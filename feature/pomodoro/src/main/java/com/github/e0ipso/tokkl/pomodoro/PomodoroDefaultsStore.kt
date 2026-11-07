@@ -59,6 +59,12 @@ class PomodoroDefaultsStore(context: Context) : ClearableStore<StoredPomodoroDef
         const val KEY_LONG_REST_MINUTES = "long_rest_minutes"
         const val KEY_LONG_REST_EVERY = "long_rest_every"
         const val KEY_UNSENT = "unsent"
-        val KEYS = listOf(KEY_WORK_MINUTES, KEY_SHORT_REST_MINUTES, KEY_LONG_REST_MINUTES, KEY_LONG_REST_EVERY, KEY_UNSENT)
+        val KEYS = listOf(
+            KEY_WORK_MINUTES,
+            KEY_SHORT_REST_MINUTES,
+            KEY_LONG_REST_MINUTES,
+            KEY_LONG_REST_EVERY,
+            KEY_UNSENT,
+        )
     }
 }

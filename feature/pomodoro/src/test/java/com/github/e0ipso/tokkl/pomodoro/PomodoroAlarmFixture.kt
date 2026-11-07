@@ -3,11 +3,11 @@ package com.github.e0ipso.tokkl.pomodoro
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.PomodoroAlarmScheduler
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
+import kotlinx.coroutines.Dispatchers
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
-import kotlinx.coroutines.Dispatchers
 
 /** A phone clock the test moves. */
 internal class MovableClock(var now: Instant = T0) : Clock() {

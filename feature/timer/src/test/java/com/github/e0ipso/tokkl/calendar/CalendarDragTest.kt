@@ -4,15 +4,15 @@ import com.github.e0ipso.tokkl.entryfields.TimeRange
 import com.github.e0ipso.tokkl.entryfields.snappedInstant
 import com.github.e0ipso.tokkl.time.AccountTime
 import com.github.e0ipso.tokkl.time.addClockMinutes
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
 import java.time.DayOfWeek
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
-import org.junit.Test
 
 /**
  * The calendar's drag arithmetic. The first tests replay the cases of calendarDay.test.ts in
@@ -23,7 +23,10 @@ class CalendarDragTest {
 
     @Test
     fun dragStepIsTheSmallestMultipleOfTheResolutionThatIsAtLeast15Minutes() {
-        val steps = mapOf(1 to 15, 2 to 16, 3 to 15, 4 to 16, 5 to 15, 6 to 18, 10 to 20, 12 to 24, 15 to 15, 20 to 20, 30 to 30, 60 to 60)
+        val steps = mapOf(
+            1 to 15, 2 to 16, 3 to 15, 4 to 16, 5 to 15, 6 to 18, 10 to 20, 12 to 24, 15 to 15, 20 to 20,
+            30 to 30, 60 to 60,
+        )
         for ((resolution, step) in steps) {
             assertEquals("resolution $resolution", step, dragStep(resolution))
             assertEquals("resolution $resolution", 0, step % resolution)
@@ -202,12 +205,26 @@ class CalendarDragTest {
         // 09:00 to 10:00, an hour later.
         assertEquals(
             range("2026-06-17T08:00:00Z", "2026-06-17T09:00:00Z"),
-            movedRange(Instant.parse("2026-06-17T07:00:00Z"), Instant.parse("2026-06-17T08:00:00Z"), 60, JUNE_17, dayMode = false, time),
+            movedRange(
+                Instant.parse("2026-06-17T07:00:00Z"),
+                Instant.parse("2026-06-17T08:00:00Z"),
+                60,
+                JUNE_17,
+                dayMode = false,
+                time,
+            ),
         )
         // An imported 09:07:30 to 09:37:30, a step earlier: the start lands on 08:55, the duration stays.
         assertEquals(
             range("2026-06-17T06:55:00Z", "2026-06-17T07:25:00Z"),
-            movedRange(Instant.parse("2026-06-17T07:07:30Z"), Instant.parse("2026-06-17T07:37:30Z"), -15, JUNE_17, dayMode = false, time),
+            movedRange(
+                Instant.parse("2026-06-17T07:07:30Z"),
+                Instant.parse("2026-06-17T07:37:30Z"),
+                -15,
+                JUNE_17,
+                dayMode = false,
+                time,
+            ),
         )
     }
 
@@ -218,9 +235,15 @@ class CalendarDragTest {
         val start = Instant.parse("2026-10-24T22:00:00Z")
         val stop = Instant.parse("2026-10-25T03:00:00Z")
         val day = LocalDate.of(2026, 10, 25)
-        assertEquals(range("2026-10-25T18:00:00Z", "2026-10-25T23:00:00Z"), movedRange(start, stop, 1200, day, dayMode = true, time))
+        assertEquals(
+            range("2026-10-25T18:00:00Z", "2026-10-25T23:00:00Z"),
+            movedRange(start, stop, 1200, day, dayMode = true, time),
+        )
         // The week view lets it cross midnight.
-        assertEquals(range("2026-10-25T19:00:00Z", "2026-10-26T00:00:00Z"), movedRange(start, stop, 1200, day, dayMode = false, time))
+        assertEquals(
+            range("2026-10-25T19:00:00Z", "2026-10-26T00:00:00Z"),
+            movedRange(start, stop, 1200, day, dayMode = false, time),
+        )
     }
 
     @Test
@@ -229,9 +252,18 @@ class CalendarDragTest {
         val start = Instant.parse("2026-06-17T07:00:00Z")
         val stop = Instant.parse("2026-06-17T08:00:00Z")
         assertEquals(range("2026-06-17T07:00:00Z", "2026-06-17T08:30:00Z"), endResizedRange(start, stop, 30, 15, time))
-        assertEquals(range("2026-06-17T07:00:00Z", "2026-06-17T07:15:00Z"), endResizedRange(start, stop, -120, 15, time))
-        assertEquals(range("2026-06-17T06:15:00Z", "2026-06-17T08:00:00Z"), startResizedRange(start, stop, -45, 15, time))
-        assertEquals(range("2026-06-17T07:45:00Z", "2026-06-17T08:00:00Z"), startResizedRange(start, stop, 120, 15, time))
+        assertEquals(
+            range("2026-06-17T07:00:00Z", "2026-06-17T07:15:00Z"),
+            endResizedRange(start, stop, -120, 15, time),
+        )
+        assertEquals(
+            range("2026-06-17T06:15:00Z", "2026-06-17T08:00:00Z"),
+            startResizedRange(start, stop, -45, 15, time),
+        )
+        assertEquals(
+            range("2026-06-17T07:45:00Z", "2026-06-17T08:00:00Z"),
+            startResizedRange(start, stop, 120, 15, time),
+        )
     }
 
     /** The server moves an imported start to the grid, so an end resize sends that start too, as the web app does. */

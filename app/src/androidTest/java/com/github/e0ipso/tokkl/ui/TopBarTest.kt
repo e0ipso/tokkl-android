@@ -25,12 +25,12 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.core.ui.R
 import com.github.e0ipso.tokkl.ui.theme.TokklSpacing
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import kotlin.math.abs
-import kotlin.math.roundToInt
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import kotlin.math.abs
+import kotlin.math.roundToInt
 
 /**
  * The shared top bar on its own: its height, the title as a heading, the back button only when a
@@ -70,8 +70,14 @@ class TopBarTest {
                 SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button),
         )
         val bounds = back.getUnclippedBoundsInRoot()
-        assertTrue("the back button is ${bounds.right - bounds.left} wide", bounds.right - bounds.left >= MIN_TOUCH_TARGET - PIXEL_DP.dp)
-        assertTrue("the back button is ${bounds.bottom - bounds.top} tall", bounds.bottom - bounds.top >= MIN_TOUCH_TARGET - PIXEL_DP.dp)
+        assertTrue(
+            "the back button is ${bounds.right - bounds.left} wide",
+            bounds.right - bounds.left >= MIN_TOUCH_TARGET - PIXEL_DP.dp,
+        )
+        assertTrue(
+            "the back button is ${bounds.bottom - bounds.top} tall",
+            bounds.bottom - bounds.top >= MIN_TOUCH_TARGET - PIXEL_DP.dp,
+        )
         back.performClick()
         assertEquals(1, backs)
     }
@@ -100,9 +106,15 @@ class TopBarTest {
         val middle = image[image.width / 2, y]
         val end = image[image.width - 1, y]
         assertTrue("the strip starts as yellow: $start, not $FIRST_STOP", start.near(FIRST_STOP))
-        assertTrue("half way the strip is the cyan stop: $middle, not $MIDDLE_STOP", middle.near(MIDDLE_STOP, STOP_TOLERANCE))
+        assertTrue(
+            "half way the strip is the cyan stop: $middle, not $MIDDLE_STOP",
+            middle.near(MIDDLE_STOP, STOP_TOLERANCE),
+        )
         assertTrue("the strip ends as magenta: $end, not $LAST_STOP", end.near(LAST_STOP, STOP_TOLERANCE))
-        assertTrue("between the pink and the cyan stops the strip is a mix: $between", between.between(PINK_STOP, MIDDLE_STOP))
+        assertTrue(
+            "between the pink and the cyan stops the strip is a mix: $between",
+            between.between(PINK_STOP, MIDDLE_STOP),
+        )
 
         val controlsBottom = listOf(
             composeRule.onNode(hasContentDescription(context.getString(R.string.back))),
@@ -110,7 +122,10 @@ class TopBarTest {
         ).maxOf { it.getUnclippedBoundsInRoot().bottom.value }
         val bar = composeRule.onNodeWithTag(BAR).getUnclippedBoundsInRoot()
         val stripTopDp = bar.top.value + stripTop / density
-        assertTrue("the controls end at $controlsBottom, below the strip's top at $stripTopDp", controlsBottom <= stripTopDp + PIXEL_DP)
+        assertTrue(
+            "the controls end at $controlsBottom, below the strip's top at $stripTopDp",
+            controlsBottom <= stripTopDp + PIXEL_DP,
+        )
     }
 
     private fun show(onBack: (() -> Unit)?, dark: Boolean = false) {

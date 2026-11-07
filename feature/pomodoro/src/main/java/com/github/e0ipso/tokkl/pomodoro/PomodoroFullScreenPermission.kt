@@ -21,7 +21,8 @@ internal fun fullScreenAllowed(sdk: Int, granted: () -> Boolean): Boolean = sdk 
 
 /** API 31..33 have no full-screen special-access page. Never send that action there. */
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-fun pomodoroFullScreenSettings(context: Context): Intent? =
-    if (Build.VERSION.SDK_INT >= 34) {
-        Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, Uri.parse("package:${context.packageName}"))
-    } else null
+fun pomodoroFullScreenSettings(context: Context): Intent? = if (Build.VERSION.SDK_INT >= 34) {
+    Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, Uri.parse("package:${context.packageName}"))
+} else {
+    null
+}

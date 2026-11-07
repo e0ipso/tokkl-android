@@ -6,9 +6,9 @@
 // (`node file.mts` strips the types), except where a case says the port departs on purpose.
 package com.github.e0ipso.tokkl.time
 
-import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import java.util.Locale
 
 class DurationJsSemanticsTest {
     private fun assertParses(cases: List<Pair<String, Long?>>) {

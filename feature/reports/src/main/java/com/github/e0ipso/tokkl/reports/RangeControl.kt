@@ -50,7 +50,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.github.e0ipso.tokkl.feature.reports.R
-import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.time.AccountTime
 import com.github.e0ipso.tokkl.ui.DateWords
 import com.github.e0ipso.tokkl.ui.FillScreenWindow
@@ -59,6 +58,7 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * The range of the report: buttons that step it by its own length on either side of a button
@@ -83,14 +83,25 @@ internal fun RangeControl(
     val enabled = selection != null && time != null
     val today = time?.today()
     val active = selection?.preset
-        ?: if (selection != null && time != null) RangePreset.matching(selection.range, time.today(), time.firstDayOfWeek) else null
+        ?: if (selection != null && time != null) {
+            RangePreset.matching(
+                selection.range,
+                time.today(),
+                time.firstDayOfWeek,
+            )
+        } else {
+            null
+        }
     val words = DateWords(LocalResources.current)
     val rangeText = if (selection != null && today != null) words.range(selection.range, today) else ""
     val changeLabel = stringResource(R.string.reports_range_change)
 
     Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier.fillMaxWidth()) {
         IconButton(onClick = { onShift(-1) }, enabled = enabled) {
-            Icon(painterResource(UiR.drawable.ic_chevron_left), contentDescription = stringResource(R.string.reports_previous_period))
+            Icon(
+                painterResource(UiR.drawable.ic_chevron_left),
+                contentDescription = stringResource(R.string.reports_previous_period),
+            )
         }
         OutlinedButton(
             onClick = { presetsOpen = true },
@@ -99,7 +110,12 @@ internal fun RangeControl(
             modifier = Modifier
                 .weight(1f)
                 .heightIn(min = LocalMinimumInteractiveComponentSize.current)
-                .semantics { onClick(label = changeLabel) { presetsOpen = true; true } },
+                .semantics {
+                    onClick(label = changeLabel) {
+                        presetsOpen = true
+                        true
+                    }
+                },
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 if (active != null) {
@@ -111,14 +127,25 @@ internal fun RangeControl(
                 }
                 Text(
                     text = rangeText,
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = if (active == null) FontWeight.Bold else FontWeight.Normal),
-                    color = if (active == null) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = if (active == null) FontWeight.Bold else FontWeight.Normal,
+                    ),
+                    color = if (active ==
+                        null
+                    ) {
+                        MaterialTheme.colorScheme.onSurface
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
                     textAlign = TextAlign.Center,
                 )
             }
         }
         IconButton(onClick = { onShift(1) }, enabled = enabled) {
-            Icon(painterResource(UiR.drawable.ic_chevron_right), contentDescription = stringResource(R.string.reports_next_period))
+            Icon(
+                painterResource(UiR.drawable.ic_chevron_right),
+                contentDescription = stringResource(R.string.reports_next_period),
+            )
         }
     }
 
@@ -126,8 +153,14 @@ internal fun RangeControl(
         PresetDialog(
             presets = presets,
             active = active,
-            onPreset = { presetsOpen = false; onPreset(it) },
-            onCustom = { presetsOpen = false; customOpen = true },
+            onPreset = {
+                presetsOpen = false
+                onPreset(it)
+            },
+            onCustom = {
+                presetsOpen = false
+                customOpen = true
+            },
             onDismiss = { presetsOpen = false },
         )
     }
@@ -135,7 +168,10 @@ internal fun RangeControl(
         CustomRangeDialog(
             initial = selection.range,
             today = today,
-            onApply = { customOpen = false; onCustom(it) },
+            onApply = {
+                customOpen = false
+                onCustom(it)
+            },
             onDismiss = { customOpen = false },
         )
     }
@@ -143,7 +179,13 @@ internal fun RangeControl(
 
 /** The presets as radio buttons, which apply on a tap, and a button that opens the custom range. */
 @Composable
-private fun PresetDialog(presets: List<RangePreset>, active: RangePreset?, onPreset: (RangePreset) -> Unit, onCustom: () -> Unit, onDismiss: () -> Unit) {
+private fun PresetDialog(
+    presets: List<RangePreset>,
+    active: RangePreset?,
+    onPreset: (RangePreset) -> Unit,
+    onCustom: () -> Unit,
+    onDismiss: () -> Unit,
+) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.reports_range_title), modifier = Modifier.semantics { heading() }) },
@@ -181,7 +223,12 @@ private fun PresetDialog(presets: List<RangePreset>, active: RangePreset?, onPre
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun CustomRangeDialog(initial: ReportRange, today: LocalDate, onApply: (ReportRange) -> Unit, onDismiss: () -> Unit) {
+private fun CustomRangeDialog(
+    initial: ReportRange,
+    today: LocalDate,
+    onApply: (ReportRange) -> Unit,
+    onDismiss: () -> Unit,
+) {
     val windowWidth = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.width.toDp() }
     val state = rememberDateRangePickerState(
         initialSelectedStartDateMillis = initial.from.utcMillis(),
@@ -202,7 +249,10 @@ private fun CustomRangeDialog(initial: ReportRange, today: LocalDate, onApply: (
                     modifier = Modifier.padding(horizontal = TokklTheme.spacing.space1),
                 ) {
                     IconButton(onClick = onDismiss) {
-                        Icon(painterResource(UiR.drawable.ic_close), contentDescription = stringResource(R.string.reports_cancel))
+                        Icon(
+                            painterResource(UiR.drawable.ic_close),
+                            contentDescription = stringResource(R.string.reports_cancel),
+                        )
                     }
                     Text(
                         text = stringResource(R.string.reports_custom_range_title),
@@ -235,7 +285,12 @@ private fun CustomRangeDialog(initial: ReportRange, today: LocalDate, onApply: (
                                     Text(
                                         text = when {
                                             start == null -> stringResource(R.string.reports_custom_range_pick_start)
-                                            picked == null -> stringResource(R.string.reports_custom_range_pick_end, words.shortWithYear(start))
+
+                                            picked == null -> stringResource(
+                                                R.string.reports_custom_range_pick_end,
+                                                words.shortWithYear(start),
+                                            )
+
                                             else -> words.range(picked, today)
                                         },
                                         style = MaterialTheme.typography.titleMedium,
@@ -243,7 +298,11 @@ private fun CustomRangeDialog(initial: ReportRange, today: LocalDate, onApply: (
                                     )
                                     if (tooLong) {
                                         Text(
-                                            text = pluralStringResource(R.plurals.reports_custom_range_too_long, MAX_RANGE_DAYS, MAX_RANGE_DAYS),
+                                            text = pluralStringResource(
+                                                R.plurals.reports_custom_range_too_long,
+                                                MAX_RANGE_DAYS,
+                                                MAX_RANGE_DAYS,
+                                            ),
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = MaterialTheme.colorScheme.error,
                                         )

@@ -66,7 +66,9 @@ class PomodoroViewModel(
     private val sendQueued: suspend () -> Unit = {},
     private val alarmProbe: () -> Boolean = { false },
 ) : ViewModel(scope) {
-    private val modelScope = CoroutineScope(viewModelScope.coroutineContext + SupervisorJob(viewModelScope.coroutineContext[Job]))
+    private val modelScope = CoroutineScope(
+        viewModelScope.coroutineContext + SupervisorJob(viewModelScope.coroutineContext[Job]),
+    )
     private val mutableState = MutableStateFlow(
         PomodoroPageState(lengths = PomodoroLengths.from(defaults.value), account = settings.value),
     )
@@ -101,9 +103,11 @@ class PomodoroViewModel(
                 publish()
             }
         }
-        modelScope.launch { defaults.collect { value ->
-            if (!lengthsEdited) mutableState.update { it.copy(lengths = PomodoroLengths.from(value)) }
-        } }
+        modelScope.launch {
+            defaults.collect { value ->
+                if (!lengthsEdited) mutableState.update { it.copy(lengths = PomodoroLengths.from(value)) }
+            }
+        }
         modelScope.launch { settings.collect { account -> mutableState.update { it.copy(account = account) } } }
         modelScope.launch { unsent.collect { count -> mutableState.update { it.copy(unsentCount = count) } } }
         modelScope.launch { refused.collect { list -> mutableState.update { it.copy(refused = list) } } }
@@ -118,7 +122,11 @@ class PomodoroViewModel(
     internal fun permissionsChanged(grants: PomodoroPermissions) {
         exactAlarmAllowed = grants.exactAlarm
         mutableState.update {
-            it.copy(notificationsDenied = !grants.notifications, alarmDenied = !grants.exactAlarm, fullScreenDenied = !grants.fullScreen)
+            it.copy(
+                notificationsDenied = !grants.notifications,
+                alarmDenied = !grants.exactAlarm,
+                fullScreenDenied = !grants.fullScreen,
+            )
         }
     }
 
@@ -146,7 +154,9 @@ class PomodoroViewModel(
         val loading = !(heldRead && controlsRead)
         mutableState.update {
             it.copy(
-                loading = loading, held = heldNow, fields = shown,
+                loading = loading,
+                held = heldNow,
+                fields = shown,
                 alarmDenied = if (it.loading && !loading) alarmDenied() else it.alarmDenied,
             )
         }
@@ -176,11 +186,7 @@ class PomodoroViewModel(
      * for each letter of the description, the page shows the fields until [fieldsDone]; otherwise
      * they go to the queue now. Returns the write, or null when nothing was queued.
      */
-    fun editFields(
-        fields: EntryFields,
-        entryId: Long? = state.value.pomodoro?.entryId,
-        send: Boolean = true,
-    ): Job? {
+    fun editFields(fields: EntryFields, entryId: Long? = state.value.pomodoro?.entryId, send: Boolean = true): Job? {
         val current = state.value
         if (current.loading || current.busy || current.workspaceId == null) return null
         val pomodoro = current.pomodoro
@@ -229,7 +235,8 @@ class PomodoroViewModel(
                     // Keeps the typed fields on screen until the cache shows them.
                     withTimeoutOrNull(SETTLE_MS) {
                         cached.first { row ->
-                            row == null || row.id != entry.id || row.fields().let { it == change.fields || it != before }
+                            row == null || row.id != entry.id ||
+                                row.fields().let { it == change.fields || it != before }
                         }
                     }
                 }
@@ -256,7 +263,11 @@ class PomodoroViewModel(
         val lengths = before.lengths.sessionLengths() ?: return null
         val workspace = before.workspaceId ?: return null
         return command(PomodoroAction.START) {
-            actions.startSession(workspace, before.fields, lengths).also { if (it == TimerActionResult.Done) onStarted() }
+            actions.startSession(
+                workspace,
+                before.fields,
+                lengths,
+            ).also { if (it == TimerActionResult.Done) onStarted() }
         }
     }
 
@@ -299,7 +310,11 @@ class PomodoroViewModel(
             commands.withLock {
                 try {
                     val result = send()
-                    mutableState.update { it.copy(problem = if (result == TimerActionResult.Done) null else PomodoroProblem(action, result)) }
+                    mutableState.update {
+                        it.copy(
+                            problem = if (result == TimerActionResult.Done) null else PomodoroProblem(action, result),
+                        )
+                    }
                 } catch (e: CancellationException) {
                     throw e
                 } finally {

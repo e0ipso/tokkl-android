@@ -12,22 +12,22 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createComposeRule
+import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import java.time.DayOfWeek
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneOffset
-import java.util.concurrent.CopyOnWriteArrayList
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.DayOfWeek
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * A group of similar entries in the history (docs/PRD.md H4): one line with the count, the total
@@ -45,7 +45,9 @@ class HistoryGroupUiTest {
     private val composeRule = createComposeRule()
 
     @get:Rule
-    val rules: RuleChain = RuleChain.outerRule(SystemFontScale(SystemFontScale.LARGEST, largestDisplaySize = true)).around(composeRule)
+    val rules: RuleChain = RuleChain.outerRule(
+        SystemFontScale(SystemFontScale.LARGEST, largestDisplaySize = true),
+    ).around(composeRule)
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private val edits = CopyOnWriteArrayList<Long>()
@@ -63,16 +65,24 @@ class HistoryGroupUiTest {
         composeRule.onNode(hasText("3")).assertExists()
         composeRule.onNode(hasText(SETTINGS.formatDuration(3 * 3600))).assertExists()
         composeRule.onNode(hasText(context.getString(R.string.history_time_range, "09:00", "12:00"))).assertExists()
-        composeRule.onAllNodes(hasContentDescription(context.getString(R.string.history_more_actions, "Group work"))).assertCountEquals(0)
+        composeRule.onAllNodes(
+            hasContentDescription(context.getString(R.string.history_more_actions, "Group work")),
+        ).assertCountEquals(0)
 
         group.performSemanticsAction(SemanticsActions.OnClick)
 
         assertEquals(context.getString(R.string.history_group_expanded), group.stateDescription())
         assertEquals(context.getString(R.string.history_group_hide), group.clickLabel())
-        val members = composeRule.onAllNodes(hasText("Group work") and hasClickAction() and hasContentDescription(entries(3)).not())
+        val members = composeRule.onAllNodes(
+            hasText("Group work") and hasClickAction() and hasContentDescription(entries(3)).not(),
+        )
         members.assertCountEquals(3)
-        composeRule.onAllNodes(hasContentDescription(context.getString(R.string.history_more_actions, "Group work"))).assertCountEquals(3)
-        composeRule.onNode(hasText(context.getString(R.string.history_time_range, "10:00", "11:00")) and hasClickAction())
+        composeRule.onAllNodes(
+            hasContentDescription(context.getString(R.string.history_more_actions, "Group work")),
+        ).assertCountEquals(3)
+        composeRule.onNode(
+            hasText(context.getString(R.string.history_time_range, "10:00", "11:00")) and hasClickAction(),
+        )
             .performSemanticsAction(SemanticsActions.OnClick)
         assertEquals("a member opens for editing", listOf(2L), edits)
 
@@ -86,10 +96,17 @@ class HistoryGroupUiTest {
     @Test
     fun noItemOfTheEntryMenuIsCutOffAtTheLargestFontScale() {
         show(pin = PinAction(enabled = true) {})
-        composeRule.onNode(hasContentDescription(context.getString(R.string.history_more_actions, "Solo work")) and hasClickAction())
+        composeRule.onNode(
+            hasContentDescription(context.getString(R.string.history_more_actions, "Solo work")) and hasClickAction(),
+        )
             .performSemanticsAction(SemanticsActions.OnClick)
 
-        for (item in listOf(R.string.history_duplicate, R.string.history_split, R.string.history_pin, R.string.history_delete)) {
+        for (item in listOf(
+            R.string.history_duplicate,
+            R.string.history_split,
+            R.string.history_pin,
+            R.string.history_delete,
+        )) {
             val text = context.getString(item)
             composeRule.onNode(hasText(text) and hasClickAction()).assertExists()
             val node = composeRule.onNode(hasText(text), useUnmergedTree = true)
@@ -125,7 +142,11 @@ class HistoryGroupUiTest {
         }
     }
 
-    private fun entries(count: Int): String = context.resources.getQuantityString(R.plurals.history_group_entries, count, count)
+    private fun entries(count: Int): String = context.resources.getQuantityString(
+        R.plurals.history_group_entries,
+        count,
+        count,
+    )
 
     private fun SemanticsNodeInteraction.stateDescription(): String? =
         fetchSemanticsNode().config.getOrElseNullable(SemanticsProperties.StateDescription) { null }
@@ -142,7 +163,11 @@ class HistoryGroupUiTest {
 
     private companion object {
         val DAY: LocalDate = LocalDate.of(2026, 10, 15)
-        val SETTINGS = AccountSettings(timeZone = "UTC", beginningOfWeek = DayOfWeek.MONDAY, timeResolutionMinutes = null)
+        val SETTINGS = AccountSettings(
+            timeZone = "UTC",
+            beginningOfWeek = DayOfWeek.MONDAY,
+            timeResolutionMinutes = null,
+        )
 
         fun entry(id: Long, description: String, startHour: Int, stopHour: Int) = HistoryEntry(
             id = id,

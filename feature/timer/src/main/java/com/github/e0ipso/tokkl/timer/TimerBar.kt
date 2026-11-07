@@ -16,9 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
-import com.github.e0ipso.tokkl.feature.timer.R
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
-import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.entryfields.DescriptionSuggestion
@@ -27,18 +24,27 @@ import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.entryfields.descriptionSuggestions
 import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
 import com.github.e0ipso.tokkl.favorites.TemplatesPopup
+import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.picker.EntityPicker
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
 import com.github.e0ipso.tokkl.ui.theme.FrameWidth
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.Clock
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * The project, task and tag picker for an entry in [workspaceId], as [EntityPicker] takes it.
  */
 typealias WorkspacePicker =
-    @Composable (workspaceId: Long, original: Picked, picked: Picked, onPickedChange: (Picked) -> Unit, modifier: Modifier) -> Unit
+    @Composable (
+        workspaceId: Long,
+        original: Picked,
+        picked: Picked,
+        onPickedChange: (Picked) -> Unit,
+        modifier: Modifier,
+    ) -> Unit
 
 /**
  * The timer at the top of the Timer page (docs/PRD.md T1), from [model], with the cached
@@ -201,14 +207,25 @@ fun TimerBarContent(
     Surface(
         shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(FrameWidth, if (running != null) TokklTheme.extraColors.running else MaterialTheme.colorScheme.outline),
+        border = BorderStroke(
+            FrameWidth,
+            if (running != null) TokklTheme.extraColors.running else MaterialTheme.colorScheme.outline,
+        ),
         modifier = modifier.fillMaxWidth(),
     ) {
         EntryFieldsEditor(
             fields = running?.fields ?: paused?.fields ?: idle?.fields ?: EntryFields(),
             labels = running?.labels ?: paused?.labels ?: idle?.labels ?: EntryLabels(),
             original = running?.original ?: paused?.original ?: Picked(),
-            descriptionHint = stringResource(if (running != null || paused != null) R.string.timer_description_running else R.string.timer_description_idle),
+            descriptionHint = stringResource(
+                if (running != null ||
+                    paused != null
+                ) {
+                    R.string.timer_description_running
+                } else {
+                    R.string.timer_description_idle
+                },
+            ),
             onDescriptionChange = onDescriptionChange,
             onDescriptionDone = onDescriptionDone,
             onPick = onPick,
@@ -234,25 +251,59 @@ fun TimerBarContent(
                         onEditRunning()
                     }
                     if (running.pausable) {
-                        TimerButton(UiR.drawable.ic_pause, SharedR.string.timer_pause, SharedR.string.timer_pause_spoken, TimerButtonLook.Neutral, enabled = true) {
+                        TimerButton(
+                            UiR.drawable.ic_pause,
+                            SharedR.string.timer_pause,
+                            SharedR.string.timer_pause_spoken,
+                            TimerButtonLook.Neutral,
+                            enabled = true,
+                        ) {
                             onPause()
                             focusManager.clearFocus()
                         }
                     }
-                    TimerButton(UiR.drawable.ic_stop, SharedR.string.timer_stop, SharedR.string.timer_stop_spoken, TimerButtonLook.Danger, enabled = true, onClick = stop)
+                    TimerButton(
+                        UiR.drawable.ic_stop,
+                        SharedR.string.timer_stop,
+                        SharedR.string.timer_stop_spoken,
+                        TimerButtonLook.Danger,
+                        enabled = true,
+                        onClick = stop,
+                    )
                 }
+
                 paused != null -> {
                     PausedLabel()
                     PausedClock(paused.seconds)
-                    TimerButton(UiR.drawable.ic_play, SharedR.string.timer_resume, SharedR.string.timer_resume_spoken, TimerButtonLook.Primary, enabled = true) {
+                    TimerButton(
+                        UiR.drawable.ic_play,
+                        SharedR.string.timer_resume,
+                        SharedR.string.timer_resume_spoken,
+                        TimerButtonLook.Primary,
+                        enabled = true,
+                    ) {
                         onResume()
                         focusManager.clearFocus()
                     }
-                    TimerButton(UiR.drawable.ic_stop, SharedR.string.timer_stop, SharedR.string.timer_stop_spoken, TimerButtonLook.Danger, enabled = true, onClick = stop)
+                    TimerButton(
+                        UiR.drawable.ic_stop,
+                        SharedR.string.timer_stop,
+                        SharedR.string.timer_stop_spoken,
+                        TimerButtonLook.Danger,
+                        enabled = true,
+                        onClick = stop,
+                    )
                 }
+
                 else -> {
                     IdleClock()
-                    TimerButton(UiR.drawable.ic_play, R.string.timer_start, R.string.timer_start_spoken, TimerButtonLook.Primary, enabled = workspaceId != null) {
+                    TimerButton(
+                        UiR.drawable.ic_play,
+                        R.string.timer_start,
+                        R.string.timer_start_spoken,
+                        TimerButtonLook.Primary,
+                        enabled = workspaceId != null,
+                    ) {
                         onStart()
                         focusManager.clearFocus()
                     }
@@ -260,7 +311,10 @@ fun TimerBarContent(
             }
             TokklGhostButton(onClick = onAddEntry) { Text(stringResource(R.string.timer_add_entry)) }
             if (running != null || paused != null) {
-                TokklGhostButton(onClick = { focusManager.clearFocus(); onOpenFullscreen() }) {
+                TokklGhostButton(onClick = {
+                    focusManager.clearFocus()
+                    onOpenFullscreen()
+                }) {
                     Text(stringResource(R.string.timer_open_fullscreen))
                 }
             }

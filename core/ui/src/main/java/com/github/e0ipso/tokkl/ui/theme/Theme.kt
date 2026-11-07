@@ -32,11 +32,20 @@ fun TokklTheme(
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
+
         darkTheme -> TokklDarkColorScheme
+
         else -> TokklLightColorScheme
     }
     val tokklColors = if (darkTheme) TokklDarkExtraColors else TokklLightExtraColors
-    val extraColors = if (dynamicColor) tokklColors.withPrimaryFill(colorScheme.primary, colorScheme.onPrimary) else tokklColors
+    val extraColors = if (dynamicColor) {
+        tokklColors.withPrimaryFill(
+            colorScheme.primary,
+            colorScheme.onPrimary,
+        )
+    } else {
+        tokklColors
+    }
     CompositionLocalProvider(LocalTokklExtraColors provides extraColors) {
         MaterialTheme(colorScheme = colorScheme, shapes = TokklShapes, typography = TokklTypography, content = content)
     }

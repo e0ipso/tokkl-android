@@ -19,8 +19,11 @@ internal class PomodoroWidgetRedrawer(
     override suspend fun redraw(context: Context, phase: PomodoroPhaseKey) {
         val state = states.state.first() as? PomodoroWidgetState.Active
         if (state?.session?.phase?.start == phase.start) {
-            if (state.ended) PomodoroWidget().updateAll(context)
-            else scheduler.schedule(state.end, phase)
+            if (state.ended) {
+                PomodoroWidget().updateAll(context)
+            } else {
+                scheduler.schedule(state.end, phase)
+            }
         }
     }
 }

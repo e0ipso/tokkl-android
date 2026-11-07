@@ -52,8 +52,7 @@ class AccountTime(
      * account's time resolution. Without a resolution the span comes back unchanged. Never pass
      * the running entry. Null means the server would reject a typed span as too short.
      */
-    fun snapUnsent(start: Instant, stop: Instant): SnappedSpan? =
-        snapUnsent(start, stop, timeResolutionMinutes, zone)
+    fun snapUnsent(start: Instant, stop: Instant): SnappedSpan? = snapUnsent(start, stop, timeResolutionMinutes, zone)
 
     /**
      * [seconds] rounded the way the server stores a no-time entry's duration, to the account's
@@ -74,8 +73,11 @@ class AccountTime(
 
     /** A write's start snapped independently; no resolution keeps the instant unchanged. */
     fun snapInstant(at: Instant): Instant =
-        if (timeResolutionMinutes == null || !isTimeResolution(timeResolutionMinutes)) at
-        else snapInstant(at.truncatedTo(java.time.temporal.ChronoUnit.SECONDS), timeResolutionMinutes, zone)
+        if (timeResolutionMinutes == null || !isTimeResolution(timeResolutionMinutes)) {
+            at
+        } else {
+            snapInstant(at.truncatedTo(java.time.temporal.ChronoUnit.SECONDS), timeResolutionMinutes, zone)
+        }
 
     /**
      * Legacy queued Stop and switch-span prediction. New captured Stops use [snapCapturedStop].

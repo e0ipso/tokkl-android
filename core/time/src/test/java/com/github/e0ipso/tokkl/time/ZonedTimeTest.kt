@@ -5,14 +5,14 @@
 // Diff the TypeScript file against this one to spot drift.
 package com.github.e0ipso.tokkl.time
 
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
+import org.junit.Test
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotEquals
-import org.junit.Test
 
 class ZonedTimeTest {
 
@@ -55,11 +55,26 @@ class ZonedTimeTest {
     @Test
     fun `the next local day at a clock time spans DST nights correctly`() {
         // A 10:00 to 09:00-next-day range is 22 hours on the spring night and 24 on the autumn night.
-        assertEquals(22.0, hours(zonedToUtc(2026, 3, 28, 10, 0, 0, MADRID), zonedToUtc(2026, 3, 29, 9, 0, 0, MADRID)), 0.0)
-        assertEquals(24.0, hours(zonedToUtc(2026, 10, 24, 10, 0, 0, MADRID), zonedToUtc(2026, 10, 25, 9, 0, 0, MADRID)), 0.0)
-        assertEquals(23.0, hours(zonedToUtc(2026, 10, 13, 10, 0, 0, MADRID), zonedToUtc(2026, 10, 14, 9, 0, 0, MADRID)), 0.0)
+        assertEquals(
+            22.0,
+            hours(zonedToUtc(2026, 3, 28, 10, 0, 0, MADRID), zonedToUtc(2026, 3, 29, 9, 0, 0, MADRID)),
+            0.0,
+        )
+        assertEquals(
+            24.0,
+            hours(zonedToUtc(2026, 10, 24, 10, 0, 0, MADRID), zonedToUtc(2026, 10, 25, 9, 0, 0, MADRID)),
+            0.0,
+        )
+        assertEquals(
+            23.0,
+            hours(zonedToUtc(2026, 10, 13, 10, 0, 0, MADRID), zonedToUtc(2026, 10, 14, 9, 0, 0, MADRID)),
+            0.0,
+        )
         // Overnight splits resolve 04:00 on the next calendar date, which is not start + 24 hours on DST nights.
-        for ((day, iso) in listOf("2026-03-29" to "2026-03-29T02:00:00.000Z", "2026-10-25" to "2026-10-25T03:00:00.000Z")) {
+        for ((day, iso) in listOf(
+            "2026-03-29" to "2026-03-29T02:00:00.000Z",
+            "2026-10-25" to "2026-10-25T03:00:00.000Z",
+        )) {
             val previous = addDays(day, -1)
             val (y, m, d) = day.split('-').map(String::toInt)
             val split = zonedToUtc(y, m, d, 4, 0, 0, MADRID)
@@ -94,6 +109,8 @@ class ZonedTimeTest {
 
     private companion object {
         val MADRID: ZoneId = ZoneId.of("Europe/Madrid")
-        val ISO: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(ZoneOffset.UTC)
+        val ISO: DateTimeFormatter = DateTimeFormatter.ofPattern(
+            "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+        ).withZone(ZoneOffset.UTC)
     }
 }

@@ -18,13 +18,13 @@ import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.shortcuts.FavoriteShortcutSync
 import com.github.e0ipso.tokkl.timerstate.HeldTimerFlows
 import com.github.e0ipso.tokkl.widget.WidgetSync
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlin.coroutines.CoroutineContext
 
 /**
  * What every process does when it starts, whatever starts it. Each component comes in as [Lazy]
@@ -69,8 +69,12 @@ internal class AppStartup(
         }
         pomodoroNotification.value.current.start()
         reminder.value.follow(
-            combine(cache.value.running, flow { emitAll(reminderSettings.value.state) }) { running, preferences -> running to preferences },
-            scope, io,
+            combine(
+                cache.value.running,
+                flow { emitAll(reminderSettings.value.state) },
+            ) { running, preferences -> running to preferences },
+            scope,
+            io,
         )
         widgetSync.value.start()
         pomodoroWidgetSync.value.start()

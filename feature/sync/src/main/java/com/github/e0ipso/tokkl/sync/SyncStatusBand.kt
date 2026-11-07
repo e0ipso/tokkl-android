@@ -17,12 +17,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.semantics.semantics
 import com.github.e0ipso.tokkl.feature.sync.R
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.ui.DateWords
 import com.github.e0ipso.tokkl.ui.UnsentIcon
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
 import java.time.Clock
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 
 /**
  * The status element above the bottom bar (docs/PRD.md O5): the unsent icon and how many changes
@@ -75,8 +75,15 @@ fun SyncStatusBand(
                             color = MaterialTheme.colorScheme.onSurface,
                         )
                     }
-                    lastAnsweredText(resources, lastAnsweredLabel(status.lastAnswered, status.settings, clock))?.let { text ->
-                        Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    lastAnsweredText(
+                        resources,
+                        lastAnsweredLabel(status.lastAnswered, status.settings, clock),
+                    )?.let { text ->
+                        Text(
+                            text,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
                 }
             }
@@ -95,7 +102,13 @@ fun SyncStatusBand(
             }
             if (status.needsAttention > 0 && onOpenNeedsAttention != null) {
                 TextButton(onClick = onOpenNeedsAttention) {
-                    Text(resources.getQuantityString(R.plurals.sync_needs_attention, status.needsAttention, status.needsAttention))
+                    Text(
+                        resources.getQuantityString(
+                            R.plurals.sync_needs_attention,
+                            status.needsAttention,
+                            status.needsAttention,
+                        ),
+                    )
                 }
             }
         }
@@ -105,13 +118,21 @@ fun SyncStatusBand(
 /** The line about the server's last answer, or null without an account timezone to show it in. */
 private fun lastAnsweredText(resources: Resources, label: LastAnsweredLabel): String? = when (label) {
     LastAnsweredLabel.Never -> resources.getString(R.string.sync_never_answered)
+
     LastAnsweredLabel.NoAccountTime -> null
+
     is LastAnsweredLabel.At -> when (label.daysAgo) {
         0L -> resources.getString(R.string.sync_last_answered_today, label.time)
+
         1L -> resources.getString(R.string.sync_last_answered_yesterday, label.time)
+
         else -> {
             val words = DateWords(resources)
-            val day = resources.getString(SharedR.string.history_day, words.weekday(label.day), words.shortWithYear(label.day))
+            val day = resources.getString(
+                SharedR.string.history_day,
+                words.weekday(label.day),
+                words.shortWithYear(label.day),
+            )
             resources.getString(R.string.sync_last_answered_day, day, label.time)
         }
     }

@@ -77,7 +77,9 @@ fun CacheContents.refreshedWith(
     before: EntryRefreshStart? = null,
 ): CacheContents {
     val historyStart = server.history?.start
-    val protectedIds = if (before == null) emptySet() else {
+    val protectedIds = if (before == null) {
+        emptySet()
+    } else {
         val previous = before.entries.associateBy { it.id }
         val current = timeEntries.associateBy { it.id }
         before.pendingIds + (previous.keys + current.keys).filter { previous[it] != current[it] }

@@ -28,8 +28,6 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import com.github.e0ipso.tokkl.feature.tile.R
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
-import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.timernotice.showTimerActionFailure
 import com.github.e0ipso.tokkl.timerstate.SurfaceTap
@@ -45,6 +43,8 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * The Quick Settings tile's long press (docs/PRD.md N4, T1). SystemUI starts it with
@@ -108,8 +108,7 @@ class TileControlsActivity : ComponentActivity() {
 }
 
 /** True when SystemUI started this activity for the tile's long press. */
-internal fun isTilePreferencesIntent(action: String?): Boolean =
-    action == TileService.ACTION_QS_TILE_PREFERENCES
+internal fun isTilePreferencesIntent(action: String?): Boolean = action == TileService.ACTION_QS_TILE_PREFERENCES
 
 /**
  * Pause, where offered, and Stop, or Resume and Stop, for [panel]. The buttons stack at full
@@ -117,16 +116,16 @@ internal fun isTilePreferencesIntent(action: String?): Boolean =
  * scale. Back and a tap outside dismiss. The words say the action, and so does TalkBack.
  */
 @Composable
-private fun TileControlsDialog(
-    panel: TileControlsPanel,
-    onPress: (TileControl) -> Unit,
-    onDismiss: () -> Unit,
-) {
+private fun TileControlsDialog(panel: TileControlsPanel, onPress: (TileControl) -> Unit, onDismiss: () -> Unit) {
     val description = panel.description.ifBlank { stringResource(R.string.tile_no_description) }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(description, modifier = Modifier.semantics { heading() }) },
-        text = { Text(stringResource(if (panel.paused) SharedR.string.timer_paused else SharedR.string.timer_running)) },
+        text = {
+            Text(
+                stringResource(if (panel.paused) SharedR.string.timer_paused else SharedR.string.timer_running),
+            )
+        },
         confirmButton = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -144,7 +143,9 @@ private fun TileControlsDialog(
 @Composable
 private fun TileControlButton(action: TimerSurfaceAction, onClick: () -> Unit) {
     @StringRes val label: Int
+
     @StringRes val spoken: Int
+
     @DrawableRes val icon: Int
     when (action) {
         TimerSurfaceAction.Pause -> {
@@ -152,11 +153,13 @@ private fun TileControlButton(action: TimerSurfaceAction, onClick: () -> Unit) {
             spoken = SharedR.string.timer_pause_spoken
             icon = UiR.drawable.ic_pause
         }
+
         TimerSurfaceAction.Resume -> {
             label = SharedR.string.timer_resume
             spoken = SharedR.string.timer_resume_spoken
             icon = UiR.drawable.ic_play
         }
+
         TimerSurfaceAction.Stop -> {
             label = SharedR.string.timer_stop
             spoken = SharedR.string.timer_stop_spoken

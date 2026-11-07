@@ -7,9 +7,9 @@ import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import com.github.e0ipso.tokkl.timerstate.TimerControls
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import com.github.e0ipso.tokkl.timerstate.target
-import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * A timer control on a surface outside the app's screens: the running timer's notification, the
@@ -30,7 +30,11 @@ sealed interface SurfaceTap {
      * runs in a broadcast ends the broadcast first, so a slow server cannot hold it past its time
      * limit.
      */
-    class Request @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE) constructor(private val request: suspend () -> TimerActionResult?) : SurfaceTap {
+    class Request
+    @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
+    constructor(
+        private val request: suspend () -> TimerActionResult?,
+    ) : SurfaceTap {
         suspend fun send(): TimerActionResult? = request()
     }
 }
@@ -75,7 +79,9 @@ class TimerSurfaceActions(
         if (target.account != account()) return null
         return when (action) {
             TimerSurfaceAction.Pause -> pause(target)
+
             TimerSurfaceAction.Resume -> whilePaused(target) { server.resume(target.revision) }
+
             TimerSurfaceAction.Stop ->
                 if (target.entryId != 0L) {
                     SurfaceTap.Queued.takeIf { changes.stop(target.entryId) }
@@ -94,7 +100,12 @@ class TimerSurfaceActions(
 
     private suspend fun pause(target: TimerTarget): SurfaceTap? {
         val running = controls() as? TimerControls.Running ?: return null
-        if (!running.pausable || target.entryId == 0L || changes.currentId(target.entryId) != running.entry.id) return null
+        if (!running.pausable || target.entryId == 0L || changes.currentId(
+                target.entryId,
+            ) != running.entry.id
+        ) {
+            return null
+        }
         return request(running.target) {
             if (running.unsent) sendQueued()
             server.pause()
@@ -110,7 +121,10 @@ class TimerSurfaceActions(
                 requests.withLock {
                     val current = controls()
                     if (expected.account != account() || current.target != expected ||
-                        (current is TimerControls.Running && !current.pausable)) return@withLock null
+                        (current is TimerControls.Running && !current.pausable)
+                    ) {
+                        return@withLock null
+                    }
                     action()
                 }
             } finally {

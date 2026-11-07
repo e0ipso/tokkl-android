@@ -22,9 +22,9 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.catalog.CancelAndConfirm
 import com.github.e0ipso.tokkl.entryfields.SplitProblem
+import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.SnappedSpan
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -49,12 +49,22 @@ internal fun SplitEntryDialog(
     val name = dialog.source.description.ifBlank { stringResource(R.string.history_no_description) }
     val start = settings.formatTime(dialog.whole.start, dialog.zone)
     val stop = settings.formatTime(dialog.whole.stop, dialog.zone)
-    val spoken = stringResource(R.string.history_split_entry, name, stringResource(R.string.history_time_range_spoken, start, stop))
+    val spoken = stringResource(
+        R.string.history_split_entry,
+        name,
+        stringResource(R.string.history_time_range_spoken, start, stop),
+    )
     val problem = dialog.problem
     val halves = dialog.halves
     val note: String? = when {
         problem != null -> problemText(problem)
-        halves != null -> stringResource(R.string.history_split_preview, duration(halves.first, settings), duration(halves.second, settings))
+
+        halves != null -> stringResource(
+            R.string.history_split_preview,
+            duration(halves.first, settings),
+            duration(halves.second, settings),
+        )
+
         else -> null
     }
     AlertDialog(
@@ -66,7 +76,11 @@ internal fun SplitEntryDialog(
                 verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup),
             ) {
                 Text(
-                    text = stringResource(R.string.history_split_entry, name, stringResource(R.string.history_time_range, start, stop)),
+                    text = stringResource(
+                        R.string.history_split_entry,
+                        name,
+                        stringResource(R.string.history_time_range, start, stop),
+                    ),
                     modifier = Modifier.semantics { contentDescription = spoken },
                 )
                 OutlinedTextField(
@@ -77,7 +91,11 @@ internal fun SplitEntryDialog(
                     supportingText = note?.let { { Text(it) } },
                     isError = problem != null,
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii, autoCorrectEnabled = false, imeAction = ImeAction.Done),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Ascii,
+                        autoCorrectEnabled = false,
+                        imeAction = ImeAction.Done,
+                    ),
                     keyboardActions = KeyboardActions(onDone = { onConfirm() }),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -85,7 +103,13 @@ internal fun SplitEntryDialog(
                 )
             }
         },
-        confirmButton = { CancelAndConfirm(stringResource(R.string.history_split_confirm), onConfirm = onConfirm, onCancel = onCancel) },
+        confirmButton = {
+            CancelAndConfirm(
+                stringResource(R.string.history_split_confirm),
+                onConfirm = onConfirm,
+                onCancel = onCancel,
+            )
+        },
     )
 }
 

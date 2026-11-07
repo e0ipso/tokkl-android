@@ -41,23 +41,39 @@ internal fun refusal(api: TogglApiClient, change: PendingChange, error: ApiError
     val status = refused.status
     return when {
         status == UNAUTHORIZED -> Refusal.SignInAgain
+
         status !in 400..499 || status == REQUEST_TIMEOUT -> Refusal.Wait(error)
+
         status == CONFLICT && change.kind == ChangeKind.STOP && change.capturedStop == null -> Refusal.AlreadyDone
+
         change.kind == ChangeKind.STOP && change.capturedStop != null && status in setOf(CONFLICT, NOT_FOUND) ->
             when (val found = stoppedOnServer(api, change)) {
                 is ApiResult.Success -> if (found.value) Refusal.AlreadyDone else Refusal.Hold(refused.message)
+
                 is ApiResult.Failure -> if ((found.error as? ApiError.Http)?.status in 400..499) {
                     Refusal.Hold(refused.message ?: "Captured Stop could not be verified")
-                } else Refusal.Wait(found.error)
+                } else {
+                    Refusal.Wait(found.error)
+                }
             }
-        status == NOT_FOUND && change.kind != ChangeKind.CREATE -> when (val entry = entryOnServer(api, change.entryId)) {
+
+        status == NOT_FOUND && change.kind != ChangeKind.CREATE -> when (
+            val entry = entryOnServer(
+                api,
+                change.entryId,
+            )
+        ) {
             is ApiResult.Success -> if (entry.value) Refusal.Hold(refused.message) else Refusal.EntryGone
-            is ApiResult.Failure -> if (entry.error == ApiError.AuthFailed || (entry.error as? ApiError.Http)?.status == UNAUTHORIZED) {
+
+            is ApiResult.Failure -> if (entry.error == ApiError.AuthFailed ||
+                (entry.error as? ApiError.Http)?.status == UNAUTHORIZED
+            ) {
                 Refusal.SignInAgain
             } else {
                 Refusal.Wait(entry.error)
             }
         }
+
         else -> Refusal.Hold(refused.message)
     }
 }
@@ -66,6 +82,7 @@ internal fun refusal(api: TogglApiClient, change: PendingChange, error: ApiError
 private fun entryOnServer(api: TogglApiClient, id: Long): ApiResult<Boolean> =
     when (val result = api.get(api.server.api("me", "time_entries", id.toString()), JsonObject.serializer())) {
         is ApiResult.Success -> ApiResult.Success(true)
+
         is ApiResult.Failure -> when {
             (result.error as? ApiError.Http)?.status == NOT_FOUND -> ApiResult.Success(false)
             result.error is ApiError.InvalidResponse -> ApiResult.Success(true)

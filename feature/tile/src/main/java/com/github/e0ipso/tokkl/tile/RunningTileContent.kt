@@ -36,12 +36,15 @@ sealed interface RunningTileContent {
 }
 
 /** The tile for what the timer [controls] show, a paused timer too, and the cache's [entries]. */
-fun runningTileContent(controls: TimerControls, entries: List<CachedTimeEntry>): RunningTileContent =
-    when (controls) {
-        is TimerControls.Running -> RunningTileContent.Running(controls.entry, controls.target)
-        is TimerControls.Paused -> RunningTileContent.Paused(controls.fields.description, controls.target)
-        TimerControls.Idle -> lastStopped(entries)?.let { RunningTileContent.Continue(it) } ?: RunningTileContent.Nothing
-    }
+fun runningTileContent(controls: TimerControls, entries: List<CachedTimeEntry>): RunningTileContent = when (controls) {
+    is TimerControls.Running -> RunningTileContent.Running(controls.entry, controls.target)
+
+    is TimerControls.Paused -> RunningTileContent.Paused(controls.fields.description, controls.target)
+
+    TimerControls.Idle -> lastStopped(
+        entries,
+    )?.let { RunningTileContent.Continue(it) } ?: RunningTileContent.Nothing
+}
 
 /**
  * A tap on the tile while it shows [shown]. It acts on what the tile shows, not on what the cache
@@ -53,10 +56,13 @@ fun runningTileContent(controls: TimerControls, entries: List<CachedTimeEntry>):
 suspend fun tapTile(shown: RunningTileContent, surface: TimerSurfaceActions, changes: EntryChanges): SurfaceTap? =
     when (shown) {
         is RunningTileContent.Running -> surface.tap(TimerSurfaceAction.Stop, shown.target)
+
         is RunningTileContent.Paused -> surface.tap(TimerSurfaceAction.Resume, shown.target)
+
         is RunningTileContent.Continue -> {
             changes.continueEntry(shown.last)
             null
         }
+
         RunningTileContent.Nothing -> null
     }

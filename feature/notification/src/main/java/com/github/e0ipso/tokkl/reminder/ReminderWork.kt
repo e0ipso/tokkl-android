@@ -7,10 +7,10 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import kotlinx.coroutines.withContext
 import java.time.Duration
 import java.time.Instant
 import kotlin.coroutines.CoroutineContext
-import kotlinx.coroutines.withContext
 
 /** A single inexact delayed wakeup, with neither a network constraint nor an exact-alarm permission. */
 object ReminderWork {
@@ -40,7 +40,11 @@ class ReminderWorker(
     private val io: CoroutineContext,
 ) : CoroutineWorker(context, parameters) {
     override suspend fun doWork(): Result = withContext(io) {
-        reminder.fire(inputData.getLong(ReminderWork.ID, 0), inputData.getLong(ReminderWork.START, 0), inputData.getLong(ReminderWork.DUE, 0))
+        reminder.fire(
+            inputData.getLong(ReminderWork.ID, 0),
+            inputData.getLong(ReminderWork.START, 0),
+            inputData.getLong(ReminderWork.DUE, 0),
+        )
         Result.success()
     }
 }

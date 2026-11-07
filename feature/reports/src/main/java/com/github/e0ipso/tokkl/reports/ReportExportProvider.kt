@@ -22,7 +22,9 @@ class ReportExportProvider : FileProvider() {
             val stat = Os.fstat(descriptor.fileDescriptor)
             if (System.currentTimeMillis() - stat.st_mtime * 1000 >= ReportExportFiles.MAX_AGE_MILLIS ||
                 stat.st_size > ReportExportFiles.MAX_BYTES
-            ) throw FileNotFoundException("Export expired")
+            ) {
+                throw FileNotFoundException("Export expired")
+            }
             return descriptor
         } catch (e: Exception) {
             descriptor.close()

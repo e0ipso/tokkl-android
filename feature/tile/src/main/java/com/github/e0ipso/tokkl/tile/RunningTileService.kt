@@ -100,8 +100,10 @@ class RunningTileService : TileService() {
         super.onDestroy()
     }
 
-    private fun content(): Flow<RunningTileContent> =
-        combine(timerControls.controls, cache.entries) { controls, entries -> runningTileContent(controls, entries.map { it.entry }) }
+    private fun content(): Flow<RunningTileContent> = combine(
+        timerControls.controls,
+        cache.entries,
+    ) { controls, entries -> runningTileContent(controls, entries.map { it.entry }) }
 
     private fun show(content: RunningTileContent) {
         val tile = qsTile ?: return

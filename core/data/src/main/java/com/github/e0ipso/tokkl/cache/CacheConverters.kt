@@ -1,11 +1,11 @@
 package com.github.e0ipso.tokkl.cache
 
 import androidx.room.TypeConverter
-import java.time.Instant
-import java.time.LocalDate
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
+import java.time.Instant
+import java.time.LocalDate
 
 /** Stores instants as epoch milliseconds, dates as ISO `YYYY-MM-DD` text and lists as JSON arrays. */
 internal class CacheConverters {

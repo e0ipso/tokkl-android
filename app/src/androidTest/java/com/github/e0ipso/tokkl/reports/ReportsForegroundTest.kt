@@ -11,7 +11,6 @@ import androidx.test.runner.lifecycle.Stage
 import com.github.e0ipso.tokkl.BackgroundTrip
 import com.github.e0ipso.tokkl.DeviceShell
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.feature.reports.R
 import com.github.e0ipso.tokkl.RequestCounter
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
@@ -23,12 +22,11 @@ import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.sessionViewModels
+import com.github.e0ipso.tokkl.feature.reports.R
 import com.github.e0ipso.tokkl.openMorePage
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
-import java.time.LocalDate
-import java.time.ZoneId
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -43,6 +41,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.time.LocalDate
+import java.time.ZoneId
 
 /**
  * A report loaded before the app went to the background is asked for again when the app comes
@@ -117,12 +117,22 @@ class ReportsForegroundTest {
         BackgroundTrip.comeBack(activity)
 
         val offline = runCatching {
-            compose.waitUntil("the offline message shows", LOAD_TIMEOUT_MS) { hasNode(string(R.string.reports_offline_title)) }
+            compose.waitUntil(
+                "the offline message shows",
+                LOAD_TIMEOUT_MS,
+            ) { hasNode(string(R.string.reports_offline_title)) }
         }
-        assertTrue("the offline message shows; state ${model.state.value}, old total shows: ${hasNode(total)}", offline.isSuccess)
+        assertTrue(
+            "the offline message shows; state ${model.state.value}, old total shows: ${hasNode(total)}",
+            offline.isSuccess,
+        )
         assertTrue("the offline explanation shows", hasNode(string(R.string.reports_offline_message)))
         val state = model.state.value
-        assertEquals("failed for want of the server", ReportsState.Failed(loaded.selection, ReportFailure.Unreachable), state)
+        assertEquals(
+            "failed for want of the server",
+            ReportsState.Failed(loaded.selection, ReportFailure.Unreachable),
+            state,
+        )
         assertFalse("no total $total offline", hasNode(total))
         assertFalse("no totals offline", hasNode(string(R.string.reports_total_time).uppercase()))
     }
@@ -146,7 +156,10 @@ class ReportsForegroundTest {
         val portrait = resumedActivity()!!
         scenario!!.onActivity { it.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE }
         val landscape = awaitCondition("the activity is recreated in landscape") {
-            resumedActivity()?.takeIf { it !== portrait && it.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE }
+            resumedActivity()?.takeIf {
+                it !== portrait &&
+                    it.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+            }
         }
         compose.waitForIdle()
         Thread.sleep(SETTLE_MS)
@@ -191,12 +204,16 @@ class ReportsForegroundTest {
     private fun resumedActivity(): MainActivity? {
         var resumed: MainActivity? = null
         instrumentation.runOnMainSync {
-            resumed = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED).filterIsInstance<MainActivity>().singleOrNull()
+            resumed = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(
+                Stage.RESUMED,
+            ).filterIsInstance<MainActivity>().singleOrNull()
         }
         return resumed
     }
 
-    private fun hasNode(text: String): Boolean = compose.onAllNodes(hasText(text, substring = true)).fetchSemanticsNodes().isNotEmpty()
+    private fun hasNode(text: String): Boolean = compose.onAllNodes(
+        hasText(text, substring = true),
+    ).fetchSemanticsNodes().isNotEmpty()
 
     /** Polls [value] until it is not null. Works while the app is in the background, unlike the compose rule's waits. */
     private fun <T : Any> awaitCondition(what: String, value: () -> T?): T {
@@ -230,7 +247,12 @@ class ReportsForegroundTest {
             put("start", LocalDate.now(ZoneId.of(ZONE)).atStartOfDay(ZoneId.of(ZONE)).toInstant().toString())
             put("duration", SEEDED_SECONDS)
         }
-        api.send("POST", api.server.api("workspaces", workspace.toString(), "time_entries"), body, JsonObject.serializer())
+        api.send(
+            "POST",
+            api.server.api("workspaces", workspace.toString(), "time_entries"),
+            body,
+            JsonObject.serializer(),
+        )
             .orFail("POST a time entry")
     }
 
@@ -245,7 +267,6 @@ class ReportsForegroundTest {
 
         /** Long enough for a request the app would send at once to reach the relay. */
         const val SETTLE_MS = 2_000L
-
 
         /** Summary now reads the app report. Keep the once-per-foreground assertion on that request. */
         const val SEARCH = "/api/app/report HTTP/1.1"

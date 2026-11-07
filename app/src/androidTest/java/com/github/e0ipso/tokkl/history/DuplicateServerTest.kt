@@ -12,7 +12,6 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
@@ -24,14 +23,10 @@ import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
-import java.time.Instant
-import java.time.LocalDate
-import java.time.OffsetDateTime
-import java.time.ZoneId
-import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.builtins.ListSerializer
@@ -52,6 +47,11 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.Instant
+import java.time.LocalDate
+import java.time.OffsetDateTime
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 
 /**
  * Duplicate against the real Tokkl container, in the real activity (docs/PRD.md H5). The copy
@@ -127,7 +127,10 @@ class DuplicateServerTest {
             JsonObject.serializer(),
         ).orFail("POST an entry").getValue("id").jsonPrimitive.long
         // The server snaps the times to the account's resolution, and the copy takes them as stored.
-        val stored = web.get(web.server.api("me", "time_entries", source.toString()), JsonObject.serializer()).orFail("GET the source")
+        val stored = web.get(
+            web.server.api("me", "time_entries", source.toString()),
+            JsonObject.serializer(),
+        ).orFail("GET the source")
         runBlocking { app.accountRefresh.refresh().join() }
         val unsent = context.getString(R.string.history_unsent)
 
@@ -136,7 +139,11 @@ class DuplicateServerTest {
             composeRule.waitUntil("the entry shows", LOAD_TIMEOUT_MS) { rowsIn("Paint the wall") == 1 }
             AirplaneMode.set(true, web)
 
-            composeRule.onNode(hasContentDescription(context.getString(R.string.history_more_actions, "Paint the wall")) and hasClickAction())
+            composeRule.onNode(
+                hasContentDescription(
+                    context.getString(R.string.history_more_actions, "Paint the wall"),
+                ) and hasClickAction(),
+            )
                 .performSemanticsAction(SemanticsActions.OnClick)
             composeRule.onNode(hasText(context.getString(R.string.history_duplicate)) and hasClickAction())
                 .performSemanticsAction(SemanticsActions.OnClick)
@@ -148,7 +155,9 @@ class DuplicateServerTest {
                 rowsIn("Paint the wall") == 1 && composeRule.onAllNodes(group).fetchSemanticsNodes().size == 1
             }
             composeRule.waitUntil("the message says so", LOAD_TIMEOUT_MS) {
-                composeRule.onAllNodes(hasText(context.getString(R.string.history_duplicated))).fetchSemanticsNodes().isNotEmpty()
+                composeRule.onAllNodes(
+                    hasText(context.getString(R.string.history_duplicated)),
+                ).fetchSemanticsNodes().isNotEmpty()
             }
 
             AirplaneMode.set(false, web)
@@ -160,7 +169,10 @@ class DuplicateServerTest {
         val copy = entries.single { it.getValue("id").jsonPrimitive.long != source }
         assertEquals(project, copy.getValue("project_id").jsonPrimitive.long)
         assertEquals(task, copy.getValue("task_id").jsonPrimitive.long)
-        assertEquals(setOf("outdoor", "spray"), copy.getValue("tags").jsonArray.map { it.jsonPrimitive.content }.toSet())
+        assertEquals(
+            setOf("outdoor", "spray"),
+            copy.getValue("tags").jsonArray.map { it.jsonPrimitive.content }.toSet(),
+        )
         assertEquals("true", copy.getValue("billable").jsonPrimitive.content)
         assertEquals("the source's start", stored.instant("start"), copy.instant("start"))
         assertEquals("the source's stop", stored.instant("stop"), copy.instant("stop"))
@@ -180,16 +192,29 @@ class DuplicateServerTest {
             composeRule.awaitTimerPage(LOAD_TIMEOUT_MS)
             composeRule.waitUntil("the entry shows", LOAD_TIMEOUT_MS) { rowsIn("Team offsite") == 1 }
 
-            composeRule.onNode(hasContentDescription(context.getString(R.string.history_more_actions, "Team offsite")) and hasClickAction())
+            composeRule.onNode(
+                hasContentDescription(
+                    context.getString(R.string.history_more_actions, "Team offsite"),
+                ) and hasClickAction(),
+            )
                 .performSemanticsAction(SemanticsActions.OnClick)
             composeRule.waitUntil("the menu shows Duplicate", LOAD_TIMEOUT_MS) {
-                composeRule.onAllNodes(hasText(context.getString(R.string.history_duplicate))).fetchSemanticsNodes().isNotEmpty()
+                composeRule.onAllNodes(
+                    hasText(context.getString(R.string.history_duplicate)),
+                ).fetchSemanticsNodes().isNotEmpty()
             }
-            assertTrue("a no-time entry cannot be split", composeRule.onAllNodes(hasText(context.getString(R.string.history_split))).fetchSemanticsNodes().isEmpty())
+            assertTrue(
+                "a no-time entry cannot be split",
+                composeRule.onAllNodes(
+                    hasText(context.getString(R.string.history_split)),
+                ).fetchSemanticsNodes().isEmpty(),
+            )
             composeRule.onNode(hasText(context.getString(R.string.history_duplicate)) and hasClickAction())
                 .performSemanticsAction(SemanticsActions.OnClick)
             composeRule.waitUntil("the message says so", LOAD_TIMEOUT_MS) {
-                composeRule.onAllNodes(hasText(context.getString(R.string.history_duplicated))).fetchSemanticsNodes().isNotEmpty()
+                composeRule.onAllNodes(
+                    hasText(context.getString(R.string.history_duplicated)),
+                ).fetchSemanticsNodes().isNotEmpty()
             }
 
             sendTheQueue()

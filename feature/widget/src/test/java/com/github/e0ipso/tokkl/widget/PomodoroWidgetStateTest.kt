@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.widget
 
-import com.github.e0ipso.tokkl.timerstate.ServerTimerStates
 import com.github.e0ipso.tokkl.api.PhaseKind
 import com.github.e0ipso.tokkl.api.PhaseTransition
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
@@ -12,15 +11,16 @@ import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.RunningCheckStart
 import com.github.e0ipso.tokkl.cache.RunningCheckWrites
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
-import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
+import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
+import com.github.e0ipso.tokkl.timerstate.ServerTimerStates
 import com.github.e0ipso.tokkl.timerstate.TimerStateSource
+import org.junit.Assert.*
+import org.junit.Test
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneOffset
-import org.junit.Assert.*
-import org.junit.Test
 
 class PomodoroWidgetStateTest {
     private val at = Instant.parse("2026-10-29T08:00:00Z")
@@ -29,8 +29,14 @@ class PomodoroWidgetStateTest {
     private val project = CachedProject(7, 1, null, "Tokkl", "#06aaf5", true, true)
     private val task = CachedTask(9, 1, 7, "Widget", true)
     private val serverEntry = ServerTimeEntry(
-        id = 42, workspaceId = 1, projectId = 7, taskId = 9, description = fields.description,
-        start = at.toString(), billable = true, tags = fields.tags,
+        id = 42,
+        workspaceId = 1,
+        projectId = 7,
+        taskId = 9,
+        description = fields.description,
+        start = at.toString(),
+        billable = true,
+        tags = fields.tags,
     )
     private val session = ServerTimerStates.session(42, at)
     private val held = ServerTimerStates.held(17, at, pomodoro = session, offset = Duration.ofSeconds(120))
@@ -90,9 +96,16 @@ class PomodoroWidgetStateTest {
     @Test fun bothRestKindsRetainTheServersCompletedWorkAndUpcomingTransition() {
         for (kind in listOf(PhaseKind.SHORT_REST, PhaseKind.LONG_REST)) {
             val rest = session.copy(
-                phase = session.phase.copy(kind = kind, completed = 4), number = 4,
+                phase = session.phase.copy(kind = kind, completed = 4),
+                number = 4,
                 upcomingPhase = PhaseKind.WORK,
-                transition = if (kind == PhaseKind.SHORT_REST) PhaseTransition.SHORT_REST_TO_WORK else PhaseTransition.LONG_REST_TO_WORK,
+                transition = if (kind ==
+                    PhaseKind.SHORT_REST
+                ) {
+                    PhaseTransition.SHORT_REST_TO_WORK
+                } else {
+                    PhaseTransition.LONG_REST_TO_WORK
+                },
             )
             val active = state(held = held.copy(state = held.state.copy(pomodoro = rest))) as PomodoroWidgetState.Active
             assertEquals(rest, active.session)
@@ -112,8 +125,12 @@ class PomodoroWidgetStateTest {
     }
 
     @Test fun missingOrWrongEntryDoesNotLeakAnotherTimersFields() {
-        val missing = state(held = held.copy(state = held.state.copy(runningEntry = null))) as PomodoroWidgetState.Active
-        val wrong = state(held = held.copy(state = held.state.copy(runningEntry = serverEntry.copy(id = 99)))) as PomodoroWidgetState.Active
+        val missing = state(
+            held = held.copy(state = held.state.copy(runningEntry = null)),
+        ) as PomodoroWidgetState.Active
+        val wrong = state(
+            held = held.copy(state = held.state.copy(runningEntry = serverEntry.copy(id = 99))),
+        ) as PomodoroWidgetState.Active
         assertEquals(fields, missing.entry.fields)
         assertEquals(fields, wrong.entry.fields)
         val unknown = state(projects = emptyList(), tasks = emptyList()) as PomodoroWidgetState.Active
@@ -123,7 +140,10 @@ class PomodoroWidgetStateTest {
     }
 
     @Test fun catalogLabelsAreScopedToTheEntryWorkspace() {
-        val active = state(projects = listOf(project.copy(workspaceId = 2)), tasks = listOf(task.copy(workspaceId = 2))) as PomodoroWidgetState.Active
+        val active = state(
+            projects = listOf(project.copy(workspaceId = 2)),
+            tasks = listOf(task.copy(workspaceId = 2)),
+        ) as PomodoroWidgetState.Active
         assertNull(active.entry.project)
         assertNull(active.entry.projectColor)
         assertNull(active.entry.task)
@@ -136,8 +156,14 @@ class PomodoroWidgetStateTest {
         assertNotEquals(active.key(), active.copy(account = "account-b").key())
         assertNotEquals(active.key(), state(projects = listOf(project.copy(color = "#aabbcc"))).key())
         assertNotEquals(active.key(), state(projects = listOf(project.copy(name = "Renamed"))).key())
-        assertNotEquals(active.key(), active.copy(entry = active.entry.copy(fields = fields.copy(tags = listOf("changed")))).key())
-        assertNotEquals(active.key(), active.copy(entry = active.entry.copy(fields = fields.copy(billable = false))).key())
+        assertNotEquals(
+            active.key(),
+            active.copy(entry = active.entry.copy(fields = fields.copy(tags = listOf("changed")))).key(),
+        )
+        assertNotEquals(
+            active.key(),
+            active.copy(entry = active.entry.copy(fields = fields.copy(billable = false))).key(),
+        )
         assertNotEquals(active.key(), active.copy(end = active.end.plusSeconds(1)).key())
         assertNotEquals(state(held = null).key(), state(held = null, defaults = PomodoroDefaults(50, 8, 20, 3)).key())
         assertEquals(64, active.key().length)
@@ -155,7 +181,12 @@ class PomodoroWidgetStateTest {
         assertEquals(remembered, rememberedPomodoroFields(account, held))
         assertNull(rememberedPomodoroFields(account, held.copy(state = held.state.copy(pomodoro = null))))
         assertNull(rememberedPomodoroFields(account, held.copy(state = held.state.copy(runningEntry = null))))
-        assertNull(rememberedPomodoroFields(account, held.copy(state = held.state.copy(runningEntry = serverEntry.copy(id = 99)))))
+        assertNull(
+            rememberedPomodoroFields(
+                account,
+                held.copy(state = held.state.copy(runningEntry = serverEntry.copy(id = 99))),
+            ),
+        )
     }
 
     @Test fun acceptedStatesRememberFieldsBeforeIdleAndRejectStaleAndRetiredResponses() {
@@ -169,16 +200,25 @@ class PomodoroWidgetStateTest {
             save = { stored ->
                 rememberedPomodoroFields(account, stored.held)?.let { disk = encodeRememberedPomodoroFields(it) }
             },
-            cache = cache, clock = Clock.fixed(at, ZoneOffset.UTC),
+            cache = cache,
+            clock = Clock.fixed(at, ZoneOffset.UTC),
         )
         val slowRead = source.begin()
         assertTrue(source.accept(source.begin(), held.state))
         assertEquals(remembered, disk?.let { decodeRememberedPomodoroFields(it, account) })
-        assertFalse(source.accept(slowRead, held.state.copy(revision = 16, runningEntry = serverEntry.copy(description = "Stale"))))
+        assertFalse(
+            source.accept(
+                slowRead,
+                held.state.copy(revision = 16, runningEntry = serverEntry.copy(description = "Stale")),
+            ),
+        )
         assertEquals(fields, disk?.let { decodeRememberedPomodoroFields(it, account) }?.fields())
         val lateRead = source.begin()
         assertTrue(source.accept(source.begin(), held.state.copy(revision = 18, pomodoro = null, runningEntry = null)))
-        val idle = state(held = source.state.value, remembered = disk?.let { decodeRememberedPomodoroFields(it, account) }) as PomodoroWidgetState.Idle
+        val idle = state(
+            held = source.state.value,
+            remembered = disk?.let { decodeRememberedPomodoroFields(it, account) },
+        ) as PomodoroWidgetState.Idle
         assertEquals(fields, idle.entry.fields)
         source.retire()
         disk = null // Sign-out clears only after retirement has waited for accepted writes.
@@ -188,7 +228,9 @@ class PomodoroWidgetStateTest {
 
     @Test fun keysDistinguishTagNamesContainingSeparators() {
         val active = state() as PomodoroWidgetState.Active
-        fun tags(vararg names: String) = active.copy(entry = active.entry.copy(fields = fields.copy(tags = names.toList()))).key()
+        fun tags(vararg names: String) = active.copy(
+            entry = active.entry.copy(fields = fields.copy(tags = names.toList())),
+        ).key()
         assertNotEquals(tags("a, b"), tags("a", "b"))
     }
 }

@@ -59,19 +59,10 @@ data class CachedProject(
 )
 
 @Entity(tableName = "clients")
-data class CachedClient(
-    @PrimaryKey val id: Long,
-    val workspaceId: Long,
-    val name: String,
-    val archived: Boolean,
-)
+data class CachedClient(@PrimaryKey val id: Long, val workspaceId: Long, val name: String, val archived: Boolean)
 
 @Entity(tableName = "tags")
-data class CachedTag(
-    @PrimaryKey val id: Long,
-    val workspaceId: Long,
-    val name: String,
-)
+data class CachedTag(@PrimaryKey val id: Long, val workspaceId: Long, val name: String)
 
 /** A task. A done one ([active] false) stays only while a cached entry or favorite uses it. */
 @Entity(tableName = "tasks")

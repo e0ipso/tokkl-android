@@ -55,7 +55,13 @@ fun shownSyncStatus(
     signInNeeded: Flow<Boolean> = flowOf(false),
     grace: Duration = SHOW_AFTER,
 ): Flow<SyncStatus?> {
-    val status = combine(unsent, lastAnswered, needsAttention, settings, signInNeeded) { count, answered, attention, account, signIn ->
+    val status = combine(
+        unsent,
+        lastAnswered,
+        needsAttention,
+        settings,
+        signInNeeded,
+    ) { count, answered, attention, account, signIn ->
         SyncStatus(count, answered, attention, account, signIn)
     }
     val waitedLongEnough = status

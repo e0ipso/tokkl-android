@@ -31,7 +31,9 @@ import org.koin.core.component.get
  *
  * Glance's own receiver runs it, which is not exported: only the widget's PendingIntents reach it.
  */
-class StartTimerAction : ActionCallback, KoinComponent {
+class StartTimerAction :
+    ActionCallback,
+    KoinComponent {
 
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         // Signed out since the widget was drawn: nothing to start in.
@@ -48,7 +50,9 @@ class StartTimerAction : ActionCallback, KoinComponent {
  * The widget's Stop: of the running entry it showed, on the phone and queued, as the
  * notification's Stop does, so it works offline; or of the paused timer it showed, on the server.
  */
-class StopTimerAction : ActionCallback, KoinComponent {
+class StopTimerAction :
+    ActionCallback,
+    KoinComponent {
 
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         tapTimer(context, TimerSurfaceAction.Stop, parameters)
@@ -56,7 +60,9 @@ class StopTimerAction : ActionCallback, KoinComponent {
 }
 
 /** The widget's Pause (docs/PRD.md T1): it pauses the entry the widget showed, on the server. */
-class PauseTimerAction : ActionCallback, KoinComponent {
+class PauseTimerAction :
+    ActionCallback,
+    KoinComponent {
 
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         tapTimer(context, TimerSurfaceAction.Pause, parameters)
@@ -67,7 +73,9 @@ class PauseTimerAction : ActionCallback, KoinComponent {
  * The widget's Resume (docs/PRD.md T1): the server starts a new entry with the paused timer's
  * fields, at the revision the widget showed.
  */
-class ResumeTimerAction : ActionCallback, KoinComponent {
+class ResumeTimerAction :
+    ActionCallback,
+    KoinComponent {
 
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         tapTimer(context, TimerSurfaceAction.Resume, parameters)
@@ -89,7 +97,9 @@ private suspend fun KoinComponent.tapTimer(context: Context, action: TimerSurfac
         null
     }
     if (tap is SurfaceTap.Request) {
-        get<CoroutineScope>().launch(get<CoroutineDispatcher>(IoDispatcher)) { tap.send()?.let { showTimerActionFailure(app, it) } }
+        get<CoroutineScope>().launch(
+            get<CoroutineDispatcher>(IoDispatcher),
+        ) { tap.send()?.let { showTimerActionFailure(app, it) } }
     }
 }
 

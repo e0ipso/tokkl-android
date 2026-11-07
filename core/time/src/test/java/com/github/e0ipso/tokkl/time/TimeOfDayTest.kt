@@ -9,11 +9,7 @@ import org.junit.Test
 
 class TimeOfDayTest {
     /** The TypeScript `options` argument. */
-    private data class Options(
-        val twelveHour: Boolean? = null,
-        val reference: Int? = null,
-        val after: Int? = null,
-    )
+    private data class Options(val twelveHour: Boolean? = null, val reference: Int? = null, val after: Int? = null)
 
     private class Case(val raw: String, val options: Options, val expected: Int?)
 

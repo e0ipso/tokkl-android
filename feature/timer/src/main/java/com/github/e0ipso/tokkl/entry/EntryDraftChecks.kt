@@ -32,7 +32,9 @@ internal fun check(form: EntryDraft, settings: AccountSettings, time: AccountTim
     val stop = when {
         durationChanged -> (form.durationSeconds ?: parseDuration(form.duration))?.let { start.plusSecondsOrNull(it) }
             ?: return CheckedTimes.Invalid(TimeField.DURATION, TimeMistake.DURATION)
+
         form.target is DraftTarget.Edit && !form.endChanged() -> form.target.stop
+
         else -> resolveRange(form.date, form.start, form.end, time, settings.twelveHour, nowMinutes(time, clock))?.stop
             ?: return CheckedTimes.Invalid(TimeField.END, unreadable)
     }
@@ -43,9 +45,13 @@ internal fun check(form: EntryDraft, settings: AccountSettings, time: AccountTim
     val target = form.target as? DraftTarget.Edit
     val unchanged = target != null && target.entryId > 0 && start == target.start && stop == target.stop
     if (predicted == null && !unchanged) return CheckedTimes.Invalid(spanField, TimeMistake.TOO_SHORT)
-    val seconds = predicted?.let { it.stop.epochSecond - it.start.epochSecond } ?: (stop.epochSecond - start.epochSecond)
-    return if (seconds > MAX_ENTRY_SECONDS) CheckedTimes.Invalid(spanField, TimeMistake.TOO_LONG)
-    else CheckedTimes.Valid(start, stop)
+    val seconds =
+        predicted?.let { it.stop.epochSecond - it.start.epochSecond } ?: (stop.epochSecond - start.epochSecond)
+    return if (seconds > MAX_ENTRY_SECONDS) {
+        CheckedTimes.Invalid(spanField, TimeMistake.TOO_LONG)
+    } else {
+        CheckedTimes.Valid(start, stop)
+    }
 }
 
 /**
@@ -62,14 +68,23 @@ private fun checkNoTimes(form: EntryDraft, settings: AccountSettings, time: Acco
     }
     val read = noTimeDuration(form.duration, settings.timeResolutionMinutes)
     val seconds = read.seconds
-    if (read.error != null || seconds == null) return CheckedTimes.Invalid(TimeField.DURATION, read.mistake(settings.timeResolutionMinutes))
+    if (read.error != null || seconds == null) {
+        return CheckedTimes.Invalid(
+            TimeField.DURATION,
+            read.mistake(settings.timeResolutionMinutes),
+        )
+    }
     val span = time.noTimeSpan(form.date, seconds)
     return CheckedTimes.Valid(span.start, span.stop, noTimeDay = form.date)
 }
 
 /** The start [EntryDraft.start] means: the entry's own while the date and the start are as they opened. */
 private fun EntryDraft.startInstant(settings: AccountSettings, time: AccountTime, clock: Clock): Instant? {
-    val minutes = parseTimeOfDay(start, twelveHour = settings.twelveHour, reference = nowMinutes(time, clock)) ?: return null
+    val minutes = parseTimeOfDay(
+        start,
+        twelveHour = settings.twelveHour,
+        reference = nowMinutes(time, clock),
+    ) ?: return null
     return when {
         target is DraftTarget.Edit && !startChanged() -> target.start
         target is DraftTarget.Running && !startChanged() -> target.start
@@ -93,7 +108,11 @@ internal fun EntryDraft.followDuration(settings: AccountSettings, time: AccountT
     val seconds = durationSeconds ?: parseDuration(duration) ?: return this
     val start = startInstant(settings, time, clock) ?: return this
     val stop = start.plusSecondsOrNull(seconds) ?: return this
-    return copy(end = settings.formatTime(stop, time.zone), duration = formatDuration(snappedSeconds(start, stop, time)), durationSeconds = seconds)
+    return copy(
+        end = settings.formatTime(stop, time.zone),
+        duration = formatDuration(snappedSeconds(start, stop, time)),
+        durationSeconds = seconds,
+    )
 }
 
 /** The no-time duration as the server will store it, when the server takes it. */
@@ -115,7 +134,14 @@ internal fun EntryDraft.timesFromMidnight(settings: AccountSettings, time: Accou
     val stop = seconds?.let { start.plusSecondsOrNull(it) } ?: return copy(noTimes = false, start = startText, end = "")
     val endText = settings.formatTime(stop, time.zone)
     val text = formatDuration(snappedSeconds(start, stop, time))
-    val endSaysIt = resolveRange(date, startText, endText, time, settings.twelveHour, nowMinutes(time, clock))?.stop == stop
+    val endSaysIt = resolveRange(
+        date,
+        startText,
+        endText,
+        time,
+        settings.twelveHour,
+        nowMinutes(time, clock),
+    )?.stop == stop
     return copy(
         noTimes = false,
         start = startText,
@@ -126,14 +152,13 @@ internal fun EntryDraft.timesFromMidnight(settings: AccountSettings, time: Accou
     )
 }
 
-private fun Instant.plusSecondsOrNull(seconds: Long): Instant? =
-    try {
-        plusSeconds(seconds)
-    } catch (_: ArithmeticException) {
-        null
-    } catch (_: DateTimeException) {
-        null
-    }
+private fun Instant.plusSecondsOrNull(seconds: Long): Instant? = try {
+    plusSeconds(seconds)
+} catch (_: ArithmeticException) {
+    null
+} catch (_: DateTimeException) {
+    null
+}
 
 /**
  * The mistake for a duration [noTimeDuration] refused, by its rules: one it cannot read, one over a

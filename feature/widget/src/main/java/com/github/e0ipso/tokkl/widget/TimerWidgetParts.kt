@@ -21,6 +21,7 @@ import androidx.glance.appwidget.AndroidRemoteViews
 import androidx.glance.appwidget.components.SquareIconButton
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.background
+import androidx.glance.color.ColorProvider
 import androidx.glance.layout.*
 import androidx.glance.semantics.contentDescription
 import androidx.glance.semantics.semantics
@@ -28,38 +29,87 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
-import androidx.glance.color.ColorProvider
 import com.github.e0ipso.tokkl.feature.widget.R
-import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.time.DurationFormat
 import com.github.e0ipso.tokkl.time.formatDuration
 import com.github.e0ipso.tokkl.time.formatDurationWithoutSeconds
 import com.github.e0ipso.tokkl.ui.theme.TokklDarkColorScheme
 import com.github.e0ipso.tokkl.ui.theme.TokklLightColorScheme
 import java.time.Instant
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 @Composable
 internal fun PrimaryControl(context: Context, state: WidgetState.Ready, size: Float) {
     when {
-        state.running != null -> Control(context.getString(R.string.widget_stop_description), UiR.drawable.ic_stop, stopTimer(state.running.target), size, GlanceTheme.colors.error, GlanceTheme.colors.onError)
-        state.paused != null -> Control(context.getString(R.string.widget_resume_description), UiR.drawable.ic_play, resumeTimer(state.paused.target), size, PrimaryFill, OnPrimaryFill)
-        else -> Control(context.getString(R.string.widget_start_description), UiR.drawable.ic_play, startTimer(), size, PrimaryFill, OnPrimaryFill)
+        state.running != null -> Control(
+            context.getString(R.string.widget_stop_description),
+            UiR.drawable.ic_stop,
+            stopTimer(state.running.target),
+            size,
+            GlanceTheme.colors.error,
+            GlanceTheme.colors.onError,
+        )
+
+        state.paused != null -> Control(
+            context.getString(R.string.widget_resume_description),
+            UiR.drawable.ic_play,
+            resumeTimer(state.paused.target),
+            size,
+            PrimaryFill,
+            OnPrimaryFill,
+        )
+
+        else -> Control(
+            context.getString(R.string.widget_start_description),
+            UiR.drawable.ic_play,
+            startTimer(),
+            size,
+            PrimaryFill,
+            OnPrimaryFill,
+        )
     }
 }
 
 @Composable
-internal fun Control(label: String, icon: Int, action: Action, size: Float, background: ColorProvider, foreground: ColorProvider) {
-    SquareIconButton(ImageProvider(icon), label, action, GlanceModifier.size(size.dp), backgroundColor = background, contentColor = foreground)
+internal fun Control(
+    label: String,
+    icon: Int,
+    action: Action,
+    size: Float,
+    background: ColorProvider,
+    foreground: ColorProvider,
+) {
+    SquareIconButton(
+        ImageProvider(icon),
+        label,
+        action,
+        GlanceModifier.size(size.dp),
+        backgroundColor = background,
+        contentColor = foreground,
+    )
 }
 
 @Composable
 internal fun TimerClock(context: Context, state: WidgetState.Ready, size: Float, width: Float) {
     val running = state.running
     if (running != null) {
-        Elapsed(context, running.start, running.accumulatedSeconds, size, width, context.getString(R.string.widget_elapsed))
+        Elapsed(
+            context,
+            running.start,
+            running.accumulatedSeconds,
+            size,
+            width,
+            context.getString(R.string.widget_elapsed),
+        )
     } else {
-        val text = if (state.paused != null) formatDuration(state.paused.seconds, state.day?.durationFormat ?: DurationFormat.IMPROVED)
-        else state.day?.formattedTotal(Instant.now()) ?: formatDuration(0)
+        val text = if (state.paused != null) {
+            formatDuration(
+                state.paused.seconds,
+                state.day?.durationFormat ?: DurationFormat.IMPROVED,
+            )
+        } else {
+            state.day?.formattedTotal(Instant.now()) ?: formatDuration(0)
+        }
         StaticDuration(context, text, size, width)
     }
 }
@@ -67,7 +117,14 @@ internal fun TimerClock(context: Context, state: WidgetState.Ready, size: Float,
 @Composable
 internal fun DayClock(context: Context, day: WidgetDayReport?, size: Float, width: Float) {
     if (day?.running != null) {
-        Elapsed(context, day.running.start, day.stoppedSeconds, size, width, context.getString(R.string.widget_today_total))
+        Elapsed(
+            context,
+            day.running.start,
+            day.stoppedSeconds,
+            size,
+            width,
+            context.getString(R.string.widget_today_total),
+        )
     } else {
         StaticDuration(context, day?.formattedTotal(Instant.now()) ?: formatDuration(0), size, width)
     }
@@ -89,7 +146,14 @@ private fun fittedClockSize(context: Context, sample: String, requested: Float, 
 }
 
 @Composable
-internal fun Elapsed(context: Context, start: Instant, accumulated: Long, requested: Float, maxWidth: Float, label: String) {
+internal fun Elapsed(
+    context: Context,
+    start: Instant,
+    accumulated: Long,
+    requested: Float,
+    maxWidth: Float,
+    label: String,
+) {
     val now = Instant.now()
     val seconds = accumulated + java.time.Duration.between(start, now).seconds.coerceAtLeast(0)
     // Reserve the next hour's wider form as well as the time drawn now.
@@ -100,16 +164,35 @@ internal fun Elapsed(context: Context, start: Instant, accumulated: Long, reques
     val width = minOf(maxWidth, (paint.measureText(sample) + 4) / density)
     val height = (paint.fontMetrics.bottom - paint.fontMetrics.top) / density + 4
     val views = RemoteViews(context.packageName, R.layout.widget_chronometer).apply {
-        setChronometer(R.id.widget_chronometer, chronometerBase(start, now, SystemClock.elapsedRealtime(), accumulated), null, true)
+        setChronometer(
+            R.id.widget_chronometer,
+            chronometerBase(start, now, SystemClock.elapsedRealtime(), accumulated),
+            null,
+            true,
+        )
         setTextViewTextSize(R.id.widget_chronometer, TypedValue.COMPLEX_UNIT_SP, size)
         setContentDescription(R.id.widget_chronometer, label)
-        setColorInt(R.id.widget_chronometer, "setTextColor", TokklLightColorScheme.onSurface.toArgb(), TokklDarkColorScheme.onSurface.toArgb())
+        setColorInt(
+            R.id.widget_chronometer,
+            "setTextColor",
+            TokklLightColorScheme.onSurface.toArgb(),
+            TokklDarkColorScheme.onSurface.toArgb(),
+        )
     }
-    AndroidRemoteViews(views, modifier = GlanceModifier.width(width.dp).height(height.dp).semantics { contentDescription = label })
+    AndroidRemoteViews(
+        views,
+        modifier = GlanceModifier.width(width.dp).height(height.dp).semantics { contentDescription = label },
+    )
 }
 
 @Composable
-internal fun StaticDuration(context: Context, text: String, requested: Float, width: Float, color: ColorProvider = GlanceTheme.colors.onSurface) {
+internal fun StaticDuration(
+    context: Context,
+    text: String,
+    requested: Float,
+    width: Float,
+    color: ColorProvider = GlanceTheme.colors.onSurface,
+) {
     val maxWidth = width.coerceAtLeast(1f)
     val size = fittedClockSize(context, text, requested, maxWidth)
     val paint = clockPaint(context, size)
@@ -119,8 +202,11 @@ internal fun StaticDuration(context: Context, text: String, requested: Float, wi
         setTextViewTextSize(R.id.widget_duration, TypedValue.COMPLEX_UNIT_SP, size)
         setTextColor(R.id.widget_duration, color.getColor(context).toArgb())
     }
-    AndroidRemoteViews(views, modifier = GlanceModifier.width(minOf(maxWidth, (paint.measureText(text) + 4) / density).dp)
-        .height(((paint.fontMetrics.bottom - paint.fontMetrics.top) / density + 4).dp))
+    AndroidRemoteViews(
+        views,
+        modifier = GlanceModifier.width(minOf(maxWidth, (paint.measureText(text) + 4) / density).dp)
+            .height(((paint.fontMetrics.bottom - paint.fontMetrics.top) / density + 4).dp),
+    )
 }
 
 @Composable
@@ -142,33 +228,90 @@ internal fun StackedBar(context: Context, projects: List<WidgetDayProject>, day:
     val total = projects.sumOf { it.stoppedSeconds }.coerceAtLeast(1)
     val label = projects.mapIndexed { index, project ->
         val name = projectName(context, project, index == 4 && day!!.projects.size > 5)
-        val duration = project.formattedStopped.ifEmpty { formatDurationWithoutSeconds(project.stoppedSeconds, day?.durationFormat ?: DurationFormat.IMPROVED) }
+        val duration = project.formattedStopped.ifEmpty {
+            formatDurationWithoutSeconds(
+                project.stoppedSeconds,
+                day?.durationFormat ?: DurationFormat.IMPROVED,
+            )
+        }
         if (project.running) context.getString(R.string.widget_project_running, name, duration) else "$name, $duration"
     }.joinToString("; ")
-    Row(GlanceModifier.fillMaxWidth().height(8.dp).cornerRadius(4.dp).background(ChartBand).semantics { contentDescription = label }) {
+    Row(
+        GlanceModifier.fillMaxWidth().height(
+            8.dp,
+        ).cornerRadius(4.dp).background(ChartBand).semantics { contentDescription = label },
+    ) {
         projects.forEach { project ->
-            if (project.stoppedSeconds > 0) Box(GlanceModifier.width((width * project.stoppedSeconds / total).dp).height(8.dp).background(projectColor(project.projectColor))) {}
+            if (project.stoppedSeconds > 0) {
+                Box(
+                    GlanceModifier.width(
+                        (width * project.stoppedSeconds / total).dp,
+                    ).height(8.dp).background(projectColor(project.projectColor)),
+                ) {}
+            }
         }
     }
 }
 
 @Composable
-internal fun ProjectRow(context: Context, project: WidgetDayProject, day: WidgetDayReport?, other: Boolean, large: Boolean, width: Float, scale: Float) {
+internal fun ProjectRow(
+    context: Context,
+    project: WidgetDayProject,
+    day: WidgetDayReport?,
+    other: Boolean,
+    large: Boolean,
+    width: Float,
+    scale: Float,
+) {
     val name = projectName(context, project, other)
-    val duration = project.formattedStopped.ifEmpty { formatDurationWithoutSeconds(project.stoppedSeconds, day?.durationFormat ?: DurationFormat.IMPROVED) }
-    val label = if (project.running) context.getString(R.string.widget_project_running, name, duration) else "$name, $duration"
-    Column(GlanceModifier.fillMaxWidth().height(((if (large) 28f else 18f) * scale).dp).semantics { contentDescription = label }) {
+    val duration = project.formattedStopped.ifEmpty {
+        formatDurationWithoutSeconds(
+            project.stoppedSeconds,
+            day?.durationFormat ?: DurationFormat.IMPROVED,
+        )
+    }
+    val label = if (project.running) {
+        context.getString(
+            R.string.widget_project_running,
+            name,
+            duration,
+        )
+    } else {
+        "$name, $duration"
+    }
+    Column(
+        GlanceModifier.fillMaxWidth().height(
+            ((if (large) 28f else 18f) * scale).dp,
+        ).semantics { contentDescription = label },
+    ) {
         Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            if (!large) { Dot(projectColor(project.projectColor)); Spacer(GlanceModifier.width(5.dp)) }
-            Text(name, GlanceModifier.defaultWeight(), style = TextStyle(color = GlanceTheme.colors.onSurface, fontSize = 12.sp), maxLines = 1)
+            if (!large) {
+                Dot(projectColor(project.projectColor))
+                Spacer(GlanceModifier.width(5.dp))
+            }
+            Text(
+                name,
+                GlanceModifier.defaultWeight(),
+                style = TextStyle(color = GlanceTheme.colors.onSurface, fontSize = 12.sp),
+                maxLines = 1,
+            )
             Spacer(GlanceModifier.width(6.dp))
             Label(duration, 12f, muted = true)
-            if (project.running) { Spacer(GlanceModifier.width(4.dp)); Dot(RunningColor) }
+            if (project.running) {
+                Spacer(GlanceModifier.width(4.dp))
+                Dot(RunningColor)
+            }
         }
         if (large) {
             val total = day?.stoppedSeconds?.coerceAtLeast(1) ?: 1
             Box(GlanceModifier.fillMaxWidth().height(5.dp).cornerRadius(3.dp).background(ChartBand)) {
-                if (project.stoppedSeconds > 0) Box(GlanceModifier.width((width * project.stoppedSeconds / total).dp).height(5.dp).background(projectColor(project.projectColor))) {}
+                if (project.stoppedSeconds > 0) {
+                    Box(
+                        GlanceModifier.width(
+                            (width * project.stoppedSeconds / total).dp,
+                        ).height(5.dp).background(projectColor(project.projectColor)),
+                    ) {}
+                }
             }
         }
     }
@@ -181,11 +324,43 @@ internal fun TemplateChips(context: Context, favorites: List<WidgetFavorite>, wi
         favorites.take(count).forEachIndexed { index, favorite ->
             if (index > 0) Spacer(GlanceModifier.width(6.dp))
             val description = favorite.fields.description.ifBlank { context.getString(R.string.widget_no_description) }
-            val project = favorite.project?.let { name -> favorite.task?.let { context.getString(R.string.widget_project_task, name, it) } ?: name }
-            val label = if (project == null) context.getString(R.string.widget_start_favorite, description) else context.getString(R.string.widget_start_favorite_project, description, project)
-            Row(GlanceModifier.defaultWeight().height(48.dp).background(ImageProvider(R.drawable.widget_chip_background), colorFilter = ColorFilter.tint(GlanceTheme.colors.surfaceVariant))
-                .clickable(startTimer(favorite.fields)).padding(horizontal = 8.dp).semantics { contentDescription = label }, verticalAlignment = Alignment.CenterVertically) {
-                Image(ImageProvider(UiR.drawable.ic_play), null, GlanceModifier.size(12.dp), colorFilter = ColorFilter.tint(GlanceTheme.colors.primary))
+            val project = favorite.project?.let { name ->
+                favorite.task?.let {
+                    context.getString(
+                        R.string.widget_project_task,
+                        name,
+                        it,
+                    )
+                } ?: name
+            }
+            val label = if (project == null) {
+                context.getString(
+                    R.string.widget_start_favorite,
+                    description,
+                )
+            } else {
+                context.getString(R.string.widget_start_favorite_project, description, project)
+            }
+            Row(
+                GlanceModifier.defaultWeight().height(
+                    48.dp,
+                ).background(
+                    ImageProvider(R.drawable.widget_chip_background),
+                    colorFilter = ColorFilter.tint(GlanceTheme.colors.surfaceVariant),
+                )
+                    .clickable(
+                        startTimer(favorite.fields),
+                    ).padding(
+                        horizontal = 8.dp,
+                    ).semantics { contentDescription = label },
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Image(
+                    ImageProvider(UiR.drawable.ic_play),
+                    null,
+                    GlanceModifier.size(12.dp),
+                    colorFilter = ColorFilter.tint(GlanceTheme.colors.primary),
+                )
                 Spacer(GlanceModifier.width(4.dp))
                 Label(description, 12f)
             }
@@ -193,8 +368,13 @@ internal fun TemplateChips(context: Context, favorites: List<WidgetFavorite>, wi
     }
 }
 
-private fun projectName(context: Context, project: WidgetDayProject, other: Boolean): String =
-    if (other) context.getString(R.string.widget_other) else project.project ?: context.getString(R.string.widget_no_project)
+private fun projectName(context: Context, project: WidgetDayProject, other: Boolean): String = if (other) {
+    context.getString(
+        R.string.widget_other,
+    )
+} else {
+    project.project ?: context.getString(R.string.widget_no_project)
+}
 
 @Composable
 internal fun projectColor(color: String?): ColorProvider = color?.let {
@@ -208,9 +388,18 @@ internal fun projectText(context: Context, state: WidgetState.Ready): String? {
     return if (task == null) project else context.getString(R.string.widget_project_task, project, task)
 }
 internal fun description(context: Context, state: WidgetState.Ready): String =
-    (state.running?.description ?: state.paused?.description)?.ifBlank { context.getString(R.string.widget_no_description) } ?: context.getString(R.string.widget_idle)
+    (state.running?.description ?: state.paused?.description)?.ifBlank {
+        context.getString(
+            R.string.widget_no_description,
+        )
+    } ?: context.getString(R.string.widget_idle)
 
 @Composable
-internal fun Label(text: String, size: Float, muted: Boolean = false, color: ColorProvider = if (muted) GlanceTheme.colors.onSurfaceVariant else GlanceTheme.colors.onSurface) {
+internal fun Label(
+    text: String,
+    size: Float,
+    muted: Boolean = false,
+    color: ColorProvider = if (muted) GlanceTheme.colors.onSurfaceVariant else GlanceTheme.colors.onSurface,
+) {
     Text(text, style = TextStyle(color = color, fontSize = size.sp, fontWeight = FontWeight.Medium), maxLines = 1)
 }

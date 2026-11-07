@@ -15,8 +15,9 @@ fun pomodoroAlarmIntent(context: Context, phase: PomodoroPhaseKey): Intent =
         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
 
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-fun pomodoroAlarmPendingIntent(context: Context, phase: PomodoroPhaseKey): PendingIntent =
-    PendingIntent.getActivity(
-        context, 0, pomodoroAlarmIntent(context, phase),
-        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
-    )
+fun pomodoroAlarmPendingIntent(context: Context, phase: PomodoroPhaseKey): PendingIntent = PendingIntent.getActivity(
+    context,
+    0,
+    pomodoroAlarmIntent(context, phase),
+    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+)

@@ -30,26 +30,26 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.DpRect
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
+import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.DurationFormat
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklLightColorScheme
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
-import java.time.DayOfWeek
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneOffset
-import kotlin.math.abs
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.DayOfWeek
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
+import kotlin.math.abs
 
 /**
  * The strip of the week's days above the one-day calendar on an upright phone, at Android's
@@ -69,7 +69,9 @@ class WeekStripFitTest {
 
     /** The font scale is set before the activity starts, so it never has to restart for it. */
     @get:Rule
-    val rules: RuleChain = RuleChain.outerRule(SystemFontScale(SystemFontScale.LARGEST, largestDisplaySize = true)).around(composeRule)
+    val rules: RuleChain = RuleChain.outerRule(
+        SystemFontScale(SystemFontScale.LARGEST, largestDisplaySize = true),
+    ).around(composeRule)
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
@@ -102,7 +104,9 @@ class WeekStripFitTest {
 
             assertTextsWhole(days(), format)
             // The strip may leave the seconds out where the total does not fit; TalkBack does not.
-            stripDay(string(R.string.history_day_spoken, "Mon, 12 Oct", "10 hours, 30 minutes, 15 seconds")).assertExists()
+            stripDay(
+                string(R.string.history_day_spoken, "Mon, 12 Oct", "10 hours, 30 minutes, 15 seconds"),
+            ).assertExists()
         }
     }
 
@@ -152,8 +156,14 @@ class WeekStripFitTest {
         // Unclipped bounds share one scroll position, so they compare even off screen.
         val bounds = days.map { day -> day.spoken() to byId(day.id).getUnclippedBoundsInRoot() }
         for ((name, box) in bounds) {
-            assertTrue("$name is ${box.bottom - box.top} tall, $format", box.bottom - box.top >= MIN_TOUCH_TARGET - SLACK)
-            assertTrue("$name is ${box.right - box.left} wide, $format", box.right - box.left >= MIN_TOUCH_TARGET - SLACK)
+            assertTrue(
+                "$name is ${box.bottom - box.top} tall, $format",
+                box.bottom - box.top >= MIN_TOUCH_TARGET - SLACK,
+            )
+            assertTrue(
+                "$name is ${box.right - box.left} wide, $format",
+                box.right - box.left >= MIN_TOUCH_TARGET - SLACK,
+            )
         }
         for (day in days) {
             val box = byId(day.id).performScrollTo().getUnclippedBoundsInRoot()
@@ -176,16 +186,24 @@ class WeekStripFitTest {
         for (day in days) {
             val box = byId(day.id).getUnclippedBoundsInRoot()
             val lines = composeRule.onAllNodes(
-                SemanticsMatcher.keyIsDefined(SemanticsActions.GetTextLayoutResult) and hasAnyAncestor(byIdMatcher(day.id)),
+                SemanticsMatcher.keyIsDefined(
+                    SemanticsActions.GetTextLayoutResult,
+                ) and hasAnyAncestor(byIdMatcher(day.id)),
                 useUnmergedTree = true,
             ).fetchSemanticsNodes()
             assertEquals("the weekday, date and total of ${day.spoken()}, $format", 3, lines.size)
             for (line in lines) {
                 val text = line.config.getOrNull(SemanticsProperties.Text)?.joinToString { it.text }
                 val layout = layoutOf(line)
-                assertFalse("\"$text\" of ${day.spoken()} ends in an ellipsis, $format", layout.isLineEllipsized(layout.lineCount - 1))
+                assertFalse(
+                    "\"$text\" of ${day.spoken()} ends in an ellipsis, $format",
+                    layout.isLineEllipsized(layout.lineCount - 1),
+                )
                 assertFalse("\"$text\" of ${day.spoken()} is cut off, $format", layout.didOverflowHeight)
-                val lineBox = composeRule.onNode(byIdMatcher(line.id), useUnmergedTree = true).getUnclippedBoundsInRoot()
+                val lineBox = composeRule.onNode(
+                    byIdMatcher(line.id),
+                    useUnmergedTree = true,
+                ).getUnclippedBoundsInRoot()
                 assertTrue("\"$text\" at $lineBox leaves ${day.spoken()} at $box, $format", lineBox.inside(box))
             }
         }
@@ -198,8 +216,9 @@ class WeekStripFitTest {
         return close(edge, TokklLightColorScheme.outline)
     }
 
-    private fun close(a: Color, b: Color): Boolean =
-        abs(a.red - b.red) < COLOUR_TOLERANCE && abs(a.green - b.green) < COLOUR_TOLERANCE && abs(a.blue - b.blue) < COLOUR_TOLERANCE
+    private fun close(a: Color, b: Color): Boolean = abs(
+        a.red - b.red,
+    ) < COLOUR_TOLERANCE && abs(a.green - b.green) < COLOUR_TOLERANCE && abs(a.blue - b.blue) < COLOUR_TOLERANCE
 
     /**
      * The strip's text sizes itself, and for such text semantics hands out the layout it drew,
@@ -207,7 +226,9 @@ class WeekStripFitTest {
      */
     private fun layoutOf(node: SemanticsNode): TextLayoutResult {
         val results = mutableListOf<TextLayoutResult>()
-        checkNotNull(node.config.getOrNull(SemanticsActions.GetTextLayoutResult)?.action) { "no text layout" }.invoke(results)
+        checkNotNull(
+            node.config.getOrNull(SemanticsActions.GetTextLayoutResult)?.action,
+        ) { "no text layout" }.invoke(results)
         return results.single()
     }
 
@@ -218,10 +239,13 @@ class WeekStripFitTest {
 
     private fun byIdMatcher(id: Int): SemanticsMatcher = SemanticsMatcher("has id $id") { it.id == id }
 
-    private fun SemanticsNode.spoken(): String = config.getOrNull(SemanticsProperties.ContentDescription)?.joinToString().orEmpty()
+    private fun SemanticsNode.spoken(): String = config.getOrNull(
+        SemanticsProperties.ContentDescription,
+    )?.joinToString().orEmpty()
 
     private fun DpRect.inside(other: DpRect): Boolean =
-        left >= other.left - SLACK && top >= other.top - SLACK && right <= other.right + SLACK && bottom <= other.bottom + SLACK
+        left >= other.left - SLACK && top >= other.top - SLACK && right <= other.right + SLACK &&
+            bottom <= other.bottom + SLACK
 
     private fun DpRect.overlaps(other: DpRect): Boolean =
         left < other.right && other.left < right && top < other.bottom && other.top < bottom
@@ -239,7 +263,11 @@ class WeekStripFitTest {
         /** The chosen day, which is not today, so the frame and today's circle both show. */
         val SELECTED: LocalDate = MONDAY
         val NOON: Instant = Instant.parse("2026-10-15T12:00:00Z")
-        val SETTINGS = AccountSettings(timeZone = "UTC", beginningOfWeek = DayOfWeek.MONDAY, timeResolutionMinutes = null)
+        val SETTINGS = AccountSettings(
+            timeZone = "UTC",
+            beginningOfWeek = DayOfWeek.MONDAY,
+            timeResolutionMinutes = null,
+        )
 
         /**
          * The longest totals of each format: a ten and a half hour Monday, 10:30:15 or 10.50 h,

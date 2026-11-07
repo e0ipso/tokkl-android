@@ -4,11 +4,11 @@ import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountRefreshRequests
 import com.github.e0ipso.tokkl.session.SignOutOrder
-import java.io.IOException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import java.io.IOException
 
 /** The account's [TimerStateSource], and the name its timer controls carry in their targets. */
 class AccountTimerState(val source: TimerStateSource, val account: String)

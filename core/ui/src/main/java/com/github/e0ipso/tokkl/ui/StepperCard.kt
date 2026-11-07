@@ -141,8 +141,14 @@ fun StepperCard(
                         true
                     }
                     customActions = listOf(
-                        CustomAccessibilityAction(increaseLabel) { step(1); true },
-                        CustomAccessibilityAction(decreaseLabel) { step(-1); true },
+                        CustomAccessibilityAction(increaseLabel) {
+                            step(1)
+                            true
+                        },
+                        CustomAccessibilityAction(decreaseLabel) {
+                            step(-1)
+                            true
+                        },
                     )
                 } else {
                     disabled()
@@ -151,7 +157,12 @@ fun StepperCard(
             .border(FrameWidth, if (invalid) colors.error else colors.outline, MaterialTheme.shapes.medium)
             .padding(TokklTheme.spacing.space3),
     ) {
-        Text(label, style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant, textAlign = TextAlign.Center)
+        Text(
+            label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = colors.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
         StepperValue(
             value = value,
             enabled = enabled,
@@ -220,7 +231,10 @@ private fun StepButton(@DrawableRes icon: Int, tag: String, enabled: Boolean, on
         enabled = enabled,
         shape = MaterialTheme.shapes.small,
         colors = IconButtonDefaults.outlinedIconButtonColors(contentColor = colors.onSurface),
-        border = BorderStroke(FrameWidth, if (enabled) colors.outline else colors.onSurface.copy(alpha = DisabledFrameAlpha)),
+        border = BorderStroke(
+            FrameWidth,
+            if (enabled) colors.outline else colors.onSurface.copy(alpha = DisabledFrameAlpha),
+        ),
         modifier = Modifier.size(TokklTheme.spacing.space8).testTag(tag),
     ) {
         Icon(painterResource(icon), contentDescription = null, modifier = Modifier.size(TokklTheme.spacing.space6))
@@ -231,24 +245,53 @@ private fun StepButton(@DrawableRes icon: Int, tag: String, enabled: Boolean, on
 @Composable
 private fun unitLine(draft: StepperDraft, range: IntRange, unit: StepperUnit): String = when (draft) {
     is StepperDraft.InRange ->
-        stringResource(R.string.stepper_unit_range, pluralStringResource(unit.compact, draft.number), range.first, range.last)
+        stringResource(
+            R.string.stepper_unit_range,
+            pluralStringResource(unit.compact, draft.number),
+            range.first,
+            range.last,
+        )
+
     is StepperDraft.AboveMax -> stringResource(R.string.stepper_limit_max, range.last)
+
     is StepperDraft.BelowMin -> stringResource(R.string.stepper_limit_min, range.first)
+
     StepperDraft.Empty, StepperDraft.NotANumber -> stringResource(R.string.stepper_limit_range, range.first, range.last)
 }
 
 /** What TalkBack reads for the card: its label, the number with its unit, and the range or the limit missed. */
 @Composable
-private fun spokenCard(label: String, value: String, draft: StepperDraft, range: IntRange, unit: StepperUnit): String = when (draft) {
-    is StepperDraft.InRange ->
-        stringResource(R.string.stepper_spoken_in_range, label, spokenNumber(unit, draft.number.toLong(), value), range.first, range.last)
-    is StepperDraft.AboveMax ->
-        stringResource(R.string.stepper_spoken_above_max, label, spokenNumber(unit, draft.number, value), range.last)
-    is StepperDraft.BelowMin ->
-        stringResource(R.string.stepper_spoken_below_min, label, spokenNumber(unit, draft.number, value), range.first)
-    StepperDraft.Empty -> stringResource(R.string.stepper_spoken_empty, label, range.first, range.last)
-    StepperDraft.NotANumber -> stringResource(R.string.stepper_spoken_not_a_number, label, range.first, range.last)
-}
+private fun spokenCard(label: String, value: String, draft: StepperDraft, range: IntRange, unit: StepperUnit): String =
+    when (draft) {
+        is StepperDraft.InRange ->
+            stringResource(
+                R.string.stepper_spoken_in_range,
+                label,
+                spokenNumber(unit, draft.number.toLong(), value),
+                range.first,
+                range.last,
+            )
+
+        is StepperDraft.AboveMax ->
+            stringResource(
+                R.string.stepper_spoken_above_max,
+                label,
+                spokenNumber(unit, draft.number, value),
+                range.last,
+            )
+
+        is StepperDraft.BelowMin ->
+            stringResource(
+                R.string.stepper_spoken_below_min,
+                label,
+                spokenNumber(unit, draft.number, value),
+                range.first,
+            )
+
+        StepperDraft.Empty -> stringResource(R.string.stepper_spoken_empty, label, range.first, range.last)
+
+        StepperDraft.NotANumber -> stringResource(R.string.stepper_spoken_not_a_number, label, range.first, range.last)
+    }
 
 /** [number] with its unit, or the typed [value] for a whole number too long to parse. */
 @Composable

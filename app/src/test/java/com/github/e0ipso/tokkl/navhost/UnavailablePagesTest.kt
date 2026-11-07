@@ -34,7 +34,11 @@ class UnavailablePagesTest {
         val unavailable = setOf(TopLevelPage.POMODORO)
         assertEquals(Route.Timer, Route.Pomodoro.orTimerIfUnavailable(unavailable))
         assertEquals(Route.Reports, Route.Reports.orTimerIfUnavailable(unavailable))
-        assertEquals("a screen below a page is not a page", Route.Licences, Route.Licences.orTimerIfUnavailable(unavailable))
+        assertEquals(
+            "a screen below a page is not a page",
+            Route.Licences,
+            Route.Licences.orTimerIfUnavailable(unavailable),
+        )
         assertEquals(Route.Pomodoro, Route.Pomodoro.orTimerIfUnavailable(emptySet()))
     }
 }

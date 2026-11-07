@@ -1,10 +1,10 @@
 package com.github.e0ipso.tokkl.reports
 
-import java.time.DayOfWeek
-import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import java.time.DayOfWeek
+import java.time.LocalDate
 
 /**
  * The range presets, shifting and the chart's resolution, after the web app's range.ts. The
@@ -34,8 +34,14 @@ class ReportRangeTest {
         assertEquals(range("2026-09-19", "2026-10-18"), RangePreset.LAST_30_DAYS.range(today, monday))
         assertEquals(range("2026-01-01", "2026-12-31"), RangePreset.THIS_YEAR.range(today, monday))
         assertEquals(range("2025-01-01", "2025-12-31"), RangePreset.LAST_YEAR.range(today, monday))
-        assertEquals(range("2024-02-01", "2024-02-29"), RangePreset.THIS_MONTH.range(LocalDate.parse("2024-02-10"), monday))
-        assertEquals(range("2025-12-01", "2025-12-31"), RangePreset.LAST_MONTH.range(LocalDate.parse("2026-01-03"), monday))
+        assertEquals(
+            range("2024-02-01", "2024-02-29"),
+            RangePreset.THIS_MONTH.range(LocalDate.parse("2024-02-10"), monday),
+        )
+        assertEquals(
+            range("2025-12-01", "2025-12-31"),
+            RangePreset.LAST_MONTH.range(LocalDate.parse("2026-01-03"), monday),
+        )
     }
 
     @Test
@@ -63,10 +69,19 @@ class ReportRangeTest {
 
     @Test
     fun aRangeNamesThePresetItMatches() {
-        assertEquals(RangePreset.THIS_WEEK, RangePreset.matching(range("2026-10-12", "2026-10-18"), today, DayOfWeek.MONDAY))
-        assertEquals(RangePreset.THIS_WEEK, RangePreset.matching(range("2026-10-14", "2026-10-20"), today, DayOfWeek.WEDNESDAY))
+        assertEquals(
+            RangePreset.THIS_WEEK,
+            RangePreset.matching(range("2026-10-12", "2026-10-18"), today, DayOfWeek.MONDAY),
+        )
+        assertEquals(
+            RangePreset.THIS_WEEK,
+            RangePreset.matching(range("2026-10-14", "2026-10-20"), today, DayOfWeek.WEDNESDAY),
+        )
         // A one-day range of today is Today, not a week.
-        assertEquals(RangePreset.TODAY, RangePreset.matching(range("2026-10-18", "2026-10-18"), today, DayOfWeek.MONDAY))
+        assertEquals(
+            RangePreset.TODAY,
+            RangePreset.matching(range("2026-10-18", "2026-10-18"), today, DayOfWeek.MONDAY),
+        )
         assertNull(RangePreset.matching(range("2026-10-11", "2026-10-17"), today, DayOfWeek.MONDAY))
     }
 

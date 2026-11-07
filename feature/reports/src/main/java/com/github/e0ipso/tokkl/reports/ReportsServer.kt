@@ -4,16 +4,16 @@ import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.api.WithHeaders
-import java.time.DayOfWeek
-import java.time.LocalDate
-import java.time.OffsetDateTime
-import java.time.ZoneId
-import java.time.format.DateTimeParseException
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import java.time.DayOfWeek
+import java.time.LocalDate
+import java.time.OffsetDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeParseException
 
 /**
  * The workspace a report covers: the account's default workspace, as in the web app, and its
@@ -41,8 +41,16 @@ class ReportsServer(private val api: TogglApiClient) {
             is ApiResult.Failure -> return answer
         }
         val id = user.defaultWorkspaceId
-        return when (val answer = api.get(api.server.api("workspaces", id.toString()), WorkspaceRounding.serializer())) {
-            is ApiResult.Success -> ApiResult.Success(ReportWorkspace(id, answer.value.rounding, answer.value.roundingMinutes, user.role != null))
+        return when (
+            val answer = api.get(
+                api.server.api("workspaces", id.toString()),
+                WorkspaceRounding.serializer(),
+            )
+        ) {
+            is ApiResult.Success -> ApiResult.Success(
+                ReportWorkspace(id, answer.value.rounding, answer.value.roundingMinutes, user.role != null),
+            )
+
             is ApiResult.Failure -> answer
         }
     }
@@ -68,8 +76,16 @@ class ReportsServer(private val api: TogglApiClient) {
                 put("sub_grouping", "projects")
                 filters.writeTo(this)
             }
-            when (val answer = api.send("POST", api.server.app("report"), body, kotlinx.serialization.json.JsonObject.serializer())) {
+            when (
+                val answer = api.send(
+                    "POST",
+                    api.server.app("report"),
+                    body,
+                    kotlinx.serialization.json.JsonObject.serializer(),
+                )
+            ) {
                 is ApiResult.Success -> return decodeAppSummary(answer.value)
+
                 is ApiResult.Failure -> {
                     val error = answer.error
                     if (error !is ApiError.UnexpectedStatus || error.status !in setOf(404, 410)) return answer
@@ -89,7 +105,12 @@ class ReportsServer(private val api: TogglApiClient) {
      * The request asks for the workspace's rounding. Tokkl's web app always applies it, while the
      * Reports API rounds only when asked, as in Toggl (Tokkl's docs/PRD.md R8).
      */
-    fun entries(workspace: ReportWorkspace, range: ReportRange, zone: ZoneId, filters: ReportFilters = ReportFilters()): ApiResult<List<ReportEntry>> {
+    fun entries(
+        workspace: ReportWorkspace,
+        range: ReportRange,
+        zone: ZoneId,
+        filters: ReportFilters = ReportFilters(),
+    ): ApiResult<List<ReportEntry>> {
         val entries = mutableListOf<ReportEntry>()
         var firstRow = 1
         repeat(MAX_PAGES) {
@@ -145,7 +166,11 @@ class ReportsServer(private val api: TogglApiClient) {
      * [filters], from `POST /reports/api/v3/workspace/{id}/weekly/time_entries`: a row per project
      * with its seconds on each day. The request asks for the workspace's rounding, as [entries] does.
      */
-    fun weekly(workspace: ReportWorkspace, weekStart: LocalDate, filters: ReportFilters = ReportFilters()): ApiResult<List<WeeklyRow>> {
+    fun weekly(
+        workspace: ReportWorkspace,
+        weekStart: LocalDate,
+        filters: ReportFilters = ReportFilters(),
+    ): ApiResult<List<WeeklyRow>> {
         val url = api.server.reports("workspace", workspace.id.toString(), "weekly", "time_entries")
         val body = buildJsonObject {
             put("start_date", weekStart.toString())
@@ -159,10 +184,19 @@ class ReportsServer(private val api: TogglApiClient) {
             is ApiResult.Failure -> return answer
         }
         if (rows.any { it.seconds.size != DAYS_IN_WEEK }) {
-            return ApiResult.Failure(ApiError.InvalidResponse(IllegalArgumentException("a weekly row does not hold $DAYS_IN_WEEK days")))
+            return ApiResult.Failure(
+                ApiError.InvalidResponse(IllegalArgumentException("a weekly row does not hold $DAYS_IN_WEEK days")),
+            )
         }
         return ApiResult.Success(
-            rows.map { WeeklyRow(it.projectId, it.projectName ?: "", it.projectColor ?: it.projectHexColor, it.seconds.map { day -> day ?: 0 }) },
+            rows.map {
+                WeeklyRow(
+                    it.projectId,
+                    it.projectName ?: "",
+                    it.projectColor ?: it.projectHexColor,
+                    it.seconds.map { day -> day ?: 0 },
+                )
+            },
         )
     }
 
@@ -199,12 +233,17 @@ class ReportsServer(private val api: TogglApiClient) {
      */
     private fun nextRow(page: WithHeaders<*>, firstRow: Int): ApiResult<Int?> {
         val next = page.headers[NEXT_ROW_HEADER]?.trim()?.toIntOrNull() ?: return ApiResult.Success(null)
-        if (next <= firstRow) return ApiResult.Failure(ApiError.InvalidResponse(IllegalArgumentException("the next page does not move forward")))
+        if (next <= firstRow) {
+            return ApiResult.Failure(
+                ApiError.InvalidResponse(IllegalArgumentException("the next page does not move forward")),
+            )
+        }
         return ApiResult.Success(next)
     }
 
-    private fun notADateAndTime(e: DateTimeParseException): ApiResult.Failure =
-        ApiResult.Failure(ApiError.InvalidResponse(IllegalArgumentException("a time entry's start or stop is not a date and time", e)))
+    private fun notADateAndTime(e: DateTimeParseException): ApiResult.Failure = ApiResult.Failure(
+        ApiError.InvalidResponse(IllegalArgumentException("a time entry's start or stop is not a date and time", e)),
+    )
 
     private companion object {
         /** Tokkl's largest page. */
@@ -229,10 +268,7 @@ private class ReportUser(@SerialName("default_workspace_id") val defaultWorkspac
 
 /** Toggl and Tokkl send a workspace's rounding as whole numbers. */
 @Serializable
-private class WorkspaceRounding(
-    val rounding: Int = 0,
-    @SerialName("rounding_minutes") val roundingMinutes: Int = 0,
-)
+private class WorkspaceRounding(val rounding: Int = 0, @SerialName("rounding_minutes") val roundingMinutes: Int = 0)
 
 /**
  * One row of a detailed search. Tokkl sends one time entry per row. A row that holds several, as

@@ -32,13 +32,12 @@ object ConfiguredServer {
      * talks to a server before the app has stored it. One attempt runs at a
      * time, and the stored server applies again when it returns.
      */
-    fun <T> signingIn(candidate: ServerUrl, attempt: () -> T): T =
-        synchronized(signInLock) {
-            signInCandidate = candidate
-            try {
-                attempt()
-            } finally {
-                signInCandidate = null
-            }
+    fun <T> signingIn(candidate: ServerUrl, attempt: () -> T): T = synchronized(signInLock) {
+        signInCandidate = candidate
+        try {
+            attempt()
+        } finally {
+            signInCandidate = null
         }
+    }
 }

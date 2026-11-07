@@ -50,8 +50,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.github.e0ipso.tokkl.feature.timer.R
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
-import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.ui.DateWords
 import com.github.e0ipso.tokkl.ui.FillScreenWindow
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
@@ -59,6 +57,8 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * No times, a switch across the whole row, as in Settings. TalkBack reads the row as one switch
@@ -73,7 +73,11 @@ internal fun NoTimesSwitch(noTimes: Boolean, enabled: Boolean, onChange: (Boolea
             .heightIn(min = LocalMinimumInteractiveComponentSize.current)
             .toggleable(value = noTimes, enabled = enabled, role = Role.Switch, onValueChange = onChange),
     ) {
-        Text(stringResource(R.string.entry_no_times), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+        Text(
+            stringResource(R.string.entry_no_times),
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f),
+        )
         Spacer(Modifier.width(TokklTheme.spacing.space3))
         Switch(checked = noTimes, onCheckedChange = null, enabled = enabled)
     }
@@ -110,7 +114,11 @@ internal fun TimeTextField(
         isError = mistake != null,
         singleLine = true,
         enabled = enabled,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii, autoCorrectEnabled = false, imeAction = imeAction),
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Ascii,
+            autoCorrectEnabled = false,
+            imeAction = imeAction,
+        ),
         modifier = modifier.onFocusChanged { focus ->
             if (focused && !focus.isFocused) onDone()
             focused = focus.isFocused
@@ -191,7 +199,10 @@ private fun DateDialog(initial: LocalDate, onPick: (LocalDate) -> Unit, onDismis
                     modifier = Modifier.padding(horizontal = TokklTheme.spacing.space1),
                 ) {
                     IconButton(onClick = onDismiss) {
-                        Icon(painterResource(UiR.drawable.ic_close), contentDescription = stringResource(R.string.entry_cancel))
+                        Icon(
+                            painterResource(UiR.drawable.ic_close),
+                            contentDescription = stringResource(R.string.entry_cancel),
+                        )
                     }
                     Text(
                         text = stringResource(R.string.entry_date),

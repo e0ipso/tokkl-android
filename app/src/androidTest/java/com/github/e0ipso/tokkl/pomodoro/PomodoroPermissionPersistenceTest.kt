@@ -50,5 +50,4 @@ class PomodoroPermissionPersistenceTest {
         assertTrue(NotificationPermissionStore(context).asked())
         assertFalse(NotificationPermissionAsk(33, NotificationPermissionStore(context)) { false }.atStartInApp())
     }
-
 }

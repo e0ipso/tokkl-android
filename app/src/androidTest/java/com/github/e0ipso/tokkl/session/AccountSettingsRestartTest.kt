@@ -1,17 +1,17 @@
 package com.github.e0ipso.tokkl.session
 
-import com.github.e0ipso.tokkl.components.accountSettings
 import android.os.Process
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.TokklApplication
-import java.io.File
-import java.time.DayOfWeek
+import com.github.e0ipso.tokkl.components.accountSettings
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
+import java.io.File
+import java.time.DayOfWeek
 
 /**
  * The account settings survive a restart of the app process, so screens have them offline. The

@@ -25,7 +25,10 @@ class SignInCooldownStoreTest {
         store.save("http://10.0.2.2:8080", 2_000L)
         store.save("https://tokkl.example:443", 3_000L)
 
-        assertEquals(mapOf("https://tokkl.example:443" to 3_000L, "http://10.0.2.2:8080" to 2_000L), SignInCooldownStore(context).load())
+        assertEquals(
+            mapOf("https://tokkl.example:443" to 3_000L, "http://10.0.2.2:8080" to 2_000L),
+            SignInCooldownStore(context).load(),
+        )
         val file = context.getSharedPreferences(SignInCooldownStore.FILE_NAME, Context.MODE_PRIVATE).all
         assertEquals("the file holds the origins and deadlines only", store.load(), file)
 

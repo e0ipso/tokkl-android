@@ -7,12 +7,12 @@ import androidx.annotation.VisibleForTesting
 import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.timernotice.showTimerActionFailure
 import com.github.e0ipso.tokkl.timerstate.TimerActions
-import java.util.concurrent.CountDownLatch
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import java.util.concurrent.CountDownLatch
 
 /**
  * The ringing notification's buttons. Next phase and End session go to the server with the
@@ -20,7 +20,9 @@ import org.koin.core.component.inject
  * other device. One that fails, offline included, leaves the ring going and says why. A swipe
  * posts the notification again.
  */
-class PomodoroRingingActionReceiver : BroadcastReceiver(), KoinComponent {
+class PomodoroRingingActionReceiver :
+    BroadcastReceiver(),
+    KoinComponent {
     private val pomodoroAlarm: PomodoroPhaseAlarm by inject()
     private val timerActions: TimerActions by inject()
     private val scope: CoroutineScope by inject()
@@ -46,7 +48,12 @@ class PomodoroRingingActionReceiver : BroadcastReceiver(), KoinComponent {
                     // The broadcast ends before the request, so a server slow to answer cannot
                     // hold it past its time limit. The ringing service keeps the process alive.
                     pending.finish()
-                    pomodoroAlarm.sendPhaseAction(timerActions, phase, checkNotNull(revision), end = intent.action == END)
+                    pomodoroAlarm.sendPhaseAction(
+                        timerActions,
+                        phase,
+                        checkNotNull(revision),
+                        end = intent.action == END,
+                    )
                         ?.let { showTimerActionFailure(app, it) }
                 }
             } finally {

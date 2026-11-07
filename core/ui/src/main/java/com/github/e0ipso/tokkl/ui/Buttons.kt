@@ -51,7 +51,11 @@ fun TokklIconButton(
                 contentColor = if (danger) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
             ),
         ) {
-            Icon(painterResource(icon), contentDescription = description, modifier = Modifier.size(TokklTheme.spacing.space6))
+            Icon(
+                painterResource(icon),
+                contentDescription = description,
+                modifier = Modifier.size(TokklTheme.spacing.space6),
+            )
         }
     }
 }

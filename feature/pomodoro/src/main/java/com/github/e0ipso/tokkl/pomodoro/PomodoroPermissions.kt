@@ -11,17 +11,17 @@ import android.os.Build
 import android.provider.Settings
 
 /** Current platform grants, independent of whether an alarm has already tried to arm. */
-internal data class PomodoroPermissions(
-    val notifications: Boolean,
-    val exactAlarm: Boolean,
-    val fullScreen: Boolean,
-)
+internal data class PomodoroPermissions(val notifications: Boolean, val exactAlarm: Boolean, val fullScreen: Boolean)
 
 internal fun pomodoroPermissions(context: Context): PomodoroPermissions {
     val notifications = context.getSystemService(NotificationManager::class.java)
     return pomodoroPermissions(
         sdk = Build.VERSION.SDK_INT,
-        notificationRuntime = { context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED },
+        notificationRuntime = {
+            context.checkSelfPermission(
+                Manifest.permission.POST_NOTIFICATIONS,
+            ) == PackageManager.PERMISSION_GRANTED
+        },
         notificationsEnabled = notifications::areNotificationsEnabled,
         exactAlarm = { context.getSystemService(AlarmManager::class.java).canScheduleExactAlarms() },
         fullScreen = { canShowPomodoroFullScreen(context) },

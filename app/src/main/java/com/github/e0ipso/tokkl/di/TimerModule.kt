@@ -42,7 +42,13 @@ internal val timerModule = module {
      * server at once and never queued. Each answer, refusals included, goes to the account's
      * timer state.
      */
-    single { TimerActions(client = get<Session>(), source = get<AccountTimerStates>()::source, io = io()) } binds arrayOf(PauseActions::class, SessionActions::class)
+    single {
+        TimerActions(
+            client = get<Session>(),
+            source = get<AccountTimerStates>()::source,
+            io = io(),
+        )
+    } binds arrayOf(PauseActions::class, SessionActions::class)
 
     /**
      * The Pause, Resume and Stop of the running notification, the widget, the Quick Settings tile
@@ -75,5 +81,16 @@ internal val timerModule = module {
         TimerSync<TimerStateSource>(ElapsedTimerSyncClock(scope), connections::open, connections::stopped)
     }
 
-    single { TimerSyncFollower(androidContext(), get(), get(), get(), get(), get(), get(), get()) } bind AccountDataOwner::class
+    single {
+        TimerSyncFollower(
+            androidContext(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+        )
+    } bind AccountDataOwner::class
 }

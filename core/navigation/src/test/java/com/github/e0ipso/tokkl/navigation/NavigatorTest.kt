@@ -2,12 +2,12 @@ package com.github.e0ipso.tokkl.navigation
 
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
-import java.time.Instant
-import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Test
+import java.time.Instant
+import java.time.LocalDate
 
 /** What the screens' navigation calls leave on the back stack, and the entry form's openings. */
 class NavigatorTest {
@@ -65,19 +65,27 @@ class NavigatorTest {
 
     @Test
     fun aFormTakesWhatItOpensOnceAndAFormFromAnotherProcessNothing() {
-        val older = CachedTimeEntry(7, 1, null, null, "older", Instant.EPOCH, Instant.EPOCH, false, emptyList(), emptyList())
+        val older =
+            CachedTimeEntry(7, 1, null, null, "older", Instant.EPOCH, Instant.EPOCH, false, emptyList(), emptyList())
         navigator.openEntry(EntryOpening.Edit(7), older)
         val form = stack.last() as Route.Entry
         val request = openings.take(form)
         assertEquals(EntryOpening.Edit(7), request?.opening)
         assertSame(older, request?.older)
         assertNull("a configuration change makes no second opening", openings.take(form))
-        assertNull("a restored route that this process did not open", openings.take(Route.Entry(EntryOpening.Edit(7), id = "restored")))
+        assertNull(
+            "a restored route that this process did not open",
+            openings.take(Route.Entry(EntryOpening.Edit(7), id = "restored")),
+        )
     }
 
     @Test
     fun theRouteOfARunningSegmentOrANewEntryKeepsWhatItOpens() {
-        val identity = RunningEntryIdentity(entryId = 3, workspaceId = 4, start = Instant.ofEpochSecond(1_700_000_000, 123))
+        val identity = RunningEntryIdentity(
+            entryId = 3,
+            workspaceId = 4,
+            start = Instant.ofEpochSecond(1_700_000_000, 123),
+        )
         assertEquals(identity, EntryOpening.Running.of(identity).identity)
         val day = LocalDate.of(2026, 11, 6)
         assertEquals(day, EntryOpening.New.on(day, noTimes = true).day)

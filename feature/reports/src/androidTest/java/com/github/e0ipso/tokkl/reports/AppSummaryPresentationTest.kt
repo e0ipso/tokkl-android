@@ -16,12 +16,12 @@ import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import java.time.DayOfWeek
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import java.time.DayOfWeek
 
 /** Component acceptance tests for decoded server data; the seeded ReportsScreenTest covers HTTP. */
 class AppSummaryPresentationTest {
@@ -41,11 +41,16 @@ class AppSummaryPresentationTest {
 
     @Test
     fun unknownScalarListObjectAndRateDataShowUnderTheirOwnersWithoutInventedUnits() {
-        val report = decode(BODY
-            .replace("\"totals\":{\"seconds\":777", "\"totals\":{\"futureRate\":[{\"unit\":\"tokens\",\"value\":12.5}],\"seconds\":777")
-            .replace("\"title\":\"Zero first\"", "\"title\":\"Zero first\",\"new_flag\":false")
-            .replace("\"start\":\"2026-10-21\"", "\"start\":\"2026-10-21\",\"new_label\":\"<b>literal</b>\"")
-            .replace("\"resolution\":\"day\"", "\"resolution\":\"day\",\"newScalar\":0"))
+        val report = decode(
+            BODY
+                .replace(
+                    "\"totals\":{\"seconds\":777",
+                    "\"totals\":{\"futureRate\":[{\"unit\":\"tokens\",\"value\":12.5}],\"seconds\":777",
+                )
+                .replace("\"title\":\"Zero first\"", "\"title\":\"Zero first\",\"new_flag\":false")
+                .replace("\"start\":\"2026-10-21\"", "\"start\":\"2026-10-21\",\"new_label\":\"<b>literal</b>\"")
+                .replace("\"resolution\":\"day\"", "\"resolution\":\"day\",\"newScalar\":0"),
+        )
         show(report)
         compose.onNode(hasText("Additional report data")).performScrollTo().assertExists()
         compose.onNode(hasText("[{Unit: \"tokens\", Value: 12.5}]") and within("Totals"), useUnmergedTree = true)
@@ -55,13 +60,22 @@ class AppSummaryPresentationTest {
         compose.onNode(hasText("\"<b>literal</b>\"") and within("Bucket starting 2026-10-21"), useUnmergedTree = true)
             .performScrollTo().assertExists()
         compose.onNode(hasText("0") and within("Report"), useUnmergedTree = true).performScrollTo().assertExists()
-        compose.onNode(hasText("New flag") and within("Project: Missing second"), useUnmergedTree = true).assertDoesNotExist()
+        compose.onNode(
+            hasText("New flag") and within("Project: Missing second"),
+            useUnmergedTree = true,
+        ).assertDoesNotExist()
     }
 
     @Test
     fun ordinaryNewCurrenciesKeepMoneyFormattingAndMixedGroupsAreNotMislabelled() {
-        show(decode(BODY.replace("{\"currency\":\"XYZ\",\"cents\":0}",
-            "{\"currency\":\"XYZ\",\"cents\":0},{\"currency\":\"QXZ\",\"cents\":789}")))
+        show(
+            decode(
+                BODY.replace(
+                    "{\"currency\":\"XYZ\",\"cents\":0}",
+                    "{\"currency\":\"XYZ\",\"cents\":0},{\"currency\":\"QXZ\",\"cents\":789}",
+                ),
+            ),
+        )
         compose.onNode(hasText("7.89 QXZ")).performScrollTo().assertExists()
         compose.onNode(hasText("Zero first") and hasText("0.00 XYZ")).assertDoesNotExist()
         compose.onNode(hasText("Zero first")).performScrollTo().assertExists()
@@ -92,7 +106,11 @@ class AppSummaryPresentationTest {
         }
     }
 
-    private fun decode(body: String = BODY) = (decodeAppSummary(Json.parseToJsonElement(body).jsonObject) as ApiResult.Success).value
+    private fun decode(body: String = BODY) = (
+        decodeAppSummary(
+            Json.parseToJsonElement(body).jsonObject,
+        ) as ApiResult.Success
+        ).value
 
     private companion object {
         val BODY = """{

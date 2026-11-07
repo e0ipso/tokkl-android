@@ -11,8 +11,6 @@ import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.orFail
-import java.time.DayOfWeek
-import java.time.ZoneId
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -23,6 +21,8 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
+import java.time.DayOfWeek
+import java.time.ZoneId
 
 /**
  * The app's own settings source reads the account settings from the real Tokkl container. The
@@ -57,7 +57,13 @@ class AccountSettingsServerTest {
         runBlocking { app.accountRefresh.refresh().join() }
 
         // Tokkl's instance time resolution is 5 minutes unless an admin changes it.
-        val expected = AccountSettings("America/Sao_Paulo", DayOfWeek.SUNDAY, timeResolutionMinutes = 5.0, defaultWorkspaceId = serverId("default_workspace_id"), userId = serverId("id"))
+        val expected = AccountSettings(
+            "America/Sao_Paulo",
+            DayOfWeek.SUNDAY,
+            timeResolutionMinutes = 5.0,
+            defaultWorkspaceId = serverId("default_workspace_id"),
+            userId = serverId("id"),
+        )
         assertEquals(expected, source.state.value)
         assertEquals("the stored settings", expected, AccountSettingsStore(context).load())
         assertEquals(ZoneId.of("America/Sao_Paulo"), expected.time()?.zone)

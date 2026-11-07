@@ -28,7 +28,9 @@ object BackgroundTrip {
         // ActivityScenario matches lifecycle events against the original launch intent. Keep
         // its action and categories too, or it ignores RESUMED and close() fails during teardown.
         // Replace launch-only flags such as CLEAR_TASK so this returns the existing activity.
-        val intent = Intent(activity.intent).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+        val intent = Intent(
+            activity.intent,
+        ).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
         // UiAutomation passes arguments directly; the URI already escapes its own values.
         val uri = intent.toUri(Intent.URI_INTENT_SCHEME)
         val result = DeviceShell.run("am start -W $uri")
@@ -40,14 +42,21 @@ object BackgroundTrip {
     private fun resumedActivity(): MainActivity? {
         var resumed: MainActivity? = null
         instrumentation.runOnMainSync {
-            resumed = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED).filterIsInstance<MainActivity>().singleOrNull()
+            resumed = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(
+                Stage.RESUMED,
+            ).filterIsInstance<MainActivity>().singleOrNull()
         }
         return resumed
     }
 
     private fun inStage(activity: MainActivity, stage: Stage): Boolean {
         var found = false
-        instrumentation.runOnMainSync { found = activity in ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(stage) }
+        instrumentation.runOnMainSync {
+            found =
+                activity in ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(
+                    stage,
+                )
+        }
         return found
     }
 

@@ -39,8 +39,11 @@ object TimerActionToasts {
         throw AssertionError("Expected the toast '$expected'; platform toasts: ${toasts()}")
     }
 
-    private fun shows(expected: String): Boolean =
-        toasts().any { it.contains(":${context.packageName}/") && it.contains(" text=$expected duration=${Toast.LENGTH_LONG}}") }
+    private fun shows(expected: String): Boolean = toasts().any {
+        it.contains(
+            ":${context.packageName}/",
+        ) && it.contains(" text=$expected duration=${Toast.LENGTH_LONG}}")
+    }
 
     private fun toasts(): List<String> =
         DeviceShell.run("dumpsys notification").lineSequence().filter { it.contains("TextToastRecord{") }.toList()

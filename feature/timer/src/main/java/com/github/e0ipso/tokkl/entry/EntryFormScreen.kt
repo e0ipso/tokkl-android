@@ -30,12 +30,11 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
-import com.github.e0ipso.tokkl.feature.timer.R
-import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.catalog.ConfirmDialog
 import com.github.e0ipso.tokkl.entryfields.EntryFieldsEditor
+import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.picker.EntityPicker
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.ui.DateWords
@@ -47,12 +46,19 @@ import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
 import java.time.LocalDate
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * The project, task and tag picker for an entry in [workspaceId], as [EntityPicker] takes it.
  */
 typealias EntryFormPicker =
-    @Composable (workspaceId: Long, original: Picked, picked: Picked, onPickedChange: (Picked) -> Unit, modifier: Modifier) -> Unit
+    @Composable (
+        workspaceId: Long,
+        original: Picked,
+        picked: Picked,
+        onPickedChange: (Picked) -> Unit,
+        modifier: Modifier,
+    ) -> Unit
 
 /**
  * The entry form from [model], over the cached projects, tasks and tags of [cache] in its picker:
@@ -128,7 +134,12 @@ class EntryFormActions(
  */
 @Composable
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-fun EntryFormContent(state: EntryFormState, actions: EntryFormActions, picker: EntryFormPicker, modifier: Modifier = Modifier) {
+fun EntryFormContent(
+    state: EntryFormState,
+    actions: EntryFormActions,
+    picker: EntryFormPicker,
+    modifier: Modifier = Modifier,
+) {
     val editing = (state as? EntryFormState.Open)?.editing ?: true
     val openState = state as? EntryFormState.Open
     if (openState?.confirmDelete == true) {
@@ -170,8 +181,13 @@ fun EntryFormContent(state: EntryFormState, actions: EntryFormActions, picker: E
         ) {
             when (state) {
                 EntryFormState.Closed, EntryFormState.Loading, EntryFormState.Saved -> Unit
+
                 EntryFormState.Missing -> Notice(stringResource(R.string.entry_form_missing))
-                is EntryFormState.NoAccountTime -> Notice(stringResource(R.string.entry_form_unknown_time_zone, state.timeZone))
+
+                is EntryFormState.NoAccountTime -> Notice(
+                    stringResource(R.string.entry_form_unknown_time_zone, state.timeZone),
+                )
+
                 is EntryFormState.Open -> Fields(state, actions, picker)
             }
         }
@@ -295,7 +311,10 @@ private fun Fields(state: EntryFormState.Open, actions: EntryFormActions, picker
                     danger = true,
                 )
             }
-            TokklGhostButton(onClick = actions.onClose, enabled = !state.saving) { Text(stringResource(R.string.entry_cancel)) }
+            TokklGhostButton(
+                onClick = actions.onClose,
+                enabled = !state.saving,
+            ) { Text(stringResource(R.string.entry_cancel)) }
             TokklButton(onClick = actions.onSave, enabled = canChange) { Text(stringResource(R.string.entry_save)) }
         }
     }

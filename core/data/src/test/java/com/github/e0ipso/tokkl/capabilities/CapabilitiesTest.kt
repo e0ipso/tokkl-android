@@ -13,7 +13,6 @@ import com.github.e0ipso.tokkl.cache.RunningCheckStart
 import com.github.e0ipso.tokkl.cache.RunningCheckWrites
 import com.github.e0ipso.tokkl.storage.InMemoryValueStore
 import com.github.e0ipso.tokkl.timerstate.TimerStateSource
-import java.io.IOException
 import kotlinx.serialization.json.Json
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
@@ -26,6 +25,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.io.IOException
 
 /** The capability flags from `/me`, the trash probe and the timer state probe, against a MockWebServer. */
 class CapabilitiesTest {
@@ -69,7 +69,10 @@ class CapabilitiesTest {
     fun favoritesAreFalseWhenMeLacksRole() {
         answers[TRASH] = json("[]")
 
-        val capabilities = source().refresh(client, me("""{"id":1,"timezone":"UTC","beginning_of_week":1,"time_resolution_minutes":5}"""))
+        val capabilities = source().refresh(
+            client,
+            me("""{"id":1,"timezone":"UTC","beginning_of_week":1,"time_resolution_minutes":5}"""),
+        )
 
         assertFalse(capabilities.favorites)
         assertFalse("Toggl Track's Reports API v3 has no exclude fields", capabilities.negatedFilters)
@@ -150,7 +153,9 @@ class CapabilitiesTest {
     /** Such as a proxy's HTML page in front of a server without the trash. */
     @Test
     fun aTrashAnswerThatIsNotAListHidesTrashAndRestore() {
-        answers[TRASH] = MockResponse.Builder().code(200).addHeader("Content-Type", "text/html").body("<html></html>").build()
+        answers[TRASH] = MockResponse.Builder().code(
+            200,
+        ).addHeader("Content-Type", "text/html").body("<html></html>").build()
 
         val capabilities = source(initial = ALL).refresh(client, me(TOKKL_ME))
 
@@ -188,10 +193,12 @@ class CapabilitiesTest {
         answers[TRASH] = json("[]")
         answers[TIMER] = json(TIMER_STATE)
         var failWrites = true
-        val source = CapabilitiesSource(InMemoryValueStore<Capabilities>(null) {
-            if (failWrites) throw IOException("disk full")
-            saved += it
-        })
+        val source = CapabilitiesSource(
+            InMemoryValueStore<Capabilities>(null) {
+                if (failWrites) throw IOException("disk full")
+                saved += it
+            },
+        )
 
         assertEquals(ALL, source.refresh(client, me(TOKKL_ME)))
         assertEquals(ALL, source.state.value)
@@ -250,13 +257,19 @@ class CapabilitiesTest {
     @Test
     fun aSuccessfulAnswerThatIsNotATimerStateMeansAbsent() {
         answers[TRASH] = json("[]")
-        val bodies = listOf("""["x"]""", """{"revision":3}""", TIMER_STATE.replace("2026-10-28T08:13:05.120Z", "yesterday"))
+        val bodies = listOf(
+            """["x"]""",
+            """{"revision":3}""",
+            TIMER_STATE.replace("2026-10-28T08:13:05.120Z", "yesterday"),
+        )
         for (body in bodies) {
             answers[TIMER] = json(body)
 
             assertFalse(body, source(initial = ALL).refresh(client, me(TOKKL_ME)).timerState)
         }
-        answers[TIMER] = MockResponse.Builder().code(200).addHeader("Content-Type", "text/html").body("<html></html>").build()
+        answers[TIMER] = MockResponse.Builder().code(
+            200,
+        ).addHeader("Content-Type", "text/html").body("<html></html>").build()
         assertFalse(source(initial = ALL).refresh(client, me(TOKKL_ME)).timerState)
         assertNull("none of them seeded the holder", timerStates.state.value)
     }
@@ -313,8 +326,7 @@ class CapabilitiesTest {
 
     private fun CapabilitiesSource.refresh(api: TogglApiClient, me: Me) = refresh(api, me, timerStates)
 
-    private fun MockWebServer.requests(): List<String> =
-        List(requestCount) { takeRequest().url.encodedPath }
+    private fun MockWebServer.requests(): List<String> = List(requestCount) { takeRequest().url.encodedPath }
 
     private fun source(initial: Capabilities? = null) = CapabilitiesSource(InMemoryValueStore(initial) { saved += it })
 

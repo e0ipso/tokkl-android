@@ -9,8 +9,6 @@ import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.HeldTimerFlows
 import com.github.e0ipso.tokkl.timerstate.PomodoroRingingPhase
-import java.time.Instant
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -18,6 +16,8 @@ import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import java.time.Instant
+import kotlin.coroutines.CoroutineContext
 
 /**
  * The Pomodoro widget's held session and idle defaults. Read the current account under its
@@ -40,10 +40,17 @@ class PomodoroWidgetStateSource(
 ) {
 
     val state: Flow<PomodoroWidgetState> = run {
-        val deadlines = pomodoroWidgetDeadlineChanges(held.held.map { held ->
-            held?.let { it.state.pomodoro?.phase?.plannedEnd?.minus(it.clockOffset) }
-        })
-        val catalog = combine(cache.projects, cache.tasks, ringing.ringingPhase, deadlines) { projects, tasks, ring, _ ->
+        val deadlines = pomodoroWidgetDeadlineChanges(
+            held.held.map { held ->
+                held?.let { it.state.pomodoro?.phase?.plannedEnd?.minus(it.clockOffset) }
+            },
+        )
+        val catalog = combine(
+            cache.projects,
+            cache.tasks,
+            ringing.ringingPhase,
+            deadlines,
+        ) { projects, tasks, ring, _ ->
             Triple(projects, tasks, ring)
         }
         combine(

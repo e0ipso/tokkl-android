@@ -19,14 +19,13 @@ import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.feature.signin.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.awaitText
+import com.github.e0ipso.tokkl.feature.signin.R
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
-import kotlin.math.abs
 import okhttp3.Credentials
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -36,6 +35,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import kotlin.math.abs
 
 /**
  * Tokkl's own 429 through the sign-in screen. Tokkl counts failed passwords
@@ -92,7 +92,9 @@ class SignInRateLimitTest {
         ActivityScenario.launch(MainActivity::class.java).use {
             composeRule.awaitText(string(R.string.sign_in_server_url))
             field(R.string.sign_in_server_url).performTextInput(server.toString())
-            composeRule.onNode(hasText(string(R.string.sign_in_method_email_password)) and isSelectable()).performClick()
+            composeRule.onNode(
+                hasText(string(R.string.sign_in_method_email_password)) and isSelectable(),
+            ).performClick()
             field(R.string.sign_in_email).performTextInput(account.email)
             field(R.string.sign_in_password).performTextInput(WRONG_PASSWORD)
 
@@ -137,7 +139,9 @@ class SignInRateLimitTest {
             .build()
         val retryAfter = OkHttpClient().newCall(request).execute().use { response ->
             assertEquals("Tokkl still refuses the account", 429, response.code)
-            response.header("Retry-After")?.toLongOrNull() ?: throw AssertionError("Tokkl's 429 has no Retry-After in seconds")
+            response.header(
+                "Retry-After",
+            )?.toLongOrNull() ?: throw AssertionError("Tokkl's 429 has no Retry-After in seconds")
         }
         assertTrue(
             "the countdown shows $seconds s and Tokkl's Retry-After is $retryAfter s",
@@ -182,6 +186,7 @@ class SignInRateLimitTest {
         const val WRONG_PASSWORD = "not-the-password"
         const val NETWORK_TIMEOUT_MS = 15_000L
         const val SEVERAL = 2
+
         /** The two clocks round up a second each, and the requests take some time. */
         const val SLACK_SECONDS = 3L
     }

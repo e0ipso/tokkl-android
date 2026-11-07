@@ -29,23 +29,23 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.DpRect
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.feature.reports.R
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
+import com.github.e0ipso.tokkl.feature.reports.R
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import java.time.Clock
-import java.time.DayOfWeek
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneOffset
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.Clock
+import java.time.DayOfWeek
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
 
 /**
  * The report filters at Android's largest font scale, 200%, with every kind of filter active, one
@@ -65,7 +65,9 @@ class ReportFiltersFitTest {
 
     /** The font scale is set before the activity starts, so it never has to restart for it. */
     @get:Rule
-    val rules: RuleChain = RuleChain.outerRule(SystemFontScale(SystemFontScale.LARGEST, largestDisplaySize = true)).around(composeRule)
+    val rules: RuleChain = RuleChain.outerRule(
+        SystemFontScale(SystemFontScale.LARGEST, largestDisplaySize = true),
+    ).around(composeRule)
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
@@ -85,7 +87,12 @@ class ReportFiltersFitTest {
 
         assertFit(listOf(button) + lines, area = report())
         val box = button.second.getUnclippedBoundsInRoot()
-        for ((name, node) in lines) assertTrue("$name leaves the Filters button", node.getUnclippedBoundsInRoot().inside(box))
+        for ((name, node) in lines) {
+            assertTrue(
+                "$name leaves the Filters button",
+                node.getUnclippedBoundsInRoot().inside(box),
+            )
+        }
         assertNoOverlap(lines)
         assertTouchTargets(listOf(button))
     }
@@ -98,16 +105,26 @@ class ReportFiltersFitTest {
         val dialog = composeRule.onNode(isDialog()).getUnclippedBoundsInRoot()
 
         val topRow = listOf(
-            "close button" to composeRule.onNode(hasContentDescription(string(R.string.reports_cancel)) and hasClickAction() and inDialog()),
+            "close button" to composeRule.onNode(
+                hasContentDescription(string(R.string.reports_cancel)) and hasClickAction() and inDialog(),
+            ),
             "heading" to composeRule.onNode(hasText(string(R.string.reports_filters)) and isHeading() and inDialog()),
-            "Apply button" to composeRule.onNode(hasText(string(R.string.reports_apply)) and hasClickAction() and inDialog()),
+            "Apply button" to composeRule.onNode(
+                hasText(string(R.string.reports_apply)) and hasClickAction() and inDialog(),
+            ),
         )
         val search = "search field" to composeRule.onNode(hasSetTextAction() and inDialog())
         assertFit(topRow + search, area = dialog)
         assertNoOverlap(topRow + search + ("list" to list()))
-        val searchLabel = composeRule.onNode(hasText(string(R.string.reports_filter_search)) and inDialog(), useUnmergedTree = true)
+        val searchLabel = composeRule.onNode(
+            hasText(string(R.string.reports_filter_search)) and inDialog(),
+            useUnmergedTree = true,
+        )
         searchLabel.textLayout()?.let { assertFalse("text is cut off: search label", it.didOverflowHeight) }
-        assertTrue("the search label leaves its field", searchLabel.getUnclippedBoundsInRoot().inside(search.second.getUnclippedBoundsInRoot()))
+        assertTrue(
+            "the search label leaves its field",
+            searchLabel.getUnclippedBoundsInRoot().inside(search.second.getUnclippedBoundsInRoot()),
+        )
         assertTouchTargets(listOf(search))
         val apply = "Apply label" to composeRule.onNode(
             hasText(string(R.string.reports_apply)) and hasAnyAncestor(hasClickAction() and inDialog()),
@@ -132,15 +149,25 @@ class ReportFiltersFitTest {
             val segments = MODES.map { (label, description) ->
                 val name = string(description, string(filter))
                 val segment = assertFitInList(name, hasContentDescription(name) and isSelectable() and inDialog(), area)
-                val text = composeRule.onNode(hasText(string(label)) and hasAnyAncestor(hasContentDescription(name)), useUnmergedTree = true)
+                val text = composeRule.onNode(
+                    hasText(string(label)) and hasAnyAncestor(hasContentDescription(name)),
+                    useUnmergedTree = true,
+                )
                 text.textLayout()?.let { assertFalse("text is cut off: $name", it.didOverflowHeight) }
-                assertTrue("the label leaves its segment: $name", text.getUnclippedBoundsInRoot().inside(segment.getUnclippedBoundsInRoot()))
+                assertTrue(
+                    "the label leaves its segment: $name",
+                    text.getUnclippedBoundsInRoot().inside(segment.getUnclippedBoundsInRoot()),
+                )
                 Triple(name, segment, text)
             }
             assertNoOverlap(segments.map { (name, _, text) -> "$name label" to text })
             assertTouchTargets(segments.map { (name, segment, _) -> name to segment })
         }
-        assertControlFits(string(R.string.reports_filters_clear), hasText(string(R.string.reports_filters_clear)) and hasClickAction() and inDialog(), area)
+        assertControlFits(
+            string(R.string.reports_filters_clear),
+            hasText(string(R.string.reports_filters_clear)) and hasClickAction() and inDialog(),
+            area,
+        )
     }
 
     /** The summary of an empty week, as with filters no entry matches, with [FILTERS] active. */
@@ -148,7 +175,10 @@ class ReportFiltersFitTest {
         composeRule.setContent {
             TokklTheme {
                 ReportsContent(
-                    state = ReportsState.Loaded(RangeSelection(WEEK, RangePreset.THIS_WEEK), SummaryReport.of(emptyList(), WEEK, DayOfWeek.MONDAY)),
+                    state = ReportsState.Loaded(
+                        RangeSelection(WEEK, RangePreset.THIS_WEEK),
+                        SummaryReport.of(emptyList(), WEEK, DayOfWeek.MONDAY),
+                    ),
                     tab = ReportTab.SUMMARY,
                     settings = ACCOUNT,
                     time = ACCOUNT.time(TODAY),
@@ -174,7 +204,10 @@ class ReportFiltersFitTest {
         // In the unmerged tree the row holds its label as a child, and each label shows once in the sheet.
         val label = composeRule.onNode(hasText(name) and inDialog(), useUnmergedTree = true)
         label.textLayout()?.let { assertFalse("text is cut off: $name", it.didOverflowHeight) }
-        assertTrue("the label leaves its control: $name", label.getUnclippedBoundsInRoot().inside(control.getUnclippedBoundsInRoot()))
+        assertTrue(
+            "the label leaves its control: $name",
+            label.getUnclippedBoundsInRoot().inside(control.getUnclippedBoundsInRoot()),
+        )
         assertTouchTargets(listOf(name to control))
     }
 
@@ -219,7 +252,10 @@ class ReportFiltersFitTest {
         for ((name, node) in controls) {
             val touch = node.fetchSemanticsNode().touchBoundsInRoot
             val (width, height) = with(composeRule.density) { touch.width.toDp() to touch.height.toDp() }
-            assertTrue("$name takes taps on $width by $height", width >= MIN_TOUCH_TARGET - SLACK && height >= MIN_TOUCH_TARGET - SLACK)
+            assertTrue(
+                "$name takes taps on $width by $height",
+                width >= MIN_TOUCH_TARGET - SLACK && height >= MIN_TOUCH_TARGET - SLACK,
+            )
         }
     }
 
@@ -236,12 +272,19 @@ class ReportFiltersFitTest {
 
     private fun inDialog(): SemanticsMatcher = hasAnyAncestor(isDialog())
 
-    private fun line(@StringRes name: Int, value: String): String = string(R.string.reports_filter_line, string(name), value)
+    private fun line(@StringRes name: Int, value: String): String = string(
+        R.string.reports_filter_line,
+        string(name),
+        value,
+    )
 
-    private fun scrolls(node: SemanticsNodeInteraction): Boolean = hasAnyAncestor(hasScrollAction()).matches(node.fetchSemanticsNode())
+    private fun scrolls(node: SemanticsNodeInteraction): Boolean = hasAnyAncestor(
+        hasScrollAction(),
+    ).matches(node.fetchSemanticsNode())
 
     private fun DpRect.inside(other: DpRect): Boolean =
-        left >= other.left - SLACK && top >= other.top - SLACK && right <= other.right + SLACK && bottom <= other.bottom + SLACK
+        left >= other.left - SLACK && top >= other.top - SLACK && right <= other.right + SLACK &&
+            bottom <= other.bottom + SLACK
 
     private fun DpRect.overlaps(other: DpRect): Boolean =
         left < other.right && other.left < right && top < other.bottom && other.top < bottom
@@ -264,7 +307,11 @@ class ReportFiltersFitTest {
         val SLACK = 0.5.dp
         val MIN_TOUCH_TARGET = 48.dp
 
-        val ACCOUNT = AccountSettings(timeZone = "UTC", beginningOfWeek = DayOfWeek.MONDAY, timeResolutionMinutes = null)
+        val ACCOUNT = AccountSettings(
+            timeZone = "UTC",
+            beginningOfWeek = DayOfWeek.MONDAY,
+            timeResolutionMinutes = null,
+        )
 
         /** A Thursday at noon, in the middle of [WEEK]. */
         val TODAY: Clock = Clock.fixed(Instant.parse("2026-10-15T12:00:00Z"), ZoneOffset.UTC)
@@ -292,10 +339,19 @@ class ReportFiltersFitTest {
             clientsNot = true,
         )
 
-        val HEADINGS = listOf(R.string.reports_filter_project, R.string.reports_filter_client, R.string.reports_filter_tag, R.string.reports_filter_billable)
+        val HEADINGS = listOf(
+            R.string.reports_filter_project,
+            R.string.reports_filter_client,
+            R.string.reports_filter_tag,
+            R.string.reports_filter_billable,
+        )
 
         /** The "without" choice of each list. */
-        val CHECKBOXES = listOf(R.string.reports_without_project, R.string.reports_filter_without_client, R.string.reports_filter_without_tags)
+        val CHECKBOXES = listOf(
+            R.string.reports_without_project,
+            R.string.reports_filter_without_client,
+            R.string.reports_filter_without_tags,
+        )
 
         /** The label and the TalkBack text of "Is" and "Is not". */
         val MODES = listOf(

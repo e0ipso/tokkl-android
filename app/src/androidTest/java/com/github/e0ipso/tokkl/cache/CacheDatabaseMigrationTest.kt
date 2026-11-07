@@ -8,11 +8,6 @@ import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.TogglApiClient
-import java.time.Duration
-import java.time.Instant
-import java.time.LocalDate
-import java.time.OffsetDateTime
-import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -25,6 +20,11 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import java.time.Duration
+import java.time.Instant
+import java.time.LocalDate
+import java.time.OffsetDateTime
+import java.time.temporal.ChronoUnit
 
 /**
  * A cache written by version 1, before the queue, by version 2, before
@@ -61,7 +61,15 @@ class CacheDatabaseMigrationTest {
         try {
             val cache = database.cache()
             assertEquals(
-                listOf(CachedTimeEntry(42, 7, 3, null, "Cached before the update", START, null, false, listOf("focus"), listOf(5))),
+                listOf(
+                    CachedTimeEntry(
+                        42, 7, 3, null, "Cached before the update", START, null, false,
+                        listOf(
+                            "focus",
+                        ),
+                        listOf(5),
+                    ),
+                ),
                 runBlocking { cache.timeEntries().first() },
             )
             assertEquals(listOf("Website"), runBlocking { cache.projects().first() }.map { it.name })
@@ -96,7 +104,8 @@ class CacheDatabaseMigrationTest {
         val database = Room.databaseBuilder(context, CacheDatabase::class.java, FILE).build()
         try {
             val store = RoomChangeStore(database)
-            val queued = PendingChange(1, ChangeKind.CREATE, -1, 7, null, null, "Queued before the update", START, null, false, emptyList(), emptyList())
+            val queued =
+                PendingChange(1, ChangeKind.CREATE, -1, 7, null, null, "Queued before the update", START, null, false, emptyList(), emptyList())
             assertEquals("the queued create survived, not marked as maybe sent", queued, store.first())
             assertTrue("the mapping survived", store.isMapped(99))
 
@@ -116,7 +125,9 @@ class CacheDatabaseMigrationTest {
             VERSION_3.forEach(db::execSQL)
             db.execSQL(
                 "INSERT INTO time_entries VALUES " +
-                    "(42, 7, NULL, NULL, 'From the server', ${START.toEpochMilli()}, ${START.plusSeconds(1800).toEpochMilli()}, 0, '[]', '[]')",
+                    "(42, 7, NULL, NULL, 'From the server', ${START.toEpochMilli()}, ${START.plusSeconds(
+                        1800,
+                    ).toEpochMilli()}, 0, '[]', '[]')",
             )
             db.execSQL(
                 "INSERT INTO pending_changes VALUES " +
@@ -128,11 +139,19 @@ class CacheDatabaseMigrationTest {
         val database = Room.databaseBuilder(context, CacheDatabase::class.java, FILE).build()
         try {
             val store = RoomChangeStore(database)
-            val queued = PendingChange(1, ChangeKind.CREATE, -1, 7, null, null, "Queued before the update", START, null, false, emptyList(), emptyList(), maybeSent = true)
+            val queued =
+                PendingChange(1, ChangeKind.CREATE, -1, 7, null, null, "Queued before the update", START, null, false, emptyList(), emptyList(), maybeSent = true)
             assertEquals("the queued create survived, marked, with no ids", queued, store.first())
 
             val queue = ChangeQueue(database, Dispatchers.IO, onQueued = {})
-            val copy = runBlocking { queue.create(7, EntryFields(description = "From the server"), START, START.plusSeconds(1800)) }
+            val copy = runBlocking {
+                queue.create(
+                    7,
+                    EntryFields(description = "From the server"),
+                    START,
+                    START.plusSeconds(1800),
+                )
+            }
             assertEquals(
                 "a create queued now records the server's entry around its start",
                 listOf(42L),
@@ -192,8 +211,10 @@ class CacheDatabaseMigrationTest {
                     "(1, 'STOP', 42, 7, NULL, NULL, 'Earlier tap', ${START.toEpochMilli()}, " +
                     "${START.plusSeconds(300).toEpochMilli()}, 0, '[]', '[]', 0, '[]', 0, NULL)",
             )
-            db.execSQL("INSERT INTO time_entries VALUES (42, 7, NULL, NULL, 'Earlier tap', " +
-                "${START.toEpochMilli()}, ${START.plusSeconds(300).toEpochMilli()}, 0, '[]', '[]')")
+            db.execSQL(
+                "INSERT INTO time_entries VALUES (42, 7, NULL, NULL, 'Earlier tap', " +
+                    "${START.toEpochMilli()}, ${START.plusSeconds(300).toEpochMilli()}, 0, '[]', '[]')",
+            )
             db.execSQL("UPDATE room_master_table SET identity_hash = '7b9d9c485b587e3975dadd777dfeccae' WHERE id = 42")
             db.version = 5
         }
@@ -223,7 +244,9 @@ class CacheDatabaseMigrationTest {
                     "(1, 'CREATE', -1, 7, NULL, NULL, 'Running before the update', ${START.toEpochMilli()}, NULL, 0, " +
                     "'[]', '[]', 0, '[]', 0, NULL, NULL, 0)",
             )
-            db.execSQL("INSERT INTO time_entries VALUES (-1, 7, NULL, NULL, 'Running before the update', ${START.toEpochMilli()}, NULL, 0, '[]', '[]')")
+            db.execSQL(
+                "INSERT INTO time_entries VALUES (-1, 7, NULL, NULL, 'Running before the update', ${START.toEpochMilli()}, NULL, 0, '[]', '[]')",
+            )
             db.version = 6
         }
 
@@ -286,12 +309,17 @@ class CacheDatabaseMigrationTest {
             val workspace = account.workspaceId
             // Whole hours are on every grid the server snaps to.
             val base = Instant.now().truncatedTo(ChronoUnit.HOURS).minus(Duration.ofHours(6))
-            val kept = account.createEntry("Kept on the server", base.plus(HOUR.multipliedBy(4)), base.plus(HOUR.multipliedBy(5)))
+            val kept = account.createEntry(
+                "Kept on the server",
+                base.plus(HOUR.multipliedBy(4)),
+                base.plus(HOUR.multipliedBy(5)),
+            )
             val running = account.createEntry("Running before the update", base.plus(HOUR.multipliedBy(2)))
             val stoppedAt = base.plus(HOUR.multipliedBy(3))
             val shortAt = base.plus(HOUR)
             val undo = ShortStopUndo(
-                77, shortAt.plusSeconds(10),
+                77,
+                shortAt.plusSeconds(10),
                 CachedTimeEntry(77, workspace, null, null, "Short before the update", shortAt, shortAt, false, emptyList(), emptyList()),
             )
             context.deleteDatabase(FILE)
@@ -299,26 +327,64 @@ class CacheDatabaseMigrationTest {
                 VERSION_8.forEach(db::execSQL)
                 // A pomodoro the phone's own session saved: an ordinary stopped create.
                 db.execSQL(entryRow(-1, workspace, "Saved pomodoro before the update", base, base.plus(HOUR)))
-                db.execSQL(changeRow(1, "CREATE", -1, workspace, "Saved pomodoro before the update", base, base.plus(HOUR)))
-                // A captured Stop of the timer the server runs.
-                db.execSQL(entryRow(running, workspace, "Running before the update", base.plus(HOUR.multipliedBy(2)), stoppedAt))
                 db.execSQL(
-                    changeRow(2, "STOP", running, workspace, "Running before the update", base.plus(HOUR.multipliedBy(2)), stoppedAt,
-                        capturedStop = stoppedAt),
+                    changeRow(1, "CREATE", -1, workspace, "Saved pomodoro before the update", base, base.plus(HOUR)),
+                )
+                // A captured Stop of the timer the server runs.
+                db.execSQL(
+                    entryRow(
+                        running,
+                        workspace,
+                        "Running before the update",
+                        base.plus(HOUR.multipliedBy(2)),
+                        stoppedAt,
+                    ),
+                )
+                db.execSQL(
+                    changeRow(
+                        2,
+                        "STOP",
+                        running,
+                        workspace,
+                        "Running before the update",
+                        base.plus(HOUR.multipliedBy(2)),
+                        stoppedAt,
+                        capturedStop = stoppedAt,
+                    ),
                 )
                 // An edit the server refused, which waits for the user.
-                db.execSQL(entryRow(kept, workspace, "Refused edit", base.plus(HOUR.multipliedBy(4)), base.plus(HOUR.multipliedBy(5))))
                 db.execSQL(
-                    changeRow(3, "UPDATE", kept, workspace, "Refused edit", base.plus(HOUR.multipliedBy(4)), base.plus(HOUR.multipliedBy(5)),
-                        held = "1, 'Server validation failed'"),
+                    entryRow(
+                        kept,
+                        workspace,
+                        "Refused edit",
+                        base.plus(HOUR.multipliedBy(4)),
+                        base.plus(HOUR.multipliedBy(5)),
+                    ),
+                )
+                db.execSQL(
+                    changeRow(
+                        3,
+                        "UPDATE",
+                        kept,
+                        workspace,
+                        "Refused edit",
+                        base.plus(HOUR.multipliedBy(4)),
+                        base.plus(HOUR.multipliedBy(5)),
+                        held = "1, 'Server validation failed'",
+                    ),
                 )
                 db.execSQL("INSERT INTO entry_ids VALUES (-9, 99)")
                 db.execSQL(
                     "INSERT INTO short_stop_undo VALUES (77, ${undo.capturedAt.toEpochMilli()}, 77, $workspace, NULL, NULL, " +
                         "'Short before the update', ${shortAt.toEpochMilli()}, ${shortAt.toEpochMilli()}, 0, '[]', '[]')",
                 )
-                db.execSQL("INSERT INTO pause_chain VALUES (0, 11, 2, 3, 600, NULL, $workspace, 'Paused focus', NULL, NULL, '[]', 0)")
-                db.execSQL("INSERT INTO pause_chain VALUES (1, 11, 0, 1, 600, $running, $workspace, 'Paused focus', NULL, NULL, '[]', 0)")
+                db.execSQL(
+                    "INSERT INTO pause_chain VALUES (0, 11, 2, 3, 600, NULL, $workspace, 'Paused focus', NULL, NULL, '[]', 0)",
+                )
+                db.execSQL(
+                    "INSERT INTO pause_chain VALUES (1, 11, 0, 1, 600, $running, $workspace, 'Paused focus', NULL, NULL, '[]', 0)",
+                )
                 db.execSQL("INSERT INTO timer_session VALUES (0, 44)")
                 db.execSQL(
                     "INSERT INTO pomodoro_session VALUES (0, $workspace, 25.0, 5.0, 15.0, 4.0, 'work', " +
@@ -340,15 +406,23 @@ class CacheDatabaseMigrationTest {
                 assertEquals(kept, held.entryId)
                 assertEquals("Server validation failed", held.refusal)
                 assertTrue("the old id mapping stays", changes.isMapped(99))
-                assertEquals("the short Stop's Undo offer stays", undo, runBlocking { changes.latestShortStop().first() })
+                assertEquals(
+                    "the short Stop's Undo offer stays",
+                    undo,
+                    runBlocking { changes.latestShortStop().first() },
+                )
 
                 val sender = ChangeSender(
                     RoomChangeStore(database),
                     client = { TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(account.apiToken)) },
-                    scope = scope, io = Dispatchers.IO,
+                    scope = scope,
+                    io = Dispatchers.IO,
                 )
                 val outcome = runBlocking { sender.sendAndWait() }
-                assertTrue("the drain ended with only the held edit left: $outcome", outcome is ChangeSender.Outcome.Empty)
+                assertTrue(
+                    "the drain ended with only the held edit left: $outcome",
+                    outcome is ChangeSender.Outcome.Empty,
+                )
 
                 val created = checkNotNull(changes.serverId(-1)) { "the server answered the saved pomodoro" }
                 val saved = account.entry(created)
@@ -356,12 +430,19 @@ class CacheDatabaseMigrationTest {
                 assertEquals(base, saved.instant("start"))
                 assertEquals(base.plus(HOUR), saved.instant("stop"))
                 assertEquals("the captured Stop reached the server", stoppedAt, account.entry(running).instant("stop"))
-                assertEquals("the held edit stayed on the phone", "Kept on the server", account.entry(kept).text("description"))
+                assertEquals(
+                    "the held edit stayed on the phone",
+                    "Kept on the server",
+                    account.entry(kept).text("description"),
+                )
                 assertEquals(listOf(held), runBlocking { changes.held().first() })
                 assertEquals(1, runBlocking { changes.count().first() })
                 assertTrue(changes.isMapped(99))
                 assertEquals(undo, runBlocking { changes.latestShortStop().first() })
-                assertTrue("Undo still queues its restore", runBlocking { ChangeQueue(database, Dispatchers.IO, onQueued = {}).undoShortStop(77) })
+                assertTrue(
+                    "Undo still queues its restore",
+                    runBlocking { ChangeQueue(database, Dispatchers.IO, onQueued = {}).undoShortStop(77) },
+                )
                 assertEquals(listOf(ChangeKind.RESTORE), changes.changesFor(77).map { it.kind })
             } finally {
                 database.close()
@@ -387,7 +468,9 @@ class CacheDatabaseMigrationTest {
             db.execSQL(entryRow(42, 7, "Cached before the update", START, START.plus(HOUR)))
             db.execSQL(changeRow(1, "UPDATE", 42, 7, "Edited before the update", START, START.plus(HOUR)))
             db.execSQL(
-                "INSERT INTO short_stop_undo VALUES (77, ${shortAt.plusSeconds(10).toEpochMilli()}, 77, 7, NULL, NULL, " +
+                "INSERT INTO short_stop_undo VALUES (77, ${shortAt.plusSeconds(
+                    10,
+                ).toEpochMilli()}, 77, 7, NULL, NULL, " +
                     "'Short before the update', ${shortAt.toEpochMilli()}, ${shortAt.toEpochMilli()}, 0, '[]', '[]')",
             )
             db.version = 9
@@ -399,30 +482,59 @@ class CacheDatabaseMigrationTest {
             val queued = checkNotNull(RoomChangeStore(database).first())
             val undo = checkNotNull(runBlocking { database.changes().latestShortStop().first() })
             assertEquals(
-                CachedTimeEntry(42, 7, null, null, "Cached before the update", START, START.plus(HOUR), false, emptyList(), emptyList()),
+                CachedTimeEntry(
+                    42, 7, null, null, "Cached before the update", START,
+                    START.plus(
+                        HOUR,
+                    ),
+                    false, emptyList(), emptyList(),
+                ),
                 cached,
             )
             assertEquals(
-                PendingChange(1, ChangeKind.UPDATE, 42, 7, null, null, "Edited before the update", START, START.plus(HOUR), false, emptyList(), emptyList()),
+                PendingChange(
+                    1, ChangeKind.UPDATE, 42, 7, null, null, "Edited before the update", START,
+                    START.plus(
+                        HOUR,
+                    ),
+                    false, emptyList(), emptyList(),
+                ),
                 queued,
             )
             assertEquals(
                 ShortStopUndo(
-                    77, shortAt.plusSeconds(10),
+                    77,
+                    shortAt.plusSeconds(10),
                     CachedTimeEntry(77, 7, null, null, "Short before the update", shortAt, shortAt, false, emptyList(), emptyList()),
                 ),
                 undo,
             )
-            assertEquals("every migrated row is timed", listOf(false, false, false), listOf(cached, queued.entry(), undo.entry).map { it.allDay })
-            assertEquals("and has no day", listOf(null, null, null), listOf(cached, queued.entry(), undo.entry).map { it.day })
+            assertEquals(
+                "every migrated row is timed",
+                listOf(false, false, false),
+                listOf(cached, queued.entry(), undo.entry).map { it.allDay },
+            )
+            assertEquals(
+                "and has no day",
+                listOf(null, null, null),
+                listOf(cached, queued.entry(), undo.entry).map { it.day },
+            )
 
             val midnight = Instant.parse("2026-10-19T00:00:00Z")
             val noTime = CachedTimeEntry(
-                -2, 7, null, null, "Workshop", midnight, midnight.plus(Duration.ofMinutes(90)), false, emptyList(), emptyList(),
+                -2, 7, null, null, "Workshop", midnight,
+                midnight.plus(
+                    Duration.ofMinutes(90),
+                ),
+                false, emptyList(), emptyList(),
                 allDay = true, day = LocalDate.of(2026, 10, 19),
             )
             val sequence = database.changes().insert(PendingChange.of(ChangeKind.CREATE, noTime))
-            assertEquals("the queued no-time create keeps its flag and day", noTime, database.changes().change(sequence)?.entry())
+            assertEquals(
+                "the queued no-time create keeps its flag and day",
+                noTime,
+                database.changes().change(sequence)?.entry(),
+            )
         } finally {
             database.close()
             assertTrue(context.deleteDatabase(FILE))
@@ -430,10 +542,11 @@ class CacheDatabaseMigrationTest {
     }
 
     /** The names of the tables in [database]'s file. */
-    private fun tables(database: CacheDatabase): Set<String> =
-        database.openHelper.readableDatabase.query("SELECT name FROM sqlite_master WHERE type = 'table'").use { cursor ->
-            buildSet { while (cursor.moveToNext()) add(cursor.getString(0)) }
-        }
+    private fun tables(database: CacheDatabase): Set<String> = database.openHelper.readableDatabase.query(
+        "SELECT name FROM sqlite_master WHERE type = 'table'",
+    ).use { cursor ->
+        buildSet { while (cursor.moveToNext()) add(cursor.getString(0)) }
+    }
 
     private fun JsonObject.text(key: String): String = getValue(key).jsonPrimitive.content
 
@@ -573,7 +686,8 @@ class CacheDatabaseMigrationTest {
             stop: Instant?,
             capturedStop: Instant? = null,
             held: String = "0, NULL",
-        ) = "INSERT INTO pending_changes VALUES ($sequence, '$kind', $entryId, $workspace, NULL, NULL, '$description', " +
-            "${start.toEpochMilli()}, ${stop?.toEpochMilli()}, 0, '[]', '[]', 0, '[]', $held, ${capturedStop?.toEpochMilli()}, 0)"
+        ) =
+            "INSERT INTO pending_changes VALUES ($sequence, '$kind', $entryId, $workspace, NULL, NULL, '$description', " +
+                "${start.toEpochMilli()}, ${stop?.toEpochMilli()}, 0, '[]', '[]', 0, '[]', $held, ${capturedStop?.toEpochMilli()}, 0)"
     }
 }

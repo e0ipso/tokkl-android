@@ -1,11 +1,11 @@
 package com.github.e0ipso.tokkl.timerstate
 
 import com.github.e0ipso.tokkl.api.ApiError
-import java.io.IOException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.IOException
 
 /**
  * When [TimerSync] opens, closes and reopens the timer event stream: the watchdog on a silent
@@ -65,7 +65,10 @@ class TimerSyncLifecycleTest {
             waitForOpen()
         }
 
-        assertEquals(listOf(1_000L, 2_000L, 4_000L, 8_000L, 16_000L, 32_000L, 64_000L, 120_000L, 120_000L, 120_000L), waits)
+        assertEquals(
+            listOf(1_000L, 2_000L, 4_000L, 8_000L, 16_000L, 32_000L, 64_000L, 120_000L, 120_000L, 120_000L),
+            waits,
+        )
 
         // A stream that stays up a minute and then ends starts the delays over.
         val healthy = opens.last().link
@@ -236,13 +239,12 @@ class TimerSyncLifecycleTest {
         return opens.last().at - from
     }
 
-    private fun isCancelled(link: TimerSyncLink): Boolean =
-        try {
-            link.cancellation.check()
-            false
-        } catch (e: IOException) {
-            true
-        }
+    private fun isCancelled(link: TimerSyncLink): Boolean = try {
+        link.cancellation.check()
+        false
+    } catch (e: IOException) {
+        true
+    }
 
     private data class Opened(val account: String, val link: TimerSyncLink, val at: Long)
 
@@ -264,7 +266,9 @@ class TimerSyncLifecycleTest {
         fun advanceBy(millis: Long) {
             val until = time + millis
             while (true) {
-                val next = tasks.filter { it.at <= until }.minWithOrNull(compareBy<Task>({ it.at }, { it.sequence })) ?: break
+                val next = tasks.filter { it.at <= until }.minWithOrNull(
+                    compareBy<Task>({ it.at }, { it.sequence }),
+                ) ?: break
                 tasks.remove(next)
                 time = next.at
                 next.run()

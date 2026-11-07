@@ -27,17 +27,6 @@ import com.github.e0ipso.tokkl.timerstate.TimerStateSource
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import com.github.e0ipso.tokkl.timerstate.continueEntry
 import com.github.e0ipso.tokkl.timerstate.serverTimerControls
-import java.time.Clock
-import java.time.DayOfWeek
-import java.time.Duration
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
-import java.time.ZoneOffset
-import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
-import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExecutorCoroutineDispatcher
@@ -60,6 +49,17 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.time.Clock
+import java.time.DayOfWeek
+import java.time.Duration
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Pause, Resume and Stop while paused on the timer's model (docs/PRD.md T1), against the cache's
@@ -154,13 +154,19 @@ class TimerPauseTest {
         awaitState("the running entry shows") { it is TimerState.Running }
 
         onMain { model.editDescription("Typed before Pause") }
-        awaitState("the typed description shows") { it is TimerState.Running && it.fields.description == "Typed before Pause" }
+        awaitState(
+            "the typed description shows",
+        ) { it is TimerState.Running && it.fields.description == "Typed before Pause" }
         onMain { model.pause() }
 
         val typed = FIELDS.copy(description = "Typed before Pause")
         awaitState("the server's pause shows") { it is TimerState.Paused }
         assertEquals(listOf("updateRunning $RUNNING_ID $typed"), changes.calls)
-        assertEquals("the queue goes out before the server pauses", listOf("updateRunning", "send queued", "pause"), events)
+        assertEquals(
+            "the queue goes out before the server pauses",
+            listOf("updateRunning", "send queued", "pause"),
+            events,
+        )
     }
 
     @Test
@@ -173,7 +179,9 @@ class TimerPauseTest {
 
         val notice = awaitNotice { it is TimerNotice.ActionFailed } as TimerNotice.ActionFailed
         assertEquals(TimerActionResult.Offline, notice.result)
-        val shown = awaitState("taps count again") { it is TimerState.Running && model.isShown(it.target!!) } as TimerState.Running
+        val shown = awaitState(
+            "taps count again",
+        ) { it is TimerState.Running && model.isShown(it.target!!) } as TimerState.Running
         assertEquals(RUNNING_ID, shown.entryId)
         assertTrue("nothing was queued", changes.calls.isEmpty())
         assertEquals(listOf("pause"), calls)
@@ -193,7 +201,10 @@ class TimerPauseTest {
 
         onMain { model.pause() }
 
-        assertEquals(TimerActionResult.Refused, (awaitNotice { it is TimerNotice.ActionFailed } as TimerNotice.ActionFailed).result)
+        assertEquals(
+            TimerActionResult.Refused,
+            (awaitNotice { it is TimerNotice.ActionFailed } as TimerNotice.ActionFailed).result,
+        )
         val paused = awaitState("the server's state shows") { it is TimerState.Paused } as TimerState.Paused
         assertEquals(120L, paused.seconds)
     }
@@ -228,12 +239,17 @@ class TimerPauseTest {
         assertTrue("the paused view stays while Resume is on its way", model.state.value is TimerState.Paused)
 
         server.gate.complete(Unit)
-        val resumed = awaitState("the clone shows") { it is TimerState.Running && it.entryId == CLONE_ID } as TimerState.Running
+        val resumed = awaitState(
+            "the clone shows",
+        ) { it is TimerState.Running && it.entryId == CLONE_ID } as TimerState.Running
         assertEquals("the clock goes on from the chain's seconds", 600L, resumed.accumulatedSeconds)
         assertEquals("the clone counts on the server's clock", OFFSET, resumed.clockOffset)
         assertEquals("Resume starts the fields kept at Pause", FIELDS, resumed.fields)
         assertTrue(resumed.pausable)
-        assertNotNull("a resume asks about notifications as a start does", runBlocking { withTimeoutOrNull(TIMEOUT_MS) { model.starts.first() } })
+        assertNotNull(
+            "a resume asks about notifications as a start does",
+            runBlocking { withTimeoutOrNull(TIMEOUT_MS) { model.starts.first() } },
+        )
         assertTrue("nothing was queued", changes.calls.isEmpty())
     }
 
@@ -298,7 +314,9 @@ class TimerPauseTest {
         onMain { model.continueEntry(PAST) }
 
         assertEquals(listOf("start $WORKSPACE ${PAST.fields()}"), changes.calls)
-        val started = awaitState("the continued entry runs") { it is TimerState.Running && it.entryId == STARTED_ID } as TimerState.Running
+        val started = awaitState(
+            "the continued entry runs",
+        ) { it is TimerState.Running && it.entryId == STARTED_ID } as TimerState.Running
         assertEquals("a new timer leaves the chain's seconds behind", 0L, started.accumulatedSeconds)
         assertTrue("the server's chain is not resumed", calls.isEmpty())
     }
@@ -337,19 +355,25 @@ class TimerPauseTest {
         phone.value = Phone(running(), held(revision = 2))
         val running = awaitState("running context") { it is TimerState.Running } as TimerState.Running
         onMain { model.pauseShown(running.target!!) }
-        val paused = awaitState("settled paused context") { it is TimerState.Paused && model.isShown(it.target!!) } as TimerState.Paused
+        val paused = awaitState(
+            "settled paused context",
+        ) { it is TimerState.Paused && model.isShown(it.target!!) } as TimerState.Paused
         assertEquals(90L, paused.seconds)
 
         onMain { model.resumeShown(running.target!!) }
         assertEquals("a stale running callback cannot resume its paused successor", listOf("pause"), calls)
         // A rename shown with the chain moves the server's revision.
         phone.value = Phone(running = null, held(revision = 4, pause = pause(seconds = 90, cloneEntryId = null)))
-        val renamed = awaitState("the newer revision shows") { it is TimerState.Paused && it.target != paused.target } as TimerState.Paused
+        val renamed = awaitState(
+            "the newer revision shows",
+        ) { it is TimerState.Paused && it.target != paused.target } as TimerState.Paused
         onMain { model.resumeShown(paused.target!!) }
         assertEquals("an older revision's callback sends nothing", listOf("pause"), calls)
 
         onMain { model.resumeShown(renamed.target!!) }
-        val resumed = awaitState("settled resumed context") { it is TimerState.Running && model.isShown(it.target!!) } as TimerState.Running
+        val resumed = awaitState(
+            "settled resumed context",
+        ) { it is TimerState.Running && model.isShown(it.target!!) } as TimerState.Running
         assertEquals(listOf("pause", "resume 4"), calls)
         assertEquals(90L, resumed.accumulatedSeconds)
         assertEquals(CLONE_ID, resumed.entryId)
@@ -404,7 +428,10 @@ class TimerPauseTest {
     @Test
     fun aTooShortPomodoroIsNoticedOnceEvenWhenItsStateArrivesAgain() {
         val holder = TimerStateSource(initial = null, save = {}, cache = NoRunningEntries, clock = clock)
-        val notices = timerModel(discardNotices = holder.discardNotice, takeDiscardNotice = { holder.takeDiscardNotice() })
+        val notices = timerModel(
+            discardNotices = holder.discardNotice,
+            takeDiscardNotice = { holder.takeDiscardNotice() },
+        )
         scope.launch { notices.notice.collect {} }
         val discarded = DiscardedPomodoro(entryId = 70, start = TAP.minusSeconds(40), stop = TAP)
         val state = held(revision = 20).state.copy(discardedPomodoro = discarded)
@@ -428,7 +455,9 @@ class TimerPauseTest {
         var last: TimerState? = null
         return runBlocking {
             withTimeoutOrNull(TIMEOUT_MS) { model.state.onEach { last = it }.first(condition) }
-        } ?: throw AssertionError("timed out waiting until $what; the last state was $last, after ${changes.calls} and $calls")
+        } ?: throw AssertionError(
+            "timed out waiting until $what; the last state was $last, after ${changes.calls} and $calls",
+        )
     }
 
     private fun awaitNotice(from: TimerViewModel = model, condition: (TimerNotice?) -> Boolean): TimerNotice? {
@@ -447,7 +476,13 @@ class TimerPauseTest {
     private fun onMain(block: () -> Unit) = runBlocking(mainDispatcher) { block() }
 
     private fun running(id: Long = RUNNING_ID) = EntryWithSendState(
-        CachedTimeEntry(id, WORKSPACE, FIELDS.projectId, FIELDS.taskId, FIELDS.description, TAP.minusSeconds(90), null, FIELDS.billable, FIELDS.tags, emptyList()),
+        CachedTimeEntry(
+            id, WORKSPACE, FIELDS.projectId, FIELDS.taskId, FIELDS.description,
+            TAP.minusSeconds(
+                90,
+            ),
+            null, FIELDS.billable, FIELDS.tags, emptyList(),
+        ),
         unsent = false,
     )
 
@@ -465,9 +500,23 @@ class TimerPauseTest {
         pomodoro: TimerPomodoro? = null,
         offset: Duration = OFFSET,
     ): HeldTimerState {
-        val clone = pause?.cloneEntryId?.let { ServerTimeEntry(id = it, workspaceId = WORKSPACE, description = FIELDS.description, start = CLONE_START.toString()) }
+        val clone = pause?.cloneEntryId?.let {
+            ServerTimeEntry(
+                id = it,
+                workspaceId = WORKSPACE,
+                description = FIELDS.description,
+                start = CLONE_START.toString(),
+            )
+        }
         return HeldTimerState(
-            com.github.e0ipso.tokkl.api.TimerState(revision, TAP.plus(offset), clone, pause, pomodoro, discardedPomodoro = null),
+            com.github.e0ipso.tokkl.api.TimerState(
+                revision,
+                TAP.plus(offset),
+                clone,
+                pause,
+                pomodoro,
+                discardedPomodoro = null,
+            ),
             receivedAt = TAP,
         )
     }
@@ -490,7 +539,12 @@ class TimerPauseTest {
         shortRestMinutes = 5,
         longRestMinutes = 15,
         longRestEvery = 4,
-        phase = TimerPomodoroPhase(PhaseKind.WORK, TAP.minusSeconds(90), completed = 0, plannedEnd = TAP.plusSeconds(1_410)),
+        phase = TimerPomodoroPhase(
+            PhaseKind.WORK,
+            TAP.minusSeconds(90),
+            completed = 0,
+            plannedEnd = TAP.plusSeconds(1_410),
+        ),
         upcomingPhase = PhaseKind.SHORT_REST,
         transition = PhaseTransition.WORK_TO_SHORT_REST,
         number = 1,
@@ -561,7 +615,8 @@ class TimerPauseTest {
             val at = clock.instant()
             calls += "start $workspaceId $fields"
             gate.await()
-            val entry = CachedTimeEntry(STARTED_ID, workspaceId, fields.projectId, fields.taskId, fields.description, at, null, fields.billable, fields.tags, emptyList())
+            val entry =
+                CachedTimeEntry(STARTED_ID, workspaceId, fields.projectId, fields.taskId, fields.description, at, null, fields.billable, fields.tags, emptyList())
             phone.value = phone.value.copy(running = EntryWithSendState(entry, unsent = true))
             return STARTED_ID
         }
@@ -579,21 +634,41 @@ class TimerPauseTest {
                 it.id == identity.entryId && it.workspaceId == identity.workspaceId && it.start == identity.start
             }
 
-        override suspend fun updateRunning(identity: RunningEntryIdentity, fields: EntryFields, start: Instant): Boolean {
+        override suspend fun updateRunning(
+            identity: RunningEntryIdentity,
+            fields: EntryFields,
+            start: Instant,
+        ): Boolean {
             calls += "updateRunning ${identity.entryId} $fields"
             events += "updateRunning"
             gate.await()
             val current = runningEntry(identity) ?: return false
-            val edited = current.copy(description = fields.description, projectId = fields.projectId, taskId = fields.taskId, tags = fields.tags, billable = fields.billable)
+            val edited = current.copy(
+                description = fields.description,
+                projectId = fields.projectId,
+                taskId = fields.taskId,
+                tags = fields.tags,
+                billable = fields.billable,
+            )
             phone.value = phone.value.copy(running = EntryWithSendState(edited, unsent = true))
             return true
         }
 
-        override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?, noTimeDay: LocalDate?): Boolean =
-            throw AssertionError("these timers edit running entries through updateRunning")
+        override suspend fun update(
+            entryId: Long,
+            fields: EntryFields,
+            start: Instant,
+            stop: Instant?,
+            noTimeDay: LocalDate?,
+        ): Boolean = throw AssertionError("these timers edit running entries through updateRunning")
 
-        override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant, noTimeDay: LocalDate?): Long =
-            throw AssertionError("the timer creates no stopped entry")
+        override suspend fun create(
+            workspaceId: Long,
+            fields: EntryFields,
+            start: Instant,
+            stop: Instant,
+            noTimeDay: LocalDate?,
+        ): Long = throw AssertionError("the timer creates no stopped entry")
 
         override suspend fun delete(entryId: Long): Boolean = throw AssertionError("the timer deletes nothing")
     }
@@ -625,7 +700,15 @@ class TimerPauseTest {
             timeResolutionMinutes = null,
             defaultWorkspaceId = WORKSPACE,
         )
-        val APP = CachedProject(1, WORKSPACE, clientId = null, name = "Tokkl for Android", color = "#0b83d9", active = true, billable = false)
+        val APP = CachedProject(
+            1,
+            WORKSPACE,
+            clientId = null,
+            name = "Tokkl for Android",
+            color = "#0b83d9",
+            active = true,
+            billable = false,
+        )
         val DESIGN = CachedTask(5, WORKSPACE, projectId = APP.id, name = "Design", active = true)
         val FIELDS = EntryFields("Pause the timer", projectId = APP.id, taskId = DESIGN.id, tags = listOf("android"))
 

@@ -2,7 +2,6 @@ package com.github.e0ipso.tokkl.reports
 
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
-import java.time.LocalDate
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonNull
@@ -14,12 +13,16 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.LocalDate
 
 class AppSummaryResponseTest {
     @Test
     fun serverValuesAndAllOrdersAreAuthoritative() {
         val report = decode()
-        assertEquals(ReportTotals(7317, 6001, 9, listOf(Amount("XYZ", 101), Amount("USD", 0), Amount("EUR", 723))), report.totals)
+        assertEquals(
+            ReportTotals(7317, 6001, 9, listOf(Amount("XYZ", 101), Amount("USD", 0), Amount("EUR", 723))),
+            report.totals,
+        )
         assertEquals(Resolution.WEEK, report.resolution)
         assertEquals(listOf("2026-10-28", "2026-10-21"), report.series.map { it.start.toString() })
         assertEquals(listOf(3L, 7L), report.series.map { it.seconds })
@@ -47,7 +50,8 @@ class AppSummaryResponseTest {
     @Test
     fun incompatibleRecognizedValuesFailInsteadOfBecomingEmptyReports() {
         val invalid = listOf(
-            "{}", APP_SUMMARY_FIXTURE.replace("7317", "\"not a duration\""),
+            "{}",
+            APP_SUMMARY_FIXTURE.replace("7317", "\"not a duration\""),
             APP_SUMMARY_FIXTURE.replace("7317", "\"7317\""),
             APP_SUMMARY_FIXTURE.replace("\"week\"", "\"fortnight\""),
             APP_SUMMARY_FIXTURE.replace("2026-10-28", "yesterday"),
@@ -68,13 +72,24 @@ class AppSummaryResponseTest {
         // These keys have no production counterparts; no currency/rate schema is assumed.
         val fields = mapOf(
             "newCounter" to JsonPrimitive(0),
-            "future_rate_rows" to JsonArray(listOf(JsonObject(mapOf("unitCode" to JsonPrimitive("widgets"), "value" to JsonPrimitive(123))))),
-            "newFlag" to JsonPrimitive(false), "newNull" to JsonNull,
+            "future_rate_rows" to JsonArray(
+                listOf(JsonObject(mapOf("unitCode" to JsonPrimitive("widgets"), "value" to JsonPrimitive(123)))),
+            ),
+            "newFlag" to JsonPrimitive(false),
+            "newNull" to JsonNull,
         )
-        val amended = JsonObject(body + ("totals" to JsonObject(totals + fields)) + ("serverNote" to JsonPrimitive("<b>literal</b>")))
+        val amended = JsonObject(
+            body + ("totals" to JsonObject(totals + fields)) + ("serverNote" to JsonPrimitive("<b>literal</b>")),
+        )
         val report = (decodeAppSummary(amended) as ApiResult.Success).value
-        assertEquals(listOf("New Counter", "Future rate rows", "New Flag", "New Null"), report.totals.additionalData.map { it.name })
-        assertEquals(listOf("0", "[{Unit Code: \"widgets\", Value: 123}]", "false", "null"), report.totals.additionalData.map { it.value })
+        assertEquals(
+            listOf("New Counter", "Future rate rows", "New Flag", "New Null"),
+            report.totals.additionalData.map { it.name },
+        )
+        assertEquals(
+            listOf("0", "[{Unit Code: \"widgets\", Value: 123}]", "false", "null"),
+            report.totals.additionalData.map { it.value },
+        )
         assertEquals(listOf(ReportExtraField("Server Note", "\"<b>literal</b>\"")), report.additionalData)
         assertEquals(7317L, report.totals.seconds)
         assertFalse(report.additionalDataTruncated)
@@ -96,8 +111,14 @@ class AppSummaryResponseTest {
 
     @Test
     fun additiveProjectionBoundsDepthWidthAndTextAcrossTheWholeReport() {
-        val deep = JsonObject(mapOf("a" to JsonObject(mapOf("b" to JsonObject(mapOf("c" to JsonObject(mapOf("d" to JsonPrimitive(9)))))))))
-        val huge = JsonObject((0..1000).associate { "extra_$it" to JsonPrimitive("x".repeat(10_000)) } + ("deep" to deep))
+        val deep = JsonObject(
+            mapOf(
+                "a" to JsonObject(mapOf("b" to JsonObject(mapOf("c" to JsonObject(mapOf("d" to JsonPrimitive(9))))))),
+            ),
+        )
+        val huge = JsonObject(
+            (0..1000).associate { "extra_$it" to JsonPrimitive("x".repeat(10_000)) } + ("deep" to deep),
+        )
         val projection = ReportExtraProjection()
         val fields = projection.fields(huge, emptySet())
         assertEquals(12, fields.size)
@@ -115,7 +136,10 @@ class AppSummaryResponseTest {
     @Test
     fun unsafeFormattingCharactersAndMarkupStayPlainText() {
         val projection = ReportExtraProjection()
-        val field = projection.fields(JsonObject(mapOf("a\u202Eb" to JsonPrimitive("<script>\n\u202E"))), emptySet()).single()
+        val field = projection.fields(
+            JsonObject(mapOf("a\u202Eb" to JsonPrimitive("<script>\n\u202E"))),
+            emptySet(),
+        ).single()
         assertEquals("A b", field.name)
         assertFalse(field.value.contains('\u202E'))
         assertTrue(field.value.contains("<script>"))

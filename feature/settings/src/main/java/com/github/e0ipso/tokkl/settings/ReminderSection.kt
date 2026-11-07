@@ -45,19 +45,40 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 internal fun ReminderSection(preferences: ReminderPreferences, change: (ReminderPreferences) -> Unit) {
     var editing by rememberSaveable { mutableStateOf(false) }
     var hours by rememberSaveable { mutableStateOf("") }
-    Text(stringResource(R.string.reminder_settings), style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
+    Text(
+        stringResource(R.string.reminder_settings),
+        style = MaterialTheme.typography.titleMedium,
+        modifier = Modifier.semantics { heading() },
+    )
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth().heightIn(min = LocalMinimumInteractiveComponentSize.current)
-            .toggleable(preferences.enabled, role = Role.Switch, onValueChange = { change(preferences.copy(enabled = it)) }),
+            .toggleable(
+                preferences.enabled,
+                role = Role.Switch,
+                onValueChange = { change(preferences.copy(enabled = it)) },
+            ),
     ) {
-        Text(stringResource(R.string.reminder_enabled), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+        Text(
+            stringResource(R.string.reminder_enabled),
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f),
+        )
         Spacer(Modifier.width(TokklTheme.spacing.space3))
         Switch(checked = preferences.enabled, onCheckedChange = null)
     }
-    Row(Modifier.fillMaxWidth().heightIn(min = LocalMinimumInteractiveComponentSize.current)
-        .clickable(role = Role.Button) { hours = preferences.hours.toString(); editing = true }, verticalAlignment = Alignment.CenterVertically) {
-        Text(pluralStringResource(R.plurals.reminder_after_hours, preferences.hours, preferences.hours), style = MaterialTheme.typography.bodyLarge)
+    Row(
+        Modifier.fillMaxWidth().heightIn(min = LocalMinimumInteractiveComponentSize.current)
+            .clickable(role = Role.Button) {
+                hours = preferences.hours.toString()
+                editing = true
+            },
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            pluralStringResource(R.plurals.reminder_after_hours, preferences.hours, preferences.hours),
+            style = MaterialTheme.typography.bodyLarge,
+        )
     }
     if (editing) {
         // A new state each time the dialog opens. An attached label is drawn halfway above the
@@ -67,7 +88,12 @@ internal fun ReminderSection(preferences: ReminderPreferences, change: (Reminder
         val value = text.toIntOrNull()?.takeIf { it in ReminderPreferences.HOURS }
         AlertDialog(
             onDismissRequest = { editing = false },
-            title = { Text(stringResource(R.string.reminder_hours_label), modifier = Modifier.semantics { heading() }) },
+            title = {
+                Text(
+                    stringResource(R.string.reminder_hours_label),
+                    modifier = Modifier.semantics { heading() },
+                )
+            },
             text = {
                 Column(
                     Modifier.verticalScroll(rememberScrollState()),
@@ -79,17 +105,30 @@ internal fun ReminderSection(preferences: ReminderPreferences, change: (Reminder
                         labelPosition = TextFieldLabelPosition.Above(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         lineLimits = TextFieldLineLimits.SingleLine,
-                        isError = value == null, modifier = Modifier.fillMaxWidth(),
+                        isError = value == null,
+                        modifier = Modifier.fillMaxWidth(),
                     )
                     Text(stringResource(R.string.reminder_hours_range))
                 }
             },
             confirmButton = {
-                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup)) {
-                    TokklGhostButton(onClick = { editing = false }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.reminder_cancel)) }
+                Column(
+                    Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup),
+                ) {
+                    TokklGhostButton(
+                        onClick = { editing = false },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text(stringResource(R.string.reminder_cancel)) }
                     TokklButton(
-                        onClick = { value?.let { change(preferences.copy(hours = it)); editing = false } },
-                        enabled = value != null, modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            value?.let {
+                                change(preferences.copy(hours = it))
+                                editing = false
+                            }
+                        },
+                        enabled = value != null,
+                        modifier = Modifier.fillMaxWidth(),
                     ) {
                         Text(stringResource(R.string.reminder_save))
                     }

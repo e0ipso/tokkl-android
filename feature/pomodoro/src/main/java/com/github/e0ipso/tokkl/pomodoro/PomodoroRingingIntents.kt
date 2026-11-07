@@ -18,7 +18,9 @@ fun Intent.putPhase(phase: PomodoroPhaseKey, revision: Long? = null, unique: Boo
     putExtra(EXTRA_PHASE_START, phase.start.toEpochMilli())
     if (revision != null) putExtra(EXTRA_REVISION, revision)
     if (unique) {
-        val uri = Uri.Builder().scheme("tokkl-pomodoro").authority("phase").appendPath(phase.start.toEpochMilli().toString())
+        val uri = Uri.Builder().scheme(
+            "tokkl-pomodoro",
+        ).authority("phase").appendPath(phase.start.toEpochMilli().toString())
         if (revision != null) uri.appendPath(revision.toString())
         data = uri.build()
     }
@@ -26,8 +28,14 @@ fun Intent.putPhase(phase: PomodoroPhaseKey, revision: Long? = null, unique: Boo
 
 /** The phase this intent carries, or null without one. */
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-fun Intent.phaseKey(): PomodoroPhaseKey? =
-    if (hasExtra(EXTRA_PHASE_START)) PomodoroPhaseKey(Instant.ofEpochMilli(getLongExtra(EXTRA_PHASE_START, 0))) else null
+fun Intent.phaseKey(): PomodoroPhaseKey? = if (hasExtra(
+        EXTRA_PHASE_START,
+    )
+) {
+    PomodoroPhaseKey(Instant.ofEpochMilli(getLongExtra(EXTRA_PHASE_START, 0)))
+} else {
+    null
+}
 
 /** The revision this intent's button was shown at, or null without one. */
 internal fun Intent.shownRevision(): Long? =

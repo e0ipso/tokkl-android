@@ -12,16 +12,6 @@ import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.timerstate.continueEntry
 import com.github.e0ipso.tokkl.timerstate.serverTimerControls
-import java.time.Clock
-import java.time.DayOfWeek
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
-import java.time.ZoneOffset
-import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
-import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -41,6 +31,16 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.time.Clock
+import java.time.DayOfWeek
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * The timer's model against a running entry that the test sets, as the cache would show it, and
@@ -121,7 +121,9 @@ class TimerViewModelTest {
         assertEquals("the queue read the tap time on the tap", listOf("start $WORKSPACE $draft at $TAP"), changes.calls)
 
         changes.gate.complete(Unit)
-        val cached = awaitState("the cache's entry shows") { it is TimerState.Running && it.entryId != null } as TimerState.Running
+        val cached = awaitState(
+            "the cache's entry shows",
+        ) { it is TimerState.Running && it.entryId != null } as TimerState.Running
         assertEquals(TAP, cached.start)
         assertEquals(draft, cached.fields)
 
@@ -168,7 +170,11 @@ class TimerViewModelTest {
 
         onMain { model.stop() }
         onMain { model.shown(cached) }
-        assertEquals("the running timer is not what Stop did", listOf("begin TimerStart", "end TimerStart", "begin TimerStop"), taps)
+        assertEquals(
+            "the running timer is not what Stop did",
+            listOf("begin TimerStart", "end TimerStart", "begin TimerStop"),
+            taps,
+        )
         val stopped = awaitIdle()
         onMain { model.shown(stopped) }
         assertEquals(listOf("begin TimerStart", "end TimerStart", "begin TimerStop", "end TimerStop"), taps)
@@ -199,13 +205,17 @@ class TimerViewModelTest {
         running.value = cachedRunning(description = "Review")
         awaitState("the cached running entry shows") { it is TimerState.Running && it.entryId == RUNNING_ID }
         onMain { model.editDescription("Review the queue") }
-        awaitState("the typed description shows") { it is TimerState.Running && it.fields.description == "Review the queue" }
+        awaitState(
+            "the typed description shows",
+        ) { it is TimerState.Running && it.fields.description == "Review the queue" }
         assertEquals("typing queues nothing", emptyList<String>(), changes.calls)
 
         changes.gate = CompletableDeferred()
         onMain { model.stop() }
 
-        val idle = awaitState("the idle timer shows before the queue has written the stop") { it is TimerState.Idle } as TimerState.Idle
+        val idle = awaitState(
+            "the idle timer shows before the queue has written the stop",
+        ) { it is TimerState.Idle } as TimerState.Idle
         assertEquals(EntryFields(), idle.fields)
         assertEquals(
             "the stop carries the description in the same change",
@@ -242,7 +252,9 @@ class TimerViewModelTest {
         running.value = cachedRunning(description = "Old")
         awaitState("the cached running entry shows") { it is TimerState.Running && it.entryId == RUNNING_ID }
         onMain { model.editDescription("Typed on the phone") }
-        awaitState("the typed description shows") { it is TimerState.Running && it.fields.description == "Typed on the phone" }
+        awaitState(
+            "the typed description shows",
+        ) { it is TimerState.Running && it.fields.description == "Typed on the phone" }
 
         // A refresh brings the server's description while the user types.
         running.value = cachedRunning(description = "Changed on the web")
@@ -253,7 +265,9 @@ class TimerViewModelTest {
         awaitCache("the cache has the description") { it?.description == "Typed on the phone" }
         // The next refresh brings a later change from the web.
         running.value = cachedRunning(description = "Changed on the web again")
-        awaitState("the web's later change shows") { it is TimerState.Running && it.fields.description == "Changed on the web again" }
+        awaitState(
+            "the web's later change shows",
+        ) { it is TimerState.Running && it.fields.description == "Changed on the web again" }
     }
 
     @Test
@@ -269,12 +283,20 @@ class TimerViewModelTest {
         awaitCache("the cache is billable") { it?.billable == true }
 
         onMain { model.pick(Picked(projectId = APP.id, taskId = DESIGN.id, tags = listOf("planning"))) }
-        val shown = awaitState("the project and task show") { it is TimerState.Running && it.labels.task != null } as TimerState.Running
+        val shown = awaitState(
+            "the project and task show",
+        ) { it is TimerState.Running && it.labels.task != null } as TimerState.Running
 
         assertEquals(
             listOf(
                 "update $RUNNING_ID ${EntryFields(description = "Plan the week", billable = true)}",
-                "update $RUNNING_ID ${EntryFields("Plan the week", APP.id, DESIGN.id, listOf("planning"), billable = true)}",
+                "update $RUNNING_ID ${EntryFields(
+                    "Plan the week",
+                    APP.id,
+                    DESIGN.id,
+                    listOf("planning"),
+                    billable = true,
+                )}",
             ),
             changes.calls,
         )
@@ -289,7 +311,9 @@ class TimerViewModelTest {
         assertEquals(false, (model.state.value as TimerState.Idle).fields.billable)
 
         onMain { model.pick(Picked(projectId = CLIENT_WORK.id, tags = listOf("call"))) }
-        val idle = awaitState("the project shows") { it is TimerState.Idle && it.fields.projectId == CLIENT_WORK.id } as TimerState.Idle
+        val idle = awaitState(
+            "the project shows",
+        ) { it is TimerState.Idle && it.fields.projectId == CLIENT_WORK.id } as TimerState.Idle
         assertEquals(true, idle.fields.billable)
         assertEquals(EntryLabels(project = CLIENT_WORK.name, projectColor = CLIENT_WORK.color), idle.labels)
     }
@@ -311,14 +335,25 @@ class TimerViewModelTest {
     fun aFavoriteStartsAtOnceAndTheDraftGoes() {
         awaitIdle()
         onMain { model.editDescription("A draft") }
-        val favorite = EntryFields(description = "Write the report", projectId = APP.id, tags = listOf("call"), billable = true)
+        val favorite = EntryFields(
+            description = "Write the report",
+            projectId = APP.id,
+            tags = listOf("call"),
+            billable = true,
+        )
 
         changes.gate = CompletableDeferred()
         onMain { model.startFrom(favorite) }
-        val shown = awaitState("the favorite runs before the queue has written it") { it is TimerState.Running } as TimerState.Running
+        val shown = awaitState(
+            "the favorite runs before the queue has written it",
+        ) { it is TimerState.Running } as TimerState.Running
         assertEquals(favorite, shown.fields)
         assertEquals(TAP, shown.start)
-        assertEquals("the queue read the tap time on the tap", listOf("start $WORKSPACE $favorite at $TAP"), changes.calls)
+        assertEquals(
+            "the queue read the tap time on the tap",
+            listOf("start $WORKSPACE $favorite at $TAP"),
+            changes.calls,
+        )
 
         changes.gate.complete(Unit)
         awaitState("the cache's entry shows") { it is TimerState.Running && it.entryId != null }
@@ -340,10 +375,15 @@ class TimerViewModelTest {
         onMain { model.startFrom(favorite) }
         awaitCache("the favorite runs") { it?.description == "Write the report" }
         assertEquals(
-            listOf("update $RUNNING_ID ${cachedRunning("Old, typed").entry.fields()}", "start $WORKSPACE $favorite at $TAP"),
+            listOf(
+                "update $RUNNING_ID ${cachedRunning("Old, typed").entry.fields()}",
+                "start $WORKSPACE $favorite at $TAP",
+            ),
             changes.calls,
         )
-        val shown = awaitState("the favorite shows running") { it is TimerState.Running && it.entryId != RUNNING_ID } as TimerState.Running
+        val shown = awaitState(
+            "the favorite shows running",
+        ) { it is TimerState.Running && it.entryId != RUNNING_ID } as TimerState.Running
         assertEquals(favorite, shown.fields)
     }
 
@@ -360,7 +400,13 @@ class TimerViewModelTest {
     @Test
     fun aSuggestionFillsEveryFieldOfTheDraftAndOfTheRunningEntry() {
         awaitIdle()
-        val picked = EntryFields(description = "Write the report", projectId = APP.id, taskId = DESIGN.id, tags = listOf("call"), billable = true)
+        val picked = EntryFields(
+            description = "Write the report",
+            projectId = APP.id,
+            taskId = DESIGN.id,
+            tags = listOf("call"),
+            billable = true,
+        )
         onMain {
             model.editDescription("rep")
             model.fill(picked)
@@ -404,7 +450,9 @@ class TimerViewModelTest {
         )
 
         changes.gate.complete(Unit)
-        val cached = awaitState("the cache's entry shows") { it is TimerState.Running && it.entryId != null } as TimerState.Running
+        val cached = awaitState(
+            "the cache's entry shows",
+        ) { it is TimerState.Running && it.entryId != null } as TimerState.Running
         assertEquals(PAST.fields(), cached.fields)
     }
 
@@ -431,7 +479,9 @@ class TimerViewModelTest {
 
         onMain { model.continueEntry(PAST) }
 
-        awaitState("the continued entry shows") { it is TimerState.Running && it.entryId != null && it.entryId != RUNNING_ID }
+        awaitState(
+            "the continued entry shows",
+        ) { it is TimerState.Running && it.entryId != null && it.entryId != RUNNING_ID }
         val typed = cachedRunning("Write the timer").entry.fields().copy(description = "Write the timer model")
         assertEquals(
             "the typed description goes to the queue before the start stops its entry",
@@ -448,7 +498,9 @@ class TimerViewModelTest {
 
         onMain { model.continueEntry(PAST) }
 
-        val idle = awaitState("the idle timer shows again") { it is TimerState.Idle && it.fields.description.isNotEmpty() } as TimerState.Idle
+        val idle = awaitState(
+            "the idle timer shows again",
+        ) { it is TimerState.Idle && it.fields.description.isNotEmpty() } as TimerState.Idle
         assertEquals(EntryFields(description = "A draft"), idle.fields)
     }
 
@@ -505,7 +557,11 @@ class TimerViewModelTest {
     private fun awaitAnnounced(announced: List<Int>, expected: List<Int>) {
         val deadline = System.nanoTime() + TIMEOUT_MS * 1_000_000
         while (announced != expected) {
-            if (System.nanoTime() > deadline) throw AssertionError("announced $announced, not $expected, after ${changes.calls}")
+            if (System.nanoTime() > deadline) {
+                throw AssertionError(
+                    "announced $announced, not $expected, after ${changes.calls}",
+                )
+            }
             Thread.sleep(POLL_MS)
         }
     }
@@ -522,7 +578,9 @@ class TimerViewModelTest {
         }
     }
 
-    private fun awaitIdle(): TimerState.Idle = awaitState("the idle timer shows") { it is TimerState.Idle } as TimerState.Idle
+    private fun awaitIdle(): TimerState.Idle = awaitState(
+        "the idle timer shows",
+    ) { it is TimerState.Idle } as TimerState.Idle
 
     private fun awaitState(what: String, condition: (TimerState) -> Boolean): TimerState {
         var last: TimerState? = null
@@ -535,7 +593,11 @@ class TimerViewModelTest {
     private fun awaitCache(what: String, condition: (CachedTimeEntry?) -> Boolean) {
         val deadline = System.nanoTime() + TIMEOUT_MS * 1_000_000
         while (!condition(running.value?.entry)) {
-            if (System.nanoTime() > deadline) throw AssertionError("timed out waiting until $what, after ${changes.calls}")
+            if (System.nanoTime() > deadline) {
+                throw AssertionError(
+                    "timed out waiting until $what, after ${changes.calls}",
+                )
+            }
             Thread.sleep(POLL_MS)
         }
     }
@@ -602,7 +664,13 @@ class TimerViewModelTest {
             return true
         }
 
-        override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?, noTimeDay: LocalDate?): Boolean {
+        override suspend fun update(
+            entryId: Long,
+            fields: EntryFields,
+            start: Instant,
+            stop: Instant?,
+            noTimeDay: LocalDate?,
+        ): Boolean {
             calls += "update $entryId $fields"
             gate.await()
             val current = running.value?.entry?.takeIf { it.id == entryId } ?: return false
@@ -621,11 +689,19 @@ class TimerViewModelTest {
             return true
         }
 
-        override suspend fun updateRunning(identity: RunningEntryIdentity, fields: EntryFields, start: Instant): Boolean =
-            update(identity.entryId, fields, start, stop = null)
+        override suspend fun updateRunning(
+            identity: RunningEntryIdentity,
+            fields: EntryFields,
+            start: Instant,
+        ): Boolean = update(identity.entryId, fields, start, stop = null)
 
-        override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant, noTimeDay: LocalDate?): Long =
-            throw AssertionError("the timer creates no stopped entry")
+        override suspend fun create(
+            workspaceId: Long,
+            fields: EntryFields,
+            start: Instant,
+            stop: Instant,
+            noTimeDay: LocalDate?,
+        ): Long = throw AssertionError("the timer creates no stopped entry")
 
         override suspend fun delete(entryId: Long): Boolean = throw AssertionError("the timer deletes nothing")
     }
@@ -645,8 +721,24 @@ class TimerViewModelTest {
             timeResolutionMinutes = null,
             defaultWorkspaceId = WORKSPACE,
         )
-        val APP = CachedProject(1, WORKSPACE, clientId = null, name = "Tokkl for Android", color = "#0b83d9", active = true, billable = false)
-        val CLIENT_WORK = CachedProject(2, WORKSPACE, clientId = null, name = "Client work", color = "#d94182", active = true, billable = true)
+        val APP = CachedProject(
+            1,
+            WORKSPACE,
+            clientId = null,
+            name = "Tokkl for Android",
+            color = "#0b83d9",
+            active = true,
+            billable = false,
+        )
+        val CLIENT_WORK = CachedProject(
+            2,
+            WORKSPACE,
+            clientId = null,
+            name = "Client work",
+            color = "#d94182",
+            active = true,
+            billable = true,
+        )
         val DESIGN = CachedTask(5, WORKSPACE, projectId = APP.id, name = "Design", active = true)
         const val OTHER_WORKSPACE = 20L
 

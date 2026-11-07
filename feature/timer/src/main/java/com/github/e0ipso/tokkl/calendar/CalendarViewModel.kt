@@ -17,11 +17,6 @@ import com.github.e0ipso.tokkl.entryfields.TimeRange
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.AppEvent
 import com.github.e0ipso.tokkl.time.AccountTime
-import java.time.Clock
-import java.time.Duration
-import java.time.Instant
-import java.time.LocalDate
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -38,6 +33,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.time.Clock
+import java.time.Duration
+import java.time.Instant
+import java.time.LocalDate
+import kotlin.coroutines.CoroutineContext
 
 /**
  * The calendar on the Timer page (docs/PRD.md K1): a week at a time, from the account's first day
@@ -132,11 +132,19 @@ class CalendarViewModel(
      */
     val foregrounds: StateFlow<Int> = foregroundCount
 
-    val state: StateFlow<CalendarState> = combine(entries, projects, tasks, accountSettings, choice) { cached, projectRows, taskRows, settings, (day, weeks, overrides, offered) ->
+    val state: StateFlow<CalendarState> = combine(
+        entries,
+        projects,
+        tasks,
+        accountSettings,
+        choice,
+    ) { cached, projectRows, taskRows, settings, (day, weeks, overrides, offered) ->
         val time = settings?.time(clock)
         when {
             settings == null -> CalendarState.Loading
+
             time == null -> CalendarState.NoAccountTime(settings.timeZone)
+
             else -> {
                 val today = time.today()
                 val shown = day ?: today
@@ -147,7 +155,11 @@ class CalendarViewModel(
                 val restored = resolved.mapValues { (id, entry) ->
                     entry?.let { edits[id]?.entry ?: server?.entries?.firstOrNull { it.id == id } ?: it }
                 }
-                val (current, serverRows) = reconcileEntryRows(cached, server?.entries.orEmpty().map { edits[it.id]?.entry ?: it }, restored)
+                val (current, serverRows) = reconcileEntryRows(
+                    cached,
+                    server?.entries.orEmpty().map { edits[it.id]?.entry ?: it },
+                    restored,
+                )
                 CalendarState.Shown(
                     selected = shown,
                     weekStart = weekStart,
@@ -193,7 +205,11 @@ class CalendarViewModel(
         val time = accountSettings.value?.time(clock) ?: return
         val span = spanOf(time, weekStart, time.today())
         val known = loaded.value[span]
-        if (known != null && (known.status == WeekSource.Loading || known.status == WeekSource.Loaded && !known.stale)) return
+        if (known != null &&
+            (known.status == WeekSource.Loading || known.status == WeekSource.Loaded && !known.stale)
+        ) {
+            return
+        }
         val before = known?.takeIf { it.status == WeekSource.Loaded }
         loaded.update { it + (span to (before?.copy(stale = false) ?: ServerWeek(emptyList(), WeekSource.Loading))) }
         // The server has every edit that the cache no longer holds, so this load's copies replace them.
@@ -243,7 +259,17 @@ class CalendarViewModel(
     fun cameToForeground() {
         if (!backgrounded) return
         backgrounded = false
-        loaded.update { weeks -> weeks.mapValues { (_, week) -> if (week.status == WeekSource.Loaded) week.copy(stale = true) else week } }
+        loaded.update { weeks ->
+            weeks.mapValues { (_, week) ->
+                if (week.status == WeekSource.Loaded) {
+                    week.copy(
+                        stale = true,
+                    )
+                } else {
+                    week
+                }
+            }
+        }
         foregroundCount.update { it + 1 }
     }
 
@@ -261,13 +287,23 @@ class CalendarViewModel(
      * stores for it. One that the cache holds inside its window shows from the cache, and one that
      * the cache dropped keeps its copy, no longer held.
      */
-    private fun keepEdits(cached: List<EntryWithSendState>, weeks: Map<WeekSpan, ServerWeek>, time: AccountTime, restored: Set<Long>): Map<Long, Edit> {
+    private fun keepEdits(
+        cached: List<EntryWithSendState>,
+        weeks: Map<WeekSpan, ServerWeek>,
+        time: AccountTime,
+        restored: Set<Long>,
+    ): Map<Long, Edit> {
         val ids = weeks.values.flatMapTo(HashSet()) { week -> week.entries.map { it.id } } + restored
         val windowStart = HistoryWindow.endingToday(time).start
         val held = cached.filter { it.entry.id in ids }.associateBy { it.entry.id }
         return edited.updateAndGet { edits ->
             val dropped = edits.filterKeys { it !in held }.mapValues { (_, edit) -> edit.copy(held = false) }
-            val kept = held.values.filter { it.entry.start < windowStart }.associate { it.entry.id to Edit(it.entry.stored(time), held = true) }
+            val kept = held.values.filter { it.entry.start < windowStart }.associate {
+                it.entry.id to Edit(
+                    it.entry.stored(time),
+                    held = true,
+                )
+            }
             dropped + kept
         }
     }
@@ -319,7 +355,10 @@ class CalendarViewModel(
             val cached = entries.first().firstOrNull { it.entry.id == entry.id }?.entry
             when {
                 cached != null -> changes.update(cached.id, cached.fields(), span.start, span.stop)
-                else -> serverEntry(entry.id)?.let { changes.updateOlder(it.id, it.workspaceId, it.fields(), span.start, span.stop) }
+
+                else -> serverEntry(
+                    entry.id,
+                )?.let { changes.updateOlder(it.id, it.workspaceId, it.fields(), span.start, span.stop) }
             }
         }
     }

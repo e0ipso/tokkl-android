@@ -24,11 +24,11 @@ import com.github.e0ipso.tokkl.ui.TokklTopBar
 import com.github.e0ipso.tokkl.ui.TopBarStatusBand
 import com.github.e0ipso.tokkl.ui.WindowWidth
 import com.github.e0ipso.tokkl.ui.compactHeightWindow
-import com.github.e0ipso.tokkl.ui.windowWidth
 import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
 import com.github.e0ipso.tokkl.ui.theme.TokklSpacing
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
+import com.github.e0ipso.tokkl.ui.windowWidth
 
 /**
  * How the Timer page shows time entries, as the web app's view switch does. [preferenceValue] is

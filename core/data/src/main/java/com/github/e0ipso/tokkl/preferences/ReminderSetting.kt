@@ -9,8 +9,6 @@ import com.github.e0ipso.tokkl.session.AccountRefreshed
 import com.github.e0ipso.tokkl.session.MePreferences
 import com.github.e0ipso.tokkl.session.SignOutOrder
 import com.github.e0ipso.tokkl.storage.ClearableStore
-import java.io.IOException
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,6 +23,8 @@ import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.put
+import java.io.IOException
+import kotlin.coroutines.CoroutineContext
 
 /** Tokkl main: packages/types/index.ts and packages/api/src/models/users.ts. */
 data class ReminderPreferences(val enabled: Boolean = true, val hours: Int = 8) {
@@ -48,7 +48,8 @@ class ReminderSetting(
     private val client: ApiClientProvider,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
-) : AccountRefreshListener, AccountDataOwner {
+) : AccountRefreshListener,
+    AccountDataOwner {
 
     override val signOutOrder = SignOutOrder.REMINDER_SETTING
 
@@ -94,13 +95,20 @@ class ReminderSetting(
     fun refreshed(preferences: MePreferences?, tokkl: Boolean): Job {
         val expected = synchronized(lock) {
             val wasShared = loaded.shared
-            if (!tokkl) loaded.shared = false
-            else if (preferences != null) loaded.shared = preferences.body.keys.containsAll(
-                listOf(ReminderPreferences.ENABLED_KEY, ReminderPreferences.HOURS_KEY),
-            )
+            if (!tokkl) {
+                loaded.shared = false
+            } else if (preferences != null) {
+                loaded.shared = preferences.body.keys.containsAll(
+                    listOf(ReminderPreferences.ENABLED_KEY, ReminderPreferences.HOURS_KEY),
+                )
+            }
             if (loaded.shared && !wasShared && changed) loaded.unsent = true
             if (!loaded.shared) loaded.unsent = false
-            if (loaded.shared && !loaded.unsent && !changed && preferences != null) loaded.state.value = preferences.reminderPreferences()
+            if (loaded.shared && !loaded.unsent && !changed &&
+                preferences != null
+            ) {
+                loaded.state.value = preferences.reminderPreferences()
+            }
             changed = false
             generation
         }
@@ -117,11 +125,15 @@ class ReminderSetting(
     }
 
     private suspend fun send(expected: Long) = sending.withLock {
-        val values = synchronized(lock) { loaded.state.value.takeIf { expected == generation && loaded.unsent && loaded.shared } } ?: return@withLock
+        val values = synchronized(
+            lock,
+        ) { loaded.state.value.takeIf { expected == generation && loaded.unsent && loaded.shared } } ?: return@withLock
         val api = client() ?: return@withLock
         val result = api.send("POST", api.server.api("me", "preferences"), values.body(), JsonObject.serializer())
-        if (result is ApiResult.Success) synchronized(lock) {
-            if (expected == generation && loaded.state.value == values) loaded.unsent = false
+        if (result is ApiResult.Success) {
+            synchronized(lock) {
+                if (expected == generation && loaded.state.value == values) loaded.unsent = false
+            }
         }
         persist(expected)
     }
@@ -143,7 +155,8 @@ internal fun ReminderPreferences.body() = buildJsonObject {
 
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 fun MePreferences.reminderPreferences(): ReminderPreferences {
-    val enabled = (body[ReminderPreferences.ENABLED_KEY] as? JsonPrimitive)?.takeUnless { it.isString }?.booleanOrNull ?: true
+    val enabled =
+        (body[ReminderPreferences.ENABLED_KEY] as? JsonPrimitive)?.takeUnless { it.isString }?.booleanOrNull ?: true
     val number = (body[ReminderPreferences.HOURS_KEY] as? JsonPrimitive)?.takeUnless { it.isString }?.doubleOrNull
     val hours = number?.takeIf { it % 1.0 == 0.0 && it >= 1 && it <= 168 }?.toInt() ?: 8
     return ReminderPreferences(enabled, hours)

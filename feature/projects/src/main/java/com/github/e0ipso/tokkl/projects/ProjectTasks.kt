@@ -35,8 +35,6 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
-import com.github.e0ipso.tokkl.feature.projects.R
-import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.catalog.CancelAndConfirm
 import com.github.e0ipso.tokkl.catalog.CatalogChange
 import com.github.e0ipso.tokkl.catalog.CatalogListRow
@@ -45,11 +43,13 @@ import com.github.e0ipso.tokkl.catalog.ConfirmDialog
 import com.github.e0ipso.tokkl.catalog.DetailLine
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.catalog.problemText
+import com.github.e0ipso.tokkl.feature.projects.R
 import com.github.e0ipso.tokkl.ui.CheckboxOptionRow
 import com.github.e0ipso.tokkl.ui.ErrorBanner
 import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklIconButton
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /** What the task list's controls do. */
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
@@ -148,6 +148,7 @@ internal fun ProjectTasks(state: TasksState, project: Project, offline: Boolean,
             onSave = actions.onSave,
             onCancel = actions.onDismiss,
         )
+
         is TaskOverlay.ConfirmDelete -> ConfirmDialog(
             title = stringResource(R.string.project_task_delete_title, overlay.task.name),
             paragraphs = listOf(stringResource(R.string.project_task_delete_message)),
@@ -158,13 +159,20 @@ internal fun ProjectTasks(state: TasksState, project: Project, offline: Boolean,
             onCancel = actions.onDismiss,
             danger = true,
         )
+
         null -> Unit
     }
 }
 
 /** The web app's field and Add task button, which adds a task at once. */
 @Composable
-private fun NewTaskField(name: String, nameMissing: Boolean, enabled: Boolean, onNameChange: (String) -> Unit, onAdd: () -> Unit) {
+private fun NewTaskField(
+    name: String,
+    nameMissing: Boolean,
+    enabled: Boolean,
+    onNameChange: (String) -> Unit,
+    onAdd: () -> Unit,
+) {
     Column(verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup)) {
         OutlinedTextField(
             value = name,
@@ -178,7 +186,10 @@ private fun NewTaskField(name: String, nameMissing: Boolean, enabled: Boolean, o
             isError = nameMissing,
             singleLine = true,
             enabled = enabled,
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Done),
+            keyboardOptions = KeyboardOptions(
+                capitalization = KeyboardCapitalization.Sentences,
+                imeAction = ImeAction.Done,
+            ),
             keyboardActions = KeyboardActions(onDone = { onAdd() }),
             modifier = Modifier.fillMaxWidth(),
         )
@@ -244,7 +255,12 @@ private fun TaskDialog(
     }
     AlertDialog(
         onDismissRequest = onCancel,
-        title = { Text(text = stringResource(R.string.project_task_edit_title, task.name), modifier = Modifier.semantics { heading() }) },
+        title = {
+            Text(
+                text = stringResource(R.string.project_task_edit_title, task.name),
+                modifier = Modifier.semantics { heading() },
+            )
+        },
         text = {
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState()),
@@ -264,17 +280,31 @@ private fun TaskDialog(
                     },
                     isError = nameMissing,
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Done),
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.Sentences,
+                        imeAction = ImeAction.Done,
+                    ),
                     keyboardActions = KeyboardActions(onDone = { if (canSave) save() }),
                     modifier = Modifier
                         .fillMaxWidth()
                         .focusRequester(focus),
                 )
-                CheckboxOptionRow(label = stringResource(R.string.project_task_done), checked = done, onCheckedChange = { done = it })
+                CheckboxOptionRow(
+                    label = stringResource(R.string.project_task_done),
+                    checked = done,
+                    onCheckedChange = { done = it },
+                )
                 problem?.let { ErrorBanner(problemText(it)) }
             }
         },
-        confirmButton = { CancelAndConfirm(stringResource(R.string.project_task_save), onConfirm = save, onCancel = onCancel, enabled = canSave) },
+        confirmButton = {
+            CancelAndConfirm(
+                stringResource(R.string.project_task_save),
+                onConfirm = save,
+                onCancel = onCancel,
+                enabled = canSave,
+            )
+        },
     )
 }
 

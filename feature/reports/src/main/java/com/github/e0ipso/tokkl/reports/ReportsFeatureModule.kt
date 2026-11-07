@@ -8,13 +8,13 @@ import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.AppEvents
 import com.github.e0ipso.tokkl.session.Session
-import java.io.File
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
+import java.io.File
 
 /** Reports: the report CSV files, which a sign-out deletes, the view model and the screen. */
 val reportsFeatureModule = module {

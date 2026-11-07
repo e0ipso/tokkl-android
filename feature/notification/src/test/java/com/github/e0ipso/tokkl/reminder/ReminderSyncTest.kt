@@ -5,14 +5,20 @@ import com.github.e0ipso.tokkl.preferences.ReminderPreferences
 import com.github.e0ipso.tokkl.storage.valueStore
 import com.github.e0ipso.tokkl.timerstate.SurfaceTap
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
-import java.time.Instant
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Test
+import java.time.Instant
 
 class ReminderSyncTest {
     private val now = Instant.parse("2026-10-21T12:00:00Z")
-    private val entry = CachedTimeEntry(1, 1, null, null, "Work", now.minusSeconds(9 * 3600), null, false, emptyList(), emptyList())
+    private val entry = CachedTimeEntry(
+        1, 1, null, null, "Work",
+        now.minusSeconds(
+            9 * 3600,
+        ),
+        null, false, emptyList(), emptyList(),
+    )
     private var input = ReminderInput(entry, ReminderPreferences())
     private var stored: ReminderTimer? = null
     private val waiting = mutableListOf<ReminderTimer>()
@@ -21,20 +27,37 @@ class ReminderSyncTest {
     private val mappings = mutableMapOf<Long, Long>()
     private var removals = 0
     private fun sync() = ReminderSync(
-        latest = { input }, currentId = { mappings[it] ?: it }, timers = valueStore(load = { stored }, save = { stored = it }),
-        schedule = { if (waiting.none { old -> old.id == it.id && old.start == it.start && old.due == it.due }) waiting += it },
-        cancel = { waiting.clear() }, post = { posted += it }, remove = {}, stop = { stopped += it; true },
+        latest = { input },
+        currentId = { mappings[it] ?: it },
+        timers = valueStore(load = { stored }, save = { stored = it }),
+        schedule = {
+            if (waiting.none { old -> old.id == it.id && old.start == it.start && old.due == it.due }) {
+                waiting +=
+                    it
+            }
+        },
+        cancel = { waiting.clear() },
+        post = { posted += it },
+        remove = {},
+        stop = {
+            stopped += it
+            true
+        },
     )
 
     @Test fun oneDelayAtStartPlusHoursAndNoDelayWhenIdleOrDisabled() = runBlocking {
         val sync = sync()
-        sync.reconcile(); sync.reconcile()
+        sync.reconcile()
+        sync.reconcile()
         assertEquals(1, waiting.size)
         assertEquals(entry.start.plusSeconds(8 * 3600).toEpochMilli(), waiting.single().due)
-        input = input.copy(preferences = ReminderPreferences(false, 8)); sync.reconcile()
+        input = input.copy(preferences = ReminderPreferences(false, 8))
+        sync.reconcile()
         assertTrue(waiting.isEmpty())
-        input = input.copy(running = null); sync.reconcile()
-        assertNull(stored); assertTrue(waiting.isEmpty())
+        input = input.copy(running = null)
+        sync.reconcile()
+        assertNull(stored)
+        assertTrue(waiting.isEmpty())
     }
 
     @Test fun oncePerTimerAcrossRestartDescriptionEditAndPreferenceChanges() = runBlocking {
@@ -53,12 +76,17 @@ class ReminderSyncTest {
         sync.fire(1, entry.start.epochSecond, entry.start.epochSecond * 1000 + input.preferences.hours * 3_600_000L)
         sync.act(1, entry.start.epochSecond, false)
         sync.fire(1, entry.start.epochSecond, entry.start.epochSecond * 1000 + input.preferences.hours * 3_600_000L)
-        assertEquals(1, posted.size); assertTrue(stopped.isEmpty())
+        assertEquals(1, posted.size)
+        assertTrue(stopped.isEmpty())
         val corrected = entry.copy(start = entry.start.minusSeconds(3600))
         input = input.copy(running = corrected)
         sync.fire(1, entry.start.epochSecond, entry.start.epochSecond * 1000 + input.preferences.hours * 3_600_000L)
         assertEquals("old worker cannot deliver corrected timer", 1, posted.size)
-        sync.fire(1, corrected.start.epochSecond, corrected.start.epochSecond * 1000 + input.preferences.hours * 3_600_000L)
+        sync.fire(
+            1,
+            corrected.start.epochSecond,
+            corrected.start.epochSecond * 1000 + input.preferences.hours * 3_600_000L,
+        )
         assertEquals(2, posted.size)
     }
 
@@ -67,7 +95,8 @@ class ReminderSyncTest {
         sync.reconcile()
         input = input.copy(running = null)
         sync.fire(1, entry.start.epochSecond, entry.start.epochSecond * 1000 + input.preferences.hours * 3_600_000L)
-        assertTrue(posted.isEmpty()); assertTrue(waiting.isEmpty())
+        assertTrue(posted.isEmpty())
+        assertTrue(waiting.isEmpty())
         input = input.copy(running = entry.copy(id = 2))
         sync.act(1, entry.start.epochSecond, true)
         assertTrue(stopped.isEmpty())
@@ -107,11 +136,22 @@ class ReminderSyncTest {
 
     @Test fun pauseGoesToTheServerAfterTheBroadcastEndsAndResumeRemindsFromTheNewSegmentsStart() = runBlocking {
         val events = mutableListOf<String>()
-        val sync = pausing { id -> SurfaceTap.Request { events += "pause $id"; TimerActionResult.Done } }
+        val sync = pausing { id ->
+            SurfaceTap.Request {
+                events += "pause $id"
+                TimerActionResult.Done
+            }
+        }
         sync.fire(1, entry.start.epochSecond, entry.start.epochSecond * 1000 + input.preferences.hours * 3_600_000L)
         val removed = removals
 
-        val result = sync.act(1, entry.start.epochSecond, stopTimer = false, pauseTimer = true, beforeRequest = { events += "broadcast ends" })
+        val result = sync.act(
+            1,
+            entry.start.epochSecond,
+            stopTimer = false,
+            pauseTimer = true,
+            beforeRequest = { events += "broadcast ends" },
+        )
 
         assertEquals(TimerActionResult.Done, result)
         assertEquals(listOf("broadcast ends", "pause 1"), events)
@@ -132,9 +172,15 @@ class ReminderSyncTest {
         sync.fire(1, entry.start.epochSecond, entry.start.epochSecond * 1000 + input.preferences.hours * 3_600_000L)
         val removed = removals
 
-        assertEquals(TimerActionResult.Offline, sync.act(1, entry.start.epochSecond, stopTimer = false, pauseTimer = true))
+        assertEquals(
+            TimerActionResult.Offline,
+            sync.act(1, entry.start.epochSecond, stopTimer = false, pauseTimer = true),
+        )
         answer = TimerActionResult.Refused
-        assertEquals(TimerActionResult.Refused, sync.act(1, entry.start.epochSecond, stopTimer = false, pauseTimer = true))
+        assertEquals(
+            TimerActionResult.Refused,
+            sync.act(1, entry.start.epochSecond, stopTimer = false, pauseTimer = true),
+        )
 
         assertEquals("the reminder stays for another try", removed, removals)
         assertTrue("Pause never queues a Stop", stopped.isEmpty())
@@ -143,12 +189,23 @@ class ReminderSyncTest {
     @Test fun aPauseNotOfferedNowOrForAnotherTimerSendsNothing() = runBlocking {
         val asked = mutableListOf<Long>()
         // No timer API, or a Pomodoro session: the app offers no Pause request.
-        val sync = pausing { id -> asked += id; null }
+        val sync = pausing { id ->
+            asked += id
+            null
+        }
         sync.fire(1, entry.start.epochSecond, entry.start.epochSecond * 1000 + input.preferences.hours * 3_600_000L)
         val removed = removals
         var ended = false
 
-        assertNull(sync.act(1, entry.start.epochSecond, stopTimer = false, pauseTimer = true, beforeRequest = { ended = true }))
+        assertNull(
+            sync.act(
+                1,
+                entry.start.epochSecond,
+                stopTimer = false,
+                pauseTimer = true,
+                beforeRequest = { ended = true },
+            ),
+        )
         assertEquals(listOf(1L), asked)
         input = input.copy(running = entry.copy(id = 2))
         assertNull(sync.act(1, entry.start.epochSecond, stopTimer = false, pauseTimer = true))
@@ -159,9 +216,16 @@ class ReminderSyncTest {
     }
 
     private fun pausing(pause: suspend (Long) -> SurfaceTap.Request?) = ReminderSync(
-        latest = { input }, currentId = { mappings[it] ?: it }, timers = valueStore(load = { stored }, save = { stored = it }),
+        latest = { input }, currentId = { mappings[it] ?: it },
+        timers = valueStore(
+            load = { stored },
+            save = { stored = it },
+        ),
         schedule = { waiting += it }, cancel = { waiting.clear() }, post = { posted += it }, remove = { removals++ },
-        stop = { stopped += it; true }, pause = pause,
+        stop = {
+            stopped += it
+            true
+        }, pause = pause,
     )
 
     @Test fun futureTimerWaitsAndChangingHoursReplacesTheDelay() = runBlocking {
@@ -173,6 +237,7 @@ class ReminderSyncTest {
         sync.reconcile()
         assertEquals(now.plusSeconds(7200).toEpochMilli(), waiting.single().due)
         sync.forget()
-        assertNull(stored); assertTrue(waiting.isEmpty())
+        assertNull(stored)
+        assertTrue(waiting.isEmpty())
     }
 }

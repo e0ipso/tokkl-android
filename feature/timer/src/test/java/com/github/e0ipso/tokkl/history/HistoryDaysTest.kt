@@ -5,16 +5,16 @@ import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryWithSendState
 import com.github.e0ipso.tokkl.time.AccountTime
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Test
 
 /** How historyDays groups entries into days in the account's timezone, Madrid here. */
 class HistoryDaysTest {
@@ -31,7 +31,9 @@ class HistoryDaysTest {
                 sent(entry(4, "2026-10-15T06:00:00Z", "2026-10-15T07:00:00Z", project = 9, task = 90)),
             ),
             older = emptyList(),
-            projects = listOf(CachedProject(9, 1, null, "Tokkl for Android", "#0b83d9", active = true, billable = false)),
+            projects = listOf(
+                CachedProject(9, 1, null, "Tokkl for Android", "#0b83d9", active = true, billable = false),
+            ),
             tasks = listOf(CachedTask(90, 1, 9, "Reports", active = true)),
             time = time(resolution = 15.0),
         )
@@ -73,7 +75,13 @@ class HistoryDaysTest {
         assertEquals(snapped.stop, shown.stop)
         assertTrue(shown.unsent)
 
-        val withoutResolution = historyDays(listOf(unsent(raw)), emptyList(), emptyList(), emptyList(), time(resolution = null))
+        val withoutResolution = historyDays(
+            listOf(unsent(raw)),
+            emptyList(),
+            emptyList(),
+            emptyList(),
+            time(resolution = null),
+        )
             .single().entries.single()
         assertEquals(raw.start, withoutResolution.start)
         assertEquals(raw.stop, withoutResolution.stop)
@@ -113,7 +121,10 @@ class HistoryDaysTest {
     @Test
     fun aCachedEntryFromBeforeTheWindowShowsAsNotCached() {
         val days = historyDays(
-            cached = listOf(sent(entry(1, "2026-10-14T08:00:00Z", "2026-10-14T09:00:00Z")), unsent(entry(2, "2026-09-01T08:00:00Z", "2026-09-01T09:00:00Z"))),
+            cached = listOf(
+                sent(entry(1, "2026-10-14T08:00:00Z", "2026-10-14T09:00:00Z")),
+                unsent(entry(2, "2026-09-01T08:00:00Z", "2026-09-01T09:00:00Z")),
+            ),
             older = emptyList(),
             projects = emptyList(),
             tasks = emptyList(),
@@ -144,7 +155,13 @@ class HistoryDaysTest {
         // A server row without a day: its start is local midnight of the 14th in Madrid.
         val bare = noTime(2, "2026-10-13T22:00:00Z", seconds = 3600, day = null)
 
-        val days = historyDays(listOf(sent(stale), sent(bare)), emptyList(), emptyList(), emptyList(), time(resolution = 15.0))
+        val days = historyDays(
+            listOf(sent(stale), sent(bare)),
+            emptyList(),
+            emptyList(),
+            emptyList(),
+            time(resolution = 15.0),
+        )
 
         val day = days.single()
         assertEquals(LocalDate.of(2026, 10, 14), day.date)
@@ -160,7 +177,11 @@ class HistoryDaysTest {
         val inside = noTime(1, "2026-10-01T22:00:00Z", seconds = 600, day = LocalDate.of(2026, 10, 2))
 
         val shown = historyDays(
-            listOf(sent(inside)), emptyList(), emptyList(), emptyList(), time(resolution = null),
+            listOf(sent(inside)),
+            emptyList(),
+            emptyList(),
+            emptyList(),
+            time(resolution = null),
             windowStart = LocalDate.of(2026, 10, 2),
         ).single().entries.single()
 
@@ -204,18 +225,19 @@ class HistoryDaysTest {
 
     private fun unsent(entry: CachedTimeEntry) = EntryWithSendState(entry, unsent = true)
 
-    private fun entry(id: Long, start: String, stop: String?, project: Long? = null, task: Long? = null) = CachedTimeEntry(
-        id = id,
-        workspaceId = 1,
-        projectId = project,
-        taskId = task,
-        description = "Entry $id",
-        start = Instant.parse(start),
-        stop = stop?.let(Instant::parse),
-        billable = false,
-        tags = emptyList(),
-        tagIds = emptyList(),
-    )
+    private fun entry(id: Long, start: String, stop: String?, project: Long? = null, task: Long? = null) =
+        CachedTimeEntry(
+            id = id,
+            workspaceId = 1,
+            projectId = project,
+            taskId = task,
+            description = "Entry $id",
+            start = Instant.parse(start),
+            stop = stop?.let(Instant::parse),
+            billable = false,
+            tags = emptyList(),
+            tagIds = emptyList(),
+        )
 
     private companion object {
         val MADRID: ZoneId = ZoneId.of("Europe/Madrid")

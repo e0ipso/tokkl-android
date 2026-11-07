@@ -8,11 +8,11 @@ import com.github.e0ipso.tokkl.cache.RunningCheckStart
 import com.github.e0ipso.tokkl.cache.RunningCheckWrites
 import com.github.e0ipso.tokkl.cache.toCached
 import com.github.e0ipso.tokkl.capabilities.ProbedTimerState
-import java.io.IOException
-import java.time.Clock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.io.IOException
+import java.time.Clock
 
 /**
  * What the cache held when a timer state request went out or a stream began waiting for its next

@@ -42,7 +42,8 @@ data class ReportFilters(
 ) {
 
     /** True when no filter is set, so a report covers every entry of its range. */
-    val isEmpty: Boolean get() = projects.isEmpty() && clients.isEmpty() && tags.isEmpty() && billable == BillableFilter.ALL
+    val isEmpty: Boolean get() = projects.isEmpty() && clients.isEmpty() && tags.isEmpty() &&
+        billable == BillableFilter.ALL
 
     /** These filters with every "Is not" turned back to "Is", for a server that cannot negate. */
     fun withoutNegation(): ReportFilters = copy(projectsNot = false, clientsNot = false, tagsNot = false)
@@ -113,7 +114,11 @@ data class FilterOptions(
         ): FilterOptions {
             fun inWorkspace(id: Long) = workspaceId == null || id == workspaceId
             return FilterOptions(
-                projects = projects.filter { inWorkspace(it.workspaceId) }.sortedBy { !it.active }.map { FilterOption(it.id, it.name) },
+                projects = projects.filter {
+                    inWorkspace(
+                        it.workspaceId,
+                    )
+                }.sortedBy { !it.active }.map { FilterOption(it.id, it.name) },
                 clients = clients.filter { inWorkspace(it.workspaceId) }.map { FilterOption(it.id, it.name) },
                 tags = tags.filter { inWorkspace(it.workspaceId) }.map { FilterOption(it.id, it.name) },
                 negation = negation,
@@ -131,7 +136,12 @@ internal fun reportFilterOptions(
     cache: AccountCache,
     settings: Flow<AccountSettings?>,
     capabilities: Flow<Capabilities>,
-): Flow<FilterOptions> =
-    combine(cache.projects, cache.clients, cache.tags, settings, capabilities) { projects, clients, tags, account, flags ->
-        FilterOptions.of(projects, clients, tags, account?.defaultWorkspaceId, negation = flags.negatedFilters)
-    }
+): Flow<FilterOptions> = combine(
+    cache.projects,
+    cache.clients,
+    cache.tags,
+    settings,
+    capabilities,
+) { projects, clients, tags, account, flags ->
+    FilterOptions.of(projects, clients, tags, account?.defaultWorkspaceId, negation = flags.negatedFilters)
+}

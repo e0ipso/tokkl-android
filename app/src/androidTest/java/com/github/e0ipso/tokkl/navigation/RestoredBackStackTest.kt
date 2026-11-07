@@ -8,13 +8,11 @@ import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.feature.settings.R
-import com.github.e0ipso.tokkl.feature.signin.R as SigninR
-import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.bottomBarItem
+import com.github.e0ipso.tokkl.feature.settings.R
 import com.github.e0ipso.tokkl.navhost.label
 import com.github.e0ipso.tokkl.openBarPage
 import com.github.e0ipso.tokkl.session.Session
@@ -23,6 +21,8 @@ import org.junit.Assert.assertFalse
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import com.github.e0ipso.tokkl.feature.signin.R as SigninR
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 
 /**
  * A back stack restored from saved state shows the page it held only while somebody is signed
@@ -68,7 +68,9 @@ class RestoredBackStackTest {
 
     private fun heading(@StringRes label: Int): SemanticsMatcher = hasText(string(label)) and isHeading()
 
-    private fun exists(matcher: SemanticsMatcher): Boolean = composeRule.onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty()
+    private fun exists(matcher: SemanticsMatcher): Boolean = composeRule.onAllNodes(
+        matcher,
+    ).fetchSemanticsNodes().isNotEmpty()
 
     private fun string(@StringRes id: Int): String = context.getString(id)
 

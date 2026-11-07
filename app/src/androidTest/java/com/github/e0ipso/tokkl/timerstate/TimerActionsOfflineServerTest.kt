@@ -17,11 +17,6 @@ import androidx.test.uiautomator.UiDevice
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.BackgroundTrip
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.core.shared.R
-import com.github.e0ipso.tokkl.feature.notification.R as NotificationR
-import com.github.e0ipso.tokkl.feature.pomodoro.R as PomodoroR
-import com.github.e0ipso.tokkl.feature.timer.R as TimerR
-import com.github.e0ipso.tokkl.feature.widget.R as WidgetR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TimerActionToasts
 import com.github.e0ipso.tokkl.api.TimerState
@@ -35,6 +30,7 @@ import com.github.e0ipso.tokkl.components.sessionViewModels
 import com.github.e0ipso.tokkl.components.timerActions
 import com.github.e0ipso.tokkl.components.timerControls
 import com.github.e0ipso.tokkl.components.timerState
+import com.github.e0ipso.tokkl.core.shared.R
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.notification.action
 import com.github.e0ipso.tokkl.notification.stopAction
@@ -49,11 +45,6 @@ import com.github.e0ipso.tokkl.pomodoro.PomodoroViewModel
 import com.github.e0ipso.tokkl.pomodoro.pomodoroAlarmIntent
 import com.github.e0ipso.tokkl.timer.TimerAcceptanceFixture
 import com.github.e0ipso.tokkl.widget.NativeWidget
-import java.time.Duration
-import java.time.Instant
-import java.time.temporal.ChronoUnit
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -71,6 +62,15 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.Duration
+import java.time.Instant
+import java.time.temporal.ChronoUnit
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import com.github.e0ipso.tokkl.feature.notification.R as NotificationR
+import com.github.e0ipso.tokkl.feature.pomodoro.R as PomodoroR
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
+import com.github.e0ipso.tokkl.feature.widget.R as WidgetR
 
 /**
  * Without a connection, each of the six timer actions that need the server, Pause, Resume and
@@ -87,6 +87,7 @@ import org.junit.rules.RuleChain
  */
 class TimerActionsOfflineServerTest {
     private val compose = createEmptyComposeRule()
+
     @get:Rule val rules: RuleChain = RuleChain.outerRule(SessionRule()).around(compose)
     private val fixture = TimerAcceptanceFixture()
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
@@ -138,14 +139,22 @@ class TimerActionsOfflineServerTest {
             tapOnTheTimerPage(R.string.timer_pause_spoken)
             awaitNotice()
             assertUnchanged("Pause on the Timer page", running)
-            toast("Pause on the notification") { TimerSurfaces.runningNotification(ongoing = true).action(NotificationR.string.notification_pause).actionIntent.send() }
+            toast(
+                "Pause on the notification",
+            ) {
+                TimerSurfaces.runningNotification(
+                    ongoing = true,
+                ).action(NotificationR.string.notification_pause).actionIntent.send()
+            }
             assertUnchanged("Pause on the notification", running)
             assertEquals(entry, (shown() as TimerControls.Running).entry.id)
 
             // The other device pauses; the phone learns of it once it is back online.
             AirplaneMode.set(false, fixture.account.client)
             val pausedThere = postTimer("timer", "pause")
-            app.awaitControls<TimerControls.Paused>("the other device's Pause") { it.target.revision == pausedThere.revision }
+            app.awaitControls<TimerControls.Paused>(
+                "the other device's Pause",
+            ) { it.target.revision == pausedThere.revision }
             AirplaneMode.set(true, fixture.account.client)
             val paused = snapshot()
             pausedOffline = paused
@@ -156,9 +165,17 @@ class TimerActionsOfflineServerTest {
             tapOnTheTimerPage(R.string.timer_stop_spoken)
             awaitNotice()
             assertUnchanged("Stop while paused on the Timer page", paused)
-            toast("Resume on the notification") { TimerSurfaces.runningNotification(ongoing = false).action(NotificationR.string.notification_resume).actionIntent.send() }
+            toast(
+                "Resume on the notification",
+            ) {
+                TimerSurfaces.runningNotification(
+                    ongoing = false,
+                ).action(NotificationR.string.notification_resume).actionIntent.send()
+            }
             assertUnchanged("Resume on the notification", paused)
-            toast("Stop while paused on the notification") { TimerSurfaces.runningNotification(ongoing = false).stopAction().actionIntent.send() }
+            toast(
+                "Stop while paused on the notification",
+            ) { TimerSurfaces.runningNotification(ongoing = false).stopAction().actionIntent.send() }
             assertUnchanged("Stop while paused on the notification", paused)
         }
 
@@ -167,7 +184,9 @@ class TimerActionsOfflineServerTest {
             widget.awaitDescription(context.getString(WidgetR.string.widget_resume_description))
             toast("Resume on the widget") { widget.click(context.getString(WidgetR.string.widget_resume_description)) }
             assertUnchanged("Resume on the widget", paused)
-            toast("Stop while paused on the widget") { widget.click(context.getString(WidgetR.string.widget_stop_description)) }
+            toast(
+                "Stop while paused on the widget",
+            ) { widget.click(context.getString(WidgetR.string.widget_stop_description)) }
             assertUnchanged("Stop while paused on the widget", paused)
             widget.awaitDescription(context.getString(WidgetR.string.widget_resume_description))
         }
@@ -194,7 +213,9 @@ class TimerActionsOfflineServerTest {
             val paused = app.awaitControls<TimerControls.Paused>("the phone's Pause")
             val resumed = postTimer("timer", "resume", revision = other.timerState().revision)
             val clone = checkNotNull(resumed.pause?.cloneEntryId)
-            app.awaitControls<TimerControls.Running>("the clone") { it.entry.id == clone && it.accumulatedSeconds == paused.seconds }
+            app.awaitControls<TimerControls.Running>(
+                "the clone",
+            ) { it.entry.id == clone && it.accumulatedSeconds == paused.seconds }
             assertEquals(0, unsent())
 
             AirplaneMode.set(true, fixture.account.client)
@@ -257,7 +278,10 @@ class TimerActionsOfflineServerTest {
 
             AirplaneMode.set(false, fixture.account.client)
             tapOnThePage(R.string.pomodoro_start)
-            compose.waitUntil("the server started the session", 15_000) { page.state.value.pomodoro != null && !page.state.value.busy }
+            compose.waitUntil(
+                "the server started the session",
+                15_000,
+            ) { page.state.value.pomodoro != null && !page.state.value.busy }
             val session = checkNotNull(other.timerState().pomodoro)
             compose.waitUntil("the session notification", 10_000) { TimerSurfaces.sessionNotification() != null }
 
@@ -281,7 +305,9 @@ class TimerActionsOfflineServerTest {
             val phase = PomodoroPhaseKey(session.phase.start)
             val untilEnd = Duration.between(Instant.now(), session.phase.plannedEnd).toMillis().coerceAtLeast(0)
             val ringing = runBlocking {
-                withTimeout(untilEnd + 30_000) { app.pomodoroRinging.state.first { it.serviceRunning && it.playing && it.ring?.phase == phase } }
+                withTimeout(
+                    untilEnd + 30_000,
+                ) { app.pomodoroRinging.state.first { it.serviceRunning && it.playing && it.ring?.phase == phase } }
             }
             compose.waitUntil("the ringing notification", 10_000) { TimerSurfaces.ringingNotification() != null }
             val ring = checkNotNull(TimerSurfaces.ringingNotification())
@@ -325,18 +351,26 @@ class TimerActionsOfflineServerTest {
     /** The other device starts [description] ten minutes ago. Returns its id. */
     private fun otherStarts(description: String): Long {
         val workspace = fixture.account.workspaceId
-        return other.send("POST", other.server.api("workspaces", "$workspace", "time_entries"), buildJsonObject {
-            put("workspace_id", workspace)
-            put("created_with", "tokkl-android tests, another device")
-            put("description", description)
-            put("start", Instant.now().minusSeconds(600).truncatedTo(ChronoUnit.SECONDS).toString())
-            put("duration", -1)
-        }, JsonObject.serializer()).orFail("POST a running entry").getValue("id").jsonPrimitive.long
+        return other.send(
+            "POST",
+            other.server.api("workspaces", "$workspace", "time_entries"),
+            buildJsonObject {
+                put("workspace_id", workspace)
+                put("created_with", "tokkl-android tests, another device")
+                put("description", description)
+                put("start", Instant.now().minusSeconds(600).truncatedTo(ChronoUnit.SECONDS).toString())
+                put("duration", -1)
+            },
+            JsonObject.serializer(),
+        ).orFail("POST a running entry").getValue("id").jsonPrimitive.long
     }
 
     private fun tapOnTheTimerPage(spoken: Int) {
         val button = hasContentDescription(context.getString(spoken)) and hasClickAction()
-        compose.waitUntil("the Timer page offers ${context.getString(spoken)}", 5_000) { compose.onAllNodes(button).fetchSemanticsNodes().isNotEmpty() }
+        compose.waitUntil(
+            "the Timer page offers ${context.getString(spoken)}",
+            5_000,
+        ) { compose.onAllNodes(button).fetchSemanticsNodes().isNotEmpty() }
         compose.onNode(button).performClick()
     }
 
@@ -346,8 +380,14 @@ class TimerActionsOfflineServerTest {
 
     /** Waits until the Timer page's notice says the phone is offline, then until it has gone. */
     private fun awaitNotice() {
-        compose.waitUntil("the offline notice shows", 10_000) { compose.onAllNodesWithText(offline).fetchSemanticsNodes().isNotEmpty() }
-        compose.waitUntil("the offline notice goes", 15_000) { compose.onAllNodesWithText(offline).fetchSemanticsNodes().isEmpty() }
+        compose.waitUntil(
+            "the offline notice shows",
+            10_000,
+        ) { compose.onAllNodesWithText(offline).fetchSemanticsNodes().isNotEmpty() }
+        compose.waitUntil(
+            "the offline notice goes",
+            15_000,
+        ) { compose.onAllNodesWithText(offline).fetchSemanticsNodes().isEmpty() }
     }
 
     private fun assertNoNotice() {
@@ -357,7 +397,10 @@ class TimerActionsOfflineServerTest {
 
     /** Waits until the Pomodoro page says [action] could not reach the server, and shows it. */
     private fun awaitProblem(page: PomodoroViewModel, action: PomodoroAction) {
-        compose.waitUntil("$action fails offline", 15_000) { !page.state.value.busy && page.state.value.problem != null }
+        compose.waitUntil(
+            "$action fails offline",
+            15_000,
+        ) { !page.state.value.busy && page.state.value.problem != null }
         assertEquals(PomodoroProblem(action, TimerActionResult.Offline), page.state.value.problem)
         compose.onNodeWithText(offline).performScrollTo().assertIsDisplayed()
     }
@@ -410,7 +453,9 @@ class TimerActionsOfflineServerTest {
         assertEquals(TimerActionResult.Offline, alarm.state.value.problem)
         compose.onNode(TimerSurfaces.onTheAlarm(hasText(offline))).assertIsDisplayed()
         for (action in listOf(PomodoroR.string.pomodoro_alarm_next, PomodoroR.string.pomodoro_alarm_end)) {
-            compose.onNode(TimerSurfaces.onTheAlarm(hasText(context.getString(action)) and hasClickAction())).assertIsEnabled()
+            compose.onNode(
+                TimerSurfaces.onTheAlarm(hasText(context.getString(action)) and hasClickAction()),
+            ).assertIsEnabled()
         }
         device.pressBack()
         val deadline = SystemClock.elapsedRealtime() + 10_000
@@ -427,9 +472,13 @@ class TimerActionsOfflineServerTest {
     }
 
     /** A timer action from the other device, which must succeed. */
-    private fun postTimer(vararg path: String, revision: Long? = null): TimerState =
-        other.send("POST", other.server.app(*path), buildJsonObject { if (revision != null) put("revision", revision) }, TimerState.serializer())
-            .orFail("POST /api/app/${path.joinToString("/")}")
+    private fun postTimer(vararg path: String, revision: Long? = null): TimerState = other.send(
+        "POST",
+        other.server.app(*path),
+        buildJsonObject { if (revision != null) put("revision", revision) },
+        TimerState.serializer(),
+    )
+        .orFail("POST /api/app/${path.joinToString("/")}")
 
     private fun com.github.e0ipso.tokkl.api.TogglApiClient.timerState(): TimerState =
         get(server.app("timer"), TimerState.serializer()).orFail("GET /api/app/timer")
@@ -437,6 +486,5 @@ class TimerActionsOfflineServerTest {
     private companion object {
         /** A Start or Stop shows on the phone without waiting for any network. */
         const val AT_ONCE_MS = 1_000L
-
     }
 }

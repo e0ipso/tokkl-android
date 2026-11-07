@@ -52,9 +52,6 @@ import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
 import androidx.test.runner.lifecycle.Stage
 import com.github.e0ipso.tokkl.HangingRelay
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.feature.timer.R
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
-import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
@@ -78,6 +75,7 @@ import com.github.e0ipso.tokkl.components.navigationStores
 import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.components.timerActions
 import com.github.e0ipso.tokkl.components.timerControls
+import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.finishWithin
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
@@ -86,13 +84,6 @@ import com.github.e0ipso.tokkl.timer.TimerViewModel
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import com.github.e0ipso.tokkl.timerstate.TimerControls
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import java.time.Duration
-import java.time.Instant
-import java.time.LocalDate
-import java.time.OffsetDateTime
-import java.time.ZoneId
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
@@ -120,6 +111,15 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.Duration
+import java.time.Instant
+import java.time.LocalDate
+import java.time.OffsetDateTime
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * Direct live canaries for the clock-to-running-editor route. Each test owns a real server
@@ -143,6 +143,7 @@ class RunningEntryEditorServerTest {
     private val web by lazy {
         TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(account.apiToken), httpClient = OkHttpClient())
     }
+
     // A stopped version of this fixture must remain inside the cache's history window.
     private val fixtureDay = ZonedDateTime.now(MADRID).toLocalDate().minusDays(2)
     private val fixtureStart get() = fixtureDay.atTime(13, 7, 41).atZone(MADRID).toInstant()
@@ -255,21 +256,33 @@ class RunningEntryEditorServerTest {
     @Test
     fun metadataSaveKeepsSecondsAndInvalidStartFlushesNothing() {
         val id = seedRunning("Metadata original")
-        val project = web.send("POST", web.server.api("workspaces", workspace.toString(), "projects"),
-            buildJsonObject { put("name", "Running project") }, JsonObject.serializer()).orFail("create fixture project")
+        val project = web.send(
+            "POST",
+            web.server.api("workspaces", workspace.toString(), "projects"),
+            buildJsonObject { put("name", "Running project") },
+            JsonObject.serializer(),
+        ).orFail("create fixture project")
             .getValue("id").jsonPrimitive.long
         refresh()
         withMain {
             openClock()
             replace(SharedR.string.entry_description, "Metadata saved")
-            composeRule.onNode(hasContentDescription(string(SharedR.string.entry_no_project_spoken)) and hasClickAction() and inForm())
+            composeRule.onNode(
+                hasContentDescription(string(SharedR.string.entry_no_project_spoken)) and hasClickAction() and inForm(),
+            )
                 .performScrollTo().performClick()
             val projectRow = hasText("Running project") and hasClickAction()
-            composeRule.onNode(hasScrollToNodeAction() and hasAnyDescendant(hasText(string(SharedR.string.picker_project))))
+            composeRule.onNode(
+                hasScrollToNodeAction() and hasAnyDescendant(hasText(string(SharedR.string.picker_project))),
+            )
                 .performScrollToNode(projectRow)
             composeRule.onNode(projectRow).performClick()
-            composeRule.onNode(hasSetTextAction() and hasText(string(SharedR.string.picker_search))).performTextInput("running-tag")
-            composeRule.onNode(hasText(string(SharedR.string.picker_add_tag, "running-tag")) and hasClickAction()).performClick()
+            composeRule.onNode(
+                hasSetTextAction() and hasText(string(SharedR.string.picker_search)),
+            ).performTextInput("running-tag")
+            composeRule.onNode(
+                hasText(string(SharedR.string.picker_add_tag, "running-tag")) and hasClickAction(),
+            ).performClick()
             composeRule.onNode(hasText(string(SharedR.string.entry_picker_done)) and hasClickAction()).performClick()
             billable().performClick()
             save()
@@ -288,7 +301,10 @@ class RunningEntryEditorServerTest {
             awaitUi("invalid running start is explained") {
                 exists(field(R.string.entry_start, string(R.string.entry_mistake_times)))
             }
-            assertTrue("start error exposed to accessibility", SemanticsProperties.Error in field(R.string.entry_start).fetchSemanticsNode().config)
+            assertTrue(
+                "start error exposed to accessibility",
+                SemanticsProperties.Error in field(R.string.entry_start).fetchSemanticsNode().config,
+            )
             assertEquals("invalid Save queues no metadata", 0, queued())
             assertEquals(saved, serverEntry(id))
             tap(R.string.entry_cancel)
@@ -298,8 +314,12 @@ class RunningEntryEditorServerTest {
     @Test
     fun offlineMidnightCorrectionPersistsOnDiskAndRemapsOneRunningEntry() {
         setResolution(60)
-        web.send("POST", web.server.api("me", "preferences"), buildJsonObject { put("timeofday_format", "h:mm A") },
-            JsonObject.serializer()).orFail("set twelve-hour fixture preference")
+        web.send(
+            "POST",
+            web.server.api("me", "preferences"),
+            buildJsonObject { put("timeofday_format", "h:mm A") },
+            JsonObject.serializer(),
+        ).orFail("set twelve-hour fixture preference")
         routeThroughRelay()
         assertTrue("account uses twelve-hour input", app.accountSettings.state.value!!.twelveHour)
         withMain { scenario ->
@@ -336,7 +356,11 @@ class RunningEntryEditorServerTest {
             finishWithin("recreate the offline activity") { scenario.recreate() }
             composeRule.awaitTimerPage(NETWORK_MS)
             openClock()
-            assertTrue(field(R.string.entry_start).fetchSemanticsNode().config[SemanticsProperties.EditableText].text.contains("11:53"))
+            assertTrue(
+                field(
+                    R.string.entry_start,
+                ).fetchSemanticsNode().config[SemanticsProperties.EditableText].text.contains("11:53"),
+            )
             replace(SharedR.string.entry_description, "Saved after remapping")
             // Keep this editor open on its local identity while CREATE receives the server id.
             relay!!.release()
@@ -350,10 +374,21 @@ class RunningEntryEditorServerTest {
             drain()
             assertRunning(serverEntry(mapped), mapped, corrected)
             assertEquals("Saved after remapping", serverEntry(mapped).text("description"))
-            val serverRows = web.get(web.server.api("me", "time_entries"), JsonArray.serializer()).orFail("list fixture entries")
+            val serverRows = web.get(
+                web.server.api("me", "time_entries"),
+                JsonArray.serializer(),
+            ).orFail("list fixture entries")
                 .map { it.jsonObject }
-            assertEquals("one server entry after reconnect", listOf(mapped), serverRows.map { it.getValue("id").jsonPrimitive.long })
-            assertEquals("one cached running identity", listOf(mapped), runBlocking { app.cache.entries.first() }.filter { it.entry.stop == null }.map { it.entry.id })
+            assertEquals(
+                "one server entry after reconnect",
+                listOf(mapped),
+                serverRows.map { it.getValue("id").jsonPrimitive.long },
+            )
+            assertEquals(
+                "one cached running identity",
+                listOf(mapped),
+                runBlocking { app.cache.entries.first() }.filter { it.entry.stop == null }.map { it.entry.id },
+            )
             assertEquals("reconnect drains the queue", 0, queued())
         }
     }
@@ -388,15 +423,26 @@ class RunningEntryEditorServerTest {
             awaitSignal(writes.updateEntered)
             composeRule.waitForIdle()
             assertFalse("no editor while the description's local write is held", formOpen())
-            assertEquals("cache still has the settled initial fields", "Start boundary", runBlocking { app.cache.running.first() }!!.entry.description)
+            assertEquals(
+                "cache still has the settled initial fields",
+                "Start boundary",
+                runBlocking { app.cache.running.first() }!!.entry.description,
+            )
             writes.updateRelease.complete(Unit)
             awaitEditor()
             assertTrue(exists(field(SharedR.string.entry_description, "Latest focused typing")))
             assertEquals(settledId, runBlocking { app.cache.running.first() }!!.entry.id)
             tap(R.string.entry_cancel)
             drain()
-            assertEquals("Latest focused typing", serverEntry(runBlocking { app.changes.currentId(running.id) }).text("description"))
-            assertEquals("one running entry", 1, runBlocking { app.cache.entries.first() }.count { it.entry.stop == null })
+            assertEquals(
+                "Latest focused typing",
+                serverEntry(runBlocking { app.changes.currentId(running.id) }).text("description"),
+            )
+            assertEquals(
+                "one running entry",
+                1,
+                runBlocking { app.cache.entries.first() }.count { it.entry.stop == null },
+            )
         }
     }
 
@@ -408,8 +454,12 @@ class RunningEntryEditorServerTest {
             openClock()
             replace(SharedR.string.entry_description, "Stale stopped draft")
             val stop = fixtureStart.plusSeconds(3600)
-            web.send("PATCH", web.server.api("workspaces", workspace.toString(), "time_entries", id.toString(), "stop"),
-                buildJsonObject { put("stop", stop.toString()) }, JsonObject.serializer()).orFail("stop the captured fixture")
+            web.send(
+                "PATCH",
+                web.server.api("workspaces", workspace.toString(), "time_entries", id.toString(), "stop"),
+                buildJsonObject { put("stop", stop.toString()) },
+                JsonObject.serializer(),
+            ).orFail("stop the captured fixture")
             refresh()
             assertNotNull(runBlocking { app.cache.entries.first() }.single { it.entry.id == id }.entry.stop)
             val stopped = serverEntry(id)
@@ -430,7 +480,11 @@ class RunningEntryEditorServerTest {
             openClock()
             replace(SharedR.string.entry_description, "Stale paused draft")
             assertEquals("the server pauses it", TimerActionResult.Done, runBlocking { app.timerActions.pause() })
-            val paused = runBlocking { withTimeout(NETWORK_MS) { app.timerControls.first { it is TimerControls.Paused } } }
+            val paused = runBlocking {
+                withTimeout(
+                    NETWORK_MS,
+                ) { app.timerControls.first { it is TimerControls.Paused } }
+            }
             val stopped = serverEntry(id)
             assertFalse("Pause stops the captured segment on the server", stopped["stop"] is JsonNull)
             relay!!.hang()
@@ -439,7 +493,11 @@ class RunningEntryEditorServerTest {
             awaitMissing()
 
             assertEquals("stale Save adds no UPDATE or Start", 0, queued())
-            assertEquals("stale Save leaves the paused chain as shown", paused, runBlocking { app.timerControls.first() })
+            assertEquals(
+                "stale Save leaves the paused chain as shown",
+                paused,
+                runBlocking { app.timerControls.first() },
+            )
             assertEquals("no cached timer was revived", null, runBlocking { app.cache.running.first() })
             assertEquals(stopped, serverEntry(id))
         }
@@ -463,21 +521,36 @@ class RunningEntryEditorServerTest {
             assertEquals("stale Save queues nothing", 0, queued())
             assertEquals(before, serverEntry(replacement))
             assertRunning(serverCurrent(), replacement, fixtureStart)
-            assertFalse("old segment stays stopped or absent", runBlocking { app.cache.entries.first() }.any { it.entry.id == original && it.entry.stop == null })
+            assertFalse(
+                "old segment stays stopped or absent",
+                runBlocking { app.cache.entries.first() }.any { it.entry.id == original && it.entry.stop == null },
+            )
         }
     }
 
     /** Production navigation and view models in a size override, matching the existing adaptive fixture. With [changes], the timer sends to it. */
     private fun withHost(width: Int, changes: EntryChanges? = null, steps: () -> Unit) {
-        val scenario = finishWithin("launch sized navigation host") { ActivityScenario.launch(ComponentActivity::class.java) }
+        val scenario = finishWithin(
+            "launch sized navigation host",
+        ) { ActivityScenario.launch(ComponentActivity::class.java) }
         try {
             scenario.onActivity { activity ->
                 WindowCompat.enableEdgeToEdge(activity.window)
                 activity.window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
                 if (changes != null) {
                     // The session's timer, made before the host asks for it, sends its changes to [changes].
-                    val timer = TimerViewModel(app.timerControls, app.cache.projects, app.cache.tasks, app.accountSettings.state, changes, activity.lifecycleScope)
-                    ViewModelProvider(navigationStores(activity).session, viewModelFactory { initializer { timer } })[TimerViewModel::class.java]
+                    val timer = TimerViewModel(
+                        app.timerControls,
+                        app.cache.projects,
+                        app.cache.tasks,
+                        app.accountSettings.state,
+                        changes,
+                        activity.lifecycleScope,
+                    )
+                    ViewModelProvider(
+                        navigationStores(activity).session,
+                        viewModelFactory { initializer { timer } },
+                    )[TimerViewModel::class.java]
                 }
                 activity.setContent {
                     DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(DpSize(width.dp, 900.dp))) {
@@ -510,11 +583,18 @@ class RunningEntryEditorServerTest {
         field(R.string.entry_start).assertIsDisplayed()
         field(R.string.entry_end).assertDoesNotExist()
         field(R.string.entry_duration).assertDoesNotExist()
-        composeRule.onNode(hasContentDescription(string(R.string.history_delete)) and hasClickAction() and inForm()).assertDoesNotExist()
+        composeRule.onNode(
+            hasContentDescription(string(R.string.history_delete)) and hasClickAction() and inForm(),
+        ).assertDoesNotExist()
         assertTrue("running description exists", exists(field(SharedR.string.entry_description)))
         assertTrue("running date exists", exists(dateButton()))
-        assertEquals("List shares a pane only at expanded width; Calendar uses its screen", beside,
-            composeRule.onAllNodes(hasText(string(R.string.timer_view_list)) and isSelectable()).fetchSemanticsNodes().isNotEmpty())
+        assertEquals(
+            "List shares a pane only at expanded width; Calendar uses its screen",
+            beside,
+            composeRule.onAllNodes(
+                hasText(string(R.string.timer_view_list)) and isSelectable(),
+            ).fetchSemanticsNodes().isNotEmpty(),
+        )
         tap(R.string.entry_cancel)
         awaitClosed()
         assertEquals("opening and Cancel queue no change", 0, queued())
@@ -523,7 +603,9 @@ class RunningEntryEditorServerTest {
     private fun selectCalendar() {
         val calendar = hasText(string(R.string.timer_view_calendar)) and isSelectable()
         composeRule.onNode(calendar).assertIsDisplayed().performTouchInput { click() }
-        awaitUi("Calendar is selected") { composeRule.onAllNodes(calendar and isSelected()).fetchSemanticsNodes().size == 1 }
+        awaitUi(
+            "Calendar is selected",
+        ) { composeRule.onAllNodes(calendar and isSelected()).fetchSemanticsNodes().size == 1 }
     }
 
     private fun openClock() {
@@ -538,30 +620,55 @@ class RunningEntryEditorServerTest {
     )
 
     private fun awaitEditor() = awaitUi("running editor opens") { formOpen() && exists(field(R.string.entry_start)) }
-    private fun formOpen(): Boolean = composeRule.onAllNodes(hasText(string(R.string.entry_form_edit_running)) and isHeading()).fetchSemanticsNodes().size == 1
+    private fun formOpen(): Boolean = composeRule.onAllNodes(
+        hasText(string(R.string.entry_form_edit_running)) and isHeading(),
+    ).fetchSemanticsNodes().size == 1
     private fun awaitClosed() = awaitUi("running editor closes back to the Timer page") {
-        val title = hasText(string(R.string.entry_form_edit_running)) or hasText(string(R.string.entry_form_edit)) or hasText(string(R.string.entry_form_new))
+        val title = hasText(
+            string(R.string.entry_form_edit_running),
+        ) or hasText(string(R.string.entry_form_edit)) or hasText(string(R.string.entry_form_new))
         composeRule.onAllNodes(title and isHeading()).fetchSemanticsNodes().isEmpty() && exists(clock())
     }
-    private fun awaitMissing() = awaitUi("stale running edit is rejected") { exists(composeRule.onNode(hasText(string(R.string.entry_form_missing)))) }
-    private fun awaitUi(message: String, condition: () -> Boolean) = composeRule.waitUntil(message, AT_ONCE_MS, condition)
+    private fun awaitMissing() = awaitUi(
+        "stale running edit is rejected",
+    ) { exists(composeRule.onNode(hasText(string(R.string.entry_form_missing)))) }
+    private fun awaitUi(message: String, condition: () -> Boolean) = composeRule.waitUntil(
+        message,
+        AT_ONCE_MS,
+        condition,
+    )
 
-    private fun inForm(): SemanticsMatcher = hasAnyAncestor(hasScrollAction() and hasAnyDescendant(hasText(string(R.string.entry_save))))
+    private fun inForm(): SemanticsMatcher = hasAnyAncestor(
+        hasScrollAction() and hasAnyDescendant(hasText(string(R.string.entry_save))),
+    )
     private fun field(@StringRes label: Int, value: String? = null): SemanticsNodeInteraction {
         val labeled = hasSetTextAction() and hasText(string(label)) and inForm()
         return composeRule.onNode(if (value == null) labeled else labeled and hasText(value))
     }
-    private fun timerDescription(): SemanticsNodeInteraction = composeRule.onNode(hasSetTextAction() and hasText(string(SharedR.string.entry_description)) and !inForm())
-    private fun startButton(): SemanticsNodeInteraction = composeRule.onNode(hasContentDescription(string(R.string.timer_start_spoken)) and hasClickAction())
-    private fun billable(): SemanticsNodeInteraction = composeRule.onNode(hasText(string(SharedR.string.entry_billable)) and isToggleable() and inForm()).performScrollTo()
-    private fun dateButton(): SemanticsNodeInteraction = composeRule.onNode(hasContentDescription(string(R.string.entry_date_spoken, ""), substring = true) and hasClickAction() and inForm())
+    private fun timerDescription(): SemanticsNodeInteraction = composeRule.onNode(
+        hasSetTextAction() and hasText(string(SharedR.string.entry_description)) and !inForm(),
+    )
+    private fun startButton(): SemanticsNodeInteraction = composeRule.onNode(
+        hasContentDescription(string(R.string.timer_start_spoken)) and hasClickAction(),
+    )
+    private fun billable(): SemanticsNodeInteraction = composeRule.onNode(
+        hasText(string(SharedR.string.entry_billable)) and isToggleable() and inForm(),
+    ).performScrollTo()
+    private fun dateButton(): SemanticsNodeInteraction = composeRule.onNode(
+        hasContentDescription(
+            string(R.string.entry_date_spoken, ""),
+            substring = true,
+        ) and hasClickAction() and inForm(),
+    )
 
     private fun replace(@StringRes label: Int, value: String) {
         field(label).performScrollTo().performTextClearance()
         field(label).performTextInput(value)
     }
 
-    private fun tap(@StringRes label: Int) = composeRule.onNode(hasText(string(label)) and hasClickAction() and inForm()).performScrollTo().performClick()
+    private fun tap(@StringRes label: Int) = composeRule.onNode(
+        hasText(string(label)) and hasClickAction() and inForm(),
+    ).performScrollTo().performClick()
     private fun save() {
         tap(R.string.entry_save)
         awaitClosed()
@@ -575,15 +682,23 @@ class RunningEntryEditorServerTest {
 
     private fun assertDraft(description: String, date: LocalDate) {
         assertTrue(exists(field(SharedR.string.entry_description, description)))
-        assertEquals("04:37", field(R.string.entry_start).fetchSemanticsNode().config[SemanticsProperties.EditableText].text)
-        assertTrue(exists(composeRule.onNode(hasContentDescription(spokenDate(date)) and hasClickAction() and inForm())))
+        assertEquals(
+            "04:37",
+            field(R.string.entry_start).fetchSemanticsNode().config[SemanticsProperties.EditableText].text,
+        )
+        assertTrue(
+            exists(composeRule.onNode(hasContentDescription(spokenDate(date)) and hasClickAction() and inForm())),
+        )
         billable().assertIsOn()
         assertEquals("rotation submits no update", 0, queued())
     }
 
     private fun assertOriginal(description: String) {
         assertTrue(exists(field(SharedR.string.entry_description, description)))
-        assertEquals("13:07", field(R.string.entry_start).fetchSemanticsNode().config[SemanticsProperties.EditableText].text)
+        assertEquals(
+            "13:07",
+            field(R.string.entry_start).fetchSemanticsNode().config[SemanticsProperties.EditableText].text,
+        )
         assertTrue(exists(composeRule.onNode(hasContentDescription(spokenDate(fixtureDay)) and inForm())))
     }
 
@@ -591,20 +706,30 @@ class RunningEntryEditorServerTest {
         dateButton().performScrollTo().performClick()
         if (chosen.month != opened.month || chosen.year != opened.year) {
             // This fixture moves only to yesterday, so at most one month boundary is crossed.
-            composeRule.onNode(hasContentDescription("previous month", substring = true, ignoreCase = true) and hasClickAction()).performClick()
+            composeRule.onNode(
+                hasContentDescription("previous month", substring = true, ignoreCase = true) and hasClickAction(),
+            ).performClick()
         }
         val locale = context.resources.configuration.locales[0]
         val spoken = DateTimeFormatter.ofPattern("MMMM d, yyyy", locale).format(chosen)
         val day = hasText(chosen.dayOfMonth.toString()) or hasText(spoken, substring = true)
         composeRule.onNode(day and hasClickAction() and hasAnyAncestor(isDialog())).performClick()
-        composeRule.onNode(hasText(string(SharedR.string.entry_picker_done)) and hasClickAction() and hasAnyAncestor(isDialog())).performClick()
-        awaitUi("chosen account date shows") { exists(composeRule.onNode(hasContentDescription(spokenDate(chosen)) and inForm())) }
+        composeRule.onNode(
+            hasText(string(SharedR.string.entry_picker_done)) and hasClickAction() and hasAnyAncestor(isDialog()),
+        ).performClick()
+        awaitUi(
+            "chosen account date shows",
+        ) { exists(composeRule.onNode(hasContentDescription(spokenDate(chosen)) and inForm())) }
     }
 
     private fun spokenDate(date: LocalDate): String {
         val weekday = context.resources.getStringArray(UiR.array.reports_weekdays_short)[date.dayOfWeek.value - 1]
         val month = context.resources.getStringArray(UiR.array.reports_months_short)[date.monthValue - 1]
-        val value = string(R.string.entry_date_value, weekday, string(UiR.string.reports_date_year, date.dayOfMonth, month, date.year))
+        val value = string(
+            R.string.entry_date_value,
+            weekday,
+            string(UiR.string.reports_date_year, date.dayOfMonth, month, date.year),
+        )
         return string(R.string.entry_date_spoken, value)
     }
 
@@ -622,16 +747,27 @@ class RunningEntryEditorServerTest {
     private fun resumedActivity(): MainActivity? {
         var resumed: MainActivity? = null
         instrumentation.runOnMainSync {
-            resumed = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED).filterIsInstance<MainActivity>().singleOrNull()
+            resumed = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(
+                Stage.RESUMED,
+            ).filterIsInstance<MainActivity>().singleOrNull()
         }
         return resumed
     }
 
     private fun hideKeyboard(scenario: ActivityScenario<MainActivity>) {
-        scenario.onActivity { WindowCompat.getInsetsController(it.window, it.window.decorView).hide(WindowInsetsCompat.Type.ime()) }
+        scenario.onActivity {
+            WindowCompat.getInsetsController(
+                it.window,
+                it.window.decorView,
+            ).hide(WindowInsetsCompat.Type.ime())
+        }
         composeRule.waitUntil("keyboard hidden before Back or rotation", NETWORK_MS) {
             var shown = true
-            scenario.onActivity { shown = ViewCompat.getRootWindowInsets(it.window.decorView)?.isVisible(WindowInsetsCompat.Type.ime()) ?: false }
+            scenario.onActivity {
+                shown = ViewCompat.getRootWindowInsets(
+                    it.window.decorView,
+                )?.isVisible(WindowInsetsCompat.Type.ime()) ?: false
+            }
             !shown
         }
     }
@@ -659,7 +795,9 @@ class RunningEntryEditorServerTest {
         awaitUi("elapsed clock follows the corrected start") {
             val value = clock().fetchSemanticsNode().config[SemanticsProperties.Text].single().text
             val parts = value.split(':').map { it.toLong() }
-            parts.size == 3 && kotlin.math.abs(parts[0] * 3600 + parts[1] * 60 + parts[2] - Duration.between(start, Instant.now()).seconds) <= 1
+            parts.size == 3 && kotlin.math.abs(
+                parts[0] * 3600 + parts[1] * 60 + parts[2] - Duration.between(start, Instant.now()).seconds,
+            ) <= 1
         }
         val lower = Duration.between(start, Instant.now()).seconds
         val value = clock().fetchSemanticsNode().config[SemanticsProperties.Text].single().text
@@ -671,14 +809,18 @@ class RunningEntryEditorServerTest {
     }
 
     private fun seedRunning(description: String): Long = createRunning(description, fixtureStart).also { refresh() }
-    private fun createRunning(description: String, start: Instant): Long = web.send("POST",
-        web.server.api("workspaces", workspace.toString(), "time_entries"), buildJsonObject {
+    private fun createRunning(description: String, start: Instant): Long = web.send(
+        "POST",
+        web.server.api("workspaces", workspace.toString(), "time_entries"),
+        buildJsonObject {
             put("workspace_id", workspace)
             put("created_with", "running editor live canary")
             put("description", description)
             put("start", start.toString())
             put("duration", -1)
-        }, JsonObject.serializer()).orFail("create running fixture").getValue("id").jsonPrimitive.long
+        },
+        JsonObject.serializer(),
+    ).orFail("create running fixture").getValue("id").jsonPrimitive.long
 
     private fun assertRunning(entry: JsonObject, id: Long, start: Instant) {
         assertEquals(id, entry.getValue("id").jsonPrimitive.long)
@@ -687,8 +829,14 @@ class RunningEntryEditorServerTest {
         assertEquals(start, OffsetDateTime.parse(entry.text("start")).toInstant())
     }
 
-    private fun serverEntry(id: Long): JsonObject = web.get(web.server.api("me", "time_entries", id.toString()), JsonObject.serializer()).orFail("read fixture entry")
-    private fun serverCurrent(): JsonObject = web.get(web.server.api("me", "time_entries", "current"), JsonObject.serializer()).orFail("read running fixture")
+    private fun serverEntry(id: Long): JsonObject = web.get(
+        web.server.api("me", "time_entries", id.toString()),
+        JsonObject.serializer(),
+    ).orFail("read fixture entry")
+    private fun serverCurrent(): JsonObject = web.get(
+        web.server.api("me", "time_entries", "current"),
+        JsonObject.serializer(),
+    ).orFail("read running fixture")
     private fun queued(): Int = runBlocking { app.changes.unsentCount.first() }
     private fun refresh() = runBlocking { withTimeout(NETWORK_MS) { app.accountRefresh.refreshAfterChange().join() } }
     private fun drain() {
@@ -709,11 +857,25 @@ class RunningEntryEditorServerTest {
     }
 
     private fun setResolution(minutes: Long) {
-        val admin = TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(TokklTestServer.apiToken), httpClient = OkHttpClient())
+        val admin = TogglApiClient(
+            TokklTestServer.url,
+            ApiCredentials.ApiToken(TokklTestServer.apiToken),
+            httpClient = OkHttpClient(),
+        )
         val url = admin.server.app("admin", "settings")
-        if (originalResolution == null) originalResolution = admin.get(url, JsonObject.serializer()).orFail("read fixture grid")
-            .getValue("time_resolution_minutes").jsonPrimitive.long
-        admin.send("PUT", url, buildJsonObject { put("time_resolution_minutes", minutes) }, JsonObject.serializer()).orFail("set fixture grid")
+        if (originalResolution == null) {
+            originalResolution = admin.get(
+                url,
+                JsonObject.serializer(),
+            ).orFail("read fixture grid")
+                .getValue("time_resolution_minutes").jsonPrimitive.long
+        }
+        admin.send(
+            "PUT",
+            url,
+            buildJsonObject { put("time_resolution_minutes", minutes) },
+            JsonObject.serializer(),
+        ).orFail("set fixture grid")
         refresh()
     }
 
@@ -728,8 +890,17 @@ class RunningEntryEditorServerTest {
         Session(context).save(server, token)
     }
 
-    private fun awaitSignal(signal: CompletableDeferred<Unit>) = runBlocking { withTimeout(AT_ONCE_MS) { signal.await() } }
-    private fun exists(node: SemanticsNodeInteraction): Boolean = try { node.fetchSemanticsNode(); true } catch (_: AssertionError) { false }
+    private fun awaitSignal(signal: CompletableDeferred<Unit>) = runBlocking {
+        withTimeout(
+            AT_ONCE_MS,
+        ) { signal.await() }
+    }
+    private fun exists(node: SemanticsNodeInteraction): Boolean = try {
+        node.fetchSemanticsNode()
+        true
+    } catch (_: AssertionError) {
+        false
+    }
     private fun JsonObject.text(key: String): String = getValue(key).jsonPrimitive.content
     private fun string(@StringRes id: Int, vararg args: Any): String = context.getString(id, *args)
 
@@ -739,6 +910,7 @@ class RunningEntryEditorServerTest {
         val startRelease = CompletableDeferred<Unit>()
         val updateEntered = CompletableDeferred<Unit>()
         val updateRelease = CompletableDeferred<Unit>()
+
         @Volatile var holdUpdate = false
 
         override suspend fun start(workspaceId: Long, fields: EntryFields): Long {
@@ -747,7 +919,11 @@ class RunningEntryEditorServerTest {
             return real.start(workspaceId, fields)
         }
 
-        override suspend fun updateRunning(identity: RunningEntryIdentity, fields: EntryFields, start: Instant): Boolean {
+        override suspend fun updateRunning(
+            identity: RunningEntryIdentity,
+            fields: EntryFields,
+            start: Instant,
+        ): Boolean {
             if (holdUpdate) {
                 updateEntered.complete(Unit)
                 updateRelease.await()

@@ -26,7 +26,8 @@ class Session(
     private val trustListener: TrustListener? = null,
     private val successListener: SuccessListener? = null,
     private val clearExports: () -> Unit = {},
-) : ApiClientProvider, AccountDataOwner {
+) : ApiClientProvider,
+    AccountDataOwner {
 
     override val signOutOrder = SignOutOrder.SESSION
 
@@ -36,14 +37,13 @@ class Session(
      * Signed in means a server is stored and the token decrypts. A Keystore or
      * disk failure counts as signed out, so the user can sign in again.
      */
-    fun isSignedIn(): Boolean =
-        try {
-            servers.load() != null && tokens.load() != null
-        } catch (e: GeneralSecurityException) {
-            false
-        } catch (e: IOException) {
-            false
-        }
+    fun isSignedIn(): Boolean = try {
+        servers.load() != null && tokens.load() != null
+    } catch (e: GeneralSecurityException) {
+        false
+    } catch (e: IOException) {
+        false
+    }
 
     /**
      * The API client of the signed-in account, or null when signed out. A Keystore or disk
@@ -53,7 +53,12 @@ class Session(
         return try {
             val server = servers.load() ?: return null
             val token = tokens.load() ?: return null
-            TogglApiClient(server, ApiCredentials.ApiToken(token), trustListener = trustListener, successListener = successListener)
+            TogglApiClient(
+                server,
+                ApiCredentials.ApiToken(token),
+                trustListener = trustListener,
+                successListener = successListener,
+            )
         } catch (e: GeneralSecurityException) {
             null
         } catch (e: IOException) {

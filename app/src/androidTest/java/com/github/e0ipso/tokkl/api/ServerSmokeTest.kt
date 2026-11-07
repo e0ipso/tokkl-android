@@ -5,7 +5,6 @@ import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
-import java.util.UUID
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -16,6 +15,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Before
 import org.junit.Test
+import java.util.UUID
 
 /**
  * Talks to the real Tokkl container over plain HTTP, which the network
@@ -55,7 +55,10 @@ class ServerSmokeTest {
 
         val result = client.get(me, JsonObject.serializer())
 
-        assertEquals(ApiError.HostNotAllowed("${me.scheme}://${me.host}:${me.port}"), (result as? ApiResult.Failure)?.error)
+        assertEquals(
+            ApiError.HostNotAllowed("${me.scheme}://${me.host}:${me.port}"),
+            (result as? ApiResult.Failure)?.error,
+        )
     }
 
     @Test
@@ -86,7 +89,14 @@ class ServerSmokeTest {
         try {
             val client = account.client
             // Nothing runs, so the server refuses each Pause with its state and changes nothing.
-            val pause = { client.sendRefusable("POST", client.server.app("timer", "pause"), JsonObject(emptyMap()), TimerState.serializer()) }
+            val pause = {
+                client.sendRefusable(
+                    "POST",
+                    client.server.app("timer", "pause"),
+                    JsonObject(emptyMap()),
+                    TimerState.serializer(),
+                )
+            }
             pause().valueOrFail("POST /api/app/timer/pause")
             // The pause under test, past the server's 5 seconds and short of OkHttp's 10.
             Thread.sleep(7_000)
@@ -122,20 +132,18 @@ class ServerSmokeTest {
     private fun JsonObject.string(key: String): String = getValue(key).jsonPrimitive.content
 
     /** Fails with the error alone, so neither a response body nor a secret lands in the message. */
-    private fun <T> ApiResult<T>.valueOrFail(call: String): T =
-        when (this) {
-            is ApiResult.Success -> value
-            is ApiResult.Failure -> throw AssertionError("$call failed: ${error.describe()}")
-        }
+    private fun <T> ApiResult<T>.valueOrFail(call: String): T = when (this) {
+        is ApiResult.Success -> value
+        is ApiResult.Failure -> throw AssertionError("$call failed: ${error.describe()}")
+    }
 
-    private fun ApiError.describe(): String =
-        when (this) {
-            is ApiError.Http -> "HTTP $status"
-            is ApiError.Network -> "network error: $cause"
-            is ApiError.InvalidResponse -> "response is not the expected JSON"
-            is ApiError.HostNotAllowed -> "refused a request to $origin"
-            is ApiError.CleartextNotConfirmed -> "refused a request to $server, an unconfirmed http server"
-            is ApiError.UntrustedCertificate -> "refused the certificate of ${certificate.host}:${certificate.port}"
-            is ApiError.CertificateHostMismatch -> "refused a certificate that does not name $host"
-        }
+    private fun ApiError.describe(): String = when (this) {
+        is ApiError.Http -> "HTTP $status"
+        is ApiError.Network -> "network error: $cause"
+        is ApiError.InvalidResponse -> "response is not the expected JSON"
+        is ApiError.HostNotAllowed -> "refused a request to $origin"
+        is ApiError.CleartextNotConfirmed -> "refused a request to $server, an unconfirmed http server"
+        is ApiError.UntrustedCertificate -> "refused the certificate of ${certificate.host}:${certificate.port}"
+        is ApiError.CertificateHostMismatch -> "refused a certificate that does not name $host"
+    }
 }

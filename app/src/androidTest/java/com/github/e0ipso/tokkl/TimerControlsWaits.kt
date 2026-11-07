@@ -24,13 +24,21 @@ inline fun <reified T : TimerControls> TokklApplication.awaitControls(
 ): T {
     var last: TimerControls? = null
     val reached = runBlocking {
-        withTimeoutOrNull(timeoutMs) { timerControls.first { last = it; it is T && done(it) } }
+        withTimeoutOrNull(timeoutMs) {
+            timerControls.first {
+                last = it
+                it is T && done(it)
+            }
+        }
     }
     return reached as? T ?: throw AssertionError("$what: last controls $last; held ${timerState.state.value?.state}")
 }
 
 /** The server's timer state, read with [client]'s own token, past the app. */
-fun TogglApiClient.timerState(): TimerState = get(server.app("timer"), TimerState.serializer()).orFail("GET /api/app/timer")
+fun TogglApiClient.timerState(): TimerState = get(
+    server.app("timer"),
+    TimerState.serializer(),
+).orFail("GET /api/app/timer")
 
 /**
  * Treats the server as one without the timer API, as Toggl Track or an older Tokkl release does,

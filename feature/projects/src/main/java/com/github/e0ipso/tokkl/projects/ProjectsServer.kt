@@ -72,7 +72,10 @@ class ProjectsServer(private val api: TogglApiClient, private val workspace: Lon
     fun create(fields: ProjectFields, known: Set<Long>): ApiResult<Project> = createOnce(
         create = { api.send("POST", url(), fields.toJson(), Project.serializer(), resend = false) },
         list = ::list,
-        made = { it.id !in known && it.workspaceId == workspace && it.name == fields.name && it.clientId == fields.clientId },
+        made = {
+            it.id !in known && it.workspaceId == workspace && it.name == fields.name &&
+                it.clientId == fields.clientId
+        },
     )
 
     fun update(id: Long, fields: ProjectFields): ApiResult<Project> =
@@ -82,12 +85,11 @@ class ProjectsServer(private val api: TogglApiClient, private val workspace: Lon
     fun setActive(id: Long, active: Boolean): ApiResult<Project> =
         api.send("PUT", url(id), buildJsonObject { put("active", active) }, Project.serializer())
 
-    private fun url(id: Long? = null) =
-        if (id == null) {
-            api.server.api("workspaces", workspace.toString(), "projects")
-        } else {
-            api.server.api("workspaces", workspace.toString(), "projects", id.toString())
-        }
+    private fun url(id: Long? = null) = if (id == null) {
+        api.server.api("workspaces", workspace.toString(), "projects")
+    } else {
+        api.server.api("workspaces", workspace.toString(), "projects", id.toString())
+    }
 }
 
 /** No client goes as 0, as the web app sends it. Tokkl reads 0 and null alike as no client. */

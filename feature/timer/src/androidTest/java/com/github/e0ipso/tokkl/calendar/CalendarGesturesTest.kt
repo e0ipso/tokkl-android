@@ -20,21 +20,14 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.feature.timer.R
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.EntryWithSendState
+import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.DateWords
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import java.time.Clock
-import java.time.DayOfWeek
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneOffset
-import java.util.concurrent.CopyOnWriteArrayList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -46,6 +39,13 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import java.time.Clock
+import java.time.DayOfWeek
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
+import java.util.concurrent.CopyOnWriteArrayList
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 
 /**
  * The calendar's drags (docs/PRD.md K2), by touch as a finger makes them: a long press, then a
@@ -229,7 +229,9 @@ class CalendarGesturesTest {
     fun eachAllDayCellOffersTalkBackAnActionThatAddsANoTimeEntry() {
         show(window = MEDIUM, allDayOffered = true)
 
-        composeRule.onAllNodes(allDayCellAction)[1].performCustomAccessibilityActionWithLabel(string(R.string.calendar_add_all_day))
+        composeRule.onAllNodes(
+            allDayCellAction,
+        )[1].performCustomAccessibilityActionWithLabel(string(R.string.calendar_add_all_day))
 
         composeRule.waitUntil(TIMEOUT_MS) { opened.isNotEmpty() }
         assertEquals(listOf("add all day ${MONDAY.plusDays(1)}"), opened)
@@ -238,7 +240,9 @@ class CalendarGesturesTest {
     /** The calendar on [ENTRY], in a window of [window], or the phone's own, with the All day row when [allDayOffered]. */
     private fun show(window: DpSize?, allDayOffered: Boolean = false): CalendarViewModel {
         val model = CalendarViewModel(
-            entries = MutableStateFlow(listOf(EntryWithSendState(ENTRY, unsent = false), EntryWithSendState(ALL_DAY_ENTRY, unsent = false))),
+            entries = MutableStateFlow(
+                listOf(EntryWithSendState(ENTRY, unsent = false), EntryWithSendState(ALL_DAY_ENTRY, unsent = false)),
+            ),
             projects = MutableStateFlow(emptyList()),
             tasks = MutableStateFlow(emptyList()),
             accountSettings = MutableStateFlow(SETTINGS),
@@ -294,14 +298,22 @@ class CalendarGesturesTest {
     private fun string(@StringRes id: Int): String = context.getString(id)
 
     /** The no-time entry's chip, which TalkBack reads with its description first. */
-    private val allDayChip: SemanticsMatcher = hasContentDescription("${ALL_DAY_ENTRY.description}, ", substring = true) and hasClickAction()
+    private val allDayChip: SemanticsMatcher = hasContentDescription(
+        "${ALL_DAY_ENTRY.description}, ",
+        substring = true,
+    ) and hasClickAction()
 
     /** The + of a day's All day cell. */
-    private val allDayPlus: SemanticsMatcher = hasContentDescription(context.getString(R.string.calendar_add_all_day), substring = true) and hasClickAction()
+    private val allDayPlus: SemanticsMatcher = hasContentDescription(
+        context.getString(R.string.calendar_add_all_day),
+        substring = true,
+    ) and hasClickAction()
 
     /** A day's All day cell, which carries TalkBack's action. */
     private val allDayCellAction = SemanticsMatcher("has the All day add action") { node ->
-        node.config.getOrNull(SemanticsActions.CustomActions)?.any { it.label == context.getString(R.string.calendar_add_all_day) } == true
+        node.config.getOrNull(
+            SemanticsActions.CustomActions,
+        )?.any { it.label == context.getString(R.string.calendar_add_all_day) } == true
     }
 
     /** The entry's block, which TalkBack reads with its description first. */
@@ -311,19 +323,35 @@ class CalendarGesturesTest {
     private class RecordingChanges : EntryChanges {
         val calls = CopyOnWriteArrayList<String>()
 
-        override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant, noTimeDay: LocalDate?): Long {
+        override suspend fun create(
+            workspaceId: Long,
+            fields: EntryFields,
+            start: Instant,
+            stop: Instant,
+            noTimeDay: LocalDate?,
+        ): Long {
             calls += "create $workspaceId $fields $start $stop"
             return LOCAL_ID
         }
 
-        override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?, noTimeDay: LocalDate?): Boolean {
+        override suspend fun update(
+            entryId: Long,
+            fields: EntryFields,
+            start: Instant,
+            stop: Instant?,
+            noTimeDay: LocalDate?,
+        ): Boolean {
             calls += "update $entryId $fields $start $stop"
             return true
         }
 
-        override suspend fun start(workspaceId: Long, fields: EntryFields): Long = throw AssertionError("the calendar starts no timer")
+        override suspend fun start(workspaceId: Long, fields: EntryFields): Long = throw AssertionError(
+            "the calendar starts no timer",
+        )
 
-        override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean = throw AssertionError("the calendar stops no timer")
+        override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean = throw AssertionError(
+            "the calendar stops no timer",
+        )
 
         override suspend fun delete(entryId: Long): Boolean = throw AssertionError("the calendar deletes nothing")
     }

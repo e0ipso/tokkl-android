@@ -26,38 +26,41 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.core.shared.R
-import com.github.e0ipso.tokkl.feature.pomodoro.R as PomodoroR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.timerstate.TimerActionResult
+import com.github.e0ipso.tokkl.core.shared.R
 import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import java.time.Clock
-import java.time.DayOfWeek
-import java.time.Instant
-import java.time.ZoneOffset
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.Clock
+import java.time.DayOfWeek
+import java.time.Instant
+import java.time.ZoneOffset
+import com.github.e0ipso.tokkl.feature.pomodoro.R as PomodoroR
 
 /** Dedicated page coverage, leaving the shared accessibility infrastructure unchanged. */
 @SignedOut
 class PomodoroPageFontScaleTest {
     private val compose = createAndroidComposeRule<ComponentActivity>()
+
     @get:Rule val rules: RuleChain = RuleChain.outerRule(SessionRule())
         .around(SystemFontScale(SystemFontScale.LARGEST)).around(compose)
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private val at = Instant.parse("2026-10-24T09:00:00Z")
-    private var state by mutableStateOf(PomodoroPageState(
-        loading = false,
-        account = AccountSettings("europe/madrid", DayOfWeek.MONDAY, null, defaultWorkspaceId = 1),
-    ))
+    private var state by mutableStateOf(
+        PomodoroPageState(
+            loading = false,
+            account = AccountSettings("europe/madrid", DayOfWeek.MONDAY, null, defaultWorkspaceId = 1),
+        ),
+    )
     private var starts = 0
     private var nexts = 0
     private var ends = 0
@@ -67,8 +70,10 @@ class PomodoroPageFontScaleTest {
         show()
         compose.onNode(hasText(context.getString(R.string.pomodoro_title)) and isHeading()).assertIsDisplayed()
         for ((label, value) in listOf(
-            R.string.pomodoro_card_work to "180", R.string.pomodoro_card_short_rest to "60",
-            R.string.pomodoro_card_long_rest to "60", R.string.pomodoro_card_long_rest_every to "12",
+            R.string.pomodoro_card_work to "180",
+            R.string.pomodoro_card_short_rest to "60",
+            R.string.pomodoro_card_long_rest to "60",
+            R.string.pomodoro_card_long_rest_every to "12",
         )) {
             val name = context.getString(label)
             compose.lengthCard(name).performScrollTo().assertIsDisplayed().assertIsEnabled()
@@ -95,7 +100,10 @@ class PomodoroPageFontScaleTest {
 
     @Test
     fun runningOvertimeHasASpokenClockAndBothActionsFitAtTheLargestFontScale() {
-        state = state.copy(held = heldSession(phaseStart = at, description = "Current work"), fields = EntryFields(description = "Current work"))
+        state = state.copy(
+            held = heldSession(phaseStart = at, description = "Current work"),
+            fields = EntryFields(description = "Current work"),
+        )
         show(Clock.fixed(at.plusSeconds(25 * 60 + 65), ZoneOffset.UTC))
         compose.onNodeWithText(context.getString(R.string.pomodoro_overtime)).performScrollTo().assertIsDisplayed()
         val duration = state.account!!.formatDuration(65)
@@ -114,7 +122,9 @@ class PomodoroPageFontScaleTest {
     @Test
     fun alarmDenialAndTheNoConnectionMessageAreReadableAndDoNotHideStart() {
         state = state.copy(
-            alarmDenied = true, problem = PomodoroProblem(PomodoroAction.END, TimerActionResult.Offline), unsentCount = 2,
+            alarmDenied = true,
+            problem = PomodoroProblem(PomodoroAction.END, TimerActionResult.Offline),
+            unsentCount = 2,
         )
         show()
         for (text in listOf(

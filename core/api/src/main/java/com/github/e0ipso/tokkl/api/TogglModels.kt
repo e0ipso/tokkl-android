@@ -30,11 +30,7 @@ class ServerProject(
 
 /** A tag. Neither Tokkl nor Toggl archives tags. */
 @Serializable
-class ServerTag(
-    val id: Long,
-    @SerialName("workspace_id") val workspaceId: Long,
-    val name: String? = null,
-)
+class ServerTag(val id: Long, @SerialName("workspace_id") val workspaceId: Long, val name: String? = null)
 
 /** A task. [active] is false for a task marked done. */
 @Serializable
@@ -73,9 +69,7 @@ data class ServerTimeEntry(
 
 /** `GET /api/v9/me/preferences`. Tokkl leaves `favorites` out until the user saves one. */
 @Serializable
-class ServerPreferences(
-    val favorites: List<ServerFavorite>? = null,
-)
+class ServerPreferences(val favorites: List<ServerFavorite>? = null)
 
 /** One of Tokkl's favorites: what a tap starts. Tags are names, as in a time entry. */
 @Serializable

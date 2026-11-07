@@ -14,7 +14,6 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
@@ -27,15 +26,10 @@ import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
-import java.time.Duration
-import java.time.Instant
-import java.time.OffsetDateTime
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.builtins.ListSerializer
@@ -54,6 +48,12 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.Duration
+import java.time.Instant
+import java.time.OffsetDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
 /**
  * Split against the real Tokkl container, in the real activity (docs/PRD.md H6). The Split item
@@ -132,7 +132,9 @@ class SplitServerTest {
         ActivityScenario.launch(MainActivity::class.java).use {
             composeRule.awaitTimerPage(LOAD_TIMEOUT_MS)
             composeRule.waitUntil("the entry shows", LOAD_TIMEOUT_MS) {
-                composeRule.onAllNodes(hasContentDescription(context.getString(R.string.history_more_actions, "Paint the wall")))
+                composeRule.onAllNodes(
+                    hasContentDescription(context.getString(R.string.history_more_actions, "Paint the wall")),
+                )
                     .fetchSemanticsNodes().size == 1
             }
             AirplaneMode.set(true, web)
@@ -142,31 +144,43 @@ class SplitServerTest {
             field().performTextReplacement(stop.plus(30, ChronoUnit.MINUTES).atZone(madrid).format(clock))
             splitButton().performSemanticsAction(SemanticsActions.OnClick)
             composeRule.waitUntil("the message shows", LOAD_TIMEOUT_MS) {
-                composeRule.onAllNodes(hasText(context.getString(R.string.history_split_outside), substring = true)).fetchSemanticsNodes().isNotEmpty()
+                composeRule.onAllNodes(
+                    hasText(context.getString(R.string.history_split_outside), substring = true),
+                ).fetchSemanticsNodes().isNotEmpty()
             }
             assertEquals("nothing queued", 0, runBlocking { app.changes.unsentCount.first() })
 
             field().performTextReplacement(split.atZone(madrid).format(clock))
             composeRule.waitUntil("the preview shows", LOAD_TIMEOUT_MS) {
-                composeRule.onAllNodes(hasText(preview(Duration.ofMinutes(45), Duration.ofMinutes(75)), substring = true)).fetchSemanticsNodes().isNotEmpty()
+                composeRule.onAllNodes(
+                    hasText(preview(Duration.ofMinutes(45), Duration.ofMinutes(75)), substring = true),
+                ).fetchSemanticsNodes().isNotEmpty()
             }
             splitButton().performSemanticsAction(SemanticsActions.OnClick)
 
             composeRule.waitUntil("the halves show at once, as a group of two marked unsent", LOAD_TIMEOUT_MS) {
                 composeRule.onAllNodes(
-                    hasText("Paint the wall") and hasText(context.getString(R.string.history_unsent), ignoreCase = true) and
-                        hasContentDescription(context.resources.getQuantityString(R.plurals.history_group_entries, 2, 2)),
+                    hasText(
+                        "Paint the wall",
+                    ) and hasText(context.getString(R.string.history_unsent), ignoreCase = true) and
+                        hasContentDescription(
+                            context.resources.getQuantityString(R.plurals.history_group_entries, 2, 2),
+                        ),
                 ).fetchSemanticsNodes().size == 1
             }
             composeRule.waitUntil("the message says so", LOAD_TIMEOUT_MS) {
-                composeRule.onAllNodes(hasText(context.getString(R.string.history_split_done))).fetchSemanticsNodes().isNotEmpty()
+                composeRule.onAllNodes(
+                    hasText(context.getString(R.string.history_split_done)),
+                ).fetchSemanticsNodes().isNotEmpty()
             }
 
             AirplaneMode.set(false, web)
             sendTheQueue()
         }
 
-        val entries = serverEntries(start).filter { it.string("description") == "Paint the wall" }.sortedBy { it.instant("start") }
+        val entries = serverEntries(
+            start,
+        ).filter { it.string("description") == "Paint the wall" }.sortedBy { it.instant("start") }
         assertEquals("the original and the second half", 2, entries.size)
         val (first, second) = entries
         assertEquals("the original keeps its id", source, first.getValue("id").jsonPrimitive.long)
@@ -186,27 +200,41 @@ class SplitServerTest {
 
     /** Opens the entry's menu and its Split item, each by the label TalkBack reads. */
     private fun openSplit() {
-        composeRule.onNode(hasContentDescription(context.getString(R.string.history_more_actions, "Paint the wall")) and hasClickAction())
+        composeRule.onNode(
+            hasContentDescription(
+                context.getString(R.string.history_more_actions, "Paint the wall"),
+            ) and hasClickAction(),
+        )
             .performSemanticsAction(SemanticsActions.OnClick)
         composeRule.onNode(hasText(context.getString(R.string.history_split)) and hasClickAction())
             .performSemanticsAction(SemanticsActions.OnClick)
         composeRule.waitUntil("the dialog shows", LOAD_TIMEOUT_MS) {
-            composeRule.onAllNodes(isDialog() and hasAnyDescendantText(R.string.history_split_title)).fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodes(
+                isDialog() and hasAnyDescendantText(R.string.history_split_title),
+            ).fetchSemanticsNodes().isNotEmpty()
         }
     }
 
     /** The time field, by its label. */
-    private fun field() = composeRule.onNode(hasSetTextAction() and hasText(context.getString(R.string.history_split_field)))
+    private fun field() = composeRule.onNode(
+        hasSetTextAction() and hasText(context.getString(R.string.history_split_field)),
+    )
 
     private fun splitButton() = composeRule.onNode(
         hasText(context.getString(R.string.history_split_confirm)) and hasClickAction() and hasAnyAncestor(isDialog()),
     )
 
-    private fun hasAnyDescendantText(id: Int) = androidx.compose.ui.test.hasAnyDescendant(hasText(context.getString(id)))
+    private fun hasAnyDescendantText(id: Int) = androidx.compose.ui.test.hasAnyDescendant(
+        hasText(context.getString(id)),
+    )
 
     private fun preview(first: Duration, second: Duration): String {
         val settings = app.accountSettings.state.value!!
-        return context.getString(R.string.history_split_preview, settings.formatDuration(first.seconds), settings.formatDuration(second.seconds))
+        return context.getString(
+            R.string.history_split_preview,
+            settings.formatDuration(first.seconds),
+            settings.formatDuration(second.seconds),
+        )
     }
 
     /** The server's entries that start within a day of [start]. */

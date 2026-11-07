@@ -54,11 +54,11 @@ import com.github.e0ipso.tokkl.widget.PomodoroWidgetState
 import com.github.e0ipso.tokkl.widget.PomodoroWidgetStateSource
 import com.github.e0ipso.tokkl.widget.WidgetState
 import com.github.e0ipso.tokkl.widget.WidgetStateSource
-import java.time.Clock
 import kotlinx.coroutines.flow.Flow
 import org.koin.androidx.workmanager.factory.KoinWorkerFactory
 import org.koin.core.context.GlobalContext
 import org.koin.core.qualifier.Qualifier
+import java.time.Clock
 
 // The app's components as the tests read them, from the app's Koin graph. Each name matches the
 // TokklApplication property it replaced, so the tests keep their call sites. They live in a package
@@ -133,14 +133,13 @@ fun initializeTestWorkManager(context: Context) {
  * [owner]'s view models, made through Koin when the store lacks one, as the app makes them. A plain
  * [ViewModelProvider] cannot make them: they take their dependencies in their constructors.
  */
-fun koinViewModels(owner: ViewModelStoreOwner): ViewModelProvider =
-    ViewModelProvider(
-        owner,
-        object : ViewModelProvider.Factory {
-            override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T =
-                GlobalContext.get().get(modelClass.kotlin)
-        },
-    )
+fun koinViewModels(owner: ViewModelStoreOwner): ViewModelProvider = ViewModelProvider(
+    owner,
+    object : ViewModelProvider.Factory {
+        override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T =
+            GlobalContext.get().get(modelClass.kotlin)
+    },
+)
 
 /** The navigation's view model stores in [activity], which TokklNavHost reads them from. */
 internal fun navigationStores(activity: ComponentActivity): NavigationStores =
@@ -150,7 +149,9 @@ internal fun navigationStores(activity: ComponentActivity): NavigationStores =
  * The view models of [activity]'s signed-in session, which the screens share: the timer, the entry
  * actions, the timer templates, the reports and the Pomodoro page.
  */
-internal fun sessionViewModels(activity: ComponentActivity): ViewModelProvider = koinViewModels(navigationStores(activity).session)
+internal fun sessionViewModels(activity: ComponentActivity): ViewModelProvider = koinViewModels(
+    navigationStores(activity).session,
+)
 
 /** The view models of [activity]'s Timer page: its history and its calendar. */
 internal fun timerPageViewModels(activity: ComponentActivity): ViewModelProvider =

@@ -28,20 +28,25 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import com.github.e0ipso.tokkl.feature.settings.R
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.ui.StepperCard
 import com.github.e0ipso.tokkl.ui.StepperUnit
 import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 
 /** Each default has a labelled, validated editor; a draft never mutates the stored defaults. */
 @Composable
-internal fun PomodoroDefaultsSection(defaults: PomodoroDefaults, sharedWithWeb: Boolean, change: (PomodoroDefaults) -> Unit) {
+internal fun PomodoroDefaultsSection(
+    defaults: PomodoroDefaults,
+    sharedWithWeb: Boolean,
+    change: (PomodoroDefaults) -> Unit,
+) {
     var editing by rememberSaveable { mutableStateOf<String?>(null) }
     Text(
-        stringResource(R.string.settings_pomodoro), style = MaterialTheme.typography.titleMedium,
+        stringResource(R.string.settings_pomodoro),
+        style = MaterialTheme.typography.titleMedium,
         modifier = Modifier.semantics { heading() },
     )
     Text(
@@ -58,8 +63,19 @@ internal fun PomodoroDefaultsSection(defaults: PomodoroDefaults, sharedWithWeb: 
         ) {
             Text(stringResource(field.label), style = MaterialTheme.typography.bodyLarge)
             Text(
-                pluralStringResource(if (field == PomodoroDefaultField.EVERY) R.plurals.settings_pomodoro_phases else R.plurals.settings_pomodoro_minutes, value, value),
-                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                pluralStringResource(
+                    if (field ==
+                        PomodoroDefaultField.EVERY
+                    ) {
+                        R.plurals.settings_pomodoro_phases
+                    } else {
+                        R.plurals.settings_pomodoro_minutes
+                    },
+                    value,
+                    value,
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
@@ -72,7 +88,12 @@ internal fun PomodoroDefaultsSection(defaults: PomodoroDefaults, sharedWithWeb: 
         val valid = field.parse(text) != null
         AlertDialog(
             onDismissRequest = { editing = null },
-            title = { Text(stringResource(R.string.settings_pomodoro_edit), modifier = Modifier.semantics { heading() }) },
+            title = {
+                Text(
+                    stringResource(R.string.settings_pomodoro_edit),
+                    modifier = Modifier.semantics { heading() },
+                )
+            },
             text = {
                 Column(Modifier.verticalScroll(rememberScrollState())) {
                     StepperCard(
@@ -86,13 +107,22 @@ internal fun PomodoroDefaultsSection(defaults: PomodoroDefaults, sharedWithWeb: 
                 }
             },
             confirmButton = {
-                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup)) {
+                Column(
+                    Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup),
+                ) {
                     TokklGhostButton(onClick = { editing = null }, modifier = Modifier.fillMaxWidth()) {
                         Text(stringResource(R.string.settings_pomodoro_cancel))
                     }
                     TokklButton(
-                        onClick = { field.edited(defaults, text)?.let { change(it); editing = null } },
-                        enabled = valid, modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            field.edited(defaults, text)?.let {
+                                change(it)
+                                editing = null
+                            }
+                        },
+                        enabled = valid,
+                        modifier = Modifier.fillMaxWidth(),
                     ) { Text(stringResource(R.string.settings_pomodoro_save)) }
                 }
             },

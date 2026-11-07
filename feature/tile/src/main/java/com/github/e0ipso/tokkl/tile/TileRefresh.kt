@@ -11,10 +11,10 @@ import com.github.e0ipso.tokkl.cache.RunningCheck
 import com.github.e0ipso.tokkl.cache.toCached
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.session.reachesInternet
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.builtins.nullable
+import kotlin.coroutines.CoroutineContext
 
 /**
  * One current-entry read when the shade opens, independent of the tile's display and taps.
@@ -41,7 +41,10 @@ internal class TileRefresh(
             var succeeded = false
             try {
                 val before = cache.runningCheckStart()
-                val current = api.get(api.server.api("me", "time_entries", "current"), ServerTimeEntry.serializer().nullable)
+                val current = api.get(
+                    api.server.api("me", "time_entries", "current"),
+                    ServerTimeEntry.serializer().nullable,
+                )
                 if (current is ApiResult.Success) {
                     // Reuse the background check's sign-out, queued-change and newer-write guards.
                     RunningCheck.results.write(generation) { cache.checkedRunning(before, current.value?.toCached()) }

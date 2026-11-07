@@ -7,25 +7,22 @@ import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.entryfields.entryLabels
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
-import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
-import java.security.MessageDigest
-import java.time.Instant
+import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import java.security.MessageDigest
+import java.time.Instant
 
 /** Server session data for the Pomodoro widget, without requests or local phase rules. */
 sealed interface PomodoroWidgetState {
     data object NoAccount : PomodoroWidgetState
     data object Unsupported : PomodoroWidgetState
 
-    data class Idle(
-        val account: String,
-        val defaults: PomodoroDefaults,
-        val entry: PomodoroWidgetEntry,
-    ) : PomodoroWidgetState
+    data class Idle(val account: String, val defaults: PomodoroDefaults, val entry: PomodoroWidgetEntry) :
+        PomodoroWidgetState
 
     data class Active(
         val account: String,
@@ -73,13 +70,19 @@ fun pomodoroWidgetState(
     val entryWorkspace = fields?.workspaceId ?: workspaceId
     val entryFields = fields?.fields() ?: EntryFields()
     val labels = entryLabels(
-        entryFields, projects.filter { it.workspaceId == entryWorkspace }, tasks.filter { it.workspaceId == entryWorkspace },
+        entryFields,
+        projects.filter { it.workspaceId == entryWorkspace },
+        tasks.filter { it.workspaceId == entryWorkspace },
     )
     val entry = PomodoroWidgetEntry(entryWorkspace, entryFields, labels.project, labels.projectColor, labels.task)
     if (session == null) return PomodoroWidgetState.Idle(account, defaults, entry)
     val end = session.phase.plannedEnd.minus(held.clockOffset)
     return PomodoroWidgetState.Active(
-        account, held.state.revision, session, session.phase.start.minus(held.clockOffset), end,
+        account,
+        held.state.revision,
+        session,
+        session.phase.start.minus(held.clockOffset),
+        end,
         ended = !deviceNow.isBefore(end) || ringing?.start == session.phase.start,
         entry = entry,
     )
@@ -90,7 +93,9 @@ fun PomodoroWidgetState.key(): String {
     val content = buildJsonObject {
         when (val state = this@key) {
             PomodoroWidgetState.NoAccount -> put("state", "no-account")
+
             PomodoroWidgetState.Unsupported -> put("state", "unsupported")
+
             is PomodoroWidgetState.Idle -> {
                 put("state", "idle")
                 put("account", state.account)
@@ -100,6 +105,7 @@ fun PomodoroWidgetState.key(): String {
                 put("every", state.defaults.longRestEvery)
                 put("entry", state.entry.keyContent())
             }
+
             is PomodoroWidgetState.Active -> {
                 put("state", "active")
                 put("account", state.account)
@@ -117,7 +123,15 @@ fun PomodoroWidgetState.key(): String {
 }
 
 private fun PomodoroWidgetEntry.keyContent() = buildJsonObject {
-    val saved = RememberedPomodoroFields("", workspaceId, fields.description, fields.projectId, fields.taskId, fields.tags, fields.billable)
+    val saved = RememberedPomodoroFields(
+        "",
+        workspaceId,
+        fields.description,
+        fields.projectId,
+        fields.taskId,
+        fields.tags,
+        fields.billable,
+    )
     put("fields", ApiJson.encodeToJsonElement(RememberedPomodoroFields.serializer(), saved))
     put("project", project?.let(::JsonPrimitive) ?: JsonNull)
     put("projectColor", projectColor?.let(::JsonPrimitive) ?: JsonNull)

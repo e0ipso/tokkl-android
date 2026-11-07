@@ -7,14 +7,14 @@ import com.github.e0ipso.tokkl.session.SignOutOrder
 import com.github.e0ipso.tokkl.storage.ValueStore
 import com.github.e0ipso.tokkl.timerstate.SurfaceTap
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
-import java.io.IOException
-import java.time.Duration
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.io.IOException
+import java.time.Duration
+import kotlin.coroutines.CoroutineContext
 
 /** Identity is id plus start to the second, as the web app's LongTimerReminder.tsx. */
 data class ReminderTimer(val id: Long, val start: Long, val due: Long, val handled: Boolean = false)
@@ -64,15 +64,20 @@ class ReminderSync(
     private suspend fun update(input: ReminderInput): ReminderTimer? {
         val entry = input.running?.takeIf { it.stop == null }
         if (entry == null) {
-            cancel(); remove(); timers.save(null)
+            cancel()
+            remove()
+            timers.save(null)
             return null
         }
         val previous = timers.load()
         val same = previous != null && currentId(previous.id) == entry.id && previous.start == entry.start.epochSecond
-        val due = entry.start.epochSecond * 1000 + Duration.ofHours(input.preferences.clamped().hours.toLong()).toMillis()
+        val due = entry.start.epochSecond * 1000 + Duration.ofHours(
+            input.preferences.clamped().hours.toLong(),
+        ).toMillis()
         val timer = if (same) previous.copy(due = due) else ReminderTimer(entry.id, entry.start.epochSecond, due)
         if (!same || previous.due != due) {
-            cancel(); remove()
+            cancel()
+            remove()
         }
         timers.save(timer)
         if (!input.preferences.enabled || timer.handled) cancel() else schedule(timer)
@@ -83,7 +88,12 @@ class ReminderSync(
     /** A worker may arrive late, after cancellation, a start correction, sign-out or a switch. */
     suspend fun fire(id: Long, start: Long, due: Long): Unit = lock.withLock {
         val timer = update(latest()) ?: return@withLock
-        if (timer.start != start || currentId(id) != currentId(timer.id) || timer.handled || timer.due != due) return@withLock
+        if (timer.start != start || currentId(
+                id,
+            ) != currentId(timer.id) || timer.handled || timer.due != due
+        ) {
+            return@withLock
+        }
         // Persist first, so another process or a second delivery never posts it twice.
         timers.save(timer.copy(handled = true))
         post(timer)
@@ -130,10 +140,13 @@ class ReminderSync(
 
     private fun handled(timer: ReminderTimer) {
         timers.save(timer.copy(handled = true))
-        cancel(); remove()
+        cancel()
+        remove()
     }
 
     suspend fun forget(): Unit = lock.withLock {
-        cancel(); remove(); timers.save(null)
+        cancel()
+        remove()
+        timers.save(null)
     }
 }

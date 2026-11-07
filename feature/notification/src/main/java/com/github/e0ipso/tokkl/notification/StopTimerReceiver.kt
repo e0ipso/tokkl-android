@@ -28,7 +28,9 @@ import org.koin.core.component.inject
  *
  * Declared in the manifest and not exported: only the notification's own PendingIntents reach it.
  */
-class StopTimerReceiver : BroadcastReceiver(), KoinComponent {
+class StopTimerReceiver :
+    BroadcastReceiver(),
+    KoinComponent {
 
     private val surfaceActions: TimerSurfaceActions by inject()
     private val scope: CoroutineScope by inject()
@@ -71,10 +73,9 @@ class StopTimerReceiver : BroadcastReceiver(), KoinComponent {
 }
 
 /** Puts [target] in this intent's extras, for [timerTarget] to read back. */
-fun Intent.putTarget(target: TimerTarget): Intent =
-    putExtra(StopTimerReceiver.EXTRA_ACCOUNT, target.account)
-        .putExtra(StopTimerReceiver.EXTRA_REVISION, target.revision)
-        .putExtra(StopTimerReceiver.EXTRA_ENTRY_ID, target.entryId)
+fun Intent.putTarget(target: TimerTarget): Intent = putExtra(StopTimerReceiver.EXTRA_ACCOUNT, target.account)
+    .putExtra(StopTimerReceiver.EXTRA_REVISION, target.revision)
+    .putExtra(StopTimerReceiver.EXTRA_ENTRY_ID, target.entryId)
 
 /**
  * The [TimerTarget] [putTarget] put here. An intent without an account, as from a notification

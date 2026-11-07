@@ -1,10 +1,10 @@
 package com.github.e0ipso.tokkl.session
 
 import com.github.e0ipso.tokkl.storage.ValueStore
-import java.io.IOException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.io.IOException
 
 /**
  * The account settings for the whole process, and the one place screens read them from.

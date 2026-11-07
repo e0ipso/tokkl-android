@@ -5,12 +5,6 @@ import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.EntryWithSendState
 import com.github.e0ipso.tokkl.session.AccountSettings
-import java.time.Clock
-import java.time.DayOfWeek
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneOffset
-import java.util.TimeZone
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,6 +15,12 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
+import java.time.Clock
+import java.time.DayOfWeek
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
+import java.util.TimeZone
 
 /**
  * The calendar lays out the week in the account's timezone and from its first day of the week,
@@ -106,9 +106,15 @@ class CalendarTimeZoneTest {
 
         val entry = state.entries.single()
         // Midnight on the 11th in Tokyo is 15:00 UTC on the 10th.
-        assertEquals(Instant.parse("2026-10-10T15:00:00Z") to Instant.parse("2026-10-10T16:30:00Z"), entry.start to entry.stop)
+        assertEquals(
+            Instant.parse("2026-10-10T15:00:00Z") to Instant.parse("2026-10-10T16:30:00Z"),
+            entry.start to entry.stop,
+        )
         assertEquals(listOf(LocalDate.of(2026, 10, 11)), state.allDay.keys.toList())
-        assertEquals(emptyList<CalendarBlock>(), calendarBlocks(state.entries, state.weekDays, state.zone, NOW.instant()))
+        assertEquals(
+            emptyList<CalendarBlock>(),
+            calendarBlocks(state.entries, state.weekDays, state.zone, NOW.instant()),
+        )
         assertEquals(5400L, dayTotalSeconds(state.entries, LocalDate.of(2026, 10, 11), state.zone, NOW.instant()))
         assertEquals(0L, dayTotalSeconds(state.entries, LocalDate.of(2026, 10, 10), state.zone, NOW.instant()))
     }
@@ -135,15 +141,27 @@ class CalendarTimeZoneTest {
 
     /** The calendar only shows entries here. */
     private object NoChanges : EntryChanges {
-        override suspend fun start(workspaceId: Long, fields: EntryFields): Long = throw AssertionError("nothing starts")
+        override suspend fun start(workspaceId: Long, fields: EntryFields): Long = throw AssertionError(
+            "nothing starts",
+        )
 
         override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean = throw AssertionError("nothing stops")
 
-        override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant, noTimeDay: LocalDate?): Long =
-            throw AssertionError("nothing is created")
+        override suspend fun create(
+            workspaceId: Long,
+            fields: EntryFields,
+            start: Instant,
+            stop: Instant,
+            noTimeDay: LocalDate?,
+        ): Long = throw AssertionError("nothing is created")
 
-        override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?, noTimeDay: LocalDate?): Boolean =
-            throw AssertionError("nothing is edited")
+        override suspend fun update(
+            entryId: Long,
+            fields: EntryFields,
+            start: Instant,
+            stop: Instant?,
+            noTimeDay: LocalDate?,
+        ): Boolean = throw AssertionError("nothing is edited")
 
         override suspend fun delete(entryId: Long): Boolean = throw AssertionError("nothing is deleted")
     }

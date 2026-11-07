@@ -7,12 +7,12 @@ import com.github.e0ipso.tokkl.timerstate.PomodoroAlarmScheduler
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.timerstate.SessionActions
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
-import java.time.Clock
-import java.time.Instant
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import java.time.Clock
+import java.time.Instant
+import kotlin.coroutines.CoroutineContext
 
 /**
  * The exact alarm and the ring of the server's Pomodoro session, from the account's held timer

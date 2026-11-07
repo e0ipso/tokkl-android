@@ -16,10 +16,10 @@ import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import com.github.e0ipso.tokkl.timerstate.TimerControls
 import com.github.e0ipso.tokkl.timerstate.seconds
 import com.github.e0ipso.tokkl.timerstate.target
-import java.time.Instant
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
+import java.time.Instant
 
 /** Disposable account and real Room/queue shared by the normal timer acceptance tests. */
 internal class TimerAcceptanceFixture {
@@ -41,10 +41,14 @@ internal class TimerAcceptanceFixture {
         refresh()
     }
     fun cleanup() {
-        try { AirplaneMode.set(false, account.client) }
-        finally {
-            try { TestAccounts.delete(account) }
-            finally { SessionRule.signOut() }
+        try {
+            AirplaneMode.set(false, account.client)
+        } finally {
+            try {
+                TestAccounts.delete(account)
+            } finally {
+                SessionRule.signOut()
+            }
         }
     }
     fun refresh() = runBlocking { app.accountRefresh.refresh().join() }
@@ -70,11 +74,15 @@ internal class TimerAcceptanceFixture {
     fun ageRunning(seconds: Long = 600): TimerControls.Running {
         val active = shown() as TimerControls.Running
         val row = active.entry
-        assertTrue(runBlocking { app.changes.updateRunning(
-            RunningEntryIdentity(row.id, row.workspaceId, row.start),
-            EntryFields(row.description, row.projectId, row.taskId, row.tags, row.billable),
-            Instant.now().minusSeconds(seconds),
-        ) })
+        assertTrue(
+            runBlocking {
+                app.changes.updateRunning(
+                    RunningEntryIdentity(row.id, row.workspaceId, row.start),
+                    EntryFields(row.description, row.projectId, row.taskId, row.tags, row.billable),
+                    Instant.now().minusSeconds(seconds),
+                )
+            },
+        )
         return shown() as TimerControls.Running
     }
 
@@ -82,7 +90,12 @@ internal class TimerAcceptanceFixture {
     fun stop() {
         when (val active = shown()) {
             is TimerControls.Running -> assertTrue(runBlocking { app.changes.stop(active.entry.id) })
-            is TimerControls.Paused -> assertEquals(TimerActionResult.Done, runBlocking { app.timerActions.discard(active.target.revision) })
+
+            is TimerControls.Paused -> assertEquals(
+                TimerActionResult.Done,
+                runBlocking { app.timerActions.discard(active.target.revision) },
+            )
+
             TimerControls.Idle -> Unit
         }
     }

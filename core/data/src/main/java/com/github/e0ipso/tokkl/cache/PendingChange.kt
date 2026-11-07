@@ -87,7 +87,13 @@ data class PendingChange(
 ) {
 
     /** The cache row this change leaves, or null for a delete or short Stop. */
-    fun cachedEntry(): CachedTimeEntry? = if (kind == ChangeKind.DELETE || (kind == ChangeKind.STOP && shortStop)) null else entry()
+    fun cachedEntry(): CachedTimeEntry? = if (kind == ChangeKind.DELETE ||
+        (kind == ChangeKind.STOP && shortStop)
+    ) {
+        null
+    } else {
+        entry()
+    }
 
     /** The entry as this change has it: for a delete, as it was when the delete was queued. */
     fun entry(): CachedTimeEntry =
@@ -123,16 +129,10 @@ data class ShortStopUndo(
 
 /** The server's id for an entry the phone created under [localId]. */
 @Entity(tableName = "entry_ids")
-data class EntryIdMapping(
-    @PrimaryKey val localId: Long,
-    val serverId: Long,
-)
+data class EntryIdMapping(@PrimaryKey val localId: Long, val serverId: Long)
 
 /** A cached entry, and whether the queue holds a change to it that the server has not received. */
-data class EntryWithSendState(
-    @Embedded val entry: CachedTimeEntry,
-    val unsent: Boolean,
-)
+data class EntryWithSendState(@Embedded val entry: CachedTimeEntry, val unsent: Boolean)
 
 /**
  * These entries with each of the [pending] changes applied in order, so a refresh keeps showing

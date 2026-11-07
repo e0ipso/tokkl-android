@@ -1,9 +1,5 @@
 package com.github.e0ipso.tokkl.widget
 
-import java.time.Clock
-import java.time.Instant
-import java.time.ZoneId
-import java.time.ZoneOffset
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -13,6 +9,10 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.junit.Assert.*
 import org.junit.Test
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneId
+import java.time.ZoneOffset
 
 class PomodoroWidgetDeadlineTest {
     @Test fun aFractionalMillisecondCannotRedrawBeforeThePhaseEnds() = runBlocking {
@@ -29,7 +29,9 @@ class PomodoroWidgetDeadlineTest {
             time.now = 1
             pending.release.complete(Unit)
             withTimeout(1_000) { draws.receive() }
-        } finally { job.cancel() }
+        } finally {
+            job.cancel()
+        }
     }
 
     @Test fun phaseEndRedrawDoesNotDependOnAnAlarmOrAnotherServerEvent() = runBlocking {
@@ -49,7 +51,9 @@ class PomodoroWidgetDeadlineTest {
             withTimeout(1_000) { draws.receive() }
             assertTrue("one phase has one deadline", time.waits.tryReceive().isFailure)
             assertTrue("no repeated redraws", draws.tryReceive().isFailure)
-        } finally { job.cancel() }
+        } finally {
+            job.cancel()
+        }
     }
 
     @Test fun aNewPhaseCancelsThePreviousDeadline() = runBlocking {
@@ -73,7 +77,9 @@ class PomodoroWidgetDeadlineTest {
             time.now = 3_000
             current.release.complete(Unit)
             withTimeout(1_000) { draws.receive() }
-        } finally { job.cancel() }
+        } finally {
+            job.cancel()
+        }
     }
 
     @Test fun sessionEndCancelsTheDeadlineAndPastEndsNeedNoFutureWork() = runBlocking {
@@ -94,7 +100,9 @@ class PomodoroWidgetDeadlineTest {
             ends.value = Instant.EPOCH
             withTimeout(1_000) { draws.receive() }
             assertTrue("an overdue restored phase needs no future wait", time.waits.tryReceive().isFailure)
-        } finally { job.cancel() }
+        } finally {
+            job.cancel()
+        }
     }
 
     private class Pending(val milliseconds: Long) {
@@ -111,7 +119,11 @@ class PomodoroWidgetDeadlineTest {
         suspend fun wait(milliseconds: Long) {
             val pending = Pending(milliseconds)
             waits.send(pending)
-            try { pending.release.await() } finally { pending.finished = true }
+            try {
+                pending.release.await()
+            } finally {
+                pending.finished = true
+            }
         }
     }
 }

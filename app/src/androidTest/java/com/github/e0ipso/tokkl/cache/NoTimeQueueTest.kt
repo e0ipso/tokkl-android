@@ -4,12 +4,6 @@ import androidx.room.Room
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.time.AccountTime
-import java.time.Clock
-import java.time.DayOfWeek
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
-import java.time.ZoneOffset
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -21,6 +15,12 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.time.Clock
+import java.time.DayOfWeek
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.ZoneOffset
 
 /**
  * A no-time entry keeps its flag and day through every change the queue makes to it, in the
@@ -175,11 +175,14 @@ class NoTimeQueueTest {
     private fun timed(id: Long, start: Instant, stop: Instant) =
         CachedTimeEntry(id, WORKSPACE, null, null, "Server", start, stop, false, emptyList(), emptyList())
 
-    private fun serverNoTime(id: Long, day: LocalDate?) =
-        CachedTimeEntry(
-            id, WORKSPACE, null, null, "Server all day", MIDNIGHT, MIDNIGHT.plusSeconds(7_200), false, emptyList(), emptyList(),
-            allDay = true, day = day,
-        )
+    private fun serverNoTime(id: Long, day: LocalDate?) = CachedTimeEntry(
+        id, WORKSPACE, null, null, "Server all day", MIDNIGHT,
+        MIDNIGHT.plusSeconds(
+            7_200,
+        ),
+        false, emptyList(), emptyList(),
+        allDay = true, day = day,
+    )
 
     private companion object {
         const val WORKSPACE = 20L

@@ -28,13 +28,13 @@ import androidx.compose.ui.unit.DpRect
 import androidx.core.view.WindowCompat
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.accessibility.createEmptyComposeRule
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
+import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.navhost.SignedInFrame
 import com.github.e0ipso.tokkl.navigation.TopLevelPage
 import com.github.e0ipso.tokkl.session.AccountSettings
@@ -46,18 +46,18 @@ import com.github.e0ipso.tokkl.timer.TimerView
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklSpacing
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import java.time.Clock
-import java.time.DayOfWeek
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneOffset
-import kotlin.math.abs
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.Clock
+import java.time.DayOfWeek
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
+import kotlin.math.abs
 
 /**
  * The Timer page's Calendar view on a phone held sideways, a window of compact height (docs/PRD.md
@@ -137,7 +137,9 @@ abstract class LandscapeCalendarTest(
                 )
             }
             // The page's column, which holds the view switch, ends right above the bottom bar.
-            val page = composeRule.onNode(hasScrollAction() and hasAnyDescendant(hasText(string(R.string.timer_view_list)) and isSelectable()))
+            val page = composeRule.onNode(
+                hasScrollAction() and hasAnyDescendant(hasText(string(R.string.timer_view_list)) and isSelectable()),
+            )
             val pageBottom = page.fetchSemanticsNode().boundsInRoot.bottom
             // From the bottom of the calendar up the window, as a thumb scrolls on through the day.
             composeRule.onRoot().performTouchInput {
@@ -171,7 +173,10 @@ abstract class LandscapeCalendarTest(
             string(label) to composeRule.onNode(hasContentDescription(string(label)) and hasClickAction())
         }
         val current = string(thisWeek).let { it to composeRule.onNode(hasText(it) and hasClickAction()) }
-        val totals = listOf("timer_totals_today", "timer_totals_week").map { tag -> tag to composeRule.onNodeWithTag(tag) }
+        val totals = listOf(
+            "timer_totals_today",
+            "timer_totals_week",
+        ).map { tag -> tag to composeRule.onNodeWithTag(tag) }
         return segments + arrows + current + totals
     }
 
@@ -212,7 +217,12 @@ class LargestFontLandscapeCalendarTest : LandscapeCalendarTest(fontScale = Syste
  * sideways, so the title, the timer, the switch and the toolbar scroll away there too, and the grid
  * shows eight hour rows.
  */
-class LargestFontUprightCalendarTest : LandscapeCalendarTest(fontScale = SystemFontScale.LARGEST, hourRows = 8, landscape = false)
+class LargestFontUprightCalendarTest :
+    LandscapeCalendarTest(
+        fontScale = SystemFontScale.LARGEST,
+        hourRows = 8,
+        landscape = false,
+    )
 
 /**
  * On a phone held upright at the usual font scale, the title, the timer and the switch scroll
@@ -253,7 +263,15 @@ private fun CalendarPage() {
             },
             listContent = {},
             calendarContent = {
-                CalendarContent(state = WEEK, now = NOON, onStep = {}, onSelect = {}, onToday = {}, onRetry = {}, editing = INERT_EDITING)
+                CalendarContent(
+                    state = WEEK,
+                    now = NOON,
+                    onStep = {},
+                    onSelect = {},
+                    onToday = {},
+                    onRetry = {},
+                    editing = INERT_EDITING,
+                )
             },
         )
     }

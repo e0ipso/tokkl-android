@@ -78,7 +78,12 @@ private fun WeeklyGrid(report: WeeklyReport, settings: AccountSettings) {
     // Each day column, then the total column, is as wide as its widest text.
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
-    fun widthOf(text: String, style: TextStyle): Int = measurer.measure(text, style, softWrap = false, maxLines = 1).size.width
+    fun widthOf(text: String, style: TextStyle): Int = measurer.measure(
+        text,
+        style,
+        softWrap = false,
+        maxLines = 1,
+    ).size.width
     val dayHeads = report.days.map { words.weekday(it).uppercase(locale) to words.short(it) }
     val columnWidths: List<Dp> = (0..DAYS_IN_WEEK).map { column ->
         val pixels = if (column < DAYS_IN_WEEK) {
@@ -121,7 +126,10 @@ private fun WeeklyGrid(report: WeeklyReport, settings: AccountSettings) {
                 if (column < DAYS_IN_WEEK) {
                     val day = report.days[column]
                     val spoken = words.bucket(day, Resolution.DAY)
-                    Column(horizontalAlignment = Alignment.End, modifier = Modifier.clearAndSetSemantics { contentDescription = spoken }) {
+                    Column(
+                        horizontalAlignment = Alignment.End,
+                        modifier = Modifier.clearAndSetSemantics { contentDescription = spoken },
+                    ) {
                         Text(dayHeads[column].first, style = styles.head, maxLines = 1, softWrap = false)
                         Text(
                             dayHeads[column].second,
@@ -157,7 +165,11 @@ private fun WeeklyGrid(report: WeeklyReport, settings: AccountSettings) {
                             text = settings.formatDuration(row.total),
                             style = styles.total,
                             muted = false,
-                            spoken = resources.getString(R.string.reports_weekly_row_total_description, name, spokenDuration(resources, row.total)),
+                            spoken = resources.getString(
+                                R.string.reports_weekly_row_total_description,
+                                name,
+                                spokenDuration(resources, row.total),
+                            ),
                         )
                     }
                 }
@@ -181,7 +193,10 @@ private fun WeeklyGrid(report: WeeklyReport, settings: AccountSettings) {
                         text = settings.formatDuration(report.total),
                         style = styles.total,
                         muted = false,
-                        spoken = resources.getString(R.string.reports_weekly_total_description, spokenDuration(resources, report.total)),
+                        spoken = resources.getString(
+                            R.string.reports_weekly_total_description,
+                            spokenDuration(resources, report.total),
+                        ),
                     )
                 }
             }
@@ -189,7 +204,13 @@ private fun WeeklyGrid(report: WeeklyReport, settings: AccountSettings) {
     }
 }
 
-private class GridStyles(val cell: TextStyle, val total: TextStyle, val head: TextStyle, val date: TextStyle, val name: TextStyle)
+private class GridStyles(
+    val cell: TextStyle,
+    val total: TextStyle,
+    val head: TextStyle,
+    val date: TextStyle,
+    val name: TextStyle,
+)
 
 /**
  * One row of the grid: [name] in a column [nameWidth] wide that stays put, then a cell per column

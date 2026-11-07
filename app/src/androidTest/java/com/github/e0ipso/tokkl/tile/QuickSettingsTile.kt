@@ -19,7 +19,10 @@ import com.github.e0ipso.tokkl.DeviceShell
 object QuickSettingsTile {
 
     private val instrumentation get() = InstrumentationRegistry.getInstrumentation()
-    private val component get() = ComponentName(instrumentation.targetContext, RunningTileService::class.java).flattenToString()
+    private val component get() = ComponentName(
+        instrumentation.targetContext,
+        RunningTileService::class.java,
+    ).flattenToString()
     private val device get() = UiDevice.getInstance(instrumentation)
 
     /** The label of any tile, which the panel shows only while it is open. */
@@ -49,8 +52,7 @@ object QuickSettingsTile {
         }
     }
 
-    private fun tileSpecs(): List<String> =
-        DeviceShell.run("settings get secure sysui_qs_tiles").trim().split(',')
+    private fun tileSpecs(): List<String> = DeviceShell.run("settings get secure sysui_qs_tiles").trim().split(',')
 
     /** Opens the full Quick Settings panel, where the system binds the tile and it listens. */
     fun expand() {
@@ -81,7 +83,13 @@ object QuickSettingsTile {
         expand()
         awaitPanel({ device.hasObject(anyTile) }) { "the panel did not reopen to close; tiles=${tileSpecs()}" }
         collapse()
-        if (!device.wait(Until.gone(anyTile), TIMEOUT_NANOS / 1_000_000)) throw AssertionError("the panel did not close")
+        if (!device.wait(
+                Until.gone(anyTile),
+                TIMEOUT_NANOS / 1_000_000,
+            )
+        ) {
+            throw AssertionError("the panel did not close")
+        }
     }
 
     /** Taps the tile, as SystemUI does for a touch. */
@@ -118,10 +126,15 @@ object QuickSettingsTile {
         val automation = instrumentation.uiAutomation
         val info = automation.serviceInfo
         if (info.flags and AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS == 0) {
-            automation.serviceInfo = info.apply { flags = flags or AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS }
+            automation.serviceInfo =
+                info.apply { flags = flags or AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS }
         }
         val roots = automation.windows.mapNotNull { it.root } + listOfNotNull(automation.rootInActiveWindow)
-        return roots.any { root -> root.findAccessibilityNodeInfosByText(text).any { it.says(text) && (!visibleOnly || it.isVisibleToUser) } }
+        return roots.any { root ->
+            root.findAccessibilityNodeInfosByText(
+                text,
+            ).any { it.says(text) && (!visibleOnly || it.isVisibleToUser) }
+        }
     }
 
     /** The search matches part of a text, in any case: this checks the whole of it. */

@@ -12,7 +12,6 @@ import androidx.test.runner.lifecycle.Stage
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.BackgroundTrip
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.RequestCounter
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
@@ -22,6 +21,7 @@ import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.bottomBarItem
 import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.followNoTimerEvents
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
@@ -135,7 +135,10 @@ class ForegroundRefreshServerTest {
 
         scenario!!.onActivity { it.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE }
         awaitCondition("the activity is recreated in landscape") {
-            resumedActivity()?.takeIf { it !== activity && it.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE }
+            resumedActivity()?.takeIf {
+                it !== activity &&
+                    it.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+            }
         }
         settle()
         assertEquals("a rotation refreshes nothing", beforeOpen + 2, me.count)
@@ -172,7 +175,9 @@ class ForegroundRefreshServerTest {
     private fun resumedActivity(): MainActivity? {
         var resumed: MainActivity? = null
         instrumentation.runOnMainSync {
-            resumed = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED).filterIsInstance<MainActivity>().singleOrNull()
+            resumed = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(
+                Stage.RESUMED,
+            ).filterIsInstance<MainActivity>().singleOrNull()
         }
         return resumed
     }

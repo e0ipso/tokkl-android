@@ -5,8 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.api.ServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.navigation.SignInAgain
-import java.io.IOException
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
@@ -21,6 +19,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import java.io.IOException
+import kotlin.coroutines.CoroutineContext
 
 enum class SignInMethod { API_TOKEN, EMAIL_PASSWORD }
 
@@ -121,7 +121,9 @@ class SignInViewModel(
         mutableState.update { it.copy(retryAt = deadlineFor(it.serverUrl)) }
     }
 
-    fun onServerUrlChange(value: String) = edit(InputError.SERVER_URL) { copy(serverUrl = value, retryAt = deadlineFor(value)) }
+    fun onServerUrlChange(value: String) = edit(
+        InputError.SERVER_URL,
+    ) { copy(serverUrl = value, retryAt = deadlineFor(value)) }
 
     fun onMethodChange(value: SignInMethod) = mutableState.update { it.copy(method = value, inputErrors = emptySet()) }
 
@@ -164,7 +166,9 @@ class SignInViewModel(
                 is SignInResult.RateLimited ->
                     (clock() + (result.retryAfterSeconds ?: DEFAULT_RETRY_AFTER_SECONDS) * MILLIS_PER_SECOND)
                         .also { remember(server.origin, it) }
+
                 SignInResult.SignedIn -> null.also { forget(server.origin) }
+
                 else -> null
             }
             mutableState.update { it.after(result, retryAt) }
@@ -217,7 +221,12 @@ class SignInViewModel(
                     false
                 }
             }
-            mutableState.update { it.copy(submitting = false, failure = SignInResult.AnswerNotStored.takeUnless { stored }) }
+            mutableState.update {
+                it.copy(
+                    submitting = false,
+                    failure = SignInResult.AnswerNotStored.takeUnless { stored },
+                )
+            }
             if (stored) submit()
         }
     }
@@ -240,16 +249,15 @@ class SignInViewModel(
         mutableState.value = SignInState()
     }
 
-    private fun SignInState.after(result: SignInResult, retryAt: Long?): SignInState =
-        when (result) {
-            // Drops every secret the form held.
-            SignInResult.SignedIn -> SignInState(signedIn = true)
-            else -> copy(submitting = false, failure = result, retryAt = retryAt)
-        }
+    private fun SignInState.after(result: SignInResult, retryAt: Long?): SignInState = when (result) {
+        // Drops every secret the form held.
+        SignInResult.SignedIn -> SignInState(signedIn = true)
+
+        else -> copy(submitting = false, failure = result, retryAt = retryAt)
+    }
 
     /** The deadline for the server in the form, or null when none blocks it. */
-    private fun deadlineFor(serverUrl: String): Long? =
-        ServerUrl.parse(serverUrl.trim())?.let { deadlines[it.origin] }
+    private fun deadlineFor(serverUrl: String): Long? = ServerUrl.parse(serverUrl.trim())?.let { deadlines[it.origin] }
 
     private fun remember(origin: String, deadline: Long) {
         deadlines[origin] = deadline
@@ -287,6 +295,7 @@ class SignInViewModel(
         if (server == null) add(InputError.SERVER_URL)
         when (state.method) {
             SignInMethod.API_TOKEN -> if (state.apiToken.isBlank()) add(InputError.API_TOKEN)
+
             SignInMethod.EMAIL_PASSWORD -> {
                 val email = state.email.trim()
                 if (email.isEmpty()) add(InputError.EMAIL)
@@ -298,18 +307,18 @@ class SignInViewModel(
     }
 
     /** Trims what a paste may wrap around the token or email. A password is sent exactly as typed. */
-    private fun credentials(state: SignInState): SignInCredentials? =
-        when (state.method) {
-            SignInMethod.API_TOKEN -> state.apiToken.trim().takeIf { it.isNotEmpty() }?.let(SignInCredentials::ApiToken)
-            SignInMethod.EMAIL_PASSWORD -> {
-                val email = state.email.trim()
-                if (email.isEmpty() || ':' in email || state.password.isEmpty()) {
-                    null
-                } else {
-                    SignInCredentials.EmailPassword(email, state.password)
-                }
+    private fun credentials(state: SignInState): SignInCredentials? = when (state.method) {
+        SignInMethod.API_TOKEN -> state.apiToken.trim().takeIf { it.isNotEmpty() }?.let(SignInCredentials::ApiToken)
+
+        SignInMethod.EMAIL_PASSWORD -> {
+            val email = state.email.trim()
+            if (email.isEmpty() || ':' in email || state.password.isEmpty()) {
+                null
+            } else {
+                SignInCredentials.EmailPassword(email, state.password)
             }
         }
+    }
 
     private companion object {
         const val MILLIS_PER_SECOND = 1000L

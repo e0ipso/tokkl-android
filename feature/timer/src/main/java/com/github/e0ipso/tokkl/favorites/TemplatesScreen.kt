@@ -16,8 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.github.e0ipso.tokkl.feature.timer.R
-import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTask
@@ -28,6 +26,7 @@ import com.github.e0ipso.tokkl.entryfields.EntryPicker
 import com.github.e0ipso.tokkl.entryfields.entryLabels
 import com.github.e0ipso.tokkl.entryfields.picked
 import com.github.e0ipso.tokkl.entryfields.withPicked
+import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.picker.EntityPicker
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.picker.rememberOffline
@@ -35,6 +34,7 @@ import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
 import com.github.e0ipso.tokkl.ui.TokklIconButton
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * More > Timer templates (docs/PRD.md T5). Ordered rows, and New or Edit forms for the
@@ -183,11 +183,23 @@ private fun TemplateRow(
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space1)) {
         Text(name, style = MaterialTheme.typography.bodyLarge)
         if (details != null) {
-            Text(details, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                details,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space1)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space1),
+        ) {
             RowButton(R.drawable.ic_chevron_up, stringResource(R.string.favorites_move_up, name), canMoveUp, onMoveUp)
-            RowButton(R.drawable.ic_chevron_down, stringResource(R.string.favorites_move_down, name), canMoveDown, onMoveDown)
+            RowButton(
+                R.drawable.ic_chevron_down,
+                stringResource(R.string.favorites_move_down, name),
+                canMoveDown,
+                onMoveDown,
+            )
             RowButton(UiR.drawable.ic_edit, stringResource(R.string.favorites_edit_spoken, name), canChange, onEdit)
             TokklIconButton(
                 icon = UiR.drawable.ic_nav_trash,

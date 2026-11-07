@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.widget
 
-import com.github.e0ipso.tokkl.timerstate.ServerTimerStates
 import com.github.e0ipso.tokkl.cache.CachedFavorite
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTask
@@ -10,13 +9,9 @@ import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.storage.valueStore
 import com.github.e0ipso.tokkl.time.DurationFormat
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
+import com.github.e0ipso.tokkl.timerstate.ServerTimerStates
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import com.github.e0ipso.tokkl.timerstate.timerPeriodTotals
-import java.io.IOException
-import java.time.DayOfWeek
-import java.time.Duration
-import java.time.Instant
-import java.time.LocalDate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOf
@@ -27,11 +22,24 @@ import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.IOException
+import java.time.DayOfWeek
+import java.time.Duration
+import java.time.Instant
+import java.time.LocalDate
 
 class WidgetStateTest {
 
     private val start: Instant = Instant.parse("2026-10-20T08:15:30.250Z")
-    private val project = CachedProject(id = 7, workspaceId = 1, clientId = null, name = "Tokkl for Android", color = "#06aaf5", active = true, billable = false)
+    private val project = CachedProject(
+        id = 7,
+        workspaceId = 1,
+        clientId = null,
+        name = "Tokkl for Android",
+        color = "#06aaf5",
+        active = true,
+        billable = false,
+    )
     private val task = CachedTask(id = 9, workspaceId = 1, projectId = 7, name = "Design", active = true)
     private val settings = AccountSettings("Asia/Tokyo", DayOfWeek.MONDAY, timeResolutionMinutes = null)
     private val running = CachedTimeEntry(
@@ -47,8 +55,22 @@ class WidgetStateTest {
         tagIds = emptyList(),
     )
     private val favorites = listOf(
-        CachedFavorite(position = 1, description = "Review", projectId = null, taskId = null, tags = emptyList(), billable = false),
-        CachedFavorite(position = 0, description = "Write", projectId = 7, taskId = 9, tags = listOf("docs"), billable = true),
+        CachedFavorite(
+            position = 1,
+            description = "Review",
+            projectId = null,
+            taskId = null,
+            tags = emptyList(),
+            billable = false,
+        ),
+        CachedFavorite(
+            position = 0,
+            description = "Write",
+            projectId = 7,
+            taskId = 9,
+            tags = listOf("docs"),
+            billable = true,
+        ),
     )
 
     /** The widget for the cache's running [entry] and the server's [held] timer state. */
@@ -64,8 +86,16 @@ class WidgetStateTest {
         settings: AccountSettings = this.settings,
         now: Instant = start.plusSeconds(1_800),
         serverIdOf: Map<Long, Long> = emptyMap(),
-    ) = widgetState(workspaceId, ServerTimerStates.controls(entry, held, timerApi), favorites, favoritesAvailable, projects, tasks,
-        entries = entries, settings = settings, now = now, serverIdOf = serverIdOf)
+    ) = widgetState(
+        workspaceId,
+        ServerTimerStates.controls(
+            entry,
+            held,
+            timerApi,
+        ),
+        favorites, favoritesAvailable, projects, tasks,
+        entries = entries, settings = settings, now = now, serverIdOf = serverIdOf,
+    )
 
     @Test
     fun projectColourChangesRedrawRunningAndPausedWidgets() {
@@ -102,7 +132,13 @@ class WidgetStateTest {
     @Test
     fun pauseIsHiddenWithoutTheTimerApiAndDuringAPomodoroSession() {
         val toggl = state(timerApi = false) as WidgetState.Ready
-        val session = state(held = ServerTimerStates.held(revision = 4, at = start, pomodoro = ServerTimerStates.session(entryId = -3, at = start))) as WidgetState.Ready
+        val session = state(
+            held = ServerTimerStates.held(
+                revision = 4,
+                at = start,
+                pomodoro = ServerTimerStates.session(entryId = -3, at = start),
+            ),
+        ) as WidgetState.Ready
 
         assertFalse("no timer API", toggl.running!!.pausable)
         assertFalse("the server refuses Pause during a session", session.running!!.pausable)
@@ -112,7 +148,11 @@ class WidgetStateTest {
     @Test
     fun noRunningEntryShowsStart() {
         assertEquals(null, (state(entry = null) as WidgetState.Ready).running)
-        assertEquals("a stopped entry", null, (state(entry = running.copy(stop = start.plusSeconds(60))) as WidgetState.Ready).running)
+        assertEquals(
+            "a stopped entry",
+            null,
+            (state(entry = running.copy(stop = start.plusSeconds(60))) as WidgetState.Ready).running,
+        )
     }
 
     @Test
@@ -126,7 +166,11 @@ class WidgetStateTest {
 
         assertEquals(
             listOf(
-                WidgetFavorite(EntryFields("Write", projectId = 7, taskId = 9, tags = listOf("docs"), billable = true), "Tokkl for Android", "Design"),
+                WidgetFavorite(
+                    EntryFields("Write", projectId = 7, taskId = 9, tags = listOf("docs"), billable = true),
+                    "Tokkl for Android",
+                    "Design",
+                ),
                 WidgetFavorite(EntryFields("Review"), project = null, task = null),
             ),
             shown.favorites,
@@ -152,20 +196,35 @@ class WidgetStateTest {
         val now = start.plusSeconds(90)
 
         assertEquals(1_000_000L - 90_000, chronometerBase(start, now, elapsedRealtime = 1_000_000))
-        assertEquals("a start after now counts from zero", 1_000_000L, chronometerBase(now, start, elapsedRealtime = 1_000_000))
+        assertEquals(
+            "a start after now counts from zero",
+            1_000_000L,
+            chronometerBase(now, start, elapsedRealtime = 1_000_000),
+        )
     }
 
     @Test
     fun theChronometerAddsWhatTheServersChainStored() {
         val now = start.plusSeconds(90)
 
-        assertEquals(1_000_000L - 90_000 - 600_000, chronometerBase(start, now, elapsedRealtime = 1_000_000, accumulatedSeconds = 600))
-        assertEquals("a start after now counts from the stored time", 1_000_000L - 600_000, chronometerBase(now, start, elapsedRealtime = 1_000_000, accumulatedSeconds = 600))
+        assertEquals(
+            1_000_000L - 90_000 - 600_000,
+            chronometerBase(start, now, elapsedRealtime = 1_000_000, accumulatedSeconds = 600),
+        )
+        assertEquals(
+            "a start after now counts from the stored time",
+            1_000_000L - 600_000,
+            chronometerBase(now, start, elapsedRealtime = 1_000_000, accumulatedSeconds = 600),
+        )
     }
 
     @Test
     fun aPausedTimerShowsTheServersFrozenTotalAndWhatResumeStarts() {
-        val held = ServerTimerStates.held(revision = 3, at = start, pause = ServerTimerStates.paused(600, EntryFields("Widget", projectId = 7, taskId = 9)))
+        val held = ServerTimerStates.held(
+            revision = 3,
+            at = start,
+            pause = ServerTimerStates.paused(600, EntryFields("Widget", projectId = 7, taskId = 9)),
+        )
 
         val shown = state(entry = null, held = held) as WidgetState.Ready
 
@@ -182,13 +241,22 @@ class WidgetStateTest {
             shown.paused,
         )
         assertEquals("favorites stay", 2, shown.favorites.size)
-        assertEquals("no chain shows without the timer API", null, (state(entry = null, held = held, timerApi = false) as WidgetState.Ready).paused)
+        assertEquals(
+            "no chain shows without the timer API",
+            null,
+            (state(entry = null, held = held, timerApi = false) as WidgetState.Ready).paused,
+        )
     }
 
     @Test
     fun aResumedCloneCountsOnFromTheChainsSecondsOnTheServersClock() {
         // The server's clock runs 20.4 s ahead of the phone's, and the server set the clone's start.
-        val held = ServerTimerStates.held(revision = 4, at = start, pause = ServerTimerStates.resumed(600, entryId = -3), offset = Duration.ofMillis(20_400))
+        val held = ServerTimerStates.held(
+            revision = 4,
+            at = start,
+            pause = ServerTimerStates.resumed(600, entryId = -3),
+            offset = Duration.ofMillis(20_400),
+        )
 
         val shown = (state(held = held) as WidgetState.Ready).running!!
 
@@ -201,7 +269,14 @@ class WidgetStateTest {
     @Test
     fun aNewStateWithTheSameClockDoesNotRedrawTheWidget() {
         // Each state the phone receives gives a slightly different offset. The clock ticks on its own.
-        fun clone(offsetMs: Long) = state(held = ServerTimerStates.held(4, start, ServerTimerStates.resumed(600, entryId = -3), offset = Duration.ofMillis(offsetMs)))
+        fun clone(offsetMs: Long) = state(
+            held = ServerTimerStates.held(
+                4,
+                start,
+                ServerTimerStates.resumed(600, entryId = -3),
+                offset = Duration.ofMillis(offsetMs),
+            ),
+        )
 
         assertEquals(clone(20_100).key(), clone(20_400).key())
         assertNotEquals("a clock a second off redraws", clone(20_100).key(), clone(21_100).key())
@@ -240,7 +315,15 @@ class WidgetStateTest {
         val rows = listOf(server, local, local, other, unassigned)
         val mapping = mapOf(-4L to 80L)
         val now = start.plusSeconds(1_800)
-        val day = (state(entry = null, entries = rows, projects = listOf(project, otherProject), now = now, serverIdOf = mapping) as WidgetState.Ready).day!!
+        val day = (
+            state(
+                entry = null,
+                entries = rows,
+                projects = listOf(project, otherProject),
+                now = now,
+                serverIdOf = mapping,
+            ) as WidgetState.Ready
+            ).day!!
 
         assertEquals(LocalDate.of(2026, 10, 20), day.date)
         assertEquals(timerPeriodTotals(rows, settings, now, mapping)!!.todaySeconds, day.totalSeconds(now))
@@ -258,11 +341,28 @@ class WidgetStateTest {
 
     @Test
     fun resumedDayCountsActualSegmentsWithoutAddingThePauseChainAgain() {
-        val stopped = running.copy(id = 1, start = start.minusSeconds(900), stop = start.minusSeconds(300), billable = true)
+        val stopped = running.copy(
+            id = 1,
+            start = start.minusSeconds(900),
+            stop = start.minusSeconds(300),
+            billable = true,
+        )
         val current = running.copy(billable = true)
-        val held = ServerTimerStates.held(4, start, ServerTimerStates.resumed(600, entryId = -3), offset = Duration.ofSeconds(20))
+        val held = ServerTimerStates.held(
+            4,
+            start,
+            ServerTimerStates.resumed(600, entryId = -3),
+            offset = Duration.ofSeconds(20),
+        )
         val now = start.plusSeconds(100)
-        val day = (state(entry = current, held = held, entries = listOf(stopped, current), now = now) as WidgetState.Ready).day!!
+        val day = (
+            state(
+                entry = current,
+                held = held,
+                entries = listOf(stopped, current),
+                now = now,
+            ) as WidgetState.Ready
+            ).day!!
         val segment = day.running!!
 
         assertEquals(600L, day.stoppedSeconds)
@@ -327,7 +427,14 @@ class WidgetStateTest {
         )) {
             val row = running.copy(start = Instant.parse(first), stop = Instant.parse(last))
             val now = row.stop!!.plusSeconds(60)
-            val day = (state(entry = null, entries = listOf(row), settings = account, now = now) as WidgetState.Ready).day!!
+            val day = (
+                state(
+                    entry = null,
+                    entries = listOf(row),
+                    settings = account,
+                    now = now,
+                ) as WidgetState.Ready
+                ).day!!
             assertEquals(3_600L, day.totalSeconds(now))
             assertEquals(timerPeriodTotals(listOf(row), account, now)!!.todaySeconds, day.totalSeconds(now))
         }
@@ -347,7 +454,14 @@ class WidgetStateTest {
         val now = row.stop!!
         for (format in DurationFormat.entries) {
             val account = settings.copy(durationFormat = format)
-            val day = (state(entry = null, entries = listOf(row), settings = account, now = now) as WidgetState.Ready).day!!
+            val day = (
+                state(
+                    entry = null,
+                    entries = listOf(row),
+                    settings = account,
+                    now = now,
+                ) as WidgetState.Ready
+                ).day!!
             assertEquals(account.formatDuration(3_661), day.formattedTotal(now))
             assertEquals(account.formatDuration(3_661), day.formattedBillable(now))
             assertEquals(account.formatDurationWithoutSeconds(3_661), day.projects.single().formattedStopped)

@@ -5,11 +5,11 @@ import android.content.res.Configuration
 import android.util.Log
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.DeviceShell
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 /**
  * Sets the default display to the largest step offered by AOSP Settings, before an activity
@@ -41,7 +41,9 @@ class SystemDisplaySize : TestRule {
             check(interval > 0f && maxScale >= 1f) { "unexpected AOSP display-size bounds: $maxScale / $interval" }
             // Settings has up to three larger steps. Its final step is rounded down to an even dpi.
             val largerSteps = ((maxScale - 1f) / interval).toInt().coerceIn(0, 3)
-            val largest = if (largerSteps == 0) original.physical else {
+            val largest = if (largerSteps == 0) {
+                original.physical
+            } else {
                 val stepInterval = (maxScale - 1f) / largerSteps
                 (original.physical * (1f + largerSteps * stepInterval)).toInt() and -2
             }
@@ -51,10 +53,16 @@ class SystemDisplaySize : TestRule {
                         DeviceShell.run("wm density $largest -d 0")
                     }
                     check(readDensity().effective == largest) { "wm density did not keep the largest display size" }
-                    Log.i("TokklAccessibility", "largest display density=$largest; physical=${original.physical}; size=$size")
+                    Log.i(
+                        "TokklAccessibility",
+                        "largest display density=$largest; physical=${original.physical}; size=$size",
+                    )
                 },
                 restore = {
-                    awaitDeviceConfiguration("original display density ${original.effective}", { it.densityDpi == original.effective }) {
+                    awaitDeviceConfiguration(
+                        "original display density ${original.effective}",
+                        { it.densityDpi == original.effective },
+                    ) {
                         DeviceShell.run("wm density ${original.overrideDpi ?: "reset"} -d 0")
                     }
                     check(readDensity() == original) { "the display density override was not restored" }

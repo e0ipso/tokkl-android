@@ -5,8 +5,8 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
-import java.time.Instant
 import kotlinx.coroutines.flow.Flow
+import java.time.Instant
 
 /**
  * The queue's reads and writes. [ChangeQueue] and [RoomChangeStore] combine them in transactions,
@@ -24,7 +24,9 @@ abstract class ChangeDao {
      * The oldest change that can go out, which goes out next: neither [PendingChange.held] nor to
      * an entry whose earlier change is held, since those wait behind it (docs/PRD.md O6).
      */
-    @Query("SELECT * FROM pending_changes WHERE entryId NOT IN (SELECT entryId FROM pending_changes WHERE held) ORDER BY sequence LIMIT 1")
+    @Query(
+        "SELECT * FROM pending_changes WHERE entryId NOT IN (SELECT entryId FROM pending_changes WHERE held) ORDER BY sequence LIMIT 1",
+    )
     abstract fun first(): PendingChange?
 
     /** How many changes the server refused wait for the user. */
@@ -118,7 +120,9 @@ abstract class ChangeDao {
     abstract fun runningEntries(): List<CachedTimeEntry>
 
     /** The running entry that started last, as [CacheDao.runningEntry] shows it. */
-    @Query("SELECT time_entries.*, ${CacheDao.UNSENT} FROM time_entries WHERE stop IS NULL ORDER BY start DESC, id DESC LIMIT 1")
+    @Query(
+        "SELECT time_entries.*, ${CacheDao.UNSENT} FROM time_entries WHERE stop IS NULL ORDER BY start DESC, id DESC LIMIT 1",
+    )
     abstract fun latestRunning(): EntryWithSendState?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

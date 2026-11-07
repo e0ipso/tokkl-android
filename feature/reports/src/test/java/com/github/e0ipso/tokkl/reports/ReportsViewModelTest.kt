@@ -7,13 +7,6 @@ import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.session.AccountSettings
-import java.time.Clock
-import java.time.DayOfWeek
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneOffset
-import java.util.concurrent.CopyOnWriteArrayList
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,6 +26,13 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.time.Clock
+import java.time.DayOfWeek
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
+import java.util.concurrent.CopyOnWriteArrayList
+import kotlin.coroutines.CoroutineContext
 
 /**
  * The reports screen's model against a MockWebServer, for an account at UTC+14 whose week starts
@@ -51,7 +51,9 @@ class ReportsViewModelTest {
     private val server = MockWebServer()
     private val searches = CopyOnWriteArrayList<JsonObject>()
     private val io = QueuedDispatcher()
-    private val settings = MutableStateFlow<AccountSettings?>(AccountSettings(ZONE, DayOfWeek.WEDNESDAY, timeResolutionMinutes = null))
+    private val settings = MutableStateFlow<AccountSettings?>(
+        AccountSettings(ZONE, DayOfWeek.WEDNESDAY, timeResolutionMinutes = null),
+    )
     private lateinit var model: ReportsViewModel
 
     /** The search gets the 503 of a proxy whose server is down. */
@@ -63,13 +65,18 @@ class ReportsViewModelTest {
         server.dispatcher = object : Dispatcher() {
             override fun dispatch(request: RecordedRequest): MockResponse = when (request.url.encodedPath) {
                 "/api/v9/me" -> json("""{"id":1,"default_workspace_id":7}""")
+
                 "/api/v9/workspaces/7" -> json("""{"id":7,"rounding":0,"rounding_minutes":0}""")
+
                 SEARCH -> if (searchUnreachable) {
                     MockResponse.Builder().code(503).build()
                 } else {
                     searches += Json.parseToJsonElement(request.body!!.utf8()).jsonObject
-                    json("""[{"billable":false,"currency":"EUR","time_entries":[{"seconds":3600,"start":"2026-10-21T00:30:00+14:00"}]}]""")
+                    json(
+                        """[{"billable":false,"currency":"EUR","time_entries":[{"seconds":3600,"start":"2026-10-21T00:30:00+14:00"}]}]""",
+                    )
                 }
+
                 else -> MockResponse.Builder().code(404).build()
             }
         }
@@ -141,7 +148,11 @@ class ReportsViewModelTest {
 
         model.shift(1)
         io.runAll()
-        assertEquals("a shifted range names no preset", RangeSelection(range("2026-10-21", "2026-10-27"), null), loaded().selection)
+        assertEquals(
+            "a shifted range names no preset",
+            RangeSelection(range("2026-10-21", "2026-10-27"), null),
+            loaded().selection,
+        )
 
         model.shift(1)
         io.runAll()
@@ -162,7 +173,11 @@ class ReportsViewModelTest {
         assertSame("a stop alone asks nothing", shown, model.state.value)
         model.cameToForeground()
 
-        assertEquals("no old numbers while the answer is on its way", ReportsState.Loading(shown.selection), model.state.value)
+        assertEquals(
+            "no old numbers while the answer is on its way",
+            ReportsState.Loading(shown.selection),
+            model.state.value,
+        )
         io.runAll()
         assertEquals(shown.selection, loaded().selection)
         assertEquals(3, searches.size)
@@ -273,12 +288,17 @@ class ReportsViewModelTest {
     /** The latest search asked for [from] to [to]. */
     private fun assertSearched(from: String, to: String) {
         val body = searches.last()
-        assertEquals(from to to, body.getValue("start_date").jsonPrimitive.content to body.getValue("end_date").jsonPrimitive.content)
+        assertEquals(
+            from to to,
+            body.getValue("start_date").jsonPrimitive.content to body.getValue("end_date").jsonPrimitive.content,
+        )
     }
 
     private fun range(from: String, to: String) = ReportRange(LocalDate.parse(from), LocalDate.parse(to))
 
-    private fun json(body: String) = MockResponse.Builder().code(200).body(body).addHeader("Content-Type", "application/json").build()
+    private fun json(body: String) = MockResponse.Builder().code(
+        200,
+    ).body(body).addHeader("Content-Type", "application/json").build()
 
     /** Holds dispatched work until [runAll] runs it on the calling thread. */
     private class QueuedDispatcher : CoroutineDispatcher() {

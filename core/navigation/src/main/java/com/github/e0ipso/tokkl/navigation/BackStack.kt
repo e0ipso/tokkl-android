@@ -9,8 +9,11 @@ internal fun stackOpening(page: TopLevelPage): List<Route> =
     if (page == TopLevelPage.TIMER) listOf(Route.Timer) else listOf(Route.Timer, page.route)
 
 /** Whether the screen on top is the fullscreen timer, or the entry form opened from it. Both hide the bar. */
-internal fun List<Route>.isFocused(): Boolean =
-    lastOrNull() == Route.FullscreenTimer || (lastOrNull() is Route.Entry && getOrNull(lastIndex - 1) == Route.FullscreenTimer)
+internal fun List<Route>.isFocused(): Boolean = lastOrNull() == Route.FullscreenTimer || (
+    lastOrNull() is Route.Entry && getOrNull(
+        lastIndex - 1,
+    ) == Route.FullscreenTimer
+    )
 
 /**
  * The stack with [entry] on top: in place of a form already on top, so a form opened beside the

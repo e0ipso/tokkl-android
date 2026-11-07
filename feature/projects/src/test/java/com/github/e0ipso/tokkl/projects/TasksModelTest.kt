@@ -8,7 +8,6 @@ import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.catalog.CatalogChange
 import com.github.e0ipso.tokkl.catalog.ServerProblem
-import java.util.concurrent.CopyOnWriteArrayList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import mockwebserver3.Dispatcher
@@ -20,6 +19,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * The project form's task list against a MockWebServer with project 5 in workspace 7, which has
@@ -42,13 +42,30 @@ class TasksModelTest {
                 requests += "${request.method} ${request.url.encodedPath} ${request.body?.utf8().orEmpty()}".trim()
                 return when ("${request.method} ${request.url.encodedPath}") {
                     "GET /api/v9/workspaces/7/projects/5/tasks" ->
-                        json("""[{"id":2,"project_id":5,"name":"brief","active":false},{"id":1,"project_id":5,"name":"Design","active":true}]""")
+                        json(
+                            """[{"id":2,"project_id":5,"name":"brief","active":false},{"id":1,"project_id":5,"name":"Design","active":true}]""",
+                        )
+
                     "GET /api/v9/workspaces/7/projects/6/tasks" -> json("[]")
-                    "POST /api/v9/workspaces/7/projects/5/tasks" -> json("""{"id":3,"project_id":5,"name":"Copy","active":true}""")
-                    "PUT /api/v9/workspaces/7/projects/5/tasks/1" -> json("""{"id":1,"project_id":5,"name":"Wireframes","active":false}""")
+
+                    "POST /api/v9/workspaces/7/projects/5/tasks" -> json(
+                        """{"id":3,"project_id":5,"name":"Copy","active":true}""",
+                    )
+
+                    "PUT /api/v9/workspaces/7/projects/5/tasks/1" -> json(
+                        """{"id":1,"project_id":5,"name":"Wireframes","active":false}""",
+                    )
+
                     "DELETE /api/v9/workspaces/7/projects/5/tasks/1" -> MockResponse.Builder().code(200).build()
+
                     "POST /api/v9/workspaces/7/projects/6/tasks" ->
-                        MockResponse.Builder().code(400).addHeader("Content-Type", "application/json").body("\"Can not change tasks of archived project\"").build()
+                        MockResponse.Builder().code(
+                            400,
+                        ).addHeader(
+                            "Content-Type",
+                            "application/json",
+                        ).body("\"Can not change tasks of archived project\"").build()
+
                     else -> MockResponse.Builder().code(404).build()
                 }
             }
@@ -105,10 +122,17 @@ class TasksModelTest {
 
         model.save(" Wireframes ", done = true)
 
-        assertEquals("""PUT /api/v9/workspaces/7/projects/5/tasks/1 {"name":"Wireframes","active":false}""", requests[asked])
+        assertEquals(
+            """PUT /api/v9/workspaces/7/projects/5/tasks/1 {"name":"Wireframes","active":false}""",
+            requests[asked],
+        )
         assertEquals(CatalogChange.Saved("Wireframes"), model.state.value.done)
         assertNull("the form closes", model.state.value.overlay)
-        assertEquals("a done task goes after the open ones", listOf("brief", "Wireframes"), model.state.value.data!!.tasks.map { it.name })
+        assertEquals(
+            "a done task goes after the open ones",
+            listOf("brief", "Wireframes"),
+            model.state.value.data!!.tasks.map { it.name },
+        )
         assertEquals(1, refreshes)
     }
 

@@ -14,8 +14,6 @@ import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
-import java.io.File
-import java.util.Properties
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
@@ -27,6 +25,8 @@ import org.junit.Assert.assertTrue
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
+import java.io.File
+import java.util.Properties
 
 /**
  * The queue survives the death of the app process. The steps run in name order, and the test
@@ -66,12 +66,24 @@ class ChangeQueueRestartTest {
 
         val id = runBlocking { app.changes.start(workspace, EntryFields(description = "Started before the restart")) }
         val start = runBlocking { app.cache.running.first() }!!.entry.start
-        assertTrue(runBlocking { app.changes.update(id, EntryFields(description = "Edited before the restart"), start, stop = null) })
+        assertTrue(
+            runBlocking {
+                app.changes.update(
+                    id,
+                    EntryFields(description = "Edited before the restart"),
+                    start,
+                    stop = null,
+                )
+            },
+        )
         assertTrue(runBlocking { app.changes.stop(id) })
         runBlocking { app.sender.send().join() }
 
         assertEquals("the drain failed and kept every change", 3, runBlocking { app.changes.unsentCount.first() })
-        assertTrue("the short timer is absent from offline history", runBlocking { app.cache.entries.first() }.isEmpty())
+        assertTrue(
+            "the short timer is absent from offline history",
+            runBlocking { app.cache.entries.first() }.isEmpty(),
+        )
         assertEquals(id, runBlocking { app.changes.shortStopUndo.first() }?.entryId)
     }
 
@@ -79,7 +91,11 @@ class ChangeQueueRestartTest {
     fun step2SendsTheQueueInANewProcess() {
         assertTrue("step 1 did not run before step 2", handOver.exists())
         val saved = Properties().apply { handOver.inputStream().use { load(it) } }
-        val account = TestAccounts.Account(saved.getProperty("accountId").toLong(), saved.getProperty("email"), saved.getProperty("token"))
+        val account = TestAccounts.Account(
+            saved.getProperty("accountId").toLong(),
+            saved.getProperty("email"),
+            saved.getProperty("token"),
+        )
         try {
             assertNotEquals("step 1 ran in this same process", saved.getProperty("process"), currentProcess())
             assertEquals("the queue survived", 3, runBlocking { app.changes.unsentCount.first() })
@@ -104,10 +120,17 @@ class ChangeQueueRestartTest {
             }
 
             val serverId = runBlocking { app.changes.currentId(localId) }
-            val sent = account.client.get(account.client.server.api("me", "time_entries", serverId.toString()), JsonObject.serializer())
+            val sent = account.client.get(
+                account.client.server.api("me", "time_entries", serverId.toString()),
+                JsonObject.serializer(),
+            )
                 .orFail("GET the entry")
             assertEquals("Edited before the restart", sent.getValue("description").jsonPrimitive.content)
-            assertEquals("the server restored a stopped zero-length entry", sent.getValue("start"), sent.getValue("stop"))
+            assertEquals(
+                "the server restored a stopped zero-length entry",
+                sent.getValue("start"),
+                sent.getValue("stop"),
+            )
         } finally {
             try {
                 signIn(TokklTestServer.url, TokklTestServer.apiToken)

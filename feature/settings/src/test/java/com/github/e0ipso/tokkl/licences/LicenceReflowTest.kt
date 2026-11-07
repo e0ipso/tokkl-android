@@ -1,9 +1,9 @@
 package com.github.e0ipso.tokkl.licences
 
-import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.File
 
 /** [licenceBlocks] over the OFL the app ships, res/raw/anybody_ofl.txt. */
 class LicenceReflowTest {
@@ -61,7 +61,9 @@ class LicenceReflowTest {
         )
         // The disclaimer is in capitals, like a heading, but stays one paragraph under its heading.
         val disclaimer = lines[lines.indexOf("DISCLAIMER") + 1]
-        assertTrue(disclaimer.startsWith("THE FONT SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS"))
+        assertTrue(
+            disclaimer.startsWith("THE FONT SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS"),
+        )
         assertTrue(disclaimer.endsWith("OTHER DEALINGS IN THE FONT SOFTWARE."))
     }
 

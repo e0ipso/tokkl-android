@@ -23,8 +23,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.github.e0ipso.tokkl.feature.projects.R
-import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.cache.CachedClient
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.catalog.ActiveThenArchived
@@ -36,11 +34,13 @@ import com.github.e0ipso.tokkl.catalog.CatalogPageEffects
 import com.github.e0ipso.tokkl.catalog.DetailLine
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.catalog.changeText
+import com.github.e0ipso.tokkl.feature.projects.R
 import com.github.e0ipso.tokkl.picker.projectColor
 import com.github.e0ipso.tokkl.picker.rememberOffline
 import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklIconButton
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * The projects page (docs/PRD.md P2): the workspace's projects from the server, archived ones in a
@@ -208,7 +208,11 @@ private fun ProjectList(
         if (state.data != null && rows.isEmpty()) {
             CatalogEmpty(stringResource(R.string.projects_empty_title), stringResource(R.string.projects_empty_message))
         }
-        ActiveThenArchived(active, archived, stringResource(R.string.projects_archived)) { ProjectListRow(it, canChange, actions) }
+        ActiveThenArchived(
+            active,
+            archived,
+            stringResource(R.string.projects_archived),
+        ) { ProjectListRow(it, canChange, actions) }
     }
 }
 
@@ -247,7 +251,10 @@ private fun ProjectListRow(row: ProjectRow, canChange: Boolean, actions: Project
                 )
             }
         }
-        val label = stringResource(if (row.active) R.string.projects_archive_named else R.string.projects_restore_named, row.name)
+        val label = stringResource(
+            if (row.active) R.string.projects_archive_named else R.string.projects_restore_named,
+            row.name,
+        )
         TokklIconButton(
             icon = if (row.active) UiR.drawable.ic_archive else UiR.drawable.ic_restore,
             description = label,

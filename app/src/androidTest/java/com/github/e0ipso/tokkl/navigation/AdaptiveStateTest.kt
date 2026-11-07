@@ -34,11 +34,10 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
 import androidx.test.runner.lifecycle.Stage
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.feature.timer.R
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.navhost.SignedInFrame
 import com.github.e0ipso.tokkl.navhost.SignedInPanes
 import com.github.e0ipso.tokkl.navhost.showsEntryBeside
@@ -50,6 +49,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 
 /**
  * The entry form and the Timer page keep their state when a fold or a rotation moves them between
@@ -129,7 +129,11 @@ class AdaptiveStateTest {
     }
 
     private fun assertGone(prefix: String) {
-        assertEquals("nothing of $prefix shows", 0, composeRule.onAllNodes(hasText(prefix, substring = true)).fetchSemanticsNodes().size)
+        assertEquals(
+            "nothing of $prefix shows",
+            0,
+            composeRule.onAllNodes(hasText(prefix, substring = true)).fetchSemanticsNodes().size,
+        )
     }
 
     private companion object {
@@ -173,27 +177,49 @@ class AdaptiveRotationTest {
                 val before = resumedActivity()
                 scenario.onActivity { it.requestedOrientation = requested }
                 composeRule.waitUntil("the activity is recreated", TIMEOUT_MS) {
-                    resumedActivity()?.let { it !== before && it.resources.configuration.orientation == orientation } == true
+                    resumedActivity()?.let { it !== before && it.resources.configuration.orientation == orientation } ==
+                        true
                 }
                 composeRule.waitForIdle()
                 val expanded = resumedActivity()!!.let { activity ->
-                    activity.windowManager.currentWindowMetrics.bounds.width() / activity.resources.displayMetrics.density >= EXPANDED_DP
+                    activity.windowManager.currentWindowMetrics.bounds.width() /
+                        activity.resources.displayMetrics.density >=
+                        EXPANDED_DP
                 }
 
-                assertEquals("the form keeps its heading", 1, composeRule.onAllNodes(hasText(string(R.string.entry_form_new)) and isHeading()).fetchSemanticsNodes().size)
-                assertTrue("the form keeps what was typed", composeRule.onAllNodes(descriptionField() and hasText(TYPED)).fetchSemanticsNodes().isNotEmpty())
-                val listSwitch = composeRule.onAllNodes(hasText(string(R.string.timer_view_list)) and isSelectable()).fetchSemanticsNodes()
-                assertEquals("the Timer page shows beside the form only when expanded", expanded, listSwitch.isNotEmpty())
+                assertEquals(
+                    "the form keeps its heading",
+                    1,
+                    composeRule.onAllNodes(
+                        hasText(string(R.string.entry_form_new)) and isHeading(),
+                    ).fetchSemanticsNodes().size,
+                )
+                assertTrue(
+                    "the form keeps what was typed",
+                    composeRule.onAllNodes(descriptionField() and hasText(TYPED)).fetchSemanticsNodes().isNotEmpty(),
+                )
+                val listSwitch = composeRule.onAllNodes(
+                    hasText(string(R.string.timer_view_list)) and isSelectable(),
+                ).fetchSemanticsNodes()
+                assertEquals(
+                    "the Timer page shows beside the form only when expanded",
+                    expanded,
+                    listSwitch.isNotEmpty(),
+                )
             }
         }
     }
 
-    private fun descriptionField(): SemanticsMatcher = hasSetTextAction() and hasText(string(SharedR.string.entry_description))
+    private fun descriptionField(): SemanticsMatcher = hasSetTextAction() and hasText(
+        string(SharedR.string.entry_description),
+    )
 
     private fun resumedActivity(): MainActivity? {
         var resumed: MainActivity? = null
         instrumentation.runOnMainSync {
-            resumed = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED).filterIsInstance<MainActivity>().singleOrNull()
+            resumed = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(
+                Stage.RESUMED,
+            ).filterIsInstance<MainActivity>().singleOrNull()
         }
         return resumed
     }

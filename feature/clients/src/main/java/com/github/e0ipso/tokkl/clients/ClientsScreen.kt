@@ -18,8 +18,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.github.e0ipso.tokkl.feature.clients.R
-import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.cache.CachedClient
 import com.github.e0ipso.tokkl.catalog.ActiveThenArchived
 import com.github.e0ipso.tokkl.catalog.CatalogChange
@@ -32,10 +30,12 @@ import com.github.e0ipso.tokkl.catalog.ConfirmDialog
 import com.github.e0ipso.tokkl.catalog.DetailLine
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.catalog.changeText
+import com.github.e0ipso.tokkl.feature.clients.R
 import com.github.e0ipso.tokkl.picker.rememberOffline
 import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklIconButton
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * The clients page (docs/PRD.md P3): the workspace's clients from the server, archived ones in a
@@ -53,7 +53,9 @@ fun ClientsScreen(model: ClientsViewModel, modifier: Modifier = Modifier) {
     val state by model.state.collectAsStateWithLifecycle()
     val cachedClients by model.cachedClients.collectAsStateWithLifecycle(initialValue = emptyList())
     val workspace = model.workspace()
-    BackHandler(enabled = state.overlay is ClientsOverlay.New || state.overlay is ClientsOverlay.Edit) { model.dismiss() }
+    BackHandler(
+        enabled = state.overlay is ClientsOverlay.New || state.overlay is ClientsOverlay.Edit,
+    ) { model.dismiss() }
     ClientsContent(
         state = state,
         offline = offline,
@@ -123,12 +125,19 @@ fun ClientsContent(
                 onSave = actions.onSave,
                 onCancel = actions.onDismiss,
             )
+
             is ClientsOverlay.ConfirmArchive, null -> ClientList(
                 state = state,
                 serverNeeded = serverNeeded,
                 canChange = canChange,
                 rows = state.data?.let { data -> data.clients.map { ClientRow(it, data.projectCount(it)) } }
-                    ?: cachedClients.map { ClientRow(Client(it.id, it.workspaceId, it.name, it.archived), projects = null, fromServer = false) },
+                    ?: cachedClients.map {
+                        ClientRow(
+                            Client(it.id, it.workspaceId, it.name, it.archived),
+                            projects = null,
+                            fromServer = false,
+                        )
+                    },
                 actions = actions,
             )
         }
@@ -187,7 +196,11 @@ private fun ClientList(
             CatalogEmpty(stringResource(R.string.clients_empty_title), stringResource(R.string.clients_empty_message))
         }
         val (active, archived) = rows.partition { !it.client.archived }
-        ActiveThenArchived(active, archived, stringResource(R.string.clients_archived)) { ClientListRow(it, canChange, actions) }
+        ActiveThenArchived(
+            active,
+            archived,
+            stringResource(R.string.clients_archived),
+        ) { ClientListRow(it, canChange, actions) }
     }
 }
 
@@ -231,7 +244,10 @@ private fun ClientListRow(row: ClientRow, canChange: Boolean, actions: ClientsAc
                 ),
             )
         }
-        val label = stringResource(if (client.archived) R.string.clients_restore_named else R.string.clients_archive_named, client.name)
+        val label = stringResource(
+            if (client.archived) R.string.clients_restore_named else R.string.clients_archive_named,
+            client.name,
+        )
         TokklIconButton(
             icon = if (client.archived) UiR.drawable.ic_restore else UiR.drawable.ic_archive,
             description = label,

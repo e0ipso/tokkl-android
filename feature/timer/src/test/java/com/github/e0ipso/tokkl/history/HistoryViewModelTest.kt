@@ -11,20 +11,6 @@ import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryWithSendState
 import com.github.e0ipso.tokkl.session.AccountSettings
-import java.time.Clock
-import java.time.DayOfWeek
-import java.time.Duration
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
-import java.time.ZoneOffset
-import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExecutorCoroutineDispatcher
@@ -47,6 +33,20 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.time.Clock
+import java.time.DayOfWeek
+import java.time.Duration
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * The history's older days against a MockWebServer that answers `GET /api/app/bounds` and
@@ -90,13 +90,21 @@ class HistoryViewModelTest {
                 requests += request.url.encodedPath
                 return when (request.url.encodedPath) {
                     "/api/app/bounds" -> boundsAnswer ?: json("""{"first_date":"$firstDay"}""")
+
                     "/api/v9/me/time_entries" -> {
                         pages += "${request.url.queryParameter("start_date")} ${request.url.queryParameter("end_date")}"
                         entriesAnswer?.let { return it }
                         val start = Instant.parse(request.url.queryParameter("start_date"))
                         val end = Instant.parse(request.url.queryParameter("end_date"))
-                        json(serverEntries.filter { it.start >= start && it.start < end }.joinToString(",", "[", "]") { it.json() })
+                        json(
+                            serverEntries.filter { it.start >= start && it.start < end }.joinToString(
+                                ",",
+                                "[",
+                                "]",
+                            ) { it.json() },
+                        )
                     }
+
                     else -> MockResponse.Builder().code(404).build()
                 }
             }
@@ -134,12 +142,20 @@ class HistoryViewModelTest {
         cached.value = cachedDays(LocalDate.parse("2026-10-07"), LocalDate.parse("2026-10-20"))
         val moved = awaitShown(model) { it.today == LocalDate.parse("2026-10-20") }
 
-        assertEquals("every day from today to the oldest day loaded", days("2026-10-20", "2026-09-22"), moved.days.map { it.date })
+        assertEquals(
+            "every day from today to the oldest day loaded",
+            days("2026-10-20", "2026-09-22"),
+            moved.days.map { it.date },
+        )
         assertEquals("nothing loads before the list's end shows", sent, requests.size)
 
         onMain { model.loadOlder() }
         val older = awaitShown(model) { it.days.last().date == LocalDate.parse("2026-09-08") }
-        assertEquals("the next page goes on from the oldest day loaded", days("2026-10-20", "2026-09-08"), older.days.map { it.date })
+        assertEquals(
+            "the next page goes on from the oldest day loaded",
+            days("2026-10-20", "2026-09-08"),
+            older.days.map { it.date },
+        )
     }
 
     @Test
@@ -208,7 +224,11 @@ class HistoryViewModelTest {
         onMain { model.loadOlder() }
         val tapped = awaitShown(model) { it.older == OlderDays.More(auto = true) }
         assertEquals(OlderDays.More(auto = true), tapped.older)
-        assertEquals("the tap loads the 14 days before the empty page", "2026-09-07T22:00:00Z 2026-09-21T22:00:00Z", pages.last())
+        assertEquals(
+            "the tap loads the 14 days before the empty page",
+            "2026-09-07T22:00:00Z 2026-09-21T22:00:00Z",
+            pages.last(),
+        )
         assertEquals(days("2026-10-19", "2026-10-06") + days("2026-09-21", "2026-09-08"), tapped.days.map { it.date })
     }
 
@@ -348,7 +368,9 @@ class HistoryViewModelTest {
         assertEquals("the edit, for the form and Continue", edited, model.entry(edited.id))
     }
 
-    private fun HistoryState.Shown.entryOn(day: LocalDate): HistoryEntry = days.single { it.date == day }.entries.single()
+    private fun HistoryState.Shown.entryOn(day: LocalDate): HistoryEntry = days.single {
+        it.date == day
+    }.entries.single()
 
     /** A reverse proxy answers 502, 503 or 504 while the server behind it is down. */
     @Test
@@ -385,18 +407,22 @@ class HistoryViewModelTest {
     private fun awaitShown(model: HistoryViewModel, condition: (HistoryState.Shown) -> Boolean): HistoryState.Shown {
         var last: HistoryState.Shown? = null
         return runBlocking {
-            withTimeoutOrNull(TIMEOUT_MS) { model.state.filterIsInstance<HistoryState.Shown>().onEach { last = it }.first(condition) }
+            withTimeoutOrNull(
+                TIMEOUT_MS,
+            ) { model.state.filterIsInstance<HistoryState.Shown>().onEach { last = it }.first(condition) }
         } ?: throw AssertionError(
             "timed out; the last state had ${last?.days?.size} days and ${last?.older} at the end, after the requests $requests",
         )
     }
 
-    private fun cachedDays(first: LocalDate, last: LocalDate): List<EntryWithSendState> =
-        generateSequence(first) { it.plusDays(1) }.takeWhile { it <= last }.map { EntryWithSendState(entryOn(it), unsent = false) }.toList()
+    private fun cachedDays(first: LocalDate, last: LocalDate): List<EntryWithSendState> = generateSequence(
+        first,
+    ) { it.plusDays(1) }.takeWhile { it <= last }.map { EntryWithSendState(entryOn(it), unsent = false) }.toList()
 
     /** Newest first, from [newest] back to [oldest]. */
-    private fun days(newest: String, oldest: String): List<LocalDate> =
-        generateSequence(LocalDate.parse(newest)) { it.minusDays(1) }.takeWhile { it >= LocalDate.parse(oldest) }.toList()
+    private fun days(newest: String, oldest: String): List<LocalDate> = generateSequence(
+        LocalDate.parse(newest),
+    ) { it.minusDays(1) }.takeWhile { it >= LocalDate.parse(oldest) }.toList()
 
     private fun json(body: String) = MockResponse.Builder()
         .code(200)
@@ -405,7 +431,8 @@ class HistoryViewModelTest {
         .build()
 
     /** The clock's instant comes from [now], also in the zones it is moved to. */
-    private class MovableClock(private val now: AtomicReference<Instant>, private val zone: ZoneId = ZoneOffset.UTC) : Clock() {
+    private class MovableClock(private val now: AtomicReference<Instant>, private val zone: ZoneId = ZoneOffset.UTC) :
+        Clock() {
         override fun instant(): Instant = now.get()
 
         override fun getZone(): ZoneId = zone

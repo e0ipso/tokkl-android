@@ -20,11 +20,7 @@ data class TileControl(val action: TimerSurfaceAction, val target: TimerTarget)
  * @property description the entry's description, blank when it has none.
  * @property paused true while the chain is paused, so the dialog says Paused and offers Resume.
  */
-data class TileControlsPanel(
-    val description: String,
-    val paused: Boolean,
-    val buttons: List<TileControl>,
-)
+data class TileControlsPanel(val description: String, val paused: Boolean, val buttons: List<TileControl>)
 
 /**
  * The compact controls for [controls], or null when the timer is idle. Pause shows only where the
@@ -39,6 +35,7 @@ fun tileControlsPanel(controls: TimerControls): TileControlsPanel? = when (contr
             TileControl(TimerSurfaceAction.Stop, controls.target),
         ),
     )
+
     is TimerControls.Paused -> TileControlsPanel(
         description = controls.fields.description,
         paused = true,
@@ -47,5 +44,6 @@ fun tileControlsPanel(controls: TimerControls): TileControlsPanel? = when (contr
             TileControl(TimerSurfaceAction.Stop, controls.target),
         ),
     )
+
     TimerControls.Idle -> null
 }

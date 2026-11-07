@@ -90,7 +90,9 @@ class TrashViewModelTest {
 
     @Test
     fun anAnswerThatIsNotAListHidesTheTrashToo() {
-        answers[LIST] = MockResponse.Builder().code(200).addHeader("Content-Type", "text/html").body("<html></html>").build()
+        answers[LIST] = MockResponse.Builder().code(
+            200,
+        ).addHeader("Content-Type", "text/html").body("<html></html>").build()
 
         model.open()
 
@@ -138,7 +140,9 @@ class TrashViewModelTest {
     @Test
     fun aPurgeOfAnEntryNoLongerInTheTrashLoadsTheListAgain() {
         answers[LIST] = json("[${entry(1, "Write")}]")
-        answers["DELETE /api/app/trash/1"] = MockResponse.Builder().code(404).body("\"Time entry not found in trash\"").build()
+        answers["DELETE /api/app/trash/1"] = MockResponse.Builder().code(
+            404,
+        ).body("\"Time entry not found in trash\"").build()
         model.open()
         answers[LIST] = json("[]")
 

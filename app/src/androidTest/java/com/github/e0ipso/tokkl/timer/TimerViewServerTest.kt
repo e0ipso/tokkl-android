@@ -13,13 +13,13 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.Session
 import kotlinx.coroutines.runBlocking
@@ -141,7 +141,11 @@ class TimerViewServerTest {
             scenario.moveToState(Lifecycle.State.CREATED)
             AirplaneMode.set(false, account.client)
             assertEquals("nothing reached the server", null, serverView())
-            assertEquals("the phone still keeps it unsent", StoredTimerView(TimerView.CALENDAR, unsent = true), TimerViewStore(context).load())
+            assertEquals(
+                "the phone still keeps it unsent",
+                StoredTimerView(TimerView.CALENDAR, unsent = true),
+                TimerViewStore(context).load(),
+            )
 
             scenario.moveToState(Lifecycle.State.RESUMED)
             composeRule.waitUntil("the server has calendar", TIMEOUT_MS) { serverView() == "calendar" }
@@ -162,12 +166,19 @@ class TimerViewServerTest {
     private fun refresh() = runBlocking { app.accountRefresh.refresh().join() }
 
     private fun setOnTheServer(view: String) {
-        account.client.send("POST", account.client.server.api("me", "preferences"), buildJsonObject { put("timerView", view) }, JsonObject.serializer())
+        account.client.send(
+            "POST",
+            account.client.server.api("me", "preferences"),
+            buildJsonObject { put("timerView", view) },
+            JsonObject.serializer(),
+        )
             .orFail("POST /api/v9/me/preferences")
     }
 
-    private fun preferences(): JsonObject =
-        account.client.get(account.client.server.api("me", "preferences"), JsonObject.serializer()).orFail("GET /api/v9/me/preferences")
+    private fun preferences(): JsonObject = account.client.get(
+        account.client.server.api("me", "preferences"),
+        JsonObject.serializer(),
+    ).orFail("GET /api/v9/me/preferences")
 
     private fun serverView(): String? = preferences()["timerView"]?.jsonPrimitive?.content
 
@@ -175,14 +186,18 @@ class TimerViewServerTest {
 
     private fun awaitSelected(@StringRes label: Int) {
         composeRule.waitUntil("${string(label)} is chosen", TIMEOUT_MS) {
-            composeRule.onAllNodes(hasText(string(label)) and isSelectable() and isSelected()).fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodes(
+                hasText(string(label)) and isSelectable() and isSelected(),
+            ).fetchSemanticsNodes().isNotEmpty()
         }
     }
 
     /** The Calendar view shows: its toolbar's arrows are there. */
     private fun awaitCalendar() {
         composeRule.waitUntil("the calendar shows", TIMEOUT_MS) {
-            composeRule.onAllNodes(hasContentDescription(string(R.string.calendar_previous_day))).fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodes(
+                hasContentDescription(string(R.string.calendar_previous_day)),
+            ).fetchSemanticsNodes().isNotEmpty()
         }
     }
 

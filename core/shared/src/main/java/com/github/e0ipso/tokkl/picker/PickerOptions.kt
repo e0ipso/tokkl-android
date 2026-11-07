@@ -9,11 +9,7 @@ import com.github.e0ipso.tokkl.cache.CachedTask
  * What an entry has picked: a project or none, a task of that project or none, and tags by name.
  * The queue sends the tags by name, and the server creates the ones it does not know.
  */
-data class Picked(
-    val projectId: Long? = null,
-    val taskId: Long? = null,
-    val tags: List<String> = emptyList(),
-) {
+data class Picked(val projectId: Long? = null, val taskId: Long? = null, val tags: List<String> = emptyList()) {
 
     /** The project alone, with no task. */
     fun withProject(projectId: Long?): Picked = copy(projectId = projectId, taskId = null)
@@ -22,12 +18,11 @@ data class Picked(
     fun withTask(task: CachedTask): Picked = copy(projectId = task.projectId, taskId = task.id)
 
     /** The tags with [name] added, or taken out when picked already. Tag names ignore case, as on the server. */
-    fun withTagToggled(name: String): Picked =
-        if (tags.any { it.equals(name, ignoreCase = true) }) {
-            copy(tags = tags.filterNot { it.equals(name, ignoreCase = true) })
-        } else {
-            copy(tags = tags + name)
-        }
+    fun withTagToggled(name: String): Picked = if (tags.any { it.equals(name, ignoreCase = true) }) {
+        copy(tags = tags.filterNot { it.equals(name, ignoreCase = true) })
+    } else {
+        copy(tags = tags + name)
+    }
 }
 
 /** The cached rows the picker offers. */
@@ -79,13 +74,21 @@ data class PickerOptions(
  * them and nothing else can pick them. Neither Tokkl nor Toggl archives tags. A tag name of
  * [picked] that no cached tag has shows too, selected.
  */
-fun pickerOptions(workspaceId: Long, original: Picked, picked: Picked, query: String, source: PickerSource): PickerOptions {
+fun pickerOptions(
+    workspaceId: Long,
+    original: Picked,
+    picked: Picked,
+    query: String,
+    source: PickerSource,
+): PickerOptions {
     val search = query.trim()
     val clients = source.clients.associateBy { it.id }
     val tasksByProject = source.tasks
         .filter { it.workspaceId == workspaceId && (it.active || it.id == original.taskId) }
         .groupBy { it.projectId }
-    val projects = source.projects.filter { it.workspaceId == workspaceId && (it.active || it.id == original.projectId) }
+    val projects = source.projects.filter {
+        it.workspaceId == workspaceId && (it.active || it.id == original.projectId)
+    }
     val options = projects.mapNotNull { project ->
         val client = project.clientId?.let(clients::get)
         val projectMatches = project.name.contains(search, ignoreCase = true) ||
@@ -107,13 +110,23 @@ fun pickerOptions(workspaceId: Long, original: Picked, picked: Picked, query: St
             val archived = options.first { it.first?.name == name }.first?.archived == true
             ProjectGroup(name, archived, list)
         }
-        .sortedWith(compareBy<ProjectGroup> { it.clientName != null }.thenBy(String.CASE_INSENSITIVE_ORDER) { it.clientName.orEmpty() })
+        .sortedWith(
+            compareBy<ProjectGroup> { it.clientName != null }.thenBy(
+                String.CASE_INSENSITIVE_ORDER,
+            ) { it.clientName.orEmpty() },
+        )
 
     val cachedTags = source.tags.filter { it.workspaceId == workspaceId }.map { it.name }
     val typedTags = picked.tags.filterNot { name -> cachedTags.any { it.equals(name, ignoreCase = true) } }
     val tags = (cachedTags.map { it to true } + typedTags.map { it to false })
         .filter { (name, _) -> name.contains(search, ignoreCase = true) }
-        .map { (name, cached) -> TagOption(name, selected = picked.tags.any { it.equals(name, ignoreCase = true) }, cached = cached) }
+        .map { (name, cached) ->
+            TagOption(
+                name,
+                selected = picked.tags.any { it.equals(name, ignoreCase = true) },
+                cached = cached,
+            )
+        }
     val knownTag = (cachedTags + typedTags).any { it.equals(search, ignoreCase = true) }
 
     return PickerOptions(

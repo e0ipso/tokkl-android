@@ -51,11 +51,7 @@ import java.time.Clock
  * route of its own, so a form opened over one already beside the history starts afresh.
  */
 @Composable
-internal fun SignedInPanes(
-    top: Route,
-    entryBeside: Boolean,
-    screen: @Composable (Route) -> Unit,
-) {
+internal fun SignedInPanes(top: Route, entryBeside: Boolean, screen: @Composable (Route) -> Unit) {
     Row(Modifier.fillMaxSize()) {
         val page = if (entryBeside) Route.Timer else top
         if (page !is Route.Entry) {
@@ -63,7 +59,15 @@ internal fun SignedInPanes(
                 Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .then(if (entryBeside) Modifier.consumeWindowInsets(WindowInsets.systemBars.only(WindowInsetsSides.End)) else Modifier),
+                    .then(
+                        if (entryBeside) {
+                            Modifier.consumeWindowInsets(
+                                WindowInsets.systemBars.only(WindowInsetsSides.End),
+                            )
+                        } else {
+                            Modifier
+                        },
+                    ),
             ) {
                 screen(page)
             }
@@ -74,7 +78,15 @@ internal fun SignedInPanes(
                 Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .then(if (entryBeside) Modifier.consumeWindowInsets(WindowInsets.systemBars.only(WindowInsetsSides.Start)) else Modifier),
+                    .then(
+                        if (entryBeside) {
+                            Modifier.consumeWindowInsets(
+                                WindowInsets.systemBars.only(WindowInsetsSides.Start),
+                            )
+                        } else {
+                            Modifier
+                        },
+                    ),
             ) {
                 key(top) { screen(top) }
             }
@@ -112,21 +124,50 @@ internal fun SignedInFrame(
     val rail = showNavigation && width != WindowWidth.COMPACT
     Row(Modifier.fillMaxSize()) {
         if (rail) {
-            AppNavigationRail(current = current, onOpen = onOpen, timerRunning = timerRunning, pomodoroRunning = pomodoroRunning, hidden = hidden)
+            AppNavigationRail(
+                current = current,
+                onOpen = onOpen,
+                timerRunning = timerRunning,
+                pomodoroRunning = pomodoroRunning,
+                hidden = hidden,
+            )
         }
         Scaffold(
             modifier = Modifier
                 .weight(1f)
-                .then(if (rail) Modifier.consumeWindowInsets(WindowInsets.systemBars.only(WindowInsetsSides.Start)) else Modifier),
+                .then(
+                    if (rail) {
+                        Modifier.consumeWindowInsets(
+                            WindowInsets.systemBars.only(WindowInsetsSides.Start),
+                        )
+                    } else {
+                        Modifier
+                    },
+                ),
             bottomBar = {
                 Column {
                     // The bar, or the band's spacer, keeps clear of the system navigation bar for
                     // the notice too.
                     val clearsSystemBar = (showNavigation && !rail) || syncStatus != null
-                    Box(if (clearsSystemBar) Modifier.consumeWindowInsets(WindowInsets.navigationBars) else Modifier) { notice() }
-                    if (syncStatus != null) SyncStatusBand(syncStatus, onOpenNeedsAttention, onSignInAgain = onSignInAgain, clock = syncStatusClock)
+                    Box(
+                        if (clearsSystemBar) Modifier.consumeWindowInsets(WindowInsets.navigationBars) else Modifier,
+                    ) { notice() }
+                    if (syncStatus != null) {
+                        SyncStatusBand(
+                            syncStatus,
+                            onOpenNeedsAttention,
+                            onSignInAgain = onSignInAgain,
+                            clock = syncStatusClock,
+                        )
+                    }
                     if (showNavigation && !rail) {
-                        AppNavigationBar(current = current, onOpen = onOpen, timerRunning = timerRunning, pomodoroRunning = pomodoroRunning, hidden = hidden)
+                        AppNavigationBar(
+                            current = current,
+                            onOpen = onOpen,
+                            timerRunning = timerRunning,
+                            pomodoroRunning = pomodoroRunning,
+                            hidden = hidden,
+                        )
                     } else if (syncStatus != null) {
                         // Without the bar, the band keeps above the system navigation bar on its own.
                         Spacer(

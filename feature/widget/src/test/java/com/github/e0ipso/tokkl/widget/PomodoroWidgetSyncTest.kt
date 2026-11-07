@@ -1,13 +1,13 @@
 package com.github.e0ipso.tokkl.widget
 
 import com.github.e0ipso.tokkl.storage.valueStore
-import java.io.IOException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import java.io.IOException
 
 class PomodoroWidgetSyncTest {
     @Test fun eachProviderKeepsItsOwnKeyAcrossChangesAndProcessRestart() = runBlocking {
@@ -16,7 +16,9 @@ class PomodoroWidgetSyncTest {
         fun sync(name: String, vararg keys: String) = WidgetSync(
             keys = flowOf(*keys),
             shown = valueStore(load = { disk[name] }, save = { disk[name] = it }),
-            update = { updates += name }, scope = CoroutineScope(Dispatchers.Unconfined), io = Dispatchers.Unconfined,
+            update = { updates += name },
+            scope = CoroutineScope(Dispatchers.Unconfined),
+            io = Dispatchers.Unconfined,
         )
         sync("timer", "running", "running").follow()
         sync("pomodoro", "work", "work", "ended").follow()
@@ -31,19 +33,26 @@ class PomodoroWidgetSyncTest {
     @Test fun aFailedDrawDoesNotRememberAKeyThatWasNeverDrawn() = runBlocking {
         var saved: String? = "work"
         val sync = WidgetSync(
-            keys = flowOf("ended"), shown = valueStore(load = { saved }, save = { saved = it }),
+            keys = flowOf("ended"),
+            shown = valueStore(load = { saved }, save = { saved = it }),
             update = { throw IOException("launcher unavailable") },
-            scope = CoroutineScope(Dispatchers.Unconfined), io = Dispatchers.Unconfined,
+            scope = CoroutineScope(Dispatchers.Unconfined),
+            io = Dispatchers.Unconfined,
         )
-        try { sync.follow() } catch (_: IOException) { /* Retry on the next process or state. */ }
+        try {
+            sync.follow()
+        } catch (_: IOException) { /* Retry on the next process or state. */ }
         assertEquals("work", saved)
     }
 
     @Test fun failedStorageStillAllowsTheNextPhaseToDraw() = runBlocking {
         var draws = 0
         val sync = WidgetSync(
-            keys = flowOf("work", "work", "ended"), shown = valueStore(load = { null }, save = { throw IOException("disk full") }), update = { draws++ },
-            scope = CoroutineScope(Dispatchers.Unconfined), io = Dispatchers.Unconfined,
+            keys = flowOf("work", "work", "ended"),
+            shown = valueStore(load = { null }, save = { throw IOException("disk full") }),
+            update = { draws++ },
+            scope = CoroutineScope(Dispatchers.Unconfined),
+            io = Dispatchers.Unconfined,
         )
         sync.follow()
         assertEquals(2, draws)

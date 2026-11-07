@@ -33,25 +33,25 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.DeviceShell
-import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createComposeRule
+import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.spokenDuration
 import com.github.e0ipso.tokkl.ui.theme.LocalSectionHue
 import com.github.e0ipso.tokkl.ui.theme.SectionHues
 import com.github.e0ipso.tokkl.ui.theme.TokklLightColorScheme
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Rule
+import org.junit.Test
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 import java.time.temporal.TemporalAdjusters
 import kotlin.math.abs
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
-import org.junit.Rule
-import org.junit.Test
 
 /**
  * The calendar's two layouts (docs/PRD.md K1). On this upright phone, a compact width, it shows
@@ -135,7 +135,9 @@ class DayCalendarTest {
 
             composeRule.onAllNodes(stripDay).assertCountEquals(0)
             composeRule.onNode(isHeading() and hasContentDescription(spoken("Mon, 12 Oct", 210))).assertExists()
-            composeRule.onNode(isHeading() and hasContentDescription(spoken(string(R.string.history_today), 30))).assertExists()
+            composeRule.onNode(
+                isHeading() and hasContentDescription(spoken(string(R.string.history_today), 30)),
+            ).assertExists()
             composeRule.onNode(isHeading() and hasContentDescription(spoken("Sun, 18 Oct", 15))).assertExists()
             composeRule.onNode(blockOf(MURAL)).assertExists()
             composeRule.onNode(blockOf(STAND_UP)).assertExists()
@@ -239,13 +241,16 @@ class DayCalendarTest {
         return close(edge, TokklLightColorScheme.outline)
     }
 
-    private fun close(a: Color, b: Color): Boolean =
-        abs(a.red - b.red) < COLOUR_TOLERANCE && abs(a.green - b.green) < COLOUR_TOLERANCE && abs(a.blue - b.blue) < COLOUR_TOLERANCE
+    private fun close(a: Color, b: Color): Boolean = abs(
+        a.red - b.red,
+    ) < COLOUR_TOLERANCE && abs(a.green - b.green) < COLOUR_TOLERANCE && abs(a.blue - b.blue) < COLOUR_TOLERANCE
 
     private fun stripDay(spoken: String): SemanticsNodeInteraction =
         composeRule.onNode(stripDay and hasContentDescription(spoken, substring = true))
 
-    private fun arrow(@StringRes label: Int): SemanticsMatcher = hasContentDescription(string(label)) and hasClickAction()
+    private fun arrow(@StringRes label: Int): SemanticsMatcher = hasContentDescription(
+        string(label),
+    ) and hasClickAction()
 
     /** What TalkBack reads for the day [label] with [minutes] in total. */
     private fun spoken(label: String, minutes: Long): String =
@@ -281,7 +286,11 @@ class DayCalendarTest {
         val THURSDAY: LocalDate = LocalDate.of(2026, 10, 15)
         val NEXT_MONDAY: LocalDate = LocalDate.of(2026, 10, 19)
         val NOON: Instant = Instant.parse("2026-10-15T12:00:00Z")
-        val SETTINGS = AccountSettings(timeZone = "UTC", beginningOfWeek = DayOfWeek.MONDAY, timeResolutionMinutes = null)
+        val SETTINGS = AccountSettings(
+            timeZone = "UTC",
+            beginningOfWeek = DayOfWeek.MONDAY,
+            timeResolutionMinutes = null,
+        )
 
         const val MURAL = "Paint the mural"
         const val STAND_UP = "Stand-up"

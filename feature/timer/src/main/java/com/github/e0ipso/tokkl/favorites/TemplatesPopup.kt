@@ -26,15 +26,15 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import com.github.e0ipso.tokkl.feature.timer.R
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
-import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.catalog.problemText
+import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.picker.rememberOffline
 import com.github.e0ipso.tokkl.ui.ErrorBanner
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * The timer panel's timer-templates icon (docs/PRD.md T5). It opens a popup of the cached
@@ -71,7 +71,10 @@ fun TemplatesPopup(
                     text = stringResource(R.string.favorites_empty),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = TokklTheme.spacing.space3, vertical = TokklTheme.spacing.space2),
+                    modifier = Modifier.padding(
+                        horizontal = TokklTheme.spacing.space3,
+                        vertical = TokklTheme.spacing.space2,
+                    ),
                 )
             } else {
                 for (template in state.favorites) {
@@ -150,9 +153,12 @@ internal fun TemplateFeedback(state: FavoritesState, offline: Boolean, saved: Bo
     val warning = when {
         offline || (problem as? FavoritesProblem.Server)?.problem == ServerProblem.Unreachable ->
             stringResource(R.string.favorites_offline)
+
         saved && problem == null -> null
+
         problem is FavoritesProblem.Full || state.full ->
             pluralStringResource(R.plurals.favorites_full, MAX_FAVORITES, MAX_FAVORITES)
+
         else -> null
     }
     if (warning != null) TemplateNotice(warning, padding)

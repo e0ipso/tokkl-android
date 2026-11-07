@@ -1,8 +1,6 @@
 package com.github.e0ipso.tokkl.trash
 
-import com.github.e0ipso.tokkl.components.capabilities
 import androidx.annotation.StringRes
-import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.hasAnyAncestor
@@ -20,8 +18,6 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.feature.clients.R as ClientsR
-import com.github.e0ipso.tokkl.feature.trash.R as TrashR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
@@ -29,10 +25,9 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.bottomBarItem
+import com.github.e0ipso.tokkl.components.capabilities
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.Session
-import java.time.Instant
-import java.time.temporal.ChronoUnit
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -40,10 +35,13 @@ import kotlinx.serialization.json.long
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.Instant
+import java.time.temporal.ChronoUnit
+import com.github.e0ipso.tokkl.feature.clients.R as ClientsR
+import com.github.e0ipso.tokkl.feature.trash.R as TrashR
 
 /**
  * The trash page against the real Tokkl container (docs/PRD.md H7): it lists an account's deleted
@@ -80,7 +78,14 @@ class TrashServerTest {
             account.createEntry(description, from, from.plus(10, ChronoUnit.MINUTES)).also(account::deleteEntry)
         }
         launchOnTrash {
-            for (description in listOf(RESTORED, PURGED, EMPTIED, ALSO_EMPTIED)) composeRule.awaitText(description, TIMEOUT_MS)
+            for (description in listOf(
+                RESTORED,
+                PURGED,
+                EMPTIED,
+                ALSO_EMPTIED,
+            )) {
+                composeRule.awaitText(description, TIMEOUT_MS)
+            }
 
             control(TrashR.string.trash_restore_named, RESTORED).performScrollTo().performClick()
             composeRule.awaitText(string(TrashR.string.trash_restored), NETWORK_TIMEOUT_MS)
@@ -94,12 +99,20 @@ class TrashServerTest {
             awaitGone(PURGED)
             assertFalse("the entry went for good", ids[1] in trashIds(account))
 
-            composeRule.onNode(hasText(string(TrashR.string.trash_empty_trash)) and hasClickAction() and !inDialog()).performClick()
+            composeRule.onNode(
+                hasText(string(TrashR.string.trash_empty_trash)) and hasClickAction() and !inDialog(),
+            ).performClick()
             composeRule.awaitText(string(TrashR.string.trash_empty_confirm_title), TIMEOUT_MS)
-            composeRule.onNode(hasText(context.resources.getQuantityString(TrashR.plurals.trash_empty_confirm_message, 2, 2)) and inDialog())
+            composeRule.onNode(
+                hasText(
+                    context.resources.getQuantityString(TrashR.plurals.trash_empty_confirm_message, 2, 2),
+                ) and inDialog(),
+            )
                 .assertExists()
             assertEquals("the question sends nothing", listOf(ids[2], ids[3]), trashIds(account).sorted())
-            composeRule.onNode(hasText(string(TrashR.string.trash_empty_trash)) and hasClickAction() and inDialog()).performClick()
+            composeRule.onNode(
+                hasText(string(TrashR.string.trash_empty_trash)) and hasClickAction() and inDialog(),
+            ).performClick()
 
             composeRule.awaitText(string(TrashR.string.trash_empty_title), NETWORK_TIMEOUT_MS)
             assertEquals("the trash is empty on the server", emptyList<Long>(), trashIds(account))
@@ -117,7 +130,10 @@ class TrashServerTest {
             composeRule.awaitText(RESTORED, TIMEOUT_MS)
             val noDescription = string(TrashR.string.trash_no_description)
             for (name in listOf(RESTORED, noDescription)) {
-                val row = composeRule.onNode(hasText(name) and hasText(string(TrashR.string.trash_no_project)), useUnmergedTree = false)
+                val row = composeRule.onNode(
+                    hasText(name) and hasText(string(TrashR.string.trash_no_project)),
+                    useUnmergedTree = false,
+                )
                 row.assertExists()
                 control(TrashR.string.trash_restore_named, name).assertHasClickAction()
                 control(TrashR.string.trash_purge_named, name).assertHasClickAction()
@@ -159,8 +175,14 @@ class TrashServerTest {
 
             composeRule.awaitTimerPage(TIMEOUT_MS)
             composeRule.onNode(bottomBarItem(R.string.nav_more)).performClick()
-            composeRule.waitUntil("the More sheet opens", TIMEOUT_MS) { exists(hasText(string(ClientsR.string.nav_clients)) and isSelectable()) }
-            assertFalse("the sheet leaves Trash out", exists(hasText(string(TrashR.string.nav_trash)) and isSelectable()))
+            composeRule.waitUntil(
+                "the More sheet opens",
+                TIMEOUT_MS,
+            ) { exists(hasText(string(ClientsR.string.nav_clients)) and isSelectable()) }
+            assertFalse(
+                "the sheet leaves Trash out",
+                exists(hasText(string(TrashR.string.nav_trash)) and isSelectable()),
+            )
         }
     }
 
@@ -168,12 +190,18 @@ class TrashServerTest {
     private fun launchOnTrash(steps: () -> Unit) {
         ActivityScenario.launch(MainActivity::class.java).use {
             composeRule.awaitTimerPage(NETWORK_TIMEOUT_MS)
-            composeRule.waitUntil("the refresh finds the trash", NETWORK_TIMEOUT_MS) { app.capabilities.state.value.trash }
+            composeRule.waitUntil(
+                "the refresh finds the trash",
+                NETWORK_TIMEOUT_MS,
+            ) { app.capabilities.state.value.trash }
             composeRule.onNode(bottomBarItem(R.string.nav_more)).performClick()
             val item = hasText(string(TrashR.string.nav_trash)) and isSelectable()
             composeRule.waitUntil("the More sheet lists Trash", TIMEOUT_MS) { exists(item) }
             composeRule.onNode(item).performClick()
-            composeRule.waitUntil("the trash page shows", TIMEOUT_MS) { exists(hasText(string(TrashR.string.nav_trash)) and isHeading()) }
+            composeRule.waitUntil(
+                "the trash page shows",
+                TIMEOUT_MS,
+            ) { exists(hasText(string(TrashR.string.nav_trash)) and isHeading()) }
             steps()
         }
     }
@@ -199,7 +227,9 @@ class TrashServerTest {
 
     private fun inDialog(): SemanticsMatcher = hasAnyAncestor(isDialog())
 
-    private fun exists(matcher: SemanticsMatcher): Boolean = composeRule.onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty()
+    private fun exists(matcher: SemanticsMatcher): Boolean = composeRule.onAllNodes(
+        matcher,
+    ).fetchSemanticsNodes().isNotEmpty()
 
     private fun string(@StringRes id: Int): String = context.getString(id)
 

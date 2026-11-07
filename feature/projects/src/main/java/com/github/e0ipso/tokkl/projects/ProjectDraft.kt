@@ -66,7 +66,12 @@ data class ProjectDraft(
             if (name.isBlank()) put(ProjectField.NAME, R.string.project_name_missing)
             if (!isHexColor(color)) put(ProjectField.COLOR, R.string.project_colour_invalid)
             if (rate == Amount.Invalid) put(ProjectField.RATE, R.string.project_rate_invalid)
-            if (code.isNotEmpty() && !CURRENCY.matches(code)) put(ProjectField.CURRENCY, R.string.project_currency_invalid)
+            if (code.isNotEmpty() && !CURRENCY.matches(
+                    code,
+                )
+            ) {
+                put(ProjectField.CURRENCY, R.string.project_currency_invalid)
+            }
             if (estimate == Amount.Invalid) put(ProjectField.ESTIMATE, R.string.project_estimate_invalid)
         }
         if (mistakes.isNotEmpty()) return DraftCheck.Invalid(mistakes)
@@ -86,20 +91,27 @@ data class ProjectDraft(
     companion object {
 
         /** The form for [project] as the server sent it, or for a new project in [newColor]. */
-        fun of(project: Project?, newColor: ProjectPalette): ProjectDraft =
-            if (project == null) {
-                ProjectDraft("", newColor.hex, clientId = null, billable = false, rate = "", currency = "", estimate = "")
-            } else {
-                ProjectDraft(
-                    name = project.name,
-                    color = project.color?.takeIf(::isHexColor)?.lowercase(Locale.ROOT) ?: newColor.hex,
-                    clientId = project.clientId,
-                    billable = project.billable,
-                    rate = amountText(project.rate),
-                    currency = project.currency.orEmpty(),
-                    estimate = amountText(project.estimatedHours),
-                )
-            }
+        fun of(project: Project?, newColor: ProjectPalette): ProjectDraft = if (project == null) {
+            ProjectDraft(
+                "",
+                newColor.hex,
+                clientId = null,
+                billable = false,
+                rate = "",
+                currency = "",
+                estimate = "",
+            )
+        } else {
+            ProjectDraft(
+                name = project.name,
+                color = project.color?.takeIf(::isHexColor)?.lowercase(Locale.ROOT) ?: newColor.hex,
+                clientId = project.clientId,
+                billable = project.billable,
+                rate = amountText(project.rate),
+                currency = project.currency.orEmpty(),
+                estimate = amountText(project.estimatedHours),
+            )
+        }
 
         private val CURRENCY = Regex("[A-Z]{3}")
     }

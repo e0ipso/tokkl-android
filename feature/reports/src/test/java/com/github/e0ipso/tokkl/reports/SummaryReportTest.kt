@@ -1,10 +1,10 @@
 package com.github.e0ipso.tokkl.reports
 
-import java.time.DayOfWeek
-import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import java.time.DayOfWeek
+import java.time.LocalDate
 
 /** The summary's sums, ported from the web app's totalsOf, timeSeries and groupEntries. */
 class SummaryReportTest {
@@ -12,11 +12,43 @@ class SummaryReportTest {
     @Test
     fun totalsSeriesAndProjects() {
         val entries = listOf(
-            entry(3600, billable = true, cents = 5000, currency = "EUR", project = 1, name = "Web", date = "2026-10-12"),
-            entry(1800, billable = false, cents = null, currency = "EUR", project = null, name = null, date = "2026-10-12"),
-            entry(900, billable = true, cents = 2500, currency = "USD", project = 2, name = "Consult", date = "2026-10-14"),
+            entry(
+                3600,
+                billable = true,
+                cents = 5000,
+                currency = "EUR",
+                project = 1,
+                name = "Web",
+                date = "2026-10-12",
+            ),
+            entry(
+                1800,
+                billable = false,
+                cents = null,
+                currency = "EUR",
+                project = null,
+                name = null,
+                date = "2026-10-12",
+            ),
+            entry(
+                900,
+                billable = true,
+                cents = 2500,
+                currency = "USD",
+                project = 2,
+                name = "Consult",
+                date = "2026-10-14",
+            ),
             entry(3600, billable = true, cents = 0, currency = "EUR", project = 1, name = "Web", date = "2026-10-18"),
-            entry(2700, billable = false, cents = null, currency = "EUR", project = 2, name = "Consult", date = "2026-10-18"),
+            entry(
+                2700,
+                billable = false,
+                cents = null,
+                currency = "EUR",
+                project = 2,
+                name = "Consult",
+                date = "2026-10-18",
+            ),
         )
         val report = SummaryReport.of(entries, ReportRange(date("2026-10-12"), date("2026-10-18")), DayOfWeek.MONDAY)
 
@@ -53,10 +85,30 @@ class SummaryReportTest {
 
     @Test
     fun fallbackDistinguishesAMissingGroupAmountFromAnExplicitZero() {
-        val report = SummaryReport.of(listOf(
-            entry(60, billable = false, cents = null, currency = "EUR", project = 1, name = "Missing", date = "2026-10-12"),
-            entry(60, billable = true, cents = 0, currency = "EUR", project = 2, name = "Zero", date = "2026-10-12"),
-        ), ReportRange(date("2026-10-12"), date("2026-10-12")), DayOfWeek.MONDAY)
+        val report = SummaryReport.of(
+            listOf(
+                entry(
+                    60,
+                    billable = false,
+                    cents = null,
+                    currency = "EUR",
+                    project = 1,
+                    name = "Missing",
+                    date = "2026-10-12",
+                ),
+                entry(
+                    60,
+                    billable = true,
+                    cents = 0,
+                    currency = "EUR",
+                    project = 2,
+                    name = "Zero",
+                    date = "2026-10-12",
+                ),
+            ),
+            ReportRange(date("2026-10-12"), date("2026-10-12")),
+            DayOfWeek.MONDAY,
+        )
         assertEquals(listOf(Amount("EUR", 0)), report.totals.amounts)
         assertEquals(listOf(null, 0L), report.projects.map { it.amountCents })
     }
@@ -84,7 +136,17 @@ class SummaryReportTest {
     @Test
     fun weekBucketsFollowAnotherWeekStart() {
         val range = ReportRange(date("2026-01-01"), date("2026-03-31"))
-        val entries = listOf(entry(100, billable = false, cents = null, currency = "EUR", project = null, name = null, date = "2026-01-06"))
+        val entries = listOf(
+            entry(
+                100,
+                billable = false,
+                cents = null,
+                currency = "EUR",
+                project = null,
+                name = null,
+                date = "2026-01-06",
+            ),
+        )
         val report = SummaryReport.of(entries, range, DayOfWeek.WEDNESDAY)
 
         assertEquals(date("2025-12-31"), report.series.first().start)
@@ -93,8 +155,24 @@ class SummaryReportTest {
 
     private fun date(text: String) = LocalDate.parse(text)
 
-    private fun entry(seconds: Long, billable: Boolean, cents: Long?, currency: String, project: Long?, name: String?, date: String) =
-        ReportEntry(seconds, billable, cents, currency, project, name, if (project == null) null else COLOUR, date(date))
+    private fun entry(
+        seconds: Long,
+        billable: Boolean,
+        cents: Long?,
+        currency: String,
+        project: Long?,
+        name: String?,
+        date: String,
+    ) = ReportEntry(
+        seconds,
+        billable,
+        cents,
+        currency,
+        project,
+        name,
+        if (project == null) null else COLOUR,
+        date(date),
+    )
 
     private companion object {
         const val COLOUR = "#06aaf5"

@@ -55,7 +55,9 @@ class PinnedCertificateTest {
 
         val result = client.get(me, JsonObject.serializer())
 
-        val body = (result as? ApiResult.Success)?.value ?: throw AssertionError("GET /api/v9/me failed: ${(result as ApiResult.Failure).error.javaClass.simpleName}")
+        val body = (result as? ApiResult.Success)?.value ?: throw AssertionError(
+            "GET /api/v9/me failed: ${(result as ApiResult.Failure).error.javaClass.simpleName}",
+        )
         assertEquals(TokklTestServer.email, body.getValue("email").jsonPrimitive.content)
     }
 
@@ -74,6 +76,8 @@ class PinnedCertificateTest {
     /** The pinning trust manager's refusal, which the client reports as its own error. */
     private fun refusal(result: ApiResult<*>): ApiError.UntrustedCertificate {
         val error = (result as? ApiResult.Failure)?.error
-        return error as? ApiError.UntrustedCertificate ?: throw AssertionError("expected a refused certificate, got ${error ?: "a success"}")
+        return error as? ApiError.UntrustedCertificate ?: throw AssertionError(
+            "expected a refused certificate, got ${error ?: "a success"}",
+        )
     }
 }

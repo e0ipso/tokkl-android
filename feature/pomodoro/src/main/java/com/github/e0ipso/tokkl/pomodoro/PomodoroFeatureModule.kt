@@ -54,7 +54,11 @@ val pomodoroFeatureModule = module {
     } binds arrayOf(PomodoroAlarmScheduler::class, TimerSyncWatcher::class)
 
     /** The ringing service at a Pomodoro phase's planned end, as [PomodoroPhaseAlarm] drives it and the Pomodoro widget reads it. */
-    single { ServicePomodoroRinging(androidContext()) } binds arrayOf(PomodoroRinging::class, PomodoroRingingPhase::class)
+    single {
+        ServicePomodoroRinging(
+            androidContext(),
+        )
+    } binds arrayOf(PomodoroRinging::class, PomodoroRingingPhase::class)
 
     /**
      * The exact alarm and the ring of the server's Pomodoro session, which follow the held timer
@@ -71,7 +75,13 @@ val pomodoroFeatureModule = module {
         )
     } bind AccountDataOwner::class
 
-    single { AccountPomodoroNotification(androidContext(), get(), get(), get(), get(), get(), get(), get(), io()) } binds arrayOf(AccountDataOwner::class, SignedInListener::class)
+    single {
+        AccountPomodoroNotification(androidContext(), get(), get(), get(), get(), get(), get(), get(), io())
+    } binds
+        arrayOf(
+            AccountDataOwner::class,
+            SignedInListener::class,
+        )
 
     viewModel {
         val changes = get<ChangeQueue>()

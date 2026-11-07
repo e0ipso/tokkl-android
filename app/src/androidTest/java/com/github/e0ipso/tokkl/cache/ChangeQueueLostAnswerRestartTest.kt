@@ -14,11 +14,6 @@ import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
-import java.io.File
-import java.time.Duration
-import java.time.Instant
-import java.time.temporal.ChronoUnit
-import java.util.Properties
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.builtins.ListSerializer
@@ -31,6 +26,11 @@ import org.junit.Assert.assertTrue
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
+import java.io.File
+import java.time.Duration
+import java.time.Instant
+import java.time.temporal.ChronoUnit
+import java.util.Properties
 
 /**
  * The app process dies while the server holds a create the phone sent, before the answer arrives.
@@ -59,7 +59,12 @@ class ChangeQueueLostAnswerRestartTest {
         relay.holdAnswerTo("POST /api/v9/workspaces/")
 
         val id = runBlocking {
-            app.changes.create(workspace, EntryFields(description = "Sent before the process died"), start, start.plus(Duration.ofMinutes(30)))
+            app.changes.create(
+                workspace,
+                EntryFields(description = "Sent before the process died"),
+                start,
+                start.plus(Duration.ofMinutes(30)),
+            )
         }
         val deadline = System.nanoTime() + Duration.ofSeconds(30).toNanos()
         while (!relay.holdsAnswer) {
@@ -75,7 +80,11 @@ class ChangeQueueLostAnswerRestartTest {
             setProperty("start", start.toString())
             handOver.outputStream().use { store(it, null) }
         }
-        assertEquals("the create waits for its answer, still queued", 1, runBlocking { app.changes.unsentCount.first() })
+        assertEquals(
+            "the create waits for its answer, still queued",
+            1,
+            runBlocking { app.changes.unsentCount.first() },
+        )
         // The process ends with the answer held, as when Android kills the app mid-request.
     }
 
@@ -83,7 +92,11 @@ class ChangeQueueLostAnswerRestartTest {
     fun step2SendsTheQueueWithoutASecondCopy() {
         assertTrue("step 1 did not run before step 2", handOver.exists())
         val saved = Properties().apply { handOver.inputStream().use { load(it) } }
-        val account = TestAccounts.Account(saved.getProperty("accountId").toLong(), saved.getProperty("email"), saved.getProperty("token"))
+        val account = TestAccounts.Account(
+            saved.getProperty("accountId").toLong(),
+            saved.getProperty("email"),
+            saved.getProperty("token"),
+        )
         try {
             assertNotEquals("step 1 ran in this same process", saved.getProperty("process"), currentProcess())
             assertEquals("the create survived", 1, runBlocking { app.changes.unsentCount.first() })
@@ -101,7 +114,10 @@ class ChangeQueueLostAnswerRestartTest {
                 .addQueryParameter("start_date", start.minus(Duration.ofDays(1)).toString())
                 .addQueryParameter("end_date", start.plus(Duration.ofDays(1)).toString())
                 .build()
-            val copies = account.client.get(url, ListSerializer(JsonObject.serializer())).orFail("GET /api/v9/me/time_entries")
+            val copies = account.client.get(
+                url,
+                ListSerializer(JsonObject.serializer()),
+            ).orFail("GET /api/v9/me/time_entries")
             assertEquals("one copy on the server: $copies", 1, copies.size)
             assertEquals(
                 "the phone's entry is that copy",

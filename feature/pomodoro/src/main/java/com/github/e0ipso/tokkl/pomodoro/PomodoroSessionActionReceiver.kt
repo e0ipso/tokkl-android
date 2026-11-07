@@ -6,12 +6,12 @@ import android.content.Intent
 import androidx.annotation.VisibleForTesting
 import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.timernotice.showTimerActionFailure
-import java.util.concurrent.CountDownLatch
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import java.util.concurrent.CountDownLatch
 
 /**
  * The session notification's Next phase and End session. No activity is needed: the action goes
@@ -19,7 +19,9 @@ import org.koin.core.component.inject
  * the notification and the alarm. One that fails, offline included, changes nothing on the phone
  * and says why.
  */
-class PomodoroSessionActionReceiver : BroadcastReceiver(), KoinComponent {
+class PomodoroSessionActionReceiver :
+    BroadcastReceiver(),
+    KoinComponent {
     private val notification: AccountPomodoroNotification by inject()
     private val scope: CoroutineScope by inject()
     private val io: CoroutineDispatcher by inject(IoDispatcher)

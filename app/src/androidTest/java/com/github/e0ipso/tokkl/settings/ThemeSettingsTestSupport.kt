@@ -14,12 +14,12 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.feature.settings.R
 import com.github.e0ipso.tokkl.awaitText
+import com.github.e0ipso.tokkl.feature.settings.R
 import com.github.e0ipso.tokkl.ui.theme.ThemeMode
 import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsStore
-import java.io.File
 import org.junit.rules.ExternalResource
+import java.io.File
 
 private val targetContext get() = InstrumentationRegistry.getInstrumentation().targetContext
 
@@ -75,7 +75,10 @@ fun ComposeTestRule.shownTheme(activity: Activity): ShownTheme {
     var lightStatusBar = false
     InstrumentationRegistry.getInstrumentation().runOnMainSync {
         window = (activity.window.decorView.background as? ColorDrawable)?.color
-        lightStatusBar = WindowInsetsControllerCompat(activity.window, activity.window.decorView).isAppearanceLightStatusBars
+        lightStatusBar = WindowInsetsControllerCompat(
+            activity.window,
+            activity.window.decorView,
+        ).isAppearanceLightStatusBars
     }
     return ShownTheme(hex(content), window?.let(::hex), lightStatusBar)
 }

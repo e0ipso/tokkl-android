@@ -1,14 +1,6 @@
 package com.github.e0ipso.tokkl.time
 
 import com.github.e0ipso.tokkl.ClassReferences
-import java.time.Clock
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.time.ZonedDateTime
-import java.util.Calendar
-import java.util.GregorianCalendar
-import java.util.TimeZone
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -22,14 +14,19 @@ class NoDeviceZoneTest {
 
     @Test
     fun noAppClassReadsTheDeviceZone() {
-        assertTrue("the scan found the app's classes", "com/github/e0ipso/tokkl/time/AccountTime" in ClassReferences.app)
+        assertTrue(
+            "the scan found the app's classes",
+            "com/github/e0ipso/tokkl/time/AccountTime" in ClassReferences.app,
+        )
 
         val offenders = ClassReferences.app
             .filterKeys { it !in ALLOWED }
             .flatMap { (name, references) -> references.members.filter(::readsDeviceZone).map { "$name uses $it" } }
 
         assertTrue(
-            "Take the zone, the clock and the week from AccountSettings.time() instead:\n" + offenders.joinToString("\n"),
+            "Take the zone, the clock and the week from AccountSettings.time() instead:\n" + offenders.joinToString(
+                "\n",
+            ),
             offenders.isEmpty(),
         )
     }

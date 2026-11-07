@@ -4,16 +4,13 @@ import android.app.Application
 import android.content.Context
 import androidx.work.WorkerParameters
 import com.github.e0ipso.tokkl.reports.ReportExportController
-import com.github.e0ipso.tokkl.session.AccountRefreshListener
 import com.github.e0ipso.tokkl.session.AccountDataOwner
+import com.github.e0ipso.tokkl.session.AccountRefreshListener
 import com.github.e0ipso.tokkl.session.SignOutOrder
 import com.github.e0ipso.tokkl.signin.SignIn
 import com.github.e0ipso.tokkl.storage.ClearableStore
 import com.github.e0ipso.tokkl.storage.ValueStore
 import com.github.e0ipso.tokkl.timerstate.TimerSyncClock
-import java.io.File
-import java.time.Instant
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import org.junit.Assert.assertEquals
@@ -22,6 +19,9 @@ import org.koin.core.annotation.KoinInternalApi
 import org.koin.dsl.koinApplication
 import org.koin.dsl.module
 import org.koin.test.verify.verify
+import java.io.File
+import java.time.Instant
+import kotlin.coroutines.CoroutineContext
 
 class AppModulesTest {
 

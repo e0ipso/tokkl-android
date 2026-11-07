@@ -26,10 +26,9 @@ class ServerUrl private constructor(private val base: HttpUrl) {
      * Each segment is percent-encoded on its own, so a `/` or `?` inside one
      * cannot change the path or add a query.
      */
-    private fun endpoint(prefix: List<String>, segments: Array<out String>): HttpUrl =
-        base.newBuilder()
-            .apply { (prefix + segments).forEach(::addPathSegment) }
-            .build()
+    private fun endpoint(prefix: List<String>, segments: Array<out String>): HttpUrl = base.newBuilder()
+        .apply { (prefix + segments).forEach(::addPathSegment) }
+        .build()
 
     /** `scheme://host:port`, with an IPv6 host in brackets. */
     val origin: String

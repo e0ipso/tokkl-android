@@ -22,12 +22,16 @@ class TrashServer(private val api: TogglApiClient) {
     fun list(): ApiResult<List<TrashEntry>> = api.get(api.server.app("trash"), ListSerializer(TrashEntry.serializer()))
 
     /** Puts entry [id] back among the time entries. Tokkl answers with the entry. */
-    fun restore(id: Long): ApiResult<Unit> =
-        // OkHttp sends a POST only with a body. Tokkl reads none.
+    fun restore(id: Long): ApiResult<Unit> = // OkHttp sends a POST only with a body. Tokkl reads none.
         api.sendNoContent("POST", api.server.app("time_entries", id.toString(), "restore"), JsonObject(emptyMap()))
 
     /** Deletes entry [id] for good. A 404 means it is no longer in the trash. */
-    fun purge(id: Long): ApiResult<Purged> = api.send("DELETE", api.server.app("trash", id.toString()), null, Purged.serializer())
+    fun purge(id: Long): ApiResult<Purged> = api.send(
+        "DELETE",
+        api.server.app("trash", id.toString()),
+        null,
+        Purged.serializer(),
+    )
 
     /** Deletes every entry in the trash for good. */
     fun purgeAll(): ApiResult<Purged> = api.send("DELETE", api.server.app("trash"), null, Purged.serializer())

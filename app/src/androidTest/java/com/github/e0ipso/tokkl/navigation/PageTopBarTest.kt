@@ -21,24 +21,24 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.feature.clients.R as ClientsR
-import com.github.e0ipso.tokkl.feature.projects.R as ProjectsR
-import com.github.e0ipso.tokkl.feature.reports.R as ReportsR
-import com.github.e0ipso.tokkl.feature.settings.R as SettingsR
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
-import com.github.e0ipso.tokkl.feature.tags.R as TagsR
-import com.github.e0ipso.tokkl.feature.timer.R as TimerR
-import com.github.e0ipso.tokkl.feature.trash.R as TrashR
-import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.awaitPomodoroOffered
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.navhost.label
-import kotlin.math.abs
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import kotlin.math.abs
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
+import com.github.e0ipso.tokkl.feature.clients.R as ClientsR
+import com.github.e0ipso.tokkl.feature.projects.R as ProjectsR
+import com.github.e0ipso.tokkl.feature.reports.R as ReportsR
+import com.github.e0ipso.tokkl.feature.settings.R as SettingsR
+import com.github.e0ipso.tokkl.feature.tags.R as TagsR
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
+import com.github.e0ipso.tokkl.feature.trash.R as TrashR
 
 /**
  * Every signed-in page in the real activity starts with the shared top bar: its title as a
@@ -62,11 +62,23 @@ class PageTopBarTest {
             composeRule.onNode(barItem(page)).performClick()
             assertTopBar(page, back = false)
         }
-        for (page in listOf(ReportsR.string.reports, TimerR.string.nav_templates, ClientsR.string.nav_clients, TagsR.string.nav_tags, TrashR.string.nav_trash)) {
+        for (page in listOf(
+            ReportsR.string.reports,
+            TimerR.string.nav_templates,
+            ClientsR.string.nav_clients,
+            TagsR.string.nav_tags,
+            TrashR.string.nav_trash,
+        )) {
             composeRule.onNode(barItem(R.string.nav_more)).performClick()
-            composeRule.waitUntil("the More sheet opens", TIMEOUT_MS) { exists(isSelectable() and hasText(string(page))) }
+            composeRule.waitUntil(
+                "the More sheet opens",
+                TIMEOUT_MS,
+            ) { exists(isSelectable() and hasText(string(page))) }
             composeRule.onNode(isSelectable() and hasText(string(page))).performScrollTo().performClick()
-            composeRule.waitUntil("the More sheet closes", TIMEOUT_MS) { !exists(hasText(string(R.string.nav_more)) and isHeading()) }
+            composeRule.waitUntil(
+                "the More sheet closes",
+                TIMEOUT_MS,
+            ) { !exists(hasText(string(R.string.nav_more)) and isHeading()) }
             assertTopBar(page, back = false)
         }
     }
@@ -75,7 +87,9 @@ class PageTopBarTest {
     fun licencesHasTheBarWithABackButton() {
         composeRule.awaitTimerPage(NETWORK_TIMEOUT_MS)
         composeRule.onNode(barItem(SettingsR.string.settings)).performClick()
-        composeRule.onNode(hasText(string(SettingsR.string.licences)) and hasClickAction()).performScrollTo().performClick()
+        composeRule.onNode(
+            hasText(string(SettingsR.string.licences)) and hasClickAction(),
+        ).performScrollTo().performClick()
 
         assertTopBar(SettingsR.string.licences, back = true)
     }
@@ -99,7 +113,10 @@ class PageTopBarTest {
         assertTopBar(ProjectsR.string.nav_projects, back = false)
 
         composeRule.onNode(barItem(R.string.nav_more)).performClick()
-        composeRule.waitUntil("the More sheet opens", TIMEOUT_MS) { exists(isSelectable() and hasText(string(ClientsR.string.nav_clients))) }
+        composeRule.waitUntil(
+            "the More sheet opens",
+            TIMEOUT_MS,
+        ) { exists(isSelectable() and hasText(string(ClientsR.string.nav_clients))) }
         composeRule.onNode(isSelectable() and hasText(string(ClientsR.string.nav_clients))).performClick()
         openForm(ClientsR.string.clients_new)
         assertTopBar(ClientsR.string.client_form_new, back = true)
@@ -125,7 +142,10 @@ class PageTopBarTest {
         val scrolling = composeRule.onAllNodes(hasScrollAction()).fetchSemanticsNodes()
         for (node in scrolling) {
             val top = with(composeRule.density) { node.boundsInRoot.top.toDp() }
-            assertTrue("$name's title ends at ${headingBounds.bottom}, inside a part that scrolls from $top", headingBounds.bottom <= top + SLACK)
+            assertTrue(
+                "$name's title ends at ${headingBounds.bottom}, inside a part that scrolls from $top",
+                headingBounds.bottom <= top + SLACK,
+            )
         }
 
         val backs = composeRule.onAllNodes(hasContentDescription(string(UiR.string.back)) and hasClickAction())
@@ -134,7 +154,10 @@ class PageTopBarTest {
             val button = backs[0].assertIsDisplayed().getBoundsInRoot()
             val buttonMiddle = (button.top + button.bottom) / 2
             val headingMiddle = (headingBounds.top + headingBounds.bottom) / 2
-            assertTrue("the back button sits beside $name's title", abs((buttonMiddle - headingMiddle).value) <= SLACK.value)
+            assertTrue(
+                "the back button sits beside $name's title",
+                abs((buttonMiddle - headingMiddle).value) <= SLACK.value,
+            )
             assertTrue("the back button comes before $name's title", button.right <= headingBounds.left + SLACK)
         } else {
             backs.assertCountEquals(0)
@@ -143,7 +166,9 @@ class PageTopBarTest {
         composeRule.onAllNodes(hasContentDescription(string(UiR.string.app_name))).assertCountEquals(0)
     }
 
-    private fun exists(matcher: SemanticsMatcher): Boolean = composeRule.onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty()
+    private fun exists(matcher: SemanticsMatcher): Boolean = composeRule.onAllNodes(
+        matcher,
+    ).fetchSemanticsNodes().isNotEmpty()
 
     private fun barItem(@StringRes label: Int): SemanticsMatcher =
         hasText(string(label)) and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab)

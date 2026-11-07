@@ -18,21 +18,21 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.DpRect
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.feature.trash.R
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
 import com.github.e0ipso.tokkl.api.TrashEntry
 import com.github.e0ipso.tokkl.catalog.ServerProblem
+import com.github.e0ipso.tokkl.feature.trash.R
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import java.time.DayOfWeek
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.DayOfWeek
 
 /**
  * The trash page, its question and its offline state at Android's largest font scale, 200%: no
@@ -49,7 +49,9 @@ class TrashFitTest {
 
     /** The font scale is set before the activity starts, so it never has to restart for it. */
     @get:Rule
-    val rules: RuleChain = RuleChain.outerRule(SystemFontScale(SystemFontScale.LARGEST, largestDisplaySize = true)).around(composeRule)
+    val rules: RuleChain = RuleChain.outerRule(
+        SystemFontScale(SystemFontScale.LARGEST, largestDisplaySize = true),
+    ).around(composeRule)
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
@@ -70,7 +72,10 @@ class TrashFitTest {
             val boxes = listOf(restore, purge).map { it.assertIsDisplayed().getBoundsInRoot() }
             for (box in boxes) {
                 assertTrue("a control of $name leaves the screen", box.inside(screen))
-                assertTrue("an icon target of $name is too small", box.right - box.left >= 48.dp && box.bottom - box.top >= 48.dp)
+                assertTrue(
+                    "an icon target of $name is too small",
+                    box.right - box.left >= 48.dp && box.bottom - box.top >= 48.dp,
+                )
             }
             assertFalse("Restore overlaps Delete forever for $name", boxes[0].overlaps(boxes[1]))
         }
@@ -107,14 +112,19 @@ class TrashFitTest {
     private fun assertNoTextCutOff(where: String) {
         assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
         composeRule.waitForIdle()
-        val nodes = composeRule.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsActions.GetTextLayoutResult), useUnmergedTree = true)
+        val nodes = composeRule.onAllNodes(
+            SemanticsMatcher.keyIsDefined(SemanticsActions.GetTextLayoutResult),
+            useUnmergedTree = true,
+        )
             .fetchSemanticsNodes()
         assertTrue("the scan found text in $where", nodes.isNotEmpty())
         for (node in nodes) {
             val layouts = mutableListOf<TextLayoutResult>()
             node.config.getOrNull(SemanticsActions.GetTextLayoutResult)?.action?.invoke(layouts)
             val layout = layouts.firstOrNull() ?: continue
-            val text = node.config.getOrNull(SemanticsProperties.Text)?.joinToString { it.text } ?: layout.layoutInput.text.text
+            val text = node.config.getOrNull(
+                SemanticsProperties.Text,
+            )?.joinToString { it.text } ?: layout.layoutInput.text.text
             assertFalse("text cut off in $where: $text", layout.didOverflowHeight)
         }
     }
@@ -126,7 +136,11 @@ class TrashFitTest {
         left < other.right && other.left < right && top < other.bottom && other.top < bottom
 
     private companion object {
-        val SETTINGS = AccountSettings(timeZone = "Europe/Madrid", beginningOfWeek = DayOfWeek.MONDAY, timeResolutionMinutes = null)
+        val SETTINGS = AccountSettings(
+            timeZone = "Europe/Madrid",
+            beginningOfWeek = DayOfWeek.MONDAY,
+            timeResolutionMinutes = null,
+        )
         val ENTRIES = listOf(
             TrashEntry(
                 id = 1,
@@ -138,7 +152,13 @@ class TrashFitTest {
                 projectName = "Website redesign for the new brand",
                 deletedAt = "2026-10-20T08:00:00+00:00",
             ),
-            TrashEntry(id = 2, description = null, start = "2025-12-30T16:00:00+00:00", duration = -1767110400, deletedAt = "2026-01-02T09:15:00+00:00"),
+            TrashEntry(
+                id = 2,
+                description = null,
+                start = "2025-12-30T16:00:00+00:00",
+                duration = -1767110400,
+                deletedAt = "2026-01-02T09:15:00+00:00",
+            ),
         )
         val LOADED = TrashState(entries = ENTRIES)
     }

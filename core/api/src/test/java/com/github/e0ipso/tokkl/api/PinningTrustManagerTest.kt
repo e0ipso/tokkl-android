@@ -1,5 +1,12 @@
 package com.github.e0ipso.tokkl.api
 
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
+import org.junit.Test
 import java.io.IOException
 import java.security.KeyStore
 import java.security.cert.CertificateException
@@ -8,13 +15,6 @@ import java.security.cert.X509Certificate
 import javax.net.ssl.SSLHandshakeException
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertThrows
-import org.junit.Assert.assertTrue
-import org.junit.Test
 
 /**
  * The pin check of [PinningTrustManager], with two self-signed certificates
@@ -95,10 +95,12 @@ class PinningTrustManagerTest {
     @Test
     fun aCertificateThePlatformTrustsNeverReachesThePin() {
         // As if the user had installed the certificate as a CA in Android.
-        val platform = trustManager(KeyStore.getInstance(KeyStore.getDefaultType()).apply {
-            load(null)
-            setCertificateEntry("a", a)
-        })
+        val platform = trustManager(
+            KeyStore.getInstance(KeyStore.getDefaultType()).apply {
+                load(null)
+                setCertificateEntry("a", a)
+            },
+        )
         val manager = PinningTrustManager(platform) { _, _ -> error("the pin was read") }
 
         manager.verify(arrayOf(a), "tokkl.test", 443) { platform.checkServerTrusted(arrayOf(a), AUTH_TYPE) }
@@ -130,7 +132,11 @@ class PinningTrustManagerTest {
     @Test
     fun handshakeFailureFromThePinningTrustManagerCarriesTheCertificate() {
         val certificate = ServerCertificate("tokkl.test", 443, "ab".repeat(32), "CN=tokkl.test")
-        val refusal = UntrustedCertificateException(certificate, pinChanged = false, cause = CertificateException("no trust anchor"))
+        val refusal = UntrustedCertificateException(
+            certificate,
+            pinChanged = false,
+            cause = CertificateException("no trust anchor"),
+        )
         val untrusted = SSLHandshakeException("handshake failed").apply { initCause(refusal) }
         val platformOnly = SSLHandshakeException("handshake failed").apply {
             initCause(CertificateException("Trust anchor for certification path not found."))

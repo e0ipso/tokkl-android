@@ -169,74 +169,73 @@ internal val TokklSpectrum: List<Color> = listOf(
  * [other] is the opposite scheme, for inversePrimary. [surfaceBright] and [surfaceDim] are the
  * lightest and darkest surface tokens, which differ between light and dark.
  */
-private fun colorScheme(t: Tokens, other: Tokens, surfaceBright: Color, surfaceDim: Color) =
-    ColorScheme(
-        primary = t.primaryText,
-        // styles.css has no colour for content on --primary-text. --on-danger is white in light
-        // and the ink in dark, the one that reads on it in each scheme.
-        onPrimary = t.onDanger,
-        // --state-selected is the web's tint behind selected rows and today's column, with --text
-        // on it.
-        primaryContainer = t.stateSelected,
-        onPrimaryContainer = t.text,
-        // The primary text colour of the opposite scheme, as Material 3 defines it.
-        inversePrimary = other.primaryText,
-        // A mark only, never text, and only on bg and surface: the light --secondary is 3.01:1 on bg
-        // and under 3:1 on surface-2.
-        secondary = t.secondary,
-        // styles.css has no --on-secondary. The report header band puts --on-primary, the ink, on
-        // --secondary.
-        onSecondary = t.onPrimary,
-        // --selected is the web's fill for the active segmented button, with --on-selected on it.
-        // Material 3's segmented buttons take this role for their active segment.
-        secondaryContainer = t.selected,
-        onSecondaryContainer = t.onSelected,
-        // The pink accent. It is also the running state, so it never marks a state alone.
-        tertiary = t.accentPink,
-        // styles.css has no colour for text on the pink. The ink is 4.41:1 on the light pink, so
-        // this takes --on-danger, white in light and the ink in dark.
-        onTertiary = t.onDanger,
-        tertiaryContainer = t.stateSelected,
-        onTertiaryContainer = t.text,
-        background = t.bg,
-        onBackground = t.text,
-        surface = t.surface,
-        onSurface = t.text,
-        surfaceVariant = t.surface2,
-        onSurfaceVariant = t.muted,
-        // Surface itself, so tonal elevation adds no tint and every surface stays a tested colour.
-        surfaceTint = t.surface,
-        inverseSurface = t.text,
-        inverseOnSurface = t.surface,
-        error = t.danger,
-        onError = t.onDanger,
-        errorContainer = t.dangerSoft,
-        onErrorContainer = t.danger,
-        outline = t.border,
-        outlineVariant = t.border,
-        scrim = t.backdrop,
-        surfaceBright = surfaceBright,
-        surfaceContainer = t.surface,
-        surfaceContainerHigh = t.surface,
-        surfaceContainerHighest = t.surface2,
-        surfaceContainerLow = t.surface,
-        surfaceContainerLowest = t.surface,
-        surfaceDim = surfaceDim,
-        // Fixed roles stay the same in light and dark, so both schemes take the light
-        // --state-selected with the light --text on it.
-        primaryFixed = Light.stateSelected,
-        primaryFixedDim = Light.stateSelected,
-        onPrimaryFixed = Light.text,
-        onPrimaryFixedVariant = Light.text,
-        secondaryFixed = Light.stateSelected,
-        secondaryFixedDim = Light.stateSelected,
-        onSecondaryFixed = Light.text,
-        onSecondaryFixedVariant = Light.text,
-        tertiaryFixed = Light.stateSelected,
-        tertiaryFixedDim = Light.stateSelected,
-        onTertiaryFixed = Light.text,
-        onTertiaryFixedVariant = Light.text,
-    )
+private fun colorScheme(t: Tokens, other: Tokens, surfaceBright: Color, surfaceDim: Color) = ColorScheme(
+    primary = t.primaryText,
+    // styles.css has no colour for content on --primary-text. --on-danger is white in light
+    // and the ink in dark, the one that reads on it in each scheme.
+    onPrimary = t.onDanger,
+    // --state-selected is the web's tint behind selected rows and today's column, with --text
+    // on it.
+    primaryContainer = t.stateSelected,
+    onPrimaryContainer = t.text,
+    // The primary text colour of the opposite scheme, as Material 3 defines it.
+    inversePrimary = other.primaryText,
+    // A mark only, never text, and only on bg and surface: the light --secondary is 3.01:1 on bg
+    // and under 3:1 on surface-2.
+    secondary = t.secondary,
+    // styles.css has no --on-secondary. The report header band puts --on-primary, the ink, on
+    // --secondary.
+    onSecondary = t.onPrimary,
+    // --selected is the web's fill for the active segmented button, with --on-selected on it.
+    // Material 3's segmented buttons take this role for their active segment.
+    secondaryContainer = t.selected,
+    onSecondaryContainer = t.onSelected,
+    // The pink accent. It is also the running state, so it never marks a state alone.
+    tertiary = t.accentPink,
+    // styles.css has no colour for text on the pink. The ink is 4.41:1 on the light pink, so
+    // this takes --on-danger, white in light and the ink in dark.
+    onTertiary = t.onDanger,
+    tertiaryContainer = t.stateSelected,
+    onTertiaryContainer = t.text,
+    background = t.bg,
+    onBackground = t.text,
+    surface = t.surface,
+    onSurface = t.text,
+    surfaceVariant = t.surface2,
+    onSurfaceVariant = t.muted,
+    // Surface itself, so tonal elevation adds no tint and every surface stays a tested colour.
+    surfaceTint = t.surface,
+    inverseSurface = t.text,
+    inverseOnSurface = t.surface,
+    error = t.danger,
+    onError = t.onDanger,
+    errorContainer = t.dangerSoft,
+    onErrorContainer = t.danger,
+    outline = t.border,
+    outlineVariant = t.border,
+    scrim = t.backdrop,
+    surfaceBright = surfaceBright,
+    surfaceContainer = t.surface,
+    surfaceContainerHigh = t.surface,
+    surfaceContainerHighest = t.surface2,
+    surfaceContainerLow = t.surface,
+    surfaceContainerLowest = t.surface,
+    surfaceDim = surfaceDim,
+    // Fixed roles stay the same in light and dark, so both schemes take the light
+    // --state-selected with the light --text on it.
+    primaryFixed = Light.stateSelected,
+    primaryFixedDim = Light.stateSelected,
+    onPrimaryFixed = Light.text,
+    onPrimaryFixedVariant = Light.text,
+    secondaryFixed = Light.stateSelected,
+    secondaryFixedDim = Light.stateSelected,
+    onSecondaryFixed = Light.text,
+    onSecondaryFixedVariant = Light.text,
+    tertiaryFixed = Light.stateSelected,
+    tertiaryFixedDim = Light.stateSelected,
+    onTertiaryFixed = Light.text,
+    onTertiaryFixedVariant = Light.text,
+)
 
 val TokklLightColorScheme =
     colorScheme(Light, other = Dark, surfaceBright = Light.surface, surfaceDim = Light.surface2)

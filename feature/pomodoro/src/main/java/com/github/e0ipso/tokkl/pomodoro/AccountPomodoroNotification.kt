@@ -8,11 +8,11 @@ import com.github.e0ipso.tokkl.session.SignOutOrder
 import com.github.e0ipso.tokkl.session.SignedInListener
 import com.github.e0ipso.tokkl.timerstate.HeldTimerFlows
 import com.github.e0ipso.tokkl.timerstate.TimerActions
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
+import kotlin.coroutines.CoroutineContext
 
 /**
  * The signed-in account's Pomodoro session notification. Made on first use, restoring what the
@@ -28,7 +28,8 @@ class AccountPomodoroNotification internal constructor(
     private val ringing: ServicePomodoroRinging,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
-) : AccountDataOwner, SignedInListener {
+) : AccountDataOwner,
+    SignedInListener {
 
     override val signOutOrder = SignOutOrder.POMODORO_NOTIFICATION
 
@@ -58,7 +59,9 @@ class AccountPomodoroNotification internal constructor(
             changes = combine(held.held, flow { emitAll(capabilities.state) }, ringing.state) { _, _, _ -> Unit },
             signedIn = { session.isSignedIn() },
             serviceRunning = { ringing.state.value.serviceRunning },
-            load = { if (restore) store.load() else null }, save = store::save, post = notifier::post, remove = notifier::remove,
+            load = {
+                if (restore) store.load() else null
+            }, save = store::save, post = notifier::post, remove = notifier::remove,
             scope = scope, io = io,
         )
     }

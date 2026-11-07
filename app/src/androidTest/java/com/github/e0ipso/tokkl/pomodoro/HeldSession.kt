@@ -28,7 +28,12 @@ fun heldSession(
     val work = kind == PhaseKind.WORK
     val session = TimerPomodoro(
         workMinutes = 25, shortRestMinutes = 5, longRestMinutes = 15, longRestEvery = longRestEvery,
-        phase = TimerPomodoroPhase(kind, phaseStart, completed = if (work) number - 1 else number, plannedEnd = phaseStart.plusSeconds(phaseSeconds)),
+        phase = TimerPomodoroPhase(
+            kind,
+            phaseStart,
+            completed = if (work) number - 1 else number,
+            plannedEnd = phaseStart.plusSeconds(phaseSeconds),
+        ),
         upcomingPhase = when {
             !work -> PhaseKind.WORK
             number % longRestEvery == 0 -> PhaseKind.LONG_REST
@@ -42,7 +47,12 @@ fun heldSession(
         },
         number = number, entryId = entryId, pomodoroStart = phaseStart,
     )
-    val entry = ServerTimeEntry(id = entryId, workspaceId = workspaceId, description = description, start = phaseStart.toString())
+    val entry = ServerTimeEntry(
+        id = entryId,
+        workspaceId = workspaceId,
+        description = description,
+        start = phaseStart.toString(),
+    )
     return HeldTimerState(
         TimerState(revision, phaseStart, entry, pause = null, pomodoro = session, discardedPomodoro = null),
         receivedAt = phaseStart,

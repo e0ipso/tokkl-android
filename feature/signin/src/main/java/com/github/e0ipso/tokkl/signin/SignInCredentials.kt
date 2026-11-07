@@ -52,6 +52,7 @@ internal fun Credentials(
             showError = InputError.API_TOKEN in errors,
             keyboardActions = keyboardActions,
         )
+
         SignInMethod.EMAIL_PASSWORD -> {
             val emailError = when {
                 InputError.EMAIL in errors -> R.string.sign_in_error_email

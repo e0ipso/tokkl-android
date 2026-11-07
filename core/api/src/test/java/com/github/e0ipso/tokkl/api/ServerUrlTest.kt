@@ -97,8 +97,12 @@ class ServerUrlTest {
     @Test
     fun rejectsWhatIsNotAnHttpBaseUrl() {
         val bad = listOf(
-            "", "example.com", "ftp://example.com", "https://",
-            "https://ana@example.com/tokkl", "https://ana:secret@example.com/tokkl",
+            "",
+            "example.com",
+            "ftp://example.com",
+            "https://",
+            "https://ana@example.com/tokkl",
+            "https://ana:secret@example.com/tokkl",
             "https://ana:secret@example.com/tokkl?x=1",
         )
         for (url in bad) {

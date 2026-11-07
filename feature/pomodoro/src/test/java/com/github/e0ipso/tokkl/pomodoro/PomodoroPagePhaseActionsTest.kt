@@ -2,7 +2,6 @@ package com.github.e0ipso.tokkl.pomodoro
 
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
-import java.time.Duration
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -11,12 +10,12 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.Duration
 
 /** Next phase, End and the clock the page draws, against a server that refuses a revision it has moved past. */
 class PomodoroPagePhaseActionsTest {
     private val fixtures = mutableListOf<PageFixture>()
-    private fun page(revision: Long = 4) =
-        PageFixture(heldState(revision), cachedEntry()).also { fixtures += it }
+    private fun page(revision: Long = 4) = PageFixture(heldState(revision), cachedEntry()).also { fixtures += it }
 
     @After
     fun stop() = fixtures.forEach { it.close() }
@@ -101,7 +100,11 @@ class PomodoroPagePhaseActionsTest {
         f.page.editFields(EntryFields("Typed"), ENTRY)!!.join()
         f.page.next()!!.join()
         assertEquals(listOf("send"), f.queueSends)
-        assertEquals("the queue is sent, then the state is read, then Next phase goes out", listOf("read", "next 5"), f.server.calls)
+        assertEquals(
+            "the queue is sent, then the state is read, then Next phase goes out",
+            listOf("read", "next 5"),
+            f.server.calls,
+        )
         assertNull(f.page.state.value.problem)
     }
 

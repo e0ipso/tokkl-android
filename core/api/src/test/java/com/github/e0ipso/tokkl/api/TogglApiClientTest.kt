@@ -1,7 +1,5 @@
 package com.github.e0ipso.tokkl.api
 
-import java.net.SocketTimeoutException
-import java.util.concurrent.TimeUnit
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -14,6 +12,8 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.net.SocketTimeoutException
+import java.util.concurrent.TimeUnit
 
 class TogglApiClientTest {
 

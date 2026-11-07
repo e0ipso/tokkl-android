@@ -2,12 +2,12 @@ package com.github.e0ipso.tokkl.cache
 
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ServerUrl
+import org.junit.Assert.assertEquals
+import org.junit.Test
 import java.io.IOException
 import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.time.Instant
-import org.junit.Assert.assertEquals
-import org.junit.Test
 
 /** What the background send does after each way a drain can end (docs/PRD.md O4 and O6). */
 class BackgroundSendTest {
@@ -30,7 +30,11 @@ class BackgroundSendTest {
             ApiError.RateLimited(retryAfterSeconds = null),
         )
         for (error in transient) {
-            assertEquals("$error", AfterBackgroundSend.RETRY, ChangeSender.Outcome.Stopped(sent = 1, error).afterBackgroundSend())
+            assertEquals(
+                "$error",
+                AfterBackgroundSend.RETRY,
+                ChangeSender.Outcome.Stopped(sent = 1, error).afterBackgroundSend(),
+            )
         }
         assertEquals(
             "a 429's wait",
@@ -53,7 +57,11 @@ class BackgroundSendTest {
             ApiError.CleartextNotConfirmed(server),
         )
         for (error in refusals) {
-            assertEquals("$error", AfterBackgroundSend.GIVE_UP, ChangeSender.Outcome.Stopped(sent = 0, error).afterBackgroundSend())
+            assertEquals(
+                "$error",
+                AfterBackgroundSend.GIVE_UP,
+                ChangeSender.Outcome.Stopped(sent = 0, error).afterBackgroundSend(),
+            )
         }
     }
 }

@@ -11,17 +11,15 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.feature.signin.R
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createComposeRule
 import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.SharedHttpClient
+import com.github.e0ipso.tokkl.feature.signin.R
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import java.net.InetAddress
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
@@ -32,6 +30,8 @@ import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.net.InetAddress
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 
 /**
  * Signs in through the screen to the TLS proxy of scripts/instrumented-tests.sh under a host
@@ -73,7 +73,9 @@ class CertificateHostMismatchTest {
 
     @After
     fun forgetTheServer() {
-        try { composeRule.checkAccessibility() } finally {
+        try {
+            composeRule.checkAccessibility()
+        } finally {
             scope.cancel()
             SessionRule.signOut()
         }
@@ -111,7 +113,9 @@ class CertificateHostMismatchTest {
         composeRule.onNode(hasSetTextAction() and hasText(string(R.string.sign_in_api_token)))
             .performTextInput(TokklTestServer.apiToken)
         // The brand above the form can push the button below the screen's or the keyboard's edge.
-        composeRule.onNode(hasText(string(R.string.sign_in_submit)) and hasClickAction()).performScrollTo().performClick()
+        composeRule.onNode(
+            hasText(string(R.string.sign_in_submit)) and hasClickAction(),
+        ).performScrollTo().performClick()
     }
 
     private fun awaitHostMessage() {

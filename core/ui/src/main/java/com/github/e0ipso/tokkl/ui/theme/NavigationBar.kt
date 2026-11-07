@@ -63,7 +63,10 @@ internal fun navigationBarItemColors(scheme: ColorScheme, hue: SectionHue) = Nav
 )
 
 /** The colours of [navigationBarItemColors] for a navigation rail item, whose label also sits below its indicator. */
-internal fun navigationRailItemColors(scheme: ColorScheme, hue: SectionHue) = navigationBarItemColors(scheme, hue).let { bar ->
+internal fun navigationRailItemColors(scheme: ColorScheme, hue: SectionHue) = navigationBarItemColors(
+    scheme,
+    hue,
+).let { bar ->
     NavigationRailItemColors(
         selectedIconColor = bar.selectedIconColor,
         selectedTextColor = bar.selectedTextColor,
@@ -90,8 +93,7 @@ internal fun navigationIndicator(scheme: ColorScheme, hue: SectionHue) = Navigat
  * The weight of an item's label. The active one is bold, 700, so that the weight and the
  * indicator's shape mark it without colour. An inactive label keeps the weight it inherits.
  */
-fun navigationBarLabelWeight(selected: Boolean): FontWeight? =
-    if (selected) FontWeight.Bold else null
+fun navigationBarLabelWeight(selected: Boolean): FontWeight? = if (selected) FontWeight.Bold else null
 
 /** What a screen needs to build a bar or rail item from [NavigationBarItem] or [NavigationRailItem] in Tokkl's colours. */
 object TokklNavigationBarDefaults {
@@ -103,7 +105,10 @@ object TokklNavigationBarDefaults {
     /** The colours of [NavigationRailItem] for a page with [hue], in the current theme, the bar's colours. */
     @Composable
     @ReadOnlyComposable
-    fun railItemColors(hue: SectionHue): NavigationRailItemColors = navigationRailItemColors(MaterialTheme.colorScheme, hue)
+    fun railItemColors(hue: SectionHue): NavigationRailItemColors = navigationRailItemColors(
+        MaterialTheme.colorScheme,
+        hue,
+    )
 
     /**
      * The colours of an item on the More sheet, a [NavigationDrawerItem], as `.more-sheet .nav-link`
@@ -226,7 +231,11 @@ private val RailIndicatorSize = DpSize(56.dp, 32.dp)
 private fun ItemLabel(label: String, selected: Boolean, labels: List<String>) {
     // Every label is measured in the bolder of its two weights, so selecting an item
     // changes no item's size.
-    val style = LocalTextStyle.current.let { it.copy(fontWeight = maxOf(it.fontWeight ?: FontWeight.Normal, FontWeight.Bold)) }
+    val style = LocalTextStyle.current.let {
+        it.copy(
+            fontWeight = maxOf(it.fontWeight ?: FontWeight.Normal, FontWeight.Bold),
+        )
+    }
     val measurer = rememberTextMeasurer(cacheSize = labels.size)
     val fontScale = LocalDensity.current.fontScale
     Text(
@@ -253,7 +262,15 @@ private class SharedLabelSize(
     override fun TextAutoSizeLayoutScope.getFontSize(constraints: Constraints, text: AnnotatedString): TextUnit {
         val fontSize = style.fontSize
         fun allFit(size: TextUnit) = labels.all { label ->
-            fits(measurer.measure(label, style.copy(fontSize = size), maxLines = 1, constraints = constraints, density = this))
+            fits(
+                measurer.measure(
+                    label,
+                    style.copy(fontSize = size),
+                    maxLines = 1,
+                    constraints = constraints,
+                    density = this,
+                ),
+            )
         }
         if (allFit(fontSize)) return fontSize
         // Prefer the size at the default font scale. Fitting only gets easier as the size goes
@@ -282,7 +299,8 @@ private class SharedLabelSize(
         other is SharedLabelSize && labels == other.labels && style == other.style &&
             measurer === other.measurer && fontScale == other.fontScale
 
-    override fun hashCode(): Int = ((labels.hashCode() * 31 + style.hashCode()) * 31 + measurer.hashCode()) * 31 + fontScale.hashCode()
+    override fun hashCode(): Int =
+        ((labels.hashCode() * 31 + style.hashCode()) * 31 + measurer.hashCode()) * 31 + fontScale.hashCode()
 
     private companion object {
         /** In sp, as fine as TextAutoSize.StepBased's default step. */

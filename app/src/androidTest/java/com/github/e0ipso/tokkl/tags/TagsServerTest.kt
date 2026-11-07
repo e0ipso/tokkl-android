@@ -28,8 +28,6 @@ import androidx.core.view.WindowCompat
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.HangingRelay
-import com.github.e0ipso.tokkl.feature.tags.R
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
@@ -39,14 +37,11 @@ import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.feature.tags.R
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import java.time.Duration
-import java.time.Instant
-import java.time.temporal.ChronoUnit
-import java.util.concurrent.CopyOnWriteArrayList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
@@ -69,6 +64,11 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.Duration
+import java.time.Instant
+import java.time.temporal.ChronoUnit
+import java.util.concurrent.CopyOnWriteArrayList
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 
 /**
  * The tags page against the real Tokkl container, wired as TagsViewModel wires it, on an account
@@ -131,7 +131,11 @@ class TagsServerTest {
         awaitMessageGone(string(SharedR.string.catalog_created, "focus"))
         val id = tag("focus")!!.getValue("id").jsonPrimitive.long
         awaitCache("the cache holds the new tag") { tags, _ -> tags.any { it.id == id && it.name == "focus" } }
-        field(R.string.tags_new_name).assert(SemanticsMatcher("an empty field") { it.config.getOrNull(SemanticsProperties.EditableText)?.text == "" })
+        field(
+            R.string.tags_new_name,
+        ).assert(
+            SemanticsMatcher("an empty field") { it.config.getOrNull(SemanticsProperties.EditableText)?.text == "" },
+        )
 
         entry("focus")
         runBlocking { app.accountRefresh.refresh().join() }
@@ -140,7 +144,9 @@ class TagsServerTest {
         awaitText(string(R.string.tags_rename_title, "focus"))
         field(R.string.tags_rename_field).clear()
         field(R.string.tags_rename_field).type("deep work")
-        composeRule.onNode(hasText(string(R.string.tags_rename_save)) and hasClickAction() and hasAnyAncestor(isDialog())).tap(scroll = false)
+        composeRule.onNode(
+            hasText(string(R.string.tags_rename_save)) and hasClickAction() and hasAnyAncestor(isDialog()),
+        ).tap(scroll = false)
 
         awaitText(string(SharedR.string.catalog_renamed, "deep work"))
         awaitMessageGone(string(SharedR.string.catalog_renamed, "deep work"))
@@ -218,7 +224,9 @@ class TagsServerTest {
         row("two").tap(scroll = false)
         field(R.string.tags_rename_field).clear()
         field(R.string.tags_rename_field).type("one")
-        composeRule.onNode(hasText(string(R.string.tags_rename_save)) and hasClickAction() and hasAnyAncestor(isDialog())).tap(scroll = false)
+        composeRule.onNode(
+            hasText(string(R.string.tags_rename_save)) and hasClickAction() and hasAnyAncestor(isDialog()),
+        ).tap(scroll = false)
         awaitText("A tag with the same name already exists")
         assertTrue(tag("two") != null)
     }
@@ -234,7 +242,9 @@ class TagsServerTest {
         awaitText(string(R.string.tags_server_needed_message))
         button(R.string.tags_add).assertIsNotEnabled()
         // A disabled field takes no text, so it has no SetText action.
-        composeRule.onNode(hasText(string(R.string.tags_new_name)) and SemanticsMatcher.keyIsDefined(SemanticsProperties.EditableText))
+        composeRule.onNode(
+            hasText(string(R.string.tags_new_name)) and SemanticsMatcher.keyIsDefined(SemanticsProperties.EditableText),
+        )
             .assertIsNotEnabled()
         composeRule.onNode(hasContentDescription(string(R.string.tags_delete_named, "focus"))).assertIsNotEnabled()
         row("focus").assertIsNotEnabled()
@@ -304,7 +314,11 @@ class TagsServerTest {
     }
 
     private fun assertNoText(text: String) {
-        assertEquals("\"$text\" shows", 0, composeRule.onAllNodesWithText(text, substring = true).fetchSemanticsNodes().size)
+        assertEquals(
+            "\"$text\" shows",
+            0,
+            composeRule.onAllNodesWithText(text, substring = true).fetchSemanticsNodes().size,
+        )
     }
 
     /**
@@ -368,24 +382,37 @@ class TagsServerTest {
      */
     private fun awaitMessageGone(text: String) {
         composeRule.mainClock.advanceTimeBy(SNACKBAR_MS)
-        composeRule.waitUntil(NETWORK_TIMEOUT.toMillis()) { composeRule.onAllNodesWithText(text).fetchSemanticsNodes().isEmpty() }
+        composeRule.waitUntil(
+            NETWORK_TIMEOUT.toMillis(),
+        ) { composeRule.onAllNodesWithText(text).fetchSemanticsNodes().isEmpty() }
     }
 
     private fun button(id: Int) = composeRule.onNode(hasText(string(id)) and hasClickAction())
 
     private fun field(id: Int) = composeRule.onNode(hasText(string(id)) and hasSetTextAction())
 
-    private fun row(name: String) =
-        composeRule.onNode(hasText(name) and hasClickAction() and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
+    private fun row(name: String) = composeRule.onNode(
+        hasText(name) and hasClickAction() and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button),
+    )
 
     private fun awaitCache(message: String, check: (List<CachedTag>, List<CachedTimeEntry>) -> Boolean) {
         runBlocking { refreshes.forEach { it.join() } }
-        assertTrue(message, check(runBlocking { app.cache.tags.first() }, runBlocking { app.cache.timeEntries.first() }))
+        assertTrue(
+            message,
+            check(runBlocking { app.cache.tags.first() }, runBlocking { app.cache.timeEntries.first() }),
+        )
     }
 
-    private fun tag(name: String): JsonObject? = tags().singleOrNull { it.getValue("name").jsonPrimitive.content == name }
+    private fun tag(name: String): JsonObject? = tags().singleOrNull {
+        it.getValue(
+            "name",
+        ).jsonPrimitive.content == name
+    }
 
-    private fun tags(): List<JsonObject> = account.client.get(url("tags"), ListSerializer(JsonObject.serializer())).orFail("GET tags")
+    private fun tags(): List<JsonObject> = account.client.get(
+        url("tags"),
+        ListSerializer(JsonObject.serializer()),
+    ).orFail("GET tags")
 
     private fun entry(tag: String) {
         val start = Instant.now().minus(2, ChronoUnit.HOURS).truncatedTo(ChronoUnit.MINUTES)
@@ -403,13 +430,20 @@ class TagsServerTest {
     private fun url(vararg path: String) = account.client.server.api("workspaces", workspace.toString(), *path)
 
     private fun create(name: String) {
-        account.client.send("POST", url("tags"), buildJsonObject { put("name", name) }, JsonObject.serializer()).orFail("POST tags")
+        account.client.send(
+            "POST",
+            url("tags"),
+            buildJsonObject { put("name", name) },
+            JsonObject.serializer(),
+        ).orFail("POST tags")
     }
 
     private fun string(id: Int, vararg args: Any): String = context.getString(id, *args)
 
     private fun awaitText(text: String) {
-        composeRule.waitUntil(NETWORK_TIMEOUT.toMillis()) { composeRule.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
+        composeRule.waitUntil(
+            NETWORK_TIMEOUT.toMillis(),
+        ) { composeRule.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
     }
 
     private companion object {

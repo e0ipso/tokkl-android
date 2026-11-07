@@ -40,11 +40,16 @@ internal class TimerNoticeBoard(private val takeDiscardNotice: suspend () -> Dis
     /** See [TimerViewModel.claim]. */
     suspend fun claim(notice: TimerNotice): TimerNotice? = when (notice) {
         is TimerNotice.ActionFailed -> notice.takeIf { failures.value == it }
+
         is TimerNotice.PomodoroDiscarded ->
             if (claimedDiscard.value == notice) {
                 notice
             } else {
-                takeDiscardNotice()?.let { taken -> TimerNotice.PomodoroDiscarded(taken.entryId).also { claimedDiscard.value = it } }
+                takeDiscardNotice()?.let { taken ->
+                    TimerNotice.PomodoroDiscarded(
+                        taken.entryId,
+                    ).also { claimedDiscard.value = it }
+                }
             }
     }
 

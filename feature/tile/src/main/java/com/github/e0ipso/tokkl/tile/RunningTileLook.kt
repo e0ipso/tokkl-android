@@ -21,43 +21,45 @@ data class RunningTileLook(
     val contentDescription: String,
 )
 
-fun runningTileLook(content: RunningTileContent, context: Context): RunningTileLook =
-    when (content) {
-        is RunningTileContent.Running -> {
-            val description = content.entry.description.ifBlank { context.getString(R.string.tile_no_description) }
-            RunningTileLook(
-                state = Tile.STATE_ACTIVE,
-                label = description,
-                subtitle = context.getString(R.string.tile_running_subtitle),
-                icon = UiR.drawable.ic_stop,
-                contentDescription = context.getString(R.string.tile_running_description, description),
-            )
-        }
-        is RunningTileContent.Paused -> {
-            val description = content.description.ifBlank { context.getString(R.string.tile_no_description) }
-            RunningTileLook(
-                state = Tile.STATE_INACTIVE,
-                label = description,
-                subtitle = context.getString(R.string.tile_paused_subtitle),
-                icon = UiR.drawable.ic_play,
-                contentDescription = context.getString(R.string.tile_paused_description, description),
-            )
-        }
-        is RunningTileContent.Continue -> {
-            val description = content.last.description.ifBlank { context.getString(R.string.tile_no_description) }
-            RunningTileLook(
-                state = Tile.STATE_INACTIVE,
-                label = context.getString(R.string.tile_continue),
-                subtitle = description,
-                icon = UiR.drawable.ic_play,
-                contentDescription = context.getString(R.string.tile_continue_description, description),
-            )
-        }
-        RunningTileContent.Nothing -> RunningTileLook(
-            state = Tile.STATE_UNAVAILABLE,
-            label = context.getString(R.string.tile_name),
-            subtitle = context.getString(R.string.tile_nothing_subtitle),
-            icon = UiR.drawable.ic_play,
-            contentDescription = context.getString(R.string.tile_nothing_description),
+fun runningTileLook(content: RunningTileContent, context: Context): RunningTileLook = when (content) {
+    is RunningTileContent.Running -> {
+        val description = content.entry.description.ifBlank { context.getString(R.string.tile_no_description) }
+        RunningTileLook(
+            state = Tile.STATE_ACTIVE,
+            label = description,
+            subtitle = context.getString(R.string.tile_running_subtitle),
+            icon = UiR.drawable.ic_stop,
+            contentDescription = context.getString(R.string.tile_running_description, description),
         )
     }
+
+    is RunningTileContent.Paused -> {
+        val description = content.description.ifBlank { context.getString(R.string.tile_no_description) }
+        RunningTileLook(
+            state = Tile.STATE_INACTIVE,
+            label = description,
+            subtitle = context.getString(R.string.tile_paused_subtitle),
+            icon = UiR.drawable.ic_play,
+            contentDescription = context.getString(R.string.tile_paused_description, description),
+        )
+    }
+
+    is RunningTileContent.Continue -> {
+        val description = content.last.description.ifBlank { context.getString(R.string.tile_no_description) }
+        RunningTileLook(
+            state = Tile.STATE_INACTIVE,
+            label = context.getString(R.string.tile_continue),
+            subtitle = description,
+            icon = UiR.drawable.ic_play,
+            contentDescription = context.getString(R.string.tile_continue_description, description),
+        )
+    }
+
+    RunningTileContent.Nothing -> RunningTileLook(
+        state = Tile.STATE_UNAVAILABLE,
+        label = context.getString(R.string.tile_name),
+        subtitle = context.getString(R.string.tile_nothing_subtitle),
+        icon = UiR.drawable.ic_play,
+        contentDescription = context.getString(R.string.tile_nothing_description),
+    )
+}

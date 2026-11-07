@@ -24,14 +24,19 @@ import org.junit.Test
 
 /** These are page opens, with no session action and no notification phase/account bypass. */
 class WidgetNavigationTest {
-    @get:Rule(order = 0) val session = SessionRule()
-    @get:Rule(order = 1) val compose = createEmptyComposeRule()
+    @get:Rule(order = 0)
+    val session = SessionRule()
+
+    @get:Rule(order = 1)
+    val compose = createEmptyComposeRule()
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private val app get() = context.applicationContext as TokklApplication
 
     @Test fun todayOpensOnColdStartAndReplacesRetainedWeeklySelection() {
         runBlocking { app.accountRefresh.refresh().join() }
-        ActivityScenario.launch<MainActivity>(WidgetNavigation.intent(context, WidgetNavigation.OPEN_TODAY)).use { scenario ->
+        ActivityScenario.launch<MainActivity>(
+            WidgetNavigation.intent(context, WidgetNavigation.OPEN_TODAY),
+        ).use { scenario ->
             assertToday(scenario)
             lateinit var model: ReportsViewModel
             scenario.onActivity { model = sessionViewModels(it)[ReportsViewModel::class.java] }
@@ -54,7 +59,9 @@ class WidgetNavigationTest {
     @Test fun pomodoroPageRouteWorksOnColdAndRetainedActivityAndFallsBackWithoutCapability() {
         runBlocking { app.accountRefresh.refresh().join() }
         assertTrue("the pinned server supports Timer state", app.capabilities.state.value.timerState)
-        ActivityScenario.launch<MainActivity>(WidgetNavigation.intent(context, WidgetNavigation.OPEN_POMODORO)).use { scenario ->
+        ActivityScenario.launch<MainActivity>(
+            WidgetNavigation.intent(context, WidgetNavigation.OPEN_POMODORO),
+        ).use { scenario ->
             awaitPomodoroPage()
             context.startActivity(WidgetNavigation.intent(context, WidgetNavigation.OPEN_TIMER))
             compose.awaitTimerPage()

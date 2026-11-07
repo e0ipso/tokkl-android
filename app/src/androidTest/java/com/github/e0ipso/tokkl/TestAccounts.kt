@@ -5,10 +5,6 @@ import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.api.TogglApiClient
-import java.security.SecureRandom
-import java.time.Instant
-import java.time.LocalDate
-import java.util.concurrent.TimeUnit
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
@@ -21,6 +17,10 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import java.security.SecureRandom
+import java.time.Instant
+import java.time.LocalDate
+import java.util.concurrent.TimeUnit
 
 /**
  * Extra accounts on the Tokkl test server, for a test that fills an account with data. The
@@ -99,7 +99,10 @@ object TestAccounts {
                 .orFail("GET /api/v9/me/time_entries/<id>")
 
         fun deleteEntry(id: Long) {
-            client.sendNoContent("DELETE", entries(id.toString())).orFail("DELETE /api/v9/workspaces/<id>/time_entries/<id>")
+            client.sendNoContent(
+                "DELETE",
+                entries(id.toString()),
+            ).orFail("DELETE /api/v9/workspaces/<id>/time_entries/<id>")
         }
 
         private fun entries(vararg path: String) =
@@ -109,12 +112,21 @@ object TestAccounts {
     }
 
     private val admin by lazy {
-        TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(TokklTestServer.apiToken), httpClient = OkHttpClient())
+        TogglApiClient(
+            TokklTestServer.url,
+            ApiCredentials.ApiToken(TokklTestServer.apiToken),
+            httpClient = OkHttpClient(),
+        )
     }
 
     fun create(timezone: String): Account {
         val invite = admin
-            .send("POST", TokklTestServer.url.app("admin", "invites"), buildJsonObject { put("role", "user") }, JsonObject.serializer())
+            .send(
+                "POST",
+                TokklTestServer.url.app("admin", "invites"),
+                buildJsonObject { put("role", "user") },
+                JsonObject.serializer(),
+            )
             .orFail("POST /api/app/admin/invites")
         val token = invite.getValue("url").jsonPrimitive.content.substringAfterLast('/')
         val email = "cache-${hex(8)}@example.com"
@@ -132,7 +144,11 @@ object TestAccounts {
             .post(account.toString().toRequestBody("application/json".toMediaType()))
             .build()
         SharedHttpClient.instance.newCall(accept).execute().use { response ->
-            if (!response.isSuccessful) throw AssertionError("POST /api/app/invites/<token> failed: HTTP ${response.code}")
+            if (!response.isSuccessful) {
+                throw AssertionError(
+                    "POST /api/app/invites/<token> failed: HTTP ${response.code}",
+                )
+            }
         }
         val me = TogglApiClient(TokklTestServer.url, ApiCredentials.EmailPassword(email, password))
             .get(TokklTestServer.url.api("me"), NewMe.serializer())
@@ -155,12 +171,12 @@ object TestAccounts {
 }
 
 /** The value, or an error that names [call] and the failure alone, so no body or secret lands in it. */
-fun <T> ApiResult<T>.orFail(call: String): T =
-    when (this) {
-        is ApiResult.Success -> value
-        is ApiResult.Failure -> {
-            val error = error
-            val reason = if (error is ApiError.Http) "HTTP ${error.status}" else error::class.simpleName
-            throw AssertionError("$call failed: $reason")
-        }
+fun <T> ApiResult<T>.orFail(call: String): T = when (this) {
+    is ApiResult.Success -> value
+
+    is ApiResult.Failure -> {
+        val error = error
+        val reason = if (error is ApiError.Http) "HTTP ${error.status}" else error::class.simpleName
+        throw AssertionError("$call failed: $reason")
     }
+}

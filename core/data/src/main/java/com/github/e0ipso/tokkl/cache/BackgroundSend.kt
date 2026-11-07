@@ -12,10 +12,10 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.github.e0ipso.tokkl.api.ApiError
+import kotlinx.coroutines.withContext
 import java.time.Duration
 import java.util.concurrent.ExecutionException
 import kotlin.coroutines.CoroutineContext
-import kotlinx.coroutines.withContext
 
 /**
  * Sends the queue in the background once the phone has a network, also with the app closed
@@ -64,7 +64,11 @@ object BackgroundSend {
     fun cancelWaiting(context: Context, queueEmpty: () -> Boolean) {
         val workManager = WorkManager.getInstance(context)
         runs.cancelWaiting(
-            waiting = { workManager.getWorkInfosForUniqueWork(WORK_NAME).get().any { it.state == WorkInfo.State.ENQUEUED } },
+            waiting = {
+                workManager.getWorkInfosForUniqueWork(
+                    WORK_NAME,
+                ).get().any { it.state == WorkInfo.State.ENQUEUED }
+            },
             cancel = { workManager.cancelUniqueWork(WORK_NAME).result.get() },
             queueEmpty = queueEmpty,
             schedule = { schedule(context) },
@@ -129,21 +133,19 @@ internal enum class AfterBackgroundSend {
 }
 
 /** What the background send does after a drain that ended in this outcome; null is a disk failure. */
-internal fun ChangeSender.Outcome?.afterBackgroundSend(): AfterBackgroundSend =
-    when (this) {
-        is ChangeSender.Outcome.Empty, is ChangeSender.Outcome.SignedOut -> AfterBackgroundSend.DONE
-        is ChangeSender.Outcome.Waiting, null -> AfterBackgroundSend.RETRY
-        is ChangeSender.Outcome.Stopped -> if (error.isTransient()) AfterBackgroundSend.RETRY else AfterBackgroundSend.GIVE_UP
-    }
+internal fun ChangeSender.Outcome?.afterBackgroundSend(): AfterBackgroundSend = when (this) {
+    is ChangeSender.Outcome.Empty, is ChangeSender.Outcome.SignedOut -> AfterBackgroundSend.DONE
+    is ChangeSender.Outcome.Waiting, null -> AfterBackgroundSend.RETRY
+    is ChangeSender.Outcome.Stopped -> if (error.isTransient()) AfterBackgroundSend.RETRY else AfterBackgroundSend.GIVE_UP
+}
 
 /**
  * True for a failure that a later try may get past: no response at all, a 5xx or a 429
  * (docs/PRD.md O6). A 4xx, a body the phone cannot read and a trust refusal stay until someone
  * acts.
  */
-internal fun ApiError.isTransient(): Boolean =
-    when (this) {
-        is ApiError.Network -> true
-        is ApiError.Http -> this is ApiError.RateLimited || status >= 500
-        is ApiError.InvalidResponse, is ApiError.HostNotAllowed, is ApiError.TrustRefused -> false
-    }
+internal fun ApiError.isTransient(): Boolean = when (this) {
+    is ApiError.Network -> true
+    is ApiError.Http -> this is ApiError.RateLimited || status >= 500
+    is ApiError.InvalidResponse, is ApiError.HostNotAllowed, is ApiError.TrustRefused -> false
+}

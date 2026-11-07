@@ -13,7 +13,9 @@ import java.io.IOException
  *
  * The first call loads the preferences file, so make calls off the main thread.
  */
-class AccountSettingsStore(context: Context) : ValueStore<AccountSettings>, AccountDataOwner {
+class AccountSettingsStore(context: Context) :
+    ValueStore<AccountSettings>,
+    AccountDataOwner {
 
     override val signOutOrder = SignOutOrder.ACCOUNT_SETTINGS
 
@@ -29,14 +31,25 @@ class AccountSettingsStore(context: Context) : ValueStore<AccountSettings>, Acco
         // Settings stored before the app read the duration format have none, which means improved.
         val durationFormat = DurationFormat.fromTogglName(preferences.getString(KEY_DURATION_FORMAT, null))
         // Settings stored before the app kept the default workspace have none until the next refresh.
-        val defaultWorkspaceId = KEY_DEFAULT_WORKSPACE_ID.takeIf(preferences::contains)?.let { preferences.getLong(it, 0) }
+        val defaultWorkspaceId = KEY_DEFAULT_WORKSPACE_ID.takeIf(
+            preferences::contains,
+        )?.let { preferences.getLong(it, 0) }
         // Settings stored before the app read the clock format have none, which means 24-hour.
         val twelveHour = preferences.getBoolean(KEY_TWELVE_HOUR, false)
         // Settings stored before the app read the grouping preference have none, which means grouped.
         val collapseSimilar = preferences.getBoolean(KEY_COLLAPSE_SIMILAR, true)
         // Settings stored before the app kept the account's id have none until the next refresh.
         val userId = KEY_USER_ID.takeIf(preferences::contains)?.let { preferences.getLong(it, 0) }
-        return AccountSettings(timeZone, beginningOfWeek, timeResolution, durationFormat, defaultWorkspaceId, twelveHour, collapseSimilar, userId)
+        return AccountSettings(
+            timeZone,
+            beginningOfWeek,
+            timeResolution,
+            durationFormat,
+            defaultWorkspaceId,
+            twelveHour,
+            collapseSimilar,
+            userId,
+        )
     }
 
     /** Replaces the stored settings in one write. */
@@ -54,7 +67,13 @@ class AccountSettingsStore(context: Context) : ValueStore<AccountSettings>, Acco
             }
             putString(KEY_DURATION_FORMAT, value.durationFormat.togglName)
             val defaultWorkspaceId = value.defaultWorkspaceId
-            if (defaultWorkspaceId == null) remove(KEY_DEFAULT_WORKSPACE_ID) else putLong(KEY_DEFAULT_WORKSPACE_ID, defaultWorkspaceId)
+            if (defaultWorkspaceId == null) {
+                remove(
+                    KEY_DEFAULT_WORKSPACE_ID,
+                )
+            } else {
+                putLong(KEY_DEFAULT_WORKSPACE_ID, defaultWorkspaceId)
+            }
             putBoolean(KEY_TWELVE_HOUR, value.twelveHour)
             putBoolean(KEY_COLLAPSE_SIMILAR, value.collapseSimilar)
             val userId = value.userId

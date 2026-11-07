@@ -23,11 +23,24 @@ object ServerTimerStates {
     const val ACCOUNT = "the signed-in account"
 
     /** A state the phone received [at] while the server's clock read [offset] later. */
-    fun held(revision: Long, at: Instant, pause: TimerPause? = null, pomodoro: TimerPomodoro? = null, offset: Duration = Duration.ZERO) =
-        HeldTimerState(TimerState(revision, at.plus(offset), runningEntry = null, pause, pomodoro, discardedPomodoro = null), receivedAt = at)
+    fun held(
+        revision: Long,
+        at: Instant,
+        pause: TimerPause? = null,
+        pomodoro: TimerPomodoro? = null,
+        offset: Duration = Duration.ZERO,
+    ) = HeldTimerState(
+        TimerState(revision, at.plus(offset), runningEntry = null, pause, pomodoro, discardedPomodoro = null),
+        receivedAt = at,
+    )
 
     /** A chain paused at [seconds], which Resume starts with [fields] in [workspaceId]. */
-    fun paused(seconds: Long, fields: EntryFields, workspaceId: Long = 1) = pause(seconds, fields, workspaceId, cloneEntryId = null)
+    fun paused(seconds: Long, fields: EntryFields, workspaceId: Long = 1) = pause(
+        seconds,
+        fields,
+        workspaceId,
+        cloneEntryId = null,
+    )
 
     /** A chain whose clone [entryId] runs after [seconds] its earlier entries store. */
     fun resumed(seconds: Long, entryId: Long, fields: EntryFields = EntryFields(), workspaceId: Long = 1) =
@@ -48,8 +61,17 @@ object ServerTimerStates {
     )
 
     /** The shared controls for the cache's [running] entry and the [held] state, for [ACCOUNT]. */
-    fun controls(running: CachedTimeEntry?, held: HeldTimerState? = null, timerApi: Boolean = true, unsent: Boolean = false): TimerControls =
-        serverTimerControls(running?.takeIf { it.stop == null }?.let { EntryWithSendState(it, unsent) }, held, timerApi, ACCOUNT)
+    fun controls(
+        running: CachedTimeEntry?,
+        held: HeldTimerState? = null,
+        timerApi: Boolean = true,
+        unsent: Boolean = false,
+    ): TimerControls = serverTimerControls(
+        running?.takeIf { it.stop == null }?.let { EntryWithSendState(it, unsent) },
+        held,
+        timerApi,
+        ACCOUNT,
+    )
 
     private fun pause(seconds: Long, fields: EntryFields, workspaceId: Long, cloneEntryId: Long?) = TimerPause(
         paused = cloneEntryId == null,

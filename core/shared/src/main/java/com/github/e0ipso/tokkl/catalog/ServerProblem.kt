@@ -28,15 +28,22 @@ sealed interface ServerProblem {
 /** The [ServerProblem] behind this error. */
 fun ApiError.toServerProblem(): ServerProblem = when (this) {
     is ApiError.Network -> ServerProblem.Unreachable
+
     is ApiError.UnexpectedStatus -> when {
         // A reverse proxy answers these while the Tokkl server behind it is down.
         status in PROXY_UNREACHABLE -> ServerProblem.Unreachable
+
         status in 400..499 -> message?.let(ServerProblem::Refused) ?: ServerProblem.Unexpected(status)
+
         else -> ServerProblem.Unexpected(status)
     }
+
     ApiError.AuthFailed -> ServerProblem.AuthFailed
+
     is ApiError.TrustRefused -> ServerProblem.TrustRefused
+
     is ApiError.RateLimited -> ServerProblem.Unexpected(status)
+
     is ApiError.HostNotAllowed, is ApiError.InvalidResponse -> ServerProblem.Unexpected(null)
 }
 

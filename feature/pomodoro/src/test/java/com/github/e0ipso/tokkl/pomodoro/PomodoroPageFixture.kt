@@ -19,16 +19,16 @@ import com.github.e0ipso.tokkl.timerstate.SessionLengths
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import com.github.e0ipso.tokkl.timerstate.TimerControls
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
-import java.time.DayOfWeek
-import java.time.Duration
-import java.time.Instant
-import java.time.LocalDate
-import java.util.concurrent.CopyOnWriteArrayList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
+import java.time.DayOfWeek
+import java.time.Duration
+import java.time.Instant
+import java.time.LocalDate
+import java.util.concurrent.CopyOnWriteArrayList
 
 internal val T0: Instant = Instant.parse("2026-10-28T08:00:00Z")
 internal const val WORKSPACE = 11L
@@ -43,9 +43,17 @@ internal fun heldState(
     offset: Duration = Duration.ZERO,
 ): HeldTimerState {
     val running = pomodoro?.let {
-        ServerTimeEntry(id = entryId, workspaceId = WORKSPACE, description = description, start = it.pomodoroStart.toString())
+        ServerTimeEntry(
+            id = entryId,
+            workspaceId = WORKSPACE,
+            description = description,
+            start = it.pomodoroStart.toString(),
+        )
     }
-    return HeldTimerState(TimerState(revision, T0.plus(offset), running, pause = null, pomodoro = pomodoro, discardedPomodoro = null), T0)
+    return HeldTimerState(
+        TimerState(revision, T0.plus(offset), running, pause = null, pomodoro = pomodoro, discardedPomodoro = null),
+        T0,
+    )
 }
 
 internal fun work(
@@ -70,8 +78,13 @@ internal fun rest(start: Instant = T0.plusSeconds(1_500)) = TimerPomodoro(
 internal fun cachedEntry(description: String = "Focused work", id: Long = ENTRY, start: Instant = T0) =
     CachedTimeEntry(id, WORKSPACE, null, null, description, start, null, false, emptyList(), emptyList())
 
-internal fun running(entry: CachedTimeEntry) =
-    TimerControls.Running(entry, unsent = false, accumulatedSeconds = 0, target = TimerTarget.server(entryId = entry.id), pausable = false)
+internal fun running(entry: CachedTimeEntry) = TimerControls.Running(
+    entry,
+    unsent = false,
+    accumulatedSeconds = 0,
+    target = TimerTarget.server(entryId = entry.id),
+    pausable = false,
+)
 
 /**
  * A Tokkl server that holds one timer state. An action with the held revision advances it, as the
@@ -83,7 +96,12 @@ internal class FakeServer(val held: MutableStateFlow<HeldTimerState?>) : Session
     var answer: TimerActionResult? = null
 
     /** What a Done action leaves behind, given the state it acted on. */
-    var advance: (HeldTimerState?) -> HeldTimerState? = { current -> heldState((current?.state?.revision ?: 0) + 1, rest()) }
+    var advance: (HeldTimerState?) -> HeldTimerState? = { current ->
+        heldState(
+            (current?.state?.revision ?: 0) + 1,
+            rest(),
+        )
+    }
 
     /** What a read changes on the server's side. */
     var onRead: () -> Unit = {}
@@ -94,8 +112,13 @@ internal class FakeServer(val held: MutableStateFlow<HeldTimerState?>) : Session
         return TimerActionResult.Done
     }
 
-    override suspend fun startSession(workspaceId: Long, fields: EntryFields, lengths: SessionLengths): TimerActionResult {
-        calls += "start $workspaceId $fields ${lengths.workMinutes}/${lengths.shortRestMinutes}/${lengths.longRestMinutes}/${lengths.longRestEvery}"
+    override suspend fun startSession(
+        workspaceId: Long,
+        fields: EntryFields,
+        lengths: SessionLengths,
+    ): TimerActionResult {
+        calls +=
+            "start $workspaceId $fields ${lengths.workMinutes}/${lengths.shortRestMinutes}/${lengths.longRestMinutes}/${lengths.longRestEvery}"
         gate.await()
         return answer ?: TimerActionResult.Done.also { held.value = heldState(revision = 1) }
     }
@@ -104,7 +127,11 @@ internal class FakeServer(val held: MutableStateFlow<HeldTimerState?>) : Session
 
     override suspend fun endSession(revision: Long): TimerActionResult = act("end $revision", revision) { null }
 
-    private suspend fun act(call: String, revision: Long, next: (HeldTimerState?) -> HeldTimerState? = advance): TimerActionResult {
+    private suspend fun act(
+        call: String,
+        revision: Long,
+        next: (HeldTimerState?) -> HeldTimerState? = advance,
+    ): TimerActionResult {
         calls += call
         gate.await()
         answer?.let { return it }
@@ -124,14 +151,42 @@ internal class FakeChanges(private val cache: MutableStateFlow<TimerControls>) :
         updates += identity to fields
         if (!accepts) return false
         val row = (cache.value as? TimerControls.Running)?.entry ?: return true
-        cache.value = running(row.copy(description = fields.description, projectId = fields.projectId, taskId = fields.taskId, tags = fields.tags, billable = fields.billable))
+        cache.value = running(
+            row.copy(
+                description = fields.description,
+                projectId = fields.projectId,
+                taskId = fields.taskId,
+                tags = fields.tags,
+                billable = fields.billable,
+            ),
+        )
         return true
     }
 
-    override suspend fun start(workspaceId: Long, fields: EntryFields): Long = error("the page starts nothing on the phone")
-    override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean = error("the page stops nothing on the phone")
-    override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant, noTimeDay: LocalDate?): Long = error("no create")
-    override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?, noTimeDay: LocalDate?): Boolean = error("no update")
+    override suspend fun start(workspaceId: Long, fields: EntryFields): Long = error(
+        "the page starts nothing on the phone",
+    )
+    override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean = error(
+        "the page stops nothing on the phone",
+    )
+    override suspend fun create(
+        workspaceId: Long,
+        fields: EntryFields,
+        start: Instant,
+        stop: Instant,
+        noTimeDay: LocalDate?,
+    ): Long = error(
+        "no create",
+    )
+    override suspend fun update(
+        entryId: Long,
+        fields: EntryFields,
+        start: Instant,
+        stop: Instant?,
+        noTimeDay: LocalDate?,
+    ): Boolean = error(
+        "no update",
+    )
     override suspend fun delete(entryId: Long): Boolean = error("no delete")
 }
 
@@ -146,7 +201,9 @@ internal class PageFixture(
     val controls = MutableStateFlow<TimerControls>(entry?.let(::running) ?: TimerControls.Idle)
     val server = FakeServer(held)
     val changes = FakeChanges(controls)
-    val settings = MutableStateFlow<AccountSettings?>(AccountSettings("europe/madrid", DayOfWeek.MONDAY, null, defaultWorkspaceId = WORKSPACE))
+    val settings = MutableStateFlow<AccountSettings?>(
+        AccountSettings("europe/madrid", DayOfWeek.MONDAY, null, defaultWorkspaceId = WORKSPACE),
+    )
     val unsent = MutableStateFlow(0)
     val refused = MutableStateFlow<List<PendingChange>>(emptyList())
     val queueSends = CopyOnWriteArrayList<String>()

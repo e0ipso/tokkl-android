@@ -2,9 +2,9 @@ package com.github.e0ipso.tokkl
 
 import android.util.Log
 import com.github.e0ipso.tokkl.timer.TapTrace
+import org.koin.core.context.GlobalContext
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
-import org.koin.core.context.GlobalContext
 
 /**
  * Two monotonic seconds from before a tap through every observation of its visible state. A tap
@@ -53,7 +53,9 @@ class TapToVisibleDeadline(private val action: String) {
 internal object BlackholeDiagnostics {
     private const val LIMIT = 160
     private val records = AtomicInteger()
+
     @Volatile private var active = false
+
     @Volatile private var phase = "inactive"
 
     fun begin(name: String) {
@@ -113,11 +115,10 @@ internal object BlackholeDiagnostics {
     }
 
     /** The simple names of [CURRENT_READERS] on the stack of each thread that is inside OkHttp now. */
-    private fun producersInCalls(): List<String> =
-        Thread.getAllStackTraces().values.mapNotNull { frames ->
-            if (frames.none { it.className.startsWith("okhttp3.") }) return@mapNotNull null
-            frames.firstNotNullOfOrNull { frame -> CURRENT_READERS.firstOrNull { frame.className.startsWith(it) } }
-        }.map { it.substringAfterLast('.') }
+    private fun producersInCalls(): List<String> = Thread.getAllStackTraces().values.mapNotNull { frames ->
+        if (frames.none { it.className.startsWith("okhttp3.") }) return@mapNotNull null
+        frames.firstNotNullOfOrNull { frame -> CURRENT_READERS.firstOrNull { frame.className.startsWith(it) } }
+    }.map { it.substringAfterLast('.') }
 
     /** The classes whose current-entry reads, `GET /api/v9/me/time_entries/current`, the diagnostics name. */
     private val CURRENT_READERS = listOf(

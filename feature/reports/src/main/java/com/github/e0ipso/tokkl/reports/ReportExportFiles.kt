@@ -2,8 +2,8 @@ package com.github.e0ipso.tokkl.reports
 
 import java.io.Closeable
 import java.io.File
-import java.io.InputStreamReader
 import java.io.IOException
+import java.io.InputStreamReader
 import java.nio.charset.CodingErrorAction
 import java.util.UUID
 
@@ -14,11 +14,17 @@ import java.util.UUID
  */
 class ReportExportFiles(private val root: File, private val now: () -> Long = System::currentTimeMillis) {
     class Pending internal constructor(val staging: File, val completed: File) : Closeable {
-        override fun close() { staging.delete() }
+        override fun close() {
+            staging.delete()
+        }
     }
 
     fun prepare(filename: String): Pending = synchronized(LOCK) {
-        require(filename.matches(Regex("tokkl-(summary|detailed)-[0-9]{4}-[0-9]{2}-[0-9]{2}-to-[0-9]{4}-[0-9]{2}-[0-9]{2}\\.csv")))
+        require(
+            filename.matches(
+                Regex("tokkl-(summary|detailed)-[0-9]{4}-[0-9]{2}-[0-9]{2}-to-[0-9]{4}-[0-9]{2}-[0-9]{2}\\.csv"),
+            ),
+        )
         val staging = File(root, "staging")
         val shared = File(root, "shared")
         if ((!staging.isDirectory && !staging.mkdirs()) || (!shared.isDirectory && !shared.mkdirs())) {
@@ -100,12 +106,30 @@ class ReportExportFiles(private val root: File, private val now: () -> Long = Sy
                     }
                     if (char == '\u0000') throw IOException("Unexpected export content")
                     when {
-                        quoted -> if (char == '"') { quoted = false; afterQuote = true }
-                        afterQuote && char == '"' -> { quoted = true; afterQuote = false }
-                        char == ',' || char == '\r' || char == '\n' -> { fieldStart = true; afterQuote = false }
+                        quoted -> if (char == '"') {
+                            quoted = false
+                            afterQuote = true
+                        }
+
+                        afterQuote && char == '"' -> {
+                            quoted = true
+                            afterQuote = false
+                        }
+
+                        char == ',' || char == '\r' || char == '\n' -> {
+                            fieldStart = true
+                            afterQuote = false
+                        }
+
                         afterQuote -> throw IOException("Invalid CSV quoting")
-                        char == '"' && fieldStart -> { quoted = true; fieldStart = false }
+
+                        char == '"' && fieldStart -> {
+                            quoted = true
+                            fieldStart = false
+                        }
+
                         char == '"' -> throw IOException("Invalid CSV quoting")
+
                         else -> fieldStart = false
                     }
                 }

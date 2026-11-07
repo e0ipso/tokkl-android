@@ -75,7 +75,13 @@ class NotificationPermissionStore(context: Context) : NotificationPermissionAsk.
 
     @SuppressLint("UseKtx") // The KTX helper discards the commit result; a failed write must be reported.
     override fun markAsked() {
-        if (!preferences.edit().putBoolean(KEY_ASKED, true).commit()) throw IOException("Could not record the notification permission request")
+        if (!preferences.edit().putBoolean(
+                KEY_ASKED,
+                true,
+            ).commit()
+        ) {
+            throw IOException("Could not record the notification permission request")
+        }
     }
 
     private companion object {

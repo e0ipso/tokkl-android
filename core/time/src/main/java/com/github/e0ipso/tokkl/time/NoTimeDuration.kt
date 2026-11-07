@@ -40,7 +40,9 @@ fun noTimeSeconds(parsed: Long, minutes: Double?): NoTimeDuration {
     val resolution = minutes?.takeIf(::isTimeResolution)
     val seconds = snapDuration(parsed, resolution)
     if (seconds <= 0) {
-        val error = if (resolution == null) NOT_A_DURATION else {
+        val error = if (resolution == null) {
+            NOT_A_DURATION
+        } else {
             "The duration rounds to zero at the ${resolution.toInt()}-minute time resolution"
         }
         return NoTimeDuration(seconds, error)

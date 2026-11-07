@@ -13,12 +13,12 @@ import com.github.e0ipso.tokkl.components.pomodoroRinging
 import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
-import java.time.Duration
-import java.time.Instant
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.junit.Assert.assertTrue
+import java.time.Duration
+import java.time.Instant
 
 /**
  * Device-test helpers that give the app a server Pomodoro phase to ring, without waiting out a
@@ -65,17 +65,39 @@ internal object HeldPhases {
         }
         val session = TimerPomodoro(
             workMinutes = 1, shortRestMinutes = 1, longRestMinutes = 1, longRestEvery = 4,
-            phase = TimerPomodoroPhase(kind, start, completed = if (kind == PhaseKind.WORK) number - 1 else number, plannedEnd = end),
+            phase = TimerPomodoroPhase(
+                kind,
+                start,
+                completed = if (kind == PhaseKind.WORK) number - 1 else number,
+                plannedEnd = end,
+            ),
             upcomingPhase = upcoming, transition = transition, number = number,
             entryId = ENTRY, pomodoroStart = start,
         )
         // No running entry, so the cache, the running notification and the widget stay as they are.
-        return hold(TimerState(nextRevision(), now, runningEntry = null, pause = null, pomodoro = session, discardedPomodoro = null))
+        return hold(
+            TimerState(
+                nextRevision(),
+                now,
+                runningEntry = null,
+                pause = null,
+                pomodoro = session,
+                discardedPomodoro = null,
+            ),
+        )
     }
 
     /** Holds a state without a session, as after End session on any device. */
-    fun holdNoSession(): HeldTimerState =
-        hold(TimerState(nextRevision(), Instant.now(), runningEntry = null, pause = null, pomodoro = null, discardedPomodoro = null))
+    fun holdNoSession(): HeldTimerState = hold(
+        TimerState(
+            nextRevision(),
+            Instant.now(),
+            runningEntry = null,
+            pause = null,
+            pomodoro = null,
+            discardedPomodoro = null,
+        ),
+    )
 
     /** Holds [state] as if the server had just sent it. */
     fun hold(state: TimerState): HeldTimerState {
@@ -89,12 +111,16 @@ internal object HeldPhases {
 
     /** Waits until the ringing service plays and vibrates. */
     fun awaitPlaying(): PomodoroRingingState = runBlocking {
-        withTimeout(10_000) { app.pomodoroRinging.state.first { it.serviceRunning && it.playing && it.vibrationRequested } }
+        withTimeout(
+            10_000,
+        ) { app.pomodoroRinging.state.first { it.serviceRunning && it.playing && it.vibrationRequested } }
     }
 
     /** Waits until the ringing service has stopped both outputs and ended. */
     fun awaitStopped() = runBlocking {
-        withTimeout(10_000) { app.pomodoroRinging.state.first { !it.serviceRunning && !it.playing && !it.vibrationRequested } }
+        withTimeout(
+            10_000,
+        ) { app.pomodoroRinging.state.first { !it.serviceRunning && !it.playing && !it.vibrationRequested } }
     }
 
     private fun nextRevision(): Long = maxOf(FIRST_REVISION, (app.timerState.state.value?.state?.revision ?: 0) + 1)

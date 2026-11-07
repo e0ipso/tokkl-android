@@ -13,10 +13,6 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.feature.sync.R
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
-import com.github.e0ipso.tokkl.feature.signin.R as SigninR
-import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
@@ -32,14 +28,12 @@ import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.discarded
 import com.github.e0ipso.tokkl.components.lastAnswer
 import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.feature.sync.R
 import com.github.e0ipso.tokkl.followNoTimerEvents
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.time.formatTime
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -53,6 +47,12 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.feature.signin.R as SigninR
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 
 /**
  * The status element above the bottom bar against the real Tokkl container (docs/PRD.md O5).
@@ -116,7 +116,9 @@ class SyncStatusServerTest {
 
             AirplaneMode.set(false, direct)
             composeRule.waitUntil("the app sends the queue and the status goes", NETWORK_TIMEOUT_MS) {
-                runBlocking { app.changes.unsentCount.first() } == 0 && !shows(hasText(unsent(2))) && !shows(hasText(unsent(1)))
+                runBlocking { app.changes.unsentCount.first() } == 0 && !shows(
+                    hasText(unsent(2)),
+                ) && !shows(hasText(unsent(1)))
             }
             val later = checkNotNull(app.lastAnswer.state.value)
             assertTrue("the send's answers moved the time on from $answered to $later", later.isAfter(answered))
@@ -130,17 +132,27 @@ class SyncStatusServerTest {
             runBlocking { app.accountRefresh.refresh().join() }
             val start = Instant.now().minusSeconds(3600)
             runBlocking {
-                app.changes.create(account.workspaceId, EntryFields(description = "Invalid draft"), start, start.plusSeconds(1000 * 3600))
+                app.changes.create(
+                    account.workspaceId,
+                    EntryFields(description = "Invalid draft"),
+                    start,
+                    start.plusSeconds(1000 * 3600),
+                )
             }
             val link = context.resources.getQuantityString(R.plurals.sync_needs_attention, 1, 1)
             awaitText(link)
             composeRule.onNode(hasText(link) and hasClickAction()).performClick()
-            val reason = context.getString(R.string.needs_attention_reason, "Time entries can not be longer than 999 hours")
+            val reason = context.getString(
+                R.string.needs_attention_reason,
+                "Time entries can not be longer than 999 hours",
+            )
             awaitText(reason)
             composeRule.onNode(hasText(context.getString(R.string.needs_attention_send_again)) and hasClickAction())
                 .performScrollTo().performClick()
             // The entry is held before the resend too, so wait for the refusal's actions to show again.
-            val edit = hasContentDescription(context.getString(R.string.needs_attention_edit_named, "Invalid draft")) and hasClickAction()
+            val edit = hasContentDescription(
+                context.getString(R.string.needs_attention_edit_named, "Invalid draft"),
+            ) and hasClickAction()
             composeRule.waitUntil("the same server refusal returns", NETWORK_TIMEOUT_MS) {
                 runBlocking { app.changes.heldCount.first() } == 1 && shows(edit)
             }
@@ -165,11 +177,25 @@ class SyncStatusServerTest {
             composeRule.awaitTimerPage(NETWORK_TIMEOUT_MS)
             runBlocking { app.accountRefresh.refresh().join() }
             account.deleteEntry(id)
-            assertTrue(runBlocking { app.changes.update(id, EntryFields(description = "Offline edit"), start, start.plusSeconds(1800)) })
+            assertTrue(
+                runBlocking {
+                    app.changes.update(
+                        id,
+                        EntryFields(description = "Offline edit"),
+                        start,
+                        start.plusSeconds(1800),
+                    )
+                },
+            )
             awaitText(context.resources.getQuantityString(R.plurals.sync_discarded, 1, 1))
             assertEquals(0, runBlocking { app.changes.unsentCount.first() })
-            composeRule.onNode(hasText(context.getString(R.string.sync_discarded_dismiss)) and hasClickAction()).performClick()
-            composeRule.waitUntil("the discard notice is dismissed", NETWORK_TIMEOUT_MS) { app.discarded.state.value == 0 }
+            composeRule.onNode(
+                hasText(context.getString(R.string.sync_discarded_dismiss)) and hasClickAction(),
+            ).performClick()
+            composeRule.waitUntil(
+                "the discard notice is dismissed",
+                NETWORK_TIMEOUT_MS,
+            ) { app.discarded.state.value == 0 }
         }
     }
 
@@ -190,7 +216,14 @@ class SyncStatusServerTest {
         val database = CacheDatabase.open(context)
         try {
             val quietQueue = ChangeQueue(database, Dispatchers.IO, onQueued = {})
-            runBlocking { quietQueue.create(workspace, EntryFields(description = "Saved before restart"), start, start.plusSeconds(1800)) }
+            runBlocking {
+                quietQueue.create(
+                    workspace,
+                    EntryFields(description = "Saved before restart"),
+                    start,
+                    start.plusSeconds(1800),
+                )
+            }
         } finally {
             database.close()
         }
@@ -212,13 +245,27 @@ class SyncStatusServerTest {
             composeRule.awaitTimerPage(NETWORK_TIMEOUT_MS)
             runBlocking { app.accountRefresh.refresh().join() }
             val workspace = account.workspaceId
-            val newToken = direct.send("POST", direct.server.api("me", "reset_token"), JsonObject(emptyMap()), String.serializer())
+            val newToken = direct.send(
+                "POST",
+                direct.server.api("me", "reset_token"),
+                JsonObject(emptyMap()),
+                String.serializer(),
+            )
                 .orFail("POST /me/reset_token")
             val start = Instant.now().minusSeconds(3600)
-            runBlocking { app.changes.create(workspace, EntryFields(description = "Waiting for sign-in"), start, start.plusSeconds(1800)) }
+            runBlocking {
+                app.changes.create(
+                    workspace,
+                    EntryFields(description = "Waiting for sign-in"),
+                    start,
+                    start.plusSeconds(1800),
+                )
+            }
             awaitText(context.getString(R.string.sync_sign_in_needed))
             assertEquals(1, runBlocking { app.changes.unsentCount.first() })
-            composeRule.onNode(hasText(context.getString(R.string.sync_sign_in_again)) and hasClickAction()).performClick()
+            composeRule.onNode(
+                hasText(context.getString(R.string.sync_sign_in_again)) and hasClickAction(),
+            ).performClick()
             composeRule.waitUntil("the sign-in form opens", NETWORK_TIMEOUT_MS) {
                 shows(hasText(context.getString(SigninR.string.sign_in_api_token)) and hasSetTextAction())
             }
@@ -227,7 +274,10 @@ class SyncStatusServerTest {
             composeRule.onNode(hasText(context.getString(SigninR.string.sign_in_submit)) and hasClickAction())
                 .performScrollTo().performClick()
             composeRule.awaitTimerPage(NETWORK_TIMEOUT_MS)
-            composeRule.waitUntil("sign-in resumed the queue", NETWORK_TIMEOUT_MS) { runBlocking { app.changes.unsentCount.first() } == 0 }
+            composeRule.waitUntil(
+                "sign-in resumed the queue",
+                NETWORK_TIMEOUT_MS,
+            ) { runBlocking { app.changes.unsentCount.first() } == 0 }
             assertTrue(!app.sender.signInNeeded.value)
             assertEquals(0, app.discarded.state.value)
         }
@@ -257,11 +307,17 @@ class SyncStatusServerTest {
 
     private fun unsent(count: Int): String = context.resources.getQuantityString(R.plurals.sync_unsent, count, count)
 
-    private fun startButton(): SemanticsMatcher = hasContentDescription(context.getString(TimerR.string.timer_start_spoken)) and hasClickAction()
+    private fun startButton(): SemanticsMatcher = hasContentDescription(
+        context.getString(TimerR.string.timer_start_spoken),
+    ) and hasClickAction()
 
-    private fun stopButton(): SemanticsMatcher = hasContentDescription(context.getString(SharedR.string.timer_stop_spoken)) and hasClickAction()
+    private fun stopButton(): SemanticsMatcher = hasContentDescription(
+        context.getString(SharedR.string.timer_stop_spoken),
+    ) and hasClickAction()
 
-    private fun shows(matcher: SemanticsMatcher): Boolean = composeRule.onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty()
+    private fun shows(matcher: SemanticsMatcher): Boolean = composeRule.onAllNodes(
+        matcher,
+    ).fetchSemanticsNodes().isNotEmpty()
 
     private companion object {
         const val NETWORK_TIMEOUT_MS = 30_000L

@@ -22,11 +22,7 @@ import java.time.Instant
  * @property account the account the control was drawn for, as the timer state's store names it,
  *   or blank where no account names it.
  */
-data class TimerTarget(
-    val revision: Long = 0,
-    val entryId: Long = 0,
-    val account: String = "",
-) {
+data class TimerTarget(val revision: Long = 0, val entryId: Long = 0, val account: String = "") {
     companion object {
         /**
          * A control drawn from the server's timer state for [account]: the running entry
@@ -70,12 +66,8 @@ sealed interface TimerControls {
      * A chain is paused at [seconds], the time its entries store. Resume starts [fields] in
      * [workspaceId] as a new entry, and Stop ends the chain.
      */
-    data class Paused(
-        val seconds: Long,
-        val workspaceId: Long,
-        val fields: EntryFields,
-        val target: TimerTarget,
-    ) : TimerControls
+    data class Paused(val seconds: Long, val workspaceId: Long, val fields: EntryFields, val target: TimerTarget) :
+        TimerControls
 }
 
 /** The target these controls were drawn with, or null while idle. */
@@ -100,7 +92,12 @@ val TimerControls.target: TimerTarget?
  * runs in the cache, as after a queued Stop, shows nothing. Pause is offered outside a Pomodoro
  * session, which the server refuses it in.
  */
-fun serverTimerControls(running: EntryWithSendState?, held: HeldTimerState?, timerApi: Boolean, account: String = ""): TimerControls {
+fun serverTimerControls(
+    running: EntryWithSendState?,
+    held: HeldTimerState?,
+    timerApi: Boolean,
+    account: String = "",
+): TimerControls {
     val state = held?.takeIf { timerApi }?.state
     val pause = state?.pause
     if (running != null) {

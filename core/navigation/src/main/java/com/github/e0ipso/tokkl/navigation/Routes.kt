@@ -3,9 +3,9 @@ package com.github.e0ipso.tokkl.navigation
 import androidx.navigation3.runtime.NavKey
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
+import kotlinx.serialization.Serializable
 import java.time.Instant
 import java.time.LocalDate
-import kotlinx.serialization.Serializable
 
 /**
  * The app's screens, as the back stack holds them. The stack is saved with these serializers, so
@@ -72,7 +72,8 @@ sealed interface EntryOpening {
 
     /** The running segment that started at [startSeconds] and [startNanos], and only that one. */
     @Serializable
-    data class Running(val entryId: Long, val workspaceId: Long, val startSeconds: Long, val startNanos: Int) : EntryOpening {
+    data class Running(val entryId: Long, val workspaceId: Long, val startSeconds: Long, val startNanos: Int) :
+        EntryOpening {
         val identity: RunningEntryIdentity
             get() = RunningEntryIdentity(entryId, workspaceId, Instant.ofEpochSecond(startSeconds, startNanos.toLong()))
 

@@ -8,8 +8,6 @@ import com.github.e0ipso.tokkl.session.AccountRefreshed
 import com.github.e0ipso.tokkl.session.MePreferences
 import com.github.e0ipso.tokkl.session.SignOutOrder
 import com.github.e0ipso.tokkl.storage.ClearableStore
-import java.io.IOException
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,6 +19,8 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import java.io.IOException
+import kotlin.coroutines.CoroutineContext
 
 /** The Timer page's view as the phone keeps it, and whether the server still has to get it. */
 data class StoredTimerView(val view: TimerView, val unsent: Boolean)
@@ -50,7 +50,8 @@ class TimerViewSetting(
     private val keepsTimerView: () -> Boolean,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
-) : AccountRefreshListener, AccountDataOwner {
+) : AccountRefreshListener,
+    AccountDataOwner {
 
     override val signOutOrder = SignOutOrder.TIMER_VIEW
 
@@ -119,8 +120,11 @@ class TimerViewSetting(
                     loaded.unsent = false
                     false
                 }
+
                 loaded.unsent -> true
+
                 tapped || preferences == null -> false
+
                 else -> {
                     loaded.view.value = preferences.timerView()
                     false

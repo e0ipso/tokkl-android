@@ -1,6 +1,11 @@
 package com.github.e0ipso.tokkl.time
 
 import com.github.e0ipso.tokkl.session.AccountSettings
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Before
+import org.junit.Test
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Instant
@@ -9,11 +14,6 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.TimeZone
-import org.junit.After
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Before
-import org.junit.Test
 
 /**
  * The phone sits in Kiritimati (UTC+14) and the account in Los Angeles or Kolkata. Every time
@@ -78,8 +78,14 @@ class AccountTimeTest {
         val at = Instant.parse("2026-10-18T10:50:00Z")
         val time = AccountSettings("Asia/Kolkata", DayOfWeek.MONDAY, timeResolutionMinutes = 60.0).time()!!
 
-        assertEquals(SnappedSpan(Instant.parse("2026-10-18T10:30:00Z"), Instant.parse("2026-10-18T11:30:00Z")), time.snapStop(start, at, oneStep = true))
-        assertEquals(SnappedSpan(Instant.parse("2026-10-18T10:30:00Z"), Instant.parse("2026-10-18T10:30:00Z")), time.snapStop(start, at, oneStep = false))
+        assertEquals(
+            SnappedSpan(Instant.parse("2026-10-18T10:30:00Z"), Instant.parse("2026-10-18T11:30:00Z")),
+            time.snapStop(start, at, oneStep = true),
+        )
+        assertEquals(
+            SnappedSpan(Instant.parse("2026-10-18T10:30:00Z"), Instant.parse("2026-10-18T10:30:00Z")),
+            time.snapStop(start, at, oneStep = false),
+        )
     }
 
     @Test

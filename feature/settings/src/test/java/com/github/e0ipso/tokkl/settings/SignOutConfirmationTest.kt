@@ -13,12 +13,16 @@ class SignOutConfirmationTest {
     private var clears = 0
     private var clearSucceeds = true
 
-    private fun model(clear: suspend () -> Boolean = { clears++; clearSucceeds }) =
-        SignOutConfirmation(
-            unsentCount = { if (countFails) throw IllegalStateException("disk I/O error") else unsent },
-            clear = clear,
-            scope = CoroutineScope(Dispatchers.Unconfined),
-        )
+    private fun model(
+        clear: suspend () -> Boolean = {
+            clears++
+            clearSucceeds
+        },
+    ) = SignOutConfirmation(
+        unsentCount = { if (countFails) throw IllegalStateException("disk I/O error") else unsent },
+        clear = clear,
+        scope = CoroutineScope(Dispatchers.Unconfined),
+    )
 
     @Test
     fun anEmptyQueueSignsOutWithoutAsking() {
@@ -93,7 +97,10 @@ class SignOutConfirmationTest {
     @Test
     fun tapsWhileSigningOutStartNoSecondSignOut() {
         val finish = CompletableDeferred<Boolean>()
-        val model = model(clear = { clears++; finish.await() })
+        val model = model(clear = {
+            clears++
+            finish.await()
+        })
 
         model.signOut()
         assertEquals(SignOutConfirmation.State(signingOut = true), model.state.value)

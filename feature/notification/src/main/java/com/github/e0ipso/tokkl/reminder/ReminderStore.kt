@@ -12,11 +12,18 @@ import java.io.IOException
 class ReminderStore(context: Context) : ClearableStore<StoredReminderPreferences> {
     private val preferences = context.getSharedPreferences("long_timer_reminder", Context.MODE_PRIVATE)
 
-    override fun load(): StoredReminderPreferences? = if (!preferences.contains("hours")) null else StoredReminderPreferences(
-        ReminderPreferences(preferences.getBoolean("enabled", true), preferences.getInt("hours", 8)).clamped(),
-        preferences.getBoolean("unsent", false),
-        preferences.getBoolean("shared", false),
-    )
+    override fun load(): StoredReminderPreferences? = if (!preferences.contains(
+            "hours",
+        )
+    ) {
+        null
+    } else {
+        StoredReminderPreferences(
+            ReminderPreferences(preferences.getBoolean("enabled", true), preferences.getInt("hours", 8)).clamped(),
+            preferences.getBoolean("unsent", false),
+            preferences.getBoolean("shared", false),
+        )
+    }
 
     override fun save(value: StoredReminderPreferences) = commit {
         putBoolean("enabled", value.preferences.enabled)
@@ -32,17 +39,28 @@ class ReminderStore(context: Context) : ClearableStore<StoredReminderPreferences
         override fun save(value: ReminderTimer?) = saveTimer(value)
     }
 
-    fun loadTimer(): ReminderTimer? = if (!preferences.contains("timer_id")) null else ReminderTimer(
-        preferences.getLong("timer_id", 0), preferences.getLong("timer_start", 0),
-        preferences.getLong("timer_due", 0), preferences.getBoolean("timer_handled", false),
-    )
+    fun loadTimer(): ReminderTimer? = if (!preferences.contains("timer_id")) {
+        null
+    } else {
+        ReminderTimer(
+            preferences.getLong("timer_id", 0),
+            preferences.getLong("timer_start", 0),
+            preferences.getLong("timer_due", 0),
+            preferences.getBoolean("timer_handled", false),
+        )
+    }
 
     fun saveTimer(timer: ReminderTimer?) = commit {
         if (timer == null) {
-            remove("timer_id"); remove("timer_start"); remove("timer_due"); remove("timer_handled")
+            remove("timer_id")
+            remove("timer_start")
+            remove("timer_due")
+            remove("timer_handled")
         } else {
-            putLong("timer_id", timer.id); putLong("timer_start", timer.start)
-            putLong("timer_due", timer.due); putBoolean("timer_handled", timer.handled)
+            putLong("timer_id", timer.id)
+            putLong("timer_start", timer.start)
+            putLong("timer_due", timer.due)
+            putBoolean("timer_handled", timer.handled)
         }
     }
 

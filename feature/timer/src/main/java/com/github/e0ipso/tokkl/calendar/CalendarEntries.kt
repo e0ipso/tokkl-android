@@ -39,7 +39,12 @@ internal fun weekEntries(
 /** The entry with the times the server stores once it gets it: a stopped entry's span snapped. */
 internal fun CachedTimeEntry.stored(time: AccountTime): CachedTimeEntry {
     if (allDay) {
-        val span = stop?.let { time.noTimeSpan(noTimeDay(time.zone), Duration.between(start, it).seconds) } ?: return this
+        val span = stop?.let {
+            time.noTimeSpan(
+                noTimeDay(time.zone),
+                Duration.between(start, it).seconds,
+            )
+        } ?: return this
         return copy(start = span.start, stop = span.stop)
     }
     val stop = stop?.takeIf { !it.isBefore(start) } ?: return this
@@ -59,7 +64,14 @@ private fun CachedTimeEntry.shown(
     // The server keeps a running entry's start as sent, so only a stopped one is snapped.
     // A rejected pending span keeps its actual times and unsent state for correction.
     val span = stop?.takeIf { unsent }?.let {
-        if (noTimeDay != null) time.noTimeSpan(noTimeDay, Duration.between(start, it).seconds) else time.snapUnsent(start, it)
+        if (noTimeDay != null) {
+            time.noTimeSpan(
+                noTimeDay,
+                Duration.between(start, it).seconds,
+            )
+        } else {
+            time.snapUnsent(start, it)
+        }
     }
     val project = projectId?.let(projects::get)
     return CalendarEntry(

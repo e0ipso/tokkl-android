@@ -10,15 +10,6 @@ import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.session.AccountSettings
-import java.time.Clock
-import java.time.DayOfWeek
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
-import java.time.ZoneOffset
-import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExecutorCoroutineDispatcher
 import kotlinx.coroutines.SupervisorJob
@@ -34,6 +25,15 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
+import java.time.Clock
+import java.time.DayOfWeek
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 /**
  * The entry form's model, in Madrid, against entries the test puts in the cache and a change
@@ -45,7 +45,9 @@ class EntryFormViewModelTest {
     private val main: ExecutorService = Executors.newSingleThreadExecutor()
     private val mainDispatcher: ExecutorCoroutineDispatcher = main.asCoroutineDispatcher()
     private val scope = CoroutineScope(SupervisorJob() + mainDispatcher)
-    private val entries = MutableStateFlow(listOf(EntryWithSendState(ENTRY, unsent = false), EntryWithSendState(ALL_DAY, unsent = false)))
+    private val entries = MutableStateFlow(
+        listOf(EntryWithSendState(ENTRY, unsent = false), EntryWithSendState(ALL_DAY, unsent = false)),
+    )
     private val settings = MutableStateFlow<AccountSettings?>(SETTINGS)
 
     /** Whether the server stores no-time entries, as on Tokkl. */
@@ -112,7 +114,9 @@ class EntryFormViewModelTest {
             model.timesDone()
         }
         // The names come from the cached projects and tasks, which the form reads once it shows.
-        val form = awaitOpen("the duration follows the times and the names show") { it.duration == "6:30:00" && it.labels.task != null }
+        val form = awaitOpen(
+            "the duration follows the times and the names show",
+        ) { it.duration == "6:30:00" && it.labels.task != null }
         assertEquals(EntryLabels(project = APP.name, projectColor = APP.color, task = DESIGN.name), form.labels)
 
         save()
@@ -140,7 +144,14 @@ class EntryFormViewModelTest {
 
         save()
 
-        assertEquals(listOf("update $ENTRY_ID ${ENTRY_FIELDS.copy(description = "Only the description")} ${ENTRY.start} ${ENTRY.stop}"), changes.calls)
+        assertEquals(
+            listOf(
+                "update $ENTRY_ID ${ENTRY_FIELDS.copy(
+                    description = "Only the description",
+                )} ${ENTRY.start} ${ENTRY.stop}",
+            ),
+            changes.calls,
+        )
     }
 
     /** As in the web app's editor: the stop is the start plus the duration, and the end shows it. */
@@ -156,7 +167,10 @@ class EntryFormViewModelTest {
 
         save()
 
-        assertEquals(listOf("update $ENTRY_ID $ENTRY_FIELDS ${ENTRY.start} ${ENTRY.start.plusSeconds(2 * 3600)}"), changes.calls)
+        assertEquals(
+            listOf("update $ENTRY_ID $ENTRY_FIELDS ${ENTRY.start} ${ENTRY.start.plusSeconds(2 * 3600)}"),
+            changes.calls,
+        )
     }
 
     @Test
@@ -231,7 +245,10 @@ class EntryFormViewModelTest {
     @Test
     fun anUnsentEntryOpensWithTheTimesTheServerWillStore() {
         settings.value = SETTINGS.copy(timeResolutionMinutes = 15.0)
-        val raw = ENTRY.copy(start = Instant.parse("2026-10-14T07:07:31.500Z"), stop = Instant.parse("2026-10-14T08:01:02.250Z"))
+        val raw = ENTRY.copy(
+            start = Instant.parse("2026-10-14T07:07:31.500Z"),
+            stop = Instant.parse("2026-10-14T08:01:02.250Z"),
+        )
         entries.value = listOf(EntryWithSendState(raw, unsent = true))
 
         val form = openEntry()
@@ -375,7 +392,10 @@ class EntryFormViewModelTest {
 
         save()
 
-        assertEquals(listOf("create $WORKSPACE ${EntryFields()} 2026-10-19T21:00:00Z 2026-10-19T23:00:00Z"), changes.calls)
+        assertEquals(
+            listOf("create $WORKSPACE ${EntryFields()} 2026-10-19T21:00:00Z 2026-10-19T23:00:00Z"),
+            changes.calls,
+        )
     }
 
     @Test
@@ -395,7 +415,10 @@ class EntryFormViewModelTest {
         awaitOpen("the duration follows the end") { it.duration == "2:00:00" }
         save()
 
-        assertEquals(listOf("create $WORKSPACE ${EntryFields()} 2026-10-19T07:00:00Z 2026-10-19T09:00:00Z"), changes.calls)
+        assertEquals(
+            listOf("create $WORKSPACE ${EntryFields()} 2026-10-19T07:00:00Z 2026-10-19T09:00:00Z"),
+            changes.calls,
+        )
     }
 
     /** zonedToUtc's rules, which time.test.ts pins, decide the clock changes, as on the web app. */
@@ -403,11 +426,29 @@ class EntryFormViewModelTest {
     fun wallTimesOnTheDaysTheClocksChangeResolveAsTokklResolvesThem() {
         for (case in listOf(
             // Spring: 01:30 CET to 03:30 CEST is one hour.
-            Typed(LocalDate.of(2026, 3, 29), "1:30", end = "3:30", from = "2026-03-29T00:30:00Z", stop = "2026-03-29T01:30:00Z"),
+            Typed(
+                LocalDate.of(2026, 3, 29),
+                "1:30",
+                end = "3:30",
+                from = "2026-03-29T00:30:00Z",
+                stop = "2026-03-29T01:30:00Z",
+            ),
             // 02:30 does not exist then, so it lands after the gap, at 03:30 CEST.
-            Typed(LocalDate.of(2026, 3, 29), "2:30", end = "4", from = "2026-03-29T01:30:00Z", stop = "2026-03-29T02:00:00Z"),
+            Typed(
+                LocalDate.of(2026, 3, 29),
+                "2:30",
+                end = "4",
+                from = "2026-03-29T01:30:00Z",
+                stop = "2026-03-29T02:00:00Z",
+            ),
             // Autumn: 02:30 happens twice, and the later one, in CET, is the one.
-            Typed(LocalDate.of(2026, 10, 25), "2:30", end = "3", from = "2026-10-25T01:30:00Z", stop = "2026-10-25T02:00:00Z"),
+            Typed(
+                LocalDate.of(2026, 10, 25),
+                "2:30",
+                end = "3",
+                from = "2026-10-25T01:30:00Z",
+                stop = "2026-10-25T02:00:00Z",
+            ),
         )) {
             changes.calls.clear()
             openNew()
@@ -435,7 +476,10 @@ class EntryFormViewModelTest {
 
         save()
 
-        assertEquals(listOf("create $WORKSPACE ${EntryFields()} 2026-10-19T14:00:00Z 2026-10-19T15:00:00Z"), changes.calls)
+        assertEquals(
+            listOf("create $WORKSPACE ${EntryFields()} 2026-10-19T14:00:00Z 2026-10-19T15:00:00Z"),
+            changes.calls,
+        )
     }
 
     @Test
@@ -482,7 +526,10 @@ class EntryFormViewModelTest {
         save()
 
         // 09:00 to 10:00 in Madrid's summer time.
-        assertEquals(listOf("create $WORKSPACE ${EntryFields()} 2026-09-02T07:00:00Z 2026-09-02T08:00:00Z"), changes.calls)
+        assertEquals(
+            listOf("create $WORKSPACE ${EntryFields()} 2026-09-02T07:00:00Z 2026-09-02T08:00:00Z"),
+            changes.calls,
+        )
     }
 
     @Test
@@ -531,7 +578,14 @@ class EntryFormViewModelTest {
         openEntry()
         onMain { model.setDescription("Keep the legacy times") }
         save()
-        assertEquals(listOf("update $ENTRY_ID ${ENTRY_FIELDS.copy(description = "Keep the legacy times")} ${legacy.start} ${legacy.stop}"), changes.calls)
+        assertEquals(
+            listOf(
+                "update $ENTRY_ID ${ENTRY_FIELDS.copy(
+                    description = "Keep the legacy times",
+                )} ${legacy.start} ${legacy.stop}",
+            ),
+            changes.calls,
+        )
         changes.calls.clear()
         openEntry()
         onMain {
@@ -555,7 +609,10 @@ class EntryFormViewModelTest {
         }
         awaitOpen("the snapped duration shows") { it.duration == "1:30:00" && it.end == "03:10" }
         save()
-        assertEquals(listOf("create $WORKSPACE ${EntryFields()} 2026-10-03T15:10:00Z 2026-10-03T16:10:00Z"), changes.calls)
+        assertEquals(
+            listOf("create $WORKSPACE ${EntryFields()} 2026-10-03T15:10:00Z 2026-10-03T16:10:00Z"),
+            changes.calls,
+        )
     }
 
     @Test
@@ -622,7 +679,10 @@ class EntryFormViewModelTest {
         save()
 
         // Midnight in Madrid's summer time, then 95 minutes rounded to the 15-minute resolution.
-        assertEquals(listOf("create $WORKSPACE ${EntryFields()} 2026-09-01T22:00:00Z 2026-09-01T23:30:00Z on 2026-09-02"), changes.calls)
+        assertEquals(
+            listOf("create $WORKSPACE ${EntryFields()} 2026-09-01T22:00:00Z 2026-09-01T23:30:00Z on 2026-09-02"),
+            changes.calls,
+        )
     }
 
     /** The messages of the web app's noTimeDuration.ts, each under the duration. */
@@ -675,7 +735,11 @@ class EntryFormViewModelTest {
         // The day and the duration stay as they opened, so the stored 1:37 is kept, not rounded,
         // as the web app's noTimeEdit.ts keeps it.
         assertEquals(
-            listOf("update ${ALL_DAY.id} ${EntryFields("Read the spec again")} 2026-10-13T22:00:00Z 2026-10-13T23:37:00Z on 2026-10-14"),
+            listOf(
+                "update ${ALL_DAY.id} ${EntryFields(
+                    "Read the spec again",
+                )} 2026-10-13T22:00:00Z 2026-10-13T23:37:00Z on 2026-10-14",
+            ),
             changes.calls,
         )
     }
@@ -688,7 +752,10 @@ class EntryFormViewModelTest {
 
         save()
 
-        assertEquals(listOf("update ${ALL_DAY.id} $ALL_DAY_FIELDS 2026-10-13T22:00:00Z 2026-10-13T23:30:00Z on 2026-10-14"), changes.calls)
+        assertEquals(
+            listOf("update ${ALL_DAY.id} $ALL_DAY_FIELDS 2026-10-13T22:00:00Z 2026-10-13T23:30:00Z on 2026-10-14"),
+            changes.calls,
+        )
     }
 
     /**
@@ -705,12 +772,19 @@ class EntryFormViewModelTest {
         save()
 
         // Midnight in New York's summer time.
-        assertEquals(listOf("update ${ALL_DAY.id} $ALL_DAY_FIELDS 2026-10-14T04:00:00Z 2026-10-14T06:00:00Z on 2026-10-14"), changes.calls)
+        assertEquals(
+            listOf("update ${ALL_DAY.id} $ALL_DAY_FIELDS 2026-10-14T04:00:00Z 2026-10-14T06:00:00Z on 2026-10-14"),
+            changes.calls,
+        )
     }
 
     @Test
     fun aNoTimeEntryFromTheOlderDaysSavesWholeOnItsDay() {
-        val older = OLDER.copy(allDay = true, start = Instant.parse("2026-09-01T22:00:00Z"), stop = Instant.parse("2026-09-01T23:00:00Z"))
+        val older = OLDER.copy(
+            allDay = true,
+            start = Instant.parse("2026-09-01T22:00:00Z"),
+            stop = Instant.parse("2026-09-01T23:00:00Z"),
+        )
         onMain { model.edit(older.id, older = older) }
         val form = awaitOpen("the form opens on the older entry") { it.noTimes }
         assertEquals(LocalDate.of(2026, 9, 2), form.date)
@@ -720,7 +794,12 @@ class EntryFormViewModelTest {
         save()
 
         val fields = EntryFields(description = "Plan the sprint", projectId = APP.id)
-        assertEquals(listOf("updateOlder ${older.id} $OLDER_WORKSPACE $fields 2026-09-02T22:00:00Z 2026-09-02T23:00:00Z on 2026-09-03"), changes.calls)
+        assertEquals(
+            listOf(
+                "updateOlder ${older.id} $OLDER_WORKSPACE $fields 2026-09-02T22:00:00Z 2026-09-02T23:00:00Z on 2026-09-03",
+            ),
+            changes.calls,
+        )
     }
 
     /** As the web app's editor: the date stays, and the duration is the one the form shows. */
@@ -737,7 +816,10 @@ class EntryFormViewModelTest {
 
         save()
 
-        assertEquals(listOf("update $ENTRY_ID $ENTRY_FIELDS 2026-10-14T22:00:00Z 2026-10-14T23:30:25Z on 2026-10-15"), changes.calls)
+        assertEquals(
+            listOf("update $ENTRY_ID $ENTRY_FIELDS 2026-10-14T22:00:00Z 2026-10-14T23:30:25Z on 2026-10-15"),
+            changes.calls,
+        )
     }
 
     @Test
@@ -788,7 +870,11 @@ class EntryFormViewModelTest {
         val form = awaitOpen("the times are back") { !it.noTimes }
         assertEquals(Triple("00:00", "01:37", "1:37:00"), Triple(form.start, form.end, form.duration))
         save()
-        assertEquals("times and no day", listOf("update ${ALL_DAY.id} $ALL_DAY_FIELDS 2026-10-13T22:00:00Z 2026-10-13T23:37:00Z"), changes.calls)
+        assertEquals(
+            "times and no day",
+            listOf("update ${ALL_DAY.id} $ALL_DAY_FIELDS 2026-10-13T22:00:00Z 2026-10-13T23:37:00Z"),
+            changes.calls,
+        )
     }
 
     @Test
@@ -802,13 +888,18 @@ class EntryFormViewModelTest {
 
         save()
 
-        assertEquals(listOf("update ${ALL_DAY.id} $ALL_DAY_FIELDS 2026-10-14T07:00:00Z 2026-10-14T08:00:00Z"), changes.calls)
+        assertEquals(
+            listOf("update ${ALL_DAY.id} $ALL_DAY_FIELDS 2026-10-14T07:00:00Z 2026-10-14T08:00:00Z"),
+            changes.calls,
+        )
     }
 
     /** Its end is midnight again, which the end field cannot tell from the start, so the duration says it. */
     @Test
     fun aDayLongNoTimeEntryKeepsItsLengthWhenItGetsTimes() {
-        entries.value = listOf(EntryWithSendState(ALL_DAY.copy(stop = Instant.parse("2026-10-14T22:00:00Z")), unsent = false))
+        entries.value = listOf(
+            EntryWithSendState(ALL_DAY.copy(stop = Instant.parse("2026-10-14T22:00:00Z")), unsent = false),
+        )
         openEntry(ALL_DAY.id)
 
         onMain { model.setNoTimes(false) }
@@ -817,7 +908,10 @@ class EntryFormViewModelTest {
         assertEquals(Triple("00:00", "00:00", "24:00:00"), Triple(form.start, form.end, form.duration))
         assertEquals(LocalDate.of(2026, 10, 15), form.endsOn)
         save()
-        assertEquals(listOf("update ${ALL_DAY.id} $ALL_DAY_FIELDS 2026-10-13T22:00:00Z 2026-10-14T22:00:00Z"), changes.calls)
+        assertEquals(
+            listOf("update ${ALL_DAY.id} $ALL_DAY_FIELDS 2026-10-13T22:00:00Z 2026-10-14T22:00:00Z"),
+            changes.calls,
+        )
     }
 
     /** Toggl Track, and a Tokkl that cannot store them, get no switch, and it follows the flag. */
@@ -864,7 +958,12 @@ class EntryFormViewModelTest {
 
         assertEquals(
             "a full update for an entry the cache does not hold, in its own workspace",
-            listOf("updateOlder ${OLDER.id} $OLDER_WORKSPACE ${EntryFields(description = "Plan the sprint, again", projectId = APP.id)} ${OLDER.start} ${OLDER.stop}"),
+            listOf(
+                "updateOlder ${OLDER.id} $OLDER_WORKSPACE ${EntryFields(
+                    description = "Plan the sprint, again",
+                    projectId = APP.id,
+                )} ${OLDER.start} ${OLDER.stop}",
+            ),
             changes.calls,
         )
     }
@@ -926,21 +1025,44 @@ class EntryFormViewModelTest {
         @Volatile
         var updates = true
 
-        override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?, noTimeDay: LocalDate?): Boolean {
+        override suspend fun update(
+            entryId: Long,
+            fields: EntryFields,
+            start: Instant,
+            stop: Instant?,
+            noTimeDay: LocalDate?,
+        ): Boolean {
             calls += "update $entryId $fields $start $stop" + noTimeDay.onDay()
             return updates
         }
 
-        override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant, noTimeDay: LocalDate?): Long {
+        override suspend fun create(
+            workspaceId: Long,
+            fields: EntryFields,
+            start: Instant,
+            stop: Instant,
+            noTimeDay: LocalDate?,
+        ): Long {
             calls += "create $workspaceId $fields $start $stop" + noTimeDay.onDay()
             return -1
         }
 
-        override suspend fun start(workspaceId: Long, fields: EntryFields): Long = throw AssertionError("the form starts no timer")
+        override suspend fun start(workspaceId: Long, fields: EntryFields): Long = throw AssertionError(
+            "the form starts no timer",
+        )
 
-        override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean = throw AssertionError("the form stops no timer")
+        override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean = throw AssertionError(
+            "the form stops no timer",
+        )
 
-        override suspend fun updateOlder(entryId: Long, workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant, noTimeDay: LocalDate?) {
+        override suspend fun updateOlder(
+            entryId: Long,
+            workspaceId: Long,
+            fields: EntryFields,
+            start: Instant,
+            stop: Instant,
+            noTimeDay: LocalDate?,
+        ) {
             calls += "updateOlder $entryId $workspaceId $fields $start $stop" + noTimeDay.onDay()
         }
 
@@ -950,7 +1072,10 @@ class EntryFormViewModelTest {
         @Volatile
         var running: CachedTimeEntry? = null
 
-        override suspend fun runningEntry(identity: RunningEntryIdentity): CachedTimeEntry? = running?.takeIf { it.id == identity.entryId }
+        override suspend fun runningEntry(identity: RunningEntryIdentity): CachedTimeEntry? = running?.takeIf {
+            it.id ==
+                identity.entryId
+        }
 
         /** A no-time change names its day, and a timed one names none. */
         private fun LocalDate?.onDay(): String = this?.let { " on $it" } ?: ""
@@ -970,8 +1095,24 @@ class EntryFormViewModelTest {
             timeResolutionMinutes = null,
             defaultWorkspaceId = WORKSPACE,
         )
-        val APP = CachedProject(1, WORKSPACE, clientId = null, name = "Tokkl for Android", color = "#0b83d9", active = true, billable = false)
-        val CLIENT_WORK = CachedProject(2, WORKSPACE, clientId = null, name = "Client work", color = "#d94182", active = true, billable = true)
+        val APP = CachedProject(
+            1,
+            WORKSPACE,
+            clientId = null,
+            name = "Tokkl for Android",
+            color = "#0b83d9",
+            active = true,
+            billable = false,
+        )
+        val CLIENT_WORK = CachedProject(
+            2,
+            WORKSPACE,
+            clientId = null,
+            name = "Client work",
+            color = "#d94182",
+            active = true,
+            billable = true,
+        )
         val DESIGN = CachedTask(5, WORKSPACE, projectId = APP.id, name = "Design", active = true)
 
         /** 09:00:20 to 10:30:45 in Madrid on Wednesday 14 October 2026. */

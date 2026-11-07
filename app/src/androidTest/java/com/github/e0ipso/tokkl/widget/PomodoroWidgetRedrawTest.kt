@@ -1,29 +1,31 @@
 package com.github.e0ipso.tokkl.widget
 
-import com.github.e0ipso.tokkl.components.pomodoroAlarm
-import com.github.e0ipso.tokkl.components.pomodoroAlarms
-import com.github.e0ipso.tokkl.components.pomodoroRinging
-import com.github.e0ipso.tokkl.components.timerState
 import android.app.PendingIntent
 import android.os.Handler
 import android.os.Looper
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.*
+import com.github.e0ipso.tokkl.components.pomodoroAlarm
+import com.github.e0ipso.tokkl.components.pomodoroAlarms
+import com.github.e0ipso.tokkl.components.pomodoroRinging
+import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.core.shared.R
 import com.github.e0ipso.tokkl.pomodoro.*
 import com.github.e0ipso.tokkl.timer.TimerAcceptanceFixture
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
-import java.time.Duration
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.runBlocking
 import org.junit.*
 import org.junit.Assert.*
+import java.time.Duration
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 class PomodoroWidgetRedrawTest {
     @get:Rule val session = SessionRule()
     private val fixture = TimerAcceptanceFixture()
+
     @Before fun prepare() = fixture.prepare()
+
     @After fun cleanup() = fixture.cleanup()
 
     @Test fun nativeFallbackRedrawAcceptsOnlyTheHeldPhaseAndNeverStartsRinging() {
@@ -41,8 +43,13 @@ class PomodoroWidgetRedrawTest {
 
             fun deliver(phase: PomodoroPhaseKey) {
                 val finished = CountDownLatch(1)
-                scheduler.operation(create = true, phase, redraw = true)!!.send(context, 0, null,
-                    PendingIntent.OnFinished { _, _, _, _, _ -> finished.countDown() }, Handler(Looper.getMainLooper()))
+                scheduler.operation(create = true, phase, redraw = true)!!.send(
+                    context,
+                    0,
+                    null,
+                    PendingIntent.OnFinished { _, _, _, _, _ -> finished.countDown() },
+                    Handler(Looper.getMainLooper()),
+                )
                 assertTrue("native redraw broadcast finishes", finished.await(10, TimeUnit.SECONDS))
             }
             val before = host.updates.get()

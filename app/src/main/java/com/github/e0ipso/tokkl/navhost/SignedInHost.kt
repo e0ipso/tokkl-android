@@ -15,7 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.navigation3.runtime.NavEntry
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.navigation.Navigator
@@ -47,6 +46,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.compose.koinInject
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 
 /**
  * A signed-in back stack, [stack], with [top] on screen, in the [SignedInFrame]. The bar or the
@@ -103,7 +103,11 @@ internal fun SignedInHost(
     val timerState by timer.state.collectAsState()
     LaunchedEffect(focused, timerState) {
         // A notification may have opened Pomodoro before this old focused effect runs.
-        if (focused && (timerState as? TimerState.Idle)?.authoritative == true && navigator.focused) navigator.downToTimer()
+        if (focused && (timerState as? TimerState.Idle)?.authoritative == true &&
+            navigator.focused
+        ) {
+            navigator.downToTimer()
+        }
     }
     val discardedCount by discarded.state.collectAsState()
     val shortUndo by changes.shortStopUndo.collectAsState(initial = null)
@@ -114,9 +118,17 @@ internal fun SignedInHost(
     LaunchedEffect(top, shortUndo?.entryId, shortUndo?.capturedAt) {
         val pending = shortUndo ?: return@LaunchedEffect
         if (top != Route.Timer) return@LaunchedEffect
-        val result = shortHost.showSnackbar(shortMessage, undoLabel, withDismissAction = true, duration = SnackbarDuration.Long)
-        if (result == SnackbarResult.ActionPerformed) changes.undoShortStop(pending.entryId)
-        else changes.dismissShortStop(pending.entryId)
+        val result = shortHost.showSnackbar(
+            shortMessage,
+            undoLabel,
+            withDismissAction = true,
+            duration = SnackbarDuration.Long,
+        )
+        if (result == SnackbarResult.ActionPerformed) {
+            changes.undoShortStop(pending.entryId)
+        } else {
+            changes.dismissShortStop(pending.entryId)
+        }
     }
     val permissionStarts = remember(timer, prompts) { merge(timer.starts, prompts.pomodoroStarts.receiveAsFlow()) }
     val permissionRetries = remember(prompts) { prompts.retries.receiveAsFlow() }
@@ -144,9 +156,18 @@ internal fun SignedInHost(
         if (top == Route.FullscreenTimer) {
             entries.Show(top)
         } else {
-            SignedInPanes(top = top, entryBeside = showsEntryBeside(width, view, stack)) { route -> entries.Show(route) }
+            SignedInPanes(
+                top = top,
+                entryBeside = showsEntryBeside(width, view, stack),
+            ) { route -> entries.Show(route) }
         }
-        if (discardedCount > 0) DiscardNotice(discardedCount, onDismiss = discarded::dismiss, modifier = Modifier.align(Alignment.BottomCenter))
+        if (discardedCount > 0) {
+            DiscardNotice(
+                discardedCount,
+                onDismiss = discarded::dismiss,
+                modifier = Modifier.align(Alignment.BottomCenter),
+            )
+        }
         if (top in TIMER_PAGES) {
             TimerNotices(timer, shortHost)
             SnackbarHost(shortHost, Modifier.align(Alignment.BottomCenter))

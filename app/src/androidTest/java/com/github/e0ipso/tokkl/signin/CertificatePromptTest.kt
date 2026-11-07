@@ -15,8 +15,6 @@ import androidx.compose.ui.test.performTextInput
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.DeviceShell
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.core.shared.R
-import com.github.e0ipso.tokkl.feature.signin.R as SigninR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.TokklTestServer
@@ -25,6 +23,7 @@ import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
 import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.core.shared.R
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
@@ -35,6 +34,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import com.github.e0ipso.tokkl.feature.signin.R as SigninR
 
 /**
  * Signs in through the screen to the real Tokkl container behind the TLS
@@ -47,7 +47,6 @@ class CertificatePromptTest {
     fun auditFinalAccessibilityState() {
         composeRule.checkAccessibility()
     }
-
 
     @get:Rule(order = 0)
     val session = SessionRule()
@@ -98,7 +97,9 @@ class CertificatePromptTest {
         composeRule.onNode(hasText(TokklTestServer.tlsFingerprint)).performScrollTo().assertIsDisplayed()
         composeRule.onNode(hasText(string(R.string.sign_in_warning_cancel)) and hasClickAction()).performClick()
 
-        composeRule.waitUntil("the prompt closes") { !exists(hasText(string(R.string.sign_in_certificate_changed_title))) }
+        composeRule.waitUntil(
+            "the prompt closes",
+        ) { !exists(hasText(string(R.string.sign_in_certificate_changed_title))) }
         assertEquals(old, ServerTrustStore(context).pinnedSha256(endpoint.host, endpoint.port))
         assertNull(ServerConfigStore(context).load())
     }
@@ -122,7 +123,9 @@ class CertificatePromptTest {
         composeRule.onNode(hasSetTextAction() and hasText(string(SigninR.string.sign_in_api_token)))
             .performTextInput(TokklTestServer.apiToken)
         // The brand above the form can push the button below the screen's or the keyboard's edge.
-        composeRule.onNode(hasText(string(SigninR.string.sign_in_submit)) and hasClickAction()).performScrollTo().performClick()
+        composeRule.onNode(
+            hasText(string(SigninR.string.sign_in_submit)) and hasClickAction(),
+        ).performScrollTo().performClick()
     }
 
     private fun awaitPrompt(@StringRes title: Int) {

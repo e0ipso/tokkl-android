@@ -31,7 +31,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import com.github.e0ipso.tokkl.feature.pomodoro.R
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.timernotice.TimerNotice
 import com.github.e0ipso.tokkl.timernotice.timerNoticeText
 import com.github.e0ipso.tokkl.ui.ErrorBanner
@@ -39,9 +38,10 @@ import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
+import kotlinx.coroutines.delay
 import java.time.Clock
 import java.util.Locale
-import kotlinx.coroutines.delay
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 
 /**
  * The held phase's alarm: its transition, "Pomodoro N of M" from the server's number and the
@@ -65,8 +65,11 @@ fun PomodoroAlarmContent(
                 .screenContent().padding(vertical = TokklTheme.spacing.betweenGroups),
             verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.betweenGroups),
         ) {
-            Text(stringResource(R.string.pomodoro_alarm_title), style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.semantics { heading() })
+            Text(
+                stringResource(R.string.pomodoro_alarm_title),
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.semantics { heading() },
+            )
             state.problem?.let { problem ->
                 ErrorBanner(timerNoticeText(LocalResources.current, TimerNotice.ActionFailed(problem, 0)))
             }
@@ -88,16 +91,29 @@ fun PomodoroAlarmContent(
                     if (reading.overtime) R.string.pomodoro_overtime_clock else R.string.pomodoro_remaining_clock,
                     duration,
                 )
-                Text(stringResource(if (reading.overtime) SharedR.string.pomodoro_overtime else SharedR.string.pomodoro_remaining))
-                Text(duration, style = TokklTheme.clockTextStyle,
-                    modifier = Modifier.fillMaxWidth().semantics { contentDescription = spoken })
+                Text(
+                    stringResource(
+                        if (reading.overtime) SharedR.string.pomodoro_overtime else SharedR.string.pomodoro_remaining,
+                    ),
+                )
+                Text(
+                    duration,
+                    style = TokklTheme.clockTextStyle,
+                    modifier = Modifier.fillMaxWidth().semantics { contentDescription = spoken },
+                )
             }
-            TokklButton(onClick = onNext, enabled = ring != null && !state.busy,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp)) {
+            TokklButton(
+                onClick = onNext,
+                enabled = ring != null && !state.busy,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp),
+            ) {
                 Text(stringResource(R.string.pomodoro_alarm_next))
             }
-            TokklGhostButton(onClick = onEnd, enabled = ring != null && !state.busy,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp)) {
+            TokklGhostButton(
+                onClick = onEnd,
+                enabled = ring != null && !state.busy,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp),
+            ) {
                 Text(stringResource(R.string.pomodoro_alarm_end))
             }
         }

@@ -4,10 +4,10 @@ import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.time.jsTrim
+import kotlinx.serialization.builtins.ListSerializer
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
-import kotlinx.serialization.builtins.ListSerializer
 
 /**
  * The entry an earlier post of [create] made, or null when the server has none: one that
@@ -34,7 +34,12 @@ internal fun earlierCopy(
     }
     val starts = setOf(start, spans.start(start))
     return ApiResult.Success(
-        entries.firstOrNull { create.couldHaveMade(it, starts) && it.id !in create.existingIds && !store.isMapped(it.id) },
+        entries.firstOrNull {
+            create.couldHaveMade(
+                it,
+                starts,
+            ) && it.id !in create.existingIds && !store.isMapped(it.id)
+        },
     )
 }
 

@@ -5,8 +5,8 @@ import com.github.e0ipso.tokkl.api.Me
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.session.MePreferences
-import java.time.Clock
 import kotlinx.coroutines.flow.Flow
+import java.time.Clock
 
 /**
  * What the app last loaded from the server, readable offline (docs/PRD.md O2): projects, clients,
@@ -16,10 +16,8 @@ import kotlinx.coroutines.flow.Flow
  * The account settings are not cached here. AccountSettingsSource keeps them and stays their one
  * source of truth.
  */
-class AccountCache(
-    private val database: CacheDatabase,
-    private val clock: Clock = Clock.systemUTC(),
-) : CurrentEntryCache {
+class AccountCache(private val database: CacheDatabase, private val clock: Clock = Clock.systemUTC()) :
+    CurrentEntryCache {
 
     private val dao = database.cache()
 
@@ -67,7 +65,12 @@ class AccountCache(
             return
         }
         val snapshot = readServerSnapshot(
-            api, me, preferences, clock, favorites = capabilities.favorites, onAllDayMissing = onAllDayMissing,
+            api,
+            me,
+            preferences,
+            clock,
+            favorites = capabilities.favorites,
+            onAllDayMissing = onAllDayMissing,
         )
         try {
             database.runInTransaction {
@@ -147,10 +150,7 @@ class AccountCache(
  * What a running entry check read before its request: the [running] entries and the
  * [pendingIds] of the entries the queue held changes to.
  */
-class RunningCheckStart(
-    val running: List<CachedTimeEntry>,
-    val pendingIds: Set<Long> = emptySet(),
-)
+class RunningCheckStart(val running: List<CachedTimeEntry>, val pendingIds: Set<Long> = emptySet())
 
 /**
  * The cache's current-entry reconciliation, for every server answer that names the running entry:

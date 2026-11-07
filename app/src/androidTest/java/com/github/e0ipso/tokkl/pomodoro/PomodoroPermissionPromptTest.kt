@@ -20,16 +20,13 @@ import androidx.core.app.ActivityOptionsCompat
 import androidx.core.view.WindowCompat
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.feature.pomodoro.R
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
+import com.github.e0ipso.tokkl.feature.pomodoro.R
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
 import com.github.e0ipso.tokkl.notification.NotificationPermissionPrompt
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import java.time.DayOfWeek
-import java.util.concurrent.CopyOnWriteArrayList
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 import org.junit.Assert.assertEquals
@@ -37,11 +34,15 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.DayOfWeek
+import java.util.concurrent.CopyOnWriteArrayList
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 
 /** Uses the same shared prompt as navigation, with Android's result registry held unanswered. */
 @SignedOut
 class PomodoroPermissionPromptTest {
     private val compose = createAndroidComposeRule<ComponentActivity>()
+
     @get:Rule val rules: RuleChain = RuleChain.outerRule(SessionRule()).around(compose)
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private val starts = Channel<Unit>(Channel.UNLIMITED)
@@ -54,19 +55,30 @@ class PomodoroPermissionPromptTest {
     private var exactSettings = 0
     private var fullSettings = 0
     private var asked = false
-    private var page by mutableStateOf(PomodoroPageState(
-        loading = false,
-        account = AccountSettings("Europe/Madrid", DayOfWeek.MONDAY, null, defaultWorkspaceId = 11),
-        notificationsDenied = true, alarmDenied = true, fullScreenDenied = true,
-    ))
+    private var page by mutableStateOf(
+        PomodoroPageState(
+            loading = false,
+            account = AccountSettings("Europe/Madrid", DayOfWeek.MONDAY, null, defaultWorkspaceId = 11),
+            notificationsDenied = true,
+            alarmDenied = true,
+            fullScreenDenied = true,
+        ),
+    )
     private val registry = object : ActivityResultRegistry() {
-        override fun <I, O> onLaunch(requestCode: Int, contract: ActivityResultContract<I, O>, input: I, options: ActivityOptionsCompat?) {
+        override fun <I, O> onLaunch(
+            requestCode: Int,
+            contract: ActivityResultContract<I, O>,
+            input: I,
+            options: ActivityOptionsCompat?,
+        ) {
             requests += requestCode
         }
     }
     private val record = object : NotificationPermissionAsk.AskRecord {
         override fun asked() = asked
-        override fun markAsked() { asked = true }
+        override fun markAsked() {
+            asked = true
+        }
     }
 
     private fun show(granted: Boolean = false) {
@@ -79,12 +91,22 @@ class PomodoroPermissionPromptTest {
             CompositionLocalProvider(LocalActivityResultRegistryOwner provides owner) {
                 TokklTheme {
                     Box {
-                        PomodoroContent(page, {}, {}, {}, {}, onStart = { started++; starts.trySend(Unit) },
+                        PomodoroContent(
+                            page, {}, {}, {}, {}, onStart = {
+                                started++
+                                starts.trySend(Unit)
+                            },
                             onNext = {}, onEnd = {},
                             onNotificationRetry = { retries.trySend(Unit) },
-                            onExactAlarmSettings = { exactSettings++ }, onFullScreenSettings = { fullSettings++ })
-                        NotificationPermissionPrompt(startFlow, ask, retries = retryFlow,
-                            openSettings = { settings++ }, onResult = { allowed -> page = page.copy(notificationsDenied = !allowed) })
+                            onExactAlarmSettings = { exactSettings++ }, onFullScreenSettings = { fullSettings++ },
+                        )
+                        NotificationPermissionPrompt(
+                            startFlow,
+                            ask,
+                            retries = retryFlow,
+                            openSettings = { settings++ },
+                            onResult = { allowed -> page = page.copy(notificationsDenied = !allowed) },
+                        )
                     }
                 }
             }
@@ -93,7 +115,8 @@ class PomodoroPermissionPromptTest {
 
     private fun tap(id: Int) = compose.onNodeWithText(context.getString(id)).performScrollTo().performClick()
 
-    @Test @SdkSuppress(minSdkVersion = 33)
+    @Test
+    @SdkSuppress(minSdkVersion = 33)
     fun firstStartIsImmediateAndOutstandingRequestsCannotCauseDuplicateAutomaticDialogs() {
         show()
         assertEquals(0, requests.size)
@@ -106,7 +129,9 @@ class PomodoroPermissionPromptTest {
         assertEquals(2, started)
         assertEquals(1, requests.size)
         compose.runOnUiThread { registry.dispatchResult(requests.single(), false) }
-        compose.onNodeWithText(context.getString(R.string.pomodoro_notifications_denied)).performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText(
+            context.getString(R.string.pomodoro_notifications_denied),
+        ).performScrollTo().assertIsDisplayed()
         tap(SharedR.string.pomodoro_start)
         compose.waitForIdle()
         assertEquals(1, requests.size)
@@ -118,7 +143,8 @@ class PomodoroPermissionPromptTest {
         assertEquals(1, requests.size)
     }
 
-    @Test @SdkSuppress(minSdkVersion = 33)
+    @Test
+    @SdkSuppress(minSdkVersion = 33)
     fun explicitRetryBeforeAnyStartRequestsAndGrantRemovesThePersistentNotice() {
         show()
         tap(R.string.pomodoro_notifications_settings)
@@ -142,13 +168,22 @@ class PomodoroPermissionPromptTest {
         compose.waitForIdle()
         assertTrue(requests.isEmpty())
         compose.onNodeWithText(context.getString(R.string.pomodoro_alarm_denied)).performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText(context.getString(R.string.pomodoro_fullscreen_denied)).performScrollTo().assertIsDisplayed()
-        compose.runOnIdle { page = page.copy(alarmDenied = false, fullScreenDenied = false, notificationsDenied = false) }
+        compose.onNodeWithText(
+            context.getString(R.string.pomodoro_fullscreen_denied),
+        ).performScrollTo().assertIsDisplayed()
+        compose.runOnIdle {
+            page = page.copy(
+                alarmDenied = false,
+                fullScreenDenied = false,
+                notificationsDenied = false,
+            )
+        }
         compose.onNodeWithText(context.getString(R.string.pomodoro_exact_alarm_settings)).assertDoesNotExist()
         compose.onNodeWithText(context.getString(R.string.pomodoro_fullscreen_settings)).assertDoesNotExist()
     }
 
-    @Test @SdkSuppress(maxSdkVersion = 32)
+    @Test
+    @SdkSuppress(maxSdkVersion = 32)
     fun android12StartsWithoutPostNotificationRequestAndRetryOpensSettings() {
         show()
         tap(SharedR.string.pomodoro_start)

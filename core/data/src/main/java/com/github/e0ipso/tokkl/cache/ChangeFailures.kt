@@ -18,13 +18,17 @@ internal const val CONFLICT = 409
  * refusal. A 5xx, a timeout, a dropped connection or a 2xx the phone could not read may come after
  * the server stored it.
  */
-internal fun ApiError.leftNothingOnTheServer(): Boolean =
-    when (this) {
-        is ApiError.Http -> status in 400..499
-        is ApiError.Network -> cause is ConnectException || cause is UnknownHostException || cause is NoRouteToHostException
-        is ApiError.InvalidResponse -> false
-        is ApiError.HostNotAllowed, is ApiError.TrustRefused -> true
-    }
+internal fun ApiError.leftNothingOnTheServer(): Boolean = when (this) {
+    is ApiError.Http -> status in 400..499
+
+    is ApiError.Network ->
+        cause is ConnectException || cause is UnknownHostException ||
+            cause is NoRouteToHostException
+
+    is ApiError.InvalidResponse -> false
+
+    is ApiError.HostNotAllowed, is ApiError.TrustRefused -> true
+}
 
 /**
  * True when a request that failed with this error is worth sending again at once: its connection

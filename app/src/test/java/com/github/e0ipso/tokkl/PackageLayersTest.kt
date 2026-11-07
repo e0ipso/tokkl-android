@@ -78,7 +78,11 @@ class PackageLayersTest {
 
     companion object {
         /** The layer of [pkg], counted from 0 for the lowest. */
-        fun layerOf(pkg: String): Int = LAYERS.indexOfFirst { pkg in it }.also { check(it >= 0) { "$pkg has no layer" } }
+        fun layerOf(pkg: String): Int = LAYERS.indexOfFirst { pkg in it }.also {
+            check(
+                it >= 0,
+            ) { "$pkg has no layer" }
+        }
 
         /**
          * The layers, lowest first. Core leaves import no app package. Core data holds what the

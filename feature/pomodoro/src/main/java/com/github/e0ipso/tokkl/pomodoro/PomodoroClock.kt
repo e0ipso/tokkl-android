@@ -18,9 +18,11 @@ fun HeldTimerState.phaseClockAt(deviceNow: Instant): PomodoroClock? {
     return clockFor(Duration.between(serverNow(deviceNow), end).toMillis())
 }
 
-private fun clockFor(remainingMillis: Long): PomodoroClock =
-    if (remainingMillis >= 0) PomodoroClock(false, (remainingMillis + 999) / 1000)
-    else PomodoroClock(true, -remainingMillis / 1000)
+private fun clockFor(remainingMillis: Long): PomodoroClock = if (remainingMillis >= 0) {
+    PomodoroClock(false, (remainingMillis + 999) / 1000)
+} else {
+    PomodoroClock(true, -remainingMillis / 1000)
+}
 
 /**
  * The ringing phase's clock at the phone's [deviceNow]: time left before its planned end, or the

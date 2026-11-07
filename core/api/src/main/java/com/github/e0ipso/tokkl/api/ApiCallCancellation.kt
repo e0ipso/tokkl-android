@@ -1,7 +1,7 @@
 package com.github.e0ipso.tokkl.api
 
-import java.io.InterruptedIOException
 import okhttp3.Call
+import java.io.InterruptedIOException
 
 /** Cancels just this operation's calls, including a call registered after cancellation. */
 class ApiCallCancellation {
@@ -14,7 +14,9 @@ class ApiCallCancellation {
     }
 
     @Synchronized
-    internal fun detach(call: Call) { calls.remove(call) }
+    internal fun detach(call: Call) {
+        calls.remove(call)
+    }
 
     @Synchronized
     fun cancel() {

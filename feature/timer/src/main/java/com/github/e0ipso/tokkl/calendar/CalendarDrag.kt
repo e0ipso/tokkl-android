@@ -74,8 +74,7 @@ fun fitMoveInDay(movedStart: Instant, duration: Duration, originalStop: Instant,
 }
 
 /** A clock minute rounded to whole drag steps of [step], kept on the day, as snap in WeekCalendar.tsx. */
-fun snapToStep(minutes: Double, step: Int): Int =
-    (Math.round(minutes / step) * step).toInt().coerceIn(0, DAY_MINUTES)
+fun snapToStep(minutes: Double, step: Int): Int = (Math.round(minutes / step) * step).toInt().coerceIn(0, DAY_MINUTES)
 
 /**
  * The entry a drag on empty space from clock minute [fromMinute] to [toMinute] on [day] creates,
@@ -97,7 +96,14 @@ fun createdRange(day: LocalDate, fromMinute: Int, toMinute: Int, step: Int, time
  * shows it, and the entry keeps its elapsed duration. In [dayMode], shown on [day] alone, the
  * stop the server will store stays on that day, also on the 25-hour autumn day.
  */
-fun movedRange(start: Instant, stop: Instant, deltaMinutes: Int, day: LocalDate, dayMode: Boolean, time: AccountTime): TimeRange {
+fun movedRange(
+    start: Instant,
+    stop: Instant,
+    deltaMinutes: Int,
+    day: LocalDate,
+    dayMode: Boolean,
+    time: AccountTime,
+): TimeRange {
     var movedStart = droppedAt(start, deltaMinutes, time)
     if (dayMode) {
         val dayEnd = day.plusDays(1).atStartOfDay(time.zone).toInstant()
@@ -114,7 +120,10 @@ fun movedRange(start: Instant, stop: Instant, deltaMinutes: Int, day: LocalDate,
  */
 fun endResizedRange(start: Instant, stop: Instant, deltaMinutes: Int, step: Int, time: AccountTime): TimeRange {
     val gridStart = snappedInstant(start, time)
-    return TimeRange(gridStart, maxOf(gridStart + Duration.ofMinutes(step.toLong()), droppedAt(stop, deltaMinutes, time)))
+    return TimeRange(
+        gridStart,
+        maxOf(gridStart + Duration.ofMinutes(step.toLong()), droppedAt(stop, deltaMinutes, time)),
+    )
 }
 
 /**

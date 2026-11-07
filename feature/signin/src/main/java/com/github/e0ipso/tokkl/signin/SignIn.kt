@@ -14,9 +14,9 @@ import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.accountSettings
+import okhttp3.OkHttpClient
 import java.io.IOException
 import java.security.GeneralSecurityException
-import okhttp3.OkHttpClient
 
 /** What the user entered to sign in. `toString` never prints a secret. */
 sealed interface SignInCredentials {
@@ -138,7 +138,9 @@ class SignIn(
         if (account?.userId != null && me.id != account.userId) return SignInResult.OtherAccount
         val token = when (credentials) {
             is SignInCredentials.ApiToken -> credentials.token
-            is SignInCredentials.EmailPassword -> me.apiToken?.takeIf { it.isNotEmpty() } ?: return SignInResult.NoApiToken
+
+            is SignInCredentials.EmailPassword -> me.apiToken?.takeIf { it.isNotEmpty() }
+                ?: return SignInResult.NoApiToken
         }
         return try {
             session.save(server, token, settings)
@@ -151,24 +153,22 @@ class SignIn(
     }
 }
 
-private fun SignInCredentials.toApiCredentials(): ApiCredentials =
-    when (this) {
-        is SignInCredentials.ApiToken -> ApiCredentials.ApiToken(token)
-        is SignInCredentials.EmailPassword -> ApiCredentials.EmailPassword(email, password)
-    }
+private fun SignInCredentials.toApiCredentials(): ApiCredentials = when (this) {
+    is SignInCredentials.ApiToken -> ApiCredentials.ApiToken(token)
+    is SignInCredentials.EmailPassword -> ApiCredentials.EmailPassword(email, password)
+}
 
-private fun ApiError.toSignInResult(): SignInResult =
-    when (this) {
-        ApiError.AuthFailed -> SignInResult.BadCredentials
-        is ApiError.RateLimited -> SignInResult.RateLimited(retryAfterSeconds)
-        is ApiError.UnexpectedStatus -> SignInResult.UnexpectedStatus(status)
-        is ApiError.InvalidResponse -> SignInResult.NotTokkl
-        is ApiError.HostNotAllowed -> SignInResult.HostNotAllowed(origin)
-        is ApiError.CleartextNotConfirmed -> SignInResult.CleartextNotConfirmed(server)
-        is ApiError.UntrustedCertificate -> SignInResult.UntrustedCertificate(certificate, changed)
-        is ApiError.CertificateHostMismatch -> SignInResult.CertificateHostMismatch(host)
-        is ApiError.Network -> SignInResult.Unreachable
-    }
+private fun ApiError.toSignInResult(): SignInResult = when (this) {
+    ApiError.AuthFailed -> SignInResult.BadCredentials
+    is ApiError.RateLimited -> SignInResult.RateLimited(retryAfterSeconds)
+    is ApiError.UnexpectedStatus -> SignInResult.UnexpectedStatus(status)
+    is ApiError.InvalidResponse -> SignInResult.NotTokkl
+    is ApiError.HostNotAllowed -> SignInResult.HostNotAllowed(origin)
+    is ApiError.CleartextNotConfirmed -> SignInResult.CleartextNotConfirmed(server)
+    is ApiError.UntrustedCertificate -> SignInResult.UntrustedCertificate(certificate, changed)
+    is ApiError.CertificateHostMismatch -> SignInResult.CertificateHostMismatch(host)
+    is ApiError.Network -> SignInResult.Unreachable
+}
 
 /**
  * The account a sign-in would replace, read from the stores on each call: the stored server and

@@ -7,9 +7,9 @@ import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.catalog.CatalogChange
 import com.github.e0ipso.tokkl.catalog.CatalogModel
 import com.github.e0ipso.tokkl.catalog.CatalogState
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
+import kotlin.coroutines.CoroutineContext
 
 /** What the task list opens over the project form. */
 sealed interface TaskOverlay {
@@ -121,18 +121,22 @@ class TasksModel(
     }
 
     private fun read(api: TogglApiClient, workspace: Long): ApiResult<TasksData> {
-        val project = project ?: return ApiResult.Failure(ApiError.InvalidResponse(IllegalArgumentException("no project is open")))
+        val project = project ?: return ApiResult.Failure(
+            ApiError.InvalidResponse(IllegalArgumentException("no project is open")),
+        )
         return when (val answer = TasksServer(api, workspace, project).list()) {
-            is ApiResult.Success -> ApiResult.Success(TasksData(answer.value.filter { it.projectId == project }.sortedForList()))
+            is ApiResult.Success -> ApiResult.Success(
+                TasksData(answer.value.filter { it.projectId == project }.sortedForList()),
+            )
+
             is ApiResult.Failure -> answer
         }
     }
 }
 
 /** Open tasks before done ones, each by name ignoring case, as the web app lists them. */
-private fun List<ProjectTask>.sortedForList(): List<ProjectTask> =
-    sortedWith(
-        compareBy<ProjectTask> { !it.active }
-            .thenBy(String.CASE_INSENSITIVE_ORDER) { it.name }
-            .thenBy { it.id },
-    )
+private fun List<ProjectTask>.sortedForList(): List<ProjectTask> = sortedWith(
+    compareBy<ProjectTask> { !it.active }
+        .thenBy(String.CASE_INSENSITIVE_ORDER) { it.name }
+        .thenBy { it.id },
+)

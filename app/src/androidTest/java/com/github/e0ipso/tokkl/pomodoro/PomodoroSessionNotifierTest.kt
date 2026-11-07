@@ -8,18 +8,18 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.feature.pomodoro.R
 import com.github.e0ipso.tokkl.api.PhaseKind
+import com.github.e0ipso.tokkl.feature.pomodoro.R
 import com.github.e0ipso.tokkl.notification.RunningNotifier
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
-import java.time.Instant
-import java.util.UUID
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.Instant
+import java.util.UUID
 
 /** Native notification and immutable PendingIntent contracts, with no fixture server writes. */
 class PomodoroSessionNotifierTest {
@@ -52,7 +52,10 @@ class PomodoroSessionNotifierTest {
         val notifier = PomodoroSessionNotifier(context)
         val first = notifier.build(content, "account-a")
         val same = notifier.build(content, "account-a")
-        val next = notifier.build(checkNotNull(heldSession(PhaseKind.SHORT_REST, start.plusSeconds(1500), 300).notificationContent()), "account-a")
+        val next = notifier.build(
+            checkNotNull(heldSession(PhaseKind.SHORT_REST, start.plusSeconds(1500), 300).notificationContent()),
+            "account-a",
+        )
         val account = notifier.build(content, "account-b")
         val revision = notifier.build(content.copy(revision = content.revision + 1), "account-a")
         try {
@@ -108,7 +111,8 @@ class PomodoroSessionNotifierTest {
         }
     }
 
-    @Test @SdkSuppress(minSdkVersion = 33)
+    @Test
+    @SdkSuppress(minSdkVersion = 33)
     fun aDeniedNotificationPermissionDoesNotPostOrThrow() {
         val denied = object : ContextWrapper(context) {
             override fun checkSelfPermission(permission: String) = PackageManager.PERMISSION_DENIED
@@ -121,10 +125,19 @@ class PomodoroSessionNotifierTest {
 
     @Test fun restPhaseLabelsAndBlankDescriptionUseResources() {
         val notifier = PomodoroSessionNotifier(context)
-        for ((kind, label) in listOf(PhaseKind.SHORT_REST to R.string.pomodoro_session_short_rest, PhaseKind.LONG_REST to R.string.pomodoro_session_long_rest)) {
+        for ((kind, label) in listOf(
+            PhaseKind.SHORT_REST to R.string.pomodoro_session_short_rest,
+            PhaseKind.LONG_REST to R.string.pomodoro_session_long_rest,
+        )) {
             val built = notifier.build(checkNotNull(heldSession(kind, start, 300).notificationContent()), "labels")
-            assertEquals(context.getString(R.string.pomodoro_session_title, context.getString(label), 1, 4), built.extras.getCharSequence(Notification.EXTRA_TITLE).toString())
-            assertEquals(context.getString(R.string.pomodoro_session_no_description), built.extras.getCharSequence(Notification.EXTRA_TEXT).toString())
+            assertEquals(
+                context.getString(R.string.pomodoro_session_title, context.getString(label), 1, 4),
+                built.extras.getCharSequence(Notification.EXTRA_TITLE).toString(),
+            )
+            assertEquals(
+                context.getString(R.string.pomodoro_session_no_description),
+                built.extras.getCharSequence(Notification.EXTRA_TEXT).toString(),
+            )
         }
     }
 }

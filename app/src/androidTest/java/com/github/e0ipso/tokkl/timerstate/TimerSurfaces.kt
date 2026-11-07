@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.timerstate
 
-import com.github.e0ipso.tokkl.components.koinViewModels
 import android.app.Activity
 import android.app.Notification
 import android.app.NotificationManager
@@ -13,6 +12,7 @@ import androidx.compose.ui.test.hasText
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
 import androidx.test.runner.lifecycle.Stage
+import com.github.e0ipso.tokkl.components.koinViewModels
 import com.github.e0ipso.tokkl.feature.pomodoro.R
 import com.github.e0ipso.tokkl.notification.RunningNotifier
 import com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmActivity
@@ -30,7 +30,14 @@ internal object TimerSurfaces {
     private val context get() = instrumentation.targetContext
     private val notifications get() = context.getSystemService(NotificationManager::class.java)
 
-    private val OPEN_STAGES = listOf(Stage.PRE_ON_CREATE, Stage.CREATED, Stage.STARTED, Stage.RESUMED, Stage.PAUSED, Stage.STOPPED)
+    private val OPEN_STAGES = listOf(
+        Stage.PRE_ON_CREATE,
+        Stage.CREATED,
+        Stage.STARTED,
+        Stage.RESUMED,
+        Stage.PAUSED,
+        Stage.STOPPED,
+    )
 
     /**
      * Waits for the running timer's notification, running or paused as [ongoing] says: the one
@@ -47,10 +54,14 @@ internal object TimerSurfaces {
                     (it.notification.flags and Notification.FLAG_ONGOING_EVENT != 0) == ongoing
             }?.let { return it.notification }
             if (SystemClock.elapsedRealtime() > deadline) {
-                throw AssertionError("no running notification with ongoing=$ongoing: " + withId.joinToString {
-                    "${it.key} tag=${it.tag} flags=${it.notification.flags} channel=${it.notification.channelId} " +
-                        "group=${it.notification.group} actions=${it.notification.actions?.map { action -> action.title }}"
-                })
+                throw AssertionError(
+                    "no running notification with ongoing=$ongoing: " + withId.joinToString {
+                        "${it.key} tag=${it.tag} flags=${it.notification.flags} channel=${it.notification.channelId} " +
+                            "group=${it.notification.group} actions=${it.notification.actions?.map { action ->
+                                action.title
+                            }}"
+                    },
+                )
             }
             SystemClock.sleep(POLL_MS)
         }

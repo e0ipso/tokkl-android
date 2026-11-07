@@ -4,8 +4,8 @@ import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.TogglApiClient
-import java.time.temporal.ChronoUnit
 import kotlinx.serialization.builtins.nullable
+import java.time.temporal.ChronoUnit
 
 /** The change as it went to the server, the server's id for its entry, and the entry as the server stored it. */
 internal class SentChange(val change: PendingChange, val serverId: Long, val entry: CachedTimeEntry?)
@@ -29,7 +29,15 @@ internal class ChangeTries(
     /** Sends an update, a legacy stop or a restore as [request] builds it. */
     fun update(api: TogglApiClient, change: PendingChange): ApiResult<SentChange> {
         val request = change.request(api.server, allDay())
-        return when (val result = api.send(request.method, request.url, request.body, ServerTimeEntry.serializer(), resend = false)) {
+        return when (
+            val result = api.send(
+                request.method,
+                request.url,
+                request.body,
+                ServerTimeEntry.serializer(),
+                resend = false,
+            )
+        ) {
             is ApiResult.Success -> ApiResult.Success(SentChange(change, result.value.id, result.value.toCached()))
             is ApiResult.Failure -> result
         }
@@ -39,18 +47,34 @@ internal class ChangeTries(
     fun capturedStop(api: TogglApiClient, change: PendingChange): ApiResult<SentChange> {
         if (change.maybeSent) {
             when (val found = stoppedOnServer(api, change)) {
-                is ApiResult.Success -> if (found.value) return ApiResult.Success(SentChange(change, change.entryId, if (change.shortStop) null else change.entry()))
+                is ApiResult.Success -> if (found.value) {
+                    return ApiResult.Success(
+                        SentChange(change, change.entryId, if (change.shortStop) null else change.entry()),
+                    )
+                }
+
                 is ApiResult.Failure -> return found
             }
         }
         store.maybeSent(change, true)
         val request = change.request(api.server, allDay())
-        return when (val result = api.send(request.method, request.url, request.body, ServerTimeEntry.serializer(), resend = false)) {
+        return when (
+            val result = api.send(
+                request.method,
+                request.url,
+                request.body,
+                ServerTimeEntry.serializer(),
+                resend = false,
+            )
+        ) {
             is ApiResult.Success -> if (result.value.matchesStop(change)) {
-                ApiResult.Success(SentChange(change, result.value.id, if (change.shortStop) null else result.value.toCached()))
+                ApiResult.Success(
+                    SentChange(change, result.value.id, if (change.shortStop) null else result.value.toCached()),
+                )
             } else {
                 ApiResult.Failure(ApiError.UnexpectedStatus(CONFLICT, "The server stored a different Stop outcome"))
             }
+
             is ApiResult.Failure -> result
         }
     }
@@ -65,7 +89,12 @@ internal class ChangeTries(
     fun create(api: TogglApiClient, queued: PendingChange): ApiResult<SentChange> {
         if (queued.maybeSent) {
             when (val found = earlierCopy(api, queued, spans, store)) {
-                is ApiResult.Success -> found.value?.let { return ApiResult.Success(SentChange(queued, it.id, it.toCached())) }
+                is ApiResult.Success -> found.value?.let {
+                    return ApiResult.Success(
+                        SentChange(queued, it.id, it.toCached()),
+                    )
+                }
+
                 is ApiResult.Failure -> return found
             }
         }
@@ -79,8 +108,17 @@ internal class ChangeTries(
         }
         if (!change.maybeSent) store.maybeSent(change, true)
         val request = change.request(api.server, allDay())
-        return when (val result = api.send(request.method, request.url, request.body, ServerTimeEntry.serializer(), resend = false)) {
+        return when (
+            val result = api.send(
+                request.method,
+                request.url,
+                request.body,
+                ServerTimeEntry.serializer(),
+                resend = false,
+            )
+        ) {
             is ApiResult.Success -> ApiResult.Success(SentChange(change, result.value.id, result.value.toCached()))
+
             is ApiResult.Failure -> {
                 if (result.error.leftNothingOnTheServer()) store.maybeSent(change, false)
                 result
@@ -101,12 +139,17 @@ internal class ChangeTries(
         val request = change.request(api.server, allDay())
         return when (val result = api.sendNoContent(request.method, request.url, request.body, resend = false)) {
             is ApiResult.Success -> ApiResult.Success(SentChange(change, change.entryId, entry = null))
+
             is ApiResult.Failure -> when {
-                (result.error as? ApiError.Http)?.status == NOT_FOUND && change.maybeSent -> ApiResult.Success(SentChange(change, change.entryId, entry = null))
+                (result.error as? ApiError.Http)?.status == NOT_FOUND && change.maybeSent -> ApiResult.Success(
+                    SentChange(change, change.entryId, entry = null),
+                )
+
                 !change.maybeSent -> {
                     if (result.error.leftNothingOnTheServer()) store.maybeSent(change, false)
                     result
                 }
+
                 else -> result
             }
         }

@@ -18,8 +18,10 @@ import org.junit.Test
 class PomodoroViewModelTest {
     private val fixtures = mutableListOf<PageFixture>()
     private fun idle() = PageFixture().also { fixtures += it }
-    private fun running(description: String = "Focused work") =
-        PageFixture(heldState(revision = 4, description = description), cachedEntry(description)).also { fixtures += it }
+    private fun running(description: String = "Focused work") = PageFixture(
+        heldState(revision = 4, description = description),
+        cachedEntry(description),
+    ).also { fixtures += it }
 
     @After
     fun stop() = fixtures.forEach { it.close() }
@@ -44,12 +46,23 @@ class PomodoroViewModelTest {
     @Test
     fun rangesMatchWhatTheServerAcceptsAndAnyOtherLengthBlocksStart() {
         val f = idle()
-        assertEquals(PomodoroLengths("180", "60", "60", "12").sessionLengths()!!.run { listOf(workMinutes, shortRestMinutes, longRestMinutes, longRestEvery) }, listOf(180, 60, 60, 12))
+        assertEquals(
+            PomodoroLengths(
+                "180",
+                "60",
+                "60",
+                "12",
+            ).sessionLengths()!!.run { listOf(workMinutes, shortRestMinutes, longRestMinutes, longRestEvery) },
+            listOf(180, 60, 60, 12),
+        )
         assertNotNull(PomodoroLengths("1", "1", "1", "1").sessionLengths())
         for (bad in listOf(
-            PomodoroLengths("181", "5", "15", "4"), PomodoroLengths("25", "61", "15", "4"),
-            PomodoroLengths("25", "5", "0", "4"), PomodoroLengths("25", "5", "15", "13"),
-            PomodoroLengths("", "5", "15", "4"), PomodoroLengths("25", "5.5", "15", "4"),
+            PomodoroLengths("181", "5", "15", "4"),
+            PomodoroLengths("25", "61", "15", "4"),
+            PomodoroLengths("25", "5", "0", "4"),
+            PomodoroLengths("25", "5", "15", "13"),
+            PomodoroLengths("", "5", "15", "4"),
+            PomodoroLengths("25", "5.5", "15", "4"),
         )) {
             f.page.editLengths(bad)
             assertFalse("$bad", f.page.state.value.canStart)
@@ -65,7 +78,12 @@ class PomodoroViewModelTest {
         f.page.editFields(EntryFields(description = "First work", tags = listOf("deep")))
         var started = 0
         f.page.start { started++ }!!.join()
-        assertEquals(listOf("start $WORKSPACE EntryFields(description=First work, projectId=null, taskId=null, tags=[deep], billable=false) 30/5/12/2"), f.server.calls)
+        assertEquals(
+            listOf(
+                "start $WORKSPACE EntryFields(description=First work, projectId=null, taskId=null, tags=[deep], billable=false) 30/5/12/2",
+            ),
+            f.server.calls,
+        )
         assertEquals(1, started)
         assertTrue(f.changes.updates.isEmpty())
         // The server's answer is the session the page shows.

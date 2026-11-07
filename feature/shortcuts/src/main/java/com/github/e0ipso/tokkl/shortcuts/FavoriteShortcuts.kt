@@ -7,11 +7,11 @@ import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.fields
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
-import java.security.MessageDigest
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
+import java.security.MessageDigest
 
 /**
  * One favorite as a launcher shortcut (docs/PRD.md N6).

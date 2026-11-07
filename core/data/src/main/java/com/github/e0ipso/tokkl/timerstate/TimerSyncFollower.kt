@@ -22,7 +22,8 @@ class TimerSyncFollower(
     private val sender: ChangeSender,
     private val syncWatcher: TimerSyncWatcher,
     private val slot: TimerSyncServiceSlot,
-) : AccountRefreshListener, AccountDataOwner {
+) : AccountRefreshListener,
+    AccountDataOwner {
 
     override val signOutOrder = SignOutOrder.TIMER_SYNC
 

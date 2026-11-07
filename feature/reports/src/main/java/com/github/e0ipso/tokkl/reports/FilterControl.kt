@@ -11,11 +11,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedButton
@@ -45,13 +45,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.github.e0ipso.tokkl.feature.reports.R
-import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.time.jsTrim
 import com.github.e0ipso.tokkl.ui.CheckboxOptionRow
 import com.github.e0ipso.tokkl.ui.FillScreenWindow
 import com.github.e0ipso.tokkl.ui.RadioOptionRow
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * The Filters button under the range. It names every active filter in words, so the filters show
@@ -73,10 +73,19 @@ internal fun FilterControl(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = LocalMinimumInteractiveComponentSize.current)
-            .semantics { onClick(label = changeLabel) { open = true; true } },
+            .semantics {
+                onClick(label = changeLabel) {
+                    open = true
+                    true
+                }
+            },
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(stringResource(R.string.reports_filters), style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center)
+            Text(
+                stringResource(R.string.reports_filters),
+                style = MaterialTheme.typography.labelLarge,
+                textAlign = TextAlign.Center,
+            )
             for (line in filterLines(filters, options)) {
                 Text(
                     text = line,
@@ -91,7 +100,10 @@ internal fun FilterControl(
         FilterSheet(
             initial = filters,
             options = options,
-            onApply = { open = false; onApply(it) },
+            onApply = {
+                open = false
+                onApply(it)
+            },
             onDismiss = { open = false },
         )
     }
@@ -104,17 +116,44 @@ internal fun FilterControl(
  */
 @Composable
 private fun filterLines(filters: ReportFilters, options: FilterOptions): List<String> = buildList {
-    idLine(R.string.reports_filter_project, R.string.reports_without_project, filters.projects, filters.projectsNot, options.projects)?.let(::add)
-    idLine(R.string.reports_filter_client, R.string.reports_filter_without_client, filters.clients, filters.clientsNot, options.clients)?.let(::add)
-    idLine(R.string.reports_filter_tag, R.string.reports_filter_without_tags, filters.tags, filters.tagsNot, options.tags)?.let(::add)
+    idLine(
+        R.string.reports_filter_project,
+        R.string.reports_without_project,
+        filters.projects,
+        filters.projectsNot,
+        options.projects,
+    )?.let(::add)
+    idLine(
+        R.string.reports_filter_client,
+        R.string.reports_filter_without_client,
+        filters.clients,
+        filters.clientsNot,
+        options.clients,
+    )?.let(::add)
+    idLine(
+        R.string.reports_filter_tag,
+        R.string.reports_filter_without_tags,
+        filters.tags,
+        filters.tagsNot,
+        options.tags,
+    )?.let(::add)
     when (filters.billable) {
         BillableFilter.ALL -> Unit
-        BillableFilter.BILLABLE, BillableFilter.NON_BILLABLE -> add(stringResource(BILLABLE_LABELS.getValue(filters.billable)))
+
+        BillableFilter.BILLABLE, BillableFilter.NON_BILLABLE -> add(
+            stringResource(BILLABLE_LABELS.getValue(filters.billable)),
+        )
     }
 }
 
 @Composable
-private fun idLine(@StringRes name: Int, @StringRes without: Int, ids: List<Long?>, negated: Boolean, options: List<FilterOption>): String? {
+private fun idLine(
+    @StringRes name: Int,
+    @StringRes without: Int,
+    ids: List<Long?>,
+    negated: Boolean,
+    options: List<FilterOption>,
+): String? {
     if (ids.isEmpty()) return null
     val names = options.associate { it.id to it.name }
     val withoutName = stringResource(without)
@@ -124,7 +163,11 @@ private fun idLine(@StringRes name: Int, @StringRes without: Int, ids: List<Long
     } else {
         picked.filterNotNull().joinToString(", ")
     }
-    return stringResource(if (negated) R.string.reports_filter_line_not else R.string.reports_filter_line, stringResource(name), value)
+    return stringResource(
+        if (negated) R.string.reports_filter_line_not else R.string.reports_filter_line,
+        stringResource(name),
+        value,
+    )
 }
 
 /**
@@ -136,7 +179,12 @@ private fun idLine(@StringRes name: Int, @StringRes without: Int, ids: List<Long
  * filters as they were.
  */
 @Composable
-private fun FilterSheet(initial: ReportFilters, options: FilterOptions, onApply: (ReportFilters) -> Unit, onDismiss: () -> Unit) {
+private fun FilterSheet(
+    initial: ReportFilters,
+    options: FilterOptions,
+    onApply: (ReportFilters) -> Unit,
+    onDismiss: () -> Unit,
+) {
     var draft by rememberSaveable(stateSaver = FILTERS_SAVER) { mutableStateOf(initial) }
     var query by rememberSaveable { mutableStateOf("") }
     val search = query.jsTrim()
@@ -149,7 +197,10 @@ private fun FilterSheet(initial: ReportFilters, options: FilterOptions, onApply:
                     modifier = Modifier.padding(horizontal = TokklTheme.spacing.space1),
                 ) {
                     IconButton(onClick = onDismiss) {
-                        Icon(painterResource(UiR.drawable.ic_close), contentDescription = stringResource(R.string.reports_cancel))
+                        Icon(
+                            painterResource(UiR.drawable.ic_close),
+                            contentDescription = stringResource(R.string.reports_cancel),
+                        )
                     }
                     Text(
                         text = stringResource(R.string.reports_filters),
@@ -278,7 +329,12 @@ private fun LazyListScope.idSection(
  * not the only sign.
  */
 @Composable
-private fun ModeSwitch(@StringRes filter: Int, negated: Boolean, onNegatedChange: (Boolean) -> Unit, modifier: Modifier = Modifier) {
+private fun ModeSwitch(
+    @StringRes filter: Int,
+    negated: Boolean,
+    onNegatedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val name = stringResource(filter)
     SingleChoiceSegmentedButtonRow(modifier.fillMaxWidth().padding(bottom = TokklTheme.spacing.inGroup)) {
         for ((index, mode) in listOf(false, true).withIndex()) {
@@ -291,7 +347,11 @@ private fun ModeSwitch(@StringRes filter: Int, negated: Boolean, onNegatedChange
                 onClick = { onNegatedChange(mode) },
                 shape = SegmentedButtonDefaults.itemShape(index, 2),
                 modifier = Modifier.semantics { contentDescription = description },
-                label = { Text(stringResource(if (mode) R.string.reports_filter_mode_not else R.string.reports_filter_mode_is)) },
+                label = {
+                    Text(
+                        stringResource(if (mode) R.string.reports_filter_mode_not else R.string.reports_filter_mode_is),
+                    )
+                },
             )
         }
     }
@@ -318,7 +378,13 @@ private val BILLABLE_LABELS = mapOf(
 /** Ids are positive on Tokkl and Toggl, so 0 can stand for null, the "without" choice, in a saved state. */
 private val FILTERS_SAVER: Saver<ReportFilters, Any> = listSaver(
     save = {
-        listOf(it.projects.saved(), it.clients.saved(), it.tags.saved(), it.billable.ordinal, booleanArrayOf(it.projectsNot, it.clientsNot, it.tagsNot))
+        listOf(
+            it.projects.saved(),
+            it.clients.saved(),
+            it.tags.saved(),
+            it.billable.ordinal,
+            booleanArrayOf(it.projectsNot, it.clientsNot, it.tagsNot),
+        )
     },
     restore = {
         val negated = it[4] as BooleanArray

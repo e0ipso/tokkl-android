@@ -11,12 +11,7 @@ import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import java.time.Instant
 
 /** Session-only inputs. Editing these never changes the account's defaults. */
-data class PomodoroLengths(
-    val work: String,
-    val shortRest: String,
-    val longRest: String,
-    val every: String,
-) {
+data class PomodoroLengths(val work: String, val shortRest: String, val longRest: String, val every: String) {
     /**
      * The four lengths a session starts with, or null while one is not a whole number in the
      * range Tokkl accepts. Tokkl answers a length outside its range with 400, so the form checks first.
@@ -31,8 +26,10 @@ data class PomodoroLengths(
 
     companion object {
         fun from(defaults: PomodoroDefaults) = PomodoroLengths(
-            defaults.workMinutes.toString(), defaults.shortRestMinutes.toString(),
-            defaults.longRestMinutes.toString(), defaults.longRestEvery.toString(),
+            defaults.workMinutes.toString(),
+            defaults.shortRestMinutes.toString(),
+            defaults.longRestMinutes.toString(),
+            defaults.longRestEvery.toString(),
         )
     }
 }
@@ -80,5 +77,6 @@ data class PomodoroPageState(
     val workspaceId: Long?
         get() = held?.state?.takeIf { it.pomodoro != null }?.runningEntry?.workspaceId ?: account?.defaultWorkspaceId
 
-    val canStart: Boolean get() = !loading && !busy && pomodoro == null && workspaceId != null && lengths.sessionLengths() != null
+    val canStart: Boolean get() = !loading && !busy && pomodoro == null && workspaceId != null &&
+        lengths.sessionLengths() != null
 }

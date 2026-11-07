@@ -18,9 +18,6 @@ import androidx.test.runner.lifecycle.Stage
 import com.github.e0ipso.tokkl.BackgroundTrip
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.feature.clients.R as ClientsR
-import com.github.e0ipso.tokkl.feature.projects.R as ProjectsR
-import com.github.e0ipso.tokkl.feature.tags.R as TagsR
 import com.github.e0ipso.tokkl.RequestCounter
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
@@ -44,6 +41,9 @@ import org.junit.Assert.assertFalse
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import com.github.e0ipso.tokkl.feature.clients.R as ClientsR
+import com.github.e0ipso.tokkl.feature.projects.R as ProjectsR
+import com.github.e0ipso.tokkl.feature.tags.R as TagsR
 
 /**
  * The projects, clients and tags pages load their list again when the app comes back to the
@@ -103,7 +103,10 @@ class CatalogForegroundTest {
     @Test
     fun aProjectRenamedElsewhereShowsAfterTheForegroundAndARotationLoadsNothing() {
         val id = create("projects", "Website")
-        val counter = RequestCounter(TokklTestServer.url, "/workspaces/${account.workspaceId}/projects HTTP/1.1").also { this.counter = it }
+        val counter = RequestCounter(
+            TokklTestServer.url,
+            "/workspaces/${account.workspaceId}/projects HTTP/1.1",
+        ).also { this.counter = it }
         ServerTrustStore(context).confirmCleartext(counter.url)
         Session(context).save(counter.url, account.apiToken)
 
@@ -123,7 +126,10 @@ class CatalogForegroundTest {
 
         scenario!!.onActivity { it.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE }
         awaitCondition("the activity is recreated in landscape") {
-            resumedActivity()?.takeIf { it !== activity && it.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE }
+            resumedActivity()?.takeIf {
+                it !== activity &&
+                    it.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+            }
         }
         compose.waitForIdle()
         Thread.sleep(SETTLE_MS)
@@ -195,7 +201,12 @@ class CatalogForegroundTest {
      * shared HTTP client sends only there, so the rename goes through the relay too.
      */
     private fun rename(collection: String, id: Long, name: String, api: TogglApiClient = account.client) {
-        api.send("PUT", url(collection, id.toString(), api = api), buildJsonObject { put("name", name) }, JsonObject.serializer())
+        api.send(
+            "PUT",
+            url(collection, id.toString(), api = api),
+            buildJsonObject { put("name", name) },
+            JsonObject.serializer(),
+        )
             .orFail("PUT $collection/$id")
     }
 
@@ -205,7 +216,9 @@ class CatalogForegroundTest {
     private fun resumedActivity(): MainActivity? {
         var resumed: MainActivity? = null
         instrumentation.runOnMainSync {
-            resumed = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED).filterIsInstance<MainActivity>().singleOrNull()
+            resumed = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(
+                Stage.RESUMED,
+            ).filterIsInstance<MainActivity>().singleOrNull()
         }
         return resumed
     }

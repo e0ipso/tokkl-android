@@ -43,13 +43,16 @@ class PrimaryFillTest {
      * [TokklExtraColors] later is checked too. Compose's Color is a value class, so each getter
      * returns the packed Long under a name such as `getRunning-0d7_KjU`.
      */
-    private fun colours(colors: TokklExtraColors): Map<String, Long> =
-        TokklExtraColors::class.java.methods
-            .filter { it.parameterCount == 0 && it.name.startsWith("get") && it.returnType == Long::class.javaPrimitiveType }
-            .associate { method ->
-                val name = method.name.removePrefix("get").substringBefore('-').replaceFirstChar { it.lowercase() }
-                name to method.invoke(colors) as Long
-            }
+    private fun colours(colors: TokklExtraColors): Map<String, Long> = TokklExtraColors::class.java.methods
+        .filter {
+            it.parameterCount == 0 && it.name.startsWith(
+                "get",
+            ) && it.returnType == Long::class.javaPrimitiveType
+        }
+        .associate { method ->
+            val name = method.name.removePrefix("get").substringBefore('-').replaceFirstChar { it.lowercase() }
+            name to method.invoke(colors) as Long
+        }
 
     private companion object {
         // Material 3's baseline primary and onPrimary, as a wallpaper scheme would give them.

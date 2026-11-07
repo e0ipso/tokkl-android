@@ -50,14 +50,11 @@ object ConfiguredTrust {
     private object TrustNothing : ServerTrust {
         override fun isCleartextConfirmed(server: ServerUrl): Boolean = false
 
-        override fun confirmCleartext(server: ServerUrl) {
-            throw IOException("No trust store is configured")
-        }
+        override fun confirmCleartext(server: ServerUrl): Unit = throw IOException("No trust store is configured")
 
         override fun pinnedSha256(host: String, port: Int): String? = null
 
-        override fun pinCertificate(certificate: ServerCertificate) {
+        override fun pinCertificate(certificate: ServerCertificate): Unit =
             throw IOException("No trust store is configured")
-        }
     }
 }

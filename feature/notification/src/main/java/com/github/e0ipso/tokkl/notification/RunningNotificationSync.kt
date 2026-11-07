@@ -3,8 +3,6 @@ package com.github.e0ipso.tokkl.notification
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.SignOutOrder
 import com.github.e0ipso.tokkl.storage.ValueStore
-import java.io.IOException
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
@@ -12,6 +10,8 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.io.IOException
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Keeps the running timer's notification in step with the running entry on the phone

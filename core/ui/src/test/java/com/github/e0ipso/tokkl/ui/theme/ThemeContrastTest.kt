@@ -15,12 +15,10 @@ import org.junit.Test
 class ThemeContrastTest {
 
     @Test
-    fun lightSchemePairsMeetWcagAa() =
-        assertPairsPass("light", TokklLightColorScheme, TokklLightExtraColors)
+    fun lightSchemePairsMeetWcagAa() = assertPairsPass("light", TokklLightColorScheme, TokklLightExtraColors)
 
     @Test
-    fun darkSchemePairsMeetWcagAa() =
-        assertPairsPass("dark", TokklDarkColorScheme, TokklDarkExtraColors)
+    fun darkSchemePairsMeetWcagAa() = assertPairsPass("dark", TokklDarkColorScheme, TokklDarkExtraColors)
 
     private enum class Kind(val minimum: Double) { TEXT(4.5), NON_TEXT(3.0) }
 
@@ -87,7 +85,10 @@ class ThemeContrastTest {
             Pair("onTertiaryFixed on tertiaryFixedDim", s.onTertiaryFixed, s.tertiaryFixedDim, Kind.TEXT),
             Pair("onTertiaryFixedVariant on tertiaryFixed", s.onTertiaryFixedVariant, s.tertiaryFixed, Kind.TEXT),
         )
-        return surfacePairs + surfaceOnlyMarks + fills + huePairs() + stickerPairs(s, x) + navigationBarPairs(s) + texturePairs(s, x) + sceneOverlapPairs(s, x) +
+        return surfacePairs + surfaceOnlyMarks + fills + huePairs() + stickerPairs(
+            s,
+            x,
+        ) + navigationBarPairs(s) + texturePairs(s, x) + sceneOverlapPairs(s, x) +
             reportPairs(s, x)
     }
 
@@ -119,8 +120,18 @@ class ThemeContrastTest {
             listOfNotNull(
                 Pair("day sticker text on $name", hue.onFill, hue.fill, Kind.TEXT),
                 Pair("today badge, $name on its text colour", hue.fill, hue.onFill, Kind.TEXT),
-                Pair("$name sticker outline on surface", x.stickerOutline, s.surface, Kind.NON_TEXT).takeIf { outlined },
-                Pair("$name sticker outline on background", x.stickerOutline, s.background, Kind.NON_TEXT).takeIf { outlined },
+                Pair(
+                    "$name sticker outline on surface",
+                    x.stickerOutline,
+                    s.surface,
+                    Kind.NON_TEXT,
+                ).takeIf { outlined },
+                Pair(
+                    "$name sticker outline on background",
+                    x.stickerOutline,
+                    s.background,
+                    Kind.NON_TEXT,
+                ).takeIf { outlined },
                 Pair("$name sticker on surface", hue.fill, s.surface, Kind.NON_TEXT).takeUnless { outlined },
             )
         }
@@ -157,7 +168,11 @@ class ThemeContrastTest {
      * pairs. sceneOverlapPairs has the pairs where the scene's gradients overlap.
      */
     private fun texturePairs(s: ColorScheme, x: TokklExtraColors): List<Pair> {
-        val texture = listOf("textureGlow" to x.textureGlow, "textureSwell" to x.textureSwell, "textureStripe" to x.textureStripe)
+        val texture = listOf(
+            "textureGlow" to x.textureGlow,
+            "textureSwell" to x.textureSwell,
+            "textureStripe" to x.textureStripe,
+        )
         val scene = listOf("sceneGlow" to x.sceneGlow, "sceneSwell" to x.sceneSwell, "sceneStripe" to x.sceneStripe)
         val text = texture.flatMap { (name, colour) ->
             listOf(
@@ -192,7 +207,12 @@ class ThemeContrastTest {
             overlapPair("wordmarkHalo", x.wordmarkHalo, Kind.NON_TEXT, corners).takeIf { haloDrawn },
             overlapPair("the wordmark's outline", WORDMARK_OUTLINE, Kind.NON_TEXT, corners).takeUnless { haloDrawn },
         )
-        val outlineOnHalo = Pair("the wordmark's outline on wordmarkHalo", WORDMARK_OUTLINE, x.wordmarkHalo, Kind.NON_TEXT)
+        val outlineOnHalo = Pair(
+            "the wordmark's outline on wordmarkHalo",
+            WORDMARK_OUTLINE,
+            x.wordmarkHalo,
+            Kind.NON_TEXT,
+        )
         return onScene + listOfNotNull(outlineOnHalo.takeIf { haloDrawn })
     }
 
@@ -212,8 +232,14 @@ class ThemeContrastTest {
     private fun overlapPair(name: String, colour: Color, kind: Kind, corners: Corners): Pair {
         val own = luminance(colour)
         return when {
-            own <= luminance(corners.darkest) -> Pair("$name on the scene overlap's darkest corner", colour, corners.darkest, kind)
-            own >= luminance(corners.lightest) -> Pair("$name on the scene overlap's lightest corner", colour, corners.lightest, kind)
+            own <= luminance(
+                corners.darkest,
+            ) -> Pair("$name on the scene overlap's darkest corner", colour, corners.darkest, kind)
+
+            own >= luminance(
+                corners.lightest,
+            ) -> Pair("$name on the scene overlap's lightest corner", colour, corners.lightest, kind)
+
             else -> Pair("$name, which some scene overlap matches", colour, colour, kind)
         }
     }
@@ -234,7 +260,12 @@ class ThemeContrastTest {
             Pair("chartBillable on the bar track, chartBand", x.chartBillable, x.chartBand, Kind.NON_TEXT),
             Pair("chartOther on the bar track, chartBand", x.chartOther, x.chartBand, Kind.NON_TEXT),
         )
-        val dot = Pair("project dot without a colour on surface", projectMark(null, x.projectMix, s.onSurfaceVariant), s.surface, Kind.NON_TEXT)
+        val dot = Pair(
+            "project dot without a colour on surface",
+            projectMark(null, x.projectMix, s.onSurfaceVariant),
+            s.surface,
+            Kind.NON_TEXT,
+        )
         return marks + dot
     }
 

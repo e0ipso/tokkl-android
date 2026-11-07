@@ -35,7 +35,10 @@ class SnapUnsentTest {
         val from = Instant.parse("2026-10-14T09:00:00.900Z")
         val to = Instant.parse("2026-10-14T09:00:30.100Z")
         assertEquals(null, snapSpan(from, to, 1.0, madrid))
-        assertEquals(SnappedSpan(Instant.parse("2026-10-14T09:00:00Z"), Instant.parse("2026-10-14T09:01:00Z")), snapUnsent(from, to, 1.0, madrid))
+        assertEquals(
+            SnappedSpan(Instant.parse("2026-10-14T09:00:00Z"), Instant.parse("2026-10-14T09:01:00Z")),
+            snapUnsent(from, to, 1.0, madrid),
+        )
     }
 
     @Test

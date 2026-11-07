@@ -36,5 +36,4 @@ class TopLevelPageHueTest {
     fun reportsKeepsItsOwnHueOnTheMoreSheet() {
         assertSame(SectionHues.reports, TopLevelPage.REPORTS.hue)
     }
-
 }

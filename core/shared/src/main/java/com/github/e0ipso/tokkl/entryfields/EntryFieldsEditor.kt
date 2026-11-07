@@ -45,8 +45,8 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.github.e0ipso.tokkl.core.shared.R
 import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.core.shared.R
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.ui.projectMark
 import com.github.e0ipso.tokkl.ui.theme.FrameWidth
@@ -56,7 +56,12 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
  * The project, task and tag picker for one entry, such as picker/EntityPicker for the entry's
  * workspace: [original] is what the entry had when editing started, [picked] what it has now.
  */
-typealias EntryPicker = @Composable (original: Picked, picked: Picked, onPickedChange: (Picked) -> Unit, modifier: Modifier) -> Unit
+typealias EntryPicker = @Composable (
+    original: Picked,
+    picked: Picked,
+    onPickedChange: (Picked) -> Unit,
+    modifier: Modifier,
+) -> Unit
 
 /**
  * The fields of one time entry that the user picks (docs/PRD.md T1, H2), as the web app's
@@ -175,7 +180,10 @@ private fun DescriptionField(
             placeholder = { Text(hint, maxLines = 1, overflow = TextOverflow.Ellipsis) },
             singleLine = true,
             enabled = enabled,
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Done),
+            keyboardOptions = KeyboardOptions(
+                capitalization = KeyboardCapitalization.Sentences,
+                imeAction = ImeAction.Done,
+            ),
             keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
             modifier = fieldModifier.onFocusChanged { focus ->
                 when {
@@ -183,6 +191,7 @@ private fun DescriptionField(
                         typed = TextFieldValue(description, TextRange(description.length))
                         closed = false
                     }
+
                     !focus.isFocused && focused -> {
                         if (typed.text != description) onChange(typed.text)
                         onDone()
@@ -265,7 +274,10 @@ private fun SuggestionText(suggestion: DescriptionSuggestion) {
         if (suggestion.fields.projectId != null) {
             val muted = MaterialTheme.colorScheme.onSurfaceVariant
             val dot = projectMark(suggestion.projectColor, TokklTheme.extraColors.projectMix, muted)
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space2)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space2),
+            ) {
                 Canvas(Modifier.size(TokklTheme.spacing.space3)) { drawCircle(dot) }
                 Text(
                     text = suggestion.project ?: stringResource(R.string.entry_unknown_project),

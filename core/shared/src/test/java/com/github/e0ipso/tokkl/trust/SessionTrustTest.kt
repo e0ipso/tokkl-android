@@ -12,9 +12,6 @@ import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.api.UntrustedCertificateException
-import java.io.IOException
-import java.security.cert.CertificateException
-import javax.net.ssl.SSLHandshakeException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.json.JsonObject
@@ -27,6 +24,9 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.io.IOException
+import java.security.cert.CertificateException
+import javax.net.ssl.SSLHandshakeException
 
 /**
  * A signed-in session's requests against a MockWebServer, with the session's
@@ -123,7 +123,10 @@ class SessionTrustTest {
 
         model.refused(ApiError.UntrustedCertificate(CERTIFICATE, changed = false))
 
-        assertEquals(SessionTrust.State(ApiError.UntrustedCertificate(CERTIFICATE, changed = false), promptOpen = true), model.state.value)
+        assertEquals(
+            SessionTrust.State(ApiError.UntrustedCertificate(CERTIFICATE, changed = false), promptOpen = true),
+            model.state.value,
+        )
     }
 
     @Test
@@ -163,8 +166,12 @@ class SessionTrustTest {
         assertEquals(0, retries)
     }
 
-    private fun model(trust: ServerTrust) =
-        SessionTrust(trust, retry = { retries++ }, scope = CoroutineScope(Dispatchers.Unconfined), io = Dispatchers.Unconfined)
+    private fun model(trust: ServerTrust) = SessionTrust(
+        trust,
+        retry = { retries++ },
+        scope = CoroutineScope(Dispatchers.Unconfined),
+        io = Dispatchers.Unconfined,
+    )
 
     /** The signed-in session's client, as Session builds it. */
     private fun client(httpClient: OkHttpClient = SharedHttpClient.instance) =
@@ -180,7 +187,11 @@ class SessionTrustTest {
             .addInterceptor { chain ->
                 val pin = trust.pinnedSha256(certificate.host, certificate.port)
                 if (pin != certificate.sha256) {
-                    val refusal = UntrustedCertificateException(certificate, pinChanged = pin != null, cause = CertificateException("no trust anchor"))
+                    val refusal = UntrustedCertificateException(
+                        certificate,
+                        pinChanged = pin != null,
+                        cause = CertificateException("no trust anchor"),
+                    )
                     throw SSLHandshakeException("handshake failed").apply { initCause(refusal) }
                 }
                 chain.proceed(chain.request())

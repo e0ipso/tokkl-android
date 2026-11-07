@@ -5,12 +5,12 @@ import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.Me
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.time.DurationFormat
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonObject
+import kotlin.coroutines.CoroutineContext
 
 /** What runs after each refresh whose `GET /api/v9/me` answered. */
 fun interface AccountRefreshSteps {

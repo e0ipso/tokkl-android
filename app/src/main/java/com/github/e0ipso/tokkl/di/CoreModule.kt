@@ -12,7 +12,6 @@ import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.sync.LastAnswer
 import com.github.e0ipso.tokkl.trust.SessionTrust
-import java.time.Clock
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,6 +19,7 @@ import kotlinx.coroutines.SupervisorJob
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.binds
 import org.koin.dsl.module
+import java.time.Clock
 
 /** Dispatchers, the application scope, the wall clock and the signed-in [Session]. */
 internal val coreModule = module {

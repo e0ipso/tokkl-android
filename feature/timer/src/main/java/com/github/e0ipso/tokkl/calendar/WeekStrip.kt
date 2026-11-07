@@ -47,7 +47,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.takeOrElse
 import com.github.e0ipso.tokkl.feature.timer.R
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.DateWords
 import com.github.e0ipso.tokkl.ui.spokenDuration
@@ -56,6 +55,7 @@ import com.github.e0ipso.tokkl.ui.theme.SmallCornerShape
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.Instant
 import java.time.LocalDate
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 
 /**
  * The seven days of the chosen day's week, from the account's first day of the week, each with
@@ -68,11 +68,31 @@ import java.time.LocalDate
  * display size on a phone, the strip scrolls sideways and keeps the chosen day in sight.
  */
 @Composable
-internal fun WeekStrip(state: CalendarState.Shown, today: LocalDate, now: Instant, onSelect: (LocalDate) -> Unit, editing: CalendarEditing?) {
+internal fun WeekStrip(
+    state: CalendarState.Shown,
+    today: LocalDate,
+    now: Instant,
+    onSelect: (LocalDate) -> Unit,
+    editing: CalendarEditing?,
+) {
     // --radius-md on the top corners, as the day heads.
     val shape = MaterialTheme.shapes.small.copy(bottomStart = ZeroCornerSize, bottomEnd = ZeroCornerSize)
-    val totals = state.weekDays.map { day -> if (state.week.shows) dayTotalSeconds(state.entries, day, state.zone, now) else null }
-    val widestTotal = rememberWidestStripTotal(totals.mapNotNull { it?.let(state.settings::formatDuration) }, stripTotalStyle())
+    val totals = state.weekDays.map { day ->
+        if (state.week.shows) {
+            dayTotalSeconds(
+                state.entries,
+                day,
+                state.zone,
+                now,
+            )
+        } else {
+            null
+        }
+    }
+    val widestTotal = rememberWidestStripTotal(
+        totals.mapNotNull { it?.let(state.settings::formatDuration) },
+        stripTotalStyle(),
+    )
     val inset = TokklTheme.spacing.space1 / 2
     val minDay = LocalMinimumInteractiveComponentSize.current.takeOrElse { 48.dp }
     BoxWithConstraints(Modifier.fillMaxWidth()) {
@@ -133,8 +153,20 @@ private fun StripDay(
     val locale = LocalConfiguration.current.locales[0]
     val words = remember(resources) { DateWords(resources) }
     val scheme = MaterialTheme.colorScheme
-    val label = if (isToday) resources.getString(R.string.history_today) else resources.getString(SharedR.string.history_day, words.weekday(day), words.short(day))
-    val spoken = totalSeconds?.let { stringResource(R.string.history_day_spoken, label, spokenDuration(resources, it)) } ?: label
+    val label = if (isToday) {
+        resources.getString(
+            R.string.history_today,
+        )
+    } else {
+        resources.getString(SharedR.string.history_day, words.weekday(day), words.short(day))
+    }
+    val spoken = totalSeconds?.let {
+        stringResource(
+            R.string.history_day_spoken,
+            label,
+            spokenDuration(resources, it),
+        )
+    } ?: label
     val frame = if (selected) {
         Modifier
             .background(scheme.primaryContainer, SmallCornerShape)
@@ -206,7 +238,15 @@ private fun rememberWidestStripTotal(totals: List<String>, style: TextStyle): In
     val density = LocalDensity.current
     return remember(totals, style, measurer, density) {
         val smallest = style.copy(fontSize = StripMinFontSize)
-        totals.maxOfOrNull { measurer.measure(it, smallest, softWrap = false, maxLines = 1, density = density).size.width } ?: 0
+        totals.maxOfOrNull {
+            measurer.measure(
+                it,
+                smallest,
+                softWrap = false,
+                maxLines = 1,
+                density = density,
+            ).size.width
+        } ?: 0
     }
 }
 

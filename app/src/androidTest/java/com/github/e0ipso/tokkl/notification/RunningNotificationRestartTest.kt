@@ -16,9 +16,6 @@ import com.github.e0ipso.tokkl.components.initializeTestWorkManager
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timerstate.TimerControls
-import java.io.File
-import java.time.Instant
-import java.util.Properties
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertNotEquals
@@ -26,6 +23,9 @@ import org.junit.Assert.assertTrue
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
+import java.io.File
+import java.time.Instant
+import java.util.Properties
 
 /**
  * A notification swiped away stays away when the app opens in a new process, which is how the
@@ -83,7 +83,9 @@ class RunningNotificationRestartTest {
 
                 val edited = EntryFields(description = "Edited after the restart")
                 val start = Instant.parse(saved.getProperty("start"))
-                assertTrue(runBlocking { app.changes.update(saved.getProperty("id").toLong(), edited, start, stop = null) })
+                assertTrue(
+                    runBlocking { app.changes.update(saved.getProperty("id").toLong(), edited, start, stop = null) },
+                )
                 RunningNotifications.awaitShown("the edit") {
                     it.notification.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString() == edited.description
                 }

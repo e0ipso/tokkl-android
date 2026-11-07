@@ -38,8 +38,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.github.e0ipso.tokkl.core.shared.R
 import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.core.shared.R
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.ui.FillScreenWindow
 import com.github.e0ipso.tokkl.ui.projectMark
@@ -55,7 +55,12 @@ internal fun ProjectButton(fields: EntryFields, labels: EntryLabels, enabled: Bo
         labels.task == null -> labels.project
         else -> stringResource(R.string.entry_project_task, labels.project, labels.task)
     }
-    val spoken = name?.let { stringResource(R.string.entry_project_spoken, it) } ?: stringResource(R.string.entry_no_project_spoken)
+    val spoken = name?.let {
+        stringResource(
+            R.string.entry_project_spoken,
+            it,
+        )
+    } ?: stringResource(R.string.entry_no_project_spoken)
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
     val dot = projectMark(labels.projectColor, TokklTheme.extraColors.projectMix, muted)
     FieldButton(
@@ -78,7 +83,12 @@ internal fun ProjectButton(fields: EntryFields, labels: EntryLabels, enabled: Bo
 @Composable
 internal fun TagsButton(tags: List<String>, enabled: Boolean, onClick: () -> Unit) {
     val names = tags.joinToString(", ").takeIf { tags.isNotEmpty() }
-    val spoken = names?.let { stringResource(R.string.entry_tags_spoken, it) } ?: stringResource(R.string.entry_no_tags_spoken)
+    val spoken = names?.let {
+        stringResource(
+            R.string.entry_tags_spoken,
+            it,
+        )
+    } ?: stringResource(R.string.entry_no_tags_spoken)
     FieldButton(
         active = names != null,
         enabled = enabled,
@@ -97,7 +107,12 @@ internal fun BillableToggle(billable: Boolean, enabled: Boolean, onChange: (Bool
     FieldButton(
         active = billable,
         enabled = enabled,
-        modifier = Modifier.toggleable(value = billable, enabled = enabled, role = Role.Checkbox, onValueChange = onChange),
+        modifier = Modifier.toggleable(
+            value = billable,
+            enabled = enabled,
+            role = Role.Checkbox,
+            onValueChange = onChange,
+        ),
     ) {
         FieldIcon(if (billable) R.drawable.ic_check else R.drawable.ic_dollar)
         FieldText(stringResource(R.string.entry_billable))
@@ -110,12 +125,7 @@ internal fun BillableToggle(billable: Boolean, enabled: Boolean, onChange: (Bool
  * target, at least 48dp high. [modifier] makes it clickable or toggleable.
  */
 @Composable
-private fun FieldButton(
-    active: Boolean,
-    enabled: Boolean,
-    modifier: Modifier,
-    content: @Composable () -> Unit,
-) {
+private fun FieldButton(active: Boolean, enabled: Boolean, modifier: Modifier, content: @Composable () -> Unit) {
     val colors = MaterialTheme.colorScheme
     val frame = when {
         !enabled -> colors.outlineVariant

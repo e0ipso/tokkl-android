@@ -38,28 +38,28 @@ import androidx.compose.ui.unit.DpRect
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.feature.timer.R
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.entryfields.SplitHalves
 import com.github.e0ipso.tokkl.entryfields.SplitProblem
+import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.SnappedSpan
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
-import java.time.DayOfWeek
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneOffset
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.DayOfWeek
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 
 /**
  * The history's entry actions and grouped rows at Android's largest font scale, 200%, at the
@@ -79,7 +79,9 @@ class HistoryFitTest {
 
     /** The font scale is set before the activity starts, so it never has to restart for it. */
     @get:Rule
-    val rules: RuleChain = RuleChain.outerRule(SystemFontScale(SystemFontScale.LARGEST, largestDisplaySize = true)).around(composeRule)
+    val rules: RuleChain = RuleChain.outerRule(
+        SystemFontScale(SystemFontScale.LARGEST, largestDisplaySize = true),
+    ).around(composeRule)
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
@@ -92,15 +94,25 @@ class HistoryFitTest {
     @Test
     fun theRowMenuFits() {
         show(SOLO)
-        composeRule.onNode(hasContentDescription(string(R.string.history_more_actions, SOLO_DESCRIPTION)) and hasClickAction())
+        composeRule.onNode(
+            hasContentDescription(string(R.string.history_more_actions, SOLO_DESCRIPTION)) and hasClickAction(),
+        )
             .performScrollTo()
             .performClick()
         val items = listOf(R.string.history_duplicate, R.string.history_split, R.string.history_delete).map { label ->
             "${string(label)} item" to composeRule.onNode(hasText(string(label)) and hasClickAction())
         }
-        val labels = listOf(R.string.history_duplicate, R.string.history_split, R.string.history_delete).map { label -> inside(label, hasClickAction()) }
+        val labels = listOf(
+            R.string.history_duplicate,
+            R.string.history_split,
+            R.string.history_delete,
+        ).map { label -> inside(label, hasClickAction()) }
         val menu = composeRule.onNode(isRoot() and hasAnyDescendant(hasText(string(R.string.history_duplicate))))
-        val page = composeRule.onNode(isRoot() and hasAnyDescendant(hasContentDescription(string(R.string.history_more_actions, SOLO_DESCRIPTION))))
+        val page = composeRule.onNode(
+            isRoot() and hasAnyDescendant(
+                hasContentDescription(string(R.string.history_more_actions, SOLO_DESCRIPTION)),
+            ),
+        )
 
         val window = menu.screenRect()
         assertTrue("the menu's window $window leaves the screen ${page.screenRect()}", window.inside(page.screenRect()))
@@ -124,12 +136,33 @@ class HistoryFitTest {
     @Test
     fun theSplitDialogFitsWithItsPreviewAndItsLongestMessage() {
         show(SOLO)
-        val halves = SplitHalves(SnappedSpan(SOLO_START, SOLO_START.plusSeconds(45 * 60)), SnappedSpan(SOLO_START.plusSeconds(45 * 60), SOLO_STOP))
+        val halves = SplitHalves(
+            SnappedSpan(SOLO_START, SOLO_START.plusSeconds(45 * 60)),
+            SnappedSpan(SOLO_START.plusSeconds(45 * 60), SOLO_STOP),
+        )
 
-        split = SplitDialog(SOLO_CACHED, SnappedSpan(SOLO_START, SOLO_STOP), ZoneOffset.UTC, text = "13:45", halves = halves)
-        assertSplitDialogFits(string(R.string.history_split_preview, SETTINGS.formatDuration(45 * 60L), SETTINGS.formatDuration(45 * 60L)))
+        split = SplitDialog(
+            SOLO_CACHED,
+            SnappedSpan(SOLO_START, SOLO_STOP),
+            ZoneOffset.UTC,
+            text = "13:45",
+            halves = halves,
+        )
+        assertSplitDialogFits(
+            string(
+                R.string.history_split_preview,
+                SETTINGS.formatDuration(45 * 60L),
+                SETTINGS.formatDuration(45 * 60L),
+            ),
+        )
 
-        split = SplitDialog(SOLO_CACHED, SnappedSpan(SOLO_START, SOLO_STOP), ZoneOffset.UTC, text = "13:45", problem = SplitProblem.CLOCK_CHANGE)
+        split = SplitDialog(
+            SOLO_CACHED,
+            SnappedSpan(SOLO_START, SOLO_STOP),
+            ZoneOffset.UTC,
+            text = "13:45",
+            problem = SplitProblem.CLOCK_CHANGE,
+        )
         assertSplitDialogFits(string(R.string.history_split_clock_change))
     }
 
@@ -150,7 +183,9 @@ class HistoryFitTest {
         assertFit(expanded, area = history())
         assertNoOverlap(expanded)
         assertTouchTargets((0 until 3).map { "member $it menu button" to composeRule.onAllNodes(memberMenu())[it] })
-        assertTouchTargets((0 until 3).map { "member $it continue button" to composeRule.onAllNodes(continueButton())[it + 1] })
+        assertTouchTargets(
+            (0 until 3).map { "member $it continue button" to composeRule.onAllNodes(continueButton())[it + 1] },
+        )
     }
 
     /** [entries] under today's heading, at the width the Timer page gives its history, with [notice] over them. */
@@ -195,15 +230,23 @@ class HistoryFitTest {
     private fun assertMessageFits(@StringRes text: Int) {
         val snackbar = SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite) and
             hasAnyDescendant(hasText(string(text)))
-        composeRule.waitUntil("the message shows", TIMEOUT_MS) { composeRule.onAllNodes(snackbar).fetchSemanticsNodes().isNotEmpty() }
+        composeRule.waitUntil(
+            "the message shows",
+            TIMEOUT_MS,
+        ) { composeRule.onAllNodes(snackbar).fetchSemanticsNodes().isNotEmpty() }
         composeRule.waitForIdle()
         val buttons = composeRule.onAllNodes(hasClickAction() and hasAnyAncestor(snackbar)).fetchSemanticsNodes()
         assertEquals("Undo and the button that dismisses the message", 2, buttons.size)
-        val undo = "Undo button" to composeRule.onNode(hasText(string(R.string.history_undo)) and hasClickAction() and hasAnyAncestor(snackbar))
+        val undo = "Undo button" to composeRule.onNode(
+            hasText(string(R.string.history_undo)) and hasClickAction() and hasAnyAncestor(snackbar),
+        )
         val dismiss = "dismiss button" to composeRule.onNode(
             hasClickAction() and hasAnyAncestor(snackbar) and hasText(string(R.string.history_undo)).not(),
         )
-        val message = "message" to composeRule.onNode(hasText(string(text)) and hasAnyAncestor(snackbar), useUnmergedTree = true)
+        val message = "message" to composeRule.onNode(
+            hasText(string(text)) and hasAnyAncestor(snackbar),
+            useUnmergedTree = true,
+        )
         val undoLabel = "Undo label" to composeRule.onNode(
             hasText(string(R.string.history_undo)) and hasAnyAncestor(hasClickAction() and hasAnyAncestor(snackbar)),
             useUnmergedTree = true,
@@ -226,7 +269,11 @@ class HistoryFitTest {
         }
         composeRule.waitForIdle()
         val dialogWindow = composeRule.onNode(isRoot() and hasAnyDescendant(isDialog()))
-        val page = composeRule.onNode(isRoot() and hasAnyDescendant(hasContentDescription(string(R.string.history_more_actions, SOLO_DESCRIPTION))))
+        val page = composeRule.onNode(
+            isRoot() and hasAnyDescendant(
+                hasContentDescription(string(R.string.history_more_actions, SOLO_DESCRIPTION)),
+            ),
+        )
         assertTrue("the dialog's window leaves the screen", dialogWindow.screenRect().inside(page.screenRect()))
         val dialog = composeRule.onNode(isDialog()).getUnclippedBoundsInRoot()
         val range = string(R.string.history_time_range, "13:00", "14:30")
@@ -235,37 +282,60 @@ class HistoryFitTest {
             "entry" to text(string(R.string.history_split_entry, SOLO_DESCRIPTION, range)),
             "field" to composeRule.onNode(hasSetTextAction() and hasText(string(R.string.history_split_field))),
             "cancel button" to composeRule.onNode(hasText(string(SharedR.string.catalog_cancel)) and hasClickAction()),
-            "split button" to composeRule.onNode(hasText(string(R.string.history_split_confirm)) and hasClickAction() and hasAnyAncestor(isDialog())),
+            "split button" to composeRule.onNode(
+                hasText(string(R.string.history_split_confirm)) and hasClickAction() and hasAnyAncestor(isDialog()),
+            ),
         )
-        assertFit(blocks + ("note" to text(note)) + inside(R.string.history_split_confirm, hasClickAction() and hasAnyAncestor(isDialog())), area = dialog)
+        assertFit(
+            blocks + (
+                "note" to text(
+                    note,
+                )
+                ) + inside(R.string.history_split_confirm, hasClickAction() and hasAnyAncestor(isDialog())),
+            area = dialog,
+        )
         assertNoOverlap(blocks)
         assertTouchTargets(blocks.takeLast(2))
     }
 
     /** The group's own line: its count, description, total, project, time range, tags and billable mark. */
-    private fun groupLine(): List<Pair<String, SemanticsNodeInteraction>> =
-        listOf(
-            "count badge" to text("3"),
-            "description" to composeRule.onAllNodes(hasText(GROUP_DESCRIPTION), useUnmergedTree = true)[0],
-            // The day's heading shows the same total.
-            "total" to composeRule.onNode(hasText(SETTINGS.formatDuration(3 * HOUR)) and hasAnyAncestor(isHeading()).not(), useUnmergedTree = true),
-            "project" to composeRule.onAllNodes(hasText(PROJECT), useUnmergedTree = true)[0],
-            "time range" to text(string(R.string.history_time_range, "09:00", "12:00")),
-            "tags" to composeRule.onAllNodes(hasText(TAG), useUnmergedTree = true)[0],
-            "billable mark" to composeRule.onAllNodes(hasText(string(R.string.history_billable)), useUnmergedTree = true)[0],
-            "continue button" to composeRule.onAllNodes(continueButton())[0],
-        )
+    private fun groupLine(): List<Pair<String, SemanticsNodeInteraction>> = listOf(
+        "count badge" to text("3"),
+        "description" to composeRule.onAllNodes(hasText(GROUP_DESCRIPTION), useUnmergedTree = true)[0],
+        // The day's heading shows the same total.
+        "total" to composeRule.onNode(
+            hasText(SETTINGS.formatDuration(3 * HOUR)) and hasAnyAncestor(isHeading()).not(),
+            useUnmergedTree = true,
+        ),
+        "project" to composeRule.onAllNodes(hasText(PROJECT), useUnmergedTree = true)[0],
+        "time range" to text(string(R.string.history_time_range, "09:00", "12:00")),
+        "tags" to composeRule.onAllNodes(hasText(TAG), useUnmergedTree = true)[0],
+        "billable mark" to composeRule.onAllNodes(
+            hasText(string(R.string.history_billable)),
+            useUnmergedTree = true,
+        )[0],
+        "continue button" to composeRule.onAllNodes(continueButton())[0],
+    )
 
     /** The parts of the group's member [index], newest first, each found after the group's own line. */
     private fun member(index: Int): List<Pair<String, SemanticsNodeInteraction>> {
         val (start, stop) = MEMBER_TIMES[index]
         return listOf(
-            "member $index description" to composeRule.onAllNodes(hasText(GROUP_DESCRIPTION), useUnmergedTree = true)[index + 1],
-            "member $index duration" to composeRule.onAllNodes(hasText(SETTINGS.formatDuration(HOUR)), useUnmergedTree = true)[index],
+            "member $index description" to composeRule.onAllNodes(
+                hasText(GROUP_DESCRIPTION),
+                useUnmergedTree = true,
+            )[index + 1],
+            "member $index duration" to composeRule.onAllNodes(
+                hasText(SETTINGS.formatDuration(HOUR)),
+                useUnmergedTree = true,
+            )[index],
             "member $index project" to composeRule.onAllNodes(hasText(PROJECT), useUnmergedTree = true)[index + 1],
             "member $index time range" to text(string(R.string.history_time_range, start, stop)),
             "member $index tags" to composeRule.onAllNodes(hasText(TAG), useUnmergedTree = true)[index + 1],
-            "member $index billable mark" to composeRule.onAllNodes(hasText(string(R.string.history_billable)), useUnmergedTree = true)[index + 1],
+            "member $index billable mark" to composeRule.onAllNodes(
+                hasText(string(R.string.history_billable)),
+                useUnmergedTree = true,
+            )[index + 1],
             "member $index continue button" to composeRule.onAllNodes(continueButton())[index + 1],
             "member $index menu button" to composeRule.onAllNodes(memberMenu())[index],
         )
@@ -306,10 +376,16 @@ class HistoryFitTest {
     }
 
     /** Each label in [labels] stays inside the control at the same place in [controls]. */
-    private fun assertWithin(labels: List<Pair<String, SemanticsNodeInteraction>>, controls: List<Pair<String, SemanticsNodeInteraction>>) {
+    private fun assertWithin(
+        labels: List<Pair<String, SemanticsNodeInteraction>>,
+        controls: List<Pair<String, SemanticsNodeInteraction>>,
+    ) {
         for ((label, control) in labels.zip(controls)) {
             val box = control.second.getUnclippedBoundsInRoot()
-            assertTrue("${label.first} leaves the ${control.first}", label.second.getUnclippedBoundsInRoot().inside(box))
+            assertTrue(
+                "${label.first} leaves the ${control.first}",
+                label.second.getUnclippedBoundsInRoot().inside(box),
+            )
         }
     }
 
@@ -325,23 +401,34 @@ class HistoryFitTest {
             node.assertIsDisplayed()
             val touch = node.fetchSemanticsNode().touchBoundsInRoot
             val (width, height) = with(composeRule.density) { touch.width.toDp() to touch.height.toDp() }
-            assertTrue("$name takes taps on $width by $height", width >= MIN_TOUCH_TARGET - SLACK && height >= MIN_TOUCH_TARGET - SLACK)
+            assertTrue(
+                "$name takes taps on $width by $height",
+                width >= MIN_TOUCH_TARGET - SLACK && height >= MIN_TOUCH_TARGET - SLACK,
+            )
         }
     }
 
     /** The history's area, the width the Timer page gives it, which holds the list and the message. */
     private fun history(): DpRect = composeRule.onNode(hasScrollAction()).getBoundsInRoot()
 
-    private fun scrolls(node: SemanticsNodeInteraction): Boolean = hasAnyAncestor(hasScrollAction()).matches(node.fetchSemanticsNode())
+    private fun scrolls(node: SemanticsNodeInteraction): Boolean = hasAnyAncestor(
+        hasScrollAction(),
+    ).matches(node.fetchSemanticsNode())
 
     /** The root's place on the screen, in pixels, to compare windows with each other. */
-    private fun SemanticsNodeInteraction.screenRect(): Rect = fetchSemanticsNode().let { Rect(it.positionOnScreen, it.size.toSize()) }
+    private fun SemanticsNodeInteraction.screenRect(): Rect = fetchSemanticsNode().let {
+        Rect(
+            it.positionOnScreen,
+            it.size.toSize(),
+        )
+    }
 
     private fun Rect.inside(other: Rect): Boolean =
         left >= other.left && top >= other.top && right <= other.right && bottom <= other.bottom
 
     private fun DpRect.inside(other: DpRect): Boolean =
-        left >= other.left - SLACK && top >= other.top - SLACK && right <= other.right + SLACK && bottom <= other.bottom + SLACK
+        left >= other.left - SLACK && top >= other.top - SLACK && right <= other.right + SLACK &&
+            bottom <= other.bottom + SLACK
 
     private fun DpRect.overlaps(other: DpRect): Boolean =
         left < other.right && other.left < right && top < other.bottom && other.top < bottom
@@ -358,13 +445,21 @@ class HistoryFitTest {
     }
 
     /** The text node itself, not the row it sits in, so its layout result is reachable. */
-    private fun text(value: String): SemanticsNodeInteraction = composeRule.onNode(hasText(value), useUnmergedTree = true)
+    private fun text(value: String): SemanticsNodeInteraction = composeRule.onNode(
+        hasText(value),
+        useUnmergedTree = true,
+    )
 
     /** The text node of [id] inside a control that merges its children. */
-    private fun inside(@StringRes id: Int, control: SemanticsMatcher): Pair<String, SemanticsNodeInteraction> =
-        string(id).let { "$it label" to composeRule.onNode(hasText(it) and hasAnyAncestor(control), useUnmergedTree = true) }
+    private fun inside(@StringRes id: Int, control: SemanticsMatcher): Pair<String, SemanticsNodeInteraction> = string(
+        id,
+    ).let { "$it label" to composeRule.onNode(hasText(it) and hasAnyAncestor(control), useUnmergedTree = true) }
 
-    private fun entries(count: Int): String = context.resources.getQuantityString(R.plurals.history_group_entries, count, count)
+    private fun entries(count: Int): String = context.resources.getQuantityString(
+        R.plurals.history_group_entries,
+        count,
+        count,
+    )
 
     private fun string(@StringRes id: Int, vararg args: Any): String = context.getString(id, *args)
 
@@ -377,7 +472,11 @@ class HistoryFitTest {
         val MIN_TOUCH_TARGET = 48.dp
 
         val DAY: LocalDate = LocalDate.of(2026, 10, 15)
-        val SETTINGS = AccountSettings(timeZone = "UTC", beginningOfWeek = DayOfWeek.MONDAY, timeResolutionMinutes = null)
+        val SETTINGS = AccountSettings(
+            timeZone = "UTC",
+            beginningOfWeek = DayOfWeek.MONDAY,
+            timeResolutionMinutes = null,
+        )
 
         const val PROJECT = "Tokkl for Android"
         const val TAG = "code review"

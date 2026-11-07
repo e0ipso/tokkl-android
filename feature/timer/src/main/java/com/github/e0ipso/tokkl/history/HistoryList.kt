@@ -37,9 +37,8 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import com.github.e0ipso.tokkl.feature.timer.R
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
+import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.picker.rememberOffline
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.DateWords
@@ -47,6 +46,7 @@ import com.github.e0ipso.tokkl.ui.daySticker
 import com.github.e0ipso.tokkl.ui.spokenDuration
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.LocalDate
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 
 /**
  * The history in the Timer page's List view: the days with entries, newest first, each with its
@@ -81,18 +81,20 @@ fun HistoryList(
             onDelete = actions::delete,
             pin = pin,
         )
-        if (showActions) EntryActionsHost(
-            state = actionsState,
-            onUndo = actions::undo,
-            onNoticeDone = actions::noticeDone,
-            onConfirmDelete = actions::confirmDelete,
-            onCancelDelete = actions::cancelDelete,
-            modifier = Modifier.align(Alignment.BottomCenter),
-            settings = (state as? HistoryState.Shown)?.settings,
-            onSplitTextChange = actions::setSplitText,
-            onConfirmSplit = actions::confirmSplit,
-            onCancelSplit = actions::cancelSplit,
-        )
+        if (showActions) {
+            EntryActionsHost(
+                state = actionsState,
+                onUndo = actions::undo,
+                onNoticeDone = actions::noticeDone,
+                onConfirmDelete = actions::confirmDelete,
+                onCancelDelete = actions::cancelDelete,
+                modifier = Modifier.align(Alignment.BottomCenter),
+                settings = (state as? HistoryState.Shown)?.settings,
+                onSplitTextChange = actions::setSplitText,
+                onConfirmSplit = actions::confirmSplit,
+                onCancelSplit = actions::cancelSplit,
+            )
+        }
     }
 }
 
@@ -129,10 +131,20 @@ fun HistoryContent(
     when (state) {
         // The cache reads in moments, so this shows nothing rather than a flash of a spinner.
         HistoryState.Loading -> Unit
+
         is HistoryState.NoAccountTime -> Column(modifier.fillMaxSize()) {
-            Text(stringResource(R.string.history_unknown_time_zone, state.timeZone), style = MaterialTheme.typography.bodyLarge)
+            Text(
+                stringResource(R.string.history_unknown_time_zone, state.timeZone),
+                style = MaterialTheme.typography.bodyLarge,
+            )
         }
-        is HistoryState.Shown -> Days(state, onLoadOlder, EntryCallbacks(onEdit, onContinue, onDuplicate, onSplit, onDelete, pin), modifier)
+
+        is HistoryState.Shown -> Days(
+            state,
+            onLoadOlder,
+            EntryCallbacks(onEdit, onContinue, onDuplicate, onSplit, onDelete, pin),
+            modifier,
+        )
     }
 }
 
@@ -194,7 +206,9 @@ private fun Days(state: HistoryState.Shown, onLoadOlder: () -> Unit, callbacks: 
  */
 private fun dayLabel(date: LocalDate, today: LocalDate, resources: Resources, words: DateWords): String = when (date) {
     today -> resources.getString(R.string.history_today)
+
     today.minusDays(1) -> resources.getString(R.string.history_yesterday)
+
     else -> resources.getString(
         SharedR.string.history_day,
         words.weekday(date),
@@ -210,7 +224,11 @@ private fun dayLabel(date: LocalDate, today: LocalDate, resources: Resources, wo
 @Composable
 private fun DayHeader(label: String, totalSeconds: Long, settings: AccountSettings) {
     val locale = LocalConfiguration.current.locales[0]
-    val spoken = stringResource(R.string.history_day_spoken, label, spokenDuration(LocalResources.current, totalSeconds))
+    val spoken = stringResource(
+        R.string.history_day_spoken,
+        label,
+        spokenDuration(LocalResources.current, totalSeconds),
+    )
     val hue = TokklTheme.sectionHue
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -229,7 +247,12 @@ private fun DayHeader(label: String, totalSeconds: Long, settings: AccountSettin
                 contentDescription = spoken
             },
     ) {
-        Text(label.uppercase(locale), style = TokklTheme.dayHeaderTextStyle, color = hue.onFill, modifier = Modifier.weight(1f))
+        Text(
+            label.uppercase(locale),
+            style = TokklTheme.dayHeaderTextStyle,
+            color = hue.onFill,
+            modifier = Modifier.weight(1f),
+        )
         Spacer(Modifier.width(TokklTheme.spacing.space3))
         Text(settings.formatDuration(totalSeconds), style = TokklTheme.dayTotalTextStyle, color = hue.onFill)
     }
@@ -245,7 +268,10 @@ private fun OlderRow(older: OlderDays, onLoadOlder: () -> Unit) {
             .padding(vertical = TokklTheme.spacing.betweenGroups),
     ) {
         when (older) {
-            is OlderDays.More -> OutlinedButton(onClick = onLoadOlder) { Text(stringResource(R.string.history_load_older)) }
+            is OlderDays.More -> OutlinedButton(
+                onClick = onLoadOlder,
+            ) { Text(stringResource(R.string.history_load_older)) }
+
             OlderDays.Loading -> Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
@@ -254,18 +280,31 @@ private fun OlderRow(older: OlderDays, onLoadOlder: () -> Unit) {
                 Spacer(Modifier.width(TokklTheme.spacing.space3))
                 Text(stringResource(R.string.history_loading_older), style = MaterialTheme.typography.bodyLarge)
             }
+
             OlderDays.End -> Text(
                 stringResource(R.string.history_no_older),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+
             OlderDays.Unreachable -> Problem(
                 title = stringResource(R.string.history_offline_title),
                 message = stringResource(R.string.history_offline_message),
                 onRetry = onLoadOlder,
             )
-            OlderDays.AuthFailed -> Problem(title = null, message = stringResource(R.string.history_error_auth), onRetry = onLoadOlder)
-            OlderDays.TrustRefused -> Problem(title = null, message = stringResource(R.string.history_error_trust), onRetry = onLoadOlder)
+
+            OlderDays.AuthFailed -> Problem(
+                title = null,
+                message = stringResource(R.string.history_error_auth),
+                onRetry = onLoadOlder,
+            )
+
+            OlderDays.TrustRefused -> Problem(
+                title = null,
+                message = stringResource(R.string.history_error_trust),
+                onRetry = onLoadOlder,
+            )
+
             is OlderDays.Failed -> Problem(
                 title = null,
                 message = older.status?.let { stringResource(R.string.history_error_status, it) }

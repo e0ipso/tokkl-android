@@ -5,11 +5,6 @@ import android.security.keystore.KeyInfo
 import android.security.keystore.KeyProperties
 import android.util.Base64
 import androidx.test.platform.app.InstrumentationRegistry
-import java.io.File
-import java.security.KeyStore
-import java.util.UUID
-import javax.crypto.SecretKey
-import javax.crypto.SecretKeyFactory
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
@@ -18,6 +13,11 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.io.File
+import java.security.KeyStore
+import java.util.UUID
+import javax.crypto.SecretKey
+import javax.crypto.SecretKeyFactory
 
 /** Runs against the real Android Keystore of the device. */
 class ApiTokenStoreTest {
@@ -66,7 +66,10 @@ class ApiTokenStoreTest {
         )
         // Every file the app can write to on internal storage, not just the store's.
         val files = context.dataDir.walkTopDown().filter { it.isFile && it.canRead() }.toList()
-        assertTrue("$storedFile is not under the data directory", storedFile.canonicalFile in files.map { it.canonicalFile })
+        assertTrue(
+            "$storedFile is not under the data directory",
+            storedFile.canonicalFile in files.map { it.canonicalFile },
+        )
         for (file in files) {
             val bytes = file.readBytes()
             for ((name, form) in forms) {

@@ -11,11 +11,11 @@ import com.github.e0ipso.tokkl.catalog.CatalogChange
 import com.github.e0ipso.tokkl.catalog.CatalogModel
 import com.github.e0ipso.tokkl.catalog.CatalogPageEvents
 import com.github.e0ipso.tokkl.catalog.CatalogState
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlin.coroutines.CoroutineContext
 
 /** The project form: a new project, or [Edit] of one the server sent. */
 sealed interface ProjectForm {
@@ -31,7 +31,9 @@ sealed interface ProjectForm {
 data class ProjectsData(val projects: List<Project>, val defaults: WorkspaceDefaults?) {
 
     /** With [project] as the server sent it after a change, in its place in the order. */
-    fun with(project: Project): ProjectsData = copy(projects = (projects.filterNot { it.id == project.id } + project).sortedForList())
+    fun with(project: Project): ProjectsData = copy(
+        projects = (projects.filterNot { it.id == project.id } + project).sortedForList(),
+    )
 }
 
 typealias ProjectsState = CatalogState<ProjectsData, ProjectForm>
@@ -53,9 +55,17 @@ class ProjectsViewModel(
     io: CoroutineContext,
     val cachedProjects: Flow<List<CachedProject>> = flowOf(emptyList()),
     val cachedClients: Flow<List<CachedClient>> = flowOf(emptyList()),
-) : ViewModel(scope), CatalogPageEvents {
+) : ViewModel(scope),
+    CatalogPageEvents {
 
-    private val catalog = CatalogModel<ProjectsData, ProjectForm>(client, workspaceId, refreshCache, viewModelScope, io, ::read)
+    private val catalog = CatalogModel<ProjectsData, ProjectForm>(
+        client,
+        workspaceId,
+        refreshCache,
+        viewModelScope,
+        io,
+        ::read,
+    )
 
     /** The task list of the project the form edits. */
     val tasks = TasksModel(client, workspaceId, refreshCache, viewModelScope, io)
@@ -109,7 +119,15 @@ class ProjectsViewModel(
                 }
             },
             apply = ProjectsData::with,
-            done = { saved -> if (form == ProjectForm.New) CatalogChange.Created(saved.name) else CatalogChange.Saved(saved.name) },
+            done = { saved ->
+                if (form == ProjectForm.New) {
+                    CatalogChange.Created(
+                        saved.name,
+                    )
+                } else {
+                    CatalogChange.Saved(saved.name)
+                }
+            },
         )
     }
 
@@ -118,7 +136,15 @@ class ProjectsViewModel(
         catalog.send(
             request = { api, workspace -> ProjectsServer(api, workspace).setActive(project.id, active) },
             apply = ProjectsData::with,
-            done = { saved -> if (saved.active) CatalogChange.Restored(saved.name) else CatalogChange.Archived(saved.name) },
+            done = { saved ->
+                if (saved.active) {
+                    CatalogChange.Restored(
+                        saved.name,
+                    )
+                } else {
+                    CatalogChange.Archived(saved.name)
+                }
+            },
         )
     }
 
@@ -132,6 +158,7 @@ class ProjectsViewModel(
                     defaults = (server.defaults() as? ApiResult.Success)?.value,
                 ),
             )
+
             is ApiResult.Failure -> projects
         }
     }

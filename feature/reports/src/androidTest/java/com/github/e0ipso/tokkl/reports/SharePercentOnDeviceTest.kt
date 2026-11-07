@@ -2,11 +2,11 @@ package com.github.e0ipso.tokkl.reports
 
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.time.jsShortestDecimal
-import java.math.BigDecimal
-import java.math.RoundingMode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.math.BigDecimal
+import java.math.RoundingMode
 
 /**
  * The report's percentages on ART, whose BigDecimal and parseDouble are not the JVM's: the phone
@@ -53,7 +53,11 @@ class SharePercentOnDeviceTest {
             val expected = BigDecimal(javaScript.replace("e+", "e"))
             val actual = jsShortestDecimal(x)
             assertEquals("$x: $actual", 0, actual.compareTo(expected))
-            assertEquals("$x: $actual has more digits than String(x)", expected.stripTrailingZeros().precision(), actual.stripTrailingZeros().precision())
+            assertEquals(
+                "$x: $actual has more digits than String(x)",
+                expected.stripTrailingZeros().precision(),
+                actual.stripTrailingZeros().precision(),
+            )
         }
     }
 

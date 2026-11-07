@@ -1,13 +1,13 @@
 package com.github.e0ipso.tokkl.widget
 
-import java.time.Clock
-import java.time.Duration
-import java.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import java.time.Clock
+import java.time.Duration
+import java.time.Instant
 
 /**
  * A single redraw at the held phase's corrected end, independent of alarm permission. The

@@ -4,11 +4,11 @@ import com.github.e0ipso.tokkl.api.SuccessListener
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.SignOutOrder
 import com.github.e0ipso.tokkl.storage.ValueStore
-import java.time.Clock
-import java.time.Instant
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.time.Clock
+import java.time.Instant
 
 /**
  * When the server last gave a 2xx answer to the signed-in session (docs/PRD.md O5), from any
@@ -18,10 +18,9 @@ import kotlinx.coroutines.flow.asStateFlow
  * later one leaves the later one. The first read loads the stored time, null when the server has
  * not answered since sign-in, on the reading thread.
  */
-class LastAnswer(
-    private val store: ValueStore<Instant?>,
-    private val clock: Clock = Clock.systemUTC(),
-) : SuccessListener, AccountDataOwner {
+class LastAnswer(private val store: ValueStore<Instant?>, private val clock: Clock = Clock.systemUTC()) :
+    SuccessListener,
+    AccountDataOwner {
 
     override val signOutOrder = SignOutOrder.LAST_ANSWER
 

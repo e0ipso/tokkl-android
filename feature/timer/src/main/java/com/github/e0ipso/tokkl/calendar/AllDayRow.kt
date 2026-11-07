@@ -50,8 +50,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.takeOrElse
 import com.github.e0ipso.tokkl.feature.timer.R
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
-import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.DateWords
 import com.github.e0ipso.tokkl.ui.compactHeightWindow
@@ -60,6 +58,8 @@ import com.github.e0ipso.tokkl.ui.theme.SmallCornerShape
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.Instant
 import java.time.LocalDate
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * The All day row, as `.calendar-all-day` in the web app's WeekCalendar.tsx: its label over the
@@ -69,7 +69,13 @@ import java.time.LocalDate
  * off the screen. TalkBack gets the add as an action on each cell too.
  */
 @Composable
-internal fun AllDayRow(days: List<LocalDate>, state: CalendarState.Shown, now: Instant, gutter: Dp, editing: CalendarEditing?) {
+internal fun AllDayRow(
+    days: List<LocalDate>,
+    state: CalendarState.Shown,
+    now: Instant,
+    gutter: Dp,
+    editing: CalendarEditing?,
+) {
     val line = MaterialTheme.colorScheme.outlineVariant
     Row(
         Modifier
@@ -80,7 +86,12 @@ internal fun AllDayRow(days: List<LocalDate>, state: CalendarState.Shown, now: I
             .background(MaterialTheme.colorScheme.surface)
             .drawBehind {
                 val stroke = DividerDefaults.Thickness.toPx()
-                drawLine(line, Offset(0f, size.height - stroke / 2), Offset(size.width, size.height - stroke / 2), stroke)
+                drawLine(
+                    line,
+                    Offset(0f, size.height - stroke / 2),
+                    Offset(size.width, size.height - stroke / 2),
+                    stroke,
+                )
             },
     ) {
         Text(
@@ -89,7 +100,10 @@ internal fun AllDayRow(days: List<LocalDate>, state: CalendarState.Shown, now: I
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            autoSize = TextAutoSize.StepBased(minFontSize = StripMinFontSize, maxFontSize = MaterialTheme.typography.labelSmall.fontSize),
+            autoSize = TextAutoSize.StepBased(
+                minFontSize = StripMinFontSize,
+                maxFontSize = MaterialTheme.typography.labelSmall.fontSize,
+            ),
             modifier = Modifier
                 .width(gutter)
                 .padding(top = TokklTheme.spacing.space2, end = TokklTheme.spacing.space1),
@@ -135,7 +149,10 @@ private fun AllDayCell(
             val words = remember(resources) { DateWords(resources) }
             val dayLabel = resources.getString(SharedR.string.history_day, words.weekday(day), words.short(day))
             IconButton(onClick = { editing.addAllDay(day) }) {
-                Icon(painterResource(UiR.drawable.ic_plus), contentDescription = stringResource(R.string.calendar_add_all_day_on, dayLabel))
+                Icon(
+                    painterResource(UiR.drawable.ic_plus),
+                    contentDescription = stringResource(R.string.calendar_add_all_day_on, dayLabel),
+                )
             }
         }
     }
@@ -149,7 +166,13 @@ private fun AllDayCell(
  * one line, as tall as a touch target, so the grid keeps its room ([oneLine]).
  */
 @Composable
-private fun AllDayChip(entry: CalendarEntry, settings: AccountSettings, now: Instant, onEdit: (() -> Unit)?, oneLine: Boolean = compactHeightWindow()) {
+private fun AllDayChip(
+    entry: CalendarEntry,
+    settings: AccountSettings,
+    now: Instant,
+    onEdit: (() -> Unit)?,
+    oneLine: Boolean = compactHeightWindow(),
+) {
     val resources = LocalResources.current
     val colours = entryColours(entry)
     val noDescription = stringResource(R.string.history_no_description)
@@ -165,14 +188,39 @@ private fun AllDayChip(entry: CalendarEntry, settings: AccountSettings, now: Ins
             .clip(SmallCornerShape)
             .background(colours.tint)
             .drawBehind { drawRect(colours.bar, size = Size(BlockBar.toPx(), size.height)) }
-            .then(if (onEdit != null) Modifier.clickable(onClickLabel = editLabel, role = Role.Button, onClick = onEdit) else Modifier)
-            .padding(start = BlockBar + TokklTheme.spacing.space1, end = TokklTheme.spacing.space1, top = BlockGap, bottom = BlockGap)
+            .then(
+                if (onEdit != null) {
+                    Modifier.clickable(
+                        onClickLabel = editLabel,
+                        role = Role.Button,
+                        onClick = onEdit,
+                    )
+                } else {
+                    Modifier
+                },
+            )
+            .padding(
+                start = BlockBar + TokklTheme.spacing.space1,
+                end = TokklTheme.spacing.space1,
+                top = BlockGap,
+                bottom = BlockGap,
+            )
             .clearAndSetSemantics { contentDescription = spoken },
     ) {
         when {
             // Where height is short, a chip is its touch target's height and no more, and says "Not sent" with its icon.
             oneLine -> ChipLine(heading, duration, mark = entry.unsent)
-            entry.unsent -> UnsentBlockText { mark -> BlockText(entry, heading, duration, twoLines = true, mark = mark) }
+
+            entry.unsent -> UnsentBlockText { mark ->
+                BlockText(
+                    entry,
+                    heading,
+                    duration,
+                    twoLines = true,
+                    mark = mark,
+                )
+            }
+
             else -> BlockText(entry, heading, duration, twoLines = true, mark = false)
         }
     }

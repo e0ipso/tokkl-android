@@ -1,10 +1,10 @@
 package com.github.e0ipso.tokkl
 
 import com.github.e0ipso.tokkl.api.ServerUrl
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import java.io.Closeable
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
-import okhttp3.HttpUrl.Companion.toHttpUrl
 
 /**
  * Counts the requests the app sends through a [LoopbackRelay] to [server] whose request line ends
@@ -45,7 +45,9 @@ class RequestCounter(server: ServerUrl, private val request: String) : Closeable
         private val line = StringBuilder()
 
         init {
-            BlackholeDiagnostics.record("counter.connection listen_port=${url.toString().toHttpUrl().port} connection=$connection")
+            BlackholeDiagnostics.record(
+                "counter.connection listen_port=${url.toString().toHttpUrl().port} connection=$connection",
+            )
             BlackholeDiagnostics.recordHttpCalls()
         }
 
@@ -72,7 +74,12 @@ class RequestCounter(server: ServerUrl, private val request: String) : Closeable
                 }
                 val text = line.toString().trimEnd('\r')
                 line.setLength(0)
-                if (text.contains(request.trimEnd('\r', '\n'))) REQUEST_LINE.find(text)?.let { requestLines += it.value }
+                if (text.contains(
+                        request.trimEnd('\r', '\n'),
+                    )
+                ) {
+                    REQUEST_LINE.find(text)?.let { requestLines += it.value }
+                }
             }
         }
 

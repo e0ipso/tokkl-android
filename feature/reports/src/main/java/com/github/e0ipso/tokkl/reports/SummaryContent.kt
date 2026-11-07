@@ -97,14 +97,20 @@ private fun Totals(totals: ReportTotals, settings: AccountSettings) {
                 DurationText(totals.billableSeconds, settings, resources)
                 if (totals.seconds > 0) {
                     Text(
-                        text = stringResource(R.string.reports_share_of_total, sharePercent(totals.billableSeconds, totals.seconds)),
+                        text = stringResource(
+                            R.string.reports_share_of_total,
+                            sharePercent(totals.billableSeconds, totals.seconds),
+                        ),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
             Total(stringResource(R.string.reports_entries)) {
-                Text(NumberFormat.getIntegerInstance(locale).format(totals.entryCount), style = TokklTheme.totalTextStyle)
+                Text(
+                    NumberFormat.getIntegerInstance(locale).format(totals.entryCount),
+                    style = TokklTheme.totalTextStyle,
+                )
             }
             if (totals.amounts.isNotEmpty()) {
                 Total(stringResource(R.string.reports_amount)) {
@@ -185,7 +191,11 @@ private fun SeriesChart(report: SummaryReport, settings: AccountSettings) {
  */
 private fun chartDescription(report: SummaryReport, resources: Resources, words: DateWords): String {
     val bars = report.series.joinToString(". ") { point ->
-        resources.getString(R.string.reports_chart_bar_description, words.bucket(point.start, report.resolution), spokenDuration(resources, point.seconds))
+        resources.getString(
+            R.string.reports_chart_bar_description,
+            words.bucket(point.start, report.resolution),
+            spokenDuration(resources, point.seconds),
+        )
     }
     val total = spokenDuration(resources, report.series.sumOf { it.seconds })
     return resources.getString(CHART_DESCRIPTIONS.getValue(report.resolution), total, bars)
@@ -267,7 +277,11 @@ private fun ProjectBreakdown(report: SummaryReport, settings: AccountSettings) {
     ReportCard {
         CardHeading(stringResource(R.string.reports_projects))
         if (report.totals.amounts.size > 1) {
-            Text(stringResource(R.string.reports_mixed_currencies), style = MaterialTheme.typography.bodyMedium, color = muted)
+            Text(
+                stringResource(R.string.reports_mixed_currencies),
+                style = MaterialTheme.typography.bodyMedium,
+                color = muted,
+            )
         }
         for (project in report.projects) {
             val spoken = spokenDuration(resources, project.seconds)
@@ -293,7 +307,10 @@ private fun ProjectBreakdown(report: SummaryReport, settings: AccountSettings) {
                         modifier = Modifier.semantics { contentDescription = spoken },
                     )
                     Text(
-                        text = stringResource(R.string.reports_percent, sharePercent(project.seconds, report.totals.seconds)),
+                        text = stringResource(
+                            R.string.reports_percent,
+                            sharePercent(project.seconds, report.totals.seconds),
+                        ),
                         style = MaterialTheme.typography.bodyMedium.copy(fontFeatureSettings = "tnum"),
                         color = muted,
                     )

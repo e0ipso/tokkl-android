@@ -10,8 +10,6 @@ import com.github.e0ipso.tokkl.cache.RunningCheck
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.timerstate.TimerControlsSource
-import java.time.Clock
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -20,6 +18,8 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
+import java.time.Clock
+import kotlin.coroutines.CoroutineContext
 
 /**
  * What the home screen widget shows (docs/PRD.md N3): the running entry or paused timer (T1)
@@ -44,7 +44,9 @@ class WidgetStateSource(
     val state: Flow<WidgetState> = run {
         val openings = callbackFlow {
             val callbacks = object : Application.ActivityLifecycleCallbacks {
-                override fun onActivityStarted(activity: Activity) { trySend(Unit) }
+                override fun onActivityStarted(activity: Activity) {
+                    trySend(Unit)
+                }
                 override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) = Unit
                 override fun onActivityResumed(activity: Activity) = Unit
                 override fun onActivityPaused(activity: Activity) = Unit
@@ -71,8 +73,18 @@ class WidgetStateSource(
             }.toMap()
             entries to mappings
         }
-        val catalog = combine(cache.projects, cache.tasks, history) { projects, tasks, history -> Triple(projects, tasks, history) }
-        combine(accountSettings.state, capabilities.state, timerControls.controls, cache.favorites, catalog) { settings, flags, controls, favorites, (projects, tasks, history) ->
+        val catalog = combine(
+            cache.projects,
+            cache.tasks,
+            history,
+        ) { projects, tasks, history -> Triple(projects, tasks, history) }
+        combine(
+            accountSettings.state,
+            capabilities.state,
+            timerControls.controls,
+            cache.favorites,
+            catalog,
+        ) { settings, flags, controls, favorites, (projects, tasks, history) ->
             val (entries, mappings) = history
             widgetState(
                 settings?.defaultWorkspaceId, controls, favorites, flags.favorites, projects, tasks,

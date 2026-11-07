@@ -75,7 +75,15 @@ internal val accountModule = module {
         )
     } bind AccountRefreshSteps::class
 
-    single { AccountRefresh(client = get<Session>(), settings = get(), scope = get(), io = io(), steps = get<AccountRefreshPipeline>()) } bind AccountDataOwner::class
+    single {
+        AccountRefresh(
+            client = get<Session>(),
+            settings = get(),
+            scope = get(),
+            io = io(),
+            steps = get<AccountRefreshPipeline>(),
+        )
+    } bind AccountDataOwner::class
 
     /**
      * Refreshes the account, and with it the running entry and the cache, each time the app comes
@@ -108,7 +116,14 @@ internal val accountModule = module {
      * navigation host prompts about. Accepting one refreshes the account settings, the request
      * that ran into it.
      */
-    single { SessionTrust(trust = get<ServerTrustStore>(), retry = get<AccountRefreshRequests>()::refresh, scope = get(), io = io()) } bind AccountDataOwner::class
+    single {
+        SessionTrust(
+            trust = get<ServerTrustStore>(),
+            retry = get<AccountRefreshRequests>()::refresh,
+            scope = get(),
+            io = io(),
+        )
+    } bind AccountDataOwner::class
 
     signOutSteps()
 

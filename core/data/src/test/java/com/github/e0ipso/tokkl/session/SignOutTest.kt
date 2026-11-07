@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.session
 
-import java.io.IOException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -8,6 +7,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.IOException
 
 class SignOutTest {
 
@@ -34,7 +34,11 @@ class SignOutTest {
     @Test
     fun aFailedStepDoesNotStopTheOthersButTheSignOutDoesNotCount() {
         val signOut = SignOut(
-            listOf(step(SignOutOrder.SESSION), step(SignOutOrder.CHANGE_SENDER, fails = { true }), step(SignOutOrder.CACHE)),
+            listOf(
+                step(SignOutOrder.SESSION),
+                step(SignOutOrder.CHANGE_SENDER, fails = { true }),
+                step(SignOutOrder.CACHE),
+            ),
             Dispatchers.Unconfined,
         )
 
@@ -47,7 +51,10 @@ class SignOutTest {
     @Test
     fun aSecondSignOutRunsEveryStepAgain() {
         var failing = true
-        val signOut = SignOut(listOf(step(SignOutOrder.SESSION), step(SignOutOrder.CACHE, fails = { failing })), Dispatchers.Unconfined)
+        val signOut = SignOut(
+            listOf(step(SignOutOrder.SESSION), step(SignOutOrder.CACHE, fails = { failing })),
+            Dispatchers.Unconfined,
+        )
 
         assertFalse(runBlocking { signOut.run() })
         failing = false

@@ -42,7 +42,18 @@ val notificationFeatureModule = module {
     single { ReminderSetting(get<ReminderStore>(), get<Session>(), get(), io()) } bind AccountDataOwner::class
 
     /** The running entry's reminder, followed independently of any screen. */
-    single { accountReminderSync(androidContext(), get(), get(), get(), get(), get(), get(), get()) } bind AccountDataOwner::class
+    single {
+        accountReminderSync(
+            androidContext(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+        )
+    } bind AccountDataOwner::class
 
     worker { params -> ReminderWorker(androidContext(), params.get(), get(), io()) }
 }

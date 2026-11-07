@@ -3,16 +3,16 @@ package com.github.e0ipso.tokkl.history
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryWithSendState
 import com.github.e0ipso.tokkl.session.AccountSettings
-import java.time.Clock
-import java.time.DayOfWeek
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneOffset
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.Clock
+import java.time.DayOfWeek
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
 
 /**
  * The web app's grouping of similar entries within a day, ported from similarityKey and rowsForDay
@@ -73,7 +73,11 @@ class HistoryRowsTest {
     @Test
     fun theStartTheStopAndTheProjectsNameDoNotCount() {
         val first = entry(1, "Work", project = "Website")
-        val second = entry(2, "Work", project = "Renamed").copy(start = first.start.plusSeconds(7200), stop = first.stop.plusSeconds(9000))
+        val second = entry(
+            2,
+            "Work",
+            project = "Renamed",
+        ).copy(start = first.start.plusSeconds(7200), stop = first.stop.plusSeconds(9000))
 
         assertEquals(1, rowsForDay(listOf(second, first), collapse = true).size)
     }
@@ -85,26 +89,38 @@ class HistoryRowsTest {
         val b = entry(2, "Work").copy(tags = listOf("a", "b"))
         val c = entry(3, "Work").copy(tags = listOf("a,b"))
 
-        assertEquals(listOf(listOf(1L, 2L, 3L)), rowsForDay(listOf(a, b, c), collapse = true).map { r -> r.entries.map { it.id }.sorted() })
+        assertEquals(
+            listOf(listOf(1L, 2L, 3L)),
+            rowsForDay(listOf(a, b, c), collapse = true).map { r -> r.entries.map { it.id }.sorted() },
+        )
         assertEquals("a\u0000\u0000\u0000false\u0000a,b", similarityKey(entry(4, "a").copy(tags = listOf("b", "a"))))
     }
 
     /** JavaScript's sort orders by UTF-16 code units: "Z" before "a", "é" after "z". */
     @Test
     fun tagsSortByUtf16CodeUnits() {
-        assertEquals("x\u0000\u0000\u0000false\u0000Z,a,z,é", similarityKey(entry(1, "x").copy(tags = listOf("é", "z", "a", "Z"))))
+        assertEquals(
+            "x\u0000\u0000\u0000false\u0000Z,a,z,é",
+            similarityKey(entry(1, "x").copy(tags = listOf("é", "z", "a", "Z"))),
+        )
     }
 
     /** null joins as an empty string, a number as its digits and a boolean as true or false. */
     @Test
     fun theKeyWritesFieldsAsJavaScriptJoinDoes() {
-        assertEquals("Work\u000012\u000034\u0000true\u0000", similarityKey(entry(1, "Work").copy(projectId = 12, taskId = 34, billable = true)))
+        assertEquals(
+            "Work\u000012\u000034\u0000true\u0000",
+            similarityKey(entry(1, "Work").copy(projectId = 12, taskId = 34, billable = true)),
+        )
     }
 
     @Test
     fun withoutTheCollapsePreferenceEveryEntryHasItsOwnRow() {
         val day = LocalDate.of(2026, 10, 18)
-        val entries = listOf(cached(1, "Group work", at(day, 9), at(day, 10)), cached(2, "Group work", at(day, 10), at(day, 11)))
+        val entries = listOf(
+            cached(1, "Group work", at(day, 9), at(day, 10)),
+            cached(2, "Group work", at(day, 10), at(day, 11)),
+        )
 
         val rows = days(entries, collapse = false).single().rows
 
@@ -158,7 +174,14 @@ class HistoryRowsTest {
 
     private fun days(entries: List<CachedTimeEntry>, collapse: Boolean): List<HistoryDay> {
         val time = AccountSettings("UTC", DayOfWeek.MONDAY, timeResolutionMinutes = null).time(CLOCK)!!
-        return historyDays(entries.map { EntryWithSendState(it, unsent = false) }, emptyList(), emptyList(), emptyList(), time, collapse)
+        return historyDays(
+            entries.map { EntryWithSendState(it, unsent = false) },
+            emptyList(),
+            emptyList(),
+            emptyList(),
+            time,
+            collapse,
+        )
     }
 
     private fun at(day: LocalDate, hour: Int): Instant = day.atTime(hour, 0).toInstant(ZoneOffset.UTC)

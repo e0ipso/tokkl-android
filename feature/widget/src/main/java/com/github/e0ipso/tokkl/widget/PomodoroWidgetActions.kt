@@ -16,21 +16,27 @@ import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.SessionActions
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import com.github.e0ipso.tokkl.timerstate.TimerActions
-import java.time.Instant
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
+import java.time.Instant
 
 internal sealed interface PomodoroWidgetTap {
     val account: String
-    data class Start(override val account: String, val entry: PomodoroWidgetEntry, val defaults: PomodoroDefaults) : PomodoroWidgetTap
-    data class Phase(override val account: String, val revision: Long, val start: Instant, val endSession: Boolean) : PomodoroWidgetTap
+    data class Start(override val account: String, val entry: PomodoroWidgetEntry, val defaults: PomodoroDefaults) :
+        PomodoroWidgetTap
+    data class Phase(override val account: String, val revision: Long, val start: Instant, val endSession: Boolean) :
+        PomodoroWidgetTap
 }
 
-internal suspend fun sendPomodoroWidgetAction(tap: PomodoroWidgetTap, current: PomodoroWidgetState, actions: SessionActions): TimerActionResult? {
+internal suspend fun sendPomodoroWidgetAction(
+    tap: PomodoroWidgetTap,
+    current: PomodoroWidgetState,
+    actions: SessionActions,
+): TimerActionResult? {
     val account = when (current) {
         is PomodoroWidgetState.Idle -> current.account
         is PomodoroWidgetState.Active -> current.account
@@ -40,9 +46,17 @@ internal suspend fun sendPomodoroWidgetAction(tap: PomodoroWidgetTap, current: P
     return when (tap) {
         is PomodoroWidgetTap.Start -> {
             if (current !is PomodoroWidgetState.Idle) return TimerActionResult.Refused
-            val lengths = tap.defaults.run { com.github.e0ipso.tokkl.timerstate.SessionLengths(workMinutes, shortRestMinutes, longRestMinutes, longRestEvery) }
+            val lengths = tap.defaults.run {
+                com.github.e0ipso.tokkl.timerstate.SessionLengths(
+                    workMinutes,
+                    shortRestMinutes,
+                    longRestMinutes,
+                    longRestEvery,
+                )
+            }
             actions.startSession(tap.entry.workspaceId, tap.entry.fields, lengths)
         }
+
         is PomodoroWidgetTap.Phase -> {
             if (current !is PomodoroWidgetState.Active || current.session.phase.start != tap.start) return null
             if (tap.endSession) actions.endSession(tap.revision) else actions.nextPhase(tap.revision)
@@ -51,50 +65,84 @@ internal suspend fun sendPomodoroWidgetAction(tap: PomodoroWidgetTap, current: P
 }
 
 internal data class PomodoroWidgetClock(val base: Long, val countDown: Boolean)
-internal fun pomodoroWidgetClock(state: PomodoroWidgetState.Active, now: Instant, elapsedRealtime: Long): PomodoroWidgetClock {
-    return PomodoroWidgetClock(
-        base = elapsedRealtime + java.time.Duration.between(now, state.end).toMillis(),
-        countDown = !state.ended,
-    )
-}
+internal fun pomodoroWidgetClock(
+    state: PomodoroWidgetState.Active,
+    now: Instant,
+    elapsedRealtime: Long,
+): PomodoroWidgetClock = PomodoroWidgetClock(
+    base = elapsedRealtime + java.time.Duration.between(now, state.end).toMillis(),
+    countDown = !state.ended,
+)
 
 /** Parameters capture what was drawn; a later state never substitutes its revision or defaults. */
 internal fun startPomodoroWidget(state: PomodoroWidgetState.Idle): Action {
     val entry = state.entry
     val fields = entry.fields
-    val saved = RememberedPomodoroFields(state.account, entry.workspaceId, fields.description, fields.projectId, fields.taskId, fields.tags, fields.billable)
-    return actionRunCallback<StartPomodoroWidgetAction>(actionParametersOf(
-        ACCOUNT to state.account,
-        FIELDS to ApiJson.encodeToString(RememberedPomodoroFields.serializer(), saved),
-        WORK to state.defaults.workMinutes, SHORT to state.defaults.shortRestMinutes,
-        LONG to state.defaults.longRestMinutes, EVERY to state.defaults.longRestEvery,
-    ))
+    val saved = RememberedPomodoroFields(
+        state.account,
+        entry.workspaceId,
+        fields.description,
+        fields.projectId,
+        fields.taskId,
+        fields.tags,
+        fields.billable,
+    )
+    return actionRunCallback<StartPomodoroWidgetAction>(
+        actionParametersOf(
+            ACCOUNT to state.account,
+            FIELDS to ApiJson.encodeToString(RememberedPomodoroFields.serializer(), saved),
+            WORK to state.defaults.workMinutes,
+            SHORT to state.defaults.shortRestMinutes,
+            LONG to state.defaults.longRestMinutes,
+            EVERY to state.defaults.longRestEvery,
+        ),
+    )
 }
 
 internal fun phasePomodoroWidget(state: PomodoroWidgetState.Active, end: Boolean = false): Action =
-    actionRunCallback<PhasePomodoroWidgetAction>(actionParametersOf(
-        ACCOUNT to state.account, REVISION to state.revision,
-        PHASE to state.session.phase.start.toString(), END to end,
-    ))
+    actionRunCallback<PhasePomodoroWidgetAction>(
+        actionParametersOf(
+            ACCOUNT to state.account,
+            REVISION to state.revision,
+            PHASE to state.session.phase.start.toString(),
+            END to end,
+        ),
+    )
 
-class StartPomodoroWidgetAction : ActionCallback, KoinComponent {
+class StartPomodoroWidgetAction :
+    ActionCallback,
+    KoinComponent {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         val tap = runCatching {
             val account = parameters[ACCOUNT] ?: return
             val saved = ApiJson.decodeFromString(RememberedPomodoroFields.serializer(), parameters[FIELDS] ?: return)
             if (saved.account != account) return
-            PomodoroWidgetTap.Start(account, PomodoroWidgetEntry(saved.workspaceId, saved.fields(), null, null, null),
-                PomodoroDefaults(parameters[WORK] ?: return, parameters[SHORT] ?: return, parameters[LONG] ?: return, parameters[EVERY] ?: return))
+            PomodoroWidgetTap.Start(
+                account,
+                PomodoroWidgetEntry(saved.workspaceId, saved.fields(), null, null, null),
+                PomodoroDefaults(
+                    parameters[WORK] ?: return,
+                    parameters[SHORT] ?: return,
+                    parameters[LONG] ?: return,
+                    parameters[EVERY] ?: return,
+                ),
+            )
         }.getOrNull() ?: return
         dispatchPomodoroWidget(context, tap)
     }
 }
 
-class PhasePomodoroWidgetAction : ActionCallback, KoinComponent {
+class PhasePomodoroWidgetAction :
+    ActionCallback,
+    KoinComponent {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         val tap = runCatching {
-            PomodoroWidgetTap.Phase(parameters[ACCOUNT] ?: return, parameters[REVISION] ?: return,
-                Instant.parse(parameters[PHASE] ?: return), parameters[END] ?: return)
+            PomodoroWidgetTap.Phase(
+                parameters[ACCOUNT] ?: return,
+                parameters[REVISION] ?: return,
+                Instant.parse(parameters[PHASE] ?: return),
+                parameters[END] ?: return,
+            )
         }.getOrNull() ?: return
         dispatchPomodoroWidget(context, tap)
     }
@@ -112,7 +160,11 @@ private fun KoinComponent.dispatchPomodoroWidget(context: Context, tap: Pomodoro
         if (timerStates.source !== source || !session.isSignedIn()) return@launch
         val client = session.client()
         // Keep the captured holder and credential together across sign-out/account replacement.
-        val actions = TimerActions(client = { client.takeIf { timerStates.source === source && session.isSignedIn() } }, source = { source }, io = io)
+        val actions = TimerActions(
+            client = { client.takeIf { timerStates.source === source && session.isSignedIn() } },
+            source = { source },
+            io = io,
+        )
         sendPomodoroWidgetAction(tap, current, actions)?.let { showTimerActionFailure(app, it) }
     }
 }

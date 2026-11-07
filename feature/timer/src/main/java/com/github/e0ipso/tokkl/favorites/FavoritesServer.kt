@@ -32,8 +32,16 @@ class FavoritesServer(private val client: ApiClientProvider, private val cache: 
      */
     fun save(favorites: List<EntryFields>): ApiResult<Unit> {
         val api = client() ?: return ApiResult.Failure(ApiError.AuthFailed)
-        return when (val answer = api.send("POST", api.server.api("me", "preferences"), favoritesBody(favorites), JsonElement.serializer())) {
+        return when (
+            val answer = api.send(
+                "POST",
+                api.server.api("me", "preferences"),
+                favoritesBody(favorites),
+                JsonElement.serializer(),
+            )
+        ) {
             is ApiResult.Failure -> answer
+
             is ApiResult.Success -> {
                 cache.replaceFavorites(favorites.mapIndexed { position, fields -> fields.toFavorite(position) })
                 ApiResult.Success(Unit)

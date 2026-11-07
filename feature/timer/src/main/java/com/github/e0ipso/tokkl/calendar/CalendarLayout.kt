@@ -83,7 +83,12 @@ private fun clockMinutes(instant: Instant, zone: ZoneId): Double {
  * ends at [now]. Each block is at least five minutes tall. Blocks that overlap share their
  * cluster's width in lanes, each taking the first lane free at its top.
  */
-fun calendarBlocks(entries: List<CalendarEntry>, days: List<LocalDate>, zone: ZoneId, now: Instant): List<CalendarBlock> {
+fun calendarBlocks(
+    entries: List<CalendarEntry>,
+    days: List<LocalDate>,
+    zone: ZoneId,
+    now: Instant,
+): List<CalendarBlock> {
     val ordered = entries.filter { !it.allDay }.sortedWith(entryOrder)
     return days.flatMap { day ->
         val onDay = ordered
@@ -93,7 +98,9 @@ fun calendarBlocks(entries: List<CalendarEntry>, days: List<LocalDate>, zone: Zo
                 }
             }
             .sortedBy { it.top }
-        lanesOf(onDay).map { (placed, lane, lanes) -> CalendarBlock(placed.entry, day, placed.top, placed.bottom, lane, lanes) }
+        lanesOf(
+            onDay,
+        ).map { (placed, lane, lanes) -> CalendarBlock(placed.entry, day, placed.top, placed.bottom, lane, lanes) }
     }
 }
 
@@ -107,7 +114,11 @@ private fun CalendarEntry.noTimeDayIn(zone: ZoneId): LocalDate = day ?: start.at
  * app's splitAllDay does. Entries on a day that is not shown are in no list, and a day without
  * entries has no key. Each list is in the order of start, then id.
  */
-fun allDayEntries(entries: List<CalendarEntry>, days: List<LocalDate>, zone: ZoneId): Map<LocalDate, List<CalendarEntry>> {
+fun allDayEntries(
+    entries: List<CalendarEntry>,
+    days: List<LocalDate>,
+    zone: ZoneId,
+): Map<LocalDate, List<CalendarEntry>> {
     val shown = days.toSet()
     return entries
         .filter { it.allDay }
@@ -152,5 +163,14 @@ private fun lanesOf(blocks: List<Placed>): List<Triple<Placed, Int, Int>> {
  * web app's dayTotal. An entry across midnight counts on the day it starts. A no-time entry counts
  * its whole duration on its stored day.
  */
-fun dayTotalSeconds(entries: List<CalendarEntry>, day: LocalDate, zone: ZoneId, now: Instant): Long =
-    entries.filter { (if (it.allDay) it.noTimeDayIn(zone) else it.start.atZone(zone).toLocalDate()) == day }.sumOf { it.seconds(now) }
+fun dayTotalSeconds(entries: List<CalendarEntry>, day: LocalDate, zone: ZoneId, now: Instant): Long = entries.filter {
+    (
+        if (it.allDay) {
+            it.noTimeDayIn(
+                zone,
+            )
+        } else {
+            it.start.atZone(zone).toLocalDate()
+        }
+        ) == day
+}.sumOf { it.seconds(now) }

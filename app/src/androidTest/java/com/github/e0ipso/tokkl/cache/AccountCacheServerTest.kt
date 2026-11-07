@@ -15,9 +15,6 @@ import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.Session
-import java.time.Duration
-import java.time.Instant
-import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.SerialName
@@ -35,6 +32,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.time.Duration
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 /**
  * One refresh from the real Tokkl container fills the cache, and with the phone in airplane mode
@@ -77,7 +77,9 @@ class AccountCacheServerTest {
                 cachedEntry(STALE_OLD_ENTRY, seed.now.minus(30, ChronoUnit.DAYS)),
                 cachedEntry(STALE_DELETED_ENTRY, seed.now.minus(1, ChronoUnit.DAYS)),
             ),
-            projects = listOf(CachedProject(seed.project, seed.workspace, null, "Stale name", null, active = true, billable = false)),
+            projects = listOf(
+                CachedProject(seed.project, seed.workspace, null, "Stale name", null, active = true, billable = false),
+            ),
             tags = listOf(CachedTag(STALE_TAG, seed.workspace, "stale")),
         )
         // Another instance on the same file, as the app's own is not open to writes from here.
@@ -92,7 +94,10 @@ class AccountCacheServerTest {
         runBlocking { app.accountRefresh.refresh().join() }
         setAirplaneMode(on = true)
         val offline = account.client.get(account.client.server.api("me"), JsonObject.serializer())
-        assertTrue("requests fail in airplane mode: $offline", (offline as? ApiResult.Failure)?.error is ApiError.Network)
+        assertTrue(
+            "requests fail in airplane mode: $offline",
+            (offline as? ApiResult.Failure)?.error is ApiError.Network,
+        )
 
         val cache = app.cache
         assertEquals(
@@ -131,7 +136,11 @@ class AccountCacheServerTest {
         DeviceShell.run("cmd connectivity airplane-mode ${if (on) "enable" else "disable"}")
         val deadline = System.nanoTime() + NETWORK_TIMEOUT.toNanos()
         while (serverAnswers() == on) {
-            if (System.nanoTime() > deadline) throw AssertionError("the network did not ${if (on) "go" else "come back"}")
+            if (System.nanoTime() > deadline) {
+                throw AssertionError(
+                    "the network did not ${if (on) "go" else "come back"}",
+                )
+            }
             Thread.sleep(200)
         }
     }
@@ -149,7 +158,13 @@ class AccountCacheServerTest {
         val now: Instant = Instant.now().truncatedTo(ChronoUnit.SECONDS)
         val workspace = api.get(api.server.api("me"), Me.serializer()).orFail("GET /api/v9/me").defaultWorkspaceId
         val client = create("clients", buildJsonObject { put("name", "Acme") })
-        val project = create("projects", buildJsonObject { put("name", "Website"); put("client_id", client) })
+        val project = create(
+            "projects",
+            buildJsonObject {
+                put("name", "Website")
+                put("client_id", client)
+            },
+        )
         val archivedProject = create("projects", buildJsonObject { put("name", "Archived, on an entry") })
         val unusedProject = create("projects", buildJsonObject { put("name", "Archived, unused") })
         val tag = create("tags", buildJsonObject { put("name", "focus") })
@@ -177,20 +192,19 @@ class AccountCacheServerTest {
             ).orFail("POST /api/v9/me/preferences")
         }
 
-        private fun entry(start: Instant, project: Long, task: Long?, tag: Long?): Long =
-            create(
-                "time_entries",
-                buildJsonObject {
-                    put("workspace_id", workspace)
-                    put("created_with", "tokkl-android tests")
-                    put("description", "Entry")
-                    put("start", start.toString())
-                    put("duration", 1800)
-                    put("project_id", project)
-                    if (task != null) put("task_id", task)
-                    if (tag != null) put("tag_ids", buildJsonArray { add(JsonPrimitive(tag)) })
-                },
-            )
+        private fun entry(start: Instant, project: Long, task: Long?, tag: Long?): Long = create(
+            "time_entries",
+            buildJsonObject {
+                put("workspace_id", workspace)
+                put("created_with", "tokkl-android tests")
+                put("description", "Entry")
+                put("start", start.toString())
+                put("duration", 1800)
+                put("project_id", project)
+                if (task != null) put("task_id", task)
+                if (tag != null) put("tag_ids", buildJsonArray { add(JsonPrimitive(tag)) })
+            },
+        )
 
         private fun archive(project: Long) {
             api.send(

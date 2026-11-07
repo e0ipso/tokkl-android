@@ -62,11 +62,19 @@ class ClientsServer(private val api: TogglApiClient, private val workspace: Long
      * projects it archived, which the page does not need. OkHttp sends no POST without a body, so
      * the body is an empty object.
      */
-    fun archive(id: Long): ApiResult<Unit> = api.sendNoContent("POST", url(id.toString(), "archive"), buildJsonObject {})
+    fun archive(id: Long): ApiResult<Unit> = api.sendNoContent(
+        "POST",
+        url(id.toString(), "archive"),
+        buildJsonObject {},
+    )
 
     /** Restores the client and every one of its projects, as the web app asks. */
-    fun restore(id: Long): ApiResult<Client> =
-        api.send("POST", url(id.toString(), "restore"), buildJsonObject { put("restore_all_projects", true) }, Client.serializer())
+    fun restore(id: Long): ApiResult<Client> = api.send(
+        "POST",
+        url(id.toString(), "restore"),
+        buildJsonObject { put("restore_all_projects", true) },
+        Client.serializer(),
+    )
 
     private fun url(vararg path: String) = api.server.api("workspaces", workspace.toString(), "clients", *path)
 

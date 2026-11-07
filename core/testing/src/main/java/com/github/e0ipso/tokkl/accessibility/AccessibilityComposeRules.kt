@@ -5,14 +5,14 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.junit4.accessibility.enableAccessibilityChecks
-import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule as androidComposeRule
-import androidx.compose.ui.test.junit4.v2.createComposeRule as composeRule
-import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule as emptyComposeRule
 import androidx.compose.ui.test.tryPerformAccessibilityChecks
 import androidx.test.espresso.accessibility.AccessibilityChecks
 import com.google.android.apps.common.testing.accessibility.framework.AccessibilityCheckResultUtils.matchesCheck
 import com.google.android.apps.common.testing.accessibility.framework.checks.TouchTargetSizeCheck
 import com.google.android.apps.common.testing.accessibility.framework.integrations.espresso.AccessibilityValidator
+import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule as androidComposeRule
+import androidx.compose.ui.test.junit4.v2.createComposeRule as composeRule
+import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule as emptyComposeRule
 
 /**
  * Audit tests use the same v2 factories as other tests, with the maintained ATF integration.
@@ -29,7 +29,11 @@ inline fun <reified A : ComponentActivity> createAndroidComposeRule() =
  * touch targets in the device's pixels, so there a 48dp target reads smaller than it is. Such a
  * rule leaves out only the touch-target check; every other check still runs.
  */
-fun createComposeRule(scaledSizes: Boolean = false) = composeRule().also { it.enableTokklAccessibilityChecks(scaledSizes) }
+fun createComposeRule(scaledSizes: Boolean = false) = composeRule().also {
+    it.enableTokklAccessibilityChecks(
+        scaledSizes,
+    )
+}
 
 fun createEmptyComposeRule() = emptyComposeRule().also { it.enableTokklAccessibilityChecks() }
 

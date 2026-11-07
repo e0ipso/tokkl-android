@@ -41,20 +41,28 @@ internal class ReportExtraProjection {
         nodesLeft--
         return when (value) {
             is JsonPrimitive -> text(if (value.isString) quoted(value.content) else value.content)
+
             is JsonArray -> {
                 if (depth >= 3) return omitted()
                 val parts = mutableListOf<String>()
                 for (child in value) {
-                    if (!available() || parts.size == 12) { parts += omitted(); break }
+                    if (!available() || parts.size == 12) {
+                        parts += omitted()
+                        break
+                    }
                     parts += render(child, depth + 1)
                 }
                 "[" + parts.joinToString(", ") + "]"
             }
+
             is JsonObject -> {
                 if (depth >= 3) return omitted()
                 val parts = mutableListOf<String>()
                 for ((key, child) in value) {
-                    if (!available() || parts.size == 12) { parts += omitted(); break }
+                    if (!available() || parts.size == 12) {
+                        parts += omitted()
+                        break
+                    }
                     if (key.length > 240) truncated = true
                     parts += text(humanizeReportKey(key)) + ": " + render(child, depth + 1)
                 }
@@ -70,14 +78,26 @@ internal class ReportExtraProjection {
         return if (value.length > limit) bounded + omitted() else bounded
     }
 
-    private fun omitted(): String { truncated = true; return "…" }
+    private fun omitted(): String {
+        truncated = true
+        return "…"
+    }
 
     private fun quoted(value: String): String {
         // Bound before escaping; JSON quoting keeps quotes/newlines literal and Compose Text
         // never interprets markup. Escape bidi/control formatting so labels cannot be spoofed.
         val limited = value.take(240)
         if (limited.length != value.length) truncated = true
-        val safe = limited.map { if (Character.getType(it) == Character.FORMAT.toInt()) "\\u%04x".format(it.code) else it.toString() }.joinToString("")
+        val safe = limited.map {
+            if (Character.getType(
+                    it,
+                ) == Character.FORMAT.toInt()
+            ) {
+                "\\u%04x".format(it.code)
+            } else {
+                it.toString()
+            }
+        }.joinToString("")
         return JsonPrimitive(safe).toString() + if (limited.length != value.length) "…" else ""
     }
 }

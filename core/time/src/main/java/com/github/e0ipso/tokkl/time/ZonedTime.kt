@@ -43,7 +43,15 @@ fun zonedToUtc(year: Int, month: Int, day: Int, hour: Int, minute: Int, second: 
  */
 fun addClockMinutes(instant: Instant, minutes: Int, zone: ZoneId): Instant {
     val wall = instant.atZone(zone)
-    val shifted = zonedToUtc(wall.year, wall.monthValue, wall.dayOfMonth, wall.hour, wall.minute + minutes, wall.second, zone)
+    val shifted = zonedToUtc(
+        wall.year,
+        wall.monthValue,
+        wall.dayOfMonth,
+        wall.hour,
+        wall.minute + minutes,
+        wall.second,
+        zone,
+    )
     return shifted.plusMillis(Math.floorMod(instant.toEpochMilli(), SECOND_MS))
 }
 

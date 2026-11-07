@@ -30,13 +30,13 @@ import com.github.e0ipso.tokkl.core.ui.R
 import com.github.e0ipso.tokkl.ui.theme.TokklDarkColorScheme
 import com.github.e0ipso.tokkl.ui.theme.TokklDarkExtraColors
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import kotlin.math.abs
-import kotlin.math.ceil
-import kotlin.math.roundToInt
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import kotlin.math.abs
+import kotlin.math.ceil
+import kotlin.math.roundToInt
 
 /**
  * The brand's halo, its fit, and that it is the wordmark alone (docs/PRD.md, Visual direction,
@@ -54,7 +54,11 @@ class BrandTest {
     fun inDarkModeAHaloInTheWordmarkHaloColourTracesTheWordmark() {
         var look by mutableStateOf(Look.DARK)
         composeRule.setContent {
-            Box(Modifier.testTag(FRAME).background(if (look == Look.ON_MARKER) MARKER else DARK_BACKGROUND).padding(FRAME_PADDING)) {
+            Box(
+                Modifier.testTag(
+                    FRAME,
+                ).background(if (look == Look.ON_MARKER) MARKER else DARK_BACKGROUND).padding(FRAME_PADDING),
+            ) {
                 TokklTheme(darkTheme = look == Look.DARK) { Brand(BrandSize.LARGE) }
             }
         }
@@ -69,7 +73,10 @@ class BrandTest {
         val artwork = Mask(marker.width, marker.height) { x, y -> !marker[x, y].near(MARKER, 0) }
         val outside = (0 until marker.width).flatMap { x -> (0 until marker.height).map { y -> x to y } }
             .filterNot { (x, y) -> artwork[x, y] }
-        assertTrue("light mode draws something around the brand", outside.all { (x, y) -> light[x, y].near(DARK_BACKGROUND, EXACT) })
+        assertTrue(
+            "light mode draws something around the brand",
+            outside.all { (x, y) -> light[x, y].near(DARK_BACKGROUND, EXACT) },
+        )
 
         // The halo is the wordmark moved 1dp each way, so nothing changes further out.
         val reach = ceil(HALO_WIDTH.value * density).toInt() + 1
@@ -82,7 +89,10 @@ class BrandTest {
         // The pixels just outside the artwork, on every side of every letter, take the halo.
         val edge = outside.filter { (x, y) -> artwork.anyWithin(x, y, 1) }
         val traced = edge.count { (x, y) -> dark[x, y].near(HALO, BLENDED) }
-        assertTrue("the halo covers $traced of ${edge.size} pixels at the wordmark's edge", traced >= edge.size * MIN_TRACED_SHARE)
+        assertTrue(
+            "the halo covers $traced of ${edge.size} pixels at the wordmark's edge",
+            traced >= edge.size * MIN_TRACED_SHARE,
+        )
     }
 
     @Test
@@ -101,7 +111,10 @@ class BrandTest {
         val width = wordmark.right - wordmark.left
         val height = wordmark.bottom - wordmark.top
         assertEquals("the wordmark's width in a $NARROW row", NARROW.value, width.value, PIXEL_DP)
-        assertTrue("the wordmark ends at ${wordmark.right}, past the row's ${frame.right}", wordmark.right <= frame.right + PIXEL_DP.dp)
+        assertTrue(
+            "the wordmark ends at ${wordmark.right}, past the row's ${frame.right}",
+            wordmark.right <= frame.right + PIXEL_DP.dp,
+        )
         assertEquals("the wordmark keeps its shape", WORDMARK_ASPECT_RATIO, width / height, 0.02f)
     }
 
@@ -123,16 +136,32 @@ class BrandTest {
             size = each
             val image = capture()
 
-            val images = composeRule.onAllNodes(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Image), useUnmergedTree = true)
+            val images = composeRule.onAllNodes(
+                SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Image),
+                useUnmergedTree = true,
+            )
                 .fetchSemanticsNodes()
                 .map { it.config.getOrNull(SemanticsProperties.ContentDescription) }
             assertEquals("the images in the $each brand", listOf(listOf(string(R.string.app_name))), images)
 
             val brand = composeRule.onNodeWithTag(BRAND).getUnclippedBoundsInRoot()
             val wordmark = wordmarkBounds()
-            assertEquals("the $each wordmark's width", each.wordmarkWidth.value, (wordmark.right - wordmark.left).value, PIXEL_DP)
-            val margins = listOf(wordmark.left - brand.left, brand.right - wordmark.right, wordmark.top - brand.top, brand.bottom - wordmark.bottom)
-            assertTrue("the $each brand reaches past its wordmark by $margins", margins.all { abs(it.value) <= PIXEL_DP })
+            assertEquals(
+                "the $each wordmark's width",
+                each.wordmarkWidth.value,
+                (wordmark.right - wordmark.left).value,
+                PIXEL_DP,
+            )
+            val margins = listOf(
+                wordmark.left - brand.left,
+                brand.right - wordmark.right,
+                wordmark.top - brand.top,
+                brand.bottom - wordmark.bottom,
+            )
+            assertTrue(
+                "the $each brand reaches past its wordmark by $margins",
+                margins.all { abs(it.value) <= PIXEL_DP },
+            )
 
             // Light mode draws no halo, so every pixel off the marker colour is inside the wordmark.
             val frame = composeRule.onNodeWithTag(FRAME).getUnclippedBoundsInRoot()
@@ -156,8 +185,10 @@ class BrandTest {
     }
 
     /** The wordmark's own node, not the brand's merged one. */
-    private fun wordmarkBounds() =
-        composeRule.onNode(hasContentDescription(string(R.string.app_name)), useUnmergedTree = true).getUnclippedBoundsInRoot()
+    private fun wordmarkBounds() = composeRule.onNode(
+        hasContentDescription(string(R.string.app_name)),
+        useUnmergedTree = true,
+    ).getUnclippedBoundsInRoot()
 
     private fun Dp.px(): Int = (value * density).roundToInt()
 
@@ -166,8 +197,9 @@ class BrandTest {
         return composeRule.onNodeWithTag(FRAME).captureToImage().toPixelMap()
     }
 
-    private fun Color.near(other: Color, tolerance: Int): Boolean =
-        abs(red8 - other.red8) <= tolerance && abs(green8 - other.green8) <= tolerance && abs(blue8 - other.blue8) <= tolerance
+    private fun Color.near(other: Color, tolerance: Int): Boolean = abs(
+        red8 - other.red8,
+    ) <= tolerance && abs(green8 - other.green8) <= tolerance && abs(blue8 - other.blue8) <= tolerance
 
     private val Color.red8 get() = (red * 255).roundToInt()
     private val Color.green8 get() = (green * 255).roundToInt()

@@ -21,11 +21,11 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import com.github.e0ipso.tokkl.core.shared.R
-import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.ui.ErrorBanner
 import com.github.e0ipso.tokkl.ui.StickerCard
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /** What [change] did, in the web app's words, such as "Created Website". */
 @Composable
@@ -45,9 +45,13 @@ fun problemText(problem: ServerProblem): String = problemText(LocalResources.cur
 /** What [problem] means for the user, in a sentence, from [resources], for text made outside composition. */
 fun problemText(resources: Resources, problem: ServerProblem): String = when (problem) {
     ServerProblem.Unreachable -> resources.getString(R.string.catalog_error_unreachable)
+
     ServerProblem.AuthFailed -> resources.getString(R.string.catalog_error_auth)
+
     ServerProblem.TrustRefused -> resources.getString(R.string.catalog_error_trust)
+
     is ServerProblem.Refused -> problem.reason
+
     is ServerProblem.Unexpected -> problem.status?.let { resources.getString(R.string.catalog_error_status, it) }
         ?: resources.getString(R.string.catalog_error_unreadable)
 }
@@ -114,9 +118,18 @@ fun DetailLine(details: List<String>, modifier: Modifier = Modifier) {
         val separator = stringResource(R.string.catalog_detail_separator)
         details.forEachIndexed { index, detail ->
             if (index > 0) {
-                Text(separator, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.clearAndSetSemantics {})
+                Text(
+                    separator,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.clearAndSetSemantics {},
+                )
             }
-            Text(detail, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                detail,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }

@@ -10,9 +10,6 @@ import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.capabilities.ReportCsvKind
 import com.github.e0ipso.tokkl.time.DurationFormat
-import java.time.DayOfWeek
-import java.time.LocalDate
-import java.time.ZoneId
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
@@ -26,6 +23,9 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.time.DayOfWeek
+import java.time.LocalDate
+import java.time.ZoneId
 
 class AppSummaryServerTest {
     private val http = MockWebServer()
@@ -34,8 +34,12 @@ class AppSummaryServerTest {
     private val workspace = ReportWorkspace(7, 1, 15, appSummaryCandidate = true)
     private val zone = ZoneId.of("Pacific/Kiritimati")
     private val filters = ReportFilters(
-        projects = listOf(null, 8), clients = listOf(9, null), tags = listOf(10, null),
-        billable = BillableFilter.BILLABLE, projectsNot = true, tagsNot = true,
+        projects = listOf(null, 8),
+        clients = listOf(9, null),
+        tags = listOf(10, null),
+        billable = BillableFilter.BILLABLE,
+        projectsNot = true,
+        tagsNot = true,
     )
 
     @Before
@@ -73,8 +77,10 @@ class AppSummaryServerTest {
         assertEquals("/prefix/tokkl/api/app/report", request.url.encodedPath)
         assertTrue(request.headers["Authorization"]!!.startsWith("Basic "))
         assertEquals(
-            jsonObject("""{"start_date":"2026-10-21","end_date":"2026-10-27","grouping":"projects","sub_grouping":"projects",
-              "exclude_project_ids":[null,8],"client_ids":[9,null],"exclude_tag_ids":[10,null],"billable":true}"""),
+            jsonObject(
+                """{"start_date":"2026-10-21","end_date":"2026-10-27","grouping":"projects","sub_grouping":"projects",
+              "exclude_project_ids":[null,8],"client_ids":[9,null],"exclude_tag_ids":[10,null],"billable":true}""",
+            ),
             jsonObject(request.body!!.utf8()),
         )
         assertEquals(1, http.requestCount)
@@ -84,14 +90,23 @@ class AppSummaryServerTest {
     fun allFilterVariantsAreForwardedWithoutChangingTheirMeaning() {
         val cases = listOf(
             ReportFilters() to "{}",
-            ReportFilters(projects = listOf(null), clients = listOf(null), tags = listOf(null), billable = BillableFilter.NON_BILLABLE, clientsNot = true) to
+            ReportFilters(
+                projects = listOf(null),
+                clients = listOf(null),
+                tags = listOf(null),
+                billable = BillableFilter.NON_BILLABLE,
+                clientsNot = true,
+            ) to
                 """{"project_ids":[null],"exclude_client_ids":[null],"tag_ids":[null],"billable":false}""",
         )
         for ((selected, expected) in cases) {
             http.enqueue(json(APP_SUMMARY_FIXTURE))
             success(server.summary(workspace, range, zone, DayOfWeek.WEDNESDAY, selected))
             val body = jsonObject(http.takeRequest().body!!.utf8())
-            assertEquals(jsonObject(expected), JsonObject(body - setOf("start_date", "end_date", "grouping", "sub_grouping")))
+            assertEquals(
+                jsonObject(expected),
+                JsonObject(body - setOf("start_date", "end_date", "grouping", "sub_grouping")),
+            )
         }
     }
 
@@ -108,15 +123,23 @@ class AppSummaryServerTest {
             val fallback = http.takeRequest()
             assertEquals("/prefix/tokkl/reports/api/v3/workspace/7/search/time_entries", fallback.url.encodedPath)
             val body = jsonObject(fallback.body!!.utf8())
-            assertEquals(jsonObject("""{"rounding":1,"rounding_minutes":15,"exclude_project_ids":[null,8],"client_ids":[9,null],"exclude_tag_ids":[10,null],"billable":true}"""),
-                JsonObject(body - setOf("start_date", "end_date", "order_by", "order_dir", "page_size", "first_row_number")))
+            assertEquals(
+                jsonObject(
+                    """{"rounding":1,"rounding_minutes":15,"exclude_project_ids":[null,8],"client_ids":[9,null],"exclude_tag_ids":[10,null],"billable":true}""",
+                ),
+                JsonObject(
+                    body - setOf("start_date", "end_date", "order_by", "order_dir", "page_size", "first_row_number"),
+                ),
+            )
         }
     }
 
     @Test
     fun nonCandidateUsesExistingDetailedSearchWithoutAnAppProbe() {
         http.enqueue(json(FALLBACK_ROWS))
-        val report = success(server.summary(workspace.copy(appSummaryCandidate = false), range, zone, DayOfWeek.WEDNESDAY))
+        val report = success(
+            server.summary(workspace.copy(appSummaryCandidate = false), range, zone, DayOfWeek.WEDNESDAY),
+        )
         assertEquals(168L, report.totals.amounts.single().cents)
         assertEquals("/prefix/tokkl/reports/api/v3/workspace/7/search/time_entries", http.takeRequest().url.encodedPath)
         assertEquals(1, http.requestCount)
@@ -127,7 +150,9 @@ class AppSummaryServerTest {
         for (status in listOf(401, 403, 429, 500, 502, 503, 504)) {
             // A dispatcher also prevents an accidental fallback from hanging the test.
             http.dispatcher = object : Dispatcher() {
-                override fun dispatch(request: RecordedRequest) = MockResponse.Builder().code(status).addHeader("Retry-After", "17").build()
+                override fun dispatch(request: RecordedRequest) = MockResponse.Builder().code(
+                    status,
+                ).addHeader("Retry-After", "17").build()
             }
             val before = http.requestCount
             val answer = server.summary(workspace, range, zone, DayOfWeek.WEDNESDAY) as ApiResult.Failure
@@ -169,16 +194,32 @@ class AppSummaryServerTest {
         server.weekly(workspace, range.from, filters)
         assertEquals("/prefix/tokkl/reports/api/v3/workspace/7/weekly/time_entries", http.takeRequest().url.encodedPath)
         for (kind in ReportCsvKind.entries) {
-            val old = ReportCsvRequest(kind, range, filters, workspace.copy(appSummaryCandidate = false), DurationFormat.CLASSIC)
+            val old = ReportCsvRequest(
+                kind,
+                range,
+                filters,
+                workspace.copy(appSummaryCandidate = false),
+                DurationFormat.CLASSIC,
+            )
             val current = old.copy(workspace = workspace)
             assertEquals(old.body(), current.body())
             assertTrue(current.body().containsKey("rounding"))
         }
         assertEquals(null, ReportTab.WEEKLY.csvKind())
-        assertFalse(ReportCsvRequest(ReportCsvKind.DETAILED, range, filters, workspace, DurationFormat.CLASSIC).body().containsKey("grouping"))
+        assertFalse(
+            ReportCsvRequest(
+                ReportCsvKind.DETAILED,
+                range,
+                filters,
+                workspace,
+                DurationFormat.CLASSIC,
+            ).body().containsKey("grouping"),
+        )
     }
 
-    private fun json(body: String) = MockResponse.Builder().code(200).body(body).addHeader("Content-Type", "application/json").build()
+    private fun json(body: String) = MockResponse.Builder().code(
+        200,
+    ).body(body).addHeader("Content-Type", "application/json").build()
     private fun jsonObject(body: String) = Json.parseToJsonElement(body).jsonObject
     private fun success(result: ApiResult<SummaryReport>) = (result as ApiResult.Success).value
 

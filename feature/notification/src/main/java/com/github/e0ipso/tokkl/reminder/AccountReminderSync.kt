@@ -29,7 +29,10 @@ internal fun accountReminderSync(
 ): ReminderSync {
     val notifier = ReminderNotifier(context)
 
-    suspend fun runningNow(entryId: Long) = (controls.current() as? TimerControls.Running)?.takeIf { it.entry.id == entryId }
+    suspend fun runningNow(entryId: Long) = (controls.current() as? TimerControls.Running)?.takeIf {
+        it.entry.id ==
+            entryId
+    }
 
     return ReminderSync(
         latest = { ReminderInput(cache.running.first()?.entry?.takeIf { session.isSignedIn() }, settings.state.value) },

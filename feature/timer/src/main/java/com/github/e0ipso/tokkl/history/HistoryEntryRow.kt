@@ -42,7 +42,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import com.github.e0ipso.tokkl.feature.timer.R
-import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.UnsentIcon
 import com.github.e0ipso.tokkl.ui.projectMark
@@ -50,6 +49,7 @@ import com.github.e0ipso.tokkl.ui.spokenDuration
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.ZoneId
 import java.util.Locale
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * One stopped entry, one item to TalkBack, and beside it the buttons that continue it and open its
@@ -60,7 +60,13 @@ import java.util.Locale
  * the entry's fields, so every row has it.
  */
 @Composable
-internal fun EntryRow(entry: HistoryEntry, zone: ZoneId, settings: AccountSettings, locale: Locale, callbacks: EntryCallbacks) {
+internal fun EntryRow(
+    entry: HistoryEntry,
+    zone: ZoneId,
+    settings: AccountSettings,
+    locale: Locale,
+    callbacks: EntryCallbacks,
+) {
     // Where the description's first line has its middle, in pixels from the row's top, so the
     // menu button lines up with it at any font scale.
     var firstLineMiddle by remember { mutableFloatStateOf(0f) }
@@ -92,7 +98,13 @@ internal fun EntryRow(entry: HistoryEntry, zone: ZoneId, settings: AccountSettin
  * and says the new state after a tap. A chevron shows the state too, so it never rests on colour.
  */
 @Composable
-internal fun GroupRow(row: HistoryRow, zone: ZoneId, settings: AccountSettings, locale: Locale, callbacks: EntryCallbacks) {
+internal fun GroupRow(
+    row: HistoryRow,
+    zone: ZoneId,
+    settings: AccountSettings,
+    locale: Locale,
+    callbacks: EntryCallbacks,
+) {
     var expanded by rememberSaveable { mutableStateOf(false) }
     var firstLineMiddle by remember { mutableFloatStateOf(0f) }
     val state = stringResource(if (expanded) R.string.history_group_expanded else R.string.history_group_collapsed)
@@ -141,7 +153,10 @@ internal fun GroupRow(row: HistoryRow, zone: ZoneId, settings: AccountSettings, 
 @Composable
 private fun ContinueButton(entry: HistoryEntry, callbacks: EntryCallbacks, firstLineMiddle: Float) {
     val name = entry.description.ifBlank { stringResource(R.string.history_no_description) }
-    IconButton(onClick = { callbacks.onContinue(entry.id) }, modifier = Modifier.padding(top = buttonTop(firstLineMiddle))) {
+    IconButton(
+        onClick = { callbacks.onContinue(entry.id) },
+        modifier = Modifier.padding(top = buttonTop(firstLineMiddle)),
+    ) {
         Icon(
             painter = painterResource(UiR.drawable.ic_play),
             contentDescription = stringResource(R.string.history_continue, name),
@@ -221,9 +236,21 @@ private class RowLine(
     val range: HistoryRange?,
     val unsent: Boolean,
 ) {
-    constructor(entry: HistoryEntry) : this(entry, null, entry.seconds, HistoryRange(entry.start, entry.stop).takeIf { !entry.allDay }, entry.unsent)
+    constructor(entry: HistoryEntry) : this(
+        entry,
+        null,
+        entry.seconds,
+        HistoryRange(entry.start, entry.stop).takeIf { !entry.allDay },
+        entry.unsent,
+    )
 
-    constructor(row: HistoryRow) : this(row.newest, row.entries.size, row.seconds, row.range, row.entries.any { it.unsent })
+    constructor(row: HistoryRow) : this(
+        row.newest,
+        row.entries.size,
+        row.seconds,
+        row.range,
+        row.entries.any { it.unsent },
+    )
 }
 
 /** The line's count, description, duration, project, times and marks. [modifier] takes its tap. */
@@ -244,7 +271,15 @@ private fun EntryText(
     val range = line.range
     val start = range?.let { settings.formatTime(it.start, zone) }
     val stop = range?.let { settings.formatTime(it.stop, zone) }
-    val spokenRange = if (start != null && stop != null) stringResource(R.string.history_time_range_spoken, start, stop) else null
+    val spokenRange = if (start != null && stop != null) {
+        stringResource(
+            R.string.history_time_range_spoken,
+            start,
+            stop,
+        )
+    } else {
+        null
+    }
     val spokenSeconds = spokenDuration(resources, line.seconds)
     Column(
         verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space1),
@@ -276,7 +311,13 @@ private fun EntryText(
                 Canvas(Modifier.size(TokklTheme.spacing.space3)) { drawCircle(dot) }
                 Spacer(Modifier.width(TokklTheme.spacing.space2))
                 Text(
-                    text = entry.task?.let { stringResource(R.string.history_project_task, entry.project, it) } ?: entry.project,
+                    text = entry.task?.let {
+                        stringResource(
+                            R.string.history_project_task,
+                            entry.project,
+                            it,
+                        )
+                    } ?: entry.project,
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
@@ -294,7 +335,11 @@ private fun EntryText(
                 Text(entry.tags.joinToString(", "), style = MaterialTheme.typography.bodyMedium, color = muted)
             }
             if (entry.billable) {
-                Text(stringResource(R.string.history_billable), style = MaterialTheme.typography.bodyMedium, color = muted)
+                Text(
+                    stringResource(R.string.history_billable),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = muted,
+                )
             }
             if (line.unsent) {
                 // The icon and the words, so colour is never the only sign. TalkBack reads the words.

@@ -12,9 +12,6 @@ import androidx.test.uiautomator.Until
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.BlackholeDiagnostics
 import com.github.e0ipso.tokkl.HangingRelay
-import com.github.e0ipso.tokkl.feature.tile.R
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
-import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.RequestCounter
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TapToVisibleDeadline
@@ -33,6 +30,7 @@ import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.timerActions
 import com.github.e0ipso.tokkl.components.timerControls
+import com.github.e0ipso.tokkl.feature.tile.R
 import com.github.e0ipso.tokkl.followNoTimerEvents
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.orFail
@@ -43,8 +41,6 @@ import com.github.e0ipso.tokkl.timerState
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import com.github.e0ipso.tokkl.timerstate.TimerControls
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
-import java.time.Instant
-import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -64,6 +60,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.time.Instant
+import java.time.temporal.ChronoUnit
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * The Quick Settings tile (docs/PRD.md N4) in the device's real SystemUI, against the real Tokkl
@@ -167,7 +167,11 @@ class RunningTileServerTest {
 
     @Test
     fun aTapDuringAHeldRefreshContinuesTheDisplayedEntryAtOnce() {
-        account.createEntry("Continue while refresh hangs", Instant.now().minusSeconds(7_200), Instant.now().minusSeconds(3_600))
+        account.createEntry(
+            "Continue while refresh hangs",
+            Instant.now().minusSeconds(7_200),
+            Instant.now().minusSeconds(3_600),
+        )
         runBlocking { app.accountRefresh.refresh().join() }
         // Without the timer event stream, as on Toggl Track, only the held refresh would show the laptop's timer.
         app.followNoTimerEvents()
@@ -177,7 +181,10 @@ class RunningTileServerTest {
                 signIn(requests.url, account.apiToken)
                 relay.holdAnswerTo("GET /api/v9/me/time_entries/current ")
                 QuickSettingsTile.expand()
-                QuickSettingsTile.awaitText("the cached entry before the refresh answers", "Continue while refresh hangs")
+                QuickSettingsTile.awaitText(
+                    "the cached entry before the refresh answers",
+                    "Continue while refresh hangs",
+                )
                 runBlocking { withTimeout(TIMEOUT_MS) { while (!relay.holdsAnswer) delay(20) } }
                 QuickSettingsTile.collapse()
                 QuickSettingsTile.expand()
@@ -186,10 +193,17 @@ class RunningTileServerTest {
 
                 QuickSettingsTile.click()
 
-                val continued = runBlocking { withTimeout(AT_ONCE_MS) { app.cache.running.first { it != null } } }!!.entry
+                val continued = runBlocking {
+                    withTimeout(
+                        AT_ONCE_MS,
+                    ) { app.cache.running.first { it != null } }
+                }!!.entry
                 assertEquals("the tap uses the displayed entry", "Continue while refresh hangs", continued.description)
                 assertTrue("the tap did not wait for the current-entry reply", relay.holdsAnswer)
-                QuickSettingsTile.awaitText("the immediate cached start", context.getString(R.string.tile_running_subtitle))
+                QuickSettingsTile.awaitText(
+                    "the immediate cached start",
+                    context.getString(R.string.tile_running_subtitle),
+                )
                 relay.releaseAnswer()
             }
         }
@@ -230,10 +244,15 @@ class RunningTileServerTest {
                     QuickSettingsTile.awaitText("the offline cache", context.getString(R.string.tile_nothing_subtitle))
                     QuickSettingsTile.collapse()
                     QuickSettingsTile.expand()
-                    QuickSettingsTile.awaitText("the offline cache on reopening", context.getString(R.string.tile_nothing_subtitle))
+                    QuickSettingsTile.awaitText(
+                        "the offline cache on reopening",
+                        context.getString(R.string.tile_nothing_subtitle),
+                    )
                     QuickSettingsTile.collapse()
 
-                    BlackholeDiagnostics.record("tile.pre_assert count=${requests.count} hung=${relay.hungConnections} relay_failures=${requests.failures.size}")
+                    BlackholeDiagnostics.record(
+                        "tile.pre_assert count=${requests.count} hung=${relay.hungConnections} relay_failures=${requests.failures.size}",
+                    )
                     BlackholeDiagnostics.mark("tile.assertions")
                     tileNetworkSnapshot()
                     assertEquals("offline openings send no current-entry request", 0, requests.count)
@@ -275,7 +294,12 @@ class RunningTileServerTest {
         val stop = start.plusSeconds(3600)
         runBlocking { app.changes.create(workspace, EntryFields(description = "Earlier entry"), start, stop) }
         val last = runBlocking {
-            app.changes.create(workspace, EntryFields(description = "Continued from the tile", projectId = project, tags = listOf("tile")), start, stop)
+            app.changes.create(
+                workspace,
+                EntryFields(description = "Continued from the tile", projectId = project, tags = listOf("tile")),
+                start,
+                stop,
+            )
         }
         QuickSettingsTile.expand()
         QuickSettingsTile.awaitText("no timer runs", context.getString(R.string.tile_continue))
@@ -296,7 +320,10 @@ class RunningTileServerTest {
     @Test
     fun longPressPausesResumesAndStopsWhilePausedOnTheServer() {
         val fields = EntryFields(description = "Long press controls", projectId = project)
-        val first = account.createEntry(fields.description, Instant.now().minusSeconds(600).truncatedTo(ChronoUnit.SECONDS))
+        val first = account.createEntry(
+            fields.description,
+            Instant.now().minusSeconds(600).truncatedTo(ChronoUnit.SECONDS),
+        )
         runBlocking { app.accountRefresh.refresh().join() }
         val press = openCompactControls(fields.description)
 
@@ -306,7 +333,9 @@ class RunningTileServerTest {
         assertEquals("Pause stopped the entry on the server", null, runBlocking { app.cache.running.first() })
 
         press(SharedR.string.timer_resume_spoken)
-        val resumed = app.awaitControls<TimerControls.Running>("the long press Resume") { it.accumulatedSeconds == paused.seconds }
+        val resumed = app.awaitControls<TimerControls.Running>(
+            "the long press Resume",
+        ) { it.accumulatedSeconds == paused.seconds }
         assertNotEquals("Resume creates a new segment", first, resumed.entry.id)
         assertEquals("the server's clone", web.timerState().pause?.cloneEntryId, resumed.entry.id)
         assertEquals(fields.description, resumed.entry.description)
@@ -320,8 +349,16 @@ class RunningTileServerTest {
         assertEquals("Stop while paused ended the chain on the server", null, web.timerState().pause)
         assertEquals("nothing went through the queue", 0, unsentCount())
         val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
-        assertTrue("Stop closes the compact dialog", device.wait(Until.gone(By.pkg(context.packageName)
-            .desc(context.getString(SharedR.string.timer_stop_spoken))), TIMEOUT_MS))
+        assertTrue(
+            "Stop closes the compact dialog",
+            device.wait(
+                Until.gone(
+                    By.pkg(context.packageName)
+                        .desc(context.getString(SharedR.string.timer_stop_spoken)),
+                ),
+                TIMEOUT_MS,
+            ),
+        )
     }
 
     @Test
@@ -334,7 +371,11 @@ class RunningTileServerTest {
         val queued = unsentCount()
 
         TimerActionToasts.await(TimerActionToasts.offline) { press(SharedR.string.timer_pause_spoken) }
-        assertEquals("the timer runs on", id, (runBlocking { app.timerControls.first() } as TimerControls.Running).entry.id)
+        assertEquals(
+            "the timer runs on",
+            id,
+            (runBlocking { app.timerControls.first() } as TimerControls.Running).entry.id,
+        )
         assertEquals("Pause queues nothing", queued, unsentCount())
 
         press(SharedR.string.timer_stop_spoken)
@@ -363,7 +404,9 @@ class RunningTileServerTest {
         AirplaneMode.set(false, web)
 
         QuickSettingsTile.click()
-        val resumed = app.awaitControls<TimerControls.Running>("the paused tile's Resume") { it.accumulatedSeconds == paused.seconds }
+        val resumed = app.awaitControls<TimerControls.Running>(
+            "the paused tile's Resume",
+        ) { it.accumulatedSeconds == paused.seconds }
         assertEquals("the server's clone", web.timerState().pause?.cloneEntryId, resumed.entry.id)
         QuickSettingsTile.awaitText("the resumed timer", context.getString(R.string.tile_running_subtitle))
     }
@@ -429,7 +472,10 @@ class RunningTileServerTest {
         ageRunning(next, nextFields)
         QuickSettingsTile.expand()
         QuickSettingsTile.awaitText("a start while the panel was closed", "Started with the panel closed")
-        QuickSettingsTile.awaitText("a start while the panel was closed", context.getString(R.string.tile_running_subtitle))
+        QuickSettingsTile.awaitText(
+            "a start while the panel was closed",
+            context.getString(R.string.tile_running_subtitle),
+        )
 
         QuickSettingsTile.collapse()
         runBlocking { app.changes.stop(next) }
@@ -446,8 +492,14 @@ class RunningTileServerTest {
             val id = app.changes.start(workspace, EntryFields(description = "Looked at"))
             app.cache.running.first()!!.entry.also { assertEquals(id, it.id) }
         }
-        val running = runningTileLook(RunningTileContent.Running(entry, TimerTarget.server(entryId = entry.id)), context)
-        val stopped = runningTileLook(RunningTileContent.Continue(entry.copy(stop = entry.start.plusSeconds(60))), context)
+        val running = runningTileLook(
+            RunningTileContent.Running(entry, TimerTarget.server(entryId = entry.id)),
+            context,
+        )
+        val stopped = runningTileLook(
+            RunningTileContent.Continue(entry.copy(stop = entry.start.plusSeconds(60))),
+            context,
+        )
         val nothing = runningTileLook(RunningTileContent.Nothing, context)
         val paused = runningTileLook(RunningTileContent.Paused("Looked at", TimerTarget.server(revision = 3)), context)
 
@@ -470,7 +522,10 @@ class RunningTileServerTest {
         assertEquals("Timer paused: Looked at. Tap to resume. Hold for controls.", paused.contentDescription)
         assertEquals(
             "No description",
-            runningTileLook(RunningTileContent.Running(entry.copy(description = ""), TimerTarget.server(entryId = entry.id)), context).label,
+            runningTileLook(
+                RunningTileContent.Running(entry.copy(description = ""), TimerTarget.server(entryId = entry.id)),
+                context,
+            ).label,
         )
     }
 
@@ -487,7 +542,9 @@ class RunningTileServerTest {
         // Where an earlier test allowed notifications, the running notification's title in the shade
         // reads the same description, and a long press there opens the notification's controls.
         // So press the tile's own label.
-        val tile = checkNotNull(device.wait(Until.findObject(By.res("com.android.systemui", "tile_label").text(description)), TIMEOUT_MS)) {
+        val tile = checkNotNull(
+            device.wait(Until.findObject(By.res("com.android.systemui", "tile_label").text(description)), TIMEOUT_MS),
+        ) {
             "SystemUI did not expose the running tile"
         }
         tileStartedAnActivity = true
@@ -504,12 +561,12 @@ class RunningTileServerTest {
     /** The compact control spoken as [label], once the dialog shows it. */
     private fun awaitControl(label: Int): UiObject2 {
         val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
-        return checkNotNull(device.wait(Until.findObject(By.pkg(context.packageName).desc(context.getString(label))), TIMEOUT_MS)) {
+        return checkNotNull(
+            device.wait(Until.findObject(By.pkg(context.packageName).desc(context.getString(label))), TIMEOUT_MS),
+        ) {
             "Compact controls did not show ${context.getString(label)}"
         }
     }
-
-
 
     /** A stopped row is required for Continue; a fresh Start can instead enter short Stop Trash. */
     private fun ageRunning(id: Long, fields: EntryFields) {

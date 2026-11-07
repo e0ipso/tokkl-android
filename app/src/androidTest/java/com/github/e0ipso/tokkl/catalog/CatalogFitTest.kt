@@ -15,7 +15,6 @@ import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.feature.projects.R
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
 import com.github.e0ipso.tokkl.cache.CachedTag
@@ -31,6 +30,7 @@ import com.github.e0ipso.tokkl.catalog.CatalogSamples.TASKS_LOADED
 import com.github.e0ipso.tokkl.clients.ClientsActions
 import com.github.e0ipso.tokkl.clients.ClientsContent
 import com.github.e0ipso.tokkl.clients.ClientsOverlay
+import com.github.e0ipso.tokkl.feature.projects.R
 import com.github.e0ipso.tokkl.projects.ProjectForm
 import com.github.e0ipso.tokkl.projects.ProjectsActions
 import com.github.e0ipso.tokkl.projects.ProjectsContent
@@ -61,24 +61,50 @@ abstract class CatalogFitTest(private val fontScale: Float) {
 
     /** The font scale is set before the activity starts, so it never has to restart for it. */
     @get:Rule
-    val rules: RuleChain = RuleChain.outerRule(SystemFontScale(fontScale, largestDisplaySize = fontScale == SystemFontScale.LARGEST)).around(composeRule)
+    val rules: RuleChain = RuleChain.outerRule(
+        SystemFontScale(fontScale, largestDisplaySize = fontScale == SystemFontScale.LARGEST),
+    ).around(composeRule)
 
     @Test
     fun projectsList() {
-        show { ProjectsContent(PROJECTS_LOADED, offline = false, cachedProjects = emptyList(), clients = CACHED_CLIENTS, actions = ProjectsActions()) }
+        show {
+            ProjectsContent(
+                PROJECTS_LOADED,
+                offline = false,
+                cachedProjects = emptyList(),
+                clients = CACHED_CLIENTS,
+                actions = ProjectsActions(),
+            )
+        }
         assertNoTextCutOff("the projects")
     }
 
     @Test
     fun projectsOffline() {
-        show { ProjectsContent(PROJECTS_LOADED, offline = true, cachedProjects = emptyList(), clients = CACHED_CLIENTS, actions = ProjectsActions()) }
+        show {
+            ProjectsContent(
+                PROJECTS_LOADED,
+                offline = true,
+                cachedProjects = emptyList(),
+                clients = CACHED_CLIENTS,
+                actions = ProjectsActions(),
+            )
+        }
         assertNoTextCutOff("the projects offline")
     }
 
     @Test
     fun projectForm() {
         val editing = PROJECTS_LOADED.copy(overlay = ProjectForm.Edit(PROJECTS.first()))
-        show { ProjectsContent(editing, offline = false, cachedProjects = emptyList(), clients = CACHED_CLIENTS, actions = ProjectsActions()) }
+        show {
+            ProjectsContent(
+                editing,
+                offline = false,
+                cachedProjects = emptyList(),
+                clients = CACHED_CLIENTS,
+                actions = ProjectsActions(),
+            )
+        }
         assertNoTextCutOff("the top of the project form")
 
         composeRule.onNode(hasText(string(R.string.project_save)) and hasClickAction()).performScrollTo()
@@ -88,7 +114,15 @@ abstract class CatalogFitTest(private val fontScale: Float) {
     @Test
     fun newProjectFormWithMistakes() {
         val creating = PROJECTS_LOADED.copy(overlay = ProjectForm.New)
-        show { ProjectsContent(creating, offline = false, cachedProjects = emptyList(), clients = CACHED_CLIENTS, actions = ProjectsActions()) }
+        show {
+            ProjectsContent(
+                creating,
+                offline = false,
+                cachedProjects = emptyList(),
+                clients = CACHED_CLIENTS,
+                actions = ProjectsActions(),
+            )
+        }
         composeRule.onNode(hasText(string(R.string.project_create)) and hasClickAction())
             .performScrollTo()
             .performSemanticsAction(SemanticsActions.OnClick)
@@ -100,8 +134,19 @@ abstract class CatalogFitTest(private val fontScale: Float) {
     @Test
     fun projectFormWithTasks() {
         val editing = PROJECTS_LOADED.copy(overlay = ProjectForm.Edit(PROJECTS.first()))
-        show { ProjectsContent(editing, offline = false, cachedProjects = emptyList(), clients = CACHED_CLIENTS, actions = ProjectsActions(), tasks = TASKS_LOADED) }
-        composeRule.onNode(hasContentDescription(string(R.string.project_task_delete_named, TASKS.last().name))).performScrollTo()
+        show {
+            ProjectsContent(
+                editing,
+                offline = false,
+                cachedProjects = emptyList(),
+                clients = CACHED_CLIENTS,
+                actions = ProjectsActions(),
+                tasks = TASKS_LOADED,
+            )
+        }
+        composeRule.onNode(
+            hasContentDescription(string(R.string.project_task_delete_named, TASKS.last().name)),
+        ).performScrollTo()
 
         assertNoTextCutOff("the tasks under the project form")
     }
@@ -109,7 +154,16 @@ abstract class CatalogFitTest(private val fontScale: Float) {
     @Test
     fun projectFormWithTasksOffline() {
         val editing = PROJECTS_LOADED.copy(overlay = ProjectForm.Edit(PROJECTS.first()))
-        show { ProjectsContent(editing, offline = true, cachedProjects = emptyList(), clients = CACHED_CLIENTS, actions = ProjectsActions(), tasks = TASKS_LOADED) }
+        show {
+            ProjectsContent(
+                editing,
+                offline = true,
+                cachedProjects = emptyList(),
+                clients = CACHED_CLIENTS,
+                actions = ProjectsActions(),
+                tasks = TASKS_LOADED,
+            )
+        }
         composeRule.onNode(hasText(string(R.string.project_tasks_server_needed_message))).performScrollTo()
 
         assertNoTextCutOff("the tasks under the project form offline")
@@ -119,7 +173,16 @@ abstract class CatalogFitTest(private val fontScale: Float) {
     fun taskForm() {
         val editing = PROJECTS_LOADED.copy(overlay = ProjectForm.Edit(PROJECTS.first()))
         val tasks = TASKS_LOADED.copy(overlay = TaskOverlay.Edit(TASKS[1]))
-        show { ProjectsContent(editing, offline = false, cachedProjects = emptyList(), clients = CACHED_CLIENTS, actions = ProjectsActions(), tasks = tasks) }
+        show {
+            ProjectsContent(
+                editing,
+                offline = false,
+                cachedProjects = emptyList(),
+                clients = CACHED_CLIENTS,
+                actions = ProjectsActions(),
+                tasks = tasks,
+            )
+        }
         assertNoTextCutOff("the form that edits a task")
     }
 
@@ -127,13 +190,29 @@ abstract class CatalogFitTest(private val fontScale: Float) {
     fun taskDeleteQuestion() {
         val editing = PROJECTS_LOADED.copy(overlay = ProjectForm.Edit(PROJECTS.first()))
         val tasks = TASKS_LOADED.copy(overlay = TaskOverlay.ConfirmDelete(TASKS[1]))
-        show { ProjectsContent(editing, offline = false, cachedProjects = emptyList(), clients = CACHED_CLIENTS, actions = ProjectsActions(), tasks = tasks) }
+        show {
+            ProjectsContent(
+                editing,
+                offline = false,
+                cachedProjects = emptyList(),
+                clients = CACHED_CLIENTS,
+                actions = ProjectsActions(),
+                tasks = tasks,
+            )
+        }
         assertNoTextCutOff("the question before deleting a task")
     }
 
     @Test
     fun clientsList() {
-        show { ClientsContent(CLIENTS_LOADED, offline = false, cachedClients = emptyList(), actions = ClientsActions()) }
+        show {
+            ClientsContent(
+                CLIENTS_LOADED,
+                offline = false,
+                cachedClients = emptyList(),
+                actions = ClientsActions(),
+            )
+        }
         assertNoTextCutOff("the clients")
     }
 
@@ -153,7 +232,14 @@ abstract class CatalogFitTest(private val fontScale: Float) {
 
     @Test
     fun clientsOffline() {
-        show { ClientsContent(CatalogState(loadProblem = ServerProblem.Unreachable), offline = true, cachedClients = CACHED_CLIENTS, actions = ClientsActions()) }
+        show {
+            ClientsContent(
+                CatalogState(loadProblem = ServerProblem.Unreachable),
+                offline = true,
+                cachedClients = CACHED_CLIENTS,
+                actions = ClientsActions(),
+            )
+        }
         assertNoTextCutOff("the clients offline")
     }
 
@@ -180,7 +266,14 @@ abstract class CatalogFitTest(private val fontScale: Float) {
     @Test
     fun tagsOffline() {
         val cached = listOf(CachedTag(1, 7, "focus"), CachedTag(2, 7, "meeting"))
-        show { TagsContent(CatalogState(loadProblem = ServerProblem.Unreachable), offline = true, cachedTags = cached, actions = TagsActions()) }
+        show {
+            TagsContent(
+                CatalogState(loadProblem = ServerProblem.Unreachable),
+                offline = true,
+                cachedTags = cached,
+                actions = TagsActions(),
+            )
+        }
         assertNoTextCutOff("the tags offline")
     }
 
@@ -193,19 +286,28 @@ abstract class CatalogFitTest(private val fontScale: Float) {
     private fun assertNoTextCutOff(where: String) {
         assertEquals(fontScale, composeRule.activity.resources.configuration.fontScale)
         composeRule.waitForIdle()
-        val nodes = composeRule.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsActions.GetTextLayoutResult), useUnmergedTree = true)
+        val nodes = composeRule.onAllNodes(
+            SemanticsMatcher.keyIsDefined(SemanticsActions.GetTextLayoutResult),
+            useUnmergedTree = true,
+        )
             .fetchSemanticsNodes()
         for (node in nodes) {
             val layouts = mutableListOf<TextLayoutResult>()
             node.config.getOrNull(SemanticsActions.GetTextLayoutResult)?.action?.invoke(layouts)
             val layout = layouts.firstOrNull() ?: continue
             if (layout.layoutInput.overflow == TextOverflow.Ellipsis) continue
-            val text = node.config.getOrNull(SemanticsProperties.Text)?.joinToString { it.text } ?: layout.layoutInput.text.text
+            val text = node.config.getOrNull(
+                SemanticsProperties.Text,
+            )?.joinToString { it.text } ?: layout.layoutInput.text.text
             assertFalse("text cut off in $where: $text", layout.didOverflowHeight)
         }
     }
 
-    private fun string(@StringRes id: Int, vararg args: Any): String = InstrumentationRegistry.getInstrumentation().targetContext.getString(id, *args)
+    private fun string(@StringRes id: Int, vararg args: Any): String =
+        InstrumentationRegistry.getInstrumentation().targetContext.getString(
+            id,
+            *args,
+        )
 }
 
 class UsualFontCatalogFitTest : CatalogFitTest(fontScale = 1f)

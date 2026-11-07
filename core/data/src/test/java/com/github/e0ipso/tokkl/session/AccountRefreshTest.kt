@@ -9,11 +9,6 @@ import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.storage.InMemoryValueStore
 import com.github.e0ipso.tokkl.time.DurationFormat
 import com.github.e0ipso.tokkl.time.SnappedSpan
-import java.time.DayOfWeek
-import java.time.Instant
-import java.time.ZoneId
-import java.util.concurrent.Executor
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -31,6 +26,11 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.time.DayOfWeek
+import java.time.Instant
+import java.time.ZoneId
+import java.util.concurrent.Executor
+import kotlin.coroutines.CoroutineContext
 
 /** Refreshes against a MockWebServer that answers `GET /api/v9/me` and `GET /api/v9/me/preferences`. */
 class AccountRefreshTest {
@@ -345,7 +345,11 @@ class AccountRefreshTest {
 
             assertEquals(preferences, twelveHour, source.state.value!!.twelveHour)
             val noon = Instant.parse("2026-10-19T10:00:00Z")
-            assertEquals(preferences, if (twelveHour) "12:00 PM" else "12:00", source.state.value!!.formatTime(noon, ZoneId.of("Europe/Madrid")))
+            assertEquals(
+                preferences,
+                if (twelveHour) "12:00 PM" else "12:00",
+                source.state.value!!.formatTime(noon, ZoneId.of("Europe/Madrid")),
+            )
         }
     }
 
@@ -389,7 +393,9 @@ class AccountRefreshTest {
     fun failedPreferencesKeepTheStoredClockFormat() {
         server.enqueue(json(MADRID_MONDAY))
         server.enqueue(MockResponse.Builder().code(500).build())
-        val source = source(initial = AccountSettings("UTC", DayOfWeek.SUNDAY, timeResolutionMinutes = null, twelveHour = true))
+        val source = source(
+            initial = AccountSettings("UTC", DayOfWeek.SUNDAY, timeResolutionMinutes = null, twelveHour = true),
+        )
 
         source.refresh()
 
@@ -397,14 +403,13 @@ class AccountRefreshTest {
     }
 
     /** Unconfined runs the refresh to the end inside refresh() unless [io] holds it. */
-    private fun source(initial: AccountSettings?, io: CoroutineContext = Dispatchers.Unconfined) =
-        Account(
-            initial = initial,
-            save = { saved += it },
-            client = { client },
-            scope = CoroutineScope(Dispatchers.Unconfined),
-            io = io,
-        )
+    private fun source(initial: AccountSettings?, io: CoroutineContext = Dispatchers.Unconfined) = Account(
+        initial = initial,
+        save = { saved += it },
+        client = { client },
+        scope = CoroutineScope(Dispatchers.Unconfined),
+        io = io,
+    )
 
     /** The settings and their refresh, wired as the app wires them. */
     private class Account(
@@ -439,7 +444,12 @@ class AccountRefreshTest {
         const val MADRID_MONDAY = """{"id":7,"email":"ana@example.com","timezone":"Europe/Madrid","beginning_of_week":1}"""
         const val MADRID_MONDAY_IN_42 =
             """{"id":7,"email":"ana@example.com","timezone":"Europe/Madrid","beginning_of_week":1,"default_workspace_id":42}"""
-        val MADRID_MONDAY_SETTINGS = AccountSettings("Europe/Madrid", DayOfWeek.MONDAY, timeResolutionMinutes = null, userId = 7)
+        val MADRID_MONDAY_SETTINGS = AccountSettings(
+            "Europe/Madrid",
+            DayOfWeek.MONDAY,
+            timeResolutionMinutes = null,
+            userId = 7,
+        )
         const val IMPROVED = """{"duration_format":"improved"}"""
         const val CLASSIC = """{"duration_format":"classic"}"""
     }

@@ -2,7 +2,6 @@ package com.github.e0ipso.tokkl.timerstate
 
 import com.github.e0ipso.tokkl.api.DiscardedPomodoro
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -11,6 +10,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
+import kotlin.coroutines.CoroutineContext
 
 /**
  * The signed-in account's held timer state, as flows that follow [timerStates] across sign-ins.

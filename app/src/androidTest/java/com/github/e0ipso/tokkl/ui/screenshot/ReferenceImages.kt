@@ -5,11 +5,11 @@ import android.graphics.BitmapFactory
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.test.platform.app.InstrumentationRegistry
+import org.junit.Assert.fail
 import java.io.File
 import java.io.FileNotFoundException
 import kotlin.math.abs
 import kotlin.math.max
-import org.junit.Assert.fail
 
 /**
  * Compares captures with the reference images in the test APK's assets, under [ASSET_DIR].
@@ -59,9 +59,18 @@ internal object ReferenceImages {
      * last whole block drop out.
      */
     private fun shrink(bitmap: Bitmap): Bitmap {
-        val source = if (bitmap.config == Bitmap.Config.ARGB_8888) bitmap else bitmap.copy(Bitmap.Config.ARGB_8888, false)
+        val source = if (bitmap.config == Bitmap.Config.ARGB_8888) {
+            bitmap
+        } else {
+            bitmap.copy(
+                Bitmap.Config.ARGB_8888,
+                false,
+            )
+        }
         val stride = source.width
-        val pixels = IntArray(stride * source.height).also { source.getPixels(it, 0, stride, 0, 0, stride, source.height) }
+        val pixels = IntArray(
+            stride * source.height,
+        ).also { source.getPixels(it, 0, stride, 0, 0, stride, source.height) }
         val width = source.width / SCALE
         val height = source.height / SCALE
         val area = SCALE * SCALE

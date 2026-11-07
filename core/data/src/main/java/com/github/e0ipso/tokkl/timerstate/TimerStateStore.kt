@@ -7,12 +7,12 @@ import com.github.e0ipso.tokkl.api.IsoInstantSerializer
 import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.SignOutOrder
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import java.io.IOException
 import java.time.Duration
 import java.time.Instant
 import java.util.UUID
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 
 /**
  * A timer state as the phone holds it: the server's [state] and the phone's clock when it
@@ -102,10 +102,9 @@ internal fun encodeStoredTimerState(stored: StoredTimerState): String =
     ApiJson.encodeToString(StoredTimerState.serializer(), stored)
 
 /** The state [text] holds, or null when it does not decode, as after a format change. */
-internal fun decodeStoredTimerState(text: String): StoredTimerState? =
-    try {
-        ApiJson.decodeFromString(StoredTimerState.serializer(), text)
-    } catch (e: IllegalArgumentException) {
-        // kotlinx.serialization's SerializationException is an IllegalArgumentException.
-        null
-    }
+internal fun decodeStoredTimerState(text: String): StoredTimerState? = try {
+    ApiJson.decodeFromString(StoredTimerState.serializer(), text)
+} catch (e: IllegalArgumentException) {
+    // kotlinx.serialization's SerializationException is an IllegalArgumentException.
+    null
+}

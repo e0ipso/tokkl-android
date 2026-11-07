@@ -61,10 +61,24 @@ sealed interface ReportFailure {
 /** How [error] shows on the reports screen. */
 internal fun reportFailureOf(error: ApiError): ReportFailure = when (error) {
     is ApiError.Network -> ReportFailure.Unreachable
+
     // A reverse proxy answers these while the Tokkl server behind it is down.
-    is ApiError.UnexpectedStatus -> if (error.status in setOf(502, 503, 504)) ReportFailure.Unreachable else ReportFailure.Unexpected(error.status)
+    is ApiError.UnexpectedStatus -> if (error.status in setOf(
+            502,
+            503,
+            504,
+        )
+    ) {
+        ReportFailure.Unreachable
+    } else {
+        ReportFailure.Unexpected(error.status)
+    }
+
     ApiError.AuthFailed -> ReportFailure.AuthFailed
+
     is ApiError.TrustRefused -> ReportFailure.TrustRefused
+
     is ApiError.RateLimited -> ReportFailure.Unexpected(error.status)
+
     is ApiError.HostNotAllowed, is ApiError.InvalidResponse -> ReportFailure.Unexpected(null)
 }

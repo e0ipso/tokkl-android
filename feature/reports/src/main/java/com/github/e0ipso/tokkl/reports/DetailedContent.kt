@@ -128,14 +128,24 @@ private fun EntryRow(entry: DetailedEntry, settings: AccountSettings, day: Strin
             )
         }
         if (entry.projectName == null) {
-            Text(stringResource(R.string.reports_without_project), style = MaterialTheme.typography.bodyMedium, color = muted)
+            Text(
+                stringResource(R.string.reports_without_project),
+                style = MaterialTheme.typography.bodyMedium,
+                color = muted,
+            )
         } else {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 val dot = projectMark(entry.projectColor, TokklTheme.extraColors.projectMix, muted)
                 Canvas(Modifier.size(TokklTheme.spacing.space3)) { drawCircle(dot) }
                 Spacer(Modifier.width(TokklTheme.spacing.space2))
                 Text(
-                    text = entry.taskName?.let { stringResource(R.string.reports_project_task, entry.projectName, it) } ?: entry.projectName,
+                    text = entry.taskName?.let {
+                        stringResource(
+                            R.string.reports_project_task,
+                            entry.projectName,
+                            it,
+                        )
+                    } ?: entry.projectName,
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }

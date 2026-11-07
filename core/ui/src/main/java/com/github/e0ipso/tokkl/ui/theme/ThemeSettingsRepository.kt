@@ -1,7 +1,5 @@
 package com.github.e0ipso.tokkl.ui.theme
 
-import java.io.IOException
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -11,6 +9,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import java.io.IOException
+import kotlin.coroutines.CoroutineContext
 
 /**
  * The theme settings for the whole process. A change shows in [state] at once, so the theme

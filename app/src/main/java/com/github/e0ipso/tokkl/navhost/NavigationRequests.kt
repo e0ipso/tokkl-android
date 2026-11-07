@@ -83,16 +83,19 @@ internal fun NavigationRequestEffects(
                         } else {
                             when (request.page) {
                                 WidgetPage.TIMER -> navigator.open(TopLevelPage.TIMER, currentUnavailable)
+
                                 WidgetPage.TODAY -> {
                                     reports?.openToday()
                                     navigator.open(TopLevelPage.REPORTS, currentUnavailable)
                                 }
+
                                 WidgetPage.POMODORO -> navigator.open(TopLevelPage.POMODORO, currentUnavailable)
                             }
                         }
                         requests.handled(request)
                     }
                 }
+
                 is NavigationRequest.Pomodoro -> LaunchedEffect(request) {
                     val accepted = withContext(io) {
                         pomodoroNotification.current.acceptsTap(request.tap.account, request.tap.phase)
@@ -100,6 +103,7 @@ internal fun NavigationRequestEffects(
                     if (accepted) navigator.open(TopLevelPage.POMODORO, currentUnavailable)
                     requests.handled(request)
                 }
+
                 NavigationRequest.ReminderTimer -> LaunchedEffect(request, onSignIn) {
                     if (onSignIn) return@LaunchedEffect
                     navigator.open(TopLevelPage.TIMER)

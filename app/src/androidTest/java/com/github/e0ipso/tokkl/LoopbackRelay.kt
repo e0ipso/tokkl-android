@@ -24,11 +24,8 @@ import kotlin.concurrent.thread
  * a network that has gone quiet does. [dropHeld] closes those, and [cutRelayed] closes the ones
  * it is passing on. [relayTo] sends new connections to another server at the same local port.
  */
-class LoopbackRelay(
-    host: String,
-    port: Int,
-    private val watchConnections: () -> ConnectionWatcher? = { null },
-) : Closeable {
+class LoopbackRelay(host: String, port: Int, private val watchConnections: () -> ConnectionWatcher? = { null }) :
+    Closeable {
 
     /** Sees one connection's bytes as the relay passes them on. */
     fun interface ConnectionWatcher {
@@ -92,12 +89,18 @@ class LoopbackRelay(
 
     /** Cuts the connections the relay is passing on, on both sides. */
     fun cutRelayed() {
-        relayed.removeIf { it.close(); true }
+        relayed.removeIf {
+            it.close()
+            true
+        }
     }
 
     /** Closes the connections the relay holds, which the app sees as a network failure. */
     fun dropHeld() {
-        held.removeIf { it.close(); true }
+        held.removeIf {
+            it.close()
+            true
+        }
     }
 
     private fun relay(app: Socket) {
@@ -134,7 +137,12 @@ class LoopbackRelay(
     }
 
     /** Copies [input] to [output] until either side closes, showing each chunk to [beforeWrite] first. */
-    private fun pipe(input: InputStream, output: OutputStream, beforeWrite: ((ByteArray, Int) -> Unit)?, vararg ends: Socket) {
+    private fun pipe(
+        input: InputStream,
+        output: OutputStream,
+        beforeWrite: ((ByteArray, Int) -> Unit)?,
+        vararg ends: Socket,
+    ) {
         val buffer = ByteArray(BUFFER_SIZE)
         try {
             while (true) {

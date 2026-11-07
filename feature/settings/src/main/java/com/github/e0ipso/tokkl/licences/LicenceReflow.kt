@@ -8,8 +8,7 @@ package com.github.e0ipso.tokkl.licences
  * A line still starts a new line after a blank line, after a heading such as PREAMBLE and before
  * a numbered condition such as `1)`. Blank lines stay, so paragraphs keep their gaps.
  */
-internal fun licenceBlocks(text: String): List<String> =
-    splitAtRules(text.replace("\r\n", "\n")).map(::reflow)
+internal fun licenceBlocks(text: String): List<String> = splitAtRules(text.replace("\r\n", "\n")).map(::reflow)
 
 /** The blocks of [text] between the lines made only of dashes, without those lines. */
 private fun splitAtRules(text: String): List<String> {

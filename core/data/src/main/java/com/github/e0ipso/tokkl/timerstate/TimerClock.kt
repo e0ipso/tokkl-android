@@ -49,9 +49,8 @@ fun HeldTimerState.chainTotal(deviceNow: Instant): Duration? {
 private fun nonNegative(duration: Duration): Duration = if (duration.isNegative) Duration.ZERO else duration
 
 /** The v9 running entry's start, such as `2026-10-28T08:13:05+00:00`. */
-private fun instantOrNull(text: String): Instant? =
-    try {
-        OffsetDateTime.parse(text).toInstant()
-    } catch (e: DateTimeParseException) {
-        null
-    }
+private fun instantOrNull(text: String): Instant? = try {
+    OffsetDateTime.parse(text).toInstant()
+} catch (e: DateTimeParseException) {
+    null
+}

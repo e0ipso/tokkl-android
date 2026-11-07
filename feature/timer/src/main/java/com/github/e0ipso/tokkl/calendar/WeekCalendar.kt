@@ -58,16 +58,16 @@ import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
-import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
+import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.ui.ScrollAwayColumn
 import com.github.e0ipso.tokkl.ui.theme.TokklSpacing
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
+import kotlinx.coroutines.delay
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import kotlin.math.sign
-import kotlinx.coroutines.delay
 
 /**
  * The calendar in the Timer page's Calendar view (docs/PRD.md K1): the week from the account's
@@ -112,7 +112,11 @@ fun WeekCalendar(
             override fun move(entry: CalendarEntry, day: LocalDate, deltaMinutes: Int, dayMode: Boolean) =
                 model.move(entry, day, deltaMinutes, dayMode)
 
-            override fun resize(entry: CalendarEntry, edge: ResizeEdge, deltaMinutes: Int) = model.resize(entry, edge, deltaMinutes)
+            override fun resize(entry: CalendarEntry, edge: ResizeEdge, deltaMinutes: Int) = model.resize(
+                entry,
+                edge,
+                deltaMinutes,
+            )
 
             override fun edit(entry: CalendarEntry) = edit(entry.id, model.serverEntry(entry.id))
 
@@ -125,9 +129,14 @@ fun WeekCalendar(
     when (val current = state) {
         // The cache reads in moments, so this shows nothing rather than a flash of a spinner.
         CalendarState.Loading -> Unit
+
         is CalendarState.NoAccountTime -> Column(modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-            Text(stringResource(R.string.calendar_unknown_time_zone, current.timeZone), style = MaterialTheme.typography.bodyLarge)
+            Text(
+                stringResource(R.string.calendar_unknown_time_zone, current.timeZone),
+                style = MaterialTheme.typography.bodyLarge,
+            )
         }
+
         is CalendarState.Shown -> {
             val foregrounds by model.foregrounds.collectAsState()
             // Showing a week is the event that loads what the phone does not keep, and so is
@@ -172,7 +181,11 @@ fun CalendarContent(
 ) {
     val edits = editing?.takeIf { state.week.shows }
     val gesture = remember { HeldGesture() }
-    val drags = remember(edits, state.settings, dayMode) { edits?.let { CalendarDrags(it, state.settings, dayMode, gesture) } }
+    val drags = remember(
+        edits,
+        state.settings,
+        dayMode,
+    ) { edits?.let { CalendarDrags(it, state.settings, dayMode, gesture) } }
     val days = if (dayMode) listOf(state.selected) else state.weekDays
     val stepDays = if (dayMode) 1L else 7L
     val today = now.atZone(state.zone).toLocalDate()
@@ -190,7 +203,17 @@ fun CalendarContent(
         },
     ) {
         Column(Modifier.fillMaxSize()) {
-            if (dayMode) WeekStrip(state, today, now, onSelect, edits) else DayHeads(days, today, state, now, gutter, edits)
+            if (dayMode) {
+                WeekStrip(
+                    state,
+                    today,
+                    now,
+                    onSelect,
+                    edits,
+                )
+            } else {
+                DayHeads(days, today, state, now, gutter, edits)
+            }
             if (state.allDayOffered) AllDayRow(days, state, now, gutter, edits)
             Box(
                 Modifier
@@ -229,6 +252,7 @@ private fun WeekProblem(week: WeekSource, onRetry: () -> Unit, modifier: Modifie
     ) {
         when (week) {
             WeekSource.Cached, WeekSource.Loaded -> Unit
+
             WeekSource.Loading -> Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
@@ -237,13 +261,17 @@ private fun WeekProblem(week: WeekSource, onRetry: () -> Unit, modifier: Modifie
                 Spacer(Modifier.width(TokklTheme.spacing.space3))
                 Text(stringResource(R.string.calendar_loading), style = MaterialTheme.typography.bodyLarge)
             }
+
             WeekSource.Unreachable -> Problem(
                 title = stringResource(R.string.calendar_offline_title),
                 message = stringResource(R.string.calendar_offline_message),
                 onRetry = onRetry,
             )
+
             WeekSource.AuthFailed -> Problem(null, stringResource(R.string.calendar_error_auth), onRetry)
+
             WeekSource.TrustRefused -> Problem(null, stringResource(R.string.calendar_error_trust), onRetry)
+
             is WeekSource.Failed -> Problem(
                 title = null,
                 message = week.status?.let { stringResource(R.string.calendar_error_status, it) }

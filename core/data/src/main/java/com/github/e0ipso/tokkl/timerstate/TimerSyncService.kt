@@ -132,7 +132,9 @@ class TimerSyncService : Service() {
                 sync.networkLost()
             }
         }
-        getSystemService(ConnectivityManager::class.java).registerDefaultNetworkCallback(callback, Handler(Looper.getMainLooper()))
+        getSystemService(
+            ConnectivityManager::class.java,
+        ).registerDefaultNetworkCallback(callback, Handler(Looper.getMainLooper()))
         return callback
     }
 
@@ -141,13 +143,12 @@ class TimerSyncService : Service() {
          * Starts the service in the foreground. Returns false when the platform refuses, as it does
          * for an app in the background outside the boot and update broadcasts.
          */
-        fun start(context: Context): Boolean =
-            try {
-                context.startForegroundService(Intent(context, TimerSyncService::class.java))
-                true
-            } catch (e: ServiceStartNotAllowedException) {
-                false
-            }
+        fun start(context: Context): Boolean = try {
+            context.startForegroundService(Intent(context, TimerSyncService::class.java))
+            true
+        } catch (e: ServiceStartNotAllowedException) {
+            false
+        }
     }
 }
 
@@ -161,7 +162,11 @@ object TimerSyncNotification {
 
     /** Low importance and no sound, so it sits in the shade without a sound, a vibration or a pop-up. */
     fun createChannel(context: Context) {
-        val channel = NotificationChannel(CHANNEL_ID, context.getString(R.string.timer_sync_channel), NotificationManager.IMPORTANCE_LOW).apply {
+        val channel = NotificationChannel(
+            CHANNEL_ID,
+            context.getString(R.string.timer_sync_channel),
+            NotificationManager.IMPORTANCE_LOW,
+        ).apply {
             description = context.getString(R.string.timer_sync_channel_description)
             setSound(null, null)
             enableVibration(false)
@@ -170,17 +175,16 @@ object TimerSyncNotification {
         context.getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
     }
 
-    fun build(context: Context): Notification =
-        Notification.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_nav_timer)
-            .setContentTitle(context.getString(R.string.timer_sync_title))
-            .setContentText(context.getString(R.string.timer_sync_text))
-            .setOngoing(true)
-            .setOnlyAlertOnce(true)
-            .setShowWhen(false)
-            .setCategory(Notification.CATEGORY_SERVICE)
-            .setContentIntent(openApp(context))
-            .build()
+    fun build(context: Context): Notification = Notification.Builder(context, CHANNEL_ID)
+        .setSmallIcon(R.drawable.ic_nav_timer)
+        .setContentTitle(context.getString(R.string.timer_sync_title))
+        .setContentText(context.getString(R.string.timer_sync_text))
+        .setOngoing(true)
+        .setOnlyAlertOnce(true)
+        .setShowWhen(false)
+        .setCategory(Notification.CATEGORY_SERVICE)
+        .setContentIntent(openApp(context))
+        .build()
 
     /** Brings the app's task to the front as the launcher does, or starts it. */
     private fun openApp(context: Context): PendingIntent {
@@ -188,7 +192,12 @@ object TimerSyncNotification {
             .setAction(Intent.ACTION_MAIN)
             .addCategory(Intent.CATEGORY_LAUNCHER)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
-        return PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        return PendingIntent.getActivity(
+            context,
+            0,
+            intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
     }
 }
 

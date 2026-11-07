@@ -5,7 +5,6 @@ import androidx.annotation.StringRes
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
@@ -28,22 +27,19 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.feature.settings.R
-import com.github.e0ipso.tokkl.feature.signin.R as SigninR
-import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.components.reminderSettings
+import com.github.e0ipso.tokkl.feature.settings.R
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
-import com.github.e0ipso.tokkl.reminder.ReminderNotifier
 import com.github.e0ipso.tokkl.preferences.ReminderPreferences
+import com.github.e0ipso.tokkl.reminder.ReminderNotifier
 import com.github.e0ipso.tokkl.reminder.ReminderTimer
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.ui.theme.ThemeMode
@@ -57,6 +53,8 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import com.github.e0ipso.tokkl.core.ui.R as UiR
+import com.github.e0ipso.tokkl.feature.signin.R as SigninR
 
 /** The settings screen in the real activity, reached from the bottom bar. */
 class SettingsScreenTest {
@@ -143,7 +141,10 @@ class SettingsScreenTest {
         assertEquals(2, composeRule.onAllNodes(hasRole(Role.Switch)).fetchSemanticsNodes().size)
         val signOut = signOutRow().fetchSemanticsNode().config
         assertEquals(Role.Button, signOut.getOrNull(SemanticsProperties.Role))
-        assertEquals(listOf(string(R.string.settings_sign_out)), signOut.getOrNull(SemanticsProperties.Text)?.map { it.text })
+        assertEquals(
+            listOf(string(R.string.settings_sign_out)),
+            signOut.getOrNull(SemanticsProperties.Text)?.map { it.text },
+        )
     }
 
     /**
@@ -153,7 +154,9 @@ class SettingsScreenTest {
     @Test
     fun signOutWithAnEmptyQueueGoesStraightToSignIn() {
         composeRule.openSettings()
-        composeRule.onNode(hasText(string(R.string.settings_account)) and isHeading()).performScrollTo().assertIsDisplayed()
+        composeRule.onNode(
+            hasText(string(R.string.settings_account)) and isHeading(),
+        ).performScrollTo().assertIsDisplayed()
         val row = signOutRow().performScrollTo()
         val height = row.getUnclippedBoundsInRoot().let { it.bottom - it.top }
         assertTrue("the Sign out row is $height tall", height >= MIN_TOUCH_TARGET - SLACK)
@@ -226,7 +229,11 @@ class SettingsScreenTest {
             val toggle = composeRule.onNode(hasText(string(R.string.reminder_enabled)) and isToggleable())
             toggle.performScrollTo().assertIsOn().performClick().assertIsOff()
             assertFalse(app.reminderSettings.state.value.enabled)
-            val hours = composeRule.onNode(hasText(composeRule.activity.resources.getQuantityString(R.plurals.reminder_after_hours, 8, 8)) and hasClickAction())
+            val hours = composeRule.onNode(
+                hasText(
+                    composeRule.activity.resources.getQuantityString(R.plurals.reminder_after_hours, 8, 8),
+                ) and hasClickAction(),
+            )
             hours.performScrollTo().performClick()
             val field = composeRule.onNode(hasSetTextAction())
             for (invalid in listOf("", "0", "169", "1.5")) {
@@ -237,7 +244,9 @@ class SettingsScreenTest {
             // Close the keyboard with Back, then use the dialog's visible Save button.
             InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
             composeRule.onNodeWithText(string(R.string.reminder_save)).performClick()
-            composeRule.onNodeWithText(composeRule.activity.resources.getQuantityString(R.plurals.reminder_after_hours, 168, 168)).assertIsDisplayed()
+            composeRule.onNodeWithText(
+                composeRule.activity.resources.getQuantityString(R.plurals.reminder_after_hours, 168, 168),
+            ).assertIsDisplayed()
             assertEquals(ReminderPreferences(false, 168), app.reminderSettings.state.value)
         } finally {
             runBlocking { app.reminderSettings.change(ReminderPreferences()).join() }
@@ -274,10 +283,26 @@ class SettingsScreenTest {
         val defaults = PomodoroDefaults.DEFAULT
         val resources = composeRule.activity.resources
         return setOf(
-            resources.getQuantityString(R.plurals.settings_pomodoro_minutes, defaults.workMinutes, defaults.workMinutes),
-            resources.getQuantityString(R.plurals.settings_pomodoro_minutes, defaults.shortRestMinutes, defaults.shortRestMinutes),
-            resources.getQuantityString(R.plurals.settings_pomodoro_minutes, defaults.longRestMinutes, defaults.longRestMinutes),
-            resources.getQuantityString(R.plurals.settings_pomodoro_phases, defaults.longRestEvery, defaults.longRestEvery),
+            resources.getQuantityString(
+                R.plurals.settings_pomodoro_minutes,
+                defaults.workMinutes,
+                defaults.workMinutes,
+            ),
+            resources.getQuantityString(
+                R.plurals.settings_pomodoro_minutes,
+                defaults.shortRestMinutes,
+                defaults.shortRestMinutes,
+            ),
+            resources.getQuantityString(
+                R.plurals.settings_pomodoro_minutes,
+                defaults.longRestMinutes,
+                defaults.longRestMinutes,
+            ),
+            resources.getQuantityString(
+                R.plurals.settings_pomodoro_phases,
+                defaults.longRestEvery,
+                defaults.longRestEvery,
+            ),
         )
     }
 

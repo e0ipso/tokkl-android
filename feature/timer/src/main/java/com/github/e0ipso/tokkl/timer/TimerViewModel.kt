@@ -18,8 +18,6 @@ import com.github.e0ipso.tokkl.timerstate.PauseActions
 import com.github.e0ipso.tokkl.timerstate.TimerControls
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import com.github.e0ipso.tokkl.timerstate.target
-import java.time.Clock
-import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.channels.BufferOverflow
@@ -36,6 +34,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.Clock
+import java.time.temporal.ChronoUnit
 
 /**
  * The timer on the Timer page (docs/PRD.md T1): Start, Pause, Resume, Stop and the running entry's
@@ -105,9 +105,19 @@ class TimerViewModel(
      */
     val starts: SharedFlow<Unit> = queuedStarts.asSharedFlow()
 
-    private val pauseOffered: StateFlow<Boolean> = timerApi.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), false)
+    private val pauseOffered: StateFlow<Boolean> = timerApi.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
+        false,
+    )
 
-    val state: StateFlow<TimerState> = combine(cached, catalog, accountSettings, local, pauseOffered) { running, names, settings, taps, offered ->
+    val state: StateFlow<TimerState> = combine(
+        cached,
+        catalog,
+        accountSettings,
+        local,
+        pauseOffered,
+    ) { running, names, settings, taps, offered ->
         timerState(running, settings?.defaultWorkspaceId, taps, offered).labelled(names.projects, names.tasks)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), TimerState.Loading)
 
@@ -117,7 +127,13 @@ class TimerViewModel(
 
     private val fieldEdits = RunningFieldEdits(taps, changes) { catalog.value.projects }
 
-    private val pauseTaps = PauseChainTaps(taps, pauseChain, fieldEdits, sendQueued, notices) { queuedStarts.tryEmit(Unit) }
+    private val pauseTaps = PauseChainTaps(
+        taps,
+        pauseChain,
+        fieldEdits,
+        sendQueued,
+        notices,
+    ) { queuedStarts.tryEmit(Unit) }
 
     /**
      * What the timer's screens should say now, or null: a claimed notice until it has shown, then
@@ -180,9 +196,20 @@ class TimerViewModel(
         if (local.value.pending != null) return
         when (val shown = snapshot()) {
             TimerState.Loading -> Unit
+
             is TimerState.Idle -> shown.workspaceId?.let { startWith(it, fields, typed = null) }
-            is TimerState.Running -> startWith(accountSettings.value?.defaultWorkspaceId ?: shown.workspaceId, fields, typedFor(shown))
-            is TimerState.Paused -> startWith(accountSettings.value?.defaultWorkspaceId ?: shown.workspaceId, fields, typed = null)
+
+            is TimerState.Running -> startWith(
+                accountSettings.value?.defaultWorkspaceId ?: shown.workspaceId,
+                fields,
+                typedFor(shown),
+            )
+
+            is TimerState.Paused -> startWith(
+                accountSettings.value?.defaultWorkspaceId ?: shown.workspaceId,
+                fields,
+                typed = null,
+            )
         }
     }
 
@@ -215,8 +242,10 @@ class TimerViewModel(
                 local.update { taps ->
                     when {
                         taps.pending != starting -> taps
+
                         // Nothing started, so the draft comes back.
                         !queued && taps.draft == EntryFields() -> taps.copy(pending = null, draft = draft)
+
                         else -> taps.copy(pending = null)
                     }
                 }
@@ -270,8 +299,12 @@ class TimerViewModel(
     /** A focused control keeps the durable target that supplied its displayed context. */
     fun isShown(target: TimerTarget): Boolean = local.value.pending == null && taps.controls()?.target == target
 
-    fun pauseShown(target: TimerTarget) { if (isShown(target)) pause() }
-    fun resumeShown(target: TimerTarget) { if (isShown(target)) resume() }
+    fun pauseShown(target: TimerTarget) {
+        if (isShown(target)) pause()
+    }
+    fun resumeShown(target: TimerTarget) {
+        if (isShown(target)) resume()
+    }
     fun stopShown(target: TimerTarget) {
         if (!isShown(target)) return
         when (val shown = snapshot()) {
@@ -313,9 +346,17 @@ class TimerViewModel(
     fun fill(fields: EntryFields) = fieldEdits.fill(fields)
 
     /** The state as of now, without labels, which the tap handlers act on. */
-    private fun snapshot(): TimerState = timerState(cached.value, accountSettings.value?.defaultWorkspaceId, local.value, pauseOffered.value)
+    private fun snapshot(): TimerState = timerState(
+        cached.value,
+        accountSettings.value?.defaultWorkspaceId,
+        local.value,
+        pauseOffered.value,
+    )
 
-    private data class Catalog(val projects: List<CachedProject> = emptyList(), val tasks: List<CachedTask> = emptyList())
+    private data class Catalog(
+        val projects: List<CachedProject> = emptyList(),
+        val tasks: List<CachedTask> = emptyList(),
+    )
 
     private companion object {
         const val STOP_TIMEOUT_MS = 5_000L

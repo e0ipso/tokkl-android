@@ -21,7 +21,12 @@ import com.github.e0ipso.tokkl.api.ApiResult
 fun <T> createOnce(create: () -> ApiResult<T>, list: () -> ApiResult<List<T>>, made: (T) -> Boolean): ApiResult<T> =
     send(create, list, made, tries = 2)
 
-private tailrec fun <T> send(create: () -> ApiResult<T>, list: () -> ApiResult<List<T>>, made: (T) -> Boolean, tries: Int): ApiResult<T> {
+private tailrec fun <T> send(
+    create: () -> ApiResult<T>,
+    list: () -> ApiResult<List<T>>,
+    made: (T) -> Boolean,
+    tries: Int,
+): ApiResult<T> {
     val answer = create()
     if (answer !is ApiResult.Failure || answer.error !is ApiError.Network) return answer
     val items = (list() as? ApiResult.Success)?.value ?: return answer

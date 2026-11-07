@@ -55,10 +55,18 @@ class TypeScaleTest {
         assertSame("headlineLarge is the page title", TokklTheme.pageTitleTextStyle, typography.headlineLarge)
         assertSame("titleMedium is the section heading", TokklTheme.sectionHeadingTextStyle, typography.titleMedium)
         assertSame("labelLarge is the button label", TokklTheme.buttonLabelTextStyle, typography.labelLarge)
-        for ((name, style) in listOf("bodyLarge" to typography.bodyLarge, "bodyMedium" to typography.bodyMedium, "bodySmall" to typography.bodySmall)) {
+        for ((name, style) in listOf(
+            "bodyLarge" to typography.bodyLarge,
+            "bodyMedium" to typography.bodyMedium,
+            "bodySmall" to typography.bodySmall,
+        )) {
             assertEquals("$name weight", FontWeight.Normal, style.fontWeight)
         }
-        assertEquals("body sizes", listOf(16.sp, 14.sp, 12.sp), listOf(typography.bodyLarge, typography.bodyMedium, typography.bodySmall).map { it.fontSize })
+        assertEquals(
+            "body sizes",
+            listOf(16.sp, 14.sp, 12.sp),
+            listOf(typography.bodyLarge, typography.bodyMedium, typography.bodySmall).map { it.fontSize },
+        )
     }
 
     @Test

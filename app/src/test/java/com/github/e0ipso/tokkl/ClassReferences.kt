@@ -106,30 +106,39 @@ internal object ClassReferences {
         while (index < count) {
             when (val tag = input.readUnsignedByte()) {
                 TAG_UTF8 -> utf8[index] = input.readUTF()
+
                 TAG_INTEGER, TAG_FLOAT -> input.readInt()
+
                 TAG_LONG, TAG_DOUBLE -> {
                     input.readLong()
                     index++ // Takes two entries.
                 }
+
                 TAG_CLASS -> {
                     classNameIndex[index] = input.readUnsignedShort()
                     classEntries += index
                 }
+
                 TAG_STRING, TAG_METHOD_TYPE, TAG_MODULE, TAG_PACKAGE -> input.readUnsignedShort()
+
                 TAG_FIELD_REF, TAG_METHOD_REF, TAG_INTERFACE_METHOD_REF ->
                     memberEntries += input.readUnsignedShort() to input.readUnsignedShort()
+
                 TAG_NAME_AND_TYPE -> {
                     nameAndTypeNameIndex[index] = input.readUnsignedShort()
                     nameAndTypeDescriptorIndex[index] = input.readUnsignedShort()
                 }
+
                 TAG_METHOD_HANDLE -> {
                     input.readUnsignedByte()
                     input.readUnsignedShort()
                 }
+
                 TAG_DYNAMIC, TAG_INVOKE_DYNAMIC -> {
                     input.readUnsignedShort()
                     input.readUnsignedShort()
                 }
+
                 else -> error("unknown constant pool tag $tag")
             }
             index++

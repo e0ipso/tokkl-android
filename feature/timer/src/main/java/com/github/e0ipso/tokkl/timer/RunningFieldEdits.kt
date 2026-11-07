@@ -65,11 +65,17 @@ internal class RunningFieldEdits(
                 val startedId = pending.entryId.await() ?: return null
                 taps.local.first { it.pending != pending }
                 startedId
-            } else shown.entryId ?: return null
+            } else {
+                shown.entryId ?: return null
+            }
             descriptionDone()
             awaitWrites()
             val settled = taps.shown() as? TimerState.Running ?: return null
-            val identity = RunningEntryIdentity(id, shown.workspaceId, if (pending is PendingTap.Starting) settled.start else shown.start)
+            val identity = RunningEntryIdentity(
+                id,
+                shown.workspaceId,
+                if (pending is PendingTap.Starting) settled.start else shown.start,
+            )
             return identity.takeIf { changes.runningEntry(it) != null }
         } finally {
             openingRunning = false
@@ -84,14 +90,22 @@ internal class RunningFieldEdits(
     private fun edit(send: Boolean, change: (EntryFields) -> EntryFields) {
         when (val shown = taps.shown()) {
             TimerState.Loading, is TimerState.Paused -> Unit
+
             is TimerState.Idle -> taps.local.update { it.copy(draft = change(it.draft)) }
+
             is TimerState.Running -> {
                 if (taps.local.value.pending != null || shown.entryId == null) return
                 val fields = change(shown.fields)
                 when {
                     fields == shown.fields -> Unit
+
                     send -> send(shown, fields)
-                    else -> taps.local.update { it.copy(edit = FieldEdit(shown.entryId, shown.workspaceId, shown.start, fields, sent = false)) }
+
+                    else -> taps.local.update {
+                        it.copy(
+                            edit = FieldEdit(shown.entryId, shown.workspaceId, shown.start, fields, sent = false),
+                        )
+                    }
                 }
             }
         }
@@ -108,10 +122,16 @@ internal class RunningFieldEdits(
         taps.local.update { it.copy(edit = edit) }
         val write = taps.scope.launch(start = CoroutineStart.UNDISPATCHED) {
             try {
-                if (changes.updateRunning(RunningEntryIdentity(entryId, shown.workspaceId, shown.start), fields, shown.start)) {
+                if (changes.updateRunning(
+                        RunningEntryIdentity(entryId, shown.workspaceId, shown.start),
+                        fields,
+                        shown.start,
+                    )
+                ) {
                     taps.settle { controls ->
                         val entry = controls.runningEntry()
-                        entry == null || entry.start != shown.start || entry.fields().let { it == fields || it != before }
+                        entry == null || entry.start != shown.start ||
+                            entry.fields().let { it == fields || it != before }
                     }
                 }
             } finally {

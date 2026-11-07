@@ -21,8 +21,14 @@ class BackStackRulesTest {
         val other = Route.Entry(EntryOpening.Edit(1), id = "b")
         assertEquals(listOf(Route.Timer, form), listOf<Route>(Route.Timer).withEntry(form))
         assertEquals(listOf(Route.Timer, other), listOf(Route.Timer, form).withEntry(other))
-        assertEquals(listOf(Route.Timer, Route.FullscreenTimer, form), listOf(Route.Timer, Route.FullscreenTimer).withEntry(form))
-        assertEquals(listOf(Route.Timer, Route.NeedsAttention, form), listOf(Route.Timer, Route.NeedsAttention).withEntry(form))
+        assertEquals(
+            listOf(Route.Timer, Route.FullscreenTimer, form),
+            listOf(Route.Timer, Route.FullscreenTimer).withEntry(form),
+        )
+        assertEquals(
+            listOf(Route.Timer, Route.NeedsAttention, form),
+            listOf(Route.Timer, Route.NeedsAttention).withEntry(form),
+        )
     }
 
     @Test

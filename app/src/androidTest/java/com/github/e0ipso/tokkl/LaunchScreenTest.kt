@@ -16,14 +16,14 @@ import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.text.TextLayoutResult
-import com.github.e0ipso.tokkl.feature.projects.R as ProjectsR
-import com.github.e0ipso.tokkl.feature.settings.R as SettingsR
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
-import com.github.e0ipso.tokkl.feature.timer.R as TimerR
-import com.github.e0ipso.tokkl.core.ui.R as UiR
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
+import com.github.e0ipso.tokkl.feature.projects.R as ProjectsR
+import com.github.e0ipso.tokkl.feature.settings.R as SettingsR
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 
 /** The first screen of a signed-in session, the Timer page, with the bottom bar. */
 class LaunchScreenTest {
@@ -49,7 +49,11 @@ class LaunchScreenTest {
         val tabs = composeRule.onAllNodes(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab))
             .fetchSemanticsNodes()
             .sortedBy { it.boundsInRoot.left }
-        val labels = tabs.map { node -> node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { text -> text.text } }
+        val labels = tabs.map { node ->
+            node.config.getOrNull(
+                SemanticsProperties.Text,
+            )?.joinToString(" ") { text -> text.text }
+        }
         val expected = listOf(
             TimerR.string.nav_timer,
             SharedR.string.pomodoro_title,
@@ -58,7 +62,10 @@ class LaunchScreenTest {
             R.string.nav_more,
         )
         assertEquals(expected.map(::string), labels)
-        assertEquals(listOf(true, false, false, false, false), tabs.map { it.config.getOrNull(SemanticsProperties.Selected) })
+        assertEquals(
+            listOf(true, false, false, false, false),
+            tabs.map { it.config.getOrNull(SemanticsProperties.Selected) },
+        )
     }
 
     /**
@@ -73,7 +80,10 @@ class LaunchScreenTest {
         val headings = composeRule.onAllNodes(hasText(title) and isHeading())
         headings.assertCountEquals(1)
         val heading = headings[0]
-        assertEquals(listOf(title), heading.fetchSemanticsNode().config.getOrNull(SemanticsProperties.Text)?.map { it.text })
+        assertEquals(
+            listOf(title),
+            heading.fetchSemanticsNode().config.getOrNull(SemanticsProperties.Text)?.map { it.text },
+        )
         val drawn = mutableListOf<TextLayoutResult>()
         heading.performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(drawn) }
         assertEquals(title.uppercase(), drawn.single().layoutInput.text.text)

@@ -232,13 +232,14 @@ class PomodoroDefaultsSettingTest {
         assertEquals(PomodoroDefaults(50, 10, 30, 3), setting.defaults.value)
     }
 
-    private fun setting(initial: StoredPomodoroDefaults? = null, keepsPreferences: Boolean = true) = PomodoroDefaultsSetting(
-        store = InMemoryValueStore(initial) { saved += it },
-        client = { client },
-        keepsPreferences = { keepsPreferences },
-        scope = CoroutineScope(Dispatchers.Unconfined),
-        io = Dispatchers.Unconfined,
-    )
+    private fun setting(initial: StoredPomodoroDefaults? = null, keepsPreferences: Boolean = true) =
+        PomodoroDefaultsSetting(
+            store = InMemoryValueStore(initial) { saved += it },
+            client = { client },
+            keepsPreferences = { keepsPreferences },
+            scope = CoroutineScope(Dispatchers.Unconfined),
+            io = Dispatchers.Unconfined,
+        )
 
     private fun preferences(body: String) = MePreferences(Json.parseToJsonElement(body).jsonObject)
 

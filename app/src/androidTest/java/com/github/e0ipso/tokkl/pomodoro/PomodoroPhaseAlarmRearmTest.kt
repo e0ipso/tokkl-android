@@ -10,13 +10,13 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.PhaseTransition
 import com.github.e0ipso.tokkl.components.pomodoroAlarms
 import com.github.e0ipso.tokkl.components.timerState
-import java.time.Duration
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import java.time.Duration
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 /**
  * A boot broadcast arms the held phase's exact alarm again from the stored timer state, with no
@@ -36,7 +36,11 @@ class PomodoroPhaseAlarmRearmTest {
         PomodoroAlarmRearmReceiver.completed = latch
         try {
             // Twenty minutes of the work phase are left.
-            val held = HeldPhases.hold(PhaseTransition.WORK_TO_SHORT_REST, overtime = Duration.ofMinutes(-20), length = Duration.ofMinutes(25))
+            val held = HeldPhases.hold(
+                PhaseTransition.WORK_TO_SHORT_REST,
+                overtime = Duration.ofMinutes(-20),
+                length = Duration.ofMinutes(25),
+            )
             val end = checkNotNull(held.ring()).end
             // The held state arms the alarm; take it away as a reboot does.
             awaitNextAlarm(end.toEpochMilli())
@@ -65,7 +69,11 @@ class PomodoroPhaseAlarmRearmTest {
 
     private fun awaitNextAlarm(triggerTime: Long?) {
         val deadline = System.currentTimeMillis() + 5_000
-        while (alarms.nextAlarmClock?.triggerTime != triggerTime && System.currentTimeMillis() < deadline) Thread.sleep(50)
+        while (alarms.nextAlarmClock?.triggerTime != triggerTime && System.currentTimeMillis() < deadline) {
+            Thread.sleep(
+                50,
+            )
+        }
         assertEquals(triggerTime, alarms.nextAlarmClock?.triggerTime)
     }
 }

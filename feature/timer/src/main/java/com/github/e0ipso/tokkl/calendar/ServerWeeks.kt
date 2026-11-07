@@ -8,9 +8,9 @@ import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.HistoryWindow
 import com.github.e0ipso.tokkl.cache.toCached
 import com.github.e0ipso.tokkl.time.AccountTime
+import kotlinx.serialization.builtins.ListSerializer
 import java.time.Instant
 import java.time.LocalDate
-import kotlinx.serialization.builtins.ListSerializer
 /** The entries that start before [to] and run past [from], or still run. */
 internal data class WeekSpan(val from: Instant, val to: Instant)
 
@@ -31,7 +31,10 @@ internal fun spanOf(time: AccountTime, weekStart: LocalDate, today: LocalDate): 
         val cacheStart = today.minusDays(HistoryWindow.DAYS - 1).atStartOfDay(time.zone).toInstant()
         return WeekSpan(cacheStart, cacheStart)
     }
-    return WeekSpan(weekStart.atStartOfDay(time.zone).toInstant(), weekStart.plusDays(7).atStartOfDay(time.zone).toInstant())
+    return WeekSpan(
+        weekStart.atStartOfDay(time.zone).toInstant(),
+        weekStart.plusDays(7).atStartOfDay(time.zone).toInstant(),
+    )
 }
 
 /**
@@ -46,8 +49,11 @@ internal fun fetchWeek(client: ApiClientProvider, span: WeekSpan): ServerWeek {
         .build()
     return when (val answer = api.get(url, ListSerializer(ServerTimeEntry.serializer()))) {
         is ApiResult.Failure -> ServerWeek(emptyList(), statusOf(answer.error))
+
         is ApiResult.Success -> ServerWeek(
-            answer.value.mapNotNull { it.toCached() }.filter { entry -> entry.stop.let { it == null || it > span.from } },
+            answer.value.mapNotNull {
+                it.toCached()
+            }.filter { entry -> entry.stop.let { it == null || it > span.from } },
             WeekSource.Loaded,
         )
     }
@@ -55,11 +61,24 @@ internal fun fetchWeek(client: ApiClientProvider, span: WeekSpan): ServerWeek {
 
 private fun statusOf(error: ApiError): WeekSource = when (error) {
     is ApiError.Network -> WeekSource.Unreachable
+
     // A reverse proxy answers these while the server behind it is down.
-    is ApiError.UnexpectedStatus -> if (error.status in PROXY_UNREACHABLE) WeekSource.Unreachable else WeekSource.Failed(error.status)
+    is ApiError.UnexpectedStatus -> if (error.status in
+        PROXY_UNREACHABLE
+    ) {
+        WeekSource.Unreachable
+    } else {
+        WeekSource.Failed(
+            error.status,
+        )
+    }
+
     ApiError.AuthFailed -> WeekSource.AuthFailed
+
     is ApiError.TrustRefused -> WeekSource.TrustRefused
+
     is ApiError.RateLimited -> WeekSource.Failed(error.status)
+
     is ApiError.HostNotAllowed, is ApiError.InvalidResponse -> WeekSource.Failed(null)
 }
 

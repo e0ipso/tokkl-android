@@ -1,12 +1,12 @@
 package com.github.e0ipso.tokkl.api
 
 import com.github.e0ipso.tokkl.ClassReferences
-import java.io.File
-import javax.net.ssl.HostnameVerifier
-import javax.net.ssl.TrustManager
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.File
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.TrustManager
 
 /**
  * No code path accepts a certificate without a check (docs/PRD.md S3): no
@@ -21,7 +21,10 @@ class NoTrustAllTest {
     @Test
     fun noCompiledAppClassButThePinningTrustManagerIsATrustManagerOrHostnameVerifier() {
         val classes = appClasses()
-        assertTrue("the scan found the app's classes", classes.any { it.name == "com.github.e0ipso.tokkl.MainActivity" })
+        assertTrue(
+            "the scan found the app's classes",
+            classes.any { it.name == "com.github.e0ipso.tokkl.MainActivity" },
+        )
 
         val trustManagers = classes.filter { TrustManager::class.java.isAssignableFrom(it) }.map { it.name }
         val verifiers = classes.filter { HostnameVerifier::class.java.isAssignableFrom(it) }.map { it.name }
@@ -64,9 +67,8 @@ class NoTrustAllTest {
         ClassReferences.app.keys.map { Class.forName(it.replace('/', '.'), false, javaClass.classLoader) }
 
     /** The checkout's root: the parent of the app module, which Gradle makes the working directory of its unit tests. */
-    private fun rootDirectory(): File =
-        generateSequence(File("").absoluteFile) { it.parentFile }
-            .first { File(it, "settings.gradle.kts").isFile }
+    private fun rootDirectory(): File = generateSequence(File("").absoluteFile) { it.parentFile }
+        .first { File(it, "settings.gradle.kts").isFile }
 
     private companion object {
         const val PINNING_TRUST_MANAGER = "com.github.e0ipso.tokkl.api.PinningTrustManager"

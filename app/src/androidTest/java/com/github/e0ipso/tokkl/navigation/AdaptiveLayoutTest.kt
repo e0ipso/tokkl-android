@@ -32,10 +32,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.feature.projects.R as ProjectsR
-import com.github.e0ipso.tokkl.feature.settings.R as SettingsR
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
-import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createComposeRule
 import com.github.e0ipso.tokkl.api.SharedHttpClient
@@ -88,8 +84,6 @@ import com.github.e0ipso.tokkl.ui.screenshot.ScreenshotTest
 import com.github.e0ipso.tokkl.ui.theme.ThemeSettings
 import com.github.e0ipso.tokkl.ui.theme.TokklSpacing
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import java.time.LocalDate
-import kotlin.math.abs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -99,6 +93,12 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import java.time.LocalDate
+import kotlin.math.abs
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.feature.projects.R as ProjectsR
+import com.github.e0ipso.tokkl.feature.settings.R as SettingsR
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 
 /**
  * Every screen at one window size, [window], of the width class [width] (docs/PRD.md, Devices):
@@ -128,7 +128,11 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
 
     @After
     fun cancelTheScope() {
-        try { if (shown) composeRule.checkAccessibility() } finally { scope.cancel() }
+        try {
+            if (shown) composeRule.checkAccessibility()
+        } finally {
+            scope.cancel()
+        }
     }
 
     /** Both navigation layouts expose independent, changing spoken running marks. */
@@ -137,7 +141,12 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
         var timerRunning by mutableStateOf(false)
         var sessionRunning by mutableStateOf(true)
         show {
-            SignedInFrame(current = TopLevelPage.PROJECTS, onOpen = {}, timerRunning = timerRunning, pomodoroRunning = sessionRunning) {
+            SignedInFrame(
+                current = TopLevelPage.PROJECTS,
+                onOpen = {},
+                timerRunning = timerRunning,
+                pomodoroRunning = sessionRunning,
+            ) {
                 Box(Modifier.fillMaxSize())
             }
         }
@@ -165,21 +174,37 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
 
         val windowBounds = windowBounds()
         val items = navigationItems()
-        assertEquals("the items: ${items.map { it.label() }}", NAVIGATION_LABELS.map(::string), items.map { it.label() })
+        assertEquals(
+            "the items: ${items.map { it.label() }}",
+            NAVIGATION_LABELS.map(::string),
+            items.map { it.label() },
+        )
         for (item in items) assertShownWhole("the ${item.label()} item", item)
         val bounds = items.map { it.boundsInRoot }
         if (width == WindowWidth.COMPACT) {
             for ((before, after) in bounds.zipWithNext()) {
                 assertEquals("the bar's items share a top", before.top, after.top, TOLERANCE_PX)
-                assertTrue("the bar's items run from the start: $before, then $after", before.right <= after.left + TOLERANCE_PX)
+                assertTrue(
+                    "the bar's items run from the start: $before, then $after",
+                    before.right <= after.left + TOLERANCE_PX,
+                )
             }
-            assertTrue("the bar sits at the bottom: ${bounds.first()} in $windowBounds", bounds.first().bottom >= windowBounds.bottom - windowBounds.height / 4)
+            assertTrue(
+                "the bar sits at the bottom: ${bounds.first()} in $windowBounds",
+                bounds.first().bottom >= windowBounds.bottom - windowBounds.height / 4,
+            )
         } else {
             for ((before, after) in bounds.zipWithNext()) {
                 assertEquals("the rail's items share a centre", before.center.x, after.center.x, TOLERANCE_PX)
-                assertTrue("the rail's items run from the top: $before, then $after", before.bottom <= after.top + TOLERANCE_PX)
+                assertTrue(
+                    "the rail's items run from the top: $before, then $after",
+                    before.bottom <= after.top + TOLERANCE_PX,
+                )
             }
-            assertTrue("the rail sits at the start: ${bounds.first()} in $windowBounds", bounds.first().right <= windowBounds.left + windowBounds.width / 4)
+            assertTrue(
+                "the rail sits at the start: ${bounds.first()} in $windowBounds",
+                bounds.first().right <= windowBounds.left + windowBounds.width / 4,
+            )
         }
     }
 
@@ -229,12 +254,17 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
             }
         }
 
-        val form = composeRule.onNode(hasText(string(TimerR.string.entry_form_edit)) and isHeading()).fetchSemanticsNode()
+        val form = composeRule.onNode(
+            hasText(string(TimerR.string.entry_form_edit)) and isHeading(),
+        ).fetchSemanticsNode()
         val history = composeRule.onAllNodes(hasText(HISTORY_ENTRY), useUnmergedTree = true).fetchSemanticsNodes()
         if (beside) {
             assertTrue("the history shows beside the form", history.isNotEmpty())
             val historyRight = history.maxOf { it.boundsInRoot.right }
-            assertTrue("the history ends where the form starts: $historyRight, ${form.boundsInRoot}", historyRight <= form.boundsInRoot.left)
+            assertTrue(
+                "the history ends where the form starts: $historyRight, ${form.boundsInRoot}",
+                historyRight <= form.boundsInRoot.left,
+            )
         } else {
             assertTrue("the form shows alone", history.isEmpty())
         }
@@ -302,14 +332,22 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
             )
             val shown = node.boundsInRoot
             if (shown.height > 0f) {
-                assertEquals("$screen: ${node.describe()} shows its whole width", whole.width, shown.width, TOLERANCE_PX)
+                assertEquals(
+                    "$screen: ${node.describe()} shows its whole width",
+                    whole.width,
+                    shown.width,
+                    TOLERANCE_PX,
+                )
             }
         }
     }
 
     private fun assertShownWhole(what: String, node: SemanticsNode) {
         val shown = node.boundsInRoot
-        assertTrue("$what shows whole: $shown of ${node.size}", abs(shown.width - node.size.width) <= TOLERANCE_PX && abs(shown.height - node.size.height) <= TOLERANCE_PX)
+        assertTrue(
+            "$what shows whole: $shown of ${node.size}",
+            abs(shown.width - node.size.width) <= TOLERANCE_PX && abs(shown.height - node.size.height) <= TOLERANCE_PX,
+        )
     }
 
     private fun windowBounds(): Rect = composeRule.onNodeWithTag(WINDOW).fetchSemanticsNode().boundsInRoot
@@ -321,9 +359,12 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
     private fun navigationItem(label: Int): SemanticsMatcher =
         hasText(string(label)) and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab)
 
-    private fun SemanticsNode.label(): String =
-        (config.getOrNull(SemanticsProperties.Text) ?: children.flatMap { it.config.getOrNull(SemanticsProperties.Text).orEmpty() })
-            .joinToString { it.text }
+    private fun SemanticsNode.label(): String = (
+        config.getOrNull(
+            SemanticsProperties.Text,
+        ) ?: children.flatMap { it.config.getOrNull(SemanticsProperties.Text).orEmpty() }
+        )
+        .joinToString { it.text }
 
     private fun SemanticsNode.describe(): String {
         val text = config.getOrNull(SemanticsProperties.Text)?.joinToString { it.text }
@@ -356,8 +397,12 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
         fun SignInPage() = SignInScreen(signInModel, onSignedIn = {})
 
         @Composable
-        fun Framed(page: TopLevelPage, content: @Composable () -> Unit) =
-            SignedInFrame(current = page, onOpen = {}, syncStatus = ScreenshotTest.SYNC_STATUS, syncStatusClock = ScreenshotTest.TODAY) { content() }
+        fun Framed(page: TopLevelPage, content: @Composable () -> Unit) = SignedInFrame(
+            current = page,
+            onOpen = {},
+            syncStatus = ScreenshotTest.SYNC_STATUS,
+            syncStatusClock = ScreenshotTest.TODAY,
+        ) { content() }
     }
 
     private val SCREENS: List<Screen> = listOf(
@@ -370,7 +415,13 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
         Screen("the Weekly report") { Framed(TopLevelPage.REPORTS) { Reports(ReportTab.WEEKLY) } },
         Screen("Projects") {
             Framed(TopLevelPage.PROJECTS) {
-                ProjectsContent(CatalogSamples.PROJECTS_LOADED, offline = false, cachedProjects = emptyList(), clients = CatalogSamples.CACHED_CLIENTS, actions = ProjectsActions())
+                ProjectsContent(
+                    CatalogSamples.PROJECTS_LOADED,
+                    offline = false,
+                    cachedProjects = emptyList(),
+                    clients = CatalogSamples.CACHED_CLIENTS,
+                    actions = ProjectsActions(),
+                )
             }
         },
         Screen("the project form") {
@@ -386,21 +437,38 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
         },
         Screen("Clients") {
             Framed(TopLevelPage.CLIENTS) {
-                ClientsContent(CatalogSamples.CLIENTS_LOADED, offline = false, cachedClients = emptyList(), actions = ClientsActions())
+                ClientsContent(
+                    CatalogSamples.CLIENTS_LOADED,
+                    offline = false,
+                    cachedClients = emptyList(),
+                    actions = ClientsActions(),
+                )
             }
         },
         Screen("the client form") {
             Framed(TopLevelPage.CLIENTS) {
-                ClientsContent(CatalogSamples.CLIENTS_LOADED.copy(overlay = ClientsOverlay.New), offline = false, cachedClients = emptyList(), actions = ClientsActions())
+                ClientsContent(
+                    CatalogSamples.CLIENTS_LOADED.copy(overlay = ClientsOverlay.New),
+                    offline = false,
+                    cachedClients = emptyList(),
+                    actions = ClientsActions(),
+                )
             }
         },
         Screen("Tags") {
             Framed(TopLevelPage.TAGS) {
-                TagsContent(CatalogSamples.TAGS_LOADED, offline = false, cachedTags = emptyList(), actions = TagsActions())
+                TagsContent(
+                    CatalogSamples.TAGS_LOADED,
+                    offline = false,
+                    cachedTags = emptyList(),
+                    actions = TagsActions(),
+                )
             }
         },
         Screen("Trash") {
-            Framed(TopLevelPage.TRASH) { TrashContent(TRASH, offline = false, settings = ScreenshotTest.ACCOUNT, actions = TrashActions()) }
+            Framed(
+                TopLevelPage.TRASH,
+            ) { TrashContent(TRASH, offline = false, settings = ScreenshotTest.ACCOUNT, actions = TrashActions()) }
         },
         Screen("Settings") {
             Framed(TopLevelPage.SETTINGS) {
@@ -435,11 +503,18 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
         val SHORT_HEIGHT = 360.dp
 
         /** The bar's and the rail's items, in order. */
-        val NAVIGATION_LABELS = listOf(TimerR.string.nav_timer, SharedR.string.pomodoro_title, ProjectsR.string.nav_projects, SettingsR.string.settings, R.string.nav_more)
+        val NAVIGATION_LABELS = listOf(
+            TimerR.string.nav_timer,
+            SharedR.string.pomodoro_title,
+            ProjectsR.string.nav_projects,
+            SettingsR.string.settings,
+            R.string.nav_more,
+        )
 
         /** Anything a person reads or uses. */
-        val CONTROL_OR_TEXT: SemanticsMatcher = hasClickAction() or hasSetTextAction() or isToggleable() or isSelectable() or
-            SemanticsMatcher.keyIsDefined(SemanticsProperties.Text)
+        val CONTROL_OR_TEXT: SemanticsMatcher =
+            hasClickAction() or hasSetTextAction() or isToggleable() or isSelectable() or
+                SemanticsMatcher.keyIsDefined(SemanticsProperties.Text)
 
         /** Today's first entry in ScreenshotTest's history, not the one the form edits. */
         const val HISTORY_ENTRY = "Code review"

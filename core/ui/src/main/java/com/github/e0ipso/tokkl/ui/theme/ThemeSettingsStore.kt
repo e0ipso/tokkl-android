@@ -22,7 +22,10 @@ class ThemeSettingsStore(context: Context) {
         val mode = preferences.getString(KEY_MODE, null)
             ?.let { name -> ThemeMode.entries.firstOrNull { it.name == name } }
             ?: defaults.mode
-        return ThemeSettings(mode = mode, dynamicColor = preferences.getBoolean(KEY_DYNAMIC_COLOR, defaults.dynamicColor))
+        return ThemeSettings(
+            mode = mode,
+            dynamicColor = preferences.getBoolean(KEY_DYNAMIC_COLOR, defaults.dynamicColor),
+        )
     }
 
     @Throws(IOException::class)

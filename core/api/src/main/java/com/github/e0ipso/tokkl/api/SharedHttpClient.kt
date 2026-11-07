@@ -1,15 +1,15 @@
 package com.github.e0ipso.tokkl.api
 
-import java.security.KeyStore
-import java.util.concurrent.TimeUnit
-import javax.net.ssl.SSLContext
-import javax.net.ssl.TrustManagerFactory
-import javax.net.ssl.X509TrustManager
 import kotlinx.serialization.json.Json
 import okhttp3.ConnectionPool
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
+import java.security.KeyStore
+import java.util.concurrent.TimeUnit
+import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManagerFactory
+import javax.net.ssl.X509TrustManager
 
 /**
  * The app's only [OkHttpClient]. Every request goes through it, or through
@@ -48,8 +48,7 @@ object SharedHttpClient {
      * connection. It shares the rest with [client]: connection pool, dispatcher, interceptors and
      * trust checks, so the guard, the pinning and [cancelAll] cover it as they cover [client].
      */
-    fun sendingOnce(client: OkHttpClient): OkHttpClient =
-        client.newBuilder().retryOnConnectionFailure(false).build()
+    fun sendingOnce(client: OkHttpClient): OkHttpClient = client.newBuilder().retryOnConnectionFailure(false).build()
 
     private fun build(): OkHttpClient {
         val trustManager = PinningTrustManager(platformTrustManager()) { host, port ->
@@ -63,7 +62,9 @@ object SharedHttpClient {
             .followSslRedirects(false)
             .sslSocketFactory(tls.socketFactory, trustManager)
             .addInterceptor(StreamingReads)
-            .addInterceptor(ConfiguredServerGuard(configured = { ConfiguredServer.current }, trust = { ConfiguredTrust.current }))
+            .addInterceptor(
+                ConfiguredServerGuard(configured = { ConfiguredServer.current }, trust = { ConfiguredTrust.current }),
+            )
             .build()
     }
 

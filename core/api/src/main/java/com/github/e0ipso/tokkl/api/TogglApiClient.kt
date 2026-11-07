@@ -1,9 +1,5 @@
 package com.github.e0ipso.tokkl.api
 
-import java.io.IOException
-import java.io.InputStream
-import java.io.OutputStream
-import java.util.concurrent.TimeUnit
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
@@ -14,6 +10,10 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
+import java.util.concurrent.TimeUnit
 
 /**
  * Client for the Toggl Track API v9 and Reports API v3, as served by Tokkl or
@@ -106,8 +106,12 @@ class TogglApiClient(
      * project id as JSON, which this method ignores too. Any 2xx is a success.
      * [resend] works as in [send].
      */
-    fun sendNoContent(method: String, url: HttpUrl, body: JsonElement? = null, resend: Boolean = true): ApiResult<Unit> =
-        execute(method, url, body, resend) { ApiResult.Success(Unit) }
+    fun sendNoContent(
+        method: String,
+        url: HttpUrl,
+        body: JsonElement? = null,
+        resend: Boolean = true,
+    ): ApiResult<Unit> = execute(method, url, body, resend) { ApiResult.Success(Unit) }
 
     /**
      * Streams CSV bytes unchanged through the shared transport. The caller owns the private
@@ -126,8 +130,12 @@ class TogglApiClient(
             val content = response.body
             val type = content.contentType()
             val length = content.contentLength()
-            if (response.code != 200 || type == null || type.type != "text" || type.subtype != "csv" || length > maxBytes) {
-                return@execute ApiResult.Failure(ApiError.InvalidResponse(IllegalArgumentException("Expected a bounded CSV response")))
+            if (response.code != 200 || type == null || type.type != "text" || type.subtype != "csv" ||
+                length > maxBytes
+            ) {
+                return@execute ApiResult.Failure(
+                    ApiError.InvalidResponse(IllegalArgumentException("Expected a bounded CSV response")),
+                )
             }
             var total = 0L
             content.byteStream().use { input ->
@@ -138,7 +146,9 @@ class TogglApiClient(
                     if (read == -1) break
                     total += read
                     if (total > maxBytes) {
-                        return@execute ApiResult.Failure(ApiError.InvalidResponse(IllegalArgumentException("CSV exceeds the export limit")))
+                        return@execute ApiResult.Failure(
+                            ApiError.InvalidResponse(IllegalArgumentException("CSV exceeds the export limit")),
+                        )
                     }
                     output.write(buffer, 0, read)
                 }
@@ -202,7 +212,9 @@ class TogglApiClient(
                         successListener?.succeeded()
                         onSuccess(response)
                     }
+
                     response.code == CONFLICT && onConflict != null -> onConflict(response)
+
                     else -> ApiResult.Failure(httpError(response))
                 }
             }
@@ -213,8 +225,12 @@ class TogglApiClient(
         } catch (e: IOException) {
             val untrusted = e.untrustedCertificate()
             when {
-                untrusted != null -> refused(ApiError.UntrustedCertificate(untrusted.certificate, changed = untrusted.pinChanged))
+                untrusted != null -> refused(
+                    ApiError.UntrustedCertificate(untrusted.certificate, changed = untrusted.pinChanged),
+                )
+
                 e.certificateHostMismatch() -> refused(ApiError.CertificateHostMismatch(url.host))
+
                 else -> ApiResult.Failure(ApiError.Network(e))
             }
         } finally {
@@ -227,12 +243,11 @@ class TogglApiClient(
         return ApiResult.Failure(refusal)
     }
 
-    private fun httpError(response: Response): ApiError.Http =
-        when (response.code) {
-            403 -> ApiError.AuthFailed
-            429 -> ApiError.RateLimited(retryAfterSeconds(response.header("Retry-After")))
-            else -> ApiError.UnexpectedStatus(response.code, reason(response))
-        }
+    private fun httpError(response: Response): ApiError.Http = when (response.code) {
+        403 -> ApiError.AuthFailed
+        429 -> ApiError.RateLimited(retryAfterSeconds(response.header("Retry-After")))
+        else -> ApiError.UnexpectedStatus(response.code, reason(response))
+    }
 
     /**
      * The error body when it is one JSON string, as Tokkl's errors are, read up to
@@ -263,16 +278,18 @@ class TogglApiClient(
     private fun <T> refusal(text: String, deserializer: DeserializationStrategy<T>): ApiResult<Refusable<T>> =
         when (val decoded = decode(text, deserializer)) {
             is ApiResult.Success -> ApiResult.Success(Refusable(decoded.value, refused = true))
-            is ApiResult.Failure -> reasonIn(text)?.let { ApiResult.Failure(ApiError.UnexpectedStatus(CONFLICT, it)) } ?: decoded
+
+            is ApiResult.Failure -> reasonIn(
+                text,
+            )?.let { ApiResult.Failure(ApiError.UnexpectedStatus(CONFLICT, it)) } ?: decoded
         }
 
-    private fun <T> decode(text: String, deserializer: DeserializationStrategy<T>): ApiResult<T> =
-        try {
-            ApiResult.Success(ApiJson.decodeFromString(deserializer, text))
-        } catch (e: IllegalArgumentException) {
-            // kotlinx.serialization's SerializationException is an IllegalArgumentException.
-            ApiResult.Failure(ApiError.InvalidResponse(e))
-        }
+    private fun <T> decode(text: String, deserializer: DeserializationStrategy<T>): ApiResult<T> = try {
+        ApiResult.Success(ApiJson.decodeFromString(deserializer, text))
+    } catch (e: IllegalArgumentException) {
+        // kotlinx.serialization's SerializationException is an IllegalArgumentException.
+        ApiResult.Failure(ApiError.InvalidResponse(e))
+    }
 
     private companion object {
         val JSON = "application/json; charset=utf-8".toMediaType()

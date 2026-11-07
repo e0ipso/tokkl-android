@@ -38,6 +38,9 @@ class SharedPermissionQuestionTest {
         var value = false
         var writes = 0
         override fun asked() = value
-        override fun markAsked() { value = true; writes++ }
+        override fun markAsked() {
+            value = true
+            writes++
+        }
     }
 }

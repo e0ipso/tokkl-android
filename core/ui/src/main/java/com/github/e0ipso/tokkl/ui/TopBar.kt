@@ -86,7 +86,10 @@ fun TokklTopBar(
                         .outdent(BackIconInset)
                         .size(BackButtonSize),
                 ) {
-                    Icon(painter = painterResource(R.drawable.ic_arrow_back), contentDescription = stringResource(R.string.back))
+                    Icon(
+                        painter = painterResource(R.drawable.ic_arrow_back),
+                        contentDescription = stringResource(R.string.back),
+                    )
                 }
                 Spacer(Modifier.width(TokklTheme.spacing.space1))
             }

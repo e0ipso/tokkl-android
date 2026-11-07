@@ -28,7 +28,6 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import com.github.e0ipso.tokkl.feature.notification.R
 import com.github.e0ipso.tokkl.platform.IoDispatcher
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
@@ -37,6 +36,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.withContext
 import org.koin.compose.koinInject
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Asks for the notification permission at the first timer or Pomodoro start made in the app

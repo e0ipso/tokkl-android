@@ -14,12 +14,12 @@ import androidx.annotation.StringRes
 import androidx.annotation.VisibleForTesting
 import androidx.compose.ui.graphics.toArgb
 import com.github.e0ipso.tokkl.feature.notification.R
-import com.github.e0ipso.tokkl.core.data.R as DataR
-import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.platform.mainActivityIntent
 import com.github.e0ipso.tokkl.time.formatDuration
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import com.github.e0ipso.tokkl.ui.theme.TokklLightExtraColors
+import com.github.e0ipso.tokkl.core.data.R as DataR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * Posts and removes the running timer's notification (docs/PRD.md N1). It is ongoing and shows
@@ -48,14 +48,18 @@ class RunningNotifier(context: Context) {
     }
 
     /** Low importance: it makes no sound and does not pop up over the screen. */
-    private fun channel(): NotificationChannel =
-        NotificationChannel(CHANNEL_ID, context.getString(R.string.notification_channel_running), NotificationManager.IMPORTANCE_LOW)
-            .apply { description = context.getString(R.string.notification_channel_running_description) }
+    private fun channel(): NotificationChannel = NotificationChannel(
+        CHANNEL_ID,
+        context.getString(R.string.notification_channel_running),
+        NotificationManager.IMPORTANCE_LOW,
+    )
+        .apply { description = context.getString(R.string.notification_channel_running_description) }
 
     @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
     fun build(
         content: RunningNotificationContent,
-        requestPromotion: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA && manager.canPostPromotedNotifications(),
+        requestPromotion: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA &&
+            manager.canPostPromotedNotifications(),
     ): Notification {
         val builder = Notification.Builder(context, CHANNEL_ID)
             .setSmallIcon(DataR.drawable.ic_nav_timer)
@@ -67,8 +71,17 @@ class RunningNotifier(context: Context) {
                 .setContentText(pausedText(content))
                 .setShowWhen(false)
                 .setOngoing(false)
-                .addAction(action(UiR.drawable.ic_play, R.string.notification_resume, StopTimerReceiver.ACTION_RESUME, content))
-                .addAction(action(UiR.drawable.ic_stop, R.string.notification_stop, StopTimerReceiver.ACTION_STOP, content))
+                .addAction(
+                    action(
+                        UiR.drawable.ic_play,
+                        R.string.notification_resume,
+                        StopTimerReceiver.ACTION_RESUME,
+                        content,
+                    ),
+                )
+                .addAction(
+                    action(UiR.drawable.ic_stop, R.string.notification_stop, StopTimerReceiver.ACTION_STOP, content),
+                )
                 .build()
         }
         builder
@@ -78,8 +91,14 @@ class RunningNotifier(context: Context) {
             .setUsesChronometer(true)
             .setOngoing(true)
             .setCategory(Notification.CATEGORY_STOPWATCH)
-        if (content.pausable) builder.addAction(action(UiR.drawable.ic_pause, R.string.notification_pause, StopTimerReceiver.ACTION_PAUSE, content))
-        builder.addAction(action(UiR.drawable.ic_stop, R.string.notification_stop, StopTimerReceiver.ACTION_STOP, content))
+        if (content.pausable) {
+            builder.addAction(
+                action(UiR.drawable.ic_pause, R.string.notification_pause, StopTimerReceiver.ACTION_PAUSE, content),
+            )
+        }
+        builder.addAction(
+            action(UiR.drawable.ic_stop, R.string.notification_stop, StopTimerReceiver.ACTION_STOP, content),
+        )
         // Standard style, ongoing, a title and a non-minimal channel meet the promotion rules.
         // Keep the same notification when the user or the device declines promotion.
         // https://developer.android.com/develop/ui/views/notifications/live-update
@@ -109,16 +128,34 @@ class RunningNotifier(context: Context) {
             .setAction(Intent.ACTION_MAIN)
             .addCategory(Intent.CATEGORY_LAUNCHER)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
-        return PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        return PendingIntent.getActivity(
+            context,
+            0,
+            intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
     }
 
-    private fun action(@DrawableRes icon: Int, @StringRes title: Int, action: String, content: RunningNotificationContent): Notification.Action =
-        Notification.Action.Builder(Icon.createWithResource(context, icon), context.getString(title), timerIntent(action, content.target)).build()
+    private fun action(
+        @DrawableRes icon: Int,
+        @StringRes title: Int,
+        action: String,
+        content: RunningNotificationContent,
+    ): Notification.Action = Notification.Action.Builder(
+        Icon.createWithResource(context, icon),
+        context.getString(title),
+        timerIntent(action, content.target),
+    ).build()
 
     /** Each action is its own PendingIntent, as its intent action tells them apart. */
     private fun timerIntent(action: String, target: TimerTarget): PendingIntent {
         val intent = Intent(context, StopTimerReceiver::class.java).setAction(action).putTarget(target)
-        return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        return PendingIntent.getBroadcast(
+            context,
+            0,
+            intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
     }
 
     companion object {

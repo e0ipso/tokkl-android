@@ -7,7 +7,6 @@ import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.catalog.CatalogChange
-import java.util.concurrent.CopyOnWriteArrayList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import mockwebserver3.Dispatcher
@@ -19,6 +18,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * The clients page's model against a MockWebServer with one client, Acme, in workspace 7, and one
@@ -40,10 +40,19 @@ class ClientsViewModelTest {
                 requests += "${request.method} ${request.url.encodedPath} ${request.body?.utf8().orEmpty()}".trim()
                 return when ("${request.method} ${request.url.encodedPath}") {
                     "GET /api/v9/workspaces/7/clients" -> json("""[{"id":1,"wid":7,"name":"Acme","archived":false}]""")
+
                     "GET /api/v9/workspaces/7/projects" -> json("""[{"id":5,"client_id":1}]""")
-                    "POST /api/v9/workspaces/7/clients" -> json("""{"id":2,"wid":7,"name":"Surf school","archived":false}""")
+
+                    "POST /api/v9/workspaces/7/clients" -> json(
+                        """{"id":2,"wid":7,"name":"Surf school","archived":false}""",
+                    )
+
                     "POST /api/v9/workspaces/7/clients/1/archive" -> json("[5]")
-                    "POST /api/v9/workspaces/7/clients/1/restore" -> json("""{"id":1,"wid":7,"name":"Acme","archived":false}""")
+
+                    "POST /api/v9/workspaces/7/clients/1/restore" -> json(
+                        """{"id":1,"wid":7,"name":"Acme","archived":false}""",
+                    )
+
                     else -> MockResponse.Builder().code(404).build()
                 }
             }

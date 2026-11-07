@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.timer
 
-import android.content.res.Resources
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect

@@ -9,10 +9,10 @@ import com.github.e0ipso.tokkl.entryfields.entryLabels
 import com.github.e0ipso.tokkl.timerstate.TimerControls
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import com.github.e0ipso.tokkl.timerstate.countsFrom
-import java.security.MessageDigest
-import java.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import java.security.MessageDigest
+import java.time.Instant
 
 /**
  * What the running timer's notification shows (docs/PRD.md N1): the entry's description, its
@@ -63,15 +63,22 @@ fun runningNotificationContent(
     tasks: List<CachedTask>,
 ): RunningNotificationContent? = when (controls) {
     TimerControls.Idle -> null
+
     is TimerControls.Running -> runningNotificationContent(controls.entry, projects, tasks)?.let { content ->
         content.copy(
             start = controls.countsFrom,
-            key = hash(content.key, controls.target.account, controls.accumulatedSeconds.toString(), controls.pausable.toString()),
+            key = hash(
+                content.key,
+                controls.target.account,
+                controls.accumulatedSeconds.toString(),
+                controls.pausable.toString(),
+            ),
             accumulatedSeconds = controls.accumulatedSeconds,
             target = controls.target,
             pausable = controls.pausable,
         )
     }
+
     is TimerControls.Paused -> {
         val fields = controls.fields
         val labels = entryLabels(fields, projects, tasks)
@@ -159,12 +166,14 @@ data class FollowedEntry(val key: String, val entryId: Long?)
  * until the next start, stop or edit. Two starts with the same fields within one second give the
  * same key, so the id tells them apart, and the notification's Stop stops the newer one.
  */
-fun runningNotificationChange(followed: FollowedEntry?, content: RunningNotificationContent?): RunningNotificationChange? =
-    when {
-        content == null -> if (followed == null) null else RunningNotificationChange.Remove
-        followed?.key == content.key && (followed.entryId == null || followed.entryId == content.entryId) -> null
-        else -> RunningNotificationChange.Post(content)
-    }
+fun runningNotificationChange(
+    followed: FollowedEntry?,
+    content: RunningNotificationContent?,
+): RunningNotificationChange? = when {
+    content == null -> if (followed == null) null else RunningNotificationChange.Remove
+    followed?.key == content.key && (followed.entryId == null || followed.entryId == content.entryId) -> null
+    else -> RunningNotificationChange.Post(content)
+}
 
 /** Each value with its length first, so no two lists of values give the same text. */
 private fun hash(vararg values: String): String {
@@ -183,5 +192,11 @@ private fun tagKey(name: String): String =
  * The running notification's content as the timer controls and the cached projects and tasks
  * change, null while nothing runs.
  */
-internal fun runningNotificationContents(controls: Flow<TimerControls>, cache: AccountCache): Flow<RunningNotificationContent?> =
-    combine(controls, cache.projects, cache.tasks) { current, projects, tasks -> runningNotificationContent(current, projects, tasks) }
+internal fun runningNotificationContents(
+    controls: Flow<TimerControls>,
+    cache: AccountCache,
+): Flow<RunningNotificationContent?> = combine(
+    controls,
+    cache.projects,
+    cache.tasks,
+) { current, projects, tasks -> runningNotificationContent(current, projects, tasks) }

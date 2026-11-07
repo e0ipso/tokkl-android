@@ -21,9 +21,6 @@ import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timerstate.TimerStateStore
-import java.io.File
-import java.time.Duration
-import java.util.Properties
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -33,6 +30,9 @@ import org.junit.Assert.assertTrue
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
+import java.io.File
+import java.time.Duration
+import java.util.Properties
 
 /**
  * The session notification across a process restart, from the stored timer state rather than any
@@ -54,7 +54,11 @@ class PomodoroSessionNotificationRestartTest {
         HeldPhases.learnTheTimerApi()
         RunningNotifications.allow()
         // Two hours of a three-hour work phase are left, so nothing rings across the restart.
-        val held = HeldPhases.hold(PhaseTransition.WORK_TO_SHORT_REST, overtime = Duration.ofHours(-2), length = Duration.ofHours(3))
+        val held = HeldPhases.hold(
+            PhaseTransition.WORK_TO_SHORT_REST,
+            overtime = Duration.ofHours(-2),
+            length = Duration.ofHours(3),
+        )
         runBlocking { app.pomodoroSessionNotification.refresh(force = true) }
         val posted = manager.activeNotifications.single { it.id == PomodoroSessionNotifier.NOTIFICATION_ID }
         val identity = checkNotNull(PomodoroSessionNotificationStore(context).load()).account

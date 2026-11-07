@@ -30,7 +30,11 @@ fun Route.orTimerIfUnavailable(unavailable: Set<TopLevelPage>): Route =
     if (TopLevelPage.of(this) in unavailable) Route.Timer else this
 
 /** Whether a route on the stack belongs to a page in [unavailable]. */
-internal fun List<Route>.holdsAnyOf(unavailable: Set<TopLevelPage>): Boolean = any { TopLevelPage.of(it) in unavailable }
+internal fun List<Route>.holdsAnyOf(unavailable: Set<TopLevelPage>): Boolean = any {
+    TopLevelPage.of(
+        it,
+    ) in unavailable
+}
 
 /**
  * Whether the entry form on top of [stack] shows beside the Timer page below it: on an expanded

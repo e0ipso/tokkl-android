@@ -11,10 +11,6 @@ import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.TimerControls
 import com.github.e0ipso.tokkl.timerstate.seconds
 import com.github.e0ipso.tokkl.timerstate.serverTimerControls
-import java.time.Clock
-import java.time.Instant
-import java.time.ZoneOffset
-import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -26,6 +22,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
+import java.time.temporal.ChronoUnit
 
 /** The real Room transaction and durable ID mapping, in a disposable database. No sender runs. */
 class RunningEntryQueueTest {
@@ -119,7 +119,9 @@ class RunningEntryQueueTest {
         runBlocking {
             val id = queue.start(WORKSPACE, EntryFields("Running"))
             val before = database.changes().changesFor(id)
-            assertFalse(queue.updateRunning(identity(id).copy(workspaceId = 999), EntryFields("Wrong workspace"), START))
+            assertFalse(
+                queue.updateRunning(identity(id).copy(workspaceId = 999), EntryFields("Wrong workspace"), START),
+            )
             assertEquals(before, database.changes().changesFor(id))
         }
     }
@@ -139,9 +141,15 @@ class RunningEntryQueueTest {
     @Test
     fun shortStopAndItsUndoCannotReviveTheRunningEditor() {
         runBlocking {
-            queue = ChangeQueue(database, Dispatchers.IO, onQueued = {}, clock = clock, spans = object : ServerSpans {
-                override fun capturedStop(start: Instant, at: Instant): SnappedSpan? = null
-            })
+            queue = ChangeQueue(
+                database,
+                Dispatchers.IO,
+                onQueued = {},
+                clock = clock,
+                spans = object : ServerSpans {
+                    override fun capturedStop(start: Instant, at: Instant): SnappedSpan? = null
+                },
+            )
             val id = queue.start(WORKSPACE, EntryFields("Short"))
             assertTrue(queue.stop(id))
             assertFalse(queue.updateRunning(identity(id), EntryFields("Stale"), START))
@@ -165,12 +173,30 @@ class RunningEntryQueueTest {
                 paused = false, seconds = 600, workspaceId = WORKSPACE, description = "Pause chain", projectId = null,
                 taskId = null, tagIds = emptyList(), tags = emptyList(), billable = false, cloneEntryId = CLONE,
             )
-            val clone = ServerTimeEntry(id = CLONE, workspaceId = WORKSPACE, description = "Pause chain", start = resumedAt.toString())
-            val held = HeldTimerState(TimerState(4, resumedAt, clone, pause, pomodoro = null, discardedPomodoro = null), receivedAt = resumedAt)
-            fun controls() = serverTimerControls(database.changes().latestRunning(), held, timerApi = true) as TimerControls.Running
+            val clone = ServerTimeEntry(
+                id = CLONE,
+                workspaceId = WORKSPACE,
+                description = "Pause chain",
+                start = resumedAt.toString(),
+            )
+            val held = HeldTimerState(
+                TimerState(4, resumedAt, clone, pause, pomodoro = null, discardedPomodoro = null),
+                receivedAt = resumedAt,
+            )
+            fun controls() = serverTimerControls(
+                database.changes().latestRunning(),
+                held,
+                timerApi = true,
+            ) as TimerControls.Running
             val before = controls()
             val corrected = resumedAt.minusSeconds(61)
-            assertTrue(queue.updateRunning(RunningEntryIdentity(CLONE, WORKSPACE, resumedAt), EntryFields("Pause chain"), corrected))
+            assertTrue(
+                queue.updateRunning(
+                    RunningEntryIdentity(CLONE, WORKSPACE, resumedAt),
+                    EntryFields("Pause chain"),
+                    corrected,
+                ),
+            )
 
             val after = controls()
             assertEquals("the server's stored seconds stay", 600L, after.accumulatedSeconds)
@@ -204,7 +230,11 @@ class RunningEntryQueueTest {
             assertEquals("Edited on the phone", database.changes().entry(501)!!.description)
 
             cache.checkedRunning(cache.runningCheckStart(), server = stale)
-            assertEquals("a read begun after the send takes the server's values", "Running", database.changes().entry(501)!!.description)
+            assertEquals(
+                "a read begun after the send takes the server's values",
+                "Running",
+                database.changes().entry(501)!!.description,
+            )
         }
     }
 

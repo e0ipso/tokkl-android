@@ -16,12 +16,6 @@ import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.CurrentEntryCache
 import com.github.e0ipso.tokkl.cache.RunningCheckStart
 import com.github.e0ipso.tokkl.cache.RunningCheckWrites
-import java.io.ByteArrayInputStream
-import java.io.IOException
-import java.io.InputStream
-import java.net.SocketTimeoutException
-import java.time.Instant
-import java.util.concurrent.TimeUnit
 import kotlinx.serialization.json.JsonObject
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -32,6 +26,12 @@ import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
+import java.io.ByteArrayInputStream
+import java.io.IOException
+import java.io.InputStream
+import java.net.SocketTimeoutException
+import java.time.Instant
+import java.util.concurrent.TimeUnit
 
 /**
  * The timer event stream as Tokkl 1.10.0 sends it: the hand-written framing however reads cut it,
@@ -67,7 +67,9 @@ class TimerEventStreamTest {
     @Test
     fun readsCutAnywhereGiveTheSameEventsAsOneRead() {
         // The second state's description has two- and three-byte UTF-8 characters to cut inside.
-        val transcript = timerEvent(state(1)) + KEEP_ALIVE + ": a proxy's comment\n\n" + timerEvent(state(2, running = entry(40, "Café ☕ notes")))
+        val transcript = timerEvent(
+            state(1),
+        ) + KEEP_ALIVE + ": a proxy's comment\n\n" + timerEvent(state(2, running = entry(40, "Café ☕ notes")))
         val bytes = transcript.toByteArray(Charsets.UTF_8)
         val whole = EventStreamParser().feed(bytes, bytes.size)
 
@@ -82,7 +84,10 @@ class TimerEventStreamTest {
         )
         for (cut in 1 until bytes.size) {
             val parser = EventStreamParser()
-            val items = parser.feed(bytes.copyOfRange(0, cut), cut) + parser.feed(bytes.copyOfRange(cut, bytes.size), bytes.size - cut)
+            val items = parser.feed(
+                bytes.copyOfRange(0, cut),
+                cut,
+            ) + parser.feed(bytes.copyOfRange(cut, bytes.size), bytes.size - cut)
             assertEquals("cut at byte $cut", whole, items)
         }
         val parser = EventStreamParser()
@@ -116,7 +121,11 @@ class TimerEventStreamTest {
 
     @Test
     fun timerEventsReachTheHolderAndEveryEventOrCommentCountsAsAlive() {
-        val body = timerEvent(state(3)) + KEEP_ALIVE + ": keep-alive\n\n" + "event: something-new\ndata: {}\n\n" + timerEvent(state(4, running = entry(40, "Focus")))
+        val body = timerEvent(
+            state(3),
+        ) + KEEP_ALIVE + ": keep-alive\n\n" + "event: something-new\ndata: {}\n\n" + timerEvent(
+            state(4, running = entry(40, "Focus")),
+        )
 
         val end = readTimerEvents(chunks(body, 7), holder, link.link, holder.begin())
 
@@ -131,7 +140,12 @@ class TimerEventStreamTest {
         holder.accept(holder.begin(), state(5))
         val held = holder.state.value
 
-        val malformed = readTimerEvents(chunks("event: timer\ndata: {\"revision\":\"six\"}\n\n" + timerEvent(state(7)), 64), holder, link.link, holder.begin())
+        val malformed = readTimerEvents(
+            chunks("event: timer\ndata: {\"revision\":\"six\"}\n\n" + timerEvent(state(7)), 64),
+            holder,
+            link.link,
+            holder.begin(),
+        )
         assertTrue(malformed.toString(), malformed is StreamEnd.Failed && malformed.error is ApiError.InvalidResponse)
         assertEquals("the read stopped at the bad state", held, holder.state.value)
 
@@ -148,7 +162,11 @@ class TimerEventStreamTest {
 
             override fun read(): Int = throw UnsupportedOperationException()
 
-            override fun read(b: ByteArray, off: Int, len: Int): Int = first.read(b, off, len).takeIf { it != -1 } ?: throw IOException("Connection reset")
+            override fun read(b: ByteArray, off: Int, len: Int): Int = first.read(
+                b,
+                off,
+                len,
+            ).takeIf { it != -1 } ?: throw IOException("Connection reset")
         }
 
         try {
@@ -163,14 +181,25 @@ class TimerEventStreamTest {
     @Test
     fun aCancelledLinkTakesNoFurtherStateAndARetiredAccountTakesNone() {
         link.link.cancel()
-        assertEquals(StreamEnd.Ended, readTimerEvents(chunks(timerEvent(state(1)), 8), holder, link.link, holder.begin()))
+        assertEquals(
+            StreamEnd.Ended,
+            readTimerEvents(chunks(timerEvent(state(1)), 8), holder, link.link, holder.begin()),
+        )
         assertNull("a cancelled stream publishes nothing", holder.state.value)
 
         // Sign-out or a new sign-in retired this account while its stream was still reading.
         val read = holder.begin()
         holder.retire()
         val live = RecordingLink()
-        assertEquals(StreamEnd.Ended, readTimerEvents(chunks(timerEvent(state(2, running = entry(40, "Other account"))), 8), holder, live.link, read))
+        assertEquals(
+            StreamEnd.Ended,
+            readTimerEvents(
+                chunks(timerEvent(state(2, running = entry(40, "Other account"))), 8),
+                holder,
+                live.link,
+                read,
+            ),
+        )
         assertNull(holder.state.value)
         assertEquals("the cache keeps nothing of it", emptyList<CachedTimeEntry?>(), cache.written)
     }
@@ -193,7 +222,10 @@ class TimerEventStreamTest {
         assertEquals("GET" to "/tokkl/api/app/timer/events", request.method to request.url.encodedPath)
         assertEquals(credentials.authorizationHeader, request.headers["Authorization"])
         val plain = api.get(url.app("timer"), JsonObject.serializer())
-        assertTrue(plain.toString(), plain is ApiResult.Failure && (plain.error as? ApiError.Network)?.cause is SocketTimeoutException)
+        assertTrue(
+            plain.toString(),
+            plain is ApiResult.Failure && (plain.error as? ApiError.Network)?.cause is SocketTimeoutException,
+        )
     }
 
     @Test
@@ -208,7 +240,10 @@ class TimerEventStreamTest {
         assertEquals("a proxy's 401", StreamEnd.Refused, holdTimerEvents(api, holder, link.link))
         assertEquals(StreamEnd.Failed(ApiError.UnexpectedStatus(502)), holdTimerEvents(api, holder, link.link))
         val notAStream = holdTimerEvents(api, holder, link.link)
-        assertTrue(notAStream.toString(), notAStream is StreamEnd.Failed && notAStream.error is ApiError.InvalidResponse)
+        assertTrue(
+            notAStream.toString(),
+            notAStream is StreamEnd.Failed && notAStream.error is ApiError.InvalidResponse,
+        )
         assertNull("no state came from any of them", holder.state.value)
         assertEquals(0, link.connected)
 

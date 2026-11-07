@@ -4,7 +4,6 @@ import com.github.e0ipso.tokkl.api.PhaseKind
 import com.github.e0ipso.tokkl.api.PhaseTransition
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
-import java.time.Duration
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
@@ -16,6 +15,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.Duration
 
 /**
  * The ring of a held phase: it starts at the phase's planned end with the sound of the server's
@@ -50,7 +50,12 @@ class PomodoroRingingTest {
         )
         for ((transition, sound) in cases) {
             // The sound follows the transition the server sent, whatever the phase's kind.
-            val f = AlarmFixture(heldState(revision = 3, pomodoro = work().copy(transition = transition, upcomingPhase = PhaseKind.LONG_REST)))
+            val f = AlarmFixture(
+                heldState(
+                    revision = 3,
+                    pomodoro = work().copy(transition = transition, upcomingPhase = PhaseKind.LONG_REST),
+                ),
+            )
             f.ringNow()
             assertEquals(sound, f.output.sound)
             assertTrue(f.output.audio)
@@ -243,8 +248,12 @@ class PomodoroRingingTest {
             override fun play(sound: PomodoroSound) = Unit
             override fun vibrate() = Unit
             override fun stopAudio(): Unit = throw IllegalStateException("audio device failed")
-            override fun stopVibration() { cancelled = true }
-            override fun removeNotification() { removed = true }
+            override fun stopVibration() {
+                cancelled = true
+            }
+            override fun removeNotification() {
+                removed = true
+            }
         }
         val controller = PomodoroRingController(output)
         val result = runCatching { controller.stop() }

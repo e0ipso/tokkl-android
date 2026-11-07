@@ -8,8 +8,6 @@ import com.github.e0ipso.tokkl.api.ConfiguredTrust
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
-import java.time.LocalDate
-import java.time.ZoneId
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.int
@@ -23,6 +21,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.time.LocalDate
+import java.time.ZoneId
 
 /**
  * The Reports API v3 requests behind the summary and the decoding of Tokkl's detailed rows,
@@ -97,7 +97,11 @@ class ReportsServerTest {
             "time_entries":[{"id":1,"seconds":600,"start":"2026-10-12T09:00:00+00:00"},{"id":2,"seconds":300,"start":"2026-10-13T09:00:00+00:00"}]}"""
         server.enqueue(json("[$grouped]"))
 
-        val answer = reports.entries(ReportWorkspace(7, 0, 0), ReportRange(LocalDate.parse("2026-10-12"), LocalDate.parse("2026-10-18")), ZoneId.of("UTC"))
+        val answer = reports.entries(
+            ReportWorkspace(7, 0, 0),
+            ReportRange(LocalDate.parse("2026-10-12"), LocalDate.parse("2026-10-18")),
+            ZoneId.of("UTC"),
+        )
 
         val entries = (answer as ApiResult.Success).value
         assertEquals(listOf(600L, 300L), entries.map { it.seconds })
@@ -127,7 +131,9 @@ class ReportsServerTest {
 
     @Test
     fun aStartThatIsNotADateAndTimeIsAnInvalidResponse() {
-        server.enqueue(json("""[{"billable":false,"currency":"EUR","time_entries":[{"seconds":1,"start":"yesterday"}]}]"""))
+        server.enqueue(
+            json("""[{"billable":false,"currency":"EUR","time_entries":[{"seconds":1,"start":"yesterday"}]}]"""),
+        )
 
         val answer = reports.entries(ReportWorkspace(7, 0, 0), oneDay(), ZoneId.of("UTC"))
 

@@ -56,6 +56,7 @@ import org.junit.rules.RuleChain
  */
 class TimerSyncServiceLifecycleTest {
     private val compose = createEmptyComposeRule()
+
     @get:Rule val rules: RuleChain = RuleChain.outerRule(SessionRule()).around(compose)
     private val fixture = TimerAcceptanceFixture()
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
@@ -155,11 +156,16 @@ class TimerSyncServiceLifecycleTest {
                 .takeIf { it }
         }
         await("the phase alarm goes after $after", AT_ONCE_MS) { (alarms.nextAlarmClock == null).takeIf { it } }
-        assertEquals("boot and updates no longer start the app", PackageManager.COMPONENT_ENABLED_STATE_DISABLED, rearmReceiverState())
+        assertEquals(
+            "boot and updates no longer start the app",
+            PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+            rearmReceiverState(),
+        )
     }
 
-    private fun rearmReceiverState(): Int =
-        context.packageManager.getComponentEnabledSetting(ComponentName(context, PomodoroAlarmRearmReceiver::class.java))
+    private fun rearmReceiverState(): Int = context.packageManager.getComponentEnabledSetting(
+        ComponentName(context, PomodoroAlarmRearmReceiver::class.java),
+    )
 
     private fun <T : Any> await(what: String, timeoutMs: Long, value: () -> T?): T {
         val deadline = SystemClock.elapsedRealtime() + timeoutMs
@@ -176,10 +182,18 @@ class TimerSyncServiceLifecycleTest {
             put("workspace_id", workspace)
             put("created_with", "tokkl-android tests, another device")
             put("description", "Before the session")
-            put("start", java.time.Instant.now().minusSeconds(60).truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString())
+            put(
+                "start",
+                java.time.Instant.now().minusSeconds(60).truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString(),
+            )
             put("duration", -1)
         }
-        val created = other.send("POST", other.server.api("workspaces", "$workspace", "time_entries"), body, JsonObject.serializer())
+        val created = other.send(
+            "POST",
+            other.server.api("workspaces", "$workspace", "time_entries"),
+            body,
+            JsonObject.serializer(),
+        )
             .orFail("POST a running entry")
         return (created.getValue("id") as JsonPrimitive).content.toLong()
     }
@@ -198,7 +212,12 @@ class TimerSyncServiceLifecycleTest {
     }
 
     private fun postTimer(vararg path: String, revision: Long? = null, body: JsonObject? = null): TimerState =
-        other.send("POST", other.server.app(*path), body ?: buildJsonObject { if (revision != null) put("revision", revision) }, TimerState.serializer())
+        other.send(
+            "POST",
+            other.server.app(*path),
+            body ?: buildJsonObject { if (revision != null) put("revision", revision) },
+            TimerState.serializer(),
+        )
             .orFail("POST /api/app/${path.joinToString("/")}")
 
     private companion object {

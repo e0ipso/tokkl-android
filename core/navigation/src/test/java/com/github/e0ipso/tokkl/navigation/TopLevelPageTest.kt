@@ -16,7 +16,13 @@ class TopLevelPageTest {
     @Test
     fun moreKeepsReportsAndTemplatesBeforeTheOtherPages() {
         assertEquals(
-            listOf(TopLevelPage.REPORTS, TopLevelPage.TEMPLATES, TopLevelPage.CLIENTS, TopLevelPage.TAGS, TopLevelPage.TRASH),
+            listOf(
+                TopLevelPage.REPORTS,
+                TopLevelPage.TEMPLATES,
+                TopLevelPage.CLIENTS,
+                TopLevelPage.TAGS,
+                TopLevelPage.TRASH,
+            ),
             TopLevelPage.entries.filter { it.inMore },
         )
     }

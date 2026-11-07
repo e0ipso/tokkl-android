@@ -50,7 +50,8 @@ class MainActivity : ComponentActivity() {
         (pendingWidget ?: intent?.takeWidgetPage())?.let { requests.request(NavigationRequest.Widget(it)) }
         lifecycle.addObserver(foreground)
         // Reading the theme setting loads it, so the first frame already has the chosen theme's icons.
-        val systemIsDark = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+        val systemIsDark =
+            (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
         showSystemBarIconsFor(darkTheme = themeSettings.state.value.mode.isDark(systemIsDark))
         setContent {
             val settings by themeSettings.state.collectAsState()
@@ -73,7 +74,9 @@ class MainActivity : ComponentActivity() {
                     PENDING_POMODORO,
                     pomodoroSessionOpenIntent(this, request.tap.account, request.tap.phase),
                 )
+
                 is NavigationRequest.Widget -> outState.putString(PENDING_WIDGET_PAGE, request.page.name)
+
                 NavigationRequest.ReminderTimer -> Unit
             }
         }

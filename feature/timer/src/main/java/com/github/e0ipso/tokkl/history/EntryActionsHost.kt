@@ -12,10 +12,10 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.catalog.ConfirmDialog
 import com.github.e0ipso.tokkl.catalog.problemText
 import com.github.e0ipso.tokkl.favorites.MAX_FAVORITES
+import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.session.AccountSettings
 
 /**
@@ -77,14 +77,22 @@ internal fun EntryActionsHost(
     }
     val split = state.split
     if (split != null && settings != null) {
-        SplitEntryDialog(split, settings, onTextChange = onSplitTextChange, onConfirm = onConfirmSplit, onCancel = onCancelSplit)
+        SplitEntryDialog(
+            split,
+            settings,
+            onTextChange = onSplitTextChange,
+            onConfirm = onConfirmSplit,
+            onCancel = onCancelSplit,
+        )
     }
 }
 
 /** The entry whose delete Undo takes back, or null when the notice offers no Undo. */
 private fun EntryNotice.undoes(): Long? = when (this) {
     is EntryNotice.Deleted -> entryId.takeIf { undo }
+
     is EntryNotice.UndoNeedsServer -> entryId
+
     is EntryNotice.UndoFailed, is EntryNotice.Duplicated, is EntryNotice.Split,
     is EntryNotice.Pinned, is EntryNotice.PinFull, is EntryNotice.PinNeedsServer, is EntryNotice.PinFailed,
     -> null
@@ -93,13 +101,21 @@ private fun EntryNotice.undoes(): Long? = when (this) {
 @Composable
 private fun noticeText(notice: EntryNotice): String = when (notice) {
     is EntryNotice.Deleted -> stringResource(R.string.history_deleted)
+
     is EntryNotice.UndoNeedsServer -> stringResource(R.string.history_undo_needs_server)
+
     is EntryNotice.UndoFailed -> notice.status?.let { stringResource(R.string.history_undo_failed_status, it) }
         ?: stringResource(R.string.history_undo_failed)
+
     is EntryNotice.Duplicated -> stringResource(R.string.history_duplicated)
+
     is EntryNotice.Split -> stringResource(R.string.history_split_done)
+
     is EntryNotice.Pinned -> stringResource(R.string.history_pinned)
+
     is EntryNotice.PinFull -> pluralStringResource(R.plurals.favorites_full, MAX_FAVORITES, MAX_FAVORITES)
+
     is EntryNotice.PinNeedsServer -> stringResource(R.string.history_pin_needs_server)
+
     is EntryNotice.PinFailed -> problemText(notice.problem)
 }

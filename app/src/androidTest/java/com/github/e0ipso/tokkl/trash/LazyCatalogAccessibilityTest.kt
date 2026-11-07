@@ -14,11 +14,10 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.core.view.WindowCompat
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.feature.trash.R
-import com.github.e0ipso.tokkl.feature.tags.R as TagsR
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
 import com.github.e0ipso.tokkl.api.TrashEntry
+import com.github.e0ipso.tokkl.feature.trash.R
 import com.github.e0ipso.tokkl.tags.Tag
 import com.github.e0ipso.tokkl.tags.TagsActions
 import com.github.e0ipso.tokkl.tags.TagsContent
@@ -31,6 +30,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import com.github.e0ipso.tokkl.feature.tags.R as TagsR
 
 /** Stable row identity and reading order deep in both lists at Android's largest font scale. */
 class LazyCatalogAccessibilityTest {
@@ -42,18 +42,24 @@ class LazyCatalogAccessibilityTest {
     private val compose = createAndroidComposeRule<ComponentActivity>()
 
     @get:Rule
-    val rules: RuleChain = RuleChain.outerRule(SystemFontScale(SystemFontScale.LARGEST, largestDisplaySize = true)).around(compose)
+    val rules: RuleChain = RuleChain.outerRule(
+        SystemFontScale(SystemFontScale.LARGEST, largestDisplaySize = true),
+    ).around(compose)
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
     @Test
     fun trashKeepsItsVisibleEntryAndReadingOrderAfterRemovingAnEarlierEntry() {
-        val entries = mutableStateOf(List(1000) { index ->
-            TrashEntry(index.toLong(), "Trash $index", "2026-10-19T08:00:00Z", "2026-10-19T08:01:00Z", 60)
-        })
+        val entries = mutableStateOf(
+            List(1000) { index ->
+                TrashEntry(index.toLong(), "Trash $index", "2026-10-19T08:00:00Z", "2026-10-19T08:01:00Z", 60)
+            },
+        )
         compose.activityRule.scenario.onActivity { WindowCompat.enableEdgeToEdge(it.window) }
         compose.setContent {
-            TokklTheme(darkTheme = false) { TrashContent(TrashState(entries = entries.value), false, null, TrashActions()) }
+            TokklTheme(
+                darkTheme = false,
+            ) { TrashContent(TrashState(entries = entries.value), false, null, TrashActions()) }
         }
         compose.onNode(hasScrollAction()).performScrollToIndex(242)
         val row = compose.onNode(hasText("Trash 240", substring = true))
@@ -73,7 +79,9 @@ class LazyCatalogAccessibilityTest {
         val tags = mutableStateOf(List(500) { index -> Tag(index.toLong(), 7, "Tag $index") })
         compose.activityRule.scenario.onActivity { WindowCompat.enableEdgeToEdge(it.window) }
         compose.setContent {
-            TokklTheme(darkTheme = false) { TagsContent(TagsState(data = TagsData(tags.value)), false, emptyList(), TagsActions()) }
+            TokklTheme(
+                darkTheme = false,
+            ) { TagsContent(TagsState(data = TagsData(tags.value)), false, emptyList(), TagsActions()) }
         }
         compose.onNode(hasScrollAction()).performScrollToIndex(242)
         val row = compose.onNode(hasText("Tag 240"))

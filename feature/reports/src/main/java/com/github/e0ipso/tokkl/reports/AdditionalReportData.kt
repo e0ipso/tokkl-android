@@ -32,7 +32,12 @@ internal fun AdditionalReportData(report: SummaryReport) {
         for (point in report.series) {
             ExtraSection(stringResource(R.string.reports_extra_bucket, point.start.toString()), point.additionalData)
         }
-        if (report.additionalDataTruncated) Text(stringResource(R.string.reports_extra_truncated), style = MaterialTheme.typography.bodyMedium)
+        if (report.additionalDataTruncated) {
+            Text(
+                stringResource(R.string.reports_extra_truncated),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
     }
 }
 

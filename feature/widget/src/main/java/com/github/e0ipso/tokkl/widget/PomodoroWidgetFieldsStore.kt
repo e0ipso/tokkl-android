@@ -7,8 +7,8 @@ import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.SignOutOrder
 import com.github.e0ipso.tokkl.timerstate.HeldFieldsMemory
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
-import java.io.IOException
 import kotlinx.serialization.Serializable
+import java.io.IOException
 
 /** The last accepted session's fields, scoped to the holder's persisted account name. */
 @Serializable
@@ -28,20 +28,24 @@ internal fun rememberedPomodoroFields(account: String, held: HeldTimerState): Re
     val session = held.state.pomodoro ?: return null
     val entry = held.state.runningEntry?.takeIf { it.id == session.entryId } ?: return null
     return RememberedPomodoroFields(
-        account, entry.workspaceId, entry.description.orEmpty(), entry.projectId, entry.taskId,
-        entry.tags.orEmpty(), entry.billable == true,
+        account,
+        entry.workspaceId,
+        entry.description.orEmpty(),
+        entry.projectId,
+        entry.taskId,
+        entry.tags.orEmpty(),
+        entry.billable == true,
     )
 }
 
 internal fun encodeRememberedPomodoroFields(fields: RememberedPomodoroFields): String =
     ApiJson.encodeToString(RememberedPomodoroFields.serializer(), fields)
 
-internal fun decodeRememberedPomodoroFields(text: String, account: String): RememberedPomodoroFields? =
-    try {
-        ApiJson.decodeFromString(RememberedPomodoroFields.serializer(), text).takeIf { it.account == account }
-    } catch (e: IllegalArgumentException) {
-        null
-    }
+internal fun decodeRememberedPomodoroFields(text: String, account: String): RememberedPomodoroFields? = try {
+    ApiJson.decodeFromString(RememberedPomodoroFields.serializer(), text).takeIf { it.account == account }
+} catch (e: IllegalArgumentException) {
+    null
+}
 
 /**
  * Last fields for idle Start, including starts learned from another device. The holder calls
@@ -52,7 +56,9 @@ internal fun decodeRememberedPomodoroFields(text: String, account: String): Reme
  * Calls read the disk. Like the held timer state, these private preferences are excluded from
  * backup by the app's existing rules. No token or other credential is stored here.
  */
-class PomodoroWidgetFieldsStore(context: Context) : HeldFieldsMemory, AccountDataOwner {
+class PomodoroWidgetFieldsStore(context: Context) :
+    HeldFieldsMemory,
+    AccountDataOwner {
 
     override val signOutOrder = SignOutOrder.POMODORO_WIDGET_FIELDS
 

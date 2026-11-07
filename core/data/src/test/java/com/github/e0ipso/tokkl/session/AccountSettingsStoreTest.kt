@@ -3,12 +3,12 @@ package com.github.e0ipso.tokkl.session
 import android.content.ContextWrapper
 import android.content.SharedPreferences
 import com.github.e0ipso.tokkl.time.DurationFormat
-import java.time.DayOfWeek
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.DayOfWeek
 
 /** The store over an in-memory preferences file, since the JVM tests have no Android runtime. */
 class AccountSettingsStoreTest {
@@ -77,7 +77,12 @@ class AccountSettingsStoreTest {
     @Test
     fun theClockFormatReadsBackAsSaved() {
         for (twelveHour in listOf(true, false)) {
-            val settings = AccountSettings("UTC", DayOfWeek.MONDAY, timeResolutionMinutes = null, twelveHour = twelveHour)
+            val settings = AccountSettings(
+                "UTC",
+                DayOfWeek.MONDAY,
+                timeResolutionMinutes = null,
+                twelveHour = twelveHour,
+            )
 
             store.save(settings)
 
@@ -88,14 +93,22 @@ class AccountSettingsStoreTest {
     @Test
     fun theGroupingReadsBackAsSavedAndSettingsWithoutItGroup() {
         for (collapse in listOf(false, true)) {
-            val settings = AccountSettings("UTC", DayOfWeek.MONDAY, timeResolutionMinutes = null, collapseSimilar = collapse)
+            val settings = AccountSettings(
+                "UTC",
+                DayOfWeek.MONDAY,
+                timeResolutionMinutes = null,
+                collapseSimilar = collapse,
+            )
 
             store.save(settings)
 
             assertEquals(settings, store.load())
         }
         file.edit().remove("collapse_similar").commit()
-        assertTrue("settings stored before the app read the preference group, as the web app does", store.load()!!.collapseSimilar)
+        assertTrue(
+            "settings stored before the app read the preference group, as the web app does",
+            store.load()!!.collapseSimilar,
+        )
     }
 
     @Test

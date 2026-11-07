@@ -49,23 +49,38 @@ class WidgetLargeTextTest {
         }
         SystemDisplaySize().apply(
             body,
-            Description.createTestDescription(javaClass, "theRunningClockControlsAndFavoriteTextFitAtLargestFontAndDisplaySize"),
+            Description.createTestDescription(
+                javaClass,
+                "theRunningClockControlsAndFavoriteTextFitAtLargestFontAndDisplaySize",
+            ),
         ).evaluate()
     }
 
     private fun assertWidgetFits(combinedSizes: Boolean) {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("the widget uses the largest system font", SystemFontScale.LARGEST, context.resources.configuration.fontScale)
+        assertEquals(
+            "the widget uses the largest system font",
+            SystemFontScale.LARGEST,
+            context.resources.configuration.fontScale,
+        )
         val app = context.applicationContext as TokklApplication
         val account = TestAccounts.create(timezone = "Europe/Madrid")
         try {
             val api = account.client
             val workspace = account.workspaceId
-            val project = api.send("POST", api.server.api("workspaces", "$workspace", "projects"),
-                buildJsonObject { put("name", "Demo") }, JsonObject.serializer()).orFail("create project")["id"]!!.jsonPrimitive.long
-            api.sendNoContent("POST", api.server.api("me", "preferences"), Json.parseToJsonElement(
-                """{"favorites":[{"description":"Read","project_id":$project,"task_id":null,"tags":[],"billable":false}]}""",
-            )).orFail("save favorite")
+            val project = api.send(
+                "POST",
+                api.server.api("workspaces", "$workspace", "projects"),
+                buildJsonObject { put("name", "Demo") },
+                JsonObject.serializer(),
+            ).orFail("create project")["id"]!!.jsonPrimitive.long
+            api.sendNoContent(
+                "POST",
+                api.server.api("me", "preferences"),
+                Json.parseToJsonElement(
+                    """{"favorites":[{"description":"Read","project_id":$project,"task_id":null,"tags":[],"billable":false}]}""",
+                ),
+            ).orFail("save favorite")
             Session(context).save(TokklTestServer.url, account.apiToken)
             runBlocking { app.accountRefresh.refresh().join() }
             val offline = checkNotNull(ServerUrl.parse("http://127.0.0.1:9"))
@@ -79,7 +94,10 @@ class WidgetLargeTextTest {
                     assertTrue("the minimum widget width fits this display", width >= 240)
                     widget.resize(width, 320)
                 }
-                if (!combinedSizes) { widget.resize(375, 338); widget.awaitText("Read") }
+                if (!combinedSizes) {
+                    widget.resize(375, 338)
+                    widget.awaitText("Read")
+                }
                 runBlocking { app.changes.start(workspace, EntryFields("Work", projectId = project)) }
                 widget.awaitText("Work")
                 widget.awaitDescription("Stop the timer")

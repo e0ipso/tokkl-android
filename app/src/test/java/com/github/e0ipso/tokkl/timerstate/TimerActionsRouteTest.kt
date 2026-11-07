@@ -29,7 +29,11 @@ class TimerActionsRouteTest {
         const val PACKAGE = "com/github/e0ipso/tokkl"
 
         /** The classes of the actions and their results. */
-        val OWN = listOf("$PACKAGE/timerstate/TimerActions", "$PACKAGE/timerstate/TimerActionResult", "$PACKAGE/timerstate/SessionLengths")
+        val OWN = listOf(
+            "$PACKAGE/timerstate/TimerActions",
+            "$PACKAGE/timerstate/TimerActionResult",
+            "$PACKAGE/timerstate/SessionLengths",
+        )
 
         /** The change queue, its store and its sender. */
         val FORBIDDEN = listOf(

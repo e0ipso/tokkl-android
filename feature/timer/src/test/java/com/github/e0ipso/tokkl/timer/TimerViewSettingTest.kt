@@ -52,7 +52,10 @@ class TimerViewSettingTest {
     @Test
     fun aColdStartOpensTheStoredViewBeforeAnyRefresh() {
         assertEquals(TimerView.LIST, setting(initial = null).view.value)
-        assertEquals(TimerView.CALENDAR, setting(initial = StoredTimerView(TimerView.CALENDAR, unsent = false)).view.value)
+        assertEquals(
+            TimerView.CALENDAR,
+            setting(initial = StoredTimerView(TimerView.CALENDAR, unsent = false)).view.value,
+        )
         assertEquals(0, server.requestCount)
     }
 

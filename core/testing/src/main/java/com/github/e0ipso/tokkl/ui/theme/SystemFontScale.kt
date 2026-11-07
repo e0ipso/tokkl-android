@@ -12,10 +12,7 @@ import org.junit.runners.model.Statement
  * setting afterwards. Audit tests can also request AOSP Settings' largest display size.
  * Both settings are restored on partial setup failure, as well as test failure.
  */
-class SystemFontScale(
-    private val scale: Float,
-    private val largestDisplaySize: Boolean = false,
-) : TestRule {
+class SystemFontScale(private val scale: Float, private val largestDisplaySize: Boolean = false) : TestRule {
     override fun apply(base: Statement, description: Description): Statement {
         val font = object : Statement() {
             override fun evaluate() {
@@ -34,9 +31,15 @@ class SystemFontScale(
                         Log.i("TokklAccessibility", "font scale=$scale; largest display=$largestDisplaySize")
                     },
                     restore = {
-                        awaitDeviceConfiguration("original font scale $previousScale", { it.fontScale == previousScale }) {
-                            if (previous == NOT_SET) DeviceShell.run("settings delete system font_scale")
-                            else DeviceShell.run("settings put system font_scale $previous")
+                        awaitDeviceConfiguration(
+                            "original font scale $previousScale",
+                            { it.fontScale == previousScale },
+                        ) {
+                            if (previous == NOT_SET) {
+                                DeviceShell.run("settings delete system font_scale")
+                            } else {
+                                DeviceShell.run("settings put system font_scale $previous")
+                            }
                         }
                         // Unset means the default. Android 12 writes the default back once the
                         // configuration changes, so an unset setting may read 1.0 after the delete.

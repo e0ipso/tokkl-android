@@ -105,7 +105,10 @@ internal fun Block(
                         topLeft = Offset(stroke / 2, stroke / 2),
                         size = Size(size.width - stroke, size.height - stroke),
                         cornerRadius = CornerRadius(SmallCorner.toPx()),
-                        style = Stroke(width = stroke, pathEffect = PathEffect.dashPathEffect(floatArrayOf(dash, dash))),
+                        style = Stroke(
+                            width = stroke,
+                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(dash, dash)),
+                        ),
                     )
                 }
             }
@@ -139,7 +142,15 @@ internal fun entryColours(entry: CalendarEntry): EntryColours {
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
     return EntryColours(
         tint = mix(projectColour(entry.projectColor) ?: muted, MaterialTheme.colorScheme.surface, BLOCK_TINT),
-        bar = if (entry.running) TokklTheme.extraColors.running else projectMark(entry.projectColor, TokklTheme.extraColors.projectMix, muted),
+        bar = if (entry.running) {
+            TokklTheme.extraColors.running
+        } else {
+            projectMark(
+                entry.projectColor,
+                TokklTheme.extraColors.projectMix,
+                muted,
+            )
+        },
     )
 }
 
@@ -161,7 +172,11 @@ internal fun BlockText(entry: CalendarEntry, heading: String, duration: String, 
             }
             Text(
                 text = buildAnnotatedString {
-                    if (entry.project != null) append(entry.project + resources.getString(R.string.calendar_block_separator))
+                    if (entry.project != null) {
+                        append(
+                            entry.project + resources.getString(R.string.calendar_block_separator),
+                        )
+                    }
                     withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = scheme.onSurface)) { append(duration) }
                 },
                 style = small.copy(fontFeatureSettings = "tnum"),
@@ -192,7 +207,10 @@ internal fun BlockText(entry: CalendarEntry, heading: String, duration: String, 
 @Composable
 internal fun MarkedLine(mark: Boolean, style: TextStyle, line: @Composable () -> Unit) {
     if (mark) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space1)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space1),
+        ) {
             UnsentIcon(style)
             line()
         }
@@ -214,7 +232,10 @@ internal fun UnsentBlockText(text: @Composable (mark: Boolean) -> Unit) {
     Layout(
         content = {
             text(false)
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space1)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space1),
+            ) {
                 UnsentIcon(TokklTheme.smallCapsLabelTextStyle)
                 Text(
                     text = stringResource(R.string.history_unsent).uppercase(locale),
@@ -245,9 +266,21 @@ internal fun UnsentBlockText(text: @Composable (mark: Boolean) -> Unit) {
 }
 
 /** What TalkBack reads for a block: description, project and task, times, duration, and whether it runs or is unsent. */
-private fun spokenBlock(resources: Resources, entry: CalendarEntry, settings: AccountSettings, zone: ZoneId, now: Instant): String {
+private fun spokenBlock(
+    resources: Resources,
+    entry: CalendarEntry,
+    settings: AccountSettings,
+    zone: ZoneId,
+    now: Instant,
+): String {
     val start = settings.formatTime(entry.start, zone)
-    val times = entry.stop?.let { resources.getString(R.string.history_time_range_spoken, start, settings.formatTime(it, zone)) }
+    val times = entry.stop?.let {
+        resources.getString(
+            R.string.history_time_range_spoken,
+            start,
+            settings.formatTime(it, zone),
+        )
+    }
         ?: resources.getString(R.string.calendar_running_spoken, start)
     return listOfNotNull(
         entry.description.ifBlank { resources.getString(R.string.history_no_description) },

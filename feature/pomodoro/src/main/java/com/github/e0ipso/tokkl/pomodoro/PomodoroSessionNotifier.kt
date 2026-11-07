@@ -11,9 +11,9 @@ import android.content.pm.PackageManager
 import android.graphics.drawable.Icon
 import android.os.Build
 import androidx.annotation.VisibleForTesting
+import com.github.e0ipso.tokkl.api.PhaseKind
 import com.github.e0ipso.tokkl.feature.pomodoro.R
 import com.github.e0ipso.tokkl.core.ui.R as UiR
-import com.github.e0ipso.tokkl.api.PhaseKind
 
 /** A native countdown crosses zero into negative elapsed overtime without app ticks. */
 class PomodoroSessionNotifier(private val context: Context) {
@@ -23,13 +23,22 @@ class PomodoroSessionNotifier(private val context: Context) {
     fun post(content: PomodoroSessionNotificationContent, account: String): Boolean {
         if (Build.VERSION.SDK_INT >= 33 &&
             context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
-        ) return false
+        ) {
+            return false
+        }
         return try {
             manager.createNotificationChannel(
-                NotificationChannel(CHANNEL_ID, context.getString(R.string.pomodoro_session_channel), NotificationManager.IMPORTANCE_LOW)
+                NotificationChannel(
+                    CHANNEL_ID,
+                    context.getString(R.string.pomodoro_session_channel),
+                    NotificationManager.IMPORTANCE_LOW,
+                )
                     .apply { description = context.getString(R.string.pomodoro_session_channel_description) },
             )
-            if (!manager.areNotificationsEnabled() || manager.getNotificationChannel(CHANNEL_ID)?.importance == NotificationManager.IMPORTANCE_NONE) {
+            if (!manager.areNotificationsEnabled() || manager.getNotificationChannel(
+                    CHANNEL_ID,
+                )?.importance == NotificationManager.IMPORTANCE_NONE
+            ) {
                 false
             } else {
                 manager.notify(NOTIFICATION_ID, build(content, account))
@@ -41,19 +50,28 @@ class PomodoroSessionNotifier(private val context: Context) {
         }
     }
 
-    fun remove() { manager.cancel(NOTIFICATION_ID) }
+    fun remove() {
+        manager.cancel(NOTIFICATION_ID)
+    }
 
     @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
     fun build(content: PomodoroSessionNotificationContent, account: String): Notification {
         val label = phaseLabel(content.kind)
         val open = PendingIntent.getActivity(
-            context, 0, pomodoroSessionOpenIntent(context, account, content.phase),
+            context,
+            0,
+            pomodoroSessionOpenIntent(context, account, content.phase),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
         return Notification.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_nav_pomodoro)
             .setContentTitle(
-                context.getString(R.string.pomodoro_session_title, context.getString(label), content.number, content.longRestEvery),
+                context.getString(
+                    R.string.pomodoro_session_title,
+                    context.getString(label),
+                    content.number,
+                    content.longRestEvery,
+                ),
             )
             .setContentText(content.description.ifBlank { context.getString(R.string.pomodoro_session_no_description) })
             .setSubText(context.getString(R.string.pomodoro_up_next, context.getString(phaseLabel(content.upcoming))))
@@ -65,21 +83,44 @@ class PomodoroSessionNotifier(private val context: Context) {
             .setOnlyAlertOnce(true)
             .setCategory(Notification.CATEGORY_STOPWATCH)
             .setContentIntent(open)
-            .addAction(action(UiR.drawable.ic_play, R.string.pomodoro_session_next, PomodoroSessionActionReceiver.NEXT, content, account))
-            .addAction(action(UiR.drawable.ic_stop, R.string.pomodoro_session_end, PomodoroSessionActionReceiver.END, content, account))
+            .addAction(
+                action(
+                    UiR.drawable.ic_play,
+                    R.string.pomodoro_session_next,
+                    PomodoroSessionActionReceiver.NEXT,
+                    content,
+                    account,
+                ),
+            )
+            .addAction(
+                action(
+                    UiR.drawable.ic_stop,
+                    R.string.pomodoro_session_end,
+                    PomodoroSessionActionReceiver.END,
+                    content,
+                    account,
+                ),
+            )
             .build()
     }
 
-    private fun action(icon: Int, label: Int, action: String, content: PomodoroSessionNotificationContent, account: String) =
-        Notification.Action.Builder(
-            Icon.createWithResource(context, icon), context.getString(label),
-            PendingIntent.getBroadcast(
-                context, 0,
-                Intent(context, PomodoroSessionActionReceiver::class.java).setAction(action)
-                    .putNotificationIdentity(account, content.phase, content.revision),
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-            ),
-        ).build()
+    private fun action(
+        icon: Int,
+        label: Int,
+        action: String,
+        content: PomodoroSessionNotificationContent,
+        account: String,
+    ) = Notification.Action.Builder(
+        Icon.createWithResource(context, icon),
+        context.getString(label),
+        PendingIntent.getBroadcast(
+            context,
+            0,
+            Intent(context, PomodoroSessionActionReceiver::class.java).setAction(action)
+                .putNotificationIdentity(account, content.phase, content.revision),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        ),
+    ).build()
 
     private fun phaseLabel(kind: PhaseKind): Int = when (kind) {
         PhaseKind.WORK -> R.string.pomodoro_session_work

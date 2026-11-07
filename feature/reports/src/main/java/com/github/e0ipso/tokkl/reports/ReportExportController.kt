@@ -7,10 +7,6 @@ import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.capabilities.ReportCsvKind
 import com.github.e0ipso.tokkl.capabilities.csvEndpointAbsent
 import com.github.e0ipso.tokkl.session.ExportAccount
-import java.io.File
-import java.io.FileOutputStream
-import java.io.IOException
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -20,6 +16,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import kotlin.coroutines.CoroutineContext
 
 sealed interface ReportExportState {
     data object Idle : ReportExportState
@@ -65,10 +65,16 @@ class ReportExportController(
                     val api = client() ?: return@withContext ReportExportState.Failed(ApiError.AuthFailed)
                     val answer = FileOutputStream(staged.staging).use { output ->
                         val result = api.downloadCsv(
-                            api.server.app("report", "${request.kind.path}.csv"), request.body(),
-                            output, ReportExportFiles.MAX_BYTES, cancellation,
+                            api.server.app("report", "${request.kind.path}.csv"),
+                            request.body(),
+                            output,
+                            ReportExportFiles.MAX_BYTES,
+                            cancellation,
                         )
-                        if (result is ApiResult.Success) { output.flush(); output.fd.sync() }
+                        if (result is ApiResult.Success) {
+                            output.flush()
+                            output.fd.sync()
+                        }
                         result
                     }
                     when (answer) {
@@ -76,6 +82,7 @@ class ReportExportController(
                             if (answer.error.csvEndpointAbsent()) lease.current { csvMissing(request.kind) }
                             ReportExportState.Failed(answer.error)
                         }
+
                         is ApiResult.Success -> {
                             cancellation.check()
                             completed = lease.current { files.publish(staged, answer.value) }

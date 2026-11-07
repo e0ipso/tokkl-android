@@ -3,8 +3,6 @@ package com.github.e0ipso.tokkl.widget
 import android.content.Context
 import android.content.SharedPreferences
 import com.github.e0ipso.tokkl.storage.ValueStore
-import java.io.IOException
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
@@ -13,6 +11,8 @@ import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import java.io.IOException
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Keeps the home screen widget (docs/PRD.md N3) in step with the phone. Every start, stop and edit

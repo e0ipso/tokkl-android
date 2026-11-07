@@ -25,11 +25,9 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import com.github.e0ipso.tokkl.feature.sync.R
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
-import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.cache.ChangeKind
 import com.github.e0ipso.tokkl.cache.PendingChange
+import com.github.e0ipso.tokkl.feature.sync.R
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.DateWords
 import com.github.e0ipso.tokkl.ui.TokklIconButton
@@ -38,6 +36,8 @@ import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
 import kotlinx.coroutines.flow.StateFlow
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * The "needs attention" list (docs/PRD.md O6), opened from the status band. Each change the server
@@ -73,7 +73,9 @@ fun NeedsAttentionScreen(
             verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space3),
         ) {
             Text(
-                text = stringResource(if (held.isEmpty()) R.string.needs_attention_empty else R.string.needs_attention_intro),
+                text = stringResource(
+                    if (held.isEmpty()) R.string.needs_attention_empty else R.string.needs_attention_intro,
+                ),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -125,7 +127,10 @@ private fun HeldChange(
             if (change.kind != ChangeKind.DELETE) {
                 TokklIconButton(
                     icon = UiR.drawable.ic_edit,
-                    description = stringResource(R.string.needs_attention_edit_named, change.description.ifBlank { stringResource(R.string.needs_attention_no_description) }),
+                    description = stringResource(
+                        R.string.needs_attention_edit_named,
+                        change.description.ifBlank { stringResource(R.string.needs_attention_no_description) },
+                    ),
                     onClick = onEdit,
                 )
             }

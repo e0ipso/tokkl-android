@@ -26,7 +26,11 @@ import org.koin.dsl.bind
 internal fun Module.signOutSteps() {
     step(SignOutOrder.POMODORO_NOTIFICATION_ID) {
         val context = androidContext()
-        return@step { context.getSystemService(NotificationManager::class.java).cancel(PomodoroSessionNotifier.NOTIFICATION_ID) }
+        return@step {
+            context.getSystemService(
+                NotificationManager::class.java,
+            ).cancel(PomodoroSessionNotifier.NOTIFICATION_ID)
+        }
     }
     step(SignOutOrder.BACKGROUND_SEND) {
         val context = androidContext()

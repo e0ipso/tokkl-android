@@ -11,11 +11,7 @@ import kotlinx.serialization.json.put
 
 /** A tag as `GET /api/v9/workspaces/{wid}/tags` sends it. */
 @Serializable
-data class Tag(
-    val id: Long,
-    @SerialName("workspace_id") val workspaceId: Long,
-    val name: String = "",
-)
+data class Tag(val id: Long, @SerialName("workspace_id") val workspaceId: Long, val name: String = "")
 
 /**
  * The API v9 tag calls of one [workspace] on the configured server. Every call blocks, so make

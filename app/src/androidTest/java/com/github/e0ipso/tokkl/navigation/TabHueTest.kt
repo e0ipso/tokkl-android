@@ -14,7 +14,6 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.performClick
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 import com.github.e0ipso.tokkl.navhost.AppNavigationBar
 import com.github.e0ipso.tokkl.navhost.AppNavigationRail
 import com.github.e0ipso.tokkl.navhost.hue
@@ -22,12 +21,13 @@ import com.github.e0ipso.tokkl.navhost.label
 import com.github.e0ipso.tokkl.ui.theme.SectionHue
 import com.github.e0ipso.tokkl.ui.theme.SectionHues
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import kotlin.math.abs
-import kotlin.math.roundToInt
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import kotlin.math.abs
+import kotlin.math.roundToInt
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 
 /**
  * The active tab's indicator takes its page's hue, in the bar and the rail, light and dark, as
@@ -78,8 +78,11 @@ class TabHueTest {
         composeRule.setContent {
             TokklTheme(darkTheme = dark) {
                 unselectedDot = TokklTheme.extraColors.running
-                if (rail) AppNavigationRail(current = current, onOpen = {}, timerRunning = running)
-                else AppNavigationBar(current = current, onOpen = {}, timerRunning = running)
+                if (rail) {
+                    AppNavigationRail(current = current, onOpen = {}, timerRunning = running)
+                } else {
+                    AppNavigationBar(current = current, onOpen = {}, timerRunning = running)
+                }
             }
         }
         val timer = tab(context.getString(TimerR.string.nav_timer))
@@ -87,7 +90,10 @@ class TabHueTest {
         // At least half the 6dp badge's area must visibly change to its expected colour.
         val minimumDotPixels = (kotlin.math.PI * 3 * 3 * density * density / 2).roundToInt()
         for (page in TopLevelPage.entries) {
-            composeRule.runOnIdle { current = page; running = false }
+            composeRule.runOnIdle {
+                current = page
+                running = false
+            }
             val idle = timer.captureToImage().toPixelMap()
             composeRule.runOnIdle { running = true }
             val active = timer.captureToImage().toPixelMap()
@@ -98,7 +104,10 @@ class TabHueTest {
                     if (active[x, y].near(expected) && !idle[x, y].near(expected)) dotPixels++
                 }
             }
-            assertTrue("the running dot remains visible while $page shows: $dotPixels pixels", dotPixels >= minimumDotPixels)
+            assertTrue(
+                "the running dot remains visible while $page shows: $dotPixels pixels",
+                dotPixels >= minimumDotPixels,
+            )
         }
     }
 
@@ -112,7 +121,10 @@ class TabHueTest {
             composeRule.runOnIdle { current = page }
             val item = tab(context.getString(page.label))
             item.assertIsSelected()
-            assertTrue("the selected $page sheet item fills with More's hue", huePixels(item, page.hue) >= minimumIndicatorPixels(rail = false))
+            assertTrue(
+                "the selected $page sheet item fills with More's hue",
+                huePixels(item, page.hue) >= minimumIndicatorPixels(rail = false),
+            )
         }
     }
 
@@ -121,11 +133,18 @@ class TabHueTest {
         var current by mutableStateOf(TopLevelPage.TIMER)
         composeRule.setContent {
             TokklTheme(darkTheme = dark) {
-                if (rail) AppNavigationRail(current = current, onOpen = {}, timerRunning = false)
-                else AppNavigationBar(current = current, onOpen = {}, timerRunning = false)
+                if (rail) {
+                    AppNavigationRail(current = current, onOpen = {}, timerRunning = false)
+                } else {
+                    AppNavigationBar(current = current, onOpen = {}, timerRunning = false)
+                }
             }
         }
-        val tabs = TopLevelPage.entries.filterNot { it.inMore }.map { context.getString(it.label) } + context.getString(R.string.nav_more)
+        val tabs = TopLevelPage.entries.filterNot { it.inMore }.map {
+            context.getString(
+                it.label,
+            )
+        } + context.getString(R.string.nav_more)
         for (page in TopLevelPage.entries) {
             current = page
             composeRule.waitForIdle()
@@ -134,7 +153,10 @@ class TabHueTest {
             for (label in tabs) {
                 val pixels = huePixels(tab(label), markedHue)
                 if (label == marked) {
-                    assertTrue("the $label tab shows $pixels pixels of its hue while $page shows", pixels >= minimumIndicatorPixels(rail))
+                    assertTrue(
+                        "the $label tab shows $pixels pixels of its hue while $page shows",
+                        pixels >= minimumIndicatorPixels(rail),
+                    )
                 } else {
                     assertEquals("the $label tab shows $page's hue while $page shows", 0, pixels)
                 }
@@ -167,8 +189,11 @@ class TabHueTest {
         return (width * density * INDICATOR_HEIGHT * density / 2).roundToInt()
     }
 
-    private fun Color.near(other: Color): Boolean =
-        listOf(red to other.red, green to other.green, blue to other.blue).all { (a, b) -> abs(a - b) * 255 <= TOLERANCE }
+    private fun Color.near(other: Color): Boolean = listOf(
+        red to other.red,
+        green to other.green,
+        blue to other.blue,
+    ).all { (a, b) -> abs(a - b) * 255 <= TOLERANCE }
 
     private companion object {
         const val BAR_INDICATOR_WIDTH = 64f

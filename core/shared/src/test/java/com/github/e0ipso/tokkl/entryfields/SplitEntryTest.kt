@@ -1,11 +1,11 @@
 package com.github.e0ipso.tokkl.entryfields
 
 import com.github.e0ipso.tokkl.time.AccountTime
+import org.junit.Assert.assertEquals
+import org.junit.Test
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.ZoneId
-import org.junit.Assert.assertEquals
-import org.junit.Test
 
 /**
  * The split port. The snappedInstant and snappedSplit cases are those of
@@ -29,7 +29,10 @@ class SplitEntryTest {
         assertEquals(at("2026-10-16T04:15:00.000Z"), snappedInstant(at("2026-10-16T04:40:00Z"), kathmandu))
         assertEquals(at("2026-10-16T05:15:00.000Z"), snappedInstant(at("2026-10-16T04:50:00Z"), kathmandu))
         // On Lord Howe, local 02:00 never happens on 2026-10-03; 02:30 local (15:30 UTC) is the grid point.
-        assertEquals(at("2026-10-03T15:30:00.000Z"), snappedInstant(at("2026-10-03T15:20:00Z"), zone("Australia/Lord_Howe", 30.0)))
+        assertEquals(
+            at("2026-10-03T15:30:00.000Z"),
+            snappedInstant(at("2026-10-03T15:20:00Z"), zone("Australia/Lord_Howe", 30.0)),
+        )
     }
 
     @Test
@@ -47,7 +50,12 @@ class SplitEntryTest {
 
     @Test
     fun snappedSplitReturnsTheHalvesTheServerStoresMeetingAtTheSplit() {
-        val halves = snappedSplit(at("2026-10-16T09:00:00Z"), at("2026-10-16T10:00:00Z"), at("2026-10-16T09:15:00Z"), utc(15.0))
+        val halves = snappedSplit(
+            at("2026-10-16T09:00:00Z"),
+            at("2026-10-16T10:00:00Z"),
+            at("2026-10-16T09:15:00Z"),
+            utc(15.0),
+        )
         assertEquals(
             listOf(
                 listOf("2026-10-16T09:00:00Z", "2026-10-16T09:15:00Z"),
@@ -61,7 +69,12 @@ class SplitEntryTest {
     fun snappedSplitCutsAnEntrySavedUnderAnotherResolutionFromItsSnappedWhole() {
         // At 15 minutes, 09:08 to 10:08 stores as 09:15 to 10:15. Snapping 09:08 to 09:30 on its own would
         // store 09:15 to 09:45, over the second half.
-        val halves = snappedSplit(at("2026-10-16T09:08:00Z"), at("2026-10-16T10:08:00Z"), at("2026-10-16T09:30:00Z"), utc(15.0))
+        val halves = snappedSplit(
+            at("2026-10-16T09:08:00Z"),
+            at("2026-10-16T10:08:00Z"),
+            at("2026-10-16T09:30:00Z"),
+            utc(15.0),
+        )
         assertEquals(
             listOf(
                 listOf("2026-10-16T09:15:00Z", "2026-10-16T09:30:00Z"),
@@ -91,7 +104,10 @@ class SplitEntryTest {
         val split = snappedInstant(at("2026-10-03T16:00:00Z"), lordHowe)
         assertEquals(at("2026-10-03T16:00:00.000Z"), split)
         assertEquals(
-            listOf(listOf("2026-10-03T14:30:00Z", "2026-10-03T16:00:00Z"), listOf("2026-10-03T16:00:00Z", "2026-10-03T17:00:00Z")),
+            listOf(
+                listOf("2026-10-03T14:30:00Z", "2026-10-03T16:00:00Z"),
+                listOf("2026-10-03T16:00:00Z", "2026-10-03T17:00:00Z"),
+            ),
             iso(snappedSplit(start, stop, split, lordHowe)),
         )
         // At a resolution of 30, the half hour on either side of the change is a whole step, so it splits.
@@ -110,12 +126,18 @@ class SplitEntryTest {
         val madrid = zone("Europe/Madrid", 15.0)
         // 22:00 CEST to 6:00 CET, split at 3:00 CET.
         assertEquals(
-            listOf(listOf("2025-10-25T20:00:00Z", "2025-10-26T02:00:00Z"), listOf("2025-10-26T02:00:00Z", "2025-10-26T05:00:00Z")),
+            listOf(
+                listOf("2025-10-25T20:00:00Z", "2025-10-26T02:00:00Z"),
+                listOf("2025-10-26T02:00:00Z", "2025-10-26T05:00:00Z"),
+            ),
             iso(splitTimes("3:00", at("2025-10-25T20:00:00Z"), at("2025-10-26T05:00:00Z"), madrid, twelveHour = false)),
         )
         // 22:00 CET to 7:00 CEST, split at 3:30 CEST.
         assertEquals(
-            listOf(listOf("2026-03-28T21:00:00Z", "2026-03-29T01:30:00Z"), listOf("2026-03-29T01:30:00Z", "2026-03-29T05:00:00Z")),
+            listOf(
+                listOf("2026-03-28T21:00:00Z", "2026-03-29T01:30:00Z"),
+                listOf("2026-03-29T01:30:00Z", "2026-03-29T05:00:00Z"),
+            ),
             iso(splitTimes("3:30", at("2026-03-28T21:00:00Z"), at("2026-03-29T05:00:00Z"), madrid, twelveHour = false)),
         )
     }
@@ -128,11 +150,22 @@ class SplitEntryTest {
         val stop = at("2026-10-16T08:30:00Z")
         assertEquals(
             "09:37 moves to the grid point at 09:30",
-            listOf(listOf("2026-10-16T07:00:00Z", "2026-10-16T07:30:00Z"), listOf("2026-10-16T07:30:00Z", "2026-10-16T08:30:00Z")),
+            listOf(
+                listOf("2026-10-16T07:00:00Z", "2026-10-16T07:30:00Z"),
+                listOf("2026-10-16T07:30:00Z", "2026-10-16T08:30:00Z"),
+            ),
             iso(splitTimes("937", start, stop, madrid, twelveHour = false)),
         )
-        assertEquals("after the stop", SplitProblem.OUTSIDE, splitTimes("11:00", start, stop, madrid, twelveHour = false))
-        assertEquals("on the start, so the next day's, after the stop", SplitProblem.OUTSIDE, splitTimes("9", start, stop, madrid, twelveHour = false))
+        assertEquals(
+            "after the stop",
+            SplitProblem.OUTSIDE,
+            splitTimes("11:00", start, stop, madrid, twelveHour = false),
+        )
+        assertEquals(
+            "on the start, so the next day's, after the stop",
+            SplitProblem.OUTSIDE,
+            splitTimes("9", start, stop, madrid, twelveHour = false),
+        )
         assertEquals(SplitProblem.UNREADABLE, splitTimes("half past", start, stop, madrid, twelveHour = false))
         assertEquals(SplitProblem.UNREADABLE, splitTimes("", start, stop, madrid, twelveHour = false))
     }
@@ -144,7 +177,10 @@ class SplitEntryTest {
         val start = at("2026-10-16T11:00:00Z")
         val stop = at("2026-10-16T14:00:00Z")
         assertEquals(
-            listOf(listOf("2026-10-16T11:00:00Z", "2026-10-16T12:00:00Z"), listOf("2026-10-16T12:00:00Z", "2026-10-16T14:00:00Z")),
+            listOf(
+                listOf("2026-10-16T11:00:00Z", "2026-10-16T12:00:00Z"),
+                listOf("2026-10-16T12:00:00Z", "2026-10-16T14:00:00Z"),
+            ),
             iso(splitTimes("2", start, stop, madrid, twelveHour = true)),
         )
     }

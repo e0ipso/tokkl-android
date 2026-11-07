@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.api
 
 import android.annotation.SuppressLint
+import okhttp3.internal.tls.OkHostnameVerifier
 import java.io.IOException
 import java.net.Socket
 import java.security.MessageDigest
@@ -12,7 +13,6 @@ import javax.net.ssl.SSLSocket
 import javax.net.ssl.X509ExtendedTrustManager
 import javax.net.ssl.X509TrustManager
 import javax.security.auth.x500.X500Principal
-import okhttp3.internal.tls.OkHostnameVerifier
 
 /**
  * A server's leaf certificate as the trust prompt shows it, and as a pin
@@ -27,13 +27,12 @@ data class ServerCertificate(val host: String, val port: Int, val sha256: String
         get() = sha256.uppercase().chunked(2).joinToString(":")
 
     companion object {
-        fun of(certificate: X509Certificate, host: String, port: Int): ServerCertificate =
-            ServerCertificate(
-                host = host,
-                port = port,
-                sha256 = sha256(certificate),
-                subject = certificate.subjectX500Principal.getName(X500Principal.RFC2253),
-            )
+        fun of(certificate: X509Certificate, host: String, port: Int): ServerCertificate = ServerCertificate(
+            host = host,
+            port = port,
+            sha256 = sha256(certificate),
+            subject = certificate.subjectX500Principal.getName(X500Principal.RFC2253),
+        )
 
         /** The SHA-256 of [certificate]'s DER encoding, as lowercase hex. */
         fun sha256(certificate: X509Certificate): String =
@@ -52,17 +51,18 @@ class UntrustedCertificateException(
     val certificate: ServerCertificate,
     val pinChanged: Boolean,
     cause: CertificateException,
-) : CertificateException("No trusted CA or pin covers the certificate of ${certificate.host}:${certificate.port}", cause)
+) : CertificateException(
+    "No trusted CA or pin covers the certificate of ${certificate.host}:${certificate.port}",
+    cause,
+)
 
 /**
  * No system or user CA trusts the server's certificate, and it does not name
  * [host], so pinning it could not work: OkHttp's host name check would refuse
  * it after the handshake. The handshake fails on this before any HTTP request.
  */
-class CertificateHostMismatchException(
-    val host: String,
-    cause: CertificateException,
-) : CertificateException("The certificate does not name $host", cause)
+class CertificateHostMismatchException(val host: String, cause: CertificateException) :
+    CertificateException("The certificate does not name $host", cause)
 
 /**
  * The [UntrustedCertificateException] among this exception's causes. The TLS
@@ -136,17 +136,14 @@ internal class PinningTrustManager(
         verify(chain, host = null, port = -1) { platform.checkServerTrusted(chain, authType) }
     }
 
-    override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String, socket: Socket?) {
+    override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String, socket: Socket?): Unit =
         throw CertificateException("The app does not accept client connections")
-    }
 
-    override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String, engine: SSLEngine?) {
+    override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String, engine: SSLEngine?): Unit =
         throw CertificateException("The app does not accept client connections")
-    }
 
-    override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {
+    override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String): Unit =
         throw CertificateException("The app does not accept client connections")
-    }
 
     override fun getAcceptedIssuers(): Array<X509Certificate> = platform.acceptedIssuers
 

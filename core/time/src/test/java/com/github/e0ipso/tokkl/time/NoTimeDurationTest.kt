@@ -1,11 +1,11 @@
 package com.github.e0ipso.tokkl.time
 
+import org.junit.Assert.assertEquals
+import org.junit.Test
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
-import org.junit.Assert.assertEquals
-import org.junit.Test
 
 /** The no-time duration check and the span a no-time entry stores, in the account's zone. */
 class NoTimeDurationTest {

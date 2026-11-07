@@ -107,7 +107,12 @@ internal class SignInActions(
  * and the plain http:// and certificate prompts that [state]'s failure asks for.
  */
 @Composable
-internal fun SignInContent(state: SignInState, secondsLeft: Long, actions: SignInActions, modifier: Modifier = Modifier) {
+internal fun SignInContent(
+    state: SignInState,
+    secondsLeft: Long,
+    actions: SignInActions,
+    modifier: Modifier = Modifier,
+) {
     SignInForm(
         state = state,
         secondsLeft = secondsLeft,
@@ -133,12 +138,14 @@ internal fun SignInContent(state: SignInState, secondsLeft: Long, actions: SignI
             onConfirm = actions.onConfirmCleartext,
             onCancel = actions.onDismissPrompt,
         )
+
         is SignInResult.UntrustedCertificate -> CertificatePrompt(
             certificate = failure.certificate,
             changed = failure.changed,
             onTrust = actions.onTrustCertificate,
             onCancel = actions.onDismissPrompt,
         )
+
         else -> Unit
     }
 }
@@ -280,23 +287,39 @@ private fun MethodChoice(selected: SignInMethod, onSelect: (SignInMethod) -> Uni
 }
 
 @Composable
-private fun failureMessage(failure: SignInResult, method: SignInMethod): String? =
-    when (failure) {
-        SignInResult.BadCredentials -> stringResource(
-            if (method == SignInMethod.API_TOKEN) R.string.sign_in_error_wrong_api_token else R.string.sign_in_error_wrong_password,
-        )
-        is SignInResult.RateLimited -> stringResource(R.string.sign_in_error_rate_limited)
-        SignInResult.Unreachable -> stringResource(R.string.sign_in_error_unreachable)
-        is SignInResult.CertificateHostMismatch -> stringResource(R.string.sign_in_error_certificate_host, failure.host)
-        is SignInResult.UnexpectedStatus -> stringResource(R.string.sign_in_error_unexpected_status, failure.status)
-        SignInResult.NotTokkl -> stringResource(R.string.sign_in_error_not_tokkl)
-        is SignInResult.HostNotAllowed -> stringResource(R.string.sign_in_error_host_not_allowed, failure.origin)
-        SignInResult.NoApiToken -> stringResource(R.string.sign_in_error_no_api_token)
-        SignInResult.StorageFailed -> stringResource(R.string.sign_in_error_storage)
-        SignInResult.OtherAccount -> stringResource(R.string.sign_in_error_other_account)
-        SignInResult.AnswerNotStored -> stringResource(R.string.sign_in_error_answer_not_stored)
-        is SignInResult.CleartextNotConfirmed, is SignInResult.UntrustedCertificate, SignInResult.SignedIn -> null
-    }
+private fun failureMessage(failure: SignInResult, method: SignInMethod): String? = when (failure) {
+    SignInResult.BadCredentials -> stringResource(
+        if (method ==
+            SignInMethod.API_TOKEN
+        ) {
+            R.string.sign_in_error_wrong_api_token
+        } else {
+            R.string.sign_in_error_wrong_password
+        },
+    )
+
+    is SignInResult.RateLimited -> stringResource(R.string.sign_in_error_rate_limited)
+
+    SignInResult.Unreachable -> stringResource(R.string.sign_in_error_unreachable)
+
+    is SignInResult.CertificateHostMismatch -> stringResource(R.string.sign_in_error_certificate_host, failure.host)
+
+    is SignInResult.UnexpectedStatus -> stringResource(R.string.sign_in_error_unexpected_status, failure.status)
+
+    SignInResult.NotTokkl -> stringResource(R.string.sign_in_error_not_tokkl)
+
+    is SignInResult.HostNotAllowed -> stringResource(R.string.sign_in_error_host_not_allowed, failure.origin)
+
+    SignInResult.NoApiToken -> stringResource(R.string.sign_in_error_no_api_token)
+
+    SignInResult.StorageFailed -> stringResource(R.string.sign_in_error_storage)
+
+    SignInResult.OtherAccount -> stringResource(R.string.sign_in_error_other_account)
+
+    SignInResult.AnswerNotStored -> stringResource(R.string.sign_in_error_answer_not_stored)
+
+    is SignInResult.CleartextNotConfirmed, is SignInResult.UntrustedCertificate, SignInResult.SignedIn -> null
+}
 
 private val METHOD_LABELS = listOf(
     SignInMethod.API_TOKEN to R.string.sign_in_method_api_token,

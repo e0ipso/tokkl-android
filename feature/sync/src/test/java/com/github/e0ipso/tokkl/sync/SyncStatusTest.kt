@@ -40,7 +40,11 @@ class SyncStatusTest {
         unsent.value = 2
         assertEquals("the count follows the queue", 2, seen.nextWithin(GRACE.inWholeMilliseconds / 2)?.unsent)
         answered.value = LATER
-        assertEquals("the time follows each answer", LATER, seen.nextWithin(GRACE.inWholeMilliseconds / 2)?.lastAnswered)
+        assertEquals(
+            "the time follows each answer",
+            LATER,
+            seen.nextWithin(GRACE.inWholeMilliseconds / 2)?.lastAnswered,
+        )
 
         unsent.value = 0
         assertNull("the queue emptied", seen.nextWithin(GRACE.inWholeMilliseconds / 2))
@@ -69,7 +73,10 @@ class SyncStatusTest {
         // 23:30 on the 15th in UTC is 08:30 on the 16th in Tokyo, where it is 10:00 now.
         val answer = Instant.parse("2026-10-15T23:30:00Z")
 
-        assertEquals(LastAnsweredLabel.At("08:30", LocalDate.of(2026, 10, 16), daysAgo = 0), lastAnsweredLabel(answer, TOKYO, NOW))
+        assertEquals(
+            LastAnsweredLabel.At("08:30", LocalDate.of(2026, 10, 16), daysAgo = 0),
+            lastAnsweredLabel(answer, TOKYO, NOW),
+        )
         assertEquals(
             LastAnsweredLabel.At("8:30 AM", LocalDate.of(2026, 10, 16), daysAgo = 0),
             lastAnsweredLabel(answer, TOKYO.copy(twelveHour = true), NOW),
@@ -87,7 +94,10 @@ class SyncStatusTest {
             lastAnsweredLabel(Instant.parse("2026-10-12T00:15:00Z"), TOKYO, NOW),
         )
         assertEquals(LastAnsweredLabel.Never, lastAnsweredLabel(null, TOKYO, NOW))
-        assertEquals(LastAnsweredLabel.NoAccountTime, lastAnsweredLabel(EARLIER, TOKYO.copy(timeZone = "Mars/Olympus_Mons"), NOW))
+        assertEquals(
+            LastAnsweredLabel.NoAccountTime,
+            lastAnsweredLabel(EARLIER, TOKYO.copy(timeZone = "Mars/Olympus_Mons"), NOW),
+        )
         assertEquals(LastAnsweredLabel.NoAccountTime, lastAnsweredLabel(EARLIER, null, NOW))
     }
 
@@ -101,6 +111,10 @@ class SyncStatusTest {
         val EARLIER: Instant = Instant.parse("2026-10-16T00:00:00Z")
         val LATER: Instant = Instant.parse("2026-10-16T00:30:00Z")
         val NOW: Clock = Clock.fixed(Instant.parse("2026-10-16T01:00:00Z"), ZoneOffset.UTC)
-        val TOKYO = AccountSettings(timeZone = "Asia/Tokyo", beginningOfWeek = DayOfWeek.MONDAY, timeResolutionMinutes = null)
+        val TOKYO = AccountSettings(
+            timeZone = "Asia/Tokyo",
+            beginningOfWeek = DayOfWeek.MONDAY,
+            timeResolutionMinutes = null,
+        )
     }
 }

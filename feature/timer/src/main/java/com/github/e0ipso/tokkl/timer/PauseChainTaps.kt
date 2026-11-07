@@ -69,7 +69,13 @@ internal class PauseChainTaps(
      * Sends a pause chain action for what [target] showed, ignoring other taps until the server
      * answers and its state shows, as [done] tells.
      */
-    private fun act(target: TimerTarget, done: (TimerControls) -> Boolean, onDone: () -> Unit = {}, send: suspend () -> TimerActionResult) {
+    private fun act(
+        target: TimerTarget,
+        done: (TimerControls) -> Boolean,
+        onDone: () -> Unit = {
+        },
+        send: suspend () -> TimerActionResult,
+    ) {
         val acting = PendingTap.Acting(target)
         taps.local.update { it.copy(pending = acting) }
         taps.scope.launch(start = CoroutineStart.UNDISPATCHED) {

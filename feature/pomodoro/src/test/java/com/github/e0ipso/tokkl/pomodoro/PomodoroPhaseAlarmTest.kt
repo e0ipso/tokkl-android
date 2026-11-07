@@ -1,14 +1,14 @@
 package com.github.e0ipso.tokkl.pomodoro
 
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
-import java.time.Duration
-import java.time.Instant
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.Duration
+import java.time.Instant
 
 /**
  * One exact alarm at the held phase's planned end, corrected by the state's clock offset and keyed

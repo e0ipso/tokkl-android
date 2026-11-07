@@ -28,6 +28,7 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 internal fun Body(state: ReportsState, settings: AccountSettings?, filtered: Boolean, onRetry: () -> Unit) {
     when (state) {
         ReportsState.Closed, is ReportsState.Loading -> Loading()
+
         is ReportsState.NoAccountTime -> Problem(
             title = null,
             message = if (state.timeZone == null) {
@@ -37,19 +38,25 @@ internal fun Body(state: ReportsState, settings: AccountSettings?, filtered: Boo
             },
             onRetry = onRetry,
         )
+
         is ReportsState.Failed -> Failure(state.failure, onRetry)
+
         is ReportsState.Loaded -> when (val report = state.report) {
             is SummaryReport -> when {
                 settings == null -> Loading()
+
                 report.totals.entryCount == 0 && report.totals.seconds == 0L &&
                     report.totals.amounts.isEmpty() && report.projects.isEmpty() -> Column {
                     Empty(filtered)
                     AdditionalReportData(report)
                 }
+
                 else -> SummaryContent(report, settings)
             }
+
             // A detailed report with entries shows as a list, once the settings and the zone are known.
             is DetailedReport -> if (report.entries.isEmpty()) Empty(filtered) else Loading()
+
             is WeeklyReport -> when {
                 settings == null -> Loading()
                 report.rows.isEmpty() -> Empty(filtered)
@@ -81,8 +88,19 @@ internal fun Failure(failure: ReportFailure, onRetry: () -> Unit) {
             message = stringResource(R.string.reports_offline_message),
             onRetry = onRetry,
         )
-        ReportFailure.AuthFailed -> Problem(title = null, message = stringResource(R.string.reports_error_auth), onRetry = onRetry)
-        ReportFailure.TrustRefused -> Problem(title = null, message = stringResource(R.string.reports_error_trust), onRetry = onRetry)
+
+        ReportFailure.AuthFailed -> Problem(
+            title = null,
+            message = stringResource(R.string.reports_error_auth),
+            onRetry = onRetry,
+        )
+
+        ReportFailure.TrustRefused -> Problem(
+            title = null,
+            message = stringResource(R.string.reports_error_trust),
+            onRetry = onRetry,
+        )
+
         is ReportFailure.Unexpected -> Problem(
             title = null,
             message = failure.status?.let { stringResource(R.string.reports_error_status, it) }
@@ -116,11 +134,15 @@ private fun Empty(filtered: Boolean) {
         verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup),
     ) {
         Text(
-            text = stringResource(if (filtered) R.string.reports_empty_title_filtered else R.string.reports_empty_title),
+            text = stringResource(
+                if (filtered) R.string.reports_empty_title_filtered else R.string.reports_empty_title,
+            ),
             style = MaterialTheme.typography.titleMedium,
         )
         Text(
-            text = stringResource(if (filtered) R.string.reports_empty_message_filtered else R.string.reports_empty_message),
+            text = stringResource(
+                if (filtered) R.string.reports_empty_message_filtered else R.string.reports_empty_message,
+            ),
             style = MaterialTheme.typography.bodyLarge,
         )
     }

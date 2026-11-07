@@ -36,9 +36,21 @@ interface EntryChanges {
 
     suspend fun stop(entryId: Long, fields: EntryFields? = null): Boolean
 
-    suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant, noTimeDay: LocalDate? = null): Long
+    suspend fun create(
+        workspaceId: Long,
+        fields: EntryFields,
+        start: Instant,
+        stop: Instant,
+        noTimeDay: LocalDate? = null,
+    ): Long
 
-    suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?, noTimeDay: LocalDate? = null): Boolean
+    suspend fun update(
+        entryId: Long,
+        fields: EntryFields,
+        start: Instant,
+        stop: Instant?,
+        noTimeDay: LocalDate? = null,
+    ): Boolean
 
     /**
      * Sets every field of the stopped entry [entryId] in [workspaceId], whether the phone holds it

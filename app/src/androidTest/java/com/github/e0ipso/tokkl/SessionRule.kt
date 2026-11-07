@@ -38,22 +38,21 @@ annotation class SignedOut
  */
 class SessionRule : TestRule {
 
-    override fun apply(base: Statement, description: Description): Statement =
-        object : Statement() {
-            override fun evaluate() {
-                val signedOut = description.getAnnotation(SignedOut::class.java) != null ||
-                    description.testClass?.isAnnotationPresent(SignedOut::class.java) == true
-                signOut()
-                // A timer start in a test never brings up the system's permission dialog over
-                // the app. NotificationPermissionPromptTest asks with a record of its own.
-                NotificationPermissionStore(context).markAsked()
-                if (!signedOut) {
-                    ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
-                    Session(context).save(TokklTestServer.url, TokklTestServer.apiToken)
-                }
-                base.evaluate()
+    override fun apply(base: Statement, description: Description): Statement = object : Statement() {
+        override fun evaluate() {
+            val signedOut = description.getAnnotation(SignedOut::class.java) != null ||
+                description.testClass?.isAnnotationPresent(SignedOut::class.java) == true
+            signOut()
+            // A timer start in a test never brings up the system's permission dialog over
+            // the app. NotificationPermissionPromptTest asks with a record of its own.
+            NotificationPermissionStore(context).markAsked()
+            if (!signedOut) {
+                ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
+                Session(context).save(TokklTestServer.url, TokklTestServer.apiToken)
             }
+            base.evaluate()
         }
+    }
 
     companion object {
         private val context get() = InstrumentationRegistry.getInstrumentation().targetContext

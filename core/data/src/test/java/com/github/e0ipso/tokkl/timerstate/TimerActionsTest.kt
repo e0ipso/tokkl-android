@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.timerstate
 
-import com.github.e0ipso.tokkl.core.data.R
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiJson
@@ -19,8 +18,7 @@ import com.github.e0ipso.tokkl.cache.CurrentEntryCache
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.RunningCheckStart
 import com.github.e0ipso.tokkl.cache.RunningCheckWrites
-import java.time.Instant
-import java.util.concurrent.TimeUnit
+import com.github.e0ipso.tokkl.core.data.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonElement
@@ -34,6 +32,8 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.time.Instant
+import java.util.concurrent.TimeUnit
 
 /**
  * The timer actions against a stand-in Tokkl server: what each request carries, which answers
@@ -102,12 +102,24 @@ class TimerActionsTest {
     fun pauseAndSessionStartSendTheBodiesTheReleaseDefines() {
         server.enqueue(answer(200, state(revision = 1)))
         server.enqueue(answer(200, state(revision = 2)))
-        val fields = EntryFields(description = "Write the report", projectId = 5, taskId = null, tags = listOf("deep", "writing"), billable = true)
+        val fields = EntryFields(
+            description = "Write the report",
+            projectId = 5,
+            taskId = null,
+            tags = listOf("deep", "writing"),
+            billable = true,
+        )
 
         assertEquals(TimerActionResult.Done, runBlocking { actions.pause() })
         assertEquals(
             TimerActionResult.Done,
-            runBlocking { actions.startSession(workspaceId = 7, fields = fields, lengths = SessionLengths(50, 10, 30, 3)) },
+            runBlocking {
+                actions.startSession(
+                    workspaceId = 7,
+                    fields = fields,
+                    lengths = SessionLengths(50, 10, 30, 3),
+                )
+            },
         )
 
         val pause = server.takeRequest()
@@ -181,7 +193,11 @@ class TimerActionsTest {
 
         assertEquals(TimerActionResult.Offline, result)
         assertEquals(R.string.timer_action_offline, result.message)
-        assertEquals("the resume went out once", listOf("/tokkl/api/app/timer/resume"), remainingRequests().map { it.url.encodedPath })
+        assertEquals(
+            "the resume went out once",
+            listOf("/tokkl/api/app/timer/resume"),
+            remainingRequests().map { it.url.encodedPath },
+        )
         assertSame("the shown state stays", held, holder.state.value)
         assertEquals("nothing is stored", savesBefore, saves)
         assertEquals("the cache is untouched", writesBefore, cache.written.size)
@@ -205,12 +221,29 @@ class TimerActionsTest {
 
         assertEquals(TimerActionResult.Failed(ApiError.AuthFailed), runBlocking { actions.pause() })
         assertEquals(
-            TimerActionResult.Failed(ApiError.UnexpectedStatus(400, "Invalid work_minutes: expected an integer from 1 to 180")),
+            TimerActionResult.Failed(
+                ApiError.UnexpectedStatus(400, "Invalid work_minutes: expected an integer from 1 to 180"),
+            ),
             runBlocking { actions.startSession(7, EntryFields(), SessionLengths(25, 5, 15, 4)) },
         )
-        assertEquals(TimerActionResult.Failed(ApiError.UnexpectedStatus(409, "Time entry already stopped")), runBlocking { actions.nextPhase(2) })
-        assertTrue(runBlocking { actions.endSession(2) }.let { it is TimerActionResult.Failed && it.error is ApiError.InvalidResponse })
-        assertTrue(runBlocking { actions.resume(2) }.let { it is TimerActionResult.Failed && it.error is ApiError.InvalidResponse })
+        assertEquals(
+            TimerActionResult.Failed(ApiError.UnexpectedStatus(409, "Time entry already stopped")),
+            runBlocking { actions.nextPhase(2) },
+        )
+        assertTrue(
+            runBlocking {
+                actions.endSession(
+                    2,
+                )
+            }.let { it is TimerActionResult.Failed && it.error is ApiError.InvalidResponse },
+        )
+        assertTrue(
+            runBlocking {
+                actions.resume(
+                    2,
+                )
+            }.let { it is TimerActionResult.Failed && it.error is ApiError.InvalidResponse },
+        )
         assertSame(held, holder.state.value)
 
         // A server the user has not confirmed gets nothing, and the session's trust prompt hears why.
@@ -239,7 +272,10 @@ class TimerActionsTest {
         holder.accept(holder.begin(), state)
     }
 
-    private fun answer(code: Int, state: TimerState) = answer(code, ApiJson.encodeToString(TimerState.serializer(), state))
+    private fun answer(code: Int, state: TimerState) = answer(
+        code,
+        ApiJson.encodeToString(TimerState.serializer(), state),
+    )
 
     private fun answer(code: Int, body: String) = MockResponse.Builder()
         .code(code)

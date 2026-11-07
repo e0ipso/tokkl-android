@@ -22,14 +22,14 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
-import com.github.e0ipso.tokkl.feature.clients.R
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.catalog.ProblemBanner
 import com.github.e0ipso.tokkl.catalog.ServerNeededNotice
 import com.github.e0ipso.tokkl.catalog.ServerProblem
+import com.github.e0ipso.tokkl.feature.clients.R
 import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 
 /**
  * The client form, as the web app's ClientEditor: name and notes. Save with an empty name marks
@@ -101,7 +101,10 @@ private fun FormFields(
             },
             isError = nameMissing,
             singleLine = true,
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words, imeAction = ImeAction.Next),
+            keyboardOptions = KeyboardOptions(
+                capitalization = KeyboardCapitalization.Words,
+                imeAction = ImeAction.Next,
+            ),
             modifier = Modifier
                 .fillMaxWidth()
                 .focusRequester(nameFocus),

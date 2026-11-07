@@ -27,22 +27,24 @@ import androidx.glance.semantics.contentDescription
 import androidx.glance.semantics.semantics
 import androidx.glance.unit.ColorProvider
 import com.github.e0ipso.tokkl.feature.widget.R
-import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.platform.mainActivityIntent
 import com.github.e0ipso.tokkl.time.formatDuration
 import com.github.e0ipso.tokkl.ui.theme.TokklDarkColorScheme
 import com.github.e0ipso.tokkl.ui.theme.TokklDarkExtraColors
 import com.github.e0ipso.tokkl.ui.theme.TokklLightColorScheme
 import com.github.e0ipso.tokkl.ui.theme.TokklLightExtraColors
-import java.time.Instant
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 import kotlinx.coroutines.flow.first
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
+import java.time.Instant
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /** Cached Timer and Today report. The launcher ticks both clocks; redraws follow existing events. */
-class TokklWidget : GlanceAppWidget(), KoinComponent {
+class TokklWidget :
+    GlanceAppWidget(),
+    KoinComponent {
     override val sizeMode: SizeMode = SizeMode.Exact
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
@@ -86,6 +88,7 @@ fun TimerWidgetContent(state: WidgetState) {
                     .semantics { contentDescription = context.getString(R.string.widget_sign_in) },
                 contentAlignment = Alignment.Center,
             ) { Label(context.getString(R.string.widget_sign_in), 14f) }
+
             is WidgetState.Ready -> when (kind) {
                 TimerWidgetSize.STRIP -> TimerStrip(context, state, padding)
                 else -> TimerCard(context, state, kind)
@@ -105,13 +108,36 @@ private fun TimerStrip(context: Context, state: WidgetState.Ready, padding: Floa
     val project = projectText(context, state)
     val status = if (state.paused != null) context.getString(R.string.widget_paused_label) else description
     Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Column(GlanceModifier.defaultWeight().semantics { contentDescription = listOfNotNull(status, project).joinToString(", ") }) {
+        Column(
+            GlanceModifier.defaultWeight().semantics {
+                contentDescription = listOfNotNull(
+                    status,
+                    project,
+                ).joinToString(", ")
+            },
+        ) {
             if (details) {
                 if (state.running != null || state.paused != null) {
                     ProjectLine(project ?: context.getString(R.string.widget_no_project), projectColor(state), 11f)
                 }
-                Label(if (state.paused != null) context.getString(R.string.widget_paused_entry, description) else description, 14f)
-                if (state.running == null && state.paused == null) Label(context.getString(R.string.widget_today), 10f, muted = true)
+                Label(
+                    if (state.paused != null) {
+                        context.getString(
+                            R.string.widget_paused_entry,
+                            description,
+                        )
+                    } else {
+                        description
+                    },
+                    14f,
+                )
+                if (state.running == null && state.paused == null) {
+                    Label(
+                        context.getString(R.string.widget_today),
+                        10f,
+                        muted = true,
+                    )
+                }
             }
             TimerClock(context, state, if (details) 24f else 18f, available)
         }
@@ -129,24 +155,65 @@ private fun ColumnScope.TimerCard(context: Context, state: WidgetState.Ready, ki
     // Android 12 scales sp linearly; newer Android versions enlarge big text less.
     // Reserve the native font's actual height rather than assuming the newer curve.
     val paint = clockPaint(context, if (large) 34f else 22f)
-    val clockHeight = maxOf(WidgetLayout.clockRowHeight(large, scale),
-        (paint.fontMetrics.bottom - paint.fontMetrics.top) / context.resources.displayMetrics.density + 4f)
+    val clockHeight = maxOf(
+        WidgetLayout.clockRowHeight(large, scale),
+        (paint.fontMetrics.bottom - paint.fontMetrics.top) / context.resources.displayMetrics.density + 4f,
+    )
     val todayPaint = clockPaint(context, 18f)
-    val todayHeight = maxOf(WidgetLayout.todayRowHeight(scale),
-        (todayPaint.fontMetrics.bottom - todayPaint.fontMetrics.top) / context.resources.displayMetrics.density + 4f)
-    Row(GlanceModifier.fillMaxWidth().height(48.dp).semantics {
-        contentDescription = listOfNotNull(description(context, state), projectText(context, state), state.paused?.let { context.getString(R.string.widget_paused_label) }).joinToString(", ")
-    }, verticalAlignment = Alignment.CenterVertically) {
+    val todayHeight = maxOf(
+        WidgetLayout.todayRowHeight(scale),
+        (todayPaint.fontMetrics.bottom - todayPaint.fontMetrics.top) / context.resources.displayMetrics.density + 4f,
+    )
+    Row(
+        GlanceModifier.fillMaxWidth().height(48.dp).semantics {
+            contentDescription = listOfNotNull(
+                description(context, state),
+                projectText(context, state),
+                state.paused?.let { context.getString(R.string.widget_paused_label) },
+            ).joinToString(", ")
+        },
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         Column(GlanceModifier.defaultWeight()) {
-            Label(if (state.paused != null) context.getString(R.string.widget_paused_entry, description(context, state)) else description(context, state), if (large) 17f else 16f)
-            if (large && scale < 1.5f && active) ProjectLine(projectText(context, state) ?: context.getString(R.string.widget_no_project), projectColor(state), 12f)
+            Label(
+                if (state.paused != null) {
+                    context.getString(
+                        R.string.widget_paused_entry,
+                        description(context, state),
+                    )
+                } else {
+                    description(context, state)
+                },
+                if (large) 17f else 16f,
+            )
+            if (large && scale < 1.5f && active) {
+                ProjectLine(
+                    projectText(context, state) ?: context.getString(R.string.widget_no_project),
+                    projectColor(state),
+                    12f,
+                )
+            }
         }
         Spacer(GlanceModifier.width(8.dp))
         if (state.running?.pausable == true) {
-            Control(context.getString(R.string.widget_pause_description), UiR.drawable.ic_pause, pauseTimer(state.running.target), 48f, GlanceTheme.colors.surfaceVariant, GlanceTheme.colors.onSurface)
+            Control(
+                context.getString(R.string.widget_pause_description),
+                UiR.drawable.ic_pause,
+                pauseTimer(state.running.target),
+                48f,
+                GlanceTheme.colors.surfaceVariant,
+                GlanceTheme.colors.onSurface,
+            )
             Spacer(GlanceModifier.width(8.dp))
         } else if (state.paused != null) {
-            Control(context.getString(R.string.widget_stop_description), UiR.drawable.ic_stop, stopTimer(state.paused.target), 48f, GlanceTheme.colors.surfaceVariant, GlanceTheme.colors.onSurface)
+            Control(
+                context.getString(R.string.widget_stop_description),
+                UiR.drawable.ic_stop,
+                stopTimer(state.paused.target),
+                48f,
+                GlanceTheme.colors.surfaceVariant,
+                GlanceTheme.colors.onSurface,
+            )
             Spacer(GlanceModifier.width(8.dp))
         }
         PrimaryControl(context, state, 48f)
@@ -156,7 +223,15 @@ private fun ColumnScope.TimerCard(context: Context, state: WidgetState.Ready, ki
             TimerClock(context, state, if (large) 34f else 22f, if (large) width else width * .55f)
             if (!large) {
                 Spacer(GlanceModifier.width(8.dp))
-                Box(GlanceModifier.defaultWeight()) { ProjectLine(projectText(context, state) ?: context.getString(R.string.widget_no_project), projectColor(state), 12f) }
+                Box(
+                    GlanceModifier.defaultWeight(),
+                ) {
+                    ProjectLine(
+                        projectText(context, state) ?: context.getString(R.string.widget_no_project),
+                        projectColor(state),
+                        12f,
+                    )
+                }
             }
         }
     }
@@ -166,15 +241,32 @@ private fun ColumnScope.TimerCard(context: Context, state: WidgetState.Ready, ki
     val day = state.day
     val reportAction = actionStartActivity(WidgetNavigation.intent(context, WidgetNavigation.OPEN_TODAY))
     val templates = large && state.favorites.isNotEmpty()
-    val count = timerWidgetProjectRows(LocalSize.current.height.value, kind, scale, active, templates, clockHeight, todayHeight)
+    val count = timerWidgetProjectRows(
+        LocalSize.current.height.value,
+        kind,
+        scale,
+        active,
+        templates,
+        clockHeight,
+        todayHeight,
+    )
     val segments = timerWidgetSegments(day?.projects.orEmpty())
     Column(GlanceModifier.fillMaxWidth().clickable(reportAction)) {
         if (large) {
-            Row(GlanceModifier.fillMaxWidth().height(WidgetLayout.reportHeadingHeight(scale).dp).semantics { contentDescription = context.getString(R.string.widget_open_report_description) }, verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                GlanceModifier.fillMaxWidth().height(
+                    WidgetLayout.reportHeadingHeight(scale).dp,
+                ).semantics { contentDescription = context.getString(R.string.widget_open_report_description) },
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Label(context.getString(R.string.widget_today), 11f, muted = true)
                 if (scale < 1.5f) {
                     Spacer(GlanceModifier.width(8.dp))
-                    Label(day?.date?.format(DateTimeFormatter.ofPattern("EEE d MMM", Locale.ENGLISH)).orEmpty(), 11f, muted = true)
+                    Label(
+                        day?.date?.format(DateTimeFormatter.ofPattern("EEE d MMM", Locale.ENGLISH)).orEmpty(),
+                        11f,
+                        muted = true,
+                    )
                 }
                 Spacer(GlanceModifier.defaultWeight())
                 Label(context.getString(R.string.widget_open_report), 11f, color = GlanceTheme.colors.primary)
@@ -191,10 +283,21 @@ private fun ColumnScope.TimerCard(context: Context, state: WidgetState.Ready, ki
                         Label(context.getString(R.string.widget_billable), 10f, muted = true)
                     }
                     if (day?.running?.billable == true) {
-                        Elapsed(context, day.running.start, day.stoppedBillableSeconds, 16f, width / 3 - 6,
-                            context.getString(R.string.widget_billable))
+                        Elapsed(
+                            context,
+                            day.running.start,
+                            day.stoppedBillableSeconds,
+                            16f,
+                            width / 3 - 6,
+                            context.getString(R.string.widget_billable),
+                        )
                     } else {
-                        StaticDuration(context, day?.formattedBillable(Instant.now()) ?: formatDuration(0), 16f, width / 3 - 6)
+                        StaticDuration(
+                            context,
+                            day?.formattedBillable(Instant.now()) ?: formatDuration(0),
+                            16f,
+                            width / 3 - 6,
+                        )
                     }
                 }
                 Column(GlanceModifier.defaultWeight()) {
@@ -203,7 +306,12 @@ private fun ColumnScope.TimerCard(context: Context, state: WidgetState.Ready, ki
                 }
             }
         } else {
-            Row(GlanceModifier.fillMaxWidth().height(todayHeight.dp).semantics { contentDescription = context.getString(R.string.widget_open_report_description) }, verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                GlanceModifier.fillMaxWidth().height(
+                    todayHeight.dp,
+                ).semantics { contentDescription = context.getString(R.string.widget_open_report_description) },
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Label(context.getString(R.string.widget_today), 11f, muted = true)
                 Spacer(GlanceModifier.defaultWeight())
                 DayClock(context, day, 18f, width - 64 * scale)
@@ -216,7 +324,16 @@ private fun ColumnScope.TimerCard(context: Context, state: WidgetState.Ready, ki
             val other = index == WidgetLayout.MAX_SEGMENTS - 1 && day!!.projects.size > WidgetLayout.MAX_SEGMENTS
             ProjectRow(context, project, day, other, large, width, scale)
         }
-        if (billableRow) Label(context.getString(R.string.widget_billable_total, day?.formattedBillable(Instant.now()) ?: formatDuration(0)), 12f, muted = true)
+        if (billableRow) {
+            Label(
+                context.getString(
+                    R.string.widget_billable_total,
+                    day?.formattedBillable(Instant.now()) ?: formatDuration(0),
+                ),
+                12f,
+                muted = true,
+            )
+        }
     }
     if (templates) {
         Spacer(GlanceModifier.defaultWeight())

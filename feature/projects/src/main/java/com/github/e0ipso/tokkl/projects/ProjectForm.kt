@@ -24,17 +24,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
-import com.github.e0ipso.tokkl.feature.projects.R
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.cache.CachedClient
 import com.github.e0ipso.tokkl.catalog.ProblemBanner
 import com.github.e0ipso.tokkl.catalog.ServerNeededNotice
 import com.github.e0ipso.tokkl.catalog.ServerProblem
+import com.github.e0ipso.tokkl.feature.projects.R
 import com.github.e0ipso.tokkl.ui.CheckboxOptionRow
 import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.util.Locale
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 
 /**
  * The project form, as the web app's ProjectEditor: name, colour, client, hourly rate, currency,
@@ -99,6 +99,7 @@ private fun FormFields(
                 mistakes = emptyMap()
                 onSave(check.fields)
             }
+
             is DraftCheck.Invalid -> {
                 mistakes = check.mistakes
                 focus.getValue(check.mistakes.keys.first()).requestFocus()
@@ -124,7 +125,10 @@ private fun FormFields(
             label = R.string.project_name,
             mistake = mistakes[ProjectField.NAME],
             focus = focus.getValue(ProjectField.NAME),
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Next),
+            keyboardOptions = KeyboardOptions(
+                capitalization = KeyboardCapitalization.Sentences,
+                imeAction = ImeAction.Next,
+            ),
         )
         ColourField(
             color = color,

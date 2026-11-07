@@ -14,7 +14,6 @@ import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.orFail
-import java.io.File
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonNull
@@ -27,6 +26,7 @@ import org.junit.Assert.assertTrue
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
+import java.io.File
 
 /**
  * The account's default workspace survives a restart of the app process, so a timer started
@@ -78,7 +78,11 @@ class DefaultWorkspaceRestartTest {
             AirplaneMode.set(true, client)
             assertEquals("read from the phone", workspace.toLong(), app.accountSettings.state.value?.defaultWorkspaceId)
             runBlocking { app.accountRefresh.refresh().join() }
-            assertEquals("a failed refresh keeps it", workspace.toLong(), app.accountSettings.state.value?.defaultWorkspaceId)
+            assertEquals(
+                "a failed refresh keeps it",
+                workspace.toLong(),
+                app.accountSettings.state.value?.defaultWorkspaceId,
+            )
 
             val stored = checkNotNull(app.accountSettings.state.value?.defaultWorkspaceId)
             val id = runBlocking { app.changes.start(stored, EntryFields(description = "Started offline")) }
@@ -99,7 +103,11 @@ class DefaultWorkspaceRestartTest {
         try {
             assertNotEquals("the step before ran in this same process", previous, currentProcess())
             assertTrue("the step before queued an entry", lines.size == 5)
-            assertEquals("read after a second restart", workspace.toLong(), app.accountSettings.state.value?.defaultWorkspaceId)
+            assertEquals(
+                "read after a second restart",
+                workspace.toLong(),
+                app.accountSettings.state.value?.defaultWorkspaceId,
+            )
             AirplaneMode.set(false, client)
             val deadline = System.nanoTime() + SEND_TIMEOUT_NANOS
             while (runBlocking { app.changes.unsentCount.first() } > 0) {
@@ -108,7 +116,10 @@ class DefaultWorkspaceRestartTest {
             }
 
             val serverId = runBlocking { app.changes.currentId(lines[4].toLong()) }
-            val entry = client.get(client.server.api("me", "time_entries", serverId.toString()), JsonObject.serializer())
+            val entry = client.get(
+                client.server.api("me", "time_entries", serverId.toString()),
+                JsonObject.serializer(),
+            )
                 .orFail("GET /api/v9/me/time_entries/<id>")
             assertEquals("Started offline", entry.getValue("description").jsonPrimitive.content)
             assertEquals("the default workspace", workspace.toLong(), entry.getValue("workspace_id").jsonPrimitive.long)

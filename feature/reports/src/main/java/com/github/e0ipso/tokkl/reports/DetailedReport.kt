@@ -29,4 +29,5 @@ data class DetailedPage(val entries: List<DetailedEntry>, val nextRow: Int?)
  * detailed report sorts them by default. [nextRow] is where the next page starts, null once the
  * server sent the last one, and [loadingMore] is true while that page is on its way.
  */
-data class DetailedReport(val entries: List<DetailedEntry>, val nextRow: Int?, val loadingMore: Boolean = false) : Report
+data class DetailedReport(val entries: List<DetailedEntry>, val nextRow: Int?, val loadingMore: Boolean = false) :
+    Report

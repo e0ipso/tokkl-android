@@ -1,8 +1,8 @@
 package com.github.e0ipso.tokkl
 
-import java.time.Clock
 import org.koin.core.module.Module
 import org.koin.dsl.module
+import java.time.Clock
 
 /**
  * The app as the instrumented tests run it: [TokklApplication] with a [TestClock] as the app's

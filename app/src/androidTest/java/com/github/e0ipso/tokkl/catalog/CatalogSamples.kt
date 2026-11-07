@@ -22,16 +22,28 @@ import com.github.e0ipso.tokkl.projects.Project as CatalogProject
  */
 object CatalogSamples {
 
-    val CACHED_CLIENTS = listOf(CachedClient(1, 7, "Acme", archived = false), CachedClient(2, 7, "Gone", archived = true))
+    val CACHED_CLIENTS = listOf(
+        CachedClient(1, 7, "Acme", archived = false),
+        CachedClient(2, 7, "Gone", archived = true),
+    )
 
     val PROJECTS = listOf(
         CatalogProject(11, 7, "Tokkl for Android", "#0b83d9", clientId = 1, clientName = "Acme", billable = true, rate = 65.0, currency = "EUR", estimatedHours = 120.0),
         CatalogProject(12, 7, "Graffiti wall", "#d94182"),
-        CatalogProject(13, 7, "Surf shop site with a long name that wraps", "#2da608", clientId = 1, clientName = "Acme"),
+        CatalogProject(
+            13,
+            7,
+            "Surf shop site with a long name that wraps",
+            "#2da608",
+            clientId = 1,
+            clientName = "Acme",
+        ),
         CatalogProject(14, 7, "Old site", "#525266", clientId = 2, clientName = "Gone", active = false),
     )
 
-    val PROJECTS_LOADED = CatalogState<ProjectsData, ProjectForm>(data = ProjectsData(PROJECTS, WorkspaceDefaults("EUR", 50.0)))
+    val PROJECTS_LOADED = CatalogState<ProjectsData, ProjectForm>(
+        data = ProjectsData(PROJECTS, WorkspaceDefaults("EUR", 50.0)),
+    )
 
     /** Tasks of the first project: an open one, one with a name long enough to wrap, and a done one. */
     val TASKS = listOf(
@@ -43,7 +55,12 @@ object CatalogSamples {
     val TASKS_LOADED = CatalogState<TasksData, TaskOverlay>(data = TasksData(TASKS))
 
     val CLIENTS = listOf(
-        Client(1, 7, "Acme", notes = "Pays late, so send the invoice on the first of the month and chase it on the tenth."),
+        Client(
+            1,
+            7,
+            "Acme",
+            notes = "Pays late, so send the invoice on the first of the month and chase it on the tenth.",
+        ),
         Client(3, 7, "Surf school"),
         Client(2, 7, "Gone", archived = true),
     )

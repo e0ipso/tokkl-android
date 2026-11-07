@@ -19,8 +19,6 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.feature.timer.R
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
@@ -33,12 +31,11 @@ import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timerstate.continueLast
-import java.time.Instant
-import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonArray
@@ -59,6 +56,9 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.Instant
+import java.time.temporal.ChronoUnit
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 
 /**
  * Continue against the real Tokkl container, in the real activity (docs/PRD.md T2). The history's
@@ -106,15 +106,27 @@ class ContinueServerTest {
     fun continueFromTheHistoryInAirplaneModeStartsTheEntryAgainAndReachesTheServer() {
         val (project, task) = projectWithTask()
         val stop = Instant.now().truncatedTo(ChronoUnit.MINUTES).minus(2, ChronoUnit.HOURS)
-        postEntry("Paint the wall", project, task, listOf("outdoor", "spray"), billable = true, stop.minus(45, ChronoUnit.MINUTES), stop)
+        postEntry(
+            "Paint the wall",
+            project,
+            task,
+            listOf("outdoor", "spray"),
+            billable = true,
+            stop.minus(45, ChronoUnit.MINUTES),
+            stop,
+        )
         val running = account.createEntry("Answer email", Instant.now().minus(10, ChronoUnit.MINUTES))
         runBlocking { app.accountRefresh.refresh().join() }
 
         ActivityScenario.launch(MainActivity::class.java).use {
             composeRule.awaitTimerPage(LOAD_TIMEOUT_MS)
-            val continueButton = hasContentDescription(context.getString(R.string.history_continue, "Paint the wall")) and hasClickAction()
+            val continueButton = hasContentDescription(
+                context.getString(R.string.history_continue, "Paint the wall"),
+            ) and hasClickAction()
             composeRule.waitUntil("the entry shows with its Continue button", LOAD_TIMEOUT_MS) {
-                composeRule.onAllNodes(continueButton and hasAnyAncestor(hasScrollToKeyAction())).fetchSemanticsNodes().size == 1
+                composeRule.onAllNodes(
+                    continueButton and hasAnyAncestor(hasScrollToKeyAction()),
+                ).fetchSemanticsNodes().size == 1
             }
             AirplaneMode.set(true, web)
 
@@ -122,7 +134,9 @@ class ContinueServerTest {
 
             composeRule.waitUntil("the timer runs the continued entry at once, offline", LOAD_TIMEOUT_MS) {
                 runBlocking { app.cache.running.first() }?.entry?.description == "Paint the wall" &&
-                    composeRule.onAllNodes(hasContentDescription(context.getString(SharedR.string.timer_stop_spoken)) and hasClickAction())
+                    composeRule.onAllNodes(
+                        hasContentDescription(context.getString(SharedR.string.timer_stop_spoken)) and hasClickAction(),
+                    )
                         .fetchSemanticsNodes().size == 1
             }
             val continued = runBlocking { app.cache.running.first() }!!.entry
@@ -140,7 +154,10 @@ class ContinueServerTest {
         assertEquals("Paint the wall", current.string("description"))
         assertEquals(project, current.getValue("project_id").jsonPrimitive.long)
         assertEquals(task, current.getValue("task_id").jsonPrimitive.long)
-        assertEquals(setOf("outdoor", "spray"), current.getValue("tags").jsonArray.map { it.jsonPrimitive.content }.toSet())
+        assertEquals(
+            setOf("outdoor", "spray"),
+            current.getValue("tags").jsonArray.map { it.jsonPrimitive.content }.toSet(),
+        )
         assertEquals("true", current.string("billable"))
         assertTrue("the entry that ran has stopped", account.entry(running)["stop"] !is JsonNull)
     }
@@ -153,15 +170,27 @@ class ContinueServerTest {
     @Test
     fun continueWhileADescriptionIsTypedKeepsTheContinuedEntrysDescription() {
         val stop = Instant.now().truncatedTo(ChronoUnit.MINUTES).minus(2, ChronoUnit.HOURS)
-        postEntry("Paint the wall", project = null, task = null, tags = emptyList(), billable = false, stop.minus(45, ChronoUnit.MINUTES), stop)
+        postEntry(
+            "Paint the wall",
+            project = null,
+            task = null,
+            tags = emptyList(),
+            billable = false,
+            stop.minus(45, ChronoUnit.MINUTES),
+            stop,
+        )
         val running = account.createEntry("Answer email", Instant.now().minus(10, ChronoUnit.MINUTES))
         runBlocking { app.accountRefresh.refresh().join() }
 
         ActivityScenario.launch(MainActivity::class.java).use {
             composeRule.awaitTimerPage(LOAD_TIMEOUT_MS)
-            val continueButton = hasContentDescription(context.getString(R.string.history_continue, "Paint the wall")) and hasClickAction()
+            val continueButton = hasContentDescription(
+                context.getString(R.string.history_continue, "Paint the wall"),
+            ) and hasClickAction()
             composeRule.waitUntil("the entry shows with its Continue button", LOAD_TIMEOUT_MS) {
-                composeRule.onAllNodes(continueButton and hasAnyAncestor(hasScrollToKeyAction())).fetchSemanticsNodes().size == 1
+                composeRule.onAllNodes(
+                    continueButton and hasAnyAncestor(hasScrollToKeyAction()),
+                ).fetchSemanticsNodes().size == 1
             }
             val description = hasSetTextAction() and hasText(context.getString(SharedR.string.entry_description))
             composeRule.waitUntil("the running entry's description shows", LOAD_TIMEOUT_MS) {
@@ -178,13 +207,17 @@ class ContinueServerTest {
             // Once the server has the start, the timer shows the cache's entry, not the tap's.
             sendTheQueue()
             composeRule.waitUntil("the timer shows every change sent", LOAD_TIMEOUT_MS) {
-                composeRule.onAllNodes(hasText(context.getString(R.string.history_unsent), ignoreCase = true)).fetchSemanticsNodes().isEmpty()
+                composeRule.onAllNodes(
+                    hasText(context.getString(R.string.history_unsent), ignoreCase = true),
+                ).fetchSemanticsNodes().isEmpty()
             }
             composeRule.onNode(description).performImeAction()
             sendTheQueue()
 
             assertEquals("Paint the wall", runBlocking { app.cache.running.first() }?.entry?.description)
-            val shown = composeRule.onNode(description).fetchSemanticsNode().config[SemanticsProperties.EditableText].text
+            val shown = composeRule.onNode(
+                description,
+            ).fetchSemanticsNode().config[SemanticsProperties.EditableText].text
             assertEquals("the description field shows the continued entry's", "Paint the wall", shown)
         }
 
@@ -198,8 +231,24 @@ class ContinueServerTest {
     fun continueLastInAirplaneModeStartsTheLatestStoppedEntryAndReachesTheServer() {
         val (project, task) = projectWithTask()
         val stop = Instant.now().truncatedTo(ChronoUnit.MINUTES).minus(1, ChronoUnit.HOURS)
-        postEntry("Earlier work", project = null, task = null, tags = emptyList(), billable = false, stop.minus(3, ChronoUnit.HOURS), stop.minus(2, ChronoUnit.HOURS))
-        postEntry("Latest work", project, task, listOf("deep"), billable = true, stop.minus(30, ChronoUnit.MINUTES), stop)
+        postEntry(
+            "Earlier work",
+            project = null,
+            task = null,
+            tags = emptyList(),
+            billable = false,
+            stop.minus(3, ChronoUnit.HOURS),
+            stop.minus(2, ChronoUnit.HOURS),
+        )
+        postEntry(
+            "Latest work",
+            project,
+            task,
+            listOf("deep"),
+            billable = true,
+            stop.minus(30, ChronoUnit.MINUTES),
+            stop,
+        )
         runBlocking { app.accountRefresh.refresh().join() }
         AirplaneMode.set(true, web)
 
@@ -245,27 +294,28 @@ class ContinueServerTest {
         billable: Boolean,
         start: Instant,
         stop: Instant,
-    ): Long =
-        web.send(
-            "POST",
-            web.server.api("workspaces", account.workspaceId.toString(), "time_entries"),
-            buildJsonObject {
-                put("workspace_id", account.workspaceId)
-                put("created_with", "tokkl-android tests")
-                put("description", description)
-                if (project != null) put("project_id", project)
-                if (task != null) put("task_id", task)
-                put("tags", JsonArray(tags.map(::JsonPrimitive)))
-                put("billable", billable)
-                put("start", start.toString())
-                put("stop", stop.toString())
-            },
-            JsonObject.serializer(),
-        ).orFail("POST an entry").getValue("id").jsonPrimitive.long
+    ): Long = web.send(
+        "POST",
+        web.server.api("workspaces", account.workspaceId.toString(), "time_entries"),
+        buildJsonObject {
+            put("workspace_id", account.workspaceId)
+            put("created_with", "tokkl-android tests")
+            put("description", description)
+            if (project != null) put("project_id", project)
+            if (task != null) put("task_id", task)
+            put("tags", JsonArray(tags.map(::JsonPrimitive)))
+            put("billable", billable)
+            put("start", start.toString())
+            put("stop", stop.toString())
+        },
+        JsonObject.serializer(),
+    ).orFail("POST an entry").getValue("id").jsonPrimitive.long
 
     /** The server's running entry. */
-    private fun currentEntry(): JsonObject =
-        web.get(web.server.api("me", "time_entries", "current"), JsonObject.serializer()).orFail("GET /api/v9/me/time_entries/current")
+    private fun currentEntry(): JsonObject = web.get(
+        web.server.api("me", "time_entries", "current"),
+        JsonObject.serializer(),
+    ).orFail("GET /api/v9/me/time_entries/current")
 
     /** Sends the queue until it is empty, as the next refresh would. */
     private fun sendTheQueue() {

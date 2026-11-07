@@ -2,9 +2,9 @@ package com.github.e0ipso.tokkl.timerstate
 
 import com.github.e0ipso.tokkl.cache.ChangeSender
 import com.github.e0ipso.tokkl.session.Session
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Opens and ends the timer event stream's calls for [TimerSync], which hands them the account's

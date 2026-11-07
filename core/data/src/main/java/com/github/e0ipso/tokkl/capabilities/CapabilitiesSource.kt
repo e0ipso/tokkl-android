@@ -4,7 +4,6 @@ import com.github.e0ipso.tokkl.api.Me
 import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.storage.ValueStore
-import java.io.IOException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,6 +12,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import java.io.IOException
 
 /**
  * The server's capabilities for the whole process, and the one place features read them from.
@@ -73,10 +73,12 @@ class CapabilitiesSource(private val store: ValueStore<Capabilities>) {
     fun csvMissing(kind: ReportCsvKind) {
         val current = loaded.state.value
         if (!current.supports(kind)) return
-        update(when (kind) {
-            ReportCsvKind.SUMMARY -> current.copy(summaryCsv = false)
-            ReportCsvKind.DETAILED -> current.copy(detailedCsv = false)
-        })
+        update(
+            when (kind) {
+                ReportCsvKind.SUMMARY -> current.copy(summaryCsv = false)
+                ReportCsvKind.DETAILED -> current.copy(detailedCsv = false)
+            },
+        )
     }
 
     /**

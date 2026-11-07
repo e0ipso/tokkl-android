@@ -37,4 +37,6 @@ suspend fun EntryChanges.continueEntry(source: CachedTimeEntry): Long = start(so
  * surface without the history, such as the Quick Settings tile (docs/PRD.md N4). Returns the new
  * entry's local id, or null when no entry is stopped.
  */
-suspend fun EntryChanges.continueLast(entries: List<CachedTimeEntry>): Long? = lastStopped(entries)?.let { continueEntry(it) }
+suspend fun EntryChanges.continueLast(entries: List<CachedTimeEntry>): Long? = lastStopped(
+    entries,
+)?.let { continueEntry(it) }

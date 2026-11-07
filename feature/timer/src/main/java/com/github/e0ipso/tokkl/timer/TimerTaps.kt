@@ -11,9 +11,9 @@ import com.github.e0ipso.tokkl.entryfields.entryLabels
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.timerstate.TimerControls
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
+import kotlinx.coroutines.CompletableDeferred
 import java.time.Instant
 import java.time.temporal.ChronoUnit
-import kotlinx.coroutines.CompletableDeferred
 
 /** The controls, once read. */
 internal sealed interface CachedControls {
@@ -31,7 +31,13 @@ internal data class TimerTaps(
 )
 
 /** [fields] for the running entry that started at [start], shown until the cache has them. [sent] once queued. */
-internal data class FieldEdit(val entryId: Long, val workspaceId: Long, val start: Instant, val fields: EntryFields, val sent: Boolean)
+internal data class FieldEdit(
+    val entryId: Long,
+    val workspaceId: Long,
+    val start: Instant,
+    val fields: EntryFields,
+    val sent: Boolean,
+)
 
 /** An [edit] not queued yet for the active [identity], which a Continue or a favorite stops. */
 internal data class TypedEdit(val identity: RunningEntryIdentity, val edit: FieldEdit)
@@ -54,10 +60,20 @@ internal sealed interface PendingTap {
  * What the timer shows for the [cached] controls and what the [taps] did that the controls may not
  * show yet, without labels.
  */
-internal fun timerState(cached: CachedControls, defaultWorkspaceId: Long?, taps: TimerTaps, pauseOffered: Boolean): TimerState {
+internal fun timerState(
+    cached: CachedControls,
+    defaultWorkspaceId: Long?,
+    taps: TimerTaps,
+    pauseOffered: Boolean,
+): TimerState {
     if (cached !is CachedControls.Read) return TimerState.Loading
     val controls = cached.controls
-    val idle = TimerState.Idle(taps.draft, EntryLabels(), defaultWorkspaceId, authoritative = controls == TimerControls.Idle && taps.pending == null)
+    val idle = TimerState.Idle(
+        taps.draft,
+        EntryLabels(),
+        defaultWorkspaceId,
+        authoritative = controls == TimerControls.Idle && taps.pending == null,
+    )
     when (val pending = taps.pending) {
         // The cache's entry shows once the start has settled, with an id that Stop can take.
         is PendingTap.Starting -> return TimerState.Running(
@@ -71,12 +87,15 @@ internal fun timerState(cached: CachedControls, defaultWorkspaceId: Long?, taps:
             // A tap on it waits for the cache's entry, as every tap during a Start does.
             pausable = pauseOffered,
         )
+
         is PendingTap.Stopping -> if (controls.runningEntry()?.start == pending.start) return idle
+
         // The timer shows what it showed until the server's answer reaches the controls.
         is PendingTap.Acting, null -> Unit
     }
     return when (controls) {
         TimerControls.Idle -> idle
+
         is TimerControls.Paused -> TimerState.Paused(
             workspaceId = controls.workspaceId,
             seconds = controls.seconds,
@@ -85,6 +104,7 @@ internal fun timerState(cached: CachedControls, defaultWorkspaceId: Long?, taps:
             original = Picked(controls.fields.projectId, controls.fields.taskId, controls.fields.tags),
             target = controls.target,
         )
+
         is TimerControls.Running -> {
             val entry = controls.entry
             val cachedFields = entry.fields()

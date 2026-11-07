@@ -16,11 +16,11 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import kotlin.math.abs
-import kotlin.math.roundToInt
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import kotlin.math.abs
+import kotlin.math.roundToInt
 
 /** The card's 2dp frame and 3dp hard shadow, including the pixels outside its bounds. */
 class StickerCardTest {

@@ -8,16 +8,16 @@ import com.github.e0ipso.tokkl.time.formatDurationWithoutSeconds
 import com.github.e0ipso.tokkl.time.formatTime
 import com.github.e0ipso.tokkl.time.isTwelveHourFormat
 import com.github.e0ipso.tokkl.time.parseTimeZone
-import java.time.Clock
-import java.time.DayOfWeek
-import java.time.Instant
-import java.time.ZoneId
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.doubleOrNull
+import java.time.Clock
+import java.time.DayOfWeek
+import java.time.Instant
+import java.time.ZoneId
 
 /**
  * The settings that decide how the app shows and reads times: those from `GET /api/v9/me`
@@ -89,10 +89,9 @@ data class AccountSettings(
 }
 
 /** The account settings, or null when `beginning_of_week` is not a day from 0 to 6. */
-fun Me.accountSettings(): AccountSettings? =
-    dayOfWeek(beginningOfWeek)?.let {
-        AccountSettings(timezone, it, timeResolutionMinutes, defaultWorkspaceId = defaultWorkspaceId, userId = id)
-    }
+fun Me.accountSettings(): AccountSettings? = dayOfWeek(beginningOfWeek)?.let {
+    AccountSettings(timezone, it, timeResolutionMinutes, defaultWorkspaceId = defaultWorkspaceId, userId = id)
+}
 
 /**
  * One `GET /api/v9/me/preferences` answer. A refresh asks for it once and hands it to each
@@ -142,8 +141,7 @@ class MePreferences(val body: JsonObject) {
 }
 
 /** The day Toggl numbers [number], from 0 for Sunday to 6 for Saturday, or null outside that. */
-internal fun dayOfWeek(number: Int): DayOfWeek? =
-    if (number in 0..6) DayOfWeek.SUNDAY.plus(number.toLong()) else null
+internal fun dayOfWeek(number: Int): DayOfWeek? = if (number in 0..6) DayOfWeek.SUNDAY.plus(number.toLong()) else null
 
 /** Toggl's number for this day, from 0 for Sunday to 6 for Saturday. */
 internal val DayOfWeek.togglNumber: Int

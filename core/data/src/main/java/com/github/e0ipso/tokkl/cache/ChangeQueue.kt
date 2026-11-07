@@ -1,12 +1,12 @@
 package com.github.e0ipso.tokkl.cache
 
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import kotlin.coroutines.CoroutineContext
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.withContext
 
 /**
  * Starts, stops, creates, edits and deletes time entries on the phone (docs/PRD.md O1). Each call
@@ -112,7 +112,13 @@ class ChangeQueue(
      * [noTimeDay] (see [EntryChanges]). Returns its local id. Pass the account's
      * `AccountSettings.defaultWorkspaceId`, as for [start].
      */
-    override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant, noTimeDay: LocalDate?): Long {
+    override suspend fun create(
+        workspaceId: Long,
+        fields: EntryFields,
+        start: Instant,
+        stop: Instant,
+        noTimeDay: LocalDate?,
+    ): Long {
         require(!stop.isBefore(start)) { "The stop comes before the start." }
         return queue { queueCreate(workspaceId, fields, start, stop, noTimeDay) }
     }
@@ -124,7 +130,13 @@ class ChangeQueue(
      * Without it the entry is timed, so a null [noTimeDay] turns a no-time entry's times on, with
      * the caller's real [start] and [stop]. Returns false when the entry is not cached.
      */
-    override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?, noTimeDay: LocalDate?): Boolean {
+    override suspend fun update(
+        entryId: Long,
+        fields: EntryFields,
+        start: Instant,
+        stop: Instant?,
+        noTimeDay: LocalDate?,
+    ): Boolean {
         require(stop == null || !stop.isBefore(start)) { "The stop comes before the start." }
         require(noTimeDay == null || stop != null) { "A no-time entry never runs." }
         return queue {
@@ -139,20 +151,27 @@ class ChangeQueue(
         database.runInTransaction<CachedTimeEntry?> { activeEntry(identity) }
     }
 
-    override suspend fun updateRunning(identity: RunningEntryIdentity, fields: EntryFields, start: Instant): Boolean = queue {
-        val current = activeEntry(identity) ?: return@queue false
-        enqueue(ChangeKind.UPDATE, entry(current.id, current.workspaceId, fields, start, stop = null))
-        true
-    }
+    override suspend fun updateRunning(identity: RunningEntryIdentity, fields: EntryFields, start: Instant): Boolean =
+        queue {
+            val current = activeEntry(identity) ?: return@queue false
+            enqueue(ChangeKind.UPDATE, entry(current.id, current.workspaceId, fields, start, stop = null))
+            true
+        }
 
     private fun activeEntry(identity: RunningEntryIdentity): CachedTimeEntry? {
         val id = resolve(identity.entryId)
         // Match the cache's current-entry ordering, including a same-instant replacement.
-        val current = dao.runningEntries().maxWithOrNull(compareBy<CachedTimeEntry> { it.start }.thenBy { it.id }) ?: return null
+        val current = dao.runningEntries().maxWithOrNull(
+            compareBy<CachedTimeEntry> { it.start }.thenBy { it.id },
+        ) ?: return null
         if (current.id != id || current.workspaceId != identity.workspaceId) return null
         // Only a remapped local create may have lost fractional seconds in the server echo.
         val sameStart = current.start == identity.start ||
-            (id != identity.entryId && current.start == identity.start.truncatedTo(java.time.temporal.ChronoUnit.SECONDS))
+            (
+                id != identity.entryId && current.start == identity.start.truncatedTo(
+                    java.time.temporal.ChronoUnit.SECONDS,
+                )
+                )
         return current.takeIf { sameStart }
     }
 
@@ -175,7 +194,10 @@ class ChangeQueue(
         require(!stop.isBefore(start)) { "The stop comes before the start." }
         queue {
             val id = resolve(entryId)
-            enqueue(ChangeKind.UPDATE, entry(id, dao.entry(id)?.workspaceId ?: workspaceId, fields, start, stop, noTimeDay))
+            enqueue(
+                ChangeKind.UPDATE,
+                entry(id, dao.entry(id)?.workspaceId ?: workspaceId, fields, start, stop, noTimeDay),
+            )
         }
     }
 
@@ -189,14 +211,13 @@ class ChangeQueue(
      * Deletes the cached entry [entryId]. Returns false when it is missing or a delete is already
      * queued.
      */
-    override suspend fun delete(entryId: Long): Boolean =
-        queue {
-            val id = resolve(entryId)
-            if (dao.queuedDelete(id) != null) return@queue false
-            val current = dao.entry(id) ?: return@queue false
-            enqueue(ChangeKind.DELETE, current)
-            true
-        }
+    override suspend fun delete(entryId: Long): Boolean = queue {
+        val id = resolve(entryId)
+        if (dao.queuedDelete(id) != null) return@queue false
+        val current = dao.entry(id) ?: return@queue false
+        enqueue(ChangeKind.DELETE, current)
+        true
+    }
 
     /**
      * Resolves identity, prefers the current cache row and guards a duplicate in the same
@@ -223,16 +244,15 @@ class ChangeQueue(
      * any other keeps its row until the next refresh brings the server's. Returns false when the
      * change is not held.
      */
-    suspend fun discard(sequence: Long): Boolean =
-        queue {
-            val held = dao.change(sequence)?.takeIf { it.held } ?: return@queue false
-            dao.deleteFrom(held.entryId, held.sequence)
-            if (held.kind == ChangeKind.CREATE) {
-                dao.deleteEntry(held.entryId)
-                dao.deleteShortStop(held.entryId)
-            }
-            true
+    suspend fun discard(sequence: Long): Boolean = queue {
+        val held = dao.change(sequence)?.takeIf { it.held } ?: return@queue false
+        dao.deleteFrom(held.entryId, held.sequence)
+        if (held.kind == ChangeKind.CREATE) {
+            dao.deleteEntry(held.entryId)
+            dao.deleteShortStop(held.entryId)
         }
+        true
+    }
 
     /**
      * Runs [change] in one transaction on [io], then asks for the queue to be sent while it holds
@@ -253,7 +273,17 @@ class ChangeQueue(
      */
     private fun stopRunning(entryId: Long, fields: EntryFields?, at: Instant): Boolean {
         val running = dao.entry(resolve(entryId))?.takeIf { it.stop == null } ?: return false
-        val stopped = if (fields == null) running else entry(running.id, running.workspaceId, fields, running.start, stop = null)
+        val stopped = if (fields == null) {
+            running
+        } else {
+            entry(
+                running.id,
+                running.workspaceId,
+                fields,
+                running.start,
+                stop = null,
+            )
+        }
         if (stopped != running) enqueue(ChangeKind.UPDATE, stopped)
         stopAt(stopped, at)
         return true
@@ -277,7 +307,13 @@ class ChangeQueue(
      * post's lookup must not take for it (see [PendingChange.existingIds]). A no-time entry's
      * start is local midnight of [noTimeDay].
      */
-    private fun queueCreate(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant?, noTimeDay: LocalDate? = null): Long {
+    private fun queueCreate(
+        workspaceId: Long,
+        fields: EntryFields,
+        start: Instant,
+        stop: Instant?,
+        noTimeDay: LocalDate? = null,
+    ): Long {
         val margin = ChangeSender.LOOKUP_MARGIN
         val existing = dao.serverEntryIds(start.minus(margin), start.plus(margin))
         return enqueue(ChangeKind.CREATE, entry(id = 0, workspaceId, fields, start, stop, noTimeDay), existing)
@@ -297,7 +333,10 @@ class ChangeQueue(
         if (kind != ChangeKind.STOP && kind != ChangeKind.RESTORE) {
             dao.heldFor(entry.id)?.let { held -> return foldInto(held, kind, entry, capturedAt, shortStop) }
         }
-        val change = PendingChange.of(kind, entry).copy(existingIds = existingIds, capturedStop = capturedAt, shortStop = shortStop)
+        val change = PendingChange.of(
+            kind,
+            entry,
+        ).copy(existingIds = existingIds, capturedStop = capturedAt, shortStop = shortStop)
         val sequence = dao.insert(change)
         val queued = if (kind == ChangeKind.CREATE) {
             change.copy(sequence = sequence, entryId = -sequence).also(dao::update)
@@ -315,7 +354,13 @@ class ChangeQueue(
      * carries every field after them. A held create stays a create, as the server has no entry
      * yet, and a delete of it leaves nothing to send. Returns the entry's id.
      */
-    private fun foldInto(held: PendingChange, kind: ChangeKind, entry: CachedTimeEntry, capturedAt: Instant?, shortStop: Boolean): Long {
+    private fun foldInto(
+        held: PendingChange,
+        kind: ChangeKind,
+        entry: CachedTimeEntry,
+        capturedAt: Instant?,
+        shortStop: Boolean,
+    ): Long {
         // A captured Stop is a separate PATCH and cannot be replaced by the full fields of an
         // edit. Keep it and the later queue order if the user fixes an earlier held change.
         val laterCapturedStop = dao.changesFor(held.entryId).any {
@@ -337,8 +382,12 @@ class ChangeQueue(
         }
         val folded = PendingChange.of(if (held.kind == ChangeKind.CREATE) ChangeKind.CREATE else kind, entry)
             .copy(
-                sequence = held.sequence, entryId = held.entryId, maybeSent = held.maybeSent,
-                existingIds = existingIds, capturedStop = capturedAt, shortStop = shortStop,
+                sequence = held.sequence,
+                entryId = held.entryId,
+                maybeSent = held.maybeSent,
+                existingIds = existingIds,
+                capturedStop = capturedAt,
+                shortStop = shortStop,
             )
         dao.update(folded)
         val row = dao.changesFor(held.entryId).last().cachedEntry()
@@ -374,6 +423,5 @@ class ChangeQueue(
     }
 
     /** The server's id for a local id the server has answered, or [entryId] as it is. */
-    private fun resolve(entryId: Long): Long =
-        if (entryId < 0) dao.serverId(entryId) ?: entryId else entryId
+    private fun resolve(entryId: Long): Long = if (entryId < 0) dao.serverId(entryId) ?: entryId else entryId
 }

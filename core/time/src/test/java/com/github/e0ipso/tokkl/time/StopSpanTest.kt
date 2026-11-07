@@ -3,12 +3,12 @@
 // resolution is 5 minutes.
 package com.github.e0ipso.tokkl.time
 
-import java.time.Duration
-import java.time.Instant
-import java.time.ZoneId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test
+import java.time.Duration
+import java.time.Instant
+import java.time.ZoneId
 
 class StopSpanTest {
     private val utc = ZoneId.of("UTC")
@@ -20,15 +20,25 @@ class StopSpanTest {
         // 09:13:20 is nearer 09:15 than 09:10 at the default resolution of 5, so the first entry stops there.
         assertEquals(
             span("2026-10-14T08:00:00Z", "2026-10-14T09:15:00Z"),
-            stopSpan(Instant.parse("2026-10-14T08:00:00Z"), Instant.parse("2026-10-14T09:13:20Z"), 5.0, utc, oneStep = false),
+            stopSpan(
+                Instant.parse("2026-10-14T08:00:00Z"),
+                Instant.parse("2026-10-14T09:13:20Z"),
+                5.0,
+                utc,
+                oneStep = false,
+            ),
         )
     }
 
     @Test
     fun `a switch between timers is stored back to back on either side of a half step`() {
         for ((minutes, switchAt, stop) in listOf(
-            Triple(5, "09:12:00", "09:10:00"), Triple(5, "09:12:30", "09:15:00"), Triple(5, "09:13:00", "09:15:00"),
-            Triple(15, "09:22:00", "09:15:00"), Triple(15, "09:22:30", "09:30:00"), Triple(15, "09:23:00", "09:30:00"),
+            Triple(5, "09:12:00", "09:10:00"),
+            Triple(5, "09:12:30", "09:15:00"),
+            Triple(5, "09:13:00", "09:15:00"),
+            Triple(15, "09:22:00", "09:15:00"),
+            Triple(15, "09:22:30", "09:30:00"),
+            Triple(15, "09:23:00", "09:30:00"),
         )) {
             val at = Instant.parse("2026-10-14T${switchAt}Z")
             val old = stopSpan(Instant.parse("2026-10-14T09:00:00Z"), at, minutes.toDouble(), utc, oneStep = false)
@@ -43,7 +53,13 @@ class StopSpanTest {
     fun `a switch within half a step of the old start stores a zero-length entry`() {
         assertEquals(
             span("2026-10-14T09:00:00Z", "2026-10-14T09:00:00Z"),
-            stopSpan(Instant.parse("2026-10-14T09:00:40Z"), Instant.parse("2026-10-14T09:02:20Z"), 5.0, utc, oneStep = false),
+            stopSpan(
+                Instant.parse("2026-10-14T09:00:40Z"),
+                Instant.parse("2026-10-14T09:02:20Z"),
+                5.0,
+                utc,
+                oneStep = false,
+            ),
         )
     }
 
@@ -69,8 +85,14 @@ class StopSpanTest {
         val start = Instant.parse("2026-10-14T09:02:00Z")
         val at = Instant.parse("2026-10-14T08:40:00Z")
 
-        assertEquals(span("2026-10-14T09:00:00Z", "2026-10-14T09:00:00Z"), stopSpan(start, at, 5.0, utc, oneStep = false))
-        assertEquals(span("2026-10-14T09:00:00Z", "2026-10-14T09:05:00Z"), stopSpan(start, at, 5.0, utc, oneStep = true))
+        assertEquals(
+            span("2026-10-14T09:00:00Z", "2026-10-14T09:00:00Z"),
+            stopSpan(start, at, 5.0, utc, oneStep = false),
+        )
+        assertEquals(
+            span("2026-10-14T09:00:00Z", "2026-10-14T09:05:00Z"),
+            stopSpan(start, at, 5.0, utc, oneStep = true),
+        )
     }
 
     @Test
@@ -87,7 +109,13 @@ class StopSpanTest {
         // Kolkata is UTC+05:30, so its hourly grid falls on the half hour in UTC.
         assertEquals(
             span("2026-10-18T10:30:00Z", "2026-10-18T12:30:00Z"),
-            stopSpan(Instant.parse("2026-10-18T10:10:00Z"), Instant.parse("2026-10-18T12:50:00Z"), 60.0, ZoneId.of("Asia/Kolkata"), oneStep = true),
+            stopSpan(
+                Instant.parse("2026-10-18T10:10:00Z"),
+                Instant.parse("2026-10-18T12:50:00Z"),
+                60.0,
+                ZoneId.of("Asia/Kolkata"),
+                oneStep = true,
+            ),
         )
     }
 
@@ -100,8 +128,18 @@ class StopSpanTest {
             for (start in starts) {
                 for (offsetSeconds in listOf(0L, 45L, 150L, 899L, 3_725L, 7_201L)) {
                     for (oneStep in listOf(false, true)) {
-                        val stopped = stopSpan(start, start.plusSeconds(offsetSeconds), minutes.toDouble(), madrid, oneStep)
-                        assertEquals("R=$minutes $start +${offsetSeconds}s oneStep=$oneStep", stopped.takeIf { it.stop > it.start }, snapSpan(stopped.start, stopped.stop, minutes.toDouble(), madrid))
+                        val stopped = stopSpan(
+                            start,
+                            start.plusSeconds(offsetSeconds),
+                            minutes.toDouble(),
+                            madrid,
+                            oneStep,
+                        )
+                        assertEquals(
+                            "R=$minutes $start +${offsetSeconds}s oneStep=$oneStep",
+                            stopped.takeIf { it.stop > it.start },
+                            snapSpan(stopped.start, stopped.stop, minutes.toDouble(), madrid),
+                        )
                     }
                 }
             }
@@ -111,7 +149,9 @@ class StopSpanTest {
     @Test
     fun `a value that is not a time resolution throws, as snapSpan does`() {
         val start = Instant.parse("2026-10-14T09:00:00Z")
-        assertThrows(IllegalArgumentException::class.java) { stopSpan(start, start.plusSeconds(600), 7.0, utc, oneStep = true) }
+        assertThrows(
+            IllegalArgumentException::class.java,
+        ) { stopSpan(start, start.plusSeconds(600), 7.0, utc, oneStep = true) }
     }
 }
 
@@ -130,13 +170,20 @@ class SnapStopTest {
     @Test
     fun `a value that is not a time resolution leaves the tap time`() {
         for (minutes in listOf(0.0, -5.0, 7.0, 45.0, 90.0, 2.5, Double.NaN, Double.POSITIVE_INFINITY)) {
-            assertEquals(minutes.toString(), SnappedSpan(start, at), snapStop(start, at, minutes, madrid, oneStep = false))
+            assertEquals(
+                minutes.toString(),
+                SnappedSpan(start, at),
+                snapStop(start, at, minutes, madrid, oneStep = false),
+            )
         }
     }
 
     @Test
     fun `with a time resolution the entry stops like stopSpan`() {
-        assertEquals(stopSpan(start, at, 15.0, madrid, oneStep = true), snapStop(start, at, 15.0, madrid, oneStep = true))
+        assertEquals(
+            stopSpan(start, at, 15.0, madrid, oneStep = true),
+            snapStop(start, at, 15.0, madrid, oneStep = true),
+        )
         assertEquals(
             SnappedSpan(Instant.parse("2026-10-14T09:00:00Z"), Instant.parse("2026-10-14T09:30:00Z")),
             snapStop(start, at, 15.0, madrid, oneStep = true),

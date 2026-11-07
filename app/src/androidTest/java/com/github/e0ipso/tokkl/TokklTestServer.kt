@@ -80,19 +80,17 @@ object TokklTestServer {
         Properties().apply { load(DeviceShell.run("cat $path").reader()) }
     }
 
-    private fun credential(name: String): String =
-        credentials.getProperty(name)
-            ?: error(
-                "$name is missing from the file in tokklCredentialsFile. " +
-                    "Run the instrumented tests with scripts/instrumented-tests.sh, which writes it.",
-            )
+    private fun credential(name: String): String = credentials.getProperty(name)
+        ?: error(
+            "$name is missing from the file in tokklCredentialsFile. " +
+                "Run the instrumented tests with scripts/instrumented-tests.sh, which writes it.",
+        )
 
-    private fun argument(name: String): String =
-        InstrumentationRegistry.getArguments().getString(name)
-            ?: error(
-                "The instrumentation argument $name is missing. " +
-                    "Run the instrumented tests with scripts/instrumented-tests.sh, which starts the server.",
-            )
+    private fun argument(name: String): String = InstrumentationRegistry.getArguments().getString(name)
+        ?: error(
+            "The instrumentation argument $name is missing. " +
+                "Run the instrumented tests with scripts/instrumented-tests.sh, which starts the server.",
+        )
 }
 
 /**

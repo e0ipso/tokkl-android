@@ -85,12 +85,7 @@ fun snapInstant(at: Instant, minutes: Double, timeZone: ZoneId): Instant {
  * both ends are cut to whole seconds first, as Tokkl's server does before it snaps
  * (snapToResolution in ../tokkl/packages/api/src/models/timeEntries.ts).
  */
-fun snapUnsent(
-    start: Instant,
-    stop: Instant,
-    timeResolutionMinutes: Double?,
-    timeZone: ZoneId,
-): SnappedSpan? {
+fun snapUnsent(start: Instant, stop: Instant, timeResolutionMinutes: Double?, timeZone: ZoneId): SnappedSpan? {
     if (timeResolutionMinutes == null || !isTimeResolution(timeResolutionMinutes)) {
         return SnappedSpan(start, stop)
     }

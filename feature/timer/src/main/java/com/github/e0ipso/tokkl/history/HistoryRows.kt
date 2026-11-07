@@ -45,15 +45,14 @@ data class HistoryRow(val key: Long, val entries: List<HistoryEntry>) {
  * Array.join writes a null as an empty string and Boolean as true or false, and the tags join
  * with commas, so a tag named "a,b" matches the tags "a" and "b", as on the web app.
  */
-fun similarityKey(entry: HistoryEntry): String =
-    listOf(
-        entry.description,
-        entry.projectId?.toString().orEmpty(),
-        entry.taskId?.toString().orEmpty(),
-        entry.billable.toString(),
-        // JavaScript's sort() orders strings by UTF-16 code units, as String.compareTo does.
-        entry.tags.sorted().joinToString(","),
-    ).joinToString("\u0000")
+fun similarityKey(entry: HistoryEntry): String = listOf(
+    entry.description,
+    entry.projectId?.toString().orEmpty(),
+    entry.taskId?.toString().orEmpty(),
+    entry.billable.toString(),
+    // JavaScript's sort() orders strings by UTF-16 code units, as String.compareTo does.
+    entry.tags.sorted().joinToString(","),
+).joinToString("\u0000")
 
 /**
  * The rows of one day's [entries], newest first: with [collapse], the account's

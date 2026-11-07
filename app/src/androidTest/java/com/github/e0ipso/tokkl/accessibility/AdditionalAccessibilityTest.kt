@@ -21,8 +21,6 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.core.view.WindowCompat
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
-import com.github.e0ipso.tokkl.feature.sync.R as SyncR
 import com.github.e0ipso.tokkl.bottomBarItem
 import com.github.e0ipso.tokkl.cache.ChangeKind
 import com.github.e0ipso.tokkl.cache.PendingChange
@@ -34,8 +32,6 @@ import com.github.e0ipso.tokkl.sync.NeedsAttention
 import com.github.e0ipso.tokkl.sync.NeedsAttentionScreen
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import java.time.DayOfWeek
-import java.time.Instant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -47,6 +43,10 @@ import org.junit.Assert.assertFalse
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.DayOfWeek
+import java.time.Instant
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.feature.sync.R as SyncR
 
 /** More and the actual Needs attention screen, without server or account fixtures. */
 abstract class AdditionalAccessibilityTest(private val dark: Boolean) {
@@ -73,7 +73,10 @@ abstract class AdditionalAccessibilityTest(private val dark: Boolean) {
             }
         }
         val marker = bottomBarItem(SharedR.string.pomodoro_title) and
-            SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, context.getString(R.string.nav_pomodoro_running))
+            SemanticsMatcher.expectValue(
+                SemanticsProperties.StateDescription,
+                context.getString(R.string.nav_pomodoro_running),
+            )
         compose.onNode(marker).assertIsDisplayed()
         assertVisibleTextFits()
         compose.runOnIdle { running.value = false }
@@ -90,7 +93,13 @@ abstract class AdditionalAccessibilityTest(private val dark: Boolean) {
                 Text(context.getString(current.value.label))
             }
         }
-        for (page in listOf(TopLevelPage.REPORTS, TopLevelPage.TEMPLATES, TopLevelPage.CLIENTS, TopLevelPage.TAGS, TopLevelPage.TRASH)) {
+        for (page in listOf(
+            TopLevelPage.REPORTS,
+            TopLevelPage.TEMPLATES,
+            TopLevelPage.CLIENTS,
+            TopLevelPage.TAGS,
+            TopLevelPage.TRASH,
+        )) {
             compose.onNode(bottomBarItem(R.string.nav_more)).performClick()
             val choice = compose.onNode(hasText(context.getString(page.label)) and hasClickAction())
             choice.performScrollTo().assertIsDisplayed()
@@ -104,13 +113,21 @@ abstract class AdditionalAccessibilityTest(private val dark: Boolean) {
     @Test
     fun refusedChangesExposeTheirReasonAndReachableActionsAtMaximumSizes() {
         val held = MutableStateFlow(emptyList<PendingChange>())
-        val settings = MutableStateFlow<AccountSettings?>(AccountSettings(timeZone = "UTC", beginningOfWeek = DayOfWeek.MONDAY, timeResolutionMinutes = null))
+        val settings = MutableStateFlow<AccountSettings?>(
+            AccountSettings(timeZone = "UTC", beginningOfWeek = DayOfWeek.MONDAY, timeResolutionMinutes = null),
+        )
         var edited: Long? = null
         var resent: Long? = null
         val model = NeedsAttention(
             held = held,
-            release = { resent = it; true },
-            drop = { sequence -> held.value = held.value.filterNot { it.sequence == sequence }; true },
+            release = {
+                resent = it
+                true
+            },
+            drop = { sequence ->
+                held.value = held.value.filterNot { it.sequence == sequence }
+                true
+            },
             afterDiscard = {},
             scope = scope,
         )
@@ -131,7 +148,11 @@ abstract class AdditionalAccessibilityTest(private val dark: Boolean) {
             val reason = context.getString(SyncR.string.needs_attention_reason, checkNotNull(change.refusal))
             compose.onNodeWithText(reason).performScrollTo().assertIsDisplayed()
             assertVisibleTextFits()
-            val edit = compose.onNode(hasContentDescription(context.getString(SyncR.string.needs_attention_edit_named, change.description)) and hasClickAction())
+            val edit = compose.onNode(
+                hasContentDescription(
+                    context.getString(SyncR.string.needs_attention_edit_named, change.description),
+                ) and hasClickAction(),
+            )
             if (kind != ChangeKind.DELETE) {
                 edit.performScrollTo().assertIsDisplayed().performTouchInput { click() }
                 assertEquals(42L, edited)
@@ -164,7 +185,8 @@ abstract class AdditionalAccessibilityTest(private val dark: Boolean) {
     private fun assertVisibleTextFits() {
         compose.checkAccessibility()
         val nodes = compose.onAllNodes(
-            SemanticsMatcher.keyIsDefined(SemanticsActions.GetTextLayoutResult), useUnmergedTree = true,
+            SemanticsMatcher.keyIsDefined(SemanticsActions.GetTextLayoutResult),
+            useUnmergedTree = true,
         ).fetchSemanticsNodes()
         for (node in nodes) {
             val layouts = mutableListOf<TextLayoutResult>()

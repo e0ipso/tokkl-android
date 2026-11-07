@@ -16,9 +16,6 @@ import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.MePreferences
 import com.github.e0ipso.tokkl.storage.InMemoryValueStore
 import com.github.e0ipso.tokkl.time.DurationFormat
-import java.time.Clock
-import java.time.Instant
-import java.time.ZoneOffset
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.builtins.ListSerializer
@@ -33,6 +30,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
 
 /** What a refresh reads from a MockWebServer that answers like Tokkl. */
 class ServerReaderTest {
@@ -71,7 +71,13 @@ class ServerReaderTest {
         )
         val preferences = preferences("""{"date_format":"YYYY-MM-DD"}""")
 
-        val snapshot = readServerSnapshot(client, me("Pacific/Auckland"), preferences, Clock.fixed(NOW, ZoneOffset.UTC), favorites = true)
+        val snapshot = readServerSnapshot(
+            client,
+            me("Pacific/Auckland"),
+            preferences,
+            Clock.fixed(NOW, ZoneOffset.UTC),
+            favorites = true,
+        )
 
         val request = recorded("/api/v9/me/time_entries")
         assertEquals("2026-10-04T11:00:00Z", request.url.queryParameter("start_date"))
@@ -79,7 +85,11 @@ class ServerReaderTest {
         assertEquals(
             listOf(
                 CachedTimeEntry(
-                    1, 7, 3, null, "Stopped", Instant.parse("2026-10-17T09:00:00Z"), Instant.parse("2026-10-17T10:00:00Z"),
+                    1, 7, 3, null, "Stopped",
+                    Instant.parse(
+                        "2026-10-17T09:00:00Z",
+                    ),
+                    Instant.parse("2026-10-17T10:00:00Z"),
                     billable = true, tags = listOf("a"), tagIds = listOf(5L),
                 ),
                 CachedTimeEntry(
@@ -105,12 +115,25 @@ class ServerReaderTest {
                          "stop":"2026-10-17T12:00:00Z","duration":3600}]"""
         answers["/api/v9/me/time_entries"] = json(body)
 
-        val snapshot = readServerSnapshot(client, me("UTC"), preferences("{}"), Clock.fixed(NOW, ZoneOffset.UTC), favorites = true)
+        val snapshot = readServerSnapshot(
+            client,
+            me("UTC"),
+            preferences("{}"),
+            Clock.fixed(NOW, ZoneOffset.UTC),
+            favorites = true,
+        )
 
         val wire = ApiJson.decodeFromString(ListSerializer(ServerTimeEntry.serializer()), body)
         assertEquals(listOf(true, false, null), wire.map { it.allDay })
-        assertEquals(mapOf(1L to true, 2L to false, 3L to false), snapshot.timeEntries?.associate { it.id to it.allDay })
-        assertEquals("a server row leaves the day to its start", listOf(null, null, null), snapshot.timeEntries?.map { it.day })
+        assertEquals(
+            mapOf(1L to true, 2L to false, 3L to false),
+            snapshot.timeEntries?.associate { it.id to it.allDay },
+        )
+        assertEquals(
+            "a server row leaves the day to its start",
+            listOf(null, null, null),
+            snapshot.timeEntries?.map { it.day },
+        )
     }
 
     /**
@@ -126,7 +149,12 @@ class ServerReaderTest {
             answers["/api/v9/me/time_entries"] = json(body)
             var missing = 0
             val snapshot = readServerSnapshot(
-                client, me, preferences("{}"), Clock.fixed(NOW, ZoneOffset.UTC), favorites = true, onAllDayMissing = { missing++ },
+                client,
+                me,
+                preferences("{}"),
+                Clock.fixed(NOW, ZoneOffset.UTC),
+                favorites = true,
+                onAllDayMissing = { missing++ },
             )
             return snapshot to missing
         }
@@ -137,10 +165,16 @@ class ServerReaderTest {
         assertEquals("an older Tokkl", 1, missing)
         assertEquals("the entries are cached all the same", listOf("Old"), snapshot.timeEntries?.map { it.description })
 
-        val capabilities = CapabilitiesSource(InMemoryValueStore(Capabilities.NONE.copy(favorites = true, allDay = true)))
+        val capabilities = CapabilitiesSource(
+            InMemoryValueStore(Capabilities.NONE.copy(favorites = true, allDay = true)),
+        )
         answers["/api/v9/me/time_entries"] = json(old)
         readServerSnapshot(
-            client, me("UTC", role = "user"), preferences("{}"), Clock.fixed(NOW, ZoneOffset.UTC), favorites = true,
+            client,
+            me("UTC", role = "user"),
+            preferences("{}"),
+            Clock.fixed(NOW, ZoneOffset.UTC),
+            favorites = true,
             onAllDayMissing = capabilities::allDayMissing,
         )
         assertEquals(false, capabilities.state.value.allDay)
@@ -152,7 +186,13 @@ class ServerReaderTest {
         answers["/api/v9/me/time_entries"] = json("[]")
         val preferences = preferences("""{"date_format":"YYYY-MM-DD"}""")
 
-        val snapshot = readServerSnapshot(client, me("UTC"), preferences, Clock.fixed(NOW, ZoneOffset.UTC), favorites = true)
+        val snapshot = readServerSnapshot(
+            client,
+            me("UTC"),
+            preferences,
+            Clock.fixed(NOW, ZoneOffset.UTC),
+            favorites = true,
+        )
 
         assertEquals(emptyList<CachedFavorite>(), snapshot.favorites)
     }
@@ -163,7 +203,13 @@ class ServerReaderTest {
         answers["/api/v9/me/time_entries"] = json("[]")
         val preferences = preferences("""{"duration_format":"classic","favorites":"broken"}""")
 
-        val snapshot = readServerSnapshot(client, me("UTC"), preferences, Clock.fixed(NOW, ZoneOffset.UTC), favorites = true)
+        val snapshot = readServerSnapshot(
+            client,
+            me("UTC"),
+            preferences,
+            Clock.fixed(NOW, ZoneOffset.UTC),
+            favorites = true,
+        )
 
         assertNull(snapshot.favorites)
         assertEquals(DurationFormat.CLASSIC, preferences.durationFormat)
@@ -175,15 +221,30 @@ class ServerReaderTest {
         answers["/api/v9/me/time_entries"] = json("[]")
         val preferences = preferences("""{"favorites":[{"description":"Standup"}]}""")
 
-        val snapshot = readServerSnapshot(client, me("UTC"), preferences, Clock.fixed(NOW, ZoneOffset.UTC), favorites = false)
+        val snapshot = readServerSnapshot(
+            client,
+            me("UTC"),
+            preferences,
+            Clock.fixed(NOW, ZoneOffset.UTC),
+            favorites = false,
+        )
 
         assertEquals(emptyList<CachedFavorite>(), snapshot.favorites)
-        assertEquals(listOf("/api/v9/me/time_entries"), List(server.requestCount) { server.takeRequest().url.encodedPath })
+        assertEquals(
+            listOf("/api/v9/me/time_entries"),
+            List(server.requestCount) { server.takeRequest().url.encodedPath },
+        )
     }
 
     @Test
     fun failedRequestsLeaveTheirListsUnread() {
-        val snapshot = readServerSnapshot(client, me("UTC"), preferences = null, Clock.fixed(NOW, ZoneOffset.UTC), favorites = true)
+        val snapshot = readServerSnapshot(
+            client,
+            me("UTC"),
+            preferences = null,
+            Clock.fixed(NOW, ZoneOffset.UTC),
+            favorites = true,
+        )
 
         assertNull(snapshot.timeEntries)
         assertNull(snapshot.favorites)
@@ -193,7 +254,13 @@ class ServerReaderTest {
     fun anUnknownZoneReadsNoEntries() {
         val preferences = preferences("{}")
 
-        val snapshot = readServerSnapshot(client, me("Mars/Olympus_Mons"), preferences, Clock.fixed(NOW, ZoneOffset.UTC), favorites = true)
+        val snapshot = readServerSnapshot(
+            client,
+            me("Mars/Olympus_Mons"),
+            preferences,
+            Clock.fixed(NOW, ZoneOffset.UTC),
+            favorites = true,
+        )
 
         assertNull(snapshot.history)
         assertNull(snapshot.timeEntries)
@@ -208,7 +275,9 @@ class ServerReaderTest {
     fun aTokklRefreshAsksForThePreferencesOnce() {
         answers["/api/v9/me"] = json("""{"id":1,"timezone":"UTC","beginning_of_week":1,"role":"user"}""")
         answers["/api/v9/me/time_entries"] = json("[]")
-        answers["/api/v9/me/preferences"] = json("""{"duration_format":"decimal","favorites":[{"description":"Standup","billable":true}]}""")
+        answers["/api/v9/me/preferences"] = json(
+            """{"duration_format":"decimal","favorites":[{"description":"Standup","billable":true}]}""",
+        )
         var snapshot: ServerSnapshot? = null
         val settings = AccountSettingsSource(InMemoryValueStore(null))
         val refresh = AccountRefresh(

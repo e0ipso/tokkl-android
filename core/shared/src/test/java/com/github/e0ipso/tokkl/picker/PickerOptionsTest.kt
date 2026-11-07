@@ -21,13 +21,20 @@ class PickerOptionsTest {
             project(WEBSITE, "Website", client = ACME),
             project(ELSEWHERE, "Other workspace", client = null, workspace = 2),
         ),
-        clients = listOf(CachedClient(ACME, WORKSPACE, "Acme", archived = false), CachedClient(BETA, WORKSPACE, "Beta", archived = true)),
+        clients = listOf(
+            CachedClient(ACME, WORKSPACE, "Acme", archived = false),
+            CachedClient(BETA, WORKSPACE, "Beta", archived = true),
+        ),
         tasks = listOf(
             CachedTask(DESIGN, WORKSPACE, WEBSITE, "Design", active = true),
             CachedTask(DROPPED, WORKSPACE, WEBSITE, "Dropped", active = false),
             CachedTask(OLD_TASK, WORKSPACE, OLD_SITE, "Old task", active = false),
         ),
-        tags = listOf(CachedTag(1, WORKSPACE, "focus"), CachedTag(2, WORKSPACE, "legacy"), CachedTag(3, 2, "elsewhere")),
+        tags = listOf(
+            CachedTag(1, WORKSPACE, "focus"),
+            CachedTag(2, WORKSPACE, "legacy"),
+            CachedTag(3, 2, "elsewhere"),
+        ),
     )
 
     @Test
@@ -42,7 +49,10 @@ class PickerOptionsTest {
         assertEquals("Retired is archived and unused", listOf(OLD_SITE, WEBSITE), acme.map { it.project.id })
         val oldSite = acme[0]
         assertTrue(oldSite.selected && oldSite.archived)
-        assertEquals(listOf(Triple(OLD_TASK, true, true)), oldSite.tasks.map { Triple(it.task.id, it.selected, it.archived) })
+        assertEquals(
+            listOf(Triple(OLD_TASK, true, true)),
+            oldSite.tasks.map { Triple(it.task.id, it.selected, it.archived) },
+        )
         assertEquals("Dropped is done and unused", listOf(DESIGN), acme[1].tasks.map { it.task.id })
         assertFalse(options.noProjectSelected)
         assertEquals(listOf(TagOption("focus", false, true), TagOption("legacy", true, true)), options.tags)
@@ -62,12 +72,19 @@ class PickerOptionsTest {
     fun searchMatchesProjectClientAndTaskNamesIgnoringCase() {
         val byTask = pickerOptions(WORKSPACE, Picked(), Picked(), "  DES ", source)
         assertEquals(listOf("Acme"), byTask.groups.map { it.clientName })
-        assertEquals(listOf(WEBSITE to listOf(DESIGN)), byTask.groups.single().projects.map { it.project.id to it.tasks.map { t -> t.task.id } })
+        assertEquals(
+            listOf(WEBSITE to listOf(DESIGN)),
+            byTask.groups.single().projects.map { it.project.id to it.tasks.map { t -> t.task.id } },
+        )
         assertFalse("No project shows only without a search", byTask.noProject)
 
         val byClient = pickerOptions(WORKSPACE, Picked(), Picked(), "acme", source)
         assertEquals(listOf(WEBSITE), byClient.groups.single().projects.map { it.project.id })
-        assertEquals("a matching project lists all its tasks", listOf(DESIGN), byClient.groups.single().projects.single().tasks.map { it.task.id })
+        assertEquals(
+            "a matching project lists all its tasks",
+            listOf(DESIGN),
+            byClient.groups.single().projects.single().tasks.map { it.task.id },
+        )
 
         val none = pickerOptions(WORKSPACE, Picked(), Picked(), "zzz", source)
         assertTrue(none.groups.isEmpty())

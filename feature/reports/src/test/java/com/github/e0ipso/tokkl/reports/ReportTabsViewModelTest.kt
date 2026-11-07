@@ -7,14 +7,6 @@ import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.session.AccountSettings
-import java.time.Clock
-import java.time.DayOfWeek
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
-import java.time.ZoneOffset
-import java.util.concurrent.CopyOnWriteArrayList
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -34,6 +26,14 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.time.Clock
+import java.time.DayOfWeek
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.util.concurrent.CopyOnWriteArrayList
+import kotlin.coroutines.CoroutineContext
 
 /**
  * The Detailed and Weekly tabs of the reports model against a MockWebServer that answers as Tokkl
@@ -47,7 +47,9 @@ class ReportTabsViewModelTest {
     private val searches = CopyOnWriteArrayList<JsonObject>()
     private val weeklies = CopyOnWriteArrayList<JsonObject>()
     private val io = Queued()
-    private val settings = MutableStateFlow<AccountSettings?>(AccountSettings(ZONE, DayOfWeek.WEDNESDAY, timeResolutionMinutes = null))
+    private val settings = MutableStateFlow<AccountSettings?>(
+        AccountSettings(ZONE, DayOfWeek.WEDNESDAY, timeResolutionMinutes = null),
+    )
     private lateinit var model: ReportsViewModel
 
     /** The detailed search's pages after the first answer 503, as a proxy does while the server is down. */
@@ -63,12 +65,18 @@ class ReportTabsViewModelTest {
         server.dispatcher = object : Dispatcher() {
             override fun dispatch(request: RecordedRequest): MockResponse = when (request.url.encodedPath) {
                 "/api/v9/me" -> json("""{"id":1,"default_workspace_id":7}""")
+
                 "/api/v9/workspaces/7" -> json("""{"id":7,"rounding":1,"rounding_minutes":15}""")
-                "/reports/api/v3/workspace/7/search/time_entries" -> search(Json.parseToJsonElement(request.body!!.utf8()).jsonObject)
+
+                "/reports/api/v3/workspace/7/search/time_entries" -> search(
+                    Json.parseToJsonElement(request.body!!.utf8()).jsonObject,
+                )
+
                 "/reports/api/v3/workspace/7/weekly/time_entries" -> {
                     weeklies += Json.parseToJsonElement(request.body!!.utf8()).jsonObject
                     json(weeklyBody)
                 }
+
                 else -> MockResponse.Builder().code(404).build()
             }
         }
@@ -125,7 +133,15 @@ class ReportTabsViewModelTest {
                 "rounding" to "1",
                 "rounding_minutes" to "15",
             ),
-            body.strings("order_dir", "page_size", "first_row_number", "start_date", "end_date", "rounding", "rounding_minutes"),
+            body.strings(
+                "order_dir",
+                "page_size",
+                "first_row_number",
+                "start_date",
+                "end_date",
+                "rounding",
+                "rounding_minutes",
+            ),
         )
 
         model.loadMore()
@@ -177,11 +193,19 @@ class ReportTabsViewModelTest {
         model.selectTab(ReportTab.WEEKLY)
 
         val loading = model.state.value as ReportsState.Loading
-        assertEquals(RangeSelection(ReportRange(LocalDate.parse("2026-10-21"), LocalDate.parse("2026-10-27")), null), loading.selection)
+        assertEquals(
+            RangeSelection(ReportRange(LocalDate.parse("2026-10-21"), LocalDate.parse("2026-10-27")), null),
+            loading.selection,
+        )
         io.runAll()
         val report = (model.state.value as ReportsState.Loaded).report as WeeklyReport
         assertEquals(
-            mapOf("start_date" to "2026-10-21", "end_date" to "2026-10-27", "rounding" to "1", "rounding_minutes" to "15"),
+            mapOf(
+                "start_date" to "2026-10-21",
+                "end_date" to "2026-10-27",
+                "rounding" to "1",
+                "rounding_minutes" to "15",
+            ),
             weeklies.last().strings("start_date", "end_date", "rounding", "rounding_minutes"),
         )
         assertEquals(listOf(5L, 4L, 3L, null), report.rows.map { it.id })
@@ -217,7 +241,12 @@ class ReportTabsViewModelTest {
     fun theFiltersGoWithEveryTabsRequest() {
         model.open()
         io.runAll()
-        val filters = ReportFilters(projects = listOf(3L, null), clients = listOf(8L), tags = listOf(null), billable = BillableFilter.BILLABLE)
+        val filters = ReportFilters(
+            projects = listOf(3L, null),
+            clients = listOf(8L),
+            tags = listOf(null),
+            billable = BillableFilter.BILLABLE,
+        )
 
         model.applyFilters(filters)
         assertTrue("the summary loads again", model.state.value is ReportsState.Loading)
@@ -271,7 +300,10 @@ class ReportTabsViewModelTest {
             WeeklyRow(3, "alpha", null, List(7) { 0L }),
         )
 
-        assertEquals(listOf("alpha", "Alpha", "beta"), WeeklyReport.of(LocalDate.parse("2026-10-21"), rows).rows.map { it.title })
+        assertEquals(
+            listOf("alpha", "Alpha", "beta"),
+            WeeklyReport.of(LocalDate.parse("2026-10-21"), rows).rows.map { it.title },
+        )
     }
 
     /** A range's week is the one its first day falls in, or this week when the range holds today. */
@@ -279,8 +311,14 @@ class ReportTabsViewModelTest {
     fun aRangesWeekStartsOnTheAccountsFirstDay() {
         val today = LocalDate.parse("2026-10-21")
 
-        assertEquals(week("2026-10-21"), ReportRange(LocalDate.parse("2026-10-01"), LocalDate.parse("2026-10-31")).week(today, DayOfWeek.WEDNESDAY))
-        assertEquals(week("2026-09-30"), ReportRange(LocalDate.parse("2026-10-01"), LocalDate.parse("2026-10-10")).week(today, DayOfWeek.WEDNESDAY))
+        assertEquals(
+            week("2026-10-21"),
+            ReportRange(LocalDate.parse("2026-10-01"), LocalDate.parse("2026-10-31")).week(today, DayOfWeek.WEDNESDAY),
+        )
+        assertEquals(
+            week("2026-09-30"),
+            ReportRange(LocalDate.parse("2026-10-01"), LocalDate.parse("2026-10-10")).week(today, DayOfWeek.WEDNESDAY),
+        )
     }
 
     /** The detailed search: the summary's search oldest first, and two pages newest first. */
@@ -288,9 +326,17 @@ class ReportTabsViewModelTest {
         searches += body
         val first = body.string("first_row_number").toInt()
         return when {
-            body.string("order_dir") == "ASC" -> json(rows(row(10, "2026-10-21T00:30:00+14:00", "2026-10-21T01:30:00+14:00")))
-            first == 1 -> json(rows(row(10, "2026-10-21T00:30:00+14:00", "2026-10-21T01:30:00+14:00")), NEXT_ROW to "51")
+            body.string(
+                "order_dir",
+            ) == "ASC" -> json(rows(row(10, "2026-10-21T00:30:00+14:00", "2026-10-21T01:30:00+14:00")))
+
+            first == 1 -> json(
+                rows(row(10, "2026-10-21T00:30:00+14:00", "2026-10-21T01:30:00+14:00")),
+                NEXT_ROW to "51",
+            )
+
             laterPagesFail -> MockResponse.Builder().code(503).build()
+
             else -> json(rows(row(9, "2026-10-20T10:00:00+00:00", stop = null)))
         }
     }
@@ -306,8 +352,12 @@ class ReportTabsViewModelTest {
     private fun JsonObject.strings(vararg keys: String): Map<String, String> = keys.associateWith { string(it) }
 
     /** The filter fields of a request body, as JSON text. */
-    private fun JsonObject.filterFields(): Map<String, String> =
-        listOf("project_ids", "client_ids", "tag_ids", "billable").mapNotNull { key -> this[key]?.let { key to it.toString() } }.toMap()
+    private fun JsonObject.filterFields(): Map<String, String> = listOf(
+        "project_ids",
+        "client_ids",
+        "tag_ids",
+        "billable",
+    ).mapNotNull { key -> this[key]?.let { key to it.toString() } }.toMap()
 
     private fun rows(vararg rows: String) = rows.joinToString(",", "[", "]")
 
@@ -315,7 +365,9 @@ class ReportTabsViewModelTest {
     private fun row(id: Int, start: String, stop: String?) =
         """{"project_id":3,"project_name":"Web","project_color":"#06aaf5","task_name":"Design","description":"d$id",""" +
             """"billable":true,"billable_amount_in_cents":null,"currency":"EUR","row_number":$id,""" +
-            """"time_entries":[{"id":$id,"seconds":900,"start":"$start","stop":${stop?.let { "\"$it\"" } ?: "null"},"at":"2026-10-20T10:00:00+00:00"}]}"""
+            """"time_entries":[{"id":$id,"seconds":900,"start":"$start","stop":${stop?.let {
+                "\"$it\""
+            } ?: "null"},"at":"2026-10-20T10:00:00+00:00"}]}"""
 
     private fun json(body: String, vararg headers: Pair<String, String>) = MockResponse.Builder()
         .code(200)
@@ -344,7 +396,12 @@ class ReportTabsViewModelTest {
         const val NEXT_ROW = "X-Next-Row-Number"
 
         /** Project 3 or none, client 8, no tags, billable only, as the web app's filterBody writes them. */
-        val FILTER_FIELDS = mapOf("project_ids" to "[3,null]", "client_ids" to "[8]", "tag_ids" to "[null]", "billable" to "true")
+        val FILTER_FIELDS = mapOf(
+            "project_ids" to "[3,null]",
+            "client_ids" to "[8]",
+            "tag_ids" to "[null]",
+            "billable" to "true",
+        )
 
         /** Two rows of Beta to merge, ties by time to sort by title, a project_hex_color, and time without a project. */
         const val WEEKLY = """[

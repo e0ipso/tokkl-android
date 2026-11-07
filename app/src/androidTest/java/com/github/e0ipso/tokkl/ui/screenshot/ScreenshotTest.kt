@@ -47,13 +47,6 @@ import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.feature.pomodoro.R as PomodoroR
-import com.github.e0ipso.tokkl.feature.reports.R as ReportsR
-import com.github.e0ipso.tokkl.feature.settings.R as SettingsR
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
-import com.github.e0ipso.tokkl.feature.signin.R as SigninR
-import com.github.e0ipso.tokkl.feature.timer.R as TimerR
-import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.api.ServerCertificate
@@ -128,6 +121,11 @@ import com.github.e0ipso.tokkl.ui.theme.ThemeSettings
 import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsStore
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.applicationNightMode
+import kotlinx.coroutines.flow.MutableStateFlow
+import org.junit.Rule
+import org.junit.Test
+import org.junit.rules.ExternalResource
+import org.junit.rules.RuleChain
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Instant
@@ -139,11 +137,13 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.roundToInt
-import kotlinx.coroutines.flow.MutableStateFlow
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.ExternalResource
-import org.junit.rules.RuleChain
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
+import com.github.e0ipso.tokkl.feature.pomodoro.R as PomodoroR
+import com.github.e0ipso.tokkl.feature.reports.R as ReportsR
+import com.github.e0ipso.tokkl.feature.settings.R as SettingsR
+import com.github.e0ipso.tokkl.feature.signin.R as SigninR
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 
 /**
  * Screenshots of every screen and trust prompt, compared with reference images by
@@ -216,7 +216,12 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     @Test
     fun timer() {
         show({
-            SignedInFrame(current = TopLevelPage.TIMER, onOpen = {}, syncStatus = SYNC_STATUS, syncStatusClock = TODAY) {
+            SignedInFrame(
+                current = TopLevelPage.TIMER,
+                onOpen = {},
+                syncStatus = SYNC_STATUS,
+                syncStatusClock = TODAY,
+            ) {
                 TimerPage(TimerView.LIST)
             }
         }) {
@@ -254,7 +259,12 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     fun timerBesideTheRail() {
         show({
             DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(MEDIUM_WINDOW)) {
-                SignedInFrame(current = TopLevelPage.TIMER, onOpen = {}, syncStatus = SYNC_STATUS, syncStatusClock = TODAY) {
+                SignedInFrame(
+                    current = TopLevelPage.TIMER,
+                    onOpen = {},
+                    syncStatus = SYNC_STATUS,
+                    syncStatusClock = TODAY,
+                ) {
                     TimerPage(TimerView.LIST)
                 }
             }
@@ -309,7 +319,10 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     @Test
     fun pomodoroLimitError() = showPomodoro(IDLE_POMODORO.copy(lengths = IDLE_POMODORO.lengths.copy(work = "200"))) {
         awaitLengthCards()
-        composeRule.onNode(hasText(string(UiR.string.stepper_limit_max, PomodoroDefaults.WORK_MINUTES.last)), useUnmergedTree = true)
+        composeRule.onNode(
+            hasText(string(UiR.string.stepper_limit_max, PomodoroDefaults.WORK_MINUTES.last)),
+            useUnmergedTree = true,
+        )
             .assertIsDisplayed()
         assertScreen("pomodoro-limit-error")
     }
@@ -355,10 +368,14 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     @SignedOut
     @Test
     fun pomodoroOvertime() = showPomodoro(RUNNING_POMODORO) {
-        composeRule.onNode(hasContentDescription(string(
-            PomodoroR.string.pomodoro_overtime_clock,
-            POMODORO_ACCOUNT.formatDuration(65),
-        ))).assertIsDisplayed()
+        composeRule.onNode(
+            hasContentDescription(
+                string(
+                    PomodoroR.string.pomodoro_overtime_clock,
+                    POMODORO_ACCOUNT.formatDuration(65),
+                ),
+            ),
+        ).assertIsDisplayed()
         assertScreen("pomodoro-overtime")
     }
 
@@ -414,7 +431,9 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     @SignedOut
     @Test
     fun reports() {
-        show({ ReportsTab(ReportsState.Loaded(RangeSelection(WEEK, RangePreset.THIS_WEEK), REPORT), ReportTab.SUMMARY) }) {
+        show(
+            { ReportsTab(ReportsState.Loaded(RangeSelection(WEEK, RangePreset.THIS_WEEK), REPORT), ReportTab.SUMMARY) },
+        ) {
             composeRule.awaitText(string(ReportsR.string.reports_projects))
             assertScreen("reports")
         }
@@ -424,7 +443,14 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     @SignedOut
     @Test
     fun detailedReport() {
-        show({ ReportsTab(ReportsState.Loaded(RangeSelection(WEEK, RangePreset.THIS_WEEK), DETAILED), ReportTab.DETAILED) }) {
+        show(
+            {
+                ReportsTab(
+                    ReportsState.Loaded(RangeSelection(WEEK, RangePreset.THIS_WEEK), DETAILED),
+                    ReportTab.DETAILED,
+                )
+            },
+        ) {
             composeRule.awaitText("Write the detailed report")
             assertScreen("reports-detailed")
         }
@@ -434,7 +460,9 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     @SignedOut
     @Test
     fun weeklyReport() {
-        show({ ReportsTab(ReportsState.Loaded(RangeSelection(WEEK, RangePreset.THIS_WEEK), WEEKLY), ReportTab.WEEKLY) }) {
+        show(
+            { ReportsTab(ReportsState.Loaded(RangeSelection(WEEK, RangePreset.THIS_WEEK), WEEKLY), ReportTab.WEEKLY) },
+        ) {
             composeRule.awaitText("Graffiti wall maintenance")
             assertScreen("reports-weekly")
         }
@@ -446,7 +474,13 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     fun projects() {
         show({
             SignedInFrame(current = TopLevelPage.PROJECTS, onOpen = {}) {
-                ProjectsContent(CatalogSamples.PROJECTS_LOADED, offline = false, cachedProjects = emptyList(), clients = CatalogSamples.CACHED_CLIENTS, actions = ProjectsActions())
+                ProjectsContent(
+                    CatalogSamples.PROJECTS_LOADED,
+                    offline = false,
+                    cachedProjects = emptyList(),
+                    clients = CatalogSamples.CACHED_CLIENTS,
+                    actions = ProjectsActions(),
+                )
             }
         }) {
             composeRule.awaitText(CatalogSamples.PROJECTS.first().name)
@@ -460,7 +494,12 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     fun clients() {
         show({
             SignedInFrame(current = TopLevelPage.CLIENTS, onOpen = {}) {
-                ClientsContent(CatalogSamples.CLIENTS_LOADED, offline = false, cachedClients = emptyList(), actions = ClientsActions())
+                ClientsContent(
+                    CatalogSamples.CLIENTS_LOADED,
+                    offline = false,
+                    cachedClients = emptyList(),
+                    actions = ClientsActions(),
+                )
             }
         }) {
             composeRule.awaitText(CatalogSamples.CLIENTS.first().name)
@@ -474,7 +513,12 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     fun tags() {
         show({
             SignedInFrame(current = TopLevelPage.TAGS, onOpen = {}) {
-                TagsContent(CatalogSamples.TAGS_LOADED, offline = false, cachedTags = emptyList(), actions = TagsActions())
+                TagsContent(
+                    CatalogSamples.TAGS_LOADED,
+                    offline = false,
+                    cachedTags = emptyList(),
+                    actions = TagsActions(),
+                )
             }
         }) {
             composeRule.awaitText(CatalogSamples.TAGS.first().name)
@@ -490,12 +534,18 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     @Test
     fun moreSheet() {
         show({ SignedInFrame(current = TopLevelPage.TAGS, onOpen = {}) {} }) {
-            composeRule.onNode(hasText(string(R.string.nav_more)) and hasClickAction()).performSemanticsAction(SemanticsActions.OnClick)
+            composeRule.onNode(
+                hasText(string(R.string.nav_more)) and hasClickAction(),
+            ).performSemanticsAction(SemanticsActions.OnClick)
             composeRule.waitUntil("the More sheet shows", TIMEOUT_MS) {
-                composeRule.onAllNodes(hasText(string(R.string.nav_more)) and isHeading()).fetchSemanticsNodes().isNotEmpty()
+                composeRule.onAllNodes(
+                    hasText(string(R.string.nav_more)) and isHeading(),
+                ).fetchSemanticsNodes().isNotEmpty()
             }
             composeRule.waitForIdle()
-            check(Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) { "PixelCopy copies a window from Android 14 on" }
+            check(
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE,
+            ) { "PixelCopy copies a window from Android 14 on" }
             ReferenceImages.assertMatches("more-sheet-$variant", copyTheWindowOverTheActivity())
         }
     }
@@ -524,7 +574,9 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
      */
     private fun openSettings() {
         composeRule.awaitTimerPage()
-        composeRule.onNode(hasText(string(SettingsR.string.settings)) and hasClickAction()).performSemanticsAction(SemanticsActions.OnClick)
+        composeRule.onNode(
+            hasText(string(SettingsR.string.settings)) and hasClickAction(),
+        ).performSemanticsAction(SemanticsActions.OnClick)
         composeRule.awaitText(string(SettingsR.string.settings_theme))
     }
 
@@ -580,13 +632,21 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
             SignedInFrame(current = TopLevelPage.POMODORO, onOpen = {}, pomodoroRunning = state.pomodoro != null) {
                 PomodoroContent(
                     state = state,
-                    onLengths = {}, onFields = {}, onDescription = {}, onDescriptionDone = {}, onStart = {}, onNext = {}, onEnd = {},
+                    onLengths = {
+                    }, onFields = {
+                    }, onDescription = {}, onDescriptionDone = {}, onStart = {}, onNext = {}, onEnd = {},
                     clock = TODAY,
                 )
             }
         }
         show({
-            if (window == null) page() else DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(window)) { page() }
+            if (window == null) {
+                page()
+            } else {
+                DeviceConfigurationOverride(
+                    DeviceConfigurationOverride.WindowSize(window),
+                ) { page() }
+            }
         }) {
             composeRule.awaitText(string(SharedR.string.pomodoro_title))
             steps()
@@ -595,7 +655,12 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
 
     private fun showPomodoroAlarm(steps: () -> Unit) {
         show({
-            PomodoroAlarmContent(PomodoroAlarmState(ring = RUNNING_POMODORO.held!!.ring()), onNext = {}, onEnd = {}, clock = TODAY)
+            PomodoroAlarmContent(
+                PomodoroAlarmState(ring = RUNNING_POMODORO.held!!.ring()),
+                onNext = {},
+                onEnd = {},
+                clock = TODAY,
+            )
         }) {
             composeRule.awaitText(string(PomodoroR.string.pomodoro_alarm_title))
             steps()
@@ -627,8 +692,11 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
             view = view,
             onViewChange = {},
             timer = {
-                if (view == TimerView.CALENDAR) Timer(RUNNING_TIMER, RUNNING_SECONDS)
-                else Timer(IDLE_TIMER, 0)
+                if (view == TimerView.CALENDAR) {
+                    Timer(RUNNING_TIMER, RUNNING_SECONDS)
+                } else {
+                    Timer(IDLE_TIMER, 0)
+                }
             },
             listContent = { HistoryContent(state = HISTORY, onLoadOlder = {}) },
             calendarContent = {
@@ -702,7 +770,9 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
         var found: View? = null
         InstrumentationRegistry.getInstrumentation().runOnMainSync {
             found = WindowInspector.getGlobalWindowViews().singleOrNull { root ->
-                root.isShown && (root.layoutParams as? WindowManager.LayoutParams)?.type != WindowManager.LayoutParams.TYPE_BASE_APPLICATION
+                root.isShown &&
+                    (root.layoutParams as? WindowManager.LayoutParams)?.type !=
+                    WindowManager.LayoutParams.TYPE_BASE_APPLICATION
             }
         }
         val window = checkNotNull(found) { "no single window over the activity's" }
@@ -739,10 +809,18 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
         /** A tablet held sideways, an expanded width. */
         val EXPANDED_WINDOW = DpSize(1280.dp, 800.dp)
 
-        val ACCOUNT = AccountSettings(timeZone = "UTC", beginningOfWeek = DayOfWeek.MONDAY, timeResolutionMinutes = null)
+        val ACCOUNT = AccountSettings(
+            timeZone = "UTC",
+            beginningOfWeek = DayOfWeek.MONDAY,
+            timeResolutionMinutes = null,
+        )
 
         /** One change not sent, the history's Code review, since the server answered at 11:52 on [TODAY]. */
-        val SYNC_STATUS = SyncStatus(unsent = 1, lastAnswered = Instant.parse("2026-10-15T11:52:00Z"), settings = ACCOUNT)
+        val SYNC_STATUS = SyncStatus(
+            unsent = 1,
+            lastAnswered = Instant.parse("2026-10-15T11:52:00Z"),
+            settings = ACCOUNT,
+        )
 
         /** A Thursday at noon, in the middle of [WEEK]. */
         val TODAY: Clock = Clock.fixed(Instant.parse("2026-10-15T12:00:00Z"), ZoneOffset.UTC)
@@ -752,7 +830,9 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
         val POMODORO_FIELDS = EntryFields(description = "Write screenshot scenarios", billable = true)
 
         val IDLE_POMODORO = PomodoroPageState(
-            loading = false, account = POMODORO_ACCOUNT, fields = POMODORO_FIELDS,
+            loading = false,
+            account = POMODORO_ACCOUNT,
+            fields = POMODORO_FIELDS,
             lengths = PomodoroLengths("25", "5", "15", "4"),
         )
 
@@ -761,7 +841,10 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
          * [TODAY]. The alarm captures show its ring. No alarm runs.
          */
         val RUNNING_POMODORO = IDLE_POMODORO.copy(
-            held = heldSession(phaseStart = TODAY.instant().minusSeconds(25 * 60 + 65), description = POMODORO_FIELDS.description),
+            held = heldSession(
+                phaseStart = TODAY.instant().minusSeconds(25 * 60 + 65),
+                description = POMODORO_FIELDS.description,
+            ),
         )
 
         val WEEK = ReportRange(LocalDate.of(2026, 10, 12), LocalDate.of(2026, 10, 18))
@@ -792,8 +875,25 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
                 HistoryDay(
                     LocalDate.of(2026, 10, 15),
                     listOf(
-                        historyEntry(1, "Code review", WALL, task = null, "10:45", "11:50", tags = listOf("review"), unsent = true),
-                        historyEntry(2, "Write the history list", APP, task = "Design", "09:00", "10:30", billable = true),
+                        historyEntry(
+                            1,
+                            "Code review",
+                            WALL,
+                            task = null,
+                            "10:45",
+                            "11:50",
+                            tags = listOf("review"),
+                            unsent = true,
+                        ),
+                        historyEntry(
+                            2,
+                            "Write the history list",
+                            APP,
+                            task = "Design",
+                            "09:00",
+                            "10:30",
+                            billable = true,
+                        ),
                     ),
                 ),
                 HistoryDay(
@@ -805,7 +905,18 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
                 ),
                 HistoryDay(
                     LocalDate.of(2026, 10, 12),
-                    listOf(historyEntry(5, "Paint the mural", WALL, task = null, "09:00", "12:30", day = 12, billable = true)),
+                    listOf(
+                        historyEntry(
+                            5,
+                            "Paint the mural",
+                            WALL,
+                            task = null,
+                            "09:00",
+                            "12:30",
+                            day = 12,
+                            billable = true,
+                        ),
+                    ),
                 ),
             ),
             today = LocalDate.of(2026, 10, 15),
@@ -832,7 +943,15 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
                 calendarEntry(2, "Sprint planning", APP, "2026-10-13T08:30", "2026-10-13T12:00"),
                 calendarEntry(3, "", project = null, "2026-10-14T23:00", "2026-10-15T01:00"),
                 calendarEntry(4, "Stand-up", APP, "2026-10-15T08:00", "2026-10-15T08:30"),
-                calendarEntry(5, "Write the history list", APP, "2026-10-15T09:00", "2026-10-15T10:30", task = "Design", unsent = true),
+                calendarEntry(
+                    5,
+                    "Write the history list",
+                    APP,
+                    "2026-10-15T09:00",
+                    "2026-10-15T10:30",
+                    task = "Design",
+                    unsent = true,
+                ),
                 calendarEntry(6, "Code review", WALL, "2026-10-15T10:45", "2026-10-15T11:50", unsent = true),
                 calendarEntry(7, "Calendar grid", APP, "2026-10-15T11:15", stop = null, unsent = true),
                 calendarEntry(8, "Team offsite", WALL, "2026-10-15T00:00", "2026-10-15T04:00", allDay = true),
@@ -853,13 +972,17 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
 
         /** Rows match each visible fixture, including the Calendar's single running entry. */
         val HISTORY_ROWS = HISTORY.days.flatMap { it.entries }.map { entry ->
-            CachedTimeEntry(entry.id, 1, entry.projectId, entry.taskId, entry.description,
-                entry.start, entry.stop, entry.billable, entry.tags, emptyList())
+            CachedTimeEntry(
+                entry.id, 1, entry.projectId, entry.taskId, entry.description,
+                entry.start, entry.stop, entry.billable, entry.tags, emptyList(),
+            )
         }
 
         val CALENDAR_ROWS = CALENDAR.entries.map { entry ->
-            CachedTimeEntry(entry.id, 1, null, null, entry.description,
-                entry.start, entry.stop, false, emptyList(), emptyList(), allDay = entry.allDay, day = entry.day)
+            CachedTimeEntry(
+                entry.id, 1, null, null, entry.description,
+                entry.start, entry.stop, false, emptyList(), emptyList(), allDay = entry.allDay, day = entry.day,
+            )
         }
 
         /** The timer with nothing running, in the account's workspace. */
@@ -972,7 +1095,16 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
         ): DetailedEntry {
             val from = ZonedDateTime.parse("2026-10-${startDay}T$start:00Z")
             val to = ZonedDateTime.parse("2026-10-${stopDay}T$stop:00Z")
-            return DetailedEntry(id, description, project?.name, project?.colour, task, from, to, to.toEpochSecond() - from.toEpochSecond())
+            return DetailedEntry(
+                id,
+                description,
+                project?.name,
+                project?.colour,
+                task,
+                from,
+                to,
+                to.toEpochSecond() - from.toEpochSecond(),
+            )
         }
 
         /** An entry in [WEEK], billed at 80 EUR an hour when [billable]. */

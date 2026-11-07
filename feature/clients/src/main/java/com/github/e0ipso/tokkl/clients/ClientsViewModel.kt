@@ -10,11 +10,11 @@ import com.github.e0ipso.tokkl.catalog.CatalogChange
 import com.github.e0ipso.tokkl.catalog.CatalogModel
 import com.github.e0ipso.tokkl.catalog.CatalogPageEvents
 import com.github.e0ipso.tokkl.catalog.CatalogState
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlin.coroutines.CoroutineContext
 
 /** What the clients page opens over its list. */
 sealed interface ClientsOverlay {
@@ -38,7 +38,9 @@ data class ClientsData(val clients: List<Client>, val projectCounts: Map<Long, I
     fun projectCount(client: Client): Int = projectCounts[client.id] ?: 0
 
     /** With [client] as it is after a change, in its place in the order. */
-    fun with(client: Client): ClientsData = copy(clients = (clients.filterNot { it.id == client.id } + client).sortedForList())
+    fun with(client: Client): ClientsData = copy(
+        clients = (clients.filterNot { it.id == client.id } + client).sortedForList(),
+    )
 }
 
 typealias ClientsState = CatalogState<ClientsData, ClientsOverlay>
@@ -59,9 +61,17 @@ class ClientsViewModel(
     scope: CoroutineScope,
     io: CoroutineContext,
     val cachedClients: Flow<List<CachedClient>> = flowOf(emptyList()),
-) : ViewModel(scope), CatalogPageEvents {
+) : ViewModel(scope),
+    CatalogPageEvents {
 
-    private val catalog = CatalogModel<ClientsData, ClientsOverlay>(client, workspaceId, refreshCache, viewModelScope, io, ::read)
+    private val catalog = CatalogModel<ClientsData, ClientsOverlay>(
+        client,
+        workspaceId,
+        refreshCache,
+        viewModelScope,
+        io,
+        ::read,
+    )
 
     val state: StateFlow<ClientsState> = catalog.state
 
@@ -107,7 +117,15 @@ class ClientsViewModel(
                 if (editing == null) server.create(trimmed, note, known) else server.update(editing.id, trimmed, note)
             },
             apply = ClientsData::with,
-            done = { saved -> if (editing == null) CatalogChange.Created(saved.name) else CatalogChange.Saved(saved.name) },
+            done = { saved ->
+                if (editing == null) {
+                    CatalogChange.Created(
+                        saved.name,
+                    )
+                } else {
+                    CatalogChange.Saved(saved.name)
+                }
+            },
         )
     }
 

@@ -9,9 +9,6 @@ import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.AppEvent
 import com.github.e0ipso.tokkl.time.AccountTime
-import java.io.File
-import java.time.Clock
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
@@ -21,6 +18,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.time.Clock
+import kotlin.coroutines.CoroutineContext
 
 /**
  * The reports screen's state. Each time the screen opens, the tab, the range or the filters change
@@ -65,13 +65,23 @@ class ReportsViewModel(
         val selectedFilters = filters.value.let {
             it.copy(projects = it.projects.toList(), clients = it.clients.toList(), tags = it.tags.toList())
         }
-        exporter?.start(ReportCsvRequest(kind, shown.selection.range, selectedFilters, knownWorkspace, settings.durationFormat))
+        exporter?.start(
+            ReportCsvRequest(kind, shown.selection.range, selectedFilters, knownWorkspace, settings.durationFormat),
+        )
     }
 
-    fun launchExportShare(launch: (File) -> Unit) { exporter?.launchShare(launch) }
-    fun exportShareFinished() { exporter?.shareFinished() }
-    fun exportNoShareTarget() { exporter?.noShareTarget() }
-    fun exportShareFailed() { exporter?.shareFailed() }
+    fun launchExportShare(launch: (File) -> Unit) {
+        exporter?.launchShare(launch)
+    }
+    fun exportShareFinished() {
+        exporter?.shareFinished()
+    }
+    fun exportNoShareTarget() {
+        exporter?.noShareTarget()
+    }
+    fun exportShareFailed() {
+        exporter?.shareFailed()
+    }
 
     override fun onCleared() {
         exporter?.cancel()
@@ -164,7 +174,9 @@ class ReportsViewModel(
         mutableState.value = shown.copy(report = report.copy(loadingMore = true))
         loading = viewModelScope.launch {
             // A cancelled page drops its answer, as a cancelled load does.
-            mutableState.value = withContext(io) { nextPage(shown.selection, known, report, next, mutableFilters.value) }
+            mutableState.value = withContext(
+                io,
+            ) { nextPage(shown.selection, known, report, next, mutableFilters.value) }
         }
     }
 
@@ -262,16 +274,42 @@ class ReportsViewModel(
             is ApiResult.Failure -> return ReportsState.Failed(selection, failureOf(answer.error)) to null
         }
         val shown = when (tab) {
-            ReportTab.SUMMARY -> when (val answer = server.summary(workspace, selection.range, time.zone, time.firstDayOfWeek, filters)) {
+            ReportTab.SUMMARY -> when (
+                val answer = server.summary(
+                    workspace,
+                    selection.range,
+                    time.zone,
+                    time.firstDayOfWeek,
+                    filters,
+                )
+            ) {
                 is ApiResult.Success -> ReportsState.Loaded(selection, answer.value)
                 is ApiResult.Failure -> ReportsState.Failed(selection, failureOf(answer.error))
             }
-            ReportTab.DETAILED -> when (val answer = server.detailedPage(workspace, selection.range, time.zone, firstRow = 1, filters)) {
-                is ApiResult.Success -> ReportsState.Loaded(selection, DetailedReport(answer.value.entries, answer.value.nextRow))
+
+            ReportTab.DETAILED -> when (
+                val answer = server.detailedPage(
+                    workspace,
+                    selection.range,
+                    time.zone,
+                    firstRow = 1,
+                    filters,
+                )
+            ) {
+                is ApiResult.Success -> ReportsState.Loaded(
+                    selection,
+                    DetailedReport(answer.value.entries, answer.value.nextRow),
+                )
+
                 is ApiResult.Failure -> ReportsState.Failed(selection, failureOf(answer.error))
             }
+
             ReportTab.WEEKLY -> when (val answer = server.weekly(workspace, selection.range.from, filters)) {
-                is ApiResult.Success -> ReportsState.Loaded(selection, WeeklyReport.of(selection.range.from, answer.value))
+                is ApiResult.Success -> ReportsState.Loaded(
+                    selection,
+                    WeeklyReport.of(selection.range.from, answer.value),
+                )
+
                 is ApiResult.Failure -> ReportsState.Failed(selection, failureOf(answer.error))
             }
         }
@@ -288,8 +326,16 @@ class ReportsViewModel(
     ): ReportsState {
         val time = accountTime() ?: return ReportsState.NoAccountTime(accountSettings.value?.timeZone)
         val api = client() ?: return ReportsState.Failed(selection, ReportFailure.AuthFailed)
-        return when (val answer = ReportsServer(api).detailedPage(workspace, selection.range, time.zone, next, filters)) {
-            is ApiResult.Success -> ReportsState.Loaded(selection, DetailedReport(report.entries + answer.value.entries, answer.value.nextRow))
+        return when (
+            val answer = ReportsServer(
+                api,
+            ).detailedPage(workspace, selection.range, time.zone, next, filters)
+        ) {
+            is ApiResult.Success -> ReportsState.Loaded(
+                selection,
+                DetailedReport(report.entries + answer.value.entries, answer.value.nextRow),
+            )
+
             is ApiResult.Failure -> ReportsState.Failed(selection, failureOf(answer.error))
         }
     }

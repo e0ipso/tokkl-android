@@ -84,7 +84,10 @@ class ForegroundRefreshTest {
     @Test
     fun onlineUpdatesRetryFailedPagesWithoutRefreshingTheAccountAgain() {
         var onlineUpdates = 0
-        val retryPage = { onlineUpdates++; Unit }
+        val retryPage = {
+            onlineUpdates++
+            Unit
+        }
         foreground.started(online = false)
 
         assertTrue(foreground.networkChanged(online = true, onOnline = retryPage))

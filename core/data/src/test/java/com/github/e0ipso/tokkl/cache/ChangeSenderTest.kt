@@ -12,13 +12,6 @@ import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.time.SnappedSpan
 import com.github.e0ipso.tokkl.time.stopSpan
-import java.time.Clock
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
-import java.time.ZoneOffset
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
@@ -47,6 +40,13 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.time.Clock
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 class ChangeSenderTest {
 
@@ -119,7 +119,14 @@ class ChangeSenderTest {
 
     @Test
     fun aRunningCreateSendsTheTapTimeAsItsStartAndTagsByName() {
-        store.queue(ChangeKind.CREATE, LOCAL, TAP.plusMillis(750), stop = null, description = "Offline", tags = listOf("focus", "new tag"))
+        store.queue(
+            ChangeKind.CREATE,
+            LOCAL,
+            TAP.plusMillis(750),
+            stop = null,
+            description = "Offline",
+            tags = listOf("focus", "new tag"),
+        )
         server.enqueue(nothingRuns())
         server.enqueue(entry(101, "Offline", stop = null))
 
@@ -158,7 +165,14 @@ class ChangeSenderTest {
     @Test
     fun aCapturedStopUsesTheFrozenTapInstantAfterTheClockMoves() {
         val captured = TAP.plusSeconds(90).plusMillis(400)
-        store.queue(ChangeKind.STOP, 55, TAP, stop = TAP.plusSeconds(90), description = "Running", capturedStop = captured)
+        store.queue(
+            ChangeKind.STOP,
+            55,
+            TAP,
+            stop = TAP.plusSeconds(90),
+            description = "Running",
+            capturedStop = captured,
+        )
         clock.now = TAP.plusSeconds(600)
         server.enqueue(entry(55, "Running", stop = "2026-10-19T08:01:30+00:00"))
 
@@ -171,7 +185,15 @@ class ChangeSenderTest {
 
     @Test
     fun anUncertainCapturedStopReadsTheMatchingRowInsteadOfReplayingPatch() {
-        store.queue(ChangeKind.STOP, 55, TAP, TAP.plusSeconds(90), "Running", maybeSent = true, capturedStop = TAP.plusSeconds(90))
+        store.queue(
+            ChangeKind.STOP,
+            55,
+            TAP,
+            TAP.plusSeconds(90),
+            "Running",
+            maybeSent = true,
+            capturedStop = TAP.plusSeconds(90),
+        )
         server.enqueue(entry(55, "Running", stop = "2026-10-19T08:01:30+00:00"))
 
         assertEquals(ChangeSender.Outcome.Empty(1), sender.drain())
@@ -182,13 +204,28 @@ class ChangeSenderTest {
 
     @Test
     fun anUncertainShortStopRequiresTheExactTrashRow() {
-        store.queue(ChangeKind.STOP, 55, TAP, TAP, "Short", maybeSent = true, capturedStop = TAP.plusSeconds(2), shortStop = true)
+        store.queue(
+            ChangeKind.STOP,
+            55,
+            TAP,
+            TAP,
+            "Short",
+            maybeSent = true,
+            capturedStop = TAP.plusSeconds(2),
+            shortStop = true,
+        )
         server.enqueue(MockResponse.Builder().code(404).body("\"Not found\"").build())
-        server.enqueue(entries("""{"id":55,"start":"2026-10-19T08:00:00+00:00","stop":"2026-10-19T08:00:00+00:00","server_deleted_at":"2026-10-19T08:00:02Z"}"""))
+        server.enqueue(
+            entries(
+                """{"id":55,"start":"2026-10-19T08:00:00+00:00","stop":"2026-10-19T08:00:00+00:00","server_deleted_at":"2026-10-19T08:00:02Z"}""",
+            ),
+        )
 
         assertEquals(ChangeSender.Outcome.Empty(1), sender.drain())
-        assertEquals(listOf("GET /api/v9/me/time_entries/55", "GET /api/app/trash"),
-            List(2) { server.takeRequest() }.map { "${it.method} ${it.url.encodedPath}" })
+        assertEquals(
+            listOf("GET /api/v9/me/time_entries/55", "GET /api/app/trash"),
+            List(2) { server.takeRequest() }.map { "${it.method} ${it.url.encodedPath}" },
+        )
         assertTrue(store.changes.isEmpty())
     }
 
@@ -221,7 +258,15 @@ class ChangeSenderTest {
      */
     @Test
     fun aNoTimeCreateSendsItsDayAndDurationAndNoTimes() {
-        store.queue(ChangeKind.CREATE, LOCAL, MIDNIGHT, stop = MIDNIGHT.plusSeconds(5400), description = "Workshop", allDay = true, day = DAY)
+        store.queue(
+            ChangeKind.CREATE,
+            LOCAL,
+            MIDNIGHT,
+            stop = MIDNIGHT.plusSeconds(5400),
+            description = "Workshop",
+            allDay = true,
+            day = DAY,
+        )
         server.enqueue(entry(101, "Workshop", stop = "2026-10-19T09:30:00+00:00"))
 
         assertEquals(ChangeSender.Outcome.Empty(sent = 1), noTimeSender().drain())
@@ -243,9 +288,25 @@ class ChangeSenderTest {
      */
     @Test
     fun aNoTimeEditAndTurningNoTimeOnSendTheDayAndDurationWithoutTimes() {
-        store.queue(ChangeKind.UPDATE, 55, MIDNIGHT, stop = MIDNIGHT.plusSeconds(3600), description = "Renamed", allDay = true, day = DAY)
+        store.queue(
+            ChangeKind.UPDATE,
+            55,
+            MIDNIGHT,
+            stop = MIDNIGHT.plusSeconds(3600),
+            description = "Renamed",
+            allDay = true,
+            day = DAY,
+        )
         val nextMidnight = MIDNIGHT.plusSeconds(86_400)
-        store.queue(ChangeKind.UPDATE, 56, nextMidnight, stop = nextMidnight.plusSeconds(7200), description = "Was timed", allDay = true, day = DAY.plusDays(1))
+        store.queue(
+            ChangeKind.UPDATE,
+            56,
+            nextMidnight,
+            stop = nextMidnight.plusSeconds(7200),
+            description = "Was timed",
+            allDay = true,
+            day = DAY.plusDays(1),
+        )
         server.enqueue(entry(55, "Renamed", stop = "2026-10-19T09:00:00+00:00"))
         server.enqueue(entry(56, "Was timed", stop = "2026-10-19T10:00:00+00:00"))
 
@@ -273,7 +334,14 @@ class ChangeSenderTest {
     /** Without a stored day, the change sends its local midnight, from which Tokkl takes the day. */
     @Test
     fun aNoTimeChangeWithoutADaySendsItsMidnightInsteadOfStartDate() {
-        store.queue(ChangeKind.UPDATE, 55, MIDNIGHT, stop = MIDNIGHT.plusSeconds(3600), description = "Renamed", allDay = true)
+        store.queue(
+            ChangeKind.UPDATE,
+            55,
+            MIDNIGHT,
+            stop = MIDNIGHT.plusSeconds(3600),
+            description = "Renamed",
+            allDay = true,
+        )
         server.enqueue(entry(55, "Renamed", stop = "2026-10-19T09:00:00+00:00"))
 
         noTimeSender().drain()
@@ -322,7 +390,15 @@ class ChangeSenderTest {
     /** Toggl Track, and Tokkl before 1.11.0, never get `all_day`: every change goes as it always did. */
     @Test
     fun withNoTimeEntriesOffNoRequestCarriesAllDay() {
-        store.queue(ChangeKind.CREATE, LOCAL, MIDNIGHT, stop = MIDNIGHT.plusSeconds(5400), description = "Workshop", allDay = true, day = DAY)
+        store.queue(
+            ChangeKind.CREATE,
+            LOCAL,
+            MIDNIGHT,
+            stop = MIDNIGHT.plusSeconds(5400),
+            description = "Workshop",
+            allDay = true,
+            day = DAY,
+        )
         store.queue(ChangeKind.UPDATE, 55, TAP, stop = TAP.plusSeconds(60), description = "Edited")
         server.enqueue(entry(101, "Workshop", stop = "2026-10-19T09:30:00+00:00"))
         server.enqueue(entry(55, "Edited", stop = "2026-10-19T08:01:00+00:00"))
@@ -377,13 +453,29 @@ class ChangeSenderTest {
 
     @Test
     fun aChangeWhosePooledConnectionTheServerClosedGoesOutOnANewOneInTheSameDrain() {
-        for ((kind, method) in listOf(ChangeKind.UPDATE to "PUT", ChangeKind.DELETE to "DELETE", ChangeKind.CREATE to "POST")) {
+        for ((kind, method) in listOf(
+            ChangeKind.UPDATE to "PUT",
+            ChangeKind.DELETE to "DELETE",
+            ChangeKind.CREATE to "POST",
+        )) {
             poolAConnectionTheServerCloses()
-            store.queue(kind, if (kind == ChangeKind.CREATE) LOCAL else 55, TAP, stop = TAP.plusSeconds(60), description = "Edited")
+            store.queue(
+                kind,
+                if (kind == ChangeKind.CREATE) LOCAL else 55,
+                TAP,
+                stop = TAP.plusSeconds(60),
+                description = "Edited",
+            )
             // A create that may have reached the server looks for the entry it made first.
             if (kind == ChangeKind.CREATE) server.enqueue(entries())
             server.enqueue(
-                if (kind == ChangeKind.DELETE) MockResponse.Builder().code(200).build() else entry(55, "Edited", stop = "2026-10-19T08:01:00+00:00"),
+                if (kind == ChangeKind.DELETE) {
+                    MockResponse.Builder().code(
+                        200,
+                    ).build()
+                } else {
+                    entry(55, "Edited", stop = "2026-10-19T08:01:00+00:00")
+                },
             )
 
             assertEquals(kind.name, ChangeSender.Outcome.Empty(sent = 1), sender.drain())
@@ -402,7 +494,11 @@ class ChangeSenderTest {
         val outcome = sender.drain()
 
         assertTrue(outcome.toString(), outcome is ChangeSender.Outcome.Stopped && outcome.error is ApiError.Network)
-        assertEquals("the first try and one more, each once", listOf("PUT", "PUT"), remainingRequests().map { it.method })
+        assertEquals(
+            "the first try and one more, each once",
+            listOf("PUT", "PUT"),
+            remainingRequests().map { it.method },
+        )
         assertEquals(listOf(ChangeKind.UPDATE), store.changes.map { it.kind })
     }
 
@@ -485,8 +581,13 @@ class ChangeSenderTest {
         store.queue(ChangeKind.STOP, 55, TAP, stop = TAP.plusSeconds(90), description = "Gone")
         store.queue(ChangeKind.UPDATE, 56, TAP, stop = TAP.plusSeconds(60), description = "Other")
         var discarded = 0
-        sender = ChangeSender(store, { TogglApiClient(url, ApiCredentials.ApiToken("tok-123")) }, scope, Dispatchers.IO,
-            onDiscarded = { discarded += it })
+        sender = ChangeSender(
+            store,
+            { TogglApiClient(url, ApiCredentials.ApiToken("tok-123")) },
+            scope,
+            Dispatchers.IO,
+            onDiscarded = { discarded += it },
+        )
         server.enqueue(MockResponse.Builder().code(404).build())
         server.enqueue(MockResponse.Builder().code(404).build())
         server.enqueue(entry(56, "Other", stop = "2026-10-19T08:01:00Z"))
@@ -517,10 +618,12 @@ class ChangeSenderTest {
             val result = sender.drain()
             when (status) {
                 503 -> assertEquals(ChangeSender.Outcome.Stopped(0, ApiError.UnexpectedStatus(503)), result)
+
                 429 -> {
                     assertEquals(ChangeSender.Outcome.Waiting(0, TAP.plusSeconds(30)), result)
                     clock.now = TAP.plusSeconds(30)
                 }
+
                 403 -> {
                     assertEquals(ChangeSender.Outcome.Stopped(0, ApiError.AuthFailed), result)
                     assertTrue(sender.signInNeeded.value)
@@ -670,7 +773,11 @@ class ChangeSenderTest {
             client = { TogglApiClient(url, ApiCredentials.ApiToken("tok-123")) },
             scope = scope,
             io = Dispatchers.IO,
-            onSent = { synchronized(calls) { calls += "onSent after ${server.requestCount} requests, ${store.changes.size} queued" } },
+            onSent = {
+                synchronized(
+                    calls,
+                ) { calls += "onSent after ${server.requestCount} requests, ${store.changes.size} queued" }
+            },
             clock = clock,
         )
         store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = null, description = "First")
@@ -867,7 +974,10 @@ class ChangeSenderTest {
 
         assertEquals(ChangeSender.Outcome.Empty(sent = 1), sender.drain())
 
-        assertEquals("GET /api/v9/me/time_entries/current", server.takeRequest().let { "${it.method} ${it.url.encodedPath}" })
+        assertEquals(
+            "GET /api/v9/me/time_entries/current",
+            server.takeRequest().let { "${it.method} ${it.url.encodedPath}" },
+        )
         val body = server.takeRequest().json()!!
         assertTrue(body["stop"] is JsonNull)
         assertEquals("-1", body.string("duration"))
@@ -878,7 +988,13 @@ class ChangeSenderTest {
     @Test
     fun aQueuedStartGoesAsQueuedWhenTheRunningTimerStartedEarlierOrAtTheSameSecond() {
         store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = null, description = "After an earlier timer")
-        store.queue(ChangeKind.CREATE, -2, TAP.plusSeconds(60).plusMillis(900), stop = null, description = "At the same second")
+        store.queue(
+            ChangeKind.CREATE,
+            -2,
+            TAP.plusSeconds(60).plusMillis(900),
+            stop = null,
+            description = "At the same second",
+        )
         server.enqueue(runs(900, start = "2026-10-19T07:00:00+00:00"))
         server.enqueue(entry(101, "After an earlier timer", stop = null))
         server.enqueue(runs(901, start = "2026-10-19T08:01:00+00:00"))
@@ -903,7 +1019,10 @@ class ChangeSenderTest {
         assertEquals(ChangeSender.Outcome.Empty(sent = 2), sender.drain())
 
         val requests = List(3) { server.takeRequest() }
-        assertEquals(listOf("2026-10-19T08:10:00Z", "2026-10-19T08:10:00Z"), requests.drop(1).map { it.json()!!.string("stop") })
+        assertEquals(
+            listOf("2026-10-19T08:10:00Z", "2026-10-19T08:10:00Z"),
+            requests.drop(1).map { it.json()!!.string("stop") },
+        )
     }
 
     @Test
@@ -911,7 +1030,13 @@ class ChangeSenderTest {
         store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = null, description = "Phone")
         store.queue(ChangeKind.UPDATE, LOCAL, TAP, stop = null, description = "Edited while it ran")
         store.queue(ChangeKind.STOP, LOCAL, TAP, stop = TAP.plusSeconds(2700), description = "Edited while it ran")
-        store.queue(ChangeKind.UPDATE, LOCAL, TAP.plusSeconds(3600), stop = null, description = "Moved after the later timer")
+        store.queue(
+            ChangeKind.UPDATE,
+            LOCAL,
+            TAP.plusSeconds(3600),
+            stop = null,
+            description = "Moved after the later timer",
+        )
         server.enqueue(runs(900, start = "2026-10-19T08:30:00+00:00"))
         server.enqueue(entry(101, "Phone", stop = "2026-10-19T08:30:00+00:00"))
         server.enqueue(entry(101, "Edited while it ran", stop = "2026-10-19T08:30:00+00:00"))
@@ -936,13 +1061,25 @@ class ChangeSenderTest {
             io = Dispatchers.IO,
             clock = clock,
             spans = object : ServerSpans {
-                override fun switched(start: Instant, stop: Instant) = stopSpan(start, stop, 15.0, ZoneId.of("UTC"), oneStep = false)
+                override fun switched(start: Instant, stop: Instant) = stopSpan(
+                    start,
+                    stop,
+                    15.0,
+                    ZoneId.of("UTC"),
+                    oneStep = false,
+                )
             },
         )
         // 08:08 snaps to 08:15 and the later timer's 08:20 to 08:15 too, so the phone's entry is
         // stored with no length. Sent as 08:08 to 08:20, Tokkl would store 08:15 to 08:30.
         store.queue(ChangeKind.CREATE, LOCAL, TAP.plusSeconds(480).plusMillis(400), stop = null, description = "Phone")
-        store.queue(ChangeKind.STOP, LOCAL, TAP.plusSeconds(480).plusMillis(400), stop = TAP.plusSeconds(2700), description = "Phone")
+        store.queue(
+            ChangeKind.STOP,
+            LOCAL,
+            TAP.plusSeconds(480).plusMillis(400),
+            stop = TAP.plusSeconds(2700),
+            description = "Phone",
+        )
         server.enqueue(runs(900, start = "2026-10-19T08:20:00+00:00"))
         server.enqueue(entry(101, "Phone", stop = "2026-10-19T08:15:00+00:00"))
         server.enqueue(entry(101, "Phone", stop = "2026-10-19T08:15:00+00:00"))
@@ -1006,7 +1143,9 @@ class ChangeSenderTest {
         server.enqueue(entry(55, "Edited", stop = "2026-10-19T08:01:00+00:00"))
         // The server reads the create, then the connection drops before the answer.
         server.enqueue(MockResponse.Builder().onResponseStart(SocketEffect.CloseSocket()).build())
-        server.enqueue(entries(listed(101, "Manual", start = "2026-10-19T08:00:00+00:00", stop = "2026-10-19T08:01:00+00:00")))
+        server.enqueue(
+            entries(listed(101, "Manual", start = "2026-10-19T08:00:00+00:00", stop = "2026-10-19T08:01:00+00:00")),
+        )
 
         assertEquals(ChangeSender.Outcome.Empty(sent = 2), sender.drain())
 
@@ -1018,7 +1157,12 @@ class ChangeSenderTest {
     fun theNextDrainTakesTheEntryALostCreateMadeAndSendsLaterChangesToIt() {
         store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = TAP.plusSeconds(60), description = "Manual", maybeSent = true)
         store.queue(ChangeKind.UPDATE, LOCAL, TAP, stop = TAP.plusSeconds(120), description = "Edited")
-        server.enqueue(entries(listed(100, "Manual", start = "2026-10-19T08:00:00+00:00", project = 4), listed(101, "Manual", start = "2026-10-19T08:00:00+00:00")))
+        server.enqueue(
+            entries(
+                listed(100, "Manual", start = "2026-10-19T08:00:00+00:00", project = 4),
+                listed(101, "Manual", start = "2026-10-19T08:00:00+00:00"),
+            ),
+        )
         server.enqueue(entry(101, "Edited", stop = "2026-10-19T08:02:00+00:00"))
 
         assertEquals(ChangeSender.Outcome.Empty(sent = 2), sender.drain())
@@ -1036,7 +1180,15 @@ class ChangeSenderTest {
     fun aLostDuplicateIsPostedInsteadOfTakingItsSource() {
         // A duplicate has every field and time of its source, entry 100, which the server held
         // when the phone queued the copy, so the lookup for a lost copy must leave it out.
-        store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = TAP.plusSeconds(1800), description = "Manual", maybeSent = true, existingIds = listOf(100))
+        store.queue(
+            ChangeKind.CREATE,
+            LOCAL,
+            TAP,
+            stop = TAP.plusSeconds(1800),
+            description = "Manual",
+            maybeSent = true,
+            existingIds = listOf(100),
+        )
         server.enqueue(entries(listed(100, "Manual", start = "2026-10-19T08:00:00+00:00")))
         server.enqueue(entry(101, "Manual", stop = "2026-10-19T08:30:00+00:00"))
 
@@ -1051,9 +1203,20 @@ class ChangeSenderTest {
 
     @Test
     fun aLostDuplicateTakesTheCopyItsPostMadeBesideItsSource() {
-        store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = TAP.plusSeconds(1800), description = "Manual", maybeSent = true, existingIds = listOf(100))
+        store.queue(
+            ChangeKind.CREATE,
+            LOCAL,
+            TAP,
+            stop = TAP.plusSeconds(1800),
+            description = "Manual",
+            maybeSent = true,
+            existingIds = listOf(100),
+        )
         server.enqueue(
-            entries(listed(100, "Manual", start = "2026-10-19T08:00:00+00:00"), listed(101, "Manual", start = "2026-10-19T08:00:00+00:00")),
+            entries(
+                listed(100, "Manual", start = "2026-10-19T08:00:00+00:00"),
+                listed(101, "Manual", start = "2026-10-19T08:00:00+00:00"),
+            ),
         )
 
         assertEquals(ChangeSender.Outcome.Empty(sent = 1), sender.drain())
@@ -1074,7 +1237,14 @@ class ChangeSenderTest {
                 override fun start(start: Instant): Instant = start.truncatedTo(java.time.temporal.ChronoUnit.HOURS)
             },
         )
-        store.queue(ChangeKind.CREATE, LOCAL, TAP.plusSeconds(120).plusMillis(300), stop = TAP.plusSeconds(600), description = "Manual", maybeSent = true)
+        store.queue(
+            ChangeKind.CREATE,
+            LOCAL,
+            TAP.plusSeconds(120).plusMillis(300),
+            stop = TAP.plusSeconds(600),
+            description = "Manual",
+            maybeSent = true,
+        )
         server.enqueue(entries(listed(101, "Manual", start = "2026-10-19T08:00:00+00:00")))
 
         assertEquals(ChangeSender.Outcome.Empty(sent = 1), snapping.drain())
@@ -1111,14 +1281,34 @@ class ChangeSenderTest {
     @Test
     fun aNoTimeCreateWhoseAnswerIsLostIsFoundInsteadOfPostedAgain() {
         store.queue(ChangeKind.UPDATE, 55, TAP, stop = TAP.plusSeconds(60), description = "Edited")
-        store.queue(ChangeKind.CREATE, LOCAL, MIDNIGHT, stop = MIDNIGHT.plusSeconds(5400), description = "Workshop", allDay = true, day = DAY)
+        store.queue(
+            ChangeKind.CREATE,
+            LOCAL,
+            MIDNIGHT,
+            stop = MIDNIGHT.plusSeconds(5400),
+            description = "Workshop",
+            allDay = true,
+            day = DAY,
+        )
         server.enqueue(entry(55, "Edited", stop = "2026-10-19T08:01:00+00:00"))
         // The server reads the create, then the connection drops before the answer.
         server.enqueue(MockResponse.Builder().onResponseStart(SocketEffect.CloseSocket()).build())
         server.enqueue(
             entries(
-                listed(100, "Workshop", start = "2026-10-18T22:30:00+00:00", stop = "2026-10-19T00:00:00+00:00", allDay = false),
-                listed(101, "Workshop", start = "2026-10-18T22:30:00+00:00", stop = "2026-10-19T00:00:00+00:00", allDay = true),
+                listed(
+                    100,
+                    "Workshop",
+                    start = "2026-10-18T22:30:00+00:00",
+                    stop = "2026-10-19T00:00:00+00:00",
+                    allDay = false,
+                ),
+                listed(
+                    101,
+                    "Workshop",
+                    start = "2026-10-18T22:30:00+00:00",
+                    stop = "2026-10-19T00:00:00+00:00",
+                    allDay = true,
+                ),
             ),
         )
 
@@ -1136,7 +1326,11 @@ class ChangeSenderTest {
     fun aNoTimeCreateMatchesANoTimeEntryWithItsFieldsWithinTheLookupWindow() {
         val create = PendingChange(
             kind = ChangeKind.CREATE, entryId = LOCAL, workspaceId = 7, projectId = 3, taskId = null, description = "Workshop",
-            start = MIDNIGHT, stop = MIDNIGHT.plusSeconds(5400), billable = true, tags = emptyList(), tagIds = emptyList(),
+            start = MIDNIGHT,
+            stop = MIDNIGHT.plusSeconds(
+                5400,
+            ),
+            billable = true, tags = emptyList(), tagIds = emptyList(),
             allDay = true, day = DAY,
         )
         fun listedEntry(start: String, allDay: Boolean?, description: String = "Workshop") =
@@ -1145,16 +1339,28 @@ class ChangeSenderTest {
 
         assertTrue(create.couldHaveMade(listedEntry("2026-10-18T21:00:00+00:00", allDay = true), starts))
         assertTrue(create.couldHaveMade(listedEntry("2026-10-18T23:00:00+00:00", allDay = true), starts))
-        assertFalse("after the window", create.couldHaveMade(listedEntry("2026-10-18T23:00:01+00:00", allDay = true), starts))
-        assertFalse("another description", create.couldHaveMade(listedEntry("2026-10-18T22:00:00+00:00", allDay = true, "Other"), starts))
-        assertFalse("a timed entry at another start", create.couldHaveMade(listedEntry("2026-10-18T22:30:00+00:00", allDay = false), starts))
+        assertFalse(
+            "after the window",
+            create.couldHaveMade(listedEntry("2026-10-18T23:00:01+00:00", allDay = true), starts),
+        )
+        assertFalse(
+            "another description",
+            create.couldHaveMade(listedEntry("2026-10-18T22:00:00+00:00", allDay = true, "Other"), starts),
+        )
+        assertFalse(
+            "a timed entry at another start",
+            create.couldHaveMade(listedEntry("2026-10-18T22:30:00+00:00", allDay = false), starts),
+        )
         assertTrue(
             "sent while the flag was off, it went timed at its midnight",
             create.couldHaveMade(listedEntry("2026-10-18T22:00:00+00:00", allDay = null), starts),
         )
         assertFalse(
             "a timed create still needs its start",
-            create.copy(allDay = false, day = null).couldHaveMade(listedEntry("2026-10-18T22:30:00+00:00", allDay = true), starts),
+            create.copy(
+                allDay = false,
+                day = null,
+            ).couldHaveMade(listedEntry("2026-10-18T22:30:00+00:00", allDay = true), starts),
         )
     }
 
@@ -1195,7 +1401,10 @@ class ChangeSenderTest {
         store.changes.replaceAll { it.copy(maybeSent = false) }
         server.enqueue(MockResponse.Builder().code(201).body("not json").build())
         val outcome = sender.drain()
-        assertTrue(outcome.toString(), outcome is ChangeSender.Outcome.Stopped && outcome.error is ApiError.InvalidResponse)
+        assertTrue(
+            outcome.toString(),
+            outcome is ChangeSender.Outcome.Stopped && outcome.error is ApiError.InvalidResponse,
+        )
         assertTrue("the server answered 2xx, so it stored the entry", store.changes.single().maybeSent)
     }
 
@@ -1231,7 +1440,11 @@ class ChangeSenderTest {
 
         assertEquals("no request", 0, server.requestCount)
         assertEquals("the other change stays queued", listOf(54L), store.changes.map { it.entryId })
-        assertEquals("the entry is back as the delete found it", listOf(55L to "Deleted"), store.putBack.map { it.id to it.description })
+        assertEquals(
+            "the entry is back as the delete found it",
+            listOf(55L to "Deleted"),
+            store.putBack.map { it.id to it.description },
+        )
     }
 
     @Test
@@ -1258,7 +1471,10 @@ class ChangeSenderTest {
         val (delete, restore) = List(2) { server.takeRequest() }
         assertEquals("DELETE /api/v9/workspaces/7/time_entries/55", "${delete.method} ${delete.url.encodedPath}")
         assertEquals("POST /api/app/time_entries/55/restore", "${restore.method} ${restore.url.encodedPath}")
-        assertEquals("Basic ${java.util.Base64.getEncoder().encodeToString("tok-123:api_token".toByteArray())}", restore.headers["Authorization"])
+        assertEquals(
+            "Basic ${java.util.Base64.getEncoder().encodeToString("tok-123:api_token".toByteArray())}",
+            restore.headers["Authorization"],
+        )
         val (id, answer) = store.restores.single()
         assertEquals(55L, id)
         assertEquals("the cache gets the entry as the server restored it", "Deleted", answer?.description)
@@ -1315,12 +1531,22 @@ class ChangeSenderTest {
         store.queue(ChangeKind.DELETE, 55, TAP, stop = TAP.plusSeconds(90), description = "Deleted")
         store.queue(ChangeKind.UPDATE, 54, TAP, stop = TAP.plusSeconds(60), description = "Other")
         // Undo runs after the sender read the delete and before it marked it.
-        store.afterFirst = { runBlocking { assertEquals(ChangeSender.UndoOutcome.Cancelled, sender.undoDelete(it.entryId)) } }
+        store.afterFirst = {
+            runBlocking {
+                assertEquals(
+                    ChangeSender.UndoOutcome.Cancelled,
+                    sender.undoDelete(it.entryId),
+                )
+            }
+        }
         server.enqueue(entry(54, "Other", stop = "2026-10-19T08:01:00+00:00"))
 
         assertEquals(ChangeSender.Outcome.Empty(sent = 1), sender.drain())
 
-        assertEquals(listOf("PUT /api/v9/workspaces/7/time_entries/54"), remainingRequests().map { "${it.method} ${it.url.encodedPath}" })
+        assertEquals(
+            listOf("PUT /api/v9/workspaces/7/time_entries/54"),
+            remainingRequests().map { "${it.method} ${it.url.encodedPath}" },
+        )
     }
 
     @Test
@@ -1332,7 +1558,11 @@ class ChangeSenderTest {
         server.enqueue(MockResponse.Builder().code(429).build())
 
         assertEquals("no network", ChangeSender.UndoOutcome.NeedsServer, runBlocking { sender.undoDelete(55) })
-        assertEquals("a proxy whose server is down", ChangeSender.UndoOutcome.NeedsServer, runBlocking { sender.undoDelete(55) })
+        assertEquals(
+            "a proxy whose server is down",
+            ChangeSender.UndoOutcome.NeedsServer,
+            runBlocking { sender.undoDelete(55) },
+        )
         assertEquals("too many requests", ChangeSender.UndoOutcome.NeedsServer, runBlocking { sender.undoDelete(55) })
         signedIn = false
         assertEquals("signed out", ChangeSender.UndoOutcome.NeedsServer, runBlocking { sender.undoDelete(55) })
@@ -1345,7 +1575,11 @@ class ChangeSenderTest {
         store.queue(ChangeKind.DELETE, 55, TAP, stop = TAP.plusSeconds(90), description = "Deleted")
         server.enqueue(MockResponse.Builder().code(200).build())
         sender.drain()
-        server.enqueue(MockResponse.Builder().code(404).addHeader("Content-Type", "application/json").body("\"Time entry not found\"").build())
+        server.enqueue(
+            MockResponse.Builder().code(
+                404,
+            ).addHeader("Content-Type", "application/json").body("\"Time entry not found\"").build(),
+        )
         server.enqueue(MockResponse.Builder().code(403).build())
 
         assertEquals(ChangeSender.UndoOutcome.Failed(404), runBlocking { sender.undoDelete(55) })
@@ -1355,7 +1589,9 @@ class ChangeSenderTest {
 
     @Test
     fun aRestoreAnsweredWithAnUnreadableBodyStillCountsAsRestored() {
-        server.enqueue(MockResponse.Builder().code(200).addHeader("Content-Type", "application/json").body("[]").build())
+        server.enqueue(
+            MockResponse.Builder().code(200).addHeader("Content-Type", "application/json").body("[]").build(),
+        )
 
         assertEquals(ChangeSender.UndoOutcome.Restored, runBlocking { sender.undoDelete(55) })
 
@@ -1425,8 +1661,9 @@ class ChangeSenderTest {
         )
         .build()
 
-    private fun entries(vararg json: String) =
-        MockResponse.Builder().code(200).addHeader("Content-Type", "application/json").body(json.joinToString(",", "[", "]")).build()
+    private fun entries(vararg json: String) = MockResponse.Builder().code(
+        200,
+    ).addHeader("Content-Type", "application/json").body(json.joinToString(",", "[", "]")).build()
 
     /** One entry in a GET /me/time_entries answer, as Tokkl lists it, in workspace 7. */
     private fun listed(
@@ -1451,7 +1688,9 @@ class ChangeSenderTest {
         allDay = { true },
     )
 
-    private fun nothingRuns() = MockResponse.Builder().code(200).addHeader("Content-Type", "application/json").body("null").build()
+    private fun nothingRuns() = MockResponse.Builder().code(
+        200,
+    ).addHeader("Content-Type", "application/json").body("null").build()
 
     /** The answer to GET /me/time_entries/current while the entry [id], started at [start], runs. */
     private fun runs(id: Long, start: String) = MockResponse.Builder()
@@ -1552,13 +1791,21 @@ class ChangeSenderTest {
 
         /** Rewrites the queue as [RoomChangeStore] does, and keeps [later] for the test. */
         @Synchronized
-        override fun endBefore(start: PendingChange, later: CachedTimeEntry, onGrid: (start: Instant, stop: Instant) -> SnappedSpan): PendingChange {
+        override fun endBefore(
+            start: PendingChange,
+            later: CachedTimeEntry,
+            onGrid: (start: Instant, stop: Instant) -> SnappedSpan,
+        ): PendingChange {
             val forEntry = changes.filter { it.entryId == start.entryId }
             val ended = start.endedAt(later.start, forEntry).placed(onGrid)
             changes.replaceAll { change ->
                 when {
                     change.sequence == start.sequence -> ended
-                    change.entryId == start.entryId && change.sequence > start.sequence -> change.stoppedBy(later.start)?.placed(onGrid) ?: change
+
+                    change.entryId == start.entryId && change.sequence > start.sequence -> change.stoppedBy(
+                        later.start,
+                    )?.placed(onGrid) ?: change
+
                     else -> change
                 }
             }
@@ -1599,7 +1846,9 @@ class ChangeSenderTest {
                     putBack += delete.entry()
                     TakenBack.Unsent
                 }
+
                 id > 0 -> TakenBack.OnServer(id)
+
                 else -> TakenBack.Unknown
             }
         }

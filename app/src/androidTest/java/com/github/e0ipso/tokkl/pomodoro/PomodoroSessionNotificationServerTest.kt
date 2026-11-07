@@ -17,10 +17,6 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.feature.timer.R
-import com.github.e0ipso.tokkl.feature.pomodoro.R as PomodoroR
-import com.github.e0ipso.tokkl.feature.settings.R as SettingsR
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
@@ -37,6 +33,7 @@ import com.github.e0ipso.tokkl.components.signOut
 import com.github.e0ipso.tokkl.components.storeSignIn
 import com.github.e0ipso.tokkl.components.timerActions
 import com.github.e0ipso.tokkl.components.timerState
+import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.openBarPage
 import com.github.e0ipso.tokkl.session.ServerTrustStore
@@ -44,8 +41,6 @@ import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.timerstate.SessionLengths
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -60,6 +55,11 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.feature.pomodoro.R as PomodoroR
+import com.github.e0ipso.tokkl.feature.settings.R as SettingsR
 
 /**
  * The session notification of a real session on the test server: its posted intents, taps through
@@ -68,6 +68,7 @@ import org.junit.rules.RuleChain
  */
 class PomodoroSessionNotificationServerTest {
     private val compose = createEmptyComposeRule()
+
     @get:Rule val rules: RuleChain = RuleChain.outerRule(SessionRule()).around(compose)
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val context = instrumentation.targetContext
@@ -102,7 +103,9 @@ class PomodoroSessionNotificationServerTest {
         } finally {
             try {
                 if (::account.isInitialized) TestAccounts.delete(account) else AirplaneMode.off()
-            } finally { SessionRule.signOut() }
+            } finally {
+                SessionRule.signOut()
+            }
         }
     }
 
@@ -144,7 +147,9 @@ class PomodoroSessionNotificationServerTest {
             compose.openBarPage(R.string.nav_timer)
             compose.onNodeWithText(context.getString(R.string.timer_open_fullscreen))
                 .performSemanticsAction(SemanticsActions.OnClick)
-            compose.waitUntil(10_000) { compose.onAllNodesWithTag("fullscreen_timer").fetchSemanticsNodes().isNotEmpty() }
+            compose.waitUntil(
+                10_000,
+            ) { compose.onAllNodesWithTag("fullscreen_timer").fetchSemanticsNodes().isNotEmpty() }
             // The server stops the regular timer at the session start.
             startSession()
             awaitSessionNotification().contentIntent.send()
@@ -170,7 +175,10 @@ class PomodoroSessionNotificationServerTest {
         // Neither reached the server: the phone holds the same state and shows the same phase.
         assertEquals(shown.revision, app.timerState.state.value?.state?.revision)
         assertEquals(PhaseKind.WORK, app.timerState.state.value?.state?.pomodoro?.phase?.kind)
-        assertEquals(work.extras.getCharSequence(Notification.EXTRA_TITLE).toString(), awaitSessionNotification().extras.getCharSequence(Notification.EXTRA_TITLE).toString())
+        assertEquals(
+            work.extras.getCharSequence(Notification.EXTRA_TITLE).toString(),
+            awaitSessionNotification().extras.getCharSequence(Notification.EXTRA_TITLE).toString(),
+        )
 
         AirplaneMode.set(false, account.client)
         sendActions(1) { work.actions[0].actionIntent.send() }
@@ -187,11 +195,15 @@ class PomodoroSessionNotificationServerTest {
 
         sendActions(1) { rest.actions[1].actionIntent.send() }
         assertNull(serverTimer().pomodoro)
-        compose.waitUntil(10_000) { manager.activeNotifications.none { it.id == PomodoroSessionNotifier.NOTIFICATION_ID } }
+        compose.waitUntil(
+            10_000,
+        ) { manager.activeNotifications.none { it.id == PomodoroSessionNotifier.NOTIFICATION_ID } }
     }
 
     @Test fun theRingingNotificationReplacesTheActiveOneAndNextRestoresOnlyOneActiveNotification() {
-        val phase = startSession(SessionLengths(workMinutes = 1, shortRestMinutes = 60, longRestMinutes = 60, longRestEvery = 4))
+        val phase = startSession(
+            SessionLengths(workMinutes = 1, shortRestMinutes = 60, longRestMinutes = 60, longRestEvery = 4),
+        )
         val active = awaitSessionNotification()
         assertEquals(PomodoroSessionNotifier.CHANNEL_ID, active.channelId)
         // The server's one-minute work phase ends, and the phone rings from its planned end.
@@ -207,7 +219,9 @@ class PomodoroSessionNotificationServerTest {
         try {
             ring.actions[0].actionIntent.send()
             assertTrue(done.await(10, TimeUnit.SECONDS))
-        } finally { PomodoroRingingActionReceiver.completed = null }
+        } finally {
+            PomodoroRingingActionReceiver.completed = null
+        }
         runBlocking { withTimeout(10_000) { app.pomodoroRinging.state.first { !it.serviceRunning } } }
         awaitSessionNotification(PhaseKind.SHORT_REST)
         assertEquals(1, manager.activeNotifications.count { it.id == PomodoroSessionNotifier.NOTIFICATION_ID })
@@ -232,7 +246,10 @@ class PomodoroSessionNotificationServerTest {
         val newIdentity = checkNotNull(PomodoroSessionNotificationStore(context).load()).account
         assertNotEquals(oldIdentity, newIdentity)
         val revision = serverTimer().revision
-        sendActions(2) { old.actions[0].actionIntent.send(); old.actions[1].actionIntent.send() }
+        sendActions(2) {
+            old.actions[0].actionIntent.send()
+            old.actions[1].actionIntent.send()
+        }
         assertEquals(revision, serverTimer().revision)
         assertEquals(PhaseKind.WORK, serverTimer().pomodoro?.phase?.kind)
         ActivityScenario.launch<MainActivity>(pomodoroSessionOpenIntent(context, oldIdentity, phase)).use {
@@ -243,9 +260,12 @@ class PomodoroSessionNotificationServerTest {
 
     /** Starts a session on the server, three hours of work by default, and returns its phase. */
     private fun startSession(lengths: SessionLengths = SessionLengths(180, 60, 60, 4)): PomodoroPhaseKey {
-        assertEquals(TimerActionResult.Done, runBlocking {
-            app.timerActions.startSession(workspace, EntryFields("Notification acceptance"), lengths)
-        })
+        assertEquals(
+            TimerActionResult.Done,
+            runBlocking {
+                app.timerActions.startSession(workspace, EntryFields("Notification acceptance"), lengths)
+            },
+        )
         return HeldPhases.key(checkNotNull(app.timerState.state.value))
     }
 
@@ -258,14 +278,28 @@ class PomodoroSessionNotificationServerTest {
     private fun sendActions(count: Int, block: () -> Unit) {
         val done = CountDownLatch(count)
         PomodoroSessionActionReceiver.completed = done
-        try { block(); assertTrue("notification actions finished", done.await(15, TimeUnit.SECONDS)) }
-        finally { PomodoroSessionActionReceiver.completed = null }
+        try {
+            block()
+            assertTrue("notification actions finished", done.await(15, TimeUnit.SECONDS))
+        } finally {
+            PomodoroSessionActionReceiver.completed = null
+        }
     }
 
     private fun awaitSessionNotification(kind: PhaseKind = PhaseKind.WORK): Notification {
-        val label = context.getString(if (kind == PhaseKind.WORK) PomodoroR.string.pomodoro_session_work else PomodoroR.string.pomodoro_session_short_rest)
+        val label = context.getString(
+            if (kind ==
+                PhaseKind.WORK
+            ) {
+                PomodoroR.string.pomodoro_session_work
+            } else {
+                PomodoroR.string.pomodoro_session_short_rest
+            },
+        )
         compose.waitUntil(10_000) {
-            manager.activeNotifications.singleOrNull { it.id == PomodoroSessionNotifier.NOTIFICATION_ID }?.notification?.let {
+            manager.activeNotifications.singleOrNull {
+                it.id == PomodoroSessionNotifier.NOTIFICATION_ID
+            }?.notification?.let {
                 it.channelId == PomodoroSessionNotifier.CHANNEL_ID &&
                     it.extras.getCharSequence(Notification.EXTRA_TITLE).toString().startsWith(label)
             } == true

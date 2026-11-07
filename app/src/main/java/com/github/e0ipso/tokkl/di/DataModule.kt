@@ -41,7 +41,14 @@ internal val dataModule = module {
      * the app closed.
      */
     single { SendOnQueue(androidContext(), get()) }
-    single { ChangeQueue(get(), io(), onQueued = get<SendOnQueue>()::queued, spans = get<AccountServerSpans>()) } bind EntryChanges::class
+    single {
+        ChangeQueue(
+            get(),
+            io(),
+            onQueued = get<SendOnQueue>()::queued,
+            spans = get<AccountServerSpans>(),
+        )
+    } bind EntryChanges::class
 
     /**
      * Sends the queued changes in order. Once it has sent some, the account refreshes with a read
@@ -64,5 +71,4 @@ internal val dataModule = module {
             allDay = get<CapabilitiesSource>()::offersAllDay,
         )
     } bind AccountDataOwner::class
-
 }

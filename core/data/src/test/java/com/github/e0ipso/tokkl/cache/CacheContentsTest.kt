@@ -1,13 +1,13 @@
 package com.github.e0ipso.tokkl.cache
 
 import com.github.e0ipso.tokkl.session.AccountSettings
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Test
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.ZoneOffset
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Test
 
 /** How a refresh replaces, prunes and keeps the cached rows. */
 class CacheContentsTest {
@@ -72,7 +72,10 @@ class CacheContentsTest {
         val cached = CacheContents(
             timeEntries = listOf(entry(1, description = "old text"), entry(2, description = "deleted on the server")),
             projects = listOf(project(10, name = "Old name")),
-            clients = listOf(CachedClient(20, WORKSPACE, "Old client", archived = false), CachedClient(21, WORKSPACE, "Gone", false)),
+            clients = listOf(
+                CachedClient(20, WORKSPACE, "Old client", archived = false),
+                CachedClient(21, WORKSPACE, "Gone", false),
+            ),
             tags = listOf(CachedTag(30, WORKSPACE, "old-tag")),
             tasks = listOf(CachedTask(40, WORKSPACE, 10, "Old task", active = true)),
             favorites = listOf(favorite(0, "Old favorite"), favorite(1, "Second")),
@@ -137,9 +140,14 @@ class CacheContentsTest {
     @Test
     fun anArchivedProjectGoesOnceItsLastEntryIsPruned() {
         val archived = project(10, active = false)
-        val cached = CacheContents(timeEntries = listOf(entry(1, start = "2026-09-01T08:00:00Z", projectId = 10)), projects = listOf(archived))
+        val cached = CacheContents(
+            timeEntries = listOf(entry(1, start = "2026-09-01T08:00:00Z", projectId = 10)),
+            projects = listOf(archived),
+        )
 
-        val refreshed = cached.refreshedWith(ServerSnapshot(history = WINDOW, timeEntries = emptyList(), projects = listOf(archived)))
+        val refreshed = cached.refreshedWith(
+            ServerSnapshot(history = WINDOW, timeEntries = emptyList(), projects = listOf(archived)),
+        )
 
         assertEquals(emptyList<CachedProject>(), refreshed.projects)
     }
@@ -183,7 +191,10 @@ class CacheContentsTest {
         val server = listOf(entry(1, description = "Server"), entry(2, description = "Deleted on the phone"))
         val pending = listOf(
             PendingChange.of(ChangeKind.UPDATE, entry(1, description = "Phone, first")).copy(sequence = 1),
-            PendingChange.of(ChangeKind.CREATE, entry(-3, description = "Started offline").copy(stop = null)).copy(sequence = 3),
+            PendingChange.of(
+                ChangeKind.CREATE,
+                entry(-3, description = "Started offline").copy(stop = null),
+            ).copy(sequence = 3),
             PendingChange.of(ChangeKind.UPDATE, entry(1, description = "Phone, last")).copy(sequence = 4),
             PendingChange.of(ChangeKind.DELETE, entry(2)).copy(sequence = 5),
         )
@@ -224,9 +235,13 @@ class CacheContentsTest {
         val refreshed = afterSend.refreshedWith(stale, before = before)
 
         assertEquals(listOf(sent), refreshed.timeEntries)
-        assertEquals(emptyList<CachedTimeEntry>(), refreshed.refreshedWith(
-            stale, before = EntryRefreshStart(refreshed.timeEntries, emptySet()),
-        ).timeEntries)
+        assertEquals(
+            emptyList<CachedTimeEntry>(),
+            refreshed.refreshedWith(
+                stale,
+                before = EntryRefreshStart(refreshed.timeEntries, emptySet()),
+            ).timeEntries,
+        )
     }
 
     @Test
@@ -244,10 +259,13 @@ class CacheContentsTest {
 
             assertEquals(listOf(stopped), refreshed.timeEntries)
             val remoteEdit = stopped.copy(description = "Edited elsewhere")
-            assertEquals(listOf(remoteEdit), refreshed.refreshedWith(
-                ServerSnapshot(history = WINDOW, timeEntries = listOf(remoteEdit)),
-                before = EntryRefreshStart(refreshed.timeEntries, emptySet()),
-            ).timeEntries)
+            assertEquals(
+                listOf(remoteEdit),
+                refreshed.refreshedWith(
+                    ServerSnapshot(history = WINDOW, timeEntries = listOf(remoteEdit)),
+                    before = EntryRefreshStart(refreshed.timeEntries, emptySet()),
+                ).timeEntries,
+            )
         }
     }
 
@@ -264,9 +282,13 @@ class CacheContentsTest {
             val refreshed = afterSend.refreshedWith(stale, before = before)
 
             assertEquals(emptyList<CachedTimeEntry>(), refreshed.timeEntries)
-            assertEquals(listOf(removed), refreshed.refreshedWith(
-                stale, before = EntryRefreshStart(refreshed.timeEntries, emptySet()),
-            ).timeEntries)
+            assertEquals(
+                listOf(removed),
+                refreshed.refreshedWith(
+                    stale,
+                    before = EntryRefreshStart(refreshed.timeEntries, emptySet()),
+                ).timeEntries,
+            )
         }
     }
 

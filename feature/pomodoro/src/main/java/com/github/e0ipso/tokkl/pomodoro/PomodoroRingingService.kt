@@ -11,7 +11,6 @@ import android.os.IBinder
 import androidx.annotation.VisibleForTesting
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.timerstate.PomodoroRingingPhase
-import java.util.concurrent.CountDownLatch
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -23,6 +22,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.android.ext.android.inject
+import java.util.concurrent.CountDownLatch
 
 /**
  * The ringing service as [PomodoroPhaseAlarm] drives it. Stop releases both outputs on the main
@@ -30,15 +30,20 @@ import org.koin.android.ext.android.inject
  * checks the held phase before it plays.
  */
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-class ServicePomodoroRinging(private val context: Context) : PomodoroRinging, PomodoroRingingPhase {
+class ServicePomodoroRinging(private val context: Context) :
+    PomodoroRinging,
+    PomodoroRingingPhase {
     @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
     var service: PomodoroRingingService? = null
     private val observed = MutableStateFlow(PomodoroRingingState())
+
     @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
     val state = observed.asStateFlow()
     override val ringingPhase: Flow<PomodoroPhaseKey?> = state.map { it.ring?.phase }
 
-    internal fun update(value: PomodoroRingingState) { observed.value = value }
+    internal fun update(value: PomodoroRingingState) {
+        observed.value = value
+    }
 
     override suspend fun start(ring: PomodoroRing) = withContext(Dispatchers.Main.immediate) {
         val active = service
@@ -108,10 +113,12 @@ class PomodoroRingingService : Service() {
     private val ringing: ServicePomodoroRinging by inject()
     private val pomodoroAlarm: PomodoroPhaseAlarm by inject()
     private lateinit var notifier: PomodoroRingingNotifier
+
     @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
     lateinit var output: AndroidPomodoroRingOutput
         private set
     private lateinit var controller: PomodoroRingController
+
     @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
     val current: PomodoroRing? get() = controller.current
 
@@ -159,7 +166,11 @@ class PomodoroRingingService : Service() {
     }
 
     internal fun promote(notification: Notification) {
-        startForeground(PomodoroSessionNotifier.NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
+        startForeground(
+            PomodoroSessionNotifier.NOTIFICATION_ID,
+            notification,
+            ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK,
+        )
         promoted = true
     }
 

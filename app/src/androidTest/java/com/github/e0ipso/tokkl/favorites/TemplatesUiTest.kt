@@ -20,11 +20,6 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.feature.clients.R as ClientsR
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
-import com.github.e0ipso.tokkl.feature.tags.R as TagsR
-import com.github.e0ipso.tokkl.feature.timer.R as TimerR
-import com.github.e0ipso.tokkl.feature.trash.R as TrashR
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.navhost.AppNavigationBar
@@ -36,6 +31,11 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.feature.clients.R as ClientsR
+import com.github.e0ipso.tokkl.feature.tags.R as TagsR
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
+import com.github.e0ipso.tokkl.feature.trash.R as TrashR
 
 /**
  * Timer templates without a server (docs/PRD.md T5): the panel popup, the management form, and
@@ -69,7 +69,10 @@ class TemplatesUiTest {
         composeRule.waitForIdle()
         openPopup()
         val expected = listOf(
-            string(TimerR.string.favorites_start_spoken, string(SharedR.string.favorites_with_project, "Write the report", "Website")),
+            string(
+                TimerR.string.favorites_start_spoken,
+                string(SharedR.string.favorites_with_project, "Write the report", "Website"),
+            ),
             string(TimerR.string.favorites_start_spoken, "Website"),
         )
         assertEquals(expected, startLabels())
@@ -200,9 +203,13 @@ class TemplatesUiTest {
     fun offlineDisablesManagement() {
         showManagement(FavoritesState(available = true, favorites = listOf(REPORT)), offline = true)
         composeRule.onNode(hasText(string(TimerR.string.favorites_offline))).assertIsDisplayed()
-        composeRule.onNode(hasContentDescription(string(TimerR.string.favorites_delete, "Write the report")) and hasClickAction()).assertIsNotEnabled()
+        composeRule.onNode(
+            hasContentDescription(string(TimerR.string.favorites_delete, "Write the report")) and hasClickAction(),
+        ).assertIsNotEnabled()
         composeRule.onNode(hasText(string(TimerR.string.favorites_new)) and hasClickAction()).assertIsNotEnabled()
-        composeRule.onNode(hasContentDescription(string(TimerR.string.favorites_move_up, "Write the report")) and hasClickAction()).assertIsNotEnabled()
+        composeRule.onNode(
+            hasContentDescription(string(TimerR.string.favorites_move_up, "Write the report")) and hasClickAction(),
+        ).assertIsNotEnabled()
     }
 
     @Test
@@ -259,14 +266,18 @@ class TemplatesUiTest {
     }
 
     private fun openPopup() {
-        composeRule.onNode(hasContentDescription(string(TimerR.string.favorites_open)) and hasClickAction()).performClick()
+        composeRule.onNode(
+            hasContentDescription(string(TimerR.string.favorites_open)) and hasClickAction(),
+        ).performClick()
         composeRule.waitForIdle()
     }
 
     private fun openMore() {
         composeRule.onNode(hasText(string(R.string.nav_more)) and hasClickAction()).performClick()
         composeRule.waitUntil("the More sheet opens", 5_000) {
-            composeRule.onAllNodes(hasText(string(R.string.nav_more)) and isHeading()).fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodes(
+                hasText(string(R.string.nav_more)) and isHeading(),
+            ).fetchSemanticsNodes().isNotEmpty()
         }
     }
 
@@ -287,20 +298,22 @@ class TemplatesUiTest {
             .sortedBy { it.boundsInRoot.top }
             .map { it.config[SemanticsProperties.ContentDescription].joinToString(" ") }
 
-    private fun sheetLabels(): List<String> =
-        composeRule.onAllNodes(sheetItem())
-            .fetchSemanticsNodes()
-            .sortedBy { it.boundsInRoot.top }
-            .map { node -> node.config[SemanticsProperties.Text].joinToString(" ") { it.text } }
+    private fun sheetLabels(): List<String> = composeRule.onAllNodes(sheetItem())
+        .fetchSemanticsNodes()
+        .sortedBy { it.boundsInRoot.top }
+        .map { node -> node.config[SemanticsProperties.Text].joinToString(" ") { it.text } }
 
-    private fun sheetItem() =
-        isSelectable() and (
-            hasText(string(TimerR.string.nav_templates)) or hasText(string(ClientsR.string.nav_clients)) or
-                hasText(string(TagsR.string.nav_tags)) or hasText(string(TrashR.string.nav_trash))
-            )
+    private fun sheetItem() = isSelectable() and (
+        hasText(string(TimerR.string.nav_templates)) or hasText(string(ClientsR.string.nav_clients)) or
+            hasText(string(TagsR.string.nav_tags)) or hasText(string(TrashR.string.nav_trash))
+        )
 
-    private fun moreLabels(): List<String> =
-        listOf(TimerR.string.nav_templates, ClientsR.string.nav_clients, TagsR.string.nav_tags, TrashR.string.nav_trash).map { string(it) }
+    private fun moreLabels(): List<String> = listOf(
+        TimerR.string.nav_templates,
+        ClientsR.string.nav_clients,
+        TagsR.string.nav_tags,
+        TrashR.string.nav_trash,
+    ).map { string(it) }
 
     private fun string(@StringRes id: Int, vararg args: Any): String = context.getString(id, *args)
 

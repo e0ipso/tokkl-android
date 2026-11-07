@@ -15,7 +15,6 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.HangingRelay
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.RequestCounter
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
@@ -33,11 +32,10 @@ import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.capabilities
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
-import java.time.Instant
-import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.builtins.ListSerializer
@@ -52,6 +50,8 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 /**
  * Delete with Undo against the real Tokkl container (docs/PRD.md H3). A delete the server has gets
@@ -114,7 +114,11 @@ class DeleteUndoServerTest {
         assertEquals("Deleted by mistake", restored.getValue("description").jsonPrimitive.content)
         assertEquals("out of the trash", emptyList<Long>(), trash())
         val cached = runBlocking { app.cache.entries.first() }.single { it.entry.id == id }
-        assertEquals("the phone shows it again, sent", "Deleted by mistake" to false, cached.entry.description to cached.unsent)
+        assertEquals(
+            "the phone shows it again, sent",
+            "Deleted by mistake" to false,
+            cached.entry.description to cached.unsent,
+        )
     }
 
     @Test
@@ -139,7 +143,11 @@ class DeleteUndoServerTest {
         assertEquals(ChangeSender.UndoOutcome.Cancelled, outcome)
         assertEquals("the queue is empty", 0, unsentCount())
         val cached = runBlocking { app.cache.entries.first() }.single { it.entry.id == id }
-        assertEquals("the phone shows it again, as sent", "Kept after all" to false, cached.entry.description to cached.unsent)
+        assertEquals(
+            "the phone shows it again, as sent",
+            "Kept after all" to false,
+            cached.entry.description to cached.unsent,
+        )
         signIn(TokklTestServer.url)
         assertTrue("the server never deleted it", serverEntry(id) is ApiResult.Success)
         assertEquals(emptyList<Long>(), trash())
@@ -190,7 +198,11 @@ class DeleteUndoServerTest {
         assertEquals("Answer lost", (restored as ApiResult.Success).value.getValue("description").jsonPrimitive.content)
         assertEquals("out of the trash", emptyList<Long>(), trash())
         val cached = runBlocking { app.cache.entries.first() }.single { it.entry.id == id }
-        assertEquals("the phone shows it again, sent", "Answer lost" to false, cached.entry.description to cached.unsent)
+        assertEquals(
+            "the phone shows it again, sent",
+            "Answer lost" to false,
+            cached.entry.description to cached.unsent,
+        )
     }
 
     /**
@@ -226,7 +238,10 @@ class DeleteUndoServerTest {
         assertEquals(ChangeSender.UndoOutcome.Restored, runBlocking { app.sender.undoDelete(id) })
         val restored = serverEntry(id)
         assertTrue("the server has it again: $restored", restored is ApiResult.Success)
-        assertEquals("Connection dropped", (restored as ApiResult.Success).value.getValue("description").jsonPrimitive.content)
+        assertEquals(
+            "Connection dropped",
+            (restored as ApiResult.Success).value.getValue("description").jsonPrimitive.content,
+        )
         assertEquals("out of the trash", emptyList<Long>(), trash())
     }
 
@@ -243,7 +258,9 @@ class DeleteUndoServerTest {
         ActivityScenario.launch(MainActivity::class.java).use {
             composeRule.awaitTimerPage(LOAD_TIMEOUT_MS)
             composeRule.waitUntil("the entry shows", LOAD_TIMEOUT_MS) { inList("Menu entry") }
-            composeRule.onNode(hasContentDescription(more) and hasClickAction()).performSemanticsAction(SemanticsActions.OnClick)
+            composeRule.onNode(
+                hasContentDescription(more) and hasClickAction(),
+            ).performSemanticsAction(SemanticsActions.OnClick)
             composeRule.onNode(hasText(context.getString(R.string.history_delete)) and hasClickAction())
                 .performSemanticsAction(SemanticsActions.OnClick)
 

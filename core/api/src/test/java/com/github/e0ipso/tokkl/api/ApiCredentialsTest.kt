@@ -1,10 +1,10 @@
 package com.github.e0ipso.tokkl.api
 
-import java.util.Base64
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
 import org.junit.Test
+import java.util.Base64
 
 class ApiCredentialsTest {
 

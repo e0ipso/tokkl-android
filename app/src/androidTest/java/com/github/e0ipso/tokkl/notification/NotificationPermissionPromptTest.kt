@@ -19,17 +19,17 @@ import androidx.core.app.ActivityOptionsCompat
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.DeviceShell
-import com.github.e0ipso.tokkl.feature.notification.R
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createComposeRule
+import com.github.e0ipso.tokkl.feature.notification.R
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
-import java.util.concurrent.CopyOnWriteArrayList
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * The notification permission's question at the first timer start in the app (docs/PRD.md N5).
@@ -54,7 +54,12 @@ class NotificationPermissionPromptTest {
     private val settingsOpened = CopyOnWriteArrayList<Unit>()
 
     private val registry = object : ActivityResultRegistry() {
-        override fun <I, O> onLaunch(requestCode: Int, contract: ActivityResultContract<I, O>, input: I, options: ActivityOptionsCompat?) {
+        override fun <I, O> onLaunch(
+            requestCode: Int,
+            contract: ActivityResultContract<I, O>,
+            input: I,
+            options: ActivityOptionsCompat?,
+        ) {
             requests += contract.createIntent(context, input)
             requestCodes += requestCode
         }
@@ -80,7 +85,12 @@ class NotificationPermissionPromptTest {
         val ask = NotificationPermissionAsk(Build.VERSION.SDK_INT, record) { false }
         compose.setContent {
             CompositionLocalProvider(LocalActivityResultRegistryOwner provides owner) {
-                NotificationPermissionPrompt(starts, ask, openSettings = { settingsOpened += Unit }, onAllowed = { allows += Unit })
+                NotificationPermissionPrompt(
+                    starts,
+                    ask,
+                    openSettings = { settingsOpened += Unit },
+                    onAllowed = { allows += Unit },
+                )
             }
         }
         compose.waitUntil(TIMEOUT_MS) { starts.subscriptionCount.value > 0 }

@@ -102,20 +102,24 @@ internal sealed interface CheckedTimes {
 }
 
 /** The draft of a manual entry on [date], or today, with No times on when [noTimes]. */
-internal fun newForm(time: AccountTime, date: LocalDate?, noTimes: Boolean): EntryDraft =
-    EntryDraft(
-        target = DraftTarget.New,
-        fields = EntryFields(),
-        date = date ?: time.today(),
-        start = "",
-        end = "",
-        duration = "",
-        syncedDuration = "",
-        noTimes = noTimes,
-    )
+internal fun newForm(time: AccountTime, date: LocalDate?, noTimes: Boolean): EntryDraft = EntryDraft(
+    target = DraftTarget.New,
+    fields = EntryFields(),
+    date = date ?: time.today(),
+    start = "",
+    end = "",
+    duration = "",
+    syncedDuration = "",
+    noTimes = noTimes,
+)
 
 /** The draft of the running segment [entry], captured as [identity]. */
-internal fun runningForm(entry: CachedTimeEntry, identity: RunningEntryIdentity, settings: AccountSettings, time: AccountTime): EntryDraft {
+internal fun runningForm(
+    entry: CachedTimeEntry,
+    identity: RunningEntryIdentity,
+    settings: AccountSettings,
+    time: AccountTime,
+): EntryDraft {
     val date = time.local(entry.start).toLocalDate()
     val start = settings.formatTime(entry.start, time.zone)
     val fields = entry.fields()
@@ -128,7 +132,12 @@ internal fun runningForm(entry: CachedTimeEntry, identity: RunningEntryIdentity,
  * The form on [cached], or null while it runs. An entry with a change the server lacks shows
  * the times the server will store, as the history does. [onPhone] says the cache holds it.
  */
-internal fun editForm(cached: EntryWithSendState, settings: AccountSettings, time: AccountTime, onPhone: Boolean): EntryDraft? {
+internal fun editForm(
+    cached: EntryWithSendState,
+    settings: AccountSettings,
+    time: AccountTime,
+    onPhone: Boolean,
+): EntryDraft? {
     val entry = cached.entry
     val stop = entry.stop ?: return null
     if (entry.allDay) return noTimeForm(entry, stop, time, onPhone)

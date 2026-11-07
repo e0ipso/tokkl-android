@@ -12,13 +12,6 @@ import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.timer.TimerState
 import com.github.e0ipso.tokkl.timer.TimerViewModel
 import com.github.e0ipso.tokkl.timerstate.serverTimerControls
-import java.time.Clock
-import java.time.DayOfWeek
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneOffset
-import java.time.temporal.ChronoUnit
-import java.util.concurrent.Executors
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -40,24 +33,47 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.time.Clock
+import java.time.DayOfWeek
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
+import java.time.temporal.ChronoUnit
+import java.util.concurrent.Executors
 
 /** The running editor and its local-write boundary, without a device timezone or network. */
 class RunningEntryEditorTest {
     private val dispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
     private val scope = CoroutineScope(SupervisorJob() + dispatcher)
     private val rows = MutableStateFlow(listOf(EntryWithSendState(ENTRY, unsent = true)))
-    private val settings = MutableStateFlow<AccountSettings?>(AccountSettings(
-        timeZone = "Europe/Madrid",
-        beginningOfWeek = DayOfWeek.MONDAY,
-        timeResolutionMinutes = 15.0,
-        defaultWorkspaceId = 10,
-    ))
+    private val settings = MutableStateFlow<AccountSettings?>(
+        AccountSettings(
+            timeZone = "Europe/Madrid",
+            beginningOfWeek = DayOfWeek.MONDAY,
+            timeResolutionMinutes = 15.0,
+            defaultWorkspaceId = 10,
+        ),
+    )
     private val projects = MutableStateFlow(emptyList<CachedProject>())
     private val tasks = MutableStateFlow(emptyList<CachedTask>())
     private val clock = Clock.fixed(Instant.parse("2026-10-22T22:10:00Z"), ZoneOffset.UTC)
     private val changes = Changes()
     private val form = EntryFormViewModel(rows, projects, tasks, settings, changes, scope, clock)
-    private val timer = TimerViewModel(rows.map { entries -> serverTimerControls(entries.firstOrNull { it.entry.stop == null }, held = null, timerApi = true) }, projects, tasks, settings, changes, scope, clock)
+    private val timer = TimerViewModel(
+        rows.map { entries ->
+            serverTimerControls(
+                entries.firstOrNull { it.entry.stop == null },
+                held = null,
+                timerApi = true,
+            )
+        },
+        projects,
+        tasks,
+        settings,
+        changes,
+        scope,
+        clock,
+    )
 
     @Before
     fun collect() {
@@ -223,7 +239,12 @@ class RunningEntryEditorTest {
         onMain {
             timer.editDescription("Typed before reconnect")
             changes.remap[ENTRY.id] = 201
-            rows.value = listOf(EntryWithSendState(ENTRY.copy(id = 201, start = ENTRY.start.truncatedTo(ChronoUnit.SECONDS)), unsent = false))
+            rows.value = listOf(
+                EntryWithSendState(
+                    ENTRY.copy(id = 201, start = ENTRY.start.truncatedTo(ChronoUnit.SECONDS)),
+                    unsent = false,
+                ),
+            )
         }
         val shown = timerState { it is TimerState.Running && it.entryId == 201L } as TimerState.Running
         assertEquals("Typed before reconnect", shown.fields.description)
@@ -293,7 +314,12 @@ class RunningEntryEditorTest {
 
         override suspend fun start(workspaceId: Long, fields: EntryFields): Long {
             startGate.await()
-            rows.value = listOf(EntryWithSendState(ENTRY.copy(id = -2, workspaceId = workspaceId, start = clock.instant()), unsent = true))
+            rows.value = listOf(
+                EntryWithSendState(
+                    ENTRY.copy(id = -2, workspaceId = workspaceId, start = clock.instant()),
+                    unsent = true,
+                ),
+            )
             return -2
         }
 
@@ -304,32 +330,70 @@ class RunningEntryEditorTest {
             val current = rows.value.singleOrNull()?.entry ?: return null
             val sameStart = current.start == identity.start ||
                 (id != identity.entryId && current.start == identity.start.truncatedTo(ChronoUnit.SECONDS))
-            return current.takeIf { it.id == id && it.workspaceId == identity.workspaceId && it.stop == null && sameStart }
+            return current.takeIf {
+                it.id == id && it.workspaceId == identity.workspaceId && it.stop == null &&
+                    sameStart
+            }
         }
 
-        override suspend fun updateRunning(identity: RunningEntryIdentity, fields: EntryFields, start: Instant): Boolean {
+        override suspend fun updateRunning(
+            identity: RunningEntryIdentity,
+            fields: EntryFields,
+            start: Instant,
+        ): Boolean {
             updateEntered.complete(Unit)
             updateGate.await()
             val current = runningEntry(identity) ?: return false
-            val updated = current.copy(description = fields.description, projectId = fields.projectId, taskId = fields.taskId,
-                tags = fields.tags, billable = fields.billable, start = start, stop = null)
+            val updated = current.copy(
+                description = fields.description,
+                projectId = fields.projectId,
+                taskId = fields.taskId,
+                tags = fields.tags,
+                billable = fields.billable,
+                start = start,
+                stop = null,
+            )
             updates += updated
             rows.value = listOf(EntryWithSendState(updated, unsent = true))
             return true
         }
 
-        override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?, noTimeDay: LocalDate?): Boolean =
-            throw AssertionError("A running editor must use the guarded update")
-        override suspend fun updateOlder(entryId: Long, workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant, noTimeDay: LocalDate?) =
-            throw AssertionError("A running editor cannot fall back to an older-entry PUT")
-        override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant, noTimeDay: LocalDate?): Long =
-            throw AssertionError("A running editor cannot create an entry")
-        override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean = throw AssertionError("Unexpected stop")
+        override suspend fun update(
+            entryId: Long,
+            fields: EntryFields,
+            start: Instant,
+            stop: Instant?,
+            noTimeDay: LocalDate?,
+        ): Boolean = throw AssertionError("A running editor must use the guarded update")
+        override suspend fun updateOlder(
+            entryId: Long,
+            workspaceId: Long,
+            fields: EntryFields,
+            start: Instant,
+            stop: Instant,
+            noTimeDay: LocalDate?,
+        ) = throw AssertionError("A running editor cannot fall back to an older-entry PUT")
+        override suspend fun create(
+            workspaceId: Long,
+            fields: EntryFields,
+            start: Instant,
+            stop: Instant,
+            noTimeDay: LocalDate?,
+        ): Long = throw AssertionError("A running editor cannot create an entry")
+        override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean = throw AssertionError(
+            "Unexpected stop",
+        )
         override suspend fun delete(entryId: Long): Boolean = throw AssertionError("Unexpected delete")
     }
 
     private companion object {
         const val TIMEOUT = 5_000L
-        val ENTRY = CachedTimeEntry(-1, 20, null, null, "Running", Instant.parse("2026-10-22T22:03:41.123Z"), null, false, emptyList(), emptyList())
+        val ENTRY = CachedTimeEntry(
+            -1, 20, null, null, "Running",
+            Instant.parse(
+                "2026-10-22T22:03:41.123Z",
+            ),
+            null, false, emptyList(), emptyList(),
+        )
     }
 }

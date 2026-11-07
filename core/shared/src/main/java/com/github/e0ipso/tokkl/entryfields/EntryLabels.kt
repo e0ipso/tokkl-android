@@ -9,11 +9,7 @@ import com.github.e0ipso.tokkl.picker.Picked
  * What an entry's project and task show as: their names and the project's `#rrggbb` colour, from
  * the cache. All null when the entry has none, or when the cache does not have them.
  */
-data class EntryLabels(
-    val project: String? = null,
-    val projectColor: String? = null,
-    val task: String? = null,
-)
+data class EntryLabels(val project: String? = null, val projectColor: String? = null, val task: String? = null)
 
 /** The labels of [fields]'s project and task among the cached [projects] and [tasks]. */
 fun entryLabels(fields: EntryFields, projects: List<CachedProject>, tasks: List<CachedTask>): EntryLabels {

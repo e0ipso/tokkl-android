@@ -1,10 +1,7 @@
 package com.github.e0ipso.tokkl.reports
 
-import android.content.res.Resources
 import androidx.annotation.VisibleForTesting
 import com.github.e0ipso.tokkl.feature.reports.R
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
-import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.time.jsShortestDecimal
 import com.github.e0ipso.tokkl.ui.DateWords
 import java.math.BigDecimal
@@ -13,6 +10,8 @@ import java.text.NumberFormat
 import java.time.LocalDate
 import java.util.Currency
 import java.util.Locale
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 // How the reports screen writes numbers and dates, after the web app's helpers in
 // ../tokkl/packages/web/src/pages/reports/format.ts, range.ts and lib/settings.ts. Words and

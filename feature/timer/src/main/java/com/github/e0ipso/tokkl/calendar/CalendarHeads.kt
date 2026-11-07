@@ -37,8 +37,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import com.github.e0ipso.tokkl.feature.timer.R
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
-import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.DateWords
 import com.github.e0ipso.tokkl.ui.daySticker
@@ -46,17 +44,29 @@ import com.github.e0ipso.tokkl.ui.spokenDuration
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.Instant
 import java.time.LocalDate
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /** The arrows, the way back to today, the week or day shown and the week's total. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-internal fun Toolbar(state: CalendarState.Shown, dayMode: Boolean, now: Instant, onStep: (Long) -> Unit, onToday: () -> Unit) {
+internal fun Toolbar(
+    state: CalendarState.Shown,
+    dayMode: Boolean,
+    now: Instant,
+    onStep: (Long) -> Unit,
+    onToday: () -> Unit,
+) {
     val resources = LocalResources.current
     val words = remember(resources) { DateWords(resources) }
     val range = if (dayMode) {
         resources.getString(SharedR.string.history_day, words.weekday(state.selected), words.short(state.selected))
     } else {
-        resources.getString(SharedR.string.reports_range, words.short(state.weekStart), words.short(state.weekStart.plusDays(6)))
+        resources.getString(
+            SharedR.string.reports_range,
+            words.short(state.weekStart),
+            words.short(state.weekStart.plusDays(6)),
+        )
     }
     val weekSeconds = state.weekDays.sumOf { dayTotalSeconds(state.entries, it, state.zone, now) }
     val weekTotal = stringResource(R.string.calendar_week_total, state.settings.formatDuration(weekSeconds))
@@ -70,7 +80,9 @@ internal fun Toolbar(state: CalendarState.Shown, dayMode: Boolean, now: Instant,
             IconButton(onClick = { onStep(-1) }) {
                 Icon(
                     painterResource(UiR.drawable.ic_chevron_left),
-                    contentDescription = stringResource(if (dayMode) R.string.calendar_previous_day else R.string.calendar_previous_week),
+                    contentDescription = stringResource(
+                        if (dayMode) R.string.calendar_previous_day else R.string.calendar_previous_week,
+                    ),
                 )
             }
             OutlinedButton(onClick = onToday, shape = MaterialTheme.shapes.small) {
@@ -79,7 +91,9 @@ internal fun Toolbar(state: CalendarState.Shown, dayMode: Boolean, now: Instant,
             IconButton(onClick = { onStep(1) }) {
                 Icon(
                     painterResource(UiR.drawable.ic_chevron_right),
-                    contentDescription = stringResource(if (dayMode) R.string.calendar_next_day else R.string.calendar_next_week),
+                    contentDescription = stringResource(
+                        if (dayMode) R.string.calendar_next_day else R.string.calendar_next_week,
+                    ),
                 )
             }
         }
@@ -112,7 +126,14 @@ internal fun Toolbar(state: CalendarState.Shown, dayMode: Boolean, now: Instant,
  * surface-2, as the web app's: in dark the violet is under 3:1 on surface-2.
  */
 @Composable
-internal fun DayHeads(days: List<LocalDate>, today: LocalDate, state: CalendarState.Shown, now: Instant, gutter: Dp, editing: CalendarEditing?) {
+internal fun DayHeads(
+    days: List<LocalDate>,
+    today: LocalDate,
+    state: CalendarState.Shown,
+    now: Instant,
+    gutter: Dp,
+    editing: CalendarEditing?,
+) {
     // --radius-md on the top corners, as the web app's .calendar-head.
     val shape = MaterialTheme.shapes.small.copy(bottomStart = ZeroCornerSize, bottomEnd = ZeroCornerSize)
     Row(
@@ -130,13 +151,32 @@ internal fun DayHeads(days: List<LocalDate>, today: LocalDate, state: CalendarSt
 }
 
 @Composable
-private fun DayHead(day: LocalDate, isToday: Boolean, totalSeconds: Long?, settings: AccountSettings, editing: CalendarEditing?, modifier: Modifier) {
+private fun DayHead(
+    day: LocalDate,
+    isToday: Boolean,
+    totalSeconds: Long?,
+    settings: AccountSettings,
+    editing: CalendarEditing?,
+    modifier: Modifier,
+) {
     val resources = LocalResources.current
     val locale = LocalConfiguration.current.locales[0]
     val words = remember(resources) { DateWords(resources) }
     val hue = TokklTheme.sectionHue
-    val label = if (isToday) resources.getString(R.string.history_today) else resources.getString(SharedR.string.history_day, words.weekday(day), words.short(day))
-    val spoken = totalSeconds?.let { stringResource(R.string.history_day_spoken, label, spokenDuration(resources, it)) } ?: label
+    val label = if (isToday) {
+        resources.getString(
+            R.string.history_today,
+        )
+    } else {
+        resources.getString(SharedR.string.history_day, words.weekday(day), words.short(day))
+    }
+    val spoken = totalSeconds?.let {
+        stringResource(
+            R.string.history_day_spoken,
+            label,
+            spokenDuration(resources, it),
+        )
+    } ?: label
     val addAction = addEntryAction(day, editing)
     Column(
         verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space1 / 2),
@@ -166,9 +206,21 @@ private fun DayHead(day: LocalDate, isToday: Boolean, totalSeconds: Long?, setti
                     .padding(horizontal = TokklTheme.spacing.space1),
             )
         } else {
-            Text(words.weekday(day).uppercase(locale), style = headStyle, color = hue.onFill, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(
+                words.weekday(day).uppercase(locale),
+                style = headStyle,
+                color = hue.onFill,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
-        Text(words.short(day), style = MaterialTheme.typography.bodySmall, color = hue.onFill, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(
+            words.short(day),
+            style = MaterialTheme.typography.bodySmall,
+            color = hue.onFill,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
         if (totalSeconds != null) {
             Text(
                 text = settings.formatDuration(totalSeconds),
@@ -187,7 +239,10 @@ internal fun addEntryAction(day: LocalDate, editing: CalendarEditing?): CustomAc
     if (editing == null) return null
     val resources = LocalResources.current
     val words = remember(resources) { DateWords(resources) }
-    val label = stringResource(R.string.calendar_add_entry, resources.getString(SharedR.string.history_day, words.weekday(day), words.short(day)))
+    val label = stringResource(
+        R.string.calendar_add_entry,
+        resources.getString(SharedR.string.history_day, words.weekday(day), words.short(day)),
+    )
     return CustomAccessibilityAction(label) {
         editing.add(day)
         true

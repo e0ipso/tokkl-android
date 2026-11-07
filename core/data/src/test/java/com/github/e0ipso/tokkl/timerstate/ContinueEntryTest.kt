@@ -3,12 +3,12 @@ package com.github.e0ipso.tokkl.timerstate
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryFields
-import java.time.Instant
-import java.time.LocalDate
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import java.time.Instant
+import java.time.LocalDate
 
 /**
  * Continue-last, which the Quick Settings tile uses: the stopped entry that started last, as the
@@ -22,7 +22,12 @@ class ContinueEntryTest {
     @Test
     fun continueLastStartsTheStoppedEntryThatStartedLast() {
         // Out of order, and the running entry started after every stopped one.
-        val entries = listOf(entry(1, "2026-10-19T08:00:00Z"), entry(2, "2026-10-19T11:00:00Z"), entry(3, "2026-10-18T15:00:00Z"), running(4))
+        val entries = listOf(
+            entry(1, "2026-10-19T08:00:00Z"),
+            entry(2, "2026-10-19T11:00:00Z"),
+            entry(3, "2026-10-18T15:00:00Z"),
+            running(4),
+        )
 
         val id = runBlocking { RecordingChanges().continueLast(entries) }
 
@@ -39,7 +44,11 @@ class ContinueEntryTest {
 
     @Test
     fun tiedLocalAndServerStartsPreferTheNewestQueuedCreateInEveryOrder() {
-        val entries = listOf(entry(42, "2026-10-19T11:00:00Z"), entry(-2, "2026-10-19T11:00:00Z"), entry(-4, "2026-10-19T11:00:00Z"))
+        val entries = listOf(
+            entry(42, "2026-10-19T11:00:00Z"),
+            entry(-2, "2026-10-19T11:00:00Z"),
+            entry(-4, "2026-10-19T11:00:00Z"),
+        )
 
         for (order in permutations(entries)) {
             assertEquals("input IDs: ${order.map { it.id }}", entries.last(), lastStopped(order))
@@ -86,10 +95,13 @@ class ContinueEntryTest {
         }
     }
 
-    private fun <T> permutations(items: List<T>): List<List<T>> =
-        if (items.isEmpty()) listOf(emptyList()) else items.indices.flatMap { index ->
+    private fun <T> permutations(items: List<T>): List<List<T>> = if (items.isEmpty()) {
+        listOf(emptyList())
+    } else {
+        items.indices.flatMap { index ->
             permutations(items.filterIndexed { i, _ -> i != index }).map { listOf(items[index]) + it }
         }
+    }
 
     private fun CachedTimeEntry.fieldsOf() = EntryFields(description, projectId, taskId, tags, billable)
 
@@ -116,11 +128,21 @@ class ContinueEntryTest {
 
         override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean = throw AssertionError("nothing stops")
 
-        override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant, noTimeDay: LocalDate?): Long =
-            throw AssertionError("nothing is created")
+        override suspend fun create(
+            workspaceId: Long,
+            fields: EntryFields,
+            start: Instant,
+            stop: Instant,
+            noTimeDay: LocalDate?,
+        ): Long = throw AssertionError("nothing is created")
 
-        override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?, noTimeDay: LocalDate?): Boolean =
-            throw AssertionError("nothing is edited")
+        override suspend fun update(
+            entryId: Long,
+            fields: EntryFields,
+            start: Instant,
+            stop: Instant?,
+            noTimeDay: LocalDate?,
+        ): Boolean = throw AssertionError("nothing is edited")
 
         override suspend fun delete(entryId: Long): Boolean = throw AssertionError("nothing is deleted")
     }

@@ -10,14 +10,13 @@ import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.feature.settings.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.feature.settings.R
 import com.github.e0ipso.tokkl.ui.theme.ThemeMode
 import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsStore
 import com.github.e0ipso.tokkl.ui.theme.TokklDarkColorScheme
 import com.github.e0ipso.tokkl.ui.theme.TokklLightColorScheme
-import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
@@ -25,6 +24,7 @@ import org.junit.FixMethodOrder
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runners.MethodSorters
+import java.io.File
 
 /**
  * Each theme mode survives a restart of the app process. The steps run in name order, and the
@@ -114,7 +114,9 @@ class ThemeSettingsRestartTest {
         mode(mode).performClick().assertIsSelected()
     }
 
-    private fun mode(mode: ThemeMode) = composeRule.onNode(hasText(string(THEME_MODE_LABELS.getValue(mode))) and isSelectable())
+    private fun mode(mode: ThemeMode) = composeRule.onNode(
+        hasText(string(THEME_MODE_LABELS.getValue(mode))) and isSelectable(),
+    )
 
     /** Waits for [chosen] to reach the disk, then names this process for the next step. */
     private fun endStep(chosen: ThemeMode) {

@@ -27,7 +27,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.github.e0ipso.tokkl.feature.timer.R
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.time.formatDuration
 import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklDangerButton
@@ -35,6 +34,7 @@ import com.github.e0ipso.tokkl.ui.TokklGhostButton
 import com.github.e0ipso.tokkl.ui.UnsentIcon
 import com.github.e0ipso.tokkl.ui.spokenDuration
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 
 /**
  * "Running" in the running colour beside a dot, and while the server lacks a change to the entry,
@@ -44,11 +44,17 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 internal fun RunningLabel(unsent: Boolean) {
     val locale = LocalConfiguration.current.locales[0]
     val colour = TokklTheme.extraColors.running
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space2)) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space2),
+    ) {
         Canvas(Modifier.size(TokklTheme.spacing.space2)) { drawCircle(colour) }
         Text(stringResource(SharedR.string.timer_running), style = MaterialTheme.typography.labelLarge, color = colour)
         if (unsent) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space1)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space1),
+            ) {
                 UnsentIcon(TokklTheme.smallCapsLabelTextStyle)
                 Text(
                     text = stringResource(R.string.history_unsent).uppercase(locale),
@@ -90,7 +96,11 @@ internal fun IdleClock() {
 /** "Paused" in the muted colour, as the web app says it beside the frozen clock. */
 @Composable
 internal fun PausedLabel() {
-    Text(stringResource(SharedR.string.timer_paused), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Text(
+        stringResource(SharedR.string.timer_paused),
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
 }
 
 /** The paused total, which stands still, and which TalkBack reads as "1 hour elapsed, paused". */
@@ -124,9 +134,26 @@ internal fun TimerButton(
     }
     val semantics = Modifier.semantics { contentDescription = description }
     when (look) {
-        TimerButtonLook.Primary -> TokklButton(onClick = onClick, enabled = enabled, modifier = semantics, content = content)
-        TimerButtonLook.Neutral -> TokklGhostButton(onClick = onClick, enabled = enabled, modifier = semantics, content = content)
-        TimerButtonLook.Danger -> TokklDangerButton(onClick = onClick, enabled = enabled, modifier = semantics, content = content)
+        TimerButtonLook.Primary -> TokklButton(
+            onClick = onClick,
+            enabled = enabled,
+            modifier = semantics,
+            content = content,
+        )
+
+        TimerButtonLook.Neutral -> TokklGhostButton(
+            onClick = onClick,
+            enabled = enabled,
+            modifier = semantics,
+            content = content,
+        )
+
+        TimerButtonLook.Danger -> TokklDangerButton(
+            onClick = onClick,
+            enabled = enabled,
+            modifier = semantics,
+            content = content,
+        )
     }
 }
 

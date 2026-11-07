@@ -17,7 +17,12 @@ sealed interface TimerState {
      * No entry runs. Start starts one with [fields] in [workspaceId], the account's default
      * workspace, which is null until the phone has read it from the server. Start waits for it.
      */
-    data class Idle(val fields: EntryFields, val labels: EntryLabels, val workspaceId: Long?, val authoritative: Boolean = false) : TimerState
+    data class Idle(
+        val fields: EntryFields,
+        val labels: EntryLabels,
+        val workspaceId: Long?,
+        val authoritative: Boolean = false,
+    ) : TimerState
 
     /**
      * An entry runs since [start], with [fields]: the cached entry's, or an edit the cache does not

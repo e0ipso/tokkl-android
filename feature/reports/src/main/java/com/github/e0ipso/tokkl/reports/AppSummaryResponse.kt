@@ -3,16 +3,16 @@ package com.github.e0ipso.tokkl.reports
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiJson
 import com.github.e0ipso.tokkl.api.ApiResult
-import java.time.DateTimeException
-import java.time.LocalDate
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonNull
-import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonObject
+import java.time.DateTimeException
+import java.time.LocalDate
 
 /**
  * Typed recognized fields and a separate additive-field projection. A missing amount is not
@@ -23,7 +23,10 @@ internal fun decodeAppSummary(body: JsonObject): ApiResult<SummaryReport> = try 
     val response = ApiJson.decodeFromJsonElement<AppSummaryResponse>(body)
     body.requireStrings("start_date", "end_date", "resolution")
     val extras = ReportExtraProjection()
-    val reportExtras = extras.fields(body, setOf("start_date", "end_date", "resolution", "week_start", "totals", "series", "groups"))
+    val reportExtras = extras.fields(
+        body,
+        setOf("start_date", "end_date", "resolution", "week_start", "totals", "series", "groups"),
+    )
     val rawTotals = body.getValue("totals").jsonObject
     rawTotals.requireNumbers("seconds", "billable_seconds", "entry_count")
     val totalsExtras = extras.fields(rawTotals, setOf("seconds", "billable_seconds", "entry_count", "amounts"))
@@ -42,7 +45,9 @@ internal fun decodeAppSummary(body: JsonObject): ApiResult<SummaryReport> = try 
         rawSeries[index].jsonObject.requireStrings("start")
         rawSeries[index].jsonObject.requireNumbers("seconds", "billable_seconds")
         SeriesPoint(
-            LocalDate.parse(point.start), point.seconds, point.billableSeconds,
+            LocalDate.parse(point.start),
+            point.seconds,
+            point.billableSeconds,
             extras.fields(rawSeries[index].jsonObject, setOf("start", "seconds", "billable_seconds")),
         )
     }
@@ -55,7 +60,15 @@ internal fun decodeAppSummary(body: JsonObject): ApiResult<SummaryReport> = try 
         // their association and show their raw fields rather than silently discarding them.
         val known = setOf("id", "title", "color", "seconds", "billable_seconds", "amount_cents") +
             if (raw["sub_groups"] == JsonArray(emptyList())) setOf("sub_groups") else emptySet()
-        ProjectShare(group.id, group.title, group.color, group.seconds, group.billableSeconds, group.amountCents, extras.fields(raw, known))
+        ProjectShare(
+            group.id,
+            group.title,
+            group.color,
+            group.seconds,
+            group.billableSeconds,
+            group.amountCents,
+            extras.fields(raw, known),
+        )
     }
     val resolution = when (response.resolution) {
         "day" -> Resolution.DAY
@@ -67,8 +80,17 @@ internal fun decodeAppSummary(body: JsonObject): ApiResult<SummaryReport> = try 
         SummaryReport(
             ReportRange(LocalDate.parse(response.startDate), LocalDate.parse(response.endDate)),
             resolution,
-            ReportTotals(response.totals.seconds, response.totals.billableSeconds, response.totals.entryCount, amounts, totalsExtras),
-            points, projects, reportExtras, extras.truncated,
+            ReportTotals(
+                response.totals.seconds,
+                response.totals.billableSeconds,
+                response.totals.entryCount,
+                amounts,
+                totalsExtras,
+            ),
+            points,
+            projects,
+            reportExtras,
+            extras.truncated,
         ),
     )
 } catch (e: IllegalArgumentException) {

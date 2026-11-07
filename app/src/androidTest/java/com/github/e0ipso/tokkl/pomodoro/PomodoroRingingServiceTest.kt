@@ -16,7 +16,6 @@ import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.Until
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.DeviceShell
-import com.github.e0ipso.tokkl.feature.pomodoro.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
@@ -24,13 +23,10 @@ import com.github.e0ipso.tokkl.api.PhaseTransition
 import com.github.e0ipso.tokkl.components.pomodoroAlarm
 import com.github.e0ipso.tokkl.components.pomodoroRinging
 import com.github.e0ipso.tokkl.components.timerState
+import com.github.e0ipso.tokkl.feature.pomodoro.R
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
-import java.time.Duration
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -41,6 +37,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.time.Duration
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * The ringing service at a held phase's planned end, on API 31..36; no audible emulator output is
@@ -94,7 +94,12 @@ class PomodoroRingingServiceTest {
             try {
                 if (Build.VERSION.SDK_INT >= 36) setRinger(ringer)
                 DeviceShell.run("cmd media_session volume --stream 4 --set $alarmVolume")
-                val mode = when (zen) { "1" -> "priority"; "2" -> "none"; "3" -> "alarms"; else -> "off" }
+                val mode = when (zen) {
+                    "1" -> "priority"
+                    "2" -> "none"
+                    "3" -> "alarms"
+                    else -> "off"
+                }
                 val filter = when (zen) {
                     "1" -> NotificationManager.INTERRUPTION_FILTER_PRIORITY
                     "2" -> NotificationManager.INTERRUPTION_FILTER_NONE
@@ -138,7 +143,10 @@ class PomodoroRingingServiceTest {
         assertNotNull(PomodoroRingingNotifier(context).build(original.ring()).fullScreenIntent)
         if (canShowPomodoroFullScreen(context)) assertNotNull(notification.fullScreenIntent)
         assertTrue(notification.flags and Notification.FLAG_FOREGROUND_SERVICE != 0)
-        assertEquals(NotificationManager.IMPORTANCE_HIGH, notifications.getNotificationChannel(PomodoroRingingNotifier.CHANNEL_ID).importance)
+        assertEquals(
+            NotificationManager.IMPORTANCE_HIGH,
+            notifications.getNotificationChannel(PomodoroRingingNotifier.CHANNEL_ID).importance,
+        )
         assertNull(notifications.getNotificationChannel(PomodoroRingingNotifier.CHANNEL_ID).sound)
     }
 
@@ -174,7 +182,12 @@ class PomodoroRingingServiceTest {
             PhaseTransition.LONG_REST_TO_WORK to PomodoroSound.LONG_REST_TO_WORK,
         )
         assertEquals(
-            listOf(R.raw.pomodoro_work_to_short_rest, R.raw.pomodoro_work_to_long_rest, R.raw.pomodoro_short_rest_to_work, R.raw.pomodoro_long_rest_to_work),
+            listOf(
+                R.raw.pomodoro_work_to_short_rest,
+                R.raw.pomodoro_work_to_long_rest,
+                R.raw.pomodoro_short_rest_to_work,
+                R.raw.pomodoro_long_rest_to_work,
+            ),
             cases.map { it.second.rawResource() },
         )
         for ((transition, sound) in cases) {
@@ -237,7 +250,12 @@ class PomodoroRingingServiceTest {
         val processed = CountDownLatch(1)
         PomodoroRingingService.processed = processed
         try {
-            context.startForegroundService(Intent(context, PomodoroRingingService::class.java).setAction(ServicePomodoroRinging.START).putPhase(stale))
+            context.startForegroundService(
+                Intent(
+                    context,
+                    PomodoroRingingService::class.java,
+                ).setAction(ServicePomodoroRinging.START).putPhase(stale),
+            )
             assertTrue("stale start was not processed", processed.await(10, TimeUnit.SECONDS))
         } finally {
             PomodoroRingingService.processed = null
@@ -280,7 +298,9 @@ class PomodoroRingingServiceTest {
         val title = checkNotNull(device.wait(Until.findObject(By.text("Pomodoro phase ended")), 10_000))
         val bounds = title.visibleBounds
         awaitActions(1) {
-            assertTrue(device.swipe(device.displayWidth / 4, bounds.centerY(), device.displayWidth - 1, bounds.centerY(), 20))
+            assertTrue(
+                device.swipe(device.displayWidth / 4, bounds.centerY(), device.displayWidth - 1, bounds.centerY(), 20),
+            )
         }
         // The receiver hands the repost to the ringing service, which posts it after the receiver ends.
         awaitSessionNotifications(1)
@@ -323,13 +343,19 @@ class PomodoroRingingServiceTest {
         val deadline = SystemClock.uptimeMillis() + 10_000
         while (notifications.activeNotifications.count { it.id == PomodoroSessionNotifier.NOTIFICATION_ID } != count) {
             if (SystemClock.uptimeMillis() > deadline) {
-                assertEquals(count, notifications.activeNotifications.count { it.id == PomodoroSessionNotifier.NOTIFICATION_ID })
+                assertEquals(
+                    count,
+                    notifications.activeNotifications.count { it.id == PomodoroSessionNotifier.NOTIFICATION_ID },
+                )
             }
             Thread.sleep(50)
         }
     }
 
-    private fun ringingNotification(): Notification = notifications.activeNotifications.single { it.id == PomodoroSessionNotifier.NOTIFICATION_ID }.notification
+    private fun ringingNotification(): Notification = notifications.activeNotifications.single {
+        it.id ==
+            PomodoroSessionNotifier.NOTIFICATION_ID
+    }.notification
 
     private fun assertAlarmOutput(state: PomodoroRingingState) {
         assertTrue(state.serviceRunning)
@@ -367,7 +393,13 @@ class PomodoroRingingServiceTest {
 
     private fun onMain(block: () -> Unit) {
         val failure = AtomicReference<Throwable?>()
-        instrumentation.runOnMainSync { try { block() } catch (caught: Throwable) { failure.set(caught) } }
+        instrumentation.runOnMainSync {
+            try {
+                block()
+            } catch (caught: Throwable) {
+                failure.set(caught)
+            }
+        }
         failure.get()?.let { throw it }
     }
 }

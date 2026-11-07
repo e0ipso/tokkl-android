@@ -2,12 +2,12 @@ package com.github.e0ipso.tokkl.reports
 
 import androidx.compose.ui.graphics.Color
 import com.github.e0ipso.tokkl.ui.projectMark
-import java.math.BigDecimal
-import java.math.RoundingMode
-import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.math.BigDecimal
+import java.math.RoundingMode
+import java.util.Locale
 
 /** Percentages and money as the web app's format.ts writes them in en-US, and the project dot's colour mix. */
 class ReportFormatTest {

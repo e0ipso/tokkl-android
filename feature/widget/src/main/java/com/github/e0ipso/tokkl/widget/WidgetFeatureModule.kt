@@ -23,7 +23,11 @@ val PomodoroWidgetQualifier: Qualifier = named("PomodoroWidget")
 
 /** The Timer and Pomodoro home screen widgets: what they show, the fields they remember and their redraws. */
 val widgetFeatureModule = module {
-    single { PomodoroWidgetFieldsStore(androidContext()) } binds arrayOf(HeldFieldsMemory::class, AccountDataOwner::class)
+    single {
+        PomodoroWidgetFieldsStore(
+            androidContext(),
+        )
+    } binds arrayOf(HeldFieldsMemory::class, AccountDataOwner::class)
 
     single { WidgetStateSource(androidApplication(), get(), get(), get(), get(), get(), clock = get(), io = io()) }
     single(TimerWidgetQualifier) { WidgetStore(androidContext()) }

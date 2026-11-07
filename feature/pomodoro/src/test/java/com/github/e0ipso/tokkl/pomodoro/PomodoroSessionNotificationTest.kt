@@ -4,8 +4,6 @@ import com.github.e0ipso.tokkl.api.PhaseKind
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
-import java.io.IOException
-import java.time.Duration
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -21,6 +19,8 @@ import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.IOException
+import java.time.Duration
 
 /**
  * The session notification of the held session: its content comes from the server's phase,
@@ -33,7 +33,9 @@ class PomodoroSessionNotificationTest {
     private val key = PomodoroPhaseKey(T0)
 
     @Test fun contentShowsTheServersPhaseNumberAndUpcomingPhaseWithTheCorrectedPlannedEnd() {
-        val work = checkNotNull(heldState(revision = 3, pomodoro = work(number = 2), offset = Duration.ofSeconds(40)).notificationContent())
+        val work = checkNotNull(
+            heldState(revision = 3, pomodoro = work(number = 2), offset = Duration.ofSeconds(40)).notificationContent(),
+        )
         assertEquals(key, work.phase)
         assertEquals(PhaseKind.WORK, work.kind)
         assertEquals(PhaseKind.SHORT_REST, work.upcoming)
@@ -212,7 +214,10 @@ class PomodoroSessionNotificationTest {
         val entered = CompletableDeferred<Unit>()
         val release = CompletableDeferred<Unit>()
         val locked = launch(start = CoroutineStart.UNDISPATCHED) {
-            f.alarm.alarm.withState { _, _ -> entered.complete(Unit); release.await() }
+            f.alarm.alarm.withState { _, _ ->
+                entered.complete(Unit)
+                release.await()
+            }
         }
         entered.await()
         f.sync.start()
@@ -266,13 +271,24 @@ class PomodoroSessionNotificationTest {
 
         init {
             // The server's answers become the held state, as the timer actions give them to it.
-            server.advance = { current -> heldState((current?.state?.revision ?: 0) + 1, rest()).also { alarm.held = it } }
+            server.advance = { current ->
+                heldState(
+                    (current?.state?.revision ?: 0) + 1,
+                    rest(),
+                ).also { alarm.held = it }
+            }
         }
 
         fun newSync() = PomodoroSessionNotificationSync(
             alarm.alarm, server, changes, { signedIn }, { serviceRunning },
-            { saved }, { if (writeFailure) throw IOException("fixture write failed"); saved = it },
-            { content, _ -> if (allowed) posts += content; allowed }, { removes++ },
+            { saved }, {
+                if (writeFailure) throw IOException("fixture write failed")
+                saved = it
+            },
+            { content, _ ->
+                if (allowed) posts += content
+                allowed
+            }, { removes++ },
             CoroutineScope(SupervisorJob() + Dispatchers.Unconfined), Dispatchers.Unconfined,
         )
     }

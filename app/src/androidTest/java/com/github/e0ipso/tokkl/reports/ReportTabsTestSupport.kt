@@ -4,11 +4,6 @@ import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
-import java.time.DayOfWeek
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.time.temporal.TemporalAdjusters
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonObject
@@ -19,6 +14,11 @@ import kotlinx.serialization.json.putJsonArray
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
+import java.time.DayOfWeek
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.temporal.TemporalAdjusters
 
 /**
  * An account of its own for the Detailed and Weekly tabs, in Kiritimati, UTC+14, where the date is
@@ -70,19 +70,32 @@ internal class ReportAccount private constructor(val account: TestAccounts.Accou
             if (tags.isNotEmpty()) putJsonArray("tag_ids") { tags.forEach { add(it) } }
             if (billable != null) put("billable", billable)
         }
-        api.send("POST", api.server.api("workspaces", account.workspaceId.toString(), "time_entries"), body, JsonObject.serializer())
+        api.send(
+            "POST",
+            api.server.api("workspaces", account.workspaceId.toString(), "time_entries"),
+            body,
+            JsonObject.serializer(),
+        )
             .orFail("POST /api/v9/workspaces/<id>/time_entries")
     }
 
     /** POSTs [body] to `/api/v9/workspaces/<id>/<what>` and returns the new item's id. */
-    private fun create(what: String, body: JsonObject): Long =
-        api.send("POST", api.server.api("workspaces", account.workspaceId.toString(), what), body, JsonObject.serializer())
-            .orFail("POST /api/v9/workspaces/<id>/$what")
-            .getValue("id").jsonPrimitive.long
+    private fun create(what: String, body: JsonObject): Long = api.send(
+        "POST",
+        api.server.api("workspaces", account.workspaceId.toString(), what),
+        body,
+        JsonObject.serializer(),
+    )
+        .orFail("POST /api/v9/workspaces/<id>/$what")
+        .getValue("id").jsonPrimitive.long
 
     /** POSTs [body] to Tokkl's own report endpoint `/api/app/report/<path>`, which the web app reads. */
-    fun webReport(path: String, body: JsonObject): JsonObject =
-        api.send("POST", TokklTestServer.url.app("report", path), body, JsonObject.serializer()).orFail("POST /api/app/report/$path")
+    fun webReport(path: String, body: JsonObject): JsonObject = api.send(
+        "POST",
+        TokklTestServer.url.app("report", path),
+        body,
+        JsonObject.serializer(),
+    ).orFail("POST /api/app/report/$path")
 
     companion object {
         const val ZONE = "Pacific/Kiritimati"
@@ -92,15 +105,30 @@ internal class ReportAccount private constructor(val account: TestAccounts.Accou
             val account = TestAccounts.create(timezone = ZONE)
             try {
                 val api = account.client
-                api.send("PUT", api.server.api("me"), buildJsonObject { put("beginning_of_week", 3) }, JsonObject.serializer())
+                api.send(
+                    "PUT",
+                    api.server.api("me"),
+                    buildJsonObject { put("beginning_of_week", 3) },
+                    JsonObject.serializer(),
+                )
                     .orFail("PUT /api/v9/me")
                 val rounding = buildJsonObject {
                     put("rounding", 1)
                     put("rounding_minutes", 15)
                 }
-                api.send("PUT", api.server.api("workspaces", account.workspaceId.toString()), rounding, JsonObject.serializer())
+                api.send(
+                    "PUT",
+                    api.server.api("workspaces", account.workspaceId.toString()),
+                    rounding,
+                    JsonObject.serializer(),
+                )
                     .orFail("PUT /api/v9/workspaces/<id>")
-                api.send("POST", api.server.api("me", "preferences"), buildJsonObject { put("timeofday_format", "h:mm A") }, JsonObject.serializer())
+                api.send(
+                    "POST",
+                    api.server.api("me", "preferences"),
+                    buildJsonObject { put("timeofday_format", "h:mm A") },
+                    JsonObject.serializer(),
+                )
                     .orFail("POST /api/v9/me/preferences")
             } catch (e: Throwable) {
                 TestAccounts.delete(account)
@@ -118,6 +146,15 @@ internal annotation class AtLargestFontScale
 
 /** Sets the largest font scale around a test marked [AtLargestFontScale]. Order it before the compose rule. */
 internal class LargestFontScaleWhenMarked : TestRule {
-    override fun apply(base: Statement, description: Description): Statement =
-        if (description.getAnnotation(AtLargestFontScale::class.java) == null) base else SystemFontScale(SystemFontScale.LARGEST, largestDisplaySize = true).apply(base, description)
+    override fun apply(base: Statement, description: Description): Statement = if (description.getAnnotation(
+            AtLargestFontScale::class.java,
+        ) == null
+    ) {
+        base
+    } else {
+        SystemFontScale(
+            SystemFontScale.LARGEST,
+            largestDisplaySize = true,
+        ).apply(base, description)
+    }
 }

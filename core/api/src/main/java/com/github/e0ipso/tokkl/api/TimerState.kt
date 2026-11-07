@@ -1,9 +1,6 @@
 package com.github.e0ipso.tokkl.api
 
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
-import java.time.Instant
-import java.time.OffsetDateTime
-import java.time.format.DateTimeParseException
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -13,6 +10,9 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import java.time.Instant
+import java.time.OffsetDateTime
+import java.time.format.DateTimeParseException
 
 // The Tokkl server's timer state, as `TimerState` in ../tokkl/packages/types/index.ts at v1.10.0
 // declares it. `GET /api/app/timer`, every timer action, every 409 refusal and each `timer` event
@@ -122,18 +122,30 @@ data class DiscardedPomodoro(
 /** A phase of a Pomodoro session, as the server names it. */
 @Serializable
 enum class PhaseKind {
-    @SerialName("work") WORK,
-    @SerialName("shortRest") SHORT_REST,
-    @SerialName("longRest") LONG_REST,
+    @SerialName("work")
+    WORK,
+
+    @SerialName("shortRest")
+    SHORT_REST,
+
+    @SerialName("longRest")
+    LONG_REST,
 }
 
 /** The change that ends a phase, as the server names it. */
 @Serializable
 enum class PhaseTransition {
-    @SerialName("workToShortRest") WORK_TO_SHORT_REST,
-    @SerialName("shortRestToWork") SHORT_REST_TO_WORK,
-    @SerialName("workToLongRest") WORK_TO_LONG_REST,
-    @SerialName("longRestToWork") LONG_REST_TO_WORK,
+    @SerialName("workToShortRest")
+    WORK_TO_SHORT_REST,
+
+    @SerialName("shortRestToWork")
+    SHORT_REST_TO_WORK,
+
+    @SerialName("workToLongRest")
+    WORK_TO_LONG_REST,
+
+    @SerialName("longRestToWork")
+    LONG_REST_TO_WORK,
 }
 
 /**

@@ -13,11 +13,11 @@ import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.session.MePreferences
 import com.github.e0ipso.tokkl.session.accountSettings
+import kotlinx.serialization.builtins.ListSerializer
 import java.time.Clock
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.format.DateTimeParseException
-import kotlinx.serialization.builtins.ListSerializer
 
 /**
  * Reads what a refresh puts in the cache. [me] is the refresh's `GET /api/v9/me` with related
@@ -131,9 +131,8 @@ private fun ServerFavorite.toCached(position: Int) = CachedFavorite(
 )
 
 /** Tokkl sends `+00:00` and Toggl `Z`; both carry the offset, so no zone is assumed. */
-private fun instant(text: String): Instant? =
-    try {
-        OffsetDateTime.parse(text).toInstant()
-    } catch (e: DateTimeParseException) {
-        null
-    }
+private fun instant(text: String): Instant? = try {
+    OffsetDateTime.parse(text).toInstant()
+} catch (e: DateTimeParseException) {
+    null
+}

@@ -18,7 +18,9 @@ import java.io.IOException
  *
  * The first call loads the preferences file, so make calls off the main thread.
  */
-class ServerTrustStore(context: Context) : ServerTrust, AccountDataOwner {
+class ServerTrustStore(context: Context) :
+    ServerTrust,
+    AccountDataOwner {
 
     override val signOutOrder = SignOutOrder.SERVER_TRUST
 

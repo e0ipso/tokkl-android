@@ -45,5 +45,4 @@ class PomodoroDefaultsStoreTest {
         store.save(StoredPomodoroDefaults(PomodoroDefaults(181, 0, 61, 0), unsent = false))
         assertEquals(StoredPomodoroDefaults(PomodoroDefaults(180, 1, 60, 1), unsent = false), store.load())
     }
-
 }

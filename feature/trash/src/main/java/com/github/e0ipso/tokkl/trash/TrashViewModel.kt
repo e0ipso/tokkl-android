@@ -10,7 +10,6 @@ import com.github.e0ipso.tokkl.catalog.CatalogPageEvents
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.catalog.toServerProblem
 import com.github.e0ipso.tokkl.session.AccountSettings
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,6 +18,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.coroutines.CoroutineContext
 
 /** A change the server accepted, for the message that confirms it. */
 sealed interface TrashChange {
@@ -76,7 +76,8 @@ class TrashViewModel(
     scope: CoroutineScope,
     private val io: CoroutineContext,
     val settings: StateFlow<AccountSettings?> = MutableStateFlow(null),
-) : ViewModel(scope), CatalogPageEvents {
+) : ViewModel(scope),
+    CatalogPageEvents {
 
     private val mutableState = MutableStateFlow(TrashState())
     val state: StateFlow<TrashState> = mutableState.asStateFlow()
@@ -202,6 +203,7 @@ class TrashViewModel(
                         done = done(answer.value),
                     )
                 }
+
                 is ApiResult.Failure -> {
                     val problem = answer.error.toServerProblem()
                     mutableState.update { current ->
@@ -230,6 +232,7 @@ class TrashViewModel(
                 is ApiResult.Success -> mutableState.update {
                     it.copy(entries = answer.value, loading = false, loadProblem = null)
                 }
+
                 is ApiResult.Failure -> mutableState.update {
                     it.copy(loading = false, loadProblem = answer.error.toServerProblem())
                 }

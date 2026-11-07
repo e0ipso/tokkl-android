@@ -25,19 +25,19 @@ import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
-import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
+import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.timerstate.nextTotalsDelay
 import com.github.e0ipso.tokkl.timerstate.timerPeriodTotals
 import com.github.e0ipso.tokkl.ui.spokenDuration
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import java.time.Clock
-import java.time.Duration
-import java.time.Instant
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
+import java.time.Clock
+import java.time.Duration
+import java.time.Instant
 
 @Composable
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
@@ -53,7 +53,10 @@ fun TimerTotals(
     val rows = cached ?: return
     val totals = timerPeriodTotals(rows, account, now)
     if (totals == null) {
-        Text(stringResource(R.string.history_unknown_time_zone, account.timeZone), style = MaterialTheme.typography.bodyLarge)
+        Text(
+            stringResource(R.string.history_unknown_time_zone, account.timeZone),
+            style = MaterialTheme.typography.bodyLarge,
+        )
         return
     }
     val text = totals.formatted(account)
@@ -77,7 +80,13 @@ private fun TimerTotalsRow(today: String, week: String, todaySeconds: Long, week
 
 /** TalkBack gets the account-period label and the elapsed duration in words. */
 @Composable
-private fun TimerTotal(@StringRes labelId: Int, value: String, seconds: Long, tag: String, modifier: Modifier = Modifier) {
+private fun TimerTotal(
+    @StringRes labelId: Int,
+    value: String,
+    seconds: Long,
+    tag: String,
+    modifier: Modifier = Modifier,
+) {
     val label = stringResource(labelId)
     val spoken = stringResource(R.string.timer_total_spoken, label, spokenDuration(LocalResources.current, seconds))
     Column(modifier.testTag(tag).semantics(mergeDescendants = true) { contentDescription = spoken }) {

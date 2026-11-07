@@ -43,12 +43,12 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
-import com.github.e0ipso.tokkl.feature.projects.R
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.cache.CachedClient
+import com.github.e0ipso.tokkl.feature.projects.R
 import com.github.e0ipso.tokkl.picker.projectColor
 import com.github.e0ipso.tokkl.ui.theme.FrameWidth
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 
 /**
  * The colour, as the web app's ColorField: Toggl's 14 swatches and Custom, one choice. Each swatch

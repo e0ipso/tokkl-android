@@ -22,8 +22,6 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.github.e0ipso.tokkl.feature.trash.R
-import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.api.TrashEntry
 import com.github.e0ipso.tokkl.catalog.CatalogEmpty
 import com.github.e0ipso.tokkl.catalog.CatalogNotices
@@ -32,6 +30,7 @@ import com.github.e0ipso.tokkl.catalog.CatalogPageEffects
 import com.github.e0ipso.tokkl.catalog.ConfirmDialog
 import com.github.e0ipso.tokkl.catalog.DetailLine
 import com.github.e0ipso.tokkl.catalog.ServerProblem
+import com.github.e0ipso.tokkl.feature.trash.R
 import com.github.e0ipso.tokkl.picker.rememberOffline
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.AccountTime
@@ -45,6 +44,7 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.format.DateTimeParseException
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * The trash page (docs/PRD.md H7), as the web app's TrashPage: the deleted entries from the
@@ -144,14 +144,24 @@ fun TrashContent(
             }
             if (entries != null && entries.isEmpty()) {
                 item(key = "empty") {
-                    CatalogEmpty(stringResource(R.string.trash_empty_title), stringResource(R.string.trash_empty_message))
+                    CatalogEmpty(
+                        stringResource(R.string.trash_empty_title),
+                        stringResource(R.string.trash_empty_message),
+                    )
                 }
             }
             if (!entries.isNullOrEmpty()) {
                 itemsIndexed(entries, key = { _, entry -> entry.id }) { index, entry ->
                     Column {
                         if (index > 0) HorizontalDivider()
-                        TrashRow(entry, time, settings?.durationFormat ?: DurationFormat.IMPROVED, settings?.twelveHour == true, canChange, actions)
+                        TrashRow(
+                            entry,
+                            time,
+                            settings?.durationFormat ?: DurationFormat.IMPROVED,
+                            settings?.twelveHour == true,
+                            canChange,
+                            actions,
+                        )
                     }
                 }
                 if (entries.size >= TrashServer.LIST_LIMIT) {
@@ -219,11 +229,39 @@ private fun TrashRow(
     val details = buildList {
         add(entry.projectName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.trash_no_project))
         if (time != null) {
-            parseInstant(entry.start)?.let { add(stringResource(R.string.trash_started, date(it, time, words), formatTime(it, time.zone, twelveHour))) }
+            parseInstant(
+                entry.start,
+            )?.let {
+                add(
+                    stringResource(
+                        R.string.trash_started,
+                        date(it, time, words),
+                        formatTime(it, time.zone, twelveHour),
+                    ),
+                )
+            }
         }
-        add(if (entry.stop == null || entry.duration < 0) stringResource(R.string.trash_running) else formatDuration(entry.duration, format))
+        add(
+            if (entry.stop == null || entry.duration < 0) {
+                stringResource(
+                    R.string.trash_running,
+                )
+            } else {
+                formatDuration(entry.duration, format)
+            },
+        )
         if (time != null) {
-            entry.deletedAt?.let(::parseInstant)?.let { add(stringResource(R.string.trash_deleted_at, date(it, time, words), formatTime(it, time.zone, twelveHour))) }
+            entry.deletedAt?.let(
+                ::parseInstant,
+            )?.let {
+                add(
+                    stringResource(
+                        R.string.trash_deleted_at,
+                        date(it, time, words),
+                        formatTime(it, time.zone, twelveHour),
+                    ),
+                )
+            }
         }
     }
     Column(
@@ -270,9 +308,8 @@ private fun date(instant: Instant, time: AccountTime, words: DateWords): String 
 }
 
 /** Tokkl writes `+00:00` and Toggl `Z`; both parse here. Null for anything else. */
-private fun parseInstant(text: String): Instant? =
-    try {
-        OffsetDateTime.parse(text).toInstant()
-    } catch (e: DateTimeParseException) {
-        null
-    }
+private fun parseInstant(text: String): Instant? = try {
+    OffsetDateTime.parse(text).toInstant()
+} catch (e: DateTimeParseException) {
+    null
+}

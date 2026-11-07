@@ -22,32 +22,33 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.feature.pomodoro.R
-import com.github.e0ipso.tokkl.core.data.R as DataR
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.api.PhaseKind
 import com.github.e0ipso.tokkl.api.PhaseTransition
+import com.github.e0ipso.tokkl.feature.pomodoro.R
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import java.time.Clock
-import java.time.Instant
-import java.time.ZoneId
-import java.time.ZoneOffset
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneId
+import java.time.ZoneOffset
+import com.github.e0ipso.tokkl.core.data.R as DataR
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 
 /** The alarm and Pomodoro page content at the largest font scale, with no server or ring. */
 @SignedOut
 class PomodoroAlarmContentTest {
     private val compose = createAndroidComposeRule<ComponentActivity>()
+
     @get:Rule val rules: RuleChain = RuleChain.outerRule(SessionRule())
         .around(SystemFontScale(SystemFontScale.LARGEST)).around(compose)
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
@@ -110,8 +111,11 @@ class PomodoroAlarmContentTest {
         edgeToEdge()
         compose.setContent {
             TokklTheme {
-                PomodoroContent(page, onLengths = {}, onFields = {}, onDescription = {}, onDescriptionDone = {}, onStart = {}, onNext = {}, onEnd = {},
-                    onFullScreenSettings = { settings++ })
+                PomodoroContent(
+                    page, onLengths = {
+                    }, onFields = {}, onDescription = {}, onDescriptionDone = {}, onStart = {}, onNext = {}, onEnd = {},
+                    onFullScreenSettings = { settings++ },
+                )
             }
         }
         for (label in listOf(R.string.pomodoro_alarm_denied, R.string.pomodoro_fullscreen_denied)) {
@@ -141,9 +145,13 @@ class PomodoroAlarmContentTest {
         edgeToEdge()
         compose.setContent {
             TokklTheme {
-                PomodoroContent(PomodoroPageState(loading = false, fullScreenDenied = true),
-                    onLengths = {}, onFields = {}, onDescription = {}, onDescriptionDone = {}, onStart = {}, onNext = {}, onEnd = {},
-                    fullScreenSettingsUnavailable = true)
+                PomodoroContent(
+                    PomodoroPageState(loading = false, fullScreenDenied = true),
+                    onLengths = {
+                    }, onFields = {
+                    }, onDescription = {}, onDescriptionDone = {}, onStart = {}, onNext = {}, onEnd = {},
+                    fullScreenSettingsUnavailable = true,
+                )
             }
         }
         val fallback = compose.onNodeWithText(context.getString(R.string.pomodoro_fullscreen_settings_unavailable))
@@ -171,7 +179,12 @@ class PomodoroAlarmContentTest {
 
     /** A [transition] phase that started at [at], third of four, whose planned end is a minute later. */
     private fun ring(transition: PhaseTransition) = PomodoroRing(
-        phase = PomodoroPhaseKey(at), kind = PhaseKind.WORK, sound = PomodoroSound.entries.single { it.transition == transition },
-        number = 3, longRestEvery = 4, end = at.plusSeconds(60), revision = 7,
+        phase = PomodoroPhaseKey(at),
+        kind = PhaseKind.WORK,
+        sound = PomodoroSound.entries.single { it.transition == transition },
+        number = 3,
+        longRestEvery = 4,
+        end = at.plusSeconds(60),
+        revision = 7,
     )
 }

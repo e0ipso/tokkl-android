@@ -1,11 +1,11 @@
 package com.github.e0ipso.tokkl.api
 
-import java.io.IOException
-import java.net.ProtocolException
 import okhttp3.HttpUrl
 import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
+import java.io.IOException
+import java.net.ProtocolException
 
 /**
  * The guard refused a request, or a redirect, to [origin] (`scheme://host:port`),
@@ -36,10 +36,8 @@ class CleartextNotConfirmedException(val server: ServerUrl) :
  * guard refuses it with [CleartextNotConfirmedException]. A redirect stays on
  * the same origin, and so on the same scheme.
  */
-internal class ConfiguredServerGuard(
-    private val configured: () -> ServerUrl?,
-    private val trust: () -> ServerTrust,
-) : Interceptor {
+internal class ConfiguredServerGuard(private val configured: () -> ServerUrl?, private val trust: () -> ServerTrust) :
+    Interceptor {
 
     override fun intercept(chain: Interceptor.Chain): Response {
         var request = chain.request()

@@ -33,7 +33,11 @@ interface ChangeStore {
      * The cache shows the entry as the queue now leaves it, and [later] running unless the queue
      * holds a change to it. Returns the start as it now stands, to send. Blocks on disk I/O.
      */
-    fun endBefore(start: PendingChange, later: CachedTimeEntry, onGrid: (start: Instant, stop: Instant) -> SnappedSpan): PendingChange
+    fun endBefore(
+        start: PendingChange,
+        later: CachedTimeEntry,
+        onGrid: (start: Instant, stop: Instant) -> SnappedSpan,
+    ): PendingChange
 
     /**
      * Records [PendingChange.maybeSent] for the queued create, Stop or delete [change]. Returns false
@@ -109,52 +113,63 @@ class RoomChangeStore(private val database: CacheDatabase) : ChangeStore {
                     dao.upsertEntry(local.copy(id = serverId))
                 }
             }
-            if (change.kind == ChangeKind.STOP && change.shortStop && dao.countFor(serverId) == 0) dao.deleteEntry(serverId)
+            if (change.kind == ChangeKind.STOP && change.shortStop && dao.countFor(
+                    serverId,
+                ) == 0
+            ) {
+                dao.deleteEntry(serverId)
+            }
             if (answer != null && dao.countFor(serverId) == 0) dao.upsertEntry(answer)
         }
     }
 
-    override fun endBefore(start: PendingChange, later: CachedTimeEntry, onGrid: (start: Instant, stop: Instant) -> SnappedSpan): PendingChange =
-        database.runInTransaction<PendingChange> {
-            val changes = dao.changesFor(start.entryId)
-            val ended = start.endedAt(later.start, changes).placed(onGrid)
-            dao.update(ended)
-            changes.filter { it.sequence > start.sequence }.forEach { change ->
-                change.stoppedBy(later.start)?.placed(onGrid)?.let(dao::update)
-            }
-            dao.changesFor(start.entryId).last().cachedEntry()?.let(dao::upsertEntry)
-            if (dao.countFor(later.id) == 0) dao.upsertEntry(later)
-            ended
+    override fun endBefore(
+        start: PendingChange,
+        later: CachedTimeEntry,
+        onGrid: (start: Instant, stop: Instant) -> SnappedSpan,
+    ): PendingChange = database.runInTransaction<PendingChange> {
+        val changes = dao.changesFor(start.entryId)
+        val ended = start.endedAt(later.start, changes).placed(onGrid)
+        dao.update(ended)
+        changes.filter { it.sequence > start.sequence }.forEach { change ->
+            change.stoppedBy(later.start)?.placed(onGrid)?.let(dao::update)
         }
+        dao.changesFor(start.entryId).last().cachedEntry()?.let(dao::upsertEntry)
+        if (dao.countFor(later.id) == 0) dao.upsertEntry(later)
+        ended
+    }
 
-    override fun maybeSent(change: PendingChange, maybeSent: Boolean): Boolean = dao.setMaybeSent(change.sequence, maybeSent) > 0
+    override fun maybeSent(change: PendingChange, maybeSent: Boolean): Boolean = dao.setMaybeSent(
+        change.sequence,
+        maybeSent,
+    ) > 0
 
     override fun isMapped(serverId: Long): Boolean = dao.isMapped(serverId)
 
     override fun hold(change: PendingChange, refusal: String?) = dao.hold(change.sequence, refusal)
 
-    override fun discardEntry(change: PendingChange): Int =
-        database.runInTransaction<Int> {
-            dao.deleteEntry(change.entryId)
-            dao.deleteFrom(change.entryId, sequence = Long.MIN_VALUE)
-        }
+    override fun discardEntry(change: PendingChange): Int = database.runInTransaction<Int> {
+        dao.deleteEntry(change.entryId)
+        dao.deleteFrom(change.entryId, sequence = Long.MIN_VALUE)
+    }
 
-    override fun takeBackDelete(entryId: Long): TakenBack =
-        database.runInTransaction<TakenBack> {
-            // The server's id once the server has answered the create of an entry made on the phone.
-            val id = if (entryId < 0) dao.serverId(entryId) ?: entryId else entryId
-            val delete = dao.queuedDelete(id)
-            when {
-                delete != null && !delete.maybeSent -> {
-                    dao.delete(delete.sequence)
-                    dao.upsertEntry(delete.entry())
-                    TakenBack.Unsent
-                }
-                // A delete goes out after the create of its entry, so it carries the server's id.
-                id > 0 -> TakenBack.OnServer(id)
-                else -> TakenBack.Unknown
+    override fun takeBackDelete(entryId: Long): TakenBack = database.runInTransaction<TakenBack> {
+        // The server's id once the server has answered the create of an entry made on the phone.
+        val id = if (entryId < 0) dao.serverId(entryId) ?: entryId else entryId
+        val delete = dao.queuedDelete(id)
+        when {
+            delete != null && !delete.maybeSent -> {
+                dao.delete(delete.sequence)
+                dao.upsertEntry(delete.entry())
+                TakenBack.Unsent
             }
+
+            // A delete goes out after the create of its entry, so it carries the server's id.
+            id > 0 -> TakenBack.OnServer(id)
+
+            else -> TakenBack.Unknown
         }
+    }
 
     override fun restored(serverId: Long, answer: CachedTimeEntry?) {
         database.runInTransaction {
@@ -184,9 +199,8 @@ internal fun PendingChange.placed(onGrid: (start: Instant, stop: Instant) -> Sna
  * then, or null when it can stay as it is: a delete, a change that starts the entry at [laterStart]
  * or later, or one that stops it by then.
  */
-internal fun PendingChange.stoppedBy(laterStart: Instant): PendingChange? =
-    when {
-        kind == ChangeKind.DELETE || !start.isBefore(laterStart) -> null
-        stop == null || stop.isAfter(laterStart) -> copy(stop = laterStart)
-        else -> null
-    }
+internal fun PendingChange.stoppedBy(laterStart: Instant): PendingChange? = when {
+    kind == ChangeKind.DELETE || !start.isBefore(laterStart) -> null
+    stop == null || stop.isAfter(laterStart) -> copy(stop = laterStart)
+    else -> null
+}

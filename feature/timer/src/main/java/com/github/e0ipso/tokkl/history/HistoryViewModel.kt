@@ -13,9 +13,6 @@ import com.github.e0ipso.tokkl.cache.resolveEntryOverrides
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.AppEvent
 import com.github.e0ipso.tokkl.time.AccountTime
-import java.time.Clock
-import java.time.LocalDate
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -28,6 +25,9 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.time.Clock
+import java.time.LocalDate
+import kotlin.coroutines.CoroutineContext
 
 /**
  * The history on the Timer page (docs/PRD.md H1): the cached two weeks from the phone, which
@@ -104,14 +104,26 @@ class HistoryViewModel(
     @Volatile
     private var shownEntries: Map<Long, CachedTimeEntry> = emptyMap()
 
-    val state: StateFlow<HistoryState> = combine(entries, projects, tasks, accountSettings, pages) { cached, projectRows, taskRows, settings, (loaded, overrides) ->
+    val state: StateFlow<HistoryState> = combine(
+        entries,
+        projects,
+        tasks,
+        accountSettings,
+        pages,
+    ) { cached, projectRows, taskRows, settings, (loaded, overrides) ->
         val time = settings?.time(clock)
         when {
             settings == null -> HistoryState.Loading
+
             time == null -> HistoryState.NoAccountTime(settings.timeZone)
+
             else -> {
                 val firstCached = firstCachedDay(time)
-                val olderEntries = daysTheCacheDropped(cached, loaded.until, time) + withEdits(cached, loaded.entries, firstCached, time)
+                val olderEntries = daysTheCacheDropped(
+                    cached,
+                    loaded.until,
+                    time,
+                ) + withEdits(cached, loaded.entries, firstCached, time)
                 val resolved = resolveEntryOverrides(overrides, currentId)
                 val restoredIds = resolved.values.filterNotNull().mapTo(HashSet()) { it.id }
                 edited = edited + cached.filter { it.entry.id in restoredIds }.associate { it.entry.id to it.entry }
@@ -163,7 +175,13 @@ class HistoryViewModel(
             bounds = read
             val loaded = older.value
             older.value = when (page) {
-                is OlderPage.Loaded -> Older(loaded.entries + page.entries, page.from, loaded.until ?: before, page.status)
+                is OlderPage.Loaded -> Older(
+                    loaded.entries + page.entries,
+                    page.from,
+                    loaded.until ?: before,
+                    page.status,
+                )
+
                 is OlderPage.NotLoaded -> loaded.copy(
                     // The server's word that no entry comes before the cache fixes where the older days end too.
                     until = loaded.until ?: before.takeIf { page.status == OlderDays.End },
@@ -172,7 +190,11 @@ class HistoryViewModel(
             }
             // The request may still have used the old route when an online update arrived.
             // Retry that failure once for the newer event; a successful page never pages on.
-            if (page is OlderPage.NotLoaded && page.status == OlderDays.Unreachable && reconnects != reconnectsBefore) loadOlder()
+            if (page is OlderPage.NotLoaded && page.status == OlderDays.Unreachable &&
+                reconnects != reconnectsBefore
+            ) {
+                loadOlder()
+            }
         }
     }
 
@@ -192,7 +214,11 @@ class HistoryViewModel(
      * window moved on with the date. They come from the cache as [state] last saw it, the newest
      * version of each entry winning, and none when no older days have loaded.
      */
-    private fun daysTheCacheDropped(cached: List<EntryWithSendState>, until: LocalDate?, time: AccountTime): List<CachedTimeEntry> {
+    private fun daysTheCacheDropped(
+        cached: List<EntryWithSendState>,
+        until: LocalDate?,
+        time: AccountTime,
+    ): List<CachedTimeEntry> {
         val now = cached.map { it.entry }
         val before = lastCached
         lastCached = now
@@ -216,14 +242,26 @@ class HistoryViewModel(
      * the page's older copy. An entry the cache holds inside its window shows from the cache, so
      * the page's copy stays for it.
      */
-    private fun withEdits(cached: List<EntryWithSendState>, pages: List<CachedTimeEntry>, firstCached: LocalDate, time: AccountTime): List<CachedTimeEntry> {
+    private fun withEdits(
+        cached: List<EntryWithSendState>,
+        pages: List<CachedTimeEntry>,
+        firstCached: LocalDate,
+        time: AccountTime,
+    ): List<CachedTimeEntry> {
         if (pages.isEmpty()) return pages
         val ids = pages.mapTo(HashSet()) { it.id }
         var edits = edited
         for (row in cached) {
             val entry = row.entry
             if (entry.id !in ids) continue
-            edits = if (time.local(entry.start).toLocalDate() < firstCached) edits + (entry.id to entry) else edits - entry.id
+            edits = if (time.local(
+                    entry.start,
+                ).toLocalDate() < firstCached
+            ) {
+                edits + (entry.id to entry)
+            } else {
+                edits - entry.id
+            }
         }
         edited = edits
         return if (edits.isEmpty()) pages else pages.map { edits[it.id] ?: it }

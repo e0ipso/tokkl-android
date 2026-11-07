@@ -14,13 +14,13 @@ import androidx.compose.ui.test.performClick
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.DeviceShell
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.core.shared.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.core.shared.R
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import kotlinx.serialization.json.JsonObject
@@ -98,11 +98,17 @@ class UnconfirmedHttpWhileSignedInTest {
     }
 
     private fun awaitGone(matcher: SemanticsMatcher, what: String) {
-        composeRule.waitUntil(what, NETWORK_TIMEOUT_MS) { composeRule.onAllNodes(matcher).fetchSemanticsNodes().isEmpty() }
+        composeRule.waitUntil(
+            what,
+            NETWORK_TIMEOUT_MS,
+        ) { composeRule.onAllNodes(matcher).fetchSemanticsNodes().isEmpty() }
     }
 
     private fun awaitNode(matcher: SemanticsMatcher, what: String) {
-        composeRule.waitUntil(what, NETWORK_TIMEOUT_MS) { composeRule.onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty() }
+        composeRule.waitUntil(
+            what,
+            NETWORK_TIMEOUT_MS,
+        ) { composeRule.onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty() }
     }
 
     private fun string(@StringRes id: Int): String = context.getString(id)

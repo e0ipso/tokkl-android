@@ -21,8 +21,11 @@ class DateWords(val resources: Resources) {
         resources.getString(R.string.reports_date_year, date.dayOfMonth, month(date), date.year)
 
     /** `Mon 13 Oct`, or `Mon 13 Oct 2025` when [date] lies in another year than [today]. */
-    fun day(date: LocalDate, today: LocalDate): String =
-        resources.getString(R.string.reports_bucket_day, weekday(date), if (date.year == today.year) short(date) else shortWithYear(date))
+    fun day(date: LocalDate, today: LocalDate): String = resources.getString(
+        R.string.reports_bucket_day,
+        weekday(date),
+        if (date.year == today.year) short(date) else shortWithYear(date),
+    )
 }
 
 /**

@@ -1,8 +1,8 @@
 package com.github.e0ipso.tokkl.cache
 
-import java.time.Instant
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import java.time.Instant
 
 /** What the running entry check writes to the cache for each answer (docs/PRD.md 6.3). */
 class RunningCheckTest {
@@ -31,7 +31,11 @@ class RunningCheckTest {
         val edited = entry(1, description = "Edited elsewhere")
 
         assertEquals(RunningCheckWrites(upsert = edited), writes(before = listOf(running), server = edited))
-        assertEquals("the same values write nothing", RunningCheckWrites(), writes(before = listOf(running), server = running))
+        assertEquals(
+            "the same values write nothing",
+            RunningCheckWrites(),
+            writes(before = listOf(running), server = running),
+        )
     }
 
     @Test
@@ -60,7 +64,12 @@ class RunningCheckTest {
         assertEquals(
             "the cached running entry still goes",
             RunningCheckWrites(delete = listOf(1)),
-            writes(before = listOf(running), server = entry(2), unsent = setOf(2L), cached = listOf(running, entry(2, stop = STOP))),
+            writes(
+                before = listOf(running),
+                server = entry(2),
+                unsent = setOf(2L),
+                cached = listOf(running, entry(2, stop = STOP)),
+            ),
         )
     }
 
@@ -104,7 +113,13 @@ class RunningCheckTest {
 
         assertEquals(
             RunningCheckWrites(),
-            writes(before = emptyList(), now = emptyList(), server = running, cached = emptyList(), pendingAtStart = setOf(1L)),
+            writes(
+                before = emptyList(),
+                now = emptyList(),
+                server = running,
+                cached = emptyList(),
+                pendingAtStart = setOf(1L),
+            ),
         )
     }
 
@@ -123,7 +138,10 @@ class RunningCheckTest {
     fun anEntryDeletedOnThePhoneAfterTheRequestIsNotAddedBack() {
         val running = entry(1)
 
-        assertEquals(RunningCheckWrites(), writes(before = listOf(running), now = emptyList(), server = running, cached = emptyList()))
+        assertEquals(
+            RunningCheckWrites(),
+            writes(before = listOf(running), now = emptyList(), server = running, cached = emptyList()),
+        )
     }
 
     @Test
@@ -164,15 +182,14 @@ class RunningCheckTest {
         unsent: Set<Long> = emptySet(),
         cached: List<CachedTimeEntry> = now,
         pendingAtStart: Set<Long> = emptySet(),
-    ): RunningCheckWrites =
-        runningCheckWrites(
-            before = before,
-            now = now,
-            server = server,
-            unsent = { it in unsent },
-            cached = { id -> cached.firstOrNull { it.id == id } },
-            pendingAtStart = pendingAtStart,
-        )
+    ): RunningCheckWrites = runningCheckWrites(
+        before = before,
+        now = now,
+        server = server,
+        unsent = { it in unsent },
+        cached = { id -> cached.firstOrNull { it.id == id } },
+        pendingAtStart = pendingAtStart,
+    )
 
     private fun entry(id: Long, description: String = "Running", stop: Instant? = null) = CachedTimeEntry(
         id = id,

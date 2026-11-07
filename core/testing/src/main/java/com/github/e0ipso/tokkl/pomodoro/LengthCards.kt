@@ -16,11 +16,10 @@ import com.github.e0ipso.tokkl.ui.STEPPER_VALUE_TAG
 // "Long rest every" are told apart by the comma.
 
 /** The card for [label] as TalkBack sees it, one node that takes text. */
-fun lengthCardMatcher(label: String): SemanticsMatcher =
-    SemanticsMatcher("length card \"$label\"") { node ->
-        SemanticsActions.SetText in node.config &&
-            node.config.getOrNull(SemanticsProperties.ContentDescription)?.firstOrNull()?.startsWith("$label, ") == true
-    }
+fun lengthCardMatcher(label: String): SemanticsMatcher = SemanticsMatcher("length card \"$label\"") { node ->
+    SemanticsActions.SetText in node.config &&
+        node.config.getOrNull(SemanticsProperties.ContentDescription)?.firstOrNull()?.startsWith("$label, ") == true
+}
 
 fun SemanticsNodeInteractionsProvider.lengthCard(label: String): SemanticsNodeInteraction =
     onNode(lengthCardMatcher(label))

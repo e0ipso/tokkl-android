@@ -33,8 +33,6 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.core.shared.R
-import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
@@ -47,13 +45,11 @@ import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.core.shared.R
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
-import java.time.Duration
-import java.time.Instant
-import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonArray
@@ -77,6 +73,10 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.Duration
+import java.time.Instant
+import java.time.temporal.ChronoUnit
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 
 /**
  * The timer's description suggestions against the real Tokkl container (docs/PRD.md T4), at
@@ -128,22 +128,42 @@ class DescriptionSuggestionsServerTest {
     @Test
     fun suggestionsFromRecentEntriesShowWhileTypingOfflineAndAPickFillsEveryField() {
         val client = create("clients", buildJsonObject { put("name", "Acme") })
-        val project = create("projects", buildJsonObject { put("name", "Website"); put("client_id", client) })
+        val project = create(
+            "projects",
+            buildJsonObject {
+                put("name", "Website")
+                put("client_id", client)
+            },
+        )
         val now = Instant.now().truncatedTo(ChronoUnit.SECONDS)
         entry("Write the report", project, listOf("call"), billable = true, start = now.minus(3, ChronoUnit.HOURS))
         entry("Write the report", project, listOf("call"), billable = true, start = now.minus(5, ChronoUnit.HOURS))
-        entry("Review the report", projectId = null, tags = emptyList(), billable = false, start = now.minus(7, ChronoUnit.HOURS))
+        entry(
+            "Review the report",
+            projectId = null,
+            tags = emptyList(),
+            billable = false,
+            start = now.minus(7, ChronoUnit.HOURS),
+        )
         entry("Lunch", projectId = null, tags = emptyList(), billable = false, start = now.minus(9, ChronoUnit.HOURS))
         launch { activity ->
             AirplaneMode.set(true, web)
             description().performTextInput("REPORT")
             awaitKeyboard(activity)
-            awaitShown("the count of suggestions") { composeRule.onNode(hasText(plural(R.plurals.timer_suggestions, 2))) }
+            awaitShown(
+                "the count of suggestions",
+            ) { composeRule.onNode(hasText(plural(R.plurals.timer_suggestions, 2))) }
             val count = composeRule.onNode(hasText(plural(R.plurals.timer_suggestions, 2))).fetchSemanticsNode()
-            assertEquals("TalkBack announces the count", LiveRegionMode.Polite, count.config.getOrNull(SemanticsProperties.LiveRegion))
+            assertEquals(
+                "TalkBack announces the count",
+                LiveRegionMode.Polite,
+                count.config.getOrNull(SemanticsProperties.LiveRegion),
+            )
             assertTrue(
                 "the newest entry's suggestion comes first",
-                suggestion("Write the report").getBoundsInRoot().top < suggestion("Review the report").getBoundsInRoot().top,
+                suggestion(
+                    "Write the report",
+                ).getBoundsInRoot().top < suggestion("Review the report").getBoundsInRoot().top,
             )
             assertEquals("an entry that does not match is left out", 0, count(hasText("Lunch") and inTheList()))
             assertUsable("Write the report")
@@ -151,25 +171,37 @@ class DescriptionSuggestionsServerTest {
 
             description().performTextClearance()
             description().performTextInput("acme")
-            awaitShown("the suggestion that matches the client") { composeRule.onNode(hasText(plural(R.plurals.timer_suggestions, 1))) }
+            awaitShown(
+                "the suggestion that matches the client",
+            ) { composeRule.onNode(hasText(plural(R.plurals.timer_suggestions, 1))) }
 
             tapSuggestion("Write the report")
             try {
-                awaitShown("the picked description") { composeRule.onNode(hasSetTextAction() and hasText("Write the report")) }
+                awaitShown(
+                    "the picked description",
+                ) { composeRule.onNode(hasSetTextAction() and hasText("Write the report")) }
             } catch (e: Throwable) {
                 throw AssertionError("the pick did not fill the description: ${fieldsAndPopups()}", e)
             }
             composeRule.onNode(hasSetTextAction() and hasText("Write the report")).assertIsFocused()
-            awaitShown("the picked project") { composeRule.onNode(hasContentDescription(string(R.string.entry_project_spoken, "Website"))) }
-            awaitShown("the picked tags") { composeRule.onNode(hasContentDescription(string(R.string.entry_tags_spoken, "call"))) }
+            awaitShown(
+                "the picked project",
+            ) { composeRule.onNode(hasContentDescription(string(R.string.entry_project_spoken, "Website"))) }
+            awaitShown(
+                "the picked tags",
+            ) { composeRule.onNode(hasContentDescription(string(R.string.entry_tags_spoken, "call"))) }
             assertEquals(
                 ToggleableState.On,
                 composeRule.onNode(hasText(string(R.string.entry_billable)) and isToggleable()).fetchSemanticsNode()
                     .config.getOrNull(SemanticsProperties.ToggleableState),
             )
 
-            composeRule.onNode(hasContentDescription(string(TimerR.string.timer_start_spoken)) and hasClickAction()).performClick()
-            awaitShown("Stop") { composeRule.onNode(hasContentDescription(string(R.string.timer_stop_spoken)) and hasClickAction()) }
+            composeRule.onNode(
+                hasContentDescription(string(TimerR.string.timer_start_spoken)) and hasClickAction(),
+            ).performClick()
+            awaitShown(
+                "Stop",
+            ) { composeRule.onNode(hasContentDescription(string(R.string.timer_stop_spoken)) and hasClickAction()) }
             AirplaneMode.set(false, web)
             drainUntilEmpty()
         }
@@ -190,7 +222,13 @@ class DescriptionSuggestionsServerTest {
                 runBlocking { app.cache.timeEntries.first() }.size == ENTRIES
             }
             composeRule.waitUntil("Start can start", NETWORK_TIMEOUT.toMillis()) {
-                shows(composeRule.onNode(hasContentDescription(string(TimerR.string.timer_start_spoken)) and hasClickAction() and enabled()))
+                shows(
+                    composeRule.onNode(
+                        hasContentDescription(
+                            string(TimerR.string.timer_start_spoken),
+                        ) and hasClickAction() and enabled(),
+                    ),
+                )
             }
             lateinit var activity: MainActivity
             scenario.onActivity { activity = it }
@@ -235,13 +273,20 @@ class DescriptionSuggestionsServerTest {
         val fields = composeRule.onAllNodes(hasSetTextAction()).fetchSemanticsNodes()
             .map { it.config.getOrNull(SemanticsProperties.EditableText)?.text to it.boundsInRoot }
         val items = composeRule.onAllNodes(hasClickAction() and inTheList()).fetchSemanticsNodes()
-            .map { it.config.getOrNull(SemanticsProperties.Text)?.joinToString { text -> text.text } to it.positionOnScreen }
+            .map {
+                it.config.getOrNull(
+                    SemanticsProperties.Text,
+                )?.joinToString { text -> text.text } to it.positionOnScreen
+            }
         return "fields $fields, suggestions $items, screen ${context.resources.displayMetrics.heightPixels}px"
     }
 
     /** Inside the suggestions, whose list starts with how many there are. */
-    private fun inTheList(): SemanticsMatcher =
-        hasAnyAncestor(hasAnyChild(hasText(plural(R.plurals.timer_suggestions, 1)) or hasText(plural(R.plurals.timer_suggestions, 2))))
+    private fun inTheList(): SemanticsMatcher = hasAnyAncestor(
+        hasAnyChild(
+            hasText(plural(R.plurals.timer_suggestions, 1)) or hasText(plural(R.plurals.timer_suggestions, 2)),
+        ),
+    )
 
     private fun count(matcher: SemanticsMatcher): Int = composeRule.onAllNodes(matcher).fetchSemanticsNodes().size
 
@@ -253,7 +298,10 @@ class DescriptionSuggestionsServerTest {
         val semantics = node.fetchSemanticsNode()
         val top = semantics.positionOnScreen.y
         val screenHeight = context.resources.displayMetrics.heightPixels
-        assertTrue("the suggestion for $description is on the screen", top >= 0f && top + semantics.size.height <= screenHeight)
+        assertTrue(
+            "the suggestion for $description is on the screen",
+            top >= 0f && top + semantics.size.height <= screenHeight,
+        )
         val text = composeRule.onNode(hasText(description) and inTheList(), useUnmergedTree = true)
         val results = mutableListOf<TextLayoutResult>()
         text.fetchSemanticsNode().config.getOrNull(SemanticsActions.GetTextLayoutResult)?.action?.invoke(results)
@@ -296,13 +344,12 @@ class DescriptionSuggestionsServerTest {
     }
 
     /** Whether exactly one node matches. */
-    private fun shows(node: SemanticsNodeInteraction): Boolean =
-        try {
-            node.fetchSemanticsNode()
-            true
-        } catch (e: AssertionError) {
-            false
-        }
+    private fun shows(node: SemanticsNodeInteraction): Boolean = try {
+        node.fetchSemanticsNode()
+        true
+    } catch (e: AssertionError) {
+        false
+    }
 
     /** Sends the queue until it is empty, as each change and refresh would, then refreshes. */
     private fun drainUntilEmpty() {

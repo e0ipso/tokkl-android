@@ -7,8 +7,6 @@ import com.github.e0ipso.tokkl.timerstate.PauseActions
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import com.github.e0ipso.tokkl.timerstate.TimerControls
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
-import java.time.Instant
-import java.time.LocalDate
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
@@ -17,6 +15,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.Instant
+import java.time.LocalDate
 
 /**
  * The one policy behind the native timer controls: what a tap on the running notification, the
@@ -99,7 +99,11 @@ class TimerSurfaceActionsTest {
         val tap = tap(TimerSurfaceAction.Resume, paused(revision = 7).target) as SurfaceTap.Request
         answer = TimerActionResult.Refused
 
-        assertEquals("the server refuses a tap on a state it moved past", TimerActionResult.Refused, runBlocking { tap.send() })
+        assertEquals(
+            "the server refuses a tap on a state it moved past",
+            TimerActionResult.Refused,
+            runBlocking { tap.send() },
+        )
         assertEquals(listOf("resume 7"), calls)
     }
 
@@ -216,7 +220,10 @@ class TimerSurfaceActionsTest {
             now = paused(revision = 9)
             val next = actions.tap(TimerSurfaceAction.Resume, paused(revision = 9).target) as SurfaceTap.Request
             val resuming = async(start = CoroutineStart.UNDISPATCHED) { next.send() }
-            assertNull("a duplicate of the waiting action", actions.tap(TimerSurfaceAction.Resume, paused(revision = 9).target))
+            assertNull(
+                "a duplicate of the waiting action",
+                actions.tap(TimerSurfaceAction.Resume, paused(revision = 9).target),
+            )
             now = running(id = 43)
             gate.complete(Unit)
             sending.await()
@@ -227,15 +234,27 @@ class TimerSurfaceActionsTest {
         }
     }
 
-    private fun tap(action: TimerSurfaceAction, target: TimerTarget): SurfaceTap? = runBlocking { actions.tap(action, target) }
+    private fun tap(action: TimerSurfaceAction, target: TimerTarget): SurfaceTap? = runBlocking {
+        actions.tap(
+            action,
+            target,
+        )
+    }
 
-    private fun running(id: Long, pausable: Boolean = true, unsent: Boolean = false, accumulatedSeconds: Long = 0) = TimerControls.Running(
-        entry = CachedTimeEntry(id, 1, null, null, "Work", Instant.parse("2026-10-28T09:00:00Z"), null, false, emptyList(), emptyList()),
-        unsent = unsent,
-        accumulatedSeconds = accumulatedSeconds,
-        target = TimerTarget.server(entryId = id, account = ACCOUNT),
-        pausable = pausable,
-    )
+    private fun running(id: Long, pausable: Boolean = true, unsent: Boolean = false, accumulatedSeconds: Long = 0) =
+        TimerControls.Running(
+            entry = CachedTimeEntry(
+                id, 1, null, null, "Work",
+                Instant.parse(
+                    "2026-10-28T09:00:00Z",
+                ),
+                null, false, emptyList(), emptyList(),
+            ),
+            unsent = unsent,
+            accumulatedSeconds = accumulatedSeconds,
+            target = TimerTarget.server(entryId = id, account = ACCOUNT),
+            pausable = pausable,
+        )
 
     private fun paused(revision: Long) =
         TimerControls.Paused(600, 1, EntryFields("Paused"), TimerTarget.server(revision = revision, account = ACCOUNT))
@@ -252,7 +271,9 @@ class TimerSurfaceActionsTest {
     }
 
     private inner class Queue : EntryChanges {
-        override suspend fun start(workspaceId: Long, fields: EntryFields): Long = throw AssertionError("nothing starts")
+        override suspend fun start(workspaceId: Long, fields: EntryFields): Long = throw AssertionError(
+            "nothing starts",
+        )
 
         override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean {
             calls += "stop $entryId"
@@ -261,11 +282,21 @@ class TimerSurfaceActionsTest {
 
         override suspend fun currentId(entryId: Long): Long = mappings[entryId] ?: entryId
 
-        override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant, noTimeDay: LocalDate?): Long =
-            throw AssertionError("nothing is created")
+        override suspend fun create(
+            workspaceId: Long,
+            fields: EntryFields,
+            start: Instant,
+            stop: Instant,
+            noTimeDay: LocalDate?,
+        ): Long = throw AssertionError("nothing is created")
 
-        override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?, noTimeDay: LocalDate?): Boolean =
-            throw AssertionError("nothing is edited")
+        override suspend fun update(
+            entryId: Long,
+            fields: EntryFields,
+            start: Instant,
+            stop: Instant?,
+            noTimeDay: LocalDate?,
+        ): Boolean = throw AssertionError("nothing is edited")
 
         override suspend fun delete(entryId: Long): Boolean = throw AssertionError("nothing is deleted")
     }

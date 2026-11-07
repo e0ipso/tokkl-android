@@ -56,7 +56,14 @@ internal fun holdTimerEvents(api: TogglApiClient?, source: TimerStateSource, lin
         }
         when (answer) {
             is ApiResult.Success -> answer.value
-            is ApiResult.Failure -> if (answer.error.refusesCredential()) StreamEnd.Refused else StreamEnd.Failed(answer.error)
+
+            is ApiResult.Failure -> if (answer.error.refusesCredential()) {
+                StreamEnd.Refused
+            } else {
+                StreamEnd.Failed(
+                    answer.error,
+                )
+            }
         }
     } catch (e: SQLiteException) {
         // The cache could not be read or written. The next connection tries again.
@@ -65,7 +72,8 @@ internal fun holdTimerEvents(api: TogglApiClient?, source: TimerStateSource, lin
 }
 
 /** Tokkl answers a bad credential with 403. A proxy in front of it may answer 401. */
-private fun ApiError.refusesCredential(): Boolean = this == ApiError.AuthFailed || (this as? ApiError.Http)?.status == UNAUTHORIZED
+private fun ApiError.refusesCredential(): Boolean =
+    this == ApiError.AuthFailed || (this as? ApiError.Http)?.status == UNAUTHORIZED
 
 /**
  * Reads [body] until it ends and gives each `timer` event's state to [source], against a
@@ -77,7 +85,12 @@ private fun ApiError.refusesCredential(): Boolean = this == ApiError.AuthFailed 
  * @return [StreamEnd.Ended] when the body ends or [link] was cancelled, and [StreamEnd.Failed] for
  *   a state the phone cannot read. An [IOException] of [body] passes through.
  */
-internal fun readTimerEvents(body: InputStream, source: TimerStateSource, link: TimerSyncLink, first: TimerStateRead): StreamEnd {
+internal fun readTimerEvents(
+    body: InputStream,
+    source: TimerStateSource,
+    link: TimerSyncLink,
+    first: TimerStateRead,
+): StreamEnd {
     var read = first
     val parser = EventStreamParser()
     val buffer = ByteArray(READ_BUFFER_BYTES)
@@ -171,7 +184,9 @@ internal class EventStreamParser(private val maxLineBytes: Int = MAX_LINE_BYTES)
         length = 0
         when {
             text.isEmpty() -> dispatch(items)
+
             text[0] == ':' -> items += StreamItem.Comment
+
             else -> {
                 val colon = text.indexOf(':')
                 val field = if (colon < 0) text else text.substring(0, colon)
@@ -186,7 +201,12 @@ internal class EventStreamParser(private val maxLineBytes: Int = MAX_LINE_BYTES)
 
     private fun dispatch(items: MutableList<StreamItem>) {
         val block = data
-        if (block != null) items += StreamItem.Event(name.ifEmpty { DEFAULT_EVENT }, block.substring(0, block.length - 1))
+        if (block != null) {
+            items += StreamItem.Event(
+                name.ifEmpty { DEFAULT_EVENT },
+                block.substring(0, block.length - 1),
+            )
+        }
         name = ""
         data = null
     }

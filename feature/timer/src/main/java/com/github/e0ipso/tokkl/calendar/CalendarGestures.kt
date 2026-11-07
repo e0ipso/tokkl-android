@@ -81,9 +81,18 @@ internal class CalendarDrags(
     /** [drag] with the finger at [y] pixels down its column, where an hour is [hour] pixels tall. */
     fun moved(drag: CalendarDrag, y: Float, hour: Float): CalendarDrag = when (drag) {
         is CalendarDrag.Create -> drag.copy(toMinute = snapToStep(y / hour * 60.0, step))
+
         is CalendarDrag.Change -> {
             val snapped = (Math.round((y - drag.originY) / hour * 60.0 / step) * step).toInt()
-            val delta = if (dayMode && drag.kind == DragKind.MOVE) clampDayMove(snapped, drag.top, drag.bottom) else snapped
+            val delta = if (dayMode && drag.kind == DragKind.MOVE) {
+                clampDayMove(
+                    snapped,
+                    drag.top,
+                    drag.bottom,
+                )
+            } else {
+                snapped
+            }
             drag.copy(deltaMinutes = delta)
         }
     }
@@ -96,8 +105,14 @@ internal class CalendarDrags(
                 val top = droppedMinute(block.top, delta, resolution)
                 block.copy(top = top, bottom = block.bottom + top - block.top)
             }
-            DragKind.RESIZE_START -> block.copy(top = minOf(droppedMinute(block.top, delta, resolution), block.bottom - step))
-            DragKind.RESIZE_END -> block.copy(bottom = maxOf(block.top + step, droppedMinute(block.bottom, delta, resolution)))
+
+            DragKind.RESIZE_START -> block.copy(
+                top = minOf(droppedMinute(block.top, delta, resolution), block.bottom - step),
+            )
+
+            DragKind.RESIZE_END -> block.copy(
+                bottom = maxOf(block.top + step, droppedMinute(block.bottom, delta, resolution)),
+            )
         }
     }
 
@@ -108,6 +123,7 @@ internal class CalendarDrags(
     fun finish(drag: CalendarDrag) {
         when (drag) {
             is CalendarDrag.Create -> editing.create(drag.day, drag.fromMinute, drag.toMinute)
+
             is CalendarDrag.Change -> when {
                 drag.deltaMinutes == 0 -> editing.edit(drag.entry)
                 drag.kind == DragKind.MOVE -> editing.move(drag.entry, drag.day, drag.deltaMinutes, dayMode)
@@ -140,7 +156,12 @@ internal sealed interface DragTarget {
  * tall, a block has [gap] on each side of its lane and is at least [minHeight] tall. A press
  * within [edge] of a block's top or bottom, and within a third of a short block, takes that edge.
  */
-internal class BlockGeometry(val hour: Float, private val gap: Float, private val minHeight: Float, private val edge: Float) {
+internal class BlockGeometry(
+    val hour: Float,
+    private val gap: Float,
+    private val minHeight: Float,
+    private val edge: Float,
+) {
 
     /**
      * What a press at [position] in the column of [day], [width] pixels wide, would drag: the
@@ -148,8 +169,21 @@ internal class BlockGeometry(val hour: Float, private val gap: Float, private va
      * entry's own start or stop, not where the block is cut off at midnight. The running entry's
      * block gives null, since the timer edits it.
      */
-    fun targetAt(position: Offset, width: Float, blocks: List<CalendarBlock>, day: LocalDate, zone: ZoneId, step: Int): DragTarget? {
-        val hit = blocks.lastOrNull { contains(it, position, width) } ?: return DragTarget.Empty(snapToStep(position.y / hour * 60.0, step))
+    fun targetAt(
+        position: Offset,
+        width: Float,
+        blocks: List<CalendarBlock>,
+        day: LocalDate,
+        zone: ZoneId,
+        step: Int,
+    ): DragTarget? {
+        val hit = blocks.lastOrNull {
+            contains(
+                it,
+                position,
+                width,
+            )
+        } ?: return DragTarget.Empty(snapToStep(position.y / hour * 60.0, step))
         val stop = hit.entry.stop ?: return null
         val top = top(hit)
         val bottom = top + height(hit)
@@ -168,12 +202,18 @@ internal class BlockGeometry(val hour: Float, private val gap: Float, private va
         val lane = width / block.lanes
         val left = lane * block.lane + gap
         val top = top(block)
-        return position.x >= left && position.x <= left + lane - gap * 2 && position.y >= top && position.y <= top + height(block)
+        return position.x >= left && position.x <= left + lane - gap * 2 && position.y >= top &&
+            position.y <= top + height(
+                block,
+            )
     }
 
     private fun top(block: CalendarBlock): Float = (block.top / 60 * hour).toFloat()
 
-    private fun height(block: CalendarBlock): Float = maxOf(((block.bottom - block.top) / 60 * hour).toFloat(), minHeight)
+    private fun height(block: CalendarBlock): Float = maxOf(
+        ((block.bottom - block.top) / 60 * hour).toFloat(),
+        minHeight,
+    )
 }
 
 /**
@@ -195,10 +235,14 @@ internal suspend fun PointerInputScope.detectCalendarGestures(
     awaitEachGesture {
         val down = awaitFirstDown(requireUnconsumed = false)
         val target = targetAt(down.position)
-        val before = withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) { awaitBeforeHold(down.id, down.position) }
+        val before = withTimeoutOrNull(
+            viewConfiguration.longPressTimeoutMillis,
+        ) { awaitBeforeHold(down.id, down.position) }
         when (before) {
             BeforeHold.TAP -> if (target is DragTarget.OnBlock) onTap(target.block.entry)
+
             BeforeHold.LEFT -> Unit
+
             // Held: the press is a drag now.
             null -> if (target != null) drag(down.id, down.position, target, onHold, onMove, onLift, onCancel)
         }
@@ -212,7 +256,11 @@ private suspend fun AwaitPointerEventScope.awaitBeforeHold(id: PointerId, start:
     while (true) {
         val change = awaitPointerEvent().changes.firstOrNull { it.id == id } ?: return BeforeHold.LEFT
         if (change.changedToUp()) return if (change.isConsumed) BeforeHold.LEFT else BeforeHold.TAP
-        if (change.isConsumed || (change.position - start).getDistance() > viewConfiguration.touchSlop) return BeforeHold.LEFT
+        if (change.isConsumed ||
+            (change.position - start).getDistance() > viewConfiguration.touchSlop
+        ) {
+            return BeforeHold.LEFT
+        }
     }
 }
 

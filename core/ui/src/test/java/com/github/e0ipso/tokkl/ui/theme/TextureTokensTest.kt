@@ -3,9 +3,9 @@ package com.github.e0ipso.tokkl.ui.theme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import kotlin.math.roundToInt
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlin.math.roundToInt
 
 /**
  * The texture, scene and wordmark-halo colours against Tokkl's styles.css, which writes each

@@ -1,10 +1,10 @@
 package com.github.e0ipso.tokkl.timernotice
 
 import android.content.res.Resources
-import com.github.e0ipso.tokkl.core.shared.R
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.catalog.problemText
 import com.github.e0ipso.tokkl.catalog.toServerProblem
+import com.github.e0ipso.tokkl.core.shared.R
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 
 /**
@@ -30,10 +30,14 @@ sealed interface TimerNotice {
  */
 fun timerNoticeText(resources: Resources, notice: TimerNotice): String = when (notice) {
     is TimerNotice.PomodoroDiscarded -> resources.getString(R.string.timer_pomodoro_too_short)
+
     is TimerNotice.ActionFailed -> when (val result = notice.result) {
         TimerActionResult.Refused -> resources.getString(TimerActionResult.Refused.message)
+
         TimerActionResult.Offline -> resources.getString(TimerActionResult.Offline.message)
+
         is TimerActionResult.Failed -> problemText(resources, result.error.toServerProblem())
+
         // The model never makes a notice of an action that went through.
         TimerActionResult.Done -> problemText(resources, ServerProblem.Unexpected(null))
     }

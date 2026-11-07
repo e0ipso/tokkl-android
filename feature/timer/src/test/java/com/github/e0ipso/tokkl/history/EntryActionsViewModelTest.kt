@@ -14,13 +14,6 @@ import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
 import com.github.e0ipso.tokkl.favorites.MAX_FAVORITES
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.SnappedSpan
-import java.io.IOException
-import java.time.DayOfWeek
-import java.time.Instant
-import java.time.LocalDate
-import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExecutorCoroutineDispatcher
 import kotlinx.coroutines.SupervisorJob
@@ -36,6 +29,13 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import java.io.IOException
+import java.time.DayOfWeek
+import java.time.Instant
+import java.time.LocalDate
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 /**
  * The history's entry actions against a cache the test fills and a change queue and an Undo that
@@ -63,7 +63,9 @@ class EntryActionsViewModelTest {
     private var favoritesAnswer: ApiResult<Unit> = ApiResult.Success(Unit)
     private val saved = CopyOnWriteArrayList<List<EntryFields>>()
 
-    private val entries = MutableStateFlow(listOf(EntryWithSendState(STOPPED, unsent = true), EntryWithSendState(RUNNING, unsent = false)))
+    private val entries = MutableStateFlow(
+        listOf(EntryWithSendState(STOPPED, unsent = true), EntryWithSendState(RUNNING, unsent = false)),
+    )
 
     @After
     fun tearDown() {
@@ -193,7 +195,13 @@ class EntryActionsViewModelTest {
         onMain { model.duplicate(STOPPED.id) }
 
         awaitNotice(model) { it is EntryNotice.Duplicated }
-        val fields = EntryFields(description = "Code review", projectId = 3, taskId = 4, tags = listOf("review", "remote"), billable = true)
+        val fields = EntryFields(
+            description = "Code review",
+            projectId = 3,
+            taskId = 4,
+            tags = listOf("review", "remote"),
+            billable = true,
+        )
         assertEquals(
             "the source's workspace, fields, start and stop, as the web app posts them",
             listOf("create 10 $fields ${STOPPED.start} ${STOPPED.stop}"),
@@ -218,14 +226,24 @@ class EntryActionsViewModelTest {
     @Test
     fun duplicateOfANoTimeEntryStaysNoTimeOnItsStoredDay() {
         // The stored day is the 19th, though the start (22:00 UTC) is now midnight of the 20th in Madrid.
-        val noTime = NO_TIME.copy(day = LocalDate.of(2026, 10, 19), start = Instant.parse("2026-10-19T22:00:00Z"), stop = Instant.parse("2026-10-19T23:30:00Z"))
+        val noTime = NO_TIME.copy(
+            day = LocalDate.of(2026, 10, 19),
+            start = Instant.parse("2026-10-19T22:00:00Z"),
+            stop = Instant.parse("2026-10-19T23:30:00Z"),
+        )
         entries.value = listOf(EntryWithSendState(noTime, unsent = false))
         val model = model(canRestore = true)
 
         onMain { model.duplicate(noTime.id) }
 
         awaitNotice(model) { it is EntryNotice.Duplicated }
-        val fields = EntryFields(description = "Code review", projectId = 3, taskId = 4, tags = listOf("review", "remote"), billable = true)
+        val fields = EntryFields(
+            description = "Code review",
+            projectId = 3,
+            taskId = 4,
+            tags = listOf("review", "remote"),
+            billable = true,
+        )
         assertEquals(
             listOf("create 10 $fields ${noTime.start} ${noTime.stop} noTimeDay=2026-10-19"),
             calls,
@@ -265,19 +283,34 @@ class EntryActionsViewModelTest {
         onMain { model.split(STOPPED.id) }
         val dialog = awaitSplit(model)
         // At 15 minutes, 08:00:12 to 09:05:40 stores as 08:00 to 09:00, with each endpoint rounded independently.
-        assertEquals(SnappedSpan(Instant.parse("2026-10-19T08:00:00Z"), Instant.parse("2026-10-19T09:00:00Z")), dialog.whole)
+        assertEquals(
+            SnappedSpan(Instant.parse("2026-10-19T08:00:00Z"), Instant.parse("2026-10-19T09:00:00Z")),
+            dialog.whole,
+        )
 
         // 10:30 in Madrid, CEST.
         onMain { model.setSplitText("10:30") }
         val halves = model.state.value.split?.halves ?: throw AssertionError("no preview for 10:30")
-        assertEquals(SnappedSpan(Instant.parse("2026-10-19T08:00:00Z"), Instant.parse("2026-10-19T08:30:00Z")), halves.first)
-        assertEquals(SnappedSpan(Instant.parse("2026-10-19T08:30:00Z"), Instant.parse("2026-10-19T09:00:00Z")), halves.second)
+        assertEquals(
+            SnappedSpan(Instant.parse("2026-10-19T08:00:00Z"), Instant.parse("2026-10-19T08:30:00Z")),
+            halves.first,
+        )
+        assertEquals(
+            SnappedSpan(Instant.parse("2026-10-19T08:30:00Z"), Instant.parse("2026-10-19T09:00:00Z")),
+            halves.second,
+        )
 
         onMain { model.confirmSplit() }
 
         awaitNotice(model) { it is EntryNotice.Split }
         assertNull("the dialog closes", model.state.value.split)
-        val fields = EntryFields(description = "Code review", projectId = 3, taskId = 4, tags = listOf("review", "remote"), billable = true)
+        val fields = EntryFields(
+            description = "Code review",
+            projectId = 3,
+            taskId = 4,
+            tags = listOf("review", "remote"),
+            billable = true,
+        )
         assertEquals(
             "the second half first, with the source's workspace and fields, then the original ends at the split",
             listOf(
@@ -294,7 +327,11 @@ class EntryActionsViewModelTest {
         onMain { model.split(STOPPED.id) }
         awaitSplit(model)
 
-        for ((text, problem) in listOf("11:30" to SplitProblem.OUTSIDE, "10:00" to SplitProblem.OUTSIDE, "noon" to SplitProblem.UNREADABLE)) {
+        for ((text, problem) in listOf(
+            "11:30" to SplitProblem.OUTSIDE,
+            "10:00" to SplitProblem.OUTSIDE,
+            "noon" to SplitProblem.UNREADABLE,
+        )) {
             onMain { model.setSplitText(text) }
             assertNull("no preview for $text", model.state.value.split?.halves)
             onMain { model.confirmSplit() }
@@ -344,7 +381,13 @@ class EntryActionsViewModelTest {
         onMain { model.pin(STOPPED.id, favorites, offline = false) }
 
         awaitNotice(model) { it is EntryNotice.Pinned }
-        val fields = EntryFields(description = "Code review", projectId = 3, taskId = 4, tags = listOf("review", "remote"), billable = true)
+        val fields = EntryFields(
+            description = "Code review",
+            projectId = 3,
+            taskId = 4,
+            tags = listOf("review", "remote"),
+            billable = true,
+        )
         assertEquals(listOf(listOf(PINNED.fields(), fields)), saved)
         assertEquals("nothing goes to the queue", emptyList<String>(), calls)
     }
@@ -362,7 +405,9 @@ class EntryActionsViewModelTest {
 
     @Test
     fun withNineFavoritesAPinSaysTheListIsFull() {
-        val favorites = favorites((0 until MAX_FAVORITES).map { PINNED.copy(position = it, description = "Favorite $it") })
+        val favorites = favorites(
+            (0 until MAX_FAVORITES).map { PINNED.copy(position = it, description = "Favorite $it") },
+        )
         val model = model(canRestore = true)
 
         onMain { model.pin(STOPPED.id, favorites, offline = false) }
@@ -384,7 +429,11 @@ class EntryActionsViewModelTest {
         onMain { model.pin(STOPPED.id, favorites, offline = false) }
         val notice = awaitNotice(model) { it is EntryNotice.PinFailed } as EntryNotice.PinFailed
         assertEquals(ServerProblem.AuthFailed, notice.problem)
-        assertEquals("both tries left the favorites as they were", listOf(PINNED.fields()), favorites.state.value.favorites.map { it.fields })
+        assertEquals(
+            "both tries left the favorites as they were",
+            listOf(PINNED.fields()),
+            favorites.state.value.favorites.map { it.fields },
+        )
     }
 
     @Test
@@ -414,7 +463,16 @@ class EntryActionsViewModelTest {
                 saved += list
                 favoritesAnswer.also { answer ->
                     if (answer is ApiResult.Success) {
-                        cachedFlow.value = list.mapIndexed { at, it -> CachedFavorite(at, it.description, it.projectId, it.taskId, it.tags, it.billable) }
+                        cachedFlow.value = list.mapIndexed { at, it ->
+                            CachedFavorite(
+                                at,
+                                it.description,
+                                it.projectId,
+                                it.taskId,
+                                it.tags,
+                                it.billable,
+                            )
+                        }
                     }
                 }
             },
@@ -423,7 +481,9 @@ class EntryActionsViewModelTest {
         )
         scope.launch { model.state.collect {} }
         runBlocking {
-            withTimeoutOrNull(TIMEOUT_MS) { model.state.first { it.favorites.size == cachedFavorites.size && it.available } }
+            withTimeoutOrNull(
+                TIMEOUT_MS,
+            ) { model.state.first { it.favorites.size == cachedFavorites.size && it.available } }
         } ?: throw AssertionError("the favorites never showed")
         return model
     }
@@ -454,7 +514,9 @@ class EntryActionsViewModelTest {
     private fun awaitNotice(model: EntryActionsViewModel, condition: (EntryNotice) -> Boolean): EntryNotice {
         var last: EntryActionsState? = null
         return runBlocking {
-            withTimeoutOrNull(TIMEOUT_MS) { model.state.onEach { last = it }.first { it.notice?.let(condition) == true } }
+            withTimeoutOrNull(
+                TIMEOUT_MS,
+            ) { model.state.onEach { last = it }.first { it.notice?.let(condition) == true } }
         }?.notice ?: throw AssertionError("timed out; the last state was $last, after $calls")
     }
 
@@ -475,16 +537,30 @@ class EntryActionsViewModelTest {
             return cached
         }
 
-        override suspend fun start(workspaceId: Long, fields: EntryFields): Long = throw AssertionError("no timer starts")
+        override suspend fun start(workspaceId: Long, fields: EntryFields): Long = throw AssertionError(
+            "no timer starts",
+        )
 
         override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean = throw AssertionError("no timer stops")
 
-        override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant, noTimeDay: LocalDate?): Long {
+        override suspend fun create(
+            workspaceId: Long,
+            fields: EntryFields,
+            start: Instant,
+            stop: Instant,
+            noTimeDay: LocalDate?,
+        ): Long {
             calls += "create $workspaceId $fields $start $stop" + (noTimeDay?.let { " noTimeDay=$it" } ?: "")
             return -1
         }
 
-        override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?, noTimeDay: LocalDate?): Boolean {
+        override suspend fun update(
+            entryId: Long,
+            fields: EntryFields,
+            start: Instant,
+            stop: Instant?,
+            noTimeDay: LocalDate?,
+        ): Boolean {
             calls += "update $entryId $fields $start $stop"
             return cached
         }
@@ -522,7 +598,14 @@ class EntryActionsViewModelTest {
             day = LocalDate.of(2026, 10, 19),
         )
 
-        val PINNED = CachedFavorite(0, "Write the report", projectId = null, taskId = null, tags = emptyList(), billable = false)
+        val PINNED = CachedFavorite(
+            0,
+            "Write the report",
+            projectId = null,
+            taskId = null,
+            tags = emptyList(),
+            billable = false,
+        )
 
         /** Madrid at a resolution of 15 minutes, on a 24-hour clock. */
         val SETTINGS = AccountSettings("Europe/Madrid", DayOfWeek.MONDAY, timeResolutionMinutes = 15.0)

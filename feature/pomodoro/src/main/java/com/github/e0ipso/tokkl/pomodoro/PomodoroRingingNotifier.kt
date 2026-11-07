@@ -9,11 +9,11 @@ import android.content.Intent
 import android.graphics.drawable.Icon
 import androidx.annotation.VisibleForTesting
 import com.github.e0ipso.tokkl.feature.pomodoro.R
+import com.github.e0ipso.tokkl.platform.mainActivityIntent
+import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.core.data.R as DataR
 import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
-import com.github.e0ipso.tokkl.platform.mainActivityIntent
-import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 
 /** The player owns sound/vibration; the high-importance channel adds neither a second sound nor haptics. */
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
@@ -22,7 +22,11 @@ class PomodoroRingingNotifier(private val context: Context) {
 
     fun createChannel() {
         manager.createNotificationChannel(
-            NotificationChannel(CHANNEL_ID, context.getString(R.string.pomodoro_alarm_channel), NotificationManager.IMPORTANCE_HIGH)
+            NotificationChannel(
+                CHANNEL_ID,
+                context.getString(R.string.pomodoro_alarm_channel),
+                NotificationManager.IMPORTANCE_HIGH,
+            )
                 .apply {
                     description = context.getString(R.string.pomodoro_alarm_channel_description)
                     setSound(null, pomodoroAlarmAudioAttributes())
@@ -43,9 +47,12 @@ class PomodoroRingingNotifier(private val context: Context) {
      */
     fun build(ring: PomodoroRing?, phase: PomodoroPhaseKey? = ring?.phase): Notification {
         val open = PendingIntent.getActivity(
-            context, 0,
+            context,
+            0,
             mainActivityIntent(context).setAction("com.github.e0ipso.tokkl.action.SHOW_POMODORO")
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP),
+                .addFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP,
+                ),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         val builder = Notification.Builder(context, CHANNEL_ID)
@@ -71,17 +78,31 @@ class PomodoroRingingNotifier(private val context: Context) {
                 .setShowWhen(true)
                 .setUsesChronometer(true)
                 .setDeleteIntent(actionIntent(PomodoroRingingActionReceiver.REPOST, ring))
-                .addAction(action(UiR.drawable.ic_play, R.string.pomodoro_alarm_next, PomodoroRingingActionReceiver.NEXT, ring))
-                .addAction(action(UiR.drawable.ic_stop, R.string.pomodoro_alarm_end, PomodoroRingingActionReceiver.END, ring))
+                .addAction(
+                    action(
+                        UiR.drawable.ic_play,
+                        R.string.pomodoro_alarm_next,
+                        PomodoroRingingActionReceiver.NEXT,
+                        ring,
+                    ),
+                )
+                .addAction(
+                    action(UiR.drawable.ic_stop, R.string.pomodoro_alarm_end, PomodoroRingingActionReceiver.END, ring),
+                )
         }
         return builder.build()
     }
 
     private fun action(icon: Int, title: Int, action: String, ring: PomodoroRing): Notification.Action =
-        Notification.Action.Builder(Icon.createWithResource(context, icon), context.getString(title), actionIntent(action, ring)).build()
+        Notification.Action.Builder(
+            Icon.createWithResource(context, icon),
+            context.getString(title),
+            actionIntent(action, ring),
+        ).build()
 
     private fun actionIntent(action: String, ring: PomodoroRing): PendingIntent = PendingIntent.getBroadcast(
-        context, 0,
+        context,
+        0,
         Intent(context, PomodoroRingingActionReceiver::class.java).setAction(action)
             .putPhase(ring.phase, revision = ring.revision, unique = true),
         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,

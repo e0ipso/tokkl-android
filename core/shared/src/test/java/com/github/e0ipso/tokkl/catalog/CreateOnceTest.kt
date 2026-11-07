@@ -2,9 +2,9 @@ package com.github.e0ipso.tokkl.catalog
 
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
-import java.io.IOException
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import java.io.IOException
 
 /** [createOnce] with a scripted server: the answers each create and each read of the list get, in order. */
 class CreateOnceTest {
@@ -18,8 +18,14 @@ class CreateOnceTest {
     private var listed = 0
 
     private fun run(known: Set<Long> = emptySet()): ApiResult<Item> = createOnce(
-        create = { created++; creates.removeAt(0) },
-        list = { listed++; lists.removeAt(0) },
+        create = {
+            created++
+            creates.removeAt(0)
+        },
+        list = {
+            listed++
+            lists.removeAt(0)
+        },
         made = { it.id !in known && it.name == "Website" },
     )
 

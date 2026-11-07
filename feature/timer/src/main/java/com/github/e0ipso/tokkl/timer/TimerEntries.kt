@@ -45,7 +45,11 @@ internal object TimerEntries : FeatureEntries {
         routes<Route.Entry> { route -> EntryForm(route, host.navigator) }
         route(Route.Templates) {
             val account by koinInject<AccountSettingsSource>().state.collectAsState()
-            TemplatesScreen(model = sessionViewModel<FavoritesViewModel>(), cache = koinInject(), workspaceId = account?.defaultWorkspaceId)
+            TemplatesScreen(
+                model = sessionViewModel<FavoritesViewModel>(),
+                cache = koinInject(),
+                workspaceId = account?.defaultWorkspaceId,
+            )
         }
     }
 }
@@ -87,7 +91,11 @@ private fun TimerPage(navigator: Navigator) {
                     scope.launch {
                         val identity = timer.runningForEdit() ?: return@launch
                         val top = navigator.top
-                        if (top == Route.Timer || top is Route.Entry) navigator.openEntry(EntryOpening.Running.of(identity))
+                        if (top == Route.Timer || top is Route.Entry) {
+                            navigator.openEntry(
+                                EntryOpening.Running.of(identity),
+                            )
+                        }
                     }
                 },
             )

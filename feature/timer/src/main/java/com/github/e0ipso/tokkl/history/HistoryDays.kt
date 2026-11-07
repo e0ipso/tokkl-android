@@ -94,13 +94,41 @@ fun historyDays(
     // An entry edited between two pages can come in both; the later page has its newer values.
     val olderOnly = older.associateBy { it.id }.values.filter { it.id !in cachedIds }
     val inWindow = { entry: CachedTimeEntry -> windowStart == null || entry.dayIn(time) >= windowStart }
-    val rows = cached.map { Row(it.entry, it.unsent, cached = inWindow(it.entry)) } + olderOnly.map { Row(it, unsent = false, cached = false) }
+    val rows = cached.map {
+        Row(
+            it.entry,
+            it.unsent,
+            cached = inWindow(it.entry),
+        )
+    } + olderOnly.map { Row(it, unsent = false, cached = false) }
     val projectsById = projects.associateBy { it.id }
     val tasksById = tasks.associateBy { it.id }
     return rows
-        .mapNotNull { row -> row.entry.shown(row.unsent, row.cached, time, projectsById, tasksById)?.let { shown -> (if (row.entry.allDay) row.entry.dayIn(time) else time.local(shown.start).toLocalDate()) to shown } }
+        .mapNotNull { row ->
+            row.entry.shown(
+                row.unsent,
+                row.cached,
+                time,
+                projectsById,
+                tasksById,
+            )?.let { shown ->
+                (
+                    if (row.entry.allDay) {
+                        row.entry.dayIn(
+                            time,
+                        )
+                    } else {
+                        time.local(shown.start).toLocalDate()
+                    }
+                    ) to shown
+            }
+        }
         .groupBy({ it.first }, { it.second })
-        .map { (date, entries) -> entries.sortedWith(NEWEST_FIRST).let { HistoryDay(date, it, rowsForDay(it, collapse)) } }
+        .map { (date, entries) ->
+            entries.sortedWith(
+                NEWEST_FIRST,
+            ).let { HistoryDay(date, it, rowsForDay(it, collapse)) }
+        }
         .sortedByDescending { it.date }
 }
 
@@ -123,7 +151,12 @@ private fun CachedTimeEntry.shown(
     // A no-time entry never goes through snapUnsent: its span is its day's midnight plus the snapped duration.
     val span = when {
         !unsent -> null
-        allDay -> time.noTimeSpan(noTimeDay(time.zone), maxOf(0L, Math.floorDiv(stop.toEpochMilli() - start.toEpochMilli(), 1000L)))
+
+        allDay -> time.noTimeSpan(
+            noTimeDay(time.zone),
+            maxOf(0L, Math.floorDiv(stop.toEpochMilli() - start.toEpochMilli(), 1000L)),
+        )
+
         // A rejected pending span keeps its actual times and unsent state for correction.
         else -> time.snapUnsent(start, stop)
     }

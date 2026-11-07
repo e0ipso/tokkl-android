@@ -22,8 +22,6 @@ import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.feature.timer.R
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createComposeRule
 import com.github.e0ipso.tokkl.api.ApiResult
@@ -33,13 +31,9 @@ import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.EntryWithSendState
 import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
+import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import java.time.DayOfWeek
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneOffset
-import java.util.concurrent.CopyOnWriteArrayList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
@@ -48,6 +42,12 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
+import java.time.DayOfWeek
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
+import java.util.concurrent.CopyOnWriteArrayList
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 
 /**
  * The history's entry actions on screen, against a change queue and an Undo that record what they
@@ -67,7 +67,11 @@ class EntryActionsUiTest {
 
     @After
     fun tearDown() {
-        try { composeRule.checkAccessibility() } finally { scope.cancel() }
+        try {
+            composeRule.checkAccessibility()
+        } finally {
+            scope.cancel()
+        }
     }
 
     @Test
@@ -78,15 +82,24 @@ class EntryActionsUiTest {
             hasContentDescription(string(R.string.history_more_actions, DESCRIPTION)) and hasClickAction() and
                 SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button),
         )
-        composeRule.onAllNodes(hasContentDescription(string(R.string.history_more_actions, string(R.string.history_no_description))))
+        composeRule.onAllNodes(
+            hasContentDescription(string(R.string.history_more_actions, string(R.string.history_no_description))),
+        )
             .assertCountEquals(1)
         more.performSemanticsAction(SemanticsActions.OnClick)
-        composeRule.onNode(hasText(string(R.string.history_delete)) and hasClickAction()).performSemanticsAction(SemanticsActions.OnClick)
+        composeRule.onNode(
+            hasText(string(R.string.history_delete)) and hasClickAction(),
+        ).performSemanticsAction(SemanticsActions.OnClick)
 
-        composeRule.waitUntil("the message shows", TIMEOUT_MS) { composeRule.onAllNodes(liveMessage(R.string.history_deleted)).fetchSemanticsNodes().isNotEmpty() }
+        composeRule.waitUntil(
+            "the message shows",
+            TIMEOUT_MS,
+        ) { composeRule.onAllNodes(liveMessage(R.string.history_deleted)).fetchSemanticsNodes().isNotEmpty() }
         assertEquals("no question first", 0, composeRule.onAllNodes(isDialog()).fetchSemanticsNodes().size)
         val undo = composeRule.onNode(
-            hasText(string(R.string.history_undo)) and hasClickAction() and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button),
+            hasText(
+                string(R.string.history_undo),
+            ) and hasClickAction() and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button),
         )
         undo.performSemanticsAction(SemanticsActions.OnClick)
 
@@ -100,13 +113,20 @@ class EntryActionsUiTest {
 
         openMenuAndDelete()
 
-        composeRule.onNode(isDialog() and hasAnyDescendant(hasText(string(R.string.history_delete_confirm_title)))).assertExists()
+        composeRule.onNode(
+            isDialog() and hasAnyDescendant(hasText(string(R.string.history_delete_confirm_title))),
+        ).assertExists()
         composeRule.onNode(hasText(string(R.string.history_delete_confirm_message))).assertExists()
         assertEquals("nothing deleted before the answer", emptyList<String>(), calls)
 
-        composeRule.onNode(hasText(string(R.string.history_delete_confirm)) and hasClickAction()).performSemanticsAction(SemanticsActions.OnClick)
+        composeRule.onNode(
+            hasText(string(R.string.history_delete_confirm)) and hasClickAction(),
+        ).performSemanticsAction(SemanticsActions.OnClick)
 
-        composeRule.waitUntil("the message shows", TIMEOUT_MS) { composeRule.onAllNodes(liveMessage(R.string.history_deleted)).fetchSemanticsNodes().isNotEmpty() }
+        composeRule.waitUntil(
+            "the message shows",
+            TIMEOUT_MS,
+        ) { composeRule.onAllNodes(liveMessage(R.string.history_deleted)).fetchSemanticsNodes().isNotEmpty() }
         composeRule.onAllNodes(hasText(string(R.string.history_undo))).assertCountEquals(0)
         assertEquals(listOf("delete $ENTRY"), calls)
     }
@@ -116,7 +136,9 @@ class EntryActionsUiTest {
         show(canRestore = false)
 
         openMenuAndDelete()
-        composeRule.onNode(hasText(string(SharedR.string.catalog_cancel)) and hasClickAction()).performSemanticsAction(SemanticsActions.OnClick)
+        composeRule.onNode(
+            hasText(string(SharedR.string.catalog_cancel)) and hasClickAction(),
+        ).performSemanticsAction(SemanticsActions.OnClick)
 
         composeRule.waitForIdle()
         assertEquals(0, composeRule.onAllNodes(isDialog()).fetchSemanticsNodes().size)
@@ -128,13 +150,20 @@ class EntryActionsUiTest {
         show(canRestore = true, undo = UndoOutcome.NeedsServer)
 
         openMenuAndDelete()
-        composeRule.waitUntil("the message shows", TIMEOUT_MS) { composeRule.onAllNodes(liveMessage(R.string.history_deleted)).fetchSemanticsNodes().isNotEmpty() }
-        composeRule.onNode(hasText(string(R.string.history_undo)) and hasClickAction()).performSemanticsAction(SemanticsActions.OnClick)
+        composeRule.waitUntil(
+            "the message shows",
+            TIMEOUT_MS,
+        ) { composeRule.onAllNodes(liveMessage(R.string.history_deleted)).fetchSemanticsNodes().isNotEmpty() }
+        composeRule.onNode(
+            hasText(string(R.string.history_undo)) and hasClickAction(),
+        ).performSemanticsAction(SemanticsActions.OnClick)
 
         composeRule.waitUntil("the server is needed", TIMEOUT_MS) {
             composeRule.onAllNodes(liveMessage(R.string.history_undo_needs_server)).fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNode(hasText(string(R.string.history_undo)) and hasClickAction()).performSemanticsAction(SemanticsActions.OnClick)
+        composeRule.onNode(
+            hasText(string(R.string.history_undo)) and hasClickAction(),
+        ).performSemanticsAction(SemanticsActions.OnClick)
         composeRule.waitUntil("Undo ran again", TIMEOUT_MS) { calls.size == 3 }
         assertEquals(listOf("delete $ENTRY", "undo $ENTRY", "undo $ENTRY"), calls)
     }
@@ -143,12 +172,19 @@ class EntryActionsUiTest {
     fun duplicateHasATalkBackLabelAndCopiesTheEntry() {
         show(canRestore = true)
 
-        composeRule.onNode(hasContentDescription(string(R.string.history_more_actions, DESCRIPTION)) and hasClickAction())
+        composeRule.onNode(
+            hasContentDescription(string(R.string.history_more_actions, DESCRIPTION)) and hasClickAction(),
+        )
             .performSemanticsAction(SemanticsActions.OnClick)
         // TalkBack reads the item's text as its label.
-        composeRule.onNode(hasText(string(R.string.history_duplicate)) and hasClickAction()).performSemanticsAction(SemanticsActions.OnClick)
+        composeRule.onNode(
+            hasText(string(R.string.history_duplicate)) and hasClickAction(),
+        ).performSemanticsAction(SemanticsActions.OnClick)
 
-        composeRule.waitUntil("the message shows", TIMEOUT_MS) { composeRule.onAllNodes(liveMessage(R.string.history_duplicated)).fetchSemanticsNodes().isNotEmpty() }
+        composeRule.waitUntil(
+            "the message shows",
+            TIMEOUT_MS,
+        ) { composeRule.onAllNodes(liveMessage(R.string.history_duplicated)).fetchSemanticsNodes().isNotEmpty() }
         composeRule.onAllNodes(hasText(string(R.string.history_undo))).assertCountEquals(0)
         assertEquals(listOf("create 10 ${CACHED.start} ${CACHED.stop}"), calls)
     }
@@ -157,21 +193,37 @@ class EntryActionsUiTest {
     fun splitAndItsTimeFieldHaveTalkBackLabelsAndSplitCutsTheEntry() {
         show(canRestore = true)
 
-        composeRule.onNode(hasContentDescription(string(R.string.history_more_actions, DESCRIPTION)) and hasClickAction())
+        composeRule.onNode(
+            hasContentDescription(string(R.string.history_more_actions, DESCRIPTION)) and hasClickAction(),
+        )
             .performSemanticsAction(SemanticsActions.OnClick)
         // TalkBack reads the item's text as its label, and the field's label with the field.
-        composeRule.onNode(hasText(string(R.string.history_split)) and hasClickAction()).performSemanticsAction(SemanticsActions.OnClick)
+        composeRule.onNode(
+            hasText(string(R.string.history_split)) and hasClickAction(),
+        ).performSemanticsAction(SemanticsActions.OnClick)
         composeRule.waitUntil("the dialog shows", TIMEOUT_MS) {
-            composeRule.onAllNodes(isDialog() and hasAnyDescendant(hasText(string(R.string.history_split_title)))).fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodes(
+                isDialog() and hasAnyDescendant(hasText(string(R.string.history_split_title))),
+            ).fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNode(hasSetTextAction() and hasText(string(R.string.history_split_field))).performTextReplacement("11:15")
-        composeRule.onNode(hasText(string(R.string.history_split_confirm)) and hasClickAction() and hasAnyAncestor(isDialog()))
+        composeRule.onNode(
+            hasSetTextAction() and hasText(string(R.string.history_split_field)),
+        ).performTextReplacement("11:15")
+        composeRule.onNode(
+            hasText(string(R.string.history_split_confirm)) and hasClickAction() and hasAnyAncestor(isDialog()),
+        )
             .performSemanticsAction(SemanticsActions.OnClick)
 
-        composeRule.waitUntil("the message shows", TIMEOUT_MS) { composeRule.onAllNodes(liveMessage(R.string.history_split_done)).fetchSemanticsNodes().isNotEmpty() }
+        composeRule.waitUntil(
+            "the message shows",
+            TIMEOUT_MS,
+        ) { composeRule.onAllNodes(liveMessage(R.string.history_split_done)).fetchSemanticsNodes().isNotEmpty() }
         assertEquals(0, composeRule.onAllNodes(isDialog()).fetchSemanticsNodes().size)
         assertEquals(
-            listOf("create 10 2026-10-15T11:15:00Z ${CACHED.stop}", "update $ENTRY ${CACHED.start} 2026-10-15T11:15:00Z"),
+            listOf(
+                "create 10 2026-10-15T11:15:00Z ${CACHED.stop}",
+                "update $ENTRY ${CACHED.start} 2026-10-15T11:15:00Z",
+            ),
             calls,
         )
     }
@@ -180,12 +232,19 @@ class EntryActionsUiTest {
     fun pinAsFavoriteHasATalkBackLabelAndPinsTheEntry() {
         show(canRestore = true, favorites = favorites(available = MutableStateFlow(true)))
 
-        composeRule.onNode(hasContentDescription(string(R.string.history_more_actions, DESCRIPTION)) and hasClickAction())
+        composeRule.onNode(
+            hasContentDescription(string(R.string.history_more_actions, DESCRIPTION)) and hasClickAction(),
+        )
             .performSemanticsAction(SemanticsActions.OnClick)
         // TalkBack reads the item's text as its label.
-        composeRule.onNode(hasText(string(R.string.history_pin)) and hasClickAction()).performSemanticsAction(SemanticsActions.OnClick)
+        composeRule.onNode(
+            hasText(string(R.string.history_pin)) and hasClickAction(),
+        ).performSemanticsAction(SemanticsActions.OnClick)
 
-        composeRule.waitUntil("the message shows", TIMEOUT_MS) { composeRule.onAllNodes(liveMessage(R.string.history_pinned)).fetchSemanticsNodes().isNotEmpty() }
+        composeRule.waitUntil(
+            "the message shows",
+            TIMEOUT_MS,
+        ) { composeRule.onAllNodes(liveMessage(R.string.history_pinned)).fetchSemanticsNodes().isNotEmpty() }
         composeRule.onAllNodes(hasText(string(R.string.history_undo))).assertCountEquals(0)
         assertEquals(listOf(listOf(EntryFields(description = DESCRIPTION))), saves)
         assertEquals("nothing goes to the queue", emptyList<String>(), calls)
@@ -196,7 +255,9 @@ class EntryActionsUiTest {
         val available = MutableStateFlow(false)
         show(canRestore = true, favorites = favorites(available))
 
-        composeRule.onNode(hasContentDescription(string(R.string.history_more_actions, DESCRIPTION)) and hasClickAction())
+        composeRule.onNode(
+            hasContentDescription(string(R.string.history_more_actions, DESCRIPTION)) and hasClickAction(),
+        )
             .performSemanticsAction(SemanticsActions.OnClick)
         composeRule.onAllNodes(hasText(string(R.string.history_duplicate)) and hasClickAction()).assertCountEquals(1)
         composeRule.onAllNodes(hasText(string(R.string.history_pin))).assertCountEquals(0)
@@ -204,7 +265,9 @@ class EntryActionsUiTest {
         // The same menu offers it once the server has favorites, so the menu did draw its items.
         available.value = true
         composeRule.waitUntil("Save as template shows", TIMEOUT_MS) {
-            composeRule.onAllNodes(hasText(string(R.string.history_pin)) and hasClickAction()).fetchSemanticsNodes().size == 1
+            composeRule.onAllNodes(
+                hasText(string(R.string.history_pin)) and hasClickAction(),
+            ).fetchSemanticsNodes().size == 1
         }
     }
 
@@ -223,16 +286,26 @@ class EntryActionsUiTest {
     )
 
     private fun openMenuAndDelete() {
-        composeRule.onNode(hasContentDescription(string(R.string.history_more_actions, DESCRIPTION)) and hasClickAction())
+        composeRule.onNode(
+            hasContentDescription(string(R.string.history_more_actions, DESCRIPTION)) and hasClickAction(),
+        )
             .performSemanticsAction(SemanticsActions.OnClick)
-        composeRule.onNode(hasText(string(R.string.history_delete)) and hasClickAction()).performSemanticsAction(SemanticsActions.OnClick)
+        composeRule.onNode(
+            hasText(string(R.string.history_delete)) and hasClickAction(),
+        ).performSemanticsAction(SemanticsActions.OnClick)
     }
 
     /** A polite live region, as TalkBack announces it, that holds [text] and, when it offers one, Undo. */
-    private fun liveMessage(text: Int) =
-        SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite) and hasAnyDescendant(hasText(string(text)))
+    private fun liveMessage(text: Int) = SemanticsMatcher.expectValue(
+        SemanticsProperties.LiveRegion,
+        LiveRegionMode.Polite,
+    ) and hasAnyDescendant(hasText(string(text)))
 
-    private fun show(canRestore: Boolean, undo: UndoOutcome = UndoOutcome.Restored, favorites: FavoritesViewModel? = null) {
+    private fun show(
+        canRestore: Boolean,
+        undo: UndoOutcome = UndoOutcome.Restored,
+        favorites: FavoritesViewModel? = null,
+    ) {
         val model = EntryActionsViewModel(
             entries = MutableStateFlow(listOf(EntryWithSendState(CACHED, unsent = false))),
             changes = RecordingChanges(),
@@ -281,16 +354,30 @@ class EntryActionsUiTest {
             return true
         }
 
-        override suspend fun start(workspaceId: Long, fields: EntryFields): Long = throw AssertionError("no timer starts")
+        override suspend fun start(workspaceId: Long, fields: EntryFields): Long = throw AssertionError(
+            "no timer starts",
+        )
 
         override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean = throw AssertionError("no timer stops")
 
-        override suspend fun create(workspaceId: Long, fields: EntryFields, start: Instant, stop: Instant, noTimeDay: LocalDate?): Long {
+        override suspend fun create(
+            workspaceId: Long,
+            fields: EntryFields,
+            start: Instant,
+            stop: Instant,
+            noTimeDay: LocalDate?,
+        ): Long {
             calls += "create $workspaceId $start $stop"
             return -1
         }
 
-        override suspend fun update(entryId: Long, fields: EntryFields, start: Instant, stop: Instant?, noTimeDay: LocalDate?): Boolean {
+        override suspend fun update(
+            entryId: Long,
+            fields: EntryFields,
+            start: Instant,
+            stop: Instant?,
+            noTimeDay: LocalDate?,
+        ): Boolean {
             calls += "update $entryId $start $stop"
             return true
         }
@@ -313,7 +400,11 @@ class EntryActionsUiTest {
             ),
             today = LocalDate.of(2026, 10, 15),
             zone = ZoneOffset.UTC,
-            settings = AccountSettings(timeZone = "UTC", beginningOfWeek = DayOfWeek.MONDAY, timeResolutionMinutes = null),
+            settings = AccountSettings(
+                timeZone = "UTC",
+                beginningOfWeek = DayOfWeek.MONDAY,
+                timeResolutionMinutes = null,
+            ),
             older = OlderDays.End,
         )
 

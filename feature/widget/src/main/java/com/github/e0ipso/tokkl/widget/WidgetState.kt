@@ -160,7 +160,11 @@ fun widgetState(
     val paused = (controls as? TimerControls.Paused)?.let { chain ->
         val labels = entryLabels(chain.fields, projects, tasks)
         WidgetPaused(
-            chain.fields.description, labels.project, labels.task, chain.seconds, chain.target,
+            chain.fields.description,
+            labels.project,
+            labels.task,
+            chain.seconds,
+            chain.target,
             projectColor = projects.firstOrNull { it.id == chain.fields.projectId }?.color,
         )
     }
@@ -214,7 +218,10 @@ fun widgetState(
  * runs late, counts from the accumulated time.
  */
 fun chronometerBase(start: Instant, now: Instant, elapsedRealtime: Long, accumulatedSeconds: Long = 0): Long =
-    elapsedRealtime - Duration.between(start, now).toMillis().coerceAtLeast(0) - Duration.ofSeconds(accumulatedSeconds).toMillis()
+    elapsedRealtime - Duration.between(
+        start,
+        now,
+    ).toMillis().coerceAtLeast(0) - Duration.ofSeconds(accumulatedSeconds).toMillis()
 
 /**
  * Changes with everything the widget shows, so the widget updates only when it would look

@@ -62,7 +62,11 @@ class ApiTokenStore(context: Context) {
             val key = key() ?: return null
             return try {
                 val cipher = Cipher.getInstance(TRANSFORMATION)
-                cipher.init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(TAG_BITS, bytes, HEADER_SIZE, ivEnd - HEADER_SIZE))
+                cipher.init(
+                    Cipher.DECRYPT_MODE,
+                    key,
+                    GCMParameterSpec(TAG_BITS, bytes, HEADER_SIZE, ivEnd - HEADER_SIZE),
+                )
                 String(cipher.doFinal(bytes, ivEnd, bytes.size - ivEnd), Charsets.UTF_8)
             } catch (e: GeneralSecurityException) {
                 null
@@ -94,7 +98,10 @@ class ApiTokenStore(context: Context) {
 
     /** Keystore keys cannot be exported: only the Keystore ever sees the key material. */
     private fun createKey(): SecretKey {
-        val spec = KeyGenParameterSpec.Builder(KEY_ALIAS, KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
+        val spec = KeyGenParameterSpec.Builder(
+            KEY_ALIAS,
+            KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT,
+        )
             .setKeySize(KEY_BITS)
             .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
             .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)

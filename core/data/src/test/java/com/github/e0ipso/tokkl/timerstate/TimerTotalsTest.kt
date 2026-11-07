@@ -4,6 +4,9 @@ import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.AccountTime
 import com.github.e0ipso.tokkl.time.DurationFormat
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Test
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Duration
@@ -12,9 +15,6 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Test
 
 /**
  * Today and this week under the timer. The clock is an argument, so none of these read the
@@ -73,8 +73,11 @@ class TimerTotalsTest {
         assertEquals(1L, totals.todaySeconds)
 
         val submillisecond = entry(4, start.plusNanos(999_999).toString(), start.plusSeconds(1).toString())
-        assertEquals("floor elapsed time before truncating timestamps", 0L,
-            timerPeriodTotals(listOf(submillisecond), tokyo(DayOfWeek.MONDAY), now).todaySeconds)
+        assertEquals(
+            "floor elapsed time before truncating timestamps",
+            0L,
+            timerPeriodTotals(listOf(submillisecond), tokyo(DayOfWeek.MONDAY), now).todaySeconds,
+        )
     }
 
     @Test
@@ -240,7 +243,12 @@ class TimerTotalsTest {
 
     private fun tokyo(weekStart: DayOfWeek) = AccountTime(TOKYO, weekStart, timeResolutionMinutes = null, clock = CLOCK)
 
-    private fun newYork() = AccountTime(ZoneId.of("America/New_York"), DayOfWeek.SUNDAY, timeResolutionMinutes = null, clock = CLOCK)
+    private fun newYork() = AccountTime(
+        ZoneId.of("America/New_York"),
+        DayOfWeek.SUNDAY,
+        timeResolutionMinutes = null,
+        clock = CLOCK,
+    )
 
     private fun settings(format: DurationFormat) =
         AccountSettings("Asia/Tokyo", DayOfWeek.MONDAY, timeResolutionMinutes = null, durationFormat = format)

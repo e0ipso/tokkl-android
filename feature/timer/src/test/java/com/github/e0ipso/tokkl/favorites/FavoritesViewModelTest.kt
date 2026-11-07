@@ -9,10 +9,6 @@ import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.fields
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
-import java.io.IOException
-import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExecutorCoroutineDispatcher
 import kotlinx.coroutines.SupervisorJob
@@ -33,6 +29,10 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.io.IOException
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 /**
  * The favorites' model against a cache the test sets and a server that stores what it gets, or
@@ -60,7 +60,15 @@ class FavoritesViewModelTest {
             available = available,
             save = { list ->
                 saved += list
-                answer.also { if (it is ApiResult.Success) cached.value = list.mapIndexed { at, fields -> fields.cached(at) } }
+                answer.also {
+                    if (it is ApiResult.Success) {
+                        cached.value = list.mapIndexed { at, fields ->
+                            fields.cached(
+                                at,
+                            )
+                        }
+                    }
+                }
             },
             scope = scope,
             io = mainDispatcher,
@@ -81,7 +89,10 @@ class FavoritesViewModelTest {
         assertTrue(shown.available)
         assertEquals(
             listOf(
-                FavoriteItem(REPORT.fields(), EntryLabels(project = APP.name, projectColor = APP.color, task = DESIGN.name)),
+                FavoriteItem(
+                    REPORT.fields(),
+                    EntryLabels(project = APP.name, projectColor = APP.color, task = DESIGN.name),
+                ),
                 FavoriteItem(WEBSITE.fields(), EntryLabels()),
             ),
             shown.favorites,
@@ -122,7 +133,9 @@ class FavoritesViewModelTest {
     fun movingAndRemovingSaveTheNewOrder() {
         awaitState("the favorites show") { it.favorites.size == 2 }
         onMain { model.move(1, later = false) }
-        awaitState("the order changes") { it.favorites.map { item -> item.fields } == listOf(WEBSITE.fields(), REPORT.fields()) && !it.saving }
+        awaitState(
+            "the order changes",
+        ) { it.favorites.map { item -> item.fields } == listOf(WEBSITE.fields(), REPORT.fields()) && !it.saving }
         onMain { model.move(1, later = true) }
         onMain { model.remove(0) }
         awaitState("one favorite is left") { it.favorites.size == 1 && !it.saving }
@@ -179,9 +192,11 @@ class FavoritesViewModelTest {
         assertEquals("only the first two went to the server", 2, saved.size)
     }
 
-    private fun awaitOutcomes(outcomes: MutableStateFlow<List<FavoritesProblem?>>, count: Int): List<FavoritesProblem?> =
-        runBlocking { withTimeoutOrNull(TIMEOUT_MS) { outcomes.first { it.size >= count } } }
-            ?: throw AssertionError("timed out waiting for $count outcomes; got ${outcomes.value}")
+    private fun awaitOutcomes(
+        outcomes: MutableStateFlow<List<FavoritesProblem?>>,
+        count: Int,
+    ): List<FavoritesProblem?> = runBlocking { withTimeoutOrNull(TIMEOUT_MS) { outcomes.first { it.size >= count } } }
+        ?: throw AssertionError("timed out waiting for $count outcomes; got ${outcomes.value}")
 
     /** The body Tokkl's web app sends from TimerPage.tsx: the favorites key alone, with every field of each. */
     @Test
@@ -210,15 +225,44 @@ class FavoritesViewModelTest {
     /** The tap handlers run on the main thread, which [scope] stands in for. */
     private fun onMain(block: () -> Unit) = runBlocking(mainDispatcher) { block() }
 
-    private fun EntryFields.cached(position: Int) = CachedFavorite(position, description, projectId, taskId, tags, billable)
+    private fun EntryFields.cached(position: Int) = CachedFavorite(
+        position,
+        description,
+        projectId,
+        taskId,
+        tags,
+        billable,
+    )
 
     private companion object {
         const val TIMEOUT_MS = 5_000L
         const val SETTLE_PAUSE_MS = 300L
         const val WORKSPACE = 10L
-        val APP = CachedProject(1, WORKSPACE, clientId = null, name = "Tokkl for Android", color = "#0b83d9", active = true, billable = false)
+        val APP = CachedProject(
+            1,
+            WORKSPACE,
+            clientId = null,
+            name = "Tokkl for Android",
+            color = "#0b83d9",
+            active = true,
+            billable = false,
+        )
         val DESIGN = CachedTask(5, WORKSPACE, projectId = APP.id, name = "Design", active = true)
-        val REPORT = CachedFavorite(0, "Write the report", APP.id, DESIGN.id, listOf("call", "deep work"), billable = true)
-        val WEBSITE = CachedFavorite(1, "Website", projectId = null, taskId = null, tags = emptyList(), billable = false)
+        val REPORT = CachedFavorite(
+            0,
+            "Write the report",
+            APP.id,
+            DESIGN.id,
+            listOf("call", "deep work"),
+            billable = true,
+        )
+        val WEBSITE = CachedFavorite(
+            1,
+            "Website",
+            projectId = null,
+            taskId = null,
+            tags = emptyList(),
+            billable = false,
+        )
     }
 }

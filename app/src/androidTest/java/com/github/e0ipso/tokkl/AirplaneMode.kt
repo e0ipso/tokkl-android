@@ -2,12 +2,12 @@ package com.github.e0ipso.tokkl
 
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
-import java.io.IOException
-import java.util.concurrent.TimeUnit
-import javax.net.ssl.SSLException
 import okhttp3.ConnectionPool
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import java.io.IOException
+import java.util.concurrent.TimeUnit
+import javax.net.ssl.SSLException
 
 /**
  * Puts the phone in airplane mode, or takes it out, through the shell user, the only user who may
@@ -27,7 +27,11 @@ object AirplaneMode {
         DeviceShell.run("cmd connectivity airplane-mode ${if (on) "enable" else "disable"}")
         val deadline = System.nanoTime() + TIMEOUT_NANOS
         while (serverAnswers(server) == on) {
-            if (System.nanoTime() > deadline) throw AssertionError("the network did not ${if (on) "go" else "come back"}")
+            if (System.nanoTime() > deadline) {
+                throw AssertionError(
+                    "the network did not ${if (on) "go" else "come back"}",
+                )
+            }
             Thread.sleep(POLL_MS)
         }
     }

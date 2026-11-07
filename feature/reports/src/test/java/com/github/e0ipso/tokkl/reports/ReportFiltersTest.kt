@@ -21,7 +21,10 @@ class ReportFiltersTest {
             CachedProject(3, OTHER_WORKSPACE, null, "Other", null, active = true, billable = false),
             CachedProject(4, WORKSPACE, null, "Zed", null, active = true, billable = false),
         )
-        val clients = listOf(CachedClient(5, WORKSPACE, "Acme", archived = true), CachedClient(6, OTHER_WORKSPACE, "Elsewhere", archived = false))
+        val clients = listOf(
+            CachedClient(5, WORKSPACE, "Acme", archived = true),
+            CachedClient(6, OTHER_WORKSPACE, "Elsewhere", archived = false),
+        )
         val tags = listOf(CachedTag(7, WORKSPACE, "deep"), CachedTag(8, OTHER_WORKSPACE, "other"))
 
         val options = FilterOptions.of(projects, clients, tags, WORKSPACE, negation = true)
@@ -30,7 +33,11 @@ class ReportFiltersTest {
         assertEquals(listOf(5L to "Acme"), options.clients.map { it.id to it.name })
         assertEquals(listOf(7L to "deep"), options.tags.map { it.id to it.name })
         assertTrue(options.negation)
-        assertEquals("every workspace while the default one is unknown", 4, FilterOptions.of(projects, clients, tags, null, negation = false).projects.size)
+        assertEquals(
+            "every workspace while the default one is unknown",
+            4,
+            FilterOptions.of(projects, clients, tags, null, negation = false).projects.size,
+        )
     }
 
     @Test
@@ -57,7 +64,11 @@ class ReportFiltersTest {
         assertTrue(ReportFilters().isEmpty)
         assertEquals("{}", buildJsonObject { ReportFilters().writeTo(this) }.toString())
 
-        val filters = ReportFilters(projects = listOf(null, 9L), tags = listOf(4L, 2L), billable = BillableFilter.NON_BILLABLE)
+        val filters = ReportFilters(
+            projects = listOf(null, 9L),
+            tags = listOf(4L, 2L),
+            billable = BillableFilter.NON_BILLABLE,
+        )
         assertFalse(filters.isEmpty)
         assertEquals(
             """{"project_ids":[null,9],"tag_ids":[4,2],"billable":false}""",
@@ -83,7 +94,13 @@ class ReportFiltersTest {
         assertEquals(
             "a negated filter with nothing picked filters nothing, as in the web app",
             "{}",
-            buildJsonObject { ReportFilters(projectsNot = true, clientsNot = true, tagsNot = true).writeTo(this) }.toString(),
+            buildJsonObject {
+                ReportFilters(
+                    projectsNot = true,
+                    clientsNot = true,
+                    tagsNot = true,
+                ).writeTo(this)
+            }.toString(),
         )
         assertTrue(ReportFilters(tagsNot = true).isEmpty)
         assertEquals(

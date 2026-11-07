@@ -17,9 +17,6 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.feature.settings.R
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
-import com.github.e0ipso.tokkl.feature.signin.R as SigninR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
@@ -40,6 +37,7 @@ import com.github.e0ipso.tokkl.components.signOutConfirmation
 import com.github.e0ipso.tokkl.components.storeSignIn
 import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
+import com.github.e0ipso.tokkl.feature.settings.R
 import com.github.e0ipso.tokkl.finishWithin
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.openBarPage
@@ -48,10 +46,6 @@ import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timerstate.TimerStateStore
-import java.time.Duration
-import java.time.Instant
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -64,6 +58,12 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.Duration
+import java.time.Instant
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.feature.signin.R as SigninR
 
 /**
  * Disposable real-server accounts, the Settings warning while the server holds a session, and
@@ -71,6 +71,7 @@ import org.junit.rules.RuleChain
  */
 class PomodoroSignOutServerTest {
     private val compose = createEmptyComposeRule()
+
     @get:Rule val rules: RuleChain = RuleChain.outerRule(SessionRule()).around(compose)
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private val app get() = context.applicationContext as TokklApplication
@@ -87,7 +88,8 @@ class PomodoroSignOutServerTest {
         suiteSettings = checkNotNull(app.accountSettings.state.value)
         account = TestAccounts.create(timezone = "Etc/UTC").also(accounts::add)
         app.storeSignIn(
-            TokklTestServer.url, account.apiToken,
+            TokklTestServer.url,
+            account.apiToken,
             suiteSettings.copy(defaultWorkspaceId = account.workspaceId, userId = account.id),
         )
         runBlocking { app.accountRefresh.refresh().join() }
@@ -116,11 +118,17 @@ class PomodoroSignOutServerTest {
     @Test fun warningCountsOnlyQueuedChangesWhileTheServerHoldsASessionAndConfirmClearsOffline() {
         // Twenty minutes of the server's work phase are left. The server owns its pomodoro, so
         // the phone has no unsaved work of its own to count.
-        val session = HeldPhases.hold(PhaseTransition.WORK_TO_SHORT_REST, overtime = Duration.ofMinutes(-20), length = Duration.ofMinutes(25))
+        val session = HeldPhases.hold(
+            PhaseTransition.WORK_TO_SHORT_REST,
+            overtime = Duration.ofMinutes(-20),
+            length = Duration.ofMinutes(25),
+        )
         runBlocking {
             app.changes.create(
-                account.workspaceId, EntryFields("Unsent manual"),
-                Instant.now().minusSeconds(7200), Instant.now().minusSeconds(3600),
+                account.workspaceId,
+                EntryFields("Unsent manual"),
+                Instant.now().minusSeconds(7200),
+                Instant.now().minusSeconds(3600),
             )
         }
         assertEquals(1, queueCount())
@@ -132,14 +140,18 @@ class PomodoroSignOutServerTest {
         compose.awaitText(context.getString(R.string.settings_sign_out_title))
         val warning = context.resources.getQuantityString(R.plurals.settings_sign_out_unsent, 1, 1)
         compose.onNode(hasText(warning) and inDialog).assertExists()
-        compose.onNode(hasText(context.getString(SharedR.string.catalog_cancel)) and hasClickAction() and inDialog).performClick()
+        compose.onNode(
+            hasText(context.getString(SharedR.string.catalog_cancel)) and hasClickAction() and inDialog,
+        ).performClick()
         compose.waitUntil("warning dismissed", 10_000) { app.signOutConfirmation.state.value.unsentToConfirm == null }
         assertEquals("Cancel keeps the server's session as held", session, app.timerState.state.value)
         assertEquals(1, queueCount())
         assertTrue(Session(context).isSignedIn())
         compose.onNode(signOutRow).performScrollTo().performClick()
         compose.awaitText(context.getString(R.string.settings_sign_out_title))
-        compose.onNode(hasText(context.getString(R.string.settings_sign_out)) and hasClickAction() and inDialog).performClick()
+        compose.onNode(
+            hasText(context.getString(R.string.settings_sign_out)) and hasClickAction() and inDialog,
+        ).performClick()
         compose.awaitText(context.getString(SigninR.string.sign_in_title), 10_000)
         assertCleared()
     }
@@ -173,7 +185,9 @@ class PomodoroSignOutServerTest {
     @Test fun ringingSignOutRejectsLateButtonsAlarmsAndServiceChecksUnderTheNextAccount() {
         val old = HeldPhases.hold()
         HeldPhases.awaitPlaying()
-        val notification = notifications.activeNotifications.single { it.id == PomodoroSessionNotifier.NOTIFICATION_ID }.notification
+        val notification = notifications.activeNotifications.single {
+            it.id == PomodoroSessionNotifier.NOTIFICATION_ID
+        }.notification
         assertTrue(runBlocking { app.signOut.run() })
         assertCleared()
         sendOldButtons(notification)
@@ -184,7 +198,11 @@ class PomodoroSignOutServerTest {
         val next = TestAccounts.create(timezone = "Etc/UTC").also(accounts::add)
         signIn(next, suiteSettings.copy(defaultWorkspaceId = next.workspaceId, userId = next.id))
         // Twenty minutes of the next account's work phase are left.
-        val current = HeldPhases.hold(PhaseTransition.WORK_TO_SHORT_REST, overtime = Duration.ofMinutes(-20), length = Duration.ofMinutes(25))
+        val current = HeldPhases.hold(
+            PhaseTransition.WORK_TO_SHORT_REST,
+            overtime = Duration.ofMinutes(-20),
+            length = Duration.ofMinutes(25),
+        )
         val nextAlarm = checkNotNull(current.ring()).end.toEpochMilli()
         awaitNextAlarm(nextAlarm)
         sendOldButtons(notification)
@@ -241,7 +259,9 @@ class PomodoroSignOutServerTest {
         awaitNextAlarm(null)
         assertEquals(
             PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-            context.packageManager.getComponentEnabledSetting(ComponentName(context, PomodoroAlarmRearmReceiver::class.java)),
+            context.packageManager.getComponentEnabledSetting(
+                ComponentName(context, PomodoroAlarmRearmReceiver::class.java),
+            ),
         )
         // cancel() also returns before the system drops the notification from its list.
         val removed = System.nanoTime() + 10_000_000_000L
@@ -251,8 +271,10 @@ class PomodoroSignOutServerTest {
         }
         assertEquals(0, queueCount())
         assertEquals(0, runBlocking { app.changes.heldCount.first() })
-        assertTrue(WorkManager.getInstance(context).getWorkInfosForUniqueWork(BackgroundSend.WORK_NAME).get()
-            .all { it.state == WorkInfo.State.CANCELLED })
+        assertTrue(
+            WorkManager.getInstance(context).getWorkInfosForUniqueWork(BackgroundSend.WORK_NAME).get()
+                .all { it.state == WorkInfo.State.CANCELLED },
+        )
     }
 
     private fun awaitStopped() = runBlocking {

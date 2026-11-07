@@ -16,6 +16,7 @@ fun managedWorkspace(api: TogglApiClient, stored: Long?): ApiResult<Long> {
     return when (val me = api.get(api.server.api("me"), MeWorkspace.serializer())) {
         is ApiResult.Success -> me.value.defaultWorkspaceId?.let { ApiResult.Success(it) }
             ?: ApiResult.Failure(ApiError.InvalidResponse(IllegalArgumentException("/me has no default_workspace_id")))
+
         is ApiResult.Failure -> me
     }
 }

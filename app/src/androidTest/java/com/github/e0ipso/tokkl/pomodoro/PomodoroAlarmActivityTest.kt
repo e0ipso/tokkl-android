@@ -32,8 +32,6 @@ import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.timerstate.SessionLengths
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
-import java.time.Duration
-import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -42,6 +40,8 @@ import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.time.Duration
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * The full-screen alarm of a held phase on API 31 and 36, with the real notification, Activity and
@@ -70,8 +70,12 @@ class PomodoroAlarmActivityTest {
         RunningNotifications.allow()
         if (Build.VERSION.SDK_INT >= 34) {
             val output = DeviceShell.run("cmd appops get ${context.packageName} USE_FULL_SCREEN_INTENT").trim()
-            originalFullScreenMode = if (output.startsWith("No operations")) "default" else {
-                Regex("USE_FULL_SCREEN_INTENT: (allow|deny|ignore|default|foreground)").find(output)?.groupValues?.get(1)
+            originalFullScreenMode = if (output.startsWith("No operations")) {
+                "default"
+            } else {
+                Regex(
+                    "USE_FULL_SCREEN_INTENT: (allow|deny|ignore|default|foreground)",
+                ).find(output)?.groupValues?.get(1)
                     ?: error("Cannot restore full-screen app-op: $output")
             }
             setFullScreenMode("allow")
@@ -159,7 +163,10 @@ class PomodoroAlarmActivityTest {
         val notification = ringingNotification()
         assertNotNull(notification.fullScreenIntent)
         assertEquals(PomodoroRingingNotifier.CHANNEL_ID, notification.channelId)
-        assertEquals(NotificationManager.IMPORTANCE_HIGH, notifications.getNotificationChannel(notification.channelId).importance)
+        assertEquals(
+            NotificationManager.IMPORTANCE_HIGH,
+            notifications.getNotificationChannel(notification.channelId).importance,
+        )
         assertEquals(listOf("Next phase", "End session"), notification.actions.map { it.title.toString() })
         assertEquals(1, notifications.activeNotifications.count { it.id == 3 })
     }
@@ -182,9 +189,12 @@ class PomodoroAlarmActivityTest {
         try {
             fixture.prepare()
             val lengths = SessionLengths(workMinutes = 1, shortRestMinutes = 1, longRestMinutes = 1, longRestEvery = 4)
-            assertEquals(TimerActionResult.Done, runBlocking {
-                app.timerActions.startSession(fixture.account.workspaceId, EntryFields("Alarm acceptance"), lengths)
-            })
+            assertEquals(
+                TimerActionResult.Done,
+                runBlocking {
+                    app.timerActions.startSession(fixture.account.workspaceId, EntryFields("Alarm acceptance"), lengths)
+                },
+            )
             // The server's one-minute work phase ends, and the phone rings from its planned end.
             val work = awaitPlaying(timeoutMillis = 90_000).ring!!
             openAlarm(work.phase)
@@ -216,7 +226,9 @@ class PomodoroAlarmActivityTest {
         assertTrue(device.wait(Until.hasObject(By.text("Work done: start short rest")), 10_000))
         openAlarm(HeldPhases.key(due))
         // Another phase's identity must leave the active alarm unchanged.
-        context.startActivity(pomodoroAlarmIntent(context, PomodoroPhaseKey(HeldPhases.key(due).start.minusSeconds(60))))
+        context.startActivity(
+            pomodoroAlarmIntent(context, PomodoroPhaseKey(HeldPhases.key(due).start.minusSeconds(60))),
+        )
         instrumentation.waitForIdleSync()
         assertTrue(device.wait(Until.hasObject(By.text("Work done: start short rest")), 10_000))
         assertKeepsRinging(before, due)
@@ -243,12 +255,15 @@ class PomodoroAlarmActivityTest {
         instrumentation.waitForIdleSync()
         assertFalse(app.pomodoroRinging.state.value.serviceRunning)
         onMain {
-            assertFalse(ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED)
-                .any { it is PomodoroAlarmActivity })
+            assertFalse(
+                ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED)
+                    .any { it is PomodoroAlarmActivity },
+            )
         }
     }
 
-    @Test @SdkSuppress(minSdkVersion = 34)
+    @Test
+    @SdkSuppress(minSdkVersion = 34)
     fun deniedAndGrantedFullScreenPermissionFollowSystemAccessAndUsePerAppSettings() {
         setFullScreenMode("deny")
         assertFalse(notifications.canUseFullScreenIntent())
@@ -262,13 +277,15 @@ class PomodoroAlarmActivityTest {
         assertTrue(canShowPomodoroFullScreen(context))
     }
 
-    @Test @SdkSuppress(maxSdkVersion = 33)
+    @Test
+    @SdkSuppress(maxSdkVersion = 33)
     fun api31Through33HaveNoSpecialAccessSettingsAction() {
         assertTrue(canShowPomodoroFullScreen(context))
         assertNull(pomodoroFullScreenSettings(context))
     }
 
-    @Test @SdkSuppress(minSdkVersion = 34)
+    @Test
+    @SdkSuppress(minSdkVersion = 34)
     fun deniedAccessKeepsRingingAndNotificationActionsWithoutOpeningTheLockScreenActivity() {
         setFullScreenMode("deny")
         device.pressHome()
@@ -277,8 +294,10 @@ class PomodoroAlarmActivityTest {
         val playing = awaitPlaying()
         instrumentation.waitForIdleSync()
         onMain {
-            assertFalse(ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED)
-                .any { it is PomodoroAlarmActivity })
+            assertFalse(
+                ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED)
+                    .any { it is PomodoroAlarmActivity },
+            )
         }
         assertKeepsRinging(playing, due)
         assertNotNull(PomodoroRingingNotifier(context).build(due.ring()).fullScreenIntent)
@@ -296,7 +315,10 @@ class PomodoroAlarmActivityTest {
         val intent = pomodoroAlarmIntent(context, due)
         assertEquals(due, intent.phaseKey())
         assertEquals(PomodoroAlarmActivity::class.java.name, intent.component?.className)
-        assertEquals(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP, intent.flags)
+        assertEquals(
+            Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP,
+            intent.flags,
+        )
         assertNull(Intent(context, PomodoroAlarmActivity::class.java).phaseKey())
         // A provisional sticky-service notification cannot open an unvalidated phase.
         assertNull(PomodoroRingingNotifier(context).build(null).fullScreenIntent)
@@ -326,8 +348,10 @@ class PomodoroAlarmActivityTest {
     }
     private fun resumedAlarm(): PomodoroAlarmActivity {
         var activity: PomodoroAlarmActivity? = null
-        onMain { activity = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED)
-            .filterIsInstance<PomodoroAlarmActivity>().single() }
+        onMain {
+            activity = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED)
+                .filterIsInstance<PomodoroAlarmActivity>().single()
+        }
         return checkNotNull(activity)
     }
     private fun assertKeepsRinging(before: PomodoroRingingState, due: HeldTimerState) {
@@ -339,7 +363,9 @@ class PomodoroAlarmActivityTest {
         assertEquals(due, app.timerState.state.value)
     }
     private fun awaitPlaying(timeoutMillis: Long = 10_000): PomodoroRingingState = runBlocking {
-        withTimeout(timeoutMillis) { app.pomodoroRinging.state.first { it.serviceRunning && it.playing && it.vibrationRequested } }
+        withTimeout(
+            timeoutMillis,
+        ) { app.pomodoroRinging.state.first { it.serviceRunning && it.playing && it.vibrationRequested } }
     }
     private fun awaitStopped() = HeldPhases.awaitStopped()
     private fun awaitNoSharedNotification() {
@@ -362,11 +388,24 @@ class PomodoroAlarmActivityTest {
         }
         assertFalse("the lock screen is still showing", keyguard.isKeyguardLocked)
     }
-    private fun ringingNotification() = notifications.activeNotifications.single { it.id == PomodoroSessionNotifier.NOTIFICATION_ID }.notification
-    private fun setFullScreenMode(mode: String) { DeviceShell.run("cmd appops set ${context.packageName} USE_FULL_SCREEN_INTENT $mode") }
+    private fun ringingNotification() = notifications.activeNotifications.single {
+        it.id ==
+            PomodoroSessionNotifier.NOTIFICATION_ID
+    }.notification
+    private fun setFullScreenMode(mode: String) {
+        DeviceShell.run(
+            "cmd appops set ${context.packageName} USE_FULL_SCREEN_INTENT $mode",
+        )
+    }
     private fun onMain(block: () -> Unit) {
         val failure = AtomicReference<Throwable?>()
-        instrumentation.runOnMainSync { try { block() } catch (caught: Throwable) { failure.set(caught) } }
+        instrumentation.runOnMainSync {
+            try {
+                block()
+            } catch (caught: Throwable) {
+                failure.set(caught)
+            }
+        }
         failure.get()?.let { throw it }
     }
 }

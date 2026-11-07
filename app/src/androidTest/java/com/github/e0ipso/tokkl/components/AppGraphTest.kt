@@ -14,8 +14,6 @@ import androidx.work.WorkerParameters
 import androidx.work.testing.TestListenableWorkerBuilder
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.SignOutOrder
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -25,6 +23,8 @@ import org.koin.core.context.GlobalContext
 import org.koin.core.definition.BeanDefinition
 import org.koin.core.parameter.parametersOf
 import org.koin.core.qualifier.named
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 /**
  * Resolves every definition of the app's Koin graph in the app's own process, as the app resolves
@@ -59,7 +59,11 @@ class AppGraphTest {
     @Test
     fun everyDefinitionResolves() {
         val (models, rest) = definitions.partition { ViewModel::class.java.isAssignableFrom(it.primaryType.java) }
-        val (workers, components) = rest.partition { ListenableWorker::class.java.isAssignableFrom(it.primaryType.java) }
+        val (workers, components) = rest.partition {
+            ListenableWorker::class.java.isAssignableFrom(
+                it.primaryType.java,
+            )
+        }
         assertTrue("the graph defines view models", models.isNotEmpty())
         assertTrue("the graph defines workers", workers.isNotEmpty())
 
@@ -108,13 +112,19 @@ class AppGraphTest {
         var made: ListenableWorker? = null
         var failure: Throwable? = null
         val workers = object : WorkerFactory() {
-            override fun createWorker(appContext: Context, workerClassName: String, workerParameters: WorkerParameters): ListenableWorker? =
-                try {
-                    koin.get<ListenableWorker>(ListenableWorker::class, named(workerClassName)) { parametersOf(workerParameters) }.also { made = it }
-                } catch (e: Throwable) {
-                    failure = e
-                    throw e
-                }
+            override fun createWorker(
+                appContext: Context,
+                workerClassName: String,
+                workerParameters: WorkerParameters,
+            ): ListenableWorker? = try {
+                koin.get<ListenableWorker>(
+                    ListenableWorker::class,
+                    named(workerClassName),
+                ) { parametersOf(workerParameters) }.also { made = it }
+            } catch (e: Throwable) {
+                failure = e
+                throw e
+            }
         }
         try {
             @Suppress("UNCHECKED_CAST")
@@ -147,13 +157,14 @@ class AppGraphTest {
         }
     }
 
-    private fun failureOf(definition: BeanDefinition<*>, resolve: () -> Unit): String? =
-        try {
-            resolve()
-            null
-        } catch (e: Throwable) {
-            "${definition.primaryType.qualifiedName} ${definition.qualifier?.value.orEmpty()}: ${generateSequence(e) { it.cause }.last()}"
-        }
+    private fun failureOf(definition: BeanDefinition<*>, resolve: () -> Unit): String? = try {
+        resolve()
+        null
+    } catch (e: Throwable) {
+        "${definition.primaryType.qualifiedName} ${definition.qualifier?.value.orEmpty()}: ${generateSequence(
+            e,
+        ) { it.cause }.last()}"
+    }
 
     /** Runs [block] on this thread while the main thread waits, so nothing posted to it meanwhile runs. */
     private fun <T> whileMainWaits(block: () -> T): T {

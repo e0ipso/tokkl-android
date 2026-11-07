@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.cache
 
 import com.github.e0ipso.tokkl.api.ServerUrl
-import java.time.temporal.ChronoUnit
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
@@ -9,6 +8,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import okhttp3.HttpUrl
+import java.time.temporal.ChronoUnit
 
 /** One change as an HTTP request. */
 internal class ChangeRequest(val method: String, val url: HttpUrl, val body: JsonObject?)
@@ -27,16 +27,37 @@ internal const val CREATED_WITH = "Tokkl for Android"
  */
 internal fun PendingChange.request(server: ServerUrl, allDay: Boolean = false): ChangeRequest {
     val collection = server.api("workspaces", workspaceId.toString(), "time_entries")
-    val url = if (kind == ChangeKind.CREATE) collection else collection.newBuilder().addPathSegment(entryId.toString()).build()
+    val url = if (kind == ChangeKind.CREATE) {
+        collection
+    } else {
+        collection.newBuilder().addPathSegment(
+            entryId.toString(),
+        ).build()
+    }
     return when (kind) {
         ChangeKind.CREATE -> ChangeRequest("POST", url, body(allDay))
+
         ChangeKind.UPDATE -> ChangeRequest("PUT", url, body(allDay))
+
         // A legacy stop ends a running entry, which is never a no-time one.
-        ChangeKind.STOP -> if (capturedStop == null) ChangeRequest("PUT", url, body(allDay = false)) else
-            ChangeRequest("PATCH", url.newBuilder().addPathSegment("stop").build(), buildJsonObject {
-                put("stop", capturedStop.truncatedTo(ChronoUnit.SECONDS).toString())
-            })
-        ChangeKind.RESTORE -> ChangeRequest("POST", server.app("time_entries", entryId.toString(), "restore"), JsonObject(emptyMap()))
+        ChangeKind.STOP -> if (capturedStop == null) {
+            ChangeRequest("PUT", url, body(allDay = false))
+        } else {
+            ChangeRequest(
+                "PATCH",
+                url.newBuilder().addPathSegment("stop").build(),
+                buildJsonObject {
+                    put("stop", capturedStop.truncatedTo(ChronoUnit.SECONDS).toString())
+                },
+            )
+        }
+
+        ChangeKind.RESTORE -> ChangeRequest(
+            "POST",
+            server.app("time_entries", entryId.toString(), "restore"),
+            JsonObject(emptyMap()),
+        )
+
         ChangeKind.DELETE -> ChangeRequest("DELETE", url, body = null)
     }
 }

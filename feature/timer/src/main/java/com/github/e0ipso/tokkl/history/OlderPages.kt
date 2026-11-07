@@ -8,12 +8,12 @@ import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.toCached
 import com.github.e0ipso.tokkl.time.AccountTime
-import java.time.LocalDate
-import java.time.format.DateTimeParseException
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import java.time.LocalDate
+import java.time.format.DateTimeParseException
 
 /** One request for older days: the days it loaded, or the status the days end with instead. */
 internal sealed interface OlderPage {
@@ -44,7 +44,12 @@ private sealed interface BoundsAnswer {
  * The page of days before [before] from [client]'s server, and where the history starts, [known]
  * or read now. Blocks on the network.
  */
-internal fun fetchOlderPage(client: ApiClientProvider, time: AccountTime, before: LocalDate, known: HistoryBounds?): Pair<OlderPage, HistoryBounds?> {
+internal fun fetchOlderPage(
+    client: ApiClientProvider,
+    time: AccountTime,
+    before: LocalDate,
+    known: HistoryBounds?,
+): Pair<OlderPage, HistoryBounds?> {
     val api = client() ?: return OlderPage.NotLoaded(OlderDays.AuthFailed) to known
     val bounds = known ?: when (val answer = readBounds(api)) {
         is BoundsAnswer.Read -> answer.bounds
@@ -60,6 +65,7 @@ internal fun fetchOlderPage(client: ApiClientProvider, time: AccountTime, before
         .build()
     val page = when (val answer = api.get(url, ListSerializer(ServerTimeEntry.serializer()))) {
         is ApiResult.Failure -> OlderPage.NotLoaded(statusOf(answer.error))
+
         is ApiResult.Success -> {
             val entries = answer.value.mapNotNull { it.toCached() }.filter { it.start >= start && it.start < end }
             val status = when {
@@ -76,8 +82,10 @@ internal fun fetchOlderPage(client: ApiClientProvider, time: AccountTime, before
 private fun readBounds(api: TogglApiClient): BoundsAnswer =
     when (val answer = api.get(api.server.app("bounds"), JsonObject.serializer())) {
         is ApiResult.Success -> BoundsAnswer.Read(boundsOf(answer.value))
+
         is ApiResult.Failure -> when (val status = statusOf(answer.error)) {
             OlderDays.Unreachable, OlderDays.AuthFailed, OlderDays.TrustRefused -> BoundsAnswer.Failed(status)
+
             // A 404 from a server without it, or any other answer: page without knowing.
             else -> BoundsAnswer.Read(HistoryBounds.Unknown)
         }
@@ -85,11 +93,22 @@ private fun readBounds(api: TogglApiClient): BoundsAnswer =
 
 private fun statusOf(error: ApiError): OlderDays = when (error) {
     is ApiError.Network -> OlderDays.Unreachable
+
     // A reverse proxy answers these while the server behind it is down.
-    is ApiError.UnexpectedStatus -> if (error.status in PROXY_UNREACHABLE) OlderDays.Unreachable else OlderDays.Failed(error.status)
+    is ApiError.UnexpectedStatus -> if (error.status in PROXY_UNREACHABLE) {
+        OlderDays.Unreachable
+    } else {
+        OlderDays.Failed(
+            error.status,
+        )
+    }
+
     ApiError.AuthFailed -> OlderDays.AuthFailed
+
     is ApiError.TrustRefused -> OlderDays.TrustRefused
+
     is ApiError.RateLimited -> OlderDays.Failed(error.status)
+
     is ApiError.HostNotAllowed, is ApiError.InvalidResponse -> OlderDays.Failed(null)
 }
 

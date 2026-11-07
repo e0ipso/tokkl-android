@@ -15,9 +15,6 @@ import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
 import androidx.test.runner.lifecycle.Stage
 import com.github.e0ipso.tokkl.*
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.core.data.R as DataR
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
-import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.calendar.CalendarViewModel
 import com.github.e0ipso.tokkl.components.accountRefresh
@@ -36,10 +33,6 @@ import com.github.e0ipso.tokkl.timerstate.TimerStateStore
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import java.time.Clock
-import java.time.Instant
-import java.time.ZoneId
-import java.time.ZoneOffset
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
@@ -51,6 +44,13 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneId
+import java.time.ZoneOffset
+import com.github.e0ipso.tokkl.core.data.R as DataR
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 
 /**
  * Normal real-host acceptance at usual and largest font sizes on API31/36. The focused timer reads
@@ -59,7 +59,10 @@ import org.junit.rules.RuleChain
  */
 abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
     private val compose = createEmptyComposeRule()
-    @get:Rule val rules: RuleChain = RuleChain.outerRule(SessionRule()).around(SystemFontScale(fontScale)).around(compose)
+
+    @get:Rule val rules: RuleChain = RuleChain.outerRule(
+        SessionRule(),
+    ).around(SystemFontScale(fontScale)).around(compose)
     private val fixture = TimerAcceptanceFixture()
     private val app get() = fixture.app
     private val context get() = fixture.context
@@ -67,14 +70,26 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
 
     // The running entry starts on the server, so no queued setup change, and no refresh its send
     // starts without waiting, is still on its way when a test begins.
-    @Before fun prepare() { fixture.prepare(); fixture.startOnServer("Pause fixture") }
-    @After fun cleanup() { fixture.cleanup() }
+    @Before fun prepare() {
+        fixture.prepare()
+        fixture.startOnServer("Pause fixture")
+    }
+
+    @After fun cleanup() {
+        fixture.cleanup()
+    }
 
     @Test
     fun enterBackAndExitKeepBothViewPositionsAndIdentity() {
         val day = app.accountSettings.state.value!!.time()!!.today()
         val midnight = app.accountSettings.state.value!!.time()!!.instantAt(day, 0)
-        for (index in 1..24) fixture.account.createEntry("History $index", midnight.minusSeconds(index * 3600L), midnight.minusSeconds(index * 3600L - 600))
+        for (index in 1..24) {
+            fixture.account.createEntry(
+                "History $index",
+                midnight.minusSeconds(index * 3600L),
+                midnight.minusSeconds(index * 3600L - 600),
+            )
+        }
         runBlocking { app.accountRefresh.refresh().join() }
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             compose.awaitTimerPage()
@@ -83,13 +98,19 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             for (view in listOf(TimerView.LIST, TimerView.CALENDAR)) {
                 chooseView(view)
                 if (view == TimerView.CALENDAR) {
-                    scenario.onActivity { timerPageViewModels(it)[CalendarViewModel::class.java].select(day.minusWeeks(2)) }
+                    scenario.onActivity {
+                        timerPageViewModels(
+                            it,
+                        )[CalendarViewModel::class.java].select(day.minusWeeks(2))
+                    }
                 }
                 compose.onRoot().performTouchInput { swipeUp() }
                 compose.waitForIdle()
                 val positions = scrollPositions()
                 // A semantic click invokes the offscreen labelled action without scrolling the top.
-                compose.onNodeWithText(context.getString(TimerR.string.timer_open_fullscreen)).performSemanticsAction(SemanticsActions.OnClick)
+                compose.onNodeWithText(
+                    context.getString(TimerR.string.timer_open_fullscreen),
+                ).performSemanticsAction(SemanticsActions.OnClick)
                 awaitFocused()
                 assertActions(running = true)
                 compose.onNode(hasText(context.getString(R.string.nav_more)) and hasClickAction()).assertDoesNotExist()
@@ -103,7 +124,9 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
                 compose.awaitTimerPage()
                 compose.onNode(isSelectable() and hasText(context.getString(view.label))).assertIsSelected()
                 assertEquals(positions, scrollPositions())
-                compose.onNodeWithText(context.getString(TimerR.string.timer_open_fullscreen)).performSemanticsAction(SemanticsActions.OnClick)
+                compose.onNodeWithText(
+                    context.getString(TimerR.string.timer_open_fullscreen),
+                ).performSemanticsAction(SemanticsActions.OnClick)
                 awaitFocused()
                 focusedButton(TimerR.string.timer_exit_fullscreen).performScrollTo().performClick()
                 compose.awaitTimerPage()
@@ -126,13 +149,21 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             val original = (fixture.shown() as TimerControls.Running).entry
             focusedButton(TimerR.string.timer_focused_edit).performScrollTo().performClick()
             compose.onNodeWithText(context.getString(TimerR.string.entry_form_edit_running)).assertExists()
-            compose.onNode(hasText(context.getString(TimerR.string.entry_end)) and hasSetTextAction()).assertDoesNotExist()
-            compose.onNode(hasText(context.getString(TimerR.string.entry_duration)) and hasSetTextAction()).assertDoesNotExist()
+            compose.onNode(
+                hasText(context.getString(TimerR.string.entry_end)) and hasSetTextAction(),
+            ).assertDoesNotExist()
+            compose.onNode(
+                hasText(context.getString(TimerR.string.entry_duration)) and hasSetTextAction(),
+            ).assertDoesNotExist()
             // Shared start editor; the field keeps seconds and a real active start, never a display base.
-            compose.onNode(hasText(context.getString(TimerR.string.entry_start)) and hasSetTextAction()).performTextClearance()
+            compose.onNode(
+                hasText(context.getString(TimerR.string.entry_start)) and hasSetTextAction(),
+            ).performTextClearance()
             val settings = app.accountSettings.state.value!!
             val earlier = settings.formatTime(original.start.minusSeconds(600), settings.time()!!.zone)
-            compose.onNode(hasText(context.getString(TimerR.string.entry_start)) and hasSetTextAction()).performTextInput(earlier)
+            compose.onNode(
+                hasText(context.getString(TimerR.string.entry_start)) and hasSetTextAction(),
+            ).performTextInput(earlier)
             // At the largest font the form outgrows the room the keyboard leaves, so Save comes into
             // view only by a scroll made after the keyboard has finished sliding in.
             compose.tapWhenStill(compose.onNodeWithText(context.getString(TimerR.string.entry_save)))
@@ -155,7 +186,9 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             focusedButton(SharedR.string.timer_pause).performScrollTo().performClick()
             val paused = awaitPaused()
             assertActions(running = false)
-            compose.onAllNodes(hasSetTextAction() and hasAnyAncestor(hasTestTag("fullscreen_timer"))).assertCountEquals(0)
+            compose.onAllNodes(
+                hasSetTextAction() and hasAnyAncestor(hasTestTag("fullscreen_timer")),
+            ).assertCountEquals(0)
             val frozen = paused.seconds
             assertEquals(frozen, app.timerState.state.value!!.state.pause!!.seconds)
             assertEquals(frozen, parseDuration(elapsedText()))
@@ -182,7 +215,10 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             assertEquals("Resume starts the fields kept at Pause", "Pause fixture", resumed.entry.description)
             assertEquals(frozen, resumed.accumulatedSeconds)
             assertTrue(parseDuration(elapsedText())!! >= frozen)
-            assertEquals("Pause fixture", runBlocking { app.cache.timeEntries.first() }.first { it.id == original.id }.description)
+            assertEquals(
+                "Pause fixture",
+                runBlocking { app.cache.timeEntries.first() }.first { it.id == original.id }.description,
+            )
             // A clone's Stop is an ordinary queued Stop, offline too, and the focused timer leaves.
             AirplaneMode.set(true, fixture.account.client)
             focusedButton(SharedR.string.timer_stop).performScrollTo().performClick()
@@ -214,13 +250,18 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
                     val before = resumedActivity()
                     scenario.onActivity { it.requestedOrientation = requested }
                     compose.waitUntil("real activity rotation retains focus", 15_000) {
-                        resumedActivity()?.let { it !== before && it.resources.configuration.orientation == orientation } == true
+                        resumedActivity()?.let {
+                            it !== before && it.resources.configuration.orientation == orientation
+                        } ==
+                            true
                     }
                     awaitFocused()
                     assertActions(running = !paused)
                     compose.onNodeWithTag("fullscreen_elapsed").performScrollTo().assertIsDisplayed()
                     val layouts = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
-                    compose.onNodeWithTag("fullscreen_elapsed").performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(layouts) }
+                    compose.onNodeWithTag(
+                        "fullscreen_elapsed",
+                    ).performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(layouts) }
                     assertTrue(layouts.isNotEmpty())
                     assertTrue("enlarged clock text is not clipped", layouts.none { it.didOverflowHeight })
                     assertEquals(token, shownTarget())
@@ -266,7 +307,9 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             // The save waits its turn in the queue, and the form ignores Back while it saves, so
             // Back goes only once the old editor has refused it.
             compose.waitUntil("the old editor refuses the save", 10_000) {
-                compose.onAllNodesWithText(context.getString(TimerR.string.entry_form_missing)).fetchSemanticsNodes().isNotEmpty()
+                compose.onAllNodesWithText(
+                    context.getString(TimerR.string.entry_form_missing),
+                ).fetchSemanticsNodes().isNotEmpty()
             }
             assertEquals(replacementId, (fixture.shown() as TimerControls.Running).entry.id)
             assertEquals("Remote replacement", (fixture.shown() as TimerControls.Running).entry.description)
@@ -275,8 +318,18 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             compose.onNodeWithText("Remote replacement").assertExists()
             assertActions(running = true)
             val client = fixture.account.client
-            client.send("PATCH", client.server.api("workspaces", fixture.account.workspaceId.toString(), "time_entries", replacementId.toString(), "stop"),
-                buildJsonObject { put("stop", Instant.now().toString()) }, ServerTimeEntry.serializer()).orFail("external Stop")
+            client.send(
+                "PATCH",
+                client.server.api(
+                    "workspaces",
+                    fixture.account.workspaceId.toString(),
+                    "time_entries",
+                    replacementId.toString(),
+                    "stop",
+                ),
+                buildJsonObject { put("stop", Instant.now().toString()) },
+                ServerTimeEntry.serializer(),
+            ).orFail("external Stop")
             runBlocking { app.accountRefresh.refresh().join() }
             awaitIdle()
             compose.awaitTimerPage()
@@ -341,7 +394,11 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
                 val beforeRequests = requests.count
                 clock.at = clock.at.plusSeconds(2)
                 compose.waitUntil("local focused tick", 5_000) { elapsedText() != beforeText }
-                assertEquals("a local tick adds no requests: ${requests.lines.drop(beforeRequests)}", beforeRequests, requests.count)
+                assertEquals(
+                    "a local tick adds no requests: ${requests.lines.drop(beforeRequests)}",
+                    beforeRequests,
+                    requests.count,
+                )
                 // Each start of the activity reads the server once (docs/PRD.md O2). Count what
                 // one such refresh sends, so the trip below may add that and nothing for the clock.
                 fixture.refresh()
@@ -351,9 +408,16 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
                 scenario.moveToState(androidx.lifecycle.Lifecycle.State.CREATED)
                 clock.at = clock.at.plusSeconds(10)
                 scenario.moveToState(androidx.lifecycle.Lifecycle.State.RESUMED)
-                compose.waitUntil("foreground catches up locally", 5_000) { parseDuration(elapsedText())!! >= parseDuration(beforeText)!! + 10 }
+                compose.waitUntil(
+                    "foreground catches up locally",
+                    5_000,
+                ) { parseDuration(elapsedText())!! >= parseDuration(beforeText)!! + 10 }
                 compose.waitUntil("the foreground refresh is sent", 5_000) { requests.count >= tripRequests }
-                assertEquals("the clock's catch-up adds no requests to the foreground refresh", tripRequests, requests.count)
+                assertEquals(
+                    "the clock's catch-up adds no requests to the foreground refresh",
+                    tripRequests,
+                    requests.count,
+                )
                 // Pause goes to the server and nowhere else. Its answer, the authoritative pause,
                 // is what the phone holds and shows before anything is counted.
                 val pauseRequests = requests.count
@@ -365,9 +429,15 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
                 assertTrue(pause.paused)
                 assertEquals(pause.seconds, paused.seconds)
                 // Native surfaces carry the sign-in's account id, so a tap drawn for another account does nothing.
-                assertEquals(TimerTarget.server(revision = held.revision, account = TimerStateStore(app).account()), paused.target)
+                assertEquals(
+                    TimerTarget.server(revision = held.revision, account = TimerStateStore(app).account()),
+                    paused.target,
+                )
                 assertEquals("Pause queued no Stop", 0, runBlocking { app.changes.unsentCount.first() })
-                compose.waitUntil("paused display matches the server's total", 5_000) { parseDuration(elapsedText()) == paused.seconds }
+                compose.waitUntil(
+                    "paused display matches the server's total",
+                    5_000,
+                ) { parseDuration(elapsedText()) == paused.seconds }
                 // The paused state took the running entry out of the cache, and the one refresh
                 // that brings it back stopped writes the cache after its last request.
                 compose.waitUntil("the refresh after Pause brings the entry back stopped", 10_000) {
@@ -381,7 +451,11 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
                 clock.at = clock.at.plusSeconds(3_600)
                 compose.mainClock.advanceTimeBy(2_000)
                 assertEquals(paused.seconds, parseDuration(elapsedText()))
-                assertEquals("frozen display adds no requests: ${requests.lines.drop(linesBeforePause)}", frozenRequests, requests.count)
+                assertEquals(
+                    "frozen display adds no requests: ${requests.lines.drop(linesBeforePause)}",
+                    frozenRequests,
+                    requests.count,
+                )
                 assertEquals(paused.target, shownTarget())
                 assertTrue(requests.failures.isEmpty())
             }
@@ -398,8 +472,18 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             compose.onNodeWithText(context.getString(TimerR.string.entry_form_edit_running)).assertExists()
             val row = (fixture.shown() as TimerControls.Running).entry
             val client = fixture.account.client
-            client.send("PATCH", client.server.api("workspaces", fixture.account.workspaceId.toString(), "time_entries", row.id.toString(), "stop"),
-                buildJsonObject { put("stop", Instant.now().toString()) }, ServerTimeEntry.serializer()).orFail("external Stop from editor")
+            client.send(
+                "PATCH",
+                client.server.api(
+                    "workspaces",
+                    fixture.account.workspaceId.toString(),
+                    "time_entries",
+                    row.id.toString(),
+                    "stop",
+                ),
+                buildJsonObject { put("stop", Instant.now().toString()) },
+                ServerTimeEntry.serializer(),
+            ).orFail("external Stop from editor")
             fixture.refresh()
             awaitIdle()
             compose.awaitTimerPage()
@@ -451,23 +535,44 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
     /** Waits until the timer's notice [message] shows, then until it has gone, so the next one is new. */
     private fun awaitNotice(message: Int) {
         val text = context.getString(message)
-        compose.waitUntil("the notice \"$text\" shows", 10_000) { compose.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
-        compose.waitUntil("the notice \"$text\" goes", 15_000) { compose.onAllNodesWithText(text).fetchSemanticsNodes().isEmpty() }
+        compose.waitUntil(
+            "the notice \"$text\" shows",
+            10_000,
+        ) { compose.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
+        compose.waitUntil(
+            "the notice \"$text\" goes",
+            15_000,
+        ) { compose.onAllNodesWithText(text).fetchSemanticsNodes().isEmpty() }
     }
 
     private fun chooseView(view: TimerView) {
-        compose.onNode(isSelectable() and hasText(context.getString(view.label))).performSemanticsAction(SemanticsActions.OnClick)
+        compose.onNode(
+            isSelectable() and hasText(context.getString(view.label)),
+        ).performSemanticsAction(SemanticsActions.OnClick)
         compose.onNode(isSelectable() and hasText(context.getString(view.label))).assertIsSelected()
     }
     private fun openFocused() {
-        compose.onNodeWithText(context.getString(TimerR.string.timer_open_fullscreen)).performSemanticsAction(SemanticsActions.OnClick)
+        compose.onNodeWithText(
+            context.getString(TimerR.string.timer_open_fullscreen),
+        ).performSemanticsAction(SemanticsActions.OnClick)
         awaitFocused()
     }
     private fun awaitFocused() {
-        compose.waitUntil("fullscreen route", 5_000) { compose.onAllNodesWithTag("fullscreen_timer").fetchSemanticsNodes().size == 1 }
+        compose.waitUntil(
+            "fullscreen route",
+            5_000,
+        ) { compose.onAllNodesWithTag("fullscreen_timer").fetchSemanticsNodes().size == 1 }
     }
     private fun focusedButton(label: Int) = compose.onNode(
-        (if (label == TimerR.string.timer_focused_edit) hasContentDescription(context.getString(label)) else hasText(context.getString(label))) and
+        (
+            if (label == TimerR.string.timer_focused_edit) {
+                hasContentDescription(
+                    context.getString(label),
+                )
+            } else {
+                hasText(context.getString(label))
+            }
+            ) and
             hasClickAction() and hasAnyAncestor(hasTestTag("fullscreen_timer")),
     )
 
@@ -477,23 +582,46 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
      */
     private fun assertActions(running: Boolean) {
         compose.waitUntil("shared focused controls settle", 5_000) {
-            compose.onAllNodes(hasText(context.getString(if (running) SharedR.string.timer_pause else SharedR.string.timer_resume)) and hasClickAction()).fetchSemanticsNodes().size == 1
+            compose.onAllNodes(
+                hasText(
+                    context.getString(if (running) SharedR.string.timer_pause else SharedR.string.timer_resume),
+                ) and hasClickAction(),
+            ).fetchSemanticsNodes().size == 1
         }
         focusedButton(if (running) SharedR.string.timer_pause else SharedR.string.timer_resume).assertExists()
-        compose.onNode(hasText(context.getString(if (running) SharedR.string.timer_resume else SharedR.string.timer_pause)) and hasClickAction()).assertDoesNotExist()
+        compose.onNode(
+            hasText(
+                context.getString(if (running) SharedR.string.timer_resume else SharedR.string.timer_pause),
+            ) and hasClickAction(),
+        ).assertDoesNotExist()
         focusedButton(SharedR.string.timer_stop).assertExists()
-        if (running) focusedButton(TimerR.string.timer_focused_edit).assertExists() else focusedButton(TimerR.string.timer_focused_edit).assertDoesNotExist()
+        if (running) {
+            focusedButton(
+                TimerR.string.timer_focused_edit,
+            ).assertExists()
+        } else {
+            focusedButton(TimerR.string.timer_focused_edit).assertDoesNotExist()
+        }
         focusedButton(TimerR.string.timer_exit_fullscreen).assertExists()
-        compose.onAllNodes(hasClickAction() and hasAnyAncestor(hasTestTag("fullscreen_timer"))).assertCountEquals(if (running) 4 else 3)
+        compose.onAllNodes(
+            hasClickAction() and hasAnyAncestor(hasTestTag("fullscreen_timer")),
+        ).assertCountEquals(if (running) 4 else 3)
     }
-    private fun elapsedText(): String = compose.onNodeWithTag("fullscreen_elapsed").fetchSemanticsNode().config[SemanticsProperties.Text]
+    private fun elapsedText(): String = compose.onNodeWithTag(
+        "fullscreen_elapsed",
+    ).fetchSemanticsNode().config[SemanticsProperties.Text]
         .joinToString("") { it.text }
-    private fun scrollPositions(): List<Float> = compose.onAllNodes(hasScrollAction(), useUnmergedTree = true).fetchSemanticsNodes()
+    private fun scrollPositions(): List<Float> = compose.onAllNodes(
+        hasScrollAction(),
+        useUnmergedTree = true,
+    ).fetchSemanticsNodes()
         .mapNotNull { it.config.getOrNull(SemanticsProperties.VerticalScrollAxisRange)?.value?.invoke() }
     private fun resumedActivity(): MainActivity? {
         var result: MainActivity? = null
         instrumentation.runOnMainSync {
-            result = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED).filterIsInstance<MainActivity>().singleOrNull()
+            result = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(
+                Stage.RESUMED,
+            ).filterIsInstance<MainActivity>().singleOrNull()
         }
         return result
     }

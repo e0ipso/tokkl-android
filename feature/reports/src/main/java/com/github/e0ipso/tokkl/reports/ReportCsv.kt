@@ -35,6 +35,7 @@ data class ReportCsvRequest(
                 put("grouping", "projects")
                 put("sub_grouping", "projects")
             }
+
             ReportCsvKind.DETAILED -> {
                 put("sort", "date")
                 put("dir", "desc")

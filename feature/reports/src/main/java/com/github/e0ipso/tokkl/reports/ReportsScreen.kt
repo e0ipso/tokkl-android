@@ -175,11 +175,13 @@ fun ReportsContent(
         }
         when (exportState) {
             ReportExportState.Preparing -> Loading(stringResource(R.string.reports_export_preparing))
+
             is ReportExportState.Failed -> when {
                 exportState.noTargets -> ErrorBanner(stringResource(R.string.reports_export_no_targets))
                 exportState.error != null -> Failure(reportFailureOf(exportState.error), onExport)
                 else -> ErrorBanner(stringResource(R.string.reports_export_failed))
             }
+
             else -> Unit
         }
         Spacer(Modifier.height(TokklTheme.spacing.betweenGroups))
@@ -270,7 +272,9 @@ private fun ReportTabs(selected: ReportTab, onTab: (ReportTab) -> Unit) {
     BoxWithConstraints {
         val share = maxWidth / labels.size
         val fit = labels.all { label ->
-            val width = with(density) { measurer.measure(label, style, softWrap = false, maxLines = 1).size.width.toDp() }
+            val width = with(
+                density,
+            ) { measurer.measure(label, style, softWrap = false, maxLines = 1).size.width.toDp() }
             // Material pads a tab's text by 16dp on each side, the spacing scale's space4.
             width + TokklTheme.spacing.space4 * 2 <= share
         }
@@ -278,7 +282,12 @@ private fun ReportTabs(selected: ReportTab, onTab: (ReportTab) -> Unit) {
         if (fit) {
             PrimaryTabRow(selectedTabIndex = selected.ordinal, containerColor = background, tabs = tabs)
         } else {
-            PrimaryScrollableTabRow(selectedTabIndex = selected.ordinal, containerColor = background, edgePadding = 0.dp, tabs = tabs)
+            PrimaryScrollableTabRow(
+                selectedTabIndex = selected.ordinal,
+                containerColor = background,
+                edgePadding = 0.dp,
+                tabs = tabs,
+            )
         }
     }
 }

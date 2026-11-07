@@ -10,10 +10,6 @@ import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountRefreshListener
 import com.github.e0ipso.tokkl.session.AccountRefreshed
 import com.github.e0ipso.tokkl.session.SignOutOrder
-import java.time.Clock
-import java.time.Duration
-import java.time.Instant
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
@@ -24,6 +20,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
+import java.time.Clock
+import java.time.Duration
+import java.time.Instant
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Sends the queue to the configured server, oldest change first (docs/PRD.md O1). A failure the
@@ -83,7 +83,8 @@ class ChangeSender(
     private val clock: Clock = Clock.systemUTC(),
     private val spans: ServerSpans = ServerSpans.Unsnapped,
     private val allDay: () -> Boolean = { false },
-) : AccountRefreshListener, AccountDataOwner {
+) : AccountRefreshListener,
+    AccountDataOwner {
 
     override val signOutOrder = SignOutOrder.CHANGE_SENDER
 
@@ -279,10 +280,12 @@ class ChangeSender(
             when (val result = send(api, queued)) {
                 // Undo took the delete back before it went out.
                 null -> Unit
+
                 is ApiResult.Success -> {
                     store.sent(result.value.change, result.value.serverId, result.value.entry)
                     sent++
                 }
+
                 is ApiResult.Failure -> {
                     val error = result.error
                     if (error is ApiError.RateLimited) {
@@ -299,25 +302,31 @@ class ChangeSender(
                         is Refusal.Wait -> {
                             val waiting = refused.error
                             if (waiting is ApiError.RateLimited) {
-                                val until = clock.instant().plusSeconds(waiting.retryAfterSeconds ?: DEFAULT_RETRY_AFTER.seconds)
+                                val until = clock.instant().plusSeconds(
+                                    waiting.retryAfterSeconds ?: DEFAULT_RETRY_AFTER.seconds,
+                                )
                                 retryAt = until
                                 return Outcome.Waiting(sent, until)
                             }
                             return Outcome.Stopped(sent, waiting)
                         }
+
                         Refusal.SignInAgain -> {
                             mutableSignInNeeded.value = true
                             return Outcome.Stopped(sent, ApiError.AuthFailed)
                         }
+
                         Refusal.AlreadyDone -> {
                             store.sent(queued, queued.entryId, answer = null)
                             sent++
                         }
+
                         Refusal.EntryGone -> {
                             val discarded = store.discardEntry(queued)
                             sent += discarded
                             if (discarded > 0) onDiscarded(discarded)
                         }
+
                         is Refusal.Hold -> store.hold(queued, refused.reason)
                     }
                 }
@@ -374,15 +383,28 @@ class ChangeSender(
                 store.restored(serverId, result.value.toCached())
                 UndoOutcome.Restored
             }
+
             is ApiResult.Failure -> when (val error = result.error) {
                 // A 2xx: the server restored it, in an answer the phone cannot read.
                 is ApiError.InvalidResponse -> {
                     store.restored(serverId, answer = null)
                     UndoOutcome.Restored
                 }
+
                 is ApiError.Network, is ApiError.RateLimited, is ApiError.TrustRefused -> UndoOutcome.NeedsServer
-                is ApiError.UnexpectedStatus -> if (error.status in PROXY_UNREACHABLE) UndoOutcome.NeedsServer else UndoOutcome.Failed(error.status)
+
+                is ApiError.UnexpectedStatus -> if (error.status in
+                    PROXY_UNREACHABLE
+                ) {
+                    UndoOutcome.NeedsServer
+                } else {
+                    UndoOutcome.Failed(
+                        error.status,
+                    )
+                }
+
                 ApiError.AuthFailed -> UndoOutcome.Failed(ApiError.AuthFailed.status)
+
                 is ApiError.HostNotAllowed -> UndoOutcome.Failed(status = null)
             }
         }

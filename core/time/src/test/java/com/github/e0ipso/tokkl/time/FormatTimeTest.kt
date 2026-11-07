@@ -4,13 +4,13 @@
 // writes 12 for hour 0 and hour 12.
 package com.github.e0ipso.tokkl.time
 
-import java.time.Instant
-import java.time.ZoneId
-import java.time.ZoneOffset
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.Instant
+import java.time.ZoneId
+import java.time.ZoneOffset
 
 class FormatTimeTest {
 

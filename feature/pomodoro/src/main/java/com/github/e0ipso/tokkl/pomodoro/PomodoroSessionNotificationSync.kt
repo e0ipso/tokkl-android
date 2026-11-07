@@ -3,9 +3,6 @@ package com.github.e0ipso.tokkl.pomodoro
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.timerstate.SessionActions
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
-import java.io.IOException
-import java.util.UUID
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
@@ -13,6 +10,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.io.IOException
+import java.util.UUID
+import kotlin.coroutines.CoroutineContext
 
 /**
  * The session notification of the server's Pomodoro session, from the held timer state, and its
@@ -46,6 +46,7 @@ class PomodoroSessionNotificationSync internal constructor(
     private var display: PomodoroNotificationDisplay? = null
     private var loaded = false
     private var job: Job? = null
+
     @Volatile private var retired = false
 
     @Synchronized fun start() {
@@ -84,7 +85,9 @@ class PomodoroSessionNotificationSync internal constructor(
                 display = null
                 loaded = true
                 remove()
-                try { save(null) } catch (_: IOException) { /* Try again on an ordinary emission. */ }
+                try {
+                    save(null)
+                } catch (_: IOException) { /* Try again on an ordinary emission. */ }
                 return@withState
             }
             val state = readDisplay()
@@ -124,12 +127,19 @@ class PomodoroSessionNotificationSync internal constructor(
 
     /** Fence first, await collectors, and erase display identity before cache clearing. */
     suspend fun forget() {
-        val observer = synchronized(this) { retired = true; job }
+        val observer = synchronized(this) {
+            retired = true
+            job
+        }
         observer?.cancelAndJoin()
         lock.withLock {
             display = null
             loaded = true
-            try { remove() } finally { save(null) }
+            try {
+                remove()
+            } finally {
+                save(null)
+            }
         }
     }
 }

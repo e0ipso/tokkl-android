@@ -12,7 +12,6 @@ import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.catalog.toServerProblem
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.entryfields.entryLabels
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,6 +22,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.coroutines.CoroutineContext
 
 /** One favorite as the Timer page shows it: what a tap starts, and its project's and task's names. */
 data class FavoriteItem(val fields: EntryFields, val labels: EntryLabels)
@@ -75,14 +75,28 @@ class FavoritesViewModel(
     private val save: (List<EntryFields>) -> ApiResult<Unit>,
     scope: CoroutineScope,
     private val io: CoroutineContext,
-) : ViewModel(scope), TemplateAdder {
+) : ViewModel(scope),
+    TemplateAdder {
 
     private val local = MutableStateFlow(Local())
 
-    val state: StateFlow<FavoritesState> = combine(available, favorites, projects, tasks, local) { shown, rows, projectRows, taskRows, edits ->
+    val state: StateFlow<FavoritesState> = combine(
+        available,
+        favorites,
+        projects,
+        tasks,
+        local,
+    ) { shown, rows, projectRows, taskRows, edits ->
         FavoritesState(
             available = shown,
-            favorites = rows.map { row -> row.fields().let { FavoriteItem(it, entryLabels(it, projectRows, taskRows)) } },
+            favorites = rows.map { row ->
+                row.fields().let {
+                    FavoriteItem(
+                        it,
+                        entryLabels(it, projectRows, taskRows),
+                    )
+                }
+            },
             saving = edits.saving,
             problem = edits.problem,
         )
@@ -111,7 +125,10 @@ class FavoritesViewModel(
         if (index !in list.indices || other !in list.indices) {
             list
         } else {
-            list.toMutableList().also { it[index] = list[other]; it[other] = list[index] }
+            list.toMutableList().also {
+                it[index] = list[other]
+                it[other] = list[index]
+            }
         }
     }
 

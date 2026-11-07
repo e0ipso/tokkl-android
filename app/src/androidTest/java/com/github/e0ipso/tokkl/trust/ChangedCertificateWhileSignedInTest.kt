@@ -11,7 +11,6 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.core.shared.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.TokklTestServer
@@ -19,6 +18,7 @@ import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.core.shared.R
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import kotlinx.serialization.json.JsonObject
@@ -46,7 +46,9 @@ class ChangedCertificateWhileSignedInTest {
     val rules: RuleChain = RuleChain.outerRule(SessionRule())
         .around(object : ExternalResource() {
             override fun before() {
-                ServerTrustStore(context).pinCertificate(ServerCertificate(endpoint.host, endpoint.port, OLD_SHA256, subject = ""))
+                ServerTrustStore(
+                    context,
+                ).pinCertificate(ServerCertificate(endpoint.host, endpoint.port, OLD_SHA256, subject = ""))
                 Session(context).save(TokklTestServer.tlsUrl, TokklTestServer.apiToken)
             }
         })
@@ -66,7 +68,9 @@ class ChangedCertificateWhileSignedInTest {
 
         awaitGone(hasText(string(R.string.sign_in_certificate_changed_title)), "the prompt closes")
         assertEquals(newSha256, ServerTrustStore(context).pinnedSha256(endpoint.host, endpoint.port))
-        val body = (me() as? ApiResult.Success)?.value ?: throw AssertionError("GET /api/v9/me still fails after the user trusted the certificate")
+        val body = (me() as? ApiResult.Success)?.value ?: throw AssertionError(
+            "GET /api/v9/me still fails after the user trusted the certificate",
+        )
         assertEquals(TokklTestServer.email, body.getValue("email").jsonPrimitive.content)
     }
 
@@ -79,7 +83,10 @@ class ChangedCertificateWhileSignedInTest {
 
         awaitNode(hasText(string(R.string.trust_refused_certificate)), "the notice shows")
         assertEquals(
-            ApiError.UntrustedCertificate(ServerCertificate(endpoint.host, endpoint.port, newSha256, SUBJECT), changed = true),
+            ApiError.UntrustedCertificate(
+                ServerCertificate(endpoint.host, endpoint.port, newSha256, SUBJECT),
+                changed = true,
+            ),
             (me() as? ApiResult.Failure)?.error,
         )
         assertEquals(OLD_SHA256, ServerTrustStore(context).pinnedSha256(endpoint.host, endpoint.port))
@@ -96,11 +103,17 @@ class ChangedCertificateWhileSignedInTest {
     }
 
     private fun awaitGone(matcher: SemanticsMatcher, what: String) {
-        composeRule.waitUntil(what, NETWORK_TIMEOUT_MS) { composeRule.onAllNodes(matcher).fetchSemanticsNodes().isEmpty() }
+        composeRule.waitUntil(
+            what,
+            NETWORK_TIMEOUT_MS,
+        ) { composeRule.onAllNodes(matcher).fetchSemanticsNodes().isEmpty() }
     }
 
     private fun awaitNode(matcher: SemanticsMatcher, what: String) {
-        composeRule.waitUntil(what, NETWORK_TIMEOUT_MS) { composeRule.onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty() }
+        composeRule.waitUntil(
+            what,
+            NETWORK_TIMEOUT_MS,
+        ) { composeRule.onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty() }
     }
 
     private fun string(@StringRes id: Int): String = context.getString(id)

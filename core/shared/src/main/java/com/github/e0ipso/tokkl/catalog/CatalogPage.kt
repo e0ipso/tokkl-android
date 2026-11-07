@@ -106,7 +106,10 @@ fun CatalogPage(
         if (lazyContent != null) {
             LazyColumn(
                 modifier = body.screenContent(),
-                contentPadding = PaddingValues(top = TokklTheme.spacing.underTopBar, bottom = TokklTheme.spacing.space2),
+                contentPadding = PaddingValues(
+                    top = TokklTheme.spacing.underTopBar,
+                    bottom = TokklTheme.spacing.space2,
+                ),
                 content = {
                     lazyContent()
                     item(key = "catalog-navigation-inset") { Spacer(Modifier.navigationBarsPadding()) }

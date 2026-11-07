@@ -44,17 +44,6 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.window.DialogWindowProvider
 import androidx.core.view.WindowCompat
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.feature.clients.R as ClientsR
-import com.github.e0ipso.tokkl.core.data.R as DataR
-import com.github.e0ipso.tokkl.feature.pomodoro.R as PomodoroR
-import com.github.e0ipso.tokkl.feature.projects.R as ProjectsR
-import com.github.e0ipso.tokkl.feature.reports.R as ReportsR
-import com.github.e0ipso.tokkl.feature.settings.R as SettingsR
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
-import com.github.e0ipso.tokkl.feature.tags.R as TagsR
-import com.github.e0ipso.tokkl.feature.timer.R as TimerR
-import com.github.e0ipso.tokkl.feature.trash.R as TrashR
-import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.navigation.TopLevelPage
 import com.github.e0ipso.tokkl.ui.theme.FrameWidth
 import com.github.e0ipso.tokkl.ui.theme.SectionHue
@@ -65,6 +54,17 @@ import com.github.e0ipso.tokkl.ui.theme.TokklNavigationRailItem
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.navigationBarLabelWeight
 import kotlinx.coroutines.launch
+import com.github.e0ipso.tokkl.core.data.R as DataR
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
+import com.github.e0ipso.tokkl.feature.clients.R as ClientsR
+import com.github.e0ipso.tokkl.feature.pomodoro.R as PomodoroR
+import com.github.e0ipso.tokkl.feature.projects.R as ProjectsR
+import com.github.e0ipso.tokkl.feature.reports.R as ReportsR
+import com.github.e0ipso.tokkl.feature.settings.R as SettingsR
+import com.github.e0ipso.tokkl.feature.tags.R as TagsR
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
+import com.github.e0ipso.tokkl.feature.trash.R as TrashR
 
 /** The page's label in the bar, the rail and the More sheet. */
 @get:StringRes
@@ -196,7 +196,12 @@ fun AppNavigationRail(
 }
 
 /** An item of the bar or the rail: a [page], or More when [page] is null. */
-private class NavigationItem(val page: TopLevelPage?, val label: String, @param:DrawableRes val icon: Int, val runningLabel: String) {
+private class NavigationItem(
+    val page: TopLevelPage?,
+    val label: String,
+    @param:DrawableRes val icon: Int,
+    val runningLabel: String,
+) {
     /** The hue of the item's indicator: its page's, or for More the hue of the pages on the sheet. */
     val hue: SectionHue get() = page?.hue ?: SectionHues.more
 
@@ -221,7 +226,14 @@ private fun navigationItems(hidden: Set<TopLevelPage>): List<NavigationItem> {
     val running = stringResource(R.string.nav_timer_running)
     val pomodoroRunning = stringResource(R.string.nav_pomodoro_running)
     val pages = TopLevelPage.entries.filterNot { it.inMore || it in hidden }
-        .map { NavigationItem(it, stringResource(it.label), it.icon, if (it == TopLevelPage.POMODORO) pomodoroRunning else running) }
+        .map {
+            NavigationItem(
+                it,
+                stringResource(it.label),
+                it.icon,
+                if (it == TopLevelPage.POMODORO) pomodoroRunning else running,
+            )
+        }
     return pages + NavigationItem(null, stringResource(R.string.nav_more), TimerR.drawable.ic_nav_more, running)
 }
 
@@ -229,7 +241,15 @@ private fun navigationItems(hidden: Set<TopLevelPage>): List<NavigationItem> {
 @Composable
 private fun ItemIcon(item: NavigationItem, current: TopLevelPage, timerRunning: Boolean, pomodoroRunning: Boolean) {
     val icon = @Composable { Icon(painterResource(item.icon), contentDescription = null) }
-    if (item.dot(timerRunning, pomodoroRunning)) BadgedBox(badge = { RunningDot(item.selected(current), item.hue) }, content = { icon() }) else icon()
+    if (item.dot(
+            timerRunning,
+            pomodoroRunning,
+        )
+    ) {
+        BadgedBox(badge = { RunningDot(item.selected(current), item.hue) }, content = { icon() })
+    } else {
+        icon()
+    }
 }
 
 /**
@@ -249,7 +269,12 @@ private fun RunningDot(selected: Boolean, hue: SectionHue) {
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun MoreSheet(current: TopLevelPage, hidden: Set<TopLevelPage>, onOpen: (TopLevelPage) -> Unit, onClose: () -> Unit) {
+private fun MoreSheet(
+    current: TopLevelPage,
+    hidden: Set<TopLevelPage>,
+    onOpen: (TopLevelPage) -> Unit,
+    onClose: () -> Unit,
+) {
     val pages = TopLevelPage.entries.filter { it.inMore && it !in hidden }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
@@ -267,7 +292,10 @@ private fun MoreSheet(current: TopLevelPage, hidden: Set<TopLevelPage>, onOpen: 
             ),
         ) {
             // The heading starts where the items' icons do.
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = TokklTheme.spacing.space4)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(start = TokklTheme.spacing.space4),
+            ) {
                 Text(
                     text = stringResource(R.string.nav_more),
                     style = TokklTheme.sectionHeadingTextStyle,
@@ -276,7 +304,10 @@ private fun MoreSheet(current: TopLevelPage, hidden: Set<TopLevelPage>, onOpen: 
                         .semantics { heading() },
                 )
                 IconButton(onClick = hide) {
-                    Icon(painterResource(UiR.drawable.ic_close), contentDescription = stringResource(R.string.nav_more_close))
+                    Icon(
+                        painterResource(UiR.drawable.ic_close),
+                        contentDescription = stringResource(R.string.nav_more_close),
+                    )
                 }
             }
             Column(
@@ -303,7 +334,15 @@ private fun MoreSheet(current: TopLevelPage, hidden: Set<TopLevelPage>, onOpen: 
                             hide()
                         },
                         // The active item's outline, as the bar's indicator has one.
-                        modifier = if (selected) Modifier.border(FrameWidth, MaterialTheme.colorScheme.outline, shape) else Modifier,
+                        modifier = if (selected) {
+                            Modifier.border(
+                                FrameWidth,
+                                MaterialTheme.colorScheme.outline,
+                                shape,
+                            )
+                        } else {
+                            Modifier
+                        },
                         shape = shape,
                         colors = TokklNavigationBarDefaults.moreItemColors(page.hue),
                     )

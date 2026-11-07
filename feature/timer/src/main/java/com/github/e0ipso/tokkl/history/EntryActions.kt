@@ -17,8 +17,6 @@ import com.github.e0ipso.tokkl.favorites.FavoritesProblem
 import com.github.e0ipso.tokkl.favorites.TemplateAdder
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.SnappedSpan
-import java.time.Clock
-import java.time.ZoneId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,6 +25,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.Clock
+import java.time.ZoneId
 
 /**
  * A message the history shows about the last action on an entry. [serial] tells two equal
@@ -90,7 +90,11 @@ data class SplitDialog(
  * @property notice the message to show, until it is dismissed or acted on.
  * @property split the open split dialog.
  */
-data class EntryActionsState(val confirmDelete: Long? = null, val notice: EntryNotice? = null, val split: SplitDialog? = null)
+data class EntryActionsState(
+    val confirmDelete: Long? = null,
+    val notice: EntryNotice? = null,
+    val split: SplitDialog? = null,
+)
 
 /**
  * The actions on an entry in the history (docs/PRD.md H3 and H5). Delete goes through the change queue,
@@ -176,7 +180,9 @@ class EntryActionsViewModel(
                         mutableReconciliation.update { it + (entryId to restored) }
                         null
                     }
+
                     UndoOutcome.NeedsServer -> EntryNotice.UndoNeedsServer(++serial, entryId)
+
                     is UndoOutcome.Failed -> EntryNotice.UndoFailed(++serial, outcome.status)
                 }
                 mutableState.update { if (it.notice == offered) it.copy(notice = notice) else it }
@@ -243,7 +249,9 @@ class EntryActionsViewModel(
             templates.add(source.fields()) { problem ->
                 val notice = when (problem) {
                     null -> EntryNotice.Pinned(++serial)
+
                     FavoritesProblem.Full -> EntryNotice.PinFull(++serial)
+
                     is FavoritesProblem.Server -> if (problem.problem == ServerProblem.Unreachable) {
                         EntryNotice.PinNeedsServer(++serial)
                     } else {
@@ -259,7 +267,9 @@ class EntryActionsViewModel(
     fun setSplitText(text: String) {
         mutableState.update { state ->
             val dialog = state.split ?: return@update state
-            state.copy(split = dialog.copy(text = text, halves = splitOf(dialog.source, text) as? SplitHalves, problem = null))
+            state.copy(
+                split = dialog.copy(text = text, halves = splitOf(dialog.source, text) as? SplitHalves, problem = null),
+            )
         }
     }
 
@@ -284,7 +294,15 @@ class EntryActionsViewModel(
                 return@launch
             }
             if (result !is SplitHalves) {
-                mutableState.update { if (it.split == dialog) it.copy(split = dialog.copy(halves = null, problem = result as SplitProblem)) else it }
+                mutableState.update {
+                    if (it.split == dialog) {
+                        it.copy(
+                            split = dialog.copy(halves = null, problem = result as SplitProblem),
+                        )
+                    } else {
+                        it
+                    }
+                }
                 return@launch
             }
             mutableState.update { if (it.split == dialog) it.copy(split = null) else it }

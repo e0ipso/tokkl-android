@@ -5,8 +5,6 @@ import com.github.e0ipso.tokkl.api.ServerTrust
 import com.github.e0ipso.tokkl.api.TrustListener
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.SignOutOrder
-import java.io.IOException
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,6 +12,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.IOException
+import kotlin.coroutines.CoroutineContext
 
 /**
  * The trust refusals of the signed-in session's requests, which the
@@ -39,7 +39,8 @@ class SessionTrust(
     private val retry: () -> Unit,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
-) : TrustListener, AccountDataOwner {
+) : TrustListener,
+    AccountDataOwner {
 
     override val signOutOrder = SignOutOrder.SESSION_TRUST
 
@@ -56,7 +57,16 @@ class SessionTrust(
     val state: StateFlow<State> = mutableState.asStateFlow()
 
     override fun refused(refusal: ApiError.TrustRefused) {
-        mutableState.update { if (it.refusal == refusal) it else State(refusal, promptOpen = refusal is ApiError.TrustQuestion) }
+        mutableState.update {
+            if (it.refusal == refusal) {
+                it
+            } else {
+                State(
+                    refusal,
+                    promptOpen = refusal is ApiError.TrustQuestion,
+                )
+            }
+        }
     }
 
     override fun answered() {

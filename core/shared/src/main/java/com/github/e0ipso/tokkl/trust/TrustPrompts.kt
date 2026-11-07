@@ -26,10 +26,10 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.window.DialogProperties
-import com.github.e0ipso.tokkl.core.shared.R
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.ServerUrl
+import com.github.e0ipso.tokkl.core.shared.R
 import com.github.e0ipso.tokkl.ui.CheckboxOptionRow
 import com.github.e0ipso.tokkl.ui.StickerCard
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
@@ -43,7 +43,13 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 fun TrustPrompt(refusal: ApiError.TrustQuestion, onAccept: () -> Unit, onCancel: () -> Unit) {
     when (refusal) {
         is ApiError.CleartextNotConfirmed -> CleartextWarning(refusal.server, onConfirm = onAccept, onCancel = onCancel)
-        is ApiError.UntrustedCertificate -> CertificatePrompt(refusal.certificate, refusal.changed, onTrust = onAccept, onCancel = onCancel)
+
+        is ApiError.UntrustedCertificate -> CertificatePrompt(
+            refusal.certificate,
+            refusal.changed,
+            onTrust = onAccept,
+            onCancel = onCancel,
+        )
     }
 }
 
@@ -124,7 +130,12 @@ fun CleartextWarning(server: ServerUrl, onConfirm: () -> Unit, onCancel: () -> U
             }
         },
         confirmButton = {
-            TrustActions(risky = R.string.sign_in_http_warning_continue, riskyEnabled = understood, onRisky = onConfirm, onCancel = onCancel)
+            TrustActions(
+                risky = R.string.sign_in_http_warning_continue,
+                riskyEnabled = understood,
+                onRisky = onConfirm,
+                onCancel = onCancel,
+            )
         },
     )
 }
@@ -138,13 +149,21 @@ fun CleartextWarning(server: ServerUrl, onConfirm: () -> Unit, onCancel: () -> U
  */
 @Composable
 fun CertificatePrompt(certificate: ServerCertificate, changed: Boolean, onTrust: () -> Unit, onCancel: () -> Unit) {
-    val server = if (':' in certificate.host) "[${certificate.host}]:${certificate.port}" else "${certificate.host}:${certificate.port}"
+    val server = if (':' in
+        certificate.host
+    ) {
+        "[${certificate.host}]:${certificate.port}"
+    } else {
+        "${certificate.host}:${certificate.port}"
+    }
     AlertDialog(
         onDismissRequest = {},
         properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false),
         title = {
             Text(
-                text = stringResource(if (changed) R.string.sign_in_certificate_changed_title else R.string.sign_in_certificate_title),
+                text = stringResource(
+                    if (changed) R.string.sign_in_certificate_changed_title else R.string.sign_in_certificate_title,
+                ),
                 modifier = Modifier.semantics { heading() },
             )
         },
@@ -154,19 +173,35 @@ fun CertificatePrompt(certificate: ServerCertificate, changed: Boolean, onTrust:
                 modifier = Modifier.verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.betweenGroups),
             ) {
-                Text(stringResource(if (changed) R.string.sign_in_certificate_changed_body else R.string.sign_in_certificate_body, server))
+                Text(
+                    stringResource(
+                        if (changed) R.string.sign_in_certificate_changed_body else R.string.sign_in_certificate_body,
+                        server,
+                    ),
+                )
                 Column(verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup)) {
-                    Text(stringResource(R.string.sign_in_certificate_fingerprint), style = MaterialTheme.typography.titleSmall)
+                    Text(
+                        stringResource(R.string.sign_in_certificate_fingerprint),
+                        style = MaterialTheme.typography.titleSmall,
+                    )
                     Text(certificate.displaySha256, style = TokklTheme.monospaceTextStyle)
                 }
                 Column(verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup)) {
-                    Text(stringResource(R.string.sign_in_certificate_subject), style = MaterialTheme.typography.titleSmall)
+                    Text(
+                        stringResource(R.string.sign_in_certificate_subject),
+                        style = MaterialTheme.typography.titleSmall,
+                    )
                     Text(certificate.subject)
                 }
             }
         },
         confirmButton = {
-            TrustActions(risky = R.string.sign_in_certificate_trust, riskyEnabled = true, onRisky = onTrust, onCancel = onCancel)
+            TrustActions(
+                risky = R.string.sign_in_certificate_trust,
+                riskyEnabled = true,
+                onRisky = onTrust,
+                onCancel = onCancel,
+            )
         },
     )
 }
@@ -189,4 +224,3 @@ private fun TrustActions(@StringRes risky: Int, riskyEnabled: Boolean, onRisky: 
         }
     }
 }
-

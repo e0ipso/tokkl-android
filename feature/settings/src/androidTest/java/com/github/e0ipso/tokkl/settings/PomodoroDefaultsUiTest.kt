@@ -28,13 +28,12 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.feature.settings.R
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
-import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
+import com.github.e0ipso.tokkl.feature.settings.R
 import com.github.e0ipso.tokkl.pomodoro.lengthCard
 import com.github.e0ipso.tokkl.pomodoro.lengthValue
+import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.ThemeSettings
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -47,23 +46,35 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 
 /** The same edits and assertions run at normal and largest font/display sizes in both themes. */
 @RunWith(Parameterized::class)
-class PomodoroDefaultsUiTest(private val fontScale: Float, private val largeDisplay: Boolean, private val dark: Boolean) {
+class PomodoroDefaultsUiTest(
+    private val fontScale: Float,
+    private val largeDisplay: Boolean,
+    private val dark: Boolean,
+) {
     private val compose = createAndroidComposeRule<ComponentActivity>()
-    @get:Rule val rules: RuleChain = RuleChain.outerRule(SystemFontScale(fontScale, largestDisplaySize = largeDisplay)).around(compose)
+
+    @get:Rule val rules: RuleChain = RuleChain.outerRule(
+        SystemFontScale(fontScale, largestDisplaySize = largeDisplay),
+    ).around(compose)
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private var defaults by mutableStateOf(PomodoroDefaults.DEFAULT)
     private var changes = 0
 
     @After
-    fun auditFinalState() { compose.checkAccessibility() }
+    fun auditFinalState() {
+        compose.checkAccessibility()
+    }
 
     @Test
     fun eachLabelledDefaultRefusesInvalidInputAndAcceptsBothBounds() {
         show(shared = true)
-        compose.onNode(hasText(string(R.string.settings_pomodoro)) and isHeading()).performScrollTo().assertIsDisplayed()
+        compose.onNode(
+            hasText(string(R.string.settings_pomodoro)) and isHeading(),
+        ).performScrollTo().assertIsDisplayed()
         compose.onNodeWithText(string(R.string.settings_pomodoro_shared)).performScrollTo().assertIsDisplayed()
         for (field in PomodoroDefaultField.entries) {
             open(field)
@@ -98,7 +109,10 @@ class PomodoroDefaultsUiTest(private val fontScale: Float, private val largeDisp
     fun cancelLeavesAllDefaultsAloneAndLocalAccountsExplainWhereTheyAreKept() {
         show(shared = false)
         compose.onNodeWithText(string(R.string.settings_pomodoro_local)).performScrollTo().assertIsDisplayed()
-        assertEquals(0, compose.onAllNodes(hasText(string(R.string.settings_pomodoro_shared))).fetchSemanticsNodes().size)
+        assertEquals(
+            0,
+            compose.onAllNodes(hasText(string(R.string.settings_pomodoro_shared))).fetchSemanticsNodes().size,
+        )
         for (field in PomodoroDefaultField.entries) {
             open(field)
             compose.lengthCard(string(field.cardLabel)).performScrollTo()
@@ -130,15 +144,21 @@ class PomodoroDefaultsUiTest(private val fontScale: Float, private val largeDisp
             TokklTheme(darkTheme = dark) {
                 SettingsContent(
                     settings = ThemeSettings(), onModeChange = {}, onDynamicColorChange = {},
-                    signOut = SignOutConfirmation.State(), onSignOut = {}, onConfirmSignOut = {}, onCancelSignOut = {}, onOpenLicences = {},
-                    pomodoro = defaults, pomodoroSharedWithWeb = shared, onPomodoroChange = { defaults = it; changes++ },
+                    signOut = SignOutConfirmation.State(), onSignOut = {
+                    }, onConfirmSignOut = {}, onCancelSignOut = {}, onOpenLicences = {},
+                    pomodoro = defaults, pomodoroSharedWithWeb = shared, onPomodoroChange = {
+                        defaults = it
+                        changes++
+                    },
                 )
             }
         }
     }
 
     private fun open(field: PomodoroDefaultField) {
-        compose.onNode(hasText(string(field.label)) and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
+        compose.onNode(
+            hasText(string(field.label)) and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button),
+        )
             .performScrollTo().assertIsDisplayed().assertHeightIsAtLeast(48.dp).performClick()
         compose.lengthCard(string(field.cardLabel)).assertIsDisplayed()
         compose.lengthValue(string(field.cardLabel)).assertTextEquals(field.value(defaults).toString())
@@ -150,7 +170,10 @@ class PomodoroDefaultsUiTest(private val fontScale: Float, private val largeDisp
 
     private fun readableVisibleText() {
         compose.checkAccessibility()
-        val nodes = compose.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsActions.GetTextLayoutResult), useUnmergedTree = true).fetchSemanticsNodes()
+        val nodes = compose.onAllNodes(
+            SemanticsMatcher.keyIsDefined(SemanticsActions.GetTextLayoutResult),
+            useUnmergedTree = true,
+        ).fetchSemanticsNodes()
         assertTrue("the editor has readable text", nodes.isNotEmpty())
         for (node in nodes) {
             if (node.boundsInRoot.height == 0f) continue
@@ -161,10 +184,13 @@ class PomodoroDefaultsUiTest(private val fontScale: Float, private val largeDisp
     }
 
     companion object {
-        @JvmStatic @Parameterized.Parameters(name = "font={0}, display={1}, dark={2}")
+        @JvmStatic
+        @Parameterized.Parameters(name = "font={0}, display={1}, dark={2}")
         fun configurations(): List<Array<Any>> = listOf(
-            arrayOf(1f, false, false), arrayOf(1f, false, true),
-            arrayOf(SystemFontScale.LARGEST, true, false), arrayOf(SystemFontScale.LARGEST, true, true),
+            arrayOf(1f, false, false),
+            arrayOf(1f, false, true),
+            arrayOf(SystemFontScale.LARGEST, true, false),
+            arrayOf(SystemFontScale.LARGEST, true, true),
         )
     }
 }

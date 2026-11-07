@@ -11,12 +11,12 @@ import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.EntryWithSendState
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
-import java.time.Duration
-import java.time.Instant
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.Duration
+import java.time.Instant
 
 /**
  * What the Timer page and the full-screen timer show for the cache's running entry and the
@@ -35,7 +35,13 @@ class TimerControlsTest {
         val shown = serverTimerControls(EntryWithSendState(running, unsent = true), held(revision = 3), timerApi = true)
 
         assertEquals(
-            TimerControls.Running(running, unsent = true, accumulatedSeconds = 0, target = TimerTarget.server(entryId = 42), pausable = true),
+            TimerControls.Running(
+                running,
+                unsent = true,
+                accumulatedSeconds = 0,
+                target = TimerTarget.server(entryId = 42),
+                pausable = true,
+            ),
             shown,
         )
     }
@@ -46,12 +52,20 @@ class TimerControlsTest {
         // The server's clock runs 20 s ahead of the phone's, and the server set the clone's start.
         val state = held(revision = 8, pause = pause(seconds = 600, cloneEntryId = 55), offset = Duration.ofSeconds(20))
 
-        val shown = serverTimerControls(EntryWithSendState(clone, unsent = false), state, timerApi = true) as TimerControls.Running
+        val shown = serverTimerControls(
+            EntryWithSendState(clone, unsent = false),
+            state,
+            timerApi = true,
+        ) as TimerControls.Running
 
         assertEquals(600L, shown.accumulatedSeconds)
         assertEquals(Duration.ofSeconds(20), shown.clockOffset)
         assertEquals(TimerTarget.server(entryId = 55), shown.target)
-        assertEquals("the stored seconds plus the clone's on the server's clock", 600L + 90 + 20, shown.seconds(start.plusSeconds(90)))
+        assertEquals(
+            "the stored seconds plus the clone's on the server's clock",
+            600L + 90 + 20,
+            shown.seconds(start.plusSeconds(90)),
+        )
     }
 
     @Test
@@ -59,28 +73,59 @@ class TimerControlsTest {
         // A Start queued on the phone that the server has not had yet shows over its chain.
         val started = entry(id = -9)
 
-        val overPaused = serverTimerControls(EntryWithSendState(started, unsent = true), held(revision = 8, pause = pause(600, cloneEntryId = null)), timerApi = true)
-        val overClone = serverTimerControls(EntryWithSendState(started, unsent = true), held(revision = 9, pause = pause(600, cloneEntryId = 55)), timerApi = true)
+        val overPaused = serverTimerControls(
+            EntryWithSendState(started, unsent = true),
+            held(revision = 8, pause = pause(600, cloneEntryId = null)),
+            timerApi = true,
+        )
+        val overClone = serverTimerControls(
+            EntryWithSendState(started, unsent = true),
+            held(revision = 9, pause = pause(600, cloneEntryId = 55)),
+            timerApi = true,
+        )
 
-        val expected = TimerControls.Running(started, unsent = true, accumulatedSeconds = 0, target = TimerTarget.server(entryId = -9), pausable = true)
+        val expected = TimerControls.Running(
+            started,
+            unsent = true,
+            accumulatedSeconds = 0,
+            target = TimerTarget.server(entryId = -9),
+            pausable = true,
+        )
         assertEquals("a timer started while paused", expected, overPaused)
         assertEquals("a timer that replaced the clone", expected, overClone)
     }
 
     @Test
     fun aPausedChainShowsTheServersFrozenSecondsAndWhatResumeStarts() {
-        val shown = serverTimerControls(running = null, held(revision = 12, pause = pause(seconds = 3_725, cloneEntryId = null)), timerApi = true)
+        val shown = serverTimerControls(
+            running = null,
+            held(revision = 12, pause = pause(seconds = 3_725, cloneEntryId = null)),
+            timerApi = true,
+        )
 
         assertEquals(
-            TimerControls.Paused(seconds = 3_725, workspaceId = 3, fields = kept, target = TimerTarget.server(revision = 12)),
+            TimerControls.Paused(
+                seconds = 3_725,
+                workspaceId = 3,
+                fields = kept,
+                target = TimerTarget.server(revision = 12),
+            ),
             shown,
         )
     }
 
     @Test
     fun aPausedTargetFollowsTheRevisionSoAnOlderOneActsOnNothing() {
-        val before = serverTimerControls(null, held(revision = 12, pause = pause(600, cloneEntryId = null)), timerApi = true) as TimerControls.Paused
-        val renamed = serverTimerControls(null, held(revision = 13, pause = pause(600, cloneEntryId = null)), timerApi = true) as TimerControls.Paused
+        val before = serverTimerControls(
+            null,
+            held(revision = 12, pause = pause(600, cloneEntryId = null)),
+            timerApi = true,
+        ) as TimerControls.Paused
+        val renamed = serverTimerControls(
+            null,
+            held(revision = 13, pause = pause(600, cloneEntryId = null)),
+            timerApi = true,
+        ) as TimerControls.Paused
 
         assertEquals(TimerTarget.server(revision = 12), before.target)
         assertEquals(TimerTarget.server(revision = 13), renamed.target)
@@ -89,7 +134,11 @@ class TimerControlsTest {
     @Test
     fun aChainWhoseCloneNoLongerRunsInTheCacheShowsNothing() {
         // The clone's Stop is queued on the phone, and the server has not ended the chain yet.
-        val shown = serverTimerControls(running = null, held(revision = 9, pause = pause(600, cloneEntryId = 55)), timerApi = true)
+        val shown = serverTimerControls(
+            running = null,
+            held(revision = 9, pause = pause(600, cloneEntryId = 55)),
+            timerApi = true,
+        )
 
         assertEquals(TimerControls.Idle, shown)
     }
@@ -105,8 +154,16 @@ class TimerControlsTest {
         val paused = held(revision = 4, pause = pause(600, cloneEntryId = null))
         val clone = held(revision = 5, pause = pause(600, cloneEntryId = 42))
 
-        assertEquals("a held pause counts for nothing", TimerControls.Idle, serverTimerControls(null, paused, timerApi = false))
-        val running = serverTimerControls(EntryWithSendState(entry(42), unsent = false), clone, timerApi = false) as TimerControls.Running
+        assertEquals(
+            "a held pause counts for nothing",
+            TimerControls.Idle,
+            serverTimerControls(null, paused, timerApi = false),
+        )
+        val running = serverTimerControls(
+            EntryWithSendState(entry(42), unsent = false),
+            clone,
+            timerApi = false,
+        ) as TimerControls.Running
         assertEquals("nor does a held clone's time", 0L, running.accumulatedSeconds)
         assertEquals(Duration.ZERO, running.clockOffset)
         assertFalse(running.pausable)
@@ -116,19 +173,33 @@ class TimerControlsTest {
     fun aPomodoroSessionHidesPause() {
         val session = held(revision = 6, pomodoro = pomodoro(entryId = 42))
 
-        val running = serverTimerControls(EntryWithSendState(entry(42), unsent = false), session, timerApi = true) as TimerControls.Running
+        val running = serverTimerControls(
+            EntryWithSendState(entry(42), unsent = false),
+            session,
+            timerApi = true,
+        ) as TimerControls.Running
 
         assertFalse("the server refuses Pause during a session", running.pausable)
         assertTrue(
             "outside a session it shows",
-            (serverTimerControls(EntryWithSendState(entry(42), unsent = false), held(revision = 7), timerApi = true) as TimerControls.Running).pausable,
+            (
+                serverTimerControls(
+                    EntryWithSendState(entry(42), unsent = false),
+                    held(revision = 7),
+                    timerApi = true,
+                ) as TimerControls.Running
+                ).pausable,
         )
     }
 
     @Test
     fun theClockNeverCountsBackBeforeTheClonesStart() {
         val state = held(revision = 8, pause = pause(600, cloneEntryId = 55), offset = Duration.ofSeconds(-40))
-        val shown = serverTimerControls(EntryWithSendState(entry(55), unsent = false), state, timerApi = true) as TimerControls.Running
+        val shown = serverTimerControls(
+            EntryWithSendState(entry(55), unsent = false),
+            state,
+            timerApi = true,
+        ) as TimerControls.Running
 
         assertEquals(600L, shown.seconds(start.plusSeconds(30)))
     }
@@ -156,7 +227,10 @@ class TimerControlsTest {
         val running = pause?.cloneEntryId?.let { id ->
             ServerTimeEntry(id = id, workspaceId = 3, description = kept.description, start = start.toString())
         }
-        return HeldTimerState(TimerState(revision, start.plus(offset), running, pause, pomodoro, discardedPomodoro = null), receivedAt = start)
+        return HeldTimerState(
+            TimerState(revision, start.plus(offset), running, pause, pomodoro, discardedPomodoro = null),
+            receivedAt = start,
+        )
     }
 
     private fun pause(seconds: Long, cloneEntryId: Long?) = TimerPause(

@@ -15,11 +15,6 @@ import androidx.compose.ui.unit.DpRect
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.feature.projects.R as ProjectsR
-import com.github.e0ipso.tokkl.feature.settings.R as SettingsR
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
-import com.github.e0ipso.tokkl.feature.sync.R as SyncR
-import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
 import com.github.e0ipso.tokkl.bottomBarItem
@@ -28,16 +23,21 @@ import com.github.e0ipso.tokkl.navigation.TopLevelPage
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import java.time.Clock
-import java.time.DayOfWeek
-import java.time.Instant
-import java.time.ZoneOffset
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.Clock
+import java.time.DayOfWeek
+import java.time.Instant
+import java.time.ZoneOffset
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.feature.projects.R as ProjectsR
+import com.github.e0ipso.tokkl.feature.settings.R as SettingsR
+import com.github.e0ipso.tokkl.feature.sync.R as SyncR
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 
 /**
  * The status element above the bottom bar at Android's largest font scale, 200%, with its longest
@@ -56,7 +56,9 @@ class SyncStatusFitTest {
 
     /** The font scale is set before the activity starts, so it never has to restart for it. */
     @get:Rule
-    val rules: RuleChain = RuleChain.outerRule(SystemFontScale(SystemFontScale.LARGEST, largestDisplaySize = true)).around(composeRule)
+    val rules: RuleChain = RuleChain.outerRule(
+        SystemFontScale(SystemFontScale.LARGEST, largestDisplaySize = true),
+    ).around(composeRule)
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
@@ -77,7 +79,11 @@ class SyncStatusFitTest {
         val count = context.resources.getQuantityString(SyncR.plurals.sync_unsent, STATUS.unsent, STATUS.unsent)
         // Four days before NOW, the line names the day.
         val answered = context.getString(SyncR.string.sync_last_answered_day, "Mon, 12 Oct 2026", "09:15")
-        val attention = context.resources.getQuantityString(SyncR.plurals.sync_needs_attention, STATUS.needsAttention, STATUS.needsAttention)
+        val attention = context.resources.getQuantityString(
+            SyncR.plurals.sync_needs_attention,
+            STATUS.needsAttention,
+            STATUS.needsAttention,
+        )
 
         composeRule.onNode(hasText(count) and hasText(answered)).assertIsDisplayed()
         val parts = listOf(
@@ -92,13 +98,20 @@ class SyncStatusFitTest {
             val box = node.getUnclippedBoundsInRoot()
             assertTrue("$name at $box leaves $window", box.inside(window))
         }
-        val bar = BAR_ITEMS.map { label -> "${context.getString(label)} item" to composeRule.onNode(bottomBarItem(label)) }
+        val bar = BAR_ITEMS.map { label ->
+            "${context.getString(
+                label,
+            )} item" to composeRule.onNode(bottomBarItem(label))
+        }
         assertNoOverlap(parts + bar)
 
         val button = composeRule.onNode(hasText(attention) and hasClickAction())
         val touch = button.fetchSemanticsNode().touchBoundsInRoot
         val (width, height) = with(composeRule.density) { touch.width.toDp() to touch.height.toDp() }
-        assertTrue("the button takes taps on $width by $height", width >= MIN_TOUCH_TARGET - SLACK && height >= MIN_TOUCH_TARGET - SLACK)
+        assertTrue(
+            "the button takes taps on $width by $height",
+            width >= MIN_TOUCH_TARGET - SLACK && height >= MIN_TOUCH_TARGET - SLACK,
+        )
         button.performClick()
         assertEquals("the button opens the list once", 1, opened)
     }
@@ -123,13 +136,19 @@ class SyncStatusFitTest {
         }
         for ((i, first) in bounds.withIndex()) {
             for (second in bounds.drop(i + 1)) {
-                assertFalse("${first.first} ${first.second} overlaps ${second.first} ${second.second}", first.second.overlaps(second.second))
+                assertFalse(
+                    "${first.first} ${first.second} overlaps ${second.first} ${second.second}",
+                    first.second.overlaps(second.second),
+                )
             }
         }
     }
 
     /** The text node itself, not the row TalkBack reads, so its layout result is reachable. */
-    private fun text(value: String): SemanticsNodeInteraction = composeRule.onNode(hasText(value), useUnmergedTree = true)
+    private fun text(value: String): SemanticsNodeInteraction = composeRule.onNode(
+        hasText(value),
+        useUnmergedTree = true,
+    )
 
     private fun SemanticsNodeInteraction.textLayout(): TextLayoutResult {
         val results = mutableListOf<TextLayoutResult>()
@@ -138,7 +157,8 @@ class SyncStatusFitTest {
     }
 
     private fun DpRect.inside(other: DpRect): Boolean =
-        left >= other.left - SLACK && top >= other.top - SLACK && right <= other.right + SLACK && bottom <= other.bottom + SLACK
+        left >= other.left - SLACK && top >= other.top - SLACK && right <= other.right + SLACK &&
+            bottom <= other.bottom + SLACK
 
     private fun DpRect.overlaps(other: DpRect): Boolean =
         left < other.right && other.left < right && top < other.bottom && other.top < bottom
@@ -148,7 +168,13 @@ class SyncStatusFitTest {
         val SLACK = 0.5.dp
         val MIN_TOUCH_TARGET = 48.dp
 
-        val BAR_ITEMS = listOf(TimerR.string.nav_timer, SharedR.string.pomodoro_title, ProjectsR.string.nav_projects, SettingsR.string.settings, R.string.nav_more)
+        val BAR_ITEMS = listOf(
+            TimerR.string.nav_timer,
+            SharedR.string.pomodoro_title,
+            ProjectsR.string.nav_projects,
+            SettingsR.string.settings,
+            R.string.nav_more,
+        )
 
         val NOW: Clock = Clock.fixed(Instant.parse("2026-10-16T01:00:00Z"), ZoneOffset.UTC)
 
@@ -157,7 +183,11 @@ class SyncStatusFitTest {
             unsent = 12,
             lastAnswered = Instant.parse("2026-10-12T09:15:00Z"),
             needsAttention = 3,
-            settings = AccountSettings(timeZone = "UTC", beginningOfWeek = DayOfWeek.MONDAY, timeResolutionMinutes = null),
+            settings = AccountSettings(
+                timeZone = "UTC",
+                beginningOfWeek = DayOfWeek.MONDAY,
+                timeResolutionMinutes = null,
+            ),
         )
     }
 }

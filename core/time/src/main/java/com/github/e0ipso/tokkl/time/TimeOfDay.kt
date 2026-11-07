@@ -22,12 +22,7 @@ private const val DAY_MINUTES = 24 * 60
  * against now). [reference], [after] and the result are minutes after midnight. An explicit suffix
  * is never second-guessed.
  */
-fun parseTimeOfDay(
-    raw: String,
-    twelveHour: Boolean = false,
-    reference: Int? = null,
-    after: Int? = null,
-): Int? {
+fun parseTimeOfDay(raw: String, twelveHour: Boolean = false, reference: Int? = null, after: Int? = null): Int? {
     val match = TIME_OF_DAY.matchEntire(raw.jsTrim().lowercase().replace(JS_WHITESPACE_RUN, ""))
         ?: return null
     var hour = match.groupValues[1].toInt()

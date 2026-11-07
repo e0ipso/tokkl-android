@@ -32,8 +32,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import com.github.e0ipso.tokkl.feature.settings.R
 import com.github.e0ipso.tokkl.catalog.ConfirmDialog
+import com.github.e0ipso.tokkl.feature.settings.R
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaultsSetting
 import com.github.e0ipso.tokkl.preferences.ReminderPreferences
@@ -207,7 +207,9 @@ private fun AccountSection(signOut: SignOutConfirmation.State, onSignOut: () -> 
             .clickable(enabled = !signOut.signingOut, role = Role.Button, onClick = onSignOut),
     ) {
         Text(
-            text = stringResource(if (signOut.signingOut) R.string.settings_signing_out else R.string.settings_sign_out),
+            text = stringResource(
+                if (signOut.signingOut) R.string.settings_signing_out else R.string.settings_sign_out,
+            ),
             style = MaterialTheme.typography.bodyLarge,
         )
     }

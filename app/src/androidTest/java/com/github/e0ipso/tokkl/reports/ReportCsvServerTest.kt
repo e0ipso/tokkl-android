@@ -11,9 +11,6 @@ import com.github.e0ipso.tokkl.capabilities.ReportCsvKind
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.time.DurationFormat
-import java.io.ByteArrayOutputStream
-import java.io.File
-import java.io.FileNotFoundException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
@@ -28,6 +25,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileNotFoundException
 
 /** Real server CSV bytes through publication and Android's actual read-only content provider. */
 class ReportCsvServerTest {
@@ -44,9 +44,12 @@ class ReportCsvServerTest {
         fixture = ReportAccount.create()
         Session(context).save(TokklTestServer.url, fixture.account.apiToken)
         exporter = ReportExportController(
-            client = { fixture.account.client }, files = files, account = Session.exports,
+            client = { fixture.account.client },
+            files = files,
+            account = Session.exports,
             csvMissing = {},
-            scope = scope, io = Dispatchers.IO,
+            scope = scope,
+            io = Dispatchers.IO,
         )
     }
 
@@ -81,13 +84,19 @@ class ReportCsvServerTest {
         fixture.entry(fixture.today.atTime(9, 0), 901, "Résumé, \"quoted\"\nsecond line", selected)
         fixture.entry(fixture.today.atTime(10, 0), 901, "Excluded description", excluded)
         val request = ReportCsvRequest(
-            kind, ReportRange(fixture.today, fixture.today), ReportFilters(projects = listOf(selected)),
-            ReportsServer(fixture.account.client).workspace().orFail("read report workspace"), DurationFormat.DECIMAL,
+            kind,
+            ReportRange(fixture.today, fixture.today),
+            ReportFilters(projects = listOf(selected)),
+            ReportsServer(fixture.account.client).workspace().orFail("read report workspace"),
+            DurationFormat.DECIMAL,
         )
         val expected = ByteArrayOutputStream().use { output ->
             fixture.account.client.downloadCsv(
-                fixture.account.client.server.app("report", "${kind.path}.csv"), request.body(),
-                output, ReportExportFiles.MAX_BYTES, ApiCallCancellation(),
+                fixture.account.client.server.app("report", "${kind.path}.csv"),
+                request.body(),
+                output,
+                ReportExportFiles.MAX_BYTES,
+                ApiCallCancellation(),
             ).orFail("read the web app's ${kind.path} CSV")
             output.toByteArray()
         }
@@ -107,7 +116,10 @@ class ReportCsvServerTest {
         var shares = 0
         lateinit var send: Intent
         instrumentation.runOnMainSync {
-            val launch: (File) -> Unit = { shares++; send = ReportCsvShare.intent(context, it) }
+            val launch: (File) -> Unit = {
+                shares++
+                send = ReportCsvShare.intent(context, it)
+            }
             exporter.launchShare(launch)
             exporter.launchShare(launch)
         }
@@ -134,7 +146,11 @@ class ReportCsvServerTest {
 
     private fun assertFileRejected(open: () -> Unit) {
         var rejected = false
-        try { open() } catch (_: FileNotFoundException) { rejected = true }
+        try {
+            open()
+        } catch (_: FileNotFoundException) {
+            rejected = true
+        }
         assertTrue("the content provider must reject this read or write", rejected)
     }
 }

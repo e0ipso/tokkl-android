@@ -98,7 +98,9 @@ private fun Navigation(
 ) {
     val session: Session = koinInject()
     val io: CoroutineDispatcher = koinInject(IoDispatcher)
-    val backStack = rememberSerializable(serializer = NavBackStackSerializer(Route.serializer())) { NavBackStack<Route>() }
+    val backStack = rememberSerializable(
+        serializer = NavBackStackSerializer(Route.serializer()),
+    ) { NavBackStack<Route>() }
     val savedStates = rememberSaveableStateHolder()
     val navigator = remember(backStack, stores) { Navigator(backStack, stores.entryOpenings) }
     val prompts = remember { NotificationPrompts() }

@@ -16,10 +16,6 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.feature.settings.R
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
-import com.github.e0ipso.tokkl.feature.signin.R as SigninR
-import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
@@ -46,14 +42,15 @@ import com.github.e0ipso.tokkl.components.timerPageViewModels
 import com.github.e0ipso.tokkl.components.timerView
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
 import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
+import com.github.e0ipso.tokkl.feature.settings.R
 import com.github.e0ipso.tokkl.finishWithin
 import com.github.e0ipso.tokkl.history.EntryActionsViewModel
 import com.github.e0ipso.tokkl.history.HistoryViewModel
 import com.github.e0ipso.tokkl.openBarPage
 import com.github.e0ipso.tokkl.orFail
-import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsStore
 import com.github.e0ipso.tokkl.pomodoro.PomodoroViewModel
+import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.preferences.StoredPomodoroDefaults
 import com.github.e0ipso.tokkl.reports.ReportsViewModel
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
@@ -64,9 +61,6 @@ import com.github.e0ipso.tokkl.timer.TimerView
 import com.github.e0ipso.tokkl.timer.TimerViewModel
 import com.github.e0ipso.tokkl.timer.TimerViewStore
 import com.github.e0ipso.tokkl.trust.SessionTrust
-import java.security.KeyStore
-import java.time.Instant
-import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.runBlocking
@@ -87,6 +81,12 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.security.KeyStore
+import java.time.Instant
+import java.time.temporal.ChronoUnit
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.feature.signin.R as SigninR
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 
 /**
  * Sign-out in the real activity, with an account of its own on the real Tokkl container
@@ -138,8 +138,14 @@ class SignOutServerTest {
 
     @Test
     fun withUnsentChangesItWarnsAndCancelKeepsEverythingThenConfirmingClearsEveryStore() {
-        assertTrue("the refresh cached the entry", runBlocking { app.cache.entries.first() }.any { it.entry.description == ENTRY })
-        assertTrue("the refresh cached the project", runBlocking { app.cache.projects.first() }.any { it.name == PROJECT })
+        assertTrue(
+            "the refresh cached the entry",
+            runBlocking { app.cache.entries.first() }.any { it.entry.description == ENTRY },
+        )
+        assertTrue(
+            "the refresh cached the project",
+            runBlocking { app.cache.projects.first() }.any { it.name == PROJECT },
+        )
         assertNotNull(AccountSettingsStore(context).load())
         assertNotNull(CapabilitiesStore(context).load())
         assertNotNull(TimerViewStore(context).load())
@@ -155,24 +161,43 @@ class SignOutServerTest {
         composeRule.awaitText(string(R.string.settings_sign_out_title))
         val warning = context.resources.getQuantityString(R.plurals.settings_sign_out_unsent, 2, 2)
         composeRule.onNode(hasText(warning) and inDialog()).assertExists()
-        composeRule.onNode(hasText(string(SharedR.string.catalog_cancel)) and hasClickAction() and inDialog()).performClick()
+        composeRule.onNode(
+            hasText(string(SharedR.string.catalog_cancel)) and hasClickAction() and inDialog(),
+        ).performClick()
 
-        composeRule.waitUntil("the warning closes", TIMEOUT_MS) { !exists(hasText(string(R.string.settings_sign_out_title))) }
+        composeRule.waitUntil(
+            "the warning closes",
+            TIMEOUT_MS,
+        ) { !exists(hasText(string(R.string.settings_sign_out_title))) }
         assertTrue("Cancel keeps the session", Session(context).isSignedIn())
         assertEquals("Cancel keeps the queue", 2, unsentCount())
         assertEquals("Cancel keeps the background work", WorkInfo.State.ENQUEUED, queueWork().single().state)
-        assertTrue("Cancel keeps the cache", runBlocking { app.cache.entries.first() }.any { it.entry.description == ENTRY })
+        assertTrue(
+            "Cancel keeps the cache",
+            runBlocking { app.cache.entries.first() }.any { it.entry.description == ENTRY },
+        )
         assertNotNull("Cancel keeps the settings", app.accountSettings.state.value)
-        assertEquals("Cancel keeps the pin", PINNED.sha256, ServerTrustStore(context).pinnedSha256(PINNED.host, PINNED.port))
+        assertEquals(
+            "Cancel keeps the pin",
+            PINNED.sha256,
+            ServerTrustStore(context).pinnedSha256(PINNED.host, PINNED.port),
+        )
 
         composeRule.onNode(signOutRow()).performScrollTo().performClick()
         composeRule.awaitText(string(R.string.settings_sign_out_title))
-        composeRule.onNode(hasText(string(R.string.settings_sign_out)) and hasClickAction() and inDialog()).performClick()
+        composeRule.onNode(
+            hasText(string(R.string.settings_sign_out)) and hasClickAction() and inDialog(),
+        ).performClick()
 
         composeRule.awaitText(string(SigninR.string.sign_in_title), TIMEOUT_MS)
         assertFalse("the bottom bar went with the session", exists(hasText(string(TimerR.string.nav_timer))))
         assertNothingOfTheAccountStays()
-        for ((kind, old) in before) assertFalse("$kind of the signed-out account is cleared", old.viewModelScope.isActive)
+        for ((kind, old) in before) {
+            assertFalse(
+                "$kind of the signed-out account is cleared",
+                old.viewModelScope.isActive,
+            )
+        }
         val after = viewModels(SESSION_VIEW_MODELS)
         for ((kind, new) in after) assertNotSame("$kind is a new view model", before.getValue(kind), new)
 
@@ -205,7 +230,11 @@ class SignOutServerTest {
 
     /** Changes the Pomodoro defaults while the session points at the dead port, so they stay unsent. */
     private fun changeThePomodoroDefaults() {
-        InstrumentationRegistry.getInstrumentation().runOnMainSync { app.pomodoroDefaults.change(PomodoroDefaults(40, 8, 20, 5)) }
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            app.pomodoroDefaults.change(
+                PomodoroDefaults(40, 8, 20, 5),
+            )
+        }
         val unsent = StoredPomodoroDefaults(PomodoroDefaults(40, 8, 20, 5), unsent = true)
         // No activity runs yet, so this waits without the compose rule.
         val deadline = System.nanoTime() + TIMEOUT_MS * 1_000_000
@@ -247,7 +276,10 @@ class SignOutServerTest {
             }
             assertTrue("the database has its tables: $tables", "time_entries" in tables && "pending_changes" in tables)
             tables.filterNot { it in BOOKKEEPING_TABLES }.associateWith { table ->
-                db.rawQuery("SELECT COUNT(*) FROM \"$table\"", null).use { it.moveToFirst(); it.getLong(0) }
+                db.rawQuery("SELECT COUNT(*) FROM \"$table\"", null).use {
+                    it.moveToFirst()
+                    it.getLong(0)
+                }
             }
         }
     }
@@ -277,7 +309,12 @@ class SignOutServerTest {
             put("name", name)
             put("color", "#06aaf5")
         }
-        val created = api.send("POST", api.server.api("workspaces", account.workspaceId.toString(), "projects"), body, JsonObject.serializer())
+        val created = api.send(
+            "POST",
+            api.server.api("workspaces", account.workspaceId.toString(), "projects"),
+            body,
+            JsonObject.serializer(),
+        )
             .orFail("POST /api/v9/workspaces/<id>/projects")
         assertNotEquals(0L, created.getValue("id").jsonPrimitive.long)
     }
@@ -287,7 +324,9 @@ class SignOutServerTest {
 
     private fun inDialog(): SemanticsMatcher = hasAnyAncestor(isDialog())
 
-    private fun exists(matcher: SemanticsMatcher): Boolean = composeRule.onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty()
+    private fun exists(matcher: SemanticsMatcher): Boolean = composeRule.onAllNodes(
+        matcher,
+    ).fetchSemanticsNodes().isNotEmpty()
 
     private fun unsentCount(): Int = runBlocking { app.changes.unsentCount.first() }
 
@@ -303,7 +342,12 @@ class SignOutServerTest {
         /** Nothing listens on this port, so every request fails for want of a route. */
         val DEAD_SERVER = checkNotNull(ServerUrl.parse("http://127.0.0.1:9"))
 
-        val PINNED = ServerCertificate(host = "10.0.2.2", port = 8443, sha256 = "ab".repeat(32), subject = "CN=sign-out test")
+        val PINNED = ServerCertificate(
+            host = "10.0.2.2",
+            port = 8443,
+            sha256 = "ab".repeat(32),
+            subject = "CN=sign-out test",
+        )
 
         /** SQLite's and Room's own tables, which hold no account data. */
         val BOOKKEEPING_TABLES = setOf("android_metadata", "room_master_table", "sqlite_sequence")

@@ -105,7 +105,12 @@ data class SummaryReport(
          * A point for every bucket from the one holding the range's first day up to its last day,
          * empty ones included. An entry outside every bucket counts in none.
          */
-        private fun series(entries: List<ReportEntry>, range: ReportRange, resolution: Resolution, firstDayOfWeek: DayOfWeek): List<SeriesPoint> {
+        private fun series(
+            entries: List<ReportEntry>,
+            range: ReportRange,
+            resolution: Resolution,
+            firstDayOfWeek: DayOfWeek,
+        ): List<SeriesPoint> {
             val buckets = LinkedHashMap<LocalDate, LongArray>()
             var start = resolution.bucketOf(range.from, firstDayOfWeek)
             while (!start.isAfter(range.to)) {
@@ -121,21 +126,20 @@ data class SummaryReport(
         }
 
         /** One share per project, in the order of first use, then sorted by time with ties kept in that order. */
-        private fun projects(entries: List<ReportEntry>): List<ProjectShare> =
-            entries.groupBy { it.projectId }
-                .values
-                .map { members ->
-                    val first = members.first()
-                    val totals = totalsOf(members)
-                    ProjectShare(
-                        id = first.projectId,
-                        title = first.projectName ?: "",
-                        color = first.projectColor,
-                        seconds = totals.seconds,
-                        billableSeconds = totals.billableSeconds,
-                        amountCents = totals.amounts.takeIf { it.isNotEmpty() }?.sumOf { it.cents },
-                    )
-                }
-                .sortedByDescending { it.seconds }
+        private fun projects(entries: List<ReportEntry>): List<ProjectShare> = entries.groupBy { it.projectId }
+            .values
+            .map { members ->
+                val first = members.first()
+                val totals = totalsOf(members)
+                ProjectShare(
+                    id = first.projectId,
+                    title = first.projectName ?: "",
+                    color = first.projectColor,
+                    seconds = totals.seconds,
+                    billableSeconds = totals.billableSeconds,
+                    amountCents = totals.amounts.takeIf { it.isNotEmpty() }?.sumOf { it.cents },
+                )
+            }
+            .sortedByDescending { it.seconds }
     }
 }

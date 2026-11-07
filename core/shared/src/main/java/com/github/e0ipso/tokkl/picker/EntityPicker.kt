@@ -43,9 +43,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.github.e0ipso.tokkl.core.shared.R
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.CachedTask
+import com.github.e0ipso.tokkl.core.shared.R
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import kotlinx.coroutines.flow.combine
 
@@ -152,7 +152,11 @@ private fun EntityPickerContent(
 }
 
 /** "No project", then each client's projects with their tasks under them, as one choice. */
-private fun LazyListScope.projectOptions(options: PickerOptions, onPickProject: (Long?) -> Unit, onPickTask: (CachedTask) -> Unit) {
+private fun LazyListScope.projectOptions(
+    options: PickerOptions,
+    onPickProject: (Long?) -> Unit,
+    onPickTask: (CachedTask) -> Unit,
+) {
     if (options.noProject) {
         item(key = "no-project") {
             ChoiceRow(selected = options.noProjectSelected, multiple = false, onClick = { onPickProject(null) }) {
@@ -185,7 +189,11 @@ private fun LazyListScope.projectOptions(options: PickerOptions, onPickProject: 
         }
         group.projects.forEach { option ->
             item(key = "project:${option.project.id}") {
-                ChoiceRow(selected = option.selected, multiple = false, onClick = { onPickProject(option.project.id) }) {
+                ChoiceRow(
+                    selected = option.selected,
+                    multiple = false,
+                    onClick = { onPickProject(option.project.id) },
+                ) {
                     ProjectDot(projectColor(option.project.color))
                     Labelled(option.project.name, note = archivedNote(option.archived))
                 }
@@ -234,7 +242,14 @@ private fun ChoiceRow(
             .then(selection)
             .padding(start = indent),
     ) {
-        if (multiple) Checkbox(checked = selected, onCheckedChange = null) else RadioButton(selected = selected, onClick = null)
+        if (multiple) {
+            Checkbox(
+                checked = selected,
+                onCheckedChange = null,
+            )
+        } else {
+            RadioButton(selected = selected, onClick = null)
+        }
         Spacer(Modifier.width(TokklTheme.spacing.space3))
         content()
     }

@@ -7,11 +7,11 @@ import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import android.os.Process
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.core.ui.R as UiR
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /** The icon a launcher gets for the installed app, through the same API launchers use. */
 class LauncherIconTest {

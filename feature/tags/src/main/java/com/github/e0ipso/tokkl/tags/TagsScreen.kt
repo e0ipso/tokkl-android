@@ -36,8 +36,6 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.github.e0ipso.tokkl.feature.tags.R
-import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.cache.CachedTag
 import com.github.e0ipso.tokkl.catalog.CancelAndConfirm
 import com.github.e0ipso.tokkl.catalog.CatalogChange
@@ -50,11 +48,13 @@ import com.github.e0ipso.tokkl.catalog.ConfirmDialog
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.catalog.changeText
 import com.github.e0ipso.tokkl.catalog.problemText
+import com.github.e0ipso.tokkl.feature.tags.R
 import com.github.e0ipso.tokkl.picker.rememberOffline
 import com.github.e0ipso.tokkl.ui.ErrorBanner
 import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklIconButton
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * The tags page (docs/PRD.md P4): the workspace's tags from the server, with a field to add one,
@@ -154,7 +154,11 @@ fun TagsContent(
                         changeProblem = state.changeProblem.takeIf { state.overlay == null },
                         onRetry = actions.onRetry,
                     )
-                    if (hasNotices && (state.data != null || rows.isNotEmpty())) Spacer(Modifier.height(TokklTheme.spacing.betweenGroups))
+                    if (hasNotices && (state.data != null || rows.isNotEmpty())) {
+                        Spacer(
+                            Modifier.height(TokklTheme.spacing.betweenGroups),
+                        )
+                    }
                 }
             }
             if (state.data != null && rows.isEmpty()) {
@@ -188,6 +192,7 @@ fun TagsContent(
             onRename = actions.onRename,
             onCancel = actions.onDismiss,
         )
+
         is TagsOverlay.ConfirmDelete -> ConfirmDialog(
             title = stringResource(R.string.tags_delete_title, overlay.tag.name),
             paragraphs = listOf(stringResource(R.string.tags_delete_message)),
@@ -198,6 +203,7 @@ fun TagsContent(
             onCancel = actions.onDismiss,
             danger = true,
         )
+
         null -> Unit
     }
 }
@@ -207,7 +213,13 @@ private data class TagRow(val tag: Tag, val fromServer: Boolean)
 
 /** The web app's field and Add tag button, which creates a tag at once. */
 @Composable
-private fun NewTagField(name: String, nameMissing: Boolean, enabled: Boolean, onNameChange: (String) -> Unit, onAdd: () -> Unit) {
+private fun NewTagField(
+    name: String,
+    nameMissing: Boolean,
+    enabled: Boolean,
+    onNameChange: (String) -> Unit,
+    onAdd: () -> Unit,
+) {
     Column(verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup)) {
         OutlinedTextField(
             value = name,
@@ -266,7 +278,13 @@ private fun TagListRow(row: TagRow, canChange: Boolean, actions: TagsActions) {
  * the web app does, with no request.
  */
 @Composable
-private fun RenameDialog(tag: Tag, canSave: Boolean, problem: ServerProblem?, onRename: (String) -> Unit, onCancel: () -> Unit) {
+private fun RenameDialog(
+    tag: Tag,
+    canSave: Boolean,
+    problem: ServerProblem?,
+    onRename: (String) -> Unit,
+    onCancel: () -> Unit,
+) {
     var name by rememberSaveable(tag.id) { mutableStateOf(tag.name) }
     var nameMissing by rememberSaveable(tag.id) { mutableStateOf(false) }
     val focus = remember { FocusRequester() }
@@ -280,7 +298,12 @@ private fun RenameDialog(tag: Tag, canSave: Boolean, problem: ServerProblem?, on
     }
     AlertDialog(
         onDismissRequest = onCancel,
-        title = { Text(text = stringResource(R.string.tags_rename_title, tag.name), modifier = Modifier.semantics { heading() }) },
+        title = {
+            Text(
+                text = stringResource(R.string.tags_rename_title, tag.name),
+                modifier = Modifier.semantics { heading() },
+            )
+        },
         text = {
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState()),
@@ -310,7 +333,14 @@ private fun RenameDialog(tag: Tag, canSave: Boolean, problem: ServerProblem?, on
                 problem?.let { ErrorBanner(problemText(it)) }
             }
         },
-        confirmButton = { CancelAndConfirm(stringResource(R.string.tags_rename_save), onConfirm = save, onCancel = onCancel, enabled = canSave) },
+        confirmButton = {
+            CancelAndConfirm(
+                stringResource(R.string.tags_rename_save),
+                onConfirm = save,
+                onCancel = onCancel,
+                enabled = canSave,
+            )
+        },
     )
 }
 

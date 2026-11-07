@@ -1,7 +1,5 @@
 package com.github.e0ipso.tokkl.pomodoro
 
-import com.github.e0ipso.tokkl.components.cache
-import com.github.e0ipso.tokkl.components.koinViewModels
 import android.os.Build
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
@@ -16,10 +14,12 @@ import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.Until
 import com.github.e0ipso.tokkl.DeviceShell
-import com.github.e0ipso.tokkl.feature.pomodoro.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.TokklApplication
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.koinViewModels
+import com.github.e0ipso.tokkl.feature.pomodoro.R
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import org.junit.After
 import org.junit.Assert.assertTrue
@@ -31,6 +31,7 @@ import org.junit.rules.RuleChain
 @SignedOut
 class PomodoroFullScreenPageTest {
     private val compose = createAndroidComposeRule<ComponentActivity>()
+
     @get:Rule val rules: RuleChain = RuleChain.outerRule(SessionRule()).around(compose)
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val context = instrumentation.targetContext
@@ -42,10 +43,13 @@ class PomodoroFullScreenPageTest {
         originalMode?.let { DeviceShell.run("cmd appops set ${context.packageName} USE_FULL_SCREEN_INTENT $it") }
     }
 
-    @Test @SdkSuppress(minSdkVersion = 34)
+    @Test
+    @SdkSuppress(minSdkVersion = 34)
     fun deniedNoticeOpensAppSettingsAndDisappearsOnResumeAfterGrant() {
         val output = DeviceShell.run("cmd appops get ${context.packageName} USE_FULL_SCREEN_INTENT").trim()
-        originalMode = if (output.startsWith("No operations")) "default" else {
+        originalMode = if (output.startsWith("No operations")) {
+            "default"
+        } else {
             Regex("USE_FULL_SCREEN_INTENT: (allow|deny|ignore|default|foreground)").find(output)?.groupValues?.get(1)
                 ?: error("Cannot restore full-screen app-op: $output")
         }
@@ -53,8 +57,12 @@ class PomodoroFullScreenPageTest {
         val model = koinViewModels(compose.activity)[PomodoroViewModel::class.java]
         compose.activityRule.scenario.onActivity { WindowCompat.enableEdgeToEdge(it.window) }
         compose.setContent { TokklTheme { PomodoroScreen(model, app.cache) } }
-        compose.onNodeWithText(context.getString(R.string.pomodoro_fullscreen_denied)).performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText(context.getString(R.string.pomodoro_fullscreen_settings)).performScrollTo().performClick()
+        compose.onNodeWithText(
+            context.getString(R.string.pomodoro_fullscreen_denied),
+        ).performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText(
+            context.getString(R.string.pomodoro_fullscreen_settings),
+        ).performScrollTo().performClick()
         assertTrue(device.wait(Until.hasObject(By.pkg("com.android.settings")), 10_000))
         DeviceShell.run("cmd appops set ${context.packageName} USE_FULL_SCREEN_INTENT allow")
         device.pressBack()
@@ -63,7 +71,8 @@ class PomodoroFullScreenPageTest {
         compose.onNodeWithText(context.getString(R.string.pomodoro_fullscreen_settings)).assertDoesNotExist()
     }
 
-    @Test @SdkSuppress(maxSdkVersion = 33)
+    @Test
+    @SdkSuppress(maxSdkVersion = 33)
     fun olderAndroidShowsThePageWithoutAnUnsupportedFullScreenSettingsButton() {
         assertTrue(Build.VERSION.SDK_INT in 31..33)
         val model = koinViewModels(compose.activity)[PomodoroViewModel::class.java]

@@ -67,7 +67,9 @@ class ModuleLayersTest {
     @Test
     fun everyModuleUsesOnlyPackagesOfItselfAndItsDependencies() {
         val outside = modules.flatMap { module ->
-            val visible = visibleFrom(module).flatMap { byPath.getValue(it).packages.keys }.toSet() + module.packages.keys
+            val visible = visibleFrom(
+                module,
+            ).flatMap { byPath.getValue(it).packages.keys }.toSet() + module.packages.keys
             module.packages.flatMap { (from, uses) ->
                 uses.filter { it.target !in visible }.map { "${module.path}: $from -> ${it.target} (${it.file})" }
             }
@@ -78,8 +80,16 @@ class ModuleLayersTest {
 
     @Test
     fun featureAndCoreModulesDependOnCoreModulesOnly() {
-        val wrong = modules.filter { it.path.startsWith(":feature:") || it.path.startsWith(":core:") }.flatMap { module ->
-            (module.mainDependencies + module.fixtureDependencies).filterNot { it.startsWith(":core:") }.map { "${module.path} -> $it" }
+        val wrong = modules.filter {
+            it.path.startsWith(
+                ":feature:",
+            ) || it.path.startsWith(":core:")
+        }.flatMap { module ->
+            (module.mainDependencies + module.fixtureDependencies).filterNot {
+                it.startsWith(
+                    ":core:",
+                )
+            }.map { "${module.path} -> $it" }
         }
 
         assertEquals("a feature or core module that depends on a feature or the app", emptyList<String>(), wrong)

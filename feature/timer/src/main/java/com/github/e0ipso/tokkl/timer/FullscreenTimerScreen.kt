@@ -25,8 +25,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.sp
 import com.github.e0ipso.tokkl.feature.timer.R
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
-import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.time.formatDuration
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import com.github.e0ipso.tokkl.ui.TokklButton
@@ -38,6 +36,8 @@ import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
 import java.time.Clock
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * A presentation of the shared owner. It creates no timer, queue or cumulative clock state. While
@@ -97,24 +97,52 @@ internal fun FullscreenTimerContent(state: TimerState, actions: FullscreenTimerA
                 .testTag("fullscreen_timer"),
             verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup),
         ) {
-            TokklGhostButton(onClick = { focus.clearFocus(); actions.onExit() }) {
+            TokklGhostButton(onClick = {
+                focus.clearFocus()
+                actions.onExit()
+            }) {
                 Text(stringResource(R.string.timer_exit_fullscreen))
             }
             if (token != null && (running != null || paused != null)) {
-                Text(stringResource(if (paused != null) SharedR.string.timer_paused else SharedR.string.timer_running), style = MaterialTheme.typography.titleLarge)
-                val spoken = stringResource(if (paused != null) R.string.timer_paused_elapsed_spoken else R.string.timer_elapsed_spoken, spokenDuration(LocalResources.current, seconds))
                 Text(
-                    formatDuration(seconds), style = TokklTheme.clockTextStyle.copy(fontSize = 56.sp, lineHeight = 64.sp),
+                    stringResource(if (paused != null) SharedR.string.timer_paused else SharedR.string.timer_running),
+                    style = MaterialTheme.typography.titleLarge,
+                )
+                val spoken = stringResource(
+                    if (paused != null) R.string.timer_paused_elapsed_spoken else R.string.timer_elapsed_spoken,
+                    spokenDuration(LocalResources.current, seconds),
+                )
+                Text(
+                    formatDuration(seconds),
+                    style = TokklTheme.clockTextStyle.copy(fontSize = 56.sp, lineHeight = 64.sp),
                     modifier = Modifier.testTag("fullscreen_elapsed").semantics { contentDescription = spoken },
                 )
                 val fields = running?.fields ?: paused!!.fields
                 val labels = running?.labels ?: paused!!.labels
-                Text(fields.description.ifEmpty { stringResource(SharedR.string.timer_suggestion_no_description) }, style = MaterialTheme.typography.headlineSmall)
+                Text(
+                    fields.description.ifEmpty { stringResource(SharedR.string.timer_suggestion_no_description) },
+                    style = MaterialTheme.typography.headlineSmall,
+                )
                 labels.project?.let { Text(it, style = MaterialTheme.typography.titleMedium) }
                 labels.task?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
-                if (fields.tags.isNotEmpty()) Text(fields.tags.joinToString(", "), style = MaterialTheme.typography.bodyLarge)
-                if (fields.billable) Text(stringResource(SharedR.string.entry_billable), style = MaterialTheme.typography.bodyLarge)
-                if (running?.unsent == true) Text(stringResource(R.string.history_unsent), style = MaterialTheme.typography.labelLarge)
+                if (fields.tags.isNotEmpty()) {
+                    Text(
+                        fields.tags.joinToString(", "),
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                }
+                if (fields.billable) {
+                    Text(
+                        stringResource(SharedR.string.entry_billable),
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                }
+                if (running?.unsent == true) {
+                    Text(
+                        stringResource(R.string.history_unsent),
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                }
                 val stopAction = stringResource(SharedR.string.timer_stop_spoken)
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup),

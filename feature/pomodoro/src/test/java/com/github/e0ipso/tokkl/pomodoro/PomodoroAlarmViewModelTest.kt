@@ -3,7 +3,6 @@ package com.github.e0ipso.tokkl.pomodoro
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
-import java.time.Duration
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -18,6 +17,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.Duration
 
 /**
  * The full-screen alarm bound to one held phase: it opens only for the phase its intent names once
@@ -32,7 +32,9 @@ class PomodoroAlarmViewModelTest {
     private val model = PomodoroAlarmViewModel(held, server, scope, clock)
     private val key = PomodoroPhaseKey(T0)
 
-    @After fun closeScope() { scope.cancel() }
+    @After fun closeScope() {
+        scope.cancel()
+    }
 
     @Test fun opensTheHeldPhaseItsIntentNamesWithTheServersTransitionNumberAndOvertime() {
         model.open(key)
@@ -87,7 +89,9 @@ class PomodoroAlarmViewModelTest {
                 loaded.await()
                 emit(heldState(revision = 3))
             },
-            FakeServer(loading), scope, clock,
+            FakeServer(loading),
+            scope,
+            clock,
         )
         late.open(key)
         assertNull(late.state.value.ring)

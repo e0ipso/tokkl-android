@@ -60,7 +60,11 @@ class DurationTest {
         assertEquals("1:05", formatDurationWithoutSeconds(3906, DurationFormat.CLASSIC))
         assertEquals("5 min", formatDurationWithoutSeconds(306, DurationFormat.CLASSIC))
         assertEquals("1 min", formatDurationWithoutSeconds(60, DurationFormat.CLASSIC))
-        assertEquals("under a minute, seconds are its only unit", "6 sec", formatDurationWithoutSeconds(6, DurationFormat.CLASSIC))
+        assertEquals(
+            "under a minute, seconds are its only unit",
+            "6 sec",
+            formatDurationWithoutSeconds(6, DurationFormat.CLASSIC),
+        )
         assertEquals("0 sec", formatDurationWithoutSeconds(-5, DurationFormat.CLASSIC))
         assertEquals("0.79 h", formatDurationWithoutSeconds(2826, DurationFormat.DECIMAL))
         assertEquals("1.50 h", formatDurationWithoutSeconds(5400, DurationFormat.DECIMAL))

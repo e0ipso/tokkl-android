@@ -96,7 +96,13 @@ data class Capabilities(
 
     companion object {
         /** Before the first refresh: every Tokkl-only feature hidden. */
-        val NONE = Capabilities(trash = false, restore = false, favorites = false, timeResolution = false, negatedFilters = false)
+        val NONE = Capabilities(
+            trash = false,
+            restore = false,
+            favorites = false,
+            timeResolution = false,
+            negatedFilters = false,
+        )
     }
 }
 
@@ -116,6 +122,7 @@ enum class TrashProbe {
 fun probeTrash(api: TogglApiClient): TrashProbe =
     when (val result = api.get(api.server.app("trash"), JsonArray.serializer())) {
         is ApiResult.Success -> TrashProbe.PRESENT
+
         is ApiResult.Failure -> when (val error = result.error) {
             is ApiError.UnexpectedStatus -> if (error.status == 404) TrashProbe.ABSENT else TrashProbe.UNKNOWN
             is ApiError.InvalidResponse -> TrashProbe.ABSENT
@@ -139,6 +146,7 @@ sealed interface TimerStateProbe {
 fun probeTimerState(api: TogglApiClient): TimerStateProbe =
     when (val result = api.get(api.server.app("timer"), TimerState.serializer())) {
         is ApiResult.Success -> TimerStateProbe.Present(result.value)
+
         is ApiResult.Failure -> when (val error = result.error) {
             is ApiError.UnexpectedStatus -> if (error.status == 404) TimerStateProbe.Absent else TimerStateProbe.Unknown
             is ApiError.InvalidResponse -> TimerStateProbe.Absent

@@ -10,11 +10,11 @@ import com.github.e0ipso.tokkl.catalog.CatalogChange
 import com.github.e0ipso.tokkl.catalog.CatalogModel
 import com.github.e0ipso.tokkl.catalog.CatalogPageEvents
 import com.github.e0ipso.tokkl.catalog.CatalogState
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlin.coroutines.CoroutineContext
 
 /** What the tags page opens over its list. */
 sealed interface TagsOverlay {
@@ -51,9 +51,17 @@ class TagsViewModel(
     scope: CoroutineScope,
     io: CoroutineContext,
     val cachedTags: Flow<List<CachedTag>> = flowOf(emptyList()),
-) : ViewModel(scope), CatalogPageEvents {
+) : ViewModel(scope),
+    CatalogPageEvents {
 
-    private val catalog = CatalogModel<TagsData, TagsOverlay>(client, workspaceId, refreshCache, viewModelScope, io, ::read)
+    private val catalog = CatalogModel<TagsData, TagsOverlay>(
+        client,
+        workspaceId,
+        refreshCache,
+        viewModelScope,
+        io,
+        ::read,
+    )
 
     val state: StateFlow<TagsState> = catalog.state
 
@@ -114,7 +122,10 @@ class TagsViewModel(
 
     private fun read(api: TogglApiClient, workspace: Long): ApiResult<TagsData> =
         when (val answer = TagsServer(api, workspace).list()) {
-            is ApiResult.Success -> ApiResult.Success(TagsData(answer.value.filter { it.workspaceId == workspace }.sortedForList()))
+            is ApiResult.Success -> ApiResult.Success(
+                TagsData(answer.value.filter { it.workspaceId == workspace }.sortedForList()),
+            )
+
             is ApiResult.Failure -> answer
         }
 }

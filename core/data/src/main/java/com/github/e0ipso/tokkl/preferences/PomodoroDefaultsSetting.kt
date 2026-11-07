@@ -8,8 +8,6 @@ import com.github.e0ipso.tokkl.session.AccountRefreshed
 import com.github.e0ipso.tokkl.session.MePreferences
 import com.github.e0ipso.tokkl.session.SignOutOrder
 import com.github.e0ipso.tokkl.storage.ClearableStore
-import java.io.IOException
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,6 +21,8 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.put
+import java.io.IOException
+import kotlin.coroutines.CoroutineContext
 
 /**
  * The lengths a Pomodoro session starts with: [workMinutes] of work, [shortRestMinutes] of rest
@@ -83,7 +83,8 @@ class PomodoroDefaultsSetting(
     private val keepsPreferences: () -> Boolean,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
-) : AccountRefreshListener, AccountDataOwner {
+) : AccountRefreshListener,
+    AccountDataOwner {
 
     override val signOutOrder = SignOutOrder.POMODORO_DEFAULTS
 
@@ -153,8 +154,11 @@ class PomodoroDefaultsSetting(
                     loaded.unsent = false
                     false
                 }
+
                 loaded.unsent -> true
+
                 changed || preferences == null -> false
+
                 else -> {
                     loaded.defaults.value = preferences.pomodoroDefaults()
                     false
@@ -183,7 +187,12 @@ class PomodoroDefaultsSetting(
     private suspend fun send() = sending.withLock {
         val defaults = synchronized(lock) { loaded.defaults.value.takeIf { loaded.unsent } } ?: return@withLock
         val api = client() ?: return@withLock
-        val answer = api.send("POST", api.server.api("me", "preferences"), defaults.preferencesBody(), JsonObject.serializer())
+        val answer = api.send(
+            "POST",
+            api.server.api("me", "preferences"),
+            defaults.preferencesBody(),
+            JsonObject.serializer(),
+        )
         if (answer !is ApiResult.Success) return@withLock
         synchronized(lock) {
             // A change while the request ran has its own write queued.
@@ -231,10 +240,26 @@ internal fun PomodoroDefaults.preferencesBody(): JsonObject {
 internal fun MePreferences.pomodoroDefaults(): PomodoroDefaults {
     val default = PomodoroDefaults.DEFAULT
     return PomodoroDefaults(
-        workMinutes = integerIn(PomodoroDefaultsSetting.WORK_MINUTES_KEY, PomodoroDefaults.WORK_MINUTES, default.workMinutes),
-        shortRestMinutes = integerIn(PomodoroDefaultsSetting.SHORT_REST_MINUTES_KEY, PomodoroDefaults.SHORT_REST_MINUTES, default.shortRestMinutes),
-        longRestMinutes = integerIn(PomodoroDefaultsSetting.LONG_REST_MINUTES_KEY, PomodoroDefaults.LONG_REST_MINUTES, default.longRestMinutes),
-        longRestEvery = integerIn(PomodoroDefaultsSetting.LONG_REST_EVERY_KEY, PomodoroDefaults.LONG_REST_EVERY, default.longRestEvery),
+        workMinutes = integerIn(
+            PomodoroDefaultsSetting.WORK_MINUTES_KEY,
+            PomodoroDefaults.WORK_MINUTES,
+            default.workMinutes,
+        ),
+        shortRestMinutes = integerIn(
+            PomodoroDefaultsSetting.SHORT_REST_MINUTES_KEY,
+            PomodoroDefaults.SHORT_REST_MINUTES,
+            default.shortRestMinutes,
+        ),
+        longRestMinutes = integerIn(
+            PomodoroDefaultsSetting.LONG_REST_MINUTES_KEY,
+            PomodoroDefaults.LONG_REST_MINUTES,
+            default.longRestMinutes,
+        ),
+        longRestEvery = integerIn(
+            PomodoroDefaultsSetting.LONG_REST_EVERY_KEY,
+            PomodoroDefaults.LONG_REST_EVERY,
+            default.longRestEvery,
+        ),
     )
 }
 

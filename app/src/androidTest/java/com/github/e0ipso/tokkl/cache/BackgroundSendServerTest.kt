@@ -27,10 +27,6 @@ import com.github.e0ipso.tokkl.reminder.ReminderWorker
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.trash.TrashServer
-import java.time.Duration
-import java.time.Instant
-import java.time.temporal.ChronoUnit
-import java.util.UUID
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -49,6 +45,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.time.Duration
+import java.time.Instant
+import java.time.temporal.ChronoUnit
+import java.util.UUID
 
 /**
  * The queue's background send against the real Tokkl container, with the app closed: no activity
@@ -65,7 +65,9 @@ class BackgroundSendServerTest {
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private val app get() = context.applicationContext as TokklApplication
     private val workManager get() = WorkManager.getInstance(context)
-    private val driver: TestDriver get() = checkNotNull(WorkManagerTestInitHelper.getTestDriver(context)) { "no test WorkManager" }
+    private val driver: TestDriver get() = checkNotNull(
+        WorkManagerTestInitHelper.getTestDriver(context),
+    ) { "no test WorkManager" }
     private lateinit var account: TestAccounts.Account
     private var workspace = 0L
     private var relay: HangingRelay? = null
@@ -117,10 +119,17 @@ class BackgroundSendServerTest {
         val work = queueWork().single()
         // Start also scheduled the running check and reminder; Stop must cancel the reminder.
         runBlocking { app.reminder.reconcile() }
-        assertTrue("no reminder waits after Stop", workManager.getWorkInfosForUniqueWork(ReminderWork.NAME).get().all { it.state.isFinished })
-        assertEquals("one send work for both changes", listOf(work.id), allWork().filter {
-            RunningCheckWorker::class.java.name !in it.tags && ReminderWorker::class.java.name !in it.tags
-        }.map { it.id })
+        assertTrue(
+            "no reminder waits after Stop",
+            workManager.getWorkInfosForUniqueWork(ReminderWork.NAME).get().all { it.state.isFinished },
+        )
+        assertEquals(
+            "one send work for both changes",
+            listOf(work.id),
+            allWork().filter {
+                RunningCheckWorker::class.java.name !in it.tags && ReminderWorker::class.java.name !in it.tags
+            }.map { it.id },
+        )
         assertEquals(WorkInfo.State.ENQUEUED, work.state)
         assertEquals("the work waits for a network", NetworkType.CONNECTED, work.constraints.requiredNetworkType)
         assertNull("one-time work", work.periodicityInfo)
@@ -173,10 +182,20 @@ class BackgroundSendServerTest {
      */
     @Test
     fun theRetryAfterTheBackoffSendsTheQueue() {
-        WorkManagerTestInitHelper.initializeTestWorkManager(context, WorkManagerTestInitHelper.ExecutorsMode.USE_TIME_BASED_SCHEDULING)
+        WorkManagerTestInitHelper.initializeTestWorkManager(
+            context,
+            WorkManagerTestInitHelper.ExecutorsMode.USE_TIME_BASED_SCHEDULING,
+        )
         signIn(NO_ROUTE, account.apiToken)
         val stop = Instant.now().truncatedTo(ChronoUnit.SECONDS)
-        val id = runBlocking { app.changes.create(workspace, EntryFields(description = "Sent by the retry"), stop.minusSeconds(600), stop) }
+        val id = runBlocking {
+            app.changes.create(
+                workspace,
+                EntryFields(description = "Sent by the retry"),
+                stop.minusSeconds(600),
+                stop,
+            )
+        }
         runBlocking { app.sender.send().join() }
         val work = queueWork().single()
 
@@ -192,7 +211,10 @@ class BackgroundSendServerTest {
 
         assertEquals(WorkInfo.State.SUCCEEDED, done.state)
         assertEquals("two runs: the one that failed and the retry", 2, done.runAttemptCount)
-        assertTrue("the retry waited out the backoff: ${finished - ran} ms", finished - ran >= BackgroundSend.BACKOFF.toMillis())
+        assertTrue(
+            "the retry waited out the backoff: ${finished - ran} ms",
+            finished - ran >= BackgroundSend.BACKOFF.toMillis(),
+        )
         assertEquals(0, unsentCount())
         assertEquals("Sent by the retry", serverEntry(serverId(id)).string("description"))
         assertEquals("still one work", listOf(work.id), allWork().map { it.id })
@@ -207,7 +229,14 @@ class BackgroundSendServerTest {
     fun anAppDrainThatEmptiesTheQueueCancelsTheWaitingRetry() {
         signIn(NO_ROUTE, account.apiToken)
         val stop = Instant.now().truncatedTo(ChronoUnit.SECONDS)
-        val id = runBlocking { app.changes.create(workspace, EntryFields(description = "Sent by the app"), stop.minusSeconds(600), stop) }
+        val id = runBlocking {
+            app.changes.create(
+                workspace,
+                EntryFields(description = "Sent by the app"),
+                stop.minusSeconds(600),
+                stop,
+            )
+        }
         runBlocking { app.sender.send().join() }
         val work = queueWork().single()
         driver.setAllConstraintsMet(work.id)
@@ -218,7 +247,11 @@ class BackgroundSendServerTest {
 
         assertEquals(0, unsentCount())
         assertEquals("Sent by the app", serverEntry(serverId(id)).string("description"))
-        assertEquals("no work waits once the app has sent the queue", WorkInfo.State.CANCELLED, queueWork().single().state)
+        assertEquals(
+            "no work waits once the app has sent the queue",
+            WorkInfo.State.CANCELLED,
+            queueWork().single().state,
+        )
     }
 
     /**
@@ -259,9 +292,15 @@ class BackgroundSendServerTest {
     }
 
     /** Tokkl's work in any state; Glance owns its independent widget sessions. */
-    private fun allWork(): List<WorkInfo> = workManager.getWorkInfos(WorkQuery.fromTags(listOf(
-        BackgroundSendWorker::class.java.name, RunningCheckWorker::class.java.name, ReminderWorker::class.java.name,
-    ))).get()
+    private fun allWork(): List<WorkInfo> = workManager.getWorkInfos(
+        WorkQuery.fromTags(
+            listOf(
+                BackgroundSendWorker::class.java.name,
+                RunningCheckWorker::class.java.name,
+                ReminderWorker::class.java.name,
+            ),
+        ),
+    ).get()
 
     private fun queueWork(): List<WorkInfo> = workManager.getWorkInfosForUniqueWork(BackgroundSend.WORK_NAME).get()
 

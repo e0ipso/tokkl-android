@@ -1,23 +1,22 @@
 package com.github.e0ipso.tokkl.ui.theme
 
-import java.io.IOException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import java.io.IOException
 
 class ThemeSettingsRepositoryTest {
 
     private val saved = mutableListOf<ThemeSettings>()
     private var failSaves = false
 
-    private fun model(initial: ThemeSettings = ThemeSettings()) =
-        ThemeSettingsRepository(
-            initial = initial,
-            save = { if (failSaves) throw IOException("disk full") else saved += it },
-            scope = CoroutineScope(Dispatchers.Unconfined),
-            io = Dispatchers.Unconfined,
-        )
+    private fun model(initial: ThemeSettings = ThemeSettings()) = ThemeSettingsRepository(
+        initial = initial,
+        save = { if (failSaves) throw IOException("disk full") else saved += it },
+        scope = CoroutineScope(Dispatchers.Unconfined),
+        io = Dispatchers.Unconfined,
+    )
 
     @Test
     fun startsWithTheStoredSettings() {

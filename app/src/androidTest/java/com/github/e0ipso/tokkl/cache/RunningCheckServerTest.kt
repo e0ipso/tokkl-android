@@ -26,10 +26,6 @@ import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.reminder.ReminderWorker
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
-import java.time.Duration
-import java.time.Instant
-import java.time.temporal.ChronoUnit
-import java.util.UUID
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -47,6 +43,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.time.Duration
+import java.time.Instant
+import java.time.temporal.ChronoUnit
+import java.util.UUID
 
 /**
  * The running entry's check every 15 minutes (docs/PRD.md 6.3) against the real Tokkl container,
@@ -62,7 +62,9 @@ class RunningCheckServerTest {
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private val app get() = context.applicationContext as TokklApplication
     private val workManager get() = WorkManager.getInstance(context)
-    private val driver: TestDriver get() = checkNotNull(WorkManagerTestInitHelper.getTestDriver(context)) { "no test WorkManager" }
+    private val driver: TestDriver get() = checkNotNull(
+        WorkManagerTestInitHelper.getTestDriver(context),
+    ) { "no test WorkManager" }
     private lateinit var account: TestAccounts.Account
     private var workspace = 0L
 
@@ -148,7 +150,11 @@ class RunningCheckServerTest {
         RunningNotifications.awaitShown("the start")
         val check = awaitCheck("the start schedules a check") { it.state == WorkInfo.State.ENQUEUED }
 
-        web.sendNoContent("PATCH", web.server.api("workspaces", workspace.toString(), "time_entries", id.toString(), "stop"), buildJsonObject {})
+        web.sendNoContent(
+            "PATCH",
+            web.server.api("workspaces", workspace.toString(), "time_entries", id.toString(), "stop"),
+            buildJsonObject {},
+        )
             .orFail("PATCH the entry's stop")
         assertNotNull("nothing but the check tells the phone", runBlocking { app.cache.running.first() })
         RequestCounter(TokklTestServer.url, "/api/v9/me/time_entries/current HTTP/1.1").use { requests ->
@@ -157,7 +163,11 @@ class RunningCheckServerTest {
 
             awaitCondition("the check clears the running entry") { runBlocking { app.cache.running.first() } == null }
             RunningNotifications.awaitGone("the stopped timer's notification")
-            assertEquals("the check finds nothing running and ends", WorkInfo.State.CANCELLED, awaitCheck("the cancel") { it.state.isFinished }.state)
+            assertEquals(
+                "the check finds nothing running and ends",
+                WorkInfo.State.CANCELLED,
+                awaitCheck("the cancel") { it.state.isFinished }.state,
+            )
             assertEquals("the check sends nothing", 0, unsentCount())
             assertEquals("one current-entry request", 1, requests.count)
             assertTrue("every connection was relayed: ${requests.failures}", requests.failures.isEmpty())
@@ -173,7 +183,9 @@ class RunningCheckServerTest {
         val elsewhere = startOnTheWeb("Started on the web")
         runCheck(check.id)
 
-        awaitCondition("the check puts the web's timer in the cache") { runBlocking { app.cache.running.first() }?.entry?.id == elsewhere }
+        awaitCondition(
+            "the check puts the web's timer in the cache",
+        ) { runBlocking { app.cache.running.first() }?.entry?.id == elsewhere }
         assertEquals("one running entry", 1, runBlocking { app.cache.timeEntries.first() }.count { it.stop == null })
         RunningNotifications.awaitShown("the web's timer") { it.title() == "Started on the web" }
         val next = awaitCheck("the check waits for the next period") { it.ranSince(check) }
@@ -189,11 +201,17 @@ class RunningCheckServerTest {
 
         // The edit cannot reach the server, so it waits in the queue.
         signIn(NO_ROUTE, account.apiToken)
-        assertTrue(runBlocking { app.changes.update(id, EntryFields(description = "Edited offline"), start, stop = null) })
+        assertTrue(
+            runBlocking { app.changes.update(id, EntryFields(description = "Edited offline"), start, stop = null) },
+        )
         runBlocking { app.sender.sendAndWait() }
         assertEquals(1, unsentCount())
         signIn(TokklTestServer.url, account.apiToken)
-        web.sendNoContent("PATCH", web.server.api("workspaces", workspace.toString(), "time_entries", id.toString(), "stop"), buildJsonObject {})
+        web.sendNoContent(
+            "PATCH",
+            web.server.api("workspaces", workspace.toString(), "time_entries", id.toString(), "stop"),
+            buildJsonObject {},
+        )
             .orFail("PATCH the entry's stop")
 
         runCheck(check.id)
@@ -204,7 +222,11 @@ class RunningCheckServerTest {
         assertEquals("Edited offline", running.entry.description)
         assertTrue(running.unsent)
         assertEquals("the check sends nothing", 1, unsentCount())
-        assertEquals("the check stays while the entry runs on the phone", listOf(check.id), checkWork().filter { !it.state.isFinished }.map { it.id })
+        assertEquals(
+            "the check stays while the entry runs on the phone",
+            listOf(check.id),
+            checkWork().filter { !it.state.isFinished }.map { it.id },
+        )
     }
 
     /** Lets the check's period pass with a network, so it runs once. */
@@ -214,19 +236,18 @@ class RunningCheckServerTest {
     }
 
     /** Starts a running entry on the server, as the web app does, which stops the one running there. */
-    private fun startOnTheWeb(description: String): Long =
-        web.send(
-            "POST",
-            web.server.api("workspaces", workspace.toString(), "time_entries"),
-            buildJsonObject {
-                put("workspace_id", workspace)
-                put("created_with", "tokkl-android tests")
-                put("description", description)
-                put("start", Instant.now().truncatedTo(ChronoUnit.SECONDS).toString())
-                put("duration", -1)
-            },
-            JsonObject.serializer(),
-        ).orFail("POST a running entry").getValue("id").jsonPrimitive.long
+    private fun startOnTheWeb(description: String): Long = web.send(
+        "POST",
+        web.server.api("workspaces", workspace.toString(), "time_entries"),
+        buildJsonObject {
+            put("workspace_id", workspace)
+            put("created_with", "tokkl-android tests")
+            put("description", description)
+            put("start", Instant.now().truncatedTo(ChronoUnit.SECONDS).toString())
+            put("duration", -1)
+        },
+        JsonObject.serializer(),
+    ).orFail("POST a running entry").getValue("id").jsonPrimitive.long
 
     private fun android.service.notification.StatusBarNotification.title(): String? =
         notification.extras.getCharSequence(android.app.Notification.EXTRA_TITLE)?.toString()
@@ -252,21 +273,26 @@ class RunningCheckServerTest {
     }
 
     /** Keep idle checks broad across Tokkl's work without counting Glance's widget sessions. */
-    private fun allWork(): List<WorkInfo> = workManager.getWorkInfos(WorkQuery.fromTags(listOf(
-        BackgroundSendWorker::class.java.name, RunningCheckWorker::class.java.name, ReminderWorker::class.java.name,
-    ))).get()
+    private fun allWork(): List<WorkInfo> = workManager.getWorkInfos(
+        WorkQuery.fromTags(
+            listOf(
+                BackgroundSendWorker::class.java.name,
+                RunningCheckWorker::class.java.name,
+                ReminderWorker::class.java.name,
+            ),
+        ),
+    ).get()
 
     private fun checkWork(): List<WorkInfo> = workManager.getWorkInfosForUniqueWork(RunningCheck.WORK_NAME).get()
 
     /** The one check once it matches [done], within the timeout. The app schedules it off the main thread. */
-    private fun awaitCheck(what: String, done: (WorkInfo) -> Boolean): WorkInfo =
-        runBlocking {
-            withTimeoutOrNull(WORK_TIMEOUT.toMillis()) {
-                workManager.getWorkInfosForUniqueWorkFlow(RunningCheck.WORK_NAME).filterNotNull().first { infos ->
-                    infos.singleOrNull()?.let(done) == true
-                }.single()
-            } ?: throw AssertionError("timed out: $what: ${checkWork().map { it.state }}")
-        }
+    private fun awaitCheck(what: String, done: (WorkInfo) -> Boolean): WorkInfo = runBlocking {
+        withTimeoutOrNull(WORK_TIMEOUT.toMillis()) {
+            workManager.getWorkInfosForUniqueWorkFlow(RunningCheck.WORK_NAME).filterNotNull().first { infos ->
+                infos.singleOrNull()?.let(done) == true
+            }.single()
+        } ?: throw AssertionError("timed out: $what: ${checkWork().map { it.state }}")
+    }
 
     private fun unsentCount(): Int = runBlocking { app.changes.unsentCount.first() }
 

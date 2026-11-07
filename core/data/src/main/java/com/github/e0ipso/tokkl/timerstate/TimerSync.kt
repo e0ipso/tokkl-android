@@ -142,6 +142,7 @@ class TimerSync<A : Any>(
                     retryLocked()
                     return
                 }
+
                 StreamEnd.Refused, StreamEnd.SignedOut -> {
                     val account = this.account
                     dropLocked()

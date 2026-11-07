@@ -52,7 +52,15 @@ fun ConfirmDialog(
                 problem?.let { ErrorBanner(problemText(it)) }
             }
         },
-        confirmButton = { CancelAndConfirm(confirmLabel, onConfirm = onConfirm, onCancel = onCancel, enabled = canConfirm, danger = danger) },
+        confirmButton = {
+            CancelAndConfirm(
+                confirmLabel,
+                onConfirm = onConfirm,
+                onCancel = onCancel,
+                enabled = canConfirm,
+                danger = danger,
+            )
+        },
     )
 }
 
@@ -62,7 +70,13 @@ fun ConfirmDialog(
  * colours.
  */
 @Composable
-fun CancelAndConfirm(confirmLabel: String, onConfirm: () -> Unit, onCancel: () -> Unit, enabled: Boolean = true, danger: Boolean = false) {
+fun CancelAndConfirm(
+    confirmLabel: String,
+    onConfirm: () -> Unit,
+    onCancel: () -> Unit,
+    enabled: Boolean = true,
+    danger: Boolean = false,
+) {
     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup)) {
         TokklGhostButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.catalog_cancel), textAlign = TextAlign.Center)

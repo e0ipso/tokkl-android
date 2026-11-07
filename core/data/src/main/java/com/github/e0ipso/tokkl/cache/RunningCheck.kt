@@ -11,8 +11,6 @@ import androidx.work.WorkerParameters
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.session.Session
-import java.time.Duration
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
@@ -20,6 +18,8 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.builtins.nullable
+import java.time.Duration
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Checks the running entry every 15 minutes while a timer runs (docs/PRD.md 6.3), since no push
@@ -92,17 +92,19 @@ class RunningCheckWorker(
     private val io: CoroutineContext,
 ) : CoroutineWorker(context, params) {
 
-    override suspend fun doWork(): Result =
-        withContext(io) {
-            val generation = RunningCheck.results.generation()
-            val api = session.client() ?: return@withContext Result.success()
-            val before = cache.runningCheckStart()
-            val current = api.get(api.server.api("me", "time_entries", "current"), ServerTimeEntry.serializer().nullable)
-            if (current is ApiResult.Success) {
-                RunningCheck.results.write(generation) { cache.checkedRunning(before, current.value?.toCached()) }
-            }
-            Result.success()
+    override suspend fun doWork(): Result = withContext(io) {
+        val generation = RunningCheck.results.generation()
+        val api = session.client() ?: return@withContext Result.success()
+        val before = cache.runningCheckStart()
+        val current = api.get(
+            api.server.api("me", "time_entries", "current"),
+            ServerTimeEntry.serializer().nullable,
+        )
+        if (current is ApiResult.Success) {
+            RunningCheck.results.write(generation) { cache.checkedRunning(before, current.value?.toCached()) }
         }
+        Result.success()
+    }
 }
 
 /**

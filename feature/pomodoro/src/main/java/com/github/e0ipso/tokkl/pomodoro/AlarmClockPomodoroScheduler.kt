@@ -15,14 +15,14 @@ import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.timerstate.PomodoroWidgetRedraw
 import com.github.e0ipso.tokkl.timerstate.TimerSyncFollower
 import com.github.e0ipso.tokkl.timerstate.TimerSyncWatcher
-import java.time.Instant
-import java.util.concurrent.CountDownLatch
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
 import org.koin.core.component.inject
+import java.time.Instant
+import java.util.concurrent.CountDownLatch
 
 /**
  * Arms one [AlarmManager.setAlarmClock] at a phase's planned end. That is the exact alarm the
@@ -48,7 +48,8 @@ class AlarmClockPomodoroScheduler(
     private val context: Context,
     private val timerSyncStarts: () -> Boolean = { false },
     private val exactAlarmsAllowed: (() -> Boolean)? = null,
-) : PomodoroAlarmScheduler, TimerSyncWatcher {
+) : PomodoroAlarmScheduler,
+    TimerSyncWatcher {
     private val manager = context.getSystemService(AlarmManager::class.java)
 
     override val permissionDenied: Boolean
@@ -110,7 +111,9 @@ class AlarmClockPomodoroScheduler(
         val flags = PendingIntent.FLAG_IMMUTABLE or
             if (create) PendingIntent.FLAG_UPDATE_CURRENT else PendingIntent.FLAG_NO_CREATE
         val intent = Intent(context, PomodoroPhaseAlarmReceiver::class.java)
-            .setAction(if (redraw) PomodoroPhaseAlarmReceiver.ACTION_WIDGET_REDRAW else PomodoroPhaseAlarmReceiver.ACTION_PHASE_END)
+            .setAction(
+                if (redraw) PomodoroPhaseAlarmReceiver.ACTION_WIDGET_REDRAW else PomodoroPhaseAlarmReceiver.ACTION_PHASE_END,
+            )
         if (phase != null) intent.putPhase(phase)
         return PendingIntent.getBroadcast(context, OPERATION_REQUEST, intent, flags)
     }
@@ -118,7 +121,9 @@ class AlarmClockPomodoroScheduler(
     private fun showPhase(): PendingIntent {
         val intent = mainActivityIntent(context)
             .setAction(ACTION_SHOW)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            .addFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP,
+            )
         return PendingIntent.getActivity(
             context,
             SHOW_REQUEST,
@@ -140,7 +145,9 @@ class AlarmClockPomodoroScheduler(
  * is still in the phase it was armed for, it starts that phase's ringing service, which an alarm
  * delivery may start from the background. It does not start the next phase.
  */
-class PomodoroPhaseAlarmReceiver : BroadcastReceiver(), KoinComponent {
+class PomodoroPhaseAlarmReceiver :
+    BroadcastReceiver(),
+    KoinComponent {
     private val scope: CoroutineScope by inject()
     private val io: CoroutineDispatcher by inject(IoDispatcher)
 
@@ -179,7 +186,9 @@ class PomodoroPhaseAlarmReceiver : BroadcastReceiver(), KoinComponent {
  * Declared disabled. [AlarmClockPomodoroScheduler] enables it while the account's server has the
  * timer API. The system sends these protected broadcasts, so the receiver is exported.
  */
-class PomodoroAlarmRearmReceiver : BroadcastReceiver(), KoinComponent {
+class PomodoroAlarmRearmReceiver :
+    BroadcastReceiver(),
+    KoinComponent {
     private val pomodoroAlarm: PomodoroPhaseAlarm by inject()
     private val timerSync: TimerSyncFollower by inject()
     private val scope: CoroutineScope by inject()

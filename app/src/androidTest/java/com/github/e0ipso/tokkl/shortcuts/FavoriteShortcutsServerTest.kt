@@ -16,9 +16,6 @@ import androidx.test.uiautomator.UiObject2
 import androidx.test.uiautomator.Until
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.DeviceShell
-import com.github.e0ipso.tokkl.feature.shortcuts.R
-import com.github.e0ipso.tokkl.core.ui.R as UiR
-import com.github.e0ipso.tokkl.feature.widget.R as WidgetR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TapToVisibleDeadline
 import com.github.e0ipso.tokkl.TestAccounts
@@ -32,15 +29,11 @@ import com.github.e0ipso.tokkl.components.capabilities
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.components.signOut
+import com.github.e0ipso.tokkl.feature.shortcuts.R
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.widget.NativeWidget
-import java.io.ByteArrayOutputStream
-import java.time.Duration
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
-import java.util.regex.Pattern
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
@@ -60,6 +53,13 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.io.ByteArrayOutputStream
+import java.time.Duration
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.regex.Pattern
+import com.github.e0ipso.tokkl.core.ui.R as UiR
+import com.github.e0ipso.tokkl.feature.widget.R as WidgetR
 
 /**
  * The favorites' launcher shortcuts (docs/PRD.md N6) against the real Tokkl container. The test's
@@ -144,7 +144,11 @@ class FavoriteShortcutsServerTest {
 
         val shown = minOf(limit, favorites.size)
         awaitShortcuts("the launcher limit", (1..shown).map { "Favorite $it" })
-        assertEquals("the cache keeps every server favorite", favorites.size, runBlocking { app.cache.favorites.first() }.size)
+        assertEquals(
+            "the cache keeps every server favorite",
+            favorites.size,
+            runBlocking { app.cache.favorites.first() }.size,
+        )
         assertEquals((0 until shown).toList(), published().map { it.rank })
     }
 
@@ -176,7 +180,9 @@ class FavoriteShortcutsServerTest {
             val started = TapToVisibleDeadline("shortcut Start")
             context.startActivity(Intent(shortcut.intent).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
             started.await("shortcut start reaches the native widget") {
-                widget.hasText("Shortcut to widget") && widget.hasDescription(context.getString(WidgetR.string.widget_stop_description))
+                widget.hasText(
+                    "Shortcut to widget",
+                ) && widget.hasDescription(context.getString(WidgetR.string.widget_stop_description))
             }
             assertEquals("Shortcut to widget", runBlocking { app.cache.running.first() }?.entry?.description)
             assertEquals("the offline start is queued", 1, runBlocking { app.changes.unsentCount.first() })
@@ -195,8 +201,12 @@ class FavoriteShortcutsServerTest {
 
     @Test
     fun aTapStartsTheFavoriteOfflineAndShowsAToastInsteadOfTheApp() {
-        val task = web.send("POST", web.server.api("workspaces", "${account.workspaceId}", "projects", "$project", "tasks"),
-            buildJsonObject { put("name", "Shortcut task") }, JsonObject.serializer()).orFail("create shortcut task")["id"]!!.jsonPrimitive.long
+        val task = web.send(
+            "POST",
+            web.server.api("workspaces", "${account.workspaceId}", "projects", "$project", "tasks"),
+            buildJsonObject { put("name", "Shortcut task") },
+            JsonObject.serializer(),
+        ).orFail("create shortcut task")["id"]!!.jsonPrimitive.long
         saveFavorites(favorite("Write the report", project, task, listOf("shortcut"), true), favorite("", project))
         awaitShortcuts("the favorites", listOf("Write the report", "Website"))
         val shortcut = published().first()
@@ -257,7 +267,10 @@ class FavoriteShortcutsServerTest {
         println("Shortcut launcher: resolved=${device.launcherPackageName}; foreground=$launcher")
         assertNotNull("Home exposes the launcher", launcher)
         appIcon(device, launcher).longClick()
-        val report = device.wait(Until.findObject(By.pkg(launcher).text(Pattern.compile("Write the report(, Website)?"))), UI_TIMEOUT.toMillis())
+        val report = device.wait(
+            Until.findObject(By.pkg(launcher).text(Pattern.compile("Write the report(, Website)?"))),
+            UI_TIMEOUT.toMillis(),
+        )
         assertNotNull("the long press lists the first favorite", report)
         assertNotNull("and the second", device.findObject(By.pkg(launcher).text("Website")))
 
@@ -272,7 +285,13 @@ class FavoriteShortcutsServerTest {
     /** The app's icon among the launcher's apps, which open with a swipe up on the home screen. */
     private fun appIcon(device: UiDevice, launcher: String): UiObject2 {
         val name = context.getString(UiR.string.app_name)
-        device.swipe(device.displayWidth / 2, device.displayHeight * 3 / 4, device.displayWidth / 2, device.displayHeight / 4, SWIPE_STEPS)
+        device.swipe(
+            device.displayWidth / 2,
+            device.displayHeight * 3 / 4,
+            device.displayWidth / 2,
+            device.displayHeight / 4,
+            SWIPE_STEPS,
+        )
         repeat(MAX_SCROLLS) {
             device.wait(Until.findObject(By.pkg(launcher).text(name)), SHORT_WAIT.toMillis())?.let { return it }
             device.findObject(By.pkg(launcher).scrollable(true))?.scroll(Direction.DOWN, 1f)
@@ -281,13 +300,27 @@ class FavoriteShortcutsServerTest {
         throw AssertionError("the launcher lists no $name")
     }
 
-    private fun favorite(description: String, project: Long?, task: Long? = null, tags: List<String> = emptyList(), billable: Boolean = false) =
-        """{"description": ${Json.encodeToString(description)}, "project_id": ${project ?: "null"}, "task_id": ${task ?: "null"}, "tags": ${Json.encodeToString(tags)}, "billable": $billable}"""
+    private fun favorite(
+        description: String,
+        project: Long?,
+        task: Long? = null,
+        tags: List<String> = emptyList(),
+        billable: Boolean = false,
+    ) = """{"description": ${Json.encodeToString(
+        description,
+    )}, "project_id": ${project ?: "null"}, "task_id": ${task ?: "null"}, "tags": ${Json.encodeToString(
+        tags,
+    )}, "billable": $billable}"""
 
     /** Sets the favorites as the web app does, then refreshes the phone. */
     private fun saveFavorites(vararg favorites: String) {
         val body = Json.parseToJsonElement("""{"favorites": [${favorites.joinToString(",")}]}""")
-        web.send("POST", web.server.api("me", "preferences"), body, JsonElement.serializer()).orFail("POST /api/v9/me/preferences")
+        web.send(
+            "POST",
+            web.server.api("me", "preferences"),
+            body,
+            JsonElement.serializer(),
+        ).orFail("POST /api/v9/me/preferences")
         runBlocking { app.accountRefresh.refresh().join() }
     }
 
@@ -323,15 +356,25 @@ class FavoriteShortcutsServerTest {
             while (System.nanoTime() < deadline) {
                 shown = DeviceShell.run("dumpsys notification").lineSequence()
                     .firstOrNull { it.contains("TextToastRecord{") }
-                if (shown?.contains(":${context.packageName}/") == true && shown.contains(" text=$text duration=${Toast.LENGTH_SHORT}}")) {
+                if (shown?.contains(
+                        ":${context.packageName}/",
+                    ) == true && shown.contains(" text=$text duration=${Toast.LENGTH_SHORT}}")
+                ) {
                     println("Shortcut system confirmation: $shown")
-                    assertTrue("the shortcut action closes after its confirmation", finished.await(UI_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS))
+                    assertTrue(
+                        "the shortcut action closes after its confirmation",
+                        finished.await(UI_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS),
+                    )
                     return
                 }
                 Thread.sleep(20)
             }
             dumpWindows(UiDevice.getInstance(instrumentation))
-            throw AssertionError("Expected short system toast '$text'; platform toast=$shown; running=${runBlocking { app.cache.running.first() }?.entry?.description}; resumed=${resumedActivities()}")
+            throw AssertionError(
+                "Expected short system toast '$text'; platform toast=$shown; running=${runBlocking {
+                    app.cache.running.first()
+                }?.entry?.description}; resumed=${resumedActivities()}",
+            )
         } finally {
             instrumentation.runOnMainSync { monitor.removeLifecycleCallback(lifecycle) }
         }

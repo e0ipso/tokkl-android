@@ -133,7 +133,15 @@ fun formatDurationWithoutSeconds(totalSeconds: Long, format: DurationFormat = Du
     val m = floor((seconds % 3600) / 60)
     return when {
         format == DurationFormat.DECIMAL -> formatDuration(totalSeconds, format)
-        format == DurationFormat.CLASSIC && h == 0.0 -> if (m > 0) "${whole(m)} min" else formatDuration(totalSeconds, format)
+
+        format == DurationFormat.CLASSIC && h == 0.0 -> if (m > 0) {
+            "${whole(
+                m,
+            )} min"
+        } else {
+            formatDuration(totalSeconds, format)
+        }
+
         else -> "${whole(h)}:${pad(m)}"
     }
 }

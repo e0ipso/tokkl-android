@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.timerstate
 
 import androidx.annotation.StringRes
-import com.github.e0ipso.tokkl.core.data.R
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
@@ -10,13 +9,14 @@ import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.cache.CREATED_WITH
 import com.github.e0ipso.tokkl.cache.EntryFields
-import kotlin.coroutines.CoroutineContext
+import com.github.e0ipso.tokkl.core.data.R
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import kotlin.coroutines.CoroutineContext
 
 /**
  * The Tokkl server's timer actions under `/api/app`: Pause, Resume and Discard of the pause chain,
@@ -42,7 +42,8 @@ class TimerActions(
     private val client: ApiClientProvider,
     private val source: () -> TimerStateSource,
     private val io: CoroutineContext,
-) : PauseActions, SessionActions {
+) : PauseActions,
+    SessionActions {
 
     /** Reads the state with `GET /api/app/timer`. */
     override suspend fun read(): TimerActionResult = call { api ->
@@ -69,8 +70,11 @@ class TimerActions(
      * of the account's defaults. The server refuses it while a session runs, and otherwise stops
      * the running entry and ends any pause chain.
      */
-    override suspend fun startSession(workspaceId: Long, fields: EntryFields, lengths: SessionLengths): TimerActionResult =
-        post(sessionStart(workspaceId, fields, lengths), "pomodoro")
+    override suspend fun startSession(
+        workspaceId: Long,
+        fields: EntryFields,
+        lengths: SessionLengths,
+    ): TimerActionResult = post(sessionStart(workspaceId, fields, lengths), "pomodoro")
 
     /** Confirms the phase shown at [revision] and starts the next one. */
     override suspend fun nextPhase(revision: Long): TimerActionResult = post(revisioned(revision), "pomodoro", "next")
@@ -93,8 +97,15 @@ class TimerActions(
                     holder.accept(read, answer.value.value)
                     if (answer.value.refused) TimerActionResult.Refused else TimerActionResult.Done
                 }
+
                 is ApiResult.Failure ->
-                    if (answer.error is ApiError.Network) TimerActionResult.Offline else TimerActionResult.Failed(answer.error)
+                    if (answer.error is ApiError.Network) {
+                        TimerActionResult.Offline
+                    } else {
+                        TimerActionResult.Failed(
+                            answer.error,
+                        )
+                    }
             }
         }
 }
@@ -209,16 +220,17 @@ private fun revisioned(revision: Long): JsonObject = buildJsonObject { put("revi
  * The body of `POST /api/app/pomodoro`: the first pomodoro's fields as a v9 start sends them, tags
  * by name and the app's `created_with`, and the four lengths.
  */
-private fun sessionStart(workspaceId: Long, fields: EntryFields, lengths: SessionLengths): JsonObject = buildJsonObject {
-    put("workspace_id", workspaceId)
-    put("created_with", CREATED_WITH)
-    put("description", fields.description)
-    put("project_id", fields.projectId)
-    put("task_id", fields.taskId)
-    put("tags", JsonArray(fields.tags.map(::JsonPrimitive)))
-    put("billable", fields.billable)
-    put("work_minutes", lengths.workMinutes)
-    put("short_rest_minutes", lengths.shortRestMinutes)
-    put("long_rest_minutes", lengths.longRestMinutes)
-    put("long_rest_every", lengths.longRestEvery)
-}
+private fun sessionStart(workspaceId: Long, fields: EntryFields, lengths: SessionLengths): JsonObject =
+    buildJsonObject {
+        put("workspace_id", workspaceId)
+        put("created_with", CREATED_WITH)
+        put("description", fields.description)
+        put("project_id", fields.projectId)
+        put("task_id", fields.taskId)
+        put("tags", JsonArray(fields.tags.map(::JsonPrimitive)))
+        put("billable", fields.billable)
+        put("work_minutes", lengths.workMinutes)
+        put("short_rest_minutes", lengths.shortRestMinutes)
+        put("long_rest_minutes", lengths.longRestMinutes)
+        put("long_rest_every", lengths.longRestEvery)
+    }

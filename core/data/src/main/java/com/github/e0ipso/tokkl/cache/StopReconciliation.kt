@@ -5,9 +5,9 @@ import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.api.TrashEntry
+import kotlinx.serialization.builtins.ListSerializer
 import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
-import kotlinx.serialization.builtins.ListSerializer
 
 /**
  * Whether the server stopped the entry of the captured Stop [change] as the phone asked. True only
@@ -21,24 +21,50 @@ internal fun stoppedOnServer(api: TogglApiClient, change: PendingChange): ApiRes
             result.value.matchesStop(change) -> ApiResult.Success(true)
             else -> ApiResult.Failure(ApiError.UnexpectedStatus(CONFLICT, "The server stopped this entry differently"))
         }
+
         is ApiResult.Failure -> if (change.shortStop && (result.error as? ApiError.Http)?.status == NOT_FOUND) {
             when (val trash = api.get(api.server.app("trash"), ListSerializer(TrashEntry.serializer()))) {
-                is ApiResult.Success -> if (trash.value.any { it.matchesStop(change) }) ApiResult.Success(true)
-                    else ApiResult.Failure(ApiError.UnexpectedStatus(CONFLICT, "The short Stop is not in Trash"))
+                is ApiResult.Success -> if (trash.value.any { it.matchesStop(change) }) {
+                    ApiResult.Success(true)
+                } else {
+                    ApiResult.Failure(ApiError.UnexpectedStatus(CONFLICT, "The short Stop is not in Trash"))
+                }
+
                 is ApiResult.Failure -> trash
             }
-        } else result
+        } else {
+            result
+        }
     }
 }
 
 // Android 12's Instant.parse rejects Tokkl's +00:00 timestamps; OffsetDateTime accepts them.
 internal fun ServerTimeEntry.matchesStop(change: PendingChange): Boolean =
     id == change.entryId && workspaceId == change.workspaceId &&
-        runCatching { OffsetDateTime.parse(start).toInstant() }.getOrNull() == change.start.truncatedTo(ChronoUnit.SECONDS) &&
-        stop?.let { runCatching { OffsetDateTime.parse(it).toInstant() }.getOrNull() } == change.stop?.truncatedTo(ChronoUnit.SECONDS) &&
+        runCatching {
+            OffsetDateTime.parse(
+                start,
+            ).toInstant()
+        }.getOrNull() == change.start.truncatedTo(ChronoUnit.SECONDS) &&
+        stop?.let {
+            runCatching {
+                OffsetDateTime.parse(
+                    it,
+                ).toInstant()
+            }.getOrNull()
+        } == change.stop?.truncatedTo(ChronoUnit.SECONDS) &&
         (serverDeletedAt != null) == change.shortStop
 
-private fun TrashEntry.matchesStop(change: PendingChange): Boolean =
-    id == change.entryId && deletedAt != null &&
-        runCatching { OffsetDateTime.parse(start).toInstant() }.getOrNull() == change.start.truncatedTo(ChronoUnit.SECONDS) &&
-        stop?.let { runCatching { OffsetDateTime.parse(it).toInstant() }.getOrNull() } == change.stop?.truncatedTo(ChronoUnit.SECONDS)
+private fun TrashEntry.matchesStop(change: PendingChange): Boolean = id == change.entryId && deletedAt != null &&
+    runCatching {
+        OffsetDateTime.parse(
+            start,
+        ).toInstant()
+    }.getOrNull() == change.start.truncatedTo(ChronoUnit.SECONDS) &&
+    stop?.let {
+        runCatching {
+            OffsetDateTime.parse(
+                it,
+            ).toInstant()
+        }.getOrNull()
+    } == change.stop?.truncatedTo(ChronoUnit.SECONDS)

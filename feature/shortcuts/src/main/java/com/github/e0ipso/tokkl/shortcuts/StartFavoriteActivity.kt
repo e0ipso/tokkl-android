@@ -9,11 +9,10 @@ import android.os.Handler
 import android.os.Looper
 import android.view.WindowManager
 import android.widget.Toast
-import com.github.e0ipso.tokkl.feature.shortcuts.R
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
+import com.github.e0ipso.tokkl.feature.shortcuts.R
 import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import kotlinx.coroutines.CoroutineDispatcher
@@ -22,6 +21,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.android.ext.android.inject
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 
 /**
  * A tap on a favorite's launcher shortcut (docs/PRD.md N6). It starts the favorite on the phone
@@ -76,8 +76,12 @@ class StartFavoriteActivity : Activity() {
             }
             Toast.makeText(app, message, Toast.LENGTH_SHORT).apply {
                 addCallback(object : Toast.Callback() {
-                    override fun onToastShown() { finish() }
-                    override fun onToastHidden() { finish() }
+                    override fun onToastShown() {
+                        finish()
+                    }
+                    override fun onToastHidden() {
+                        finish()
+                    }
                 })
                 show()
             }
@@ -92,16 +96,14 @@ class StartFavoriteActivity : Activity() {
         const val EXTRA_SHORTCUT_ID = "com.github.e0ipso.tokkl.extra.SHORTCUT_ID"
 
         /** The intent of the favorite shortcut [id]. A launcher keeps it, so it carries only the id. */
-        fun intent(context: Context, id: String): Intent =
-            Intent(context, StartFavoriteActivity::class.java)
-                .setAction(ACTION_START_FAVORITE)
-                .putExtra(EXTRA_SHORTCUT_ID, id)
+        fun intent(context: Context, id: String): Intent = Intent(context, StartFavoriteActivity::class.java)
+            .setAction(ACTION_START_FAVORITE)
+            .putExtra(EXTRA_SHORTCUT_ID, id)
     }
 }
 
 /** The fixed words in a favorite's label, in the app's language now. */
-internal fun favoriteNames(context: Context): FavoriteNames =
-    FavoriteNames(
-        untitled = context.getString(SharedR.string.favorites_untitled),
-        withProject = { name, project -> context.getString(SharedR.string.favorites_with_project, name, project) },
-    )
+internal fun favoriteNames(context: Context): FavoriteNames = FavoriteNames(
+    untitled = context.getString(SharedR.string.favorites_untitled),
+    withProject = { name, project -> context.getString(SharedR.string.favorites_with_project, name, project) },
+)

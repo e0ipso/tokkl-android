@@ -10,10 +10,6 @@ import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.api.UntrustedCertificateException
 import com.github.e0ipso.tokkl.navigation.SignInAgain
 import com.github.e0ipso.tokkl.session.AccountSettings
-import java.io.IOException
-import java.security.cert.CertificateException
-import java.time.DayOfWeek
-import javax.net.ssl.SSLHandshakeException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import mockwebserver3.MockResponse
@@ -26,6 +22,10 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.io.IOException
+import java.security.cert.CertificateException
+import java.time.DayOfWeek
+import javax.net.ssl.SSLHandshakeException
 
 /**
  * The sign-in form against a MockWebServer, which shows the exact requests
@@ -70,7 +70,14 @@ class SignInViewModelTest {
             httpClient = httpClient,
         )
         // Unconfined runs each attempt to the end inside submit().
-        return SignInViewModel(signIn, trust, cooldowns, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, clock = { now })
+        return SignInViewModel(
+            signIn,
+            trust,
+            cooldowns,
+            CoroutineScope(Dispatchers.Unconfined),
+            Dispatchers.Unconfined,
+            clock = { now },
+        )
     }
 
     /** The deadlines a [SignInCooldownStore] would hold, in memory. */
@@ -191,8 +198,10 @@ class SignInViewModelTest {
             signedInAccount = { SignInAgain(url, 7) },
         )
         server.enqueue(me("""{"id":8,$SETTINGS,"api_token":"$TOKEN"}"""))
-        assertEquals(SignInResult.OtherAccount,
-            signIn.attempt(url, SignInCredentials.ApiToken(TOKEN), SignInAgain(url, null)))
+        assertEquals(
+            SignInResult.OtherAccount,
+            signIn.attempt(url, SignInCredentials.ApiToken(TOKEN), SignInAgain(url, null)),
+        )
     }
 
     @Test
@@ -202,8 +211,10 @@ class SignInViewModelTest {
             signedInAccount = { SignInAgain(ServerUrl.parse(baseUrl("/"))!!, 7) },
         )
         server.enqueue(me("""{"id":8,$SETTINGS,"api_token":"$TOKEN"}"""))
-        assertEquals(SignInResult.OtherAccount,
-            signIn.attempt(ServerUrl.parse(baseUrl("/"))!!, SignInCredentials.ApiToken(TOKEN)))
+        assertEquals(
+            SignInResult.OtherAccount,
+            signIn.attempt(ServerUrl.parse(baseUrl("/"))!!, SignInCredentials.ApiToken(TOKEN)),
+        )
     }
 
     @Test
@@ -384,7 +395,11 @@ class SignInViewModelTest {
         )
 
         model.onEmailChange("ana@example.com")
-        assertEquals("editing a field clears its errors", setOf(InputError.SERVER_URL, InputError.PASSWORD), model.state.value.inputErrors)
+        assertEquals(
+            "editing a field clears its errors",
+            setOf(InputError.SERVER_URL, InputError.PASSWORD),
+            model.state.value.inputErrors,
+        )
         assertEquals(0, server.requestCount)
     }
 
@@ -518,7 +533,11 @@ class SignInViewModelTest {
             .addInterceptor { chain ->
                 val pin = trust.pinnedSha256(certificate.host, certificate.port)
                 if (pin != certificate.sha256) {
-                    val refusal = UntrustedCertificateException(certificate, pinChanged = pin != null, cause = CertificateException("no trust anchor"))
+                    val refusal = UntrustedCertificateException(
+                        certificate,
+                        pinChanged = pin != null,
+                        cause = CertificateException("no trust anchor"),
+                    )
                     throw SSLHandshakeException("handshake failed").apply { initCause(refusal) }
                 }
                 chain.proceed(chain.request())
@@ -569,7 +588,10 @@ class SignInViewModelTest {
 
         model.submit()
 
-        assertEquals(SignInResult.CleartextNotConfirmed(ServerUrl.parse(baseUrl("/tokkl/other"))!!), model.state.value.failure)
+        assertEquals(
+            SignInResult.CleartextNotConfirmed(ServerUrl.parse(baseUrl("/tokkl/other"))!!),
+            model.state.value.failure,
+        )
         assertEquals(0, server.requestCount)
     }
 

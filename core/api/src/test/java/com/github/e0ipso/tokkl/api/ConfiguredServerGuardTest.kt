@@ -164,7 +164,10 @@ class ConfiguredServerGuardTest {
     fun withoutAConfiguredServerEveryRequestIsRefused() {
         ConfiguredServer.readStoredFrom { null }
 
-        assertEquals(ApiError.HostNotAllowed(origin(server.api("me"))), failure(client.get(server.api("me"), Me.serializer())))
+        assertEquals(
+            ApiError.HostNotAllowed(origin(server.api("me"))),
+            failure(client.get(server.api("me"), Me.serializer())),
+        )
         assertEquals(0, configured.requestCount)
     }
 
@@ -215,7 +218,9 @@ class ConfiguredServerGuardTest {
     fun httpsServerNeedsNoConfirmation() {
         trust.cleartextConfirmed.clear()
         // The MockWebServer speaks plain HTTP, so the TLS handshake fails, but only after the guard let the call through.
-        val https = ServerUrl.parse(configured.url("/").newBuilder().scheme("https").port(configured.port).build().toString())!!
+        val https = ServerUrl.parse(
+            configured.url("/").newBuilder().scheme("https").port(configured.port).build().toString(),
+        )!!
         ConfiguredServer.readStoredFrom { https }
 
         val error = failure(TogglApiClient(https, credentials).get(https.api("me"), Me.serializer()))

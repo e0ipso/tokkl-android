@@ -102,7 +102,6 @@ internal const val SLIDE_MS = 300
  */
 internal val StripMinFontSize = 4.sp
 
-
 internal const val MINUTE_MS = 60_000L
 
 private const val SECONDS_PER_HOUR = 3600L

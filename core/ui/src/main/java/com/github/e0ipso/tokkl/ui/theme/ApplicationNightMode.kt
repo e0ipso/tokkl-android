@@ -2,7 +2,6 @@ package com.github.e0ipso.tokkl.ui.theme
 
 import android.app.UiModeManager
 import android.content.Context
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -10,6 +9,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlin.coroutines.CoroutineContext
 
 /** The night mode to give Android for this theme mode. Following the system leaves it to Android. */
 val ThemeMode.applicationNightMode: Int

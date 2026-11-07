@@ -26,19 +26,35 @@ internal object SourceTree {
         private val buildFile: String by lazy { File(directory, "build.gradle.kts").readText() }
 
         /** The modules its main sources compile against, from `api(project(...))` and `implementation(project(...))`. */
-        val mainDependencies: Set<String> by lazy { MAIN_DEPENDENCY.findAll(buildFile).map { it.groupValues[1] }.toSet() }
+        val mainDependencies: Set<String> by lazy {
+            MAIN_DEPENDENCY.findAll(
+                buildFile,
+            ).map { it.groupValues[1] }.toSet()
+        }
 
         /** The modules whose test fixtures its tests use, from `testFixtures(project(...))`. */
-        val fixtureDependencies: Set<String> by lazy { FIXTURE_DEPENDENCY.findAll(buildFile).map { it.groupValues[1] }.toSet() }
+        val fixtureDependencies: Set<String> by lazy {
+            FIXTURE_DEPENDENCY.findAll(
+                buildFile,
+            ).map { it.groupValues[1] }.toSet()
+        }
 
         /** The modules it exposes to its dependents, from `api(project(...))`. */
         val apiDependencies: Set<String> by lazy { API_DEPENDENCY.findAll(buildFile).map { it.groupValues[1] }.toSet() }
 
         /** Each package its main sources declare, with the app packages those sources use. */
-        val packages: Map<String, Set<Use>> by lazy { readSources(File(directory, "src/main/java/com/github/e0ipso/tokkl")) }
+        val packages: Map<String, Set<Use>> by lazy {
+            readSources(
+                File(directory, "src/main/java/com/github/e0ipso/tokkl"),
+            )
+        }
 
         /** The modules whose R class its main sources name, such as `:core:ui` for `com.github.e0ipso.tokkl.core.ui.R`. */
-        val resourceModules: Set<String> by lazy { readResourceModules(File(directory, "src/main/java/com/github/e0ipso/tokkl")) }
+        val resourceModules: Set<String> by lazy {
+            readResourceModules(
+                File(directory, "src/main/java/com/github/e0ipso/tokkl"),
+            )
+        }
     }
 
     val root: File by lazy {
@@ -59,10 +75,14 @@ internal object SourceTree {
         val first = parts.first()
         return when {
             name == APP -> ROOT
+
             first == "R" -> null
+
             // The R class of a core or feature module, such as com.github.e0ipso.tokkl.core.ui.R.
             (first == "core" || first == "feature") && parts.getOrNull(2) == "R" -> null
+
             first.first().isUpperCase() -> ROOT
+
             else -> first
         }
     }
@@ -73,7 +93,9 @@ internal object SourceTree {
         root.walkTopDown().filter { it.isFile && it.extension == "kt" }.forEach { file ->
             val text = file.readText()
             val from = PACKAGE.find(text)?.groupValues?.get(1)?.let(::topPackage) ?: error("no package in $file")
-            val code = withoutCommentsAndStrings(text).lineSequence().filterNot { it.startsWith("package ") }.joinToString("\n")
+            val code = withoutCommentsAndStrings(
+                text,
+            ).lineSequence().filterNot { it.startsWith("package ") }.joinToString("\n")
             val found = uses.getOrPut(from) { mutableSetOf() }
             for (match in APP_NAME.findAll(code)) {
                 val target = topPackage(match.groupValues[1]) ?: continue

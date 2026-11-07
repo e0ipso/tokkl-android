@@ -38,7 +38,11 @@ enum class SplitProblem : SplitResult {
  * of the time resolution, so both halves keep it as their shared boundary when the server snaps them.
  */
 fun splitTimes(text: String, start: Instant, stop: Instant, time: AccountTime, twelveHour: Boolean): SplitResult {
-    val minutes = parseTimeOfDay(text, twelveHour = twelveHour, reference = time.minutesOfDay(start)) ?: return SplitProblem.UNREADABLE
+    val minutes = parseTimeOfDay(
+        text,
+        twelveHour = twelveHour,
+        reference = time.minutesOfDay(start),
+    ) ?: return SplitProblem.UNREADABLE
     val startDay = time.local(start).toLocalDate()
     var at = time.instantAt(startDay, minutes)
     if (!at.isAfter(start)) at = time.instantAt(startDay.plusDays(1), minutes)

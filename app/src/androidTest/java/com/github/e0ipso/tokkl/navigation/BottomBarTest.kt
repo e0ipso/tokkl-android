@@ -23,13 +23,6 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.feature.clients.R as ClientsR
-import com.github.e0ipso.tokkl.feature.projects.R as ProjectsR
-import com.github.e0ipso.tokkl.feature.reports.R as ReportsR
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
-import com.github.e0ipso.tokkl.feature.tags.R as TagsR
-import com.github.e0ipso.tokkl.feature.timer.R as TimerR
-import com.github.e0ipso.tokkl.feature.trash.R as TrashR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
@@ -47,8 +40,6 @@ import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timerstate.SessionLengths
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
-import java.time.Instant
-import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -58,6 +49,15 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.Instant
+import java.time.temporal.ChronoUnit
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.feature.clients.R as ClientsR
+import com.github.e0ipso.tokkl.feature.projects.R as ProjectsR
+import com.github.e0ipso.tokkl.feature.reports.R as ReportsR
+import com.github.e0ipso.tokkl.feature.tags.R as TagsR
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
+import com.github.e0ipso.tokkl.feature.trash.R as TrashR
 
 /**
  * The bottom bar in the real activity (docs/PRD.md B1 to B3): each item opens its page, Back goes
@@ -136,15 +136,36 @@ class BottomBarTest {
     fun theMoreSheetListsReportsTemplatesClientsTagsAndTrashAndOpensEach() {
         launch { scenario ->
             // The sheet lists Trash and Timer templates once the refresh's probe has found them.
-            composeRule.waitUntil("the refresh finds the trash", NETWORK_TIMEOUT_MS) { app.capabilities.state.value.trash }
-            composeRule.waitUntil("the refresh finds timer templates", NETWORK_TIMEOUT_MS) { app.capabilities.state.value.favorites }
-            for (page in listOf(TopLevelPage.REPORTS, TopLevelPage.TEMPLATES, TopLevelPage.CLIENTS, TopLevelPage.TAGS, TopLevelPage.TRASH)) {
+            composeRule.waitUntil(
+                "the refresh finds the trash",
+                NETWORK_TIMEOUT_MS,
+            ) { app.capabilities.state.value.trash }
+            composeRule.waitUntil(
+                "the refresh finds timer templates",
+                NETWORK_TIMEOUT_MS,
+            ) { app.capabilities.state.value.favorites }
+            for (page in listOf(
+                TopLevelPage.REPORTS,
+                TopLevelPage.TEMPLATES,
+                TopLevelPage.CLIENTS,
+                TopLevelPage.TAGS,
+                TopLevelPage.TRASH,
+            )) {
                 openMore()
                 val items = composeRule.onAllNodes(sheetItem())
                     .fetchSemanticsNodes()
                     .sortedBy { it.boundsInRoot.top }
                     .map { node -> node.config[SemanticsProperties.Text].joinToString(" ") { it.text } }
-                assertEquals(listOf(ReportsR.string.reports, TimerR.string.nav_templates, ClientsR.string.nav_clients, TagsR.string.nav_tags, TrashR.string.nav_trash).map(::string), items)
+                assertEquals(
+                    listOf(
+                        ReportsR.string.reports,
+                        TimerR.string.nav_templates,
+                        ClientsR.string.nav_clients,
+                        TagsR.string.nav_tags,
+                        TrashR.string.nav_trash,
+                    ).map(::string),
+                    items,
+                )
 
                 composeRule.onNode(sheetItem() and hasText(string(page.label))).performScrollTo().performClick()
 
@@ -161,7 +182,9 @@ class BottomBarTest {
     fun theMoreSheetClosesOnCloseAndOnBack() {
         launch { scenario ->
             openMore()
-            composeRule.onNode(hasContentDescription(string(R.string.nav_more_close)) and hasClickAction()).performClick()
+            composeRule.onNode(
+                hasContentDescription(string(R.string.nav_more_close)) and hasClickAction(),
+            ).performClick()
             awaitSheetClosed()
             barItem(TimerR.string.nav_timer).assertIsSelected()
 
@@ -208,7 +231,10 @@ class BottomBarTest {
     @Test
     fun theTimerItemSaysWhenATimerRuns() {
         val account = signInToNewAccount()
-        val running = account.createEntry("Running", Instant.now().minus(5, ChronoUnit.MINUTES).truncatedTo(ChronoUnit.SECONDS))
+        val running = account.createEntry(
+            "Running",
+            Instant.now().minus(5, ChronoUnit.MINUTES).truncatedTo(ChronoUnit.SECONDS),
+        )
         launch {
             val runningItem = barItemMatcher(TimerR.string.nav_timer) and
                 SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, string(R.string.nav_timer_running))
@@ -218,8 +244,19 @@ class BottomBarTest {
             composeRule.openMorePage(ReportsR.string.reports, NETWORK_TIMEOUT_MS)
             composeRule.onNode(runningItem).assertIsDisplayed()
 
-            val stop = account.client.server.api("workspaces", account.workspaceId.toString(), "time_entries", running.toString(), "stop")
-            account.client.send("PATCH", stop, buildJsonObject {}, JsonObject.serializer()).orFail("PATCH .../time_entries/<id>/stop")
+            val stop = account.client.server.api(
+                "workspaces",
+                account.workspaceId.toString(),
+                "time_entries",
+                running.toString(),
+                "stop",
+            )
+            account.client.send(
+                "PATCH",
+                stop,
+                buildJsonObject {},
+                JsonObject.serializer(),
+            ).orFail("PATCH .../time_entries/<id>/stop")
             runBlocking { app.accountRefresh.refresh().join() }
 
             composeRule.waitUntil("the Timer item drops its state", NETWORK_TIMEOUT_MS) {
@@ -236,15 +273,25 @@ class BottomBarTest {
         launch { scenario ->
             composeRule.awaitPomodoroOffered(NETWORK_TIMEOUT_MS)
             val marker = barItemMatcher(SharedR.string.pomodoro_title) and
-                SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, string(R.string.nav_pomodoro_running))
+                SemanticsMatcher.expectValue(
+                    SemanticsProperties.StateDescription,
+                    string(R.string.nav_pomodoro_running),
+                )
             assertEquals(0, composeRule.onAllNodes(marker).fetchSemanticsNodes().size)
             barItem(SharedR.string.pomodoro_title).performClick()
             heading(SharedR.string.pomodoro_title).assertIsDisplayed()
             barItem(SharedR.string.pomodoro_title).assertIsSelected()
             // Another device starts the session; the phone's own action answers go to the same holder.
-            assertEquals(TimerActionResult.Done, runBlocking {
-                app.timerActions.startSession(account.workspaceId, EntryFields(description = "Navigation session"), SessionLengths(25, 5, 15, 4))
-            })
+            assertEquals(
+                TimerActionResult.Done,
+                runBlocking {
+                    app.timerActions.startSession(
+                        account.workspaceId,
+                        EntryFields(description = "Navigation session"),
+                        SessionLengths(25, 5, 15, 4),
+                    )
+                },
+            )
             composeRule.waitUntil("Pomodoro has its running state", TIMEOUT_MS) {
                 composeRule.onAllNodes(marker).fetchSemanticsNodes().isNotEmpty()
             }
@@ -310,13 +357,16 @@ class BottomBarTest {
         hasText(string(label)) and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab)
 
     /** The sheet's page items. No item of the bar has their labels. */
-    private fun sheetItem(): SemanticsMatcher =
-        isSelectable() and (
-            hasText(string(ReportsR.string.reports)) or hasText(string(TimerR.string.nav_templates)) or hasText(string(ClientsR.string.nav_clients)) or
-                hasText(string(TagsR.string.nav_tags)) or hasText(string(TrashR.string.nav_trash))
-            )
+    private fun sheetItem(): SemanticsMatcher = isSelectable() and (
+        hasText(
+            string(ReportsR.string.reports),
+        ) or hasText(string(TimerR.string.nav_templates)) or hasText(string(ClientsR.string.nav_clients)) or
+            hasText(string(TagsR.string.nav_tags)) or hasText(string(TrashR.string.nav_trash))
+        )
 
-    private fun heading(@StringRes label: Int): SemanticsNodeInteraction = composeRule.onNode(hasText(string(label)) and isHeading())
+    private fun heading(@StringRes label: Int): SemanticsNodeInteraction = composeRule.onNode(
+        hasText(string(label)) and isHeading(),
+    )
 
     private fun string(@StringRes id: Int): String = context.getString(id)
 

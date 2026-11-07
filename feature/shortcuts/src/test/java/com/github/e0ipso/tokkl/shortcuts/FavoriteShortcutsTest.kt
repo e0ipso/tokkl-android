@@ -15,18 +15,51 @@ import org.junit.Test
 
 class FavoriteShortcutsTest {
 
-    private val project = CachedProject(id = 7, workspaceId = 1, clientId = null, name = "Website", color = "#06aaf5", active = true, billable = false)
+    private val project = CachedProject(
+        id = 7,
+        workspaceId = 1,
+        clientId = null,
+        name = "Website",
+        color = "#06aaf5",
+        active = true,
+        billable = false,
+    )
     private val names = FavoriteNames(untitled = "Untitled", withProject = { name, project -> "$name, $project" })
 
-    private val report = favorite(0, description = "Write the report", projectId = 7, tags = listOf("call"), billable = true)
+    private val report = favorite(
+        0,
+        description = "Write the report",
+        projectId = 7,
+        tags = listOf("call"),
+        billable = true,
+    )
     private val website = favorite(1, description = "", projectId = 7)
     private val untitled = favorite(2, description = "")
 
-    private fun favorite(position: Int, description: String, projectId: Long? = null, tags: List<String> = emptyList(), billable: Boolean = false) =
-        CachedFavorite(position = position, description = description, projectId = projectId, taskId = null, tags = tags, billable = billable)
+    private fun favorite(
+        position: Int,
+        description: String,
+        projectId: Long? = null,
+        tags: List<String> = emptyList(),
+        billable: Boolean = false,
+    ) = CachedFavorite(
+        position = position,
+        description = description,
+        projectId = projectId,
+        taskId = null,
+        tags = tags,
+        billable = billable,
+    )
 
-    private fun shortcuts(available: Boolean = true, favorites: List<CachedFavorite> = listOf(report, website, untitled), limit: Int = 15) =
-        favoriteShortcuts(available, favorites, listOf(project), limit, names)
+    private fun shortcuts(
+        available: Boolean = true,
+        favorites: List<CachedFavorite> = listOf(
+            report,
+            website,
+            untitled,
+        ),
+        limit: Int = 15,
+    ) = favoriteShortcuts(available, favorites, listOf(project), limit, names)
 
     @Test
     fun theFavoritesGiveShortcutsInTheirOrderNamedAsTheTimerPageNamesThem() {
@@ -57,7 +90,13 @@ class FavoriteShortcutsTest {
 
     @Test
     fun theIdChangesWithEveryFieldAndHoldsNoName() {
-        val fields = EntryFields(description = "Write the report", projectId = 7, taskId = 3, tags = listOf("call"), billable = true)
+        val fields = EntryFields(
+            description = "Write the report",
+            projectId = 7,
+            taskId = 3,
+            tags = listOf("call"),
+            billable = true,
+        )
         val id = favoriteShortcutId(fields)
         val others = listOf(
             fields.copy(description = "Write the reports"),
@@ -95,7 +134,10 @@ class FavoriteShortcutsTest {
     fun aTapOnAShortcutWhoseFavoriteIsGoneStartsNothing() = runBlocking {
         val id = shortcuts().first().id
         var starts = 0
-        val start: suspend (Long, EntryFields) -> Long = { _, _ -> starts++; -1L }
+        val start: suspend (Long, EntryFields) -> Long = { _, _ ->
+            starts++
+            -1L
+        }
 
         assertEquals("removed", ShortcutStart.Gone, tap(id, favorites = listOf(website), start = start))
         assertEquals("no favorites on the server", ShortcutStart.Gone, tap(id, available = false, start = start))
@@ -118,7 +160,10 @@ class FavoriteShortcutsTest {
         val sync = FavoriteShortcutSync(
             shortcuts = flowOf(shortcuts(), shortcuts(limit = 1), shortcuts(available = false)),
             published = { launcher },
-            publish = { set += it; launcher = it },
+            publish = {
+                set += it
+                launcher = it
+            },
             scope = CoroutineScope(Dispatchers.Unconfined),
             io = Dispatchers.Unconfined,
         )

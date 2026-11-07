@@ -14,16 +14,16 @@ import com.github.e0ipso.tokkl.cache.CurrentEntryCache
 import com.github.e0ipso.tokkl.cache.RunningCheckStart
 import com.github.e0ipso.tokkl.cache.RunningCheckWrites
 import com.github.e0ipso.tokkl.cache.runningCheckWrites
-import java.time.Clock
-import java.time.Duration
-import java.time.Instant
-import java.time.ZoneId
-import java.time.ZoneOffset
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.Clock
+import java.time.Duration
+import java.time.Instant
+import java.time.ZoneId
+import java.time.ZoneOffset
 
 /** How the account's timer state source orders, keeps and applies the server's timer states. */
 class TimerStateSourceTest {
@@ -122,7 +122,10 @@ class TimerStateSourceTest {
         assertNull(old.takeDiscardNotice())
 
         val next = source()
-        assertFalse("a read begun for the old account does not count for the next", next.accept(late, state(revision = 1)))
+        assertFalse(
+            "a read begun for the old account does not count for the next",
+            next.accept(late, state(revision = 1)),
+        )
         assertNull(next.state.value)
     }
 
@@ -147,7 +150,11 @@ class TimerStateSourceTest {
         assertEquals("the sent start stays", listOf(101L), cache.running().map { it.id })
 
         timer.accept(timer.begin(), state(revision = 4, running = null))
-        assertEquals("a read begun after the send takes the server's stop", emptyList<CachedTimeEntry>(), cache.running())
+        assertEquals(
+            "a read begun after the send takes the server's stop",
+            emptyList<CachedTimeEntry>(),
+            cache.running(),
+        )
     }
 
     @Test
@@ -164,7 +171,11 @@ class TimerStateSourceTest {
         assertEquals(edited, cache.rows[1])
 
         timer.accept(timer.begin(), state(revision = 8, running = serverEntry(1, "Edited elsewhere")))
-        assertEquals("a read begun after the send takes the server's values", "Edited elsewhere", cache.rows[1]?.description)
+        assertEquals(
+            "a read begun after the send takes the server's values",
+            "Edited elsewhere",
+            cache.rows[1]?.description,
+        )
     }
 
     @Test
@@ -195,7 +206,10 @@ class TimerStateSourceTest {
     fun theCountdownAndOvertimeRunOnTheCorrectedClock() {
         // The server's clock runs two minutes ahead of the phone's.
         val end = DEVICE_T0.plusSeconds(120 + 300)
-        val held = HeldTimerState(state(revision = 1, serverTime = DEVICE_T0.plusSeconds(120), pomodoro = pomodoro(end)), DEVICE_T0)
+        val held = HeldTimerState(
+            state(revision = 1, serverTime = DEVICE_T0.plusSeconds(120), pomodoro = pomodoro(end)),
+            DEVICE_T0,
+        )
 
         assertEquals(Duration.ofSeconds(300), held.phaseRemaining(DEVICE_T0))
         assertEquals(Duration.ZERO, held.phaseOvertime(DEVICE_T0))
@@ -212,7 +226,12 @@ class TimerStateSourceTest {
 
         // The clone started at ENTRY_START. The server's clock runs a minute ahead of the phone's.
         val resumed = HeldTimerState(
-            state(revision = 2, serverTime = ENTRY_START.plusSeconds(90), running = serverEntry(12, "Resumed"), pause = pause(600, cloneEntryId = 12)),
+            state(
+                revision = 2,
+                serverTime = ENTRY_START.plusSeconds(90),
+                running = serverEntry(12, "Resumed"),
+                pause = pause(600, cloneEntryId = 12),
+            ),
             receivedAt = ENTRY_START.plusSeconds(30),
         )
         assertEquals(Duration.ofSeconds(190), resumed.cloneElapsed(ENTRY_START.plusSeconds(130)))

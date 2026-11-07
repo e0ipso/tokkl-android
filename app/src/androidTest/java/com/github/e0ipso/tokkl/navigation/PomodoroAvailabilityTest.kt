@@ -18,11 +18,11 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.core.shared.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklNavHost
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.capabilities.Capabilities
+import com.github.e0ipso.tokkl.core.shared.R
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.After
@@ -39,9 +39,12 @@ import org.junit.rules.RuleChain
  */
 class PomodoroAvailabilityTest {
     private val compose = createEmptyComposeRule()
+
     @get:Rule val rules: RuleChain = RuleChain.outerRule(SessionRule()).around(compose)
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
-    private val capabilities = MutableStateFlow(Capabilities.NONE.copy(trash = true, favorites = true, timerState = true))
+    private val capabilities = MutableStateFlow(
+        Capabilities.NONE.copy(trash = true, favorites = true, timerState = true),
+    )
     private var scenario: ActivityScenario<ComponentActivity>? = null
 
     @After
@@ -59,7 +62,10 @@ class PomodoroAvailabilityTest {
         host(width)
         assertTrue("Pomodoro is an item with the timer API", exists(item()))
         compose.onNode(item()).performClick()
-        compose.waitUntil("the Pomodoro page opens", TIMEOUT_MS) { exists(hasText(string(R.string.pomodoro_title)) and isHeading()) }
+        compose.waitUntil(
+            "the Pomodoro page opens",
+            TIMEOUT_MS,
+        ) { exists(hasText(string(R.string.pomodoro_title)) and isHeading()) }
         assertTrue("the item is marked", exists(item() and isSelected()))
 
         // The server loses the timer API while the page is open.
@@ -86,7 +92,9 @@ class PomodoroAvailabilityTest {
 
     private fun exists(matcher: SemanticsMatcher) = compose.onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty()
 
-    private fun item() = hasText(string(R.string.pomodoro_title)) and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab)
+    private fun item() = hasText(
+        string(R.string.pomodoro_title),
+    ) and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab)
 
     private fun string(id: Int) = context.getString(id)
 

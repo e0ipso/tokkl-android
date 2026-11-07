@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.api
 
-import java.util.concurrent.TimeUnit
 import kotlinx.serialization.json.JsonObject
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -13,6 +12,7 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.util.concurrent.TimeUnit
 
 /**
  * The queue sends creates, updates and deletes through [SharedHttpClient.sendingOnce] (TKA-0208),
@@ -135,7 +135,9 @@ class SharedHttpClientTest {
     /** The server reads the request, then the connection drops before the answer. */
     private fun dropBeforeTheAnswer() = MockResponse.Builder().onResponseStart(SocketEffect.CloseSocket()).build()
 
-    private fun answer() = MockResponse.Builder().code(200).addHeader("Content-Type", "application/json").body("{}").build()
+    private fun answer() = MockResponse.Builder().code(
+        200,
+    ).addHeader("Content-Type", "application/json").body("{}").build()
 
     /** Every request the server has received and the test has not taken yet. */
     private fun remainingRequests(): List<RecordedRequest> =

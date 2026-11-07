@@ -11,8 +11,6 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.feature.signin.R
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.TokklTestServer
@@ -20,11 +18,10 @@ import com.github.e0ipso.tokkl.UserCaInstalled
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.feature.signin.R
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
-import java.security.KeyStore
-import java.security.cert.X509Certificate
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.junit.Assert.assertEquals
@@ -34,6 +31,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.security.KeyStore
+import java.security.cert.X509Certificate
+import com.github.e0ipso.tokkl.core.shared.R as SharedR
 
 /**
  * Signs in through the screen to the Tokkl container behind the harness's proxy port whose
@@ -84,7 +84,9 @@ class UserCaCertificateTest {
         composeRule.onNode(hasSetTextAction() and hasText(string(R.string.sign_in_api_token)))
             .performTextInput(TokklTestServer.apiToken)
         // The brand above the form can push the button below the screen's or the keyboard's edge.
-        composeRule.onNode(hasText(string(R.string.sign_in_submit)) and hasClickAction()).performScrollTo().performClick()
+        composeRule.onNode(
+            hasText(string(R.string.sign_in_submit)) and hasClickAction(),
+        ).performScrollTo().performClick()
     }
 
     private fun exists(@StringRes text: Int): Boolean =

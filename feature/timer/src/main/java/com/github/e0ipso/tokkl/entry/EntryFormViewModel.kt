@@ -13,8 +13,6 @@ import com.github.e0ipso.tokkl.entryfields.withPicked
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.AccountTime
-import java.time.Clock
-import java.time.LocalDate
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -28,6 +26,8 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.Clock
+import java.time.LocalDate
 
 /**
  * The form that edits a running segment, every field of a stopped entry (docs/PRD.md H2), or adds
@@ -81,7 +81,12 @@ class EntryFormViewModel(
     private val catalog: StateFlow<Catalog> = combine(projects, tasks, ::Catalog)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), Catalog())
 
-    val state: StateFlow<EntryFormState> = combine(phase, catalog, accountSettings, allDay) { current, names, settings, offered ->
+    val state: StateFlow<EntryFormState> = combine(
+        phase,
+        catalog,
+        accountSettings,
+        allDay,
+    ) { current, names, settings, offered ->
         current.shown(names, settings, offered)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), EntryFormState.Closed)
 
@@ -93,7 +98,9 @@ class EntryFormViewModel(
      * hold it, such as an entry from the older days the history holds in memory. A save of [older]
      * goes to the queue as [EntryChanges.updateOlder], with every field.
      */
-    fun edit(entryId: Long, older: CachedTimeEntry? = null) = open(Opening.Edit(entryId, older?.takeIf { it.id == entryId }))
+    fun edit(entryId: Long, older: CachedTimeEntry? = null) = open(
+        Opening.Edit(entryId, older?.takeIf { it.id == entryId }),
+    )
 
     /** Opens only the captured running segment; it can never fall back to an older-entry PUT. */
     fun editRunning(identity: RunningEntryIdentity) = open(Opening.Running(identity))
@@ -115,13 +122,24 @@ class EntryFormViewModel(
 
     fun setBillable(billable: Boolean) = change { it.copy(fields = it.fields.copy(billable = billable)) }
 
-    fun setDate(date: LocalDate) = change { it.copy(date = date, mistakes = it.mistakes - TimeField.START - TimeField.END) }
+    fun setDate(date: LocalDate) = change {
+        it.copy(
+            date = date,
+            mistakes = it.mistakes - TimeField.START - TimeField.END,
+        )
+    }
 
     fun setStart(text: String) = change { it.copy(start = text, mistakes = it.mistakes - TimeField.START) }
 
     fun setEnd(text: String) = change { it.copy(end = text, mistakes = it.mistakes - TimeField.END) }
 
-    fun setDuration(text: String) = change { it.copy(duration = text, durationSeconds = null, mistakes = it.mistakes - TimeField.DURATION) }
+    fun setDuration(text: String) = change {
+        it.copy(
+            duration = text,
+            durationSeconds = null,
+            mistakes = it.mistakes - TimeField.DURATION,
+        )
+    }
 
     /**
      * Turns No times on or off, never for a running entry. On, the date stays and the duration
@@ -134,12 +152,27 @@ class EntryFormViewModel(
         val unmarked = form.mistakes - TimeField.START - TimeField.END - TimeField.DURATION
         when {
             form.target is DraftTarget.Running || form.noTimes == on -> form
+
             on -> {
                 // Times typed and not left yet give the duration, as leaving them would.
-                val shown = if (form.timesTyped() && !form.durationChanged()) form.followTimes(settings, time, clock) else form
+                val shown = if (form.timesTyped() && !form.durationChanged()) {
+                    form.followTimes(
+                        settings,
+                        time,
+                        clock,
+                    )
+                } else {
+                    form
+                }
                 shown.copy(noTimes = true, mistakes = unmarked)
             }
-            form.target is DraftTarget.Edit && form.target.snapshot.allDay -> form.timesFromMidnight(settings, time, clock).copy(mistakes = unmarked)
+
+            form.target is DraftTarget.Edit && form.target.snapshot.allDay -> form.timesFromMidnight(
+                settings,
+                time,
+                clock,
+            ).copy(mistakes = unmarked)
+
             else -> form.followDuration(settings, time, clock).copy(noTimes = false, mistakes = unmarked)
         }
     }
@@ -172,6 +205,7 @@ class EntryFormViewModel(
                 phase.value = Phase.Open(form.copy(mistakes = checked.mistakes))
                 return
             }
+
             is CheckedTimes.Valid -> checked
         }
         val saving = form.copy(mistakes = emptyMap(), saving = true)
@@ -182,14 +216,31 @@ class EntryFormViewModel(
                     changes.create(workspaceId, form.fields, span.start, requireNotNull(span.stop), span.noTimeDay)
                     true
                 }
+
                 is DraftTarget.Running -> changes.updateRunning(target.identity, form.fields, span.start)
+
                 is DraftTarget.Edit -> when {
-                    target.onPhone && changes.update(target.entryId, form.fields, span.start, span.stop, span.noTimeDay) -> true
+                    target.onPhone && changes.update(
+                        target.entryId,
+                        form.fields,
+                        span.start,
+                        span.stop,
+                        span.noTimeDay,
+                    ) -> true
+
                     // An older entry goes whole, also one whose copy the refresh after its send dropped.
                     !target.onPhone || target.start < HistoryWindow.endingToday(time).start -> {
-                        changes.updateOlder(target.entryId, target.workspaceId, form.fields, span.start, requireNotNull(span.stop), span.noTimeDay)
+                        changes.updateOlder(
+                            target.entryId,
+                            target.workspaceId,
+                            form.fields,
+                            span.start,
+                            requireNotNull(span.stop),
+                            span.noTimeDay,
+                        )
                         true
                     }
+
                     else -> false
                 }
             }
@@ -207,8 +258,11 @@ class EntryFormViewModel(
     fun delete(canRestore: Boolean, onDeleted: (CachedTimeEntry, Boolean) -> Unit) {
         val form = (phase.value as? Phase.Open)?.form?.takeIf { !it.saving } ?: return
         if (form.target !is DraftTarget.Edit) return
-        if (canRestore) queueDelete(form, true, onDeleted)
-        else phase.value = Phase.Open(form.copy(confirmDelete = true, deleteFailed = false))
+        if (canRestore) {
+            queueDelete(form, true, onDeleted)
+        } else {
+            phase.value = Phase.Open(form.copy(confirmDelete = true, deleteFailed = false))
+        }
     }
 
     fun cancelDelete() = change { it.copy(confirmDelete = false) }
@@ -232,9 +286,13 @@ class EntryFormViewModel(
             }
             if (deleted != null) onDeleted(deleted, undo)
             phase.update { current ->
-                if (current != Phase.Open(deleting)) current
-                else if (deleted != null) Phase.Saved
-                else Phase.Open(form.copy(saving = false, confirmDelete = false, deleteFailed = true))
+                if (current != Phase.Open(deleting)) {
+                    current
+                } else if (deleted != null) {
+                    Phase.Saved
+                } else {
+                    Phase.Open(form.copy(saving = false, confirmDelete = false, deleteFailed = true))
+                }
             }
         }
     }
@@ -246,17 +304,27 @@ class EntryFormViewModel(
             val settings = accountSettings.filterNotNull().first()
             val next = when (val time = settings.time(clock)) {
                 null -> Phase.NoAccountTime
+
                 else -> when (opening) {
                     is Opening.New -> Phase.Open(newForm(time, opening.date, opening.noTimes))
+
                     is Opening.Running -> {
                         val entry = changes.runningEntry(opening.identity)
                         entry?.let { Phase.Open(runningForm(it, opening.identity, settings, time)) } ?: Phase.Missing
                     }
+
                     is Opening.Edit -> {
                         val cached = entries.first().firstOrNull { it.entry.id == opening.entryId }
                         val form = when {
                             cached != null -> editForm(cached, settings, time, onPhone = true)
-                            opening.older != null -> editForm(EntryWithSendState(opening.older, unsent = false), settings, time, onPhone = false)
+
+                            opening.older != null -> editForm(
+                                EntryWithSendState(opening.older, unsent = false),
+                                settings,
+                                time,
+                                onPhone = false,
+                            )
+
                             else -> null
                         }
                         form?.let { Phase.Open(it) } ?: Phase.Missing
@@ -268,7 +336,15 @@ class EntryFormViewModel(
     }
 
     private fun change(edit: (EntryDraft) -> EntryDraft) {
-        phase.update { current -> if (current is Phase.Open && !current.form.saving) Phase.Open(edit(current.form)) else current }
+        phase.update { current ->
+            if (current is Phase.Open && !current.form.saving) {
+                Phase.Open(
+                    edit(current.form),
+                )
+            } else {
+                current
+            }
+        }
     }
 
     private fun changeWithTime(edit: (EntryDraft, AccountSettings, AccountTime) -> EntryDraft) {
@@ -279,10 +355,15 @@ class EntryFormViewModel(
 
     private fun Phase.shown(names: Catalog, settings: AccountSettings?, allDay: Boolean): EntryFormState = when (this) {
         Phase.Closed -> EntryFormState.Closed
+
         is Phase.Waiting -> EntryFormState.Loading
+
         Phase.Missing -> EntryFormState.Missing
+
         Phase.Saved -> EntryFormState.Saved
+
         Phase.NoAccountTime -> settings?.let { EntryFormState.NoAccountTime(it.timeZone) } ?: EntryFormState.Loading
+
         is Phase.Open -> {
             val time = settings?.time(clock)
             if (settings == null || time == null) {
@@ -316,7 +397,10 @@ class EntryFormViewModel(
         data class Open(val form: EntryDraft) : Phase
     }
 
-    private data class Catalog(val projects: List<CachedProject> = emptyList(), val tasks: List<CachedTask> = emptyList())
+    private data class Catalog(
+        val projects: List<CachedProject> = emptyList(),
+        val tasks: List<CachedTask> = emptyList(),
+    )
 
     private companion object {
         const val STOP_TIMEOUT_MS = 5_000L

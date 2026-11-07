@@ -3,7 +3,6 @@ package com.github.e0ipso.tokkl.timerstate
 import com.github.e0ipso.tokkl.cache.CacheDatabase
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -13,6 +12,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlin.coroutines.CoroutineContext
 
 /**
  * What every timer surface shows and acts on (docs/PRD.md T1, N1, N3, N4, N7): the Timer page,
@@ -40,7 +40,14 @@ class TimerControlsSource(
             flow { emitAll(capabilities.state) },
         ) { _, _, flags ->
             val account = timerStates.current()
-            account.source.withState { held -> serverTimerControls(dao.latestRunning(), held, flags.timerState, account.account) }
+            account.source.withState { held ->
+                serverTimerControls(
+                    dao.latestRunning(),
+                    held,
+                    flags.timerState,
+                    account.account,
+                )
+            }
         }.flowOn(io).distinctUntilChanged()
     }
 

@@ -4,7 +4,6 @@ import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TogglApiClient
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,6 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.coroutines.CoroutineContext
 
 /** A change the server accepted, for the message that confirms it. [name] is the item's name after the change. */
 sealed interface CatalogChange {
@@ -208,6 +208,7 @@ class CatalogModel<D, O>(
                     }
                     refreshCache()
                 }
+
                 is ApiResult.Failure -> {
                     val problem = answer.error.toServerProblem()
                     mutableState.update { current ->
@@ -234,6 +235,7 @@ class CatalogModel<D, O>(
                     workspace = answer.workspace
                     mutableState.update { it.copy(data = answer.data, loading = false, loadProblem = null) }
                 }
+
                 is NotLoaded -> mutableState.update { it.copy(loading = false, loadProblem = answer.problem) }
             }
         }

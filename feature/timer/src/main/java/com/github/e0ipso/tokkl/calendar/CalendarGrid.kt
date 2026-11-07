@@ -29,8 +29,8 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -164,14 +164,29 @@ private fun DayColumn(
 ) {
     val density = LocalDensity.current
     val haptics = LocalHapticFeedback.current
-    val geometry = remember(density) { with(density) { BlockGeometry(HourHeight.toPx(), BlockGap.toPx(), TokklSpacing.space1.toPx(), EdgeZone.toPx()) } }
+    val geometry = remember(
+        density,
+    ) {
+        with(
+            density,
+        ) { BlockGeometry(HourHeight.toPx(), BlockGap.toPx(), TokklSpacing.space1.toPx(), EdgeZone.toPx()) }
+    }
     val shown by rememberUpdatedState(blocks)
     val gestures = if (drags == null) {
         Modifier
     } else {
         Modifier.pointerInput(day, drags, geometry) {
             detectCalendarGestures(
-                targetAt = { position -> geometry.targetAt(position, size.width.toFloat(), shown, day, zone, drags.step) },
+                targetAt = { position ->
+                    geometry.targetAt(
+                        position,
+                        size.width.toFloat(),
+                        shown,
+                        day,
+                        zone,
+                        drags.step,
+                    )
+                },
                 onTap = drags.editing::edit,
                 onHold = { target, position ->
                     drags.gesture.held = true
@@ -216,13 +231,22 @@ private fun DayColumn(
         val current = drag.value
         for (block in blocks) {
             // A move takes every block of the entry along; a resize only the block of the edge.
-            val change = (current as? CalendarDrag.Change)?.takeIf { it.entry.id == block.entry.id && (it.kind == DragKind.MOVE || it.day == block.day) }
+            val change = (current as? CalendarDrag.Change)?.takeIf {
+                it.entry.id == block.entry.id &&
+                    (it.kind == DragKind.MOVE || it.day == block.day)
+            }
             val dragged = change != null
             val placed = if (change != null && drags != null) drags.preview(block, change) else block
             val onEdit = drags?.takeIf { !block.entry.running }?.let { { it.editing.edit(block.entry) } }
             Block(placed, maxWidth, settings, zone, now, dragged, onEdit)
         }
-        if (current is CalendarDrag.Create && current.day == day && current.fromMinute != current.toMinute) NewEntryOutline(current)
+        if (current is CalendarDrag.Create && current.day == day &&
+            current.fromMinute != current.toMinute
+        ) {
+            NewEntryOutline(
+                current,
+            )
+        }
     }
 }
 

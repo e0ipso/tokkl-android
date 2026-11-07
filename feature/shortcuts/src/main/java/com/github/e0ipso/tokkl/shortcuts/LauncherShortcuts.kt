@@ -18,10 +18,9 @@ class LauncherShortcuts(private val context: Context) {
     val limit: Int by lazy { manager.maxShortcutCountPerActivity }
 
     /** The shortcuts the launcher has, in their order. */
-    fun published(): List<FavoriteShortcut> =
-        manager.dynamicShortcuts.sortedBy { it.rank }.map { info ->
-            FavoriteShortcut(info.id, info.shortLabel.toString(), (info.longLabel ?: info.shortLabel).toString())
-        }
+    fun published(): List<FavoriteShortcut> = manager.dynamicShortcuts.sortedBy { it.rank }.map { info ->
+        FavoriteShortcut(info.id, info.shortLabel.toString(), (info.longLabel ?: info.shortLabel).toString())
+    }
 
     /**
      * Replaces the shortcuts with [shortcuts], ranked in their order. While Android holds back an
@@ -36,12 +35,11 @@ class LauncherShortcuts(private val context: Context) {
         }
     }
 
-    private fun info(shortcut: FavoriteShortcut, rank: Int): ShortcutInfo =
-        ShortcutInfo.Builder(context, shortcut.id)
-            .setShortLabel(shortcut.shortLabel)
-            .setLongLabel(shortcut.longLabel)
-            .setIcon(Icon.createWithResource(context, R.drawable.ic_shortcut_favorite))
-            .setIntent(StartFavoriteActivity.intent(context, shortcut.id))
-            .setRank(rank)
-            .build()
+    private fun info(shortcut: FavoriteShortcut, rank: Int): ShortcutInfo = ShortcutInfo.Builder(context, shortcut.id)
+        .setShortLabel(shortcut.shortLabel)
+        .setLongLabel(shortcut.longLabel)
+        .setIcon(Icon.createWithResource(context, R.drawable.ic_shortcut_favorite))
+        .setIntent(StartFavoriteActivity.intent(context, shortcut.id))
+        .setRank(rank)
+        .build()
 }
