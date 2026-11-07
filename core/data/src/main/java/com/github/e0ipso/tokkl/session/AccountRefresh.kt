@@ -4,9 +4,9 @@ import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.Me
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.platform.SingleFlight
 import com.github.e0ipso.tokkl.time.DurationFormat
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonObject
@@ -45,13 +45,13 @@ class AccountRefresh(
 
     override suspend fun forgetAccount() = forget()
 
-    /** Guards [answers] and [refreshing]. */
+    /** Guards [answers], and [refreshing]'s job read with it. */
     private val lock = Any()
 
     /** Counts the refreshes whose `GET /api/v9/me` answered, so [refreshOnReconnect] can tell. */
     private var answers = 0L
 
-    private var refreshing: Job? = null
+    private val refreshing = SingleFlight(scope, io)
 
     /**
      * Reads `GET /api/v9/me` for the signed-in account, with its related data for the cache, and
@@ -61,14 +61,7 @@ class AccountRefresh(
      * stored workspace. While one refresh runs, another call returns that one instead of sending
      * a second request.
      */
-    fun refresh(): Job {
-        val job = synchronized(lock) {
-            refreshing?.takeUnless { it.isCompleted }
-                ?: scope.launch(io, start = CoroutineStart.LAZY) { refreshNow() }.also { refreshing = it }
-        }
-        job.start()
-        return job
-    }
+    fun refresh(): Job = refreshing.launch { refreshNow() }
 
     /**
      * A [refresh] that reads the server after a change the caller has just sent, such as a new
@@ -78,7 +71,7 @@ class AccountRefresh(
      * refresh.
      */
     fun refreshAfterChange(): Job = scope.launch(io) {
-        synchronized(lock) { refreshing }?.join()
+        refreshing.running()?.join()
         refresh().join()
     }
 
@@ -89,7 +82,7 @@ class AccountRefresh(
      * the last of them.
      */
     fun refreshOnReconnect(): Job {
-        val (running, answersBefore) = synchronized(lock) { refreshing?.takeUnless { it.isCompleted } to answers }
+        val (running, answersBefore) = synchronized(lock) { refreshing.running() to answers }
         running ?: return refresh()
         return scope.launch(io) {
             running.join()
@@ -104,7 +97,7 @@ class AccountRefresh(
      */
     suspend fun forget() {
         settings.forget()
-        synchronized(lock) { refreshing }?.join()
+        refreshing.running()?.join()
     }
 
     private suspend fun refreshNow() {

@@ -6,6 +6,7 @@ import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.platform.SingleFlight
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountRefreshListener
 import com.github.e0ipso.tokkl.session.AccountRefreshed
@@ -138,7 +139,7 @@ class ChangeSender(
         data class Failed(val status: Int?) : UndoOutcome
     }
 
-    /** Guards [sending], [again] and [retry]. */
+    /** Guards [sending] and [again], and [retry]'s cancellation with them. */
     private val lock = Any()
 
     /** Held while a delete goes out and while [undoDelete] takes one back, so the two never overlap. */
@@ -149,7 +150,8 @@ class ChangeSender(
     /** A [send] call came while a drain ran, which may have looked at the queue before it. */
     private var again = false
 
-    private var retry: Job? = null
+    /** The wait after a 429, one at a time. */
+    private val retry = SingleFlight(scope)
 
     /** No request before this instant, after a 429. */
     @Volatile
@@ -217,8 +219,7 @@ class ChangeSender(
      */
     suspend fun stop() {
         val running = synchronized(lock) {
-            retry?.cancel()
-            retry = null
+            retry.cancel()
             sending
         }
         running?.join()
@@ -359,12 +360,9 @@ class ChangeSender(
 
     /** Drains again once [until] has passed. One wait at a time. */
     private fun retryAfterWait(until: Instant) {
-        synchronized(lock) {
-            if (retry?.isActive == true) return
-            retry = scope.launch {
-                delay(Duration.between(clock.instant(), until).toMillis().coerceAtLeast(0) + 1)
-                send()
-            }
+        retry.launch {
+            delay(Duration.between(clock.instant(), until).toMillis().coerceAtLeast(0) + 1)
+            send()
         }
     }
 

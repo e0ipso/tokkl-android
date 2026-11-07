@@ -1,13 +1,12 @@
 package com.github.e0ipso.tokkl.pomodoro
 
+import com.github.e0ipso.tokkl.platform.SingleFlight
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.timerstate.SessionActions
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.IOException
@@ -45,13 +44,13 @@ class PomodoroSessionNotificationSync internal constructor(
     private val lock = Mutex()
     private var display: PomodoroNotificationDisplay? = null
     private var loaded = false
-    private var job: Job? = null
+    private val observing = SingleFlight(scope, io)
 
     @Volatile private var retired = false
 
     @Synchronized fun start() {
-        if (retired || job?.isActive == true) return
-        job = scope.launch(io) { changes.collect { refresh() } }
+        if (retired) return
+        observing.launch { changes.collect { refresh() } }
     }
 
     private fun readDisplay(): PomodoroNotificationDisplay {
@@ -129,7 +128,7 @@ class PomodoroSessionNotificationSync internal constructor(
     suspend fun forget() {
         val observer = synchronized(this) {
             retired = true
-            job
+            observing.running()
         }
         observer?.cancelAndJoin()
         lock.withLock {
