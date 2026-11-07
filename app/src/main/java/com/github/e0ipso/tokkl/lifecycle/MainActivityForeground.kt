@@ -10,6 +10,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.notification.RunningNotificationSync
+import com.github.e0ipso.tokkl.platform.DefaultNetwork
 import com.github.e0ipso.tokkl.pomodoro.AccountPomodoroNotification
 import com.github.e0ipso.tokkl.session.AppEvent
 import com.github.e0ipso.tokkl.session.AppEvents
@@ -39,11 +40,12 @@ internal class MainActivityForeground(
     private val runningNotification: RunningNotificationSync,
     private val pomodoroNotification: AccountPomodoroNotification,
     private val http: SharedHttpClient,
+    defaultNetwork: DefaultNetwork,
     private val scope: CoroutineScope,
     private val io: CoroutineDispatcher,
 ) : DefaultLifecycleObserver {
 
-    private val network = NetworkWatch(context, ::networkChanged)
+    private val network = NetworkWatch(defaultNetwork, scope, changed = ::networkChanged)
     private var notificationsAllowed = allowsNotifications()
 
     override fun onStart(owner: LifecycleOwner) {

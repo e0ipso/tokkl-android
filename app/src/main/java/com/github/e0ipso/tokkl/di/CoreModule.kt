@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.di
 
+import android.net.ConnectivityManager
 import androidx.work.WorkManager
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ConfiguredServer
@@ -7,8 +8,10 @@ import com.github.e0ipso.tokkl.api.ServerTrust
 import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.api.StoredServer
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
+import com.github.e0ipso.tokkl.platform.ConnectivityDefaultNetwork
 import com.github.e0ipso.tokkl.platform.CurrentWorkManager
 import com.github.e0ipso.tokkl.platform.DefaultDispatcher
+import com.github.e0ipso.tokkl.platform.DefaultNetwork
 import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.ExportAccount
@@ -38,6 +41,11 @@ internal val coreModule = module {
 
     // The process's WorkManager, which TokklApplication initialises with Koin's worker factory.
     single { CurrentWorkManager { WorkManager.getInstance(androidContext()) } }
+
+    // The default network, which the activity, the pickers and the timer sync service follow.
+    single<DefaultNetwork> {
+        ConnectivityDefaultNetwork(androidContext().getSystemService(ConnectivityManager::class.java))
+    }
 
     // The wall clock, for components that read the time on each event, such as the widget's day.
     single<Clock> { Clock.systemUTC() }

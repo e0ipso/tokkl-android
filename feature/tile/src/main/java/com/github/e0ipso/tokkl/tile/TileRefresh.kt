@@ -1,16 +1,14 @@
 package com.github.e0ipso.tokkl.tile
 
-import android.content.Context
 import android.database.sqlite.SQLiteException
-import android.net.ConnectivityManager
 import android.os.SystemClock
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.RunningCheckResults
 import com.github.e0ipso.tokkl.cache.toCached
+import com.github.e0ipso.tokkl.platform.DefaultNetwork
 import com.github.e0ipso.tokkl.session.Session
-import com.github.e0ipso.tokkl.session.reachesInternet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.builtins.nullable
@@ -23,7 +21,7 @@ import kotlin.coroutines.CoroutineContext
  * before another opening can try, so repeated openings cannot exceed N4's request cap.
  */
 internal class TileRefresh(
-    private val context: Context,
+    private val network: DefaultNetwork,
     private val session: Session,
     private val cache: AccountCache,
     private val results: RunningCheckResults,
@@ -35,7 +33,7 @@ internal class TileRefresh(
     fun onStartListening() {
         scope.launch(io) {
             val generation = results.generation()
-            val online = context.getSystemService(ConnectivityManager::class.java).reachesInternet()
+            val online = network.reachesInternet()
             if (!online) return@launch
             val api = session.client() ?: return@launch
             if (!throttle.tryStart(generation, online, SystemClock.elapsedRealtime())) return@launch

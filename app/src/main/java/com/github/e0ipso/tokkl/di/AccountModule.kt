@@ -101,6 +101,7 @@ internal val accountModule = module {
             runningNotification = get(),
             pomodoroNotification = get(),
             http = get(),
+            defaultNetwork = get(),
             scope = get(),
             io = io(),
         )

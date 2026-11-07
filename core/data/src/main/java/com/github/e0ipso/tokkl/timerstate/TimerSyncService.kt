@@ -9,20 +9,19 @@ import android.app.ServiceStartNotAllowedException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
-import android.net.ConnectivityManager
-import android.net.Network
 import android.os.Build
-import android.os.Handler
 import android.os.IBinder
-import android.os.Looper
 import android.os.SystemClock
 import androidx.annotation.VisibleForTesting
 import com.github.e0ipso.tokkl.core.data.R
+import com.github.e0ipso.tokkl.platform.DefaultNetwork
 import com.github.e0ipso.tokkl.platform.IoDispatcher
+import com.github.e0ipso.tokkl.platform.NetworkReport
 import com.github.e0ipso.tokkl.platform.mainActivityIntent
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
@@ -55,7 +54,8 @@ class TimerSyncService : Service() {
     private val slot: TimerSyncServiceSlot by inject()
     private val timerSync: TimerSync<TimerStateSource> by inject()
     private val io: CoroutineDispatcher by inject(IoDispatcher)
-    private var network: ConnectivityManager.NetworkCallback? = null
+    private val defaultNetwork: DefaultNetwork by inject()
+    private var network: Job? = null
     private var latestStart = 0
 
     override fun onCreate() {
@@ -87,7 +87,7 @@ class TimerSyncService : Service() {
 
     override fun onDestroy() {
         if (slot.service === this) slot.service = null
-        network?.let { getSystemService(ConnectivityManager::class.java).unregisterNetworkCallback(it) }
+        network?.cancel()
         network = null
         timerSync.stop()
         scope.cancel()
@@ -115,27 +115,28 @@ class TimerSyncService : Service() {
      * Tells the stream when the default network comes or goes. A switch to another network, as
      * from Wi-Fi to mobile data, counts as both: the open call belongs to the old one.
      */
-    private fun followDefaultNetwork(): ConnectivityManager.NetworkCallback {
+    private fun followDefaultNetwork(): Job {
         val sync = timerSync
-        val callback = object : ConnectivityManager.NetworkCallback() {
-            private var current: Network? = null
+        var current: Long? = null
+        // The scope runs on the main thread at once, so the callback is registered before this returns.
+        return scope.launch {
+            defaultNetwork.reports.collect { report ->
+                when (report) {
+                    is NetworkReport.Available -> {
+                        if (current != null && current != report.id) sync.networkLost()
+                        current = report.id
+                        sync.networkAvailable()
+                    }
 
-            override fun onAvailable(network: Network) {
-                if (current != null && current != network) sync.networkLost()
-                current = network
-                sync.networkAvailable()
-            }
+                    is NetworkReport.Lost -> if (report.id == current) {
+                        current = null
+                        sync.networkLost()
+                    }
 
-            override fun onLost(network: Network) {
-                if (network != current) return
-                current = null
-                sync.networkLost()
+                    is NetworkReport.Capabilities -> Unit
+                }
             }
         }
-        getSystemService(
-            ConnectivityManager::class.java,
-        ).registerDefaultNetworkCallback(callback, Handler(Looper.getMainLooper()))
-        return callback
     }
 
     companion object {

@@ -1,64 +1,58 @@
 package com.github.e0ipso.tokkl.session
 
-import android.content.Context
-import android.net.ConnectivityManager
-import android.net.Network
-import android.net.NetworkCapabilities
-import android.os.Handler
-import android.os.Looper
+import com.github.e0ipso.tokkl.platform.DefaultNetwork
+import com.github.e0ipso.tokkl.platform.NetworkReport
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Follows whether the phone's default network reaches the internet, from [start] to [stop], and
  * reports each change to [changed] on the main thread. The activity watches only while it is
  * started, so in the background no network change reaches the app. A network that has no
  * internet but reaches a Tokkl server on the local network counts as offline, as in the picker.
+ *
+ * @param scope where the watch runs between [start] and [stop].
+ * @param main the main thread, where the watch starts at once, so the callback is registered
+ *   before [start] returns and each report reaches [changed] as it arrives.
  */
-class NetworkWatch(context: Context, private val changed: (online: Boolean) -> Unit) {
+class NetworkWatch(
+    private val network: DefaultNetwork,
+    private val scope: CoroutineScope,
+    private val main: CoroutineContext = Dispatchers.Main.immediate,
+    private val changed: (online: Boolean) -> Unit,
+) {
 
-    private val connectivity = context.getSystemService(ConnectivityManager::class.java)
-    private val main = Handler(Looper.getMainLooper())
-    private var callback: ConnectivityManager.NetworkCallback? = null
+    private var watching: Job? = null
 
     /** Starts watching, and returns whether the phone is online now. Call it on the main thread. */
     fun start(): Boolean {
-        val initial = connectivity.activeNetwork
-        val capabilities = connectivity.getNetworkCapabilities(initial)
-        val online = capabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
-        if (callback == null) {
-            val state = NetworkWatchState(
-                initial,
-                online,
-                capabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) == true,
-                changed,
-            )
-            callback = object : ConnectivityManager.NetworkCallback() {
-                override fun onAvailable(network: Network) {
-                    if (callback !== this) return
-                    state.available(network)
-                }
+        val initial = network.current()
+        val online = initial?.internet == true
+        if (watching == null) {
+            val state = NetworkWatchState(initial?.id, online, initial?.validated == true, changed)
+            watching = scope.launch(main) {
+                network.reports.collect { report ->
+                    when (report) {
+                        is NetworkReport.Available -> state.available(report.id)
 
-                override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) {
-                    if (callback !== this) return
-                    state.capabilities(
-                        network,
-                        capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET),
-                        capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED),
-                    )
-                }
+                        is NetworkReport.Capabilities ->
+                            state.capabilities(report.id, report.state.internet, report.state.validated)
 
-                override fun onLost(network: Network) {
-                    if (callback !== this) return
-                    state.lost(network)
+                        is NetworkReport.Lost -> state.lost(report.id)
+                    }
                 }
-            }.also { connectivity.registerDefaultNetworkCallback(it, main) }
+            }
         }
         return online
     }
 
     /** Stops watching. Call it on the main thread. */
     fun stop() {
-        callback?.let(connectivity::unregisterNetworkCallback)
-        callback = null
+        watching?.cancel()
+        watching = null
     }
 }
 
@@ -97,7 +91,3 @@ internal class NetworkWatchState<N : Any>(
         changed(false)
     }
 }
-
-/** True while the default network reaches the internet. */
-fun ConnectivityManager.reachesInternet(): Boolean =
-    getNetworkCapabilities(activeNetwork)?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
