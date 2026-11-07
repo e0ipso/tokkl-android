@@ -1,7 +1,8 @@
 package com.github.e0ipso.tokkl.timer
 
 import com.github.e0ipso.tokkl.api.ApiClientProvider
-import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.preferences.StoredPreference
+import com.github.e0ipso.tokkl.preferences.SyncedPreference
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountRefreshListener
 import com.github.e0ipso.tokkl.session.AccountRefreshed
@@ -9,47 +10,36 @@ import com.github.e0ipso.tokkl.session.MePreferences
 import com.github.e0ipso.tokkl.session.SignOutOrder
 import com.github.e0ipso.tokkl.storage.ClearableStore
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
-import java.io.IOException
 import kotlin.coroutines.CoroutineContext
 
 /** The Timer page's view as the phone keeps it, and whether the server still has to get it. */
-data class StoredTimerView(val view: TimerView, val unsent: Boolean)
+typealias StoredTimerView = StoredPreference<TimerView>
 
 /**
  * The Timer page's List or Calendar choice, which Tokkl keeps in the account's `timerView`
  * preference, as the web app's TimerPage.tsx does, so a choice made on one device opens there on
- * the others. The phone keeps the last choice too, so a cold start opens it before the refresh
- * answers, and offline.
+ * the others. The phone keeps the last choice too, as [SyncedPreference] describes.
  *
- * A tap shows the new view at once and posts it to `POST /api/v9/me/preferences` without waiting
- * for the answer. When that fails, as offline, the choice stays on the phone, marked unsent, and
- * goes to the server with the next refresh, so the choice that reaches the server last wins, as
- * for time entries (docs/PRD.md O3). Each refresh otherwise opens the server's `timerView`, List
- * when the key is missing or holds anything else, except the one refresh right after a tap, whose
- * preferences may predate it. A server without Tokkl's preferences, such as Toggl Track, gets
- * nothing: the choice stays on the phone.
+ * A tap shows the new view at once and posts it to `POST /api/v9/me/preferences`. Each refresh
+ * otherwise opens the server's `timerView`, List when the key is missing or holds anything else.
+ * A server without Tokkl's preferences, such as Toggl Track, gets nothing: the choice stays on the
+ * phone.
  *
  * @param store keeps the view on the phone. The first read loads it, on the reading thread.
  * @param client the signed-in account's API client, or null when signed out. Runs on [io].
- * @param keepsTimerView true when the server keeps Tokkl's preferences.
+ * @param keepsTimerView true when the server keeps Tokkl's preferences, read when a tap is sent.
  * @param scope outlives every screen, so leaving the app does not cancel a write.
  */
 class TimerViewSetting(
-    private val store: ClearableStore<StoredTimerView>,
-    private val client: ApiClientProvider,
+    store: ClearableStore<StoredTimerView>,
+    client: ApiClientProvider,
     private val keepsTimerView: () -> Boolean,
-    private val scope: CoroutineScope,
-    private val io: CoroutineContext,
+    scope: CoroutineScope,
+    io: CoroutineContext,
 ) : AccountRefreshListener,
     AccountDataOwner {
 
@@ -57,48 +47,28 @@ class TimerViewSetting(
 
     override suspend fun forgetAccount() {
         forget()
-        store.clear()
+        preference.clear()
     }
 
-    private val loaded by lazy { Loaded(store.load()) }
-
-    /** What the store held, and what changed since. Guarded by [lock], apart from [view]'s reads. */
-    private class Loaded(stored: StoredTimerView?) {
-        val view = MutableStateFlow(stored?.view ?: TimerView.LIST)
-
-        /** The server has not received the view on show. */
-        var unsent = stored?.unsent ?: false
-    }
+    private val preference = SyncedPreference(
+        store,
+        client,
+        scope,
+        io,
+        default = TimerView.LIST,
+        fromServer = { it.timerView() },
+        body = { view -> buildJsonObject { put(PREFERENCE, view.preferenceValue) } },
+    )
 
     /** The view the Timer page shows. */
-    val view: StateFlow<TimerView> by lazy { loaded.view.asStateFlow() }
-
-    /** Guards [Loaded.unsent], [chosenSinceRefresh] and each change of [view] with them. */
-    private val lock = Any()
-
-    /** A tap came after the last refresh, whose preferences may predate it. */
-    private var chosenSinceRefresh = false
-
-    /** Writes go one at a time, so the last choice reaches the server last. */
-    private val sending = Mutex()
-
-    /** Orders the writes to disk, so the last one holds the latest view. */
-    private val storing = Any()
+    val view: StateFlow<TimerView> get() = preference.value
 
     /**
      * Shows [view] at once, keeps it on the phone and sends it to the server in the background.
      * Call it on the main thread.
      */
     fun choose(view: TimerView) {
-        synchronized(lock) {
-            loaded.view.value = view
-            loaded.unsent = true
-            chosenSinceRefresh = true
-        }
-        scope.launch(io) {
-            persist()
-            if (keepsTimerView()) send()
-        }
+        preference.change(view, unsent = true, sendIf = keepsTimerView)
     }
 
     override fun refreshed(refresh: AccountRefreshed) {
@@ -111,28 +81,7 @@ class TimerViewSetting(
      * the server's. Blocks on disk I/O, so call it off the main thread.
      */
     fun refreshed(preferences: MePreferences?, keepsTimerView: Boolean) {
-        val sendNow = synchronized(lock) {
-            val tapped = chosenSinceRefresh
-            chosenSinceRefresh = false
-            when {
-                // The choice stays on the phone.
-                !keepsTimerView -> {
-                    loaded.unsent = false
-                    false
-                }
-
-                loaded.unsent -> true
-
-                tapped || preferences == null -> false
-
-                else -> {
-                    loaded.view.value = preferences.timerView()
-                    false
-                }
-            }
-        }
-        persist()
-        if (sendNow) scope.launch(io) { send() }
+        preference.refreshed(preferences, keepsTimerView)
     }
 
     /**
@@ -140,38 +89,7 @@ class TimerViewSetting(
      * send can succeed, and then deletes the stored view.
      */
     fun forget() {
-        synchronized(storing) {
-            synchronized(lock) {
-                loaded.view.value = TimerView.LIST
-                loaded.unsent = false
-                chosenSinceRefresh = false
-            }
-        }
-    }
-
-    /** Posts the view on show while it is unsent. A failure leaves it unsent for the next refresh. */
-    private suspend fun send() = sending.withLock {
-        val view = synchronized(lock) { loaded.view.value.takeIf { loaded.unsent } } ?: return@withLock
-        val api = client() ?: return@withLock
-        val body = buildJsonObject { put(PREFERENCE, view.preferenceValue) }
-        val answer = api.send("POST", api.server.api("me", "preferences"), body, JsonObject.serializer())
-        if (answer !is ApiResult.Success) return@withLock
-        synchronized(lock) {
-            // A tap while the request ran has its own write queued.
-            if (loaded.view.value == view) loaded.unsent = false
-        }
-        persist()
-    }
-
-    private fun persist() {
-        synchronized(storing) {
-            val stored = synchronized(lock) { StoredTimerView(loaded.view.value, loaded.unsent) }
-            try {
-                store.save(stored)
-            } catch (_: IOException) {
-                // The next change writes it again.
-            }
-        }
+        preference.forget()
     }
 
     internal companion object {

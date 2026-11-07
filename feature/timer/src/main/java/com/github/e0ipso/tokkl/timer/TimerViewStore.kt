@@ -28,7 +28,7 @@ class TimerViewStore(context: Context) : ClearableStore<StoredTimerView> {
     @Throws(IOException::class)
     override fun save(value: StoredTimerView) {
         file.commit {
-            putString(KEY_VIEW, value.view.name)
+            putString(KEY_VIEW, value.value.name)
             putBoolean(KEY_UNSENT, value.unsent)
         }
     }

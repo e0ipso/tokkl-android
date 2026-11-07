@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.preferences
 
 import com.github.e0ipso.tokkl.api.ApiClientProvider
-import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountRefreshListener
 import com.github.e0ipso.tokkl.session.AccountRefreshed
@@ -10,18 +9,12 @@ import com.github.e0ipso.tokkl.session.SignOutOrder
 import com.github.e0ipso.tokkl.storage.ClearableStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.put
-import java.io.IOException
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -55,21 +48,17 @@ data class PomodoroDefaults(
 }
 
 /** The Pomodoro defaults as the phone keeps them, and whether the server still has to get them. */
-data class StoredPomodoroDefaults(val defaults: PomodoroDefaults, val unsent: Boolean)
+typealias StoredPomodoroDefaults = StoredPreference<PomodoroDefaults>
 
 /**
  * The Pomodoro defaults, which Tokkl keeps in the account's `pomodoro_focus_interval_in_minutes`,
  * `pomodoro_break_interval_in_minutes`, `pomodoro_long_break_interval_in_minutes` and
  * `pomodoro_long_break_every` preferences, which the web app's Settings edit. The phone keeps the
- * last values too, so a cold start has them before the refresh answers, and offline. It never
- * reads or writes `pomodoro_enabled` or `pomodoro_stop_timer_at_end`.
+ * last values too, as [SyncedPreference] describes. It never reads or writes `pomodoro_enabled` or
+ * `pomodoro_stop_timer_at_end`.
  *
  * A change shows at once, clamped to the ranges Tokkl accepts, and goes to
- * `POST /api/v9/me/preferences` with only the four keys, without waiting for the answer. When
- * that fails, as offline, the values stay on the phone, marked unsent, and go to the server with
- * the next refresh, so the change that reaches the server last wins, as for time entries
- * (docs/PRD.md O3). Each refresh otherwise takes the server's values, except the one refresh right
- * after a change, whose preferences may predate it. A server without Tokkl's preferences, such
+ * `POST /api/v9/me/preferences` with only the four keys. A server without Tokkl's preferences, such
  * as Toggl Track, gets nothing: the values stay on the phone, from 25, 5, 15 and 4.
  *
  * @param store keeps the values on the phone. The first read loads them, on the reading thread.
@@ -78,11 +67,11 @@ data class StoredPomodoroDefaults(val defaults: PomodoroDefaults, val unsent: Bo
  * @param scope outlives every screen, so leaving the app does not cancel a write.
  */
 class PomodoroDefaultsSetting(
-    private val store: ClearableStore<StoredPomodoroDefaults>,
-    private val client: ApiClientProvider,
+    store: ClearableStore<StoredPomodoroDefaults>,
+    client: ApiClientProvider,
     private val keepsPreferences: () -> Boolean,
-    private val scope: CoroutineScope,
-    private val io: CoroutineContext,
+    scope: CoroutineScope,
+    io: CoroutineContext,
 ) : AccountRefreshListener,
     AccountDataOwner {
 
@@ -90,33 +79,22 @@ class PomodoroDefaultsSetting(
 
     override suspend fun forgetAccount() {
         forget()
-        store.clear()
+        preference.clear()
     }
 
-    private val loaded by lazy { Loaded(store.load()) }
-
-    /** What the store held, and what changed since. Guarded by [lock], apart from [defaults]' reads. */
-    private class Loaded(stored: StoredPomodoroDefaults?) {
-        val defaults = MutableStateFlow(stored?.defaults?.clamped() ?: PomodoroDefaults.DEFAULT)
-
-        /** The server has not received the values in [defaults]. */
-        var unsent = stored?.unsent ?: false
-    }
+    private val preference = SyncedPreference(
+        store,
+        client,
+        scope,
+        io,
+        default = PomodoroDefaults.DEFAULT,
+        loaded = PomodoroDefaults::clamped,
+        fromServer = { it.pomodoroDefaults() },
+        body = { it.preferencesBody() },
+    )
 
     /** The values a new session starts with, always within their ranges. */
-    val defaults: StateFlow<PomodoroDefaults> by lazy { loaded.defaults.asStateFlow() }
-
-    /** Guards [Loaded.unsent], [changedSinceRefresh] and each change of [defaults] with them. */
-    private val lock = Any()
-
-    /** A change came after the last refresh, whose preferences may predate it. */
-    private var changedSinceRefresh = false
-
-    /** Writes go one at a time, so the last change reaches the server last. */
-    private val sending = Mutex()
-
-    /** Orders the writes to disk, so the last one holds the latest values. */
-    private val storing = Any()
+    val defaults: StateFlow<PomodoroDefaults> get() = preference.value
 
     /**
      * Clamps [defaults] to their ranges, shows them at once, keeps them on the phone and sends
@@ -124,15 +102,7 @@ class PomodoroDefaultsSetting(
      */
     fun change(defaults: PomodoroDefaults): Job {
         val keepsPreferences = keepsPreferences()
-        synchronized(lock) {
-            loaded.defaults.value = defaults.clamped()
-            loaded.unsent = keepsPreferences
-            changedSinceRefresh = true
-        }
-        return scope.launch(io) {
-            persist()
-            if (keepsPreferences) send()
-        }
+        return preference.change(defaults.clamped(), unsent = keepsPreferences, sendIf = { keepsPreferences })
     }
 
     override fun refreshed(refresh: AccountRefreshed) {
@@ -145,28 +115,7 @@ class PomodoroDefaultsSetting(
      * the server's. Blocks on disk I/O, so call it off the main thread.
      */
     fun refreshed(preferences: MePreferences?, keepsPreferences: Boolean) {
-        val sendNow = synchronized(lock) {
-            val changed = changedSinceRefresh
-            changedSinceRefresh = false
-            when {
-                // The values stay on the phone.
-                !keepsPreferences -> {
-                    loaded.unsent = false
-                    false
-                }
-
-                loaded.unsent -> true
-
-                changed || preferences == null -> false
-
-                else -> {
-                    loaded.defaults.value = preferences.pomodoroDefaults()
-                    false
-                }
-            }
-        }
-        persist()
-        if (sendNow) scope.launch(io) { send() }
+        preference.refreshed(preferences, keepsPreferences)
     }
 
     /**
@@ -174,42 +123,7 @@ class PomodoroDefaultsSetting(
      * gone, so no send can succeed, and then deletes the stored values.
      */
     fun forget() {
-        synchronized(storing) {
-            synchronized(lock) {
-                loaded.defaults.value = PomodoroDefaults.DEFAULT
-                loaded.unsent = false
-                changedSinceRefresh = false
-            }
-        }
-    }
-
-    /** Posts the values on show while they are unsent. A failure leaves them unsent for the next refresh. */
-    private suspend fun send() = sending.withLock {
-        val defaults = synchronized(lock) { loaded.defaults.value.takeIf { loaded.unsent } } ?: return@withLock
-        val api = client() ?: return@withLock
-        val answer = api.send(
-            "POST",
-            api.server.api("me", "preferences"),
-            defaults.preferencesBody(),
-            JsonObject.serializer(),
-        )
-        if (answer !is ApiResult.Success) return@withLock
-        synchronized(lock) {
-            // A change while the request ran has its own write queued.
-            if (loaded.defaults.value == defaults) loaded.unsent = false
-        }
-        persist()
-    }
-
-    private fun persist() {
-        synchronized(storing) {
-            val stored = synchronized(lock) { StoredPomodoroDefaults(loaded.defaults.value, loaded.unsent) }
-            try {
-                store.save(stored)
-            } catch (_: IOException) {
-                // The next change writes it again.
-            }
-        }
+        preference.forget()
     }
 
     internal companion object {

@@ -34,7 +34,7 @@ class PomodoroDefaultsStore(context: Context) : ClearableStore<StoredPomodoroDef
     /** Replaces the stored values in one write. */
     @Throws(IOException::class)
     override fun save(value: StoredPomodoroDefaults) {
-        val defaults = value.defaults.clamped()
+        val defaults = value.value.clamped()
         file.commit {
             putInt(KEY_WORK_MINUTES, defaults.workMinutes)
             putInt(KEY_SHORT_REST_MINUTES, defaults.shortRestMinutes)
