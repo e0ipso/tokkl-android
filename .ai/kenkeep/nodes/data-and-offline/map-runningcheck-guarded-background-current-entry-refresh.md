@@ -21,13 +21,13 @@ kk_relates_to:
 kk_depends_on: []
 kk_confidence: high
 ---
-`core/data/src/main/java/com/github/e0ipso/tokkl/cache/RunningCheck.kt` owns unique periodic WorkManager work named `running-check`. `TokklApplication` follows whether the cache holds a running timer. One connected check waits every 15 minutes while running and is cancelled when idle; the first check also waits a period.
+`core/data/src/main/java/com/github/e0ipso/tokkl/cache/RunningCheck.kt` owns unique periodic WorkManager work named `running-check`. `RunningCheck` and `RunningCheckResults` are Koin singles, and `AppStartup` follows whether the cache holds a running timer through `RunningCheck.follow`. One connected check waits every 15 minutes while running and is cancelled when idle; the first check also waits a period.
 
 `RunningCheckWorker` reads only `GET /api/v9/me/time_entries/current`, then calls `AccountCache.checkedRunning`. It neither drains the queue nor refreshes history. A failed request leaves the cache unchanged until the next period, with no intervening retry. A remote stop clears the cached running row, which also clears the cache-following notification, widget and tile.
 
 The check is unchanged by the timer event stream and still runs every 15 minutes while a timer runs, on every server. On a Tokkl server with the timer API the stream delivers a remote start or stop in seconds, and the check is the fallback when the stream is down. `TimerStateSource.accept` writes each state's running entry through the same `CurrentEntryCache` calls, `runningCheckStart` and `checkedRunning`. `RunningCheckStart.pendingIds` records which entries had queued changes when the request began, so an entry whose change the sender may have sent during the request stays as it is.
 
-The response cannot overwrite entries with queued changes or cache rows changed after the request began. `RunningCheckResults` serializes writes with sign-out using a generation guard, since a synchronous request can finish after worker cancellation. Sign-out forgets the generation and waits for WorkManager cancellation before clearing account data.
+The response cannot overwrite entries with queued changes or cache rows changed after the request began. `RunningCheckResults`, which the worker, the tile and sign-out share, serializes writes with sign-out using a generation guard, since a request can finish after worker cancellation. Sign-out forgets the generation and waits for WorkManager cancellation before clearing account data.
 
 <!-- kk:related:start -->
 # Related
