@@ -796,7 +796,8 @@ class EntryFormViewModelTest {
         val fields = EntryFields(description = "Plan the sprint", projectId = APP.id)
         assertEquals(
             listOf(
-                "updateOlder ${older.id} $OLDER_WORKSPACE $fields 2026-09-02T22:00:00Z 2026-09-02T23:00:00Z on 2026-09-03",
+                "updateOlder ${older.id} $OLDER_WORKSPACE $fields 2026-09-02T22:00:00Z 2026-09-02T23:00:00Z on " +
+                    "2026-09-03",
             ),
             changes.calls,
         )

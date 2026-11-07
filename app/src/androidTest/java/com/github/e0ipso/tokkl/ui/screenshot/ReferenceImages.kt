@@ -38,7 +38,8 @@ internal object ReferenceImages {
         if (reference.width != actual.width || reference.height != actual.height) {
             val written = write(actual, "actual", name)
             fail(
-                "$name is ${actual.width}x${actual.height}, but its reference is ${reference.width}x${reference.height}. " +
+                "$name is ${actual.width}x${actual.height}, but its reference is " +
+                    "${reference.width}x${reference.height}. " +
                     "Record the references on tokkl-api36. This capture is in $written.",
             )
             return
@@ -48,7 +49,8 @@ internal object ReferenceImages {
             val writtenActual = write(actual, "actual", name)
             val writtenDiff = write(comparison.diff, "diff", name)
             fail(
-                "$name differs from its reference in ${comparison.differing} pixels, more than $MAX_DIFFERING_PIXELS, " +
+                "$name differs from its reference in ${comparison.differing} pixels, more than " +
+                    "$MAX_DIFFERING_PIXELS, " +
                     "within ${comparison.bounds}. The capture is in $writtenActual and the diff in $writtenDiff.",
             )
         }

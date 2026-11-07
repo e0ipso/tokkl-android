@@ -70,9 +70,9 @@ class AppSummaryViewModelTest {
                         MockResponse.Builder().code(summaryStatus).body(summaryBody).build()
                     }
 
-                    "/reports/api/v3/workspace/7/search/time_entries", "/reports/api/v3/workspace/7/weekly/time_entries" -> json(
-                        "[]",
-                    )
+                    "/reports/api/v3/workspace/7/search/time_entries",
+                    "/reports/api/v3/workspace/7/weekly/time_entries",
+                    -> json("[]")
 
                     else -> MockResponse.Builder().code(404).build()
                 }

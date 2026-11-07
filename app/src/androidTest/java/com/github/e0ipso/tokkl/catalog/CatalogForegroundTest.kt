@@ -223,7 +223,9 @@ class CatalogForegroundTest {
         return resumed
     }
 
-    /** Polls [value] until it is not null. Works while the activity is being recreated, unlike the compose rule's waits. */
+    /**
+     * Polls [value] until it is not null. Works while the activity is being recreated, unlike the compose rule's waits.
+     */
     private fun <T : Any> awaitCondition(what: String, value: () -> T?): T {
         val deadline = System.nanoTime() + TIMEOUT_MS * 1_000_000
         while (true) {

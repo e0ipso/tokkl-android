@@ -21,7 +21,8 @@ class SystemFontScale(private val scale: Float, private val largestDisplaySize: 
                 check(previous == NOT_SET || previous.toFloatOrNull()?.let { it.isFinite() && it > 0f } == true) {
                     "cannot safely restore the font-scale setting: $previous"
                 }
-                val previousScale = InstrumentationRegistry.getInstrumentation().targetContext.resources.configuration.fontScale
+                val target = InstrumentationRegistry.getInstrumentation().targetContext
+                val previousScale = target.resources.configuration.fontScale
                 withConfigurationRestored(
                     change = {
                         awaitDeviceConfiguration("font scale $scale", { it.fontScale == scale }) {

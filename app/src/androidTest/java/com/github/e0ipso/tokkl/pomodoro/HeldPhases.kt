@@ -28,7 +28,8 @@ import java.time.Instant
  * and the notifications see only what the test holds.
  */
 internal object HeldPhases {
-    private val app get() = InstrumentationRegistry.getInstrumentation().targetContext.applicationContext as TokklApplication
+    private val app: TokklApplication
+        get() = InstrumentationRegistry.getInstrumentation().targetContext.applicationContext as TokklApplication
 
     /** Far above the revision of any test account's timer on the test server. */
     private const val FIRST_REVISION = 1_000_000L

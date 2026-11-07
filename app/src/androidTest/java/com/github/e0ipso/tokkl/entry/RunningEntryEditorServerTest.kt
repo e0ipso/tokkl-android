@@ -528,7 +528,10 @@ class RunningEntryEditorServerTest {
         }
     }
 
-    /** Production navigation and view models in a size override, matching the existing adaptive fixture. With [changes], the timer sends to it. */
+    /**
+     * Production navigation and view models in a size override, matching the existing adaptive fixture. With [changes],
+     * the timer sends to it.
+     */
     private fun withHost(width: Int, changes: EntryChanges? = null, steps: () -> Unit) {
         val scenario = finishWithin(
             "launch sized navigation host",

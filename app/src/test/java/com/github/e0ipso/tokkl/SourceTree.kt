@@ -25,7 +25,9 @@ internal object SourceTree {
 
         private val buildFile: String by lazy { File(directory, "build.gradle.kts").readText() }
 
-        /** The modules its main sources compile against, from `api(project(...))` and `implementation(project(...))`. */
+        /**
+         * The modules its main sources compile against, from `api(project(...))` and `implementation(project(...))`.
+         */
         val mainDependencies: Set<String> by lazy {
             MAIN_DEPENDENCY.findAll(
                 buildFile,
@@ -49,7 +51,9 @@ internal object SourceTree {
             )
         }
 
-        /** The modules whose R class its main sources name, such as `:core:ui` for `com.github.e0ipso.tokkl.core.ui.R`. */
+        /**
+         * The modules whose R class its main sources name, such as `:core:ui` for `com.github.e0ipso.tokkl.core.ui.R`.
+         */
         val resourceModules: Set<String> by lazy {
             readResourceModules(
                 File(directory, "src/main/java/com/github/e0ipso/tokkl"),

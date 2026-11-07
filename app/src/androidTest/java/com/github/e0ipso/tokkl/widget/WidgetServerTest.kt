@@ -231,7 +231,8 @@ class WidgetServerTest {
         ).orFail("create task")["id"]!!.jsonPrimitive.long
         val favorites = (1..3).map { index ->
             Json.parseToJsonElement(
-                """{"description":"Favorite $index","project_id":$project,"task_id":$task,"tags":["widget"],"billable":true}""",
+                """{"description":"Favorite $index","project_id":$project,"task_id":$task,"tags":["widget"]""" +
+                    ""","billable":true}""",
             )
         }
         web.sendNoContent(

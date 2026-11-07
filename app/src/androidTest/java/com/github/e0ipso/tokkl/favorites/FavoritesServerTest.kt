@@ -152,7 +152,8 @@ class FavoritesServerTest {
     @Test
     fun aFavoriteTappedWhileADescriptionIsTypedRunsWithItsOwnDescription() {
         saveOnTheWeb(
-            """{"favorites": [{"description": "Report", "project_id": null, "task_id": null, "tags": [], "billable": false}]}""",
+            """{"favorites": [{"description": "Report", "project_id": null, "task_id": null, "tags": [],""" +
+                """ "billable": false}]}""",
         )
         launch {
             description().performTextInput("Draft")
@@ -219,7 +220,8 @@ class FavoritesServerTest {
         ).orFail("GET /api/v9/me/preferences")
         assertEquals(
             Json.parseToJsonElement(
-                """[{"description": "Pinned on the phone", "project_id": null, "task_id": null, "tags": [], "billable": false}]""",
+                """[{"description": "Pinned on the phone", "project_id": null, "task_id": null, "tags": [],""" +
+                    """ "billable": false}]""",
             ),
             preferences.getValue("favorites"),
         )
@@ -230,7 +232,8 @@ class FavoritesServerTest {
     @Test
     fun editingOfflineSaysItNeedsTheServer() {
         saveOnTheWeb(
-            """{"favorites": [{"description": "Write the report", "project_id": null, "task_id": null, "tags": [], "billable": false}]}""",
+            """{"favorites": [{"description": "Write the report", "project_id": null, "task_id": null, "tags": [],""" +
+                """ "billable": false}]}""",
         )
         launch {
             openTemplates()
@@ -255,7 +258,8 @@ class FavoritesServerTest {
         val project = createProject("Pinned project")
         createEntry("Pin me", project)
         saveOnTheWeb(
-            """{"favorites": [{"description": "Write the report", "project_id": null, "task_id": null, "tags": [], "billable": false}]}""",
+            """{"favorites": [{"description": "Write the report", "project_id": null, "task_id": null, "tags": [],""" +
+                """ "billable": false}]}""",
         )
         launch {
             pinFromHistory("Pin me")
@@ -309,7 +313,8 @@ class FavoritesServerTest {
     fun pinningAHistoryEntryOfflineSaysItNeedsTheServer() {
         createEntry("Pin me", project = null)
         saveOnTheWeb(
-            """{"favorites": [{"description": "Write the report", "project_id": null, "task_id": null, "tags": [], "billable": false}]}""",
+            """{"favorites": [{"description": "Write the report", "project_id": null, "task_id": null, "tags": [],""" +
+                """ "billable": false}]}""",
         )
         launch {
             composeRule.waitUntil("the template is cached", NETWORK_TIMEOUT.toMillis()) {
@@ -444,7 +449,7 @@ class FavoritesServerTest {
     private fun shows(node: SemanticsNodeInteraction): Boolean = try {
         node.fetchSemanticsNode()
         true
-    } catch (e: AssertionError) {
+    } catch (_: AssertionError) {
         false
     }
 

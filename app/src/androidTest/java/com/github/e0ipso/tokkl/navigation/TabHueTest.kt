@@ -30,10 +30,10 @@ import kotlin.math.roundToInt
 import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 
 /**
- * The active tab's indicator takes its page's hue, in the bar and the rail, light and dark, as
- * the web app's active nav item since tokkl d012228 (TT-0299): Timer orange, Reports sky, Projects
- * violet, Settings yellow, and More pink while a page on the More sheet shows. With the timer idle, the other tabs
- * draw no hue at all. The running-dot checks cover its separate pink fill. TopLevelPageHueTest checks which hue each page has.
+ * The active tab's indicator takes its page's hue, in the bar and the rail, light and dark, as the web app's active nav
+ * item since tokkl d012228 (TT-0299): Timer orange, Reports sky, Projects violet, Settings yellow, and More pink while
+ * a page on the More sheet shows. With the timer idle, the other tabs draw no hue at all. The running-dot checks cover
+ * its separate pink fill. TopLevelPageHueTest checks which hue each page has.
  */
 class TabHueTest {
     @get:Rule
@@ -128,7 +128,10 @@ class TabHueTest {
         }
     }
 
-    /** For each page, shown as the current one: its own tab fills with its hue. A More-sheet page marks More in More's pink, and no other tab takes that fill. */
+    /**
+     * For each page, shown as the current one: its own tab fills with its hue. A More-sheet page marks More in More's
+     * pink, and no other tab takes that fill.
+     */
     private fun assertEveryTab(dark: Boolean, rail: Boolean) {
         var current by mutableStateOf(TopLevelPage.TIMER)
         composeRule.setContent {

@@ -362,12 +362,12 @@ class ReportTabsViewModelTest {
     private fun rows(vararg rows: String) = rows.joinToString(",", "[", "]")
 
     /** A detailed row with one entry of 15 minutes, as Tokkl sends it. */
-    private fun row(id: Int, start: String, stop: String?) =
-        """{"project_id":3,"project_name":"Web","project_color":"#06aaf5","task_name":"Design","description":"d$id",""" +
-            """"billable":true,"billable_amount_in_cents":null,"currency":"EUR","row_number":$id,""" +
-            """"time_entries":[{"id":$id,"seconds":900,"start":"$start","stop":${stop?.let {
-                "\"$it\""
-            } ?: "null"},"at":"2026-10-20T10:00:00+00:00"}]}"""
+    private fun row(id: Int, start: String, stop: String?) = """{"project_id":3""" +
+        ""","project_name":"Web","project_color":"#06aaf5","task_name":"Design","description":"d$id",""" +
+        """"billable":true,"billable_amount_in_cents":null,"currency":"EUR","row_number":$id,""" +
+        """"time_entries":[{"id":$id,"seconds":900,"start":"$start","stop":${stop?.let {
+            "\"$it\""
+        } ?: "null"},"at":"2026-10-20T10:00:00+00:00"}]}"""
 
     private fun json(body: String, vararg headers: Pair<String, String>) = MockResponse.Builder()
         .code(200)
@@ -403,7 +403,9 @@ class ReportTabsViewModelTest {
             "billable" to "true",
         )
 
-        /** Two rows of Beta to merge, ties by time to sort by title, a project_hex_color, and time without a project. */
+        /**
+         * Two rows of Beta to merge, ties by time to sort by title, a project_hex_color, and time without a project.
+         */
         const val WEEKLY = """[
             {"project_id":null,"project_name":null,"project_color":null,"seconds":[0,0,0,0,0,0,900]},
             {"project_id":4,"project_name":"Beta","project_color":"#06aaf5","seconds":[900,0,0,0,0,0,0]},

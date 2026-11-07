@@ -167,7 +167,18 @@ class RunningEntryQueueTest {
             val resumedAt = START.plusSeconds(900)
             // The server resumed the chain with this clone, and its state keeps 600 s from before.
             database.changes().upsertEntry(
-                CachedTimeEntry(CLONE, WORKSPACE, null, null, "Pause chain", resumedAt, null, false, emptyList(), emptyList()),
+                CachedTimeEntry(
+                    CLONE,
+                    WORKSPACE,
+                    null,
+                    null,
+                    "Pause chain",
+                    resumedAt,
+                    null,
+                    false,
+                    emptyList(),
+                    emptyList(),
+                ),
             )
             val pause = TimerPause(
                 paused = false, seconds = 600, workspaceId = WORKSPACE, description = "Pause chain", projectId = null,

@@ -182,7 +182,9 @@ class ForegroundRefreshServerTest {
         return resumed
     }
 
-    /** Polls [value] until it is not null. Works while the app is in the background, unlike the compose rule's waits. */
+    /**
+     * Polls [value] until it is not null. Works while the app is in the background, unlike the compose rule's waits.
+     */
     private fun <T : Any> awaitCondition(what: String, value: () -> T?): T {
         val deadline = System.nanoTime() + TIMEOUT_MS * 1_000_000
         while (true) {

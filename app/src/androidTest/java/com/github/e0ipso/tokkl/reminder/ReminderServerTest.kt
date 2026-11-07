@@ -10,7 +10,11 @@ import androidx.work.NetworkType
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.testing.WorkManagerTestInitHelper
-import com.github.e0ipso.tokkl.*
+import com.github.e0ipso.tokkl.SessionRule
+import com.github.e0ipso.tokkl.TestAccounts
+import com.github.e0ipso.tokkl.TimerActionToasts
+import com.github.e0ipso.tokkl.TokklApplication
+import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
@@ -28,6 +32,7 @@ import com.github.e0ipso.tokkl.feature.notification.R
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.notification.action
 import com.github.e0ipso.tokkl.notification.stopAction
+import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.preferences.ReminderPreferences
 import com.github.e0ipso.tokkl.preferences.StoredReminderPreferences
 import com.github.e0ipso.tokkl.preferences.reminderPreferences
@@ -42,7 +47,12 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import org.junit.After
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test

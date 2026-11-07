@@ -225,7 +225,8 @@ class NativeWidget(
                 visible.height() >= text.height - 1,
             )
             assertTrue(
-                "${text.text} fits its TextView: layout ${text.layout?.height}, view ${text.height}, padding ${text.compoundPaddingTop + text.compoundPaddingBottom}",
+                "${text.text} fits its TextView: layout ${text.layout?.height}, view ${text.height}, padding " +
+                    "${text.compoundPaddingTop + text.compoundPaddingBottom}",
                 checkNotNull(text.layout).height <= text.height - text.compoundPaddingTop - text.compoundPaddingBottom,
             )
             if (text is Chronometer) {

@@ -43,7 +43,8 @@ class TasksModelTest {
                 return when ("${request.method} ${request.url.encodedPath}") {
                     "GET /api/v9/workspaces/7/projects/5/tasks" ->
                         json(
-                            """[{"id":2,"project_id":5,"name":"brief","active":false},{"id":1,"project_id":5,"name":"Design","active":true}]""",
+                            """[{"id":2,"project_id":5,"name":"brief","active":false},{"id":1,"project_id":5""" +
+                                ""","name":"Design","active":true}]""",
                         )
 
                     "GET /api/v9/workspaces/7/projects/6/tasks" -> json("[]")

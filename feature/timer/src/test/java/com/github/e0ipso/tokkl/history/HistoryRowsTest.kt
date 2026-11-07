@@ -24,7 +24,10 @@ import java.time.ZoneOffset
  */
 class HistoryRowsTest {
 
-    /** groups-bulk.spec.ts: three alike entries on one day are one group; the same on another day and a different one on the same day are rows of their own. */
+    /**
+     * groups-bulk.spec.ts: three alike entries on one day are one group; the same on another day and a different one on
+     * the same day are rows of their own.
+     */
     @Test
     fun alikeEntriesOfADayFormOneGroupAndOtherDaysAndDescriptionsStayApart() {
         val dayA = LocalDate.of(2026, 10, 18)

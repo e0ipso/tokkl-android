@@ -2,13 +2,18 @@ package com.github.e0ipso.tokkl.pomodoro
 
 import android.app.AlarmManager
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.*
+import com.github.e0ipso.tokkl.DeviceShell
+import com.github.e0ipso.tokkl.SessionRule
+import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.components.pomodoroAlarms
 import com.github.e0ipso.tokkl.components.pomodoroRinging
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
-import com.github.e0ipso.tokkl.widget.*
-import org.junit.*
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Rule
+import org.junit.Test
 import java.time.Instant
 
 /** API36 cannot revoke USE_EXACT_ALARM: inject denial into the production native scheduler. */

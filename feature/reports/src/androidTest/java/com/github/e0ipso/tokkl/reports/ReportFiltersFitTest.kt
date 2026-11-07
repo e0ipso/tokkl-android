@@ -211,7 +211,9 @@ class ReportFiltersFitTest {
         assertTouchTargets(listOf(name to control))
     }
 
-    /** Scrolls the sheet's list to the node [matcher] finds, which then has to show in full inside the list's [area]. */
+    /**
+     * Scrolls the sheet's list to the node [matcher] finds, which then has to show in full inside the list's [area].
+     */
     private fun assertFitInList(name: String, matcher: SemanticsMatcher, area: DpRect): SemanticsNodeInteraction {
         composeRule.onNode(hasScrollToNodeAction() and inDialog()).performScrollToNode(matcher)
         val node = composeRule.onNode(matcher)

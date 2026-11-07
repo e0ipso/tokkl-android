@@ -125,7 +125,8 @@ class AppSummaryServerTest {
             val body = jsonObject(fallback.body!!.utf8())
             assertEquals(
                 jsonObject(
-                    """{"rounding":1,"rounding_minutes":15,"exclude_project_ids":[null,8],"client_ids":[9,null],"exclude_tag_ids":[10,null],"billable":true}""",
+                    """{"rounding":1,"rounding_minutes":15,"exclude_project_ids":[null,8],"client_ids":[9,null]""" +
+                        ""","exclude_tag_ids":[10,null],"billable":true}""",
                 ),
                 JsonObject(
                     body - setOf("start_date", "end_date", "order_by", "order_dir", "page_size", "first_row_number"),
@@ -226,7 +227,7 @@ class AppSummaryServerTest {
     private companion object {
         // Two independently rounded 84-cent entries. Do not derive the expected 168 cents from
         // a rate multiplied by their aggregate duration. The UTC dates become Oct 21 at UTC+14.
-        val FALLBACK_ROWS = """[{"billable":true,"currency":"EUR","billable_amount_in_cents":84,
+        const val FALLBACK_ROWS = """[{"billable":true,"currency":"EUR","billable_amount_in_cents":84,
           "time_entries":[{"seconds":900,"start":"2026-10-20T11:00:00Z"}]},
           {"billable":true,"currency":"EUR","billable_amount_in_cents":84,
           "time_entries":[{"seconds":900,"start":"2026-10-20T12:00:00Z"}]}]"""

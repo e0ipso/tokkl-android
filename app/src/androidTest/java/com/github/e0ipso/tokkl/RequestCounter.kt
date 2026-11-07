@@ -57,7 +57,8 @@ class RequestCounter(server: ServerUrl, private val request: String) : Closeable
             val cumulative = total.addAndGet(matches)
             if (matches > 0) {
                 BlackholeDiagnostics.record(
-                    "counter.match listen_port=${url.toString().toHttpUrl().port} connection=$connection matches=$matches cumulative=$cumulative",
+                    "counter.match listen_port=${url.toString().toHttpUrl().port} connection=$connection " +
+                        "matches=$matches cumulative=$cumulative",
                 )
             }
             tail = seen.copyOfRange(maxOf(0, seen.size - needle.size + 1), seen.size)

@@ -215,7 +215,9 @@ class ReportsForegroundTest {
         hasText(text, substring = true),
     ).fetchSemanticsNodes().isNotEmpty()
 
-    /** Polls [value] until it is not null. Works while the app is in the background, unlike the compose rule's waits. */
+    /**
+     * Polls [value] until it is not null. Works while the app is in the background, unlike the compose rule's waits.
+     */
     private fun <T : Any> awaitCondition(what: String, value: () -> T?): T {
         val deadline = System.nanoTime() + LOAD_TIMEOUT_MS * 1_000_000
         while (true) {

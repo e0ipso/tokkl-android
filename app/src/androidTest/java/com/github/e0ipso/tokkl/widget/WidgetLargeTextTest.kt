@@ -78,7 +78,8 @@ class WidgetLargeTextTest {
                 "POST",
                 api.server.api("me", "preferences"),
                 Json.parseToJsonElement(
-                    """{"favorites":[{"description":"Read","project_id":$project,"task_id":null,"tags":[],"billable":false}]}""",
+                    """{"favorites":[{"description":"Read","project_id":$project,"task_id":null,"tags":[]""" +
+                        ""","billable":false}]}""",
                 ),
             ).orFail("save favorite")
             Session(context).save(TokklTestServer.url, account.apiToken)

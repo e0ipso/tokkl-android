@@ -105,11 +105,10 @@ import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
- * The entry form against the real Tokkl container: an entry the web app made, opened from the
- * history, edited and saved through the change queue (docs/PRD.md H2), also from an older day than
- * the phone keeps, and past entries added
- * from the Timer page (M1), online and in airplane mode. The test's own requests stand in for the web app and go straight to the server. Each test
- * signs in to an account of its own, in Madrid, and deletes it after.
+ * The entry form against the real Tokkl container: an entry the web app made, opened from the history, edited and saved
+ * through the change queue (docs/PRD.md H2), also from an older day than the phone keeps, and past entries added from
+ * the Timer page (M1), online and in airplane mode. The test's own requests stand in for the web app and go straight to
+ * the server. Each test signs in to an account of its own, in Madrid, and deletes it after.
  */
 class EntryFormServerTest {
     private val composeRule = createEmptyComposeRule()
@@ -852,7 +851,7 @@ class EntryFormServerTest {
             try {
                 list.performScrollToKey("entry-$entryId")
                 true
-            } catch (e: IllegalArgumentException) {
+            } catch (_: IllegalArgumentException) {
                 false
             }
         }
@@ -1120,7 +1119,7 @@ class EntryFormServerTest {
     private fun shows(node: SemanticsNodeInteraction): Boolean = try {
         node.fetchSemanticsNode()
         true
-    } catch (e: AssertionError) {
+    } catch (_: AssertionError) {
         false
     }
 

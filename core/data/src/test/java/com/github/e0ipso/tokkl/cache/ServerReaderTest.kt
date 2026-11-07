@@ -67,7 +67,8 @@ class ServerReaderTest {
         answers["/api/v9/me/time_entries"] = json(
             """[{"id":1,"workspace_id":7,"project_id":3,"task_id":null,"description":"Stopped","start":"2026-10-17T09:00:00+00:00",
                "stop":"2026-10-17T10:00:00+00:00","duration":3600,"billable":true,"tags":["a"],"tag_ids":[5]},
-              {"id":2,"workspace_id":7,"description":null,"start":"2026-10-18T10:00:00Z","stop":null,"duration":-1,"tags":null}]""",
+              {"id":2,"workspace_id":7,"description":null,"start":"2026-10-18T10:00:00Z",
+               "stop":null,"duration":-1,"tags":null}]""",
         )
         val preferences = preferences("""{"date_format":"YYYY-MM-DD"}""")
 
@@ -143,8 +144,10 @@ class ServerReaderTest {
      */
     @Test
     fun aTokklEntryListWithoutAllDayTurnsNoTimeEntriesOff() {
-        val old = """[{"id":1,"workspace_id":7,"description":"Old","start":"2026-10-17T09:00:00+00:00","stop":"2026-10-17T10:00:00+00:00"}]"""
-        val current = """[{"id":1,"workspace_id":7,"description":"New","start":"2026-10-17T09:00:00+00:00","stop":"2026-10-17T10:00:00+00:00","all_day":false}]"""
+        val old = """[{"id":1,"workspace_id":7,"description":"Old",""" +
+            """"start":"2026-10-17T09:00:00+00:00","stop":"2026-10-17T10:00:00+00:00"}]"""
+        val current = """[{"id":1,"workspace_id":7,"description":"New",""" +
+            """"start":"2026-10-17T09:00:00+00:00","stop":"2026-10-17T10:00:00+00:00","all_day":false}]"""
         fun refresh(body: String, me: Me): Pair<ServerSnapshot, Int> {
             answers["/api/v9/me/time_entries"] = json(body)
             var missing = 0

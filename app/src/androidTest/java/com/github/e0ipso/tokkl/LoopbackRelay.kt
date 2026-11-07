@@ -67,7 +67,7 @@ class LoopbackRelay(host: String, port: Int, private val watchConnections: () ->
             while (true) {
                 val app = try {
                     listener.accept()
-                } catch (e: IOException) {
+                } catch (_: IOException) {
                     return@thread
                 }
                 if (holdNewConnections) {
@@ -152,7 +152,7 @@ class LoopbackRelay(host: String, port: Int, private val watchConnections: () ->
                 output.write(buffer, 0, read)
                 output.flush()
             }
-        } catch (e: IOException) {
+        } catch (_: IOException) {
             // A side closed its connection.
         } finally {
             ends.forEach { it.close() }

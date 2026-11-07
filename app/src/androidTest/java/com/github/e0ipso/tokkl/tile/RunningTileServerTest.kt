@@ -251,7 +251,8 @@ class RunningTileServerTest {
                     QuickSettingsTile.collapse()
 
                     BlackholeDiagnostics.record(
-                        "tile.pre_assert count=${requests.count} hung=${relay.hungConnections} relay_failures=${requests.failures.size}",
+                        "tile.pre_assert count=${requests.count} hung=${relay.hungConnections} " +
+                            "relay_failures=${requests.failures.size}",
                     )
                     BlackholeDiagnostics.mark("tile.assertions")
                     tileNetworkSnapshot()

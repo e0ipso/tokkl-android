@@ -463,14 +463,14 @@ class EntryActionsViewModelTest {
                 saved += list
                 favoritesAnswer.also { answer ->
                     if (answer is ApiResult.Success) {
-                        cachedFlow.value = list.mapIndexed { at, it ->
+                        cachedFlow.value = list.mapIndexed { at, fields ->
                             CachedFavorite(
                                 at,
-                                it.description,
-                                it.projectId,
-                                it.taskId,
-                                it.tags,
-                                it.billable,
+                                fields.description,
+                                fields.projectId,
+                                fields.taskId,
+                                fields.tags,
+                                fields.billable,
                             )
                         }
                     }

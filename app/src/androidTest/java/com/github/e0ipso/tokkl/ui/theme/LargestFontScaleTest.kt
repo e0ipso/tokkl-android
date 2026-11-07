@@ -441,12 +441,14 @@ class LargestFontScaleTest {
         val formBottom = composeRule.onNode(hasScrollAction()).fetchSemanticsNode().boundsInWindow.bottom
 
         assertTrue(
-            "the password field ends at $before px before the keyboard opens, above its top at $keyboardTop px, so this test checks nothing",
+            "the password field ends at $before px before the keyboard opens, above its top at $keyboardTop px, so " +
+                "this test checks nothing",
             before > keyboardTop,
         )
         assertEquals("the window panned for the keyboard: the compose root starts at $rootTop px", 0f, rootTop, 0f)
         assertTrue(
-            "the focused password field ends at $after px, under the keyboard's top at $keyboardTop px, and the form's scrolling area ends at $formBottom px",
+            "the focused password field ends at $after px, under the keyboard's top at $keyboardTop px, and the " +
+                "form's scrolling area ends at $formBottom px",
             after <= keyboardTop,
         )
     }
@@ -520,7 +522,8 @@ class LargestFontScaleTest {
         val after = awaitStill(password)
 
         assertTrue(
-            "the focused password field, $pixels px above the form's edge before, ends at $after px, under the keyboard's top at $keyboardTop px",
+            "the focused password field, $pixels px above the form's edge before, ends at $after px, under the " +
+                "keyboard's top at $keyboardTop px",
             after <= keyboardTop,
         )
     }

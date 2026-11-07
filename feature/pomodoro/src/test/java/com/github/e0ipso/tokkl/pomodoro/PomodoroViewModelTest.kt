@@ -80,7 +80,8 @@ class PomodoroViewModelTest {
         f.page.start { started++ }!!.join()
         assertEquals(
             listOf(
-                "start $WORKSPACE EntryFields(description=First work, projectId=null, taskId=null, tags=[deep], billable=false) 30/5/12/2",
+                "start $WORKSPACE EntryFields(description=First work, projectId=null, taskId=null, tags=[deep], " +
+                    "billable=false) 30/5/12/2",
             ),
             f.server.calls,
         )

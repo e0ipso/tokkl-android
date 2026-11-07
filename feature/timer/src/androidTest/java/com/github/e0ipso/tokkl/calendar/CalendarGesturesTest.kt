@@ -237,7 +237,9 @@ class CalendarGesturesTest {
         assertEquals(listOf("add all day ${MONDAY.plusDays(1)}"), opened)
     }
 
-    /** The calendar on [ENTRY], in a window of [window], or the phone's own, with the All day row when [allDayOffered]. */
+    /**
+     * The calendar on [ENTRY], in a window of [window], or the phone's own, with the All day row when [allDayOffered].
+     */
     private fun show(window: DpSize?, allDayOffered: Boolean = false): CalendarViewModel {
         val model = CalendarViewModel(
             entries = MutableStateFlow(

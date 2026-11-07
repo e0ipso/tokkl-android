@@ -187,7 +187,9 @@ class DetailedReportServerTest {
         assertEquals(webRows, phoneRows)
     }
 
-    /** Offline, a page that cannot load shows the summary's message and no rows, and so do Try again and another week. */
+    /**
+     * Offline, a page that cannot load shows the summary's message and no rows, and so do Try again and another week.
+     */
     @Test
     fun offlineShowsTheSummarysMessageAndNoRows() {
         openDetailed()

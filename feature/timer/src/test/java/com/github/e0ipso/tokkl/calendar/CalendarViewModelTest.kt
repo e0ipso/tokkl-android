@@ -336,7 +336,10 @@ class CalendarViewModelTest {
         assertEquals(WeekSource.Loading, monday.week)
     }
 
-    /** A drag on empty space queues an entry in the default workspace, on whole steps of 15 minutes, and hands back its id. */
+    /**
+     * A drag on empty space queues an entry in the default workspace, on whole steps of 15 minutes, and hands back its
+     * id.
+     */
     @Test
     fun aCreateDragQueuesAnEntryInTheDefaultWorkspace() {
         val model = model(cached = emptyList(), settings = DRAG_SETTINGS)
@@ -629,7 +632,8 @@ class CalendarViewModelTest {
         "[",
         "]",
     ) { (id, start, stop) ->
-        """{"id":$id,"workspace_id":1,"description":"e$id","start":"$start","stop":"$stop","duration":60,"tag_ids":[],"billable":false}"""
+        """{"id":$id,"workspace_id":1,"description":"e$id","start":"$start","stop":"$stop","duration":60""" +
+            ""","tag_ids":[],"billable":false}"""
     }
 
     /** Records what the calendar queues. */

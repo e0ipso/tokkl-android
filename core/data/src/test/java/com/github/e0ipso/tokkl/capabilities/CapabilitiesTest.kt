@@ -343,7 +343,8 @@ class CapabilitiesTest {
         const val TIMER = "/api/app/timer"
         const val TIMER_STATE =
             """{"revision":3,"server_time":"2026-10-28T08:13:05.120Z","running_entry":null,"pause":null,"pomodoro":null,"discarded_pomodoro":null}"""
-        const val TOKKL_ME = """{"id":1,"timezone":"UTC","beginning_of_week":1,"role":"user","time_resolution_minutes":5}"""
+        const val TOKKL_ME = """{"id":1,"timezone":"UTC","beginning_of_week":1""" +
+            ""","role":"user","time_resolution_minutes":5}"""
         const val TOGGL_ME = """{"id":1,"timezone":"UTC","beginning_of_week":1}"""
         val ALL = Capabilities(
             trash = true,

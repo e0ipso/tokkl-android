@@ -1,7 +1,7 @@
 package com.github.e0ipso.tokkl.reports
 
 /** Deliberately not reconstructible from the buckets/groups, which must not replace totals. */
-internal val APP_SUMMARY_FIXTURE = """{
+internal const val APP_SUMMARY_FIXTURE = """{
   "start_date":"2026-10-21","end_date":"2026-10-27","resolution":"week","week_start":"2026-10-21",
   "totals":{"seconds":7317,"billable_seconds":6001,"entry_count":9,
     "amounts":[{"currency":"XYZ","cents":101},{"currency":"USD","cents":0},{"currency":"EUR","cents":723}]},

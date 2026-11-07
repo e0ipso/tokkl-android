@@ -461,7 +461,9 @@ class ReportFiltersTest {
         awaitReport<SummaryReport>()
     }
 
-    /** Opens the sheet, clears it, picks [picks], "Is not" on each filter of [negate] and [billable], and applies them. */
+    /**
+     * Opens the sheet, clears it, picks [picks], "Is not" on each filter of [negate] and [billable], and applies them.
+     */
     private fun pickInTheSheet(picks: List<String>, @StringRes billable: Int?, negate: List<Int>) {
         openSheet()
         val clear = inSheet(hasText(string(R.string.reports_filters_clear)) and hasClickAction())

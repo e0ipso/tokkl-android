@@ -50,7 +50,8 @@ class CacheDatabaseMigrationTest {
             VERSION_1.forEach(db::execSQL)
             db.execSQL(
                 "INSERT INTO time_entries VALUES " +
-                    "(42, 7, 3, NULL, 'Cached before the update', ${START.toEpochMilli()}, NULL, 0, '[\"focus\"]', '[5]')",
+                    "(42, 7, 3, NULL, 'Cached before the update', ${START.toEpochMilli()}, NULL, 0, '[\"focus\"]', " +
+                    "'[5]')",
             )
             db.execSQL("INSERT INTO projects VALUES (3, 7, NULL, 'Website', '#0b83d9', 1, 0)")
             db.execSQL("INSERT INTO tags VALUES (5, 7, 'focus')")
@@ -95,7 +96,8 @@ class CacheDatabaseMigrationTest {
             )
             db.execSQL(
                 "INSERT INTO pending_changes VALUES " +
-                    "(1, 'CREATE', -1, 7, NULL, NULL, 'Queued before the update', ${START.toEpochMilli()}, NULL, 0, '[]', '[]')",
+                    "(1, 'CREATE', -1, 7, NULL, NULL, 'Queued before the update', ${START.toEpochMilli()}, NULL, 0, " +
+                    "'[]', '[]')",
             )
             db.execSQL("INSERT INTO entry_ids VALUES (-9, 99)")
             db.version = 2
@@ -105,7 +107,20 @@ class CacheDatabaseMigrationTest {
         try {
             val store = RoomChangeStore(database)
             val queued =
-                PendingChange(1, ChangeKind.CREATE, -1, 7, null, null, "Queued before the update", START, null, false, emptyList(), emptyList())
+                PendingChange(
+                    1,
+                    ChangeKind.CREATE,
+                    -1,
+                    7,
+                    null,
+                    null,
+                    "Queued before the update",
+                    START,
+                    null,
+                    false,
+                    emptyList(),
+                    emptyList(),
+                )
             assertEquals("the queued create survived, not marked as maybe sent", queued, store.first())
             assertTrue("the mapping survived", store.isMapped(99))
 
@@ -131,7 +146,8 @@ class CacheDatabaseMigrationTest {
             )
             db.execSQL(
                 "INSERT INTO pending_changes VALUES " +
-                    "(1, 'CREATE', -1, 7, NULL, NULL, 'Queued before the update', ${START.toEpochMilli()}, NULL, 0, '[]', '[]', 1)",
+                    "(1, 'CREATE', -1, 7, NULL, NULL, 'Queued before the update', ${START.toEpochMilli()}, NULL, 0, " +
+                    "'[]', '[]', 1)",
             )
             db.version = 3
         }
@@ -140,7 +156,21 @@ class CacheDatabaseMigrationTest {
         try {
             val store = RoomChangeStore(database)
             val queued =
-                PendingChange(1, ChangeKind.CREATE, -1, 7, null, null, "Queued before the update", START, null, false, emptyList(), emptyList(), maybeSent = true)
+                PendingChange(
+                    1,
+                    ChangeKind.CREATE,
+                    -1,
+                    7,
+                    null,
+                    null,
+                    "Queued before the update",
+                    START,
+                    null,
+                    false,
+                    emptyList(),
+                    emptyList(),
+                    maybeSent = true,
+                )
             assertEquals("the queued create survived, marked, with no ids", queued, store.first())
 
             val queue = ChangeQueue(database, Dispatchers.IO, onQueued = {})
@@ -245,7 +275,8 @@ class CacheDatabaseMigrationTest {
                     "'[]', '[]', 0, '[]', 0, NULL, NULL, 0)",
             )
             db.execSQL(
-                "INSERT INTO time_entries VALUES (-1, 7, NULL, NULL, 'Running before the update', ${START.toEpochMilli()}, NULL, 0, '[]', '[]')",
+                "INSERT INTO time_entries VALUES (-1, 7, NULL, NULL, 'Running before the update', " +
+                    "${START.toEpochMilli()}, NULL, 0, '[]', '[]')",
             )
             db.version = 6
         }
@@ -320,7 +351,18 @@ class CacheDatabaseMigrationTest {
             val undo = ShortStopUndo(
                 77,
                 shortAt.plusSeconds(10),
-                CachedTimeEntry(77, workspace, null, null, "Short before the update", shortAt, shortAt, false, emptyList(), emptyList()),
+                CachedTimeEntry(
+                    77,
+                    workspace,
+                    null,
+                    null,
+                    "Short before the update",
+                    shortAt,
+                    shortAt,
+                    false,
+                    emptyList(),
+                    emptyList(),
+                ),
             )
             context.deleteDatabase(FILE)
             SQLiteDatabase.openOrCreateDatabase(context.getDatabasePath(FILE), null).use { db ->
@@ -376,14 +418,18 @@ class CacheDatabaseMigrationTest {
                 )
                 db.execSQL("INSERT INTO entry_ids VALUES (-9, 99)")
                 db.execSQL(
-                    "INSERT INTO short_stop_undo VALUES (77, ${undo.capturedAt.toEpochMilli()}, 77, $workspace, NULL, NULL, " +
-                        "'Short before the update', ${shortAt.toEpochMilli()}, ${shortAt.toEpochMilli()}, 0, '[]', '[]')",
+                    "INSERT INTO short_stop_undo VALUES (77, ${undo.capturedAt.toEpochMilli()}, 77, $workspace, " +
+                        "NULL, NULL, " +
+                        "'Short before the update', ${shortAt.toEpochMilli()}, ${shortAt.toEpochMilli()}, 0, '[]', " +
+                        "'[]')",
                 )
                 db.execSQL(
-                    "INSERT INTO pause_chain VALUES (0, 11, 2, 3, 600, NULL, $workspace, 'Paused focus', NULL, NULL, '[]', 0)",
+                    "INSERT INTO pause_chain VALUES (0, 11, 2, 3, 600, NULL, $workspace, 'Paused focus', NULL, NULL, " +
+                        "'[]', 0)",
                 )
                 db.execSQL(
-                    "INSERT INTO pause_chain VALUES (1, 11, 0, 1, 600, $running, $workspace, 'Paused focus', NULL, NULL, '[]', 0)",
+                    "INSERT INTO pause_chain VALUES (1, 11, 0, 1, 600, $running, $workspace, 'Paused focus', NULL, " +
+                        "NULL, '[]', 0)",
                 )
                 db.execSQL("INSERT INTO timer_session VALUES (0, 44)")
                 db.execSQL(
@@ -505,7 +551,18 @@ class CacheDatabaseMigrationTest {
                 ShortStopUndo(
                     77,
                     shortAt.plusSeconds(10),
-                    CachedTimeEntry(77, 7, null, null, "Short before the update", shortAt, shortAt, false, emptyList(), emptyList()),
+                    CachedTimeEntry(
+                        77,
+                        7,
+                        null,
+                        null,
+                        "Short before the update",
+                        shortAt,
+                        shortAt,
+                        false,
+                        emptyList(),
+                        emptyList(),
+                    ),
                 ),
                 undo,
             )
@@ -561,7 +618,8 @@ class CacheDatabaseMigrationTest {
         val VERSION_1 = listOf(
             "CREATE TABLE IF NOT EXISTS `time_entries` (`id` INTEGER NOT NULL, `workspaceId` INTEGER NOT NULL, " +
                 "`projectId` INTEGER, `taskId` INTEGER, `description` TEXT NOT NULL, `start` INTEGER NOT NULL, " +
-                "`stop` INTEGER, `billable` INTEGER NOT NULL, `tags` TEXT NOT NULL, `tagIds` TEXT NOT NULL, PRIMARY KEY(`id`))",
+                "`stop` INTEGER, `billable` INTEGER NOT NULL, `tags` TEXT NOT NULL, `tagIds` TEXT NOT NULL, PRIMARY " +
+                "KEY(`id`))",
             "CREATE INDEX IF NOT EXISTS `index_time_entries_start` ON `time_entries` (`start`)",
             "CREATE TABLE IF NOT EXISTS `projects` (`id` INTEGER NOT NULL, `workspaceId` INTEGER NOT NULL, " +
                 "`clientId` INTEGER, `name` TEXT NOT NULL, `color` TEXT, `active` INTEGER NOT NULL, " +
@@ -576,7 +634,8 @@ class CacheDatabaseMigrationTest {
                 "`projectId` INTEGER, `taskId` INTEGER, `tags` TEXT NOT NULL, `billable` INTEGER NOT NULL, " +
                 "PRIMARY KEY(`position`))",
             "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-            "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8107a6946224f42e71b1e5b586a3e59c')",
+            "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, " +
+                "'8107a6946224f42e71b1e5b586a3e59c')",
         )
 
         /**
@@ -585,12 +644,15 @@ class CacheDatabaseMigrationTest {
          */
         val VERSION_2 = VERSION_1.dropLast(1) + listOf(
             "CREATE TABLE IF NOT EXISTS `pending_changes` (`sequence` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
-                "`kind` TEXT NOT NULL, `entryId` INTEGER NOT NULL, `workspaceId` INTEGER NOT NULL, `projectId` INTEGER, " +
+                "`kind` TEXT NOT NULL, `entryId` INTEGER NOT NULL, `workspaceId` INTEGER NOT NULL, `projectId` " +
+                "INTEGER, " +
                 "`taskId` INTEGER, `description` TEXT NOT NULL, `start` INTEGER NOT NULL, `stop` INTEGER, " +
                 "`billable` INTEGER NOT NULL, `tags` TEXT NOT NULL, `tagIds` TEXT NOT NULL)",
             "CREATE INDEX IF NOT EXISTS `index_pending_changes_entryId` ON `pending_changes` (`entryId`)",
-            "CREATE TABLE IF NOT EXISTS `entry_ids` (`localId` INTEGER NOT NULL, `serverId` INTEGER NOT NULL, PRIMARY KEY(`localId`))",
-            "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '885651807ba8ad3b390113ed5f804c2f')",
+            "CREATE TABLE IF NOT EXISTS `entry_ids` (`localId` INTEGER NOT NULL, `serverId` INTEGER NOT NULL, " +
+                "PRIMARY KEY(`localId`))",
+            "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, " +
+                "'885651807ba8ad3b390113ed5f804c2f')",
         )
 
         /**
@@ -599,12 +661,16 @@ class CacheDatabaseMigrationTest {
          */
         val VERSION_3 = VERSION_1.dropLast(1) + listOf(
             "CREATE TABLE IF NOT EXISTS `pending_changes` (`sequence` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
-                "`kind` TEXT NOT NULL, `entryId` INTEGER NOT NULL, `workspaceId` INTEGER NOT NULL, `projectId` INTEGER, " +
+                "`kind` TEXT NOT NULL, `entryId` INTEGER NOT NULL, `workspaceId` INTEGER NOT NULL, `projectId` " +
+                "INTEGER, " +
                 "`taskId` INTEGER, `description` TEXT NOT NULL, `start` INTEGER NOT NULL, `stop` INTEGER, " +
-                "`billable` INTEGER NOT NULL, `tags` TEXT NOT NULL, `tagIds` TEXT NOT NULL, `maybeSent` INTEGER NOT NULL DEFAULT 0)",
+                "`billable` INTEGER NOT NULL, `tags` TEXT NOT NULL, `tagIds` TEXT NOT NULL, `maybeSent` INTEGER NOT " +
+                "NULL DEFAULT 0)",
             "CREATE INDEX IF NOT EXISTS `index_pending_changes_entryId` ON `pending_changes` (`entryId`)",
-            "CREATE TABLE IF NOT EXISTS `entry_ids` (`localId` INTEGER NOT NULL, `serverId` INTEGER NOT NULL, PRIMARY KEY(`localId`))",
-            "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3c6b11c6c52fc8eca243b7d3d98dae21')",
+            "CREATE TABLE IF NOT EXISTS `entry_ids` (`localId` INTEGER NOT NULL, `serverId` INTEGER NOT NULL, " +
+                "PRIMARY KEY(`localId`))",
+            "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, " +
+                "'3c6b11c6c52fc8eca243b7d3d98dae21')",
         )
 
         /**
@@ -613,19 +679,24 @@ class CacheDatabaseMigrationTest {
          */
         val VERSION_6 = VERSION_1.dropLast(1) + listOf(
             "CREATE TABLE IF NOT EXISTS `pending_changes` (`sequence` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
-                "`kind` TEXT NOT NULL, `entryId` INTEGER NOT NULL, `workspaceId` INTEGER NOT NULL, `projectId` INTEGER, " +
+                "`kind` TEXT NOT NULL, `entryId` INTEGER NOT NULL, `workspaceId` INTEGER NOT NULL, `projectId` " +
+                "INTEGER, " +
                 "`taskId` INTEGER, `description` TEXT NOT NULL, `start` INTEGER NOT NULL, `stop` INTEGER, " +
-                "`billable` INTEGER NOT NULL, `tags` TEXT NOT NULL, `tagIds` TEXT NOT NULL, `maybeSent` INTEGER NOT NULL DEFAULT 0, " +
+                "`billable` INTEGER NOT NULL, `tags` TEXT NOT NULL, `tagIds` TEXT NOT NULL, `maybeSent` INTEGER NOT " +
+                "NULL DEFAULT 0, " +
                 "`existingIds` TEXT NOT NULL DEFAULT '[]', `held` INTEGER NOT NULL DEFAULT 0, `refusal` TEXT, " +
                 "`capturedStop` INTEGER, `shortStop` INTEGER NOT NULL DEFAULT 0)",
             "CREATE INDEX IF NOT EXISTS `index_pending_changes_entryId` ON `pending_changes` (`entryId`)",
-            "CREATE TABLE IF NOT EXISTS `entry_ids` (`localId` INTEGER NOT NULL, `serverId` INTEGER NOT NULL, PRIMARY KEY(`localId`))",
-            "CREATE TABLE IF NOT EXISTS `short_stop_undo` (`entryId` INTEGER NOT NULL, `capturedAt` INTEGER NOT NULL, " +
+            "CREATE TABLE IF NOT EXISTS `entry_ids` (`localId` INTEGER NOT NULL, `serverId` INTEGER NOT NULL, " +
+                "PRIMARY KEY(`localId`))",
+            "CREATE TABLE IF NOT EXISTS `short_stop_undo` (`entryId` INTEGER NOT NULL, `capturedAt` INTEGER NOT " +
+                "NULL, " +
                 "`stopped_id` INTEGER NOT NULL, `stopped_workspaceId` INTEGER NOT NULL, `stopped_projectId` INTEGER, " +
                 "`stopped_taskId` INTEGER, `stopped_description` TEXT NOT NULL, `stopped_start` INTEGER NOT NULL, " +
                 "`stopped_stop` INTEGER, `stopped_billable` INTEGER NOT NULL, `stopped_tags` TEXT NOT NULL, " +
                 "`stopped_tagIds` TEXT NOT NULL, PRIMARY KEY(`entryId`))",
-            "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '056926b082c8c580bac4595b21f4295a')",
+            "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, " +
+                "'056926b082c8c580bac4595b21f4295a')",
         )
 
         /**
@@ -638,8 +709,10 @@ class CacheDatabaseMigrationTest {
                 "`runningId` INTEGER, `workspaceId` INTEGER NOT NULL, `snapshot_description` TEXT NOT NULL, " +
                 "`snapshot_projectId` INTEGER, `snapshot_taskId` INTEGER, `snapshot_tags` TEXT NOT NULL, " +
                 "`snapshot_billable` INTEGER NOT NULL, PRIMARY KEY(`slot`))",
-            "CREATE TABLE IF NOT EXISTS `timer_session` (`slot` INTEGER NOT NULL, `id` INTEGER NOT NULL, PRIMARY KEY(`slot`))",
-            "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7747807ae7eb20f454ad9d96203e5375')",
+            "CREATE TABLE IF NOT EXISTS `timer_session` (`slot` INTEGER NOT NULL, `id` INTEGER NOT NULL, PRIMARY " +
+                "KEY(`slot`))",
+            "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, " +
+                "'7747807ae7eb20f454ad9d96203e5375')",
         )
 
         /**
@@ -650,10 +723,12 @@ class CacheDatabaseMigrationTest {
             "CREATE TABLE IF NOT EXISTS `pomodoro_session` (`slot` INTEGER NOT NULL, `workspaceId` INTEGER NOT NULL, " +
                 "`workMinutes` REAL NOT NULL, `shortRestMinutes` REAL NOT NULL, `longRestMinutes` REAL NOT NULL, " +
                 "`longRestEvery` REAL NOT NULL, `phaseKind` TEXT NOT NULL, `phaseStartedAt` INTEGER NOT NULL, " +
-                "`pomodoroStartedAt` INTEGER NOT NULL, `completed` REAL NOT NULL, `fields_description` TEXT NOT NULL, " +
+                "`pomodoroStartedAt` INTEGER NOT NULL, `completed` REAL NOT NULL, `fields_description` TEXT NOT " +
+                "NULL, " +
                 "`fields_projectId` INTEGER, `fields_taskId` INTEGER, `fields_tags` TEXT NOT NULL, " +
                 "`fields_billable` INTEGER NOT NULL, PRIMARY KEY(`slot`))",
-            "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a594909fd1789ae86cc781bcdf9451b9')",
+            "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, " +
+                "'a594909fd1789ae86cc781bcdf9451b9')",
         )
 
         /**
@@ -686,8 +761,8 @@ class CacheDatabaseMigrationTest {
             stop: Instant?,
             capturedStop: Instant? = null,
             held: String = "0, NULL",
-        ) =
-            "INSERT INTO pending_changes VALUES ($sequence, '$kind', $entryId, $workspace, NULL, NULL, '$description', " +
-                "${start.toEpochMilli()}, ${stop?.toEpochMilli()}, 0, '[]', '[]', 0, '[]', $held, ${capturedStop?.toEpochMilli()}, 0)"
+        ) = "INSERT INTO pending_changes VALUES ($sequence, '$kind', $entryId, $workspace, NULL, NULL, " +
+            "'$description', " +
+            "${start.toEpochMilli()}, ${stop?.toEpochMilli()}, 0, '[]', '[]', 0, '[]', $held, ${capturedStop?.toEpochMilli()}, 0)"
     }
 }

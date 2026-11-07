@@ -302,8 +302,9 @@ class TimerStateSourceTest {
 
         val paused = body.replace(
             "\"pause\":null",
-            "\"pause\":{\"paused\":true,\"seconds\":600,\"workspace_id\":7,\"description\":\"Writing\",\"project_id\":5," +
-                "\"task_id\":null,\"tag_ids\":[3],\"tags\":[\"deep\"],\"billable\":true,\"clone_entry_id\":null}",
+            "\"pause\":{\"paused\":true,\"seconds\":600,\"workspace_id\":7,\"description\":\"Writing\"," +
+                "\"project_id\":5,\"task_id\":null,\"tag_ids\":[3],\"tags\":[\"deep\"],\"billable\":true," +
+                "\"clone_entry_id\":null}",
         )
         assertEquals(
             TimerPause(true, 600, 7, "Writing", 5, null, listOf(3L), listOf("deep"), true, null),

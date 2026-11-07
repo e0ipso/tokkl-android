@@ -499,7 +499,7 @@ class TimerServerTest {
     private fun shows(node: SemanticsNodeInteraction): Boolean = try {
         node.fetchSemanticsNode()
         true
-    } catch (e: AssertionError) {
+    } catch (_: AssertionError) {
         false
     }
 

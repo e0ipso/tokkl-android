@@ -16,9 +16,13 @@ import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.capabilities
 import com.github.e0ipso.tokkl.components.sessionViewModels
-import com.github.e0ipso.tokkl.reports.*
+import com.github.e0ipso.tokkl.reports.RangePreset
+import com.github.e0ipso.tokkl.reports.ReportTab
+import com.github.e0ipso.tokkl.reports.ReportsState
+import com.github.e0ipso.tokkl.reports.ReportsViewModel
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert.*
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 

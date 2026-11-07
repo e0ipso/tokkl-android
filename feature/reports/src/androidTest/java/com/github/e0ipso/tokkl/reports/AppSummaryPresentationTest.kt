@@ -113,7 +113,7 @@ class AppSummaryPresentationTest {
         ).value
 
     private companion object {
-        val BODY = """{
+        const val BODY = """{
           "start_date":"2026-10-21","end_date":"2026-10-21","resolution":"day",
           "totals":{"seconds":777,"billable_seconds":60,"entry_count":2,"amounts":[{"currency":"XYZ","cents":0}]},
           "series":[{"start":"2026-10-21","seconds":777,"billable_seconds":60}],

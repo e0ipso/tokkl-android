@@ -2,7 +2,11 @@ package com.github.e0ipso.tokkl.widget
 
 import android.os.SystemClock
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.*
+import com.github.e0ipso.tokkl.AirplaneMode
+import com.github.e0ipso.tokkl.SessionRule
+import com.github.e0ipso.tokkl.TestAccounts
+import com.github.e0ipso.tokkl.TimerActionToasts
+import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.PhaseKind
 import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.components.accountSettings
@@ -16,6 +20,7 @@ import com.github.e0ipso.tokkl.components.storeSignIn
 import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.components.timerSync
 import com.github.e0ipso.tokkl.core.shared.R
+import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.pomodoro.HeldPhases
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.signin.SessionWriter
@@ -23,12 +28,26 @@ import com.github.e0ipso.tokkl.signin.SignIn
 import com.github.e0ipso.tokkl.signin.SignInCredentials
 import com.github.e0ipso.tokkl.signin.SignInResult
 import com.github.e0ipso.tokkl.timer.TimerAcceptanceFixture
-import com.github.e0ipso.tokkl.timerstate.*
+import com.github.e0ipso.tokkl.timerState
+import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.json.*
-import org.junit.*
-import org.junit.Assert.*
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.long
+import kotlinx.serialization.json.put
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
 import java.time.Duration
 import java.time.Instant
 import com.github.e0ipso.tokkl.feature.widget.R as WidgetR

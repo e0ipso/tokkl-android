@@ -73,7 +73,8 @@ class ReportsViewModelTest {
                 } else {
                     searches += Json.parseToJsonElement(request.body!!.utf8()).jsonObject
                     json(
-                        """[{"billable":false,"currency":"EUR","time_entries":[{"seconds":3600,"start":"2026-10-21T00:30:00+14:00"}]}]""",
+                        """[{"billable":false,"currency":"EUR","time_entries":[{"seconds":3600""" +
+                            ""","start":"2026-10-21T00:30:00+14:00"}]}]""",
                     )
                 }
 

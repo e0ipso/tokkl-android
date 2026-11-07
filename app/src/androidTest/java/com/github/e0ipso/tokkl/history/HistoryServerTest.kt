@@ -353,7 +353,7 @@ class HistoryServerTest {
         try {
             list().performScrollToKey(key)
             true
-        } catch (e: IllegalArgumentException) {
+        } catch (_: IllegalArgumentException) {
             false
         }
     }

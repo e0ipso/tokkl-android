@@ -116,7 +116,8 @@ class PomodoroDefaultsSettingTest {
         val request = server.takeRequest()
         assertEquals("POST /api/v9/me/preferences", "${request.method} ${request.url.encodedPath}")
         assertEquals(
-            """{"pomodoro_focus_interval_in_minutes":40,"pomodoro_break_interval_in_minutes":8,"pomodoro_long_break_interval_in_minutes":20,"pomodoro_long_break_every":5}""",
+            """{"pomodoro_focus_interval_in_minutes":40,"pomodoro_break_interval_in_minutes":8""" +
+                ""","pomodoro_long_break_interval_in_minutes":20,"pomodoro_long_break_every":5}""",
             request.body?.utf8(),
         )
         assertEquals(StoredPomodoroDefaults(PomodoroDefaults(40, 8, 20, 5), unsent = false), saved.last())
@@ -149,8 +150,10 @@ class PomodoroDefaultsSettingTest {
             val body = server.takeRequest().body?.utf8()
             assertEquals(
                 "$asked is sent clamped",
-                """{"pomodoro_focus_interval_in_minutes":${sent.workMinutes},"pomodoro_break_interval_in_minutes":${sent.shortRestMinutes},""" +
-                    """"pomodoro_long_break_interval_in_minutes":${sent.longRestMinutes},"pomodoro_long_break_every":${sent.longRestEvery}}""",
+                """{"pomodoro_focus_interval_in_minutes":${sent.workMinutes}""" +
+                    ""","pomodoro_break_interval_in_minutes":${sent.shortRestMinutes},""" +
+                    """"pomodoro_long_break_interval_in_minutes":${sent.longRestMinutes}""" +
+                    ""","pomodoro_long_break_every":${sent.longRestEvery}}""",
                 body,
             )
             assertEquals("$asked is stored clamped", StoredPomodoroDefaults(sent, unsent = false), saved.last())
@@ -186,13 +189,17 @@ class PomodoroDefaultsSettingTest {
 
         assertEquals(PomodoroDefaults(40, 8, 20, 5), setting.defaults.value)
         assertEquals(
-            """{"pomodoro_focus_interval_in_minutes":40,"pomodoro_break_interval_in_minutes":8,"pomodoro_long_break_interval_in_minutes":20,"pomodoro_long_break_every":5}""",
+            """{"pomodoro_focus_interval_in_minutes":40,"pomodoro_break_interval_in_minutes":8""" +
+                ""","pomodoro_long_break_interval_in_minutes":20,"pomodoro_long_break_every":5}""",
             server.takeRequest().body?.utf8(),
         )
         assertEquals(StoredPomodoroDefaults(PomodoroDefaults(40, 8, 20, 5), unsent = false), saved.last())
     }
 
-    /** A server without Tokkl's preferences, such as Toggl Track, gets nothing, and the phone starts from 25, 5, 15 and 4. */
+    /**
+     * A server without Tokkl's preferences, such as Toggl Track, gets nothing, and the phone starts from 25, 5, 15 and
+     * 4.
+     */
     @Test
     fun withoutTokklsPreferencesTheValuesStayOnThePhoneFromTokklsDefaults() {
         val setting = setting(keepsPreferences = false)
@@ -251,7 +258,8 @@ class PomodoroDefaultsSettingTest {
 
     private companion object {
         const val SERVER_VALUES =
-            """{"pomodoro_enabled":true,"pomodoro_focus_interval_in_minutes":50,"pomodoro_break_interval_in_minutes":10,""" +
+            """{"pomodoro_enabled":true,"pomodoro_focus_interval_in_minutes":50""" +
+                ""","pomodoro_break_interval_in_minutes":10,""" +
                 """"pomodoro_long_break_interval_in_minutes":30,"pomodoro_long_break_every":3,"pomodoro_stop_timer_at_end":false}"""
     }
 }

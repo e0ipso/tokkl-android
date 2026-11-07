@@ -28,7 +28,18 @@ object CatalogSamples {
     )
 
     val PROJECTS = listOf(
-        CatalogProject(11, 7, "Tokkl for Android", "#0b83d9", clientId = 1, clientName = "Acme", billable = true, rate = 65.0, currency = "EUR", estimatedHours = 120.0),
+        CatalogProject(
+            11,
+            7,
+            "Tokkl for Android",
+            "#0b83d9",
+            clientId = 1,
+            clientName = "Acme",
+            billable = true,
+            rate = 65.0,
+            currency = "EUR",
+            estimatedHours = 120.0,
+        ),
         CatalogProject(12, 7, "Graffiti wall", "#d94182"),
         CatalogProject(
             13,

@@ -487,7 +487,18 @@ class TimerPauseTest {
     )
 
     private fun clone() = EntryWithSendState(
-        CachedTimeEntry(CLONE_ID, WORKSPACE, FIELDS.projectId, FIELDS.taskId, FIELDS.description, CLONE_START, null, FIELDS.billable, FIELDS.tags, emptyList()),
+        CachedTimeEntry(
+            CLONE_ID,
+            WORKSPACE,
+            FIELDS.projectId,
+            FIELDS.taskId,
+            FIELDS.description,
+            CLONE_START,
+            null,
+            FIELDS.billable,
+            FIELDS.tags,
+            emptyList(),
+        ),
         unsent = false,
     )
 
@@ -616,7 +627,18 @@ class TimerPauseTest {
             calls += "start $workspaceId $fields"
             gate.await()
             val entry =
-                CachedTimeEntry(STARTED_ID, workspaceId, fields.projectId, fields.taskId, fields.description, at, null, fields.billable, fields.tags, emptyList())
+                CachedTimeEntry(
+                    STARTED_ID,
+                    workspaceId,
+                    fields.projectId,
+                    fields.taskId,
+                    fields.description,
+                    at,
+                    null,
+                    fields.billable,
+                    fields.tags,
+                    emptyList(),
+                )
             phone.value = phone.value.copy(running = EntryWithSendState(entry, unsent = true))
             return STARTED_ID
         }

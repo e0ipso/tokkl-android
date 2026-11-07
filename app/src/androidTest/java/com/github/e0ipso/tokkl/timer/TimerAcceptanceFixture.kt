@@ -1,8 +1,14 @@
 package com.github.e0ipso.tokkl.timer
 
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.*
-import com.github.e0ipso.tokkl.cache.*
+import com.github.e0ipso.tokkl.AirplaneMode
+import com.github.e0ipso.tokkl.SessionRule
+import com.github.e0ipso.tokkl.TestAccounts
+import com.github.e0ipso.tokkl.TokklApplication
+import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.cache.CachedTimeEntry
+import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.cache
@@ -18,7 +24,8 @@ import com.github.e0ipso.tokkl.timerstate.seconds
 import com.github.e0ipso.tokkl.timerstate.target
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import java.time.Instant
 
 /** Disposable account and real Room/queue shared by the normal timer acceptance tests. */

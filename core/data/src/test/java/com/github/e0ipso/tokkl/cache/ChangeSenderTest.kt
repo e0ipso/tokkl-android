@@ -217,7 +217,8 @@ class ChangeSenderTest {
         server.enqueue(MockResponse.Builder().code(404).body("\"Not found\"").build())
         server.enqueue(
             entries(
-                """{"id":55,"start":"2026-10-19T08:00:00+00:00","stop":"2026-10-19T08:00:00+00:00","server_deleted_at":"2026-10-19T08:00:02Z"}""",
+                """{"id":55,"start":"2026-10-19T08:00:00+00:00","stop":"2026-10-19T08:00:00+00:00",""" +
+                    """"server_deleted_at":"2026-10-19T08:00:02Z"}""",
             ),
         )
 
@@ -275,7 +276,8 @@ class ChangeSenderTest {
         assertEquals("POST /api/v9/workspaces/7/time_entries", "${request.method} ${request.url.encodedPath}")
         assertEquals(
             Json.parseToJsonElement(
-                """{"workspace_id":7,"created_with":"Tokkl for Android","description":"Workshop","project_id":3,"task_id":null,""" +
+                """{"workspace_id":7,"created_with":"Tokkl for Android","description":"Workshop","project_id":3""" +
+                    ""","task_id":null,""" +
                     """"tags":[],"billable":true,"all_day":true,"start_date":"2026-10-19","duration":5400}""",
             ),
             request.json(),
@@ -316,7 +318,8 @@ class ChangeSenderTest {
         assertEquals("PUT /api/v9/workspaces/7/time_entries/55", "${edit.method} ${edit.url.encodedPath}")
         assertEquals(
             Json.parseToJsonElement(
-                """{"workspace_id":7,"description":"Renamed","project_id":3,"task_id":null,"tags":[],"billable":true,""" +
+                """{"workspace_id":7,"description":"Renamed","project_id":3,"task_id":null,"tags":[]""" +
+                    ""","billable":true,""" +
                     """"all_day":true,"start_date":"2026-10-19","duration":3600}""",
             ),
             edit.json(),
@@ -324,7 +327,8 @@ class ChangeSenderTest {
         assertEquals("PUT /api/v9/workspaces/7/time_entries/56", "${turnedOn.method} ${turnedOn.url.encodedPath}")
         assertEquals(
             Json.parseToJsonElement(
-                """{"workspace_id":7,"description":"Was timed","project_id":3,"task_id":null,"tags":[],"billable":true,""" +
+                """{"workspace_id":7,"description":"Was timed","project_id":3,"task_id":null,"tags":[]""" +
+                    ""","billable":true,""" +
                     """"all_day":true,"start_date":"2026-10-20","duration":7200}""",
             ),
             turnedOn.json(),
@@ -348,7 +352,8 @@ class ChangeSenderTest {
 
         assertEquals(
             Json.parseToJsonElement(
-                """{"workspace_id":7,"description":"Renamed","project_id":3,"task_id":null,"tags":[],"billable":true,""" +
+                """{"workspace_id":7,"description":"Renamed","project_id":3,"task_id":null,"tags":[]""" +
+                    ""","billable":true,""" +
                     """"all_day":true,"start":"2026-10-18T22:00:00Z","duration":3600}""",
             ),
             server.takeRequest().json(),
@@ -373,15 +378,18 @@ class ChangeSenderTest {
         assertEquals("PUT /api/v9/workspaces/7/time_entries/55", "${turnedOff.method} ${turnedOff.url.encodedPath}")
         assertEquals(
             Json.parseToJsonElement(
-                """{"workspace_id":7,"description":"Timed again","project_id":3,"task_id":null,"tags":[],"billable":true,""" +
+                """{"workspace_id":7,"description":"Timed again","project_id":3,"task_id":null,"tags":[]""" +
+                    ""","billable":true,""" +
                     """"start":"2026-10-19T08:00:00Z","stop":"2026-10-19T09:30:00Z","duration":5400,"all_day":false}""",
             ),
             turnedOff.json(),
         )
         assertEquals(
             Json.parseToJsonElement(
-                """{"workspace_id":7,"created_with":"Tokkl for Android","description":"Running","project_id":3,"task_id":null,""" +
-                    """"tags":[],"billable":true,"start":"2026-10-19T10:00:00Z","stop":null,"duration":-1,"all_day":false}""",
+                """{"workspace_id":7,"created_with":"Tokkl for Android","description":"Running","project_id":3""" +
+                    ""","task_id":null,""" +
+                    """"tags":[],"billable":true,"start":"2026-10-19T10:00:00Z","stop":null,"duration":-1""" +
+                    ""","all_day":false}""",
             ),
             start.json(),
         )
@@ -408,8 +416,10 @@ class ChangeSenderTest {
         val (create, update) = List(2) { server.takeRequest() }
         assertEquals(
             Json.parseToJsonElement(
-                """{"workspace_id":7,"created_with":"Tokkl for Android","description":"Workshop","project_id":3,"task_id":null,""" +
-                    """"tags":[],"billable":true,"start":"2026-10-18T22:00:00Z","stop":"2026-10-18T23:30:00Z","duration":5400}""",
+                """{"workspace_id":7,"created_with":"Tokkl for Android","description":"Workshop","project_id":3""" +
+                    ""","task_id":null,""" +
+                    """"tags":[],"billable":true""" +
+                    ""","start":"2026-10-18T22:00:00Z","stop":"2026-10-18T23:30:00Z","duration":5400}""",
             ),
             create.json(),
         )
@@ -1325,7 +1335,12 @@ class ChangeSenderTest {
     @Test
     fun aNoTimeCreateMatchesANoTimeEntryWithItsFieldsWithinTheLookupWindow() {
         val create = PendingChange(
-            kind = ChangeKind.CREATE, entryId = LOCAL, workspaceId = 7, projectId = 3, taskId = null, description = "Workshop",
+            kind = ChangeKind.CREATE,
+            entryId = LOCAL,
+            workspaceId = 7,
+            projectId = 3,
+            taskId = null,
+            description = "Workshop",
             start = MIDNIGHT,
             stop = MIDNIGHT.plusSeconds(
                 5400,

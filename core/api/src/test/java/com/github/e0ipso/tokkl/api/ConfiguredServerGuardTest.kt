@@ -217,7 +217,8 @@ class ConfiguredServerGuardTest {
     @Test
     fun httpsServerNeedsNoConfirmation() {
         trust.cleartextConfirmed.clear()
-        // The MockWebServer speaks plain HTTP, so the TLS handshake fails, but only after the guard let the call through.
+        // The MockWebServer speaks plain HTTP, so the TLS handshake fails, but only after the guard let the call
+        // through.
         val https = ServerUrl.parse(
             configured.url("/").newBuilder().scheme("https").port(configured.port).build().toString(),
         )!!

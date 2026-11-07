@@ -411,7 +411,8 @@ class HistoryViewModelTest {
                 TIMEOUT_MS,
             ) { model.state.filterIsInstance<HistoryState.Shown>().onEach { last = it }.first(condition) }
         } ?: throw AssertionError(
-            "timed out; the last state had ${last?.days?.size} days and ${last?.older} at the end, after the requests $requests",
+            "timed out; the last state had ${last?.days?.size} days and ${last?.older} at the end, after the " +
+                "requests $requests",
         )
     }
 

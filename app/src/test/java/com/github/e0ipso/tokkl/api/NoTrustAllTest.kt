@@ -66,7 +66,9 @@ class NoTrustAllTest {
     private fun appClasses(): List<Class<*>> =
         ClassReferences.app.keys.map { Class.forName(it.replace('/', '.'), false, javaClass.classLoader) }
 
-    /** The checkout's root: the parent of the app module, which Gradle makes the working directory of its unit tests. */
+    /**
+     * The checkout's root: the parent of the app module, which Gradle makes the working directory of its unit tests.
+     */
     private fun rootDirectory(): File = generateSequence(File("").absoluteFile) { it.parentFile }
         .first { File(it, "settings.gradle.kts").isFile }
 

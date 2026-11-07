@@ -19,9 +19,8 @@ import com.github.e0ipso.tokkl.api.TimerPomodoro
 import com.github.e0ipso.tokkl.api.TimerPomodoroPhase
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.core.shared.R
-import com.github.e0ipso.tokkl.timerstate.*
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import java.time.Duration
@@ -45,7 +44,18 @@ class PomodoroWidgetClockTest {
                 val phase = TimerPomodoroPhase(PhaseKind.WORK, start.plusSeconds(90), 1, end.plusSeconds(90))
                 // Server boundaries differ by 90 seconds. The state supplies corrected boundaries.
                 val server =
-                    TimerPomodoro(25, 5, 15, 4, phase, PhaseKind.SHORT_REST, PhaseTransition.WORK_TO_SHORT_REST, 2, 42, phase.start)
+                    TimerPomodoro(
+                        25,
+                        5,
+                        15,
+                        4,
+                        phase,
+                        PhaseKind.SHORT_REST,
+                        PhaseTransition.WORK_TO_SHORT_REST,
+                        2,
+                        42,
+                        phase.start,
+                    )
                 val state = PomodoroWidgetState.Active(
                     "fixture",
                     17,

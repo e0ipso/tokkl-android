@@ -650,7 +650,18 @@ class TimerViewModelTest {
             if (failStart) throw IllegalStateException("the database refused the start")
             val id = nextLocalId--
             running.value = EntryWithSendState(
-                CachedTimeEntry(id, workspaceId, fields.projectId, fields.taskId, fields.description, at, null, fields.billable, fields.tags, emptyList()),
+                CachedTimeEntry(
+                    id,
+                    workspaceId,
+                    fields.projectId,
+                    fields.taskId,
+                    fields.description,
+                    at,
+                    null,
+                    fields.billable,
+                    fields.tags,
+                    emptyList(),
+                ),
                 unsent = true,
             )
             return id

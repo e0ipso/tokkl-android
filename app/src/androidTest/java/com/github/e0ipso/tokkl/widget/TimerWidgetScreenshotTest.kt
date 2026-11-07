@@ -23,7 +23,7 @@ import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklDarkColorScheme
 import com.github.e0ipso.tokkl.ui.theme.TokklLightColorScheme
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert.*
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
@@ -75,7 +75,9 @@ abstract class TimerWidgetScreenshotTest(private val dark: Boolean, private val 
                             },
                         )
                     }
-                    val file = "timer_widget_${if (dark) "dark" else "light"}_${if (scale == 1f) "normal" else "largest"}_${width}x${height}_$name"
+                    val theme = if (dark) "dark" else "light"
+                    val text = if (scale == 1f) "normal" else "largest"
+                    val file = "timer_widget_${theme}_${text}_${width}x${height}_$name"
                     runCatching {
                         host.assertTextFitsVertically()
                         if (width >= 196) host.checkAccessibility()

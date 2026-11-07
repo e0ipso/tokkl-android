@@ -63,10 +63,10 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 
 /**
- * The running timer's notification (docs/PRD.md N1) against the real Tokkl container. Each test
- * starts and stops through the phone's running-entry state, the app's [com.github.e0ipso.tokkl.cache.ChangeQueue], which the
- * app, the widget, the tile and the shortcuts all write, never through a screen. Each test seeds
- * its own account and deletes it after.
+ * The running timer's notification (docs/PRD.md N1) against the real Tokkl container. Each test starts and stops
+ * through the phone's running-entry state, the app's [com.github.e0ipso.tokkl.cache.ChangeQueue], which the app, the
+ * widget, the tile and the shortcuts all write, never through a screen. Each test seeds its own account and deletes it
+ * after.
  */
 class RunningNotificationServerTest {
 

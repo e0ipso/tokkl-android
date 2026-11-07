@@ -152,6 +152,7 @@ class PinningTrustManagerTest {
 
         /** `openssl x509 -in self-signed-a.crt -noout -fingerprint -sha256` */
         const val A_SHA256 = "21:D3:4B:8A:10:BD:DA:F4:D3:E1:D8:D5:2E:97:CD:44:8F:98:C9:F6:4D:F7:FD:61:33:4B:FB:9D:E5:6E:2A:16"
-        const val B_SHA256 = "AD:89:02:A2:77:CD:C1:D0:36:1B:A5:70:4C:89:5F:5A:1E:3F:57:33:17:AC:D3:94:FE:85:54:17:52:F3:20:B4"
+        const val B_SHA256 =
+            "AD:89:02:A2:77:CD:C1:D0:36:1B:A5:70:4C:89:5F:5A:1E:3F:57:33:17:AC:D3:94:FE:85:54:17:52:F3:20:B4"
     }
 }

@@ -242,7 +242,7 @@ class TimerSyncLifecycleTest {
     private fun isCancelled(link: TimerSyncLink): Boolean = try {
         link.cancellation.check()
         false
-    } catch (e: IOException) {
+    } catch (_: IOException) {
         true
     }
 
