@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Pause and Resume on every timer surface (docs/PRD.md T1), worded as the web app's timer. -->
 <resources>
-    <!-- What TalkBack reads for the frozen clock: 1 hour, 5 minutes elapsed, paused -->
-    <string name="timer_paused_elapsed_spoken">%1$s elapsed, paused</string>
     <!--
         The notification's actions. As for Stop, the button says what TalkBack reads, so it says
         what pauses or resumes.

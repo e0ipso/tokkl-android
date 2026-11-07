@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.navigation3.runtime.NavEntry
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.navigation.Navigator
@@ -109,7 +110,7 @@ internal fun SignedInHost(
     // The short Stop's Undo and the timer's notices share one host, so they queue, never overlap.
     val shortHost = remember { SnackbarHostState() }
     val shortMessage = stringResource(R.string.timer_short_stop_trashed)
-    val undoLabel = stringResource(R.string.history_undo)
+    val undoLabel = stringResource(TimerR.string.history_undo)
     LaunchedEffect(top, shortUndo?.entryId, shortUndo?.capturedAt) {
         val pending = shortUndo ?: return@LaunchedEffect
         if (top != Route.Timer) return@LaunchedEffect

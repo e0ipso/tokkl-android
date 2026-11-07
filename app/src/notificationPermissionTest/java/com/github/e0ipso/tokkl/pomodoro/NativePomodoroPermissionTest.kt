@@ -15,6 +15,7 @@ import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.feature.pomodoro.R as PomodoroR
 import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
@@ -77,7 +78,7 @@ class NativePomodoroPermissionTest {
             }
             assertEquals(started, session())
             compose.awaitText(context.getString(SharedR.string.pomodoro_end), 15_000)
-            compose.onNodeWithText(context.getString(R.string.pomodoro_notifications_denied)).assertDoesNotExist()
+            compose.onNodeWithText(context.getString(PomodoroR.string.pomodoro_notifications_denied)).assertDoesNotExist()
         }
     }
 
@@ -85,7 +86,7 @@ class NativePomodoroPermissionTest {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             startAndWaitForDialog()
             device.findObject(By.res(CONTROLLER, "permission_deny_button")).click()
-            compose.awaitText(context.getString(R.string.pomodoro_notifications_denied), 15_000)
+            compose.awaitText(context.getString(PomodoroR.string.pomodoro_notifications_denied), 15_000)
             assertNotNull(session())
             scenario.recreate()
             compose.awaitText(context.getString(SharedR.string.pomodoro_end), 15_000)
@@ -99,7 +100,7 @@ class NativePomodoroPermissionTest {
             compose.waitUntil(15_000) { session() != null }
             assertNull(device.findObject(By.res(CONTROLLER, "permission_allow_button")))
             assertTrue(NotificationPermissionStore(context).asked())
-            tap(R.string.pomodoro_notifications_settings)
+            tap(PomodoroR.string.pomodoro_notifications_settings)
             compose.waitUntil(15_000) { device.currentPackageName == "com.android.settings" }
             assertNotNull("settings never ends the running session", session())
             device.pressBack()

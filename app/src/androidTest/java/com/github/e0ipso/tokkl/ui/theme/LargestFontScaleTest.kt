@@ -40,7 +40,11 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.LoopbackRelay
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.feature.projects.R as ProjectsR
+import com.github.e0ipso.tokkl.feature.settings.R as SettingsR
 import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.feature.signin.R as SigninR
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
@@ -108,12 +112,12 @@ class LargestFontScaleTest {
         assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
         composeRule.awaitTimerPage()
         // The test account has no entries, so the history says so once the cache has loaded.
-        composeRule.awaitText(string(R.string.history_empty_title), NETWORK_TIMEOUT_MS)
+        composeRule.awaitText(string(TimerR.string.history_empty_title), NETWORK_TIMEOUT_MS)
         composeRule.waitUntil("the timer templates icon shows", NETWORK_TIMEOUT_MS) {
-            composeRule.onAllNodes(hasContentDescription(string(R.string.favorites_open)) and hasClickAction()).fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodes(hasContentDescription(string(TimerR.string.favorites_open)) and hasClickAction()).fetchSemanticsNodes().isNotEmpty()
         }
 
-        assertTimerPageFits(timerPageParts() + templateParts() + text(R.string.history_empty_title))
+        assertTimerPageFits(timerPageParts() + templateParts() + text(TimerR.string.history_empty_title))
         assertLabelsWhole()
     }
 
@@ -121,15 +125,15 @@ class LargestFontScaleTest {
     fun pastEntryFormFits() {
         assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
         composeRule.awaitTimerPage()
-        button(R.string.timer_add_entry).performClick()
+        button(TimerR.string.timer_add_entry).performClick()
         composeRule.waitUntil("the form opens", NETWORK_TIMEOUT_MS) {
-            composeRule.onAllNodes(hasSetTextAction() and hasText(string(R.string.entry_start))).fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodes(hasSetTextAction() and hasText(string(TimerR.string.entry_start))).fetchSemanticsNodes().isNotEmpty()
         }
 
         assertFitWhenScrolledTo(
             pinned = listOf(
                 "back button" to composeRule.onNode(hasContentDescription(string(UiR.string.back)) and hasClickAction()),
-                "heading" to composeRule.onNode(hasText(string(R.string.entry_form_new)) and isHeading()),
+                "heading" to composeRule.onNode(hasText(string(TimerR.string.entry_form_new)) and isHeading()),
             ),
             blocks = listOf(
                 "description field" to field(SharedR.string.entry_description),
@@ -137,22 +141,22 @@ class LargestFontScaleTest {
                 "tags button" to composeRule.onNode(hasContentDescription(string(SharedR.string.entry_no_tags_spoken)) and hasClickAction()),
                 "billable" to switch(SharedR.string.entry_billable),
                 "date button" to composeRule.onNode(
-                    hasContentDescription(string(R.string.entry_date_spoken, ""), substring = true) and hasClickAction(),
+                    hasContentDescription(string(TimerR.string.entry_date_spoken, ""), substring = true) and hasClickAction(),
                 ),
-                "start field" to field(R.string.entry_start),
-                "end field" to field(R.string.entry_end),
-                "duration field" to field(R.string.entry_duration),
-                "cancel button" to button(R.string.entry_cancel),
-                "save button" to button(R.string.entry_save),
+                "start field" to field(TimerR.string.entry_start),
+                "end field" to field(TimerR.string.entry_end),
+                "duration field" to field(TimerR.string.entry_duration),
+                "cancel button" to button(TimerR.string.entry_cancel),
+                "save button" to button(TimerR.string.entry_save),
             ),
             texts = listOf(
                 fieldLabel(SharedR.string.entry_description),
                 inside(SharedR.string.entry_billable, isToggleable()),
-                fieldLabel(R.string.entry_start),
-                fieldLabel(R.string.entry_end),
-                fieldLabel(R.string.entry_duration),
-                inside(R.string.entry_cancel, hasClickAction()),
-                inside(R.string.entry_save, hasClickAction()),
+                fieldLabel(TimerR.string.entry_start),
+                fieldLabel(TimerR.string.entry_end),
+                fieldLabel(TimerR.string.entry_duration),
+                inside(TimerR.string.entry_cancel, hasClickAction()),
+                inside(TimerR.string.entry_save, hasClickAction()),
             ),
         )
     }
@@ -160,114 +164,114 @@ class LargestFontScaleTest {
     @Test
     fun settingsFit() {
         assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
-        composeRule.awaitText(string(R.string.settings))
-        composeRule.onNodeWithText(string(R.string.settings)).performClick()
-        composeRule.awaitText(string(R.string.settings_theme))
+        composeRule.awaitText(string(SettingsR.string.settings))
+        composeRule.onNodeWithText(string(SettingsR.string.settings)).performClick()
+        composeRule.awaitText(string(SettingsR.string.settings_theme))
 
         assertFitWhenScrolledTo(
-            pinned = listOf("heading" to composeRule.onNode(hasText(string(R.string.settings)) and isHeading())),
+            pinned = listOf("heading" to composeRule.onNode(hasText(string(SettingsR.string.settings)) and isHeading())),
             blocks = listOf(
-                "theme heading" to composeRule.onNode(hasText(string(R.string.settings_theme)) and isHeading()),
-                "follow the system choice" to choice(R.string.settings_theme_system),
-                "light choice" to choice(R.string.settings_theme_light),
-                "dark choice" to choice(R.string.settings_theme_dark),
-                "wallpaper colours switch" to switch(R.string.settings_dynamic_colour),
-                "Pomodoro heading" to composeRule.onNode(hasText(string(R.string.settings_pomodoro)) and isHeading()),
-                "work default" to button(R.string.pomodoro_work_minutes),
-                "short rest default" to button(R.string.pomodoro_short_rest_minutes),
-                "long rest default" to button(R.string.pomodoro_long_rest_minutes),
-                "long rest frequency" to button(R.string.pomodoro_long_rest_every),
-                "reminder heading" to composeRule.onNode(hasText(string(R.string.reminder_settings)) and isHeading()),
-                "reminder switch" to switch(R.string.reminder_enabled),
-                "reminder hours" to composeRule.onNode(hasText(composeRule.activity.resources.getQuantityString(R.plurals.reminder_after_hours, 8, 8)) and hasClickAction()),
-                "Account heading" to composeRule.onNode(hasText(string(R.string.settings_account)) and isHeading()),
-                "Sign out row" to button(R.string.settings_sign_out),
-                "About heading" to composeRule.onNode(hasText(string(R.string.settings_about)) and isHeading()),
-                "Licences row" to button(R.string.licences),
+                "theme heading" to composeRule.onNode(hasText(string(SettingsR.string.settings_theme)) and isHeading()),
+                "follow the system choice" to choice(SettingsR.string.settings_theme_system),
+                "light choice" to choice(SettingsR.string.settings_theme_light),
+                "dark choice" to choice(SettingsR.string.settings_theme_dark),
+                "wallpaper colours switch" to switch(SettingsR.string.settings_dynamic_colour),
+                "Pomodoro heading" to composeRule.onNode(hasText(string(SettingsR.string.settings_pomodoro)) and isHeading()),
+                "work default" to button(SettingsR.string.pomodoro_work_minutes),
+                "short rest default" to button(SettingsR.string.pomodoro_short_rest_minutes),
+                "long rest default" to button(SettingsR.string.pomodoro_long_rest_minutes),
+                "long rest frequency" to button(SettingsR.string.pomodoro_long_rest_every),
+                "reminder heading" to composeRule.onNode(hasText(string(SettingsR.string.reminder_settings)) and isHeading()),
+                "reminder switch" to switch(SettingsR.string.reminder_enabled),
+                "reminder hours" to composeRule.onNode(hasText(composeRule.activity.resources.getQuantityString(SettingsR.plurals.reminder_after_hours, 8, 8)) and hasClickAction()),
+                "Account heading" to composeRule.onNode(hasText(string(SettingsR.string.settings_account)) and isHeading()),
+                "Sign out row" to button(SettingsR.string.settings_sign_out),
+                "About heading" to composeRule.onNode(hasText(string(SettingsR.string.settings_about)) and isHeading()),
+                "Licences row" to button(SettingsR.string.licences),
             ),
             texts = listOf(
-                inside(R.string.settings_theme_system, isSelectable()),
-                inside(R.string.settings_theme_light, isSelectable()),
-                inside(R.string.settings_theme_dark, isSelectable()),
-                inside(R.string.settings_sign_out, hasClickAction()),
-                inside(R.string.licences, hasClickAction()),
-                inside(R.string.settings_dynamic_colour, isToggleable()),
-                inside(R.string.settings_dynamic_colour_summary, isToggleable()),
-                inside(R.string.reminder_enabled, isToggleable()),
-                inside(R.string.pomodoro_work_minutes, hasClickAction()),
-                inside(R.string.pomodoro_short_rest_minutes, hasClickAction()),
-                inside(R.string.pomodoro_long_rest_minutes, hasClickAction()),
-                inside(R.string.pomodoro_long_rest_every, hasClickAction()),
+                inside(SettingsR.string.settings_theme_system, isSelectable()),
+                inside(SettingsR.string.settings_theme_light, isSelectable()),
+                inside(SettingsR.string.settings_theme_dark, isSelectable()),
+                inside(SettingsR.string.settings_sign_out, hasClickAction()),
+                inside(SettingsR.string.licences, hasClickAction()),
+                inside(SettingsR.string.settings_dynamic_colour, isToggleable()),
+                inside(SettingsR.string.settings_dynamic_colour_summary, isToggleable()),
+                inside(SettingsR.string.reminder_enabled, isToggleable()),
+                inside(SettingsR.string.pomodoro_work_minutes, hasClickAction()),
+                inside(SettingsR.string.pomodoro_short_rest_minutes, hasClickAction()),
+                inside(SettingsR.string.pomodoro_long_rest_minutes, hasClickAction()),
+                inside(SettingsR.string.pomodoro_long_rest_every, hasClickAction()),
             ),
         )
     }
 
     @Test
     fun allFourPomodoroDefaultDialogsFitAtLargestFont() {
-        composeRule.awaitText(string(R.string.settings))
-        composeRule.onNodeWithText(string(R.string.settings)).performClick()
+        composeRule.awaitText(string(SettingsR.string.settings))
+        composeRule.onNodeWithText(string(SettingsR.string.settings)).performClick()
         for (field in PomodoroDefaultField.entries) {
             button(field.label).performScrollTo().performClick()
             // The line under the card's number, such as "min · 1–180", in the unmerged tree.
             val range = string(UiR.string.stepper_unit_range, "", field.range.first, field.range.last).substringAfter(' ')
             assertDialogFits(
                 blocks = listOf(
-                    "title" to composeRule.onNode(hasText(string(R.string.settings_pomodoro_edit)) and isHeading()),
+                    "title" to composeRule.onNode(hasText(string(SettingsR.string.settings_pomodoro_edit)) and isHeading()),
                     "default field" to composeRule.onNode(hasSetTextAction()),
-                    "cancel" to button(R.string.settings_pomodoro_cancel),
-                    "save" to button(R.string.settings_pomodoro_save),
+                    "cancel" to button(SettingsR.string.settings_pomodoro_cancel),
+                    "save" to button(SettingsR.string.settings_pomodoro_save),
                 ),
                 texts = listOf(
                     fieldLabel(field.cardLabel),
                     "range" to composeRule.onNode(
                         hasText(range, substring = true) and hasAnyAncestor(hasSetTextAction()), useUnmergedTree = true,
                     ),
-                    inside(R.string.settings_pomodoro_cancel, hasClickAction()),
-                    inside(R.string.settings_pomodoro_save, hasClickAction()),
+                    inside(SettingsR.string.settings_pomodoro_cancel, hasClickAction()),
+                    inside(SettingsR.string.settings_pomodoro_save, hasClickAction()),
                 ),
             )
             assertTouchTargets(
-                "cancel" to button(R.string.settings_pomodoro_cancel),
-                "save" to button(R.string.settings_pomodoro_save),
+                "cancel" to button(SettingsR.string.settings_pomodoro_cancel),
+                "save" to button(SettingsR.string.settings_pomodoro_save),
             )
-            button(R.string.settings_pomodoro_cancel).performClick()
+            button(SettingsR.string.settings_pomodoro_cancel).performClick()
         }
     }
 
     @Test
     fun reminderDialogFitsAtLargestFont() {
-        composeRule.awaitText(string(R.string.settings))
-        composeRule.onNodeWithText(string(R.string.settings)).performClick()
-        composeRule.onNode(hasText(composeRule.activity.resources.getQuantityString(R.plurals.reminder_after_hours, 8, 8)) and hasClickAction())
+        composeRule.awaitText(string(SettingsR.string.settings))
+        composeRule.onNodeWithText(string(SettingsR.string.settings)).performClick()
+        composeRule.onNode(hasText(composeRule.activity.resources.getQuantityString(SettingsR.plurals.reminder_after_hours, 8, 8)) and hasClickAction())
             .performScrollTo().performClick()
         assertDialogFits(
             blocks = listOf(
-                "title" to composeRule.onNode(hasText(string(R.string.reminder_hours_label)) and isHeading()),
+                "title" to composeRule.onNode(hasText(string(SettingsR.string.reminder_hours_label)) and isHeading()),
                 "hours field" to composeRule.onNode(hasSetTextAction()),
-                "cancel" to button(R.string.reminder_cancel),
-                "save" to button(R.string.reminder_save),
+                "cancel" to button(SettingsR.string.reminder_cancel),
+                "save" to button(SettingsR.string.reminder_save),
             ),
-            texts = listOf("range" to composeRule.onNodeWithText(string(R.string.reminder_hours_range))),
+            texts = listOf("range" to composeRule.onNodeWithText(string(SettingsR.string.reminder_hours_range))),
         )
     }
 
     @Test
     fun licencesHeadingsFit() {
         assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
-        composeRule.awaitText(string(R.string.settings))
-        composeRule.onNodeWithText(string(R.string.settings)).performClick()
-        button(R.string.licences).performScrollTo().performClick()
-        composeRule.awaitText(string(R.string.licence_anybody_title))
+        composeRule.awaitText(string(SettingsR.string.settings))
+        composeRule.onNodeWithText(string(SettingsR.string.settings)).performClick()
+        button(SettingsR.string.licences).performScrollTo().performClick()
+        composeRule.awaitText(string(SettingsR.string.licence_anybody_title))
 
         assertFitWithoutOverlap(
             "Back button" to composeRule.onNodeWithContentDescription(string(UiR.string.back)),
-            text(R.string.licences),
-            heading(R.string.licence_anybody_title),
-            text(R.string.licence_anybody_licence),
+            text(SettingsR.string.licences),
+            heading(SettingsR.string.licence_anybody_title),
+            text(SettingsR.string.licence_anybody_licence),
         )
-        heading(R.string.licence_pomodoro_sounds_title).second.performScrollTo().assertIsDisplayed()
+        heading(SettingsR.string.licence_pomodoro_sounds_title).second.performScrollTo().assertIsDisplayed()
         composeRule.checkAccessibility()
-        composeRule.onNodeWithText(string(R.string.licence_pomodoro_sounds_licence))
+        composeRule.onNodeWithText(string(SettingsR.string.licence_pomodoro_sounds_licence))
             .performScrollTo().assertIsDisplayed()
         composeRule.onNode(hasText("Copyright (c) 2026 Tokkl contributors", substring = true))
             .performScrollTo().assertIsDisplayed()
@@ -278,13 +282,13 @@ class LargestFontScaleTest {
     @Test
     fun signInWithApiTokenFits() {
         assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
-        composeRule.awaitText(string(R.string.sign_in_server_url))
+        composeRule.awaitText(string(SigninR.string.sign_in_server_url))
 
         assertFitWhenScrolledTo(
-            blocks = signInBlocks("API token field" to field(R.string.sign_in_api_token)),
+            blocks = signInBlocks("API token field" to field(SigninR.string.sign_in_api_token)),
             texts = signInTexts() + listOf(
-                fieldLabel(R.string.sign_in_api_token),
-                text(R.string.sign_in_api_token_hint),
+                fieldLabel(SigninR.string.sign_in_api_token),
+                text(SigninR.string.sign_in_api_token_hint),
             ),
         )
     }
@@ -293,19 +297,19 @@ class LargestFontScaleTest {
     @Test
     fun signInWithEmailAndPasswordFits() {
         assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
-        composeRule.awaitText(string(R.string.sign_in_server_url))
-        choice(R.string.sign_in_method_email_password).performClick()
+        composeRule.awaitText(string(SigninR.string.sign_in_server_url))
+        choice(SigninR.string.sign_in_method_email_password).performClick()
 
         assertFitWhenScrolledTo(
             blocks = signInBlocks(
-                "email field" to field(R.string.sign_in_email),
-                "password field" to field(R.string.sign_in_password),
+                "email field" to field(SigninR.string.sign_in_email),
+                "password field" to field(SigninR.string.sign_in_password),
             ),
             texts = signInTexts() + listOf(
-                fieldLabel(R.string.sign_in_email),
-                text(R.string.sign_in_email_hint),
-                fieldLabel(R.string.sign_in_password),
-                text(R.string.sign_in_password_hint),
+                fieldLabel(SigninR.string.sign_in_email),
+                text(SigninR.string.sign_in_email_hint),
+                fieldLabel(SigninR.string.sign_in_password),
+                text(SigninR.string.sign_in_password_hint),
             ),
         )
     }
@@ -320,21 +324,21 @@ class LargestFontScaleTest {
     @Test
     fun emailErrorFits() {
         assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
-        composeRule.awaitText(string(R.string.sign_in_server_url))
-        choice(R.string.sign_in_method_email_password).performClick()
-        field(R.string.sign_in_server_url).performScrollTo().performTextInput(TokklTestServer.url.toString())
-        field(R.string.sign_in_password).performScrollTo().performTextInput(TokklTestServer.password)
+        composeRule.awaitText(string(SigninR.string.sign_in_server_url))
+        choice(SigninR.string.sign_in_method_email_password).performClick()
+        field(SigninR.string.sign_in_server_url).performScrollTo().performTextInput(TokklTestServer.url.toString())
+        field(SigninR.string.sign_in_password).performScrollTo().performTextInput(TokklTestServer.password)
         val before = passwordOffset()
-        composeRule.onNode(hasText(string(R.string.sign_in_submit)) and hasClickAction()).performScrollTo().performClick()
-        composeRule.awaitText(string(R.string.sign_in_error_email))
+        composeRule.onNode(hasText(string(SigninR.string.sign_in_submit)) and hasClickAction()).performScrollTo().performClick()
+        composeRule.awaitText(string(SigninR.string.sign_in_error_email))
         assertEquals("the password field moved when the email error showed", before.value, passwordOffset().value, SLACK.value)
 
         assertFitWhenScrolledTo(
             blocks = signInBlocks(
-                "email field" to field(R.string.sign_in_email),
-                "password field" to field(R.string.sign_in_password),
+                "email field" to field(SigninR.string.sign_in_email),
+                "password field" to field(SigninR.string.sign_in_password),
             ),
-            texts = listOf(fieldLabel(R.string.sign_in_email), text(R.string.sign_in_error_email)),
+            texts = listOf(fieldLabel(SigninR.string.sign_in_email), text(SigninR.string.sign_in_error_email)),
         )
     }
 
@@ -347,15 +351,15 @@ class LargestFontScaleTest {
     @Test
     fun certificateHostMessageFits() {
         assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
-        composeRule.awaitText(string(R.string.sign_in_server_url))
+        composeRule.awaitText(string(SigninR.string.sign_in_server_url))
         val proxy = TokklTestServer.tlsUrl.api("me")
         LoopbackRelay(proxy.host, proxy.port).use { relay ->
             signInTo(ServerUrl.parse("https://localhost:${relay.localPort}") ?: error("not a URL"))
-            val message = string(R.string.sign_in_error_certificate_host, "localhost")
+            val message = string(SigninR.string.sign_in_error_certificate_host, "localhost")
             composeRule.awaitText(message, NETWORK_TIMEOUT_MS)
 
             assertFitWhenScrolledTo(
-                blocks = signInBlocks("API token field" to field(R.string.sign_in_api_token)) +
+                blocks = signInBlocks("API token field" to field(SigninR.string.sign_in_api_token)) +
                     ("host name message" to composeRule.onNodeWithText(message, useUnmergedTree = true)),
                 texts = emptyList(),
             )
@@ -379,9 +383,9 @@ class LargestFontScaleTest {
     @Test
     fun focusedSignInFieldStaysAboveTheKeyboard() {
         assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
-        composeRule.awaitText(string(R.string.sign_in_server_url))
-        choice(R.string.sign_in_method_email_password).performClick()
-        val password = field(R.string.sign_in_password)
+        composeRule.awaitText(string(SigninR.string.sign_in_server_url))
+        choice(SigninR.string.sign_in_method_email_password).performClick()
+        val password = field(SigninR.string.sign_in_password)
         password.performScrollTo()
         composeRule.waitUntil("the keyboard is closed before the tap", KEYBOARD_TIMEOUT_MS) { keyboardClosed() }
         val before = password.bottomInWindow()
@@ -426,7 +430,7 @@ class LargestFontScaleTest {
     @Test
     fun signInFieldErrorsLeaveTheFormInPlace() {
         assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
-        composeRule.awaitText(string(R.string.sign_in_server_url))
+        composeRule.awaitText(string(SigninR.string.sign_in_server_url))
 
         composeRule.assertFieldErrorsLeaveTheFormInPlace()
     }
@@ -436,16 +440,16 @@ class LargestFontScaleTest {
     @Test
     fun signInServerUrlErrorFitsInTheHintsLines() {
         assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
-        composeRule.awaitText(string(R.string.sign_in_server_url))
+        composeRule.awaitText(string(SigninR.string.sign_in_server_url))
 
         composeRule.assertServerUrlErrorFitsTheHint()
     }
 
     private fun assertFieldAtTheEdgeStaysAboveTheKeyboard(pixels: Int) {
         assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
-        composeRule.awaitText(string(R.string.sign_in_server_url))
-        choice(R.string.sign_in_method_email_password).performClick()
-        val password = field(R.string.sign_in_password)
+        composeRule.awaitText(string(SigninR.string.sign_in_server_url))
+        choice(SigninR.string.sign_in_method_email_password).performClick()
+        val password = field(SigninR.string.sign_in_password)
         val form = composeRule.onNode(hasScrollAction())
         // The field starts below the form's edge, so this scroll ends it right at the edge.
         password.performScrollTo()
@@ -481,7 +485,7 @@ class LargestFontScaleTest {
     @Test
     fun httpWarningFromSignInFits() {
         assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
-        composeRule.awaitText(string(R.string.sign_in_server_url))
+        composeRule.awaitText(string(SigninR.string.sign_in_server_url))
 
         signInTo(TokklTestServer.url)
         composeRule.awaitText(string(SharedR.string.sign_in_http_warning_title), NETWORK_TIMEOUT_MS)
@@ -494,7 +498,7 @@ class LargestFontScaleTest {
     @Test
     fun certificatePromptFromSignInFits() {
         assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
-        composeRule.awaitText(string(R.string.sign_in_server_url))
+        composeRule.awaitText(string(SigninR.string.sign_in_server_url))
 
         signInTo(TokklTestServer.tlsUrl)
         composeRule.awaitText(string(SharedR.string.sign_in_certificate_title), NETWORK_TIMEOUT_MS)
@@ -555,23 +559,23 @@ class LargestFontScaleTest {
     ): List<Pair<String, SemanticsNodeInteraction>> =
         listOf(
             brand(),
-            "heading" to composeRule.onNode(hasText(string(R.string.sign_in_title)) and isHeading()),
-            "server URL field" to field(R.string.sign_in_server_url),
-            heading(R.string.sign_in_method),
-            "API token choice" to choice(R.string.sign_in_method_api_token),
-            "email and password choice" to choice(R.string.sign_in_method_email_password),
+            "heading" to composeRule.onNode(hasText(string(SigninR.string.sign_in_title)) and isHeading()),
+            "server URL field" to field(SigninR.string.sign_in_server_url),
+            heading(SigninR.string.sign_in_method),
+            "API token choice" to choice(SigninR.string.sign_in_method_api_token),
+            "email and password choice" to choice(SigninR.string.sign_in_method_email_password),
         ) + credentialFields + listOf(
-            "sign-in button" to composeRule.onNode(hasText(string(R.string.sign_in_submit)) and hasClickAction()),
+            "sign-in button" to composeRule.onNode(hasText(string(SigninR.string.sign_in_submit)) and hasClickAction()),
         )
 
     /** Text inside the blocks, checked for clipping only. */
     private fun signInTexts(): List<Pair<String, SemanticsNodeInteraction>> =
         listOf(
-            fieldLabel(R.string.sign_in_server_url),
-            text(R.string.sign_in_server_url_hint),
-            inside(R.string.sign_in_method_api_token, isSelectable()),
-            inside(R.string.sign_in_method_email_password, isSelectable()),
-            inside(R.string.sign_in_submit, hasClickAction()),
+            fieldLabel(SigninR.string.sign_in_server_url),
+            text(SigninR.string.sign_in_server_url_hint),
+            inside(SigninR.string.sign_in_method_api_token, isSelectable()),
+            inside(SigninR.string.sign_in_method_email_password, isSelectable()),
+            inside(SigninR.string.sign_in_submit, hasClickAction()),
         )
 
     private fun field(@StringRes label: Int): SemanticsNodeInteraction =
@@ -579,7 +583,7 @@ class LargestFontScaleTest {
 
     /** How far below the email field's top the password field's top is. */
     private fun passwordOffset(): Dp =
-        field(R.string.sign_in_password).getUnclippedBoundsInRoot().top - field(R.string.sign_in_email).getUnclippedBoundsInRoot().top
+        field(SigninR.string.sign_in_password).getUnclippedBoundsInRoot().top - field(SigninR.string.sign_in_email).getUnclippedBoundsInRoot().top
 
     /** A radio button, by its label. */
     private fun choice(@StringRes label: Int): SemanticsNodeInteraction =
@@ -647,9 +651,9 @@ class LargestFontScaleTest {
 
     /** Types [server] and the account's API token into the sign-in form and submits it. */
     private fun signInTo(server: ServerUrl) {
-        field(R.string.sign_in_server_url).performScrollTo().performTextInput(server.toString())
-        field(R.string.sign_in_api_token).performScrollTo().performTextInput(TokklTestServer.apiToken)
-        composeRule.onNode(hasText(string(R.string.sign_in_submit)) and hasClickAction()).performScrollTo().performClick()
+        field(SigninR.string.sign_in_server_url).performScrollTo().performTextInput(server.toString())
+        field(SigninR.string.sign_in_api_token).performScrollTo().performTextInput(TokklTestServer.apiToken)
+        composeRule.onNode(hasText(string(SigninR.string.sign_in_submit)) and hasClickAction()).performScrollTo().performClick()
     }
 
     /**
@@ -773,7 +777,7 @@ class LargestFontScaleTest {
      * the page shows no timer templates.
      */
     private fun assertNoticeFits(@StringRes message: Int) {
-        composeRule.onNode(hasContentDescription(string(R.string.favorites_open))).assertDoesNotExist()
+        composeRule.onNode(hasContentDescription(string(TimerR.string.favorites_open))).assertDoesNotExist()
         val app = composeRule.activity.application as TokklApplication
         assertEquals("refused session has no loaded capabilities", Capabilities.NONE, app.capabilities.state.value)
         assertNull("refused session has no loaded account settings", app.accountSettings.state.value)
@@ -798,18 +802,18 @@ class LargestFontScaleTest {
      */
     private fun timerPageParts(): List<Pair<String, SemanticsNodeInteraction>> =
         listOf(
-            heading(R.string.nav_timer),
+            heading(TimerR.string.nav_timer),
             // By its label alone: the field is disabled until the account settings load, and a
             // set-text matcher found no node then.
             "description field" to composeRule.onNode(hasText(string(SharedR.string.entry_description))),
             "project button" to composeRule.onNode(hasContentDescription(string(SharedR.string.entry_no_project_spoken)) and hasClickAction()),
             "tags button" to composeRule.onNode(hasContentDescription(string(SharedR.string.entry_no_tags_spoken)) and hasClickAction()),
             "billable" to composeRule.onNode(hasText(string(SharedR.string.entry_billable)) and isToggleable()),
-            "start button" to composeRule.onNode(hasContentDescription(string(R.string.timer_start_spoken)) and hasClickAction()),
-            "past entry button" to button(R.string.timer_add_entry),
+            "start button" to composeRule.onNode(hasContentDescription(string(TimerR.string.timer_start_spoken)) and hasClickAction()),
+            "past entry button" to button(TimerR.string.timer_add_entry),
             "view switch" to composeRule.onNode(
                 SemanticsMatcher.keyIsDefined(SemanticsProperties.SelectableGroup) and
-                    hasAnyDescendant(hasText(string(R.string.timer_view_list))),
+                    hasAnyDescendant(hasText(string(TimerR.string.timer_view_list))),
             ),
         )
 
@@ -828,7 +832,7 @@ class LargestFontScaleTest {
         over: List<Pair<String, SemanticsNodeInteraction>> = emptyList(),
         bar: List<Int> = BAR_LABELS,
     ) {
-        val pageMatcher = hasScrollAction() and hasAnyDescendant(hasText(string(R.string.timer_view_list)) and isSelectable())
+        val pageMatcher = hasScrollAction() and hasAnyDescendant(hasText(string(TimerR.string.timer_view_list)) and isSelectable())
         if (composeRule.onAllNodes(pageMatcher).fetchSemanticsNodes().isEmpty()) {
             assertFitWithoutOverlap(*(parts + barParts(bar) + over).toTypedArray())
             return
@@ -874,7 +878,7 @@ class LargestFontScaleTest {
      */
     private fun templateParts(): List<Pair<String, SemanticsNodeInteraction>> =
         listOf(
-            "timer templates" to composeRule.onNode(hasContentDescription(string(R.string.favorites_open)) and hasClickAction()),
+            "timer templates" to composeRule.onNode(hasContentDescription(string(TimerR.string.favorites_open)) and hasClickAction()),
         )
 
     /** Each timer control's, each segment's and each bar item's label shows in full, inside its control. */
@@ -883,15 +887,15 @@ class LargestFontScaleTest {
             SharedR.string.entry_project to hasClickAction(),
             SharedR.string.entry_tags to hasClickAction(),
             SharedR.string.entry_billable to isToggleable(),
-            R.string.timer_start to hasClickAction(),
-            R.string.timer_add_entry to hasClickAction(),
+            TimerR.string.timer_start to hasClickAction(),
+            TimerR.string.timer_add_entry to hasClickAction(),
         )) {
             val (name, text) = inside(label, control)
             text.textLayout()?.let { assertFalse("text is cut off: $name", it.didOverflowHeight) }
             val box = composeRule.onNode(hasText(string(label)) and control).getBoundsInRoot()
             assertTrue("$name leaves its control", text.getBoundsInRoot().inside(box))
         }
-        for (label in listOf(R.string.timer_view_list, R.string.timer_view_calendar)) {
+        for (label in listOf(TimerR.string.timer_view_list, TimerR.string.timer_view_calendar)) {
             val (name, text) = inside(label, isSelectable())
             text.textLayout()?.let { assertFalse("text is cut off: $name", it.didOverflowHeight) }
             assertTrue("$name leaves its segment", text.getBoundsInRoot().inside(choice(label).getBoundsInRoot()))
@@ -1007,7 +1011,7 @@ class LargestFontScaleTest {
         val MIN_TOUCH_TARGET = 48.dp
 
         /** The bottom bar's items, in order. */
-        val BAR_LABELS = listOf(R.string.nav_timer, SharedR.string.pomodoro_title, R.string.nav_projects, R.string.settings, R.string.nav_more)
+        val BAR_LABELS = listOf(TimerR.string.nav_timer, SharedR.string.pomodoro_title, ProjectsR.string.nav_projects, SettingsR.string.settings, R.string.nav_more)
 
         /** The subject of the certificate that scripts/instrumented-tests.sh makes. */
         const val CERTIFICATE_SUBJECT = "CN=Tokkl instrumented tests"

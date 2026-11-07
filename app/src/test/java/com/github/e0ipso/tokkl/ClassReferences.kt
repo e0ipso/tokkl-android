@@ -32,6 +32,20 @@ internal object ClassReferences {
         val names: Set<String> by lazy { classes + members.map { "${it.owner}.${it.name}" } }
     }
 
+    /** The Koin module file of each feature module, whose class shows where the module's classes sit. */
+    private val FEATURE_MODULES = listOf(
+        "signin.SignInFeatureModuleKt",
+        "timer.TimerFeatureModuleKt",
+        "pomodoro.PomodoroFeatureModuleKt",
+        "reports.ReportsFeatureModuleKt",
+        "projects.ProjectsFeatureModuleKt",
+        "clients.ClientsFeatureModuleKt",
+        "tags.TagsFeatureModuleKt",
+        "trash.TrashFeatureModuleKt",
+        "settings.SettingsFeatureModuleKt",
+        "sync.SyncFeatureModuleKt",
+    ).map { "com.github.e0ipso.tokkl.$it" }
+
     /**
      * One class of each Gradle module of the app. Each module's classes sit in a directory or jar
      * of their own on the test classpath, and the class shows where.
@@ -44,7 +58,7 @@ internal object ClassReferences {
         Session::class.java,
         SessionTrust::class.java,
         Navigator::class.java,
-    )
+    ) + FEATURE_MODULES.map { Class.forName(it) }
 
     /** The directory or jar of each module's compiled classes. */
     val moduleLocations: List<File> by lazy {

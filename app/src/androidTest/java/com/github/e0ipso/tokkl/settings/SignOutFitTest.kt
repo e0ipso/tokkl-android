@@ -19,7 +19,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.feature.settings.R
 import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule

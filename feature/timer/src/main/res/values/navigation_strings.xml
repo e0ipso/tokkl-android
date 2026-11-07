@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nav_timer">Timer</string>
+    <string name="nav_templates">Timer templates</string>
+    <string name="timer_view_list">List</string>
+    <string name="timer_view_calendar">Calendar</string>
+</resources>

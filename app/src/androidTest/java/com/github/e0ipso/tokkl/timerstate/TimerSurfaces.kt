@@ -13,7 +13,7 @@ import androidx.compose.ui.test.hasText
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
 import androidx.test.runner.lifecycle.Stage
-import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.feature.pomodoro.R
 import com.github.e0ipso.tokkl.notification.RunningNotifier
 import com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmActivity
 import com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmViewModel

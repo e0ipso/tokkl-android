@@ -18,6 +18,9 @@ import androidx.test.runner.lifecycle.Stage
 import com.github.e0ipso.tokkl.BackgroundTrip
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.feature.clients.R as ClientsR
+import com.github.e0ipso.tokkl.feature.projects.R as ProjectsR
+import com.github.e0ipso.tokkl.feature.tags.R as TagsR
 import com.github.e0ipso.tokkl.RequestCounter
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
@@ -105,7 +108,7 @@ class CatalogForegroundTest {
         Session(context).save(counter.url, account.apiToken)
 
         launch()
-        barItem(R.string.nav_projects).performClick()
+        barItem(ProjectsR.string.nav_projects).performClick()
         awaitText("Website")
         assertEquals("opening loads once", 1, counter.count)
 
@@ -135,14 +138,14 @@ class CatalogForegroundTest {
         val tag = create("tags", "urgent")
         launch()
 
-        openFromMore(R.string.nav_clients)
+        openFromMore(ClientsR.string.nav_clients)
         awaitText("Acme")
         var activity = BackgroundTrip.leave()
         rename("clients", client, "Acme Inc")
         BackgroundTrip.comeBack(activity)
         awaitText("Acme Inc")
 
-        openFromMore(R.string.nav_tags)
+        openFromMore(TagsR.string.nav_tags)
         awaitText("urgent")
         activity = BackgroundTrip.leave()
         rename("tags", tag, "later")
@@ -156,7 +159,7 @@ class CatalogForegroundTest {
         runBlocking { app.accountRefresh.refresh().join() }
         scenario = ActivityScenario.launch(MainActivity::class.java)
         compose.waitUntil("the bottom bar shows", TIMEOUT_MS) {
-            compose.onAllNodes(barItemMatcher(R.string.nav_projects)).fetchSemanticsNodes().isNotEmpty()
+            compose.onAllNodes(barItemMatcher(ProjectsR.string.nav_projects)).fetchSemanticsNodes().isNotEmpty()
         }
     }
 

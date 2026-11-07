@@ -21,7 +21,14 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.feature.clients.R as ClientsR
+import com.github.e0ipso.tokkl.feature.projects.R as ProjectsR
+import com.github.e0ipso.tokkl.feature.reports.R as ReportsR
+import com.github.e0ipso.tokkl.feature.settings.R as SettingsR
 import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.feature.tags.R as TagsR
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
+import com.github.e0ipso.tokkl.feature.trash.R as TrashR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.awaitPomodoroOffered
@@ -49,13 +56,13 @@ class PageTopBarTest {
     fun thePagesOfTheBarAndTheSheetHaveTheBarWithoutABackButton() {
         composeRule.awaitTimerPage(NETWORK_TIMEOUT_MS)
         composeRule.awaitPomodoroOffered(NETWORK_TIMEOUT_MS)
-        assertTopBar(R.string.nav_timer, back = false)
+        assertTopBar(TimerR.string.nav_timer, back = false)
 
-        for (page in listOf(SharedR.string.pomodoro_title, R.string.nav_projects, R.string.settings)) {
+        for (page in listOf(SharedR.string.pomodoro_title, ProjectsR.string.nav_projects, SettingsR.string.settings)) {
             composeRule.onNode(barItem(page)).performClick()
             assertTopBar(page, back = false)
         }
-        for (page in listOf(R.string.reports, R.string.nav_templates, R.string.nav_clients, R.string.nav_tags, R.string.nav_trash)) {
+        for (page in listOf(ReportsR.string.reports, TimerR.string.nav_templates, ClientsR.string.nav_clients, TagsR.string.nav_tags, TrashR.string.nav_trash)) {
             composeRule.onNode(barItem(R.string.nav_more)).performClick()
             composeRule.waitUntil("the More sheet opens", TIMEOUT_MS) { exists(isSelectable() and hasText(string(page))) }
             composeRule.onNode(isSelectable() and hasText(string(page))).performScrollTo().performClick()
@@ -67,35 +74,35 @@ class PageTopBarTest {
     @Test
     fun licencesHasTheBarWithABackButton() {
         composeRule.awaitTimerPage(NETWORK_TIMEOUT_MS)
-        composeRule.onNode(barItem(R.string.settings)).performClick()
-        composeRule.onNode(hasText(string(R.string.licences)) and hasClickAction()).performScrollTo().performClick()
+        composeRule.onNode(barItem(SettingsR.string.settings)).performClick()
+        composeRule.onNode(hasText(string(SettingsR.string.licences)) and hasClickAction()).performScrollTo().performClick()
 
-        assertTopBar(R.string.licences, back = true)
+        assertTopBar(SettingsR.string.licences, back = true)
     }
 
     @Test
     fun theEntryFormHasTheBarWithABackButton() {
         composeRule.awaitTimerPage(NETWORK_TIMEOUT_MS)
-        openForm(R.string.timer_add_entry)
+        openForm(TimerR.string.timer_add_entry)
 
-        assertTopBar(R.string.entry_form_new, back = true)
+        assertTopBar(TimerR.string.entry_form_new, back = true)
     }
 
     @Test
     fun theProjectAndClientFormsHaveTheBarWithABackButton() {
         composeRule.awaitTimerPage(NETWORK_TIMEOUT_MS)
-        composeRule.onNode(barItem(R.string.nav_projects)).performClick()
-        openForm(R.string.projects_new)
-        assertTopBar(R.string.project_form_new, back = true)
+        composeRule.onNode(barItem(ProjectsR.string.nav_projects)).performClick()
+        openForm(ProjectsR.string.projects_new)
+        assertTopBar(ProjectsR.string.project_form_new, back = true)
 
         composeRule.onNode(hasContentDescription(string(UiR.string.back)) and hasClickAction()).performClick()
-        assertTopBar(R.string.nav_projects, back = false)
+        assertTopBar(ProjectsR.string.nav_projects, back = false)
 
         composeRule.onNode(barItem(R.string.nav_more)).performClick()
-        composeRule.waitUntil("the More sheet opens", TIMEOUT_MS) { exists(isSelectable() and hasText(string(R.string.nav_clients))) }
-        composeRule.onNode(isSelectable() and hasText(string(R.string.nav_clients))).performClick()
-        openForm(R.string.clients_new)
-        assertTopBar(R.string.client_form_new, back = true)
+        composeRule.waitUntil("the More sheet opens", TIMEOUT_MS) { exists(isSelectable() and hasText(string(ClientsR.string.nav_clients))) }
+        composeRule.onNode(isSelectable() and hasText(string(ClientsR.string.nav_clients))).performClick()
+        openForm(ClientsR.string.clients_new)
+        assertTopBar(ClientsR.string.client_form_new, back = true)
     }
 
     /** Taps the page's [button] for a new item once what the page loads has turned it on. */

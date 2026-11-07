@@ -32,7 +32,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.feature.projects.R as ProjectsR
+import com.github.e0ipso.tokkl.feature.settings.R as SettingsR
 import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createComposeRule
 import com.github.e0ipso.tokkl.api.SharedHttpClient
@@ -142,7 +145,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
             SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, string(state))
         fun count(matcher: SemanticsMatcher) = composeRule.onAllNodes(matcher).fetchSemanticsNodes().size
         val pomodoro = marked(SharedR.string.pomodoro_title, R.string.nav_pomodoro_running)
-        val timer = marked(R.string.nav_timer, R.string.nav_timer_running)
+        val timer = marked(TimerR.string.nav_timer, R.string.nav_timer_running)
         assertEquals(1, count(pomodoro))
         assertEquals(0, count(timer))
         composeRule.runOnIdle { timerRunning = true }
@@ -226,7 +229,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
             }
         }
 
-        val form = composeRule.onNode(hasText(string(R.string.entry_form_edit)) and isHeading()).fetchSemanticsNode()
+        val form = composeRule.onNode(hasText(string(TimerR.string.entry_form_edit)) and isHeading()).fetchSemanticsNode()
         val history = composeRule.onAllNodes(hasText(HISTORY_ENTRY), useUnmergedTree = true).fetchSemanticsNodes()
         if (beside) {
             assertTrue("the history shows beside the form", history.isNotEmpty())
@@ -260,7 +263,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
 
     /** The width of the List and Calendar switch, which spans the page's column, in the window's dp. */
     private fun switchWidth(): Float {
-        val segments = listOf(R.string.timer_view_list, R.string.timer_view_calendar).map { label ->
+        val segments = listOf(TimerR.string.timer_view_list, TimerR.string.timer_view_calendar).map { label ->
             composeRule.onNode(hasText(string(label)) and isSelectable()).fetchSemanticsNode().boundsInRoot
         }
         return (segments.maxOf { it.right } - segments.minOf { it.left }) / density
@@ -432,7 +435,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
         val SHORT_HEIGHT = 360.dp
 
         /** The bar's and the rail's items, in order. */
-        val NAVIGATION_LABELS = listOf(R.string.nav_timer, SharedR.string.pomodoro_title, R.string.nav_projects, R.string.settings, R.string.nav_more)
+        val NAVIGATION_LABELS = listOf(TimerR.string.nav_timer, SharedR.string.pomodoro_title, ProjectsR.string.nav_projects, SettingsR.string.settings, R.string.nav_more)
 
         /** Anything a person reads or uses. */
         val CONTROL_OR_TEXT: SemanticsMatcher = hasClickAction() or hasSetTextAction() or isToggleable() or isSelectable() or

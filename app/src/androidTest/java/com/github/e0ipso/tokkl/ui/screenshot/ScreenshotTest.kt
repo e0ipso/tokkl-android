@@ -47,7 +47,12 @@ import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.feature.pomodoro.R as PomodoroR
+import com.github.e0ipso.tokkl.feature.reports.R as ReportsR
+import com.github.e0ipso.tokkl.feature.settings.R as SettingsR
 import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.feature.signin.R as SigninR
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
@@ -188,7 +193,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     @Test
     fun signInWithApiToken() {
         launchApp {
-            composeRule.awaitText(string(R.string.sign_in_server_url))
+            composeRule.awaitText(string(SigninR.string.sign_in_server_url))
             assertScreen("sign-in-api-token")
         }
     }
@@ -197,11 +202,11 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     @Test
     fun signInWithEmailAndPassword() {
         launchApp {
-            composeRule.awaitText(string(R.string.sign_in_server_url))
+            composeRule.awaitText(string(SigninR.string.sign_in_server_url))
             // A click through semantics, not a touch, so no ripple shows in the capture.
-            composeRule.onNode(hasText(string(R.string.sign_in_method_email_password)) and isSelectable())
+            composeRule.onNode(hasText(string(SigninR.string.sign_in_method_email_password)) and isSelectable())
                 .performSemanticsAction(SemanticsActions.OnClick)
-            composeRule.awaitText(string(R.string.sign_in_password))
+            composeRule.awaitText(string(SigninR.string.sign_in_password))
             assertScreen("sign-in-email-password")
         }
     }
@@ -216,7 +221,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
             }
         }) {
             composeRule.awaitTimerPage()
-            composeRule.awaitText(string(R.string.history_today).uppercase(Locale.ROOT))
+            composeRule.awaitText(string(TimerR.string.history_today).uppercase(Locale.ROOT))
             assertScreen("timer")
         }
     }
@@ -255,7 +260,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
             }
         }) {
             composeRule.awaitTimerPage()
-            composeRule.awaitText(string(R.string.history_today).uppercase(Locale.ROOT))
+            composeRule.awaitText(string(TimerR.string.history_today).uppercase(Locale.ROOT))
             assertScreen("timer-rail")
         }
     }
@@ -274,7 +279,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
             }
         }) {
             composeRule.awaitTimerPage()
-            composeRule.awaitText(string(R.string.entry_form_edit))
+            composeRule.awaitText(string(TimerR.string.entry_form_edit))
             assertScreen("entry-beside")
         }
     }
@@ -328,10 +333,10 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     fun pomodoroDefaultDialog() {
         launchApp {
             openSettings()
-            composeRule.onNode(hasText(string(R.string.pomodoro_work_minutes)) and hasClickAction())
+            composeRule.onNode(hasText(string(SettingsR.string.pomodoro_work_minutes)) and hasClickAction())
                 .performScrollTo()
                 .performSemanticsAction(SemanticsActions.OnClick)
-            composeRule.awaitText(string(R.string.settings_pomodoro_edit))
+            composeRule.awaitText(string(SettingsR.string.settings_pomodoro_edit))
             awaitLengthCards()
             assertDialog("pomodoro-default-dialog")
         }
@@ -351,7 +356,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     @Test
     fun pomodoroOvertime() = showPomodoro(RUNNING_POMODORO) {
         composeRule.onNode(hasContentDescription(string(
-            R.string.pomodoro_overtime_clock,
+            PomodoroR.string.pomodoro_overtime_clock,
             POMODORO_ACCOUNT.formatDuration(65),
         ))).assertIsDisplayed()
         assertScreen("pomodoro-overtime")
@@ -371,7 +376,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     @SignedOut
     @Test
     fun pomodoroAlarm() = showPomodoroAlarm {
-        composeRule.onNode(hasContentDescription(string(R.string.pomodoro_overtime_clock, "1:05")))
+        composeRule.onNode(hasContentDescription(string(PomodoroR.string.pomodoro_overtime_clock, "1:05")))
             .assertIsDisplayed()
         assertScreen("pomodoro-alarm")
     }
@@ -379,9 +384,9 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     @SignedOut
     @Test
     fun pomodoroAlarmActions() = showPomodoroAlarm {
-        composeRule.onNode(hasText(string(R.string.pomodoro_alarm_end)) and hasClickAction())
+        composeRule.onNode(hasText(string(PomodoroR.string.pomodoro_alarm_end)) and hasClickAction())
             .performScrollTo().assertIsDisplayed().assertIsEnabled()
-        composeRule.onNode(hasText(string(R.string.pomodoro_alarm_next)) and hasClickAction())
+        composeRule.onNode(hasText(string(PomodoroR.string.pomodoro_alarm_next)) and hasClickAction())
             .assertIsDisplayed().assertIsEnabled()
         assertScreen("pomodoro-alarm-actions")
     }
@@ -398,10 +403,10 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     fun licences() {
         launchApp {
             openSettings()
-            composeRule.onNode(hasText(string(R.string.licences)) and hasClickAction())
+            composeRule.onNode(hasText(string(SettingsR.string.licences)) and hasClickAction())
                 .performScrollTo()
                 .performSemanticsAction(SemanticsActions.OnClick)
-            composeRule.awaitText(string(R.string.licence_anybody_title))
+            composeRule.awaitText(string(SettingsR.string.licence_anybody_title))
             assertScreen("licences")
         }
     }
@@ -410,7 +415,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     @Test
     fun reports() {
         show({ ReportsTab(ReportsState.Loaded(RangeSelection(WEEK, RangePreset.THIS_WEEK), REPORT), ReportTab.SUMMARY) }) {
-            composeRule.awaitText(string(R.string.reports_projects))
+            composeRule.awaitText(string(ReportsR.string.reports_projects))
             assertScreen("reports")
         }
     }
@@ -519,8 +524,8 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
      */
     private fun openSettings() {
         composeRule.awaitTimerPage()
-        composeRule.onNode(hasText(string(R.string.settings)) and hasClickAction()).performSemanticsAction(SemanticsActions.OnClick)
-        composeRule.awaitText(string(R.string.settings_theme))
+        composeRule.onNode(hasText(string(SettingsR.string.settings)) and hasClickAction()).performSemanticsAction(SemanticsActions.OnClick)
+        composeRule.awaitText(string(SettingsR.string.settings_theme))
     }
 
     /** Starts the app and runs [steps] once it shows in this class's theme. */
@@ -592,7 +597,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
         show({
             PomodoroAlarmContent(PomodoroAlarmState(ring = RUNNING_POMODORO.held!!.ring()), onNext = {}, onEnd = {}, clock = TODAY)
         }) {
-            composeRule.awaitText(string(R.string.pomodoro_alarm_title))
+            composeRule.awaitText(string(PomodoroR.string.pomodoro_alarm_title))
             steps()
         }
     }

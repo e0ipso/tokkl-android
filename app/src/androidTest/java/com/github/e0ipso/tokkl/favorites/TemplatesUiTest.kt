@@ -20,7 +20,11 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.feature.clients.R as ClientsR
 import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.feature.tags.R as TagsR
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
+import com.github.e0ipso.tokkl.feature.trash.R as TrashR
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.navhost.AppNavigationBar
@@ -59,14 +63,14 @@ class TemplatesUiTest {
                 )
             }
         }
-        composeRule.onNode(hasContentDescription(string(R.string.favorites_open))).assertDoesNotExist()
+        composeRule.onNode(hasContentDescription(string(TimerR.string.favorites_open))).assertDoesNotExist()
 
         state = state.copy(available = true)
         composeRule.waitForIdle()
         openPopup()
         val expected = listOf(
-            string(R.string.favorites_start_spoken, string(SharedR.string.favorites_with_project, "Write the report", "Website")),
-            string(R.string.favorites_start_spoken, "Website"),
+            string(TimerR.string.favorites_start_spoken, string(SharedR.string.favorites_with_project, "Write the report", "Website")),
+            string(TimerR.string.favorites_start_spoken, "Website"),
         )
         assertEquals(expected, startLabels())
         composeRule.onNode(hasContentDescription(expected.first()) and hasClickAction()).performClick()
@@ -95,13 +99,13 @@ class TemplatesUiTest {
             }
         }
         openPopup()
-        composeRule.onNode(hasText(string(R.string.favorites_empty))).assertIsDisplayed()
-        composeRule.onNode(hasText(string(R.string.favorites_save)) and hasClickAction()).assertIsEnabled()
-        click(R.string.favorites_save)
+        composeRule.onNode(hasText(string(TimerR.string.favorites_empty))).assertIsDisplayed()
+        composeRule.onNode(hasText(string(TimerR.string.favorites_save)) and hasClickAction()).assertIsEnabled()
+        click(TimerR.string.favorites_save)
         assertEquals(EntryFields(), saved)
-        click(R.string.favorites_manage)
+        click(TimerR.string.favorites_manage)
         assertTrue(managed)
-        composeRule.onNode(hasText(string(R.string.favorites_manage))).assertDoesNotExist()
+        composeRule.onNode(hasText(string(TimerR.string.favorites_manage))).assertDoesNotExist()
     }
 
     @Test
@@ -124,10 +128,10 @@ class TemplatesUiTest {
             }
         }
         openPopup()
-        click(R.string.favorites_save)
+        click(TimerR.string.favorites_save)
         assertEquals(current, saved)
-        composeRule.onNode(hasText(string(R.string.history_pinned))).assertIsDisplayed()
-        composeRule.onNode(hasText(string(R.string.favorites_manage)) and hasClickAction()).assertIsDisplayed()
+        composeRule.onNode(hasText(string(TimerR.string.history_pinned))).assertIsDisplayed()
+        composeRule.onNode(hasText(string(TimerR.string.favorites_manage)) and hasClickAction()).assertIsDisplayed()
     }
 
     @Test
@@ -146,9 +150,9 @@ class TemplatesUiTest {
             }
         }
         openPopup()
-        val full = context.resources.getQuantityString(R.plurals.favorites_full, MAX_FAVORITES, MAX_FAVORITES)
+        val full = context.resources.getQuantityString(TimerR.plurals.favorites_full, MAX_FAVORITES, MAX_FAVORITES)
         composeRule.onNode(hasText(full)).assertIsDisplayed()
-        composeRule.onNode(hasText(string(R.string.favorites_save))).assertIsNotEnabled()
+        composeRule.onNode(hasText(string(TimerR.string.favorites_save))).assertIsNotEnabled()
     }
 
     @Test
@@ -158,15 +162,15 @@ class TemplatesUiTest {
             added = fields
             done(null)
         })
-        click(R.string.favorites_new)
+        click(TimerR.string.favorites_new)
         composeRule.onNode(hasSetTextAction()).performTextInput("Fresh")
-        click(R.string.favorites_cancel)
+        click(TimerR.string.favorites_cancel)
         assertNull(added)
-        composeRule.onNode(hasText(string(R.string.favorites_new)) and hasClickAction()).assertIsDisplayed()
+        composeRule.onNode(hasText(string(TimerR.string.favorites_new)) and hasClickAction()).assertIsDisplayed()
 
-        click(R.string.favorites_new)
+        click(TimerR.string.favorites_new)
         composeRule.onNode(hasSetTextAction()).performTextInput("Fresh")
-        click(R.string.favorites_save_action)
+        click(TimerR.string.favorites_save_action)
         assertEquals(EntryFields(description = "Fresh"), added)
     }
 
@@ -180,25 +184,25 @@ class TemplatesUiTest {
                 done(null)
             },
         )
-        clickDescription(R.string.favorites_edit_spoken, "Write the report")
+        clickDescription(TimerR.string.favorites_edit_spoken, "Write the report")
         composeRule.onNode(hasSetTextAction()).performTextReplacement("Rewritten")
-        click(R.string.favorites_cancel)
+        click(TimerR.string.favorites_cancel)
         assertNull(replaced)
         composeRule.onNode(hasText("Write the report")).assertIsDisplayed()
 
-        clickDescription(R.string.favorites_edit_spoken, "Write the report")
+        clickDescription(TimerR.string.favorites_edit_spoken, "Write the report")
         composeRule.onNode(hasSetTextAction()).performTextReplacement("Rewritten")
-        click(R.string.favorites_save_action)
+        click(TimerR.string.favorites_save_action)
         assertEquals(0 to REPORT.fields.copy(description = "Rewritten"), replaced)
     }
 
     @Test
     fun offlineDisablesManagement() {
         showManagement(FavoritesState(available = true, favorites = listOf(REPORT)), offline = true)
-        composeRule.onNode(hasText(string(R.string.favorites_offline))).assertIsDisplayed()
-        composeRule.onNode(hasContentDescription(string(R.string.favorites_delete, "Write the report")) and hasClickAction()).assertIsNotEnabled()
-        composeRule.onNode(hasText(string(R.string.favorites_new)) and hasClickAction()).assertIsNotEnabled()
-        composeRule.onNode(hasContentDescription(string(R.string.favorites_move_up, "Write the report")) and hasClickAction()).assertIsNotEnabled()
+        composeRule.onNode(hasText(string(TimerR.string.favorites_offline))).assertIsDisplayed()
+        composeRule.onNode(hasContentDescription(string(TimerR.string.favorites_delete, "Write the report")) and hasClickAction()).assertIsNotEnabled()
+        composeRule.onNode(hasText(string(TimerR.string.favorites_new)) and hasClickAction()).assertIsNotEnabled()
+        composeRule.onNode(hasContentDescription(string(TimerR.string.favorites_move_up, "Write the report")) and hasClickAction()).assertIsNotEnabled()
     }
 
     @Test
@@ -220,13 +224,13 @@ class TemplatesUiTest {
             }
         }
         openMore()
-        composeRule.onNode(isSelectable() and hasText(string(R.string.nav_templates))).assertDoesNotExist()
-        composeRule.onNode(isSelectable() and hasText(string(R.string.nav_clients))).assertIsDisplayed()
+        composeRule.onNode(isSelectable() and hasText(string(TimerR.string.nav_templates))).assertDoesNotExist()
+        composeRule.onNode(isSelectable() and hasText(string(ClientsR.string.nav_clients))).assertIsDisplayed()
 
         hidden = emptySet()
         composeRule.waitForIdle()
         assertEquals(moreLabels(), sheetLabels())
-        composeRule.onNode(isSelectable() and hasText(string(R.string.nav_templates))).performClick()
+        composeRule.onNode(isSelectable() and hasText(string(TimerR.string.nav_templates))).performClick()
         assertEquals(TopLevelPage.TEMPLATES, opened)
     }
 
@@ -255,7 +259,7 @@ class TemplatesUiTest {
     }
 
     private fun openPopup() {
-        composeRule.onNode(hasContentDescription(string(R.string.favorites_open)) and hasClickAction()).performClick()
+        composeRule.onNode(hasContentDescription(string(TimerR.string.favorites_open)) and hasClickAction()).performClick()
         composeRule.waitForIdle()
     }
 
@@ -291,12 +295,12 @@ class TemplatesUiTest {
 
     private fun sheetItem() =
         isSelectable() and (
-            hasText(string(R.string.nav_templates)) or hasText(string(R.string.nav_clients)) or
-                hasText(string(R.string.nav_tags)) or hasText(string(R.string.nav_trash))
+            hasText(string(TimerR.string.nav_templates)) or hasText(string(ClientsR.string.nav_clients)) or
+                hasText(string(TagsR.string.nav_tags)) or hasText(string(TrashR.string.nav_trash))
             )
 
     private fun moreLabels(): List<String> =
-        listOf(R.string.nav_templates, R.string.nav_clients, R.string.nav_tags, R.string.nav_trash).map { string(it) }
+        listOf(TimerR.string.nav_templates, ClientsR.string.nav_clients, TagsR.string.nav_tags, TrashR.string.nav_trash).map { string(it) }
 
     private fun string(@StringRes id: Int, vararg args: Any): String = context.getString(id, *args)
 

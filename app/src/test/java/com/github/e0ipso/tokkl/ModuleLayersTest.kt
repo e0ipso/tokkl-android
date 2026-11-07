@@ -9,7 +9,8 @@ import org.junit.Test
  * Keeps the Gradle modules in the layers of [PackageLayersTest]. Each package lives in one module,
  * and a module depends only on modules whose packages sit no higher than its own lowest package,
  * so no core module depends on the app and the layers stay in order. A module depends only on
- * modules its main sources use, so core:data, which draws nothing, does not depend on core:ui.
+ * modules its main sources use, by their packages or their R class, so core:data, which draws
+ * nothing, does not depend on core:ui.
  * The test reads settings.gradle.kts, each module's build file and its main sources.
  */
 class ModuleLayersTest {
@@ -52,7 +53,9 @@ class ModuleLayersTest {
     fun everyModuleDependencyIsUsed() {
         val unused = modules.flatMap { module ->
             val used = module.packages.values.flatten().map { it.target }.toSet()
-            module.mainDependencies.filter { path -> byPath.getValue(path).packages.keys.none { it in used } }
+            module.mainDependencies.filter { path ->
+                byPath.getValue(path).packages.keys.none { it in used } && path !in module.resourceModules
+            }
                 .map { "${module.path} -> $it" }
         }
 

@@ -17,7 +17,9 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.feature.timer.R
+import com.github.e0ipso.tokkl.feature.pomodoro.R as PomodoroR
+import com.github.e0ipso.tokkl.feature.settings.R as SettingsR
 import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
@@ -121,14 +123,14 @@ class PomodoroSessionNotificationServerTest {
         startSession()
         val posted = awaitSessionNotification()
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            compose.openBarPage(R.string.settings)
+            compose.openBarPage(SettingsR.string.settings)
             posted.contentIntent.send()
             awaitHeading(SharedR.string.pomodoro_title)
             scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
             awaitHeading(R.string.nav_timer)
-            compose.openBarPage(R.string.settings)
+            compose.openBarPage(SettingsR.string.settings)
             scenario.recreate()
-            awaitHeading(R.string.settings)
+            awaitHeading(SettingsR.string.settings)
         }
     }
 
@@ -261,7 +263,7 @@ class PomodoroSessionNotificationServerTest {
     }
 
     private fun awaitSessionNotification(kind: PhaseKind = PhaseKind.WORK): Notification {
-        val label = context.getString(if (kind == PhaseKind.WORK) R.string.pomodoro_session_work else R.string.pomodoro_session_short_rest)
+        val label = context.getString(if (kind == PhaseKind.WORK) PomodoroR.string.pomodoro_session_work else PomodoroR.string.pomodoro_session_short_rest)
         compose.waitUntil(10_000) {
             manager.activeNotifications.singleOrNull { it.id == PomodoroSessionNotifier.NOTIFICATION_ID }?.notification?.let {
                 it.channelId == PomodoroSessionNotifier.CHANNEL_ID &&

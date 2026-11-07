@@ -8,7 +8,9 @@ import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.feature.settings.R
+import com.github.e0ipso.tokkl.feature.signin.R as SigninR
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitTimerPage
@@ -48,8 +50,8 @@ class RestoredBackStackTest {
 
             scenario.recreate()
 
-            composeRule.awaitText(string(R.string.sign_in_title), TIMEOUT_MS)
-            assertFalse("the bottom bar went with the session", exists(bottomBarItem(R.string.nav_timer)))
+            composeRule.awaitText(string(SigninR.string.sign_in_title), TIMEOUT_MS)
+            assertFalse("the bottom bar went with the session", exists(bottomBarItem(TimerR.string.nav_timer)))
             assertFalse("Settings went with the session", exists(heading(R.string.settings)))
         }
     }

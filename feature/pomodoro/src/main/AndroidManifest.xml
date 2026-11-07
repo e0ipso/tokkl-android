@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <!-- The alarm has its own task so Back/Home leave playback with the service. -->
+        <activity
+            android:name="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTask"
+            android:taskAffinity="${applicationId}.pomodoroAlarm"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:theme="@style/Theme.Tokkl" />
+        <!-- One mediaPlayback service for the Pomodoro alarm, never a WorkManager worker. -->
+        <service
+            android:name="com.github.e0ipso.tokkl.pomodoro.PomodoroRingingService"
+            android:exported="false"
+            android:stopWithTask="false"
+            android:foregroundServiceType="mediaPlayback" />
+        <receiver
+            android:name="com.github.e0ipso.tokkl.pomodoro.PomodoroSessionActionReceiver"
+            android:exported="false" />
+        <receiver
+            android:name="com.github.e0ipso.tokkl.pomodoro.PomodoroRingingActionReceiver"
+            android:exported="false" />
+        <!--
+            The Pomodoro phase's exact alarm. Not exported: only its own PendingIntent reaches it.
+            It records that the phase reached its planned end and does not start the next phase.
+        -->
+        <receiver
+            android:name="com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseAlarmReceiver"
+            android:exported="false" />
+        <!--
+            Arms that alarm again from the stored session after boot, an update, or a clock or
+            timezone change, and when the exact-alarm permission is granted. After boot and an
+            update it also starts the timer sync service. Disabled until a session is running or
+            the account's server has the timer API, so a reboot with neither does not start the
+            app. The system sends these protected broadcasts, so the receiver is exported.
+        -->
+        <receiver
+            android:name="com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmRearmReceiver"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

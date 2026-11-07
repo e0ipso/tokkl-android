@@ -16,8 +16,10 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.feature.settings.R
 import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.feature.signin.R as SigninR
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
@@ -167,8 +169,8 @@ class SignOutServerTest {
         composeRule.awaitText(string(R.string.settings_sign_out_title))
         composeRule.onNode(hasText(string(R.string.settings_sign_out)) and hasClickAction() and inDialog()).performClick()
 
-        composeRule.awaitText(string(R.string.sign_in_title), TIMEOUT_MS)
-        assertFalse("the bottom bar went with the session", exists(hasText(string(R.string.nav_timer))))
+        composeRule.awaitText(string(SigninR.string.sign_in_title), TIMEOUT_MS)
+        assertFalse("the bottom bar went with the session", exists(hasText(string(TimerR.string.nav_timer))))
         assertNothingOfTheAccountStays()
         for ((kind, old) in before) assertFalse("$kind of the signed-out account is cleared", old.viewModelScope.isActive)
         val after = viewModels(SESSION_VIEW_MODELS)

@@ -33,7 +33,8 @@ import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.feature.settings.R
+import com.github.e0ipso.tokkl.feature.signin.R as SigninR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklApplication
@@ -159,7 +160,7 @@ class SettingsScreenTest {
 
         row.performClick()
 
-        composeRule.awaitText(string(R.string.sign_in_title))
+        composeRule.awaitText(string(SigninR.string.sign_in_title))
         assertTrue(
             "no warning without unsent changes",
             composeRule.onAllNodes(hasText(string(R.string.settings_sign_out_title))).fetchSemanticsNodes().isEmpty(),

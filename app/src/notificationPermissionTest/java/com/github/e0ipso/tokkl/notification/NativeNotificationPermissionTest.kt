@@ -26,6 +26,7 @@ import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
@@ -114,7 +115,7 @@ class NativeNotificationPermissionTest {
     private fun startAndAwaitNativeDialog(scenario: ActivityScenario<MainActivity>, button: String): UiObject2 {
         compose.awaitTimerPage(TIMEOUT_MS)
         assertTrue("opening the app alone asks nothing", device.findObject(By.res(PERMISSION_CONTROLLER, "permission_allow_button")) == null)
-        val start = hasContentDescription(context.getString(R.string.timer_start_spoken)) and hasClickAction()
+        val start = hasContentDescription(context.getString(TimerR.string.timer_start_spoken)) and hasClickAction()
         compose.waitUntil("the initial refresh enables Start", TIMEOUT_MS) {
             compose.onAllNodes(start and isEnabled()).fetchSemanticsNodes().isNotEmpty()
         }

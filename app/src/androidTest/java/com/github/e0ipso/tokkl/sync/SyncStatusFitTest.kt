@@ -15,7 +15,11 @@ import androidx.compose.ui.unit.DpRect
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.feature.projects.R as ProjectsR
+import com.github.e0ipso.tokkl.feature.settings.R as SettingsR
 import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.feature.sync.R as SyncR
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
 import com.github.e0ipso.tokkl.bottomBarItem
@@ -70,10 +74,10 @@ class SyncStatusFitTest {
                 ) {}
             }
         }
-        val count = context.resources.getQuantityString(R.plurals.sync_unsent, STATUS.unsent, STATUS.unsent)
+        val count = context.resources.getQuantityString(SyncR.plurals.sync_unsent, STATUS.unsent, STATUS.unsent)
         // Four days before NOW, the line names the day.
-        val answered = context.getString(R.string.sync_last_answered_day, "Mon, 12 Oct 2026", "09:15")
-        val attention = context.resources.getQuantityString(R.plurals.sync_needs_attention, STATUS.needsAttention, STATUS.needsAttention)
+        val answered = context.getString(SyncR.string.sync_last_answered_day, "Mon, 12 Oct 2026", "09:15")
+        val attention = context.resources.getQuantityString(SyncR.plurals.sync_needs_attention, STATUS.needsAttention, STATUS.needsAttention)
 
         composeRule.onNode(hasText(count) and hasText(answered)).assertIsDisplayed()
         val parts = listOf(
@@ -144,7 +148,7 @@ class SyncStatusFitTest {
         val SLACK = 0.5.dp
         val MIN_TOUCH_TARGET = 48.dp
 
-        val BAR_ITEMS = listOf(R.string.nav_timer, SharedR.string.pomodoro_title, R.string.nav_projects, R.string.settings, R.string.nav_more)
+        val BAR_ITEMS = listOf(TimerR.string.nav_timer, SharedR.string.pomodoro_title, ProjectsR.string.nav_projects, SettingsR.string.settings, R.string.nav_more)
 
         val NOW: Clock = Clock.fixed(Instant.parse("2026-10-16T01:00:00Z"), ZoneOffset.UTC)
 

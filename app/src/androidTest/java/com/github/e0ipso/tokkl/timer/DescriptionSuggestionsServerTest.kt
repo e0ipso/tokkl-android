@@ -33,8 +33,8 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.shared.R
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
@@ -138,8 +138,8 @@ class DescriptionSuggestionsServerTest {
             AirplaneMode.set(true, web)
             description().performTextInput("REPORT")
             awaitKeyboard(activity)
-            awaitShown("the count of suggestions") { composeRule.onNode(hasText(plural(SharedR.plurals.timer_suggestions, 2))) }
-            val count = composeRule.onNode(hasText(plural(SharedR.plurals.timer_suggestions, 2))).fetchSemanticsNode()
+            awaitShown("the count of suggestions") { composeRule.onNode(hasText(plural(R.plurals.timer_suggestions, 2))) }
+            val count = composeRule.onNode(hasText(plural(R.plurals.timer_suggestions, 2))).fetchSemanticsNode()
             assertEquals("TalkBack announces the count", LiveRegionMode.Polite, count.config.getOrNull(SemanticsProperties.LiveRegion))
             assertTrue(
                 "the newest entry's suggestion comes first",
@@ -151,7 +151,7 @@ class DescriptionSuggestionsServerTest {
 
             description().performTextClearance()
             description().performTextInput("acme")
-            awaitShown("the suggestion that matches the client") { composeRule.onNode(hasText(plural(SharedR.plurals.timer_suggestions, 1))) }
+            awaitShown("the suggestion that matches the client") { composeRule.onNode(hasText(plural(R.plurals.timer_suggestions, 1))) }
 
             tapSuggestion("Write the report")
             try {
@@ -160,16 +160,16 @@ class DescriptionSuggestionsServerTest {
                 throw AssertionError("the pick did not fill the description: ${fieldsAndPopups()}", e)
             }
             composeRule.onNode(hasSetTextAction() and hasText("Write the report")).assertIsFocused()
-            awaitShown("the picked project") { composeRule.onNode(hasContentDescription(string(SharedR.string.entry_project_spoken, "Website"))) }
-            awaitShown("the picked tags") { composeRule.onNode(hasContentDescription(string(SharedR.string.entry_tags_spoken, "call"))) }
+            awaitShown("the picked project") { composeRule.onNode(hasContentDescription(string(R.string.entry_project_spoken, "Website"))) }
+            awaitShown("the picked tags") { composeRule.onNode(hasContentDescription(string(R.string.entry_tags_spoken, "call"))) }
             assertEquals(
                 ToggleableState.On,
-                composeRule.onNode(hasText(string(SharedR.string.entry_billable)) and isToggleable()).fetchSemanticsNode()
+                composeRule.onNode(hasText(string(R.string.entry_billable)) and isToggleable()).fetchSemanticsNode()
                     .config.getOrNull(SemanticsProperties.ToggleableState),
             )
 
-            composeRule.onNode(hasContentDescription(string(R.string.timer_start_spoken)) and hasClickAction()).performClick()
-            awaitShown("Stop") { composeRule.onNode(hasContentDescription(string(SharedR.string.timer_stop_spoken)) and hasClickAction()) }
+            composeRule.onNode(hasContentDescription(string(TimerR.string.timer_start_spoken)) and hasClickAction()).performClick()
+            awaitShown("Stop") { composeRule.onNode(hasContentDescription(string(R.string.timer_stop_spoken)) and hasClickAction()) }
             AirplaneMode.set(false, web)
             drainUntilEmpty()
         }
@@ -190,7 +190,7 @@ class DescriptionSuggestionsServerTest {
                 runBlocking { app.cache.timeEntries.first() }.size == ENTRIES
             }
             composeRule.waitUntil("Start can start", NETWORK_TIMEOUT.toMillis()) {
-                shows(composeRule.onNode(hasContentDescription(string(R.string.timer_start_spoken)) and hasClickAction() and enabled()))
+                shows(composeRule.onNode(hasContentDescription(string(TimerR.string.timer_start_spoken)) and hasClickAction() and enabled()))
             }
             lateinit var activity: MainActivity
             scenario.onActivity { activity = it }
@@ -241,7 +241,7 @@ class DescriptionSuggestionsServerTest {
 
     /** Inside the suggestions, whose list starts with how many there are. */
     private fun inTheList(): SemanticsMatcher =
-        hasAnyAncestor(hasAnyChild(hasText(plural(SharedR.plurals.timer_suggestions, 1)) or hasText(plural(SharedR.plurals.timer_suggestions, 2))))
+        hasAnyAncestor(hasAnyChild(hasText(plural(R.plurals.timer_suggestions, 1)) or hasText(plural(R.plurals.timer_suggestions, 2))))
 
     private fun count(matcher: SemanticsMatcher): Int = composeRule.onAllNodes(matcher).fetchSemanticsNodes().size
 
@@ -287,7 +287,7 @@ class DescriptionSuggestionsServerTest {
     }
 
     private fun description(): SemanticsNodeInteraction =
-        composeRule.onNode(hasSetTextAction() and hasText(string(SharedR.string.entry_description)))
+        composeRule.onNode(hasSetTextAction() and hasText(string(R.string.entry_description)))
 
     private fun enabled(): SemanticsMatcher = SemanticsMatcher.keyNotDefined(SemanticsProperties.Disabled)
 

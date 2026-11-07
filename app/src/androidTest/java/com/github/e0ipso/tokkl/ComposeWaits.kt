@@ -13,6 +13,7 @@ import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.performScrollTo
 import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 import com.github.e0ipso.tokkl.navhost.label
 import com.github.e0ipso.tokkl.navigation.TopLevelPage
 import androidx.compose.ui.test.junit4.ComposeTestRule
@@ -40,7 +41,7 @@ fun ComposeTestRule.awaitText(text: String, timeoutMillis: Long = START_TIMEOUT_
  * its Timer item as selected.
  */
 fun ComposeTestRule.awaitTimerPage(timeoutMillis: Long = START_TIMEOUT_MS) {
-    val timer = InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.nav_timer)
+    val timer = InstrumentationRegistry.getInstrumentation().targetContext.getString(TimerR.string.nav_timer)
     waitUntil("the Timer page shows", timeoutMillis) {
         onAllNodes(hasText(timer) and isSelected()).fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
     }

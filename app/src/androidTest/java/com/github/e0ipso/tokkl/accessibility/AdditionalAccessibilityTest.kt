@@ -22,6 +22,7 @@ import androidx.core.view.WindowCompat
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.feature.sync.R as SyncR
 import com.github.e0ipso.tokkl.bottomBarItem
 import com.github.e0ipso.tokkl.cache.ChangeKind
 import com.github.e0ipso.tokkl.cache.PendingChange
@@ -116,7 +117,7 @@ abstract class AdditionalAccessibilityTest(private val dark: Boolean) {
         show {
             NeedsAttentionScreen(model, settings, onEdit = { edited = it }, onBack = {})
         }
-        compose.onNodeWithText(context.getString(R.string.needs_attention_empty)).assertIsDisplayed()
+        compose.onNodeWithText(context.getString(SyncR.string.needs_attention_empty)).assertIsDisplayed()
         assertVisibleTextFits()
         for (kind in ChangeKind.entries) {
             val change = PendingChange(
@@ -127,10 +128,10 @@ abstract class AdditionalAccessibilityTest(private val dark: Boolean) {
                 refusal = "Time entries can not be longer than 999 hours",
             )
             held.value = listOf(change)
-            val reason = context.getString(R.string.needs_attention_reason, checkNotNull(change.refusal))
+            val reason = context.getString(SyncR.string.needs_attention_reason, checkNotNull(change.refusal))
             compose.onNodeWithText(reason).performScrollTo().assertIsDisplayed()
             assertVisibleTextFits()
-            val edit = compose.onNode(hasContentDescription(context.getString(R.string.needs_attention_edit_named, change.description)) and hasClickAction())
+            val edit = compose.onNode(hasContentDescription(context.getString(SyncR.string.needs_attention_edit_named, change.description)) and hasClickAction())
             if (kind != ChangeKind.DELETE) {
                 edit.performScrollTo().assertIsDisplayed().performTouchInput { click() }
                 assertEquals(42L, edited)
@@ -138,10 +139,10 @@ abstract class AdditionalAccessibilityTest(private val dark: Boolean) {
                 edit.assertDoesNotExist()
             }
             resent = null
-            action(R.string.needs_attention_send_again)
+            action(SyncR.string.needs_attention_send_again)
             compose.waitUntil("Send again was reachable", 5_000) { resent == change.sequence }
-            action(R.string.needs_attention_discard)
-            compose.onNodeWithText(context.getString(R.string.needs_attention_empty)).assertIsDisplayed()
+            action(SyncR.string.needs_attention_discard)
+            compose.onNodeWithText(context.getString(SyncR.string.needs_attention_empty)).assertIsDisplayed()
             assertEquals(emptyList<PendingChange>(), held.value)
             compose.checkAccessibility()
         }

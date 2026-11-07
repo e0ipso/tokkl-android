@@ -28,6 +28,7 @@ import androidx.test.uiautomator.UiDevice
 import com.github.e0ipso.tokkl.BackgroundTrip
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.feature.pomodoro.R as PomodoroR
 import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TimerActionToasts
@@ -169,7 +170,7 @@ class TimerCrossDeviceServerTest {
                         // arrival deadline instead of mixing snapshots after the wait returns.
                         val remaining = Duration.between(snapshot.state.serverTime, session.phase.plannedEnd)
                         val matches = snapshot.state.revision >= started.revision && snapshot.state.pomodoro == session &&
-                            shown.title() == sessionTitle(R.string.pomodoro_session_work, 1, 2) &&
+                            shown.title() == sessionTitle(PomodoroR.string.pomodoro_session_work, 1, 2) &&
                             shown.notification.`when` == snapshot.receivedAt.plus(remaining).toEpochMilli()
                         if (matches) countdown = snapshot to shown.notification
                         matches
@@ -196,7 +197,7 @@ class TimerCrossDeviceServerTest {
                 "ring stopped" to { ringStopped() },
                 "alarm closed" to { TimerSurfaces.noOpenAlarm() },
             )
-            awaitSessionNotification(sessionTitle(R.string.pomodoro_session_short_rest, 1, 2))
+            awaitSessionNotification(sessionTitle(PomodoroR.string.pomodoro_session_short_rest, 1, 2))
 
             // The short rest ends too, and End session from the other device ends the ring.
             awaitRingAtItsEnd(rest)
@@ -263,7 +264,7 @@ class TimerCrossDeviceServerTest {
             BackgroundTrip.leave()
             val ring = awaitRingAtItsEnd(session)
             val drawn = checkNotNull(held())
-            val next = checkNotNull(TimerSurfaces.ringingNotification()).actions.single { it.title.toString() == context.getString(R.string.pomodoro_session_next) }
+            val next = checkNotNull(TimerSurfaces.ringingNotification()).actions.single { it.title.toString() == context.getString(PomodoroR.string.pomodoro_session_next) }
 
             // The stream has not brought the other device's change yet, as on a slow network.
             app.timerSync.stop()
@@ -288,7 +289,7 @@ class TimerCrossDeviceServerTest {
             assertEquals(rest, adopted.pomodoro)
             assertNotEquals(ring.phase, PomodoroPhaseKey(rest.phase.start))
             runBlocking { withTimeout(10_000) { app.pomodoroRinging.state.first { !it.serviceRunning && !it.playing } } }
-            awaitSessionNotification(sessionTitle(R.string.pomodoro_session_short_rest, 1, 3))
+            awaitSessionNotification(sessionTitle(PomodoroR.string.pomodoro_session_short_rest, 1, 3))
             app.followTimerSync()
         }
     }
@@ -442,7 +443,7 @@ class TimerCrossDeviceServerTest {
         context.startActivity(pomodoroAlarmIntent(context, phase))
         val alarm = TimerSurfaces.awaitAlarm()
         compose.waitUntil("the alarm shows the phase", 10_000) { alarm.state.value.ring?.phase == phase }
-        compose.onNode(TimerSurfaces.onTheAlarm(hasText(context.getString(R.string.pomodoro_alarm_next)) and hasClickAction())).assertIsDisplayed()
+        compose.onNode(TimerSurfaces.onTheAlarm(hasText(context.getString(PomodoroR.string.pomodoro_alarm_next)) and hasClickAction())).assertIsDisplayed()
     }
 
     private fun ringStopped(): Boolean = app.pomodoroRinging.state.value.let { !it.serviceRunning && !it.playing && !it.vibrationRequested }
@@ -461,7 +462,7 @@ class TimerCrossDeviceServerTest {
     private fun StatusBarNotification.title(): String? = notification.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString()
 
     private fun sessionTitle(kind: Int, number: Int, every: Int): String =
-        context.getString(R.string.pomodoro_session_title, context.getString(kind), number, every)
+        context.getString(PomodoroR.string.pomodoro_session_title, context.getString(kind), number, every)
 
     /**
      * The session notification counts down to the server's planned end, on the phone's clock
@@ -474,7 +475,7 @@ class TimerCrossDeviceServerTest {
         // the server's remaining interval at receipt, without using the production offset helper.
         val remaining = Duration.between(held.state.serverTime, session.phase.plannedEnd)
         assertEquals("it counts down for the server's remaining time", held.receivedAt.plus(remaining).toEpochMilli(), notification.`when`)
-        assertEquals(context.getString(R.string.pomodoro_up_next, context.getString(upcoming)),
+        assertEquals(context.getString(PomodoroR.string.pomodoro_up_next, context.getString(upcoming)),
             notification.extras.getCharSequence(Notification.EXTRA_SUB_TEXT)?.toString())
     }
 

@@ -18,7 +18,9 @@ import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.BackgroundTrip
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.feature.pomodoro.R as PomodoroR
 import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TimerActionToasts
 import com.github.e0ipso.tokkl.api.TimerState
@@ -211,7 +213,7 @@ class TimerActionsOfflineServerTest {
             assertEquals(TimerControls.Idle, shown())
 
             AirplaneMode.set(true, fixture.account.client)
-            tapOnTheTimerPage(R.string.timer_start_spoken)
+            tapOnTheTimerPage(TimerR.string.timer_start_spoken)
             val started = app.awaitControls<TimerControls.Running>("Start, at once", timeoutMs = AT_ONCE_MS)
             assertEquals(1, unsent())
             assertFalse("a local entry is no clone", started.entry.id == clone)
@@ -288,9 +290,9 @@ class TimerActionsOfflineServerTest {
             assertStillRings(ringing.audioSessionId)
             assertUnchanged("the ringing notification", work)
 
-            alarmAction(phase, R.string.pomodoro_alarm_next)
+            alarmAction(phase, PomodoroR.string.pomodoro_alarm_next)
             assertStillRings(ringing.audioSessionId)
-            alarmAction(phase, R.string.pomodoro_alarm_end)
+            alarmAction(phase, PomodoroR.string.pomodoro_alarm_end)
             assertStillRings(ringing.audioSessionId)
             assertUnchanged("the full-screen alarm", work)
 
@@ -406,7 +408,7 @@ class TimerActionsOfflineServerTest {
         }
         assertEquals(TimerActionResult.Offline, alarm.state.value.problem)
         compose.onNode(TimerSurfaces.onTheAlarm(hasText(offline))).assertIsDisplayed()
-        for (action in listOf(R.string.pomodoro_alarm_next, R.string.pomodoro_alarm_end)) {
+        for (action in listOf(PomodoroR.string.pomodoro_alarm_next, PomodoroR.string.pomodoro_alarm_end)) {
             compose.onNode(TimerSurfaces.onTheAlarm(hasText(context.getString(action)) and hasClickAction())).assertIsEnabled()
         }
         device.pressBack()

@@ -17,6 +17,7 @@ import com.github.e0ipso.tokkl.*
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.core.data.R as DataR
 import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.calendar.CalendarViewModel
 import com.github.e0ipso.tokkl.components.accountRefresh
@@ -88,7 +89,7 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
                 compose.waitForIdle()
                 val positions = scrollPositions()
                 // A semantic click invokes the offscreen labelled action without scrolling the top.
-                compose.onNodeWithText(context.getString(R.string.timer_open_fullscreen)).performSemanticsAction(SemanticsActions.OnClick)
+                compose.onNodeWithText(context.getString(TimerR.string.timer_open_fullscreen)).performSemanticsAction(SemanticsActions.OnClick)
                 awaitFocused()
                 assertActions(running = true)
                 compose.onNode(hasText(context.getString(R.string.nav_more)) and hasClickAction()).assertDoesNotExist()
@@ -102,9 +103,9 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
                 compose.awaitTimerPage()
                 compose.onNode(isSelectable() and hasText(context.getString(view.label))).assertIsSelected()
                 assertEquals(positions, scrollPositions())
-                compose.onNodeWithText(context.getString(R.string.timer_open_fullscreen)).performSemanticsAction(SemanticsActions.OnClick)
+                compose.onNodeWithText(context.getString(TimerR.string.timer_open_fullscreen)).performSemanticsAction(SemanticsActions.OnClick)
                 awaitFocused()
-                focusedButton(R.string.timer_exit_fullscreen).performScrollTo().performClick()
+                focusedButton(TimerR.string.timer_exit_fullscreen).performScrollTo().performClick()
                 compose.awaitTimerPage()
                 assertEquals(positions, scrollPositions())
                 assertEquals(token, shownTarget())
@@ -123,18 +124,18 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             openFocused()
             AirplaneMode.set(true, fixture.account.client)
             val original = (fixture.shown() as TimerControls.Running).entry
-            focusedButton(R.string.timer_focused_edit).performScrollTo().performClick()
-            compose.onNodeWithText(context.getString(R.string.entry_form_edit_running)).assertExists()
-            compose.onNode(hasText(context.getString(R.string.entry_end)) and hasSetTextAction()).assertDoesNotExist()
-            compose.onNode(hasText(context.getString(R.string.entry_duration)) and hasSetTextAction()).assertDoesNotExist()
+            focusedButton(TimerR.string.timer_focused_edit).performScrollTo().performClick()
+            compose.onNodeWithText(context.getString(TimerR.string.entry_form_edit_running)).assertExists()
+            compose.onNode(hasText(context.getString(TimerR.string.entry_end)) and hasSetTextAction()).assertDoesNotExist()
+            compose.onNode(hasText(context.getString(TimerR.string.entry_duration)) and hasSetTextAction()).assertDoesNotExist()
             // Shared start editor; the field keeps seconds and a real active start, never a display base.
-            compose.onNode(hasText(context.getString(R.string.entry_start)) and hasSetTextAction()).performTextClearance()
+            compose.onNode(hasText(context.getString(TimerR.string.entry_start)) and hasSetTextAction()).performTextClearance()
             val settings = app.accountSettings.state.value!!
             val earlier = settings.formatTime(original.start.minusSeconds(600), settings.time()!!.zone)
-            compose.onNode(hasText(context.getString(R.string.entry_start)) and hasSetTextAction()).performTextInput(earlier)
+            compose.onNode(hasText(context.getString(TimerR.string.entry_start)) and hasSetTextAction()).performTextInput(earlier)
             // At the largest font the form outgrows the room the keyboard leaves, so Save comes into
             // view only by a scroll made after the keyboard has finished sliding in.
-            compose.tapWhenStill(compose.onNodeWithText(context.getString(R.string.entry_save)))
+            compose.tapWhenStill(compose.onNodeWithText(context.getString(TimerR.string.entry_save)))
             awaitFocused()
             assertEquals(original.id, (fixture.shown() as TimerControls.Running).entry.id)
             assertTrue((fixture.shown() as TimerControls.Running).entry.start < original.start)
@@ -226,12 +227,12 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
                     focusedButton(SharedR.string.timer_stop).performScrollTo().assertIsDisplayed()
                     if (paused) {
                         focusedButton(SharedR.string.timer_resume).performScrollTo().assertIsDisplayed()
-                        focusedButton(R.string.timer_focused_edit).assertDoesNotExist()
+                        focusedButton(TimerR.string.timer_focused_edit).assertDoesNotExist()
                     } else {
                         focusedButton(SharedR.string.timer_pause).performScrollTo().assertIsDisplayed()
-                        focusedButton(R.string.timer_focused_edit).performScrollTo().assertIsDisplayed()
+                        focusedButton(TimerR.string.timer_focused_edit).performScrollTo().assertIsDisplayed()
                     }
-                    focusedButton(R.string.timer_exit_fullscreen).performScrollTo().assertIsDisplayed()
+                    focusedButton(TimerR.string.timer_exit_fullscreen).performScrollTo().assertIsDisplayed()
                 }
             }
             // Stop while paused ends the chain on the server, and the focused timer leaves.
@@ -252,8 +253,8 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             lateinit var model: TimerViewModel
             scenario.onActivity { model = sessionViewModels(it)[TimerViewModel::class.java] }
             val old = fixture.shown() as TimerControls.Running
-            focusedButton(R.string.timer_focused_edit).performScrollTo().performClick()
-            compose.onNodeWithText(context.getString(R.string.entry_form_edit_running)).assertExists()
+            focusedButton(TimerR.string.timer_focused_edit).performScrollTo().performClick()
+            compose.onNodeWithText(context.getString(TimerR.string.entry_form_edit_running)).assertExists()
             val replacementId = fixture.account.createEntry("Remote replacement", old.entry.start)
             runBlocking { app.accountRefresh.refresh().join() }
             compose.waitUntil("replacement reaches shared model", 15_000) {
@@ -261,11 +262,11 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             }
             compose.runOnIdle { model.stopShown(old.target) }
             assertNull(runBlocking { model.runningForEditShown(old.target) })
-            compose.onNodeWithText(context.getString(R.string.entry_save)).performScrollTo().performClick()
+            compose.onNodeWithText(context.getString(TimerR.string.entry_save)).performScrollTo().performClick()
             // The save waits its turn in the queue, and the form ignores Back while it saves, so
             // Back goes only once the old editor has refused it.
             compose.waitUntil("the old editor refuses the save", 10_000) {
-                compose.onAllNodesWithText(context.getString(R.string.entry_form_missing)).fetchSemanticsNodes().isNotEmpty()
+                compose.onAllNodesWithText(context.getString(TimerR.string.entry_form_missing)).fetchSemanticsNodes().isNotEmpty()
             }
             assertEquals(replacementId, (fixture.shown() as TimerControls.Running).entry.id)
             assertEquals("Remote replacement", (fixture.shown() as TimerControls.Running).entry.description)
@@ -298,20 +299,20 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             }
             openFocused()
             assertTrue(started.entry.id < 0)
-            compose.onNodeWithText(context.getString(R.string.history_unsent)).assertExists()
-            focusedButton(R.string.timer_focused_edit).performScrollTo().performClick()
-            compose.awaitText(context.getString(R.string.entry_form_edit_running))
-            compose.onNodeWithText(context.getString(R.string.entry_form_edit_running)).assertExists()
+            compose.onNodeWithText(context.getString(TimerR.string.history_unsent)).assertExists()
+            focusedButton(TimerR.string.timer_focused_edit).performScrollTo().performClick()
+            compose.awaitText(context.getString(TimerR.string.entry_form_edit_running))
+            compose.onNodeWithText(context.getString(TimerR.string.entry_form_edit_running)).assertExists()
             scenario.recreate()
-            compose.awaitText(context.getString(R.string.entry_form_edit_running))
-            compose.onNodeWithText(context.getString(R.string.entry_form_edit_running)).assertExists()
-            compose.onNodeWithText(context.getString(R.string.entry_save)).performScrollTo().performClick()
+            compose.awaitText(context.getString(TimerR.string.entry_form_edit_running))
+            compose.onNodeWithText(context.getString(TimerR.string.entry_form_edit_running)).assertExists()
+            compose.onNodeWithText(context.getString(TimerR.string.entry_save)).performScrollTo().performClick()
             awaitFocused()
             assertEquals(started.entry.id, awaitRunning().entry.id)
             scenario.recreate()
             awaitFocused()
             assertEquals(started.entry.id, awaitRunning().entry.id)
-            focusedButton(R.string.timer_exit_fullscreen).performScrollTo().performClick()
+            focusedButton(TimerR.string.timer_exit_fullscreen).performScrollTo().performClick()
             compose.awaitTimerPage()
             assertEquals(started.entry.id, awaitRunning().entry.id)
         }
@@ -393,8 +394,8 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
         ActivityScenario.launch(MainActivity::class.java).use {
             compose.awaitTimerPage()
             openFocused()
-            focusedButton(R.string.timer_focused_edit).performScrollTo().performClick()
-            compose.onNodeWithText(context.getString(R.string.entry_form_edit_running)).assertExists()
+            focusedButton(TimerR.string.timer_focused_edit).performScrollTo().performClick()
+            compose.onNodeWithText(context.getString(TimerR.string.entry_form_edit_running)).assertExists()
             val row = (fixture.shown() as TimerControls.Running).entry
             val client = fixture.account.client
             client.send("PATCH", client.server.api("workspaces", fixture.account.workspaceId.toString(), "time_entries", row.id.toString(), "stop"),
@@ -402,7 +403,7 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             fixture.refresh()
             awaitIdle()
             compose.awaitTimerPage()
-            compose.onNodeWithText(context.getString(R.string.entry_form_edit_running)).assertDoesNotExist()
+            compose.onNodeWithText(context.getString(TimerR.string.entry_form_edit_running)).assertDoesNotExist()
             compose.onNodeWithTag("fullscreen_timer").assertDoesNotExist()
             assertEquals(0, runBlocking { app.changes.unsentCount.first() })
         }
@@ -459,14 +460,14 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
         compose.onNode(isSelectable() and hasText(context.getString(view.label))).assertIsSelected()
     }
     private fun openFocused() {
-        compose.onNodeWithText(context.getString(R.string.timer_open_fullscreen)).performSemanticsAction(SemanticsActions.OnClick)
+        compose.onNodeWithText(context.getString(TimerR.string.timer_open_fullscreen)).performSemanticsAction(SemanticsActions.OnClick)
         awaitFocused()
     }
     private fun awaitFocused() {
         compose.waitUntil("fullscreen route", 5_000) { compose.onAllNodesWithTag("fullscreen_timer").fetchSemanticsNodes().size == 1 }
     }
     private fun focusedButton(label: Int) = compose.onNode(
-        (if (label == R.string.timer_focused_edit) hasContentDescription(context.getString(label)) else hasText(context.getString(label))) and
+        (if (label == TimerR.string.timer_focused_edit) hasContentDescription(context.getString(label)) else hasText(context.getString(label))) and
             hasClickAction() and hasAnyAncestor(hasTestTag("fullscreen_timer")),
     )
 
@@ -481,8 +482,8 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
         focusedButton(if (running) SharedR.string.timer_pause else SharedR.string.timer_resume).assertExists()
         compose.onNode(hasText(context.getString(if (running) SharedR.string.timer_resume else SharedR.string.timer_pause)) and hasClickAction()).assertDoesNotExist()
         focusedButton(SharedR.string.timer_stop).assertExists()
-        if (running) focusedButton(R.string.timer_focused_edit).assertExists() else focusedButton(R.string.timer_focused_edit).assertDoesNotExist()
-        focusedButton(R.string.timer_exit_fullscreen).assertExists()
+        if (running) focusedButton(TimerR.string.timer_focused_edit).assertExists() else focusedButton(TimerR.string.timer_focused_edit).assertDoesNotExist()
+        focusedButton(TimerR.string.timer_exit_fullscreen).assertExists()
         compose.onAllNodes(hasClickAction() and hasAnyAncestor(hasTestTag("fullscreen_timer"))).assertCountEquals(if (running) 4 else 3)
     }
     private fun elapsedText(): String = compose.onNodeWithTag("fullscreen_elapsed").fetchSemanticsNode().config[SemanticsProperties.Text]

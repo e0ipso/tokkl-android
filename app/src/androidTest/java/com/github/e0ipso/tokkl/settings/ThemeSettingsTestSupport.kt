@@ -14,7 +14,7 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.feature.settings.R
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.ui.theme.ThemeMode
 import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsStore

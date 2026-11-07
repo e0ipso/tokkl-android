@@ -13,8 +13,10 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.feature.sync.R
 import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.feature.signin.R as SigninR
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
@@ -218,11 +220,11 @@ class SyncStatusServerTest {
             assertEquals(1, runBlocking { app.changes.unsentCount.first() })
             composeRule.onNode(hasText(context.getString(R.string.sync_sign_in_again)) and hasClickAction()).performClick()
             composeRule.waitUntil("the sign-in form opens", NETWORK_TIMEOUT_MS) {
-                shows(hasText(context.getString(R.string.sign_in_api_token)) and hasSetTextAction())
+                shows(hasText(context.getString(SigninR.string.sign_in_api_token)) and hasSetTextAction())
             }
-            composeRule.onNode(hasText(context.getString(R.string.sign_in_api_token)) and hasSetTextAction())
+            composeRule.onNode(hasText(context.getString(SigninR.string.sign_in_api_token)) and hasSetTextAction())
                 .performScrollTo().performTextInput(newToken)
-            composeRule.onNode(hasText(context.getString(R.string.sign_in_submit)) and hasClickAction())
+            composeRule.onNode(hasText(context.getString(SigninR.string.sign_in_submit)) and hasClickAction())
                 .performScrollTo().performClick()
             composeRule.awaitTimerPage(NETWORK_TIMEOUT_MS)
             composeRule.waitUntil("sign-in resumed the queue", NETWORK_TIMEOUT_MS) { runBlocking { app.changes.unsentCount.first() } == 0 }
@@ -255,7 +257,7 @@ class SyncStatusServerTest {
 
     private fun unsent(count: Int): String = context.resources.getQuantityString(R.plurals.sync_unsent, count, count)
 
-    private fun startButton(): SemanticsMatcher = hasContentDescription(context.getString(R.string.timer_start_spoken)) and hasClickAction()
+    private fun startButton(): SemanticsMatcher = hasContentDescription(context.getString(TimerR.string.timer_start_spoken)) and hasClickAction()
 
     private fun stopButton(): SemanticsMatcher = hasContentDescription(context.getString(SharedR.string.timer_stop_spoken)) and hasClickAction()
 

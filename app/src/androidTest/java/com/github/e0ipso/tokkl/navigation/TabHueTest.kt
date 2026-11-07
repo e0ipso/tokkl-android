@@ -14,6 +14,7 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.performClick
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 import com.github.e0ipso.tokkl.navhost.AppNavigationBar
 import com.github.e0ipso.tokkl.navhost.AppNavigationRail
 import com.github.e0ipso.tokkl.navhost.hue
@@ -81,7 +82,7 @@ class TabHueTest {
                 else AppNavigationBar(current = current, onOpen = {}, timerRunning = running)
             }
         }
-        val timer = tab(context.getString(R.string.nav_timer))
+        val timer = tab(context.getString(TimerR.string.nav_timer))
         val density = context.resources.displayMetrics.density
         // At least half the 6dp badge's area must visibly change to its expected colour.
         val minimumDotPixels = (kotlin.math.PI * 3 * 3 * density * density / 2).roundToInt()

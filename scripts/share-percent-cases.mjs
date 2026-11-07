@@ -1,8 +1,8 @@
-// Writes app/src/test/resources/reports/share-percent-cases.tsv, the cases ReportFormatTest checks
+// Writes feature/reports/src/test/resources/reports/share-percent-cases.tsv, the cases ReportFormatTest checks
 // sharePercent against: formatPercent(percent(part, whole)) from the web app in ../tokkl, run in
 // Node for a fixed set of part and whole pairs.
 //
-//   LANG=en_US.UTF-8 node scripts/share-percent-cases.mjs > app/src/test/resources/reports/share-percent-cases.tsv
+//   LANG=en_US.UTF-8 node scripts/share-percent-cases.mjs > feature/reports/src/test/resources/reports/share-percent-cases.tsv
 //
 // formatPercent formats in the default locale, so the script refuses to run in any other than en-US.
 import { execFileSync } from 'node:child_process';

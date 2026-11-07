@@ -32,6 +32,9 @@ internal object SourceTree {
 
         /** Each package its main sources declare, with the app packages those sources use. */
         val packages: Map<String, Set<Use>> by lazy { readSources(File(directory, "src/main/java/com/github/e0ipso/tokkl")) }
+
+        /** The modules whose R class its main sources name, such as `:core:ui` for `com.github.e0ipso.tokkl.core.ui.R`. */
+        val resourceModules: Set<String> by lazy { readResourceModules(File(directory, "src/main/java/com/github/e0ipso/tokkl")) }
     }
 
     val root: File by lazy {
@@ -52,8 +55,8 @@ internal object SourceTree {
         return when {
             name == APP -> ROOT
             first == "R" -> null
-            // The R class of a core module, such as com.github.e0ipso.tokkl.core.ui.R.
-            first == "core" && parts.getOrNull(2) == "R" -> null
+            // The R class of a core or feature module, such as com.github.e0ipso.tokkl.core.ui.R.
+            (first == "core" || first == "feature") && parts.getOrNull(2) == "R" -> null
             first.first().isUpperCase() -> ROOT
             else -> first
         }
@@ -75,6 +78,12 @@ internal object SourceTree {
         return uses
     }
 
+    private fun readResourceModules(root: File): Set<String> =
+        root.walkTopDown().filter { it.isFile && it.extension == "kt" }
+            .flatMap { MODULE_R.findAll(withoutCommentsAndStrings(it.readText())) }
+            .map { ":${it.groupValues[1]}:${it.groupValues[2]}" }
+            .toSet()
+
     private fun withoutCommentsAndStrings(text: String): String =
         text.replace(BLOCK_COMMENT, " ").replace(LINE_COMMENT, " ").replace(STRING, "\"\"")
 
@@ -82,6 +91,7 @@ internal object SourceTree {
     private val MAIN_DEPENDENCY = Regex("""(?<![\w.])(?:api|implementation)\(project\("(:[\w:-]+)"\)\)""")
     private val API_DEPENDENCY = Regex("""(?<![\w.])api\(project\("(:[\w:-]+)"\)\)""")
     private val FIXTURE_DEPENDENCY = Regex("""testFixtures\(project\("(:[\w:-]+)"\)\)""")
+    private val MODULE_R = Regex("""(?<![\w.])com\.github\.e0ipso\.tokkl\.(core|feature)\.(\w+)\.R\b""")
     private val PACKAGE = Regex("""^package\s+([\w.]+)""", RegexOption.MULTILINE)
     private val APP_NAME = Regex("""(?<![\w.])(com\.github\.e0ipso\.tokkl(?:\.\w+){0,3})""")
     private val BLOCK_COMMENT = Regex("""/\*.*?\*/""", RegexOption.DOT_MATCHES_ALL)

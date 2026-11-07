@@ -11,7 +11,7 @@ import androidx.test.runner.lifecycle.Stage
 import com.github.e0ipso.tokkl.BackgroundTrip
 import com.github.e0ipso.tokkl.DeviceShell
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.feature.reports.R
 import com.github.e0ipso.tokkl.RequestCounter
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts

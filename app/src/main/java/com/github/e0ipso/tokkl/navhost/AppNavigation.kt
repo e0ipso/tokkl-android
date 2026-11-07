@@ -44,8 +44,16 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.window.DialogWindowProvider
 import androidx.core.view.WindowCompat
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.feature.clients.R as ClientsR
 import com.github.e0ipso.tokkl.core.data.R as DataR
+import com.github.e0ipso.tokkl.feature.pomodoro.R as PomodoroR
+import com.github.e0ipso.tokkl.feature.projects.R as ProjectsR
+import com.github.e0ipso.tokkl.feature.reports.R as ReportsR
+import com.github.e0ipso.tokkl.feature.settings.R as SettingsR
 import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.feature.tags.R as TagsR
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
+import com.github.e0ipso.tokkl.feature.trash.R as TrashR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.navigation.TopLevelPage
 import com.github.e0ipso.tokkl.ui.theme.FrameWidth
@@ -62,15 +70,15 @@ import kotlinx.coroutines.launch
 @get:StringRes
 val TopLevelPage.label: Int
     get() = when (this) {
-        TopLevelPage.TIMER -> R.string.nav_timer
+        TopLevelPage.TIMER -> TimerR.string.nav_timer
         TopLevelPage.POMODORO -> SharedR.string.pomodoro_title
-        TopLevelPage.REPORTS -> R.string.reports
-        TopLevelPage.PROJECTS -> R.string.nav_projects
-        TopLevelPage.TEMPLATES -> R.string.nav_templates
-        TopLevelPage.CLIENTS -> R.string.nav_clients
-        TopLevelPage.TAGS -> R.string.nav_tags
-        TopLevelPage.TRASH -> R.string.nav_trash
-        TopLevelPage.SETTINGS -> R.string.settings
+        TopLevelPage.REPORTS -> ReportsR.string.reports
+        TopLevelPage.PROJECTS -> ProjectsR.string.nav_projects
+        TopLevelPage.TEMPLATES -> TimerR.string.nav_templates
+        TopLevelPage.CLIENTS -> ClientsR.string.nav_clients
+        TopLevelPage.TAGS -> TagsR.string.nav_tags
+        TopLevelPage.TRASH -> TrashR.string.nav_trash
+        TopLevelPage.SETTINGS -> SettingsR.string.settings
     }
 
 /** The page's icon in the bar, the rail and the More sheet. */
@@ -78,10 +86,10 @@ val TopLevelPage.label: Int
 val TopLevelPage.icon: Int
     get() = when (this) {
         TopLevelPage.TIMER -> DataR.drawable.ic_nav_timer
-        TopLevelPage.POMODORO -> R.drawable.ic_nav_pomodoro
+        TopLevelPage.POMODORO -> PomodoroR.drawable.ic_nav_pomodoro
         TopLevelPage.REPORTS -> R.drawable.ic_nav_reports
         TopLevelPage.PROJECTS -> SharedR.drawable.ic_nav_projects
-        TopLevelPage.TEMPLATES -> R.drawable.ic_nav_templates
+        TopLevelPage.TEMPLATES -> TimerR.drawable.ic_nav_templates
         TopLevelPage.CLIENTS -> R.drawable.ic_nav_clients
         TopLevelPage.TAGS -> SharedR.drawable.ic_nav_tags
         TopLevelPage.TRASH -> UiR.drawable.ic_nav_trash
@@ -214,7 +222,7 @@ private fun navigationItems(hidden: Set<TopLevelPage>): List<NavigationItem> {
     val pomodoroRunning = stringResource(R.string.nav_pomodoro_running)
     val pages = TopLevelPage.entries.filterNot { it.inMore || it in hidden }
         .map { NavigationItem(it, stringResource(it.label), it.icon, if (it == TopLevelPage.POMODORO) pomodoroRunning else running) }
-    return pages + NavigationItem(null, stringResource(R.string.nav_more), R.drawable.ic_nav_more, running)
+    return pages + NavigationItem(null, stringResource(R.string.nav_more), TimerR.drawable.ic_nav_more, running)
 }
 
 /** The [item]'s icon, with its own running dot for Timer or Pomodoro. */

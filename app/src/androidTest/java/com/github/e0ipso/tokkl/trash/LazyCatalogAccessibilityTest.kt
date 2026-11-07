@@ -14,7 +14,8 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.core.view.WindowCompat
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.feature.trash.R
+import com.github.e0ipso.tokkl.feature.tags.R as TagsR
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
 import com.github.e0ipso.tokkl.api.TrashEntry
@@ -77,7 +78,7 @@ class LazyCatalogAccessibilityTest {
         compose.onNode(hasScrollAction()).performScrollToIndex(242)
         val row = compose.onNode(hasText("Tag 240"))
         val before = row.assertIsDisplayed().getBoundsInRoot()
-        val delete = context.getString(R.string.tags_delete_named, "Tag 240")
+        val delete = context.getString(TagsR.string.tags_delete_named, "Tag 240")
         compose.onNode(hasContentDescription(delete)).assertIsDisplayed()
         assertReadingOrder("Tag 240", delete)
         compose.runOnUiThread { tags.value = tags.value.drop(1) }

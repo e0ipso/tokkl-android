@@ -13,7 +13,9 @@ import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.HangingRelay
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.feature.reports.R as ReportsR
 import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 import com.github.e0ipso.tokkl.RequestCounter
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TapToVisibleDeadline
@@ -301,7 +303,7 @@ class WidgetServerTest {
     fun todayReportTapOpensReportsOnToday() {
         native.awaitDescription(context.getString(R.string.widget_open_report_description))
         native.click(context.getString(R.string.widget_open_report_description))
-        compose.awaitText(context.getString(R.string.reports))
+        compose.awaitText(context.getString(ReportsR.string.reports))
         compose.awaitText("Today")
     }
 
@@ -310,13 +312,13 @@ class WidgetServerTest {
         signIn(NO_ROUTE, account.apiToken)
         ActivityScenario.launch(MainActivity::class.java).use {
             compose.awaitTimerPage()
-            compose.onNodeWithContentDescription(context.getString(R.string.timer_start_spoken)).performClick()
+            compose.onNodeWithContentDescription(context.getString(TimerR.string.timer_start_spoken)).performClick()
             native.awaitDescription(context.getString(R.string.widget_stop_description), 1_000)
             RunningNotifications.awaitShown("the app start")
             RunningNotifications.shown()!!.notification.stopAction().actionIntent.send()
             native.awaitDescription(context.getString(R.string.widget_start_description), 1_000)
 
-            compose.onNodeWithContentDescription(context.getString(R.string.timer_start_spoken)).performClick()
+            compose.onNodeWithContentDescription(context.getString(TimerR.string.timer_start_spoken)).performClick()
             native.awaitDescription(context.getString(R.string.widget_stop_description), 1_000)
             compose.onNodeWithContentDescription(context.getString(SharedR.string.timer_stop_spoken)).performClick()
             native.awaitDescription(context.getString(R.string.widget_start_description), 1_000)

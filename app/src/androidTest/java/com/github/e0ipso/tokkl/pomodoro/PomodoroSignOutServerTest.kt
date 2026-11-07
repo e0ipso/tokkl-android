@@ -17,8 +17,9 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.feature.settings.R
 import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.feature.signin.R as SigninR
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
@@ -139,7 +140,7 @@ class PomodoroSignOutServerTest {
         compose.onNode(signOutRow).performScrollTo().performClick()
         compose.awaitText(context.getString(R.string.settings_sign_out_title))
         compose.onNode(hasText(context.getString(R.string.settings_sign_out)) and hasClickAction() and inDialog).performClick()
-        compose.awaitText(context.getString(R.string.sign_in_title), 10_000)
+        compose.awaitText(context.getString(SigninR.string.sign_in_title), 10_000)
         assertCleared()
     }
 
