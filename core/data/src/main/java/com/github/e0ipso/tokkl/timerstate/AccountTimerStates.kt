@@ -3,7 +3,7 @@ package com.github.e0ipso.tokkl.timerstate
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountRefreshRequests
-import com.github.e0ipso.tokkl.session.SignOutOrder
+import com.github.e0ipso.tokkl.session.SignOutPhase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,7 +26,7 @@ class AccountTimerStates(
     private val refreshes: AccountRefreshRequests,
 ) : AccountDataOwner {
 
-    override val signOutOrder = SignOutOrder.TIMER_STATE
+    override val signOutPhase = SignOutPhase.RETIRE_STATE
 
     override suspend fun forgetAccount() = source.retire()
 

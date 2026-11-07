@@ -13,7 +13,7 @@ import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
 import androidx.work.testing.TestListenableWorkerBuilder
 import com.github.e0ipso.tokkl.session.AccountDataOwner
-import com.github.e0ipso.tokkl.session.SignOutOrder
+import com.github.e0ipso.tokkl.session.SignOutPhase
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -74,12 +74,20 @@ class AppGraphTest {
         assertEquals("definitions that do not resolve", emptyList<String>(), failures)
     }
 
-    /** Sign-out runs one step for each [SignOutOrder], so each has exactly one owner in the graph. */
+    /**
+     * Each sign-out step runs in the phase its order needs (docs/PRD.md S6): the session first,
+     * then the timer state, then what still runs stops, the refresh ends before the drain it can
+     * start, and the cache clears before the rest, which follows it. The JVM AppModulesTest checks
+     * that the graph binds these owners and no others.
+     */
     @Test
-    fun eachSignOutStepHasOneOwner() {
-        val orders = koin.getAll<AccountDataOwner>().map { it.signOutOrder }.sorted()
+    fun eachSignOutStepRunsInItsPhase() {
+        val phases = definitions.filter { AccountDataOwner::class in it.secondaryTypes }.associate { definition ->
+            val owner: AccountDataOwner = koin.get(definition.primaryType, definition.qualifier)
+            (definition.qualifier?.value ?: definition.primaryType.java.simpleName) to owner.signOutPhase
+        }
 
-        assertEquals(SignOutOrder.entries.toList(), orders)
+        assertEquals(SIGN_OUT_PHASES, phases)
     }
 
     private fun resolve(definition: BeanDefinition<*>) {
@@ -184,5 +192,32 @@ class AppGraphTest {
 
     private companion object {
         const val WAIT_SECONDS = 30L
+
+        val SIGN_OUT_PHASES = mapOf(
+            "Session" to SignOutPhase.FORGET_SESSION,
+            "AccountTimerStates" to SignOutPhase.RETIRE_STATE,
+            "PomodoroSignOut" to SignOutPhase.STOP_WORK,
+            "TimerSyncFollower" to SignOutPhase.STOP_WORK,
+            "BackgroundSend" to SignOutPhase.STOP_WORK,
+            "RunningCheck" to SignOutPhase.STOP_WORK,
+            "sign-out-http-calls" to SignOutPhase.STOP_WORK,
+            "AccountRefresh" to SignOutPhase.FINISH_REFRESH,
+            "ChangeSender" to SignOutPhase.FINISH_SENDING,
+            "sign-out-cache" to SignOutPhase.CLEAR_CACHE,
+            "TimerStateStore" to SignOutPhase.CLEAR_DATA,
+            "PomodoroWidgetFieldsStore" to SignOutPhase.CLEAR_DATA,
+            "ReminderSync" to SignOutPhase.CLEAR_DATA,
+            "ReminderSetting" to SignOutPhase.CLEAR_DATA,
+            "RunningNotificationSync" to SignOutPhase.CLEAR_DATA,
+            "FavoriteShortcutSync" to SignOutPhase.CLEAR_DATA,
+            "AccountSettingsStore" to SignOutPhase.CLEAR_DATA,
+            "sign-out-capabilities" to SignOutPhase.CLEAR_DATA,
+            "TimerViewSetting" to SignOutPhase.CLEAR_DATA,
+            "PomodoroDefaultsSetting" to SignOutPhase.CLEAR_DATA,
+            "ServerTrustStore" to SignOutPhase.CLEAR_DATA,
+            "SessionTrust" to SignOutPhase.CLEAR_DATA,
+            "LastAnswer" to SignOutPhase.CLEAR_DATA,
+            "DiscardedChanges" to SignOutPhase.CLEAR_DATA,
+        )
     }
 }

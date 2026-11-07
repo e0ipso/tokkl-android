@@ -4,7 +4,7 @@ import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ServerTrust
 import com.github.e0ipso.tokkl.api.TrustListener
 import com.github.e0ipso.tokkl.session.AccountDataOwner
-import com.github.e0ipso.tokkl.session.SignOutOrder
+import com.github.e0ipso.tokkl.session.SignOutPhase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -42,7 +42,7 @@ class SessionTrust(
 ) : TrustListener,
     AccountDataOwner {
 
-    override val signOutOrder = SignOutOrder.SESSION_TRUST
+    override val signOutPhase = SignOutPhase.CLEAR_DATA
 
     override suspend fun forgetAccount() = forget()
 

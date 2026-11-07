@@ -10,7 +10,9 @@ import androidx.work.WorkerParameters
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.platform.CurrentWorkManager
+import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.session.SignOutPhase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
@@ -30,7 +32,12 @@ import kotlin.coroutines.CoroutineContext
  *
  * @param results serializes each check's cache write with sign-out, which [cancelAndWait] forgets.
  */
-class RunningCheck(private val workManager: CurrentWorkManager, private val results: RunningCheckResults) {
+class RunningCheck(private val workManager: CurrentWorkManager, private val results: RunningCheckResults) :
+    AccountDataOwner {
+
+    override val signOutPhase = SignOutPhase.STOP_WORK
+
+    override suspend fun forgetAccount() = cancelAndWait()
 
     /**
      * Schedules the check while [running] is true and cancels it while it is false, until [scope]

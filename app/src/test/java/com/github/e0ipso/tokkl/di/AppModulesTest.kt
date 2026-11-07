@@ -6,7 +6,7 @@ import androidx.work.WorkerParameters
 import com.github.e0ipso.tokkl.reports.ReportExportController
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountRefreshListener
-import com.github.e0ipso.tokkl.session.SignOutOrder
+import com.github.e0ipso.tokkl.session.SignOutPhase
 import com.github.e0ipso.tokkl.signin.SignIn
 import com.github.e0ipso.tokkl.storage.ClearableStore
 import com.github.e0ipso.tokkl.storage.ValueStore
@@ -55,7 +55,7 @@ class AppModulesTest {
                 File::class,
                 ValueStore::class,
                 ClearableStore::class,
-                SignOutOrder::class,
+                SignOutPhase::class,
                 AccountRefreshListener::class,
                 TimerSyncClock::class,
                 SignIn::class,
@@ -65,16 +65,30 @@ class AppModulesTest {
     }
 
     /**
-     * Sign-out runs one step for each [SignOutOrder], and the graph binds one [AccountDataOwner]
-     * for each. Nothing is made here; the device's AppGraphTest checks which order each takes.
+     * Sign-out runs one step for each [AccountDataOwner] the graph binds, so this names every one
+     * of them: a component that keeps account data and binds no owner would leave its data behind.
+     * Nothing is made here; the device's AppGraphTest checks the phase each step runs in.
      */
     @OptIn(KoinInternalApi::class)
     @Test
-    fun theGraphBindsOneOwnerForEachSignOutStep() {
+    fun theGraphBindsTheSignOutStepOfEveryOwner() {
         val koin = koinApplication { modules(appModules) }.koin
         val owners = koin.instanceRegistry.instances.values.map { it.beanDefinition }.distinct()
             .filter { AccountDataOwner::class in it.secondaryTypes }
+            .map { definition -> definition.qualifier?.value ?: definition.primaryType.java.simpleName }
 
-        assertEquals(SignOutOrder.entries.size, owners.size)
+        assertEquals(SIGN_OUT_OWNERS.sorted(), owners.sorted())
+    }
+
+    private companion object {
+        /** Each owner by its class, or by its Koin name for a step of no single component. */
+        val SIGN_OUT_OWNERS = listOf(
+            "Session", "AccountTimerStates", "PomodoroSignOut", "TimerSyncFollower", "BackgroundSend",
+            "RunningCheck", "sign-out-http-calls", "AccountRefresh", "ChangeSender", "sign-out-cache",
+            "TimerStateStore", "PomodoroWidgetFieldsStore", "ReminderSync", "ReminderSetting",
+            "RunningNotificationSync", "FavoriteShortcutSync", "AccountSettingsStore", "sign-out-capabilities",
+            "TimerViewSetting", "PomodoroDefaultsSetting", "ServerTrustStore", "SessionTrust", "LastAnswer",
+            "DiscardedChanges",
+        )
     }
 }

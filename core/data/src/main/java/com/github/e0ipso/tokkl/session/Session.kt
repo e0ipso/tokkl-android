@@ -45,7 +45,7 @@ class Session(
 ) : ApiClientProvider,
     AccountDataOwner {
 
-    override val signOutOrder = SignOutOrder.SESSION
+    override val signOutPhase = SignOutPhase.FORGET_SESSION
 
     override suspend fun forgetAccount() = clear()
 

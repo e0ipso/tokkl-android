@@ -4,7 +4,7 @@ import android.content.Context
 import com.github.e0ipso.tokkl.api.ApiJson
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.session.AccountDataOwner
-import com.github.e0ipso.tokkl.session.SignOutOrder
+import com.github.e0ipso.tokkl.session.SignOutPhase
 import com.github.e0ipso.tokkl.storage.PreferencesFile
 import com.github.e0ipso.tokkl.timerstate.HeldFieldsMemory
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
@@ -61,7 +61,7 @@ class PomodoroWidgetFieldsStore(context: Context) :
     HeldFieldsMemory,
     AccountDataOwner {
 
-    override val signOutOrder = SignOutOrder.POMODORO_WIDGET_FIELDS
+    override val signOutPhase = SignOutPhase.CLEAR_DATA
 
     override suspend fun forgetAccount() = clear()
 

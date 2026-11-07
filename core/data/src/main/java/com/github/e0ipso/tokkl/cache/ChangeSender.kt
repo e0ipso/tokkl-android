@@ -10,7 +10,7 @@ import com.github.e0ipso.tokkl.platform.SingleFlight
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountRefreshListener
 import com.github.e0ipso.tokkl.session.AccountRefreshed
-import com.github.e0ipso.tokkl.session.SignOutOrder
+import com.github.e0ipso.tokkl.session.SignOutPhase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
@@ -90,7 +90,7 @@ class ChangeSender(
 ) : AccountRefreshListener,
     AccountDataOwner {
 
-    override val signOutOrder = SignOutOrder.CHANGE_SENDER
+    override val signOutPhase = SignOutPhase.FINISH_SENDING
 
     override suspend fun forgetAccount() = stop()
 

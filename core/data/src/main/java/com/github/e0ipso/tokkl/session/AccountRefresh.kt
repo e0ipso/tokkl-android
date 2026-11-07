@@ -41,7 +41,7 @@ class AccountRefresh(
     private val steps: AccountRefreshSteps,
 ) : AccountDataOwner {
 
-    override val signOutOrder = SignOutOrder.ACCOUNT_REFRESH
+    override val signOutPhase = SignOutPhase.FINISH_REFRESH
 
     override suspend fun forgetAccount() = forget()
 

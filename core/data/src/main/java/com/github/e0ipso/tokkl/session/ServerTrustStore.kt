@@ -22,7 +22,7 @@ class ServerTrustStore(context: Context) :
     ServerTrust,
     AccountDataOwner {
 
-    override val signOutOrder = SignOutOrder.SERVER_TRUST
+    override val signOutPhase = SignOutPhase.CLEAR_DATA
 
     override suspend fun forgetAccount() = clear()
 

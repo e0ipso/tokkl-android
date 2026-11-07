@@ -2,9 +2,7 @@ package com.github.e0ipso.tokkl.pomodoro
 
 import android.content.Context
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
-import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.Session
-import com.github.e0ipso.tokkl.session.SignOutOrder
 import com.github.e0ipso.tokkl.session.SignedInListener
 import com.github.e0ipso.tokkl.timerstate.HeldTimerFlows
 import com.github.e0ipso.tokkl.timerstate.TimerActions
@@ -28,12 +26,7 @@ class AccountPomodoroNotification internal constructor(
     private val ringing: ServicePomodoroRinging,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
-) : AccountDataOwner,
-    SignedInListener {
-
-    override val signOutOrder = SignOutOrder.POMODORO_NOTIFICATION
-
-    override suspend fun forgetAccount() = current.forget()
+) : SignedInListener {
 
     /** Starts the notification of the account that has just signed in. */
     override fun signedIn() = current.start()

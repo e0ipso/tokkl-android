@@ -7,7 +7,7 @@ import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountRefreshListener
 import com.github.e0ipso.tokkl.session.AccountRefreshed
 import com.github.e0ipso.tokkl.session.MePreferences
-import com.github.e0ipso.tokkl.session.SignOutOrder
+import com.github.e0ipso.tokkl.session.SignOutPhase
 import com.github.e0ipso.tokkl.storage.ClearableStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -51,7 +51,7 @@ class ReminderSetting(
 ) : AccountRefreshListener,
     AccountDataOwner {
 
-    override val signOutOrder = SignOutOrder.REMINDER_SETTING
+    override val signOutPhase = SignOutPhase.CLEAR_DATA
 
     override suspend fun forgetAccount() {
         forget()

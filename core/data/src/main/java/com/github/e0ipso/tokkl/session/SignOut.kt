@@ -14,17 +14,13 @@ import kotlin.coroutines.CoroutineContext
  * Signs the account out and leaves none of its data on the phone (docs/PRD.md S6). The phone holds
  * one account at a time, so the next sign-in starts from nothing.
  *
- * Each of [owners] forgets its part, in [SignOutOrder], on [io]. A failed step does not stop the
- * ones after it, and the next [run] runs them all again, since each clears what is there.
+ * Each of [owners] forgets its part on [io], phase by phase in [SignOutPhase] order. A failed
+ * step does not stop the ones after it, and the next [run] runs them all again, since each clears
+ * what is there.
  */
 class SignOut(owners: List<AccountDataOwner>, private val io: CoroutineContext) {
 
-    private val steps: List<AccountDataOwner> = owners.sortedBy { it.signOutOrder }
-
-    init {
-        val orders = steps.map { it.signOutOrder }
-        require(orders.distinct() == orders) { "Two sign-out steps share an order: $orders" }
-    }
+    private val steps: List<AccountDataOwner> = owners.sortedBy { it.signOutPhase }
 
     private val mutableFinished = MutableStateFlow(0)
 

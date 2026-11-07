@@ -7,7 +7,7 @@ import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountRefreshListener
 import com.github.e0ipso.tokkl.session.AccountRefreshed
 import com.github.e0ipso.tokkl.session.Session
-import com.github.e0ipso.tokkl.session.SignOutOrder
+import com.github.e0ipso.tokkl.session.SignOutPhase
 
 /**
  * Decides whether the timer event stream and [TimerSyncService] run, and starts, points or stops
@@ -25,7 +25,7 @@ class TimerSyncFollower(
 ) : AccountRefreshListener,
     AccountDataOwner {
 
-    override val signOutOrder = SignOutOrder.TIMER_SYNC
+    override val signOutPhase = SignOutPhase.STOP_WORK
 
     override suspend fun forgetAccount() {
         timerSync.stop()

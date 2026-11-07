@@ -1,7 +1,7 @@
 package com.github.e0ipso.tokkl.sync
 
 import com.github.e0ipso.tokkl.session.AccountDataOwner
-import com.github.e0ipso.tokkl.session.SignOutOrder
+import com.github.e0ipso.tokkl.session.SignOutPhase
 import com.github.e0ipso.tokkl.storage.ClearableStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.asStateFlow
  */
 class DiscardedChanges(private val store: ClearableStore<Int>) : AccountDataOwner {
 
-    override val signOutOrder = SignOutOrder.DISCARDED_CHANGES
+    override val signOutPhase = SignOutPhase.CLEAR_DATA
 
     override suspend fun forgetAccount() {
         dismiss()

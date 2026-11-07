@@ -1,7 +1,7 @@
 package com.github.e0ipso.tokkl.shortcuts
 
 import com.github.e0ipso.tokkl.session.AccountDataOwner
-import com.github.e0ipso.tokkl.session.SignOutOrder
+import com.github.e0ipso.tokkl.session.SignOutPhase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
@@ -33,7 +33,7 @@ class FavoriteShortcutSync(
     private val io: CoroutineContext,
 ) : AccountDataOwner {
 
-    override val signOutOrder = SignOutOrder.FAVORITE_SHORTCUTS
+    override val signOutPhase = SignOutPhase.CLEAR_DATA
 
     override suspend fun forgetAccount() = forget()
 

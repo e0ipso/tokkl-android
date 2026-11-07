@@ -17,7 +17,7 @@ class AccountSettingsStore(context: Context) :
     ValueStore<AccountSettings>,
     AccountDataOwner {
 
-    override val signOutOrder = SignOutOrder.ACCOUNT_SETTINGS
+    override val signOutPhase = SignOutPhase.CLEAR_DATA
 
     override suspend fun forgetAccount() = clear()
 

@@ -1,50 +1,96 @@
 package com.github.e0ipso.tokkl.session
 
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.yield
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.IOException
 
 class SignOutTest {
 
-    private val ran = mutableListOf<SignOutOrder>()
+    private val ran = mutableListOf<String>()
 
-    private fun step(order: SignOutOrder, fails: () -> Boolean = { false }) = SignOutStep(order) {
-        ran += order
-        if (fails()) throw IOException("$order failed")
+    private fun step(name: String, phase: SignOutPhase, fails: () -> Boolean = { false }) = SignOutStep(phase) {
+        ran += name
+        if (fails()) throw IOException("$name failed")
     }
 
     @Test
-    fun runsEveryStepInSignOutOrderAndCountsTheSignOut() {
+    fun runsThePhasesInOrderAndCountsTheSignOut() {
         val signOut = SignOut(
-            listOf(step(SignOutOrder.CACHE), step(SignOutOrder.SESSION), step(SignOutOrder.CHANGE_SENDER)),
+            listOf(
+                step("cache", SignOutPhase.CLEAR_CACHE),
+                step("settings", SignOutPhase.CLEAR_DATA),
+                step("session", SignOutPhase.FORGET_SESSION),
+                step("sender", SignOutPhase.FINISH_SENDING),
+                step("stream", SignOutPhase.STOP_WORK),
+                step("refresh", SignOutPhase.FINISH_REFRESH),
+                step("timer state", SignOutPhase.RETIRE_STATE),
+            ),
             Dispatchers.Unconfined,
         )
 
         assertTrue(runBlocking { signOut.run() })
 
-        assertEquals(listOf(SignOutOrder.SESSION, SignOutOrder.CHANGE_SENDER, SignOutOrder.CACHE), ran)
+        assertEquals(listOf("session", "timer state", "stream", "refresh", "sender", "cache", "settings"), ran)
         assertEquals(1, signOut.finished.value)
+    }
+
+    @Test
+    fun aPhaseStartsOnlyOnceTheOneBeforeHasEnded() = runBlocking {
+        val drainEnds = CompletableDeferred<Unit>()
+        val signOut = SignOut(
+            listOf(
+                SignOutStep(SignOutPhase.FINISH_SENDING) {
+                    drainEnds.await()
+                    ran += "sender"
+                },
+                step("cache", SignOutPhase.CLEAR_CACHE),
+            ),
+            Dispatchers.Unconfined,
+        )
+
+        val running = async { signOut.run() }
+        yield()
+        assertEquals(emptyList<String>(), ran)
+        drainEnds.complete(Unit)
+
+        assertTrue(running.await())
+        assertEquals(listOf("sender", "cache"), ran)
+    }
+
+    @Test
+    fun stepsOfOnePhaseAllRun() {
+        val signOut = SignOut(
+            listOf(step("a", SignOutPhase.CLEAR_DATA), step("b", SignOutPhase.CLEAR_DATA)),
+            Dispatchers.Unconfined,
+        )
+
+        assertTrue(runBlocking { signOut.run() })
+
+        assertEquals(setOf("a", "b"), ran.toSet())
+        assertEquals(2, ran.size)
     }
 
     @Test
     fun aFailedStepDoesNotStopTheOthersButTheSignOutDoesNotCount() {
         val signOut = SignOut(
             listOf(
-                step(SignOutOrder.SESSION),
-                step(SignOutOrder.CHANGE_SENDER, fails = { true }),
-                step(SignOutOrder.CACHE),
+                step("session", SignOutPhase.FORGET_SESSION),
+                step("sender", SignOutPhase.FINISH_SENDING, fails = { true }),
+                step("cache", SignOutPhase.CLEAR_CACHE),
             ),
             Dispatchers.Unconfined,
         )
 
         assertFalse(runBlocking { signOut.run() })
 
-        assertEquals(listOf(SignOutOrder.SESSION, SignOutOrder.CHANGE_SENDER, SignOutOrder.CACHE), ran)
+        assertEquals(listOf("session", "sender", "cache"), ran)
         assertEquals(0, signOut.finished.value)
     }
 
@@ -52,7 +98,10 @@ class SignOutTest {
     fun aSecondSignOutRunsEveryStepAgain() {
         var failing = true
         val signOut = SignOut(
-            listOf(step(SignOutOrder.SESSION), step(SignOutOrder.CACHE, fails = { failing })),
+            listOf(
+                step("session", SignOutPhase.FORGET_SESSION),
+                step("cache", SignOutPhase.CLEAR_CACHE, fails = { failing }),
+            ),
             Dispatchers.Unconfined,
         )
 
@@ -60,34 +109,29 @@ class SignOutTest {
         failing = false
         assertTrue(runBlocking { signOut.run() })
 
-        assertEquals(listOf(SignOutOrder.SESSION, SignOutOrder.CACHE, SignOutOrder.SESSION, SignOutOrder.CACHE), ran)
+        assertEquals(listOf("session", "cache", "session", "cache"), ran)
         assertEquals(1, signOut.finished.value)
-    }
-
-    @Test
-    fun twoStepsCannotShareAnOrder() {
-        assertThrows(IllegalArgumentException::class.java) {
-            SignOut(listOf(step(SignOutOrder.CACHE), step(SignOutOrder.CACHE)), Dispatchers.Unconfined)
-        }
     }
 
     /**
      * The order of sign-out (docs/PRD.md S6). The session goes first, so nothing new is sent, and
-     * the timer state next, so a late answer writes nothing. What still sends stops before the
-     * stores clear.
+     * the timer state next, so a late answer writes nothing. What still runs stops, the refresh
+     * ends before the drain it can start, and only then do the stores clear, the cache before
+     * what follows it.
      */
     @Test
-    fun theStepsRunInTheOrderSignOutNeeds() {
+    fun thePhasesRunInTheOrderSignOutNeeds() {
         assertEquals(
             listOf(
-                "SESSION", "TIMER_STATE", "POMODORO_ALARM", "TIMER_SYNC", "POMODORO_NOTIFICATION",
-                "POMODORO_NOTIFICATION_ID", "BACKGROUND_SEND", "RUNNING_CHECK", "HTTP_CALLS", "ACCOUNT_REFRESH",
-                "CHANGE_SENDER", "TIMER_STATE_STORE", "POMODORO_WIDGET_FIELDS", "CACHE", "REMINDER",
-                "REMINDER_SETTING", "RUNNING_NOTIFICATION", "FAVORITE_SHORTCUTS", "ACCOUNT_SETTINGS", "CAPABILITIES",
-                "TIMER_VIEW", "POMODORO_DEFAULTS", "SERVER_TRUST", "SESSION_TRUST", "LAST_ANSWER",
-                "DISCARDED_CHANGES",
+                "FORGET_SESSION",
+                "RETIRE_STATE",
+                "STOP_WORK",
+                "FINISH_REFRESH",
+                "FINISH_SENDING",
+                "CLEAR_CACHE",
+                "CLEAR_DATA",
             ),
-            SignOutOrder.entries.map { it.name },
+            SignOutPhase.entries.map { it.name },
         )
     }
 }

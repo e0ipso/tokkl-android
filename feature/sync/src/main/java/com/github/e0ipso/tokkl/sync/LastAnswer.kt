@@ -2,7 +2,7 @@ package com.github.e0ipso.tokkl.sync
 
 import com.github.e0ipso.tokkl.api.SuccessListener
 import com.github.e0ipso.tokkl.session.AccountDataOwner
-import com.github.e0ipso.tokkl.session.SignOutOrder
+import com.github.e0ipso.tokkl.session.SignOutPhase
 import com.github.e0ipso.tokkl.storage.ValueStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,7 +22,7 @@ class LastAnswer(private val store: ValueStore<Instant?>, private val clock: Clo
     SuccessListener,
     AccountDataOwner {
 
-    override val signOutOrder = SignOutOrder.LAST_ANSWER
+    override val signOutPhase = SignOutPhase.CLEAR_DATA
 
     override suspend fun forgetAccount() = forget()
 

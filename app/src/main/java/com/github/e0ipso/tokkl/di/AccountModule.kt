@@ -121,6 +121,6 @@ internal val accountModule = module {
 
     signOutSteps()
 
-    // Sign-out (docs/PRD.md S6): every [AccountDataOwner], in [SignOutOrder].
+    // Sign-out (docs/PRD.md S6): every [AccountDataOwner], phase by phase in [SignOutPhase] order.
     single { SignOut(owners = getAll(), io = io()) }
 }

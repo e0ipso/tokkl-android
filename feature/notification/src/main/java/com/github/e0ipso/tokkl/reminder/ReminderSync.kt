@@ -3,7 +3,7 @@ package com.github.e0ipso.tokkl.reminder
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.preferences.ReminderPreferences
 import com.github.e0ipso.tokkl.session.AccountDataOwner
-import com.github.e0ipso.tokkl.session.SignOutOrder
+import com.github.e0ipso.tokkl.session.SignOutPhase
 import com.github.e0ipso.tokkl.storage.ValueStore
 import com.github.e0ipso.tokkl.timerstate.SurfaceTap
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
@@ -43,7 +43,7 @@ class ReminderSync(
     private val pause: suspend (Long) -> SurfaceTap.Request? = { null },
 ) : AccountDataOwner {
 
-    override val signOutOrder = SignOutOrder.REMINDER
+    override val signOutPhase = SignOutPhase.CLEAR_DATA
 
     override suspend fun forgetAccount() = forget()
 

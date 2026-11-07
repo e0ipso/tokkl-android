@@ -5,7 +5,7 @@ import com.github.e0ipso.tokkl.api.ApiJson
 import com.github.e0ipso.tokkl.api.IsoInstantSerializer
 import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.session.AccountDataOwner
-import com.github.e0ipso.tokkl.session.SignOutOrder
+import com.github.e0ipso.tokkl.session.SignOutPhase
 import com.github.e0ipso.tokkl.storage.PreferencesFile
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -48,7 +48,7 @@ data class StoredTimerState(
  */
 class TimerStateStore(context: Context) : AccountDataOwner {
 
-    override val signOutOrder = SignOutOrder.TIMER_STATE_STORE
+    override val signOutPhase = SignOutPhase.CLEAR_DATA
 
     override suspend fun forgetAccount() = clear()
 

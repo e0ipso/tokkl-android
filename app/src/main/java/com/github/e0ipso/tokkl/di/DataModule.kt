@@ -42,7 +42,7 @@ internal val dataModule = module {
     // change at once, and [BackgroundSend] sends what is left when the network returns, also with
     // the app closed.
     single { BackgroundSendRuns() }
-    single { BackgroundSend(get(), get()) }
+    single { BackgroundSend(get(), get()) } bind AccountDataOwner::class
     single { SendOnQueue(get(), get()) }
     single {
         ChangeQueue(
@@ -63,7 +63,7 @@ internal val dataModule = module {
     // The running entry's check every 15 minutes while a timer runs, and the guard that keeps a
     // check's answer from landing after sign-out.
     single { RunningCheckResults() }
-    single { RunningCheck(get(), get()) }
+    single { RunningCheck(get(), get()) } bind AccountDataOwner::class
     single {
         ChangeSender(
             get(),

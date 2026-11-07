@@ -1,7 +1,7 @@
 package com.github.e0ipso.tokkl.notification
 
 import com.github.e0ipso.tokkl.session.AccountDataOwner
-import com.github.e0ipso.tokkl.session.SignOutOrder
+import com.github.e0ipso.tokkl.session.SignOutPhase
 import com.github.e0ipso.tokkl.storage.ValueStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -42,7 +42,7 @@ class RunningNotificationSync(
     private val io: CoroutineContext,
 ) : AccountDataOwner {
 
-    override val signOutOrder = SignOutOrder.RUNNING_NOTIFICATION
+    override val signOutPhase = SignOutPhase.CLEAR_DATA
 
     override suspend fun forgetAccount() = forget()
 

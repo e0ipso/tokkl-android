@@ -12,6 +12,8 @@ import androidx.work.WorkerParameters
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.HttpStatus
 import com.github.e0ipso.tokkl.platform.CurrentWorkManager
+import com.github.e0ipso.tokkl.session.AccountDataOwner
+import com.github.e0ipso.tokkl.session.SignOutPhase
 import kotlinx.coroutines.withContext
 import java.time.Duration
 import java.util.concurrent.ExecutionException
@@ -25,7 +27,12 @@ import kotlin.coroutines.CoroutineContext
  *
  * @param runs the workers that joined a drain, which [BackgroundSendWorker] registers with.
  */
-class BackgroundSend(private val workManager: CurrentWorkManager, private val runs: BackgroundSendRuns) {
+class BackgroundSend(private val workManager: CurrentWorkManager, private val runs: BackgroundSendRuns) :
+    AccountDataOwner {
+
+    override val signOutPhase = SignOutPhase.STOP_WORK
+
+    override suspend fun forgetAccount() = cancel()
 
     /**
      * Enqueues a one-time send that waits for a connected network. Work already waiting or running
