@@ -25,7 +25,8 @@ abstract class ChangeDao {
      * an entry whose earlier change is held, since those wait behind it (docs/PRD.md O6).
      */
     @Query(
-        "SELECT * FROM pending_changes WHERE entryId NOT IN (SELECT entryId FROM pending_changes WHERE held) ORDER BY sequence LIMIT 1",
+        "SELECT * FROM pending_changes WHERE entryId NOT IN (SELECT entryId FROM pending_changes WHERE held) ORDER " +
+            "BY sequence LIMIT 1",
     )
     abstract fun first(): PendingChange?
 
@@ -121,7 +122,8 @@ abstract class ChangeDao {
 
     /** The running entry that started last, as [CacheDao.runningEntry] shows it. */
     @Query(
-        "SELECT time_entries.*, ${CacheDao.UNSENT} FROM time_entries WHERE stop IS NULL ORDER BY start DESC, id DESC LIMIT 1",
+        "SELECT time_entries.*, ${CacheDao.UNSENT} FROM time_entries WHERE stop IS NULL ORDER BY start DESC, id DESC " +
+            "LIMIT 1",
     )
     abstract fun latestRunning(): EntryWithSendState?
 

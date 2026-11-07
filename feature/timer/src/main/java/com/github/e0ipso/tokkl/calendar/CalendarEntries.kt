@@ -32,7 +32,8 @@ internal fun weekEntries(
     val tasksById = tasks.associateBy { it.id }
     return rows
         .map { (entry, unsent) -> entry.shown(unsent, time, projectsById, tasksById) }
-        // A no-time entry belongs to its stored day, not to the instant of a midnight that a timezone change left stale.
+        // A no-time entry belongs to its stored day, not to the instant of a midnight that a timezone change left
+        // stale.
         .filter { if (it.allDay) it.day in days else it.start < to && (it.stop == null || it.stop > from) }
 }
 

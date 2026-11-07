@@ -231,7 +231,7 @@ class ChangeSender(
             while (drainAgain) {
                 val outcome = try {
                     drain()
-                } catch (e: SQLiteException) {
+                } catch (_: SQLiteException) {
                     // The queue stays on disk for the next try.
                     null
                 }
@@ -288,50 +288,66 @@ class ChangeSender(
 
                 is ApiResult.Failure -> {
                     val error = result.error
-                    if (error is ApiError.RateLimited) {
-                        val until = clock.instant().plusSeconds(error.retryAfterSeconds ?: DEFAULT_RETRY_AFTER.seconds)
-                        retryAt = until
-                        return Outcome.Waiting(sent, until)
-                    }
+                    if (error is ApiError.RateLimited) return waitOut(sent, error)
                     // Read the change again: the failed try may have marked it maybeSent.
                     if (error.worthAnotherTryAtOnce() && triedAgain != queued.sequence) {
                         triedAgain = queued.sequence
                         continue
                     }
-                    when (val refused = refusal(api, queued, error)) {
-                        is Refusal.Wait -> {
-                            val waiting = refused.error
-                            if (waiting is ApiError.RateLimited) {
-                                val until = clock.instant().plusSeconds(
-                                    waiting.retryAfterSeconds ?: DEFAULT_RETRY_AFTER.seconds,
-                                )
-                                retryAt = until
-                                return Outcome.Waiting(sent, until)
-                            }
-                            return Outcome.Stopped(sent, waiting)
-                        }
-
-                        Refusal.SignInAgain -> {
-                            mutableSignInNeeded.value = true
-                            return Outcome.Stopped(sent, ApiError.AuthFailed)
-                        }
-
-                        Refusal.AlreadyDone -> {
-                            store.sent(queued, queued.entryId, answer = null)
-                            sent++
-                        }
-
-                        Refusal.EntryGone -> {
-                            val discarded = store.discardEntry(queued)
-                            sent += discarded
-                            if (discarded > 0) onDiscarded(discarded)
-                        }
-
-                        is Refusal.Hold -> store.hold(queued, refused.reason)
+                    when (val step = settleRefused(api, queued, error, sent)) {
+                        is RefusalStep.Next -> sent += step.left
+                        is RefusalStep.Stop -> return step.outcome
                     }
                 }
             }
         }
+    }
+
+    /** What [drain] does after it settled a refused change: go on, or stop with [Stop.outcome]. */
+    private sealed interface RefusalStep {
+        /** Go on with the next change. [left] changes left the queue. */
+        data class Next(val left: Int) : RefusalStep
+
+        data class Stop(val outcome: Outcome) : RefusalStep
+    }
+
+    /** Settles [queued], which the server refused with [error], after [sent] changes went out. */
+    private fun settleRefused(api: TogglApiClient, queued: PendingChange, error: ApiError, sent: Int): RefusalStep =
+        when (val refused = refusal(api, queued, error)) {
+            is Refusal.Wait -> {
+                val waiting = refused.error
+                RefusalStep.Stop(
+                    if (waiting is ApiError.RateLimited) waitOut(sent, waiting) else Outcome.Stopped(sent, waiting),
+                )
+            }
+
+            Refusal.SignInAgain -> {
+                mutableSignInNeeded.value = true
+                RefusalStep.Stop(Outcome.Stopped(sent, ApiError.AuthFailed))
+            }
+
+            Refusal.AlreadyDone -> {
+                store.sent(queued, queued.entryId, answer = null)
+                RefusalStep.Next(1)
+            }
+
+            Refusal.EntryGone -> {
+                val discarded = store.discardEntry(queued)
+                if (discarded > 0) onDiscarded(discarded)
+                RefusalStep.Next(discarded)
+            }
+
+            is Refusal.Hold -> {
+                store.hold(queued, refused.reason)
+                RefusalStep.Next(0)
+            }
+        }
+
+    /** Waits out the server's rate limit [error] before the next send. */
+    private fun waitOut(sent: Int, error: ApiError.RateLimited): Outcome {
+        val until = clock.instant().plusSeconds(error.retryAfterSeconds ?: DEFAULT_RETRY_AFTER.seconds)
+        retryAt = until
+        return Outcome.Waiting(sent, until)
     }
 
     /** Drains again once [until] has passed. One wait at a time. */

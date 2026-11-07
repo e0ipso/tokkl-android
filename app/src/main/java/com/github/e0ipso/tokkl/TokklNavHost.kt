@@ -67,14 +67,14 @@ import org.koin.compose.koinInject
  * live in the signed-in session's store ([NavigationStores]).
  */
 @Composable
-fun TokklNavHost(
+internal fun TokklNavHost(
     requests: NavigationRequests = remember { NavigationRequests() },
     capabilities: StateFlow<Capabilities> = koinInject<CapabilitiesSource>().state,
     notificationPermission: NotificationPermissionAsk? = null,
-    onNotificationsAllowed: () -> Unit = {},
+    onNotificationsAllow: () -> Unit = {},
+    stores: NavigationStores = viewModel { NavigationStores() },
 ) {
     val signOuts by koinInject<SignOut>().finished.collectAsState()
-    val stores = viewModel { NavigationStores() }
     val discarded = remember(stores, signOuts) { stores.after(signOuts) }
     LaunchedEffect(signOuts) {
         // A tap from before the sign-out opens nothing for the next account.
@@ -83,7 +83,7 @@ fun TokklNavHost(
     // A sign-out starts the navigation over, at sign-in, with a back stack of its own.
     key(signOuts) {
         CompositionLocalProvider(LocalSignedInSession provides stores.session) {
-            Navigation(stores, requests, capabilities, notificationPermission, onNotificationsAllowed)
+            Navigation(stores, requests, capabilities, notificationPermission, onNotificationsAllow)
         }
     }
 }
@@ -94,7 +94,7 @@ private fun Navigation(
     requests: NavigationRequests,
     capabilities: StateFlow<Capabilities>,
     notificationPermission: NotificationPermissionAsk?,
-    onNotificationsAllowed: () -> Unit,
+    onNotificationsAllow: () -> Unit,
 ) {
     val session: Session = koinInject()
     val io: CoroutineDispatcher = koinInject(IoDispatcher)
@@ -156,6 +156,6 @@ private fun Navigation(
         unavailable = unavailable,
         prompts = prompts,
         notificationPermission = notificationPermission,
-        onNotificationsAllowed = onNotificationsAllowed,
+        onNotificationsAllow = onNotificationsAllow,
     )
 }

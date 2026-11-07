@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.HttpStatus
 import com.github.e0ipso.tokkl.api.TrashEntry
 import com.github.e0ipso.tokkl.catalog.CatalogPageEvents
 import com.github.e0ipso.tokkl.catalog.ServerProblem
@@ -247,4 +248,4 @@ class TrashViewModel(
 
 /** A 404, or a 2xx that is not a list, as the capability probe reads them: the server has no trash. */
 private fun ApiError.meansNoTrash(): Boolean =
-    (this is ApiError.UnexpectedStatus && status == 404) || this is ApiError.InvalidResponse
+    (this is ApiError.UnexpectedStatus && status == HttpStatus.NOT_FOUND) || this is ApiError.InvalidResponse

@@ -99,11 +99,11 @@ fun ReportsScreen(model: ReportsViewModel, modifier: Modifier = Modifier) {
                     } else {
                         model.exportNoShareTarget()
                     }
-                } catch (e: ActivityNotFoundException) {
+                } catch (_: ActivityNotFoundException) {
                     model.exportNoShareTarget()
-                } catch (e: IllegalArgumentException) {
+                } catch (_: IllegalArgumentException) {
                     model.exportShareFailed()
-                } catch (e: SecurityException) {
+                } catch (_: SecurityException) {
                     model.exportShareFailed()
                 }
             }
@@ -192,9 +192,10 @@ fun ReportsContent(
         topBar = { TokklTopBar(stringResource(R.string.reports)) },
         contentWindowInsets = ScrollingScreenInsets,
     ) { innerPadding ->
-        if (detailed != null && detailed.entries.isNotEmpty() && settings != null && time != null) {
+        val rows = detailed?.takeIf { it.entries.isNotEmpty() }
+        if (rows != null && settings != null && time != null) {
             DetailedContent(
-                report = detailed,
+                report = rows,
                 settings = settings,
                 today = time.today(),
                 header = header,

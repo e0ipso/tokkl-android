@@ -41,10 +41,8 @@ import org.koin.dsl.module
 val timerFeatureModule = module {
     single { TimerViewStore(androidContext()) }
 
-    /**
-     * The Timer page's List or Calendar choice, kept in Tokkl's `timerView` preference. The first
-     * read loads it from a file of two values: the Timer page's first frame on the main thread.
-     */
+    // The Timer page's List or Calendar choice, kept in Tokkl's `timerView` preference. The first
+    // read loads it from a file of two values: the Timer page's first frame on the main thread.
     single {
         TimerViewSetting(
             store = get<TimerViewStore>(),
@@ -55,7 +53,7 @@ val timerFeatureModule = module {
         )
     } bind AccountDataOwner::class
 
-    /** The system trace of each Start and Stop tap on the Timer page. */
+    // The system trace of each Start and Stop tap on the Timer page.
     single { TapTrace.System }
 
     viewModel { params ->

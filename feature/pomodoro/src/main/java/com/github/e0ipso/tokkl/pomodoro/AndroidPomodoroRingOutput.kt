@@ -94,10 +94,10 @@ class AndroidPomodoroRingOutput(
                 true
             }
             next.prepareAsync()
-        } catch (failure: IOException) {
+        } catch (_: IOException) {
             player = null
             next.release()
-        } catch (failure: IllegalStateException) {
+        } catch (_: IllegalStateException) {
             player = null
             next.release()
         }
@@ -109,7 +109,7 @@ class AndroidPomodoroRingOutput(
         // API 31/32 accepts AudioAttributes; API 33+ has the equivalent VibrationAttributes.
         // Alarm usage is required for an attentional vibration from the background.
         // https://developer.android.com/reference/android/os/Vibrator#vibrate(android.os.VibrationEffect,%20android.media.AudioAttributes)
-        if (Build.VERSION.SDK_INT >= 33) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             val attributes = VibrationAttributes.Builder().setUsage(VibrationAttributes.USAGE_ALARM).build()
             vibrator.vibrate(effect, attributes)
             vibrationUsage = attributes.usage

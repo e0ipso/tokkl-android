@@ -18,11 +18,9 @@ import org.koin.dsl.module
 val notificationFeatureModule = module {
     single { RunningNotificationStore(androidContext()) }
 
-    /**
-     * The running timer's notification (docs/PRD.md N1), which follows the timer controls, the
-     * cache's running entry and the server's pause chain (T1), from process start, so every
-     * start, pause, resume, stop and edit from any surface or device reaches it.
-     */
+    // The running timer's notification (docs/PRD.md N1), which follows the timer controls, the
+    // cache's running entry and the server's pause chain (T1), from process start, so every
+    // start, pause, resume, stop and edit from any surface or device reaches it.
     single {
         val notifier = RunningNotifier(androidContext())
         RunningNotificationSync(
@@ -38,10 +36,10 @@ val notificationFeatureModule = module {
 
     single { ReminderStore(androidContext()) }
 
-    /** Shared reminder settings where both keys exist, account-local on older servers. */
+    // Shared reminder settings where both keys exist, account-local on older servers.
     single { ReminderSetting(get<ReminderStore>(), get<Session>(), get(), io()) } bind AccountDataOwner::class
 
-    /** The running entry's reminder, followed independently of any screen. */
+    // The running entry's reminder, followed independently of any screen.
     single {
         accountReminderSync(
             androidContext(),

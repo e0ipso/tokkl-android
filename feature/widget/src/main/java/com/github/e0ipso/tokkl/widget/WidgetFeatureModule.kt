@@ -32,10 +32,8 @@ val widgetFeatureModule = module {
     single { WidgetStateSource(androidApplication(), get(), get(), get(), get(), get(), clock = get(), io = io()) }
     single(TimerWidgetQualifier) { WidgetStore(androidContext()) }
 
-    /**
-     * Updates the widget whenever what it shows changes, whichever surface changed it, from
-     * process start. It builds the widget state off the main thread.
-     */
+    // Updates the widget whenever what it shows changes, whichever surface changed it, from
+    // process start. It builds the widget state off the main thread.
     single(TimerWidgetQualifier) {
         val context = androidContext()
         WidgetSync(
@@ -49,11 +47,11 @@ val widgetFeatureModule = module {
 
     single { PomodoroWidgetStateSource(get(), get(), get(), get(), get(), get(), get(), get(), get(), io()) }
 
-    /** What the phase alarm redraws when it could not arm an exact alarm. */
+    // What the phase alarm redraws when it could not arm an exact alarm.
     factory<PomodoroWidgetRedraw> { PomodoroWidgetRedrawer(get(), get()) }
     single(PomodoroWidgetQualifier) { WidgetStore(androidContext(), keyName = WidgetStore.POMODORO_KEY) }
 
-    /** The Pomodoro widget's redraws. Its key is independent of the Timer widget. */
+    // The Pomodoro widget's redraws. Its key is independent of the Timer widget.
     single(PomodoroWidgetQualifier) {
         val context = androidContext()
         WidgetSync(

@@ -100,7 +100,7 @@ class TileControlsActivity : ComponentActivity() {
             try {
                 val tap = surfaceActions.tap(control.action, control.target)
                 if (tap is SurfaceTap.Request) tap.send()?.let { showTimerActionFailure(app, it) }
-            } catch (e: SQLiteException) {
+            } catch (_: SQLiteException) {
                 // The disk refused the change. The dialog still shows the timer it drew.
             }
         }

@@ -75,7 +75,7 @@ typealias EntryPicker = @Composable (
  *
  * While the description field has focus it keeps what is typed, whatever [fields] says, so a
  * refresh cannot take letters back. It hands every change to [onDescriptionChange], and calls
- * [onDescriptionDone] when it loses focus or the keyboard's Done is pressed. The picker opens in a
+ * [onDescriptionFinish] when it loses focus or the keyboard's Done is pressed. The picker opens in a
  * full-screen dialog, and closing it hands what was picked to [onPick], once, when it changed.
  *
  * With [suggestions], the description field lists what they give for the text typed so far
@@ -93,7 +93,7 @@ fun EntryFieldsEditor(
     original: Picked,
     descriptionHint: String,
     onDescriptionChange: (String) -> Unit,
-    onDescriptionDone: () -> Unit,
+    onDescriptionFinish: () -> Unit,
     onPick: (Picked) -> Unit,
     onBillableChange: (Boolean) -> Unit,
     picker: EntryPicker,
@@ -116,7 +116,7 @@ fun EntryFieldsEditor(
             hint = descriptionHint,
             enabled = enabled,
             onChange = onDescriptionChange,
-            onDone = onDescriptionDone,
+            onDone = onDescriptionFinish,
             suggestions = suggestions,
             onSuggestion = onSuggestion,
             modifier = Modifier
@@ -159,7 +159,7 @@ private fun DescriptionField(
     onDone: () -> Unit,
     suggestions: ((String) -> List<DescriptionSuggestion>)?,
     onSuggestion: (DescriptionSuggestion) -> Unit,
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
 ) {
     var focused by remember { mutableStateOf(false) }
     var typed by remember { mutableStateOf(TextFieldValue(description)) }

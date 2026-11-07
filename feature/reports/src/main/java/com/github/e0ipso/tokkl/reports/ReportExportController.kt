@@ -53,67 +53,86 @@ class ReportExportController(
         this.lease = lease
         mutableState.value = ReportExportState.Preparing
         job = scope.launch {
-            var pending: ReportExportFiles.Pending? = null
-            var completed: File? = null
+            val attempt = AttemptFiles()
             var retained = false
             try {
-                val outcome = withContext(io) {
-                    val staged = lease.current { files.prepare(request.filename) }
-                        ?: return@withContext ReportExportState.Idle
-                    pending = staged
-                    cancellation.check()
-                    val api = client() ?: return@withContext ReportExportState.Failed(ApiError.AuthFailed)
-                    val answer = FileOutputStream(staged.staging).use { output ->
-                        val result = api.downloadCsv(
-                            api.server.app("report", "${request.kind.path}.csv"),
-                            request.body(),
-                            output,
-                            ReportExportFiles.MAX_BYTES,
-                            cancellation,
-                        )
-                        if (result is ApiResult.Success) {
-                            output.flush()
-                            output.fd.sync()
-                        }
-                        result
-                    }
-                    when (answer) {
-                        is ApiResult.Failure -> {
-                            if (answer.error.csvEndpointAbsent()) lease.current { csvMissing(request.kind) }
-                            ReportExportState.Failed(answer.error)
-                        }
-
-                        is ApiResult.Success -> {
-                            cancellation.check()
-                            completed = lease.current { files.publish(staged, answer.value) }
-                            completed?.let { ReportExportState.Ready(it) } ?: ReportExportState.Idle
-                        }
-                    }
-                }
+                val outcome = withContext(io) { download(request, lease, cancellation, attempt) }
                 lease.current {
                     mutableState.value = outcome
                     retained = outcome is ReportExportState.Ready
                 }
             } catch (e: CancellationException) {
                 throw e
-            } catch (e: IOException) {
+            } catch (_: IOException) {
                 lease.current { mutableState.value = ReportExportState.Failed() }
-            } catch (e: SecurityException) {
+            } catch (_: SecurityException) {
                 lease.current { mutableState.value = ReportExportState.Failed() }
             } finally {
                 cancellation.cancel()
                 withContext(NonCancellable + io) {
-                    pending?.close()
-                    if (!retained) completed?.let(files::discard)
+                    attempt.pending?.close()
+                    if (!retained) attempt.completed?.let(files::discard)
                 }
-                if (!retained) {
-                    lease.close()
-                    if (this@ReportExportController.lease === lease) {
-                        this@ReportExportController.lease = null
-                        if (state.value == ReportExportState.Preparing) mutableState.value = ReportExportState.Idle
-                    }
-                }
+                if (!retained) release(lease)
             }
+        }
+    }
+
+    /** The staged and the published file of one export, for [start] to clean up after it. */
+    private class AttemptFiles {
+        var pending: ReportExportFiles.Pending? = null
+        var completed: File? = null
+    }
+
+    /**
+     * Downloads [request] into a staged file and publishes it, on the IO dispatcher. [attempt]
+     * records the files as they are made.
+     */
+    private fun download(
+        request: ReportCsvRequest,
+        lease: ExportAccount.Lease,
+        cancellation: ApiCallCancellation,
+        attempt: AttemptFiles,
+    ): ReportExportState {
+        val staged = lease.current { files.prepare(request.filename) } ?: return ReportExportState.Idle
+        attempt.pending = staged
+        cancellation.check()
+        val api = client() ?: return ReportExportState.Failed(ApiError.AuthFailed)
+        val answer = FileOutputStream(staged.staging).use { output ->
+            val result = api.downloadCsv(
+                api.server.app("report", "${request.kind.path}.csv"),
+                request.body(),
+                output,
+                ReportExportFiles.MAX_BYTES,
+                cancellation,
+            )
+            if (result is ApiResult.Success) {
+                output.flush()
+                output.fd.sync()
+            }
+            result
+        }
+        return when (answer) {
+            is ApiResult.Failure -> {
+                if (answer.error.csvEndpointAbsent()) lease.current { csvMissing(request.kind) }
+                ReportExportState.Failed(answer.error)
+            }
+
+            is ApiResult.Success -> {
+                cancellation.check()
+                val completed = lease.current { files.publish(staged, answer.value) }
+                attempt.completed = completed
+                completed?.let { ReportExportState.Ready(it) } ?: ReportExportState.Idle
+            }
+        }
+    }
+
+    /** Lets go of [lease] once its export is over and nothing keeps its file. */
+    private fun release(lease: ExportAccount.Lease) {
+        lease.close()
+        if (this.lease === lease) {
+            this.lease = null
+            if (state.value == ReportExportState.Preparing) mutableState.value = ReportExportState.Idle
         }
     }
 

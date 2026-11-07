@@ -62,7 +62,20 @@ internal fun ProjectFormContent(
     val project = (form as? ProjectForm.Edit)?.project
     // A new form starts from its own values, not from the last one's.
     key(project?.id ?: NEW_FORM) {
-        FormFields(project, projectCount, clients, defaults, canSave, sending, problem, serverNeeded, onRetry, onSave, onCancel, tasks)
+        FormFields(
+            project,
+            projectCount,
+            clients,
+            defaults,
+            canSave,
+            sending,
+            problem,
+            serverNeeded,
+            onRetry,
+            onSave,
+            onCancel,
+            tasks,
+        )
     }
 }
 

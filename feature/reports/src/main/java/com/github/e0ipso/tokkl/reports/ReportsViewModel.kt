@@ -259,7 +259,9 @@ class ReportsViewModel(
         return if (week == selection.range) selection else RangeSelection(week, preset = null)
     }
 
-    /** What [tab] shows for [selection] with [filters], and the workspace, [known] or read from the server when null. */
+    /**
+     * What [tab] shows for [selection] with [filters], and the workspace, [known] or read from the server when null.
+     */
     private fun fetch(
         selection: RangeSelection,
         known: ReportWorkspace?,

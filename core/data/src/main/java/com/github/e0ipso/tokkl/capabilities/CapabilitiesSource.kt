@@ -110,7 +110,7 @@ class CapabilitiesSource(private val store: ValueStore<Capabilities>) {
             try {
                 store.save(next)
                 loaded.stored = next
-            } catch (e: IOException) {
+            } catch (_: IOException) {
                 // The next refresh writes them again.
             }
         }

@@ -150,7 +150,18 @@ internal fun editForm(
     val end = settings.formatTime(shown.stop, time.zone)
     val duration = formatDuration(snappedSeconds(shown.start, shown.stop, time))
     val fields = entry.fields()
-    val target = DraftTarget.Edit(entry.id, entry.workspaceId, entry.start, stop, date, start, end, fields.picked, onPhone, entry)
+    val target = DraftTarget.Edit(
+        entry.id,
+        entry.workspaceId,
+        entry.start,
+        stop,
+        date,
+        start,
+        end,
+        fields.picked,
+        onPhone,
+        entry,
+    )
     return EntryDraft(target, fields, date, start, end, duration, syncedDuration = duration)
 }
 
@@ -163,7 +174,18 @@ internal fun noTimeForm(entry: CachedTimeEntry, stop: Instant, time: AccountTime
     val date = entry.noTimeDay(time.zone)
     val duration = formatDuration(time.snapDuration(stop.epochSecond - entry.start.epochSecond))
     val fields = entry.fields()
-    val target = DraftTarget.Edit(entry.id, entry.workspaceId, entry.start, stop, date, startText = "", endText = "", fields.picked, onPhone, entry)
+    val target = DraftTarget.Edit(
+        entry.id,
+        entry.workspaceId,
+        entry.start,
+        stop,
+        date,
+        startText = "",
+        endText = "",
+        fields.picked,
+        onPhone,
+        entry,
+    )
     return EntryDraft(target, fields, date, start = "", end = "", duration, syncedDuration = duration, noTimes = true)
 }
 

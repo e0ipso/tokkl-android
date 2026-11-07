@@ -332,7 +332,7 @@ class EntryActionsUiTest {
                     EntryActionsHost(
                         state = state,
                         onUndo = model::undo,
-                        onNoticeDone = model::noticeDone,
+                        onNoticeEnd = model::noticeDone,
                         onConfirmDelete = model::confirmDelete,
                         onCancelDelete = model::cancelDelete,
                         modifier = Modifier.align(Alignment.BottomCenter),

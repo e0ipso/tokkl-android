@@ -25,32 +25,42 @@ private const val DAY_MINUTES = 24 * 60
 fun parseTimeOfDay(raw: String, twelveHour: Boolean = false, reference: Int? = null, after: Int? = null): Int? {
     val match = TIME_OF_DAY.matchEntire(raw.jsTrim().lowercase().replace(JS_WHITESPACE_RUN, ""))
         ?: return null
-    var hour = match.groupValues[1].toInt()
+    val hour = match.groupValues[1].toInt()
     val minute = match.groups[2]?.value?.toInt() ?: 0
     val suffix = match.groups[3]?.value
-    if (minute > 59) return null
+    return when {
+        minute >= MINUTES_PER_HOUR -> null
+        suffix != null -> withSuffix(hour, minute, suffix)
+        hour >= HOURS_PER_DAY -> null
+        twelveHour && hour in 1 until CLOCK_FACE_HOURS -> guessHalfOfDay(hour, minute, reference, after)
+        else -> hour * MINUTES_PER_HOUR + minute
+    }
+}
 
-    if (suffix != null) {
-        if (hour < 1 || hour > 12) return null
-        hour = if (suffix.startsWith('a')) {
-            if (hour == 12) 0 else hour
-        } else {
-            if (hour == 12) 12 else hour + 12
-        }
-        return hour * 60 + minute
+/** A time with an explicit `a`, `am`, `p` or `pm` [suffix], or null for an hour off the clock face. */
+private fun withSuffix(hour: Int, minute: Int, suffix: String): Int? {
+    if (hour !in 1..CLOCK_FACE_HOURS) return null
+    val hourOfDay = if (suffix.startsWith('a')) {
+        if (hour == CLOCK_FACE_HOURS) 0 else hour
+    } else {
+        if (hour == CLOCK_FACE_HOURS) CLOCK_FACE_HOURS else hour + CLOCK_FACE_HOURS
     }
-    if (hour > 23) return null
-    if (twelveHour && hour >= 1 && hour <= 11) {
-        val am = hour * 60 + minute
-        val pm = am + 12 * 60
-        // Long arithmetic, so any Int reference or after gives JavaScript's answer without overflow.
-        if (after != null) {
+    return hourOfDay * MINUTES_PER_HOUR + minute
+}
+
+/** The morning or the afternoon [hour], as [parseTimeOfDay] guesses it from [after] or [reference]. */
+private fun guessHalfOfDay(hour: Int, minute: Int, reference: Int?, after: Int?): Int {
+    val am = hour * MINUTES_PER_HOUR + minute
+    val pm = am + 12 * 60
+    // Long arithmetic, so any Int reference or after gives JavaScript's answer without overflow.
+    return when {
+        after != null -> {
             fun wait(candidate: Int) = (candidate.toLong() - after + DAY_MINUTES) % DAY_MINUTES
-            return if (wait(pm) < wait(am)) pm else am
+            if (wait(pm) < wait(am)) pm else am
         }
-        if (reference != null) {
-            return if (abs(pm.toLong() - reference) < abs(am.toLong() - reference)) pm else am
-        }
+
+        reference != null -> if (abs(pm.toLong() - reference) < abs(am.toLong() - reference)) pm else am
+
+        else -> am
     }
-    return hour * 60 + minute
 }

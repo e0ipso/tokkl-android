@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.timer
 
-import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -29,18 +28,6 @@ import com.github.e0ipso.tokkl.ui.theme.TokklSpacing
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
 import com.github.e0ipso.tokkl.ui.windowWidth
-
-/**
- * How the Timer page shows time entries, as the web app's view switch does. [preferenceValue] is
- * the view's value in Tokkl's `timerView` preference.
- */
-enum class TimerView(@StringRes val label: Int, val preferenceValue: String) {
-    /** The entries, a day at a time. */
-    LIST(R.string.timer_view_list, "list"),
-
-    /** The calendar: the week, or the day on a phone held upright. */
-    CALENDAR(R.string.timer_view_calendar, "calendar"),
-}
 
 /**
  * The Timer page, the first page after sign-in (docs/PRD.md B2), as the web app's TimerPage.tsx
@@ -101,7 +88,11 @@ fun TimerScreen(
             top = {
                 if (scrollAway) TokklTopBar(title, windowInsets = WindowInsets(0))
                 Column(Modifier.screenContent(columnWidth)) {
-                    val gap = if (compactHeightWindow()) TokklTheme.spacing.inGroup else TokklTheme.spacing.betweenGroups
+                    val gap = if (compactHeightWindow()) {
+                        TokklTheme.spacing.inGroup
+                    } else {
+                        TokklTheme.spacing.betweenGroups
+                    }
                     Spacer(Modifier.height(if (compactHeightWindow()) gap else TokklTheme.spacing.underTopBar))
                     timer()
                     Spacer(Modifier.height(gap))

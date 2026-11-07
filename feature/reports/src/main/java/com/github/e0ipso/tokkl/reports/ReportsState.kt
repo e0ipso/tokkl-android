@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.reports
 
 import com.github.e0ipso.tokkl.api.ApiError
+import com.github.e0ipso.tokkl.api.HttpStatus
 
 /** A range and the preset it came from, null for a custom range or one stepped to. */
 data class RangeSelection(val range: ReportRange, val preset: RangePreset?)
@@ -62,13 +63,7 @@ sealed interface ReportFailure {
 internal fun reportFailureOf(error: ApiError): ReportFailure = when (error) {
     is ApiError.Network -> ReportFailure.Unreachable
 
-    // A reverse proxy answers these while the Tokkl server behind it is down.
-    is ApiError.UnexpectedStatus -> if (error.status in setOf(
-            502,
-            503,
-            504,
-        )
-    ) {
+    is ApiError.UnexpectedStatus -> if (error.status in PROXY_ANSWERS_SERVER_DOWN) {
         ReportFailure.Unreachable
     } else {
         ReportFailure.Unexpected(error.status)
@@ -82,3 +77,7 @@ internal fun reportFailureOf(error: ApiError): ReportFailure = when (error) {
 
     is ApiError.HostNotAllowed, is ApiError.InvalidResponse -> ReportFailure.Unexpected(null)
 }
+
+/** What a reverse proxy answers while the Tokkl server behind it is down. */
+private val PROXY_ANSWERS_SERVER_DOWN =
+    setOf(HttpStatus.BAD_GATEWAY, HttpStatus.SERVICE_UNAVAILABLE, HttpStatus.GATEWAY_TIMEOUT)

@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.reports
 
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.HttpStatus
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.api.WithHeaders
 import kotlinx.serialization.SerialName
@@ -88,7 +89,13 @@ class ReportsServer(private val api: TogglApiClient) {
 
                 is ApiResult.Failure -> {
                     val error = answer.error
-                    if (error !is ApiError.UnexpectedStatus || error.status !in setOf(404, 410)) return answer
+                    if (error !is ApiError.UnexpectedStatus || error.status !in setOf(
+                            HttpStatus.NOT_FOUND,
+                            HttpStatus.GONE,
+                        )
+                    ) {
+                        return answer
+                    }
                 }
             }
         }

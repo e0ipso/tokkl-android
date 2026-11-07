@@ -137,9 +137,9 @@ class ReminderActionReceiver :
                     pauseTimer = intent.getBooleanExtra(ReminderNotifier.PAUSE, false),
                     beforeRequest = finish,
                 )?.let { showTimerActionFailure(app, it) }
-            } catch (e: SQLiteException) {
+            } catch (_: SQLiteException) {
                 // The disk refused Stop. Keep the notification so the user can try again.
-            } catch (e: IOException) {
+            } catch (_: IOException) {
                 // Keep the notification if confirmation could not be stored.
             } finally {
                 finish()

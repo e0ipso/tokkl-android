@@ -166,5 +166,3 @@ internal fun SupportingLine(@StringRes hint: Int, @StringRes error: Int?, @Strin
         Text(stringResource(shown))
     }
 }
-
-/** The message under the form, or null for a result that the screen shows in a dialog or not at all. */

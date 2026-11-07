@@ -53,7 +53,7 @@ class ReminderSync(
         changes.collect {
             try {
                 reconcile()
-            } catch (e: IOException) {
+            } catch (_: IOException) {
                 // Keep the old state on a failed disk write; the next running/settings event retries.
             }
         }
@@ -88,12 +88,8 @@ class ReminderSync(
     /** A worker may arrive late, after cancellation, a start correction, sign-out or a switch. */
     suspend fun fire(id: Long, start: Long, due: Long): Unit = lock.withLock {
         val timer = update(latest()) ?: return@withLock
-        if (timer.start != start || currentId(
-                id,
-            ) != currentId(timer.id) || timer.handled || timer.due != due
-        ) {
-            return@withLock
-        }
+        val same = timer.start == start && currentId(id) == currentId(timer.id) && !timer.handled
+        if (!same || timer.due != due) return@withLock
         // Persist first, so another process or a second delivery never posts it twice.
         timers.save(timer.copy(handled = true))
         post(timer)

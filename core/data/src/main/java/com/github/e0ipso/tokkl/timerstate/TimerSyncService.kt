@@ -67,7 +67,7 @@ class TimerSyncService : Service() {
         latestStart = startId
         try {
             promote()
-        } catch (e: ServiceStartNotAllowedException) {
+        } catch (_: ServiceStartNotAllowedException) {
             // A restart the platform refuses in the background. The next app open starts it again.
             stopSelf(startId)
             return START_NOT_STICKY
@@ -146,7 +146,7 @@ class TimerSyncService : Service() {
         fun start(context: Context): Boolean = try {
             context.startForegroundService(Intent(context, TimerSyncService::class.java))
             true
-        } catch (e: ServiceStartNotAllowedException) {
+        } catch (_: ServiceStartNotAllowedException) {
             false
         }
     }

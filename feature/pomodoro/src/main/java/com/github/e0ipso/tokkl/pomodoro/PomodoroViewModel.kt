@@ -16,7 +16,6 @@ import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.SessionActions
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import com.github.e0ipso.tokkl.timerstate.TimerControls
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
@@ -315,8 +314,6 @@ class PomodoroViewModel(
                             problem = if (result == TimerActionResult.Done) null else PomodoroProblem(action, result),
                         )
                     }
-                } catch (e: CancellationException) {
-                    throw e
                 } finally {
                     mutableState.update { it.copy(busy = false, alarmDenied = alarmDenied()) }
                 }

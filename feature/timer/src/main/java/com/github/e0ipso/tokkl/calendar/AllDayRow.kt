@@ -126,7 +126,7 @@ private fun AllDayCell(
     state: CalendarState.Shown,
     now: Instant,
     editing: CalendarEditing?,
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
 ) {
     val line = MaterialTheme.colorScheme.outlineVariant
     val addAction = allDayAddAction(day, editing)
@@ -178,7 +178,7 @@ private fun AllDayChip(
     val noDescription = stringResource(R.string.history_no_description)
     val heading = entry.description.ifBlank { entry.project ?: noDescription }
     val duration = settings.formatDuration(entry.seconds(now))
-    val spoken = spokenChip(resources, entry, settings, now)
+    val spoken = spokenChip(resources, entry, now)
     val editLabel = stringResource(R.string.entry_edit_action)
     Box(
         contentAlignment = Alignment.CenterStart,
@@ -208,7 +208,8 @@ private fun AllDayChip(
             .clearAndSetSemantics { contentDescription = spoken },
     ) {
         when {
-            // Where height is short, a chip is its touch target's height and no more, and says "Not sent" with its icon.
+            // Where height is short, a chip is its touch target's height and no more, and says "Not sent" with its
+            // icon.
             oneLine -> ChipLine(heading, duration, mark = entry.unsent)
 
             entry.unsent -> UnsentBlockText { mark ->
@@ -253,14 +254,13 @@ private fun ChipLine(heading: String, duration: String, mark: Boolean) {
 }
 
 /** What TalkBack reads for a chip: description, project and task, duration, and whether it is unsent. */
-private fun spokenChip(resources: Resources, entry: CalendarEntry, settings: AccountSettings, now: Instant): String =
-    listOfNotNull(
-        entry.description.ifBlank { resources.getString(R.string.history_no_description) },
-        entry.project,
-        entry.task,
-        spokenDuration(resources, entry.seconds(now)),
-        if (entry.unsent) resources.getString(R.string.history_unsent) else null,
-    ).joinToString(", ")
+private fun spokenChip(resources: Resources, entry: CalendarEntry, now: Instant): String = listOfNotNull(
+    entry.description.ifBlank { resources.getString(R.string.history_no_description) },
+    entry.project,
+    entry.task,
+    spokenDuration(resources, entry.seconds(now)),
+    if (entry.unsent) resources.getString(R.string.history_unsent) else null,
+).joinToString(", ")
 
 /** TalkBack's action on [day]'s All day cell that opens the entry form for a new no-time entry, with [editing]. */
 @Composable

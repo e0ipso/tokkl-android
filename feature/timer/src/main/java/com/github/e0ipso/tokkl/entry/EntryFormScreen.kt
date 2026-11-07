@@ -73,7 +73,7 @@ fun EntryFormScreen(
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
     canRestore: () -> Boolean = { false },
-    onDeleted: (CachedTimeEntry, Boolean) -> Unit = { _, _ -> },
+    onEntryDelete: (CachedTimeEntry, Boolean) -> Unit = { _, _ -> },
 ) {
     LaunchedEffect(model) { if (!model.isOpen) onClose() }
     val state by model.state.collectAsState()
@@ -94,8 +94,8 @@ fun EntryFormScreen(
             onTimesDone = model::timesDone,
             onDurationDone = model::durationDone,
             onSave = model::save,
-            onDelete = { model.delete(canRestore(), onDeleted) },
-            onConfirmDelete = { model.confirmDelete(onDeleted) },
+            onDelete = { model.delete(canRestore(), onEntryDelete) },
+            onConfirmDelete = { model.confirmDelete(onEntryDelete) },
             onCancelDelete = model::cancelDelete,
             onClose = close,
         ),
@@ -212,7 +212,7 @@ private fun Fields(state: EntryFormState.Open, actions: EntryFormActions, picker
             original = state.original,
             descriptionHint = stringResource(R.string.entry_form_description_hint),
             onDescriptionChange = actions.onDescriptionChange,
-            onDescriptionDone = {},
+            onDescriptionFinish = {},
             onPick = actions.onPick,
             onBillableChange = actions.onBillableChange,
             picker = { original, picked, onPickedChange, pickerModifier ->

@@ -468,7 +468,9 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
         }
     }
 
-    /** The Projects page above the bottom bar: clients, a billable project, a name that wraps and an archived project. */
+    /**
+     * The Projects page above the bottom bar: clients, a billable project, a name that wraps and an archived project.
+     */
     @SignedOut
     @Test
     fun projects() {
@@ -634,7 +636,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
                     state = state,
                     onLengths = {
                     }, onFields = {
-                    }, onDescription = {}, onDescriptionDone = {}, onStart = {}, onNext = {}, onEnd = {},
+                    }, onDescription = {}, onDescriptionFinish = {}, onStart = {}, onNext = {}, onEnd = {},
                     clock = TODAY,
                 )
             }
@@ -726,7 +728,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
                 state = state,
                 elapsedSeconds = elapsedSeconds,
                 onDescriptionChange = {},
-                onDescriptionDone = {},
+                onDescriptionFinish = {},
                 onPick = {},
                 onBillableChange = {},
                 onStart = {},

@@ -19,7 +19,6 @@ import com.github.e0ipso.tokkl.timerstate.TimerStateStore
 import com.github.e0ipso.tokkl.timerstate.TimerSurfaceActions
 import com.github.e0ipso.tokkl.timerstate.TimerSync
 import com.github.e0ipso.tokkl.timerstate.TimerSyncFollower
-import com.github.e0ipso.tokkl.timerstate.TimerSyncService
 import com.github.e0ipso.tokkl.timerstate.TimerSyncServiceSlot
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -37,11 +36,9 @@ internal val timerModule = module {
     single { HeldTimerFlows(get(), get(), io()) }
     single { TimerControlsSource(get(), get(), get(), io()) }
 
-    /**
-     * Pause, Resume and Discard, and a Pomodoro session's Start, Next phase and End, sent to the
-     * server at once and never queued. Each answer, refusals included, goes to the account's
-     * timer state.
-     */
+    // Pause, Resume and Discard, and a Pomodoro session's Start, Next phase and End, sent to the
+    // server at once and never queued. Each answer, refusals included, goes to the account's
+    // timer state.
     single {
         TimerActions(
             client = get<Session>(),
@@ -50,12 +47,10 @@ internal val timerModule = module {
         )
     } binds arrayOf(PauseActions::class, SessionActions::class)
 
-    /**
-     * The Pause, Resume and Stop of the running notification, the widget, the Quick Settings tile
-     * and its long press, and the reminder's Pause, checked against the timer controls at each
-     * tap. Stop of a running entry goes to the [ChangeQueue]; the rest go to the server through
-     * [TimerActions].
-     */
+    // The Pause, Resume and Stop of the running notification, the widget, the Quick Settings tile
+    // and its long press, and the reminder's Pause, checked against the timer controls at each
+    // tap. Stop of a running entry goes to the [ChangeQueue]; the rest go to the server through
+    // [TimerActions].
     single {
         TimerSurfaceActions(
             controls = get<TimerControlsSource>()::current,
@@ -68,13 +63,11 @@ internal val timerModule = module {
 
     single { TimerSyncServiceSlot() }
 
-    /**
-     * The one owner of the timer event stream, which [TimerSyncService] runs for the account's
-     * timer state, with its calls from [TimerEventConnections].
-     *
-     * It keeps a scope of its own on [DefaultDispatcher], not the application scope on the main
-     * thread, for its reconnect delays.
-     */
+    // The one owner of the timer event stream, which [TimerSyncService] runs for the account's
+    // timer state, with its calls from [TimerEventConnections].
+    //
+    // It keeps a scope of its own on [DefaultDispatcher], not the application scope on the main
+    // thread, for its reconnect delays.
     single {
         val scope = CoroutineScope(SupervisorJob() + get<CoroutineDispatcher>(DefaultDispatcher))
         val connections = TimerEventConnections(get(), get(), get(), get(), scope, io())

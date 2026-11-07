@@ -18,8 +18,8 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 
 /** What a catalog page shows when the server has none of its items: [title] over [message]. */
 @Composable
-fun CatalogEmpty(title: String, message: String) {
-    Column(verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup)) {
+fun CatalogEmpty(title: String, message: String, modifier: Modifier = Modifier) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup)) {
         Text(title, style = MaterialTheme.typography.titleMedium)
         Text(message, style = MaterialTheme.typography.bodyLarge)
     }
@@ -27,11 +27,11 @@ fun CatalogEmpty(title: String, message: String) {
 
 /** One row of a catalog list: [content] across the row, usually the part a tap opens and a button after it. */
 @Composable
-fun CatalogListRow(content: @Composable RowScope.() -> Unit) {
+fun CatalogListRow(modifier: Modifier = Modifier, content: @Composable RowScope.() -> Unit) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space3),
-        modifier = Modifier.fillMaxWidth().padding(vertical = TokklTheme.spacing.space1),
+        modifier = modifier.fillMaxWidth().padding(vertical = TokklTheme.spacing.space1),
         content = content,
     )
 }

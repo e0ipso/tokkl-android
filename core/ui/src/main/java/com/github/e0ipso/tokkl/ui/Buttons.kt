@@ -48,7 +48,11 @@ fun TokklIconButton(
             modifier = modifier.sizeIn(minWidth = TokklTheme.spacing.space8, minHeight = TokklTheme.spacing.space8),
             enabled = enabled,
             colors = IconButtonDefaults.iconButtonColors(
-                contentColor = if (danger) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                contentColor = if (danger) {
+                    MaterialTheme.colorScheme.error
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
             ),
         ) {
             Icon(

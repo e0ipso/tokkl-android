@@ -125,7 +125,12 @@ internal fun BillableToggle(billable: Boolean, enabled: Boolean, onChange: (Bool
  * target, at least 48dp high. [modifier] makes it clickable or toggleable.
  */
 @Composable
-private fun FieldButton(active: Boolean, enabled: Boolean, modifier: Modifier, content: @Composable () -> Unit) {
+private fun FieldButton(
+    active: Boolean,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
     val colors = MaterialTheme.colorScheme
     val frame = when {
         !enabled -> colors.outlineVariant

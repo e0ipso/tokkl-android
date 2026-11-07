@@ -32,21 +32,32 @@ private val UNIT = Regex("""(\d+(?:\.\d+)?|\.\d+)$JS_WHITESPACE*([a-z]+)""")
  */
 fun parseDuration(raw: String): Long? {
     val input = raw.jsTrim().lowercase().replaceFirst(',', '.')
-    if (input == "") return null
-
     val colon = COLON.matchEntire(input)
-    if (colon != null) {
-        val h = colon.groupValues[1].toDouble()
-        val m = colon.groupValues[2].toDouble()
-        val s = colon.groups[3]?.value?.toDouble() ?: 0.0
-        if (m > 59 || s > 59) return null
-        return withinLimit(h * 3600 + m * 60 + s)
+    return when {
+        input == "" -> null
+
+        colon != null -> colonDuration(colon)
+
+        // A bare integer means minutes, a bare decimal means hours.
+        BARE_INTEGER.matches(input) -> withinLimit(input.toDouble() * SECONDS_PER_MINUTE)
+
+        BARE_DECIMAL.matches(input) -> withinLimit(jsRound(input.toDouble() * SECONDS_PER_HOUR))
+
+        else -> unitDuration(input)
     }
+}
 
-    // A bare integer means minutes, a bare decimal means hours.
-    if (BARE_INTEGER.matches(input)) return withinLimit(input.toDouble() * 60)
-    if (BARE_DECIMAL.matches(input)) return withinLimit(jsRound(input.toDouble() * 3600))
+/** `h:mm` or `h:mm:ss`, with minutes and seconds under 60. */
+private fun colonDuration(colon: MatchResult): Long? {
+    val h = colon.groupValues[1].toDouble()
+    val m = colon.groupValues[2].toDouble()
+    val s = colon.groups[3]?.value?.toDouble() ?: 0.0
+    if (m >= MINUTES_PER_HOUR || s >= SECONDS_PER_MINUTE) return null
+    return withinLimit(h * SECONDS_PER_HOUR + m * SECONDS_PER_MINUTE + s)
+}
 
+/** Numbers with units, such as `1h 30m`, which together make up the whole of [input]. */
+private fun unitDuration(input: String): Long? {
     var total = 0.0
     val consumed = StringBuilder()
     for (match in UNIT.findAll(input)) {
@@ -54,10 +65,8 @@ fun parseDuration(raw: String): Long? {
         total += match.groupValues[1].toDouble() * seconds
         consumed.append(match.value)
     }
-    if (consumed.toString().replace(JS_WHITESPACE_RUN, "") != input.replace(JS_WHITESPACE_RUN, "")) {
-        return null
-    }
-    return withinLimit(jsRound(total))
+    val whole = consumed.toString().replace(JS_WHITESPACE_RUN, "") == input.replace(JS_WHITESPACE_RUN, "")
+    return if (whole) withinLimit(jsRound(total)) else null
 }
 
 /**
@@ -109,17 +118,16 @@ enum class DurationFormat(val togglName: String) {
 fun formatDuration(totalSeconds: Long, format: DurationFormat = DurationFormat.IMPROVED): String {
     // Math.floor in the TypeScript has nothing to do here, since a Long is already whole.
     val seconds = if (totalSeconds < 0) 0.0 else totalSeconds.toDouble()
-    if (format == DurationFormat.DECIMAL) return "${jsToFixed(seconds / 3600, 2)} h"
+    if (format == DurationFormat.DECIMAL) return "${jsToFixed(seconds / SECONDS_PER_HOUR, 2)} h"
 
-    val h = floor(seconds / 3600)
-    val m = floor((seconds % 3600) / 60)
-    val s = seconds % 60
-    if (format == DurationFormat.CLASSIC) {
-        if (h > 0) return "${whole(h)}:${pad(m)}:${pad(s)}"
-        if (m > 0) return "${whole(m)}:${pad(s)} min"
-        return "${whole(s)} sec"
+    val h = floor(seconds / SECONDS_PER_HOUR)
+    val m = floor((seconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE)
+    val s = seconds % SECONDS_PER_MINUTE
+    return when {
+        format != DurationFormat.CLASSIC || h > 0 -> "${whole(h)}:${pad(m)}:${pad(s)}"
+        m > 0 -> "${whole(m)}:${pad(s)} min"
+        else -> "${whole(s)} sec"
     }
-    return "${whole(h)}:${pad(m)}:${pad(s)}"
 }
 
 /**

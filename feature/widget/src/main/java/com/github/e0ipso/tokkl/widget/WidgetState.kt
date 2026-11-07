@@ -177,38 +177,47 @@ fun widgetState(
             WidgetFavorite(fields, labels.project, labels.task)
         }
     }
-    val day = settings?.time()?.let { time ->
-        val today = time.local(now).toLocalDate()
-        val rows = countedTimerEntries(entries, time, now, serverIdOf).filter { it.day == today }
-        val stopped = rows.filter { it.entry.stop != null }
-        // Use the effective cached row, including a local replacement of the ID the controls
-        // already show. Its elapsed time belongs to the day even across that remap emission.
-        val active = rows.firstOrNull { it.entry.stop == null }?.entry
-        val byId = projects.associateBy { it.id }
-        val grouped = rows.groupBy { it.entry.projectId }
-        val reportProjects = grouped.map { (projectId, segments) ->
-            val project = byId[projectId]
-            val seconds = segments.filter { it.entry.stop != null }.sumOf { it.seconds }
-            WidgetDayProject(
-                projectId = projectId,
-                project = project?.name,
-                projectColor = project?.color,
-                stoppedSeconds = seconds,
-                formattedStopped = settings.formatDurationWithoutSeconds(seconds),
-                running = segments.any { it.entry.id == active?.id },
-            )
-        }.sortedWith(compareByDescending<WidgetDayProject> { it.stoppedSeconds }.thenBy { it.projectId })
-        WidgetDayReport(
-            date = today,
-            stoppedSeconds = stopped.sumOf { it.seconds },
-            stoppedBillableSeconds = stopped.filter { it.entry.billable }.sumOf { it.seconds },
-            entryCount = rows.size,
-            projects = reportProjects,
-            running = active?.let { WidgetDayRunning(it.id, it.start, it.billable) },
-            durationFormat = settings.durationFormat,
-        )
-    }
+    val day = settings?.let { dayReport(it, entries, projects, now, serverIdOf) }
     return WidgetState.Ready(shown, starts, paused, day)
+}
+
+/** The day report of [settings]' account for the day [now] falls on, or null without its time zone. */
+private fun dayReport(
+    settings: AccountSettings,
+    entries: List<CachedTimeEntry>,
+    projects: List<CachedProject>,
+    now: Instant,
+    serverIdOf: Map<Long, Long>,
+): WidgetDayReport? = settings.time()?.let { time ->
+    val today = time.local(now).toLocalDate()
+    val rows = countedTimerEntries(entries, time, now, serverIdOf).filter { it.day == today }
+    val stopped = rows.filter { it.entry.stop != null }
+    // Use the effective cached row, including a local replacement of the ID the controls
+    // already show. Its elapsed time belongs to the day even across that remap emission.
+    val active = rows.firstOrNull { it.entry.stop == null }?.entry
+    val byId = projects.associateBy { it.id }
+    val grouped = rows.groupBy { it.entry.projectId }
+    val reportProjects = grouped.map { (projectId, segments) ->
+        val project = byId[projectId]
+        val seconds = segments.filter { it.entry.stop != null }.sumOf { it.seconds }
+        WidgetDayProject(
+            projectId = projectId,
+            project = project?.name,
+            projectColor = project?.color,
+            stoppedSeconds = seconds,
+            formattedStopped = settings.formatDurationWithoutSeconds(seconds),
+            running = segments.any { it.entry.id == active?.id },
+        )
+    }.sortedWith(compareByDescending<WidgetDayProject> { it.stoppedSeconds }.thenBy { it.projectId })
+    WidgetDayReport(
+        date = today,
+        stoppedSeconds = stopped.sumOf { it.seconds },
+        stoppedBillableSeconds = stopped.filter { it.entry.billable }.sumOf { it.seconds },
+        entryCount = rows.size,
+        projects = reportProjects,
+        running = active?.let { WidgetDayRunning(it.id, it.start, it.billable) },
+        durationFormat = settings.durationFormat,
+    )
 }
 
 /**
@@ -241,10 +250,27 @@ object WidgetLayout {
     const val LARGE_HEIGHT_DP = 310f
     const val MAX_SEGMENTS = 5
 
-    fun clockRowHeight(large: Boolean, scale: Float): Float =
-        if (large) 46f + 18f * (scale.coerceAtLeast(1f) - 1f) else 28f + 20f * (scale.coerceAtLeast(1f) - 1f)
-    fun reportHeadingHeight(scale: Float): Float = 22f + 8f * (scale.coerceAtLeast(1f) - 1f)
-    fun statsHeight(scale: Float): Float = 44f + 20f * (scale.coerceAtLeast(1f) - 1f)
-    fun todayRowHeight(scale: Float): Float = 26f + 14f * (scale.coerceAtLeast(1f) - 1f)
+    fun clockRowHeight(large: Boolean, scale: Float): Float = if (large) {
+        grown(LARGE_CLOCK_ROW_DP, LARGE_CLOCK_ROW_GROWTH_DP, scale)
+    } else {
+        grown(CLOCK_ROW_DP, CLOCK_ROW_GROWTH_DP, scale)
+    }
+    fun reportHeadingHeight(scale: Float): Float = grown(REPORT_HEADING_DP, REPORT_HEADING_GROWTH_DP, scale)
+    fun statsHeight(scale: Float): Float = grown(STATS_DP, STATS_GROWTH_DP, scale)
+    fun todayRowHeight(scale: Float): Float = grown(TODAY_ROW_DP, TODAY_ROW_GROWTH_DP, scale)
+
+    /** A row [base] tall at font scale 1 that grows by [growth] for each step of font scale above 1. */
+    private fun grown(base: Float, growth: Float, scale: Float): Float = base + growth * (scale.coerceAtLeast(1f) - 1f)
+
+    private const val LARGE_CLOCK_ROW_DP = 46f
+    private const val LARGE_CLOCK_ROW_GROWTH_DP = 18f
+    private const val CLOCK_ROW_DP = 28f
+    private const val CLOCK_ROW_GROWTH_DP = 20f
+    private const val REPORT_HEADING_DP = 22f
+    private const val REPORT_HEADING_GROWTH_DP = 8f
+    private const val STATS_DP = 44f
+    private const val STATS_GROWTH_DP = 20f
+    private const val TODAY_ROW_DP = 26f
+    private const val TODAY_ROW_GROWTH_DP = 14f
     const val PADDING_DP = 12f
 }

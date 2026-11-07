@@ -82,7 +82,7 @@ fun TagsScreen(model: TagsViewModel, modifier: Modifier = Modifier) {
             onAskToDelete = model::askToDelete,
             onDelete = model::delete,
             onDismiss = model::dismiss,
-            onDoneShown = model::doneShown,
+            onDoneShow = model::doneShown,
         ),
         modifier = modifier,
     )
@@ -98,7 +98,7 @@ class TagsActions(
     val onAskToDelete: (Tag) -> Unit = {},
     val onDelete: () -> Unit = {},
     val onDismiss: () -> Unit = {},
-    val onDoneShown: () -> Unit = {},
+    val onDoneShow: () -> Unit = {},
 )
 
 /** [TagsScreen] without its model. */
@@ -125,7 +125,7 @@ fun TagsContent(
     CatalogPage(
         title = stringResource(R.string.nav_tags),
         done = state.done?.let { changeText(it) },
-        onDoneShown = actions.onDoneShown,
+        onDoneShow = actions.onDoneShow,
         modifier = modifier,
         lazyContent = {
             item(key = "new-tag") {
@@ -208,7 +208,9 @@ fun TagsContent(
     }
 }
 
-/** A tag as the list shows it. A row the phone had and the server did not send ([fromServer] false) offers no action. */
+/**
+ * A tag as the list shows it. A row the phone had and the server did not send ([fromServer] false) offers no action.
+ */
 private data class TagRow(val tag: Tag, val fromServer: Boolean)
 
 /** The web app's field and Add tag button, which creates a tag at once. */
@@ -241,7 +243,10 @@ private fun NewTagField(
     }
 }
 
-/** One tag: a tap on its name renames it, and Delete asks first. Both stay off for a row from the phone and while nothing can change. */
+/**
+ * One tag: a tap on its name renames it, and Delete asks first. Both stay off for a row from the phone and while
+ * nothing can change.
+ */
 @Composable
 private fun TagListRow(row: TagRow, canChange: Boolean, actions: TagsActions) {
     val tag = row.tag

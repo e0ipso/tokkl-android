@@ -149,7 +149,8 @@ abstract class LandscapeCalendarTest(
 
             val shown = grid.getBoundsInRoot()
             assertTrue(
-                "the grid shows $hourRows whole hour rows: ${shown.height()} tall after the scroll, ${before.height()} before",
+                "the grid shows $hourRows whole hour rows: ${shown.height()} tall after the scroll, " +
+                    "${before.height()} before",
                 shown.height() >= HOUR_ROW * hourRows,
             )
             val head = composeRule.onNode(dayHead)
@@ -246,7 +247,7 @@ private fun CalendarPage() {
                         state = TimerState.Idle(EntryFields(), EntryLabels(), workspaceId = 1),
                         elapsedSeconds = 0,
                         onDescriptionChange = {},
-                        onDescriptionDone = {},
+                        onDescriptionFinish = {},
                         onPick = {},
                         onBillableChange = {},
                         onStart = {},

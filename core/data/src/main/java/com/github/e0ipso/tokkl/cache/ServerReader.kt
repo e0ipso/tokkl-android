@@ -80,7 +80,7 @@ private fun favoritesFrom(preferences: MePreferences?): List<CachedFavorite>? {
     val body = preferences?.body ?: return null
     val decoded = try {
         ApiJson.decodeFromJsonElement(ServerPreferences.serializer(), body)
-    } catch (e: IllegalArgumentException) {
+    } catch (_: IllegalArgumentException) {
         // kotlinx.serialization's SerializationException is an IllegalArgumentException.
         return null
     }

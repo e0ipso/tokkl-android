@@ -55,11 +55,12 @@ fun PomodoroAlarmContent(
     state: PomodoroAlarmState,
     onNext: () -> Unit,
     onEnd: () -> Unit,
+    modifier: Modifier = Modifier,
     clock: Clock = Clock.systemUTC(),
 ) {
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val ring = state.ring
-    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+    Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(
             modifier = Modifier.fillMaxSize().safeDrawingPadding().verticalScroll(rememberScrollState())
                 .screenContent().padding(vertical = TokklTheme.spacing.betweenGroups),

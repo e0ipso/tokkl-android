@@ -44,11 +44,11 @@ private val TopBarBorder: Dp = 1.dp
  * The bar at the top of every signed-in page: the logo followed by [title] in the page-title role.
  * TalkBack reads the title as a heading and skips the decorative logo. The bar is on surface,
  * [TopBarHeight] tall or taller at large font scales.
- * Along its bottom runs a strip in the wordmark's full gradient, [TokklSpectrum], under the
- * controls and never behind them, then a 1dp border. The web app draws the same strip under its
- * page titles and at the foot of its phone header (tokkl d012228). A page opened from another,
- * such as Licences, a form or the entry screen, passes [onBack] for the 48dp back button; the pages of the bottom bar have
- * none. The title and the button sit in the screen's margins, as the content under them does.
+ * Along its bottom runs a strip in the wordmark's full gradient, [TokklSpectrum], under the controls and never behind
+ * them, then a 1dp border. The web app draws the same strip under its page titles and at the foot of its phone header
+ * (tokkl d012228). A page opened from another, such as Licences, a form or the entry screen, passes [onBack] for the
+ * 48dp back button; the pages of the bottom bar have none. The title and the button sit in the screen's margins, as the
+ * content under them does.
  *
  * The bar never shows the wordmark, which appears only on sign-in and the launch splash. It looks
  * the same however far the page has scrolled, so it has no motion for reduced motion to stop.

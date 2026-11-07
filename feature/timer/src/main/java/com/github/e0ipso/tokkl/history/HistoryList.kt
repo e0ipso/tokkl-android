@@ -5,6 +5,7 @@ import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -85,7 +86,7 @@ fun HistoryList(
             EntryActionsHost(
                 state = actionsState,
                 onUndo = actions::undo,
-                onNoticeDone = actions::noticeDone,
+                onNoticeEnd = actions::noticeDone,
                 onConfirmDelete = actions::confirmDelete,
                 onCancelDelete = actions::cancelDelete,
                 modifier = Modifier.align(Alignment.BottomCenter),
@@ -159,7 +160,12 @@ internal class EntryCallbacks(
 )
 
 @Composable
-private fun Days(state: HistoryState.Shown, onLoadOlder: () -> Unit, callbacks: EntryCallbacks, modifier: Modifier) {
+private fun Days(
+    state: HistoryState.Shown,
+    onLoadOlder: () -> Unit,
+    callbacks: EntryCallbacks,
+    modifier: Modifier = Modifier,
+) {
     val resources = LocalResources.current
     val locale = LocalConfiguration.current.locales[0]
     val words = remember(resources) { DateWords(resources) }
@@ -316,7 +322,7 @@ private fun OlderRow(older: OlderDays, onLoadOlder: () -> Unit) {
 }
 
 @Composable
-private fun Problem(title: String?, message: String, onRetry: () -> Unit) {
+private fun ColumnScope.Problem(title: String?, message: String, onRetry: () -> Unit) {
     Column(Modifier.semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite }) {
         if (title != null) {
             Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })

@@ -73,7 +73,7 @@ fun ProjectsScreen(model: ProjectsViewModel, modifier: Modifier = Modifier) {
             onSetActive = model::setActive,
             onSave = model::save,
             onCloseForm = model::closeForm,
-            onDoneShown = model::doneShown,
+            onDoneShow = model::doneShown,
         ),
         tasks = tasks,
         taskActions = TaskActions(
@@ -84,7 +84,7 @@ fun ProjectsScreen(model: ProjectsViewModel, modifier: Modifier = Modifier) {
             onAskToDelete = model.tasks::askToDelete,
             onDelete = model.tasks::delete,
             onDismiss = model.tasks::dismiss,
-            onDoneShown = model.tasks::doneShown,
+            onDoneShow = model.tasks::doneShown,
         ),
         modifier = modifier,
     )
@@ -99,7 +99,7 @@ class ProjectsActions(
     val onSetActive: (Project, Boolean) -> Unit = { _, _ -> },
     val onSave: (ProjectFields) -> Unit = {},
     val onCloseForm: () -> Unit = {},
-    val onDoneShown: () -> Unit = {},
+    val onDoneShow: () -> Unit = {},
 )
 
 /** [ProjectsScreen] without its model. */
@@ -119,8 +119,8 @@ fun ProjectsContent(
     val canChange = state.canChange && !offline
     val done = tasks.done ?: state.done
     val doneShown = {
-        actions.onDoneShown()
-        taskActions.onDoneShown()
+        actions.onDoneShow()
+        taskActions.onDoneShow()
     }
     val form = state.overlay
     val title = when (form) {
@@ -131,7 +131,7 @@ fun ProjectsContent(
     CatalogPage(
         title = stringResource(title),
         done = done?.let { changeText(it) },
-        onDoneShown = doneShown,
+        onDoneShow = doneShown,
         modifier = modifier,
         onBack = if (form != null) actions.onCloseForm else null,
     ) {
@@ -162,7 +162,9 @@ fun ProjectsContent(
     }
 }
 
-/** A project as the list shows it. [project] is the server's, and null for a row from the phone, which offers no action. */
+/**
+ * A project as the list shows it. [project] is the server's, and null for a row from the phone, which offers no action.
+ */
 internal data class ProjectRow(
     val id: Long,
     val name: String,

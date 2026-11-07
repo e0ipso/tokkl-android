@@ -35,7 +35,7 @@ data class SnappedSpan(val start: Instant, val stop: Instant)
  * 60.
  */
 fun isTimeResolution(minutes: Double): Boolean =
-    minutes.isFinite() && floor(minutes) == minutes && minutes >= 1 && 60 % minutes == 0.0
+    minutes.isFinite() && floor(minutes) == minutes && minutes >= 1 && MINUTES_PER_HOUR % minutes == 0.0
 
 /**
  * Independently snaps both ends to the account's wall-clock grid, taking the later point on a
@@ -190,8 +190,8 @@ private fun nearestGridPoint(time: Double, step: Double, rules: ZoneRules): Doub
  */
 private fun offsetMs(at: Double, rules: ZoneRules): Double {
     require(abs(at) <= MAX_TIME_MS) { "Invalid time value" }
-    val offset = rules.getOffset(Instant.ofEpochMilli(at.toLong())).totalSeconds * 1000.0
-    return if (floor(at / 1000) * 1000 + offset > MAX_TIME_MS) Double.NaN else offset
+    val offset = (rules.getOffset(Instant.ofEpochMilli(at.toLong())).totalSeconds * MILLIS_PER_SECOND).toDouble()
+    return if (floor(at / MILLIS_PER_SECOND) * MILLIS_PER_SECOND + offset > MAX_TIME_MS) Double.NaN else offset
 }
 
 /** `instant.getTime()` of the JavaScript Date for [instant]: NaN outside a Date's range. */

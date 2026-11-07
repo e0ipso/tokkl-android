@@ -24,9 +24,14 @@ internal fun mix(colour: Color, base: Color, fraction: Float): Color = Color(
 
 /** A project's `#rrggbb` colour, or null when it has none the app can read. */
 internal fun projectColour(hex: String?): Color? =
-    hex?.takeIf { HEX.matches(it) }?.let { Color(0xFF000000 or it.substring(1).toLong(16)) }
+    hex?.takeIf { HEX.matches(it) }?.let { Color(OPAQUE or it.substring(1).toLong(HEX_RADIX)) }
 
 private val HEX = Regex("#[0-9a-fA-F]{6}")
+
+/** The alpha of an opaque ARGB colour. */
+private const val OPAQUE = 0xFF000000
+
+private const val HEX_RADIX = 16
 
 /**
  * The days a finished swipe of [dx] by [dy] pixels moves: 1 after a swipe to the left and -1

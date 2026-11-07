@@ -149,7 +149,7 @@ class TimerStateSource(
     private fun store(held: HeldTimerState) {
         try {
             save(StoredTimerState(held, acknowledged))
-        } catch (e: IOException) {
+        } catch (_: IOException) {
             // The next accepted state or taken notice writes again.
         }
     }

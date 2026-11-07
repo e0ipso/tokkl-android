@@ -89,7 +89,7 @@ class NotificationPermissionPromptTest {
                     starts,
                     ask,
                     openSettings = { settingsOpened += Unit },
-                    onAllowed = { allows += Unit },
+                    onAllow = { allows += Unit },
                 )
             }
         }

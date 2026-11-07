@@ -30,46 +30,9 @@ internal fun decodeAppSummary(body: JsonObject): ApiResult<SummaryReport> = try 
     val rawTotals = body.getValue("totals").jsonObject
     rawTotals.requireNumbers("seconds", "billable_seconds", "entry_count")
     val totalsExtras = extras.fields(rawTotals, setOf("seconds", "billable_seconds", "entry_count", "amounts"))
-    val rawAmounts = rawTotals["amounts"] as? JsonArray
-    val amounts = response.totals.amounts.orEmpty().mapIndexedNotNull { index, amount ->
-        val raw = rawAmounts!![index].jsonObject
-        raw.requireStrings("currency")
-        raw.requireNumbers("cents")
-        // A currency with no amount must not be turned into a zero-priced currency.
-        amount.cents?.let {
-            Amount(amount.currency, it, extras.fields(raw, setOf("currency", "cents")))
-        }
-    }
-    val rawSeries = body.getValue("series") as JsonArray
-    val points = response.series.mapIndexed { index, point ->
-        rawSeries[index].jsonObject.requireStrings("start")
-        rawSeries[index].jsonObject.requireNumbers("seconds", "billable_seconds")
-        SeriesPoint(
-            LocalDate.parse(point.start),
-            point.seconds,
-            point.billableSeconds,
-            extras.fields(rawSeries[index].jsonObject, setOf("start", "seconds", "billable_seconds")),
-        )
-    }
-    val rawGroups = body.getValue("groups") as JsonArray
-    val projects = response.groups.mapIndexed { index, group ->
-        val raw = rawGroups[index].jsonObject
-        raw.requireStrings("title", "color")
-        raw.requireNumbers("id", "seconds", "billable_seconds", "amount_cents")
-        // Same-dimension grouping normally has no children. If a server adds children, keep
-        // their association and show their raw fields rather than silently discarding them.
-        val known = setOf("id", "title", "color", "seconds", "billable_seconds", "amount_cents") +
-            if (raw["sub_groups"] == JsonArray(emptyList())) setOf("sub_groups") else emptySet()
-        ProjectShare(
-            group.id,
-            group.title,
-            group.color,
-            group.seconds,
-            group.billableSeconds,
-            group.amountCents,
-            extras.fields(raw, known),
-        )
-    }
+    val amounts = amountsOf(response, rawTotals, extras)
+    val points = pointsOf(response, body, extras)
+    val projects = projectsOf(response, body, extras)
     val resolution = when (response.resolution) {
         "day" -> Resolution.DAY
         "week" -> Resolution.WEEK
@@ -104,14 +67,14 @@ internal fun decodeAppSummary(body: JsonObject): ApiResult<SummaryReport> = try 
 private fun JsonObject.requireNumbers(vararg names: String) {
     for (name in names) {
         val value = get(name) ?: continue
-        require(value == JsonNull || value is JsonPrimitive && !value.isString) { "invalid summary number type" }
+        require(value == JsonNull || (value is JsonPrimitive && !value.isString)) { "invalid summary number type" }
     }
 }
 
 private fun JsonObject.requireStrings(vararg names: String) {
     for (name in names) {
         val value = get(name) ?: continue
-        require(value == JsonNull || value is JsonPrimitive && value.isString) { "invalid summary string type" }
+        require(value == JsonNull || (value is JsonPrimitive && value.isString)) { "invalid summary string type" }
     }
 }
 
@@ -152,3 +115,63 @@ private data class AppGroup(
     @SerialName("billable_seconds") val billableSeconds: Long,
     @SerialName("amount_cents") val amountCents: Long? = null,
 )
+
+/** The totals' amounts, leaving out a currency the server gave no amount for. */
+private fun amountsOf(
+    response: AppSummaryResponse,
+    rawTotals: JsonObject,
+    extras: ReportExtraProjection,
+): List<Amount> {
+    val rawAmounts = rawTotals["amounts"] as? JsonArray
+    return response.totals.amounts.orEmpty().mapIndexedNotNull { index, amount ->
+        val raw = rawAmounts!![index].jsonObject
+        raw.requireStrings("currency")
+        raw.requireNumbers("cents")
+        // A currency with no amount must not be turned into a zero-priced currency.
+        amount.cents?.let {
+            Amount(amount.currency, it, extras.fields(raw, setOf("currency", "cents")))
+        }
+    }
+}
+
+/** The series, one point for each day, week or month. */
+private fun pointsOf(response: AppSummaryResponse, body: JsonObject, extras: ReportExtraProjection): List<SeriesPoint> {
+    val rawSeries = body.getValue("series") as JsonArray
+    return response.series.mapIndexed { index, point ->
+        rawSeries[index].jsonObject.requireStrings("start")
+        rawSeries[index].jsonObject.requireNumbers("seconds", "billable_seconds")
+        SeriesPoint(
+            LocalDate.parse(point.start),
+            point.seconds,
+            point.billableSeconds,
+            extras.fields(rawSeries[index].jsonObject, setOf("start", "seconds", "billable_seconds")),
+        )
+    }
+}
+
+/** The time per project, from the report's groups. */
+private fun projectsOf(
+    response: AppSummaryResponse,
+    body: JsonObject,
+    extras: ReportExtraProjection,
+): List<ProjectShare> {
+    val rawGroups = body.getValue("groups") as JsonArray
+    return response.groups.mapIndexed { index, group ->
+        val raw = rawGroups[index].jsonObject
+        raw.requireStrings("title", "color")
+        raw.requireNumbers("id", "seconds", "billable_seconds", "amount_cents")
+        // Same-dimension grouping normally has no children. If a server adds children, keep
+        // their association and show their raw fields rather than silently discarding them.
+        val known = setOf("id", "title", "color", "seconds", "billable_seconds", "amount_cents") +
+            if (raw["sub_groups"] == JsonArray(emptyList())) setOf("sub_groups") else emptySet()
+        ProjectShare(
+            group.id,
+            group.title,
+            group.color,
+            group.seconds,
+            group.billableSeconds,
+            group.amountCents,
+            extras.fields(raw, known),
+        )
+    }
+}

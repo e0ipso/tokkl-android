@@ -145,9 +145,9 @@ class SignIn(
         return try {
             session.save(server, token, settings)
             SignInResult.SignedIn
-        } catch (e: GeneralSecurityException) {
+        } catch (_: GeneralSecurityException) {
             SignInResult.StorageFailed
-        } catch (e: IOException) {
+        } catch (_: IOException) {
             SignInResult.StorageFailed
         }
     }

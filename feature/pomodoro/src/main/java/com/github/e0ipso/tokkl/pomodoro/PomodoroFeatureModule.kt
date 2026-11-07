@@ -28,11 +28,9 @@ import org.koin.dsl.module
 val pomodoroFeatureModule = module {
     single { PomodoroDefaultsStore(androidContext()) }
 
-    /**
-     * The lengths a Pomodoro session starts with, kept in Tokkl's four `pomodoro_*` length
-     * preferences, or on the phone only where the server lacks them. The first read loads them
-     * from a file of five values.
-     */
+    // The lengths a Pomodoro session starts with, kept in Tokkl's four `pomodoro_*` length
+    // preferences, or on the phone only where the server lacks them. The first read loads them
+    // from a file of five values.
     single {
         PomodoroDefaultsSetting(
             store = get<PomodoroDefaultsStore>(),
@@ -43,28 +41,25 @@ val pomodoroFeatureModule = module {
         )
     } bind AccountDataOwner::class
 
-    /**
-     * The exact alarm at a running Pomodoro phase's planned end.
-     * [PomodoroAlarmScheduler.permissionDenied] is what the Pomodoro page reads when that alarm
-     * cannot be set, from the platform. Its boot and update receiver also starts the timer sync
-     * service.
-     */
+    // The exact alarm at a running Pomodoro phase's planned end.
+    // [PomodoroAlarmScheduler.permissionDenied] is what the Pomodoro page reads when that alarm
+    // cannot be set, from the platform. Its boot and update receiver also starts the timer sync
+    // service.
     single {
         AlarmClockPomodoroScheduler(androidContext(), timerSyncStarts = get<CapabilitiesSource>()::offersTimerApi)
     } binds arrayOf(PomodoroAlarmScheduler::class, TimerSyncWatcher::class)
 
-    /** The ringing service at a Pomodoro phase's planned end, as [PomodoroPhaseAlarm] drives it and the Pomodoro widget reads it. */
+    // The ringing service at a Pomodoro phase's planned end, as [PomodoroPhaseAlarm] drives it and the Pomodoro widget
+    // reads it.
     single {
         ServicePomodoroRinging(
             androidContext(),
         )
     } binds arrayOf(PomodoroRinging::class, PomodoroRingingPhase::class)
 
-    /**
-     * The exact alarm and the ring of the server's Pomodoro session, which follow the held timer
-     * state while the server offers the timer API (docs/PRD.md W7). Loaded at process start; its
-     * first call loads the held state and the capabilities from disk.
-     */
+    // The exact alarm and the ring of the server's Pomodoro session, which follow the held timer
+    // state while the server offers the timer API (docs/PRD.md W7). Loaded at process start; its
+    // first call loads the held state and the capabilities from disk.
     single {
         PomodoroPhaseAlarm(
             held = get<AccountTimerStates>()::held,

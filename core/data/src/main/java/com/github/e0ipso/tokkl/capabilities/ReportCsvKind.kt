@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.capabilities
 
 import com.github.e0ipso.tokkl.api.ApiError
+import com.github.e0ipso.tokkl.api.HttpStatus
 
 /** The app CSV routes, separate from Toggl's v3 export routes and from on-screen pagination. */
 enum class ReportCsvKind(val path: String) {
@@ -12,4 +13,7 @@ enum class ReportCsvKind(val path: String) {
  * The CSV routes answer POST only. A 404 or 410 from that POST is the endpoint missing.
  * Connectivity, authentication, trust and rate-limit failures are not.
  */
-fun ApiError.csvEndpointAbsent(): Boolean = this is ApiError.UnexpectedStatus && status in setOf(404, 410)
+fun ApiError.csvEndpointAbsent(): Boolean = this is ApiError.UnexpectedStatus && status in setOf(
+    HttpStatus.NOT_FOUND,
+    HttpStatus.GONE,
+)

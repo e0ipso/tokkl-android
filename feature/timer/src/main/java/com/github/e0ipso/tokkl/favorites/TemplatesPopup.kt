@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.favorites
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DropdownMenu
@@ -144,7 +145,7 @@ internal fun templateStartSpoken(template: FavoriteItem): String {
 
 /** Capacity, offline, server and save feedback for a template change. */
 @Composable
-internal fun TemplateFeedback(state: FavoritesState, offline: Boolean, saved: Boolean) {
+internal fun ColumnScope.TemplateFeedback(state: FavoritesState, offline: Boolean, saved: Boolean) {
     val problem = state.problem
     val padding = Modifier.padding(horizontal = TokklTheme.spacing.space3, vertical = TokklTheme.spacing.space2)
     if (problem is FavoritesProblem.Server && problem.problem != ServerProblem.Unreachable && !offline) {

@@ -29,16 +29,34 @@ internal fun check(form: EntryDraft, settings: AccountSettings, time: AccountTim
     val start = form.startInstant(settings, time, clock) ?: return CheckedTimes.Invalid(TimeField.START, unreadable)
     if (form.target is DraftTarget.Running) return CheckedTimes.Valid(start, stop = null)
     val durationChanged = form.durationChanged()
-    val stop = when {
-        durationChanged -> (form.durationSeconds ?: parseDuration(form.duration))?.let { start.plusSecondsOrNull(it) }
-            ?: return CheckedTimes.Invalid(TimeField.DURATION, TimeMistake.DURATION)
-
-        form.target is DraftTarget.Edit && !form.endChanged() -> form.target.stop
-
-        else -> resolveRange(form.date, form.start, form.end, time, settings.twelveHour, nowMinutes(time, clock))?.stop
-            ?: return CheckedTimes.Invalid(TimeField.END, unreadable)
-    }
     val spanField = if (durationChanged) TimeField.DURATION else TimeField.END
+    val stop = stopOf(form, start, durationChanged, settings, time, clock)
+        ?: return CheckedTimes.Invalid(spanField, if (durationChanged) TimeMistake.DURATION else unreadable)
+    return checkSpan(form, start, stop, spanField, time)
+}
+
+/** The stop [form] sets: from its duration when [durationChanged], else from its end, or null when unreadable. */
+private fun stopOf(
+    form: EntryDraft,
+    start: Instant,
+    durationChanged: Boolean,
+    settings: AccountSettings,
+    time: AccountTime,
+    clock: Clock,
+): Instant? = when {
+    durationChanged -> (form.durationSeconds ?: parseDuration(form.duration))?.let { start.plusSecondsOrNull(it) }
+    form.target is DraftTarget.Edit && !form.endChanged() -> form.target.stop
+    else -> resolveRange(form.date, form.start, form.end, time, settings.twelveHour, nowMinutes(time, clock))?.stop
+}
+
+/** Whether the server would keep the span from [start] to [stop], with the mistake under [spanField] if not. */
+private fun checkSpan(
+    form: EntryDraft,
+    start: Instant,
+    stop: Instant,
+    spanField: TimeField,
+    time: AccountTime,
+): CheckedTimes {
     if (stop.epochSecond < start.epochSecond) return CheckedTimes.Invalid(spanField, TimeMistake.END_BEFORE_START)
     val predicted = time.snapUnsent(start, stop)
     // Tokkl permits an unchanged-time edit of a stored legacy short/zero-length entry.
@@ -63,7 +81,7 @@ private fun checkNoTimes(form: EntryDraft, settings: AccountSettings, time: Acco
     // A no-time entry saved with its day and duration as they opened keeps its stored span,
     // as the web app's noTimeEdit.ts does, so renaming one off the grid never rounds it.
     val target = form.target as? DraftTarget.Edit
-    if (target != null && target.snapshot.allDay && form.date == target.date && !form.durationChanged()) {
+    if (target != null && target.keepsNoTime(form)) {
         return CheckedTimes.Valid(target.start, target.stop, noTimeDay = form.date)
     }
     val read = noTimeDuration(form.duration, settings.timeResolutionMinutes)
@@ -174,3 +192,7 @@ private fun NoTimeDuration.mistake(minutes: Double?): TimeMistake {
         else -> TimeMistake.NO_TIME_DURATION
     }
 }
+
+/** True when [form] edits a no-time entry and leaves its day and duration as they were. */
+private fun DraftTarget.Edit.keepsNoTime(form: EntryDraft): Boolean =
+    snapshot.allDay && form.date == date && !form.durationChanged()

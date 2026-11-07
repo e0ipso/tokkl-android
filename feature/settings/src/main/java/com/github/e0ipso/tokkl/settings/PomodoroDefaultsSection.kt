@@ -5,6 +5,7 @@ import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -38,7 +39,7 @@ import com.github.e0ipso.tokkl.core.shared.R as SharedR
 
 /** Each default has a labelled, validated editor; a draft never mutates the stored defaults. */
 @Composable
-internal fun PomodoroDefaultsSection(
+internal fun ColumnScope.PomodoroDefaultsSection(
     defaults: PomodoroDefaults,
     sharedWithWeb: Boolean,
     change: (PomodoroDefaults) -> Unit,

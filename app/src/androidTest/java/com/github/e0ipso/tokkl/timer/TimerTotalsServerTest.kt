@@ -3,10 +3,30 @@ package com.github.e0ipso.tokkl.timer
 import androidx.activity.compose.setContent
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.test.*
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotDisplayed
+import androidx.compose.ui.test.hasAnyDescendant
+import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeUp
+import androidx.compose.ui.test.top
 import androidx.test.core.app.ActivityScenario
-import com.github.e0ipso.tokkl.*
+import com.github.e0ipso.tokkl.AirplaneMode
+import com.github.e0ipso.tokkl.HangingRelay
+import com.github.e0ipso.tokkl.MainActivity
+import com.github.e0ipso.tokkl.RequestCounter
+import com.github.e0ipso.tokkl.SessionRule
+import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.components.accountSettings
@@ -22,12 +42,18 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.runBlocking
 import org.junit.After
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
-import java.time.*
+import java.time.Clock
+import java.time.DayOfWeek
+import java.time.Duration
+import java.time.Instant
+import java.time.ZoneId
+import java.time.ZoneOffset
 import java.util.concurrent.atomic.AtomicInteger
 
 /** Normal acceptance coverage using the app, Room queue and disposable server accounts. */
@@ -196,7 +222,7 @@ class TimerTotalsServerTest {
             Session(context).save(requests.url, fixture.account.apiToken)
             ActivityScenario.launch(MainActivity::class.java).use { scenario ->
                 compose.awaitTimerPage()
-                scenario.onActivity { it.setContent { TokklTheme { TimerTotals(input, settings, clock) } } }
+                scenario.onActivity { it.setContent { TokklTheme { TimerTotals(input, settings, clock = clock) } } }
                 awaitTotal("timer_totals_today", "0:00:10")
                 val before = requests.count
                 clock.at = start.plusSeconds(1)

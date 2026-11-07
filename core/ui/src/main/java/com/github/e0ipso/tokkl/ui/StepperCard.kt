@@ -74,7 +74,7 @@ const val STEPPER_DECREASE_TAG = "stepper_decrease"
 const val STEPPER_INCREASE_TAG = "stepper_increase"
 
 /** A disabled button's frame, at the alpha Material gives disabled content. */
-private const val DisabledFrameAlpha = 0.38f
+private const val DISABLED_FRAME_ALPHA = 0.38f
 
 /**
  * A whole number to type, or to step by one within [range], such as a Pomodoro length: [label]
@@ -233,7 +233,7 @@ private fun StepButton(@DrawableRes icon: Int, tag: String, enabled: Boolean, on
         colors = IconButtonDefaults.outlinedIconButtonColors(contentColor = colors.onSurface),
         border = BorderStroke(
             FrameWidth,
-            if (enabled) colors.outline else colors.onSurface.copy(alpha = DisabledFrameAlpha),
+            if (enabled) colors.outline else colors.onSurface.copy(alpha = DISABLED_FRAME_ALPHA),
         ),
         modifier = Modifier.size(TokklTheme.spacing.space8).testTag(tag),
     ) {

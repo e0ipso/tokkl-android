@@ -41,7 +41,7 @@ class SignOutConfirmation(
                 unsentCount()
             } catch (e: CancellationException) {
                 throw e
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 // Without the count, signing out could drop changes without a word.
                 mutableState.value = State(failed = true)
                 return@launch

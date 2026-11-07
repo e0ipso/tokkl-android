@@ -21,7 +21,17 @@ import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
 import androidx.glance.color.ColorProvider
-import androidx.glance.layout.*
+import androidx.glance.layout.Alignment
+import androidx.glance.layout.Box
+import androidx.glance.layout.Column
+import androidx.glance.layout.ColumnScope
+import androidx.glance.layout.Row
+import androidx.glance.layout.Spacer
+import androidx.glance.layout.fillMaxSize
+import androidx.glance.layout.fillMaxWidth
+import androidx.glance.layout.height
+import androidx.glance.layout.padding
+import androidx.glance.layout.width
 import androidx.glance.material3.ColorProviders
 import androidx.glance.semantics.contentDescription
 import androidx.glance.semantics.semantics
@@ -71,13 +81,13 @@ private val BillableColor = ColorProvider(TokklLightExtraColors.billable, TokklD
 /** Also used by native-host screenshot tests, with fixed cached state. */
 @Composable
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-fun TimerWidgetContent(state: WidgetState) {
+fun TimerWidgetContent(state: WidgetState, modifier: GlanceModifier = GlanceModifier) {
     val context = LocalContext.current
     val size = LocalSize.current
     val kind = timerWidgetSize(size.width.value, size.height.value)
     val padding = if (size.height.value < 64 || size.width.value < 150) 2f else WidgetLayout.PADDING_DP
     Column(
-        modifier = GlanceModifier.fillMaxSize().appWidgetBackground()
+        modifier = modifier.fillMaxSize().appWidgetBackground()
             .background(GlanceTheme.colors.surface).cornerRadius(16.dp).padding(padding.dp)
             .clickable(actionStartActivity(WidgetNavigation.intent(context, WidgetNavigation.OPEN_TIMER))),
         verticalAlignment = if (kind == TimerWidgetSize.STRIP) Alignment.CenterVertically else Alignment.Top,

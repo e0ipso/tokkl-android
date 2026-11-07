@@ -40,7 +40,7 @@ fun formatMoney(cents: Long, currency: String, locale: Locale): String {
     val amount = BigDecimal.valueOf(cents, 2)
     val known = try {
         Currency.getInstance(currency).takeIf { it.numericCode > 0 }
-    } catch (e: IllegalArgumentException) {
+    } catch (_: IllegalArgumentException) {
         null
     }
     if (known == null) return "${amount.toPlainString()} $currency"

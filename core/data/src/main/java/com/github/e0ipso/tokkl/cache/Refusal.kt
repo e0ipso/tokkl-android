@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.cache
 
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.HttpStatus
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import kotlinx.serialization.json.JsonObject
 
@@ -42,39 +43,48 @@ internal fun refusal(api: TogglApiClient, change: PendingChange, error: ApiError
     return when {
         status == UNAUTHORIZED -> Refusal.SignInAgain
 
-        status !in 400..499 || status == REQUEST_TIMEOUT -> Refusal.Wait(error)
+        status !in HttpStatus.CLIENT_ERRORS || status == REQUEST_TIMEOUT -> Refusal.Wait(error)
 
         status == CONFLICT && change.kind == ChangeKind.STOP && change.capturedStop == null -> Refusal.AlreadyDone
 
         change.kind == ChangeKind.STOP && change.capturedStop != null && status in setOf(CONFLICT, NOT_FOUND) ->
-            when (val found = stoppedOnServer(api, change)) {
-                is ApiResult.Success -> if (found.value) Refusal.AlreadyDone else Refusal.Hold(refused.message)
+            capturedStopRefusal(api, change, refused)
 
-                is ApiResult.Failure -> if ((found.error as? ApiError.Http)?.status in 400..499) {
-                    Refusal.Hold(refused.message ?: "Captured Stop could not be verified")
-                } else {
-                    Refusal.Wait(found.error)
-                }
-            }
-
-        status == NOT_FOUND && change.kind != ChangeKind.CREATE -> when (
-            val entry = entryOnServer(
-                api,
-                change.entryId,
-            )
-        ) {
-            is ApiResult.Success -> if (entry.value) Refusal.Hold(refused.message) else Refusal.EntryGone
-
-            is ApiResult.Failure -> if (entry.error == ApiError.AuthFailed ||
-                (entry.error as? ApiError.Http)?.status == UNAUTHORIZED
-            ) {
-                Refusal.SignInAgain
-            } else {
-                Refusal.Wait(entry.error)
-            }
-        }
+        status == NOT_FOUND && change.kind != ChangeKind.CREATE -> missingEntryRefusal(api, change, refused)
 
         else -> Refusal.Hold(refused.message)
+    }
+}
+
+/** A captured Stop the server refused: done when the server holds that stop, held or waiting otherwise. */
+private fun capturedStopRefusal(
+    api: TogglApiClient,
+    change: PendingChange,
+    refused: ApiError.UnexpectedStatus,
+): Refusal = when (val found = stoppedOnServer(api, change)) {
+    is ApiResult.Success -> if (found.value) Refusal.AlreadyDone else Refusal.Hold(refused.message)
+
+    is ApiResult.Failure -> if ((found.error as? ApiError.Http)?.status in HttpStatus.CLIENT_ERRORS) {
+        Refusal.Hold(refused.message ?: "Captured Stop could not be verified")
+    } else {
+        Refusal.Wait(found.error)
+    }
+}
+
+/** A 404 for a change to an entry: gone when the server no longer has the entry. */
+private fun missingEntryRefusal(
+    api: TogglApiClient,
+    change: PendingChange,
+    refused: ApiError.UnexpectedStatus,
+): Refusal = when (val entry = entryOnServer(api, change.entryId)) {
+    is ApiResult.Success -> if (entry.value) Refusal.Hold(refused.message) else Refusal.EntryGone
+
+    is ApiResult.Failure -> if (entry.error == ApiError.AuthFailed ||
+        (entry.error as? ApiError.Http)?.status == UNAUTHORIZED
+    ) {
+        Refusal.SignInAgain
+    } else {
+        Refusal.Wait(entry.error)
     }
 }
 

@@ -17,8 +17,8 @@ fun formatTime(instant: Instant, zone: ZoneId, twelveHour: Boolean): String {
     val hour = local.hour
     val minute = local.minute.toString().padStart(2, '0')
     if (!twelveHour) return "${hour.toString().padStart(2, '0')}:$minute"
-    val clockHour = if (hour % 12 == 0) 12 else hour % 12
-    return "$clockHour:$minute ${if (hour < 12) "AM" else "PM"}"
+    val clockHour = if (hour % CLOCK_FACE_HOURS == 0) CLOCK_FACE_HOURS else hour % CLOCK_FACE_HOURS
+    return "$clockHour:$minute ${if (hour < CLOCK_FACE_HOURS) "AM" else "PM"}"
 }
 
 /**

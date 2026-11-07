@@ -89,7 +89,7 @@ class RunningTileService : TileService() {
             try {
                 val tap = tapTile(showing, surfaceActions, changes)
                 if (tap is SurfaceTap.Request) tap.send()?.let { showTimerActionFailure(app, it) }
-            } catch (e: SQLiteException) {
+            } catch (_: SQLiteException) {
                 // The disk refused the change. Nothing changed, and the tile still says so.
             }
         }

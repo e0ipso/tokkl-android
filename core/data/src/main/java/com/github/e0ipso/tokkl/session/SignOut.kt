@@ -46,7 +46,7 @@ class SignOut(owners: List<AccountDataOwner>, private val io: CoroutineContext) 
                     step.forgetAccount()
                 } catch (e: CancellationException) {
                     throw e
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     cleared = false
                 }
             }

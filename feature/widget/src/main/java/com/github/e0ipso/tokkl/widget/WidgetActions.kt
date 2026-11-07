@@ -40,7 +40,7 @@ class StartTimerAction :
         val workspaceId = get<AccountSettingsSource>().state.value?.defaultWorkspaceId ?: return
         try {
             get<ChangeQueue>().start(workspaceId, parameters.fields())
-        } catch (e: SQLiteException) {
+        } catch (_: SQLiteException) {
             // The disk refused the change. Nothing starts, and the widget stays as it was.
         }
     }
@@ -92,7 +92,7 @@ private suspend fun KoinComponent.tapTimer(context: Context, action: TimerSurfac
     val app = context.applicationContext
     val tap = try {
         get<TimerSurfaceActions>().tap(action, parameters.target())
-    } catch (e: SQLiteException) {
+    } catch (_: SQLiteException) {
         // The disk refused the change. The timer stays as it was, and the widget shows it.
         null
     }

@@ -33,19 +33,20 @@ fun descriptionSuggestions(
     val projectsById = projects.associateBy { it.id }
     val clientsById = clients.associateBy { it.id }
     val needle = query.jsTrim().lowercase()
-    val seen = mutableSetOf<Triple<String, Long?, Long?>>()
-    val out = mutableListOf<DescriptionSuggestion>()
-    for (entry in entries) {
-        if (entry.description.isEmpty() && entry.projectId == null) continue
-        val key = Triple(entry.description, entry.projectId, entry.taskId)
-        if (key in seen) continue
-        val project = entry.projectId?.let(projectsById::get)
-        val client = project?.clientId?.let(clientsById::get)
-        val haystack = "${entry.description} ${project?.name.orEmpty()} ${client?.name.orEmpty()}".lowercase()
-        if (needle.isNotEmpty() && needle !in haystack) continue
-        seen += key
-        out += DescriptionSuggestion(entry.fields(), project?.name, project?.color)
-        if (out.size >= MAX_SUGGESTIONS) break
-    }
-    return out
+    return entries.asSequence()
+        .filterNot { it.description.isEmpty() && it.projectId == null }
+        .map { entry ->
+            val project = entry.projectId?.let(projectsById::get)
+            val client = project?.clientId?.let(clientsById::get)
+            val haystack = "${entry.description} ${project?.name.orEmpty()} ${client?.name.orEmpty()}".lowercase()
+            Candidate(entry, project, haystack)
+        }
+        .filter { needle.isEmpty() || needle in it.haystack }
+        .distinctBy { Triple(it.entry.description, it.entry.projectId, it.entry.taskId) }
+        .take(MAX_SUGGESTIONS)
+        .map { DescriptionSuggestion(it.entry.fields(), it.project?.name, it.project?.color) }
+        .toList()
 }
+
+/** An entry that may become a suggestion, with its project and the text the query searches. */
+private class Candidate(val entry: CachedTimeEntry, val project: CachedProject?, val haystack: String)

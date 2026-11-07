@@ -40,7 +40,7 @@ fun RadioOptionRow(
         label = label,
         textStyle = textStyle,
         modifier = modifier,
-        selection = Modifier.selectable(selected = selected, role = Role.RadioButton, onClick = onSelect),
+        selectionModifier = Modifier.selectable(selected = selected, role = Role.RadioButton, onClick = onSelect),
     ) {
         RadioButton(selected = selected, onClick = null)
     }
@@ -59,19 +59,19 @@ fun CheckboxOptionRow(
         label = label,
         textStyle = textStyle,
         modifier = modifier,
-        selection = Modifier.toggleable(value = checked, role = Role.Checkbox, onValueChange = onCheckedChange),
+        selectionModifier = Modifier.toggleable(value = checked, role = Role.Checkbox, onValueChange = onCheckedChange),
     ) {
         Checkbox(checked = checked, onCheckedChange = null)
     }
 }
 
-/** [selection] makes the row selectable or toggleable, with its role. */
+/** [selectionModifier] makes the row selectable or toggleable, with its role. */
 @Composable
 private fun OptionRow(
     label: String,
     textStyle: TextStyle,
-    modifier: Modifier,
-    selection: Modifier,
+    modifier: Modifier = Modifier,
+    selectionModifier: Modifier = Modifier,
     control: @Composable () -> Unit,
 ) {
     Row(
@@ -79,7 +79,7 @@ private fun OptionRow(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = LocalMinimumInteractiveComponentSize.current)
-            .then(selection),
+            .then(selectionModifier),
     ) {
         control()
         Spacer(Modifier.width(TokklTheme.spacing.space3))

@@ -12,17 +12,17 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.github.e0ipso.tokkl.api.ApiError
+import com.github.e0ipso.tokkl.api.HttpStatus
 import kotlinx.coroutines.withContext
 import java.time.Duration
 import java.util.concurrent.ExecutionException
 import kotlin.coroutines.CoroutineContext
 
 /**
- * Sends the queue in the background once the phone has a network, also with the app closed
- * (docs/PRD.md O4). The app calls [schedule] from [ChangeQueue]'s onQueued, which runs only while
- * the queue holds a change, and [cancelWaiting] once a drain has emptied the queue. The work runs
- * once, so nothing wakes the phone while the queue is empty, and no periodic work comes from here: the only periodic job in the app is the running
- * entry's check (TKA-0074).
+ * Sends the queue in the background once the phone has a network, also with the app closed (docs/PRD.md O4). The app
+ * calls [schedule] from [ChangeQueue]'s onQueued, which runs only while the queue holds a change, and [cancelWaiting]
+ * once a drain has emptied the queue. The work runs once, so nothing wakes the phone while the queue is empty, and no
+ * periodic work comes from here: the only periodic job in the app is the running entry's check (TKA-0074).
  */
 object BackgroundSend {
 
@@ -104,7 +104,7 @@ class BackgroundSendWorker(
                 // Read its committed state under the same lock as cancelWaiting's cancellation.
                 !isStopped && workManager.getWorkInfoById(id).get()?.state == WorkInfo.State.RUNNING
             }
-        } catch (e: ExecutionException) {
+        } catch (_: ExecutionException) {
             return@withContext Result.retry()
         }
         if (!joined) return@withContext Result.success()
@@ -135,8 +135,12 @@ internal enum class AfterBackgroundSend {
 /** What the background send does after a drain that ended in this outcome; null is a disk failure. */
 internal fun ChangeSender.Outcome?.afterBackgroundSend(): AfterBackgroundSend = when (this) {
     is ChangeSender.Outcome.Empty, is ChangeSender.Outcome.SignedOut -> AfterBackgroundSend.DONE
+
     is ChangeSender.Outcome.Waiting, null -> AfterBackgroundSend.RETRY
-    is ChangeSender.Outcome.Stopped -> if (error.isTransient()) AfterBackgroundSend.RETRY else AfterBackgroundSend.GIVE_UP
+
+    is ChangeSender.Outcome.Stopped -> {
+        if (error.isTransient()) AfterBackgroundSend.RETRY else AfterBackgroundSend.GIVE_UP
+    }
 }
 
 /**
@@ -146,6 +150,6 @@ internal fun ChangeSender.Outcome?.afterBackgroundSend(): AfterBackgroundSend = 
  */
 internal fun ApiError.isTransient(): Boolean = when (this) {
     is ApiError.Network -> true
-    is ApiError.Http -> this is ApiError.RateLimited || status >= 500
+    is ApiError.Http -> this is ApiError.RateLimited || status >= HttpStatus.FIRST_SERVER_ERROR
     is ApiError.InvalidResponse, is ApiError.HostNotAllowed, is ApiError.TrustRefused -> false
 }

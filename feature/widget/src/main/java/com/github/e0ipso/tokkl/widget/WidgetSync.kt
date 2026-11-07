@@ -60,7 +60,7 @@ class WidgetSync(
         update()
         try {
             shown.save(key)
-        } catch (e: IOException) {
+        } catch (_: IOException) {
             // The widgets are right. A new process draws them once more, which costs nothing else.
         }
     }

@@ -58,7 +58,7 @@ class AccountSettingsSource(private val disk: ValueStore<AccountSettings>) {
             if (settings != mutableState.value) {
                 try {
                     write(settings)
-                } catch (e: IOException) {
+                } catch (_: IOException) {
                     // Keeps the stored settings until the next refresh.
                 }
             }

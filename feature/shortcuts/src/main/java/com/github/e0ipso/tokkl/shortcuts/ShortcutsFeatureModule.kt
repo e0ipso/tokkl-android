@@ -8,11 +8,9 @@ import org.koin.dsl.module
 
 /** The favorites as launcher shortcuts. */
 val shortcutsFeatureModule = module {
-    /**
-     * The favorites as launcher shortcuts (docs/PRD.md N6), which follow the cached favorites and
-     * the capabilities from process start. The capabilities load on the first collection, off the
-     * main thread.
-     */
+    // The favorites as launcher shortcuts (docs/PRD.md N6), which follow the cached favorites and
+    // the capabilities from process start. The capabilities load on the first collection, off the
+    // main thread.
     single {
         val launcher = LauncherShortcuts(androidContext())
         FavoriteShortcutSync(

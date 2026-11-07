@@ -45,5 +45,11 @@ internal fun timerWidgetProjectRows(
     }
     val chips = if (templates && size == TimerWidgetSize.LARGE) 48f else 0f
     val row = if (size == TimerWidgetSize.LARGE) 28f * scale else 18f * scale
-    return ((heightDp - 2 * WidgetLayout.PADDING_DP - timer - report - chips) / row).toInt().coerceIn(0, 5)
+    return ((heightDp - 2 * WidgetLayout.PADDING_DP - timer - report - chips) / row).toInt().coerceIn(
+        0,
+        MAX_PROJECT_ROWS,
+    )
 }
+
+/** The most project rows a widget lists. */
+private const val MAX_PROJECT_ROWS = 5

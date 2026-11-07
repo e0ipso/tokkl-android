@@ -103,7 +103,7 @@ private fun EntityPickerContent(
     onPickTask: (CachedTask) -> Unit,
     onToggleTag: (String) -> Unit,
     onAddTag: (String) -> Unit,
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
 ) {
     val spacing = TokklTheme.spacing
     Column(modifier) {
@@ -284,7 +284,7 @@ private fun SectionHeading(text: String, modifier: Modifier = Modifier) {
 
 /** The project's colour beside its name, which carries the meaning; none for "No project". */
 @Composable
-private fun ProjectDot(color: Color?) {
+private fun RowScope.ProjectDot(color: Color?) {
     Box(
         Modifier
             .size(TokklTheme.spacing.space3)
@@ -295,7 +295,13 @@ private fun ProjectDot(color: Color?) {
 
 /** A `#rrggbb` project colour, or null when it is not one. */
 fun projectColor(hex: String?): Color? {
-    val digits = hex?.removePrefix("#")?.takeIf { it.length == 6 } ?: return null
-    val rgb = digits.toLongOrNull(16) ?: return null
-    return Color(0xFF000000 or rgb)
+    val digits = hex?.removePrefix("#")?.takeIf { it.length == RGB_HEX_DIGITS } ?: return null
+    val rgb = digits.toLongOrNull(HEX_RADIX) ?: return null
+    return Color(OPAQUE or rgb)
 }
+
+private const val RGB_HEX_DIGITS = 6
+private const val HEX_RADIX = 16
+
+/** The alpha of an opaque ARGB colour. */
+private const val OPAQUE = 0xFF000000

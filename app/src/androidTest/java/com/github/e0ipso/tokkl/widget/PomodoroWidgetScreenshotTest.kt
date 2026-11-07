@@ -29,7 +29,9 @@ import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
@@ -59,7 +61,9 @@ abstract class PomodoroWidgetScreenshotTest(private val dark: Boolean, private v
                     host.resize(width, height)
                     val views = runBlocking { Fixture(state).compose(themed, size = DpSize(width.dp, height.dp)) }
                     host.showInConfiguration(views, configuration)
-                    val filename = "pomodoro_widget_${if (dark) "dark" else "light"}_${if (scale == 1f) "normal" else "largest"}_${width}x${height}_$name"
+                    val theme = if (dark) "dark" else "light"
+                    val text = if (scale == 1f) "normal" else "largest"
+                    val filename = "pomodoro_widget_${theme}_${text}_${width}x${height}_$name"
                     // Capture every state, including one whose geometry assertion needs correction.
                     runCatching {
                         host.assertTextFitsVertically()
@@ -71,7 +75,11 @@ abstract class PomodoroWidgetScreenshotTest(private val dark: Boolean, private v
                                     "$filename has a clock",
                                     host.hasDescription(
                                         context.getString(
-                                            if (state.ended) R.string.pomodoro_overtime else R.string.pomodoro_remaining,
+                                            if (state.ended) {
+                                                R.string.pomodoro_overtime
+                                            } else {
+                                                R.string.pomodoro_remaining
+                                            },
                                         ),
                                     ),
                                 )
@@ -172,7 +180,7 @@ abstract class PomodoroWidgetScreenshotTest(private val dark: Boolean, private v
             provideContent {
                 GlanceTheme(
                     colors = PomodoroColors,
-                ) { PomodoroWidgetContent(state, NOW, ticking = false) }
+                ) { PomodoroWidgetContent(state, now = NOW, ticking = false) }
             }
         }
     }

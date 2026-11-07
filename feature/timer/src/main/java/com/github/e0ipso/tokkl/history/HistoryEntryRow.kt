@@ -262,7 +262,7 @@ private fun EntryText(
     settings: AccountSettings,
     locale: Locale,
     onFirstLineMiddle: (Float) -> Unit,
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
 ) {
     val entry = line.entry
     val topPadding = with(LocalDensity.current) { TokklTheme.spacing.space3.toPx() }

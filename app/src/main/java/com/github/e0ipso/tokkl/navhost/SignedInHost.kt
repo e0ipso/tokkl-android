@@ -66,7 +66,7 @@ import com.github.e0ipso.tokkl.feature.timer.R as TimerR
  * screen, a notice says how many changes were discarded, until dismissed. On the pages that show
  * the timer, the short Stop's Undo and the timer's notices share one snackbar host, so they
  * queue, never overlap. With [notificationPermission], a timer start or a Pomodoro start may ask
- * for the notification permission, and [onNotificationsAllowed] hears the grant.
+ * for the notification permission, and [onNotificationsAllow] hears the grant.
  */
 @Composable
 internal fun SignedInHost(
@@ -77,7 +77,7 @@ internal fun SignedInHost(
     unavailable: Set<TopLevelPage>,
     prompts: NotificationPrompts,
     notificationPermission: NotificationPermissionAsk?,
-    onNotificationsAllowed: () -> Unit,
+    onNotificationsAllow: () -> Unit,
 ) {
     val io: CoroutineDispatcher = koinInject(IoDispatcher)
     val timer = sessionViewModel<TimerViewModel>()
@@ -176,7 +176,7 @@ internal fun SignedInHost(
             NotificationPermissionPrompt(
                 permissionStarts,
                 notificationPermission,
-                onAllowed = onNotificationsAllowed,
+                onAllow = onNotificationsAllow,
                 modifier = Modifier.align(Alignment.BottomCenter),
                 retries = permissionRetries,
                 onResult = { prompts.answers++ },

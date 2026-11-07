@@ -121,7 +121,7 @@ private fun TimerPage(navigator: Navigator) {
             EntryActionsHost(
                 state = actionsState,
                 onUndo = actions::undo,
-                onNoticeDone = actions::noticeDone,
+                onNoticeEnd = actions::noticeDone,
                 onConfirmDelete = actions::confirmDelete,
                 onCancelDelete = actions::cancelDelete,
                 settings = account,
@@ -173,7 +173,7 @@ private fun EntryForm(route: Route.Entry, navigator: Navigator) {
         model = model,
         cache = koinInject(),
         canRestore = actions::canRestoreDelete,
-        onDeleted = actions::deleted,
+        onEntryDelete = actions::deleted,
         onClose = { navigator.close(route) },
     )
 }

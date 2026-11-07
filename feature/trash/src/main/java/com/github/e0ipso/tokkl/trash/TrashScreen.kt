@@ -70,7 +70,7 @@ fun TrashScreen(model: TrashViewModel, modifier: Modifier = Modifier) {
             onAskToEmpty = model::askToEmpty,
             onEmpty = model::empty,
             onDismiss = model::dismiss,
-            onDoneShown = model::doneShown,
+            onDoneShow = model::doneShown,
         ),
         modifier = modifier,
     )
@@ -85,7 +85,7 @@ class TrashActions(
     val onAskToEmpty: () -> Unit = {},
     val onEmpty: () -> Unit = {},
     val onDismiss: () -> Unit = {},
-    val onDoneShown: () -> Unit = {},
+    val onDoneShow: () -> Unit = {},
 )
 
 /** [TrashScreen] without its model. */
@@ -108,7 +108,7 @@ fun TrashContent(
     CatalogPage(
         title = stringResource(R.string.nav_trash),
         done = state.done?.let { changeText(it) },
-        onDoneShown = actions.onDoneShown,
+        onDoneShow = actions.onDoneShow,
         modifier = modifier,
         lazyContent = {
             item(key = "intro") {
@@ -274,7 +274,11 @@ private fun TrashRow(
             Text(
                 text = name,
                 style = MaterialTheme.typography.bodyLarge,
-                color = if (described) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                color = if (described) {
+                    MaterialTheme.colorScheme.onSurface
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
             )
             DetailLine(details)
         }

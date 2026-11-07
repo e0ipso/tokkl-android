@@ -53,7 +53,7 @@ class StopTimerReceiver :
                 // these actions are offered, keeps the process alive meanwhile.
                 finish()
                 if (tap is SurfaceTap.Request) tap.send()?.let { showTimerActionFailure(app, it) }
-            } catch (e: SQLiteException) {
+            } catch (_: SQLiteException) {
                 // The disk refused the change. The timer keeps running, and the notification with it.
             } finally {
                 finish()

@@ -94,7 +94,7 @@ fun TimerBar(
                 }
             }
         }
-        TimerTotals(cache.timeEntries, model.accountSettings, clock)
+        TimerTotals(cache.timeEntries, model.accountSettings, clock = clock)
     }
 }
 
@@ -147,7 +147,7 @@ private fun TimerBarCore(
         state = state,
         elapsedSeconds = elapsed,
         onDescriptionChange = model::editDescription,
-        onDescriptionDone = model::descriptionDone,
+        onDescriptionFinish = model::descriptionDone,
         onPick = model::pick,
         onBillableChange = model::setBillable,
         onStart = model::start,
@@ -182,7 +182,7 @@ fun TimerBarContent(
     state: TimerState,
     elapsedSeconds: Long,
     onDescriptionChange: (String) -> Unit,
-    onDescriptionDone: () -> Unit,
+    onDescriptionFinish: () -> Unit,
     onPick: (Picked) -> Unit,
     onBillableChange: (Boolean) -> Unit,
     onStart: () -> Unit,
@@ -227,7 +227,7 @@ fun TimerBarContent(
                 },
             ),
             onDescriptionChange = onDescriptionChange,
-            onDescriptionDone = onDescriptionDone,
+            onDescriptionFinish = onDescriptionFinish,
             onPick = onPick,
             onBillableChange = onBillableChange,
             picker = { original, picked, onPickedChange, pickerModifier ->

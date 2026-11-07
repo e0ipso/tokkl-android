@@ -217,7 +217,7 @@ class SignInViewModel(
                 try {
                     store()
                     true
-                } catch (e: IOException) {
+                } catch (_: IOException) {
                     false
                 }
             }
@@ -280,7 +280,7 @@ class SignInViewModel(
                 withContext(io) {
                     try {
                         cooldowns.write()
-                    } catch (e: IOException) {
+                    } catch (_: IOException) {
                         // Nothing to show: the deadline still holds until the process ends.
                     }
                 }

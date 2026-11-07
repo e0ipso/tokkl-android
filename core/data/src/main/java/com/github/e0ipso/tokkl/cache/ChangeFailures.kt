@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.cache
 
 import com.github.e0ipso.tokkl.api.ApiError
+import com.github.e0ipso.tokkl.api.HttpStatus
 import java.io.InterruptedIOException
 import java.net.ConnectException
 import java.net.NoRouteToHostException
@@ -19,7 +20,7 @@ internal const val CONFLICT = 409
  * the server stored it.
  */
 internal fun ApiError.leftNothingOnTheServer(): Boolean = when (this) {
-    is ApiError.Http -> status in 400..499
+    is ApiError.Http -> status in HttpStatus.CLIENT_ERRORS
 
     is ApiError.Network ->
         cause is ConnectException || cause is UnknownHostException ||

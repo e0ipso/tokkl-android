@@ -138,7 +138,11 @@ class CalendarViewModel(
         tasks,
         accountSettings,
         choice,
-    ) { cached, projectRows, taskRows, settings, (day, weeks, overrides, offered) ->
+    ) { cached, projectRows, taskRows, settings, picked ->
+        val day = picked.day
+        val weeks = picked.weeks
+        val overrides = picked.overrides
+        val offered = picked.allDayOffered
         val time = settings?.time(clock)
         when {
             settings == null -> CalendarState.Loading
@@ -205,11 +209,7 @@ class CalendarViewModel(
         val time = accountSettings.value?.time(clock) ?: return
         val span = spanOf(time, weekStart, time.today())
         val known = loaded.value[span]
-        if (known != null &&
-            (known.status == WeekSource.Loading || known.status == WeekSource.Loaded && !known.stale)
-        ) {
-            return
-        }
+        if (known?.isCurrent() == true) return
         val before = known?.takeIf { it.status == WeekSource.Loaded }
         loaded.update { it + (span to (before?.copy(stale = false) ?: ServerWeek(emptyList(), WeekSource.Loading))) }
         // The server has every edit that the cache no longer holds, so this load's copies replace them.
@@ -363,7 +363,10 @@ class CalendarViewModel(
         }
     }
 
-    /** What [state] reads besides the cache: the chosen day, the weeks from the server, the overrides and whether the All day row is offered. */
+    /**
+     * What [state] reads besides the cache: the chosen day, the weeks from the server, the overrides and whether the
+     * All day row is offered.
+     */
     private data class Choice(
         val day: LocalDate?,
         val weeks: Map<WeekSpan, ServerWeek>,
@@ -407,3 +410,6 @@ class CalendarViewModel(
             weekStart <= today && weekStart >= today.minusDays(HistoryWindow.DAYS - 1)
     }
 }
+
+/** True while the week loads, or once it loaded and nothing has made it stale. */
+private fun ServerWeek.isCurrent(): Boolean = status == WeekSource.Loading || (status == WeekSource.Loaded && !stale)

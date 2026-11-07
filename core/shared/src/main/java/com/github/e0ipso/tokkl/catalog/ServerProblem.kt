@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.catalog
 
 import com.github.e0ipso.tokkl.api.ApiError
+import com.github.e0ipso.tokkl.api.HttpStatus
 
 /**
  * Why a page that changes the account's projects, clients or tags could not load them from the
@@ -33,7 +34,7 @@ fun ApiError.toServerProblem(): ServerProblem = when (this) {
         // A reverse proxy answers these while the Tokkl server behind it is down.
         status in PROXY_UNREACHABLE -> ServerProblem.Unreachable
 
-        status in 400..499 -> message?.let(ServerProblem::Refused) ?: ServerProblem.Unexpected(status)
+        status in HttpStatus.CLIENT_ERRORS -> message?.let(ServerProblem::Refused) ?: ServerProblem.Unexpected(status)
 
         else -> ServerProblem.Unexpected(status)
     }

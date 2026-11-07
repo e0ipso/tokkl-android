@@ -255,7 +255,7 @@ class TemplatesUiTest {
                     tasks = emptyList(),
                     offline = offline,
                     done = null,
-                    onDoneShown = {},
+                    onDoneShow = {},
                     onAdd = onAdd,
                     onReplace = onReplace,
                     onRemove = {},

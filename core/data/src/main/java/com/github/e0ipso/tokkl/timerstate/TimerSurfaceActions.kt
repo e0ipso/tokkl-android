@@ -120,9 +120,8 @@ class TimerSurfaceActions(
             try {
                 requests.withLock {
                     val current = controls()
-                    if (expected.account != account() || current.target != expected ||
-                        (current is TimerControls.Running && !current.pausable)
-                    ) {
+                    val moved = expected.account != account() || current.target != expected
+                    if (moved || (current is TimerControls.Running && !current.pausable)) {
                         return@withLock null
                     }
                     action()

@@ -39,9 +39,9 @@ class Session(
      */
     fun isSignedIn(): Boolean = try {
         servers.load() != null && tokens.load() != null
-    } catch (e: GeneralSecurityException) {
+    } catch (_: GeneralSecurityException) {
         false
-    } catch (e: IOException) {
+    } catch (_: IOException) {
         false
     }
 
@@ -59,9 +59,9 @@ class Session(
                 trustListener = trustListener,
                 successListener = successListener,
             )
-        } catch (e: GeneralSecurityException) {
+        } catch (_: GeneralSecurityException) {
             null
-        } catch (e: IOException) {
+        } catch (_: IOException) {
             null
         }
     }

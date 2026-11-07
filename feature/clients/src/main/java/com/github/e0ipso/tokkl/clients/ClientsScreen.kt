@@ -69,7 +69,7 @@ fun ClientsScreen(model: ClientsViewModel, modifier: Modifier = Modifier) {
             onRestore = model::restore,
             onSave = model::save,
             onDismiss = model::dismiss,
-            onDoneShown = model::doneShown,
+            onDoneShow = model::doneShown,
         ),
         modifier = modifier,
     )
@@ -86,7 +86,7 @@ class ClientsActions(
     val onRestore: (Client) -> Unit = {},
     val onSave: (String, String) -> Unit = { _, _ -> },
     val onDismiss: () -> Unit = {},
-    val onDoneShown: () -> Unit = {},
+    val onDoneShow: () -> Unit = {},
 )
 
 /** [ClientsScreen] without its model. */
@@ -110,7 +110,7 @@ fun ClientsContent(
     CatalogPage(
         title = stringResource(title),
         done = state.done?.let { clientChangeText(it) },
-        onDoneShown = actions.onDoneShown,
+        onDoneShow = actions.onDoneShow,
         modifier = modifier,
         onBack = if (formOpen) actions.onDismiss else null,
     ) {

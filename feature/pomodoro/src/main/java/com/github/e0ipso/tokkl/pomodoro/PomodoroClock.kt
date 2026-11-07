@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.pomodoro
 
+import com.github.e0ipso.tokkl.time.MILLIS_PER_SECOND
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.serverNow
 import java.time.Duration
@@ -19,9 +20,9 @@ fun HeldTimerState.phaseClockAt(deviceNow: Instant): PomodoroClock? {
 }
 
 private fun clockFor(remainingMillis: Long): PomodoroClock = if (remainingMillis >= 0) {
-    PomodoroClock(false, (remainingMillis + 999) / 1000)
+    PomodoroClock(false, (remainingMillis + MILLIS_PER_SECOND - 1) / MILLIS_PER_SECOND)
 } else {
-    PomodoroClock(true, -remainingMillis / 1000)
+    PomodoroClock(true, -remainingMillis / MILLIS_PER_SECOND)
 }
 
 /**

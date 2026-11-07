@@ -226,10 +226,10 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
 
     @Test
     fun everyScreenFits() {
-        var screen by mutableStateOf(SCREENS.first())
+        var screen by mutableStateOf(screens.first())
         show { screen.content(this) }
 
-        for (next in SCREENS) {
+        for (next in screens) {
             composeRule.runOnIdle { screen = next }
             composeRule.waitForIdle()
             assertNothingCutOffAtTheSides(next.name)
@@ -271,7 +271,10 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
         assertNothingCutOffAtTheSides("the entry form ${if (beside) "beside the history" else "alone"}")
     }
 
-    /** On an expanded window the Calendar view, the timer and the switch included, grows past a phone's column; the List view does not. */
+    /**
+     * On an expanded window the Calendar view, the timer and the switch included, grows past a phone's column; the List
+     * view does not.
+     */
     @Test
     fun theCalendarTakesTheExtraWidthOnlyWhenExpanded() {
         var view by mutableStateOf(TimerView.CALENDAR)
@@ -405,7 +408,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
         ) { content() }
     }
 
-    private val SCREENS: List<Screen> = listOf(
+    private val screens: List<Screen> = listOf(
         Screen("sign-in") { SignInPage() },
         Screen("the Timer page's List view") { Framed(TopLevelPage.TIMER) { SampleTimerPage(TimerView.LIST) } },
         Screen("the Timer page's Calendar view") { Framed(TopLevelPage.TIMER) { SampleTimerPage(TimerView.CALENDAR) } },
@@ -547,7 +550,7 @@ internal fun SampleTimerPage(view: TimerView) {
                 state = TimerState.Idle(EntryFields(), EntryLabels(), workspaceId = 1),
                 elapsedSeconds = 0,
                 onDescriptionChange = {},
-                onDescriptionDone = {},
+                onDescriptionFinish = {},
                 onPick = {},
                 onBillableChange = {},
                 onStart = {},

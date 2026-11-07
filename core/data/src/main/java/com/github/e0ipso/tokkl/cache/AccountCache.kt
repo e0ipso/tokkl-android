@@ -60,7 +60,7 @@ class AccountCache(private val database: CacheDatabase, private val clock: Clock
         val changes = database.changes()
         val before = try {
             database.runInTransaction<EntryRefreshStart> { dao.entryRefreshStart() }
-        } catch (e: SQLiteException) {
+        } catch (_: SQLiteException) {
             // Without the before-read state, a stale answer could overwrite a completed send.
             return
         }
@@ -80,7 +80,7 @@ class AccountCache(private val database: CacheDatabase, private val clock: Clock
                 val protectedBefore = before.copy(pendingIds = before.pendingIds + mappedIds)
                 dao.refresh { current, pending -> current.refreshedWith(snapshot, pending, protectedBefore) }
             }
-        } catch (e: SQLiteException) {
+        } catch (_: SQLiteException) {
             // Keeps the cache until the next refresh.
         }
     }
@@ -131,7 +131,7 @@ class AccountCache(private val database: CacheDatabase, private val clock: Clock
                 writes.upsert?.let(changes::upsertEntry)
                 writes
             }
-        } catch (e: SQLiteException) {
+        } catch (_: SQLiteException) {
             // Keeps the cache until the next check.
             null
         }

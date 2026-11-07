@@ -97,7 +97,7 @@ class RunningNotificationSync(
     private fun remember(followed: FollowedEntry?) {
         try {
             shown.save(followed)
-        } catch (e: IOException) {
+        } catch (_: IOException) {
             // Keeps following: the notification is right, and the store catches up later.
         }
     }

@@ -50,6 +50,7 @@ import com.github.e0ipso.tokkl.entryfields.withPicked
 import com.github.e0ipso.tokkl.feature.pomodoro.R
 import com.github.e0ipso.tokkl.picker.EntityPicker
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
+import com.github.e0ipso.tokkl.time.SECONDS_PER_MINUTE
 import com.github.e0ipso.tokkl.timernotice.TimerNotice
 import com.github.e0ipso.tokkl.timernotice.timerNoticeText
 import com.github.e0ipso.tokkl.ui.ErrorBanner
@@ -99,7 +100,7 @@ fun PomodoroScreen(
         onLengths = model::editLengths,
         onFields = { model.editFields(it, displayed?.entryId) },
         onDescription = { model.editFields(it, displayed?.entryId, send = false) },
-        onDescriptionDone = { model.fieldsDone(displayed?.entryId) },
+        onDescriptionFinish = { model.fieldsDone(displayed?.entryId) },
         onStart = {
             model.permissionsChanged(pomodoroPermissions(context))
             model.start(onNotificationStart)
@@ -149,7 +150,7 @@ fun PomodoroContent(
     onLengths: (PomodoroLengths) -> Unit,
     onFields: (EntryFields) -> Unit,
     onDescription: (EntryFields) -> Unit,
-    onDescriptionDone: () -> Unit,
+    onDescriptionFinish: () -> Unit,
     onStart: () -> Unit,
     onNext: () -> Unit,
     onEnd: () -> Unit,
@@ -175,7 +176,7 @@ fun PomodoroContent(
     CatalogPage(
         title = stringResource(SharedR.string.pomodoro_title),
         done = null,
-        onDoneShown = {},
+        onDoneShow = {},
         modifier = modifier,
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(spacing.betweenGroups)) {
@@ -236,7 +237,11 @@ fun PomodoroContent(
                     )
                     Text(
                         stringResource(
-                            if (reading.overtime) SharedR.string.pomodoro_overtime else SharedR.string.pomodoro_remaining,
+                            if (reading.overtime) {
+                                SharedR.string.pomodoro_overtime
+                            } else {
+                                SharedR.string.pomodoro_remaining
+                            },
                         ),
                     )
                     Text(
@@ -253,7 +258,7 @@ fun PomodoroContent(
                     original = state.fields.picked,
                     descriptionHint = stringResource(R.string.pomodoro_description_hint),
                     onDescriptionChange = { onDescription(state.fields.copy(description = it)) },
-                    onDescriptionDone = onDescriptionDone,
+                    onDescriptionFinish = onDescriptionFinish,
                     onPick = { onFields(state.fields.withPicked(it, projects)) },
                     onBillableChange = { onFields(state.fields.copy(billable = it)) },
                     picker = picker,
@@ -399,4 +404,5 @@ private fun nextLabel(kind: PhaseKind): Int = when (kind) {
     PhaseKind.LONG_REST -> SharedR.string.pomodoro_start_long_rest
 }
 
-private fun clockDuration(seconds: Long): String = "%d:%02d".format(java.util.Locale.ROOT, seconds / 60, seconds % 60)
+private fun clockDuration(seconds: Long): String =
+    "%d:%02d".format(java.util.Locale.ROOT, seconds / SECONDS_PER_MINUTE, seconds % SECONDS_PER_MINUTE)

@@ -96,8 +96,20 @@ data class PendingChange(
     }
 
     /** The entry as this change has it: for a delete, as it was when the delete was queued. */
-    fun entry(): CachedTimeEntry =
-        CachedTimeEntry(entryId, workspaceId, projectId, taskId, description, start, stop, billable, tags, tagIds, allDay, day)
+    fun entry(): CachedTimeEntry = CachedTimeEntry(
+        entryId,
+        workspaceId,
+        projectId,
+        taskId,
+        description,
+        start,
+        stop,
+        billable,
+        tags,
+        tagIds,
+        allDay,
+        day,
+    )
 
     companion object {
         /** A change of [kind] that leaves [entry] as it is given. */

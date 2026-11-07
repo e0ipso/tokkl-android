@@ -39,7 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 /** Material 3's alpha for a disabled item. */
-private const val DisabledAlpha = 0.38f
+private const val DISABLED_ALPHA = 0.38f
 
 /**
  * Tokkl's colours for a bottom bar item, replacing Material 3's defaults. The active indicator is
@@ -58,8 +58,8 @@ internal fun navigationBarItemColors(scheme: ColorScheme, hue: SectionHue) = Nav
     selectedIndicatorColor = Color.Transparent,
     unselectedIconColor = scheme.onSurfaceVariant,
     unselectedTextColor = scheme.onSurfaceVariant,
-    disabledIconColor = scheme.onSurfaceVariant.copy(alpha = DisabledAlpha),
-    disabledTextColor = scheme.onSurfaceVariant.copy(alpha = DisabledAlpha),
+    disabledIconColor = scheme.onSurfaceVariant.copy(alpha = DISABLED_ALPHA),
+    disabledTextColor = scheme.onSurfaceVariant.copy(alpha = DISABLED_ALPHA),
 )
 
 /** The colours of [navigationBarItemColors] for a navigation rail item, whose label also sits below its indicator. */
@@ -95,7 +95,9 @@ internal fun navigationIndicator(scheme: ColorScheme, hue: SectionHue) = Navigat
  */
 fun navigationBarLabelWeight(selected: Boolean): FontWeight? = if (selected) FontWeight.Bold else null
 
-/** What a screen needs to build a bar or rail item from [NavigationBarItem] or [NavigationRailItem] in Tokkl's colours. */
+/**
+ * What a screen needs to build a bar or rail item from [NavigationBarItem] or [NavigationRailItem] in Tokkl's colours.
+ */
 object TokklNavigationBarDefaults {
     /** The colours of [NavigationBarItem] for a page with [hue], in the current theme. */
     @Composable

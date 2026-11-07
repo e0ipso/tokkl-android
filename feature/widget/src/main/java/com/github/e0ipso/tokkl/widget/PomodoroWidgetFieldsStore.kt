@@ -43,7 +43,7 @@ internal fun encodeRememberedPomodoroFields(fields: RememberedPomodoroFields): S
 
 internal fun decodeRememberedPomodoroFields(text: String, account: String): RememberedPomodoroFields? = try {
     ApiJson.decodeFromString(RememberedPomodoroFields.serializer(), text).takeIf { it.account == account }
-} catch (e: IllegalArgumentException) {
+} catch (_: IllegalArgumentException) {
     null
 }
 

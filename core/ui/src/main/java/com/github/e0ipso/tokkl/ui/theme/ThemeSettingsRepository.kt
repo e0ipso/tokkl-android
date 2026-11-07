@@ -51,7 +51,7 @@ class ThemeSettingsRepository(
                 try {
                     withContext(io) { save(wanted) }
                     saved = wanted
-                } catch (e: IOException) {
+                } catch (_: IOException) {
                     mutableState.compareAndSet(wanted, saved)
                 }
             }

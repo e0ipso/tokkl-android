@@ -6,10 +6,10 @@ import com.github.e0ipso.tokkl.time.parseTimeOfDay
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
-// Split (docs/PRD.md H6): splitTimes ports splitHalves in
-// ../tokkl/packages/web/src/components/EntryEditor.tsx, and snappedSplit and snappedInstant port
-// those in ../tokkl/packages/web/src/lib/settings.ts, at tokkl commit e3f15ff628d88a476b77e51ef77c9172903d6db4. SplitEntryTest
-// replays the cases from settings.test.ts and the overnight splits of e2e/editor.spec.ts.
+// Split (docs/PRD.md H6): splitTimes ports splitHalves in ../tokkl/packages/web/src/components/EntryEditor.tsx, and
+// snappedSplit and snappedInstant port those in ../tokkl/packages/web/src/lib/settings.ts, at tokkl commit
+// e3f15ff628d88a476b77e51ef77c9172903d6db4. SplitEntryTest replays the cases from settings.test.ts and the overnight
+// splits of e2e/editor.spec.ts.
 
 /** What a split time gives: the two halves, or why it cuts nowhere. */
 sealed interface SplitResult

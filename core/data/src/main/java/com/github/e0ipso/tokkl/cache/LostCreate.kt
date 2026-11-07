@@ -62,7 +62,7 @@ internal fun PendingChange.couldHaveMade(entry: ServerTimeEntry, starts: Set<Ins
         made.projectId == projectId &&
         made.taskId == taskId &&
         made.tags.mapTo(HashSet(), ::tagKey) == tags.mapTo(HashSet(), ::tagKey) &&
-        (made.start in starts || allDay && made.allDay && made.start.near(start))
+        (made.start in starts || (allDay && made.allDay && made.start.near(start)))
 }
 
 /** True when this instant lies within [ChangeSender.LOOKUP_MARGIN] of [start], in whole seconds. */

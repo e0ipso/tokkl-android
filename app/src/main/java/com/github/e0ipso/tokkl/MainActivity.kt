@@ -61,7 +61,7 @@ class MainActivity : ComponentActivity() {
                 TokklNavHost(
                     requests = requests,
                     notificationPermission = remember { NotificationPermissionAsk.forApp(this) },
-                    onNotificationsAllowed = foreground::notificationsGranted,
+                    onNotificationsAllow = foreground::notificationsGranted,
                 )
             }
         }

@@ -168,7 +168,7 @@ class TimerViewSetting(
             val stored = synchronized(lock) { StoredTimerView(loaded.view.value, loaded.unsent) }
             try {
                 store.save(stored)
-            } catch (e: IOException) {
+            } catch (_: IOException) {
                 // The next change writes it again.
             }
         }

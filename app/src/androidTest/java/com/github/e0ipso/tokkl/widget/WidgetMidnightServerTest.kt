@@ -9,13 +9,16 @@ import androidx.test.core.app.ActivityScenario
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.testing.WorkManagerTestInitHelper
-import com.github.e0ipso.tokkl.*
+import com.github.e0ipso.tokkl.MainActivity
+import com.github.e0ipso.tokkl.SessionRule
+import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.cache.RunningCheck
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.testClock
 import com.github.e0ipso.tokkl.components.widgetState
 import com.github.e0ipso.tokkl.feature.widget.R
+import com.github.e0ipso.tokkl.followNoTimerEvents
 import com.github.e0ipso.tokkl.timer.TimerAcceptanceFixture
 import com.github.e0ipso.tokkl.timer.TimerTotals
 import com.github.e0ipso.tokkl.timerstate.timerPeriodTotals
@@ -23,10 +26,16 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
-import org.junit.*
-import org.junit.Assert.*
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
 import org.junit.rules.RuleChain
-import java.time.*
+import java.time.Duration
+import java.time.Instant
 
 class WidgetMidnightServerTest {
     private val compose = createEmptyComposeRule()
@@ -85,7 +94,7 @@ class WidgetMidnightServerTest {
                             TimerTotals(
                                 app.cache.timeEntries,
                                 app.accountSettings.state,
-                                clock,
+                                clock = clock,
                             )
                         }
                     }
@@ -137,7 +146,7 @@ class WidgetMidnightServerTest {
                             TimerTotals(
                                 app.cache.timeEntries,
                                 app.accountSettings.state,
-                                clock,
+                                clock = clock,
                             )
                         }
                     }

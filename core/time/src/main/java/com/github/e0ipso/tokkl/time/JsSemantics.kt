@@ -27,7 +27,7 @@ fun String.jsTrim(): String = replace(JS_TRIM, "")
 internal fun jsRound(x: Double): Double {
     if (!x.isFinite()) return x
     val whole = floor(x)
-    return if (x - whole >= 0.5) whole + 1 else whole
+    return if (x - whole >= HALF) whole + 1 else whole
 }
 
 /**
@@ -37,7 +37,7 @@ internal fun jsRound(x: Double): Double {
  * is a dot in every locale.
  */
 internal fun jsToFixed(x: Double, digits: Int): String {
-    require(x >= 0 && x < 1e21) { "jsToFixed takes 0 <= x < 1e21, not $x" }
+    require(x >= 0 && x < TO_FIXED_LIMIT) { "jsToFixed takes 0 <= x < 1e21, not $x" }
     return BigDecimal(x).setScale(digits, RoundingMode.HALF_UP).toPlainString()
 }
 
@@ -55,15 +55,24 @@ fun jsShortestDecimal(x: Double): BigDecimal {
     require(x.isFinite()) { "jsShortestDecimal takes a finite number, not $x" }
     if (x == 0.0) return BigDecimal.ZERO
     val exact = BigDecimal(x)
-    fun readsBack(candidate: BigDecimal) = candidate.toString().toDouble() == x
-    for (digits in 1..17) {
-        val nearest = exact.round(MathContext(digits, RoundingMode.HALF_EVEN))
-        if (readsBack(nearest)) return nearest
-        // Next to a power of two, the double below is nearer than the one above. A decimal on the
-        // far side can then read back where the nearest one does not.
-        val across = if (nearest < exact) RoundingMode.CEILING else RoundingMode.FLOOR
-        val other = exact.round(MathContext(digits, across))
-        if (readsBack(other)) return other
-    }
-    return exact // Not reached: 17 significant digits always read back.
+    // 17 significant digits always read back, so the fallback is never reached.
+    return (1..MAX_DOUBLE_DIGITS).firstNotNullOfOrNull { digits -> shortestWith(exact, x, digits) } ?: exact
 }
+
+/** The decimal of [digits] significant digits near [exact] that reads back as [x], if there is one. */
+private fun shortestWith(exact: BigDecimal, x: Double, digits: Int): BigDecimal? {
+    fun readsBack(candidate: BigDecimal) = candidate.toString().toDouble() == x
+    val nearest = exact.round(MathContext(digits, RoundingMode.HALF_EVEN))
+    // Next to a power of two, the double below is nearer than the one above. A decimal on the
+    // far side can then read back where the nearest one does not.
+    val across = if (nearest < exact) RoundingMode.CEILING else RoundingMode.FLOOR
+    return nearest.takeIf(::readsBack) ?: exact.round(MathContext(digits, across)).takeIf(::readsBack)
+}
+
+private const val HALF = 0.5
+
+/** From 1e21 on, JavaScript's toFixed writes the number as toString does. */
+private const val TO_FIXED_LIMIT = 1e21
+
+/** The most significant digits a double needs to read back as itself. */
+private const val MAX_DOUBLE_DIGITS = 17

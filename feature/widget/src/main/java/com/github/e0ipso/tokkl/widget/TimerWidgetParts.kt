@@ -22,7 +22,16 @@ import androidx.glance.appwidget.components.SquareIconButton
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.background
 import androidx.glance.color.ColorProvider
-import androidx.glance.layout.*
+import androidx.glance.layout.Alignment
+import androidx.glance.layout.Box
+import androidx.glance.layout.Column
+import androidx.glance.layout.Row
+import androidx.glance.layout.Spacer
+import androidx.glance.layout.fillMaxWidth
+import androidx.glance.layout.height
+import androidx.glance.layout.padding
+import androidx.glance.layout.size
+import androidx.glance.layout.width
 import androidx.glance.semantics.contentDescription
 import androidx.glance.semantics.semantics
 import androidx.glance.text.FontWeight
@@ -141,7 +150,9 @@ internal fun clockPaint(context: Context, size: Float): Paint = Paint().apply {
 private fun fittedClockSize(context: Context, sample: String, requested: Float, width: Float): Float {
     val density = context.resources.displayMetrics.density
     var size = requested
-    while (size > 6f && clockPaint(context, size).measureText(sample) + 4 > width * density) size -= .5f
+    while (size > MIN_CLOCK_SIZE && clockPaint(context, size).measureText(sample) + CLOCK_SLACK_PX > width * density) {
+        size -= CLOCK_SIZE_STEP
+    }
     return size
 }
 
@@ -403,3 +414,9 @@ internal fun Label(
 ) {
     Text(text, style = TextStyle(color = color, fontSize = size.sp, fontWeight = FontWeight.Medium), maxLines = 1)
 }
+
+// fittedClockSize shrinks the clock's text in steps of CLOCK_SIZE_STEP down to MIN_CLOCK_SIZE, until
+// it fits with CLOCK_SLACK_PX to spare.
+private const val MIN_CLOCK_SIZE = 6f
+private const val CLOCK_SIZE_STEP = .5f
+private const val CLOCK_SLACK_PX = 4

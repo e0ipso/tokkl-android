@@ -98,7 +98,7 @@ internal fun TimeTextField(
     mistake: TimeMistake?,
     enabled: Boolean,
     imeAction: ImeAction,
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
 ) {
     var focused by remember { mutableStateOf(false) }
     OutlinedTextField(

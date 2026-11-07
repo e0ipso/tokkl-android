@@ -53,12 +53,12 @@ class ApiTokenStore(context: Context) {
         synchronized(LOCK) {
             val bytes = try {
                 file.readFully()
-            } catch (e: FileNotFoundException) {
+            } catch (_: FileNotFoundException) {
                 return null
             }
             if (bytes.size < HEADER_SIZE || bytes[0] != FORMAT_VERSION) return null
             val ivEnd = HEADER_SIZE + (bytes[1].toInt() and 0xFF)
-            if (bytes.size < ivEnd + TAG_BITS / 8) return null
+            if (bytes.size < ivEnd + TAG_BITS / Byte.SIZE_BITS) return null
             val key = key() ?: return null
             return try {
                 val cipher = Cipher.getInstance(TRANSFORMATION)
@@ -68,7 +68,7 @@ class ApiTokenStore(context: Context) {
                     GCMParameterSpec(TAG_BITS, bytes, HEADER_SIZE, ivEnd - HEADER_SIZE),
                 )
                 String(cipher.doFinal(bytes, ivEnd, bytes.size - ivEnd), Charsets.UTF_8)
-            } catch (e: GeneralSecurityException) {
+            } catch (_: GeneralSecurityException) {
                 null
             }
         }

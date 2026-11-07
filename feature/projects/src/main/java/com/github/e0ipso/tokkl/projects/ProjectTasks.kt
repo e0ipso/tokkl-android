@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.projects
 
 import androidx.activity.compose.LocalActivity
-import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -50,19 +49,6 @@ import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklIconButton
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.core.ui.R as UiR
-
-/** What the task list's controls do. */
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-class TaskActions(
-    val onRetry: () -> Unit = {},
-    val onCreate: (String) -> Unit = {},
-    val onAskToEdit: (ProjectTask) -> Unit = {},
-    val onSave: (name: String, done: Boolean) -> Unit = { _, _ -> },
-    val onAskToDelete: (ProjectTask) -> Unit = {},
-    val onDelete: () -> Unit = {},
-    val onDismiss: () -> Unit = {},
-    val onDoneShown: () -> Unit = {},
-)
 
 /**
  * Opens [project]'s task list while its form is on screen, and closes it when the form goes, but
@@ -197,7 +183,10 @@ private fun NewTaskField(
     }
 }
 
-/** One task, with Done under a done one: a tap on it opens its form, and Delete asks first. Both stay off while nothing can change. */
+/**
+ * One task, with Done under a done one: a tap on it opens its form, and Delete asks first. Both stay off while nothing
+ * can change.
+ */
 @Composable
 private fun TaskRow(task: ProjectTask, canChange: Boolean, actions: TaskActions) {
     CatalogListRow {

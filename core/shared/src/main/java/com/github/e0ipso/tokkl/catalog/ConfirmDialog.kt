@@ -74,10 +74,11 @@ fun CancelAndConfirm(
     confirmLabel: String,
     onConfirm: () -> Unit,
     onCancel: () -> Unit,
+    modifier: Modifier = Modifier,
     enabled: Boolean = true,
     danger: Boolean = false,
 ) {
-    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup)) {
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup)) {
         TokklGhostButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.catalog_cancel), textAlign = TextAlign.Center)
         }

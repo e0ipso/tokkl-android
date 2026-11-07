@@ -9,6 +9,7 @@ import androidx.compose.ui.input.pointer.PointerId
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.changedToUp
 import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.time.MINUTES_PER_HOUR
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -80,7 +81,7 @@ internal class CalendarDrags(
 
     /** [drag] with the finger at [y] pixels down its column, where an hour is [hour] pixels tall. */
     fun moved(drag: CalendarDrag, y: Float, hour: Float): CalendarDrag = when (drag) {
-        is CalendarDrag.Create -> drag.copy(toMinute = snapToStep(y / hour * 60.0, step))
+        is CalendarDrag.Create -> drag.copy(toMinute = snapToStep(y / hour * MINUTES_PER_HOUR.toDouble(), step))
 
         is CalendarDrag.Change -> {
             val snapped = (Math.round((y - drag.originY) / hour * 60.0 / step) * step).toInt()
@@ -208,10 +209,10 @@ internal class BlockGeometry(
             )
     }
 
-    private fun top(block: CalendarBlock): Float = (block.top / 60 * hour).toFloat()
+    private fun top(block: CalendarBlock): Float = (block.top / MINUTES_PER_HOUR * hour).toFloat()
 
     private fun height(block: CalendarBlock): Float = maxOf(
-        ((block.bottom - block.top) / 60 * hour).toFloat(),
+        ((block.bottom - block.top) / MINUTES_PER_HOUR * hour).toFloat(),
         minHeight,
     )
 }
@@ -276,16 +277,20 @@ private suspend fun AwaitPointerEventScope.drag(
     onHold(target, start)
     var lifted = false
     try {
-        while (true) {
-            val change = awaitPointerEvent().changes.firstOrNull { it.id == id } ?: break
-            change.consume()
-            if (!change.pressed) {
-                lifted = true
-                onLift()
-                break
+        do {
+            val change = awaitPointerEvent().changes.firstOrNull { it.id == id }
+            change?.consume()
+            when {
+                change == null -> Unit
+
+                change.pressed -> onMove(change.position)
+
+                else -> {
+                    lifted = true
+                    onLift()
+                }
             }
-            onMove(change.position)
-        }
+        } while (change?.pressed == true)
     } finally {
         if (!lifted) onCancel()
     }

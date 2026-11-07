@@ -62,7 +62,7 @@ class AlarmClockPomodoroScheduler(
             operation(create = false, redraw = true)?.let(manager::cancel)
             manager.setAlarmClock(AlarmManager.AlarmClockInfo(triggerAt.toEpochMilli(), showPhase()), pending)
             true
-        } catch (e: SecurityException) {
+        } catch (_: SecurityException) {
             // Revoked between the check and the call. The page reads permissionDenied.
             scheduleRedraw(triggerAt, phase)
         }
@@ -112,7 +112,11 @@ class AlarmClockPomodoroScheduler(
             if (create) PendingIntent.FLAG_UPDATE_CURRENT else PendingIntent.FLAG_NO_CREATE
         val intent = Intent(context, PomodoroPhaseAlarmReceiver::class.java)
             .setAction(
-                if (redraw) PomodoroPhaseAlarmReceiver.ACTION_WIDGET_REDRAW else PomodoroPhaseAlarmReceiver.ACTION_PHASE_END,
+                if (redraw) {
+                    PomodoroPhaseAlarmReceiver.ACTION_WIDGET_REDRAW
+                } else {
+                    PomodoroPhaseAlarmReceiver.ACTION_PHASE_END
+                },
             )
         if (phase != null) intent.putPhase(phase)
         return PendingIntent.getBroadcast(context, OPERATION_REQUEST, intent, flags)

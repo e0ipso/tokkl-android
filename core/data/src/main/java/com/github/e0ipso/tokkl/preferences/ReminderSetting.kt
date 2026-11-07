@@ -104,9 +104,8 @@ class ReminderSetting(
             }
             if (loaded.shared && !wasShared && changed) loaded.unsent = true
             if (!loaded.shared) loaded.unsent = false
-            if (loaded.shared && !loaded.unsent && !changed &&
-                preferences != null
-            ) {
+            val untouched = loaded.shared && !loaded.unsent && !changed
+            if (untouched && preferences != null) {
                 loaded.state.value = preferences.reminderPreferences()
             }
             changed = false
@@ -142,7 +141,7 @@ class ReminderSetting(
         if (generation != expected) return@synchronized
         try {
             store.save(StoredReminderPreferences(loaded.state.value, loaded.unsent, loaded.shared))
-        } catch (e: IOException) {
+        } catch (_: IOException) {
             // A later change or refresh retries the disk write.
         }
     }

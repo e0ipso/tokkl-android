@@ -49,7 +49,9 @@ fun favoriteShortcuts(
 fun favoriteForShortcut(id: String, favorites: List<CachedFavorite>): CachedFavorite? =
     favorites.firstOrNull { favoriteShortcutId(it.fields()) == id }
 
-/** The name of the favorite with [fields]: the description, else the project, else Untitled, as TimerPage.tsx names it. */
+/**
+ * The name of the favorite with [fields]: the description, else the project, else Untitled, as TimerPage.tsx names it.
+ */
 fun favoriteName(fields: EntryFields, projects: List<CachedProject>, names: FavoriteNames): String =
     fields.description.ifEmpty { projectName(fields, projects) ?: names.untitled }
 

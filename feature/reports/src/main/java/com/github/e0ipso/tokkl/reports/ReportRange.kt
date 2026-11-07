@@ -1,7 +1,10 @@
 package com.github.e0ipso.tokkl.reports
 
+import com.github.e0ipso.tokkl.time.MONTHS_PER_YEAR
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.Month
+import java.time.Year
 import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAdjusters
 
@@ -61,7 +64,7 @@ data class ReportRange(val from: LocalDate, val to: LocalDate) {
     /** The number of calendar months the range covers, or 0 when it does not start and end on month edges. */
     private fun wholeMonths(): Long {
         if (from.dayOfMonth != 1 || to != to.with(TemporalAdjusters.lastDayOfMonth())) return 0
-        return (to.year - from.year) * 12L + (to.monthValue - from.monthValue) + 1
+        return (to.year - from.year).toLong() * MONTHS_PER_YEAR + (to.monthValue - from.monthValue) + 1
     }
 }
 
@@ -88,17 +91,19 @@ enum class RangePreset {
         return when (this) {
             TODAY -> ReportRange(today, today)
             YESTERDAY -> today.minusDays(1).let { ReportRange(it, it) }
-            THIS_WEEK -> ReportRange(weekStart, weekStart.plusDays(6))
-            LAST_WEEK -> ReportRange(weekStart.minusDays(7), weekStart.minusDays(1))
+            THIS_WEEK -> ReportRange(weekStart, weekStart.plusWeeks(1).minusDays(1))
+            LAST_WEEK -> ReportRange(weekStart.minusWeeks(1), weekStart.minusDays(1))
             THIS_MONTH -> ReportRange(monthStart, monthStart.plusMonths(1).minusDays(1))
             LAST_MONTH -> monthStart.minusMonths(1).let { ReportRange(it, monthStart.minusDays(1)) }
-            LAST_30_DAYS -> ReportRange(today.minusDays(29), today)
+            LAST_30_DAYS -> ReportRange(today.minusDays(LAST_30_DAYS_BEFORE_TODAY), today)
             THIS_YEAR -> year(today.year)
             LAST_YEAR -> year(today.year - 1)
         }
     }
 
-    private fun year(year: Int) = ReportRange(LocalDate.of(year, 1, 1), LocalDate.of(year, 12, 31))
+    private fun year(year: Int) = Year.of(
+        year,
+    ).let { ReportRange(it.atDay(1), it.atMonth(Month.DECEMBER).atEndOfMonth()) }
 
     companion object {
         /** The preset whose range is [range] on [today], if any. Port of matchingPreset. */
@@ -124,7 +129,10 @@ enum class Resolution {
     /** The first day of the bucket after the one starting on [start]. */
     fun next(start: LocalDate): LocalDate = when (this) {
         DAY -> start.plusDays(1)
-        WEEK -> start.plusDays(7)
+        WEEK -> start.plusWeeks(1)
         MONTH -> start.plusMonths(1)
     }
 }
+
+/** The days before today in Last 30 days, which ends today. */
+private const val LAST_30_DAYS_BEFORE_TODAY = 29L

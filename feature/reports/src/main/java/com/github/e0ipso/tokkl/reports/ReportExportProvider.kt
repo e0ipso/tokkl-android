@@ -5,6 +5,7 @@ import android.os.ParcelFileDescriptor
 import android.system.ErrnoException
 import android.system.Os
 import androidx.core.content.FileProvider
+import com.github.e0ipso.tokkl.time.MILLIS_PER_SECOND
 import java.io.FileNotFoundException
 
 /** FileProvider's sole configured root is completed exports. Every grant is read-only. */
@@ -18,19 +19,22 @@ class ReportExportProvider : FileProvider() {
         if (mode != "r") throw FileNotFoundException("Exports are read-only")
         val descriptor = super.openFile(uri, mode)
             ?: throw FileNotFoundException("Cannot read export")
+        var handedOver = false
         try {
-            val stat = Os.fstat(descriptor.fileDescriptor)
-            if (System.currentTimeMillis() - stat.st_mtime * 1000 >= ReportExportFiles.MAX_AGE_MILLIS ||
+            val stat = try {
+                Os.fstat(descriptor.fileDescriptor)
+            } catch (_: ErrnoException) {
+                throw FileNotFoundException("Cannot read export")
+            }
+            if (System.currentTimeMillis() - stat.st_mtime * MILLIS_PER_SECOND >= ReportExportFiles.MAX_AGE_MILLIS ||
                 stat.st_size > ReportExportFiles.MAX_BYTES
             ) {
                 throw FileNotFoundException("Export expired")
             }
+            handedOver = true
             return descriptor
-        } catch (e: Exception) {
-            descriptor.close()
-            if (e is FileNotFoundException) throw e
-            if (e is ErrnoException) throw FileNotFoundException("Cannot read export")
-            throw e
+        } finally {
+            if (!handedOver) descriptor.close()
         }
     }
 }

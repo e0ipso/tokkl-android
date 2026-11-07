@@ -130,9 +130,8 @@ class TogglApiClient(
             val content = response.body
             val type = content.contentType()
             val length = content.contentLength()
-            if (response.code != 200 || type == null || type.type != "text" || type.subtype != "csv" ||
-                length > maxBytes
-            ) {
+            val csv = type != null && type.type == "text" && type.subtype == "csv"
+            if (response.code != HttpStatus.OK || !csv || length > maxBytes) {
                 return@execute ApiResult.Failure(
                     ApiError.InvalidResponse(IllegalArgumentException("Expected a bounded CSV response")),
                 )
@@ -200,7 +199,7 @@ class TogglApiClient(
         val call = (if (resend) httpClient else sendingOnce).newCall(request)
         // Exports have a finite whole-call deadline as well as the shared connect/read timeouts.
         // A stream lasts as long as it is open, so it has none.
-        if (cancellation != null && !streaming) call.timeout().timeout(60, TimeUnit.SECONDS)
+        if (cancellation != null && !streaming) call.timeout().timeout(CALL_TIMEOUT_SECONDS, TimeUnit.SECONDS)
         cancellation?.attach(call)
         return try {
             cancellation?.check()
@@ -244,8 +243,8 @@ class TogglApiClient(
     }
 
     private fun httpError(response: Response): ApiError.Http = when (response.code) {
-        403 -> ApiError.AuthFailed
-        429 -> ApiError.RateLimited(retryAfterSeconds(response.header("Retry-After")))
+        HttpStatus.FORBIDDEN -> ApiError.AuthFailed
+        HttpStatus.TOO_MANY_REQUESTS -> ApiError.RateLimited(retryAfterSeconds(response.header("Retry-After")))
         else -> ApiError.UnexpectedStatus(response.code, reason(response))
     }
 
@@ -257,7 +256,7 @@ class TogglApiClient(
     private fun reason(response: Response): String? {
         val text = try {
             response.peekBody(MAX_REASON_BYTES).string()
-        } catch (e: IOException) {
+        } catch (_: IOException) {
             return null
         }
         return reasonIn(text)
@@ -267,7 +266,7 @@ class TogglApiClient(
     private fun reasonIn(text: String): String? {
         val element = try {
             ApiJson.parseToJsonElement(text)
-        } catch (e: IllegalArgumentException) {
+        } catch (_: IllegalArgumentException) {
             // kotlinx.serialization's SerializationException is an IllegalArgumentException.
             return null
         }
@@ -299,6 +298,9 @@ class TogglApiClient(
 
         /** What [sendRefusable] reads a body for. */
         const val CONFLICT = 409
+
+        /** How long a call that is not a stream may take before OkHttp gives up on it. */
+        const val CALL_TIMEOUT_SECONDS = 60L
 
         /** Tokkl sends whole seconds. An HTTP date or a negative number counts as missing. */
         fun retryAfterSeconds(value: String?): Long? = value?.trim()?.toLongOrNull()?.takeIf { it >= 0 }

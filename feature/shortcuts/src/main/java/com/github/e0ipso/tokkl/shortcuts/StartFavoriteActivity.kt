@@ -70,7 +70,7 @@ class StartFavoriteActivity : Activity() {
                     is ShortcutStart.Started -> app.getString(R.string.shortcut_started, started.name)
                     ShortcutStart.Gone -> app.getString(R.string.shortcut_gone)
                 }
-            } catch (e: SQLiteException) {
+            } catch (_: SQLiteException) {
                 // The disk refused the change, so nothing started.
                 app.getString(R.string.shortcut_failed)
             }

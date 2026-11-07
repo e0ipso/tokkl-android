@@ -50,7 +50,7 @@ internal class TileRefresh(
                     RunningCheck.results.write(generation) { cache.checkedRunning(before, current.value?.toCached()) }
                     succeeded = true
                 }
-            } catch (e: SQLiteException) {
+            } catch (_: SQLiteException) {
                 // Keep displaying the cached state if the disk cannot read it.
             } finally {
                 throttle.finished(generation, succeeded, SystemClock.elapsedRealtime())

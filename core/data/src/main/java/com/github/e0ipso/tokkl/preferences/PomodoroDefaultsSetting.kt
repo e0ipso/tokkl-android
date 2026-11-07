@@ -206,7 +206,7 @@ class PomodoroDefaultsSetting(
             val stored = synchronized(lock) { StoredPomodoroDefaults(loaded.defaults.value, loaded.unsent) }
             try {
                 store.save(stored)
-            } catch (e: IOException) {
+            } catch (_: IOException) {
                 // The next change writes it again.
             }
         }

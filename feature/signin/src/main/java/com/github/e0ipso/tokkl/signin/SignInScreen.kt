@@ -126,9 +126,8 @@ internal fun SignInContent(
     )
     val keyboard = LocalSoftwareKeyboardController.current
     val failure = state.failure
-    if (failure is SignInResult.CleartextNotConfirmed || failure is SignInResult.UntrustedCertificate ||
-        (failure != null && failureMessage(failure, state.method) != null)
-    ) {
+    val prompt = failure is SignInResult.CleartextNotConfirmed || failure is SignInResult.UntrustedCertificate
+    if (prompt || (failure != null && failureMessage(failure, state.method) != null)) {
         // The keyboard would leave the dialog, or the banner's message, little room.
         LaunchedEffect(failure) { keyboard?.hide() }
     }
@@ -286,6 +285,7 @@ private fun MethodChoice(selected: SignInMethod, onSelect: (SignInMethod) -> Uni
     }
 }
 
+/** The message under the form, or null for a result that the screen shows in a dialog or not at all. */
 @Composable
 private fun failureMessage(failure: SignInResult, method: SignInMethod): String? = when (failure) {
     SignInResult.BadCredentials -> stringResource(

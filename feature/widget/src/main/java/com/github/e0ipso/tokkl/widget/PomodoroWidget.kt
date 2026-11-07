@@ -14,14 +14,37 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.glance.*
+import androidx.glance.GlanceId
+import androidx.glance.GlanceModifier
+import androidx.glance.GlanceTheme
+import androidx.glance.ImageProvider
+import androidx.glance.LocalContext
+import androidx.glance.LocalSize
 import androidx.glance.action.Action
 import androidx.glance.action.clickable
-import androidx.glance.appwidget.*
+import androidx.glance.appwidget.AndroidRemoteViews
+import androidx.glance.appwidget.GlanceAppWidget
+import androidx.glance.appwidget.GlanceAppWidgetReceiver
+import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.action.actionStartActivity
+import androidx.glance.appwidget.appWidgetBackground
 import androidx.glance.appwidget.components.SquareIconButton
+import androidx.glance.appwidget.cornerRadius
+import androidx.glance.appwidget.provideContent
+import androidx.glance.background
 import androidx.glance.color.ColorProvider
-import androidx.glance.layout.*
+import androidx.glance.layout.Alignment
+import androidx.glance.layout.Box
+import androidx.glance.layout.Column
+import androidx.glance.layout.ColumnScope
+import androidx.glance.layout.Row
+import androidx.glance.layout.Spacer
+import androidx.glance.layout.fillMaxSize
+import androidx.glance.layout.fillMaxWidth
+import androidx.glance.layout.height
+import androidx.glance.layout.padding
+import androidx.glance.layout.size
+import androidx.glance.layout.width
 import androidx.glance.material3.ColorProviders
 import androidx.glance.semantics.contentDescription
 import androidx.glance.semantics.semantics
@@ -75,7 +98,12 @@ private val RestText = ColorProvider(Color(0xFF007A7A), TokklDarkColorScheme.sec
 /** The same content is rendered in a native RemoteViews host for deterministic layout references. */
 @Composable
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-fun PomodoroWidgetContent(state: PomodoroWidgetState, now: Instant = Instant.now(), ticking: Boolean = true) {
+fun PomodoroWidgetContent(
+    state: PomodoroWidgetState,
+    modifier: GlanceModifier = GlanceModifier,
+    now: Instant = Instant.now(),
+    ticking: Boolean = true,
+) {
     val context = LocalContext.current
     val bounds = LocalSize.current
     val large = bounds.width.value >= WidgetLayout.LARGE_WIDTH_DP && bounds.height.value >= WidgetLayout.LARGE_HEIGHT_DP
@@ -92,7 +120,7 @@ fun PomodoroWidgetContent(state: PomodoroWidgetState, now: Instant = Instant.now
     val width = bounds.width.value - padding * 2
     val height = bounds.height.value - padding * 2
     Column(
-        GlanceModifier.fillMaxSize().appWidgetBackground().background(GlanceTheme.colors.surface)
+        modifier.fillMaxSize().appWidgetBackground().background(GlanceTheme.colors.surface)
             .cornerRadius(16.dp).clickable(openPomodoro(context)).padding(padding.dp),
     ) {
         when (state) {
@@ -109,7 +137,7 @@ fun PomodoroWidgetContent(state: PomodoroWidgetState, now: Instant = Instant.now
                     large,
                 )
             } else {
-                IdleStrip(context, state, width, tiny)
+                IdleStrip(context, state, tiny)
             }
 
             is PomodoroWidgetState.Active -> if (card) {
@@ -123,7 +151,7 @@ fun PomodoroWidgetContent(state: PomodoroWidgetState, now: Instant = Instant.now
                     ticking,
                 )
             } else {
-                SessionStrip(context, state, width, height, tiny, now, ticking)
+                SessionStrip(context, state, width, tiny, now, ticking)
             }
         }
     }
@@ -156,7 +184,7 @@ private fun Message(message: String, tiny: Boolean) {
 }
 
 @Composable
-private fun IdleStrip(context: Context, state: PomodoroWidgetState.Idle, width: Float, tiny: Boolean) {
+private fun IdleStrip(context: Context, state: PomodoroWidgetState.Idle, tiny: Boolean) {
     Row(GlanceModifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
         Column(GlanceModifier.defaultWeight()) {
             Label(
@@ -192,7 +220,6 @@ private fun SessionStrip(
     context: Context,
     state: PomodoroWidgetState.Active,
     width: Float,
-    height: Float,
     tiny: Boolean,
     now: Instant,
     ticking: Boolean,
@@ -527,7 +554,7 @@ private fun Cycle(context: Context, state: PomodoroWidgetState.Active) {
     Row(GlanceModifier.semantics { contentDescription = description }, verticalAlignment = Alignment.CenterVertically) {
         // One child per work/rest pair keeps the RemoteViews child limit even at every 12.
         val dot = if (session.longRestEvery > 6) 4f else 8f
-        (0 until session.longRestEvery.coerceIn(1, 12)).chunked(2).forEach { indices ->
+        for (indices in (0 until session.longRestEvery.coerceIn(1, 12)).chunked(2)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 indices.forEach { index ->
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -563,7 +590,7 @@ private fun Cycle(context: Context, state: PomodoroWidgetState.Active) {
 }
 
 @Composable
-private fun EntryChips(context: Context, entry: PomodoroWidgetEntry, width: Float, scale: Float) {
+private fun ColumnScope.EntryChips(context: Context, entry: PomodoroWidgetEntry, width: Float, scale: Float) {
     Spacer(GlanceModifier.height(8.dp))
     Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         val project = projectLine(context, entry)
@@ -700,8 +727,14 @@ private fun Label(
 private fun phaseLabel(context: Context, state: PomodoroWidgetState.Active) = context.getString(
     when (state.session.phase.kind) {
         PhaseKind.WORK -> if (state.ended) R.string.pomodoro_widget_work_done else SharedR.string.pomodoro_work
-        PhaseKind.SHORT_REST -> if (state.ended) R.string.pomodoro_widget_short_done else SharedR.string.pomodoro_short_rest
-        PhaseKind.LONG_REST -> if (state.ended) R.string.pomodoro_widget_long_done else SharedR.string.pomodoro_long_rest
+
+        PhaseKind.SHORT_REST -> {
+            if (state.ended) R.string.pomodoro_widget_short_done else SharedR.string.pomodoro_short_rest
+        }
+
+        PhaseKind.LONG_REST -> {
+            if (state.ended) R.string.pomodoro_widget_long_done else SharedR.string.pomodoro_long_rest
+        }
     },
 )
 

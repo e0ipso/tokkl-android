@@ -21,13 +21,12 @@ internal class ReportExtraProjection {
 
     fun fields(value: JsonObject, known: Set<String>): List<ReportExtraField> {
         val result = mutableListOf<ReportExtraField>()
-        for ((key, child) in value) {
-            if (key in known) continue
-            if (!available() || result.size == 12) {
+        for ((key, child) in value.filterKeys { it !in known }) {
+            if (!available() || result.size == MAX_ENTRIES) {
                 truncated = true
                 break
             }
-            if (key.length > 240) truncated = true
+            if (key.length > MAX_TEXT_CHARACTERS) truncated = true
             val name = text(humanizeReportKey(key))
             result += ReportExtraField(name, render(child, 0))
         }
@@ -42,37 +41,39 @@ internal class ReportExtraProjection {
         return when (value) {
             is JsonPrimitive -> text(if (value.isString) quoted(value.content) else value.content)
 
-            is JsonArray -> {
-                if (depth >= 3) return omitted()
-                val parts = mutableListOf<String>()
-                for (child in value) {
-                    if (!available() || parts.size == 12) {
-                        parts += omitted()
-                        break
-                    }
-                    parts += render(child, depth + 1)
-                }
-                "[" + parts.joinToString(", ") + "]"
+            is JsonArray -> if (depth >= MAX_DEPTH) {
+                omitted()
+            } else {
+                "[" + renderParts(value) { child -> render(child, depth + 1) }.joinToString(", ") + "]"
             }
 
-            is JsonObject -> {
-                if (depth >= 3) return omitted()
-                val parts = mutableListOf<String>()
-                for ((key, child) in value) {
-                    if (!available() || parts.size == 12) {
-                        parts += omitted()
-                        break
-                    }
-                    if (key.length > 240) truncated = true
-                    parts += text(humanizeReportKey(key)) + ": " + render(child, depth + 1)
+            is JsonObject -> if (depth >= MAX_DEPTH) {
+                omitted()
+            } else {
+                val parts = renderParts(value.entries) { (key, child) ->
+                    if (key.length > MAX_TEXT_CHARACTERS) truncated = true
+                    text(humanizeReportKey(key)) + ": " + render(child, depth + 1)
                 }
                 "{" + parts.joinToString(", ") + "}"
             }
         }
     }
 
+    /** Each of [items] as [part] renders it, until the budget or [MAX_ENTRIES] runs out. */
+    private fun <T> renderParts(items: Iterable<T>, part: (T) -> String): List<String> {
+        val parts = mutableListOf<String>()
+        for (item in items) {
+            if (!available() || parts.size == MAX_ENTRIES) {
+                parts += omitted()
+                break
+            }
+            parts += part(item)
+        }
+        return parts
+    }
+
     private fun text(value: String): String {
-        val limit = minOf(240, charactersLeft)
+        val limit = minOf(MAX_TEXT_CHARACTERS, charactersLeft)
         val bounded = value.take(limit)
         charactersLeft -= bounded.length
         return if (value.length > limit) bounded + omitted() else bounded
@@ -86,7 +87,7 @@ internal class ReportExtraProjection {
     private fun quoted(value: String): String {
         // Bound before escaping; JSON quoting keeps quotes/newlines literal and Compose Text
         // never interprets markup. Escape bidi/control formatting so labels cannot be spoofed.
-        val limited = value.take(240)
+        val limited = value.take(MAX_TEXT_CHARACTERS)
         if (limited.length != value.length) truncated = true
         val safe = limited.map {
             if (Character.getType(
@@ -102,9 +103,18 @@ internal class ReportExtraProjection {
     }
 }
 
-internal fun humanizeReportKey(key: String): String = key.take(240)
+internal fun humanizeReportKey(key: String): String = key.take(MAX_TEXT_CHARACTERS)
     .replace(Regex("([a-z0-9])([A-Z])"), "$1 $2")
     .replace('_', ' ').replace('-', ' ')
     .map { if (it.isISOControl() || Character.getType(it) == Character.FORMAT.toInt()) ' ' else it }
     .joinToString("")
     .replaceFirstChar { it.uppercaseChar() }
+
+/** The most entries an object or a list shows before the rest is left out. */
+private const val MAX_ENTRIES = 12
+
+/** The longest key or text value shown. */
+private const val MAX_TEXT_CHARACTERS = 240
+
+/** How deep nested objects and lists show. */
+private const val MAX_DEPTH = 3

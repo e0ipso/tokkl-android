@@ -2,7 +2,6 @@ package com.github.e0ipso.tokkl.di
 
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.AccountServerSpans
-import com.github.e0ipso.tokkl.cache.BackgroundSend
 import com.github.e0ipso.tokkl.cache.CacheDatabase
 import com.github.e0ipso.tokkl.cache.CancelWaitingSend
 import com.github.e0ipso.tokkl.cache.ChangeQueue
@@ -25,21 +24,19 @@ import org.koin.dsl.module
 /** The Room cache, and the change queue and its sender. */
 internal val dataModule = module {
 
-    /** The file of the cache and the queue. It opens on the first query, which Room keeps off the main thread. */
+    // The file of the cache and the queue. It opens on the first query, which Room keeps off the main thread.
     single { CacheDatabase.open(androidContext()) }
 
-    /** The offline cache. */
+    // The offline cache.
     single { AccountCache(get()) }
 
     single<ChangeStore> { RoomChangeStore(get()) }
 
     single { AccountServerSpans(get()) } bind ServerSpans::class
 
-    /**
-     * Start, stop, create, edit and delete entries on the phone. The [ChangeSender] sends each
-     * change at once, and [BackgroundSend] sends what is left when the network returns, also with
-     * the app closed.
-     */
+    // Start, stop, create, edit and delete entries on the phone. The [ChangeSender] sends each
+    // change at once, and [BackgroundSend] sends what is left when the network returns, also with
+    // the app closed.
     single { SendOnQueue(androidContext(), get()) }
     single {
         ChangeQueue(
@@ -50,13 +47,11 @@ internal val dataModule = module {
         )
     } bind EntryChanges::class
 
-    /**
-     * Sends the queued changes in order. Once it has sent some, the account refreshes with a read
-     * that starts after the send, so a refresh that read the server before it cannot put the
-     * cache back. A drain that empties the queue cancels the background send's waiting retry.
-     * Changes it discards because the server no longer has their entries count in
-     * [DiscardedChanges].
-     */
+    // Sends the queued changes in order. Once it has sent some, the account refreshes with a read
+    // that starts after the send, so a refresh that read the server before it cannot put the
+    // cache back. A drain that empties the queue cancels the background send's waiting retry.
+    // Changes it discards because the server no longer has their entries count in
+    // [DiscardedChanges].
     single { CancelWaitingSend(androidContext(), get()) }
     single {
         ChangeSender(

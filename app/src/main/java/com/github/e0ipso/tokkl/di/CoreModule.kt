@@ -26,23 +26,19 @@ internal val coreModule = module {
     single<CoroutineDispatcher>(IoDispatcher) { Dispatchers.IO }
     single<CoroutineDispatcher>(DefaultDispatcher) { Dispatchers.Default }
 
-    /**
-     * The scope that app-wide components launch in. Like `MainScope()`: a [SupervisorJob] on the
-     * main thread. Nothing cancels it, so it lasts as long as the process.
-     */
+    // The scope that app-wide components launch in. Like `MainScope()`: a [SupervisorJob] on the
+    // main thread. Nothing cancels it, so it lasts as long as the process.
     single<CoroutineScope> { CoroutineScope(SupervisorJob() + Dispatchers.Main) }
 
-    /** The wall clock, for components that read the time on each event, such as the widget's day. */
+    // The wall clock, for components that read the time on each event, such as the widget's day.
     single<Clock> { Clock.systemUTC() }
 
     single { ServerConfigStore(androidContext()) }
     single { ApiTokenStore(androidContext()) }
     single { ServerTrustStore(androidContext()) } binds arrayOf(ServerTrust::class, AccountDataOwner::class)
 
-    /**
-     * Reports trust refusals to the [SessionTrust], and answers to the [LastAnswer], which
-     * loads on the first answer, off the main thread.
-     */
+    // Reports trust refusals to the [SessionTrust], and answers to the [LastAnswer], which
+    // loads on the first answer, off the main thread.
     single {
         Session(
             servers = get(),

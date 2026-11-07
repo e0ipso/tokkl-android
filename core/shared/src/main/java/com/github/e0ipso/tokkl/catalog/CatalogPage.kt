@@ -68,14 +68,14 @@ fun CatalogPageEffects(model: CatalogPageEvents, offline: Boolean) {
  * The frame of a page that manages projects, clients or tags: the top bar with [title], and the
  * back button when [onBack] is given, as for a form; under it one scrolling column in the
  * screen's margins that makes room for the keyboard; and a snackbar that says [done], the text of
- * the change the server last accepted, then calls [onDoneShown]. [lazyContent] replaces the
+ * the change the server last accepted, then calls [onDoneShow]. [lazyContent] replaces the
  * scrolling column for pages with long lists, keeping the same frame and screen margins.
  */
 @Composable
 fun CatalogPage(
     title: String,
     done: String?,
-    onDoneShown: () -> Unit,
+    onDoneShow: () -> Unit,
     modifier: Modifier = Modifier,
     onBack: (() -> Unit)? = null,
     lazyContent: (LazyListScope.() -> Unit)? = null,
@@ -87,7 +87,7 @@ fun CatalogPage(
         if (done != null) {
             // Its own job, so clearing the change does not cancel the message.
             scope.launch { snackbar.showSnackbar(done) }
-            onDoneShown()
+            onDoneShow()
         }
     }
     Scaffold(

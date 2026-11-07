@@ -113,7 +113,8 @@ class PomodoroAlarmContentTest {
             TokklTheme {
                 PomodoroContent(
                     page, onLengths = {
-                    }, onFields = {}, onDescription = {}, onDescriptionDone = {}, onStart = {}, onNext = {}, onEnd = {},
+                    }, onFields = {
+                    }, onDescription = {}, onDescriptionFinish = {}, onStart = {}, onNext = {}, onEnd = {},
                     onFullScreenSettings = { settings++ },
                 )
             }
@@ -149,7 +150,7 @@ class PomodoroAlarmContentTest {
                     PomodoroPageState(loading = false, fullScreenDenied = true),
                     onLengths = {
                     }, onFields = {
-                    }, onDescription = {}, onDescriptionDone = {}, onStart = {}, onNext = {}, onEnd = {},
+                    }, onDescription = {}, onDescriptionFinish = {}, onStart = {}, onNext = {}, onEnd = {},
                     fullScreenSettingsUnavailable = true,
                 )
             }
@@ -161,7 +162,7 @@ class PomodoroAlarmContentTest {
 
     private fun show(clock: Clock = Clock.fixed(at.plusSeconds(125), ZoneOffset.UTC)) {
         edgeToEdge()
-        compose.setContent { TokklTheme { PomodoroAlarmContent(state, { nexts++ }, { ends++ }, clock) } }
+        compose.setContent { TokklTheme { PomodoroAlarmContent(state, { nexts++ }, { ends++ }, clock = clock) } }
     }
 
     private fun edgeToEdge() {

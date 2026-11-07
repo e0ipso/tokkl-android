@@ -8,7 +8,7 @@ import org.koin.dsl.module
 
 /** Settings and Licences. */
 val settingsFeatureModule = module {
-    /** The Settings page's sign-out button and its warning about unsent changes. */
+    // The Settings page's sign-out button and its warning about unsent changes.
     single {
         SignOutConfirmation(
             unsentCount = get<ChangeQueue>()::unsentNow,

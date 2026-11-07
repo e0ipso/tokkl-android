@@ -32,7 +32,7 @@ import com.github.e0ipso.tokkl.session.AccountSettings
 internal fun EntryActionsHost(
     state: EntryActionsState,
     onUndo: (Long) -> Unit,
-    onNoticeDone: (EntryNotice) -> Unit,
+    onNoticeEnd: (EntryNotice) -> Unit,
     onConfirmDelete: () -> Unit,
     onCancelDelete: () -> Unit,
     modifier: Modifier = Modifier,
@@ -46,7 +46,7 @@ internal fun EntryActionsHost(
     val message = notice?.let { noticeText(it) }
     val undoLabel = stringResource(R.string.history_undo)
     val undo by rememberUpdatedState(onUndo)
-    val done by rememberUpdatedState(onNoticeDone)
+    val done by rememberUpdatedState(onNoticeEnd)
     LaunchedEffect(notice) {
         if (notice == null || message == null) return@LaunchedEffect
         val undoes = notice.undoes()

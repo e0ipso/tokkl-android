@@ -37,11 +37,21 @@ class AccountTime(
      * [minutes] after midnight on [date] on the account's wall clock, as instantAt in the web app's
      * lib/entryTime.ts. [zonedToUtc] decides a time in the spring gap or the repeated autumn hour.
      */
-    fun instantAt(date: LocalDate, minutes: Int): Instant =
-        zonedToUtc(date.year, date.monthValue, date.dayOfMonth, Math.floorDiv(minutes, 60), minutes % 60, 0, zone)
+    fun instantAt(date: LocalDate, minutes: Int): Instant = zonedToUtc(
+        date.year,
+        date.monthValue,
+        date.dayOfMonth,
+        Math.floorDiv(minutes, MINUTES_PER_HOUR),
+        minutes % MINUTES_PER_HOUR,
+        0,
+        zone,
+    )
 
-    /** Minutes after midnight on the account's wall clock at [instant], as minutesOfDay in the web app's lib/settings.ts. */
-    fun minutesOfDay(instant: Instant): Int = local(instant).let { it.hour * 60 + it.minute }
+    /**
+     * Minutes after midnight on the account's wall clock at [instant], as minutesOfDay in the web app's
+     * lib/settings.ts.
+     */
+    fun minutesOfDay(instant: Instant): Int = local(instant).let { it.hour * MINUTES_PER_HOUR + it.minute }
 
     /** The first day of the week that holds [date], as startOfWeek in ../tokkl/packages/common/time.ts. */
     fun startOfWeek(date: LocalDate): LocalDate = date.with(TemporalAdjusters.previousOrSame(firstDayOfWeek))

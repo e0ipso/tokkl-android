@@ -33,7 +33,7 @@ internal fun spanOf(time: AccountTime, weekStart: LocalDate, today: LocalDate): 
     }
     return WeekSpan(
         weekStart.atStartOfDay(time.zone).toInstant(),
-        weekStart.plusDays(7).atStartOfDay(time.zone).toInstant(),
+        weekStart.plusWeeks(1).atStartOfDay(time.zone).toInstant(),
     )
 }
 

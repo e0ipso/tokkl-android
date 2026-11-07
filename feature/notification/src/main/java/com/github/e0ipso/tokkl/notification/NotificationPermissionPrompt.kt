@@ -53,7 +53,7 @@ fun NotificationPermissionPrompt(
     ask: NotificationPermissionAsk,
     modifier: Modifier = Modifier,
     openSettings: (Context) -> Unit = ::openNotificationSettings,
-    onAllowed: () -> Unit = {},
+    onAllow: () -> Unit = {},
     retries: Flow<Unit> = emptyFlow(),
     onResult: (Boolean) -> Unit = {},
     io: CoroutineContext = koinInject<CoroutineDispatcher>(IoDispatcher),
@@ -61,7 +61,7 @@ fun NotificationPermissionPrompt(
     val context = LocalContext.current
     val host = remember { SnackbarHostState() }
     var refused by rememberSaveable { mutableStateOf(false) }
-    val allowedNow by rememberUpdatedState(onAllowed)
+    val allowedNow by rememberUpdatedState(onAllow)
     val resultNow by rememberUpdatedState(onResult)
     val request = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { allowed ->
         resultNow(allowed)

@@ -62,12 +62,12 @@ import java.time.ZoneOffset
 import com.github.e0ipso.tokkl.core.shared.R as SharedR
 
 /**
- * The history's entry actions and grouped rows at Android's largest font scale, 200%, at the
- * Timer page's width: the row menu with Duplicate, Split and Delete, the split dialog with its
- * preview and its longest message, the message with Undo after a
- * delete and the longer one when Undo needs the server, and a group of similar entries, collapsed
- * and expanded, with the Continue buttons of the group and its members. No text is cut off or
- * leaves the screen, no two parts overlap, and every button keeps a 48dp touch target. EntryActionsUiTest and HistoryGroupUiTest check what TalkBack reads.
+ * The history's entry actions and grouped rows at Android's largest font scale, 200%, at the Timer page's width: the
+ * row menu with Duplicate, Split and Delete, the split dialog with its preview and its longest message, the message
+ * with Undo after a delete and the longer one when Undo needs the server, and a group of similar entries, collapsed and
+ * expanded, with the Continue buttons of the group and its members. No text is cut off or leaves the screen, no two
+ * parts overlap, and every button keeps a 48dp touch target. EntryActionsUiTest and HistoryGroupUiTest check what
+ * TalkBack reads.
  */
 class HistoryFitTest {
     @org.junit.After
@@ -209,7 +209,7 @@ class HistoryFitTest {
                     EntryActionsHost(
                         state = EntryActionsState(notice = notice, split = split),
                         onUndo = {},
-                        onNoticeDone = { done -> if (notice == done) notice = null },
+                        onNoticeEnd = { done -> if (notice == done) notice = null },
                         onConfirmDelete = {},
                         onCancelDelete = {},
                         modifier = Modifier.align(Alignment.BottomCenter),

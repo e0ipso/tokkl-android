@@ -120,9 +120,12 @@ internal fun Grid(
     }
 }
 
-/** Each hour's label, centred on its line; the first sits under the top. TalkBack skips them, since every block says its times. */
+/**
+ * Each hour's label, centred on its line; the first sits under the top. TalkBack skips them, since every block says its
+ * times.
+ */
 @Composable
-private fun Gutter(labels: List<String>, style: TextStyle, modifier: Modifier) {
+private fun Gutter(labels: List<String>, style: TextStyle, modifier: Modifier = Modifier) {
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
     val end = TokklTheme.spacing.space1
     Layout(
@@ -160,7 +163,7 @@ private fun DayColumn(
     now: Instant,
     drag: MutableState<CalendarDrag?>,
     drags: CalendarDrags?,
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
 ) {
     val density = LocalDensity.current
     val haptics = LocalHapticFeedback.current

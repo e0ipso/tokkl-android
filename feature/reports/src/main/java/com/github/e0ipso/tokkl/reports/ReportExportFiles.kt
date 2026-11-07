@@ -27,7 +27,7 @@ class ReportExportFiles(private val root: File, private val now: () -> Long = Sy
         )
         val staging = File(root, "staging")
         val shared = File(root, "shared")
-        if ((!staging.isDirectory && !staging.mkdirs()) || (!shared.isDirectory && !shared.mkdirs())) {
+        if (!staging.madeDirectory() || !shared.madeDirectory()) {
             throw IOException("Cannot create export directory")
         }
         prune(staging, MAX_FILES - 1)
@@ -91,50 +91,74 @@ class ReportExportFiles(private val root: File, private val now: () -> Long = Sy
             val decoder = Charsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPORT)
                 .onUnmappableCharacter(CodingErrorAction.REPORT)
             InputStreamReader(file.inputStream(), decoder).buffered().use { reader ->
-                var quoted = false
-                var afterQuote = false
-                var fieldStart = true
-                var first = true
+                val checker = CsvChecker()
                 while (true) {
                     val next = reader.read()
                     if (next == -1) break
-                    val char = next.toChar()
-                    if (first && char == '\uFEFF') continue
-                    if (first && !char.isWhitespace()) {
-                        if (char in listOf('<', '{', '[')) throw IOException("Unexpected export content")
-                        first = false
-                    }
-                    if (char == '\u0000') throw IOException("Unexpected export content")
-                    when {
-                        quoted -> if (char == '"') {
-                            quoted = false
-                            afterQuote = true
-                        }
-
-                        afterQuote && char == '"' -> {
-                            quoted = true
-                            afterQuote = false
-                        }
-
-                        char == ',' || char == '\r' || char == '\n' -> {
-                            fieldStart = true
-                            afterQuote = false
-                        }
-
-                        afterQuote -> throw IOException("Invalid CSV quoting")
-
-                        char == '"' && fieldStart -> {
-                            quoted = true
-                            fieldStart = false
-                        }
-
-                        char == '"' -> throw IOException("Invalid CSV quoting")
-
-                        else -> fieldStart = false
-                    }
+                    checker.read(next.toChar())
                 }
-                if (quoted) throw IOException("Incomplete CSV quoting")
+                checker.finish()
             }
+        }
+    }
+}
+
+/** True when this is a directory, after making it if it was missing. */
+private fun File.madeDirectory(): Boolean = isDirectory || mkdirs()
+
+/** Reads an export one character at a time and fails on content that is not a CSV export. */
+private class CsvChecker {
+    private var quoted = false
+    private var afterQuote = false
+    private var fieldStart = true
+    private var first = true
+
+    fun read(char: Char) {
+        if (first && char == '\uFEFF') return
+        checkContent(char)
+        checkQuoting(char)
+    }
+
+    fun finish() {
+        if (quoted) throw IOException("Incomplete CSV quoting")
+    }
+
+    /** An HTML or JSON body, or a NUL, is no CSV. */
+    private fun checkContent(char: Char) {
+        if (first && !char.isWhitespace()) {
+            if (char in listOf('<', '{', '[')) throw IOException("Unexpected export content")
+            first = false
+        }
+        if (char == '\u0000') throw IOException("Unexpected export content")
+    }
+
+    private fun checkQuoting(char: Char) {
+        when {
+            quoted -> if (char == '"') {
+                quoted = false
+                afterQuote = true
+            }
+
+            afterQuote && char == '"' -> {
+                quoted = true
+                afterQuote = false
+            }
+
+            char == ',' || char == '\r' || char == '\n' -> {
+                fieldStart = true
+                afterQuote = false
+            }
+
+            afterQuote -> throw IOException("Invalid CSV quoting")
+
+            char == '"' && fieldStart -> {
+                quoted = true
+                fieldStart = false
+            }
+
+            char == '"' -> throw IOException("Invalid CSV quoting")
+
+            else -> fieldStart = false
         }
     }
 }

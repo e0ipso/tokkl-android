@@ -31,7 +31,7 @@ class BackgroundSendRuns {
             synchronized(lock) {
                 if (joined.isEmpty()) cancel()
             }
-        } catch (e: ExecutionException) {
+        } catch (_: ExecutionException) {
             // A failed WorkManager read or cancel may leave a retry waiting. The queue check
             // still covers a cancellation that committed before WorkManager reported failure.
         }

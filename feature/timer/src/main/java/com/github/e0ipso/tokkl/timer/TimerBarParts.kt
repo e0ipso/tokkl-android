@@ -156,5 +156,3 @@ internal fun TimerButton(
         )
     }
 }
-
-/** Effective Room rows include queued changes and remaps; the pause-chain clock is not added. */

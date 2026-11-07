@@ -147,7 +147,7 @@ private fun StripDay(
     settings: AccountSettings,
     onSelect: () -> Unit,
     addAction: CustomAccessibilityAction?,
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
 ) {
     val resources = LocalResources.current
     val locale = LocalConfiguration.current.locales[0]

@@ -39,11 +39,13 @@ import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 
+/** Effective Room rows include queued changes and remaps; the pause-chain clock is not added. */
 @Composable
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 fun TimerTotals(
     entries: Flow<List<CachedTimeEntry>>,
     settings: StateFlow<AccountSettings?>,
+    modifier: Modifier = Modifier,
     clock: Clock = Clock.systemUTC(),
 ) {
     val current by settings.collectAsState()
@@ -56,11 +58,12 @@ fun TimerTotals(
         Text(
             stringResource(R.string.history_unknown_time_zone, account.timeZone),
             style = MaterialTheme.typography.bodyLarge,
+            modifier = modifier,
         )
         return
     }
     val text = totals.formatted(account)
-    TimerTotalsRow(text.today, text.week, totals.todaySeconds, totals.weekSeconds)
+    TimerTotalsRow(text.today, text.week, totals.todaySeconds, totals.weekSeconds, modifier)
 }
 
 /**
@@ -68,9 +71,15 @@ fun TimerTotals(
  * stack them and push the view switch off the phone. The summary belongs to the scroll-away header.
  */
 @Composable
-private fun TimerTotalsRow(today: String, week: String, todaySeconds: Long, weekSeconds: Long) {
+private fun TimerTotalsRow(
+    today: String,
+    week: String,
+    todaySeconds: Long,
+    weekSeconds: Long,
+    modifier: Modifier = Modifier,
+) {
     Row(
-        Modifier.fillMaxWidth().padding(top = TokklTheme.spacing.space3),
+        modifier.fillMaxWidth().padding(top = TokklTheme.spacing.space3),
         horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space4),
     ) {
         TimerTotal(R.string.timer_total_today, today, todaySeconds, "timer_totals_today", Modifier.weight(1f))

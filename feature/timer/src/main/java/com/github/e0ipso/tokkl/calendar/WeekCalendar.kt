@@ -14,6 +14,7 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -241,7 +242,7 @@ fun CalendarContent(
 
 /** Covers the grid while a week that the phone does not keep loads, or says why it did not. */
 @Composable
-private fun WeekProblem(week: WeekSource, onRetry: () -> Unit, modifier: Modifier) {
+private fun WeekProblem(week: WeekSource, onRetry: () -> Unit, modifier: Modifier = Modifier) {
     Column(
         verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup),
         modifier = modifier
@@ -283,7 +284,7 @@ private fun WeekProblem(week: WeekSource, onRetry: () -> Unit, modifier: Modifie
 }
 
 @Composable
-private fun Problem(title: String?, message: String, onRetry: () -> Unit) {
+private fun ColumnScope.Problem(title: String?, message: String, onRetry: () -> Unit) {
     Column(Modifier.semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite }) {
         if (title != null) {
             Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
@@ -306,11 +307,10 @@ private suspend fun PointerInputScope.detectSwipes(gesture: HeldGesture, onSwipe
         val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
         gesture.held = false
         var last = down.position
-        while (true) {
-            val change = awaitPointerEvent(PointerEventPass.Initial).changes.firstOrNull { it.id == down.id } ?: break
-            last = change.position
-            if (!change.pressed) break
-        }
+        do {
+            val change = awaitPointerEvent(PointerEventPass.Initial).changes.firstOrNull { it.id == down.id }
+            if (change != null) last = change.position
+        } while (change?.pressed == true)
         val dx = last.x - down.position.x
         val dy = last.y - down.position.y
         if (!gesture.held) swipeSteps(dx, dy, minDistance)?.let(onSwipe)

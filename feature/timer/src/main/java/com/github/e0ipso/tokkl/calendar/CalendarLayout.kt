@@ -1,5 +1,8 @@
 package com.github.e0ipso.tokkl.calendar
 
+import com.github.e0ipso.tokkl.time.MILLIS_PER_SECOND
+import com.github.e0ipso.tokkl.time.MINUTES_PER_HOUR
+import com.github.e0ipso.tokkl.time.SECONDS_PER_MINUTE
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -29,9 +32,12 @@ data class CalendarEntry(
 ) {
     val running: Boolean get() = stop == null
 
-    /** Whole seconds from [start] to [stop], or to [now] while it runs, as entrySeconds in the web app's lib/settings.ts. */
+    /**
+     * Whole seconds from [start] to [stop], or to [now] while it runs, as entrySeconds in the web app's
+     * lib/settings.ts.
+     */
     fun seconds(now: Instant): Long =
-        maxOf(0L, Math.floorDiv((stop ?: now).toEpochMilli() - start.toEpochMilli(), 1000L))
+        maxOf(0L, Math.floorDiv((stop ?: now).toEpochMilli() - start.toEpochMilli(), MILLIS_PER_SECOND.toLong()))
 }
 
 /**
@@ -74,7 +80,7 @@ fun clockSpanOnDay(start: Instant, stop: Instant, day: LocalDate, zone: ZoneId):
 /** Wall-clock minutes after midnight in [zone], with whole seconds as a fraction, as clockMinutes in time.ts. */
 private fun clockMinutes(instant: Instant, zone: ZoneId): Double {
     val local = instant.atZone(zone)
-    return local.hour * 60 + local.minute + local.second / 60.0
+    return local.hour * MINUTES_PER_HOUR + local.minute + local.second / SECONDS_PER_MINUTE.toDouble()
 }
 
 /**

@@ -19,7 +19,10 @@ class ReminderStore(context: Context) : ClearableStore<StoredReminderPreferences
         null
     } else {
         StoredReminderPreferences(
-            ReminderPreferences(preferences.getBoolean("enabled", true), preferences.getInt("hours", 8)).clamped(),
+            ReminderPreferences(
+                preferences.getBoolean("enabled", true),
+                preferences.getInt("hours", ReminderPreferences().hours),
+            ).clamped(),
             preferences.getBoolean("unsent", false),
             preferences.getBoolean("shared", false),
         )

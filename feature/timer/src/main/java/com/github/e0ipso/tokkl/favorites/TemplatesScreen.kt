@@ -63,7 +63,7 @@ fun TemplatesScreen(
         tasks = tasks,
         offline = offline,
         done = done,
-        onDoneShown = { done = null },
+        onDoneShow = { done = null },
         onAdd = { fields, onDone ->
             model.add(fields) { problem ->
                 if (problem == null) done = savedText
@@ -96,7 +96,7 @@ fun TemplatesContent(
     tasks: List<CachedTask>,
     offline: Boolean,
     done: String?,
-    onDoneShown: () -> Unit,
+    onDoneShow: () -> Unit,
     onAdd: (EntryFields, (FavoritesProblem?) -> Unit) -> Unit,
     onReplace: (Int, EntryFields, (FavoritesProblem?) -> Unit) -> Unit,
     onRemove: (Int) -> Unit,
@@ -110,7 +110,7 @@ fun TemplatesContent(
     CatalogPage(
         title = stringResource(R.string.nav_templates),
         done = done,
-        onDoneShown = onDoneShown,
+        onDoneShow = onDoneShow,
         modifier = modifier,
     ) {
         TemplateFeedback(state, offline, saved = false)
@@ -232,7 +232,7 @@ private fun TemplateForm(
         original = draft.original,
         descriptionHint = stringResource(R.string.favorites_description_hint),
         onDescriptionChange = { text -> onDraft(draft.copy(fields = fields.copy(description = text))) },
-        onDescriptionDone = {},
+        onDescriptionFinish = {},
         onPick = { picked -> onDraft(draft.copy(fields = fields.withPicked(picked, projects))) },
         onBillableChange = { billable -> onDraft(draft.copy(fields = fields.copy(billable = billable))) },
         picker = picker,

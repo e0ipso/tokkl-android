@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.settings
 import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -146,7 +147,7 @@ fun SettingsContent(
 }
 
 @Composable
-private fun ThemeSection(
+private fun ColumnScope.ThemeSection(
     settings: ThemeSettings,
     onModeChange: (ThemeMode) -> Unit,
     onDynamicColorChange: (Boolean) -> Unit,
@@ -193,7 +194,7 @@ private fun ThemeSection(
  * that it is signing out until the phone is clear, and shows a failed sign-out below it.
  */
 @Composable
-private fun AccountSection(signOut: SignOutConfirmation.State, onSignOut: () -> Unit) {
+private fun ColumnScope.AccountSection(signOut: SignOutConfirmation.State, onSignOut: () -> Unit) {
     Text(
         text = stringResource(R.string.settings_account),
         style = MaterialTheme.typography.titleMedium,
@@ -221,7 +222,7 @@ private fun AccountSection(signOut: SignOutConfirmation.State, onSignOut: () -> 
 
 /** One row that opens the licences, clickable across its width, which TalkBack reads as a button. */
 @Composable
-private fun AboutSection(onOpenLicences: () -> Unit) {
+private fun ColumnScope.AboutSection(onOpenLicences: () -> Unit) {
     Text(
         text = stringResource(R.string.settings_about),
         style = MaterialTheme.typography.titleMedium,

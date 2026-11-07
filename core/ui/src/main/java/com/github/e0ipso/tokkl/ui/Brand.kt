@@ -1,7 +1,5 @@
 package com.github.e0ipso.tokkl.ui
 
-import androidx.annotation.DrawableRes
-import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
@@ -17,27 +15,9 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.github.e0ipso.tokkl.core.ui.R
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-
-/**
- * The sizes of [Brand], as the wordmark's width. Only Tokkl's lg from Brand.tsx ships: the wordmark
- * shows on sign-in and the launch splash only, never in a page header or a top bar, so sm and md
- * had no screen. Each size has its own images, so none is drawn scaled down from a larger size.
- * The image names are aliases: brand_images.xml in res/values and in each density's values folder
- * points them at one file per density. res/raw/brand_images_source.txt records where the files
- * come from.
- */
-enum class BrandSize(
-    @get:VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-    val wordmarkWidth: Dp,
-    @DrawableRes internal val wordmark: Int,
-) {
-    /** Tokkl's lg, on its own above a screen's content, as on sign-in. */
-    LARGE(260.dp, R.drawable.tokkl_wordmark_lg),
-}
 
 /**
  * Tokkl's brand, the owner's graffiti wordmark alone, as Tokkl's Brand.tsx draws it (docs/PRD.md,

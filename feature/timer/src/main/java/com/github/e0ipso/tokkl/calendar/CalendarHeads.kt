@@ -157,7 +157,7 @@ private fun DayHead(
     totalSeconds: Long?,
     settings: AccountSettings,
     editing: CalendarEditing?,
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
 ) {
     val resources = LocalResources.current
     val locale = LocalConfiguration.current.locales[0]

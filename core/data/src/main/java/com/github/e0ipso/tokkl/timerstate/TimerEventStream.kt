@@ -65,7 +65,7 @@ internal fun holdTimerEvents(api: TogglApiClient?, source: TimerStateSource, lin
                 )
             }
         }
-    } catch (e: SQLiteException) {
+    } catch (_: SQLiteException) {
         // The cache could not be read or written. The next connection tries again.
         StreamEnd.Failed(null)
     }

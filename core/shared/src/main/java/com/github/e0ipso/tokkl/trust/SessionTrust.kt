@@ -89,7 +89,7 @@ class SessionTrust(
                         is ApiError.UntrustedCertificate -> trust.pinCertificate(refusal.certificate)
                     }
                     true
-                } catch (e: IOException) {
+                } catch (_: IOException) {
                     false
                 }
             }

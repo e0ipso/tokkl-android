@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.capabilities
 
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.HttpStatus
 import com.github.e0ipso.tokkl.api.Me
 import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.api.TogglApiClient
@@ -124,8 +125,16 @@ fun probeTrash(api: TogglApiClient): TrashProbe =
         is ApiResult.Success -> TrashProbe.PRESENT
 
         is ApiResult.Failure -> when (val error = result.error) {
-            is ApiError.UnexpectedStatus -> if (error.status == 404) TrashProbe.ABSENT else TrashProbe.UNKNOWN
+            is ApiError.UnexpectedStatus -> if (error.status ==
+                HttpStatus.NOT_FOUND
+            ) {
+                TrashProbe.ABSENT
+            } else {
+                TrashProbe.UNKNOWN
+            }
+
             is ApiError.InvalidResponse -> TrashProbe.ABSENT
+
             else -> TrashProbe.UNKNOWN
         }
     }
@@ -148,8 +157,16 @@ fun probeTimerState(api: TogglApiClient): TimerStateProbe =
         is ApiResult.Success -> TimerStateProbe.Present(result.value)
 
         is ApiResult.Failure -> when (val error = result.error) {
-            is ApiError.UnexpectedStatus -> if (error.status == 404) TimerStateProbe.Absent else TimerStateProbe.Unknown
+            is ApiError.UnexpectedStatus -> if (error.status ==
+                HttpStatus.NOT_FOUND
+            ) {
+                TimerStateProbe.Absent
+            } else {
+                TimerStateProbe.Unknown
+            }
+
             is ApiError.InvalidResponse -> TimerStateProbe.Absent
+
             else -> TimerStateProbe.Unknown
         }
     }

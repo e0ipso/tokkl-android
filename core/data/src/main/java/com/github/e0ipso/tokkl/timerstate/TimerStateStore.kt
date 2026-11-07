@@ -75,7 +75,7 @@ class TimerStateStore(context: Context) : AccountDataOwner {
         val made = UUID.randomUUID().toString()
         try {
             commit { putString(KEY_ACCOUNT, made) }
-        } catch (e: IOException) {
+        } catch (_: IOException) {
             // Kept in memory: see above.
         }
         return made
@@ -104,7 +104,7 @@ internal fun encodeStoredTimerState(stored: StoredTimerState): String =
 /** The state [text] holds, or null when it does not decode, as after a format change. */
 internal fun decodeStoredTimerState(text: String): StoredTimerState? = try {
     ApiJson.decodeFromString(StoredTimerState.serializer(), text)
-} catch (e: IllegalArgumentException) {
+} catch (_: IllegalArgumentException) {
     // kotlinx.serialization's SerializationException is an IllegalArgumentException.
     null
 }

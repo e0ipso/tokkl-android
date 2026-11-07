@@ -54,7 +54,7 @@ class ServicePomodoroRinging(private val context: Context) :
                 context.startForegroundService(
                     Intent(context, PomodoroRingingService::class.java).setAction(START).putPhase(ring.phase),
                 )
-            } catch (e: ForegroundServiceStartNotAllowedException) {
+            } catch (_: ForegroundServiceStartNotAllowedException) {
                 // A start the platform refuses from the background rings nothing. An alarm
                 // delivery is allowed to start it, and the armed alarm still goes off.
             }

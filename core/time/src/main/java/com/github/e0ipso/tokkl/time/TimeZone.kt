@@ -82,7 +82,7 @@ fun parseTimeZone(name: String): ZoneId? {
     val id = ZONE_IDS[name.asciiLowercase()] ?: return null
     return try {
         ZoneId.of(id)
-    } catch (e: DateTimeException) {
+    } catch (_: DateTimeException) {
         // A tz database without one of the targets in INTL_ONLY_NAMES.
         null
     }
@@ -99,4 +99,4 @@ private fun parseOffset(match: MatchResult): ZoneOffset? {
 
 /** Lowercases A to Z only, the case folding Intl uses for timezone names. */
 private fun String.asciiLowercase(): String =
-    buildString(length) { for (c in this@asciiLowercase) append(if (c in 'A'..'Z') c + 32 else c) }
+    buildString(length) { for (c in this@asciiLowercase) append(if (c in 'A'..'Z') c + ('a' - 'A') else c) }
