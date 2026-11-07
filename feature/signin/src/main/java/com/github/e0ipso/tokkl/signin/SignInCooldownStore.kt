@@ -2,7 +2,6 @@ package com.github.e0ipso.tokkl.signin
 
 import android.content.Context
 import android.content.SharedPreferences
-import androidx.annotation.VisibleForTesting
 import java.io.IOException
 
 /**
@@ -34,8 +33,7 @@ class SignInCooldownStore(context: Context) : SignInCooldowns {
         if (!preferences.edit().apply(change).commit()) throw IOException("Could not write $FILE_NAME")
     }
 
-    @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
     companion object {
-        const val FILE_NAME = "sign_in_cooldown"
+        internal const val FILE_NAME = "sign_in_cooldown"
     }
 }

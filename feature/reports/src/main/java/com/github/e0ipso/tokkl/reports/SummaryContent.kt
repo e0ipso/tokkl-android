@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.reports
 
 import android.content.res.Resources
-import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -51,8 +50,7 @@ import java.text.NumberFormat
  * day, week or month, and the time per project. Durations follow the account's format.
  */
 @Composable
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-fun SummaryContent(report: SummaryReport, settings: AccountSettings) {
+internal fun SummaryContent(report: SummaryReport, settings: AccountSettings) {
     Column(verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.betweenGroups)) {
         Totals(report.totals, settings)
         SeriesChart(report, settings)

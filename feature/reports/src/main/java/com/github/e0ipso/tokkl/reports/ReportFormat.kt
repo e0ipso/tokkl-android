@@ -23,8 +23,7 @@ import java.util.Locale
  * Intl.NumberFormat rounds the shortest decimal that reads back as the double, with halves away
  * from zero, so 15300 of 600000 gives 2.6 where toFixed gives 2.5. Zero when [whole] is.
  */
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-fun sharePercent(part: Long, whole: Long): String {
+internal fun sharePercent(part: Long, whole: Long): String {
     val percent = if (whole > 0) part.toDouble() / whole * 100 else 0.0
     return jsShortestDecimal(percent).setScale(1, RoundingMode.HALF_UP).toPlainString()
 }

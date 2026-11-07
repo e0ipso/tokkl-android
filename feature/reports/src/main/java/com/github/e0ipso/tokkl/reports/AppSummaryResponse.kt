@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.reports
 
-import androidx.annotation.VisibleForTesting
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiJson
 import com.github.e0ipso.tokkl.api.ApiResult
@@ -20,8 +19,7 @@ import kotlinx.serialization.json.jsonObject
  * zero. Required values and their types must still match the contract. Dates, resolution and
  * all ordered lists come from the server; no sums, sorting, bucketing or rate multiplication.
  */
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-fun decodeAppSummary(body: JsonObject): ApiResult<SummaryReport> = try {
+internal fun decodeAppSummary(body: JsonObject): ApiResult<SummaryReport> = try {
     val response = ApiJson.decodeFromJsonElement<AppSummaryResponse>(body)
     body.requireStrings("start_date", "end_date", "resolution")
     val extras = ReportExtraProjection()

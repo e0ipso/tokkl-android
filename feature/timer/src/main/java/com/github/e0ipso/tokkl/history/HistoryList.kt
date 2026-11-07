@@ -105,8 +105,7 @@ class PinAction(val enabled: Boolean, val onPin: (Long) -> Unit)
 
 /** Save as template through [favorites], or null when the server keeps no timer templates. */
 @Composable
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-fun pinAction(actions: EntryActionsViewModel, favorites: FavoritesViewModel): PinAction? {
+internal fun pinAction(actions: EntryActionsViewModel, favorites: FavoritesViewModel): PinAction? {
     val shown by favorites.state.collectAsState()
     val offline = rememberOffline()
     if (!shown.available) return null

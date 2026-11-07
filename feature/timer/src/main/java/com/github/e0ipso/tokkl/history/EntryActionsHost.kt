@@ -29,7 +29,7 @@ import com.github.e0ipso.tokkl.session.AccountSettings
  * waiting for the server stays available until retried or dismissed.
  */
 @Composable
-fun EntryActionsHost(
+internal fun EntryActionsHost(
     state: EntryActionsState,
     onUndo: (Long) -> Unit,
     onNoticeDone: (EntryNotice) -> Unit,

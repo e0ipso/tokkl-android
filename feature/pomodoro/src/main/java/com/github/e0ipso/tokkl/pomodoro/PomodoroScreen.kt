@@ -2,7 +2,6 @@ package com.github.e0ipso.tokkl.pomodoro
 
 import android.content.ActivityNotFoundException
 import androidx.annotation.StringRes
-import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -283,8 +282,7 @@ private class LengthCard(
  * pane beside another screen gets the layout its width needs. A row's cards share its height.
  */
 @Composable
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-fun PomodoroLengthForm(lengths: PomodoroLengths, enabled: Boolean, onChange: (PomodoroLengths) -> Unit) {
+internal fun PomodoroLengthForm(lengths: PomodoroLengths, enabled: Boolean, onChange: (PomodoroLengths) -> Unit) {
     val cards = listOf(
         LengthCard(SharedR.string.pomodoro_card_work, PomodoroDefaults.WORK_MINUTES, StepperUnit.MINUTES, lengths.work) { onChange(lengths.copy(work = it)) },
         LengthCard(SharedR.string.pomodoro_card_short_rest, PomodoroDefaults.SHORT_REST_MINUTES, StepperUnit.MINUTES, lengths.shortRest) { onChange(lengths.copy(shortRest = it)) },
