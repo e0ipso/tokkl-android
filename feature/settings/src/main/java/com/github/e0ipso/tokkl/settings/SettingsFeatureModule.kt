@@ -16,7 +16,7 @@ val settingsFeatureModule = module {
     single {
         SignOutConfirmation(
             unsentCount = get<ChangeQueue>()::unsentNow,
-            clear = get<SignOut>(),
+            clear = get<SignOut>()::run,
             scope = get(),
         )
     }

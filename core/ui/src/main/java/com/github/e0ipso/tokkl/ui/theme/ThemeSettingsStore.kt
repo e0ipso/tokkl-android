@@ -11,7 +11,7 @@ import java.io.IOException
  *
  * The first call loads the preferences file from disk.
  */
-class ThemeSettingsStore(context: Context) : ThemeSettingsWriter {
+class ThemeSettingsStore(context: Context) {
 
     private val preferences by lazy { context.getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE) }
 
@@ -28,7 +28,7 @@ class ThemeSettingsStore(context: Context) : ThemeSettingsWriter {
     }
 
     @Throws(IOException::class)
-    override fun save(settings: ThemeSettings) {
+    fun save(settings: ThemeSettings) {
         commit {
             putString(KEY_MODE, settings.mode.name)
             putBoolean(KEY_DYNAMIC_COLOR, settings.dynamicColor)

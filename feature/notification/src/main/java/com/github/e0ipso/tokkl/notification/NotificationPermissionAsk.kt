@@ -9,11 +9,6 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
 
-/** Whether the user allows the app's notifications now. */
-fun interface NotificationsAllowed {
-    fun allowed(): Boolean
-}
-
 /**
  * Whether a timer start asks for the notification permission (docs/PRD.md N5). Android 13 and
  * later need POST_NOTIFICATIONS before the running timer's notification shows, so the first timer
@@ -30,7 +25,7 @@ class NotificationPermissionAsk(
     private val sdkInt: Int,
     private val record: AskRecord,
     private val io: CoroutineContext,
-    private val granted: NotificationsAllowed,
+    private val granted: () -> Boolean,
 ) {
 
     /**
@@ -41,7 +36,7 @@ class NotificationPermissionAsk(
      */
     fun atStartInApp(): Boolean {
         if (sdkInt < Build.VERSION_CODES.TIRAMISU || record.asked()) return false
-        if (!granted.allowed()) return true
+        if (!granted()) return true
         record.markAsked()
         return false
     }

@@ -96,14 +96,13 @@ class FavoritesViewModel(
     projects: Flow<List<Project>>,
     tasks: Flow<List<Task>>,
     available: Flow<Boolean>,
-    private val store: FavoritesStore,
+    private val store: suspend (List<EntryFields>) -> ApiResult<Unit>,
     scope: CoroutineScope,
     private val io: CoroutineContext,
     picker: Flow<PickerSource>,
     offline: StateFlow<Boolean>,
     workspaceId: Flow<WorkspaceId?>,
-) : ViewModel(scope),
-    TemplateAdder {
+) : ViewModel(scope) {
 
     private val local = MutableStateFlow(Local())
 
@@ -139,7 +138,7 @@ class FavoritesViewModel(
      * Without the capability, or while another change is saving, nothing happens and [onDone]
      * is not called.
      */
-    override fun add(fields: EntryFields, onDone: (FavoritesProblem?) -> Unit) =
+    fun add(fields: EntryFields, onDone: (FavoritesProblem?) -> Unit = {}) =
         change(onDone) { list -> if (list.size >= MAX_FAVORITES) null else list + fields }
 
     /** Replaces the template at [index] with [fields]. [onDone] hears how the save went. */
@@ -186,7 +185,7 @@ class FavoritesViewModel(
         }
         local.value = Local(saving = true)
         viewModelScope.launch {
-            val result = withContext(io + NonCancellable) { store.save(next) }
+            val result = withContext(io + NonCancellable) { store(next) }
             val problem = (result as? ApiResult.Failure)?.let { FavoritesProblem.Server(it.error.toServerProblem()) }
             local.value = Local(problem = problem)
             onDone(problem)
@@ -198,10 +197,4 @@ class FavoritesViewModel(
     private companion object {
         const val STOP_TIMEOUT_MS = 5_000L
     }
-}
-
-/** Adds an entry's fields at the end of the timer templates, as the history's Save as template does. */
-interface TemplateAdder {
-    /** [onDone] gets null once the server has stored the list, or why nothing was added. */
-    fun add(fields: EntryFields, onDone: (FavoritesProblem?) -> Unit = {})
 }

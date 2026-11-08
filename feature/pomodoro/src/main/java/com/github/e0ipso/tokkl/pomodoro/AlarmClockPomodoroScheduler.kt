@@ -22,11 +22,6 @@ import org.koin.core.component.get
 import org.koin.core.component.inject
 import java.time.Instant
 
-/** Whether Android refuses exact alarms to the app now, as `AlarmManager.canScheduleExactAlarms` says. */
-fun interface ExactAlarmCheck {
-    fun denied(): Boolean
-}
-
 /**
  * Arms one [AlarmManager.setAlarmClock] at a phase's planned end. That is the exact alarm the
  * platform documents for a user-facing alarm: it leaves idle mode to deliver it and shows the
@@ -51,13 +46,13 @@ fun interface ExactAlarmCheck {
 class AlarmClockPomodoroScheduler(
     private val context: Context,
     private val timerSyncStarts: () -> Boolean,
-    private val exactAlarms: ExactAlarmCheck,
+    private val exactAlarms: () -> Boolean,
 ) : PomodoroAlarmScheduler,
     TimerSyncWatcher {
     private val manager = context.getSystemService(AlarmManager::class.java)
 
     override val permissionDenied: Boolean
-        get() = exactAlarms.denied()
+        get() = exactAlarms()
 
     override fun schedule(triggerAt: Instant, phase: PomodoroPhaseKey): Boolean {
         if (permissionDenied) return scheduleRedraw(triggerAt, phase)

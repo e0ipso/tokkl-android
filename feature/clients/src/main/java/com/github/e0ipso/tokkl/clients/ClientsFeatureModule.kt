@@ -17,14 +17,14 @@ import org.koin.dsl.module
 
 /** The Clients page: its repository, its view model and its screen. */
 val clientsFeatureModule = module {
-    single<ClientsRepository> { ServerClientsRepository(get<Session>()) }
+    single { ClientsRepository(get<Session>()) }
 
     viewModel {
         val accountSettings = get<AccountSettingsSource>()
         val scope = viewModelCoroutineScope()
         ClientsViewModel(
             repository = get(),
-            workspaceId = accountSettings,
+            workspaceId = accountSettings::defaultWorkspaceId,
             refreshCache = get<AccountRefresh>()::refreshAfterChange,
             scope = scope,
             io = io(),

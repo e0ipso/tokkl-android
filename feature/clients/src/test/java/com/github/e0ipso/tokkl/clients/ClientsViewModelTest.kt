@@ -74,7 +74,7 @@ class ClientsViewModelTest {
         // The user has confirmed the MockWebServer's plain http URL.
         testApi.trust = InMemoryServerTrust(url)
         model = ClientsViewModel(
-            repository = ServerClientsRepository { testApi.api(url, ApiCredentials.ApiToken("tok-123")) },
+            repository = ClientsRepository { testApi.api(url, ApiCredentials.ApiToken("tok-123")) },
             workspaceId = { WorkspaceId(7) },
             refreshCache = { refreshes++ },
             scope = CoroutineScope(Dispatchers.Unconfined),
@@ -142,7 +142,7 @@ class ClientsViewModelTest {
         val scope = CoroutineScope(Dispatchers.Unconfined)
         val offline = MutableStateFlow(false)
         val page = ClientsViewModel(
-            repository = ServerClientsRepository {
+            repository = ClientsRepository {
                 testApi.api(checkNotNull(testApi.stored), ApiCredentials.ApiToken("tok-123"))
             },
             workspaceId = { WorkspaceId(7) },

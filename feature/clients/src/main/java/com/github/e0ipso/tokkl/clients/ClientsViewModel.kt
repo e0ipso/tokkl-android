@@ -13,7 +13,6 @@ import com.github.e0ipso.tokkl.model.ClientId
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.platform.whileShown
 import com.github.e0ipso.tokkl.session.AppEvent
-import com.github.e0ipso.tokkl.session.DefaultWorkspace
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -77,7 +76,7 @@ data class ClientsPageState(
  */
 class ClientsViewModel(
     private val repository: ClientsRepository,
-    workspaceId: DefaultWorkspace,
+    workspaceId: () -> WorkspaceId?,
     refreshCache: () -> Unit,
     scope: CoroutineScope,
     io: CoroutineContext,

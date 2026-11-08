@@ -5,6 +5,7 @@ import com.github.e0ipso.tokkl.platform.AppHook
 import com.github.e0ipso.tokkl.platform.AppHookOrder
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.session.AccountDataOwner
+import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timerstate.HeldFieldsMemory
 import com.github.e0ipso.tokkl.timerstate.PomodoroWidgetRedraw
 import kotlinx.coroutines.flow.emitAll
@@ -72,7 +73,7 @@ val widgetFeatureModule = module {
             capabilities = get(),
             accountSettings = get(),
             pomodoroDefaults = get(),
-            session = get(),
+            signedIn = get<Session>()::isSignedIn,
             clock = get(),
             io = io(),
         )

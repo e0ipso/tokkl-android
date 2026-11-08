@@ -4,26 +4,11 @@ import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.catalog.CatalogRepository
 import com.github.e0ipso.tokkl.catalog.SignedInApi
-import com.github.e0ipso.tokkl.model.Tag
 import com.github.e0ipso.tokkl.model.TagId
 import com.github.e0ipso.tokkl.model.WorkspaceId
 
 /** The workspace's tags on the server, for the tags page. */
-interface TagsRepository : CatalogRepository<TagsData> {
-
-    /**
-     * Creates the tag named [name] once, as [TagsServer.create] does. [known] are the ids of the
-     * tags the page lists, which the create cannot have made.
-     */
-    suspend fun create(workspace: WorkspaceId, name: String, known: Set<TagId>): ApiResult<Tag>
-
-    suspend fun rename(workspace: WorkspaceId, id: TagId, name: String): ApiResult<Tag>
-
-    suspend fun delete(workspace: WorkspaceId, id: TagId): ApiResult<Unit>
-}
-
-/** [TagsRepository] through the signed-in account's [client] and [TagsServer]. */
-class ServerTagsRepository(client: ApiClientProvider) : TagsRepository {
+class TagsRepository(client: ApiClientProvider) : CatalogRepository<TagsData> {
 
     private val api = SignedInApi(client)
 
@@ -40,11 +25,15 @@ class ServerTagsRepository(client: ApiClientProvider) : TagsRepository {
         }
     }
 
-    override suspend fun create(workspace: WorkspaceId, name: String, known: Set<TagId>) =
+    /**
+     * Creates the tag named [name] once, as [TagsServer.create] does. [known] are the ids of the
+     * tags the page lists, which the create cannot have made.
+     */
+    suspend fun create(workspace: WorkspaceId, name: String, known: Set<TagId>) =
         api.call { TagsServer(it, workspace).create(name, known) }
 
-    override suspend fun rename(workspace: WorkspaceId, id: TagId, name: String) =
+    suspend fun rename(workspace: WorkspaceId, id: TagId, name: String) =
         api.call { TagsServer(it, workspace).rename(id, name) }
 
-    override suspend fun delete(workspace: WorkspaceId, id: TagId) = api.call { TagsServer(it, workspace).delete(id) }
+    suspend fun delete(workspace: WorkspaceId, id: TagId) = api.call { TagsServer(it, workspace).delete(id) }
 }

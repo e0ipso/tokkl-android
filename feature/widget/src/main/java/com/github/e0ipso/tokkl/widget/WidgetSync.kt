@@ -11,11 +11,6 @@ import kotlinx.coroutines.launch
 import java.io.IOException
 import kotlin.coroutines.CoroutineContext
 
-/** Draws every placed widget of one provider again from the phone's state. */
-fun interface WidgetRedraw {
-    suspend fun redraw()
-}
-
 /**
  * Keeps the home screen widget (docs/PRD.md N3) in step with the phone. Every start, stop and edit
  * lands in the cache first, whichever surface makes it, so following the cache covers the app,
@@ -34,7 +29,7 @@ fun interface WidgetRedraw {
 class WidgetSync(
     private val keys: Flow<String>,
     private val shown: ValueStore<String>,
-    private val update: WidgetRedraw,
+    private val update: suspend () -> Unit,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
 ) {
@@ -50,7 +45,7 @@ class WidgetSync(
     /** Updates the widgets unless they already show what [key] stands for. */
     suspend fun apply(key: String) {
         if (key == shown.load()) return
-        update.redraw()
+        update()
         try {
             shown.save(key)
         } catch (_: IOException) {

@@ -17,8 +17,8 @@ import org.koin.dsl.module
 
 /** The Projects page: its repositories, its view model and its screen. */
 val projectsFeatureModule = module {
-    single<ProjectsRepository> { ServerProjectsRepository(get<Session>()) }
-    single<TasksRepository> { ServerTasksRepository(get<Session>()) }
+    single { ProjectsRepository(get<Session>()) }
+    single { TasksRepository(get<Session>()) }
 
     viewModel {
         val accountSettings = get<AccountSettingsSource>()
@@ -27,7 +27,7 @@ val projectsFeatureModule = module {
         ProjectsViewModel(
             repository = get(),
             tasksRepository = get(),
-            workspaceId = accountSettings,
+            workspaceId = accountSettings::defaultWorkspaceId,
             refreshCache = get<AccountRefresh>()::refreshAfterChange,
             scope = scope,
             io = io(),

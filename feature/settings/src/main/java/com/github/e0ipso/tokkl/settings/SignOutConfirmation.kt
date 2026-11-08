@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.settings
 
-import com.github.e0ipso.tokkl.session.AccountSignOut
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,7 +18,7 @@ import kotlinx.coroutines.launch
  */
 class SignOutConfirmation(
     private val unsentCount: suspend () -> Int,
-    private val clear: AccountSignOut,
+    private val clear: suspend () -> Boolean,
     private val scope: CoroutineScope,
 ) {
 
@@ -69,6 +68,6 @@ class SignOutConfirmation(
     }
 
     private suspend fun clearPhone() {
-        mutableState.value = State(failed = !clear.run())
+        mutableState.value = State(failed = !clear())
     }
 }

@@ -7,11 +7,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 
-/** Hears whether the phone is [online], each time that changes. */
-fun interface NetworkListener {
-    fun changed(online: Boolean)
-}
-
 /**
  * Follows whether the phone's default network reaches the internet, from [start] to [stop], and
  * reports each change to [listener] on the main thread. The activity watches only while it is
@@ -26,7 +21,7 @@ class NetworkWatch(
     private val network: DefaultNetwork,
     private val scope: CoroutineScope,
     private val main: CoroutineContext,
-    private val listener: NetworkListener,
+    private val listener: (Boolean) -> Unit,
 ) {
 
     private var watching: Job? = null
@@ -70,7 +65,7 @@ internal class NetworkWatchState<N : Any>(
     initial: N?,
     online: Boolean,
     validated: Boolean,
-    private val listener: NetworkListener,
+    private val listener: (Boolean) -> Unit,
 ) {
     private data class Snapshot<N>(val network: N, val online: Boolean, val validated: Boolean)
     private var current = initial
@@ -85,13 +80,13 @@ internal class NetworkWatchState<N : Any>(
         val next = Snapshot(network, online, validated)
         if (next == last) return
         last = next
-        listener.changed(online)
+        listener(online)
     }
 
     fun lost(network: N) {
         if (network != current) return
         current = null
         last = null
-        listener.changed(false)
+        listener(false)
     }
 }

@@ -17,7 +17,6 @@ import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
-import com.github.e0ipso.tokkl.session.SignedInCheck
 import com.github.e0ipso.tokkl.sync.LastAnswer
 import com.github.e0ipso.tokkl.trust.SessionTrust
 import kotlinx.coroutines.CoroutineDispatcher
@@ -71,5 +70,5 @@ internal val coreModule = module {
             trustListener = get<SessionTrust>(),
             successListener = get<LastAnswer>(),
         )
-    } binds arrayOf(ApiClientProvider::class, SignedInCheck::class, AccountDataOwner::class)
+    } binds arrayOf(ApiClientProvider::class, AccountDataOwner::class)
 }

@@ -36,7 +36,6 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.parameter.ParametersHolder
 import org.koin.dsl.bind
-import org.koin.dsl.binds
 import org.koin.dsl.module
 
 /**
@@ -57,7 +56,7 @@ val timerFeatureModule = module {
             scope = get(),
             io = io(),
         )
-    } binds arrayOf(AccountDataOwner::class, TimerViewChoice::class)
+    } bind AccountDataOwner::class
 
     // The system trace of each Start and Stop tap on the Timer page.
     single { TapTrace.System }
@@ -136,7 +135,7 @@ val timerFeatureModule = module {
             projects = cache.projects,
             tasks = cache.tasks,
             available = get<CapabilitiesSource>().state.map { it.favorites },
-            store = FavoritesServer(client = get<Session>(), cache = cache),
+            store = FavoritesServer(client = get<Session>(), cache = cache)::save,
             scope = scope,
             io = io(),
             picker = cache.pickerSource(),

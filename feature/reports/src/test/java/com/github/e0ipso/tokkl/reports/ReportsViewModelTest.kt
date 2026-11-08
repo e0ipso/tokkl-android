@@ -87,7 +87,7 @@ class ReportsViewModelTest {
         testApi.trust = InMemoryServerTrust(url)
         model = reportsViewModel(
             accountSettings = settings,
-            repository = ServerReportsRepository { testApi.api(url, ApiCredentials.ApiToken("token")) },
+            repository = ReportsRepository { testApi.api(url, ApiCredentials.ApiToken("token")) },
             scope = CoroutineScope(Dispatchers.Unconfined),
             io = io,
             clock = CLOCK,

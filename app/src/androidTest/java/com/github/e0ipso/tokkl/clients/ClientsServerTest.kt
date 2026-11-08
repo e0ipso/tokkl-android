@@ -97,7 +97,7 @@ class ClientsServerTest {
         workspace = account.workspaceId
         runBlocking { app.accountRefresh.refresh().join() }
         model = ClientsViewModel(
-            repository = ServerClientsRepository(Session(context)::api),
+            repository = ClientsRepository(Session(context)::api),
             workspaceId = { app.accountSettings.state.value?.defaultWorkspaceId },
             refreshCache = { refreshes += app.accountRefresh.refreshAfterChange() },
             scope = scope,

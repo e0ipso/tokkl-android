@@ -5,7 +5,6 @@ import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaultsSetting
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
-import com.github.e0ipso.tokkl.session.SignedInCheck
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.PomodoroRingingPhase
 import kotlinx.coroutines.flow.Flow
@@ -35,7 +34,7 @@ class PomodoroWidgetStateSource(
     capabilities: CapabilitiesSource,
     accountSettings: AccountSettingsSource,
     pomodoroDefaults: PomodoroDefaultsSetting,
-    session: SignedInCheck,
+    signedIn: () -> Boolean,
     clock: Clock,
     io: CoroutineContext,
 ) {
@@ -66,7 +65,7 @@ class PomodoroWidgetStateSource(
             owner.source.withState { held ->
                 pomodoroWidgetState(
                     workspaceId = settings?.defaultWorkspaceId,
-                    account = owner.account.takeIf { session.isSignedIn() },
+                    account = owner.account.takeIf { signedIn() },
                     available = flags.timerState,
                     held = held,
                     defaults = defaults,

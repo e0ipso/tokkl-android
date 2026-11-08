@@ -95,7 +95,7 @@ internal val timerModule = module {
     single {
         TimerSyncFollower(
             context = androidContext(),
-            session = get(),
+            signedIn = get<Session>()::isSignedIn,
             timerStates = get(),
             timerSync = get(),
             timerApi = get<CapabilitiesSource>()::offersTimerApi,

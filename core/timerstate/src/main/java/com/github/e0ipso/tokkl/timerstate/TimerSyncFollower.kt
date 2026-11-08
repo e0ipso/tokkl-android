@@ -4,7 +4,6 @@ import android.content.Context
 import com.github.e0ipso.tokkl.cache.ChangeSender
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.SignOutPhase
-import com.github.e0ipso.tokkl.session.SignedInCheck
 
 /**
  * Decides whether the timer event stream and [TimerSyncService] run, and starts, points or stops
@@ -12,7 +11,7 @@ import com.github.e0ipso.tokkl.session.SignedInCheck
  */
 class TimerSyncFollower(
     private val context: Context,
-    private val session: SignedInCheck,
+    private val signedIn: () -> Boolean,
     private val timerStates: AccountTimerStates,
     private val timerSync: TimerSync<TimerStateSource>,
     private val timerApi: () -> Boolean,
@@ -31,7 +30,7 @@ class TimerSyncFollower(
      * Whether the timer event stream should run: signed in to a server with the timer API, whose
      * token the server has not refused. Reads the disk.
      */
-    internal fun wanted(): Boolean = timerApi() && !sender.signInNeeded.value && session.isSignedIn()
+    internal fun wanted(): Boolean = timerApi() && !sender.signInNeeded.value && signedIn()
 
     /**
      * Starts [TimerSyncService], or points the running one at the account signed in now, while

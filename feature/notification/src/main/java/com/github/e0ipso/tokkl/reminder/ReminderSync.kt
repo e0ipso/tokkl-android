@@ -22,11 +22,6 @@ import kotlin.coroutines.CoroutineContext
 data class ReminderTimer(val id: Long, val start: Long, val due: Long, val handled: Boolean = false)
 data class ReminderInput(val running: TimeEntry?, val preferences: ReminderPreferences)
 
-/** The signed-in account's running entry and reminder settings now. */
-fun interface ReminderInputs {
-    suspend fun latest(): ReminderInput
-}
-
 /** The one delayed wakeup at a timer's reminder time, such as [ReminderWork]. */
 interface ReminderDelays {
     fun schedule(timer: ReminderTimer)
@@ -43,19 +38,6 @@ interface ReminderNotice {
     fun remove()
 }
 
-/** Stops the running entry with this id on the phone, and returns whether it did. */
-fun interface RunningEntryStop {
-    suspend fun stop(entryId: EntryId): Boolean
-}
-
-/**
- * The server's Pause of the running entry with this id, ready to send, or null when Pause is not
- * offered for it now: without the server's timer API, or during a Pomodoro session.
- */
-fun interface ReminderPause {
-    suspend fun pause(entryId: EntryId): SurfaceTap.Request?
-}
-
 /**
  * Follows the shared running state. One delayed request, no periodic work and no network constraint.
  * Re-reads the cache inside the lock: queued flow emissions and old workers cannot revive an old timer.
@@ -67,16 +49,17 @@ fun interface ReminderPause {
  * @param delays the delayed wakeup at a timer's reminder time.
  * @param notice shows the reminder for a timer, and decides then whether it offers Pause.
  * @param stop stops the running entry on the phone.
- * @param pause the server's Pause of the running entry, as [ReminderPause] says.
+ * @param pause the server's Pause of the running entry with this id, ready to send, or null when
+ *   Pause is not offered for it now: without the server's timer API, or during a Pomodoro session.
  */
 class ReminderSync(
-    private val inputs: ReminderInputs,
+    private val inputs: suspend () -> ReminderInput,
     private val ids: CurrentEntryIds,
     private val timers: ValueStore<ReminderTimer?>,
     private val delays: ReminderDelays,
     private val notice: ReminderNotice,
-    private val stop: RunningEntryStop,
-    private val pause: ReminderPause,
+    private val stop: suspend (EntryId) -> Boolean,
+    private val pause: suspend (EntryId) -> SurfaceTap.Request?,
 ) : AccountDataOwner {
 
     override val signOutPhase = SignOutPhase.CLEAR_DATA
@@ -95,7 +78,7 @@ class ReminderSync(
         }
     }
 
-    suspend fun reconcile() = lock.withLock { update(inputs.latest()) }
+    suspend fun reconcile() = lock.withLock { update(inputs()) }
 
     private suspend fun update(input: ReminderInput): ReminderTimer? {
         val entry = input.running?.takeIf { it.stop == null }
@@ -125,7 +108,7 @@ class ReminderSync(
 
     /** A worker may arrive late, after cancellation, a start correction, sign-out or a switch. */
     suspend fun fire(id: Long, start: Long, due: Long): Unit = lock.withLock {
-        val timer = update(inputs.latest()) ?: return@withLock
+        val timer = update(inputs()) ?: return@withLock
         val same = timer.start == start && ids.currentId(
             EntryId(id),
         ) == ids.currentId(EntryId(timer.id)) && !timer.handled
@@ -150,7 +133,7 @@ class ReminderSync(
         beforeRequest: () -> Unit = {},
     ): TimerActionResult? {
         val request = lock.withLock {
-            val input = inputs.latest()
+            val input = inputs()
             val entry = input.running ?: return null
             if (entry.stop != null || entry.start.epochSecond != start || ids.currentId(
                     EntryId(id),
@@ -161,9 +144,9 @@ class ReminderSync(
             val timer = timers.load() ?: return null
             if (timer.start != start || ids.currentId(EntryId(timer.id)) != entry.id) return null
             if (pauseTimer) {
-                pause.pause(entry.id) ?: return null
+                pause(entry.id) ?: return null
             } else {
-                if (stopTimer && !stop.stop(entry.id)) return null
+                if (stopTimer && !stop(entry.id)) return null
                 handled(timer)
                 return null
             }

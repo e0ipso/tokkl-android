@@ -25,7 +25,7 @@ import java.io.File
  * and sign-out invalidates, the view model and the screen.
  */
 val reportsFeatureModule = module {
-    single<ReportsRepository> { ServerReportsRepository(get<Session>()) }
+    single { ReportsRepository(get<Session>()) }
     single {
         ReportExportFiles(
             File(androidContext().cacheDir, ReportExportFiles.DIRECTORY),

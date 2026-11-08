@@ -31,7 +31,7 @@ class TagsRequestsTest {
     /** Each request's method, target and body, in order. */
     private val requests = CopyOnWriteArrayList<String>()
 
-    private lateinit var repository: ServerTagsRepository
+    private lateinit var repository: TagsRepository
 
     @Before
     fun setUp() {
@@ -54,7 +54,7 @@ class TagsRequestsTest {
         testApi.stored = url
         // The user has confirmed the MockWebServer's plain http URL.
         testApi.trust = InMemoryServerTrust(url)
-        repository = ServerTagsRepository { testApi.api(url) }
+        repository = TagsRepository { testApi.api(url) }
     }
 
     @After

@@ -18,14 +18,14 @@ import java.io.IOException
  *
  * @param disk keeps the settings on the phone. The first read loads them, on the reading thread.
  */
-class AccountSettingsSource(private val disk: ValueStore<AccountSettings>) : DefaultWorkspace {
+class AccountSettingsSource(private val disk: ValueStore<AccountSettings>) {
 
     private val mutableState by lazy { MutableStateFlow(disk.load()) }
 
     /** The stored settings, or null when none are stored yet. */
     val state: StateFlow<AccountSettings?> by lazy { mutableState.asStateFlow() }
 
-    override fun defaultWorkspaceId(): WorkspaceId? = state.value?.defaultWorkspaceId
+    fun defaultWorkspaceId(): WorkspaceId? = state.value?.defaultWorkspaceId
 
     /**
      * Guards [writes], and each write together with the state it sets. A JVM lock, not a Mutex,

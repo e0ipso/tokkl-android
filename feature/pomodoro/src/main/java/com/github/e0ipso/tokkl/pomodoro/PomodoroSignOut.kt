@@ -3,11 +3,6 @@ package com.github.e0ipso.tokkl.pomodoro
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.SignOutPhase
 
-/** Cancels the notification ID that the ring and the session notification share. */
-fun interface SharedNotificationId {
-    fun cancel()
-}
-
 /**
  * The Pomodoro feature's part of sign-out, once the held timer state is retired: the phase alarm
  * drops its alarm and ring, so nothing arms or rings the account's phase again, the session
@@ -19,7 +14,7 @@ fun interface SharedNotificationId {
 internal class PomodoroSignOut(
     private val alarm: PomodoroPhaseAlarm,
     private val notification: PomodoroSessionNotificationSync,
-    private val sharedId: SharedNotificationId,
+    private val sharedId: () -> Unit,
 ) : AccountDataOwner {
 
     override val signOutPhase = SignOutPhase.STOP_WORK
@@ -31,7 +26,7 @@ internal class PomodoroSignOut(
             try {
                 notification.forget()
             } finally {
-                sharedId.cancel()
+                sharedId()
             }
         }
     }

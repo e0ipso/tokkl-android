@@ -231,7 +231,7 @@ class ReminderSyncTest {
         assertEquals(removed, removals)
     }
 
-    private fun pausing(pause: ReminderPause) = ReminderSync(
+    private fun pausing(pause: suspend (EntryId) -> SurfaceTap.Request?) = ReminderSync(
         inputs = { input },
         ids = { mappings[it] ?: it },
         timers = valueStore(

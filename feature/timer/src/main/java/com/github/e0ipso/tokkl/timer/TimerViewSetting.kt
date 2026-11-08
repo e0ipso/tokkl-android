@@ -38,8 +38,7 @@ class TimerViewSetting(
     private val keepsTimerView: () -> Boolean,
     scope: CoroutineScope,
     io: CoroutineContext,
-) : TimerViewChoice,
-    AccountDataOwner {
+) : AccountDataOwner {
 
     override val signOutPhase = SignOutPhase.CLEAR_DATA
 
@@ -61,10 +60,11 @@ class TimerViewSetting(
         },
     )
 
-    override val view: StateFlow<TimerView> get() = preference.value
+    /** The view the Timer page shows. */
+    val view: StateFlow<TimerView> get() = preference.value
 
     /** Shows [view] at once, keeps it on the phone and sends it to the server in the background. */
-    override fun choose(view: TimerView) {
+    fun choose(view: TimerView) {
         preference.change(view, unsent = true, sendIf = keepsTimerView)
     }
 

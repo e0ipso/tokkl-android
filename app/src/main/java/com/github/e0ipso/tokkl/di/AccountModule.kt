@@ -19,9 +19,7 @@ import com.github.e0ipso.tokkl.session.AccountRefreshRequests
 import com.github.e0ipso.tokkl.session.AccountRefreshSteps
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
-import com.github.e0ipso.tokkl.session.AccountSignOut
 import com.github.e0ipso.tokkl.session.AppEvents
-import com.github.e0ipso.tokkl.session.DefaultWorkspace
 import com.github.e0ipso.tokkl.session.ForegroundRefresh
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -31,7 +29,6 @@ import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.TimerSyncFollower
 import com.github.e0ipso.tokkl.trust.SessionTrust
 import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsStore
-import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsWriter
 import com.github.e0ipso.tokkl.ui.theme.themeSettingsWithNightMode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -45,14 +42,14 @@ import org.koin.dsl.module
 internal val accountModule = module {
     single { AccountSettingsStore(androidContext()) } bind AccountDataOwner::class
     single { CapabilitiesStore(androidContext()) }
-    single { ThemeSettingsStore(androidContext()) } bind ThemeSettingsWriter::class
+    single { ThemeSettingsStore(androidContext()) }
 
     // Loaded on first use, which is MainActivity's onCreate, on the main thread, so the first frame
     // knows the theme.
     single { themeSettingsWithNightMode(androidContext(), get(), get(), io()) }
 
     // The account settings. The first read loads them from a file of six short values.
-    single { AccountSettingsSource(get<AccountSettingsStore>()) } bind DefaultWorkspace::class
+    single { AccountSettingsSource(get<AccountSettingsStore>()) }
 
     // What the server offers. The first read loads it from a file of a few flags.
     single { CapabilitiesSource(get<CapabilitiesStore>()) }
@@ -161,5 +158,5 @@ internal val accountModule = module {
     single { AccountLifetime() }
 
     // Sign-out (docs/PRD.md S6): every [AccountDataOwner], phase by phase in [SignOutPhase] order.
-    single { SignOut(owners = getAll(), lifetime = get(), io = io()) } bind AccountSignOut::class
+    single { SignOut(owners = getAll(), lifetime = get(), io = io()) }
 }

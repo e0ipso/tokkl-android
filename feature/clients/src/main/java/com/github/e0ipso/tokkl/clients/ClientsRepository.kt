@@ -4,30 +4,11 @@ import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.catalog.CatalogRepository
 import com.github.e0ipso.tokkl.catalog.SignedInApi
-import com.github.e0ipso.tokkl.model.Client
 import com.github.e0ipso.tokkl.model.ClientId
 import com.github.e0ipso.tokkl.model.WorkspaceId
 
 /** The workspace's clients on the server, for the clients page. */
-interface ClientsRepository : CatalogRepository<ClientsData> {
-
-    /**
-     * Creates the client named [name] once, as [ClientsServer.create] does. [known] are the ids of
-     * the clients the page lists, which the create cannot have made.
-     */
-    suspend fun create(workspace: WorkspaceId, name: String, notes: String?, known: Set<ClientId>): ApiResult<Client>
-
-    suspend fun update(workspace: WorkspaceId, id: ClientId, name: String, notes: String?): ApiResult<Client>
-
-    /** Archives the client and its projects. */
-    suspend fun archive(workspace: WorkspaceId, id: ClientId): ApiResult<Unit>
-
-    /** Restores the client and its projects. */
-    suspend fun restore(workspace: WorkspaceId, id: ClientId): ApiResult<Client>
-}
-
-/** [ClientsRepository] through the signed-in account's [client] and [ClientsServer]. */
-class ServerClientsRepository(client: ApiClientProvider) : ClientsRepository {
+class ClientsRepository(client: ApiClientProvider) : CatalogRepository<ClientsData> {
 
     private val api = SignedInApi(client)
 
@@ -52,20 +33,26 @@ class ServerClientsRepository(client: ApiClientProvider) : ClientsRepository {
         ApiResult.Success(ClientsData(clients, counts))
     }
 
-    override suspend fun create(workspace: WorkspaceId, name: String, notes: String?, known: Set<ClientId>) =
+    /**
+     * Creates the client named [name] once, as [ClientsServer.create] does. [known] are the ids of
+     * the clients the page lists, which the create cannot have made.
+     */
+    suspend fun create(workspace: WorkspaceId, name: String, notes: String?, known: Set<ClientId>) =
         api.call { ClientsServer(it, workspace).create(name, notes, known) }
 
-    override suspend fun update(workspace: WorkspaceId, id: ClientId, name: String, notes: String?) =
+    suspend fun update(workspace: WorkspaceId, id: ClientId, name: String, notes: String?) =
         api.call { ClientsServer(it, workspace).update(id, name, notes) }
 
-    override suspend fun archive(workspace: WorkspaceId, id: ClientId) = api.call {
+    /** Archives the client and its projects. */
+    suspend fun archive(workspace: WorkspaceId, id: ClientId) = api.call {
         ClientsServer(
             it,
             workspace,
         ).archive(id)
     }
 
-    override suspend fun restore(workspace: WorkspaceId, id: ClientId) = api.call {
+    /** Restores the client and its projects. */
+    suspend fun restore(workspace: WorkspaceId, id: ClientId) = api.call {
         ClientsServer(
             it,
             workspace,

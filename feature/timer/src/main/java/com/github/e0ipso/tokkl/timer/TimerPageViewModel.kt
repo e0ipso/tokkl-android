@@ -41,7 +41,7 @@ data class TimerPageState(
  * @param clock what the totals tick on.
  */
 class TimerPageViewModel(
-    private val views: TimerViewChoice,
+    private val views: TimerViewSetting,
     entries: Flow<List<TimeEntry>>,
     picker: Flow<PickerSource>,
     settings: StateFlow<AccountSettings?>,

@@ -9,6 +9,7 @@ import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.storage.InMemoryValueStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -32,12 +33,15 @@ import java.time.ZoneOffset
 class TimerPageViewModelTest {
 
     private val scope = CoroutineScope(Dispatchers.Unconfined)
-    private val views = object : TimerViewChoice {
-        override val view = MutableStateFlow(TimerView.LIST)
-        override fun choose(view: TimerView) {
-            this.view.value = view
-        }
-    }
+
+    // Signed out with nothing stored, so a choice stays on the phone.
+    private val views = TimerViewSetting(
+        store = InMemoryValueStore(null),
+        client = { null },
+        keepsTimerView = { false },
+        scope = scope,
+        io = Dispatchers.Unconfined,
+    )
     private val entries = MutableStateFlow(listOf(entry(1, "Code review", WEBSITE.id)))
     private val picker = MutableStateFlow(PickerSource(projects = listOf(WEBSITE), clients = listOf(ACME)))
     private val offline = MutableStateFlow(false)

@@ -31,7 +31,7 @@ class ClientsRequestsTest {
     /** Each request's method, target and body, in order. */
     private val requests = CopyOnWriteArrayList<String>()
 
-    private lateinit var repository: ServerClientsRepository
+    private lateinit var repository: ClientsRepository
 
     @Before
     fun setUp() {
@@ -57,7 +57,7 @@ class ClientsRequestsTest {
         testApi.stored = url
         // The user has confirmed the MockWebServer's plain http URL.
         testApi.trust = InMemoryServerTrust(url)
-        repository = ServerClientsRepository { testApi.api(url) }
+        repository = ClientsRepository { testApi.api(url) }
     }
 
     @After

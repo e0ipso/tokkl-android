@@ -26,12 +26,6 @@ class TimerStateRead internal constructor(
     internal val written: Long,
 )
 
-/** Writes the accepted timer state to disk. */
-fun interface TimerStateWriter {
-    @Throws(IOException::class)
-    fun save(state: StoredTimerState)
-}
-
 /**
  * The signed-in account's timer state from the Tokkl server, and the one place on the phone that
  * holds it. Answers to `GET /api/app/timer`, action answers, 409 bodies and timer events all go
@@ -43,7 +37,7 @@ fun interface TimerStateWriter {
  * and sign-in makes a new one, so an answer that kept a retired source changes nothing.
  *
  * @param initial what the store held at process start, or null.
- * @param store writes each accepted state.
+ * @param store writes each accepted state to disk, and may throw an [IOException].
  * @param cache the cache's current-entry reconciliation.
  * @param clock the phone's clock. Arrival times come from it.
  * @param runningEnded asked for a refresh after an accepted state removed a running entry from
@@ -52,7 +46,7 @@ fun interface TimerStateWriter {
  */
 class TimerStateSource(
     initial: StoredTimerState?,
-    private val store: TimerStateWriter,
+    private val store: (StoredTimerState) -> Unit,
     private val cache: CurrentEntryCache,
     private val clock: Clock,
     private val runningEnded: () -> Unit,
@@ -109,7 +103,7 @@ class TimerStateSource(
             val held = mutableState.value
             if (held != null && state.revision < held.state.revision) return false
             val next = HeldTimerState(state, receivedAt)
-            store(next)
+            write(next)
             mutableState.value = next
             mutableNotice.value = next.unshownDiscard(acknowledged)
             writeRunning(read, state)
@@ -137,7 +131,7 @@ class TimerStateSource(
         val notice = mutableNotice.value ?: return null
         acknowledged = notice.entryId
         mutableNotice.value = null
-        mutableState.value?.let(::store)
+        mutableState.value?.let(::write)
         notice
     }
 
@@ -155,9 +149,9 @@ class TimerStateSource(
     }
 
     /** A failed write keeps the state for this process, and the next state writes again. */
-    private fun store(held: HeldTimerState) {
+    private fun write(held: HeldTimerState) {
         try {
-            store.save(StoredTimerState(held, acknowledged))
+            store(StoredTimerState(held, acknowledged))
         } catch (_: IOException) {
             // The next accepted state or taken notice writes again.
         }

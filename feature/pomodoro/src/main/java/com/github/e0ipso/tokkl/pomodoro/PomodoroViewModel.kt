@@ -74,7 +74,7 @@ class PomodoroViewModel(
     refused: Flow<List<HeldChange>>,
     scope: CoroutineScope,
     private val sendQueued: suspend () -> Unit,
-    private val alarmProbe: ExactAlarmCheck,
+    private val alarmProbe: () -> Boolean,
     picker: Flow<PickerSource>,
     val offline: StateFlow<Boolean>,
 ) : ViewModel(scope) {
@@ -150,7 +150,7 @@ class PomodoroViewModel(
         }
     }
 
-    private fun alarmDenied(): Boolean = exactAlarmAllowed?.not() ?: alarmProbe.denied()
+    private fun alarmDenied(): Boolean = exactAlarmAllowed?.not() ?: alarmProbe()
 
     private fun accept(value: HeldTimerState?) {
         val ended = heldNow?.state?.pomodoro != null && value?.state?.pomodoro == null

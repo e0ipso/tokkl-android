@@ -30,20 +30,12 @@ sealed interface ReportExportState {
     data class Failed(val error: ApiError? = null, val noTargets: Boolean = false) : ReportExportState
 }
 
-/**
- * Hears that the server lacks the CSV export of [ReportCsvKind], such as
- * `CapabilitiesSource.csvMissing`, so the Reports page stops offering it.
- */
-fun interface CsvMissing {
-    fun missing(kind: ReportCsvKind)
-}
-
 /** One export at a time, independent of report pagination and protected by an account lease. */
 class ReportExportController(
     private val client: ApiClientProvider,
     private val files: ReportExportFiles,
     private val account: ExportAccount,
-    private val csvMissing: CsvMissing,
+    private val csvMissing: (ReportCsvKind) -> Unit,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
 ) {
@@ -123,7 +115,7 @@ class ReportExportController(
         }
         return when (answer) {
             is ApiResult.Failure -> {
-                if (answer.error.csvEndpointAbsent()) lease.current { csvMissing.missing(request.kind) }
+                if (answer.error.csvEndpointAbsent()) lease.current { csvMissing(request.kind) }
                 ReportExportState.Failed(answer.error)
             }
 

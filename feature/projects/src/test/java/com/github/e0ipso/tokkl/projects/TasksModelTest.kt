@@ -81,7 +81,7 @@ class TasksModelTest {
         // The user has confirmed the MockWebServer's plain http URL.
         testApi.trust = InMemoryServerTrust(url)
         model = TasksModel(
-            repository = ServerTasksRepository { testApi.api(url, ApiCredentials.ApiToken("tok-123")) },
+            repository = TasksRepository { testApi.api(url, ApiCredentials.ApiToken("tok-123")) },
             workspaceId = { WorkspaceId(7) },
             refreshCache = { refreshes++ },
             scope = CoroutineScope(Dispatchers.Unconfined),

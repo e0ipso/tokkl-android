@@ -12,12 +12,6 @@ import kotlinx.coroutines.withContext
 import java.io.IOException
 import kotlin.coroutines.CoroutineContext
 
-/** Writes the theme settings to disk, such as [ThemeSettingsStore]. */
-fun interface ThemeSettingsWriter {
-    @Throws(IOException::class)
-    fun save(settings: ThemeSettings)
-}
-
 /**
  * The theme settings for the whole process. A change shows in [state] at once, so the theme
  * redraws without a restart, and then goes to disk on [io], one write at a time. When a write
@@ -31,7 +25,7 @@ fun interface ThemeSettingsWriter {
  */
 class ThemeSettingsRepository(
     initial: ThemeSettings,
-    private val store: ThemeSettingsWriter,
+    private val store: (ThemeSettings) -> Unit,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
 ) {
@@ -55,7 +49,7 @@ class ThemeSettingsRepository(
                 val wanted = mutableState.value
                 if (wanted == saved) return@withLock
                 try {
-                    withContext(io) { store.save(wanted) }
+                    withContext(io) { store(wanted) }
                     saved = wanted
                 } catch (_: IOException) {
                     mutableState.compareAndSet(wanted, saved)

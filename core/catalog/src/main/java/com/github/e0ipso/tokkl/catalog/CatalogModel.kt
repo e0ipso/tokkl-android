@@ -3,7 +3,6 @@ package com.github.e0ipso.tokkl.catalog
 import androidx.compose.runtime.Immutable
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.model.WorkspaceId
-import com.github.e0ipso.tokkl.session.DefaultWorkspace
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
@@ -74,7 +73,7 @@ data class CatalogState<D, O>(
  */
 class CatalogModel<D, O>(
     private val repository: CatalogRepository<D>,
-    private val workspaceId: DefaultWorkspace,
+    private val workspaceId: () -> WorkspaceId?,
     private val refreshCache: () -> Unit,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
@@ -91,7 +90,7 @@ class CatalogModel<D, O>(
     private var workspace: WorkspaceId? = null
 
     /** The workspace the page manages: the one the data came from, or else the stored one, or null. */
-    fun workspace(): WorkspaceId? = workspace ?: workspaceId.defaultWorkspaceId()
+    fun workspace(): WorkspaceId? = workspace ?: workspaceId()
 
     /** Loads the data. Does nothing while the page is open, so turning the phone sends no request. */
     override fun open() = reloads.open()
@@ -195,7 +194,7 @@ class CatalogModel<D, O>(
     private fun load() {
         loading?.cancel()
         mutableState.update { it.copy(loading = true) }
-        val stored = workspaceId.defaultWorkspaceId()
+        val stored = workspaceId()
         loading = scope.launch {
             // A cancelled load cancels its requests and drops its answer.
             val answer = withContext(io) { read(stored) }

@@ -11,7 +11,7 @@ import com.github.e0ipso.tokkl.entryfields.SplitProblem
 import com.github.e0ipso.tokkl.entryfields.SplitResult
 import com.github.e0ipso.tokkl.entryfields.splitTimes
 import com.github.e0ipso.tokkl.favorites.FavoritesProblem
-import com.github.e0ipso.tokkl.favorites.TemplateAdder
+import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.TimeEntry
@@ -242,7 +242,7 @@ class EntryActionsViewModel(
      * not store the list, says why nothing was saved. An entry the cache no longer holds saves
      * nothing.
      */
-    fun pin(entryId: EntryId, templates: TemplateAdder, offline: Boolean) {
+    fun pin(entryId: EntryId, templates: FavoritesViewModel, offline: Boolean) {
         if (offline) {
             mutableState.update { it.copy(notice = EntryNotice.PinNeedsServer(++serial)) }
             return
