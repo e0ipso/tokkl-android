@@ -19,7 +19,6 @@ val timerStateModule = module {
             store = get(),
             lastFields = get(),
             cache = get(),
-            database = get(),
             capabilities = get(),
             refreshes = get(),
             lifetime = get(),

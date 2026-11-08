@@ -4,7 +4,6 @@ import android.app.Activity
 import android.app.Application
 import android.os.Bundle
 import com.github.e0ipso.tokkl.cache.AccountCache
-import com.github.e0ipso.tokkl.cache.CacheDatabase
 import com.github.e0ipso.tokkl.cache.RunningCheck
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.platform.CurrentWorkManager
@@ -33,7 +32,6 @@ import kotlin.coroutines.CoroutineContext
 class WidgetStateSource(
     application: Application,
     cache: AccountCache,
-    database: CacheDatabase,
     accountSettings: AccountSettingsSource,
     capabilities: CapabilitiesSource,
     timerControls: AccountTimerStates,
@@ -65,7 +63,7 @@ class WidgetStateSource(
         )
         val history = combine(
             cache.timeEntries,
-            database.invalidationTracker.createFlow("entry_ids"),
+            cache.entryIdsChanged,
             refreshes,
         ) { entries, _, _ -> entries to cache.serverIdsOf(entries) }
         val catalog = combine(

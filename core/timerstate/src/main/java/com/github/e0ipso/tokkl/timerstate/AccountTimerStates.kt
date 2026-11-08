@@ -2,7 +2,6 @@ package com.github.e0ipso.tokkl.timerstate
 
 import com.github.e0ipso.tokkl.api.DiscardedPomodoro
 import com.github.e0ipso.tokkl.cache.AccountCache
-import com.github.e0ipso.tokkl.cache.CacheDatabase
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountLifetime
@@ -50,7 +49,6 @@ class AccountTimerStates(
     private val store: TimerStateStore,
     private val lastFields: HeldFieldsMemory,
     private val cache: AccountCache,
-    private val database: CacheDatabase,
     private val capabilities: CapabilitiesSource,
     private val refreshes: AccountRefreshRequests,
     private val lifetime: AccountLifetime,
@@ -123,7 +121,7 @@ class AccountTimerStates(
      * wrote to the cache.
      */
     val controls: Flow<TimerControls> = combine(
-        database.invalidationTracker.createFlow("time_entries", "pending_changes"),
+        cache.entriesOrQueueChanged,
         states.flatMapLatest { it.source.state },
         capabilities.loaded,
     ) { _, _, flags ->

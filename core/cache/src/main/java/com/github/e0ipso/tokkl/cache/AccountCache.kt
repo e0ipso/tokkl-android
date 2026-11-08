@@ -59,6 +59,13 @@ class AccountCache(private val database: CacheDatabase, private val clock: Clock
     /** In the user's order. */
     val favorites: Flow<List<Favorite>> = dao.favorites().map { rows -> rows.map { it.toModel() } }
 
+    /** One item at once, and one after each change to the cached entries or to the queue. */
+    val entriesOrQueueChanged: Flow<Unit> =
+        database.invalidationTracker.createFlow("time_entries", "pending_changes").map { }
+
+    /** One item at once, and one after each change to which server entry each phone entry is ([serverIdsOf]). */
+    val entryIdsChanged: Flow<Unit> = database.invalidationTracker.createFlow("entry_ids").map { }
+
     /**
      * Reads the server with [api] and replaces the cached rows, as [refreshedWith] describes, with
      * the queued changes applied on top. Entries changed during the read, or pending when it

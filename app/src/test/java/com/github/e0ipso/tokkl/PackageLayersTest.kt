@@ -57,6 +57,24 @@ class PackageLayersTest {
         assertEquals("main sources outside core:cache that name a Room row", emptyList<String>(), outside)
     }
 
+    /**
+     * No module but core:cache names Room or the cache's database: they read what changed through
+     * the cache's flows, such as `AccountCache.entriesOrQueueChanged`, never by a table's name, and
+     * none of their build files takes Room.
+     */
+    @Test
+    fun roomStaysInTheCache() {
+        val outside = mainFiles().filterNot { (module, _) -> module == ":core:cache" }.flatMap { (_, file) ->
+            val code = withoutComments(file.readText())
+            ROOM_NAMES.filter { it.containsMatchIn(code) }.map { "${file.relativeTo(ROOT_DIR)}: ${it.pattern}" }
+        } + SourceTree.modules.filterNot { it.path == ":core:cache" }.mapNotNull { module ->
+            val build = File(module.directory, "build.gradle.kts").readText()
+            "${module.path} build file: Room".takeIf { ROOM_DEPENDENCY.containsMatchIn(build) }
+        }
+
+        assertEquals("main sources and builds outside core:cache that reach Room", emptyList<String>(), outside)
+    }
+
     @Test
     fun screensImportNoWireTypes() {
         val wire = wireTypes()
@@ -140,6 +158,18 @@ class PackageLayersTest {
             """@Serializable\s*\n\s*(?:(?:internal|private|data|enum|sealed) )*(?:class|object|interface) (\w+)""",
         )
         private val VIEW_MODEL = Regex("""\)\s*:\s*ViewModel\(""")
+
+        /** Room's package, the cache's database and its invalidation tracker, by name. */
+        private val ROOM_NAMES = listOf(
+            Regex("""\bandroidx\.room\b"""),
+            Regex("""(?<!\w)CacheDatabase\b"""),
+            Regex("""\binvalidationTracker\b"""),
+        )
+
+        /** Room in a main configuration of a build file: `api` or `implementation`, not a test's. */
+        private val ROOM_DEPENDENCY =
+            Regex("""^\s*(?:api|implementation|ksp)\(libs\.androidx\.room""", RegexOption.MULTILINE)
+
         private val API_IMPORT = Regex("""^import com\.github\.e0ipso\.tokkl\.api\.(\w+)$""", RegexOption.MULTILINE)
 
         /**

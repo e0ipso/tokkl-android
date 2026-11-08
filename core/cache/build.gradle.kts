@@ -23,8 +23,8 @@ dependencies {
     api(project(":core:session"))
     // Every read and change of the account's data takes and gives the model's types.
     api(project(":core:model"))
-    // CacheDatabase is a RoomDatabase, and the widgets watch its invalidation tracker.
-    api(libs.androidx.room.runtime)
+    // CacheDatabase is a RoomDatabase. No module above names it: they read the cache's flows.
+    implementation(libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.work.runtime)
     implementation(platform(libs.koin.bom))

@@ -35,7 +35,6 @@ val widgetFeatureModule = module {
         WidgetStateSource(
             application = androidApplication(),
             cache = get(),
-            database = get(),
             accountSettings = get(),
             capabilities = get(),
             timerControls = get(),
