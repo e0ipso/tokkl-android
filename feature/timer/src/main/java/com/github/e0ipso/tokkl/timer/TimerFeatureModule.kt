@@ -14,10 +14,10 @@ import com.github.e0ipso.tokkl.history.EntryActionsViewModel
 import com.github.e0ipso.tokkl.history.HistoryViewModel
 import com.github.e0ipso.tokkl.navigation.EntryFormRequest
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
-import com.github.e0ipso.tokkl.picker.offlineIn
 import com.github.e0ipso.tokkl.picker.pickerSource
 import com.github.e0ipso.tokkl.platform.DefaultNetwork
 import com.github.e0ipso.tokkl.platform.io
+import com.github.e0ipso.tokkl.platform.offlineIn
 import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountSettingsSource

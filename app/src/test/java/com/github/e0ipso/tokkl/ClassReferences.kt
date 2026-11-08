@@ -54,6 +54,16 @@ internal object ClassReferences {
     ).map { "com.github.e0ipso.tokkl.$it" }
 
     /**
+     * A class of each core module that the app's main sources do not depend on, by name, since
+     * only the runtime classpath holds them.
+     */
+    private val CORE_MODULES = listOf(
+        "catalog.ServerProblem",
+        "picker.PickerOptionsKt",
+        "timernotice.TimerNoticeKt",
+    ).map { "com.github.e0ipso.tokkl.$it" }
+
+    /**
      * One class of each Gradle module of the app. Each module's classes sit in a directory or jar
      * of their own on the test classpath, and the class shows where.
      */
@@ -68,7 +78,7 @@ internal object ClassReferences {
         AccountTimerStates::class.java,
         SessionTrust::class.java,
         Navigator::class.java,
-    ) + FEATURE_MODULES.map { Class.forName(it) }
+    ) + (CORE_MODULES + FEATURE_MODULES).map { Class.forName(it) }
 
     /** The directory or jar of each module's compiled classes. */
     val moduleLocations: List<File> by lazy {

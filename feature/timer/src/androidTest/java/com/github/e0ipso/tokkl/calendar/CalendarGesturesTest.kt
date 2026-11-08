@@ -45,7 +45,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 import java.util.concurrent.CopyOnWriteArrayList
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * The calendar's drags (docs/PRD.md K2), by touch as a finger makes them: a long press, then a
@@ -292,7 +292,7 @@ class CalendarGesturesTest {
 
     private fun dayLabel(day: LocalDate): String {
         val words = DateWords(context.resources)
-        return context.getString(SharedR.string.history_day, words.weekday(day), words.short(day))
+        return context.getString(UiR.string.history_day, words.weekday(day), words.short(day))
     }
 
     private fun addLabel(day: LocalDate): String = context.getString(R.string.calendar_add_entry, dayLabel(day))

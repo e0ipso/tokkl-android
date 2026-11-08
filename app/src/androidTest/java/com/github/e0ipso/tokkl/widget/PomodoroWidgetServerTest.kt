@@ -21,7 +21,7 @@ import com.github.e0ipso.tokkl.components.signOut
 import com.github.e0ipso.tokkl.components.storeSignIn
 import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.components.timerSync
-import com.github.e0ipso.tokkl.core.shared.R
+import com.github.e0ipso.tokkl.core.ui.R
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.pomodoro.HeldPhases
 import com.github.e0ipso.tokkl.session.ServerTrustStore

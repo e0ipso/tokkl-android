@@ -22,7 +22,7 @@ import com.github.e0ipso.tokkl.ui.UnsentIcon
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
 import java.time.Clock
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * The status element above the bottom bar (docs/PRD.md O5): the unsent icon and how many changes
@@ -129,7 +129,7 @@ private fun lastAnsweredText(resources: Resources, label: LastAnsweredLabel): St
         else -> {
             val words = DateWords(resources)
             val day = resources.getString(
-                SharedR.string.history_day,
+                UiR.string.history_day,
                 words.weekday(label.day),
                 words.shortWithYear(label.day),
             )

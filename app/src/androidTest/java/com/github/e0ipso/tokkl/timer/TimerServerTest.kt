@@ -54,7 +54,7 @@ import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.components.sessionViewModels
-import com.github.e0ipso.tokkl.core.shared.R
+import com.github.e0ipso.tokkl.core.entryfields.R
 import com.github.e0ipso.tokkl.followNoTimerEvents
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
@@ -93,6 +93,7 @@ import org.junit.rules.RuleChain
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 
 /**
@@ -163,7 +164,7 @@ class TimerServerTest {
             started.await("Stop shows") { displayedAfterNextFrame(stopMatcher()) }
             started.await(
                 "the running state shows in words",
-            ) { displayedAfterNextFrame(hasText(string(R.string.timer_running))) }
+            ) { displayedAfterNextFrame(hasText(string(UiR.string.timer_running))) }
             assertEquals("Start stays queued unsent", 1, runBlocking { app.changes.unsentCount.first() })
             assertTrue("the clock starts at zero: ${clockText()}", clockText().startsWith("0:00:0"))
             composeRule.waitUntil(
@@ -426,7 +427,7 @@ class TimerServerTest {
     ) and hasClickAction()
 
     private fun stopMatcher(): SemanticsMatcher = hasContentDescription(
-        string(R.string.timer_stop_spoken),
+        string(UiR.string.timer_stop_spoken),
     ) and hasClickAction()
 
     private fun startButton(): SemanticsNodeInteraction = composeRule.onNode(startMatcher())

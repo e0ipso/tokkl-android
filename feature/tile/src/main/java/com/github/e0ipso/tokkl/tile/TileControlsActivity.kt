@@ -43,7 +43,6 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
@@ -124,7 +123,7 @@ private fun TileControlsDialog(panel: TileControlsPanel, onPress: (TileControl) 
         title = { Text(description, modifier = Modifier.semantics { heading() }) },
         text = {
             Text(
-                stringResource(if (panel.paused) SharedR.string.timer_paused else SharedR.string.timer_running),
+                stringResource(if (panel.paused) UiR.string.timer_paused else UiR.string.timer_running),
             )
         },
         confirmButton = {
@@ -150,20 +149,20 @@ private fun TileControlButton(action: TimerSurfaceAction, onClick: () -> Unit) {
     @DrawableRes val icon: Int
     when (action) {
         TimerSurfaceAction.Pause -> {
-            label = SharedR.string.timer_pause
-            spoken = SharedR.string.timer_pause_spoken
+            label = UiR.string.timer_pause
+            spoken = UiR.string.timer_pause_spoken
             icon = UiR.drawable.ic_pause
         }
 
         TimerSurfaceAction.Resume -> {
-            label = SharedR.string.timer_resume
-            spoken = SharedR.string.timer_resume_spoken
+            label = UiR.string.timer_resume
+            spoken = UiR.string.timer_resume_spoken
             icon = UiR.drawable.ic_play
         }
 
         TimerSurfaceAction.Stop -> {
-            label = SharedR.string.timer_stop
-            spoken = SharedR.string.timer_stop_spoken
+            label = UiR.string.timer_stop
+            spoken = UiR.string.timer_stop_spoken
             icon = UiR.drawable.ic_stop
         }
     }

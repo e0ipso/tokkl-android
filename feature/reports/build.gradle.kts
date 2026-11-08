@@ -5,7 +5,14 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":core:shared"))
+    implementation(project(":core:api"))
+    implementation(project(":core:time"))
+    implementation(project(":core:ui"))
+    implementation(project(":core:platform"))
+    implementation(project(":core:session"))
+    implementation(project(":core:cache"))
+    // ReportsViewModel, which the app's navigation host reads, is a catalog PageEvents.
+    api(project(":core:catalog"))
     implementation(project(":core:navigation"))
     implementation(libs.androidx.activity.compose)
 

@@ -48,7 +48,7 @@ import com.github.e0ipso.tokkl.feature.projects.R
 import com.github.e0ipso.tokkl.picker.projectColor
 import com.github.e0ipso.tokkl.ui.theme.FrameWidth
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.entryfields.R as FieldsR
 
 /**
  * The colour, as the web app's ColorField: Toggl's 14 swatches and Custom, one choice. Each swatch
@@ -131,7 +131,7 @@ private fun ColourOption(label: String, hex: String?, selected: Boolean, onSelec
                 .border(DividerDefaults.Thickness, MaterialTheme.colorScheme.outline, CircleShape),
         )
         Text(label, style = MaterialTheme.typography.bodyMedium)
-        if (selected) Icon(painter = painterResource(SharedR.drawable.ic_check), contentDescription = null)
+        if (selected) Icon(painter = painterResource(FieldsR.drawable.ic_check), contentDescription = null)
     }
 }
 

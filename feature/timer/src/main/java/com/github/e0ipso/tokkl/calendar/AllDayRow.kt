@@ -58,7 +58,6 @@ import com.github.e0ipso.tokkl.ui.theme.SmallCornerShape
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.Instant
 import java.time.LocalDate
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
@@ -147,7 +146,7 @@ private fun AllDayCell(
             // The day in the label tells the week's seven buttons apart, as the web app's do.
             val resources = LocalResources.current
             val words = remember(resources) { DateWords(resources) }
-            val dayLabel = resources.getString(SharedR.string.history_day, words.weekday(day), words.short(day))
+            val dayLabel = resources.getString(UiR.string.history_day, words.weekday(day), words.short(day))
             IconButton(onClick = { editing.addAllDay(day) }) {
                 Icon(
                     painterResource(UiR.drawable.ic_plus),

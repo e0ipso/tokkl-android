@@ -54,7 +54,6 @@ import com.github.e0ipso.tokkl.ui.theme.TokklNavigationRailItem
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.navigationBarLabelWeight
 import kotlinx.coroutines.launch
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.core.timerstate.R as TimerStateR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.feature.clients.R as ClientsR
@@ -71,7 +70,7 @@ import com.github.e0ipso.tokkl.feature.trash.R as TrashR
 val TopLevelPage.label: Int
     get() = when (this) {
         TopLevelPage.TIMER -> TimerR.string.nav_timer
-        TopLevelPage.POMODORO -> SharedR.string.pomodoro_title
+        TopLevelPage.POMODORO -> UiR.string.pomodoro_title
         TopLevelPage.REPORTS -> ReportsR.string.reports
         TopLevelPage.PROJECTS -> ProjectsR.string.nav_projects
         TopLevelPage.TEMPLATES -> TimerR.string.nav_templates
@@ -88,10 +87,10 @@ val TopLevelPage.icon: Int
         TopLevelPage.TIMER -> TimerStateR.drawable.ic_nav_timer
         TopLevelPage.POMODORO -> PomodoroR.drawable.ic_nav_pomodoro
         TopLevelPage.REPORTS -> R.drawable.ic_nav_reports
-        TopLevelPage.PROJECTS -> SharedR.drawable.ic_nav_projects
+        TopLevelPage.PROJECTS -> UiR.drawable.ic_nav_projects
         TopLevelPage.TEMPLATES -> TimerR.drawable.ic_nav_templates
         TopLevelPage.CLIENTS -> R.drawable.ic_nav_clients
-        TopLevelPage.TAGS -> SharedR.drawable.ic_nav_tags
+        TopLevelPage.TAGS -> UiR.drawable.ic_nav_tags
         TopLevelPage.TRASH -> UiR.drawable.ic_nav_trash
         TopLevelPage.SETTINGS -> R.drawable.ic_nav_settings
     }

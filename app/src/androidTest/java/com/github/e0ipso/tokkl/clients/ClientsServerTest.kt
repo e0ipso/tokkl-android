@@ -66,7 +66,7 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 import java.time.Duration
 import java.util.concurrent.CopyOnWriteArrayList
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.catalog.R as CatalogR
 
 /**
  * The clients page against the real Tokkl container, wired as ClientsViewModel wires it, on an
@@ -126,8 +126,8 @@ class ClientsServerTest {
         field(R.string.client_notes).type("Pays late")
         button(R.string.client_create).tap()
 
-        awaitText(string(SharedR.string.catalog_created, "Acme"))
-        awaitMessageGone(string(SharedR.string.catalog_created, "Acme"))
+        awaitText(string(CatalogR.string.catalog_created, "Acme"))
+        awaitMessageGone(string(CatalogR.string.catalog_created, "Acme"))
         var server = client("Acme")
         assertEquals("Pays late", server.string("notes"))
         val id = server.id()
@@ -154,8 +154,8 @@ class ClientsServerTest {
         field(R.string.client_notes).clear()
         button(R.string.client_save).tap()
 
-        awaitText(string(SharedR.string.catalog_saved, "Acme Inc"))
-        awaitMessageGone(string(SharedR.string.catalog_saved, "Acme Inc"))
+        awaitText(string(CatalogR.string.catalog_saved, "Acme Inc"))
+        awaitMessageGone(string(CatalogR.string.catalog_saved, "Acme Inc"))
         server = client("Acme Inc")
         assertEquals(id, server.id())
         assertEquals(null, server.string("notes"))
@@ -203,7 +203,7 @@ class ClientsServerTest {
             field(R.string.client_name).type("Acme")
             button(R.string.client_create).tap()
 
-            awaitText(string(SharedR.string.catalog_created, "Acme"))
+            awaitText(string(CatalogR.string.catalog_created, "Acme"))
             assertEquals("the relay dropped the create's answer", 1, relay.droppedAnswers)
             row("Acme").assertExists()
             assertNoText("Name has already been taken")
@@ -241,7 +241,7 @@ class ClientsServerTest {
         awaitText("Keep")
         composeRule.onNode(hasContentDescription(string(R.string.clients_archive_named, "Keep"))).tap()
         awaitText(string(R.string.clients_archive_no_projects))
-        composeRule.onNode(hasText(string(SharedR.string.catalog_cancel)) and hasClickAction()).tap(scroll = false)
+        composeRule.onNode(hasText(string(CatalogR.string.catalog_cancel)) and hasClickAction()).tap(scroll = false)
         composeRule.waitForIdle()
         assertEquals("false", client("Keep").getValue("archived").jsonPrimitive.content)
     }

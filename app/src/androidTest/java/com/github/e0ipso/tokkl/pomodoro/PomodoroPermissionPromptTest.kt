@@ -37,7 +37,7 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 import java.time.DayOfWeek
 import java.util.concurrent.CopyOnWriteArrayList
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /** Uses the same shared prompt as navigation, with Android's result registry held unanswered. */
 @SignedOut
@@ -121,11 +121,11 @@ class PomodoroPermissionPromptTest {
     fun firstStartIsImmediateAndOutstandingRequestsCannotCauseDuplicateAutomaticDialogs() {
         show()
         assertEquals(0, requests.size)
-        tap(SharedR.string.pomodoro_start)
+        tap(UiR.string.pomodoro_start)
         compose.waitUntil(5_000) { requests.size == 1 && asked }
         assertEquals(1, started)
         // Keep the platform dialog outstanding while another start event arrives.
-        tap(SharedR.string.pomodoro_start)
+        tap(UiR.string.pomodoro_start)
         compose.waitForIdle()
         assertEquals(2, started)
         assertEquals(1, requests.size)
@@ -133,13 +133,13 @@ class PomodoroPermissionPromptTest {
         compose.onNodeWithText(
             context.getString(R.string.pomodoro_notifications_denied),
         ).performScrollTo().assertIsDisplayed()
-        tap(SharedR.string.pomodoro_start)
+        tap(UiR.string.pomodoro_start)
         compose.waitForIdle()
         assertEquals(1, requests.size)
         tap(R.string.pomodoro_notifications_settings)
         compose.waitUntil(5_000) { settings == 1 }
         // Settings is still outstanding; a new session start still runs immediately.
-        tap(SharedR.string.pomodoro_start)
+        tap(UiR.string.pomodoro_start)
         assertEquals(4, started)
         assertEquals(1, requests.size)
     }
@@ -153,7 +153,7 @@ class PomodoroPermissionPromptTest {
         assertEquals(0, started)
         compose.runOnUiThread { registry.dispatchResult(requests.single(), true) }
         compose.onNodeWithText(context.getString(R.string.pomodoro_notifications_denied)).assertDoesNotExist()
-        tap(SharedR.string.pomodoro_start)
+        tap(UiR.string.pomodoro_start)
         compose.waitForIdle()
         assertEquals(1, requests.size)
     }
@@ -162,7 +162,7 @@ class PomodoroPermissionPromptTest {
         show(granted = true)
         tap(R.string.pomodoro_exact_alarm_settings)
         tap(R.string.pomodoro_fullscreen_settings)
-        tap(SharedR.string.pomodoro_start)
+        tap(UiR.string.pomodoro_start)
         assertEquals(1, started)
         assertEquals(1, exactSettings)
         assertEquals(1, fullSettings)
@@ -187,7 +187,7 @@ class PomodoroPermissionPromptTest {
     @SdkSuppress(maxSdkVersion = 32)
     fun android12StartsWithoutPostNotificationRequestAndRetryOpensSettings() {
         show()
-        tap(SharedR.string.pomodoro_start)
+        tap(UiR.string.pomodoro_start)
         tap(R.string.pomodoro_notifications_settings)
         compose.waitUntil(5_000) { settings == 1 }
         assertTrue(requests.isEmpty())

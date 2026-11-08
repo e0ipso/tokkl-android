@@ -57,7 +57,7 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.entryfields.R as FieldsR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
@@ -212,7 +212,7 @@ private fun DateDialog(initial: LocalDate, onPick: (LocalDate) -> Unit, onDismis
                             .semantics { heading() },
                     )
                     TextButton(onClick = { picked?.let(onPick) }, enabled = picked != null) {
-                        Text(stringResource(SharedR.string.entry_picker_done))
+                        Text(stringResource(FieldsR.string.entry_picker_done))
                     }
                 }
                 DatePicker(state = state, title = null, modifier = Modifier.weight(1f))

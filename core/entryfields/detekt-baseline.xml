@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<!-- Findings whose fix would change behaviour. config/detekt/detekt.yml says how the rest is fixed. -->
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <!-- The modifier is the click target of the pill's inner row. On the outer Surface it would change the touch target and the ripple. -->
+    <ID>ModifierNotUsedAtRoot:EntryFieldButtons.kt:modifier = modifier .heightIn(min = LocalMinimumInteractiveComponentSize.current) .padding(horizontal = TokklTheme.spacing.space3)</ID>
+  </CurrentIssues>
+</SmellBaseline>

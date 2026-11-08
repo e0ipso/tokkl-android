@@ -36,7 +36,7 @@ import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
 import java.time.Clock
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.entryfields.R as FieldsR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
@@ -105,7 +105,7 @@ internal fun FullscreenTimerContent(state: TimerState, actions: FullscreenTimerA
             }
             if (token != null && (running != null || paused != null)) {
                 Text(
-                    stringResource(if (paused != null) SharedR.string.timer_paused else SharedR.string.timer_running),
+                    stringResource(if (paused != null) UiR.string.timer_paused else UiR.string.timer_running),
                     style = MaterialTheme.typography.titleLarge,
                 )
                 val spoken = stringResource(
@@ -120,7 +120,7 @@ internal fun FullscreenTimerContent(state: TimerState, actions: FullscreenTimerA
                 val fields = running?.fields ?: paused!!.fields
                 val labels = running?.labels ?: paused!!.labels
                 Text(
-                    fields.description.ifEmpty { stringResource(SharedR.string.timer_suggestion_no_description) },
+                    fields.description.ifEmpty { stringResource(FieldsR.string.timer_suggestion_no_description) },
                     style = MaterialTheme.typography.headlineSmall,
                 )
                 labels.project?.let { Text(it, style = MaterialTheme.typography.titleMedium) }
@@ -133,7 +133,7 @@ internal fun FullscreenTimerContent(state: TimerState, actions: FullscreenTimerA
                 }
                 if (fields.billable) {
                     Text(
-                        stringResource(SharedR.string.entry_billable),
+                        stringResource(FieldsR.string.entry_billable),
                         style = MaterialTheme.typography.bodyLarge,
                     )
                 }
@@ -143,28 +143,28 @@ internal fun FullscreenTimerContent(state: TimerState, actions: FullscreenTimerA
                         style = MaterialTheme.typography.labelLarge,
                     )
                 }
-                val stopAction = stringResource(SharedR.string.timer_stop_spoken)
+                val stopAction = stringResource(UiR.string.timer_stop_spoken)
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup),
                     verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup),
                 ) {
                     if (paused != null) {
-                        val resumeAction = stringResource(SharedR.string.timer_resume_spoken)
+                        val resumeAction = stringResource(UiR.string.timer_resume_spoken)
                         TokklButton(modifier = Modifier.semantics { contentDescription = resumeAction }, onClick = {
                             actions.onResume(token)
                             focus.clearFocus()
-                        }) { Text(stringResource(SharedR.string.timer_resume)) }
+                        }) { Text(stringResource(UiR.string.timer_resume)) }
                     } else if (running?.pausable == true) {
-                        val pauseAction = stringResource(SharedR.string.timer_pause_spoken)
+                        val pauseAction = stringResource(UiR.string.timer_pause_spoken)
                         TokklButton(modifier = Modifier.semantics { contentDescription = pauseAction }, onClick = {
                             actions.onPause(token)
                             focus.clearFocus()
-                        }) { Text(stringResource(SharedR.string.timer_pause)) }
+                        }) { Text(stringResource(UiR.string.timer_pause)) }
                     }
                     TokklDangerButton(modifier = Modifier.semantics { contentDescription = stopAction }, onClick = {
                         actions.onStop(token)
                         focus.clearFocus()
-                    }) { Text(stringResource(SharedR.string.timer_stop)) }
+                    }) { Text(stringResource(UiR.string.timer_stop)) }
                     if (running != null) {
                         TokklIconButton(
                             icon = UiR.drawable.ic_edit,

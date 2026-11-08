@@ -51,7 +51,7 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 import java.time.Instant
 import java.time.temporal.ChronoUnit
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.feature.clients.R as ClientsR
 import com.github.e0ipso.tokkl.feature.projects.R as ProjectsR
 import com.github.e0ipso.tokkl.feature.reports.R as ReportsR
@@ -274,15 +274,15 @@ class BottomBarTest {
         val account = signInToNewAccount()
         launch { scenario ->
             composeRule.awaitPomodoroOffered(NETWORK_TIMEOUT_MS)
-            val marker = barItemMatcher(SharedR.string.pomodoro_title) and
+            val marker = barItemMatcher(UiR.string.pomodoro_title) and
                 SemanticsMatcher.expectValue(
                     SemanticsProperties.StateDescription,
                     string(R.string.nav_pomodoro_running),
                 )
             assertEquals(0, composeRule.onAllNodes(marker).fetchSemanticsNodes().size)
-            barItem(SharedR.string.pomodoro_title).performClick()
-            heading(SharedR.string.pomodoro_title).assertIsDisplayed()
-            barItem(SharedR.string.pomodoro_title).assertIsSelected()
+            barItem(UiR.string.pomodoro_title).performClick()
+            heading(UiR.string.pomodoro_title).assertIsDisplayed()
+            barItem(UiR.string.pomodoro_title).assertIsSelected()
             // Another device starts the session; the phone's own action answers go to the same holder.
             assertEquals(
                 TimerActionResult.Done,
@@ -310,7 +310,7 @@ class BottomBarTest {
             composeRule.waitUntil("Pomodoro drops its running state", TIMEOUT_MS) {
                 composeRule.onAllNodes(marker).fetchSemanticsNodes().isEmpty()
             }
-            barItem(SharedR.string.pomodoro_title).assertIsDisplayed().assertIsNotSelected()
+            barItem(UiR.string.pomodoro_title).assertIsDisplayed().assertIsNotSelected()
         }
     }
 

@@ -19,7 +19,6 @@ import androidx.compose.ui.text.TextLayoutResult
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.feature.projects.R as ProjectsR
 import com.github.e0ipso.tokkl.feature.settings.R as SettingsR
@@ -56,7 +55,7 @@ class LaunchScreenTest {
         }
         val expected = listOf(
             TimerR.string.nav_timer,
-            SharedR.string.pomodoro_title,
+            UiR.string.pomodoro_title,
             ProjectsR.string.nav_projects,
             SettingsR.string.settings,
             R.string.nav_more,

@@ -34,7 +34,7 @@ import com.github.e0ipso.tokkl.ui.TokklGhostButton
 import com.github.e0ipso.tokkl.ui.UnsentIcon
 import com.github.e0ipso.tokkl.ui.spokenDuration
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * "Running" in the running colour beside a dot, and while the server lacks a change to the entry,
@@ -49,7 +49,7 @@ internal fun RunningLabel(unsent: Boolean) {
         horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space2),
     ) {
         Canvas(Modifier.size(TokklTheme.spacing.space2)) { drawCircle(colour) }
-        Text(stringResource(SharedR.string.timer_running), style = MaterialTheme.typography.labelLarge, color = colour)
+        Text(stringResource(UiR.string.timer_running), style = MaterialTheme.typography.labelLarge, color = colour)
         if (unsent) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -97,7 +97,7 @@ internal fun IdleClock() {
 @Composable
 internal fun PausedLabel() {
     Text(
-        stringResource(SharedR.string.timer_paused),
+        stringResource(UiR.string.timer_paused),
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )

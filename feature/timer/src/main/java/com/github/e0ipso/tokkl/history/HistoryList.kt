@@ -44,7 +44,7 @@ import com.github.e0ipso.tokkl.ui.daySticker
 import com.github.e0ipso.tokkl.ui.spokenDuration
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.LocalDate
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * The history in the Timer page's List view, for [state]: the days with entries, newest first,
@@ -191,7 +191,7 @@ private fun dayLabel(date: LocalDate, today: LocalDate, resources: Resources, wo
     today.minusDays(1) -> resources.getString(R.string.history_yesterday)
 
     else -> resources.getString(
-        SharedR.string.history_day,
+        UiR.string.history_day,
         words.weekday(date),
         if (date.year == today.year) words.short(date) else words.shortWithYear(date),
     )

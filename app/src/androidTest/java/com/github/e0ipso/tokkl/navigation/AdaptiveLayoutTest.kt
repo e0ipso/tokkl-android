@@ -96,7 +96,7 @@ import org.junit.Rule
 import org.junit.Test
 import java.time.LocalDate
 import kotlin.math.abs
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.feature.projects.R as ProjectsR
 import com.github.e0ipso.tokkl.feature.settings.R as SettingsR
 import com.github.e0ipso.tokkl.feature.timer.R as TimerR
@@ -154,7 +154,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
         fun marked(label: Int, state: Int) = navigationItem(label) and
             SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, string(state))
         fun count(matcher: SemanticsMatcher) = composeRule.onAllNodes(matcher).fetchSemanticsNodes().size
-        val pomodoro = marked(SharedR.string.pomodoro_title, R.string.nav_pomodoro_running)
+        val pomodoro = marked(UiR.string.pomodoro_title, R.string.nav_pomodoro_running)
         val timer = marked(TimerR.string.nav_timer, R.string.nav_timer_running)
         assertEquals(1, count(pomodoro))
         assertEquals(0, count(timer))
@@ -514,7 +514,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
         /** The bar's and the rail's items, in order. */
         val NAVIGATION_LABELS = listOf(
             TimerR.string.nav_timer,
-            SharedR.string.pomodoro_title,
+            UiR.string.pomodoro_title,
             ProjectsR.string.nav_projects,
             SettingsR.string.settings,
             R.string.nav_more,

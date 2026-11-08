@@ -46,7 +46,7 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /** The same edits and assertions run at normal and largest font/display sizes in both themes. */
 @RunWith(Parameterized::class)
@@ -127,8 +127,8 @@ class PomodoroDefaultsUiTest(
     fun savingOneDefaultKeepsARefreshOfTheOtherDefaults() {
         show(shared = true)
         open(PomodoroDefaultField.WORK)
-        compose.lengthCard(string(SharedR.string.pomodoro_card_work)).performScrollTo()
-        compose.lengthValue(string(SharedR.string.pomodoro_card_work)).performTextReplacement("45")
+        compose.lengthCard(string(UiR.string.pomodoro_card_work)).performScrollTo()
+        compose.lengthValue(string(UiR.string.pomodoro_card_work)).performTextReplacement("45")
         compose.runOnIdle { defaults = PomodoroDefaults(50, 10, 30, 3) }
         button(R.string.settings_pomodoro_save).performClick()
         assertEquals(PomodoroDefaults(45, 10, 30, 3), defaults)

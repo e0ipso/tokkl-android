@@ -35,7 +35,6 @@ import com.github.e0ipso.tokkl.ui.TokklTopBar
 import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
@@ -171,7 +170,7 @@ private fun spanText(resources: Resources, change: PendingChange, settings: Acco
     val time = settings?.time() ?: return null
     val start = time.local(change.start).toLocalDate()
     val words = DateWords(resources)
-    val day = resources.getString(SharedR.string.history_day, words.weekday(start), words.shortWithYear(start))
+    val day = resources.getString(UiR.string.history_day, words.weekday(start), words.shortWithYear(start))
     val from = settings.formatTime(change.start, time.zone)
     val stop = change.stop ?: return resources.getString(R.string.needs_attention_running, day, from)
     return resources.getString(R.string.needs_attention_span, day, from, settings.formatTime(stop, time.zone))

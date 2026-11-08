@@ -32,7 +32,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.net.InetAddress
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.trust.R as TrustR
 
 /**
  * Signs in through the screen to the TLS proxy of scripts/instrumented-tests.sh under a host
@@ -93,7 +93,7 @@ class CertificateHostMismatchTest {
         signIn()
 
         awaitHostMessage()
-        assertFalse("the trust prompt shows", exists(hasText(string(SharedR.string.sign_in_certificate_title))))
+        assertFalse("the trust prompt shows", exists(hasText(string(TrustR.string.sign_in_certificate_title))))
         assertNull(ServerTrustStore(context).pinnedSha256(HOST, proxy.port))
         assertFalse("the session was stored", saved)
     }

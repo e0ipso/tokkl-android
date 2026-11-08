@@ -34,7 +34,7 @@ import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.util.Locale
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.catalog.R as CatalogR
 
 /**
  * The project form, as the web app's ProjectEditor: name, colour, client, hourly rate, currency,
@@ -222,7 +222,7 @@ private fun FormFields(
             verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space2),
             modifier = Modifier.fillMaxWidth(),
         ) {
-            TokklGhostButton(onClick = onCancel) { Text(stringResource(SharedR.string.catalog_cancel)) }
+            TokklGhostButton(onClick = onCancel) { Text(stringResource(CatalogR.string.catalog_cancel)) }
             TokklButton(onClick = save, enabled = canSave && !sending) {
                 Text(stringResource(if (project == null) R.string.project_create else R.string.project_save))
             }

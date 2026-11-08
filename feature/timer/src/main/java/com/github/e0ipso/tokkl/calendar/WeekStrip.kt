@@ -55,7 +55,7 @@ import com.github.e0ipso.tokkl.ui.theme.SmallCornerShape
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.Instant
 import java.time.LocalDate
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * The seven days of the chosen day's week, from the account's first day of the week, each with
@@ -158,7 +158,7 @@ private fun StripDay(
             R.string.history_today,
         )
     } else {
-        resources.getString(SharedR.string.history_day, words.weekday(day), words.short(day))
+        resources.getString(UiR.string.history_day, words.weekday(day), words.short(day))
     }
     val spoken = totalSeconds?.let {
         stringResource(

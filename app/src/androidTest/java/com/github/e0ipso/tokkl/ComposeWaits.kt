@@ -23,7 +23,7 @@ import java.util.concurrent.FutureTask
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import kotlin.concurrent.thread
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 
 /**
@@ -57,7 +57,7 @@ fun ComposeTestRule.awaitTimerPage(timeoutMillis: Long = START_TIMEOUT_MS) {
 fun ComposeTestRule.awaitPomodoroOffered(timeoutMillis: Long = START_TIMEOUT_MS) {
     waitUntil("the bar offers Pomodoro", timeoutMillis) {
         onAllNodes(
-            bottomBarItem(SharedR.string.pomodoro_title),
+            bottomBarItem(UiR.string.pomodoro_title),
         ).fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
     }
 }

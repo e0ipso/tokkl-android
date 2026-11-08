@@ -59,7 +59,7 @@ import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.catalog.R as CatalogR
 
 /**
  * The history's entry actions and grouped rows at Android's largest font scale, 200%, at the Timer page's width: the
@@ -281,7 +281,7 @@ class HistoryFitTest {
             "title" to text(string(R.string.history_split_title)),
             "entry" to text(string(R.string.history_split_entry, SOLO_DESCRIPTION, range)),
             "field" to composeRule.onNode(hasSetTextAction() and hasText(string(R.string.history_split_field))),
-            "cancel button" to composeRule.onNode(hasText(string(SharedR.string.catalog_cancel)) and hasClickAction()),
+            "cancel button" to composeRule.onNode(hasText(string(CatalogR.string.catalog_cancel)) and hasClickAction()),
             "split button" to composeRule.onNode(
                 hasText(string(R.string.history_split_confirm)) and hasClickAction() and hasAnyAncestor(isDialog()),
             ),

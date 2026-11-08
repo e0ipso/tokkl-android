@@ -47,7 +47,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * The Pomodoro defaults against the real Tokkl container, which keeps them in the account's four
@@ -134,7 +134,7 @@ class PomodoroDefaultsServerTest {
             assertEquals(expected, saved.pomodoroDefaults())
             assertEquals(JsonPrimitive("list"), saved["timerView"])
             scenario.recreate()
-            compose.openBarPage(SharedR.string.pomodoro_title, TIMEOUT_MS)
+            compose.openBarPage(UiR.string.pomodoro_title, TIMEOUT_MS)
             for ((field, value) in inputs) {
                 val card = context.getString(field.cardLabel)
                 compose.lengthCard(card).performScrollTo()

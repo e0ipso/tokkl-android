@@ -73,7 +73,7 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 import java.time.Instant
 import java.time.temporal.ChronoUnit
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.feature.reports.R as ReportsR
 import com.github.e0ipso.tokkl.feature.tile.R as TileR
 import com.github.e0ipso.tokkl.feature.timer.R as TimerR
@@ -371,7 +371,7 @@ class WidgetServerTest {
 
             compose.onNodeWithContentDescription(context.getString(TimerR.string.timer_start_spoken)).performClick()
             native.awaitDescription(context.getString(R.string.widget_stop_description), 1_000)
-            compose.onNodeWithContentDescription(context.getString(SharedR.string.timer_stop_spoken)).performClick()
+            compose.onNodeWithContentDescription(context.getString(UiR.string.timer_stop_spoken)).performClick()
             native.awaitDescription(context.getString(R.string.widget_start_description), 1_000)
         }
         val fields = EntryFields("Tile to widget")

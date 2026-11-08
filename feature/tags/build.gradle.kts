@@ -5,6 +5,11 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":core:shared"))
+    implementation(project(":core:api"))
+    implementation(project(":core:ui"))
+    implementation(project(":core:platform"))
+    implementation(project(":core:session"))
+    implementation(project(":core:cache"))
+    implementation(project(":core:catalog"))
     implementation(project(":core:navigation"))
 }

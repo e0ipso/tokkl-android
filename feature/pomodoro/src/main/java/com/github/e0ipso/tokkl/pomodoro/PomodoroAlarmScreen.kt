@@ -40,7 +40,7 @@ import com.github.e0ipso.tokkl.ui.theme.screenContent
 import kotlinx.coroutines.delay
 import java.time.Clock
 import java.util.Locale
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * The held phase's alarm: its transition, "Pomodoro N of M" from the server's number and the
@@ -74,7 +74,7 @@ fun PomodoroAlarmContent(
             }
             if (ring != null) {
                 Text(stringResource(alarmTransitionLabel(ring.sound)), style = MaterialTheme.typography.titleLarge)
-                Text(stringResource(SharedR.string.pomodoro_number, ring.number, ring.longRestEvery))
+                Text(stringResource(UiR.string.pomodoro_number, ring.number, ring.longRestEvery))
                 var now by remember(clock, ring.phase) { mutableStateOf(clock.instant()) }
                 LaunchedEffect(clock, ring.phase, lifecycle) {
                     lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
@@ -92,7 +92,7 @@ fun PomodoroAlarmContent(
                 )
                 Text(
                     stringResource(
-                        if (reading.overtime) SharedR.string.pomodoro_overtime else SharedR.string.pomodoro_remaining,
+                        if (reading.overtime) UiR.string.pomodoro_overtime else UiR.string.pomodoro_remaining,
                     ),
                 )
                 Text(

@@ -35,7 +35,7 @@ import com.github.e0ipso.tokkl.ui.StepperUnit
 import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /** Each default has a labelled, validated editor; a draft never mutates the stored defaults. */
 @Composable
@@ -144,10 +144,10 @@ val PomodoroDefaultField.label: Int get() = when (this) {
 @get:StringRes
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 val PomodoroDefaultField.cardLabel: Int get() = when (this) {
-    PomodoroDefaultField.WORK -> SharedR.string.pomodoro_card_work
-    PomodoroDefaultField.SHORT_REST -> SharedR.string.pomodoro_card_short_rest
-    PomodoroDefaultField.LONG_REST -> SharedR.string.pomodoro_card_long_rest
-    PomodoroDefaultField.EVERY -> SharedR.string.pomodoro_card_long_rest_every
+    PomodoroDefaultField.WORK -> UiR.string.pomodoro_card_work
+    PomodoroDefaultField.SHORT_REST -> UiR.string.pomodoro_card_short_rest
+    PomodoroDefaultField.LONG_REST -> UiR.string.pomodoro_card_long_rest
+    PomodoroDefaultField.EVERY -> UiR.string.pomodoro_card_long_rest_every
 }
 
 internal val PomodoroDefaultField.unit: StepperUnit get() =

@@ -49,7 +49,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createComposeRule
-import com.github.e0ipso.tokkl.core.shared.R
+import com.github.e0ipso.tokkl.core.ui.R
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import org.junit.After

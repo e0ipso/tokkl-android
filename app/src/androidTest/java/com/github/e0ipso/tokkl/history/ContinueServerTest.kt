@@ -58,7 +58,8 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 import java.time.Instant
 import java.time.temporal.ChronoUnit
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.entryfields.R as FieldsR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * Continue against the real Tokkl container, in the real activity (docs/PRD.md T2). The history's
@@ -135,7 +136,7 @@ class ContinueServerTest {
             composeRule.waitUntil("the timer runs the continued entry at once, offline", LOAD_TIMEOUT_MS) {
                 runBlocking { app.cache.running.first() }?.entry?.description == "Paint the wall" &&
                     composeRule.onAllNodes(
-                        hasContentDescription(context.getString(SharedR.string.timer_stop_spoken)) and hasClickAction(),
+                        hasContentDescription(context.getString(UiR.string.timer_stop_spoken)) and hasClickAction(),
                     )
                         .fetchSemanticsNodes().size == 1
             }
@@ -192,7 +193,7 @@ class ContinueServerTest {
                     continueButton and hasAnyAncestor(hasScrollToKeyAction()),
                 ).fetchSemanticsNodes().size == 1
             }
-            val description = hasSetTextAction() and hasText(context.getString(SharedR.string.entry_description))
+            val description = hasSetTextAction() and hasText(context.getString(FieldsR.string.entry_description))
             composeRule.waitUntil("the running entry's description shows", LOAD_TIMEOUT_MS) {
                 composeRule.onAllNodes(description and hasText("Answer email")).fetchSemanticsNodes().size == 1
             }

@@ -46,7 +46,7 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 import java.time.DayOfWeek
 import java.time.Instant
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.feature.sync.R as SyncR
 
 /** More and the actual Needs attention screen, without server or account fixtures. */
@@ -70,10 +70,10 @@ abstract class AdditionalAccessibilityTest(private val dark: Boolean) {
         val running = mutableStateOf(true)
         show {
             SignedInFrame(current = TopLevelPage.POMODORO, onOpen = {}, pomodoroRunning = running.value) {
-                Text(context.getString(SharedR.string.pomodoro_title))
+                Text(context.getString(UiR.string.pomodoro_title))
             }
         }
-        val marker = bottomBarItem(SharedR.string.pomodoro_title) and
+        val marker = bottomBarItem(UiR.string.pomodoro_title) and
             SemanticsMatcher.expectValue(
                 SemanticsProperties.StateDescription,
                 context.getString(R.string.nav_pomodoro_running),
@@ -82,7 +82,7 @@ abstract class AdditionalAccessibilityTest(private val dark: Boolean) {
         assertVisibleTextFits()
         compose.runOnIdle { running.value = false }
         assertEquals(0, compose.onAllNodes(marker).fetchSemanticsNodes().size)
-        compose.onNode(bottomBarItem(SharedR.string.pomodoro_title)).assertIsDisplayed()
+        compose.onNode(bottomBarItem(UiR.string.pomodoro_title)).assertIsDisplayed()
         compose.checkAccessibility()
     }
 

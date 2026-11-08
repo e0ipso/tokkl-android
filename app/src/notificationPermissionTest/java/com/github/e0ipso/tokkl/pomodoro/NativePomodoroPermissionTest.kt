@@ -23,7 +23,6 @@ import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.timerState
-import com.github.e0ipso.tokkl.core.shared.R
 import com.github.e0ipso.tokkl.notification.NotificationPermissionStore
 import com.github.e0ipso.tokkl.openBarPage
 import com.github.e0ipso.tokkl.session.Session
@@ -37,6 +36,8 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import com.github.e0ipso.tokkl.core.timernotice.R as TimerNoticeR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.feature.notification.R as NotificationR
 import com.github.e0ipso.tokkl.feature.pomodoro.R as PomodoroR
 
@@ -85,7 +86,7 @@ class NativePomodoroPermissionTest {
                 context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
             }
             assertEquals(started, session())
-            compose.awaitText(context.getString(R.string.pomodoro_end), 15_000)
+            compose.awaitText(context.getString(UiR.string.pomodoro_end), 15_000)
             compose.onNodeWithText(
                 context.getString(PomodoroR.string.pomodoro_notifications_denied),
             ).assertDoesNotExist()
@@ -99,14 +100,14 @@ class NativePomodoroPermissionTest {
             compose.awaitText(context.getString(PomodoroR.string.pomodoro_notifications_denied), 15_000)
             assertNotNull(session())
             scenario.recreate()
-            compose.awaitText(context.getString(R.string.pomodoro_end), 15_000)
+            compose.awaitText(context.getString(UiR.string.pomodoro_end), 15_000)
             // The refusal's snackbar comes back after recreation, for Material's long duration.
             waitOutSnackbar(NotificationR.string.notification_permission_refused)
-            tap(R.string.pomodoro_end)
+            tap(UiR.string.pomodoro_end)
             compose.waitUntil(15_000) { session() == null }
             // Shorter than half the test server's 5-minute resolution, the pomodoro went to the trash.
-            waitOutSnackbar(R.string.timer_pomodoro_too_short)
-            tap(R.string.pomodoro_start)
+            waitOutSnackbar(TimerNoticeR.string.timer_pomodoro_too_short)
+            tap(UiR.string.pomodoro_start)
             compose.waitUntil(15_000) { session() != null }
             assertNull(device.findObject(By.res(CONTROLLER, "permission_allow_button")))
             assertTrue(NotificationPermissionStore(context).asked())
@@ -119,9 +120,9 @@ class NativePomodoroPermissionTest {
 
     private fun startAndWaitForDialog() {
         compose.awaitTimerPage(15_000)
-        compose.openBarPage(R.string.pomodoro_title)
-        compose.awaitText(context.getString(R.string.pomodoro_start), 15_000)
-        tap(R.string.pomodoro_start)
+        compose.openBarPage(UiR.string.pomodoro_title)
+        compose.awaitText(context.getString(UiR.string.pomodoro_start), 15_000)
+        tap(UiR.string.pomodoro_start)
         compose.waitUntil(15_000) { device.findObject(By.res(CONTROLLER, "permission_allow_button")) != null }
         // The native dialog is deliberately unanswered while the server's session arrives.
         compose.waitUntil(15_000) { session() != null }

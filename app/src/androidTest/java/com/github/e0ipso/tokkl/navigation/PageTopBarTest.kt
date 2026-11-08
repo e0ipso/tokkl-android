@@ -30,7 +30,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
 import kotlin.math.abs
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.feature.clients.R as ClientsR
 import com.github.e0ipso.tokkl.feature.projects.R as ProjectsR
@@ -58,7 +57,7 @@ class PageTopBarTest {
         composeRule.awaitPomodoroOffered(NETWORK_TIMEOUT_MS)
         assertTopBar(TimerR.string.nav_timer, back = false)
 
-        for (page in listOf(SharedR.string.pomodoro_title, ProjectsR.string.nav_projects, SettingsR.string.settings)) {
+        for (page in listOf(UiR.string.pomodoro_title, ProjectsR.string.nav_projects, SettingsR.string.settings)) {
             composeRule.onNode(barItem(page)).performClick()
             assertTopBar(page, back = false)
         }

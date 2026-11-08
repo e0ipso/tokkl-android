@@ -69,7 +69,8 @@ import org.junit.rules.RuleChain
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.entryfields.R as FieldsR
+import com.github.e0ipso.tokkl.core.trust.R as TrustR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.feature.projects.R as ProjectsR
 import com.github.e0ipso.tokkl.feature.settings.R as SettingsR
@@ -142,14 +143,14 @@ class LargestFontScaleTest {
                 "heading" to composeRule.onNode(hasText(string(TimerR.string.entry_form_new)) and isHeading()),
             ),
             blocks = listOf(
-                "description field" to field(SharedR.string.entry_description),
+                "description field" to field(FieldsR.string.entry_description),
                 "project button" to composeRule.onNode(
-                    hasContentDescription(string(SharedR.string.entry_no_project_spoken)) and hasClickAction(),
+                    hasContentDescription(string(FieldsR.string.entry_no_project_spoken)) and hasClickAction(),
                 ),
                 "tags button" to composeRule.onNode(
-                    hasContentDescription(string(SharedR.string.entry_no_tags_spoken)) and hasClickAction(),
+                    hasContentDescription(string(FieldsR.string.entry_no_tags_spoken)) and hasClickAction(),
                 ),
-                "billable" to switch(SharedR.string.entry_billable),
+                "billable" to switch(FieldsR.string.entry_billable),
                 "date button" to composeRule.onNode(
                     hasContentDescription(
                         string(TimerR.string.entry_date_spoken, ""),
@@ -163,8 +164,8 @@ class LargestFontScaleTest {
                 "save button" to button(TimerR.string.entry_save),
             ),
             texts = listOf(
-                fieldLabel(SharedR.string.entry_description),
-                inside(SharedR.string.entry_billable, isToggleable()),
+                fieldLabel(FieldsR.string.entry_description),
+                inside(FieldsR.string.entry_billable, isToggleable()),
                 fieldLabel(TimerR.string.entry_start),
                 fieldLabel(TimerR.string.entry_end),
                 fieldLabel(TimerR.string.entry_duration),
@@ -548,7 +549,7 @@ class LargestFontScaleTest {
         composeRule.awaitText(string(SigninR.string.sign_in_server_url))
 
         signInTo(TokklTestServer.url)
-        composeRule.awaitText(string(SharedR.string.sign_in_http_warning_title), NETWORK_TIMEOUT_MS)
+        composeRule.awaitText(string(TrustR.string.sign_in_http_warning_title), NETWORK_TIMEOUT_MS)
         awaitKeyboardHidden()
 
         assertHttpWarningFits()
@@ -561,10 +562,10 @@ class LargestFontScaleTest {
         composeRule.awaitText(string(SigninR.string.sign_in_server_url))
 
         signInTo(TokklTestServer.tlsUrl)
-        composeRule.awaitText(string(SharedR.string.sign_in_certificate_title), NETWORK_TIMEOUT_MS)
+        composeRule.awaitText(string(TrustR.string.sign_in_certificate_title), NETWORK_TIMEOUT_MS)
         awaitKeyboardHidden()
 
-        assertCertificatePromptFits(SharedR.string.sign_in_certificate_title, SharedR.string.sign_in_certificate_body)
+        assertCertificatePromptFits(TrustR.string.sign_in_certificate_title, TrustR.string.sign_in_certificate_body)
     }
 
     @SignedOut
@@ -572,7 +573,7 @@ class LargestFontScaleTest {
     @Test
     fun httpWarningOverTheHomeScreenFits() {
         assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
-        composeRule.awaitText(string(SharedR.string.sign_in_http_warning_title), NETWORK_TIMEOUT_MS)
+        composeRule.awaitText(string(TrustR.string.sign_in_http_warning_title), NETWORK_TIMEOUT_MS)
 
         assertHttpWarningFits()
     }
@@ -582,12 +583,12 @@ class LargestFontScaleTest {
     @Test
     fun noticeAfterCancellingTheHttpWarningFits() {
         assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
-        composeRule.awaitText(string(SharedR.string.sign_in_http_warning_title), NETWORK_TIMEOUT_MS)
+        composeRule.awaitText(string(TrustR.string.sign_in_http_warning_title), NETWORK_TIMEOUT_MS)
 
-        button(SharedR.string.sign_in_warning_cancel).performClick()
-        composeRule.awaitText(string(SharedR.string.trust_refused_http), NETWORK_TIMEOUT_MS)
+        button(TrustR.string.sign_in_warning_cancel).performClick()
+        composeRule.awaitText(string(TrustR.string.trust_refused_http), NETWORK_TIMEOUT_MS)
 
-        assertNoticeFits(SharedR.string.trust_refused_http)
+        assertNoticeFits(TrustR.string.trust_refused_http)
     }
 
     @SignedOut
@@ -595,11 +596,11 @@ class LargestFontScaleTest {
     @Test
     fun certificatePromptOverTheHomeScreenFits() {
         assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
-        composeRule.awaitText(string(SharedR.string.sign_in_certificate_changed_title), NETWORK_TIMEOUT_MS)
+        composeRule.awaitText(string(TrustR.string.sign_in_certificate_changed_title), NETWORK_TIMEOUT_MS)
 
         assertCertificatePromptFits(
-            SharedR.string.sign_in_certificate_changed_title,
-            SharedR.string.sign_in_certificate_changed_body,
+            TrustR.string.sign_in_certificate_changed_title,
+            TrustR.string.sign_in_certificate_changed_body,
         )
     }
 
@@ -608,12 +609,12 @@ class LargestFontScaleTest {
     @Test
     fun noticeAfterCancellingTheCertificatePromptFits() {
         assertEquals(SystemFontScale.LARGEST, composeRule.activity.resources.configuration.fontScale)
-        composeRule.awaitText(string(SharedR.string.sign_in_certificate_changed_title), NETWORK_TIMEOUT_MS)
+        composeRule.awaitText(string(TrustR.string.sign_in_certificate_changed_title), NETWORK_TIMEOUT_MS)
 
-        button(SharedR.string.sign_in_warning_cancel).performClick()
-        composeRule.awaitText(string(SharedR.string.trust_refused_certificate), NETWORK_TIMEOUT_MS)
+        button(TrustR.string.sign_in_warning_cancel).performClick()
+        composeRule.awaitText(string(TrustR.string.trust_refused_certificate), NETWORK_TIMEOUT_MS)
 
-        assertNoticeFits(SharedR.string.trust_refused_certificate)
+        assertNoticeFits(TrustR.string.trust_refused_certificate)
     }
 
     /** The parts of the sign-in form that stack, which must not overlap. */
@@ -778,29 +779,29 @@ class LargestFontScaleTest {
         fetchSemanticsNode().let { it.positionInWindow.y + it.size.height }
 
     private fun assertHttpWarningFits() {
-        val understood = string(SharedR.string.sign_in_http_warning_understood)
+        val understood = string(TrustR.string.sign_in_http_warning_understood)
         assertDialogFits(
             blocks = listOf(
                 "title" to composeRule.onNode(
-                    hasText(string(SharedR.string.sign_in_http_warning_title)) and isHeading(),
+                    hasText(string(TrustR.string.sign_in_http_warning_title)) and isHeading(),
                 ),
                 "checkbox" to composeRule.onNode(hasText(understood) and isToggleable()),
-                "cancel button" to button(SharedR.string.sign_in_warning_cancel),
-                "continue button" to button(SharedR.string.sign_in_http_warning_continue),
+                "cancel button" to button(TrustR.string.sign_in_warning_cancel),
+                "continue button" to button(TrustR.string.sign_in_http_warning_continue),
             ),
             texts = listOf(
-                text(SharedR.string.sign_in_http_warning_title),
+                text(TrustR.string.sign_in_http_warning_title),
                 "body" to composeRule.onNodeWithText(
-                    string(SharedR.string.sign_in_http_warning_body, TokklTestServer.url.toString()),
+                    string(TrustR.string.sign_in_http_warning_body, TokklTestServer.url.toString()),
                 ),
-                inside(SharedR.string.sign_in_http_warning_understood, isToggleable()),
-                inside(SharedR.string.sign_in_warning_cancel, hasClickAction()),
-                inside(SharedR.string.sign_in_http_warning_continue, hasClickAction()),
+                inside(TrustR.string.sign_in_http_warning_understood, isToggleable()),
+                inside(TrustR.string.sign_in_warning_cancel, hasClickAction()),
+                inside(TrustR.string.sign_in_http_warning_continue, hasClickAction()),
             ),
         )
         assertTouchTargets(
-            "cancel button" to button(SharedR.string.sign_in_warning_cancel),
-            "continue button" to button(SharedR.string.sign_in_http_warning_continue),
+            "cancel button" to button(TrustR.string.sign_in_warning_cancel),
+            "continue button" to button(TrustR.string.sign_in_http_warning_continue),
         )
     }
 
@@ -813,21 +814,21 @@ class LargestFontScaleTest {
                 "title" to composeRule.onNode(hasText(string(title)) and isHeading()),
                 "fingerprint" to composeRule.onNodeWithText(TokklTestServer.tlsFingerprint),
                 "subject" to composeRule.onNodeWithText(CERTIFICATE_SUBJECT),
-                "cancel button" to button(SharedR.string.sign_in_warning_cancel),
-                "trust button" to button(SharedR.string.sign_in_certificate_trust),
+                "cancel button" to button(TrustR.string.sign_in_warning_cancel),
+                "trust button" to button(TrustR.string.sign_in_certificate_trust),
             ),
             texts = listOf(
                 text(title),
                 "body" to composeRule.onNodeWithText(string(body, server)),
-                text(SharedR.string.sign_in_certificate_fingerprint),
-                text(SharedR.string.sign_in_certificate_subject),
-                inside(SharedR.string.sign_in_warning_cancel, hasClickAction()),
-                inside(SharedR.string.sign_in_certificate_trust, hasClickAction()),
+                text(TrustR.string.sign_in_certificate_fingerprint),
+                text(TrustR.string.sign_in_certificate_subject),
+                inside(TrustR.string.sign_in_warning_cancel, hasClickAction()),
+                inside(TrustR.string.sign_in_certificate_trust, hasClickAction()),
             ),
         )
         assertTouchTargets(
-            "cancel button" to button(SharedR.string.sign_in_warning_cancel),
-            "trust button" to button(SharedR.string.sign_in_certificate_trust),
+            "cancel button" to button(TrustR.string.sign_in_warning_cancel),
+            "trust button" to button(TrustR.string.sign_in_certificate_trust),
         )
     }
 
@@ -850,13 +851,13 @@ class LargestFontScaleTest {
         assertEquals("refused session has no loaded capabilities", Capabilities.NONE, app.capabilities.state.value)
         assertNull("refused session has no loaded account settings", app.accountSettings.state.value)
         // Without the capabilities the bar cannot know of the server's timer API, so it offers no Pomodoro.
-        composeRule.onNode(bottomBarItem(SharedR.string.pomodoro_title)).assertDoesNotExist()
+        composeRule.onNode(bottomBarItem(UiR.string.pomodoro_title)).assertDoesNotExist()
         assertTimerPageFits(
             timerPageParts(),
-            over = listOf(text(message), "review button" to button(SharedR.string.trust_refused_review)),
-            bar = BAR_LABELS - SharedR.string.pomodoro_title,
+            over = listOf(text(message), "review button" to button(TrustR.string.trust_refused_review)),
+            bar = BAR_LABELS - UiR.string.pomodoro_title,
         )
-        val label = inside(SharedR.string.trust_refused_review, hasClickAction())
+        val label = inside(TrustR.string.trust_refused_review, hasClickAction())
         label.second.textLayout()?.let { assertFalse("text is cut off: ${label.first}", it.didOverflowHeight) }
     }
 
@@ -872,14 +873,14 @@ class LargestFontScaleTest {
         heading(TimerR.string.nav_timer),
         // By its label alone: the field is disabled until the account settings load, and a
         // set-text matcher found no node then.
-        "description field" to composeRule.onNode(hasText(string(SharedR.string.entry_description))),
+        "description field" to composeRule.onNode(hasText(string(FieldsR.string.entry_description))),
         "project button" to composeRule.onNode(
-            hasContentDescription(string(SharedR.string.entry_no_project_spoken)) and hasClickAction(),
+            hasContentDescription(string(FieldsR.string.entry_no_project_spoken)) and hasClickAction(),
         ),
         "tags button" to composeRule.onNode(
-            hasContentDescription(string(SharedR.string.entry_no_tags_spoken)) and hasClickAction(),
+            hasContentDescription(string(FieldsR.string.entry_no_tags_spoken)) and hasClickAction(),
         ),
-        "billable" to composeRule.onNode(hasText(string(SharedR.string.entry_billable)) and isToggleable()),
+        "billable" to composeRule.onNode(hasText(string(FieldsR.string.entry_billable)) and isToggleable()),
         "start button" to composeRule.onNode(
             hasContentDescription(string(TimerR.string.timer_start_spoken)) and hasClickAction(),
         ),
@@ -965,9 +966,9 @@ class LargestFontScaleTest {
     /** Each timer control's, each segment's and each bar item's label shows in full, inside its control. */
     private fun assertLabelsWhole() {
         for ((label, control) in listOf(
-            SharedR.string.entry_project to hasClickAction(),
-            SharedR.string.entry_tags to hasClickAction(),
-            SharedR.string.entry_billable to isToggleable(),
+            FieldsR.string.entry_project to hasClickAction(),
+            FieldsR.string.entry_tags to hasClickAction(),
+            FieldsR.string.entry_billable to isToggleable(),
             TimerR.string.timer_start to hasClickAction(),
             TimerR.string.timer_add_entry to hasClickAction(),
         )) {
@@ -1101,7 +1102,7 @@ class LargestFontScaleTest {
         /** The bottom bar's items, in order. */
         val BAR_LABELS = listOf(
             TimerR.string.nav_timer,
-            SharedR.string.pomodoro_title,
+            UiR.string.pomodoro_title,
             ProjectsR.string.nav_projects,
             SettingsR.string.settings,
             R.string.nav_more,

@@ -118,7 +118,7 @@ import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.entryfields.R as FieldsR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
@@ -234,7 +234,7 @@ class RunningEntryEditorServerTest {
 
             openClock()
             assertOriginal("Lifecycle original")
-            replace(SharedR.string.entry_description, "Back draft")
+            replace(FieldsR.string.entry_description, "Back draft")
             hideKeyboard(scenario)
             pressBack(scenario)
             awaitClosed()
@@ -273,24 +273,24 @@ class RunningEntryEditorServerTest {
         refresh()
         withMain {
             openClock()
-            replace(SharedR.string.entry_description, "Metadata saved")
+            replace(FieldsR.string.entry_description, "Metadata saved")
             composeRule.onNode(
-                hasContentDescription(string(SharedR.string.entry_no_project_spoken)) and hasClickAction() and inForm(),
+                hasContentDescription(string(FieldsR.string.entry_no_project_spoken)) and hasClickAction() and inForm(),
             )
                 .performScrollTo().performClick()
             val projectRow = hasText("Running project") and hasClickAction()
             composeRule.onNode(
-                hasScrollToNodeAction() and hasAnyDescendant(hasText(string(SharedR.string.picker_project))),
+                hasScrollToNodeAction() and hasAnyDescendant(hasText(string(FieldsR.string.picker_project))),
             )
                 .performScrollToNode(projectRow)
             composeRule.onNode(projectRow).performClick()
             composeRule.onNode(
-                hasSetTextAction() and hasText(string(SharedR.string.picker_search)),
+                hasSetTextAction() and hasText(string(FieldsR.string.picker_search)),
             ).performTextInput("running-tag")
             composeRule.onNode(
-                hasText(string(SharedR.string.picker_add_tag, "running-tag")) and hasClickAction(),
+                hasText(string(FieldsR.string.picker_add_tag, "running-tag")) and hasClickAction(),
             ).performClick()
-            composeRule.onNode(hasText(string(SharedR.string.entry_picker_done)) and hasClickAction()).performClick()
+            composeRule.onNode(hasText(string(FieldsR.string.entry_picker_done)) and hasClickAction()).performClick()
             billable().performClick()
             save()
             drain()
@@ -302,7 +302,7 @@ class RunningEntryEditorServerTest {
             assertRunning(saved, id, fixtureStart)
 
             openClock()
-            replace(SharedR.string.entry_description, "Must not flush")
+            replace(FieldsR.string.entry_description, "Must not flush")
             replace(R.string.entry_start, "invalid")
             tap(R.string.entry_save)
             awaitUi("invalid running start is explained") {
@@ -370,7 +370,7 @@ class RunningEntryEditorServerTest {
                     R.string.entry_start,
                 ).fetchSemanticsNode().config[SemanticsProperties.EditableText].text.contains("11:53"),
             )
-            replace(SharedR.string.entry_description, "Saved after remapping")
+            replace(FieldsR.string.entry_description, "Saved after remapping")
             // Keep this editor open on its local identity while CREATE receives the server id.
             relay!!.release()
             drain()
@@ -419,7 +419,7 @@ class RunningEntryEditorServerTest {
             assertEquals("held Start has not written a row", 0, queued())
             writes.startRelease.complete(Unit)
             awaitEditor()
-            assertTrue(exists(field(SharedR.string.entry_description, "Start boundary")))
+            assertTrue(exists(field(FieldsR.string.entry_description, "Start boundary")))
             tap(R.string.entry_cancel)
             awaitClosed()
             val running = awaitRunning("initial Start has an identity") { true }
@@ -441,7 +441,7 @@ class RunningEntryEditorServerTest {
             )
             writes.updateRelease.complete(Unit)
             awaitEditor()
-            assertTrue(exists(field(SharedR.string.entry_description, "Latest focused typing")))
+            assertTrue(exists(field(FieldsR.string.entry_description, "Latest focused typing")))
             assertEquals(settledId, runBlocking { app.cache.running.first() }!!.entry.id)
             tap(R.string.entry_cancel)
             drain()
@@ -463,7 +463,7 @@ class RunningEntryEditorServerTest {
         routeThroughRelay()
         withMain {
             openClock()
-            replace(SharedR.string.entry_description, "Stale stopped draft")
+            replace(FieldsR.string.entry_description, "Stale stopped draft")
             val stop = fixtureStart.plusSeconds(3600)
             runBlocking {
                 web.send(
@@ -491,7 +491,7 @@ class RunningEntryEditorServerTest {
         routeThroughRelay()
         withMain {
             openClock()
-            replace(SharedR.string.entry_description, "Stale paused draft")
+            replace(FieldsR.string.entry_description, "Stale paused draft")
             assertEquals("the server pauses it", TimerActionResult.Done, runBlocking { app.timerActions.pause() })
             val paused = runBlocking {
                 withTimeout(
@@ -522,7 +522,7 @@ class RunningEntryEditorServerTest {
         routeThroughRelay()
         withMain {
             openClock()
-            replace(SharedR.string.entry_description, "Stale replacement draft")
+            replace(FieldsR.string.entry_description, "Stale replacement draft")
             val replacement = createRunning("Same-instant replacement", fixtureStart)
             assertNotEquals(original, replacement)
             refresh()
@@ -602,7 +602,7 @@ class RunningEntryEditorServerTest {
         composeRule.onNode(
             hasContentDescription(string(R.string.history_delete)) and hasClickAction() and inForm(),
         ).assertDoesNotExist()
-        assertTrue("running description exists", exists(field(SharedR.string.entry_description)))
+        assertTrue("running description exists", exists(field(FieldsR.string.entry_description)))
         assertTrue("running date exists", exists(dateButton()))
         assertEquals(
             "List shares a pane only at expanded width; Calendar uses its screen",
@@ -662,13 +662,13 @@ class RunningEntryEditorServerTest {
         return composeRule.onNode(if (value == null) labeled else labeled and hasText(value))
     }
     private fun timerDescription(): SemanticsNodeInteraction = composeRule.onNode(
-        hasSetTextAction() and hasText(string(SharedR.string.entry_description)) and !inForm(),
+        hasSetTextAction() and hasText(string(FieldsR.string.entry_description)) and !inForm(),
     )
     private fun startButton(): SemanticsNodeInteraction = composeRule.onNode(
         hasContentDescription(string(R.string.timer_start_spoken)) and hasClickAction(),
     )
     private fun billable(): SemanticsNodeInteraction = composeRule.onNode(
-        hasText(string(SharedR.string.entry_billable)) and isToggleable() and inForm(),
+        hasText(string(FieldsR.string.entry_billable)) and isToggleable() and inForm(),
     ).performScrollTo()
     private fun dateButton(): SemanticsNodeInteraction = composeRule.onNode(
         hasContentDescription(
@@ -691,13 +691,13 @@ class RunningEntryEditorServerTest {
     }
 
     private fun draft(description: String, date: LocalDate) {
-        replace(SharedR.string.entry_description, description)
+        replace(FieldsR.string.entry_description, description)
         replace(R.string.entry_start, "04:37")
         chooseDate(fixtureDay, date)
     }
 
     private fun assertDraft(description: String, date: LocalDate) {
-        assertTrue(exists(field(SharedR.string.entry_description, description)))
+        assertTrue(exists(field(FieldsR.string.entry_description, description)))
         assertEquals(
             "04:37",
             field(R.string.entry_start).fetchSemanticsNode().config[SemanticsProperties.EditableText].text,
@@ -710,7 +710,7 @@ class RunningEntryEditorServerTest {
     }
 
     private fun assertOriginal(description: String) {
-        assertTrue(exists(field(SharedR.string.entry_description, description)))
+        assertTrue(exists(field(FieldsR.string.entry_description, description)))
         assertEquals(
             "13:07",
             field(R.string.entry_start).fetchSemanticsNode().config[SemanticsProperties.EditableText].text,
@@ -731,7 +731,7 @@ class RunningEntryEditorServerTest {
         val day = hasText(chosen.dayOfMonth.toString()) or hasText(spoken, substring = true)
         composeRule.onNode(day and hasClickAction() and hasAnyAncestor(isDialog())).performClick()
         composeRule.onNode(
-            hasText(string(SharedR.string.entry_picker_done)) and hasClickAction() and hasAnyAncestor(isDialog()),
+            hasText(string(FieldsR.string.entry_picker_done)) and hasClickAction() and hasAnyAncestor(isDialog()),
         ).performClick()
         awaitUi(
             "chosen account date shows",

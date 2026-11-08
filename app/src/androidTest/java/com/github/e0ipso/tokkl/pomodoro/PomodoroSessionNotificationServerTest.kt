@@ -57,7 +57,7 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.feature.pomodoro.R as PomodoroR
 import com.github.e0ipso.tokkl.feature.settings.R as SettingsR
 
@@ -115,9 +115,9 @@ class PomodoroSessionNotificationServerTest {
         val identity = checkNotNull(PomodoroSessionNotificationStore(context).load()).account
         // ActivityScenario starts a new Activity with the same immutable intent the posted tap owns.
         ActivityScenario.launch<MainActivity>(pomodoroSessionOpenIntent(context, identity, phase)).use { scenario ->
-            awaitHeading(SharedR.string.pomodoro_title)
+            awaitHeading(UiR.string.pomodoro_title)
             scenario.recreate()
-            awaitHeading(SharedR.string.pomodoro_title)
+            awaitHeading(UiR.string.pomodoro_title)
             compose.onNodeWithText("Notification acceptance").performScrollTo().assertIsDisplayed()
         }
     }
@@ -128,7 +128,7 @@ class PomodoroSessionNotificationServerTest {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             compose.openBarPage(SettingsR.string.settings)
             posted.contentIntent.send()
-            awaitHeading(SharedR.string.pomodoro_title)
+            awaitHeading(UiR.string.pomodoro_title)
             scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
             awaitHeading(R.string.nav_timer)
             compose.openBarPage(SettingsR.string.settings)
@@ -153,7 +153,7 @@ class PomodoroSessionNotificationServerTest {
             // The server stops the regular timer at the session start.
             startSession()
             awaitSessionNotification().contentIntent.send()
-            awaitHeading(SharedR.string.pomodoro_title)
+            awaitHeading(UiR.string.pomodoro_title)
             compose.onNodeWithTag("fullscreen_timer").assertDoesNotExist()
             scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
             awaitHeading(R.string.nav_timer)

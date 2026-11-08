@@ -6,10 +6,10 @@ import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.cache.ChangeSender
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
-import com.github.e0ipso.tokkl.picker.offlineIn
 import com.github.e0ipso.tokkl.picker.pickerSource
 import com.github.e0ipso.tokkl.platform.DefaultNetwork
 import com.github.e0ipso.tokkl.platform.io
+import com.github.e0ipso.tokkl.platform.offlineIn
 import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaultsSetting
 import com.github.e0ipso.tokkl.session.AccountDataOwner

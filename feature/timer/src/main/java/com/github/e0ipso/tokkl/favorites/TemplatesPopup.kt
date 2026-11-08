@@ -33,7 +33,6 @@ import com.github.e0ipso.tokkl.catalog.problemText
 import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.ui.ErrorBanner
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
@@ -127,12 +126,12 @@ fun TemplatesPopup(
 /** The description, else the project, else Untitled. */
 @Composable
 internal fun templateName(template: FavoriteItem): String =
-    template.fields.description.ifEmpty { template.labels.project ?: stringResource(SharedR.string.favorites_untitled) }
+    template.fields.description.ifEmpty { template.labels.project ?: stringResource(UiR.string.favorites_untitled) }
 
 /** What TalkBack reads for a template: its name, and its project when the name is the description. */
 @Composable
 internal fun templateSpoken(name: String, project: String?): String =
-    project?.let { stringResource(SharedR.string.favorites_with_project, name, it) } ?: name
+    project?.let { stringResource(UiR.string.favorites_with_project, name, it) } ?: name
 
 /** What TalkBack reads for starting [template]. */
 @Composable

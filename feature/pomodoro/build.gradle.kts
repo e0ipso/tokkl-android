@@ -5,7 +5,16 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":core:shared"))
+    implementation(project(":core:api"))
+    implementation(project(":core:time"))
+    implementation(project(":core:ui"))
+    implementation(project(":core:platform"))
+    implementation(project(":core:session"))
+    implementation(project(":core:cache"))
+    implementation(project(":core:timerstate"))
+    implementation(project(":core:catalog"))
+    implementation(project(":core:entryfields"))
+    implementation(project(":core:timernotice"))
     implementation(project(":core:navigation"))
     implementation(libs.androidx.activity.compose)
 }

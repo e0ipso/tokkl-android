@@ -45,7 +45,7 @@ import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.sender
-import com.github.e0ipso.tokkl.core.shared.R
+import com.github.e0ipso.tokkl.core.entryfields.R
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -76,6 +76,7 @@ import org.junit.rules.RuleChain
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 
 /**
@@ -201,7 +202,7 @@ class DescriptionSuggestionsServerTest {
             ).performClick()
             awaitShown(
                 "Stop",
-            ) { composeRule.onNode(hasContentDescription(string(R.string.timer_stop_spoken)) and hasClickAction()) }
+            ) { composeRule.onNode(hasContentDescription(string(UiR.string.timer_stop_spoken)) and hasClickAction()) }
             AirplaneMode.set(false, web)
             drainUntilEmpty()
         }

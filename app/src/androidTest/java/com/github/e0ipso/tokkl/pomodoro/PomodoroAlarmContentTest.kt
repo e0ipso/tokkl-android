@@ -41,8 +41,8 @@ import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.core.timerstate.R as TimerStateR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /** The alarm and Pomodoro page content at the largest font scale, with no server or ring. */
 @SignedOut
@@ -69,7 +69,7 @@ class PomodoroAlarmContentTest {
             val shown = compose.onNodeWithText(context.getString(label))
             shown.performScrollTo().assertIsDisplayed()
             readable(shown)
-            val number = compose.onNodeWithText(context.getString(SharedR.string.pomodoro_number, 3, 4))
+            val number = compose.onNodeWithText(context.getString(UiR.string.pomodoro_number, 3, 4))
             number.performScrollTo().assertIsDisplayed()
             readable(number)
             compose.onAllNodes(hasClickAction()).assertCountEquals(2)

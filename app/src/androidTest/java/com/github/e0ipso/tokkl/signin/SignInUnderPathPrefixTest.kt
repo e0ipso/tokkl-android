@@ -30,7 +30,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.trust.R as TrustR
 
 /**
  * Signs in through the screen to the real Tokkl container under the path
@@ -125,14 +125,14 @@ class SignInUnderPathPrefixTest {
      */
     private fun confirmHttpWarning() {
         composeRule.waitUntil("the http warning shows", NETWORK_TIMEOUT_MS) {
-            exists(hasText(string(SharedR.string.sign_in_http_warning_title)))
+            exists(hasText(string(TrustR.string.sign_in_http_warning_title)))
         }
-        composeRule.onNode(hasText(string(SharedR.string.sign_in_http_warning_body, server.toString()))).assertExists()
+        composeRule.onNode(hasText(string(TrustR.string.sign_in_http_warning_body, server.toString()))).assertExists()
         composeRule.onNode(
-            hasText(string(SharedR.string.sign_in_http_warning_understood)) and isToggleable(),
+            hasText(string(TrustR.string.sign_in_http_warning_understood)) and isToggleable(),
         ).performClick()
         composeRule.onNode(
-            hasText(string(SharedR.string.sign_in_http_warning_continue)) and hasClickAction(),
+            hasText(string(TrustR.string.sign_in_http_warning_continue)) and hasClickAction(),
         ).performClick()
     }
 

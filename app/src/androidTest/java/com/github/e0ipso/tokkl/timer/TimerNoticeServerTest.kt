@@ -8,7 +8,7 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.components.timerState
-import com.github.e0ipso.tokkl.core.shared.R
+import com.github.e0ipso.tokkl.core.timernotice.R
 import com.github.e0ipso.tokkl.orFail
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.buildJsonObject

@@ -24,7 +24,7 @@ import com.github.e0ipso.tokkl.api.PhaseTransition
 import com.github.e0ipso.tokkl.api.TimerPomodoro
 import com.github.e0ipso.tokkl.api.TimerPomodoroPhase
 import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.core.shared.R
+import com.github.e0ipso.tokkl.core.ui.R
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale

@@ -62,7 +62,6 @@ import org.junit.Rule
 import org.junit.Test
 import java.time.Instant
 import java.time.temporal.ChronoUnit
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
@@ -330,12 +329,12 @@ class RunningTileServerTest {
         runBlocking { app.accountRefresh.refresh().join() }
         val press = openCompactControls(fields.description)
 
-        press(SharedR.string.timer_pause_spoken)
+        press(UiR.string.timer_pause_spoken)
         val paused = app.awaitControls<TimerControls.Paused>("the long press Pause")
         assertEquals("the server's frozen total", checkNotNull(web.timerState().pause).seconds, paused.seconds)
         assertEquals("Pause stopped the entry on the server", null, runBlocking { app.cache.running.first() })
 
-        press(SharedR.string.timer_resume_spoken)
+        press(UiR.string.timer_resume_spoken)
         val resumed = app.awaitControls<TimerControls.Running>(
             "the long press Resume",
         ) { it.accumulatedSeconds == paused.seconds }
@@ -343,11 +342,11 @@ class RunningTileServerTest {
         assertEquals("the server's clone", web.timerState().pause?.cloneEntryId, resumed.entry.id)
         assertEquals(fields.description, resumed.entry.description)
 
-        press(SharedR.string.timer_pause_spoken)
+        press(UiR.string.timer_pause_spoken)
         app.awaitControls<TimerControls.Paused>("the second long press Pause")
         // A Stop drawn for the running clone acts on nothing once it is paused, so wait for the redraw.
-        awaitControl(SharedR.string.timer_resume_spoken)
-        press(SharedR.string.timer_stop_spoken)
+        awaitControl(UiR.string.timer_resume_spoken)
+        press(UiR.string.timer_stop_spoken)
         app.awaitControls<TimerControls.Idle>("the long press Stop while paused")
         assertEquals("Stop while paused ended the chain on the server", null, web.timerState().pause)
         assertEquals("nothing went through the queue", 0, unsentCount())
@@ -357,7 +356,7 @@ class RunningTileServerTest {
             device.wait(
                 Until.gone(
                     By.pkg(context.packageName)
-                        .desc(context.getString(SharedR.string.timer_stop_spoken)),
+                        .desc(context.getString(UiR.string.timer_stop_spoken)),
                 ),
                 TIMEOUT_MS,
             ),
@@ -373,7 +372,7 @@ class RunningTileServerTest {
         val press = openCompactControls(fields.description)
         val queued = unsentCount()
 
-        TimerActionToasts.await(TimerActionToasts.offline) { press(SharedR.string.timer_pause_spoken) }
+        TimerActionToasts.await(TimerActionToasts.offline) { press(UiR.string.timer_pause_spoken) }
         assertEquals(
             "the timer runs on",
             id,
@@ -381,7 +380,7 @@ class RunningTileServerTest {
         )
         assertEquals("Pause queues nothing", queued, unsentCount())
 
-        press(SharedR.string.timer_stop_spoken)
+        press(UiR.string.timer_stop_spoken)
         runBlocking { withTimeout(TIMEOUT_MS) { app.cache.running.first { it == null } } }
         assertNotNull(runBlocking { app.cache.timeEntries.first() }.single { it.id == id }.stop)
         assertEquals("Stop of the running entry waits in the queue", queued + 1, unsentCount())

@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.platform.DefaultNetwork
+import com.github.e0ipso.tokkl.platform.offlineIn
 
 /**
  * [EntityPicker] over [cache]'s rows, saying so while [network] is offline, wired as the screens'

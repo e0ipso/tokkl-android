@@ -32,7 +32,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.feature.clients.R as ClientsR
 import com.github.e0ipso.tokkl.feature.tags.R as TagsR
 import com.github.e0ipso.tokkl.feature.timer.R as TimerR
@@ -72,7 +72,7 @@ class TemplatesUiTest {
         val expected = listOf(
             string(
                 TimerR.string.favorites_start_spoken,
-                string(SharedR.string.favorites_with_project, "Write the report", "Website"),
+                string(UiR.string.favorites_with_project, "Write the report", "Website"),
             ),
             string(TimerR.string.favorites_start_spoken, "Website"),
         )

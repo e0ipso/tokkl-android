@@ -11,7 +11,6 @@ import androidx.annotation.VisibleForTesting
 import com.github.e0ipso.tokkl.feature.pomodoro.R
 import com.github.e0ipso.tokkl.platform.mainActivityIntent
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.core.timerstate.R as TimerStateR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
@@ -58,7 +57,7 @@ class PomodoroRingingNotifier(private val context: Context) {
         val builder = Notification.Builder(context, CHANNEL_ID)
             .setSmallIcon(TimerStateR.drawable.ic_nav_timer)
             .setContentTitle(context.getString(R.string.pomodoro_alarm_title))
-            .setContentText(context.getString(SharedR.string.pomodoro_alarm_waiting))
+            .setContentText(context.getString(UiR.string.pomodoro_alarm_waiting))
             .setCategory(Notification.CATEGORY_ALARM)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
@@ -72,7 +71,7 @@ class PomodoroRingingNotifier(private val context: Context) {
         if (ring != null) {
             builder
                 .setContentText(context.getString(alarmTransitionLabel(ring.sound)))
-                .setSubText(context.getString(SharedR.string.pomodoro_number, ring.number, ring.longRestEvery))
+                .setSubText(context.getString(UiR.string.pomodoro_number, ring.number, ring.longRestEvery))
                 // The native clock counts the overtime up from the planned end, with no app ticks.
                 .setWhen(ring.end.toEpochMilli())
                 .setShowWhen(true)

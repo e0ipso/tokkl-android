@@ -23,7 +23,7 @@ import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitTimerPage
-import com.github.e0ipso.tokkl.core.shared.R
+import com.github.e0ipso.tokkl.core.trust.R
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import kotlinx.coroutines.runBlocking

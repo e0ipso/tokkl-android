@@ -30,7 +30,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.catalog.R as CatalogR
 
 /**
  * The sign-out warning and the failed sign-out's banner at each font scale, in both themes: no
@@ -62,7 +62,7 @@ abstract class SignOutFitTest(private val fontScale: Float) {
             ).assertIsDisplayed()
             composeRule.onNode(hasText(warning) and inDialog()).assertIsDisplayed()
             composeRule.onNode(
-                hasText(string(SharedR.string.catalog_cancel)) and hasClickAction() and inDialog(),
+                hasText(string(CatalogR.string.catalog_cancel)) and hasClickAction() and inDialog(),
             ).assertIsDisplayed()
             composeRule.onNode(
                 hasText(string(R.string.settings_sign_out)) and hasClickAction() and inDialog(),

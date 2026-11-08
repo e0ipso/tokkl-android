@@ -170,14 +170,16 @@ class ModuleLayersTest {
          * The core modules in layers, lowest first. The bottom layer needs no other core module:
          * the API client, the time helpers, the design system and the Android plumbing. Above it
          * sit the session, the cache that reads it, and the timer state that reads the cache.
-         * The parts several features show and the routes come last.
+         * Then the parts several features show, and the routes. A timer notice reads as the
+         * catalog's problem, so it comes last.
          */
         val CORE_LAYERS: List<Set<String>> = listOf(
             setOf(":core:api", ":core:time", ":core:ui", ":core:platform"),
             setOf(":core:session"),
             setOf(":core:cache"),
             setOf(":core:timerstate"),
-            setOf(":core:shared", ":core:navigation"),
+            setOf(":core:catalog", ":core:entryfields", ":core:trust", ":core:navigation"),
+            setOf(":core:timernotice"),
         )
     }
 }

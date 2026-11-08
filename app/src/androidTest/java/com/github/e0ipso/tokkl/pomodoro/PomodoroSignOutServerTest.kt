@@ -62,7 +62,7 @@ import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.catalog.R as CatalogR
 import com.github.e0ipso.tokkl.feature.signin.R as SigninR
 
 /**
@@ -141,7 +141,7 @@ class PomodoroSignOutServerTest {
         val warning = context.resources.getQuantityString(R.plurals.settings_sign_out_unsent, 1, 1)
         compose.onNode(hasText(warning) and inDialog).assertExists()
         compose.onNode(
-            hasText(context.getString(SharedR.string.catalog_cancel)) and hasClickAction() and inDialog,
+            hasText(context.getString(CatalogR.string.catalog_cancel)) and hasClickAction() and inDialog,
         ).performClick()
         compose.waitUntil("warning dismissed", 10_000) { app.signOutConfirmation.state.value.unsentToConfirm == null }
         assertEquals("Cancel keeps the server's session as held", session, app.timerState.state.value)

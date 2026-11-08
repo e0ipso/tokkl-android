@@ -59,7 +59,7 @@ import com.github.e0ipso.tokkl.ui.TokklGhostButton
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import kotlinx.coroutines.delay
 import java.time.Clock
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /** The destination can be opened directly; the navigation item is added separately. */
 @Composable
@@ -169,7 +169,7 @@ fun PomodoroContent(
         action()
     }
     CatalogPage(
-        title = stringResource(SharedR.string.pomodoro_title),
+        title = stringResource(UiR.string.pomodoro_title),
         done = null,
         onDoneShow = {},
         modifier = modifier,
@@ -224,7 +224,7 @@ fun PomodoroContent(
                         style = MaterialTheme.typography.headlineMedium,
                         modifier = Modifier.semantics { heading() },
                     )
-                    Text(stringResource(SharedR.string.pomodoro_number, session.number, session.longRestEvery))
+                    Text(stringResource(UiR.string.pomodoro_number, session.number, session.longRestEvery))
                     val duration = state.account?.formatDuration(reading.seconds) ?: clockDuration(reading.seconds)
                     val spoken = stringResource(
                         if (reading.overtime) R.string.pomodoro_overtime_clock else R.string.pomodoro_remaining_clock,
@@ -233,9 +233,9 @@ fun PomodoroContent(
                     Text(
                         stringResource(
                             if (reading.overtime) {
-                                SharedR.string.pomodoro_overtime
+                                UiR.string.pomodoro_overtime
                             } else {
-                                SharedR.string.pomodoro_remaining
+                                UiR.string.pomodoro_remaining
                             },
                         ),
                     )
@@ -266,7 +266,7 @@ fun PomodoroContent(
                         enabled = state.canStart,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text(stringResource(SharedR.string.pomodoro_start))
+                        Text(stringResource(UiR.string.pomodoro_start))
                     }
                 } else {
                     TokklButton(
@@ -281,7 +281,7 @@ fun PomodoroContent(
                         enabled = !state.busy,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text(stringResource(SharedR.string.pomodoro_end))
+                        Text(stringResource(UiR.string.pomodoro_end))
                     }
                 }
             }
@@ -310,25 +310,25 @@ private class LengthCard(
 internal fun PomodoroLengthForm(lengths: PomodoroLengths, enabled: Boolean, onChange: (PomodoroLengths) -> Unit) {
     val cards = listOf(
         LengthCard(
-            SharedR.string.pomodoro_card_work,
+            UiR.string.pomodoro_card_work,
             PomodoroDefaults.WORK_MINUTES,
             StepperUnit.MINUTES,
             lengths.work,
         ) { onChange(lengths.copy(work = it)) },
         LengthCard(
-            SharedR.string.pomodoro_card_short_rest,
+            UiR.string.pomodoro_card_short_rest,
             PomodoroDefaults.SHORT_REST_MINUTES,
             StepperUnit.MINUTES,
             lengths.shortRest,
         ) { onChange(lengths.copy(shortRest = it)) },
         LengthCard(
-            SharedR.string.pomodoro_card_long_rest,
+            UiR.string.pomodoro_card_long_rest,
             PomodoroDefaults.LONG_REST_MINUTES,
             StepperUnit.MINUTES,
             lengths.longRest,
         ) { onChange(lengths.copy(longRest = it)) },
         LengthCard(
-            SharedR.string.pomodoro_card_long_rest_every,
+            UiR.string.pomodoro_card_long_rest_every,
             PomodoroDefaults.LONG_REST_EVERY,
             StepperUnit.WORK_PHASES,
             lengths.every,
@@ -387,16 +387,16 @@ private fun PomodoroFeedback(state: PomodoroPageState) {
 
 @StringRes
 private fun phaseLabel(kind: PhaseKind): Int = when (kind) {
-    PhaseKind.WORK -> SharedR.string.pomodoro_work
-    PhaseKind.SHORT_REST -> SharedR.string.pomodoro_short_rest
-    PhaseKind.LONG_REST -> SharedR.string.pomodoro_long_rest
+    PhaseKind.WORK -> UiR.string.pomodoro_work
+    PhaseKind.SHORT_REST -> UiR.string.pomodoro_short_rest
+    PhaseKind.LONG_REST -> UiR.string.pomodoro_long_rest
 }
 
 @StringRes
 private fun nextLabel(kind: PhaseKind): Int = when (kind) {
-    PhaseKind.WORK -> SharedR.string.pomodoro_start_work
-    PhaseKind.SHORT_REST -> SharedR.string.pomodoro_start_short_rest
-    PhaseKind.LONG_REST -> SharedR.string.pomodoro_start_long_rest
+    PhaseKind.WORK -> UiR.string.pomodoro_start_work
+    PhaseKind.SHORT_REST -> UiR.string.pomodoro_start_short_rest
+    PhaseKind.LONG_REST -> UiR.string.pomodoro_start_long_rest
 }
 
 private fun clockDuration(seconds: Long): String =

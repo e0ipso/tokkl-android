@@ -41,7 +41,7 @@ import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.defaultNetwork
 import com.github.e0ipso.tokkl.components.sender
-import com.github.e0ipso.tokkl.core.shared.R
+import com.github.e0ipso.tokkl.core.entryfields.R
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme

@@ -10,7 +10,6 @@ import java.text.NumberFormat
 import java.time.LocalDate
 import java.util.Currency
 import java.util.Locale
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 // How the reports screen writes numbers and dates, after the web app's helpers in
@@ -65,7 +64,7 @@ fun DateWords.range(range: ReportRange, today: LocalDate): String {
     val showYear = !sameYear || range.from.year != today.year
     fun label(date: LocalDate, withYear: Boolean) = if (withYear) shortWithYear(date) else short(date)
     if (range.from == range.to) return label(range.from, showYear)
-    return resources.getString(SharedR.string.reports_range, label(range.from, !sameYear), label(range.to, showYear))
+    return resources.getString(UiR.string.reports_range, label(range.from, !sameYear), label(range.to, showYear))
 }
 
 /** A bar's label: `Mon 13 Oct` for a day, `Week of 13 Oct` for a week, `Oct 2026` for a month. */

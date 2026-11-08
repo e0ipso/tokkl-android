@@ -47,7 +47,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 import java.util.concurrent.CopyOnWriteArrayList
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.catalog.R as CatalogR
 
 /**
  * The history's entry actions on screen, against a change queue and an Undo that record what they
@@ -137,7 +137,7 @@ class EntryActionsUiTest {
 
         openMenuAndDelete()
         composeRule.onNode(
-            hasText(string(SharedR.string.catalog_cancel)) and hasClickAction(),
+            hasText(string(CatalogR.string.catalog_cancel)) and hasClickAction(),
         ).performSemanticsAction(SemanticsActions.OnClick)
 
         composeRule.waitForIdle()

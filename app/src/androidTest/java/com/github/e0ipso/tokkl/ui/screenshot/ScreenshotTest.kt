@@ -137,7 +137,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.roundToInt
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.trust.R as TrustR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.feature.pomodoro.R as PomodoroR
 import com.github.e0ipso.tokkl.feature.reports.R as ReportsR
@@ -359,7 +359,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     @SignedOut
     @Test
     fun pomodoroIdleActions() = showPomodoro(IDLE_POMODORO) {
-        composeRule.onNode(hasText(string(SharedR.string.pomodoro_start)) and hasClickAction())
+        composeRule.onNode(hasText(string(UiR.string.pomodoro_start)) and hasClickAction())
             .performScrollTo().assertIsDisplayed().assertIsEnabled()
         assertScreen("pomodoro-idle-actions")
     }
@@ -382,9 +382,9 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     @SignedOut
     @Test
     fun pomodoroOvertimeActions() = showPomodoro(RUNNING_POMODORO) {
-        composeRule.onNode(hasText(string(SharedR.string.pomodoro_end)) and hasClickAction())
+        composeRule.onNode(hasText(string(UiR.string.pomodoro_end)) and hasClickAction())
             .performScrollTo().assertIsDisplayed().assertIsEnabled()
-        composeRule.onNode(hasText(string(SharedR.string.pomodoro_start_short_rest)) and hasClickAction())
+        composeRule.onNode(hasText(string(UiR.string.pomodoro_start_short_rest)) and hasClickAction())
             .assertIsDisplayed().assertIsEnabled()
         assertScreen("pomodoro-overtime-actions")
     }
@@ -556,7 +556,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     @Test
     fun httpWarning() {
         show({ CleartextWarning(HTTP_SERVER, onConfirm = {}, onCancel = {}) }) {
-            composeRule.awaitText(string(SharedR.string.sign_in_http_warning_title))
+            composeRule.awaitText(string(TrustR.string.sign_in_http_warning_title))
             assertDialog("http-warning")
         }
     }
@@ -565,7 +565,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     @Test
     fun certificatePrompt() {
         show({ CertificatePrompt(CERTIFICATE, changed = false, onTrust = {}, onCancel = {}) }) {
-            composeRule.awaitText(string(SharedR.string.sign_in_certificate_title))
+            composeRule.awaitText(string(TrustR.string.sign_in_certificate_title))
             assertDialog("certificate-prompt")
         }
     }
@@ -622,7 +622,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
 
     /** Waits for the first stepper card, since the cards show a short label no other text repeats. */
     private fun awaitLengthCards() {
-        val work = string(SharedR.string.pomodoro_card_work)
+        val work = string(UiR.string.pomodoro_card_work)
         composeRule.waitUntil("the $work stepper card shows", TIMEOUT_MS) {
             composeRule.onAllNodes(lengthCardMatcher(work)).fetchSemanticsNodes().isNotEmpty()
         }
@@ -650,7 +650,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
                 ) { page() }
             }
         }) {
-            composeRule.awaitText(string(SharedR.string.pomodoro_title))
+            composeRule.awaitText(string(UiR.string.pomodoro_title))
             steps()
         }
     }

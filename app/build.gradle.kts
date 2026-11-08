@@ -152,7 +152,7 @@ dependencies {
     implementation(project(":core:session"))
     implementation(project(":core:cache"))
     implementation(project(":core:timerstate"))
-    implementation(project(":core:shared"))
+    implementation(project(":core:trust"))
     implementation(project(":core:navigation"))
     implementation(project(":feature:signin"))
     implementation(project(":feature:timer"))
@@ -196,6 +196,10 @@ dependencies {
 
     // The test runner, the compose rules with their accessibility checks and the device rules.
     androidTestImplementation(project(":core:testing"))
+    // The instrumented tests read the shared parts' strings and classes too.
+    androidTestImplementation(project(":core:catalog"))
+    androidTestImplementation(project(":core:entryfields"))
+    androidTestImplementation(project(":core:timernotice"))
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4.accessibility)

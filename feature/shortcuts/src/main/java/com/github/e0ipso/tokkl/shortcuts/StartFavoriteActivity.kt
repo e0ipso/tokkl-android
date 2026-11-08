@@ -21,7 +21,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.android.ext.android.inject
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * A tap on a favorite's launcher shortcut (docs/PRD.md N6). It starts the favorite on the phone
@@ -104,6 +104,6 @@ class StartFavoriteActivity : Activity() {
 
 /** The fixed words in a favorite's label, in the app's language now. */
 internal fun favoriteNames(context: Context): FavoriteNames = FavoriteNames(
-    untitled = context.getString(SharedR.string.favorites_untitled),
-    withProject = { name, project -> context.getString(SharedR.string.favorites_with_project, name, project) },
+    untitled = context.getString(UiR.string.favorites_untitled),
+    withProject = { name, project -> context.getString(UiR.string.favorites_with_project, name, project) },
 )

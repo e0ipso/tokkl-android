@@ -30,7 +30,7 @@ import com.github.e0ipso.tokkl.components.sessionViewModels
 import com.github.e0ipso.tokkl.components.timerActions
 import com.github.e0ipso.tokkl.components.timerControls
 import com.github.e0ipso.tokkl.components.timerState
-import com.github.e0ipso.tokkl.core.shared.R
+import com.github.e0ipso.tokkl.core.ui.R
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.notification.action
 import com.github.e0ipso.tokkl.notification.stopAction

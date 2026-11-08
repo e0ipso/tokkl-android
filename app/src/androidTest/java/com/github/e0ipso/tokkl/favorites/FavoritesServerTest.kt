@@ -64,7 +64,8 @@ import org.junit.rules.RuleChain
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.entryfields.R as FieldsR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * Timer templates against the real Tokkl container (docs/PRD.md T5), saved from the timer's popup
@@ -445,10 +446,10 @@ class FavoritesServerTest {
         composeRule.onNode(hasContentDescription(string(label, name)) and hasClickAction())
 
     private fun description(): SemanticsNodeInteraction =
-        composeRule.onNode(hasSetTextAction() and hasText(string(SharedR.string.entry_description)))
+        composeRule.onNode(hasSetTextAction() and hasText(string(FieldsR.string.entry_description)))
 
     private fun stopButton(): SemanticsNodeInteraction =
-        composeRule.onNode(hasContentDescription(string(SharedR.string.timer_stop_spoken)) and hasClickAction())
+        composeRule.onNode(hasContentDescription(string(UiR.string.timer_stop_spoken)) and hasClickAction())
 
     private fun isEnabled(): SemanticsMatcher = SemanticsMatcher.keyNotDefined(SemanticsProperties.Disabled)
 

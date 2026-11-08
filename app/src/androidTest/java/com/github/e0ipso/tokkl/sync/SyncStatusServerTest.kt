@@ -50,7 +50,8 @@ import org.junit.rules.RuleChain
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.entryfields.R as FieldsR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.feature.signin.R as SigninR
 import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 
@@ -158,7 +159,7 @@ class SyncStatusServerTest {
             }
             composeRule.onNode(edit).performScrollTo().performClick()
             composeRule.waitUntil("Edit entry opened the form", NETWORK_TIMEOUT_MS) {
-                shows(hasText(context.getString(SharedR.string.entry_description)) and hasSetTextAction())
+                shows(hasText(context.getString(FieldsR.string.entry_description)) and hasSetTextAction())
             }
             InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK)
             awaitText(reason)
@@ -321,7 +322,7 @@ class SyncStatusServerTest {
     ) and hasClickAction()
 
     private fun stopButton(): SemanticsMatcher = hasContentDescription(
-        context.getString(SharedR.string.timer_stop_spoken),
+        context.getString(UiR.string.timer_stop_spoken),
     ) and hasClickAction()
 
     private fun shows(matcher: SemanticsMatcher): Boolean = composeRule.onAllNodes(

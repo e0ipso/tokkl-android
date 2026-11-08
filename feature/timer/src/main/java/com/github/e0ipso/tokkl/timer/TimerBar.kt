@@ -31,7 +31,6 @@ import com.github.e0ipso.tokkl.ui.TokklGhostButton
 import com.github.e0ipso.tokkl.ui.theme.FrameWidth
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.Clock
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
@@ -247,8 +246,8 @@ fun TimerBarContent(
                     if (running.pausable) {
                         TimerButton(
                             UiR.drawable.ic_pause,
-                            SharedR.string.timer_pause,
-                            SharedR.string.timer_pause_spoken,
+                            UiR.string.timer_pause,
+                            UiR.string.timer_pause_spoken,
                             TimerButtonLook.Neutral,
                             enabled = true,
                         ) {
@@ -258,8 +257,8 @@ fun TimerBarContent(
                     }
                     TimerButton(
                         UiR.drawable.ic_stop,
-                        SharedR.string.timer_stop,
-                        SharedR.string.timer_stop_spoken,
+                        UiR.string.timer_stop,
+                        UiR.string.timer_stop_spoken,
                         TimerButtonLook.Danger,
                         enabled = true,
                         onClick = stop,
@@ -271,8 +270,8 @@ fun TimerBarContent(
                     PausedClock(paused.seconds)
                     TimerButton(
                         UiR.drawable.ic_play,
-                        SharedR.string.timer_resume,
-                        SharedR.string.timer_resume_spoken,
+                        UiR.string.timer_resume,
+                        UiR.string.timer_resume_spoken,
                         TimerButtonLook.Primary,
                         enabled = true,
                     ) {
@@ -281,8 +280,8 @@ fun TimerBarContent(
                     }
                     TimerButton(
                         UiR.drawable.ic_stop,
-                        SharedR.string.timer_stop,
-                        SharedR.string.timer_stop_spoken,
+                        UiR.string.timer_stop,
+                        UiR.string.timer_stop_spoken,
                         TimerButtonLook.Danger,
                         enabled = true,
                         onClick = stop,

@@ -75,7 +75,7 @@ import java.time.temporal.ChronoUnit
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.feature.notification.R as NotificationR
 
 /**
@@ -180,7 +180,7 @@ class TimerCrossDeviceServerTest {
             assertEquals(PhaseKind.WORK, session.phase.kind)
             assertEquals(1, session.number)
             assertEquals(2, session.longRestEvery)
-            assertCountsDownTo(notification, session, held, SharedR.string.pomodoro_short_rest)
+            assertCountsDownTo(notification, session, held, UiR.string.pomodoro_short_rest)
 
             // The server's one-minute work phase ends, and the phone rings from its planned end.
             val work = awaitRingAtItsEnd(session)
@@ -251,7 +251,7 @@ class TimerCrossDeviceServerTest {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             compose.awaitTimerPage()
             compose.awaitPomodoroOffered(15_000)
-            compose.openBarPage(SharedR.string.pomodoro_title)
+            compose.openBarPage(UiR.string.pomodoro_title)
             var model: PomodoroViewModel? = null
             scenario.onActivity { model = sessionViewModels(it)[PomodoroViewModel::class.java] }
             val page = checkNotNull(model)
@@ -261,7 +261,7 @@ class TimerCrossDeviceServerTest {
                 page.editFields(fields, entryId = null)
             }
             compose.onNode(
-                hasText(context.getString(SharedR.string.pomodoro_start)) and hasClickAction(),
+                hasText(context.getString(UiR.string.pomodoro_start)) and hasClickAction(),
             ).performScrollTo().performClick()
             compose.waitUntil(
                 "the server started the session",

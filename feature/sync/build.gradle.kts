@@ -4,7 +4,11 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":core:shared"))
+    implementation(project(":core:api"))
+    implementation(project(":core:ui"))
+    implementation(project(":core:platform"))
+    implementation(project(":core:session"))
+    implementation(project(":core:cache"))
     implementation(project(":core:navigation"))
 
     testImplementation(testFixtures(project(":core:platform")))

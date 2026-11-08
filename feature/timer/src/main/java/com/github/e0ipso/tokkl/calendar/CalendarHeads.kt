@@ -44,7 +44,6 @@ import com.github.e0ipso.tokkl.ui.spokenDuration
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.Instant
 import java.time.LocalDate
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /** The arrows, the way back to today, the week or day shown and the week's total. */
@@ -60,10 +59,10 @@ internal fun Toolbar(
     val resources = LocalResources.current
     val words = remember(resources) { DateWords(resources) }
     val range = if (dayMode) {
-        resources.getString(SharedR.string.history_day, words.weekday(state.selected), words.short(state.selected))
+        resources.getString(UiR.string.history_day, words.weekday(state.selected), words.short(state.selected))
     } else {
         resources.getString(
-            SharedR.string.reports_range,
+            UiR.string.reports_range,
             words.short(state.weekStart),
             words.short(state.weekStart.plusDays(6)),
         )
@@ -168,7 +167,7 @@ private fun DayHead(
             R.string.history_today,
         )
     } else {
-        resources.getString(SharedR.string.history_day, words.weekday(day), words.short(day))
+        resources.getString(UiR.string.history_day, words.weekday(day), words.short(day))
     }
     val spoken = totalSeconds?.let {
         stringResource(
@@ -241,7 +240,7 @@ internal fun addEntryAction(day: LocalDate, editing: CalendarEditing?): CustomAc
     val words = remember(resources) { DateWords(resources) }
     val label = stringResource(
         R.string.calendar_add_entry,
-        resources.getString(SharedR.string.history_day, words.weekday(day), words.short(day)),
+        resources.getString(UiR.string.history_day, words.weekday(day), words.short(day)),
     )
     return CustomAccessibilityAction(label) {
         editing.add(day)

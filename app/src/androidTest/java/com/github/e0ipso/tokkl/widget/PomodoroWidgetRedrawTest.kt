@@ -9,7 +9,7 @@ import com.github.e0ipso.tokkl.components.pomodoroAlarm
 import com.github.e0ipso.tokkl.components.pomodoroAlarms
 import com.github.e0ipso.tokkl.components.pomodoroRinging
 import com.github.e0ipso.tokkl.components.timerState
-import com.github.e0ipso.tokkl.core.shared.R
+import com.github.e0ipso.tokkl.core.ui.R
 import com.github.e0ipso.tokkl.pomodoro.AlarmClockPomodoroScheduler
 import com.github.e0ipso.tokkl.pomodoro.HeldPhases
 import com.github.e0ipso.tokkl.timer.TimerAcceptanceFixture

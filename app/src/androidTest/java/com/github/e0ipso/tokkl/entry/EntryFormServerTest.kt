@@ -101,7 +101,7 @@ import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.entryfields.R as FieldsR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
@@ -173,22 +173,22 @@ class EntryFormServerTest {
         launch {
             openEntry("Fix the report")
 
-            field(SharedR.string.entry_description).performTextClearance()
-            field(SharedR.string.entry_description).performTextInput("Fix the weekly report")
+            field(FieldsR.string.entry_description).performTextClearance()
+            field(FieldsR.string.entry_description).performTextInput("Fix the weekly report")
             projectButton(null).performClick()
             option("Form project").performClick()
             composeRule.onNode(
-                hasSetTextAction() and hasText(string(SharedR.string.picker_search)),
+                hasSetTextAction() and hasText(string(FieldsR.string.picker_search)),
             ).performTextInput("call")
-            option(string(SharedR.string.picker_add_tag, "call")).performClick()
-            composeRule.onNode(hasText(string(SharedR.string.entry_picker_done)) and hasClickAction()).performClick()
+            option(string(FieldsR.string.picker_add_tag, "call")).performClick()
+            composeRule.onNode(hasText(string(FieldsR.string.entry_picker_done)) and hasClickAction()).performClick()
             awaitShows("the project shows") { projectButton("Form project") }
-            composeRule.onNode(hasText(string(SharedR.string.entry_billable)) and isToggleable()).performClick()
+            composeRule.onNode(hasText(string(FieldsR.string.entry_billable)) and isToggleable()).performClick()
 
             dateButton().performScrollTo().performClick()
             dayInPicker(newDay).performClick()
             composeRule.onNode(
-                hasText(string(SharedR.string.entry_picker_done)) and hasClickAction() and hasAnyAncestor(isDialog()),
+                hasText(string(FieldsR.string.entry_picker_done)) and hasClickAction() and hasAnyAncestor(isDialog()),
             ).performClick()
             awaitShows(
                 "the new date shows",
@@ -220,8 +220,8 @@ class EntryFormServerTest {
         launch {
             AirplaneMode.set(true, web)
             openEntry("Offline edit")
-            field(SharedR.string.entry_description).performTextClearance()
-            field(SharedR.string.entry_description).performTextInput("Offline edit, saved")
+            field(FieldsR.string.entry_description).performTextClearance()
+            field(FieldsR.string.entry_description).performTextInput("Offline edit, saved")
             replace(R.string.entry_end, "16:15")
             save()
             awaitShows("the history says the server lacks it") {
@@ -256,8 +256,8 @@ class EntryFormServerTest {
         launch {
             showOlderEntry(entry)
             openEntry("Old plan")
-            field(SharedR.string.entry_description).performTextClearance()
-            field(SharedR.string.entry_description).performTextInput("Old plan, fixed")
+            field(FieldsR.string.entry_description).performTextClearance()
+            field(FieldsR.string.entry_description).performTextInput("Old plan, fixed")
             replace(R.string.entry_end, "10:45")
             save()
 
@@ -297,8 +297,8 @@ class EntryFormServerTest {
             showOlderEntry(entry)
             AirplaneMode.set(true, web)
             openEntry("Old call")
-            field(SharedR.string.entry_description).performTextClearance()
-            field(SharedR.string.entry_description).performTextInput("Old call, noted")
+            field(FieldsR.string.entry_description).performTextClearance()
+            field(FieldsR.string.entry_description).performTextInput("Old call, noted")
             save()
             awaitShows("the history says the server lacks it") {
                 composeRule.onNode(
@@ -332,7 +332,7 @@ class EntryFormServerTest {
             showOlderEntry(entry)
             AirplaneMode.set(true, web)
             openEntry("Old review")
-            replace(SharedR.string.entry_description, "Old review, first")
+            replace(FieldsR.string.entry_description, "Old review, first")
             save()
             openEntry("Old review, first")
 
@@ -342,7 +342,7 @@ class EntryFormServerTest {
                 "the refresh dropped it from the phone",
                 runBlocking { app.cache.entries.first() }.none { it.entry.id == entry },
             )
-            replace(SharedR.string.entry_description, "Old review, second")
+            replace(FieldsR.string.entry_description, "Old review, second")
             save()
             drainUntilEmpty()
         }
@@ -389,12 +389,12 @@ class EntryFormServerTest {
             val controls = listOf(
                 "back" to composeRule.onNode(hasContentDescription(string(UiR.string.back)) and hasClickAction()),
                 "heading" to composeRule.onNode(hasText(string(R.string.entry_form_edit)) and isHeading()),
-                "description" to field(SharedR.string.entry_description),
+                "description" to field(FieldsR.string.entry_description),
                 "project" to projectButton(null),
                 "tags" to composeRule.onNode(
-                    hasContentDescription(string(SharedR.string.entry_no_tags_spoken)) and hasClickAction(),
+                    hasContentDescription(string(FieldsR.string.entry_no_tags_spoken)) and hasClickAction(),
                 ),
-                "billable" to composeRule.onNode(hasText(string(SharedR.string.entry_billable)) and isToggleable()),
+                "billable" to composeRule.onNode(hasText(string(FieldsR.string.entry_billable)) and isToggleable()),
                 "date" to composeRule.onNode(hasContentDescription(spokenDate(day)) and hasClickAction()),
                 "start" to field(R.string.entry_start),
                 "end" to field(R.string.entry_end),
@@ -714,11 +714,11 @@ class EntryFormServerTest {
             openEntry("Plan the offsite", noTimes = true)
             composeRule.onNode(noTimesSwitch()).assertIsOn()
             assertFalse("a no-time entry has no start field", shows(field(R.string.entry_start)))
-            replace(SharedR.string.entry_description, "Plan the offsite, moved")
+            replace(FieldsR.string.entry_description, "Plan the offsite, moved")
             dateButton().performScrollTo().performClick()
             dayInPicker(newDay).performClick()
             composeRule.onNode(
-                hasText(string(SharedR.string.entry_picker_done)) and hasClickAction() and hasAnyAncestor(isDialog()),
+                hasText(string(FieldsR.string.entry_picker_done)) and hasClickAction() and hasAnyAncestor(isDialog()),
             ).performClick()
             awaitShows(
                 "the new date shows",
@@ -899,8 +899,8 @@ class EntryFormServerTest {
         composeRule.waitUntil(
             "the account's workspace is known",
             NETWORK_TIMEOUT.toMillis(),
-        ) { field(SharedR.string.entry_description).isEnabled() }
-        field(SharedR.string.entry_description).performTextInput(description)
+        ) { field(FieldsR.string.entry_description).isEnabled() }
+        field(FieldsR.string.entry_description).performTextInput(description)
         replace(R.string.entry_start, start)
         end?.let { replace(R.string.entry_end, it) }
         duration?.let { replace(R.string.entry_duration, it) }
@@ -919,11 +919,11 @@ class EntryFormServerTest {
         composeRule.waitUntil(
             "the account's workspace is known",
             NETWORK_TIMEOUT.toMillis(),
-        ) { field(SharedR.string.entry_description).isEnabled() }
+        ) { field(FieldsR.string.entry_description).isEnabled() }
         composeRule.onNode(noTimesSwitch()).performScrollTo().performClick()
         awaitShows("the duration is the only time field") { field(R.string.entry_duration) }
         assertFalse("a no-time entry has no start field", shows(field(R.string.entry_start)))
-        field(SharedR.string.entry_description).performTextInput(description)
+        field(FieldsR.string.entry_description).performTextInput(description)
         replace(R.string.entry_duration, duration)
         save(R.string.entry_form_new)
     }
@@ -1011,10 +1011,10 @@ class EntryFormServerTest {
         hasScrollAction() and hasAnyDescendant(hasText(string(R.string.entry_save))),
     )
 
-    private fun formDescription(): SemanticsMatcher = isField(SharedR.string.entry_description) and inForm()
+    private fun formDescription(): SemanticsMatcher = isField(FieldsR.string.entry_description) and inForm()
 
     private fun formBillable(): SemanticsNodeInteraction = composeRule.onNode(
-        hasText(string(SharedR.string.entry_billable)) and isToggleable() and inForm(),
+        hasText(string(FieldsR.string.entry_billable)) and isToggleable() and inForm(),
     ).performScrollTo()
 
     /**
@@ -1134,17 +1134,17 @@ class EntryFormServerTest {
     private fun projectButton(name: String?): SemanticsNodeInteraction {
         val spoken = name?.let {
             string(
-                SharedR.string.entry_project_spoken,
+                FieldsR.string.entry_project_spoken,
                 it,
             )
-        } ?: string(SharedR.string.entry_no_project_spoken)
+        } ?: string(FieldsR.string.entry_no_project_spoken)
         return composeRule.onNode(hasContentDescription(spoken) and hasClickAction())
     }
 
     /** A row of the picker, scrolled into view. */
     private fun option(text: String): SemanticsNodeInteraction {
         val matcher = hasText(text) and hasClickAction()
-        val list = hasScrollToNodeAction() and hasAnyDescendant(hasText(string(SharedR.string.picker_project)))
+        val list = hasScrollToNodeAction() and hasAnyDescendant(hasText(string(FieldsR.string.picker_project)))
         composeRule.onNode(list).performScrollToNode(matcher)
         return composeRule.onNode(matcher)
     }

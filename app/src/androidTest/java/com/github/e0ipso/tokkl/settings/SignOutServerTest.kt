@@ -84,7 +84,7 @@ import org.junit.rules.RuleChain
 import java.security.KeyStore
 import java.time.Instant
 import java.time.temporal.ChronoUnit
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.catalog.R as CatalogR
 import com.github.e0ipso.tokkl.feature.signin.R as SigninR
 import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 
@@ -162,7 +162,7 @@ class SignOutServerTest {
         val warning = context.resources.getQuantityString(R.plurals.settings_sign_out_unsent, 2, 2)
         composeRule.onNode(hasText(warning) and inDialog()).assertExists()
         composeRule.onNode(
-            hasText(string(SharedR.string.catalog_cancel)) and hasClickAction() and inDialog(),
+            hasText(string(CatalogR.string.catalog_cancel)) and hasClickAction() and inDialog(),
         ).performClick()
 
         composeRule.waitUntil(

@@ -49,7 +49,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.entryfields.R as FieldsR
 
 /**
  * The entry form and the Timer page keep their state when a fold or a rotation moves them between
@@ -211,7 +211,7 @@ class AdaptiveRotationTest {
     }
 
     private fun descriptionField(): SemanticsMatcher = hasSetTextAction() and hasText(
-        string(SharedR.string.entry_description),
+        string(FieldsR.string.entry_description),
     )
 
     private fun resumedActivity(): MainActivity? {

@@ -34,7 +34,7 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 import java.security.KeyStore
 import java.security.cert.X509Certificate
-import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.trust.R as TrustR
 
 /**
  * Signs in through the screen to the Tokkl container behind the harness's proxy port whose
@@ -61,8 +61,8 @@ class UserCaCertificateTest {
         signIn()
 
         composeRule.awaitTimerPage(NETWORK_TIMEOUT_MS)
-        assertFalse("a certificate prompt shows", exists(SharedR.string.sign_in_certificate_title))
-        assertFalse("a certificate prompt shows", exists(SharedR.string.sign_in_certificate_changed_title))
+        assertFalse("a certificate prompt shows", exists(TrustR.string.sign_in_certificate_title))
+        assertFalse("a certificate prompt shows", exists(TrustR.string.sign_in_certificate_changed_title))
         assertNull("a pin for the server", ServerTrustStore(context).pinnedSha256(endpoint.host, endpoint.port))
         assertEquals(TokklTestServer.userCaTlsUrl, ServerConfigStore(context).load())
         val client = Session(context).client() ?: throw AssertionError("no stored session")
