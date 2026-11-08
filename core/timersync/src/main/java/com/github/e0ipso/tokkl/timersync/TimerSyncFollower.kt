@@ -25,14 +25,14 @@ fun interface TimerSyncWatcher {
  *
  * @param startService starts [TimerSyncService] in the foreground, and returns false when the
  *   platform refuses, as it does for an app in the background.
- * @param signedIn whether an account is signed in. Reads the disk.
+ * @param signedIn whether an account is signed in, read from the session.
  * @param source the signed-in account's timer state.
  * @param timerApi whether the server offers the timer API.
  * @param signInNeeded whether the server refused the account's credential.
  */
 class TimerSyncFollower(
     private val startService: () -> Boolean,
-    private val signedIn: () -> Boolean,
+    private val signedIn: suspend () -> Boolean,
     private val source: () -> TimerStateSource,
     private val timerSync: TimerSync<TimerStateSource>,
     private val timerApi: () -> Boolean,
@@ -68,7 +68,7 @@ class TimerSyncFollower(
      * Whether the timer event stream should run: signed in to a server with the timer API, whose
      * token the server has not refused. Reads the disk.
      */
-    internal fun wanted(): Boolean = timerApi() && !signInNeeded() && signedIn()
+    internal suspend fun wanted(): Boolean = timerApi() && !signInNeeded() && signedIn()
 
     /**
      * Starts [TimerSyncService], or points the running one at the account signed in now, while
@@ -77,7 +77,7 @@ class TimerSyncFollower(
      * background, is dropped: the next app open starts the service, and an exact alarm already
      * set still rings. Blocks on disk I/O.
      */
-    fun follow() {
+    suspend fun follow() {
         syncWatcher.watchTimerSync()
         val running = running.value
         if (!wanted()) {

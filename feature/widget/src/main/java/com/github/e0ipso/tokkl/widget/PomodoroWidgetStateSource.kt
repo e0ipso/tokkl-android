@@ -34,7 +34,7 @@ class PomodoroWidgetStateSource(
     capabilities: CapabilitiesSource,
     accountSettings: AccountSettingsSource,
     pomodoroDefaults: PomodoroDefaultsSetting,
-    signedIn: () -> Boolean,
+    signedIn: suspend () -> Boolean,
     clock: Clock,
     io: CoroutineContext,
 ) {
@@ -62,10 +62,11 @@ class PomodoroWidgetStateSource(
             catalog,
         ) { _, flags, settings, defaults, (projects, tasks, ringing) ->
             val owner = timerStates.current()
+            val account = owner.account.takeIf { signedIn() }
             owner.source.withState { held ->
                 pomodoroWidgetState(
                     workspaceId = settings?.defaultWorkspaceId,
-                    account = owner.account.takeIf { signedIn() },
+                    account = account,
                     available = flags.timerState,
                     held = held,
                     defaults = defaults,

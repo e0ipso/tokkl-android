@@ -5,6 +5,7 @@ import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.storage.ClearableStore
 import com.github.e0ipso.tokkl.storage.InMemoryValueStore
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -30,7 +31,7 @@ class SessionTest {
     )
 
     @Test
-    fun theTokenIsReadOnceForEveryCallUntilTheAccountChanges() {
+    fun theTokenIsReadOnceForEveryCallUntilTheAccountChanges() = runTest {
         val client = session.api()
 
         assertNotNull(client)
@@ -40,7 +41,7 @@ class SessionTest {
     }
 
     @Test
-    fun savingAnAccountReadsTheNewOne() {
+    fun savingAnAccountReadsTheNewOne() = runTest {
         val before = session.api()
 
         session.save(OTHER, "tok-456")
@@ -52,7 +53,7 @@ class SessionTest {
     }
 
     @Test
-    fun clearingSignsOutAtOnce() {
+    fun clearingSignsOutAtOnce() = runTest {
         assertTrue(session.isSignedIn())
 
         session.clear()
@@ -62,7 +63,7 @@ class SessionTest {
     }
 
     @Test
-    fun aReadThatFailsKeepsNothing() {
+    fun aReadThatFailsKeepsNothing() = runTest {
         tokens.failing = true
         assertNull(session.api())
         assertFalse(session.isSignedIn())
@@ -73,7 +74,7 @@ class SessionTest {
     }
 
     @Test
-    fun aFailedSaveLeavesTheAppSignedOut() {
+    fun aFailedSaveLeavesTheAppSignedOut() = runTest {
         assertTrue(session.isSignedIn())
         tokens.failing = true
 
@@ -84,7 +85,7 @@ class SessionTest {
     }
 
     @Test
-    fun withoutAServerTheTokenIsNotRead() {
+    fun withoutAServerTheTokenIsNotRead() = runTest {
         servers.clear()
 
         assertFalse(session.isSignedIn())

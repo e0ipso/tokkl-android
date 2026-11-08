@@ -31,7 +31,7 @@ internal class AccountSessionWriter(
 ) : SessionWriter {
 
     @Throws(GeneralSecurityException::class, IOException::class)
-    override fun save(server: ServerUrl, token: String, settings: AccountSettings) {
+    override suspend fun save(server: ServerUrl, token: String, settings: AccountSettings) {
         accountSettings.store(settings)
         timerStates.clearForSignIn()
         lifetime.begin()

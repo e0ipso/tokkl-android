@@ -55,7 +55,7 @@ class PomodoroSessionNotificationSync internal constructor(
     private val alarm: PomodoroPhaseAlarm,
     private val actions: SessionActions,
     private val changes: Flow<Unit>,
-    private val isSignedIn: () -> Boolean,
+    private val isSignedIn: suspend () -> Boolean,
     private val serviceRunning: () -> Boolean,
     private val memory: PomodoroNotificationMemory,
     private val notifications: PomodoroSessionPoster,

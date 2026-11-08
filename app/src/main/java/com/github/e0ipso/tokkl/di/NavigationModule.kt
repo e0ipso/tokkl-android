@@ -33,14 +33,14 @@ internal val navigationModule = module {
     single { TopLevelPages(get<List<FeatureEntries>>(FeatureScreens).flatMap { it.pages }) }
 
     // What the navigation host asks about the stored session, off the main thread: whether somebody
-    // is signed in, and whether a Pomodoro notification's tap still belongs to the account and its
-    // phase on the server.
+    // is signed in, which the session reads on the IO dispatcher itself, and whether a Pomodoro
+    // notification's tap still belongs to the account and its phase on the server.
     single {
         val session = get<Session>()
         val pomodoroNotification = get<PomodoroSessionNotificationSync>()
         val io = io()
         NavigationSession(
-            isSignedIn = { withContext(io) { session.isSignedIn() } },
+            isSignedIn = session::isSignedIn,
             acceptsPomodoroTap = { tap -> withContext(io) { pomodoroNotification.acceptsTap(tap.account, tap.phase) } },
         )
     }

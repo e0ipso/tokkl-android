@@ -103,7 +103,7 @@ sealed interface SignInResult {
  */
 fun interface SessionWriter {
     @Throws(GeneralSecurityException::class, IOException::class)
-    fun save(server: ServerUrl, token: String, settings: AccountSettings)
+    suspend fun save(server: ServerUrl, token: String, settings: AccountSettings)
 }
 
 /**

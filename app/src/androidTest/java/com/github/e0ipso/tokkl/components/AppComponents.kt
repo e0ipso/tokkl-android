@@ -58,6 +58,7 @@ import com.github.e0ipso.tokkl.widget.PomodoroWidgetStateSource
 import com.github.e0ipso.tokkl.widget.WidgetState
 import com.github.e0ipso.tokkl.widget.WidgetStateSource
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.runBlocking
 import org.koin.androidx.workmanager.factory.KoinWorkerFactory
 import org.koin.core.context.GlobalContext
 import org.koin.core.qualifier.Qualifier
@@ -119,10 +120,10 @@ fun TokklApplication.renewTimerState() {
     component<AccountLifetime>().begin()
 }
 
-fun TokklApplication.followTimerSync() = component<TimerSyncFollower>().follow()
+fun TokklApplication.followTimerSync() = runBlocking { component<TimerSyncFollower>().follow() }
 
 fun TokklApplication.storeSignIn(server: ServerUrl, token: String, settings: AccountSettings) =
-    component<SessionWriter>().save(server, token, settings)
+    runBlocking { component<SessionWriter>().save(server, token, settings) }
 
 /**
  * Puts an empty test WorkManager in this process, as [WorkManagerTestInitHelper.initializeTestWorkManager]

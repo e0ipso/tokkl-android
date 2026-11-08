@@ -10,6 +10,10 @@ import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.api.TrustListener
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
 import com.github.e0ipso.tokkl.storage.ClearableStore
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.security.GeneralSecurityException
 import kotlin.coroutines.CoroutineContext
@@ -18,16 +22,16 @@ import kotlin.coroutines.CoroutineContext
  * The account the app is signed in to: the configured server and its API token.
  * The token goes only through [ApiTokenStore]; no password is ever stored.
  *
- * The first [api] or [isSignedIn] reads the stores, with a Keystore decrypt, and keeps the
+ * The first [api] or [isSignedIn] reads the stores on [io], with a Keystore decrypt, and keeps the
  * signed-in API in memory, so later calls touch neither the disk nor the Keystore. [save] and
  * [clear] drop what was kept, so the next call reads the stores again. A read that fails on the
- * disk or the Keystore keeps nothing, and the next call tries again. Make the first call off the
- * main thread.
+ * disk or the Keystore keeps nothing, and the next call tries again. Reads, saves and clears take
+ * turns, so a read never keeps what a change of account replaced.
  *
  * @param servers the configured server, a [ServerConfigStore] in the app.
  * @param tokens the API token, an [ApiTokenStore] in the app.
  * @param http the shared HTTP client, which every [api] sends through.
- * @param io where every [api] runs its calls.
+ * @param io where the stores are read and written, and where every [api] runs its calls.
  * @param trustListener hears every request of [api] that the trust checks
  *   refuse, so the app can prompt from any screen.
  * @param successListener hears every 2xx answer to [api]'s requests.
@@ -68,55 +72,38 @@ class Session(
         }
     }
 
-    /**
-     * Guards [generation]. A JVM lock, not a Mutex, because api() is read from any thread
-     * without suspending.
-     */
-    private val lock = Any()
-
-    /** Counts the changes of account, so a read that overlaps one keeps nothing. */
-    private var generation = 0L
-
     /** The last read, or null before the first and after each change of account. */
-    @Volatile
-    private var kept: Read? = null
+    private val kept = MutableStateFlow<Read?>(null)
+
+    /** Lets one read or change of the stores run at a time. */
+    private val stores = Mutex()
 
     /**
      * Signed in means a server is stored and the token decrypts. A Keystore or
      * disk failure counts as signed out, so the user can sign in again.
      */
-    fun isSignedIn(): Boolean = read()?.signedIn == true
+    suspend fun isSignedIn(): Boolean = read()?.signedIn == true
 
     /**
      * The API of the signed-in account, or null when signed out. A Keystore or disk failure
      * counts as signed out, as in [isSignedIn].
      */
-    fun api(): TokklApi? = read()?.api
+    suspend fun api(): TokklApi? = read()?.api
 
-    override fun invoke(): TokklApi? = api()
+    override suspend fun invoke(): TokklApi? = api()
 
-    /** The kept read, or a new one, which is kept unless the account changed meanwhile. Null on a failure. */
-    private fun read(): Read? {
-        kept?.let { return it }
-        val before = synchronized(lock) { generation }
-        val read = try {
-            val server = servers.load()
-            Read(server, server?.let { tokens.load() })
-        } catch (_: GeneralSecurityException) {
-            return null
-        } catch (_: IOException) {
-            return null
-        }
-        synchronized(lock) { if (generation == before) kept = read }
-        return read
-    }
-
-    /** Drops the kept API, and any read that started before this call. */
-    private fun forgetKept() {
-        synchronized(lock) {
-            generation++
-            kept = null
-        }
+    /** The kept read, or a new one, which is kept. Null on a failure. */
+    private suspend fun read(): Read? = kept.value ?: stores.withLock {
+        kept.value ?: withContext(io) {
+            try {
+                val server = servers.load()
+                Read(server, server?.let { tokens.load() })
+            } catch (_: GeneralSecurityException) {
+                null
+            } catch (_: IOException) {
+                null
+            }
+        }?.also { kept.value = it }
     }
 
     /**
@@ -125,15 +112,10 @@ class Session(
      * leaves the app signed out instead of pairing a token with another server.
      */
     @Throws(GeneralSecurityException::class, IOException::class)
-    fun save(server: ServerUrl, token: String) {
-        forgetKept()
-        try {
-            servers.clear()
-            tokens.save(token)
-            servers.save(server)
-        } finally {
-            forgetKept()
-        }
+    suspend fun save(server: ServerUrl, token: String) = change {
+        servers.clear()
+        tokens.save(token)
+        servers.save(server)
     }
 
     /**
@@ -141,13 +123,18 @@ class Session(
      * as signed out and sends nothing, so that goes first: a failure after it still signs out.
      */
     @Throws(GeneralSecurityException::class, IOException::class)
-    fun clear() {
-        forgetKept()
+    suspend fun clear() = change {
+        servers.clear()
+        tokens.clear()
+    }
+
+    /** Runs [write] on [io] with the kept read dropped before and after it. */
+    private suspend fun change(write: () -> Unit) = stores.withLock {
+        kept.value = null
         try {
-            servers.clear()
-            tokens.clear()
+            withContext(io) { write() }
         } finally {
-            forgetKept()
+            kept.value = null
         }
     }
 }

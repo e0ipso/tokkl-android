@@ -9,6 +9,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -65,7 +66,7 @@ class TimerSyncFollowerTest {
     }
 
     @Test
-    fun withNoServiceRunningAFollowStartsTheServiceAndOpensNoStream() {
+    fun withNoServiceRunningAFollowStartsTheServiceAndOpensNoStream() = runTest {
         follower.follow()
 
         assertEquals(1, starts)
@@ -74,7 +75,7 @@ class TimerSyncFollowerTest {
     }
 
     @Test
-    fun aRunningServiceHoldsTheStreamForTheAccountSignedInNow() {
+    fun aRunningServiceHoldsTheStreamForTheAccountSignedInNow() = runTest {
         val instance = follower.serviceRuns()
         assertEquals(instance, follower.runningService.value)
 
@@ -85,7 +86,7 @@ class TimerSyncFollowerTest {
     }
 
     @Test
-    fun aServiceThatEndedCannotOpenTheStream() {
+    fun aServiceThatEndedCannotOpenTheStream() = runTest {
         val ended = follower.serviceRuns()
         follower.serviceEnded(ended)
 
@@ -96,7 +97,7 @@ class TimerSyncFollowerTest {
     }
 
     @Test
-    fun onlyTheInstanceThatRunsNowHoldsTheStream() {
+    fun onlyTheInstanceThatRunsNowHoldsTheStream() = runTest {
         val old = follower.serviceRuns()
         follower.serviceEnded(old)
         val current = follower.serviceRuns()
@@ -112,7 +113,7 @@ class TimerSyncFollowerTest {
     }
 
     @Test
-    fun aFollowThatNoLongerWantsTheStreamAsksTheRunningServiceToStop() {
+    fun aFollowThatNoLongerWantsTheStreamAsksTheRunningServiceToStop() = runTest {
         follower.serviceRuns()
         collectStopRequests()
         follower.follow()
@@ -130,7 +131,7 @@ class TimerSyncFollowerTest {
     }
 
     @Test
-    fun aStopRequestedWhileNoServiceRunsReachesNoLaterService() {
+    fun aStopRequestedWhileNoServiceRunsReachesNoLaterService() = runTest {
         follower.stopService()
 
         follower.serviceRuns()
@@ -142,7 +143,7 @@ class TimerSyncFollowerTest {
     }
 
     @Test
-    fun theStreamFollowsTheAccountSignedInNow() {
+    fun theStreamFollowsTheAccountSignedInNow() = runTest {
         follower.serviceRuns()
         follower.follow()
         val first = account

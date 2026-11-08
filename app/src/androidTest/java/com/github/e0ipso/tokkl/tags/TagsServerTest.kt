@@ -100,7 +100,7 @@ class TagsServerTest {
         workspace = account.workspaceId
         runBlocking { app.accountRefresh.refresh().join() }
         model = TagsViewModel(
-            repository = TagsRepository(Session(context)::api),
+            repository = TagsRepository(Session(context).api),
             workspaceId = { app.accountSettings.state.value?.defaultWorkspaceId },
             refreshCache = { refreshes += app.accountRefresh.refreshAfterChange() },
             scope = scope,
