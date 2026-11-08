@@ -8,9 +8,10 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 
 /**
  * A core module without Android code: a Kotlin/JVM library with the Java 17 of the Android
- * modules, Android lint and detekt. It compiles against the JDK, not android.jar, so the build
- * no longer stops a call to a JDK API that Android 12 lacks; the app's API 31 instrumented tests
- * run that code on the oldest supported device.
+ * modules, Android lint, detekt and an Android API check. It compiles against the JDK, not
+ * android.jar, and Android lint has no minSdk for a JVM module, so its NewApi check stays silent
+ * there. Animal Sniffer checks the module's classes against the Android 12 (API 31) signature of
+ * gummy-bears instead, in `check` and in `lint`.
  */
 class JvmLibraryConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) = with(target) {
@@ -25,5 +26,17 @@ class JvmLibraryConventionPlugin : Plugin<Project> {
         }
         keepLintAnalysisToThisCheckout()
         configureDetekt()
+        configureAndroidApiCheck()
     }
+}
+
+/**
+ * Fails the build when the main classes call a JDK API that Android 12 lacks. Classes of the
+ * module's dependencies count as present; the tests run on the JVM only, so they are not checked.
+ */
+private fun Project.configureAndroidApiCheck() {
+    pluginManager.apply("ru.vyarus.animalsniffer")
+    val signature = libs.findLibrary("gummy-bears-api31").get().get()
+    dependencies.add("signature", "${signature.module}:${signature.versionConstraint.requiredVersion}@signature")
+    tasks.named("lint").configure { dependsOn("animalsnifferMain") }
 }

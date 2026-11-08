@@ -25,6 +25,10 @@ navigation3 = "1.2.1"
 # that the Compose rules 0.6 build on. Both are Apache-2.0.
 detekt = "2.0.0-alpha.6"
 composeRules = "0.6.8"
+# Android API checks for the Kotlin/JVM modules, which Android lint skips: Animal Sniffer (MIT)
+# with the API 31 signature of gummy-bears (Apache-2.0).
+animalsniffer = "2.0.1"
+gummyBears = "0.16.0"
 
 [libraries]
 androidx-annotation = { module = "androidx.annotation:annotation", version.ref = "annotation" }
@@ -74,6 +78,8 @@ detekt-gradlePlugin = { module = "dev.detekt:detekt-gradle-plugin", version.ref 
 # Detekt rule sets: ktlint's formatting rules, and the Compose rules.
 detekt-rules-ktlint = { module = "dev.detekt:detekt-rules-ktlint-wrapper", version.ref = "detekt" }
 compose-rules-detekt = { module = "io.nlopez.compose.rules:detekt", version.ref = "composeRules" }
+animalsniffer-gradlePlugin = { module = "ru.vyarus:gradle-animalsniffer-plugin", version.ref = "animalsniffer" }
+gummy-bears-api31 = { module = "com.toasttab.android:gummy-bears-api-31", version.ref = "gummyBears" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -84,6 +90,7 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 room = { id = "androidx.room", version.ref = "room" }
 detekt = { id = "dev.detekt", version.ref = "detekt" }
+animalsniffer = { id = "ru.vyarus.animalsniffer", version.ref = "animalsniffer" }
 
 # The convention plugins in build-logic.
 tokkl-android-application = { id = "tokkl.android.application" }
