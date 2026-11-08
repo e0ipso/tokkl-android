@@ -39,8 +39,9 @@ jobs:
       # Each Android module writes its debug JVM JUnit XML under
       # <module>/build/test-results/testDebugUnitTest/ and its debug lint
       # reports as lint-results-debug.html, .sarif, .txt and .xml. The
-      # Kotlin/JVM core modules, core:api and core:time, write theirs under
-      # build/test-results/test/ and as lint-results.html, .sarif, .txt and
+      # Kotlin/JVM core modules, core:model, core:api and core:time, write
+      # theirs under build/test-results/test/ (core:model has no tests) and
+      # as lint-results.html, .sarif, .txt and
       # .xml. Keep those files when check fails after writing them. An empty match fails the
       # upload, so a missing report is not a passing suite. The rest of build/
       # stays out.

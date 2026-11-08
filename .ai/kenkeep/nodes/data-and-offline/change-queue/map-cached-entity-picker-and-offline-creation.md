@@ -18,7 +18,7 @@ kk_relates_to:
 kk_depends_on: []
 kk_confidence: high
 ---
-`picker/EntityPicker` is the project, task and tag picker that the timer and the entry form share through `entry/EntryFieldsEditor` (P1). It takes a `PickerSource`, the cached projects, clients, tasks and tags, and whether the phone is offline, which each screen's view model follows from `AccountCache.pickerSource()` and `DefaultNetwork.offlineIn`; no composable reads the cache. It reads only the cache, so search and selection work offline. Offline it says that creating a project, client or task needs a connection, and the manifest holds `ACCESS_NETWORK_STATE` for that message and for the background send's network wait. A tag typed by name joins the entry by name, and the server creates it when the queue sends the change. The picker's strings live in `picker_strings.xml`.
+`picker/EntityPicker` is the project, task and tag picker that the timer and the entry form share through `entry/EntryFieldsEditor` (P1). It takes a `PickerSource`, the cached projects, clients, tasks and tags as the model's `Project`, `Client`, `Task` and `Tag`, and whether the phone is offline, which each screen's view model follows from `AccountCache.pickerSource()` and `DefaultNetwork.offlineIn`; no composable reads the cache. It reads only the cache, so search and selection work offline. Offline it says that creating a project, client or task needs a connection, and the manifest holds `ACCESS_NETWORK_STATE` for that message and for the background send's network wait. A tag typed by name joins the entry by name, and the server creates it when the queue sends the change. The picker's strings live in `picker_strings.xml`.
 
 <!-- kk:related:start -->
 # Related

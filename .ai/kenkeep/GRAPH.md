@@ -1,11 +1,11 @@
 ---
 schema_version: 3
-nodes_hash: 'sha256:1e8ad54ea3f75583d5c33b2dd019b9b1970b251d4014ad7a6d3ad12ea04f71c4'
-node_count: 95
+nodes_hash: 'sha256:9d5fb9f738ce329c9e3b9cc6e737bc61c4ae019c97db7476b5044d86b2a5885b'
+node_count: 96
 ---
 # kenkeep Graph
 
-Total nodes: 95
+Total nodes: 96
 
 ## map-account-cache-and-capabilities
 
@@ -90,6 +90,14 @@ Total nodes: 95
 - **path:** api-and-security/map-connection-trust-store-pinning-and-prompts.md
 - **tags:** security, network, ui, dialogs
 - **relates_to:** practice-pin-self-signed-certs-warn-on-http, map-api-client-shared-okhttp-serverurl-and-errors, map-signin-session-settings-and-navigation-host, map-account-settings-source-and-account-time
+
+## map-core-model-and-typed-ids
+
+- **kind:** map
+- **title:** core:model: what the screens read, with typed ids
+- **path:** data-and-offline/map-core-model-and-typed-ids.md
+- **tags:** cache, room, ui, api
+- **relates_to:** map-account-cache-and-capabilities, map-offline-entry-mutations-and-local-id-mapping, map-catalog-pages-projects-clients-tags, map-saveable-navigation-stack-and-session-guard, map-gradle-build-sdk-levels-kotlin-and-memory
 
 ## map-design-foundation-spacing-shapes-type-brand
 

@@ -13,9 +13,9 @@ _None._
 _None yet._
 
 ## Components (what exists)
+- Open [**Saveable navigation stack and session guard**](map-saveable-navigation-stack-and-session-guard.md) to learn about: Destination names survive restoration, while the host checks the session and presents trust prompts. #android #ui #navigation
 - Open [**Sign-out ordering and account cleanup**](map-sign-out-ordering-and-account-cleanup.md) to learn about: Warn about unsent work and retire account tasks before clearing local session data. #android #credentials #offline
 - Open [**Trash capability and server operations**](map-trash-capability-and-server-operations.md) to learn about: Tokkl-only Trash routes, cached rows and explicit unsupported-endpoint handling. #android #ui #api
-- Open [**Saveable navigation stack and session guard**](map-saveable-navigation-stack-and-session-guard.md) to learn about: Destination names survive restoration, while the host checks the session and presents trust prompts. #android #ui #navigation
 - Open [**Session stores and pre-frame preferences**](map-session-stores-and-pre-frame-preferences.md) to learn about: Private session stores separate credentials, account settings, trust and device preferences. #android #credentials #storage
 - Open [**Sign-in request and credential admission**](map-sign-in-request-and-credential-admission.md) to learn about: Validate configured-server credentials and required account settings before storing a session. #android #ui #credentials
 - Open [**Signed-in navigation chrome and adaptive windows**](map-signed-in-navigation-chrome-and-adaptive-windows.md) to learn about: Bar, rail, back-stack and width rules control signed-in page layout. #android #ui #navigation
@@ -28,8 +28,8 @@ _None yet._
 - Open [**Choose plain AOSP images and compatible renderers**](../../testing/emulator-runtime/practice-choose-plain-aosp-images-and-compatible-renderers.md) — API 36 references and API 31 compatibility use launcher-capable AOSP images and bounded renderers.
 ### #ui
 - Open [**Timer page layout and scroll-away header**](../timer-history-calendar/map-timer-page-layout-and-scroll-away-header.md) — Bounded Timer content and the shared scroll-away header adapt to short and wide windows.
-- Open [**Timer List and Calendar preference sync**](../timer-history-calendar/map-timer-list-and-calendar-preference-sync.md) — View selection persists locally and writes the supported server preference without blocking navigation.
 - Open [**Tokkl favorites storage and capability**](../timer-and-entry-editing/map-tokkl-favorites-storage-and-capability.md) — Favorite starts share cached fields while preference writes use supported server capabilities.
+- Open [**Timer List and Calendar preference sync**](../timer-history-calendar/map-timer-list-and-calendar-preference-sync.md) — View selection persists locally and writes the supported server preference without blocking navigation.
 ### #credentials
 - Open [**Sign-out ordering and account cleanup**](map-sign-out-ordering-and-account-cleanup.md) — Warn about unsent work and retire account tasks before clearing local session data.
 - Open [**Session stores and pre-frame preferences**](map-session-stores-and-pre-frame-preferences.md) — Private session stores separate credentials, account settings, trust and device preferences.
@@ -40,7 +40,7 @@ _None yet._
 ### #api
 - Open [**Trash capability and server operations**](map-trash-capability-and-server-operations.md) — Tokkl-only Trash routes, cached rows and explicit unsupported-endpoint handling.
 - Open [**Never make Start or Stop wait for the server**](../../data-and-offline/practice-never-wait-for-server-on-start-stop.md) — Start and Stop change state on the phone at once and queue the change. Pause, Resume and session actions wait for the server. No sync engine.
-- Open [**Ordered entry sending and refusals**](../../data-and-offline/change-queue/map-ordered-entry-sending-and-refusals.md) — Oldest-first HTTP delivery, retry boundaries, held refusals and reauthentication.
+- Open [**Match Tokkl web app behavior in the account timezone**](../../data-and-offline/practice-match-web-app-behavior-account-timezone.md) — Use the web app's time parsing, favorites, grouping and undo, in the account timezone read from GET /api/v9/me.
 ### #offline
 - Open [**Background queue work and empty-queue cancellation**](../../data-and-offline/change-queue/map-background-queue-work-and-empty-queue-cancellation.md) — Connected WorkManager delivery and serialized cancellation when the queue empties.
 - Open [**Ordered entry sending and refusals**](../../data-and-offline/change-queue/map-ordered-entry-sending-and-refusals.md) — Oldest-first HTTP delivery, retry boundaries, held refusals and reauthentication.

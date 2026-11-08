@@ -40,7 +40,7 @@ _None yet._
 ### #api
 - Open [**Trash capability and server operations**](../../screens/session-and-navigation/map-trash-capability-and-server-operations.md) — Tokkl-only Trash routes, cached rows and explicit unsupported-endpoint handling.
 - Open [**Never make Start or Stop wait for the server**](../../data-and-offline/practice-never-wait-for-server-on-start-stop.md) — Start and Stop change state on the phone at once and queue the change. Pause, Resume and session actions wait for the server. No sync engine.
-- Open [**Ordered entry sending and refusals**](../../data-and-offline/change-queue/map-ordered-entry-sending-and-refusals.md) — Oldest-first HTTP delivery, retry boundaries, held refusals and reauthentication.
+- Open [**Match Tokkl web app behavior in the account timezone**](../../data-and-offline/practice-match-web-app-behavior-account-timezone.md) — Use the web app's time parsing, favorites, grouping and undo, in the account timezone read from GET /api/v9/me.
 ### #gradle
 - Open [**Gradle build settings: SDK levels, Kotlin version, memory and build cache**](../../build-and-tooling/map-gradle-build-sdk-levels-kotlin-and-memory.md) — minSdk 31, compileSdk from the dependencies, targetSdk from the emulator, Kotlin from the catalog, a small heap and the local build cache.
 - Open [**Fix detekt findings in code, and baseline only a fix that changes behaviour**](../../build-and-tooling/practice-fix-detekt-findings-in-code.md) — check runs detekt 2 with ktlint's intellij_idea rules and the Compose rules on every module. Fix findings in code; a baseline entry needs a behaviour change as its reason.

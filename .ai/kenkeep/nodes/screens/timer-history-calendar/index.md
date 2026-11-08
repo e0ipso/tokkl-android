@@ -27,8 +27,8 @@ _None yet._
 - Open [**Entry form and account-time validation**](../timer-and-entry-editing/map-entry-form-and-account-time-validation.md) — Stopped and manual entry editing preserve untouched seconds and validate ranges in account time.
 ### #ui
 - Open [**Timer page layout and scroll-away header**](map-timer-page-layout-and-scroll-away-header.md) — Bounded Timer content and the shared scroll-away header adapt to short and wide windows.
-- Open [**Timer List and Calendar preference sync**](map-timer-list-and-calendar-preference-sync.md) — View selection persists locally and writes the supported server preference without blocking navigation.
 - Open [**Tokkl favorites storage and capability**](../timer-and-entry-editing/map-tokkl-favorites-storage-and-capability.md) — Favorite starts share cached fields while preference writes use supported server capabilities.
+- Open [**Timer List and Calendar preference sync**](map-timer-list-and-calendar-preference-sync.md) — View selection persists locally and writes the supported server preference without blocking navigation.
 ### #cache
 - Open [**Cached entity picker and offline creation**](../../data-and-offline/change-queue/map-cached-entity-picker-and-offline-creation.md) — Shared project, task and tag selection uses cached data and explicit offline creation limits.
 - Open [**Cached history days and grouping**](map-cached-history-days-and-grouping.md) — Account-local history groups and pages cached stopped entries with reconnect-aware retention.
