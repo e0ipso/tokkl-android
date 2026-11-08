@@ -32,16 +32,19 @@ import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.EntryWithSendState
 import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
 import com.github.e0ipso.tokkl.feature.timer.R
+import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
+import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
@@ -277,12 +280,15 @@ class EntryActionsUiTest {
         projects = MutableStateFlow(emptyList()),
         tasks = MutableStateFlow(emptyList()),
         available = available,
-        save = { list ->
+        store = { list ->
             saves += list
             ApiResult.Success(Unit)
         },
         scope = scope,
         io = Dispatchers.IO,
+        picker = flowOf(PickerSource()),
+        offline = MutableStateFlow(false),
+        workspaceId = flowOf(null),
     )
 
     private fun openMenuAndDelete() {
@@ -309,13 +315,14 @@ class EntryActionsUiTest {
         val model = EntryActionsViewModel(
             entries = MutableStateFlow(listOf(EntryWithSendState(CACHED, unsent = false))),
             changes = RecordingChanges(),
-            undoDelete = { entryId ->
+            undo = { entryId ->
                 calls += "undo $entryId"
                 undo
             },
             canRestore = { canRestore },
             accountSettings = MutableStateFlow(HISTORY.settings),
             scope = scope,
+            clock = Clock.systemUTC(),
         )
         composeRule.setContent {
             TokklTheme {

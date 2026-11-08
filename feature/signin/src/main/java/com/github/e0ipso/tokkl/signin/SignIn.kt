@@ -106,6 +106,11 @@ fun interface SessionWriter {
     fun save(server: ServerUrl, token: String, settings: AccountSettings)
 }
 
+/** The account signed in now, which a sign-in again must match, or null when nobody is. */
+fun interface SignedInAccount {
+    fun current(): SignInAgain?
+}
+
 /**
  * One sign-in attempt: `GET /api/v9/me` with HTTP Basic auth, then the server,
  * the token and the account settings from that response go to [session]. With
@@ -123,7 +128,7 @@ class SignIn(
     private val httpClient: OkHttpClient,
     private val configured: ConfiguredServer,
     private val io: CoroutineContext,
-    private val signedInAccount: () -> SignInAgain? = { null },
+    private val signedInAccount: SignedInAccount,
 ) {
 
     /**
@@ -131,7 +136,7 @@ class SignIn(
      * than the signed-in one is not stored: both end in [SignInResult.OtherAccount].
      */
     suspend fun attempt(server: ServerUrl, credentials: SignInCredentials, again: SignInAgain? = null): SignInResult {
-        val account = signedInAccount() ?: again
+        val account = signedInAccount.current() ?: again
         if (account != null && server != account.server) return SignInResult.OtherAccount
         val client = TogglApiClient(server, credentials.toApiCredentials(), httpClient, io = io)
         // Until the server is stored, the URL being tried is the configured server.
@@ -184,6 +189,11 @@ private fun ApiError.toSignInResult(): SignInResult = when (this) {
 internal class StoredSignInAccount(
     private val servers: ServerConfigStore,
     private val accountSettings: AccountSettingsStore,
-) {
-    fun current(): SignInAgain? = servers.load()?.let { server -> SignInAgain(server, accountSettings.load()?.userId) }
+) : SignedInAccount {
+    override fun current(): SignInAgain? = servers.load()?.let { server ->
+        SignInAgain(
+            server,
+            accountSettings.load()?.userId,
+        )
+    }
 }

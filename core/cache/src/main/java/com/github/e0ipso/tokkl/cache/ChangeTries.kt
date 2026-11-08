@@ -4,6 +4,7 @@ import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.capabilities.CapabilityCheck
 import kotlinx.serialization.builtins.nullable
 import java.time.temporal.ChronoUnit
 
@@ -24,12 +25,12 @@ internal class SentChange(val change: PendingChange, val serverId: Long, val ent
 internal class ChangeTries(
     private val store: ChangeStore,
     private val spans: ServerSpans,
-    private val allDay: () -> Boolean,
+    private val allDay: CapabilityCheck,
 ) {
 
     /** Sends an update, a legacy stop or a restore as [request] builds it. */
     suspend fun update(api: TogglApiClient, change: PendingChange): ApiResult<SentChange> {
-        val request = change.request(api.server, allDay())
+        val request = change.request(api.server, allDay.offered())
         return when (
             val result = api.send(
                 request.method,
@@ -58,7 +59,7 @@ internal class ChangeTries(
             }
         }
         store.maybeSent(change, true)
-        val request = change.request(api.server, allDay())
+        val request = change.request(api.server, allDay.offered())
         return when (
             val result = api.send(
                 request.method,
@@ -108,7 +109,7 @@ internal class ChangeTries(
             queued
         }
         if (!change.maybeSent) store.maybeSent(change, true)
-        val request = change.request(api.server, allDay())
+        val request = change.request(api.server, allDay.offered())
         return when (
             val result = api.send(
                 request.method,
@@ -137,7 +138,7 @@ internal class ChangeTries(
      */
     suspend fun delete(api: TogglApiClient, change: PendingChange): ApiResult<SentChange>? {
         if (!store.maybeSent(change, true)) return null
-        val request = change.request(api.server, allDay())
+        val request = change.request(api.server, allDay.offered())
         return when (val result = api.sendNoContent(request.method, request.url, request.body, resend = false)) {
             is ApiResult.Success -> ApiResult.Success(SentChange(change, change.entryId, entry = null))
 

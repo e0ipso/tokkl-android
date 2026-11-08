@@ -15,6 +15,22 @@ interface TimerSyncClock {
     fun schedule(delayMillis: Long, task: () -> Unit): () -> Unit
 }
 
+/** How [TimerSync] holds each account's stream, such as [TimerEventConnections]. */
+interface TimerSyncConnections<A : Any> {
+
+    /**
+     * Starts holding the stream for [account] over [link], off the calling thread, and reports
+     * through the link's callbacks, ending with [TimerSyncLink.ended].
+     */
+    fun open(account: A, link: TimerSyncLink)
+
+    /**
+     * Hears that a stream ended in a way no reconnect can fix, [StreamEnd.Refused] or
+     * [StreamEnd.SignedOut], for the [account] that held it. It is called once per such end.
+     */
+    fun stopped(account: A, end: StreamEnd)
+}
+
 /**
  * The one owner of the timer event stream: at most one call open at a time, for one account, and
  * the reconnects after it ends. [run] holds the stream for an account, [stop] cancels it with every
@@ -25,7 +41,7 @@ interface TimerSyncClock {
  * - After a stream ends or fails, the next connection waits [FIRST_DELAY_MILLIS], doubling after
  *   each failure up to [MAX_DELAY_MILLIS]. A stream that stayed open for [HEALTHY_MILLIS] starts
  *   that over. A network that comes back connects at once.
- * - A 401 or 403 ends it for that account: [stopped] hears it and nothing reconnects until [run]
+ * - A 401 or 403 ends it for that account: [TimerSyncConnections.stopped] hears it and nothing reconnects until [run]
  *   names another account.
  *
  * Callbacks of a stream this owner has cancelled or replaced change nothing, so a late answer of
@@ -33,16 +49,9 @@ interface TimerSyncClock {
  * method may be called from any thread.
  *
  * @param A what tells accounts apart. The app uses the account's [TimerStateSource].
- * @param open starts holding the stream for the account over [TimerSyncLink], off the calling
- *   thread, and reports through the link's callbacks, ending with [TimerSyncLink.ended].
- * @param stopped hears that a stream ended in a way no reconnect can fix, [StreamEnd.Refused] or
- *   [StreamEnd.SignedOut], for the account that held it. It is called once per such end.
+ * @param connections open each stream and hear the ends no reconnect can fix.
  */
-class TimerSync<A : Any>(
-    private val clock: TimerSyncClock,
-    private val open: (account: A, link: TimerSyncLink) -> Unit,
-    private val stopped: (account: A, end: StreamEnd) -> Unit,
-) {
+class TimerSync<A : Any>(private val clock: TimerSyncClock, private val connections: TimerSyncConnections<A>) {
 
     private val lock = Any()
 
@@ -83,7 +92,7 @@ class TimerSync<A : Any>(
             failures = 0
             connectLocked()
         }
-        open(account, opened)
+        connections.open(account, opened)
     }
 
     /**
@@ -110,7 +119,7 @@ class TimerSync<A : Any>(
             failures = 0
             account to connectLocked()
         }
-        open(account, opened)
+        connections.open(account, opened)
     }
 
     /** The phone lost its default network, and an open call with it. Closes the call to reconnect later. */
@@ -152,7 +161,7 @@ class TimerSync<A : Any>(
                 }
             }
         }
-        if (gone != null) stopped(gone, end)
+        if (gone != null) connections.stopped(gone, end)
     }
 
     /** A new link for [account], watched for silence from now. Call it holding [lock]. */
@@ -197,7 +206,7 @@ class TimerSync<A : Any>(
             val account = account ?: return
             account to connectLocked()
         }
-        open(account, opened)
+        connections.open(account, opened)
     }
 
     /** Cancels the call, its watchdog and the scheduled reconnect. Call it holding [lock]. */

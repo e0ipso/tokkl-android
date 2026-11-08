@@ -6,6 +6,7 @@ import java.io.File
 import java.io.IOException
 import java.io.InputStreamReader
 import java.nio.charset.CodingErrorAction
+import java.time.Clock
 import java.util.UUID
 
 /**
@@ -13,7 +14,7 @@ import java.util.UUID
  * never exposed. At most four 16 MiB files in each area, pruned on export; files expire after a
  * day and sign-out removes both areas. The provider also refuses expired reads.
  */
-class ReportExportFiles(private val root: File, private val now: () -> Long = System::currentTimeMillis) : ExportFiles {
+class ReportExportFiles(private val root: File, private val clock: Clock) : ExportFiles {
     class Pending internal constructor(val staging: File, val directory: File, filename: String) : Closeable {
         val completed = File(directory, filename)
 
@@ -54,7 +55,7 @@ class ReportExportFiles(private val root: File, private val now: () -> Long = Sy
             directory.delete()
             throw IOException("Cannot finish export file")
         }
-        if (!pending.completed.setLastModified(now()) || !directory.setLastModified(now())) {
+        if (!pending.completed.setLastModified(clock.millis()) || !directory.setLastModified(clock.millis())) {
             discard(pending.completed)
             throw IOException("Cannot date export file")
         }
@@ -76,7 +77,7 @@ class ReportExportFiles(private val root: File, private val now: () -> Long = Sy
         val files = directory.listFiles() ?: throw IOException("Cannot list exports")
         val ordered = files.sortedByDescending { it.lastModified() }
         ordered.forEachIndexed { index, file ->
-            if (index >= keep || now() - file.lastModified() >= MAX_AGE_MILLIS) {
+            if (index >= keep || clock.millis() - file.lastModified() >= MAX_AGE_MILLIS) {
                 if (!file.deleteRecursively()) throw IOException("Cannot prune exports")
             }
         }

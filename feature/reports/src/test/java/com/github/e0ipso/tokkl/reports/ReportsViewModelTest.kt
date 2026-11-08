@@ -85,7 +85,7 @@ class ReportsViewModelTest {
         val url = ServerUrl.parse(server.url("/").toString())!!
         testApi.stored = url
         testApi.trust = InMemoryServerTrust(url)
-        model = ReportsViewModel(
+        model = reportsViewModel(
             accountSettings = settings,
             repository = ServerReportsRepository { testApi.client(url, ApiCredentials.ApiToken("token")) },
             scope = CoroutineScope(Dispatchers.Unconfined),

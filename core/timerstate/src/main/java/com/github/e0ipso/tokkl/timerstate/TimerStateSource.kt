@@ -8,6 +8,7 @@ import com.github.e0ipso.tokkl.cache.RunningCheckStart
 import com.github.e0ipso.tokkl.cache.RunningCheckWrites
 import com.github.e0ipso.tokkl.cache.toCached
 import com.github.e0ipso.tokkl.capabilities.ProbedTimerState
+import com.github.e0ipso.tokkl.session.RefreshRequest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,6 +26,12 @@ class TimerStateRead internal constructor(
     internal val written: Long,
 )
 
+/** Writes the accepted timer state to disk. */
+fun interface TimerStateWriter {
+    @Throws(IOException::class)
+    fun save(state: StoredTimerState)
+}
+
 /**
  * The signed-in account's timer state from the Tokkl server, and the one place on the phone that
  * holds it. Answers to `GET /api/app/timer`, action answers, 409 bodies and timer events all go
@@ -36,19 +43,19 @@ class TimerStateRead internal constructor(
  * and sign-in makes a new one, so an answer that kept a retired source changes nothing.
  *
  * @param initial what the store held at process start, or null.
- * @param save writes the state to the store, throwing [IOException] when it cannot.
+ * @param store writes each accepted state.
  * @param cache the cache's current-entry reconciliation.
  * @param clock the phone's clock. Arrival times come from it.
- * @param onRunningEnded called after an accepted state removed a running entry from the cache.
- *   The state does not say when that entry stopped, and only a refresh brings it back with its
- *   stop, so the day's totals keep counting it.
+ * @param runningEnded asked for a refresh after an accepted state removed a running entry from
+ *   the cache. The state does not say when that entry stopped, and only a refresh brings it back
+ *   with its stop, so the day's totals keep counting it.
  */
 class TimerStateSource(
     initial: StoredTimerState?,
-    private val save: (StoredTimerState) -> Unit,
+    private val store: TimerStateWriter,
     private val cache: CurrentEntryCache,
-    private val clock: Clock = Clock.systemUTC(),
-    private val onRunningEnded: () -> Unit = {},
+    private val clock: Clock,
+    private val runningEnded: RefreshRequest,
 ) : ProbedTimerState<TimerStateRead> {
 
     /** Orders acceptance, storage, cache writes, notice taking and retirement. */
@@ -105,7 +112,7 @@ class TimerStateSource(
             mutableNotice.value = next.unshownDiscard(acknowledged)
             writeRunning(read, state)
         }
-        if (ended) onRunningEnded()
+        if (ended) runningEnded.request()
         return true
     }
 
@@ -148,7 +155,7 @@ class TimerStateSource(
     /** A failed write keeps the state for this process, and the next state writes again. */
     private fun store(held: HeldTimerState) {
         try {
-            save(StoredTimerState(held, acknowledged))
+            store.save(StoredTimerState(held, acknowledged))
         } catch (_: IOException) {
             // The next accepted state or taken notice writes again.
         }

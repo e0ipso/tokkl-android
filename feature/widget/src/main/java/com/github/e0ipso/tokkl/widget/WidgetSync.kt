@@ -7,12 +7,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.io.IOException
 import kotlin.coroutines.CoroutineContext
+
+/** Draws every placed widget of one provider again from the phone's state. */
+fun interface WidgetRedraw {
+    suspend fun redraw()
+}
 
 /**
  * Keeps the home screen widget (docs/PRD.md N3) in step with the phone. Every start, stop and edit
@@ -32,19 +34,10 @@ import kotlin.coroutines.CoroutineContext
 class WidgetSync(
     private val keys: Flow<String>,
     private val shown: ValueStore<String>,
-    private val update: suspend () -> Unit,
+    private val update: WidgetRedraw,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
 ) {
-
-    /** Keeps the Timer widget's lazy state factory compatible with independent key flows. */
-    constructor(
-        state: () -> Flow<WidgetState>,
-        shown: ValueStore<String>,
-        update: suspend () -> Unit,
-        scope: CoroutineScope,
-        io: CoroutineContext,
-    ) : this(flow { emitAll(state().map { it.key() }) }, shown, update, scope, io)
 
     /** Follows the phone's state until the scope ends. Call once, at process start. */
     fun start(): Job = scope.launch(io) { follow() }
@@ -57,7 +50,7 @@ class WidgetSync(
     /** Updates the widgets unless they already show what [key] stands for. */
     suspend fun apply(key: String) {
         if (key == shown.load()) return
-        update()
+        update.redraw()
         try {
             shown.save(key)
         } catch (_: IOException) {

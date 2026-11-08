@@ -32,6 +32,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.net.InetAddress
+import java.time.Clock
 import com.github.e0ipso.tokkl.core.trust.R as TrustR
 
 /**
@@ -67,12 +68,14 @@ class CertificateHostMismatchTest {
                 httpClient = client,
                 configured = appConfiguredServer,
                 io = Dispatchers.IO,
+                signedInAccount = { null },
             ),
             trust = ServerTrustStore(context),
             cooldowns = SignInCooldownStore(context),
             scope = scope,
             io = Dispatchers.IO,
-            clock = System::currentTimeMillis,
+            clock = Clock.systemUTC(),
+            onSignedIn = {},
         )
         composeRule.setContent { TokklTheme { SignInScreen(model, onSignedIn = {}) } }
     }

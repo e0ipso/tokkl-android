@@ -162,7 +162,7 @@ private fun KoinComponent.dispatchPomodoroWidget(context: Context, tap: Pomodoro
         // Keep the captured holder and credential together across sign-out/account replacement.
         val actions = TimerActions(
             client = { client.takeIf { timerStates.source === source && session.isSignedIn() } },
-            source = { source },
+            states = { source },
             io = io,
         )
         sendPomodoroWidgetAction(tap, current, actions)?.let { showTimerActionFailure(app, it) }

@@ -1,6 +1,8 @@
 package com.github.e0ipso.tokkl.sync
 
+import com.github.e0ipso.tokkl.cache.HeldChanges
 import com.github.e0ipso.tokkl.cache.PendingChange
+import com.github.e0ipso.tokkl.session.RefreshRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
@@ -16,18 +18,18 @@ import kotlinx.coroutines.launch
  * @param scope outlives the screen, so leaving it does not cancel a write.
  */
 class NeedsAttention(
-    val held: Flow<List<PendingChange>>,
-    private val release: suspend (sequence: Long) -> Boolean,
-    private val drop: suspend (sequence: Long) -> Boolean,
-    private val afterDiscard: () -> Unit,
+    private val changes: HeldChanges,
+    private val afterDiscard: RefreshRequest,
     private val scope: CoroutineScope,
 ) {
 
+    val held: Flow<List<PendingChange>> = changes.held
+
     fun sendAgain(change: PendingChange) {
-        scope.launch { release(change.sequence) }
+        scope.launch { changes.sendAgain(change.sequence) }
     }
 
     fun discard(change: PendingChange) {
-        scope.launch { if (drop(change.sequence)) afterDiscard() }
+        scope.launch { if (changes.discard(change.sequence)) afterDiscard.request() }
     }
 }

@@ -28,6 +28,7 @@ import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.io.InputStream
 import java.net.SocketTimeoutException
+import java.time.Clock
 import java.time.Instant
 import java.util.concurrent.TimeUnit
 
@@ -54,7 +55,13 @@ class TimerEventStreamTest {
         testApi.stored = url
         // The user has confirmed the MockWebServer's plain http URL.
         testApi.trust = InMemoryServerTrust(url)
-        holder = TimerStateSource(initial = null, save = {}, cache = cache)
+        holder = TimerStateSource(
+            initial = null,
+            store = {},
+            cache = cache,
+            clock = Clock.systemUTC(),
+            runningEnded = {},
+        )
     }
 
     @After

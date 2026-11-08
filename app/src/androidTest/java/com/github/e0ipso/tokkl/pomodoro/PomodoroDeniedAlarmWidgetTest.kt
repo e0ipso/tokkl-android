@@ -25,7 +25,7 @@ class PomodoroDeniedAlarmWidgetTest {
 
     @Test fun deniedExactAccessArmsOneNativeRedrawAndExactReplacementAndCancelRemoveIt() {
         var allowed = false
-        val scheduler = AlarmClockPomodoroScheduler(context, exactAlarmsAllowed = { allowed })
+        val scheduler = AlarmClockPomodoroScheduler(context, timerSyncStarts = { false }, exactAlarms = { !allowed })
         val start = Instant.now()
         try {
             app.pomodoroAlarms.cancel()

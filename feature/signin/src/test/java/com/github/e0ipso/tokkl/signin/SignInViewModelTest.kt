@@ -24,7 +24,11 @@ import org.junit.Before
 import org.junit.Test
 import java.io.IOException
 import java.security.cert.CertificateException
+import java.time.Clock
 import java.time.DayOfWeek
+import java.time.Instant
+import java.time.ZoneId
+import java.time.ZoneOffset
 import javax.net.ssl.SSLHandshakeException
 
 /**
@@ -71,6 +75,7 @@ class SignInViewModelTest {
             httpClient = httpClient,
             configured = testApi.configured,
             io = Dispatchers.Unconfined,
+            signedInAccount = { null },
         )
         // Unconfined runs each attempt to the end inside submit().
         return SignInViewModel(
@@ -79,7 +84,14 @@ class SignInViewModelTest {
             cooldowns,
             CoroutineScope(Dispatchers.Unconfined),
             Dispatchers.Unconfined,
-            clock = { now },
+            clock = object : Clock() {
+                override fun getZone(): ZoneId = ZoneOffset.UTC
+
+                override fun withZone(zone: ZoneId): Clock = this
+
+                override fun instant(): Instant = Instant.ofEpochMilli(now)
+            },
+            onSignedIn = {},
         )
     }
 

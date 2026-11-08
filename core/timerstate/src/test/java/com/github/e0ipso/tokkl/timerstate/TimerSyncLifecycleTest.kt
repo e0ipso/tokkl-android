@@ -19,10 +19,17 @@ class TimerSyncLifecycleTest {
     /** Every call opened, in order, with its account and the time it opened. */
     private val opens = mutableListOf<Opened>()
     private val stops = mutableListOf<Pair<String, StreamEnd>>()
-    private val sync = TimerSync<String>(
+    private val sync = TimerSync(
         clock = clock,
-        open = { account, link -> opens += Opened(account, link, clock.time) },
-        stopped = { account, end -> stops += account to end },
+        connections = object : TimerSyncConnections<String> {
+            override fun open(account: String, link: TimerSyncLink) {
+                opens += Opened(account, link, clock.time)
+            }
+
+            override fun stopped(account: String, end: StreamEnd) {
+                stops += account to end
+            }
+        },
     )
 
     @Test

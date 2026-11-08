@@ -90,7 +90,7 @@ private const val MAX_CAUSES = 8
  * decides first, so a certificate that a system or user CA signed is trusted
  * as before and the network security config still applies. When the platform
  * refuses the chain, the leaf is trusted only if its SHA-256 matches the pin
- * the user stored for that host and port, read through [pinnedSha256].
+ * the user stored for that host and port, read from [pins].
  * Anything else fails with [UntrustedCertificateException], which carries
  * the leaf for the trust prompt, or with [CertificateHostMismatchException]
  * when the leaf does not name the host, so the prompt never offers a
@@ -104,10 +104,8 @@ private const val MAX_CAUSES = 8
  * one calls the platform's first and adds only the exact pinned leaf.
  */
 @Suppress("CustomX509TrustManager")
-internal class PinningTrustManager(
-    private val platform: X509TrustManager,
-    private val pinnedSha256: (host: String, port: Int) -> String?,
-) : X509ExtendedTrustManager() {
+internal class PinningTrustManager(private val platform: X509TrustManager, private val pins: CertificatePins) :
+    X509ExtendedTrustManager() {
 
     override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String, socket: Socket?) {
         val session = (socket as? SSLSocket)?.handshakeSession
@@ -160,7 +158,7 @@ internal class PinningTrustManager(
         val leaf = chain.firstOrNull()
         if (leaf == null || host == null || port !in 1..MAX_PORT) throw refusal
         val seen = ServerCertificate.of(leaf, host, port)
-        val pin = pinnedSha256(host, port)
+        val pin = pins.pinnedSha256(host, port)
         if (pin != null && MessageDigest.isEqual(pin.toByteArray(), seen.sha256.toByteArray())) return
         // The same check OkHttp makes after the handshake. It only decides what to say; it never accepts.
         if (!OkHostnameVerifier.verify(host, leaf)) throw CertificateHostMismatchException(host, cause = refusal)

@@ -8,15 +8,16 @@ import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.github.e0ipso.tokkl.platform.CurrentWorkManager
 import kotlinx.coroutines.withContext
+import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import kotlin.coroutines.CoroutineContext
 
 /** A single inexact delayed wakeup, with neither a network constraint nor an exact-alarm permission. */
-class ReminderWork(private val workManager: CurrentWorkManager) {
+class ReminderWork(private val workManager: CurrentWorkManager, private val clock: Clock) : ReminderDelays {
 
-    fun schedule(timer: ReminderTimer) {
-        val delay = Duration.between(Instant.now(), Instant.ofEpochMilli(timer.due)).coerceAtLeast(Duration.ZERO)
+    override fun schedule(timer: ReminderTimer) {
+        val delay = Duration.between(clock.instant(), Instant.ofEpochMilli(timer.due)).coerceAtLeast(Duration.ZERO)
         val request = OneTimeWorkRequestBuilder<ReminderWorker>()
             .setInitialDelay(delay)
             .setInputData(workDataOf(ID to timer.id, START to timer.start, DUE to timer.due))
@@ -24,7 +25,7 @@ class ReminderWork(private val workManager: CurrentWorkManager) {
         workManager.get().enqueueUniqueWork(NAME, ExistingWorkPolicy.KEEP, request).result.get()
     }
 
-    fun cancel() {
+    override fun cancel() {
         workManager.get().cancelUniqueWork(NAME).result.get()
     }
 

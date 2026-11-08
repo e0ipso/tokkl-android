@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.preferences
 
 import com.github.e0ipso.tokkl.api.ApiClientProvider
+import com.github.e0ipso.tokkl.capabilities.CapabilityCheck
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountRefreshListener
 import com.github.e0ipso.tokkl.session.AccountRefreshed
@@ -69,7 +70,7 @@ typealias StoredPomodoroDefaults = StoredPreference<PomodoroDefaults>
 class PomodoroDefaultsSetting(
     store: ClearableStore<StoredPomodoroDefaults>,
     client: ApiClientProvider,
-    private val keepsPreferences: () -> Boolean,
+    private val keepsPreferences: CapabilityCheck,
     scope: CoroutineScope,
     io: CoroutineContext,
 ) : AccountRefreshListener,
@@ -88,9 +89,13 @@ class PomodoroDefaultsSetting(
         scope,
         io,
         default = PomodoroDefaults.DEFAULT,
-        loaded = PomodoroDefaults::clamped,
-        fromServer = { it.pomodoroDefaults() },
-        body = { it.preferencesBody() },
+        codec = object : PreferenceCodec<PomodoroDefaults> {
+            override fun loaded(value: PomodoroDefaults) = value.clamped()
+
+            override fun fromServer(preferences: MePreferences) = preferences.pomodoroDefaults()
+
+            override fun body(value: PomodoroDefaults) = value.preferencesBody()
+        },
     )
 
     /** The values a new session starts with, always within their ranges. */
@@ -101,7 +106,7 @@ class PomodoroDefaultsSetting(
      * them to the server in the background. Call it on the main thread.
      */
     fun change(defaults: PomodoroDefaults): Job {
-        val keepsPreferences = keepsPreferences()
+        val keepsPreferences = keepsPreferences.offered()
         return preference.change(defaults.clamped(), unsent = keepsPreferences, sendIf = { keepsPreferences })
     }
 

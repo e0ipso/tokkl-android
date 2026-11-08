@@ -11,6 +11,16 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.coroutines.CoroutineContext
 
+/** The app's shortcuts the launcher has, such as [LauncherShortcuts]. */
+interface PublishedShortcuts {
+
+    /** The shortcuts the launcher has, in their order. */
+    fun published(): List<FavoriteShortcut>
+
+    /** Replaces them; an empty list removes them all. */
+    fun publish(shortcuts: List<FavoriteShortcut>)
+}
+
 /**
  * Keeps the launcher shortcuts in step with the cached favorites (docs/PRD.md N6). Every change
  * to the favorites lands in the cache, from the Timer page or from a refresh that read the web
@@ -21,14 +31,12 @@ import kotlin.coroutines.CoroutineContext
  * launcher already has is not set again, as when a new process starts.
  *
  * @param shortcuts the shortcuts the favorites make now.
- * @param published the shortcuts the launcher has, in their order.
- * @param publish replaces them; an empty list removes them all.
+ * @param launcher the shortcuts the launcher has.
  * @param io where the launcher calls run.
  */
 class FavoriteShortcutSync(
     private val shortcuts: Flow<List<FavoriteShortcut>>,
-    private val published: () -> List<FavoriteShortcut>,
-    private val publish: (List<FavoriteShortcut>) -> Unit,
+    private val launcher: PublishedShortcuts,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
 ) : AccountDataOwner {
@@ -50,12 +58,12 @@ class FavoriteShortcutSync(
     /** Publishes [next], unless the launcher has it already. */
     suspend fun apply(next: List<FavoriteShortcut>) {
         lock.withLock {
-            if (published() != next) publish(next)
+            if (launcher.published() != next) launcher.publish(next)
         }
     }
 
     /** Removes every shortcut. Signing out calls this. */
     suspend fun forget() {
-        lock.withLock { publish(emptyList()) }
+        lock.withLock { launcher.publish(emptyList()) }
     }
 }

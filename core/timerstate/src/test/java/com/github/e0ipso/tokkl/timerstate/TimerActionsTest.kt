@@ -30,6 +30,7 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.time.Clock
 import java.time.Instant
 import java.util.concurrent.TimeUnit
 
@@ -59,10 +60,16 @@ class TimerActionsTest {
         testApi.stored = url
         // The user has confirmed the MockWebServer's plain http URL.
         testApi.trust = InMemoryServerTrust(url)
-        holder = TimerStateSource(initial = null, save = { saves++ }, cache = cache)
+        holder = TimerStateSource(
+            initial = null,
+            store = { saves++ },
+            cache = cache,
+            clock = Clock.systemUTC(),
+            runningEnded = {},
+        )
         actions = TimerActions(
             client = { if (signedIn) testApi.client(url, credentials, trustListener = trustListener) else null },
-            source = { holder },
+            states = { holder },
             io = Dispatchers.IO,
         )
     }

@@ -30,23 +30,34 @@ class ReminderSyncTest {
     private val mappings = mutableMapOf<Long, Long>()
     private var removals = 0
     private fun sync() = ReminderSync(
-        latest = { input },
-        currentId = { mappings[it] ?: it },
+        inputs = { input },
+        ids = { mappings[it] ?: it },
         timers = valueStore(load = { stored }, save = { stored = it }),
-        schedule = {
-            if (waiting.none { old -> old.id == it.id && old.start == it.start && old.due == it.due }) {
-                waiting +=
-                    it
+        delays = object : ReminderDelays {
+            override fun schedule(timer: ReminderTimer) {
+                if (waiting.none { old -> old.id == timer.id && old.start == timer.start && old.due == timer.due }) {
+                    waiting += timer
+                }
             }
+
+            override fun cancel() = waiting.clear()
         },
-        cancel = { waiting.clear() },
-        post = { posted += it },
-        remove = {},
+        notice = notice(onRemove = {}),
         stop = {
             stopped += it
             true
         },
+        pause = { null },
     )
+
+    /** The reminder notification as a list of posts, with [onRemove] for its removals. */
+    private fun notice(onRemove: () -> Unit) = object : ReminderNotice {
+        override suspend fun post(timer: ReminderTimer) {
+            posted += timer
+        }
+
+        override fun remove() = onRemove()
+    }
 
     @Test fun oneDelayAtStartPlusHoursAndNoDelayWhenIdleOrDisabled() = runBlocking {
         val sync = sync()
@@ -218,17 +229,26 @@ class ReminderSyncTest {
         assertEquals(removed, removals)
     }
 
-    private fun pausing(pause: suspend (Long) -> SurfaceTap.Request?) = ReminderSync(
-        latest = { input }, currentId = { mappings[it] ?: it },
+    private fun pausing(pause: ReminderPause) = ReminderSync(
+        inputs = { input },
+        ids = { mappings[it] ?: it },
         timers = valueStore(
             load = { stored },
             save = { stored = it },
         ),
-        schedule = { waiting += it }, cancel = { waiting.clear() }, post = { posted += it }, remove = { removals++ },
+        delays = object : ReminderDelays {
+            override fun schedule(timer: ReminderTimer) {
+                waiting += timer
+            }
+
+            override fun cancel() = waiting.clear()
+        },
+        notice = notice(onRemove = { removals++ }),
         stop = {
             stopped += it
             true
-        }, pause = pause,
+        },
+        pause = pause,
     )
 
     @Test fun futureTimerWaitsAndChangingHoursReplacesTheDelay() = runBlocking {

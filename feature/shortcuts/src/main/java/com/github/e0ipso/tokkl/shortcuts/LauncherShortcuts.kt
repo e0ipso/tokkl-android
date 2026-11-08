@@ -10,7 +10,7 @@ import com.github.e0ipso.tokkl.feature.shortcuts.R
  * The app's dynamic shortcuts, which the launcher lists on a long press of the app icon. Each one
  * opens [StartFavoriteActivity] with its favorite's id.
  */
-class LauncherShortcuts(private val context: Context) {
+class LauncherShortcuts(private val context: Context) : PublishedShortcuts {
 
     private val manager: ShortcutManager get() = context.getSystemService(ShortcutManager::class.java)
 
@@ -18,7 +18,7 @@ class LauncherShortcuts(private val context: Context) {
     val limit: Int by lazy { manager.maxShortcutCountPerActivity }
 
     /** The shortcuts the launcher has, in their order. */
-    fun published(): List<FavoriteShortcut> = manager.dynamicShortcuts.sortedBy { it.rank }.map { info ->
+    override fun published(): List<FavoriteShortcut> = manager.dynamicShortcuts.sortedBy { it.rank }.map { info ->
         FavoriteShortcut(info.id, info.shortLabel.toString(), (info.longLabel ?: info.shortLabel).toString())
     }
 
@@ -27,7 +27,7 @@ class LauncherShortcuts(private val context: Context) {
      * app that set them too often, nothing changes, and the next change to the favorites or the
      * next process sets them.
      */
-    fun publish(shortcuts: List<FavoriteShortcut>) {
+    override fun publish(shortcuts: List<FavoriteShortcut>) {
         if (shortcuts.isEmpty()) {
             manager.removeAllDynamicShortcuts()
         } else {

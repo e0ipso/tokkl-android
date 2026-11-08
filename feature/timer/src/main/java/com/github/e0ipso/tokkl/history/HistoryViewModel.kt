@@ -6,6 +6,7 @@ import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
+import com.github.e0ipso.tokkl.cache.CurrentEntryIds
 import com.github.e0ipso.tokkl.cache.EntryWithSendState
 import com.github.e0ipso.tokkl.cache.HistoryWindow
 import com.github.e0ipso.tokkl.cache.reconcileEntryRows
@@ -20,7 +21,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -64,10 +64,10 @@ class HistoryViewModel(
     private val client: ApiClientProvider,
     scope: CoroutineScope,
     private val io: CoroutineContext,
-    private val clock: Clock = Clock.systemUTC(),
-    private val currentId: suspend (Long) -> Long = { it },
-    overrides: Flow<Map<Long, CachedTimeEntry?>> = emptyFlow(),
-    appEvents: Flow<AppEvent> = emptyFlow(),
+    private val clock: Clock,
+    private val ids: CurrentEntryIds,
+    overrides: Flow<Map<Long, CachedTimeEntry?>>,
+    appEvents: Flow<AppEvent>,
 ) : ViewModel(scope) {
 
     private val older = MutableStateFlow(Older())
@@ -124,7 +124,7 @@ class HistoryViewModel(
                     loaded.until,
                     time,
                 ) + withEdits(cached, loaded.entries, firstCached, time)
-                val resolved = resolveEntryOverrides(overrides, currentId)
+                val resolved = resolveEntryOverrides(overrides, ids)
                 val restoredIds = resolved.values.filterNotNull().mapTo(HashSet()) { it.id }
                 edited = edited + cached.filter { it.entry.id in restoredIds }.associate { it.entry.id to it.entry }
                 val restored = resolved.mapValues { (id, entry) -> entry?.let { edited[id] ?: it } }

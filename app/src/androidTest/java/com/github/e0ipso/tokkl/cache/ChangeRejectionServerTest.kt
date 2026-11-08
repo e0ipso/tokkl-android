@@ -35,6 +35,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -58,7 +59,13 @@ class ChangeRejectionServerTest {
         account = TestAccounts.create("Europe/Madrid")
         token = account.apiToken
         database = Room.inMemoryDatabaseBuilder(context, CacheDatabase::class.java).build()
-        queue = ChangeQueue(database, Dispatchers.IO, onQueued = {})
+        queue = ChangeQueue(
+            database,
+            Dispatchers.IO,
+            onQueued = {},
+            clock = Clock.systemUTC(),
+            spans = ServerSpans.Unsnapped,
+        )
         sender = sender()
     }
 
@@ -195,6 +202,7 @@ class ChangeRejectionServerTest {
             httpClient = appHttp.instance,
             configured = appConfiguredServer,
             io = Dispatchers.IO,
+            signedInAccount = { null },
         )
         assertEquals(
             SignInResult.SignedIn,
@@ -234,7 +242,18 @@ class ChangeRejectionServerTest {
         },
         scope = scope,
         io = Dispatchers.IO,
-        onDiscarded = { discarded += it },
+        events = object : ChangeSenderEvents {
+            override fun sent() = Unit
+
+            override fun emptied() = Unit
+
+            override fun discarded(count: Int) {
+                discarded += count
+            }
+        },
+        clock = Clock.systemUTC(),
+        spans = ServerSpans.Unsnapped,
+        allDay = { false },
     )
 
     private fun cachedEntry(description: String): Long {

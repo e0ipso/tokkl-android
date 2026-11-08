@@ -8,9 +8,12 @@ import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.EntryWithSendState
 import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
 import com.github.e0ipso.tokkl.picker.Picked
+import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.timer.TapTrace
 import com.github.e0ipso.tokkl.timer.TimerState
 import com.github.e0ipso.tokkl.timer.TimerViewModel
+import com.github.e0ipso.tokkl.timer.discardNotices
 import com.github.e0ipso.tokkl.timerstate.serverTimerControls
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -21,6 +24,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -58,7 +62,18 @@ class RunningEntryEditorTest {
     private val tasks = MutableStateFlow(emptyList<CachedTask>())
     private val clock = Clock.fixed(Instant.parse("2026-10-22T22:10:00Z"), ZoneOffset.UTC)
     private val changes = Changes()
-    private val form = EntryFormViewModel(rows, projects, tasks, settings, changes, scope, clock)
+    private val form = EntryFormViewModel(
+        rows,
+        projects,
+        tasks,
+        settings,
+        changes,
+        scope,
+        clock,
+        allDay = flowOf(false),
+        picker = flowOf(PickerSource()),
+        offline = MutableStateFlow(false),
+    )
     private val timer = TimerViewModel(
         rows.map { entries ->
             serverTimerControls(
@@ -73,6 +88,11 @@ class RunningEntryEditorTest {
         changes,
         scope,
         clock,
+        trace = TapTrace.None,
+        pauseChain = null,
+        sendQueued = {},
+        discards = discardNotices(),
+        timerApi = flowOf(true),
     )
 
     @Before

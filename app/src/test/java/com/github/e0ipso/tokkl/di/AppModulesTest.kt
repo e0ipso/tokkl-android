@@ -3,16 +3,35 @@ package com.github.e0ipso.tokkl.di
 import android.app.Application
 import android.content.Context
 import androidx.work.WorkerParameters
+import com.github.e0ipso.tokkl.cache.ChangeSenderEvents
+import com.github.e0ipso.tokkl.capabilities.CapabilityCheck
+import com.github.e0ipso.tokkl.capabilities.CapabilityMissing
+import com.github.e0ipso.tokkl.favorites.FavoritesStore
 import com.github.e0ipso.tokkl.navigation.Route
+import com.github.e0ipso.tokkl.notification.RunningNotice
+import com.github.e0ipso.tokkl.pomodoro.ExactAlarmCheck
+import com.github.e0ipso.tokkl.pomodoro.PomodoroNotificationMemory
+import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionPoster
+import com.github.e0ipso.tokkl.pomodoro.RingingServiceCheck
+import com.github.e0ipso.tokkl.pomodoro.SharedNotificationId
+import com.github.e0ipso.tokkl.reminder.ReminderInputs
+import com.github.e0ipso.tokkl.reminder.ReminderNotice
+import com.github.e0ipso.tokkl.reminder.ReminderPause
+import com.github.e0ipso.tokkl.reminder.RunningEntryStop
+import com.github.e0ipso.tokkl.reports.CsvMissing
 import com.github.e0ipso.tokkl.reports.ReportExportController
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountRefreshListener
+import com.github.e0ipso.tokkl.session.RefreshRequest
 import com.github.e0ipso.tokkl.session.SignOutPhase
+import com.github.e0ipso.tokkl.shortcuts.PublishedShortcuts
 import com.github.e0ipso.tokkl.signin.SignIn
 import com.github.e0ipso.tokkl.storage.ClearableStore
 import com.github.e0ipso.tokkl.storage.ValueStore
 import com.github.e0ipso.tokkl.timerstate.TimerSyncClock
+import com.github.e0ipso.tokkl.timerstate.TimerSyncConnections
 import com.github.e0ipso.tokkl.ui.theme.SectionHue
+import com.github.e0ipso.tokkl.widget.WidgetRedraw
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import org.junit.Assert.assertEquals
@@ -64,6 +83,27 @@ class AppModulesTest {
                 ReportExportController::class,
                 Route::class,
                 SectionHue::class,
+                // The named callbacks a definition builds as a lambda or an object, and the
+                // collaborators it makes for one component.
+                RefreshRequest::class,
+                CapabilityCheck::class,
+                CapabilityMissing::class,
+                ChangeSenderEvents::class,
+                TimerSyncConnections::class,
+                FavoritesStore::class,
+                ExactAlarmCheck::class,
+                RingingServiceCheck::class,
+                PomodoroNotificationMemory::class,
+                PomodoroSessionPoster::class,
+                SharedNotificationId::class,
+                RunningNotice::class,
+                ReminderInputs::class,
+                ReminderNotice::class,
+                RunningEntryStop::class,
+                ReminderPause::class,
+                PublishedShortcuts::class,
+                WidgetRedraw::class,
+                CsvMissing::class,
             ),
         )
     }

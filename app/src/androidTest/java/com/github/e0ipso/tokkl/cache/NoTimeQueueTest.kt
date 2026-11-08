@@ -38,7 +38,13 @@ class NoTimeQueueTest {
     @Before
     fun open() {
         database = Room.inMemoryDatabaseBuilder(context, CacheDatabase::class.java).build()
-        queue = ChangeQueue(database, Dispatchers.IO, onQueued = {}, clock = Clock.fixed(NOW, ZoneOffset.UTC))
+        queue = ChangeQueue(
+            database,
+            Dispatchers.IO,
+            onQueued = {},
+            clock = Clock.fixed(NOW, ZoneOffset.UTC),
+            spans = ServerSpans.Unsnapped,
+        )
     }
 
     @After

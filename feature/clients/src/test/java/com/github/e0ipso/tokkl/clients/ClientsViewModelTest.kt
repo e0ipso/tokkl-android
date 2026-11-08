@@ -10,7 +10,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import mockwebserver3.Dispatcher
@@ -75,6 +77,9 @@ class ClientsViewModelTest {
             refreshCache = { refreshes++ },
             scope = CoroutineScope(Dispatchers.Unconfined),
             io = Dispatchers.Unconfined,
+            cachedClients = flowOf(emptyList()),
+            offline = MutableStateFlow(false),
+            appEvents = emptyFlow(),
         )
     }
 
@@ -144,6 +149,7 @@ class ClientsViewModelTest {
             io = Dispatchers.Unconfined,
             cachedClients = MutableStateFlow(listOf(CACHED_ACME, CachedClient(9, 8, "Elsewhere", archived = false))),
             offline = offline,
+            appEvents = emptyFlow(),
         )
         val reader = scope.launch { page.page.collect {} }
         page.open()

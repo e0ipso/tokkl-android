@@ -36,14 +36,17 @@ internal fun accountReminderSync(
     }
 
     return ReminderSync(
-        latest = { ReminderInput(cache.running.first()?.entry?.takeIf { session.isSignedIn() }, settings.state.value) },
-        currentId = changes::currentId,
+        inputs = { ReminderInput(cache.running.first()?.entry?.takeIf { session.isSignedIn() }, settings.state.value) },
+        ids = changes,
         timers = store.timers,
-        schedule = work::schedule,
-        cancel = work::cancel,
-        post = { timer -> notifier.post(timer, pausable = runningNow(changes.currentId(timer.id))?.pausable == true) },
-        remove = notifier::remove,
-        stop = changes::stop,
+        delays = work,
+        notice = object : ReminderNotice {
+            override suspend fun post(timer: ReminderTimer) =
+                notifier.post(timer, pausable = runningNow(changes.currentId(timer.id))?.pausable == true)
+
+            override fun remove() = notifier.remove()
+        },
+        stop = { entryId -> changes.stop(entryId) },
         pause = { entryId ->
             runningNow(entryId)?.let { surfaceActions.tap(TimerSurfaceAction.Pause, it.target) as? SurfaceTap.Request }
         },

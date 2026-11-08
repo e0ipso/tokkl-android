@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import androidx.annotation.VisibleForTesting
+import com.github.e0ipso.tokkl.capabilities.CapabilityCheck
 import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.platform.mainActivityIntent
 import com.github.e0ipso.tokkl.timerstate.PomodoroAlarmScheduler
@@ -23,6 +24,11 @@ import org.koin.core.component.get
 import org.koin.core.component.inject
 import java.time.Instant
 import java.util.concurrent.CountDownLatch
+
+/** Whether Android refuses exact alarms to the app now, as `AlarmManager.canScheduleExactAlarms` says. */
+fun interface ExactAlarmCheck {
+    fun denied(): Boolean
+}
 
 /**
  * Arms one [AlarmManager.setAlarmClock] at a phase's planned end. That is the exact alarm the
@@ -43,17 +49,18 @@ import java.util.concurrent.CountDownLatch
  * @param timerSyncStarts whether the account's server has the timer API, so the boot and update
  *   broadcasts must start the timer sync service and arm the held phase again. Read on every
  *   change, off the main thread.
+ * @param exactAlarms whether Android refuses exact alarms now.
  */
 class AlarmClockPomodoroScheduler(
     private val context: Context,
-    private val timerSyncStarts: () -> Boolean = { false },
-    private val exactAlarmsAllowed: (() -> Boolean)? = null,
+    private val timerSyncStarts: CapabilityCheck,
+    private val exactAlarms: ExactAlarmCheck,
 ) : PomodoroAlarmScheduler,
     TimerSyncWatcher {
     private val manager = context.getSystemService(AlarmManager::class.java)
 
     override val permissionDenied: Boolean
-        get() = !(exactAlarmsAllowed?.invoke() ?: manager.canScheduleExactAlarms())
+        get() = exactAlarms.denied()
 
     override fun schedule(triggerAt: Instant, phase: PomodoroPhaseKey): Boolean {
         if (permissionDenied) return scheduleRedraw(triggerAt, phase)
@@ -93,7 +100,7 @@ class AlarmClockPomodoroScheduler(
     }
 
     private fun applyRearmReceiver() {
-        val state = if (timerSyncStarts()) {
+        val state = if (timerSyncStarts.offered()) {
             PackageManager.COMPONENT_ENABLED_STATE_ENABLED
         } else {
             PackageManager.COMPONENT_ENABLED_STATE_DISABLED

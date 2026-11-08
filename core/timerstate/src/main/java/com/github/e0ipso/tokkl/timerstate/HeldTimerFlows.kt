@@ -12,6 +12,16 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
 
+/** The too-short pomodoro notice of the signed-in account, such as [HeldTimerFlows] keeps. */
+interface DiscardNotices {
+
+    /** The too-short pomodoro of the account's timer state that no screen has shown yet. */
+    val discardNotice: Flow<DiscardedPomodoro?>
+
+    /** Takes the [discardNotice] on show, or returns null when none is left to show. */
+    suspend fun takeDiscardNotice(): DiscardedPomodoro?
+}
+
 /**
  * The signed-in account's held timer state, as flows that follow [timerStates] across sign-ins.
  * Each loads the stored state off the main thread, on [io]. [session] loads the capabilities
@@ -22,7 +32,7 @@ class HeldTimerFlows(
     private val timerStates: AccountTimerStates,
     private val capabilities: CapabilitiesSource,
     private val io: CoroutineContext,
-) {
+) : DiscardNotices {
 
     /** The signed-in account's held timer state, or null without one. */
     val held: Flow<HeldTimerState?> =
@@ -36,13 +46,10 @@ class HeldTimerFlows(
         combine(held, flow { emitAll(capabilities.state) }) { held, flags -> held.takeIf { flags.timerState } }
             .flowOn(io)
 
-    /**
-     * Takes the [discardNotice] on show, recording it as shown in the account's timer state
-     * store, on [io].
-     */
-    suspend fun takeDiscardNotice(): DiscardedPomodoro? = withContext(io) { timerStates.source.takeDiscardNotice() }
+    /** Records the notice as shown in the account's timer state store, on [io]. */
+    override suspend fun takeDiscardNotice(): DiscardedPomodoro? =
+        withContext(io) { timerStates.source.takeDiscardNotice() }
 
-    /** The too-short pomodoro of the signed-in account's timer state that no screen has shown yet. */
-    val discardNotice: Flow<DiscardedPomodoro?> =
+    override val discardNotice: Flow<DiscardedPomodoro?> =
         timerStates.states.flatMapLatest { it.source.discardNotice }.flowOn(io)
 }

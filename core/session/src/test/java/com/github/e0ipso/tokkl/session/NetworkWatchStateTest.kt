@@ -7,7 +7,7 @@ class NetworkWatchStateTest {
     @Test
     fun initialAndUnchangedReportsAskNothing() {
         val events = mutableListOf<Boolean>()
-        val state = NetworkWatchState("wifi", online = true, validated = true, changed = { events += it })
+        val state = NetworkWatchState("wifi", online = true, validated = true, listener = { events += it })
 
         state.available("wifi")
         repeat(3) { state.capabilities("wifi", online = true, validated = true) }
@@ -18,7 +18,7 @@ class NetworkWatchStateTest {
     @Test
     fun aRouteThatBecomesValidatedReportsOnlineAgain() {
         val events = mutableListOf<Boolean>()
-        val state = NetworkWatchState("mobile", online = true, validated = false, changed = { events += it })
+        val state = NetworkWatchState("mobile", online = true, validated = false, listener = { events += it })
 
         state.capabilities("mobile", online = true, validated = true)
         state.capabilities("mobile", online = true, validated = true)
@@ -29,7 +29,7 @@ class NetworkWatchStateTest {
     @Test
     fun aNewDefaultReportsOnlineAndIgnoresTheOldNetworksLateLoss() {
         val events = mutableListOf<Boolean>()
-        val state = NetworkWatchState("mobile", online = true, validated = true, changed = { events += it })
+        val state = NetworkWatchState("mobile", online = true, validated = true, listener = { events += it })
 
         state.available("wifi")
         state.capabilities("wifi", online = true, validated = true)

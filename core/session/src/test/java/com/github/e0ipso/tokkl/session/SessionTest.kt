@@ -25,6 +25,8 @@ class SessionTest {
         tokens = tokens,
         http = TestApi(SERVER).http,
         io = Dispatchers.Unconfined,
+        trustListener = null,
+        successListener = null,
         exports = ExportAccount(),
         exportFiles = ExportFiles {},
     )

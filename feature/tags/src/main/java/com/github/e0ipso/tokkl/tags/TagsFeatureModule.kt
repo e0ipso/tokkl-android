@@ -24,7 +24,7 @@ val tagsFeatureModule = module {
         val scope = viewModelCoroutineScope()
         TagsViewModel(
             repository = get(),
-            workspaceId = accountSettings::defaultWorkspaceId,
+            workspaceId = accountSettings,
             refreshCache = get<AccountRefresh>()::refreshAfterChange,
             scope = scope,
             io = io(),

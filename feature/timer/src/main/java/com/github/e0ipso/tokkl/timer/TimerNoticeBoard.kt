@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.timer
 
 import com.github.e0ipso.tokkl.api.DiscardedPomodoro
 import com.github.e0ipso.tokkl.timernotice.TimerNotice
+import com.github.e0ipso.tokkl.timerstate.DiscardNotices
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,10 +12,9 @@ import kotlinx.coroutines.flow.combine
  * The timer's notices: failed pause chain actions, and the too-short pomodoro a screen claims
  * before it shows it.
  *
- * @param takeDiscardNotice records that a screen shows the too-short pomodoro notice, and returns
- *   it, or null when none is left to show.
+ * @param discards the too-short pomodoro notice, which a screen takes when it shows it.
  */
-internal class TimerNoticeBoard(private val takeDiscardNotice: suspend () -> DiscardedPomodoro?) {
+internal class TimerNoticeBoard(private val discards: DiscardNotices) {
 
     private val failures = MutableStateFlow<TimerNotice.ActionFailed?>(null)
     private var failureCount = 0L
@@ -45,7 +45,7 @@ internal class TimerNoticeBoard(private val takeDiscardNotice: suspend () -> Dis
             if (claimedDiscard.value == notice) {
                 notice
             } else {
-                takeDiscardNotice()?.let { taken ->
+                discards.takeDiscardNotice()?.let { taken ->
                     TimerNotice.PomodoroDiscarded(
                         taken.entryId,
                     ).also { claimedDiscard.value = it }

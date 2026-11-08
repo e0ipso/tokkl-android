@@ -22,6 +22,7 @@ val signInFeatureModule = module {
     single { AccountSessionWriter(get(), get(), get(), get(), get(), get(), get()) } bind SessionWriter::class
 
     viewModel { params ->
+        val refresh = get<AccountRefresh>()
         SignInViewModel(
             // Runs on the IO thread, since the stores touch the disk.
             signIn = SignIn(
@@ -35,9 +36,9 @@ val signInFeatureModule = module {
             cooldowns = get<SignInCooldownStore>(),
             scope = viewModelCoroutineScope(),
             io = io(),
-            clock = System::currentTimeMillis,
+            clock = get(),
             // A sign-in loads the account settings and the cache, as coming to the foreground does.
-            onSignedIn = get<AccountRefresh>()::refresh,
+            onSignedIn = { refresh.refresh() },
         ).also { model -> params.getOrNull<SignInAgain>()?.let(model::signInAgain) }
     }
 

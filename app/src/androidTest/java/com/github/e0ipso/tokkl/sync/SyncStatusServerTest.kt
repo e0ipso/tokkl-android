@@ -23,6 +23,7 @@ import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.cache.CacheDatabase
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.cache.ServerSpans
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.discarded
@@ -47,6 +48,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -216,7 +218,13 @@ class SyncStatusServerTest {
         // This represents a queue written by a previous process: no in-memory sender event.
         val database = CacheDatabase.open(context)
         try {
-            val quietQueue = ChangeQueue(database, Dispatchers.IO, onQueued = {})
+            val quietQueue = ChangeQueue(
+                database,
+                Dispatchers.IO,
+                onQueued = {},
+                clock = Clock.systemUTC(),
+                spans = ServerSpans.Unsnapped,
+            )
             runBlocking {
                 quietQueue.create(
                     workspace,

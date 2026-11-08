@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.notification
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.preferences.ReminderSetting
+import com.github.e0ipso.tokkl.reminder.ReminderDelays
 import com.github.e0ipso.tokkl.reminder.ReminderStore
 import com.github.e0ipso.tokkl.reminder.ReminderWork
 import com.github.e0ipso.tokkl.reminder.ReminderWorker
@@ -27,9 +28,8 @@ val notificationFeatureModule = module {
         RunningNotificationSync(
             running = runningNotificationContents(get<TimerControlsSource>().controls, get()),
             shown = get<RunningNotificationStore>(),
-            currentId = get<ChangeQueue>()::currentId,
-            post = notifier::post,
-            remove = notifier::remove,
+            ids = get<ChangeQueue>(),
+            notice = notifier,
             scope = get(),
             io = io(),
         )
@@ -41,7 +41,7 @@ val notificationFeatureModule = module {
     single { ReminderSetting(get<ReminderStore>(), get<Session>(), get(), io()) } bind AccountDataOwner::class
 
     // The running entry's reminder, followed independently of any screen, with its delay in WorkManager.
-    single { ReminderWork(get()) }
+    single { ReminderWork(get(), get()) } bind ReminderDelays::class
     single {
         accountReminderSync(
             androidContext(),

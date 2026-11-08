@@ -39,13 +39,13 @@ class TimerStateSourceTest {
     /** A source as a process starts it: from what the disk holds. */
     private fun source() = TimerStateSource(
         initial = disk?.let(::decodeStoredTimerState),
-        save = {
+        store = {
             saves++
             disk = encodeStoredTimerState(it)
         },
         cache = cache,
         clock = device,
-        onRunningEnded = { runningEnded++ },
+        runningEnded = { runningEnded++ },
     )
 
     private fun stored(): StoredTimerState? = disk?.let(::decodeStoredTimerState)

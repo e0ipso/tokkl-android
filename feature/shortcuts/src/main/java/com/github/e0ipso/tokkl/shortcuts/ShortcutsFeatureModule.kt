@@ -15,8 +15,7 @@ val shortcutsFeatureModule = module {
         val launcher = LauncherShortcuts(androidContext())
         FavoriteShortcutSync(
             shortcuts = favoriteShortcutLists(androidContext(), launcher, get(), get()),
-            published = launcher::published,
-            publish = launcher::publish,
+            launcher = launcher,
             scope = get(),
             io = io(),
         )

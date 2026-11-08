@@ -18,7 +18,7 @@ import java.time.Clock
  * The account settings are not cached here. AccountSettingsSource keeps them and stays their one
  * source of truth.
  */
-class AccountCache(private val database: CacheDatabase, private val clock: Clock = Clock.systemUTC()) :
+class AccountCache(private val database: CacheDatabase, private val clock: Clock) :
     CurrentEntryCache,
     AccountDataOwner {
 

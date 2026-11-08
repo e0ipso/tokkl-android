@@ -61,6 +61,7 @@ import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.entryfields.resolveRange
 import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.orFail
+import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.time.SnappedSpan
@@ -69,7 +70,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -93,6 +96,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
@@ -810,6 +814,10 @@ class EntryFormServerTest {
             app.accountSettings.state,
             app.changes,
             scope,
+            clock = Clock.systemUTC(),
+            allDay = flowOf(false),
+            picker = flowOf(PickerSource()),
+            offline = MutableStateFlow(false),
         )
         val collector = scope.launch { model.state.collect {} }
         try {

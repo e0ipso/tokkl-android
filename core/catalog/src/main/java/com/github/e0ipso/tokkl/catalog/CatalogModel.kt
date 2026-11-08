@@ -2,6 +2,8 @@ package com.github.e0ipso.tokkl.catalog
 
 import androidx.compose.runtime.Immutable
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.session.DefaultWorkspace
+import com.github.e0ipso.tokkl.session.RefreshRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
@@ -72,8 +74,8 @@ data class CatalogState<D, O>(
  */
 class CatalogModel<D, O>(
     private val repository: CatalogRepository<D>,
-    private val workspaceId: () -> Long?,
-    private val refreshCache: () -> Unit,
+    private val workspaceId: DefaultWorkspace,
+    private val refreshCache: RefreshRequest,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
 ) : PageEvents {
@@ -89,7 +91,7 @@ class CatalogModel<D, O>(
     private var workspace: Long? = null
 
     /** The workspace the page manages: the one the data came from, or else the stored one, or null. */
-    fun workspace(): Long? = workspace ?: workspaceId()
+    fun workspace(): Long? = workspace ?: workspaceId.defaultWorkspaceId()
 
     /** Loads the data. Does nothing while the page is open, so turning the phone sends no request. */
     override fun open() = reloads.open()
@@ -156,7 +158,7 @@ class CatalogModel<D, O>(
             val answer = withContext(io + NonCancellable) { request(workspace) }
             // The page closed while the request ran. What the server accepted still reaches the cache.
             if (!opened) {
-                if (answer is ApiResult.Success) refreshCache()
+                if (answer is ApiResult.Success) refreshCache.request()
                 return@launch
             }
             when (answer) {
@@ -169,7 +171,7 @@ class CatalogModel<D, O>(
                             done = done(answer.value),
                         )
                     }
-                    refreshCache()
+                    refreshCache.request()
                 }
 
                 is ApiResult.Failure -> {
@@ -189,7 +191,7 @@ class CatalogModel<D, O>(
     private fun load() {
         loading?.cancel()
         mutableState.update { it.copy(loading = true) }
-        val stored = workspaceId()
+        val stored = workspaceId.defaultWorkspaceId()
         loading = scope.launch {
             // A cancelled load cancels its requests and drops its answer.
             val answer = withContext(io) { read(stored) }

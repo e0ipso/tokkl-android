@@ -1,6 +1,8 @@
 package com.github.e0ipso.tokkl.timer
 
 import com.github.e0ipso.tokkl.api.ApiClientProvider
+import com.github.e0ipso.tokkl.capabilities.CapabilityCheck
+import com.github.e0ipso.tokkl.preferences.PreferenceCodec
 import com.github.e0ipso.tokkl.preferences.StoredPreference
 import com.github.e0ipso.tokkl.preferences.SyncedPreference
 import com.github.e0ipso.tokkl.session.AccountDataOwner
@@ -37,7 +39,7 @@ typealias StoredTimerView = StoredPreference<TimerView>
 class TimerViewSetting(
     store: ClearableStore<StoredTimerView>,
     client: ApiClientProvider,
-    private val keepsTimerView: () -> Boolean,
+    private val keepsTimerView: CapabilityCheck,
     scope: CoroutineScope,
     io: CoroutineContext,
 ) : TimerViewChoice,
@@ -57,8 +59,11 @@ class TimerViewSetting(
         scope,
         io,
         default = TimerView.LIST,
-        fromServer = { it.timerView() },
-        body = { view -> buildJsonObject { put(PREFERENCE, view.preferenceValue) } },
+        codec = object : PreferenceCodec<TimerView> {
+            override fun fromServer(preferences: MePreferences) = preferences.timerView()
+
+            override fun body(value: TimerView) = buildJsonObject { put(PREFERENCE, value.preferenceValue) }
+        },
     )
 
     override val view: StateFlow<TimerView> get() = preference.value

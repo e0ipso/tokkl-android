@@ -24,7 +24,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -76,10 +75,10 @@ class EntryFormViewModel(
     private val accountSettings: StateFlow<AccountSettings?>,
     private val changes: EntryChanges,
     scope: CoroutineScope,
-    private val clock: Clock = Clock.systemUTC(),
-    allDay: Flow<Boolean> = flowOf(false),
-    picker: Flow<PickerSource> = flowOf(PickerSource()),
-    val offline: StateFlow<Boolean> = MutableStateFlow(false),
+    private val clock: Clock,
+    allDay: Flow<Boolean>,
+    picker: Flow<PickerSource>,
+    val offline: StateFlow<Boolean>,
 ) : ViewModel(scope) {
 
     private val phase = MutableStateFlow<Phase>(Phase.Closed)

@@ -37,7 +37,7 @@ class PomodoroWidgetRedrawTest {
     @Test fun nativeFallbackRedrawAcceptsOnlyTheHeldPhaseAndNeverStartsRinging() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val app = fixture.app
-        val scheduler = AlarmClockPomodoroScheduler(context, exactAlarmsAllowed = { false })
+        val scheduler = AlarmClockPomodoroScheduler(context, timerSyncStarts = { false }, exactAlarms = { true })
         NativeWidget(PomodoroWidgetReceiver::class.java).use { host ->
             val held = HeldPhases.hold(overtime = Duration.ofSeconds(-6))
             host.awaitDescription(context.getString(R.string.pomodoro_remaining))

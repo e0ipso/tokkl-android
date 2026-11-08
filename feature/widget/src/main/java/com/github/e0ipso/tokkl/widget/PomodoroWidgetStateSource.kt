@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import java.time.Instant
+import java.time.Clock
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -36,6 +36,7 @@ class PomodoroWidgetStateSource(
     accountSettings: AccountSettingsSource,
     pomodoroDefaults: PomodoroDefaultsSetting,
     session: Session,
+    clock: Clock,
     io: CoroutineContext,
 ) {
 
@@ -44,6 +45,7 @@ class PomodoroWidgetStateSource(
             held.held.map { held ->
                 held?.let { it.state.pomodoro?.phase?.plannedEnd?.minus(it.clockOffset) }
             },
+            clock,
         )
         val catalog = combine(
             cache.projects,
@@ -71,7 +73,7 @@ class PomodoroWidgetStateSource(
                     remembered = fields.load(owner.account),
                     projects = projects,
                     tasks = tasks,
-                    deviceNow = Instant.now(),
+                    deviceNow = clock.instant(),
                     ringing = ringing,
                 )
             }

@@ -9,6 +9,8 @@ import com.github.e0ipso.tokkl.api.TrashEntry
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -43,6 +45,9 @@ class TrashViewModelTest {
             trashMissing = { missing++ },
             scope = CoroutineScope(Dispatchers.Unconfined),
             io = Dispatchers.Unconfined,
+            settings = MutableStateFlow(null),
+            offline = MutableStateFlow(false),
+            appEvents = emptyFlow(),
         )
     }
 

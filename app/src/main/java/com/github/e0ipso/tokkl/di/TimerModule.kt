@@ -7,14 +7,18 @@ import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
+import com.github.e0ipso.tokkl.timerstate.CurrentHeldState
+import com.github.e0ipso.tokkl.timerstate.CurrentTimerControls
+import com.github.e0ipso.tokkl.timerstate.DiscardNotices
 import com.github.e0ipso.tokkl.timerstate.ElapsedTimerSyncClock
 import com.github.e0ipso.tokkl.timerstate.HeldTimerFlows
 import com.github.e0ipso.tokkl.timerstate.PauseActions
 import com.github.e0ipso.tokkl.timerstate.SessionActions
+import com.github.e0ipso.tokkl.timerstate.SignedInAccountName
+import com.github.e0ipso.tokkl.timerstate.SignedInTimerState
 import com.github.e0ipso.tokkl.timerstate.TimerActions
 import com.github.e0ipso.tokkl.timerstate.TimerControlsSource
 import com.github.e0ipso.tokkl.timerstate.TimerEventConnections
-import com.github.e0ipso.tokkl.timerstate.TimerStateSource
 import com.github.e0ipso.tokkl.timerstate.TimerStateStore
 import com.github.e0ipso.tokkl.timerstate.TimerSurfaceActions
 import com.github.e0ipso.tokkl.timerstate.TimerSync
@@ -32,9 +36,14 @@ import org.koin.dsl.module
 internal val timerModule = module {
     single { TimerStateStore(androidContext()) } bind AccountDataOwner::class
 
-    single { AccountTimerStates(get(), get(), get(), get(), get()) } bind AccountDataOwner::class
-    single { HeldTimerFlows(get(), get(), io()) }
-    single { TimerControlsSource(get(), get(), get(), io()) }
+    single { AccountTimerStates(get(), get(), get(), get(), get(), get()) } binds arrayOf(
+        AccountDataOwner::class,
+        SignedInTimerState::class,
+        SignedInAccountName::class,
+        CurrentHeldState::class,
+    )
+    single { HeldTimerFlows(get(), get(), io()) } bind DiscardNotices::class
+    single { TimerControlsSource(get(), get(), get(), io()) } bind CurrentTimerControls::class
 
     // Pause, Resume and Discard, and a Pomodoro session's Start, Next phase and End, sent to the
     // server at once and never queued. Each answer, refusals included, goes to the account's
@@ -42,7 +51,7 @@ internal val timerModule = module {
     single {
         TimerActions(
             client = get<Session>(),
-            source = get<AccountTimerStates>()::source,
+            states = get<AccountTimerStates>(),
             io = io(),
         )
     } binds arrayOf(PauseActions::class, SessionActions::class)
@@ -53,11 +62,11 @@ internal val timerModule = module {
     // [TimerActions].
     single {
         TimerSurfaceActions(
-            controls = get<TimerControlsSource>()::current,
-            account = get<AccountTimerStates>()::account,
+            controls = get<TimerControlsSource>(),
+            account = get<AccountTimerStates>(),
             changes = get<ChangeQueue>(),
             server = get<TimerActions>(),
-            sendQueued = get<ChangeSender>()::sendAndWait,
+            sendQueued = get<ChangeSender>(),
         )
     }
 
@@ -71,7 +80,7 @@ internal val timerModule = module {
     single {
         val scope = CoroutineScope(SupervisorJob() + get<CoroutineDispatcher>(DefaultDispatcher))
         val connections = TimerEventConnections(get(), get(), get(), get(), scope, io())
-        TimerSync<TimerStateSource>(ElapsedTimerSyncClock(scope), connections::open, connections::stopped)
+        TimerSync(ElapsedTimerSyncClock(scope), connections)
     }
 
     single {

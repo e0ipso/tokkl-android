@@ -17,6 +17,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onEach
@@ -391,6 +392,9 @@ class HistoryViewModelTest {
         scope = scope,
         io = Dispatchers.IO,
         clock = MovableClock(now),
+        ids = { it },
+        overrides = emptyFlow(),
+        appEvents = emptyFlow(),
     )
 
     /**

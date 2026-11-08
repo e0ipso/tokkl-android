@@ -50,6 +50,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.builtins.ListSerializer
@@ -116,6 +118,8 @@ class ProjectsServerTest {
             io = Dispatchers.IO,
             cachedProjects = app.cache.projects,
             cachedClients = app.cache.clients,
+            offline = MutableStateFlow(false),
+            appEvents = emptyFlow(),
         )
     }
 

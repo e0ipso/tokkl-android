@@ -21,6 +21,7 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -82,6 +83,10 @@ class TimerViewModelTest {
             scope = scope,
             clock = clock,
             trace = trace,
+            pauseChain = null,
+            sendQueued = {},
+            discards = discardNotices(),
+            timerApi = flowOf(true),
         )
         // The screen collects the state while it shows.
         scope.launch { model.state.collect {} }

@@ -93,6 +93,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import java.time.Clock
 import java.time.LocalDate
 import kotlin.math.abs
 import com.github.e0ipso.tokkl.core.ui.R as UiR
@@ -395,12 +396,14 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
                     httpClient = appHttp.instance,
                     configured = appConfiguredServer,
                     io = Dispatchers.IO,
+                    signedInAccount = { null },
                 ),
                 trust = ServerTrustStore(context),
                 cooldowns = SignInCooldownStore(context),
                 scope = scope,
                 io = Dispatchers.IO,
-                clock = System::currentTimeMillis,
+                clock = Clock.systemUTC(),
+                onSignedIn = {},
             )
         }
 

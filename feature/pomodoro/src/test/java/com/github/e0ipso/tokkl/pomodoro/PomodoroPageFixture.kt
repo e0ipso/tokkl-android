@@ -215,6 +215,7 @@ internal class PageFixture(
         sendQueued = { queueSends += "send" },
         alarmProbe = { alarmsDenied },
         picker = picker,
+        offline = MutableStateFlow(false),
     )
 
     fun close() = scope.cancel()

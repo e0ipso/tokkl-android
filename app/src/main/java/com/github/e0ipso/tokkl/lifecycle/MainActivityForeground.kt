@@ -42,10 +42,11 @@ internal class MainActivityForeground(
     private val http: SharedHttpClient,
     defaultNetwork: DefaultNetwork,
     private val scope: CoroutineScope,
+    main: CoroutineDispatcher,
     private val io: CoroutineDispatcher,
 ) : DefaultLifecycleObserver {
 
-    private val network = NetworkWatch(defaultNetwork, scope, changed = ::networkChanged)
+    private val network = NetworkWatch(defaultNetwork, scope, main, listener = ::networkChanged)
     private var notificationsAllowed = allowsNotifications()
 
     override fun onStart(owner: LifecycleOwner) {

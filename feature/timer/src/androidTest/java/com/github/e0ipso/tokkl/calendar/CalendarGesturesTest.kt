@@ -33,6 +33,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -254,6 +255,8 @@ class CalendarGesturesTest {
             io = Dispatchers.IO,
             clock = CLOCK,
             allDayOffered = flowOf(allDayOffered),
+            overrides = emptyFlow(),
+            appEvents = emptyFlow(),
         )
         composeRule.setContent {
             TokklTheme(darkTheme = false) {

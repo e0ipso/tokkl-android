@@ -2,18 +2,19 @@ package com.github.e0ipso.tokkl.timer
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.github.e0ipso.tokkl.api.DiscardedPomodoro
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.cache.QueueSender
 import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
 import com.github.e0ipso.tokkl.cache.fields
 import com.github.e0ipso.tokkl.entryfields.withPicked
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.timernotice.TimerNotice
+import com.github.e0ipso.tokkl.timerstate.DiscardNotices
 import com.github.e0ipso.tokkl.timerstate.PauseActions
 import com.github.e0ipso.tokkl.timerstate.TimerControls
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
@@ -29,7 +30,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -60,10 +60,8 @@ import java.time.temporal.ChronoUnit
  * @param pauseChain the server's Pause, Resume and Discard, or null where the app sends none.
  * @param sendQueued sends the queue now and waits for it, so a description typed before Pause
  *   reaches the server before the Pause does.
- * @param discardNotices the too-short pomodoro whose notice no screen has shown, from the
- *   account's timer state.
- * @param takeDiscardNotice records that a screen shows that notice, and returns it, or null when
- *   none is left to show.
+ * @param discards the too-short pomodoro whose notice no screen has shown, from the account's
+ *   timer state, which a screen takes when it shows it.
  * @param timerApi whether the server offers the timer API, which decides whether a timer that
  *   the cache does not show yet offers Pause.
  */
@@ -74,13 +72,12 @@ class TimerViewModel(
     val accountSettings: StateFlow<AccountSettings?>,
     private val changes: EntryChanges,
     scope: CoroutineScope,
-    private val clock: Clock = Clock.systemUTC(),
-    private val trace: TapTrace = TapTrace.None,
-    private val pauseChain: PauseActions? = null,
-    private val sendQueued: suspend () -> Unit = {},
-    discardNotices: Flow<DiscardedPomodoro?> = flowOf(null),
-    takeDiscardNotice: suspend () -> DiscardedPomodoro? = { null },
-    timerApi: Flow<Boolean> = flowOf(true),
+    private val clock: Clock,
+    private val trace: TapTrace,
+    private val pauseChain: PauseActions?,
+    private val sendQueued: QueueSender,
+    discards: DiscardNotices,
+    timerApi: Flow<Boolean>,
 ) : ViewModel(scope),
     TimerNoticeQueue {
 
@@ -122,7 +119,7 @@ class TimerViewModel(
         timerState(running, settings?.defaultWorkspaceId, taps, offered).labelled(names.projects, names.tasks)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), TimerState.Loading)
 
-    private val notices = TimerNoticeBoard(takeDiscardNotice)
+    private val notices = TimerNoticeBoard(discards)
 
     private val taps = TimerTapState(local, cached, viewModelScope, trace, ::snapshot)
 
@@ -141,7 +138,7 @@ class TimerViewModel(
      * the latest failed pause chain action, then a too-short pomodoro no screen has shown yet. A
      * screen [claim]s a notice before it shows it and calls [noticeShown] after.
      */
-    override val notice: StateFlow<TimerNotice?> = notices.notices(discardNotices)
+    override val notice: StateFlow<TimerNotice?> = notices.notices(discards.discardNotice)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
 
     /**

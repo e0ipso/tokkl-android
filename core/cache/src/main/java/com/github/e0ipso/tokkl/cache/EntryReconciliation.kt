@@ -21,7 +21,7 @@ fun reconcileEntryRows(
 /** Remaps both the tombstone and its restored fallback after a local create reaches the server. */
 suspend fun resolveEntryOverrides(
     overrides: Map<Long, CachedTimeEntry?>,
-    currentId: suspend (Long) -> Long,
+    ids: CurrentEntryIds,
 ): Map<Long, CachedTimeEntry?> = overrides.map { (id, entry) ->
-    currentId(id) to entry?.let { it.copy(id = currentId(it.id)) }
+    ids.currentId(id) to entry?.let { it.copy(id = ids.currentId(it.id)) }
 }.toMap()

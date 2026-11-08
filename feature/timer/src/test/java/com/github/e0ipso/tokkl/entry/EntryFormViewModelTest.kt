@@ -9,6 +9,7 @@ import com.github.e0ipso.tokkl.cache.EntryWithSendState
 import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.picker.Picked
+import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.session.AccountSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExecutorCoroutineDispatcher
@@ -17,6 +18,7 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -66,6 +68,8 @@ class EntryFormViewModelTest {
             scope = scope,
             clock = Clock.fixed(NOW, ZoneOffset.UTC),
             allDay = allDay,
+            picker = flowOf(PickerSource()),
+            offline = MutableStateFlow(false),
         )
         // The screen collects the state while it shows.
         scope.launch { model.state.collect {} }

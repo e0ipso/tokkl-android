@@ -7,6 +7,7 @@ import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.HttpStatus
 import com.github.e0ipso.tokkl.api.TrashEntry
+import com.github.e0ipso.tokkl.capabilities.CapabilityMissing
 import com.github.e0ipso.tokkl.catalog.PageEvents
 import com.github.e0ipso.tokkl.catalog.PageReloads
 import com.github.e0ipso.tokkl.catalog.ServerProblem
@@ -15,6 +16,7 @@ import com.github.e0ipso.tokkl.catalog.toServerProblem
 import com.github.e0ipso.tokkl.platform.whileShown
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.AppEvent
+import com.github.e0ipso.tokkl.session.RefreshRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
@@ -23,7 +25,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -95,13 +96,13 @@ data class TrashPageState(
  */
 class TrashViewModel(
     private val repository: TrashRepository,
-    private val refreshCache: () -> Unit,
-    private val trashMissing: () -> Unit,
+    private val refreshCache: RefreshRequest,
+    private val trashMissing: CapabilityMissing,
     scope: CoroutineScope,
     private val io: CoroutineContext,
-    settings: StateFlow<AccountSettings?> = MutableStateFlow(null),
-    offline: StateFlow<Boolean> = MutableStateFlow(false),
-    appEvents: Flow<AppEvent> = emptyFlow(),
+    settings: StateFlow<AccountSettings?>,
+    offline: StateFlow<Boolean>,
+    appEvents: Flow<AppEvent>,
 ) : ViewModel(scope),
     PageEvents {
 
@@ -208,7 +209,7 @@ class TrashViewModel(
         mutableState.update { it.copy(sending = true, changeProblem = null) }
         viewModelScope.launch {
             val answer = withContext(io + NonCancellable) { request(repository) }
-            if (answer is ApiResult.Success && restored) refreshCache()
+            if (answer is ApiResult.Success && restored) refreshCache.request()
             // The page closed while the request ran.
             if (!opened) return@launch
             when (answer) {
@@ -242,7 +243,9 @@ class TrashViewModel(
         loading = viewModelScope.launch {
             // A cancelled load cancels its request and drops its answer.
             val answer = withContext(io) {
-                repository.list().also { if (it is ApiResult.Failure && it.error.meansNoTrash()) trashMissing() }
+                repository.list().also {
+                    if (it is ApiResult.Failure && it.error.meansNoTrash()) trashMissing.missing()
+                }
             }
             when (answer) {
                 is ApiResult.Success -> mutableState.update {

@@ -17,7 +17,7 @@ import java.time.Instant
 @OptIn(ExperimentalCoroutinesApi::class)
 internal fun pomodoroWidgetDeadlineChanges(
     ends: Flow<Instant?>,
-    clock: Clock = Clock.systemUTC(),
+    clock: Clock,
     wait: suspend (Long) -> Unit = { kotlinx.coroutines.delay(it) },
 ): Flow<Unit> = ends.distinctUntilChanged().flatMapLatest { end ->
     flow {

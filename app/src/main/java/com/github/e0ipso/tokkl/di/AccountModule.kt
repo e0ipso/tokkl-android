@@ -2,10 +2,12 @@ package com.github.e0ipso.tokkl.di
 
 import com.github.e0ipso.tokkl.account.AccountRefreshPipeline
 import com.github.e0ipso.tokkl.account.SendThenRefresh
+import com.github.e0ipso.tokkl.api.TrustListener
 import com.github.e0ipso.tokkl.cache.ChangeSender
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesStore
 import com.github.e0ipso.tokkl.lifecycle.MainActivityForeground
+import com.github.e0ipso.tokkl.platform.MainDispatcher
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaultsSetting
 import com.github.e0ipso.tokkl.preferences.ReminderSetting
@@ -17,7 +19,9 @@ import com.github.e0ipso.tokkl.session.AccountRefreshRequests
 import com.github.e0ipso.tokkl.session.AccountRefreshSteps
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
+import com.github.e0ipso.tokkl.session.AccountSignOut
 import com.github.e0ipso.tokkl.session.AppEvents
+import com.github.e0ipso.tokkl.session.DefaultWorkspace
 import com.github.e0ipso.tokkl.session.ForegroundReads
 import com.github.e0ipso.tokkl.session.ForegroundRefresh
 import com.github.e0ipso.tokkl.session.ServerTrustStore
@@ -27,23 +31,25 @@ import com.github.e0ipso.tokkl.timer.TimerViewSetting
 import com.github.e0ipso.tokkl.timerstate.TimerSyncFollower
 import com.github.e0ipso.tokkl.trust.SessionTrust
 import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsStore
+import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsWriter
 import com.github.e0ipso.tokkl.ui.theme.themeSettingsWithNightMode
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.bind
+import org.koin.dsl.binds
 import org.koin.dsl.module
 
 /** The account's settings, its refresh and capabilities, the theme, trust and sign-out. */
 internal val accountModule = module {
     single { AccountSettingsStore(androidContext()) } bind AccountDataOwner::class
     single { CapabilitiesStore(androidContext()) }
-    single { ThemeSettingsStore(androidContext()) }
+    single { ThemeSettingsStore(androidContext()) } bind ThemeSettingsWriter::class
 
     // Loaded on first use, which is MainActivity's onCreate, on the main thread, so the first frame
     // knows the theme.
     single { themeSettingsWithNightMode(androidContext(), get(), get(), io()) }
 
     // The account settings. The first read loads them from a file of six short values.
-    single { AccountSettingsSource(get<AccountSettingsStore>()) }
+    single { AccountSettingsSource(get<AccountSettingsStore>()) } bind DefaultWorkspace::class
 
     // What the server offers. The first read loads it from a file of a few flags.
     single { CapabilitiesSource(get<CapabilitiesStore>()) }
@@ -104,6 +110,7 @@ internal val accountModule = module {
             http = get(),
             defaultNetwork = get(),
             scope = get(),
+            main = get(MainDispatcher),
             io = io(),
         )
     }
@@ -118,7 +125,7 @@ internal val accountModule = module {
             scope = get(),
             io = io(),
         )
-    } bind AccountDataOwner::class
+    } binds arrayOf(TrustListener::class, AccountDataOwner::class)
 
     signOutSteps()
 
@@ -126,5 +133,5 @@ internal val accountModule = module {
     single { AccountLifetime() }
 
     // Sign-out (docs/PRD.md S6): every [AccountDataOwner], phase by phase in [SignOutPhase] order.
-    single { SignOut(owners = getAll(), lifetime = get(), io = io()) }
+    single { SignOut(owners = getAll(), lifetime = get(), io = io()) } bind AccountSignOut::class
 }

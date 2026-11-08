@@ -8,6 +8,17 @@ import com.github.e0ipso.tokkl.session.SignOutPhase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.io.IOException
+import java.time.Clock
+
+/** The signed-in account's [TimerStateSource], read anew for each call, such as [AccountTimerStates]. */
+fun interface SignedInTimerState {
+    fun timerState(): TimerStateSource
+}
+
+/** The signed-in account's held timer state now, or null without one, such as [AccountTimerStates.held]. */
+fun interface CurrentHeldState {
+    fun held(): HeldTimerState?
+}
 
 /** The account's [TimerStateSource], and the name its timer controls carry in their targets. */
 class AccountTimerState(val source: TimerStateSource, val account: String)
@@ -25,7 +36,11 @@ class AccountTimerStates(
     private val cache: AccountCache,
     private val refreshes: AccountRefreshRequests,
     private val lifetime: AccountLifetime,
-) : AccountDataOwner {
+    private val clock: Clock,
+) : AccountDataOwner,
+    SignedInTimerState,
+    SignedInAccountName,
+    CurrentHeldState {
 
     override val signOutPhase = SignOutPhase.RETIRE_STATE
 
@@ -41,11 +56,15 @@ class AccountTimerStates(
     val source: TimerStateSource
         get() = current().source
 
+    override fun timerState(): TimerStateSource = source
+
     /** The signed-in account's held state now, or null without one. Loads the stored state on first use. */
-    fun held(): HeldTimerState? = source.state.value
+    override fun held(): HeldTimerState? = source.state.value
 
     /** The name the signed-in account's timer controls carry in their targets. */
     fun account(): String = current().account
+
+    override fun name(): String = account()
 
     /** The source and the account name of the account signed in now, read together. */
     fun current(): AccountTimerState {
@@ -87,14 +106,15 @@ class AccountTimerStates(
         return AccountTimerState(
             TimerStateSource(
                 initial = initial,
-                save = { stored ->
+                store = { stored ->
                     store.save(stored)
                     // Under the holder's acceptance lock, for actions and SSE from any surface.
                     lastFields.remember(account, stored.held)
                 },
                 cache = cache,
+                clock = clock,
                 // The state does not carry a stopped entry's stop; the history read does.
-                onRunningEnded = refreshes::refreshAfterChange,
+                runningEnded = refreshes::refreshAfterChange,
             ),
             // Made anew after each sign-in and sign-out, which clear the store.
             account = account,

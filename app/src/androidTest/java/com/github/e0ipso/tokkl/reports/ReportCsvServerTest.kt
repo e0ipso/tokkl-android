@@ -29,6 +29,7 @@ import org.koin.core.context.GlobalContext
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileNotFoundException
+import java.time.Clock
 
 /** Real server CSV bytes through publication and Android's actual read-only content provider. */
 class ReportCsvServerTest {
@@ -36,7 +37,7 @@ class ReportCsvServerTest {
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val context = instrumentation.targetContext
     private val scope = MainScope()
-    private val files = ReportExportFiles(File(context.cacheDir, ReportExportFiles.DIRECTORY))
+    private val files = ReportExportFiles(File(context.cacheDir, ReportExportFiles.DIRECTORY), Clock.systemUTC())
     private lateinit var fixture: ReportAccount
     private lateinit var exporter: ReportExportController
 

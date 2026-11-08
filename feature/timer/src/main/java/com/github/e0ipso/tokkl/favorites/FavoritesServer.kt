@@ -17,19 +17,24 @@ import kotlinx.serialization.json.put
 /** The most favorites Tokkl keeps: `MAX_FAVORITES` in ../tokkl/packages/api/src/models/users.ts. */
 const val MAX_FAVORITES = 9
 
+/** Stores the whole list of timer templates on the server and then in the cache. */
+fun interface FavoritesStore {
+    suspend fun save(favorites: List<EntryFields>): ApiResult<Unit>
+}
+
 /**
  * Saves the account's favorites on the server, then in [cache]. Editing the list needs the
  * server: nothing is queued, and a failure leaves the server and the cache as they were.
  *
  * @param client the signed-in account's API client, or null when signed out.
  */
-class FavoritesServer(private val client: ApiClientProvider, private val cache: AccountCache) {
+class FavoritesServer(private val client: ApiClientProvider, private val cache: AccountCache) : FavoritesStore {
 
     /**
      * Posts [favorites], in order, to `POST /api/v9/me/preferences`, and once the server has
      * stored them, puts them in the cache. Blocks on the disk, so call it on the IO dispatcher.
      */
-    suspend fun save(favorites: List<EntryFields>): ApiResult<Unit> {
+    override suspend fun save(favorites: List<EntryFields>): ApiResult<Unit> {
         val api = client() ?: return ApiResult.Failure(ApiError.AuthFailed)
         return when (
             val answer = api.send(

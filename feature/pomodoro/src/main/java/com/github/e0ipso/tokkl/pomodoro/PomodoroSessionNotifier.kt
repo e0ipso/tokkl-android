@@ -16,11 +16,11 @@ import com.github.e0ipso.tokkl.feature.pomodoro.R
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /** A native countdown crosses zero into negative elapsed overtime without app ticks. */
-class PomodoroSessionNotifier(private val context: Context) {
+class PomodoroSessionNotifier(private val context: Context) : PomodoroSessionPoster {
     private val manager = context.getSystemService(NotificationManager::class.java)
 
     @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-    fun post(content: PomodoroSessionNotificationContent, account: String): Boolean {
+    override fun post(content: PomodoroSessionNotificationContent, account: String): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
         ) {
@@ -50,7 +50,7 @@ class PomodoroSessionNotifier(private val context: Context) {
         }
     }
 
-    fun remove() {
+    override fun remove() {
         manager.cancel(NOTIFICATION_ID)
     }
 

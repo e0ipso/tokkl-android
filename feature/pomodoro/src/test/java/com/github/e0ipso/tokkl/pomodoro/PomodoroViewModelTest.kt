@@ -9,7 +9,9 @@ import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -156,6 +158,7 @@ class PomodoroViewModelTest {
         val f = idle()
         val unread = PomodoroViewModel(
             emptyFlow(), emptyFlow(), f.server, f.changes, f.defaults, f.settings, f.unsent, f.refused, f.scope,
+            sendQueued = {}, alarmProbe = { false }, picker = flowOf(PickerSource()), offline = MutableStateFlow(false),
         )
         assertTrue(unread.state.value.loading)
         assertFalse(unread.state.value.canStart)

@@ -1,11 +1,13 @@
 package com.github.e0ipso.tokkl.sync
 
 import com.github.e0ipso.tokkl.cache.ChangeKind
+import com.github.e0ipso.tokkl.cache.HeldChanges
 import com.github.e0ipso.tokkl.cache.PendingChange
 import com.github.e0ipso.tokkl.session.AccountSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -24,9 +26,13 @@ class NeedsAttentionViewModelTest {
     private val settings = MutableStateFlow<AccountSettings?>(null)
     private val model = NeedsAttentionViewModel(
         attention = NeedsAttention(
-            held = held,
-            release = { true },
-            drop = { true },
+            changes = object : HeldChanges {
+                override val held: Flow<List<PendingChange>> = this@NeedsAttentionViewModelTest.held
+
+                override suspend fun sendAgain(sequence: Long) = true
+
+                override suspend fun discard(sequence: Long) = true
+            },
             afterDiscard = {},
             scope = scope,
         ),

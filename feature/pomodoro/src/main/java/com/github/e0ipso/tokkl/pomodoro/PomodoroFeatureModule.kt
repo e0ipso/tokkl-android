@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.pomodoro
 
+import android.app.AlarmManager
 import android.app.NotificationManager
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.ChangeQueue
@@ -55,7 +56,12 @@ val pomodoroFeatureModule = module {
     // cannot be set, from the platform. Its boot and update receiver also starts the timer sync
     // service.
     single {
-        AlarmClockPomodoroScheduler(androidContext(), timerSyncStarts = get<CapabilitiesSource>()::offersTimerApi)
+        val manager = androidContext().getSystemService(AlarmManager::class.java)
+        AlarmClockPomodoroScheduler(
+            androidContext(),
+            timerSyncStarts = get<CapabilitiesSource>()::offersTimerApi,
+            exactAlarms = { !manager.canScheduleExactAlarms() },
+        )
     } binds arrayOf(PomodoroAlarmScheduler::class, TimerSyncWatcher::class)
 
     // The ringing service at a Pomodoro phase's planned end, as [PomodoroPhaseAlarm] drives it and the Pomodoro widget
@@ -71,11 +77,12 @@ val pomodoroFeatureModule = module {
     // first call loads the held state and the capabilities from disk.
     single {
         PomodoroPhaseAlarm(
-            held = get<AccountTimerStates>()::held,
+            held = get<AccountTimerStates>(),
             available = get<CapabilitiesSource>()::offersTimerApi,
             alarms = get<AlarmClockPomodoroScheduler>(),
             ringing = get<ServicePomodoroRinging>(),
             io = io(),
+            clock = get(),
         )
     }
 
@@ -92,12 +99,10 @@ val pomodoroFeatureModule = module {
             alarm = get(),
             actions = get<TimerActions>(),
             changes = combine(held.held, flow { emitAll(capabilities.state) }, ringing.state) { _, _, _ -> Unit },
-            isSignedIn = session::isSignedIn,
+            session = session,
             serviceRunning = { ringing.state.value.serviceRunning },
-            load = store::load,
-            save = store::save,
-            post = notifier::post,
-            remove = notifier::remove,
+            memory = store,
+            notifications = notifier,
             scope = get(),
             io = io(),
         )
@@ -109,7 +114,7 @@ val pomodoroFeatureModule = module {
         PomodoroSignOut(
             alarm = get(),
             notification = get(),
-            cancelSharedId = { notifications.cancel(PomodoroSessionNotifier.NOTIFICATION_ID) },
+            sharedId = { notifications.cancel(PomodoroSessionNotifier.NOTIFICATION_ID) },
         )
     } bind AccountDataOwner::class
 
@@ -128,8 +133,8 @@ val pomodoroFeatureModule = module {
             unsent = changes.unsentCount,
             refused = changes.held,
             scope = scope,
-            sendQueued = sender::sendAndWait,
-            alarmProbe = alarms::permissionDenied,
+            sendQueued = sender,
+            alarmProbe = { alarms.permissionDenied },
             picker = get<AccountCache>().pickerSource(),
             offline = get<DefaultNetwork>().offlineIn(scope),
         )
@@ -139,6 +144,7 @@ val pomodoroFeatureModule = module {
             held = get<HeldTimerFlows>().session,
             actions = get<TimerActions>(),
             scope = viewModelCoroutineScope(),
+            clock = get(),
         )
     }
 

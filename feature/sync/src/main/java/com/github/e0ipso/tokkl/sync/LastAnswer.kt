@@ -18,7 +18,7 @@ import java.time.Instant
  * later one leaves the later one. The first read loads the stored time, null when the server has
  * not answered since sign-in, on the reading thread.
  */
-class LastAnswer(private val store: ValueStore<Instant?>, private val clock: Clock = Clock.systemUTC()) :
+class LastAnswer(private val store: ValueStore<Instant?>, private val clock: Clock) :
     SuccessListener,
     AccountDataOwner {
 

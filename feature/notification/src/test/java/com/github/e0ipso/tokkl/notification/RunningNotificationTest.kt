@@ -419,9 +419,16 @@ class RunningNotificationTest {
                 load = { shown },
                 save = { followed -> if (failWrites) throw IOException("disk full") else shown = followed },
             ),
-            currentId = { id -> serverIds[id] ?: id },
-            post = { calls += "post ${it.description} ${it.entryId}" },
-            remove = { calls += "remove" },
+            ids = { id -> serverIds[id] ?: id },
+            notice = object : RunningNotice {
+                override fun post(content: RunningNotificationContent) {
+                    calls += "post ${content.description} ${content.entryId}"
+                }
+
+                override fun remove() {
+                    calls += "remove"
+                }
+            },
             scope = CoroutineScope(Dispatchers.Unconfined),
             io = Dispatchers.Unconfined,
         )

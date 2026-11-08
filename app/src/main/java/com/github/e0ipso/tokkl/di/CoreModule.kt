@@ -13,11 +13,13 @@ import com.github.e0ipso.tokkl.platform.CurrentWorkManager
 import com.github.e0ipso.tokkl.platform.DefaultDispatcher
 import com.github.e0ipso.tokkl.platform.DefaultNetwork
 import com.github.e0ipso.tokkl.platform.IoDispatcher
+import com.github.e0ipso.tokkl.platform.MainDispatcher
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.ExportAccount
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.session.SignedInCheck
 import com.github.e0ipso.tokkl.sync.LastAnswer
 import com.github.e0ipso.tokkl.trust.SessionTrust
 import kotlinx.coroutines.CoroutineDispatcher
@@ -32,6 +34,7 @@ import java.time.Clock
 
 /** Dispatchers, the application scope, the wall clock, the shared HTTP client and the signed-in [Session]. */
 internal val coreModule = module {
+    single<CoroutineDispatcher>(MainDispatcher) { Dispatchers.Main.immediate }
     single<CoroutineDispatcher>(IoDispatcher) { Dispatchers.IO }
     single<CoroutineDispatcher>(DefaultDispatcher) { Dispatchers.Default }
 
@@ -75,5 +78,5 @@ internal val coreModule = module {
             exports = get(),
             exportFiles = get(),
         )
-    } binds arrayOf(ApiClientProvider::class, AccountDataOwner::class)
+    } binds arrayOf(ApiClientProvider::class, SignedInCheck::class, AccountDataOwner::class)
 }

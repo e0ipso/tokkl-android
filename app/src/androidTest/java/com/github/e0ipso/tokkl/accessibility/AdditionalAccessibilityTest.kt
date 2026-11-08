@@ -23,6 +23,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.bottomBarItem
 import com.github.e0ipso.tokkl.cache.ChangeKind
+import com.github.e0ipso.tokkl.cache.HeldChanges
 import com.github.e0ipso.tokkl.cache.PendingChange
 import com.github.e0ipso.tokkl.navhost.SignedInFrame
 import com.github.e0ipso.tokkl.navigation.Route
@@ -38,6 +39,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -130,15 +132,20 @@ abstract class AdditionalAccessibilityTest(private val dark: Boolean) {
         )
         var edited: Long? = null
         var resent: Long? = null
+        val refused = held
         val attention = NeedsAttention(
-            held = held,
-            release = {
-                resent = it
-                true
-            },
-            drop = { sequence ->
-                held.value = held.value.filterNot { it.sequence == sequence }
-                true
+            changes = object : HeldChanges {
+                override val held: Flow<List<PendingChange>> = refused
+
+                override suspend fun sendAgain(sequence: Long): Boolean {
+                    resent = sequence
+                    return true
+                }
+
+                override suspend fun discard(sequence: Long): Boolean {
+                    refused.value = refused.value.filterNot { it.sequence == sequence }
+                    return true
+                }
             },
             afterDiscard = {},
             scope = scope,

@@ -37,6 +37,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -119,8 +120,9 @@ class TimerPauseTest {
         clock = clock,
         pauseChain = server,
         sendQueued = { events += "send queued" },
-        discardNotices = discardNotices,
-        takeDiscardNotice = takeDiscardNotice,
+        discards = discardNotices(discardNotices, takeDiscardNotice),
+        trace = TapTrace.None,
+        timerApi = flowOf(true),
     )
 
     @Test
@@ -427,7 +429,13 @@ class TimerPauseTest {
 
     @Test
     fun aTooShortPomodoroIsNoticedOnceEvenWhenItsStateArrivesAgain() {
-        val holder = TimerStateSource(initial = null, save = {}, cache = NoRunningEntries, clock = clock)
+        val holder = TimerStateSource(
+            initial = null,
+            store = {},
+            cache = NoRunningEntries,
+            clock = clock,
+            runningEnded = {},
+        )
         val notices = timerModel(
             discardNotices = holder.discardNotice,
             takeDiscardNotice = { holder.takeDiscardNotice() },

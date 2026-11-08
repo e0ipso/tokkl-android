@@ -13,6 +13,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
@@ -585,6 +586,8 @@ class CalendarViewModelTest {
         io = io,
         clock = CLOCK,
         allDayOffered = flowOf(allDayOffered),
+        overrides = emptyFlow(),
+        appEvents = emptyFlow(),
     )
 
     private fun shown(model: CalendarViewModel, condition: (CalendarState.Shown) -> Boolean): CalendarState.Shown =

@@ -8,6 +8,7 @@ import com.github.e0ipso.tokkl.session.AccountSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
@@ -54,6 +55,9 @@ class CalendarTimeZoneTest {
             scope = CoroutineScope(Dispatchers.Unconfined),
             io = Dispatchers.Unconfined,
             clock = NOW,
+            allDayOffered = flowOf(false),
+            overrides = emptyFlow(),
+            appEvents = emptyFlow(),
         )
 
         val state = model.state.first { it is CalendarState.Shown } as CalendarState.Shown
@@ -100,6 +104,9 @@ class CalendarTimeZoneTest {
             scope = CoroutineScope(Dispatchers.Unconfined),
             io = Dispatchers.Unconfined,
             clock = NOW,
+            allDayOffered = flowOf(false),
+            overrides = emptyFlow(),
+            appEvents = emptyFlow(),
         )
 
         val state = model.state.first { it is CalendarState.Shown } as CalendarState.Shown

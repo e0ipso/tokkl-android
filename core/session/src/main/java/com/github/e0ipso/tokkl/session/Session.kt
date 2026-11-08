@@ -38,11 +38,12 @@ class Session(
     private val tokens: ClearableStore<String>,
     private val http: SharedHttpClient,
     private val io: CoroutineContext,
-    private val trustListener: TrustListener? = null,
-    private val successListener: SuccessListener? = null,
+    private val trustListener: TrustListener?,
+    private val successListener: SuccessListener?,
     private val exports: ExportAccount,
     private val exportFiles: ExportFiles,
 ) : ApiClientProvider,
+    SignedInCheck,
     AccountDataOwner {
 
     override val signOutPhase = SignOutPhase.FORGET_SESSION
@@ -83,7 +84,7 @@ class Session(
      * Signed in means a server is stored and the token decrypts. A Keystore or
      * disk failure counts as signed out, so the user can sign in again.
      */
-    fun isSignedIn(): Boolean = read()?.signedIn == true
+    override fun isSignedIn(): Boolean = read()?.signedIn == true
 
     /**
      * The API client of the signed-in account, or null when signed out. A Keystore or disk

@@ -24,7 +24,7 @@ val clientsFeatureModule = module {
         val scope = viewModelCoroutineScope()
         ClientsViewModel(
             repository = get(),
-            workspaceId = accountSettings::defaultWorkspaceId,
+            workspaceId = accountSettings,
             refreshCache = get<AccountRefresh>()::refreshAfterChange,
             scope = scope,
             io = io(),

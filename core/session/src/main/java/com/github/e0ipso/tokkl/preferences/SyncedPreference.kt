@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.preferences
 
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.capabilities.CapabilityCheck
 import com.github.e0ipso.tokkl.session.MePreferences
 import com.github.e0ipso.tokkl.storage.ClearableStore
 import kotlinx.coroutines.CoroutineScope
@@ -19,6 +20,19 @@ import kotlin.coroutines.CoroutineContext
 /** A preference's value as the phone keeps it, and whether the server still has to get it. */
 data class StoredPreference<out T>(val value: T, val unsent: Boolean)
 
+/** How a [SyncedPreference] reads its value from the server's preferences and posts it back. */
+interface PreferenceCodec<T : Any> {
+
+    /** The stored [value] as the phone shows it, such as moved into its range. */
+    fun loaded(value: T): T = value
+
+    /** The value in a refresh's [preferences]. */
+    fun fromServer(preferences: MePreferences): T
+
+    /** The body that posts [value], with its keys and nothing else. */
+    fun body(value: T): JsonObject
+}
+
 /**
  * One account preference that Tokkl keeps in `/api/v9/me/preferences` and the phone keeps in
  * [store], so a cold start has it before the refresh answers, and offline.
@@ -35,9 +49,7 @@ data class StoredPreference<out T>(val value: T, val unsent: Boolean)
  * @param client the signed-in account's API client, or null when signed out. Runs on [io].
  * @param scope outlives every screen, so leaving the app does not cancel a write.
  * @param default the value before one is stored, and after [forget].
- * @param loaded the stored value as the phone shows it, such as moved into its range.
- * @param fromServer the value in the refresh's preferences.
- * @param body the body that posts a value, with its keys and nothing else.
+ * @param codec how the value reads from the server's preferences and posts back.
  */
 class SyncedPreference<T : Any>(
     private val store: ClearableStore<StoredPreference<T>>,
@@ -45,16 +57,14 @@ class SyncedPreference<T : Any>(
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
     private val default: T,
-    private val loaded: (T) -> T = { it },
-    private val fromServer: (MePreferences) -> T,
-    private val body: (T) -> JsonObject,
+    private val codec: PreferenceCodec<T>,
 ) {
 
     private val state by lazy { Loaded(store.load()) }
 
     /** What the store held, and what changed since. Guarded by [lock], apart from [value]'s reads. */
     private inner class Loaded(stored: StoredPreference<T>?) {
-        val value = MutableStateFlow(stored?.value?.let(loaded) ?: default)
+        val value = MutableStateFlow(stored?.value?.let(codec::loaded) ?: default)
 
         /** The server has not received the value on show. */
         var unsent = stored?.unsent ?: false
@@ -79,7 +89,7 @@ class SyncedPreference<T : Any>(
      * Shows [value] at once, marked [unsent], keeps it on the phone and then, in the background,
      * sends it to the server when [sendIf] says so. Call it on the main thread.
      */
-    fun change(value: T, unsent: Boolean, sendIf: () -> Boolean): Job {
+    fun change(value: T, unsent: Boolean, sendIf: CapabilityCheck): Job {
         synchronized(lock) {
             state.value.value = value
             state.unsent = unsent
@@ -87,7 +97,7 @@ class SyncedPreference<T : Any>(
         }
         return scope.launch(io) {
             persist()
-            if (sendIf()) send()
+            if (sendIf.offered()) send()
         }
     }
 
@@ -112,7 +122,7 @@ class SyncedPreference<T : Any>(
                 changed || preferences == null -> false
 
                 else -> {
-                    state.value.value = fromServer(preferences)
+                    state.value.value = codec.fromServer(preferences)
                     false
                 }
             }
@@ -145,7 +155,7 @@ class SyncedPreference<T : Any>(
     private suspend fun send() = sending.withLock {
         val value = synchronized(lock) { state.value.value.takeIf { state.unsent } } ?: return@withLock
         val api = client() ?: return@withLock
-        val answer = api.send("POST", api.server.api("me", "preferences"), body(value), JsonObject.serializer())
+        val answer = api.send("POST", api.server.api("me", "preferences"), codec.body(value), JsonObject.serializer())
         if (answer !is ApiResult.Success) return@withLock
         synchronized(lock) {
             // A change while the request ran has its own write queued.

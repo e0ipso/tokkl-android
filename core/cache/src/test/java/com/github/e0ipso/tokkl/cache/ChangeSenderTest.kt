@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.cache
 
+import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiJson
@@ -8,6 +9,7 @@ import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
+import com.github.e0ipso.tokkl.capabilities.CapabilityCheck
 import com.github.e0ipso.tokkl.time.SnappedSpan
 import com.github.e0ipso.tokkl.time.stopSpan
 import kotlinx.coroutines.CoroutineScope
@@ -45,6 +47,7 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import kotlin.coroutines.CoroutineContext
 
 class ChangeSenderTest {
 
@@ -64,7 +67,7 @@ class ChangeSenderTest {
         url = ServerUrl.parse(server.url("/").toString())!!
         testApi.stored = url
         testApi.trust = InMemoryServerTrust(url)
-        sender = ChangeSender(
+        sender = changeSender(
             store,
             client = { if (signedIn) testApi.client(url, ApiCredentials.ApiToken("tok-123")) else null },
             scope = scope,
@@ -589,7 +592,7 @@ class ChangeSenderTest {
         store.queue(ChangeKind.STOP, 55, TAP, stop = TAP.plusSeconds(90), description = "Gone")
         store.queue(ChangeKind.UPDATE, 56, TAP, stop = TAP.plusSeconds(60), description = "Other")
         var discarded = 0
-        sender = ChangeSender(
+        sender = changeSender(
             store,
             { testApi.client(url, ApiCredentials.ApiToken("tok-123")) },
             scope,
@@ -728,7 +731,7 @@ class ChangeSenderTest {
 
     @Test
     fun sendTriesAgainByItselfOnceRetryAfterHasPassed() {
-        val realTime = ChangeSender(
+        val realTime = changeSender(
             store,
             client = { testApi.client(url, ApiCredentials.ApiToken("tok-123")) },
             scope = scope,
@@ -782,7 +785,7 @@ class ChangeSenderTest {
     fun onSentRunsOncePerDrainJobAfterItsLastPass() {
         val calls = mutableListOf<String>()
         lateinit var withOnSent: ChangeSender
-        withOnSent = ChangeSender(
+        withOnSent = changeSender(
             store,
             client = { testApi.client(url, ApiCredentials.ApiToken("tok-123")) },
             scope = scope,
@@ -817,7 +820,7 @@ class ChangeSenderTest {
     @Test
     fun aDrainThatSendsNothingDoesNotRunOnSent() {
         var calls = 0
-        val withOnSent = ChangeSender(
+        val withOnSent = changeSender(
             store,
             client = { testApi.client(url, ApiCredentials.ApiToken("tok-123")) },
             scope = scope,
@@ -843,7 +846,7 @@ class ChangeSenderTest {
     @Test
     fun onEmptiedRunsOnceWhenADrainSendsTheQueueEmpty() {
         val calls = mutableListOf<String>()
-        val withOnEmptied = ChangeSender(
+        val withOnEmptied = changeSender(
             store,
             client = { testApi.client(url, ApiCredentials.ApiToken("tok-123")) },
             scope = scope,
@@ -876,7 +879,7 @@ class ChangeSenderTest {
     fun aSendDuringQueueCleanupJoinsTheDrainUntilCancellationFinishes() {
         val cleaning = CountDownLatch(1)
         val finishCleanup = CountDownLatch(1)
-        val withCleanup = ChangeSender(
+        val withCleanup = changeSender(
             store,
             client = { testApi.client(url, ApiCredentials.ApiToken("tok-123")) },
             scope = scope,
@@ -1068,7 +1071,7 @@ class ChangeSenderTest {
 
     @Test
     fun aQueuedStartAndItsLaterChangesEndOnTheGridWhereTheLaterTimersStartSnaps() {
-        val gridded = ChangeSender(
+        val gridded = changeSender(
             store,
             client = { testApi.client(url, ApiCredentials.ApiToken("tok-123")) },
             scope = scope,
@@ -1244,7 +1247,7 @@ class ChangeSenderTest {
 
     @Test
     fun aLostCreateMatchesTheStartWhereTheServerSnappedIt() {
-        val snapping = ChangeSender(
+        val snapping = changeSender(
             store,
             client = { testApi.client(url, ApiCredentials.ApiToken("tok-123")) },
             scope = scope,
@@ -1623,7 +1626,7 @@ class ChangeSenderTest {
     @Test
     fun aRestoreRefreshesTheAccountOnceAndACancelledDeleteDoesNot() {
         val refreshes = java.util.concurrent.atomic.AtomicInteger()
-        val refreshing = ChangeSender(
+        val refreshing = changeSender(
             store,
             client = { testApi.client(url, ApiCredentials.ApiToken("tok-123")) },
             scope = scope,
@@ -1706,7 +1709,7 @@ class ChangeSenderTest {
         (allDay?.let { ",\"all_day\":$it" } ?: "") + "}"
 
     /** A sender for a server that stores no-time entries, as `Capabilities.allDay` says. */
-    private fun noTimeSender() = ChangeSender(
+    private fun noTimeSender() = changeSender(
         store,
         client = { testApi.client(url, ApiCredentials.ApiToken("tok-123")) },
         scope = scope,
@@ -1896,3 +1899,35 @@ class ChangeSenderTest {
         val MIDNIGHT: Instant = Instant.parse("2026-10-18T22:00:00Z")
     }
 }
+
+/**
+ * A [ChangeSender] with what a test leaves out: no-op events, the system clock, unsnapped spans
+ * and no no-time entries.
+ */
+private fun changeSender(
+    store: ChangeStore,
+    client: ApiClientProvider,
+    scope: CoroutineScope,
+    io: CoroutineContext,
+    onSent: () -> Unit = {},
+    onEmptied: () -> Unit = {},
+    onDiscarded: (Int) -> Unit = {},
+    clock: Clock = Clock.systemUTC(),
+    spans: ServerSpans = ServerSpans.Unsnapped,
+    allDay: CapabilityCheck = CapabilityCheck { false },
+) = ChangeSender(
+    store,
+    client,
+    scope,
+    io,
+    object : ChangeSenderEvents {
+        override fun sent() = onSent()
+
+        override fun emptied() = onEmptied()
+
+        override fun discarded(count: Int) = onDiscarded(count)
+    },
+    clock,
+    spans,
+    allDay,
+)

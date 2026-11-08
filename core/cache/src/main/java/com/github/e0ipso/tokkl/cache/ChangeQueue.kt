@@ -8,6 +8,29 @@ import java.time.Instant
 import java.time.LocalDate
 import kotlin.coroutines.CoroutineContext
 
+/** The changes the server refused, which wait for the user, as [ChangeQueue] keeps them. */
+interface HeldChanges {
+
+    /** The held changes, oldest first. */
+    val held: Flow<List<PendingChange>>
+
+    /** Lets the held change [sequence] go out as it is. Returns false when it is not held. */
+    suspend fun sendAgain(sequence: Long): Boolean
+
+    /** Drops the held change [sequence] and the changes behind it. Returns false when it is not held. */
+    suspend fun discard(sequence: Long): Boolean
+}
+
+/** How many changes the server has not received, held ones included, such as [ChangeQueue.unsentNow]. */
+fun interface UnsentChanges {
+    suspend fun unsentNow(): Int
+}
+
+/** Hears that [ChangeQueue] took a change the server has not received, such as [SendOnQueue]. */
+fun interface QueuedListener {
+    fun queued()
+}
+
 /**
  * Starts, stops, creates, edits and deletes time entries on the phone (docs/PRD.md O1). Each call
  * changes the cached entry at once and queues the change, in one transaction, then asks [onQueued]
@@ -46,10 +69,12 @@ import kotlin.coroutines.CoroutineContext
 class ChangeQueue(
     private val database: CacheDatabase,
     private val io: CoroutineContext,
-    private val onQueued: () -> Unit,
-    private val clock: Clock = Clock.systemUTC(),
-    private val spans: ServerSpans = ServerSpans.Unsnapped,
-) : EntryChanges {
+    private val onQueued: QueuedListener,
+    private val clock: Clock,
+    private val spans: ServerSpans,
+) : EntryChanges,
+    HeldChanges,
+    UnsentChanges {
 
     private val dao = database.changes()
 
@@ -57,10 +82,10 @@ class ChangeQueue(
     val unsentCount: Flow<Int> = dao.count()
 
     /** [unsentCount] now. */
-    suspend fun unsentNow(): Int = unsentCount.first()
+    override suspend fun unsentNow(): Int = unsentCount.first()
 
     /** The changes the server refused, which wait for the user, oldest first (docs/PRD.md O6). */
-    val held: Flow<List<PendingChange>> = dao.held()
+    override val held: Flow<List<PendingChange>> = dao.held()
 
     /** How many changes the server refused wait for the user. */
     val heldCount: Flow<Int> = dao.heldCount()
@@ -236,7 +261,7 @@ class ChangeQueue(
      * Lets the held change [sequence] go out again as it is, such as after the cause of its
      * refusal was fixed on the server. Returns false when it is not held.
      */
-    suspend fun sendAgain(sequence: Long): Boolean = queue { dao.release(sequence) > 0 }
+    override suspend fun sendAgain(sequence: Long): Boolean = queue { dao.release(sequence) > 0 }
 
     /**
      * Drops the held change [sequence] and the later changes to its entry that wait behind it,
@@ -244,7 +269,7 @@ class ChangeQueue(
      * any other keeps its row until the next refresh brings the server's. Returns false when the
      * change is not held.
      */
-    suspend fun discard(sequence: Long): Boolean = queue {
+    override suspend fun discard(sequence: Long): Boolean = queue {
         val held = dao.change(sequence)?.takeIf { it.held } ?: return@queue false
         dao.deleteFrom(held.entryId, held.sequence)
         if (held.kind == ChangeKind.CREATE) {
@@ -263,7 +288,7 @@ class ChangeQueue(
         val (result, holdsChanges) = withContext(io) {
             database.runInTransaction<Pair<T, Boolean>> { change() to (dao.first() != null) }
         }
-        if (holdsChanges) onQueued()
+        if (holdsChanges) onQueued.queued()
         return result
     }
 

@@ -201,11 +201,12 @@ class PomodoroWidgetStateTest {
         }
         val source = TimerStateSource(
             initial = null,
-            save = { stored ->
+            store = { stored ->
                 rememberedPomodoroFields(account, stored.held)?.let { disk = encodeRememberedPomodoroFields(it) }
             },
             cache = cache,
             clock = Clock.fixed(at, ZoneOffset.UTC),
+            runningEnded = {},
         )
         val slowRead = source.begin()
         assertTrue(source.accept(source.begin(), held.state))

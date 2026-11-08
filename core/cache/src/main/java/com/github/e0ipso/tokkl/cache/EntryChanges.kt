@@ -21,6 +21,13 @@ data class EntryFields(
  */
 data class RunningEntryIdentity(val entryId: Long, val workspaceId: Long, val start: Instant)
 
+/** Where the cache holds an entry now, such as [ChangeQueue.currentId]. */
+fun interface CurrentEntryIds {
+
+    /** The id the cache holds [entryId] under after a local create is answered, or [entryId]. */
+    suspend fun currentId(entryId: Long): Long
+}
+
 /**
  * The changes screens make to time entries, as [ChangeQueue] makes them: on the phone at once,
  * then queued for the server. A screen's model takes this, so a JVM test can stand in for the
@@ -31,7 +38,7 @@ data class RunningEntryIdentity(val entryId: Long, val workspaceId: Long, val st
  * (`AccountTime.instantAt(day, 0)`) and the start plus the snapped duration as the stop. A null
  * one makes a timed entry, also when the entry was a no-time one.
  */
-interface EntryChanges {
+interface EntryChanges : CurrentEntryIds {
     suspend fun start(workspaceId: Long, fields: EntryFields): Long
 
     suspend fun stop(entryId: Long, fields: EntryFields? = null): Boolean
@@ -76,8 +83,7 @@ interface EntryChanges {
 
     suspend fun delete(entryId: Long): Boolean
 
-    /** The id the cache holds [entryId] under after a local create is answered, or [entryId]. */
-    suspend fun currentId(entryId: Long): Long = entryId
+    override suspend fun currentId(entryId: Long): Long = entryId
 
     /**
      * Deletes the current cached copy, or [entry] when the cache does not hold that server entry.

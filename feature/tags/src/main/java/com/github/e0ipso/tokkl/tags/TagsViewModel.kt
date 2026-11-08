@@ -11,13 +11,12 @@ import com.github.e0ipso.tokkl.catalog.PageEvents
 import com.github.e0ipso.tokkl.catalog.followTrips
 import com.github.e0ipso.tokkl.platform.whileShown
 import com.github.e0ipso.tokkl.session.AppEvent
+import com.github.e0ipso.tokkl.session.DefaultWorkspace
+import com.github.e0ipso.tokkl.session.RefreshRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlin.coroutines.CoroutineContext
@@ -67,13 +66,13 @@ data class TagsPageState(
  */
 class TagsViewModel(
     private val repository: TagsRepository,
-    workspaceId: () -> Long?,
-    refreshCache: () -> Unit,
+    workspaceId: DefaultWorkspace,
+    refreshCache: RefreshRequest,
     scope: CoroutineScope,
     io: CoroutineContext,
-    cachedTags: Flow<List<CachedTag>> = flowOf(emptyList()),
-    offline: StateFlow<Boolean> = MutableStateFlow(false),
-    appEvents: Flow<AppEvent> = emptyFlow(),
+    cachedTags: Flow<List<CachedTag>>,
+    offline: StateFlow<Boolean>,
+    appEvents: Flow<AppEvent>,
 ) : ViewModel(scope),
     PageEvents {
 

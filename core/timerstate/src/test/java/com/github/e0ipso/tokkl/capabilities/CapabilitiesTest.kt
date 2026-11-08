@@ -26,6 +26,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.IOException
+import java.time.Clock
 
 /** The capability flags from `/me`, the trash probe and the timer state probe, against a MockWebServer. */
 class CapabilitiesTest {
@@ -36,7 +37,13 @@ class CapabilitiesTest {
     private lateinit var client: TogglApiClient
     private val answers = mutableMapOf<String, MockResponse>()
     private val saved = mutableListOf<Capabilities>()
-    private val timerStates = TimerStateSource(initial = null, save = {}, cache = EmptyCache)
+    private val timerStates = TimerStateSource(
+        initial = null,
+        store = {},
+        cache = EmptyCache,
+        clock = Clock.systemUTC(),
+        runningEnded = {},
+    )
 
     @Before
     fun setUp() {

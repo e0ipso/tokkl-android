@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.api.ServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.navigation.SignInAgain
+import com.github.e0ipso.tokkl.session.RefreshRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
@@ -22,6 +23,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.IOException
+import java.time.Clock
 import kotlin.coroutines.CoroutineContext
 
 enum class SignInMethod { API_TOKEN, EMAIL_PASSWORD }
@@ -80,8 +82,8 @@ data class SignInState(
  * @param trust where the user's answers go. The shared client checks it
  *   before every request and in every TLS handshake.
  * @param cooldowns where the 429 deadlines persist.
- * @param clock wall-clock milliseconds, such as `System.currentTimeMillis`,
- *   since a deadline has to outlast the process and a reboot.
+ * @param clock the wall clock, since a deadline has to outlast the process and a
+ *   reboot.
  * @param scope runs the view model's coroutines on one thread, the main thread in
  *   the app.
  * @param io where the blocking [SignIn.attempt] and the writes to [trust] and
@@ -95,8 +97,8 @@ class SignInViewModel(
     private val cooldowns: SignInCooldowns,
     scope: CoroutineScope,
     private val io: CoroutineContext,
-    private val clock: () -> Long,
-    onSignedIn: () -> Unit = {},
+    private val clock: Clock,
+    onSignedIn: RefreshRequest,
 ) : ViewModel(scope) {
 
     private val mutableState = MutableStateFlow(SignInState())
@@ -104,7 +106,7 @@ class SignInViewModel(
 
     init {
         viewModelScope.launch {
-            state.map { it.signedIn }.distinctUntilChanged().filter { it }.collect { onSignedIn() }
+            state.map { it.signedIn }.distinctUntilChanged().filter { it }.collect { onSignedIn.request() }
         }
     }
 
@@ -117,7 +119,7 @@ class SignInViewModel(
     /** Reads the stored deadlines and drops the ones that have passed. Submit waits for it. */
     private val restoring: Job = viewModelScope.launch {
         val stored = withContext(io) { cooldowns.load() }
-        val now = clock()
+        val now = clock.millis()
         for ((origin, deadline) in stored) {
             if (deadline > now) deadlines[origin] = deadline else forget(origin)
         }
@@ -139,7 +141,7 @@ class SignInViewModel(
     /** Whole seconds until sign-in opens again after a 429, or 0 when it is open. */
     fun secondsUntilRetry(): Long {
         val retryAt = mutableState.value.retryAt ?: return 0
-        val left = retryAt - clock()
+        val left = retryAt - clock.millis()
         return if (left <= 0) 0 else (left + MILLIS_PER_SECOND - 1) / MILLIS_PER_SECOND
     }
 
@@ -159,7 +161,7 @@ class SignInViewModel(
             // A deadline from an earlier process may still be loading.
             restoring.join()
             val stored = deadlines[server.origin]
-            if (stored != null && stored > clock()) {
+            if (stored != null && stored > clock.millis()) {
                 mutableState.update { it.copy(submitting = false, retryAt = stored) }
                 return@launch
             }
@@ -168,7 +170,7 @@ class SignInViewModel(
             val result = withContext(io + NonCancellable) { signIn.attempt(server, credentials, current.again) }
             val retryAt = when (result) {
                 is SignInResult.RateLimited ->
-                    (clock() + (result.retryAfterSeconds ?: DEFAULT_RETRY_AFTER_SECONDS) * MILLIS_PER_SECOND)
+                    (clock.millis() + (result.retryAfterSeconds ?: DEFAULT_RETRY_AFTER_SECONDS) * MILLIS_PER_SECOND)
                         .also { remember(server.origin, it) }
 
                 SignInResult.SignedIn -> null.also { forget(server.origin) }
@@ -184,7 +186,7 @@ class SignInViewModel(
      * the phone too.
      */
     fun cooldownEnded() {
-        val now = clock()
+        val now = clock.millis()
         deadlines.filterValues { it <= now }.keys.forEach(::forget)
         mutableState.update { it.copy(retryAt = deadlineFor(it.serverUrl)) }
     }

@@ -50,7 +50,7 @@ class PomodoroAlarmViewModel(
     held: Flow<HeldTimerState?>,
     private val actions: SessionActions,
     scope: CoroutineScope,
-    private val clock: Clock = Clock.systemUTC(),
+    private val clock: Clock,
 ) : ViewModel(scope) {
     private val mutable = MutableStateFlow(PomodoroAlarmState())
     val state = mutable.asStateFlow()

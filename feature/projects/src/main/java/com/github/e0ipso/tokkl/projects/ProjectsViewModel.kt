@@ -12,13 +12,12 @@ import com.github.e0ipso.tokkl.catalog.PageEvents
 import com.github.e0ipso.tokkl.catalog.followTrips
 import com.github.e0ipso.tokkl.platform.whileShown
 import com.github.e0ipso.tokkl.session.AppEvent
+import com.github.e0ipso.tokkl.session.DefaultWorkspace
+import com.github.e0ipso.tokkl.session.RefreshRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlin.coroutines.CoroutineContext
@@ -75,14 +74,14 @@ data class ProjectsPageState(
 class ProjectsViewModel(
     private val repository: ProjectsRepository,
     tasksRepository: TasksRepository,
-    workspaceId: () -> Long?,
-    refreshCache: () -> Unit,
+    workspaceId: DefaultWorkspace,
+    refreshCache: RefreshRequest,
     scope: CoroutineScope,
     io: CoroutineContext,
-    cachedProjects: Flow<List<CachedProject>> = flowOf(emptyList()),
-    cachedClients: Flow<List<CachedClient>> = flowOf(emptyList()),
-    offline: StateFlow<Boolean> = MutableStateFlow(false),
-    appEvents: Flow<AppEvent> = emptyFlow(),
+    cachedProjects: Flow<List<CachedProject>>,
+    cachedClients: Flow<List<CachedClient>>,
+    offline: StateFlow<Boolean>,
+    appEvents: Flow<AppEvent>,
 ) : ViewModel(scope),
     PageEvents {
 

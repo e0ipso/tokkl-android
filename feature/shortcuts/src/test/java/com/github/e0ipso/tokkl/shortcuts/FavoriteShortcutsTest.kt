@@ -159,10 +159,13 @@ class FavoriteShortcutsTest {
         val set = mutableListOf<List<FavoriteShortcut>>()
         val sync = FavoriteShortcutSync(
             shortcuts = flowOf(shortcuts(), shortcuts(limit = 1), shortcuts(available = false)),
-            published = { launcher },
-            publish = {
-                set += it
-                launcher = it
+            launcher = object : PublishedShortcuts {
+                override fun published() = launcher
+
+                override fun publish(shortcuts: List<FavoriteShortcut>) {
+                    set += shortcuts
+                    launcher = shortcuts
+                }
             },
             scope = CoroutineScope(Dispatchers.Unconfined),
             io = Dispatchers.Unconfined,

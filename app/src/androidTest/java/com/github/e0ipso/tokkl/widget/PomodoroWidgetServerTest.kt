@@ -260,6 +260,7 @@ class PomodoroWidgetServerTest {
                         appHttp.instance,
                         appConfiguredServer,
                         Dispatchers.IO,
+                        signedInAccount = { null },
                     ).attempt(
                         TokklTestServer.url,
                         SignInCredentials.ApiToken(replacement.apiToken),

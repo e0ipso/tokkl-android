@@ -9,6 +9,7 @@ import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.fields
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
+import com.github.e0ipso.tokkl.picker.PickerSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExecutorCoroutineDispatcher
 import kotlinx.coroutines.SupervisorJob
@@ -16,6 +17,7 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -58,7 +60,7 @@ class FavoritesViewModelTest {
             projects = MutableStateFlow(listOf(APP)),
             tasks = MutableStateFlow(listOf(DESIGN)),
             available = available,
-            save = { list ->
+            store = { list ->
                 saved += list
                 answer.also {
                     if (it is ApiResult.Success) {
@@ -72,6 +74,9 @@ class FavoritesViewModelTest {
             },
             scope = scope,
             io = mainDispatcher,
+            picker = flowOf(PickerSource()),
+            offline = MutableStateFlow(false),
+            workspaceId = flowOf(null),
         )
         // The screen collects the state while it shows.
         scope.launch { model.state.collect {} }

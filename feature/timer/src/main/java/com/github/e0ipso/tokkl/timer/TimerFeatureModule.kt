@@ -72,7 +72,8 @@ val timerFeatureModule = module {
             client = get<Session>(),
             scope = viewModelCoroutineScope(),
             io = io(),
-            currentId = changes::currentId,
+            clock = get(),
+            ids = changes,
             overrides = params.overrides(),
             appEvents = get<AppEvents>().events,
         )
@@ -82,10 +83,11 @@ val timerFeatureModule = module {
         EntryActionsViewModel(
             entries = get<AccountCache>().entries,
             changes = get<ChangeQueue>(),
-            undoDelete = get<ChangeSender>()::undoDelete,
+            undo = get<ChangeSender>(),
             canRestore = capabilities::offersRestore,
             accountSettings = get<AccountSettingsSource>().state,
             scope = viewModelCoroutineScope(),
+            clock = get(),
         )
     }
     viewModel { params ->
@@ -100,6 +102,7 @@ val timerFeatureModule = module {
             client = get<Session>(),
             scope = viewModelCoroutineScope(),
             io = io(),
+            clock = get(),
             // The capabilities load from disk on first read, off the main thread.
             allDayOffered = capabilities.allDayOffers(),
             overrides = params.overrides(),
@@ -116,11 +119,11 @@ val timerFeatureModule = module {
             accountSettings = get<AccountSettingsSource>().state,
             changes = get<ChangeQueue>(),
             scope = viewModelCoroutineScope(),
+            clock = get(),
             trace = get(),
             pauseChain = get<TimerActions>(),
-            sendQueued = sender::sendAndWait,
-            discardNotices = get<HeldTimerFlows>().discardNotice,
-            takeDiscardNotice = get<HeldTimerFlows>()::takeDiscardNotice,
+            sendQueued = sender,
+            discards = get<HeldTimerFlows>(),
             timerApi = get<CapabilitiesSource>().state.map { it.timerState },
         )
     }
@@ -132,7 +135,7 @@ val timerFeatureModule = module {
             projects = cache.projects,
             tasks = cache.tasks,
             available = get<CapabilitiesSource>().state.map { it.favorites },
-            save = FavoritesServer(client = get<Session>(), cache = cache)::save,
+            store = FavoritesServer(client = get<Session>(), cache = cache),
             scope = scope,
             io = io(),
             picker = cache.pickerSource(),
@@ -150,6 +153,7 @@ val timerFeatureModule = module {
             accountSettings = get<AccountSettingsSource>().state,
             changes = get<ChangeQueue>(),
             scope = scope,
+            clock = get(),
             allDay = get<CapabilitiesSource>().state.map { it.allDay == true },
             picker = cache.pickerSource(),
             offline = get<DefaultNetwork>().offlineIn(scope),

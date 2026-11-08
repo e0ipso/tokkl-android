@@ -12,6 +12,7 @@ import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.entryfields.SplitProblem
 import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
 import com.github.e0ipso.tokkl.favorites.MAX_FAVORITES
+import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.SnappedSpan
 import kotlinx.coroutines.CoroutineScope
@@ -21,6 +22,7 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -30,6 +32,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 import java.io.IOException
+import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
@@ -459,7 +462,7 @@ class EntryActionsViewModelTest {
             projects = MutableStateFlow(emptyList()),
             tasks = MutableStateFlow(emptyList()),
             available = MutableStateFlow(true),
-            save = { list ->
+            store = { list ->
                 saved += list
                 favoritesAnswer.also { answer ->
                     if (answer is ApiResult.Success) {
@@ -478,6 +481,9 @@ class EntryActionsViewModelTest {
             },
             scope = scope,
             io = mainDispatcher,
+            picker = flowOf(PickerSource()),
+            offline = MutableStateFlow(false),
+            workspaceId = flowOf(null),
         )
         scope.launch { model.state.collect {} }
         runBlocking {
@@ -502,13 +508,14 @@ class EntryActionsViewModelTest {
     private fun model(canRestore: Boolean) = EntryActionsViewModel(
         entries = entries,
         changes = FakeChanges(),
-        undoDelete = { entryId ->
+        undo = { entryId ->
             calls += "undo $entryId"
             undoOutcome
         },
         canRestore = { canRestore },
         accountSettings = MutableStateFlow(SETTINGS),
         scope = scope,
+        clock = Clock.systemUTC(),
     )
 
     private fun awaitNotice(model: EntryActionsViewModel, condition: (EntryNotice) -> Boolean): EntryNotice {

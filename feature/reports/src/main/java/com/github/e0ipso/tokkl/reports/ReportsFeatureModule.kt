@@ -24,7 +24,12 @@ import java.io.File
  */
 val reportsFeatureModule = module {
     single<ReportsRepository> { ServerReportsRepository(get<Session>()) }
-    single { ReportExportFiles(File(androidContext().cacheDir, ReportExportFiles.DIRECTORY)) } bind ExportFiles::class
+    single {
+        ReportExportFiles(
+            File(androidContext().cacheDir, ReportExportFiles.DIRECTORY),
+            get(),
+        )
+    } bind ExportFiles::class
 
     viewModel {
         val session = get<Session>()
@@ -36,6 +41,7 @@ val reportsFeatureModule = module {
         ReportsViewModel(
             accountSettings = accountSettings.state,
             repository = get(),
+            clock = get(),
             exportCapabilities = capabilities.state,
             exporter = ReportExportController(
                 client = session,

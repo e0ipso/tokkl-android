@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.settings
 
+import com.github.e0ipso.tokkl.session.AccountSignOut
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -14,7 +15,7 @@ class SignOutConfirmationTest {
     private var clearSucceeds = true
 
     private fun model(
-        clear: suspend () -> Boolean = {
+        clear: AccountSignOut = AccountSignOut {
             clears++
             clearSucceeds
         },

@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.notification
 
+import com.github.e0ipso.tokkl.cache.CurrentEntryIds
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import com.github.e0ipso.tokkl.storage.ValueStore
@@ -12,6 +13,15 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.IOException
 import kotlin.coroutines.CoroutineContext
+
+/** The running timer's notification, such as [RunningNotifier]. */
+interface RunningNotice {
+
+    /** Shows the notification for [content], or replaces the one on show. */
+    fun post(content: RunningNotificationContent)
+
+    fun remove()
+}
 
 /**
  * Keeps the running timer's notification in step with the running entry on the phone
@@ -26,18 +36,16 @@ import kotlin.coroutines.CoroutineContext
  *
  * @param running the notification for the running entry, null when none runs.
  * @param shown the entry last followed, null for none.
- * @param currentId the id the cache holds an entry under now, given the id it was followed under:
+ * @param ids the id the cache holds an entry under now, given the id it was followed under:
  *   the server's once the server has answered the phone's create (`ChangeQueue.currentId`).
- * @param post shows the notification, or replaces the one on show.
- * @param remove takes it away.
+ * @param notice shows, replaces and takes away the notification.
  * @param io where the store and the notification calls run.
  */
 class RunningNotificationSync(
     private val running: Flow<RunningNotificationContent?>,
     private val shown: ValueStore<FollowedEntry?>,
-    private val currentId: suspend (Long) -> Long,
-    private val post: (RunningNotificationContent) -> Unit,
-    private val remove: () -> Unit,
+    private val ids: CurrentEntryIds,
+    private val notice: RunningNotice,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
 ) : AccountDataOwner {
@@ -65,11 +73,11 @@ class RunningNotificationSync(
         lock.withLock {
             latest = content
             val stored = shown.load()
-            val followed = stored?.let { it.copy(entryId = it.entryId?.let { id -> currentId(id) }) }
+            val followed = stored?.let { it.copy(entryId = it.entryId?.let { id -> ids.currentId(id) }) }
             when (val change = runningNotificationChange(followed, content)) {
                 null -> if (content == null || stored?.entryId == content.entryId) return
-                is RunningNotificationChange.Post -> post(change.content)
-                RunningNotificationChange.Remove -> remove()
+                is RunningNotificationChange.Post -> notice.post(change.content)
+                RunningNotificationChange.Remove -> notice.remove()
             }
             remember(content?.let { FollowedEntry(it.key, it.entryId) })
         }
@@ -81,14 +89,14 @@ class RunningNotificationSync(
      * this, so a notification dismissed by the user stays dismissed.
      */
     suspend fun repost() {
-        lock.withLock { latest?.let(post) }
+        lock.withLock { latest?.let(notice::post) }
     }
 
     /** Takes the notification away and forgets the entry it followed. Signing out calls this. */
     suspend fun forget() {
         lock.withLock {
             latest = null
-            remove()
+            notice.remove()
             remember(null)
         }
     }

@@ -58,6 +58,7 @@ import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklNavHost
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
+import com.github.e0ipso.tokkl.api.DiscardedPomodoro
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.awaitTimerPage
@@ -80,7 +81,9 @@ import com.github.e0ipso.tokkl.finishWithin
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.timer.TapTrace
 import com.github.e0ipso.tokkl.timer.TimerViewModel
+import com.github.e0ipso.tokkl.timerstate.DiscardNotices
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import com.github.e0ipso.tokkl.timerstate.TimerControls
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -88,6 +91,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.JsonArray
@@ -111,6 +115,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
@@ -562,6 +567,16 @@ class RunningEntryEditorServerTest {
                         app.accountSettings.state,
                         changes,
                         activity.lifecycleScope,
+                        clock = Clock.systemUTC(),
+                        trace = TapTrace.None,
+                        pauseChain = null,
+                        sendQueued = {},
+                        discards = object : DiscardNotices {
+                            override val discardNotice = flowOf<DiscardedPomodoro?>(null)
+
+                            override suspend fun takeDiscardNotice(): DiscardedPomodoro? = null
+                        },
+                        timerApi = flowOf(true),
                     )
                     ViewModelProvider(
                         navigationStores(activity).session,

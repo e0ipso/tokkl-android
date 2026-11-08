@@ -3,26 +3,30 @@ package com.github.e0ipso.tokkl.session
 import com.github.e0ipso.tokkl.platform.DefaultNetwork
 import com.github.e0ipso.tokkl.platform.NetworkReport
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 
+/** Hears whether the phone is [online], each time that changes. */
+fun interface NetworkListener {
+    fun changed(online: Boolean)
+}
+
 /**
  * Follows whether the phone's default network reaches the internet, from [start] to [stop], and
- * reports each change to [changed] on the main thread. The activity watches only while it is
+ * reports each change to [listener] on the main thread. The activity watches only while it is
  * started, so in the background no network change reaches the app. A network that has no
  * internet but reaches a Tokkl server on the local network counts as offline, as in the picker.
  *
  * @param scope where the watch runs between [start] and [stop].
  * @param main the main thread, where the watch starts at once, so the callback is registered
- *   before [start] returns and each report reaches [changed] as it arrives.
+ *   before [start] returns and each report reaches [listener] as it arrives.
  */
 class NetworkWatch(
     private val network: DefaultNetwork,
     private val scope: CoroutineScope,
-    private val main: CoroutineContext = Dispatchers.Main.immediate,
-    private val changed: (online: Boolean) -> Unit,
+    private val main: CoroutineContext,
+    private val listener: NetworkListener,
 ) {
 
     private var watching: Job? = null
@@ -32,7 +36,7 @@ class NetworkWatch(
         val initial = network.current()
         val online = initial?.internet == true
         if (watching == null) {
-            val state = NetworkWatchState(initial?.id, online, initial?.validated == true, changed)
+            val state = NetworkWatchState(initial?.id, online, initial?.validated == true, listener)
             watching = scope.launch(main) {
                 network.reports.collect { report ->
                     when (report) {
@@ -66,7 +70,7 @@ internal class NetworkWatchState<N : Any>(
     initial: N?,
     online: Boolean,
     validated: Boolean,
-    private val changed: (Boolean) -> Unit,
+    private val listener: NetworkListener,
 ) {
     private data class Snapshot<N>(val network: N, val online: Boolean, val validated: Boolean)
     private var current = initial
@@ -81,13 +85,13 @@ internal class NetworkWatchState<N : Any>(
         val next = Snapshot(network, online, validated)
         if (next == last) return
         last = next
-        changed(online)
+        listener.changed(online)
     }
 
     fun lost(network: N) {
         if (network != current) return
         current = null
         last = null
-        changed(false)
+        listener.changed(false)
     }
 }

@@ -27,7 +27,7 @@ val projectsFeatureModule = module {
         ProjectsViewModel(
             repository = get(),
             tasksRepository = get(),
-            workspaceId = accountSettings::defaultWorkspaceId,
+            workspaceId = accountSettings,
             refreshCache = get<AccountRefresh>()::refreshAfterChange,
             scope = scope,
             io = io(),

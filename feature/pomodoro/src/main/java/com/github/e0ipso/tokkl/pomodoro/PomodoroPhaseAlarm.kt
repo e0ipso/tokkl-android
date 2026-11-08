@@ -1,5 +1,7 @@
 package com.github.e0ipso.tokkl.pomodoro
 
+import com.github.e0ipso.tokkl.capabilities.CapabilityCheck
+import com.github.e0ipso.tokkl.timerstate.CurrentHeldState
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.PomodoroAlarmScheduler
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
@@ -37,12 +39,12 @@ import kotlin.coroutines.CoroutineContext
  * @param clock the phone's clock.
  */
 class PomodoroPhaseAlarm(
-    private val held: () -> HeldTimerState?,
-    private val available: () -> Boolean,
+    private val held: CurrentHeldState,
+    private val available: CapabilityCheck,
     private val alarms: PomodoroAlarmScheduler,
     private val ringing: PomodoroRinging,
     private val io: CoroutineContext,
-    private val clock: Clock = Clock.systemUTC(),
+    private val clock: Clock,
 ) {
 
     private val lock = Mutex()
@@ -129,7 +131,7 @@ class PomodoroPhaseAlarm(
 
     private suspend fun <T> locked(block: suspend () -> T): T = withContext(io) { lock.withLock { block() } }
 
-    private fun heldLocked(): HeldTimerState? = held()?.takeIf { available() }
+    private fun heldLocked(): HeldTimerState? = held.held()?.takeIf { available.offered() }
 
     private fun currentLocked(): PomodoroRing? = heldLocked()?.ring()
 

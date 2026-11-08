@@ -15,6 +15,7 @@ import com.github.e0ipso.tokkl.timerstate.timerPeriodTotals
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -502,7 +503,7 @@ class WidgetStateTest {
         var shown: String? = first.key()
         val updates = mutableListOf<String?>()
         val sync = WidgetSync(
-            state = { flowOf(first, first, second) },
+            keys = flowOf(first, first, second).map { it.key() },
             shown = valueStore(load = { shown }, save = { shown = it }),
             update = { updates += shown },
             scope = CoroutineScope(Dispatchers.Unconfined),
@@ -520,7 +521,7 @@ class WidgetStateTest {
         var updates = 0
         var shown: String? = state(entry = null).key()
         val sync = WidgetSync(
-            state = { flowOf(state()) },
+            keys = flowOf(state()).map { it.key() },
             shown = valueStore(load = { shown }, save = { shown = it }),
             update = { updates++ },
             scope = CoroutineScope(Dispatchers.Unconfined),
@@ -537,7 +538,7 @@ class WidgetStateTest {
     fun aFailedSaveKeepsFollowing() {
         var updates = 0
         val sync = WidgetSync(
-            state = { flowOf(state(), state(entry = null)) },
+            keys = flowOf(state(), state(entry = null)).map { it.key() },
             shown = valueStore(load = { null }, save = { throw IOException("disk full") }),
             update = { updates++ },
             scope = CoroutineScope(Dispatchers.Unconfined),

@@ -5,10 +5,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.ChangeSender.UndoOutcome
+import com.github.e0ipso.tokkl.cache.DeleteUndo
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryWithSendState
 import com.github.e0ipso.tokkl.cache.fields
 import com.github.e0ipso.tokkl.cache.noTimeDay
+import com.github.e0ipso.tokkl.capabilities.CapabilityCheck
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.entryfields.SplitHalves
 import com.github.e0ipso.tokkl.entryfields.SplitProblem
@@ -113,17 +115,17 @@ data class EntryActionsState(
  *   and Split cuts.
  * @param accountSettings the account's timezone, time resolution and clock format, which Split
  *   reads the time with.
- * @param undoDelete takes back the delete of an entry, as `ChangeSender.undoDelete` does.
+ * @param undo takes back the delete of an entry, as `ChangeSender.undoDelete` does.
  * @param canRestore whether the server restores deleted entries, `Capabilities.restore`.
  */
 class EntryActionsViewModel(
     private val entries: Flow<List<EntryWithSendState>>,
     private val changes: EntryChanges,
-    private val undoDelete: suspend (Long) -> UndoOutcome,
-    private val canRestore: () -> Boolean,
+    private val undo: DeleteUndo,
+    private val canRestore: CapabilityCheck,
     private val accountSettings: StateFlow<AccountSettings?>,
     scope: CoroutineScope,
-    private val clock: Clock = Clock.systemUTC(),
+    private val clock: Clock,
 ) : ViewModel(scope) {
 
     private val mutableState = MutableStateFlow(EntryActionsState())
@@ -134,7 +136,7 @@ class EntryActionsViewModel(
     private val deleting = mutableSetOf<Long>()
     private var undoing = false
 
-    fun canRestoreDelete(): Boolean = canRestore()
+    fun canRestoreDelete(): Boolean = canRestore.offered()
 
     /** Called only after the editor's deletion transaction commits. Kept by HistoryViewModel. */
     fun deleted(entry: CachedTimeEntry, undo: Boolean) {
@@ -149,7 +151,7 @@ class EntryActionsViewModel(
 
     /** Deletes the cached entry [entryId], or asks first when the server cannot restore it. */
     fun delete(entryId: Long) {
-        if (canRestore()) {
+        if (canRestore.offered()) {
             queueDelete(entryId, undo = true)
         } else {
             mutableState.update { it.copy(confirmDelete = entryId) }
@@ -174,7 +176,7 @@ class EntryActionsViewModel(
         val offered = mutableState.value.notice
         viewModelScope.launch {
             try {
-                val notice = when (val outcome = undoDelete(entryId)) {
+                val notice = when (val outcome = undo.undoDelete(entryId)) {
                     UndoOutcome.Cancelled, UndoOutcome.Restored -> {
                         val id = changes.currentId(entryId)
                         val restored = entries.first().firstOrNull { it.entry.id == id }?.entry

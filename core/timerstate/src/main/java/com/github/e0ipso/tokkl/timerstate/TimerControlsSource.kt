@@ -28,7 +28,7 @@ class TimerControlsSource(
     timerStates: AccountTimerStates,
     capabilities: CapabilitiesSource,
     io: CoroutineContext,
-) {
+) : CurrentTimerControls {
 
     val controls: Flow<TimerControls> = run {
         val dao = database.changes()
@@ -51,5 +51,5 @@ class TimerControlsSource(
     }
 
     /** What [controls] holds now. */
-    suspend fun current(): TimerControls = controls.first()
+    override suspend fun current(): TimerControls = controls.first()
 }

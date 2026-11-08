@@ -39,7 +39,7 @@ val widgetFeatureModule = module {
     single(TimerWidgetQualifier) {
         val context = androidContext()
         WidgetSync(
-            state = { get<WidgetStateSource>().state },
+            keys = flow { emitAll(get<WidgetStateSource>().state.map { it.key() }) },
             shown = get<WidgetStore>(TimerWidgetQualifier),
             update = { TokklWidget().updateAll(context) },
             scope = get(),
@@ -47,7 +47,21 @@ val widgetFeatureModule = module {
         )
     }
 
-    single { PomodoroWidgetStateSource(get(), get(), get(), get(), get(), get(), get(), get(), get(), io()) }
+    single {
+        PomodoroWidgetStateSource(
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            clock = get(),
+            io = io(),
+        )
+    }
 
     // What the phase alarm redraws when it could not arm an exact alarm.
     factory<PomodoroWidgetRedraw> { PomodoroWidgetRedrawer(get(), get()) }

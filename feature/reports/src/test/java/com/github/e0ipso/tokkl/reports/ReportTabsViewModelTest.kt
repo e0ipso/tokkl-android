@@ -86,7 +86,7 @@ class ReportTabsViewModelTest {
         testApi.stored = url
         // The user has confirmed the MockWebServer's plain http URL.
         testApi.trust = InMemoryServerTrust(url)
-        model = ReportsViewModel(
+        model = reportsViewModel(
             settings,
             ServerReportsRepository { testApi.client(url, ApiCredentials.ApiToken("tok-123")) },
             CoroutineScope(Dispatchers.Unconfined),

@@ -22,16 +22,14 @@ class TimerEventConnections(
     private val service: TimerSyncServiceSlot,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
-) {
+) : TimerSyncConnections<TimerStateSource> {
 
-    /** For [TimerSync]'s `open`. */
-    fun open(source: TimerStateSource, link: TimerSyncLink) {
-        scope.launch(io) { link.ended(holdTimerEvents(session.client(), source, link)) }
+    override fun open(account: TimerStateSource, link: TimerSyncLink) {
+        scope.launch(io) { link.ended(holdTimerEvents(session.client(), account, link)) }
     }
 
-    /** For [TimerSync]'s `stopped`. */
-    fun stopped(source: TimerStateSource, end: StreamEnd) {
-        if (end == StreamEnd.Refused && source === timerStates.source) sender.signInRefused()
+    override fun stopped(account: TimerStateSource, end: StreamEnd) {
+        if (end == StreamEnd.Refused && account === timerStates.source) sender.signInRefused()
         service.stop()
     }
 }

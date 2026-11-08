@@ -33,17 +33,17 @@ import com.github.e0ipso.tokkl.core.ui.R as UiR
  * On Android 13 and later it shows only once the user has allowed notifications (TKA-0058 asks).
  * Without that, [post] does nothing.
  */
-class RunningNotifier(context: Context) {
+class RunningNotifier(context: Context) : RunningNotice {
 
     private val context = context.applicationContext
     private val manager = this.context.getSystemService(NotificationManager::class.java)
 
-    fun post(content: RunningNotificationContent) {
+    override fun post(content: RunningNotificationContent) {
         manager.createNotificationChannel(channel())
         manager.notify(NOTIFICATION_ID, build(content))
     }
 
-    fun remove() {
+    override fun remove() {
         manager.cancel(NOTIFICATION_ID)
     }
 

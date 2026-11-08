@@ -19,7 +19,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -52,15 +51,15 @@ class ReportsViewModel(
     private val repository: ReportsRepository,
     scope: CoroutineScope,
     private val io: CoroutineContext,
-    private val clock: Clock = Clock.systemUTC(),
-    val filterOptions: StateFlow<FilterOptions> = MutableStateFlow(FilterOptions.NONE),
-    val exportCapabilities: StateFlow<Capabilities> = MutableStateFlow(Capabilities.NONE),
-    private val exporter: ReportExportController? = null,
-    appEvents: Flow<AppEvent> = emptyFlow(),
+    private val clock: Clock,
+    val filterOptions: StateFlow<FilterOptions>,
+    val exportCapabilities: StateFlow<Capabilities>,
+    private val exporter: ReportExportController,
+    appEvents: Flow<AppEvent>,
 ) : ViewModel(scope),
     PageEvents {
 
-    val exportState: StateFlow<ReportExportState> = exporter?.state ?: MutableStateFlow(ReportExportState.Idle)
+    val exportState: StateFlow<ReportExportState> = exporter.state
 
     /** Snapshot every export setting now, independently of the rows loaded by Detailed. */
     fun exportCsv() {
@@ -72,26 +71,26 @@ class ReportsViewModel(
         val selectedFilters = filters.value.let {
             it.copy(projects = it.projects.toList(), clients = it.clients.toList(), tags = it.tags.toList())
         }
-        exporter?.start(
+        exporter.start(
             ReportCsvRequest(kind, shown.selection.range, selectedFilters, knownWorkspace, settings.durationFormat),
         )
     }
 
     fun launchExportShare(launch: (File) -> Unit) {
-        exporter?.launchShare(launch)
+        exporter.launchShare(launch)
     }
     fun exportShareFinished() {
-        exporter?.shareFinished()
+        exporter.shareFinished()
     }
     fun exportNoShareTarget() {
-        exporter?.noShareTarget()
+        exporter.noShareTarget()
     }
     fun exportShareFailed() {
-        exporter?.shareFailed()
+        exporter.shareFailed()
     }
 
     override fun onCleared() {
-        exporter?.cancel()
+        exporter.cancel()
         super.onCleared()
     }
 
@@ -235,7 +234,7 @@ class ReportsViewModel(
 
     /** Closes the screen: stops waiting for an answer and forgets the report and the workspace. */
     override fun close() {
-        exporter?.cancel()
+        exporter.cancel()
         loading?.cancel()
         loading = null
         workspace = null

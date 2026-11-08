@@ -82,7 +82,7 @@ class AppSummaryViewModelTest {
         val url = ServerUrl.parse(http.url("/").toString())!!
         testApi.stored = url
         testApi.trust = InMemoryServerTrust(url)
-        model = ReportsViewModel(
+        model = reportsViewModel(
             accountSettings = MutableStateFlow(
                 AccountSettings("Pacific/Kiritimati", DayOfWeek.WEDNESDAY, timeResolutionMinutes = null),
             ),
@@ -166,7 +166,7 @@ class AppSummaryViewModelTest {
         }
         val liveScope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         val url = ServerUrl.parse(http.url("/").toString())!!
-        val live = ReportsViewModel(
+        val live = reportsViewModel(
             accountSettings = MutableStateFlow(
                 AccountSettings("Pacific/Kiritimati", DayOfWeek.WEDNESDAY, timeResolutionMinutes = null),
             ),

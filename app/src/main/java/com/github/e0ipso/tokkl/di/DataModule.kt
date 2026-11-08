@@ -8,13 +8,20 @@ import com.github.e0ipso.tokkl.cache.CacheDatabase
 import com.github.e0ipso.tokkl.cache.CancelWaitingSend
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.cache.ChangeSender
+import com.github.e0ipso.tokkl.cache.ChangeSenderEvents
 import com.github.e0ipso.tokkl.cache.ChangeStore
+import com.github.e0ipso.tokkl.cache.CurrentEntryIds
+import com.github.e0ipso.tokkl.cache.DeleteUndo
 import com.github.e0ipso.tokkl.cache.EntryChanges
+import com.github.e0ipso.tokkl.cache.HeldChanges
+import com.github.e0ipso.tokkl.cache.QueueSender
+import com.github.e0ipso.tokkl.cache.QueuedListener
 import com.github.e0ipso.tokkl.cache.RoomChangeStore
 import com.github.e0ipso.tokkl.cache.RunningCheck
 import com.github.e0ipso.tokkl.cache.RunningCheckResults
 import com.github.e0ipso.tokkl.cache.SendOnQueue
 import com.github.e0ipso.tokkl.cache.ServerSpans
+import com.github.e0ipso.tokkl.cache.UnsentChanges
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.session.AccountDataOwner
@@ -23,6 +30,7 @@ import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.sync.DiscardedChanges
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.bind
+import org.koin.dsl.binds
 import org.koin.dsl.module
 
 /** The Room cache, the change queue and its sender, and their background work. */
@@ -32,7 +40,7 @@ internal val dataModule = module {
     single { CacheDatabase.open(androidContext()) }
 
     // The offline cache.
-    single { AccountCache(get()) } bind AccountDataOwner::class
+    single { AccountCache(get(), get()) } bind AccountDataOwner::class
 
     single<ChangeStore> { RoomChangeStore(get()) }
 
@@ -43,15 +51,16 @@ internal val dataModule = module {
     // the app closed.
     single { BackgroundSendRuns() }
     single { BackgroundSend(get(), get()) } bind AccountDataOwner::class
-    single { SendOnQueue(get(), get()) }
+    single { SendOnQueue(get(), get()) } bind QueuedListener::class
     single {
         ChangeQueue(
             get(),
             io(),
-            onQueued = get<SendOnQueue>()::queued,
+            onQueued = get<SendOnQueue>(),
+            clock = get(),
             spans = get<AccountServerSpans>(),
         )
-    } bind EntryChanges::class
+    } binds arrayOf(EntryChanges::class, CurrentEntryIds::class, HeldChanges::class, UnsentChanges::class)
 
     // Sends the queued changes in order. Once it has sent some, the account refreshes with a read
     // that starts after the send, so a refresh that read the server before it cannot put the
@@ -65,16 +74,24 @@ internal val dataModule = module {
     single { RunningCheckResults() }
     single { RunningCheck(get(), get()) } bind AccountDataOwner::class
     single {
+        val refreshes = get<AccountRefreshRequests>()
+        val waitingSend = get<CancelWaitingSend>()
+        val discards = get<DiscardedChanges>()
         ChangeSender(
             get(),
             client = get<Session>(),
             scope = get(),
             io = io(),
-            onSent = get<AccountRefreshRequests>()::refreshAfterChange,
-            onEmptied = get<CancelWaitingSend>()::emptied,
-            onDiscarded = get<DiscardedChanges>()::add,
+            events = object : ChangeSenderEvents {
+                override fun sent() = refreshes.refreshAfterChange()
+
+                override fun emptied() = waitingSend.emptied()
+
+                override fun discarded(count: Int) = discards.add(count)
+            },
+            clock = get(),
             spans = get<AccountServerSpans>(),
             allDay = get<CapabilitiesSource>()::offersAllDay,
         )
-    } bind AccountDataOwner::class
+    } binds arrayOf(QueueSender::class, DeleteUndo::class, AccountDataOwner::class)
 }

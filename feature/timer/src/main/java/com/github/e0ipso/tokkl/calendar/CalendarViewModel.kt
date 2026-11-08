@@ -24,9 +24,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -86,10 +84,10 @@ class CalendarViewModel(
     private val client: ApiClientProvider,
     scope: CoroutineScope,
     private val io: CoroutineContext,
-    private val clock: Clock = Clock.systemUTC(),
-    allDayOffered: Flow<Boolean> = flowOf(false),
-    overrides: Flow<Map<Long, CachedTimeEntry?>> = emptyFlow(),
-    appEvents: Flow<AppEvent> = emptyFlow(),
+    private val clock: Clock,
+    allDayOffered: Flow<Boolean>,
+    overrides: Flow<Map<Long, CachedTimeEntry?>>,
+    appEvents: Flow<AppEvent>,
 ) : ViewModel(scope) {
 
     /** The chosen day, or null to follow today. */
@@ -154,7 +152,7 @@ class CalendarViewModel(
                 val shown = day ?: today
                 val weekStart = time.startOfWeek(shown)
                 val server = weeks[spanOf(time, weekStart, today)]
-                val resolved = resolveEntryOverrides(overrides, changes::currentId)
+                val resolved = resolveEntryOverrides(overrides, changes)
                 val edits = keepEdits(cached, weeks, time, resolved.values.filterNotNull().mapTo(HashSet()) { it.id })
                 val restored = resolved.mapValues { (id, entry) ->
                     entry?.let { edits[id]?.entry ?: server?.entries?.firstOrNull { it.id == id } ?: it }

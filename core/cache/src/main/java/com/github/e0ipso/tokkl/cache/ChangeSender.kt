@@ -6,6 +6,7 @@ import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.capabilities.CapabilityCheck
 import com.github.e0ipso.tokkl.platform.SingleFlight
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountRefreshListener
@@ -29,6 +30,36 @@ import java.time.Duration
 import java.time.Instant
 import kotlin.coroutines.CoroutineContext
 
+/** What a [ChangeSender]'s drains tell the app, each on the sender's IO context. */
+interface ChangeSenderEvents {
+
+    /**
+     * A quiet drain sent at least one change, or an Undo restored an entry, so the app can refresh:
+     * after a quiet drain, not after each change or pass. A change queued meanwhile drains before
+     * the drain's job ends.
+     */
+    fun sent()
+
+    /**
+     * A quiet drain that sent at least one change left nothing to send. It comes inside the drain's
+     * job and before [sent], so the app can cancel a background retry that would find nothing.
+     */
+    fun emptied()
+
+    /** A 404 took [count] changes out of the queue because the server no longer has their entry. */
+    fun discarded(count: Int)
+}
+
+/** Sends the queued changes now and waits until the drain ends, such as [ChangeSender]. */
+fun interface QueueSender {
+    suspend fun sendQueued()
+}
+
+/** Takes back the delete of an entry, such as [ChangeSender.undoDelete]. */
+fun interface DeleteUndo {
+    suspend fun undoDelete(entryId: Long): ChangeSender.UndoOutcome
+}
+
 /**
  * Sends the queue to the configured server, oldest change first (docs/PRD.md O1). A failure the
  * phone can wait out stops the drain and keeps the change queued, so the order holds and nothing
@@ -38,11 +69,12 @@ import kotlin.coroutines.CoroutineContext
  *
  * Each other refusal has its own outcome, as [refusal] describes (docs/PRD.md O6). An entry the
  * server no longer has takes every queued change to it out of the queue and the entry out of the
- * cache, and [onDiscarded] counts them for the discard notice. A 404 on a delete that may already
- * have reached the server counts as sent. A held change waits for the user with the server's
- * message ([ChangeStore.hold]); later changes to the same entry wait behind it, and the rest of the
- * queue goes on. A 403, or a 401, pauses the whole queue and discards nothing: [signInNeeded]
- * turns true, and no drain sends anything until [resume], which signing in again calls.
+ * cache, and [ChangeSenderEvents.discarded] counts them for the discard notice. A 404 on a
+ * delete that may already have reached the server counts as sent. A held change waits for the
+ * user with the server's message ([ChangeStore.hold]); later changes to the same entry wait behind
+ * it, and the rest of the queue goes on. A 403, or a 401, pauses the whole queue and discards
+ * nothing: [signInNeeded] turns true, and no drain sends anything until [resume], which signing
+ * in again calls.
  *
  * [ChangeTries] sends each change once and says how a queued start goes when a later timer runs
  * (O3) and how a create that may have reached the server is found instead of posted again. When a
@@ -63,14 +95,7 @@ import kotlin.coroutines.CoroutineContext
  *
  * @param client the signed-in account's client, or null when signed out. Runs on [io].
  * @param scope outlives every screen, so leaving the app does not cancel a drain.
- * @param onSent runs on [io] once a drain has sent at least one change, so the app can refresh:
- *   after a quiet drain, not after each change or pass. A change queued during this callback
- *   drains before the job ends. It runs after a restore too.
- * @param onEmptied runs on [io] after a quiet drain that sent at least one change has left
- *   nothing to send, inside the drain's job and before [onSent], so the app can cancel a
- *   background retry that would find nothing to send.
- * @param onDiscarded runs on [io] with how many changes a 404 took out of the queue because the
- *   server no longer has their entry, so the app can say so.
+ * @param events hears on [io] what the drains did, as [ChangeSenderEvents] says.
  * @param spans where the server puts a start once the entry is stopped, which finds the entry a
  *   lost create made, and the span of a queued start ended before a later timer.
  * @param allDay whether the server stores no-time entries (`Capabilities.allDay`), read for each
@@ -81,13 +106,13 @@ class ChangeSender(
     private val client: ApiClientProvider,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
-    private val onSent: () -> Unit = {},
-    private val onEmptied: () -> Unit = {},
-    private val onDiscarded: (Int) -> Unit = {},
-    private val clock: Clock = Clock.systemUTC(),
-    private val spans: ServerSpans = ServerSpans.Unsnapped,
-    private val allDay: () -> Boolean = { false },
-) : AccountRefreshListener,
+    private val events: ChangeSenderEvents,
+    private val clock: Clock,
+    private val spans: ServerSpans,
+    private val allDay: CapabilityCheck,
+) : QueueSender,
+    DeleteUndo,
+    AccountRefreshListener,
     AccountDataOwner {
 
     override val signOutPhase = SignOutPhase.FINISH_SENDING
@@ -212,6 +237,11 @@ class ChangeSender(
         return lastOutcome
     }
 
+    /** Drains the queue as [sendAndWait] does, for a caller that needs no outcome. */
+    override suspend fun sendQueued() {
+        sendAndWait()
+    }
+
     /**
      * Cancels the wait after a 429 and forgets it, then waits for a running drain to end. Signing
      * out calls this once [client] returns null, so the drain ends at its next change and nothing
@@ -245,8 +275,8 @@ class ChangeSender(
                 if (!synchronized(lock) { again }) {
                     // Keep this job published while cancelling background work and refreshing.
                     // A caller during cleanup must join it, and any new change gets another pass.
-                    if (sent > 0 && lastOutcome is Outcome.Empty) onEmptied()
-                    if (sent > 0) onSent()
+                    if (sent > 0 && lastOutcome is Outcome.Empty) events.emptied()
+                    if (sent > 0) events.sent()
                     sent = 0
                 }
                 drainAgain = synchronized(lock) {
@@ -341,7 +371,7 @@ class ChangeSender(
 
         Refusal.EntryGone -> {
             val discarded = store.discardEntry(queued)
-            if (discarded > 0) onDiscarded(discarded)
+            if (discarded > 0) events.discarded(discarded)
             RefusalStep.Next(discarded)
         }
 
@@ -381,7 +411,7 @@ class ChangeSender(
      * only when `Capabilities.restore` is true. Blocks the sender's deletes meanwhile. Once
      * started, the Undo reaches the server and the queue also when the caller is cancelled.
      */
-    suspend fun undoDelete(entryId: Long): UndoOutcome {
+    override suspend fun undoDelete(entryId: Long): UndoOutcome {
         val outcome = withContext(io + NonCancellable) {
             deletes.withLock {
                 when (val found = store.takeBackDelete(entryId)) {
@@ -391,7 +421,7 @@ class ChangeSender(
                 }
             }
         }
-        if (outcome == UndoOutcome.Restored) withContext(io) { onSent() }
+        if (outcome == UndoOutcome.Restored) withContext(io) { events.sent() }
         return outcome
     }
 

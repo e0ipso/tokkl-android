@@ -251,7 +251,7 @@ class RunningEntryQueueTest {
 
     private fun reopen() {
         database = Room.databaseBuilder(context, CacheDatabase::class.java, FILE).build()
-        queue = ChangeQueue(database, Dispatchers.IO, onQueued = {}, clock = clock)
+        queue = ChangeQueue(database, Dispatchers.IO, onQueued = {}, clock = clock, spans = ServerSpans.Unsnapped)
     }
 
     private fun identity(id: Long) = RunningEntryIdentity(id, WORKSPACE, START)

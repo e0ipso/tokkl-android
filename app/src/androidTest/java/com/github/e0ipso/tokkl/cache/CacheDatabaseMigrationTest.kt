@@ -20,6 +20,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
@@ -75,7 +76,13 @@ class CacheDatabaseMigrationTest {
             )
             assertEquals(listOf("Website"), runBlocking { cache.projects().first() }.map { it.name })
 
-            val queue = ChangeQueue(database, Dispatchers.IO, onQueued = {})
+            val queue = ChangeQueue(
+                database,
+                Dispatchers.IO,
+                onQueued = {},
+                clock = Clock.systemUTC(),
+                spans = ServerSpans.Unsnapped,
+            )
             assertTrue("the migrated file takes a queued stop", runBlocking { queue.stop(42) })
             assertEquals(1, runBlocking { queue.unsentCount.first() })
             assertTrue(runBlocking { cache.timeEntriesWithSendState().first() }.single().unsent)
@@ -173,7 +180,13 @@ class CacheDatabaseMigrationTest {
                 )
             assertEquals("the queued create survived, marked, with no ids", queued, store.first())
 
-            val queue = ChangeQueue(database, Dispatchers.IO, onQueued = {})
+            val queue = ChangeQueue(
+                database,
+                Dispatchers.IO,
+                onQueued = {},
+                clock = Clock.systemUTC(),
+                spans = ServerSpans.Unsnapped,
+            )
             val copy = runBlocking {
                 queue.create(
                     7,
@@ -287,7 +300,13 @@ class CacheDatabaseMigrationTest {
             val running = checkNotNull(database.changes().latestRunning())
             assertEquals(-1L, running.entry.id)
             assertTrue("the queued start shows unsent", running.unsent)
-            val queue = ChangeQueue(database, Dispatchers.IO, onQueued = {})
+            val queue = ChangeQueue(
+                database,
+                Dispatchers.IO,
+                onQueued = {},
+                clock = Clock.systemUTC(),
+                spans = ServerSpans.Unsnapped,
+            )
             assertTrue("the migrated file takes a Stop", runBlocking { queue.stop(-1) })
             assertEquals(listOf(ChangeKind.CREATE, ChangeKind.STOP), database.changes().changesFor(-1).map { it.kind })
         } finally {
@@ -463,6 +482,16 @@ class CacheDatabaseMigrationTest {
                     client = { appApiClient(TokklTestServer.url, ApiCredentials.ApiToken(account.apiToken)) },
                     scope = scope,
                     io = Dispatchers.IO,
+                    events = object : ChangeSenderEvents {
+                        override fun sent() = Unit
+
+                        override fun emptied() = Unit
+
+                        override fun discarded(count: Int) = Unit
+                    },
+                    clock = Clock.systemUTC(),
+                    spans = ServerSpans.Unsnapped,
+                    allDay = { false },
                 )
                 val outcome = runBlocking { sender.sendAndWait() }
                 assertTrue(
@@ -487,7 +516,15 @@ class CacheDatabaseMigrationTest {
                 assertEquals(undo, runBlocking { changes.latestShortStop().first() })
                 assertTrue(
                     "Undo still queues its restore",
-                    runBlocking { ChangeQueue(database, Dispatchers.IO, onQueued = {}).undoShortStop(77) },
+                    runBlocking {
+                        ChangeQueue(
+                            database,
+                            Dispatchers.IO,
+                            onQueued = {},
+                            clock = Clock.systemUTC(),
+                            spans = ServerSpans.Unsnapped,
+                        ).undoShortStop(77)
+                    },
                 )
                 assertEquals(listOf(ChangeKind.RESTORE), changes.changesFor(77).map { it.kind })
             } finally {

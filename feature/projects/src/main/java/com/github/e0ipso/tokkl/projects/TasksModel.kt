@@ -6,6 +6,8 @@ import com.github.e0ipso.tokkl.catalog.CatalogChange
 import com.github.e0ipso.tokkl.catalog.CatalogModel
 import com.github.e0ipso.tokkl.catalog.CatalogRepository
 import com.github.e0ipso.tokkl.catalog.CatalogState
+import com.github.e0ipso.tokkl.session.DefaultWorkspace
+import com.github.e0ipso.tokkl.session.RefreshRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import kotlin.coroutines.CoroutineContext
@@ -41,8 +43,8 @@ typealias TasksState = CatalogState<TasksData, TaskOverlay>
  */
 class TasksModel(
     private val repository: TasksRepository,
-    workspaceId: () -> Long?,
-    refreshCache: () -> Unit,
+    workspaceId: DefaultWorkspace,
+    refreshCache: RefreshRequest,
     scope: CoroutineScope,
     io: CoroutineContext,
 ) {

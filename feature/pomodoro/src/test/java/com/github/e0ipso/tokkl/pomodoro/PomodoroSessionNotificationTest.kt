@@ -331,14 +331,24 @@ class PomodoroSessionNotificationTest {
 
         fun newSync() = PomodoroSessionNotificationSync(
             alarm.alarm, server, changes, { signedIn }, { serviceRunning },
-            { saved }, {
-                if (writeFailure) throw IOException("fixture write failed")
-                saved = it
+            object : PomodoroNotificationMemory {
+                override fun load() = saved
+
+                override fun save(display: PomodoroNotificationDisplay?) {
+                    if (writeFailure) throw IOException("fixture write failed")
+                    saved = display
+                }
             },
-            { content, _ ->
-                if (allowed) posts += content
-                allowed
-            }, { removes++ },
+            object : PomodoroSessionPoster {
+                override fun post(content: PomodoroSessionNotificationContent, account: String): Boolean {
+                    if (allowed) posts += content
+                    return allowed
+                }
+
+                override fun remove() {
+                    removes++
+                }
+            },
             CoroutineScope(SupervisorJob() + Dispatchers.Unconfined), Dispatchers.Unconfined,
         )
     }

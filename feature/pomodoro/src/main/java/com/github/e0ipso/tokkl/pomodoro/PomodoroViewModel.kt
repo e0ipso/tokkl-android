@@ -7,6 +7,7 @@ import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.PendingChange
+import com.github.e0ipso.tokkl.cache.QueueSender
 import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
 import com.github.e0ipso.tokkl.cache.fields
 import com.github.e0ipso.tokkl.cache.toCached
@@ -31,7 +32,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.joinAll
@@ -73,10 +73,10 @@ class PomodoroViewModel(
     unsent: Flow<Int>,
     refused: Flow<List<PendingChange>>,
     scope: CoroutineScope,
-    private val sendQueued: suspend () -> Unit = {},
-    private val alarmProbe: () -> Boolean = { false },
-    picker: Flow<PickerSource> = flowOf(PickerSource()),
-    val offline: StateFlow<Boolean> = MutableStateFlow(false),
+    private val sendQueued: QueueSender,
+    private val alarmProbe: ExactAlarmCheck,
+    picker: Flow<PickerSource>,
+    val offline: StateFlow<Boolean>,
 ) : ViewModel(scope) {
     private val modelScope = CoroutineScope(
         viewModelScope.coroutineContext + SupervisorJob(viewModelScope.coroutineContext[Job]),
@@ -150,7 +150,7 @@ class PomodoroViewModel(
         }
     }
 
-    private fun alarmDenied(): Boolean = exactAlarmAllowed?.not() ?: alarmProbe()
+    private fun alarmDenied(): Boolean = exactAlarmAllowed?.not() ?: alarmProbe.denied()
 
     private fun accept(value: HeldTimerState?) {
         val ended = heldNow?.state?.pomodoro != null && value?.state?.pomodoro == null
@@ -321,7 +321,7 @@ class PomodoroViewModel(
         fieldWrites.toList().joinAll()
         if (!unflushed) return shown.revision
         unflushed = false
-        sendQueued()
+        sendQueued.sendQueued()
         actions.read()
         val moved = withTimeoutOrNull(REFRESH_MS) {
             state.first { it.shown.let { now -> now == null || now.revision > shown.revision } }
