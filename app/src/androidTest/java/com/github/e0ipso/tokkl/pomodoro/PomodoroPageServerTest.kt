@@ -49,6 +49,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
 import com.github.e0ipso.tokkl.core.entryfields.R as FieldsR
+import com.github.e0ipso.tokkl.core.timernotice.R as TimerNoticeR
 import com.github.e0ipso.tokkl.feature.pomodoro.R as PomodoroR
 
 /**
@@ -164,7 +165,7 @@ class PomodoroPageServerTest {
         await { model.state.value.problem != null && !model.state.value.busy }
         assertEquals(PomodoroProblem(PomodoroAction.NEXT, TimerActionResult.Refused), model.state.value.problem)
         compose.onNodeWithText(
-            context.getString(TimerActionResult.Refused.message),
+            context.getString(TimerNoticeR.string.timer_action_refused),
         ).performScrollTo().assertIsDisplayed()
         // The refusal carried the server's state, and the old tap advanced nothing a second time.
         assertEquals(PhaseKind.SHORT_REST, model.state.value.pomodoro!!.phase.kind)
@@ -218,7 +219,7 @@ class PomodoroPageServerTest {
         await { model.state.value.problem != null && !model.state.value.busy }
         assertEquals(PomodoroProblem(PomodoroAction.START, TimerActionResult.Offline), model.state.value.problem)
         compose.onNodeWithText(
-            context.getString(TimerActionResult.Offline.message),
+            context.getString(TimerNoticeR.string.timer_action_offline),
         ).performScrollTo().assertIsDisplayed()
         assertNull(model.state.value.pomodoro)
         field(FieldsR.string.entry_description).performScrollTo().assert(hasText("Offline start"))

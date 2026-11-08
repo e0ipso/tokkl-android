@@ -14,7 +14,6 @@ import com.github.e0ipso.tokkl.cache.CREATED_WITH
 import com.github.e0ipso.tokkl.cache.CurrentEntryCache
 import com.github.e0ipso.tokkl.cache.RunningCheckStart
 import com.github.e0ipso.tokkl.cache.RunningCheckWrites
-import com.github.e0ipso.tokkl.core.timerstate.R
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.ProjectId
@@ -171,7 +170,6 @@ class TimerActionsTest {
 
         val refused = run { actions.nextPhase(4) }
         assertEquals(TimerActionResult.Refused, refused)
-        assertEquals(R.string.timer_action_refused, refused.message)
         assertEquals("the refusal's state is held", 6L, holder.state.value?.state?.revision)
     }
 
@@ -204,7 +202,6 @@ class TimerActionsTest {
         val result = run { actions.resume(8) }
 
         assertEquals(TimerActionResult.Offline, result)
-        assertEquals(R.string.timer_action_offline, result.message)
         assertEquals(
             "the resume went out once",
             listOf("/tokkl/api/app/timer/resume"),

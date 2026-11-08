@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.timerstate
 
-import androidx.annotation.StringRes
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
@@ -9,7 +8,6 @@ import com.github.e0ipso.tokkl.api.SessionStartBody
 import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.cache.CREATED_WITH
-import com.github.e0ipso.tokkl.core.timerstate.R
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import kotlinx.coroutines.NonCancellable
@@ -141,44 +139,29 @@ interface SessionActions {
     suspend fun endSession(revision: Long): TimerActionResult
 }
 
-/** What a timer action, or the timer read, came to. */
+/** What a timer action, or the timer read, came to. The surfaces put it into words. */
 sealed interface TimerActionResult {
 
-    /**
-     * What the surface says, or null when it says nothing new or uses its existing error path, as
-     * for [Failed].
-     */
-    @get:StringRes
-    val message: Int?
-
     /** The server answered with its state, which the holder took unless it held a newer one. */
-    data object Done : TimerActionResult {
-        override val message: Int? get() = null
-    }
+    data object Done : TimerActionResult
 
     /**
      * 409: the timer was no longer as the surface showed it, and the server refused the action.
      * The holder took the server's state from the refusal, unless it held a newer one.
      */
-    data object Refused : TimerActionResult {
-        override val message: Int get() = R.string.timer_action_refused
-    }
+    data object Refused : TimerActionResult
 
     /**
      * No answer came. The phone changed nothing and queued nothing. The action may still have
      * reached the server, and then the next read or timer event shows it.
      */
-    data object Offline : TimerActionResult {
-        override val message: Int get() = R.string.timer_action_offline
-    }
+    data object Offline : TimerActionResult
 
     /**
      * Any other failure, for the surface's existing error path: a refused token, a trust check the
      * user has not answered, a status with the server's reason, or a body that is not a state.
      */
-    data class Failed(val error: ApiError) : TimerActionResult {
-        override val message: Int? get() = null
-    }
+    data class Failed(val error: ApiError) : TimerActionResult
 }
 
 /**

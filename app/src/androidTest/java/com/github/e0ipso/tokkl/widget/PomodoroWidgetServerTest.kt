@@ -32,7 +32,6 @@ import com.github.e0ipso.tokkl.signin.SignInCredentials
 import com.github.e0ipso.tokkl.signin.SignInResult
 import com.github.e0ipso.tokkl.timer.TimerAcceptanceFixture
 import com.github.e0ipso.tokkl.timerState
-import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -54,6 +53,7 @@ import org.junit.Rule
 import org.junit.Test
 import java.time.Duration
 import java.time.Instant
+import com.github.e0ipso.tokkl.core.timernotice.R as TimerNoticeR
 import com.github.e0ipso.tokkl.feature.widget.R as WidgetR
 
 /** Real pinned-server actions through the installed provider's native PendingIntents. */
@@ -219,7 +219,7 @@ class PomodoroWidgetServerTest {
         assertTrue("the server has a newer revision", current.revision > shown.revision)
         assertEquals("the edit keeps the phase", shown.session.phase.start, current.pomodoro!!.phase.start)
         assertEquals("the widget still holds its drawn revision", shown.revision, active().revision)
-        TimerActionToasts.await(TimerActionResult.Refused.message) { oldNext() }
+        TimerActionToasts.await(TimerNoticeR.string.timer_action_refused) { oldNext() }
         host.awaitText("Changed elsewhere")
         assertEquals(current.revision, fixture.account.otherDevice.timerState().revision)
         assertEquals(current.revision, active().revision)
@@ -232,7 +232,7 @@ class PomodoroWidgetServerTest {
         assertTrue("the server has a newer revision", current.revision > endRevision)
         assertEquals("the edit keeps the phase", shown.session.phase.start, current.pomodoro!!.phase.start)
         assertEquals("End keeps its drawn revision", endRevision, active().revision)
-        TimerActionToasts.await(TimerActionResult.Refused.message) { oldEnd() }
+        TimerActionToasts.await(TimerNoticeR.string.timer_action_refused) { oldEnd() }
         host.awaitText("Changed again")
         assertEquals(current.revision, fixture.account.otherDevice.timerState().revision)
         assertEquals(current.revision, active().revision)

@@ -75,6 +75,7 @@ import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 import kotlin.math.abs
+import com.github.e0ipso.tokkl.core.timernotice.R as TimerNoticeR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.feature.notification.R as NotificationR
 
@@ -306,7 +307,7 @@ class TimerCrossDeviceServerTest {
             assertTrue("the phone still rings the work phase", app.pomodoroRinging.state.value.playing)
 
             PomodoroWorkWaits.ringingButtons(1, seconds = 15, what = "the ringing Next phase") {
-                TimerActionToasts.await(TimerActionResult.Refused.message) { next.actionIntent.send() }
+                TimerActionToasts.await(TimerNoticeR.string.timer_action_refused) { next.actionIntent.send() }
             }
 
             val after = other.timerState()

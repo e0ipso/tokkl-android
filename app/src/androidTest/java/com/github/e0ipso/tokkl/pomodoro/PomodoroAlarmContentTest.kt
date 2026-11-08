@@ -41,7 +41,7 @@ import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
-import com.github.e0ipso.tokkl.core.timerstate.R as TimerStateR
+import com.github.e0ipso.tokkl.core.timernotice.R as TimerNoticeR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /** The alarm and Pomodoro page content at the largest font scale, with no server or ring. */
@@ -136,7 +136,7 @@ class PomodoroAlarmContentTest {
     @Test fun aFailedActionShowsTheStandardMessageAndKeepsBothActions() {
         show()
         compose.runOnIdle { state = state.copy(problem = TimerActionResult.Offline) }
-        val message = compose.onNodeWithText(context.getString(TimerStateR.string.timer_action_offline))
+        val message = compose.onNodeWithText(context.getString(TimerNoticeR.string.timer_action_offline))
         message.performScrollTo().assertIsDisplayed()
         readable(message)
         button(R.string.pomodoro_alarm_next).performScrollTo().assertIsEnabled()

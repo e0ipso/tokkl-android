@@ -85,7 +85,7 @@ import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
-import com.github.e0ipso.tokkl.core.timerstate.R as TimerStateR
+import com.github.e0ipso.tokkl.core.timernotice.R as TimerNoticeR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 
@@ -213,7 +213,7 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             val queued = runBlocking { app.changes.unsentCount.first() }
             assertTrue("the start edit waits in the queue", queued > 0)
             focusedButton(UiR.string.timer_pause).performScrollTo().performClick()
-            awaitNotice(TimerStateR.string.timer_action_offline)
+            awaitNotice(TimerNoticeR.string.timer_action_offline)
             assertEquals(original.id, awaitRunning().entry.id)
             assertActions(running = true)
             assertEquals(queued, runBlocking { app.changes.unsentCount.first() })
@@ -237,10 +237,10 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             // Offline, Resume and Stop while paused need the server too, and the pause stays as it was.
             AirplaneMode.set(true, fixture.account.client)
             focusedButton(UiR.string.timer_resume).performScrollTo().performClick()
-            awaitNotice(TimerStateR.string.timer_action_offline)
+            awaitNotice(TimerNoticeR.string.timer_action_offline)
             assertEquals(paused, awaitPaused())
             focusedButton(UiR.string.timer_stop).performScrollTo().performClick()
-            awaitNotice(TimerStateR.string.timer_action_offline)
+            awaitNotice(TimerNoticeR.string.timer_action_offline)
             assertEquals(paused, awaitPaused())
             assertActions(running = false)
             assertEquals(0, runBlocking { app.changes.unsentCount.first() })

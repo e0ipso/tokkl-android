@@ -65,6 +65,7 @@ import org.junit.rules.RuleChain
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import com.github.e0ipso.tokkl.core.timernotice.R as TimerNoticeR
 import com.github.e0ipso.tokkl.feature.notification.R as NotificationR
 import com.github.e0ipso.tokkl.feature.pomodoro.R as PomodoroR
 import com.github.e0ipso.tokkl.feature.timer.R as TimerR
@@ -93,7 +94,7 @@ class TimerActionsOfflineServerTest {
     private val app get() = fixture.app
     private val device = UiDevice.getInstance(instrumentation)
     private val other get() = fixture.account.otherDevice
-    private val offline get() = context.getString(TimerActionResult.Offline.message)
+    private val offline get() = context.getString(TimerNoticeR.string.timer_action_offline)
 
     @Before
     fun prepare() {
@@ -409,7 +410,7 @@ class TimerActionsOfflineServerTest {
 
     private fun toast(what: String, action: () -> Unit) {
         try {
-            TimerActionToasts.await(TimerActionResult.Offline.message, action)
+            TimerActionToasts.await(TimerNoticeR.string.timer_action_offline, action)
         } catch (e: AssertionError) {
             throw AssertionError("$what: ${e.message}", e)
         }

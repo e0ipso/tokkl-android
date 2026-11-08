@@ -25,16 +25,16 @@ sealed interface TimerNotice {
 }
 
 /**
- * What [notice] says, in a sentence: the action's own message for a refusal or no answer, and
+ * What [notice] says, in a sentence: the timer's own words for a refusal or no answer, and
  * otherwise why the server failed, as the catalog pages say it.
  */
 fun timerNoticeText(resources: Resources, notice: TimerNotice): String = when (notice) {
     is TimerNotice.PomodoroDiscarded -> resources.getString(R.string.timer_pomodoro_too_short)
 
     is TimerNotice.ActionFailed -> when (val result = notice.result) {
-        TimerActionResult.Refused -> resources.getString(TimerActionResult.Refused.message)
+        TimerActionResult.Refused -> resources.getString(R.string.timer_action_refused)
 
-        TimerActionResult.Offline -> resources.getString(TimerActionResult.Offline.message)
+        TimerActionResult.Offline -> resources.getString(R.string.timer_action_offline)
 
         is TimerActionResult.Failed -> problemText(resources, result.error.toServerProblem())
 
