@@ -6,20 +6,16 @@ import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.catalog.CatalogChange
 import com.github.e0ipso.tokkl.catalog.CatalogModel
 import com.github.e0ipso.tokkl.catalog.CatalogState
-import com.github.e0ipso.tokkl.catalog.PageEvents
-import com.github.e0ipso.tokkl.catalog.followNetwork
-import com.github.e0ipso.tokkl.catalog.followTrips
 import com.github.e0ipso.tokkl.model.Client
 import com.github.e0ipso.tokkl.model.ClientId
 import com.github.e0ipso.tokkl.model.WorkspaceId
-import com.github.e0ipso.tokkl.platform.whileShown
-import com.github.e0ipso.tokkl.session.AppEvent
+import com.github.e0ipso.tokkl.platform.AppForeground
+import com.github.e0ipso.tokkl.platform.stateInPage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.stateIn
 import kotlin.coroutines.CoroutineContext
 
 /** What the clients page opens over its list. */
@@ -73,7 +69,8 @@ data class ClientsPageState(
  * @param cachedClients the clients on the phone, which the page lists while the server's do not
  *   load.
  * @param offline whether the phone is offline, when nothing can change.
- * @param appEvents MainActivity's trips to the background and back, which load the page again.
+ * @param app the app's trips to the background and the network's returns, which load the page again
+ *   while it shows ([stateInPage]).
  */
 class ClientsViewModel(
     private val repository: ClientsRepository,
@@ -83,9 +80,8 @@ class ClientsViewModel(
     io: CoroutineContext,
     cachedClients: Flow<List<Client>>,
     private val offline: StateFlow<Boolean>,
-    appEvents: Flow<AppEvent>,
-) : ViewModel(scope),
-    PageEvents {
+    app: AppForeground,
+) : ViewModel(scope) {
 
     private val catalog = CatalogModel<ClientsData, ClientsOverlay>(
         repository,
@@ -105,36 +101,11 @@ class ClientsViewModel(
     ) { shown, isOffline, cached ->
         val workspace = workspace()
         ClientsPageState(shown, isOffline, cached.filter { workspace == null || it.workspaceId == workspace })
-    }.stateIn(viewModelScope, whileShown, ClientsPageState(state.value, offline.value))
-
-    init {
-        followTrips(appEvents, viewModelScope)
-        followNetwork(offline, viewModelScope)
-    }
+    }.stateInPage(viewModelScope, ClientsPageState(state.value, offline.value), app, catalog)
 
     fun workspace(): WorkspaceId? = catalog.workspace()
 
-    /**
-     * The page opened: loads. When it comes back open after a configuration change, it loads
-     * nothing, but while the phone is online it loads again what could not reach the server.
-     */
-    override fun open() {
-        if (!catalog.opened) {
-            catalog.open()
-        } else if (!offline.value) {
-            reconnected()
-        }
-    }
-
     fun retry() = catalog.retry()
-
-    override fun reconnected() = catalog.reconnected()
-
-    override fun close() = catalog.close()
-
-    override fun wentToBackground() = catalog.wentToBackground()
-
-    override fun cameToForeground() = catalog.cameToForeground()
 
     fun doneShown() = catalog.doneShown()
 

@@ -8,14 +8,17 @@ import com.github.e0ipso.tokkl.catalog.CatalogChange
 import com.github.e0ipso.tokkl.model.Client
 import com.github.e0ipso.tokkl.model.ClientId
 import com.github.e0ipso.tokkl.model.WorkspaceId
+import com.github.e0ipso.tokkl.platform.TestApp
+import com.github.e0ipso.tokkl.platform.TestScreen
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestCoroutineScheduler
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
@@ -47,6 +50,10 @@ class ClientsViewModelTest {
     @Volatile
     private var failing = false
     private lateinit var model: ClientsViewModel
+    private lateinit var screen: TestScreen
+    private val scheduler = TestCoroutineScheduler()
+    private val scope = CoroutineScope(UnconfinedTestDispatcher(scheduler))
+    private val app = TestApp(scheduler)
 
     @Before
     fun setUp() {
@@ -83,12 +90,13 @@ class ClientsViewModelTest {
             repository = ClientsRepository { testApi.api(url, ApiCredentials.ApiToken("tok-123")) },
             workspaceId = { WorkspaceId(7) },
             refreshCache = { refreshes++ },
-            scope = CoroutineScope(Dispatchers.Unconfined),
+            scope = scope,
             io = Dispatchers.Unconfined,
             cachedClients = flowOf(emptyList()),
             offline = offline,
-            appEvents = emptyFlow(),
+            app = app.app,
         )
+        screen = TestScreen(model.page, scope, scheduler)
     }
 
     @After
@@ -97,37 +105,33 @@ class ClientsViewModelTest {
     }
 
     /**
-     * A page that could not load loads again when the network comes back, and when it comes back
-     * open after a configuration change while online. A closed page, or one that loaded, asks
-     * nothing.
+     * A page that could not load loads again when the network comes back. A rotation loads
+     * nothing, and a page that loaded or went asks nothing.
      */
     @Test
-    fun theNetworksReturnAndARotationLoadAgainWhatFailed() {
+    fun theNetworksReturnLoadsAgainWhatFailed() {
         failing = true
-        model.open()
+        screen.show()
         assertEquals("the first load", 1, clientLoads())
         assertNull(model.state.value.data)
 
-        offline.value = true
-        offline.value = false
+        app.reconnect()
         assertEquals("the network came back", 2, clientLoads())
 
-        model.open()
-        assertEquals("the page came back after a rotation", 3, clientLoads())
+        screen.hide()
+        screen.show()
+        assertEquals("a rotation loads nothing", 2, clientLoads())
 
         failing = false
-        model.open()
-        assertEquals(4, clientLoads())
+        app.reconnect()
+        assertEquals(3, clientLoads())
         assertEquals("Acme", model.state.value.data!!.clients.single().name)
-        model.open()
-        offline.value = true
-        offline.value = false
-        assertEquals("a page that loaded asks nothing", 4, clientLoads())
+        app.reconnect()
+        assertEquals("a page that loaded asks nothing", 3, clientLoads())
 
-        model.close()
-        offline.value = true
-        offline.value = false
-        assertEquals("a closed page asks nothing", 4, clientLoads())
+        screen.leave()
+        app.reconnect()
+        assertEquals("a page that went asks nothing", 3, clientLoads())
     }
 
     private fun clientLoads(): Int = requests.count { it == "GET /api/v9/workspaces/7/clients" }
@@ -135,7 +139,7 @@ class ClientsViewModelTest {
     /** Archiving asks first, since it archives the client's projects too. */
     @Test
     fun archivingAsksFirstThenArchivesTheClientAndRefreshesTheCache() {
-        model.open()
+        screen.show()
         val acme = model.state.value.data!!.clients.single()
         assertEquals(1, model.state.value.data!!.projectCount(acme))
 
@@ -154,7 +158,7 @@ class ClientsViewModelTest {
     /** Restoring brings the client's projects back too, as the web app does. */
     @Test
     fun restoringBringsTheProjectsBack() {
-        model.open()
+        screen.show()
         val acme = model.state.value.data!!.clients.single()
         val opened = requests.size
 
@@ -168,7 +172,7 @@ class ClientsViewModelTest {
 
     @Test
     fun aNewClientGoesWithItsNameTrimmedAndBlankNotesAsNone() {
-        model.open()
+        screen.show()
         model.newClient()
         val opened = requests.size
 
@@ -195,10 +199,9 @@ class ClientsViewModelTest {
                 listOf(CACHED_ACME, Client(ClientId(9), WorkspaceId(8), "Elsewhere", archived = false)),
             ),
             offline = offline,
-            appEvents = emptyFlow(),
+            app = TestApp(testScheduler).app,
         )
         val reader = scope.launch { page.page.collect {} }
-        page.open()
         offline.value = true
 
         val shown = page.page.first { it.offline }

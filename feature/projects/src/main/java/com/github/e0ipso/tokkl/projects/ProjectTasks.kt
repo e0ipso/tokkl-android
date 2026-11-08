@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.projects
 
-import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -18,12 +17,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -44,7 +41,6 @@ import com.github.e0ipso.tokkl.catalog.DetailLine
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.catalog.problemText
 import com.github.e0ipso.tokkl.feature.projects.R
-import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.model.Task
 import com.github.e0ipso.tokkl.ui.CheckboxOptionRow
 import com.github.e0ipso.tokkl.ui.ErrorBanner
@@ -52,22 +48,6 @@ import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklIconButton
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.core.ui.R as UiR
-
-/**
- * Opens [project]'s task list with [onOpen] while its form is on screen, and closes it with
- * [onClose] when the form goes, but not for a configuration change, so turning the phone sends no
- * request.
- */
-@Composable
-internal fun TaskListEffect(project: ProjectId?, onOpen: (ProjectId) -> Unit, onClose: () -> Unit) {
-    val activity = LocalActivity.current
-    val opened by rememberUpdatedState(onOpen)
-    val closed by rememberUpdatedState(onClose)
-    DisposableEffect(project) {
-        if (project != null) opened(project)
-        onDispose { if (project != null && activity?.isChangingConfigurations != true) closed() }
-    }
-}
 
 /**
  * The tasks of [project] in its form (docs/PRD.md P5), as the web app's ProjectTasks: a field to

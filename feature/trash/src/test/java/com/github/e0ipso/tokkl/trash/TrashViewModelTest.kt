@@ -7,10 +7,13 @@ import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.api.TrashEntry
 import com.github.e0ipso.tokkl.catalog.ServerProblem
+import com.github.e0ipso.tokkl.platform.TestApp
+import com.github.e0ipso.tokkl.platform.TestScreen
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.test.TestCoroutineScheduler
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -38,16 +41,19 @@ class TrashViewModelTest {
     private var cacheRefreshes = 0
     private var missing = 0
 
+    private val scheduler = TestCoroutineScheduler()
+    private val scope = CoroutineScope(UnconfinedTestDispatcher(scheduler))
+    private val screen by lazy { TestScreen(model.page, scope, scheduler) }
     private val model by lazy {
         TrashViewModel(
             repository = TrashRepository { client },
             refreshCache = { cacheRefreshes++ },
             trashMissing = { missing++ },
-            scope = CoroutineScope(Dispatchers.Unconfined),
+            scope = scope,
             io = Dispatchers.Unconfined,
             settings = MutableStateFlow(null),
             offline = MutableStateFlow(false),
-            appEvents = emptyFlow(),
+            app = TestApp(scheduler).app,
         )
     }
 
@@ -76,7 +82,7 @@ class TrashViewModelTest {
     fun openingListsTheDeletedEntries() {
         answers[LIST] = json("[${entry(1, "Write")},${entry(2, null)}]")
 
-        model.open()
+        screen.show()
 
         assertEquals(listOf(1L, 2L), model.state.value.entries?.map { it.id })
         assertEquals("Write", model.state.value.entries?.first()?.description)
@@ -86,7 +92,7 @@ class TrashViewModelTest {
 
     @Test
     fun aServerWithoutTheTrashHidesItInsteadOfFailing() {
-        model.open()
+        screen.show()
 
         assertEquals("the 404 told the capabilities", 1, missing)
         assertNull(model.state.value.entries)
@@ -98,7 +104,7 @@ class TrashViewModelTest {
             200,
         ).addHeader("Content-Type", "text/html").body("<html></html>").build()
 
-        model.open()
+        screen.show()
 
         assertEquals(1, missing)
     }
@@ -108,7 +114,7 @@ class TrashViewModelTest {
         answers[LIST] = json("[${entry(1, "Write")}]")
         server.close()
 
-        model.open()
+        screen.show()
 
         assertEquals(ServerProblem.Unreachable, model.state.value.loadProblem)
         assertFalse(model.state.value.canChange)
@@ -119,7 +125,7 @@ class TrashViewModelTest {
     fun restoreTakesTheEntryOutOfTheTrashAndRefreshesTheCache() {
         answers[LIST] = json("[${entry(1, "Write")},${entry(2, "Read")}]")
         answers["POST /api/app/time_entries/1/restore"] = json(entry(1, "Write"))
-        model.open()
+        screen.show()
 
         model.restore(1)
 
@@ -132,7 +138,7 @@ class TrashViewModelTest {
     fun purgeDeletesOneEntryAtOnce() {
         answers[LIST] = json("[${entry(1, "Write")},${entry(2, "Read")}]")
         answers["DELETE /api/app/trash/2"] = json("""{"deleted":1}""")
-        model.open()
+        screen.show()
 
         model.purge(2)
 
@@ -147,7 +153,7 @@ class TrashViewModelTest {
         answers["DELETE /api/app/trash/1"] = MockResponse.Builder().code(
             404,
         ).body("\"Time entry not found in trash\"").build()
-        model.open()
+        screen.show()
         answers[LIST] = json("[]")
 
         model.purge(1)
@@ -161,7 +167,7 @@ class TrashViewModelTest {
     fun emptyingSendsNothingUntilTheQuestionIsAnswered() {
         answers[LIST] = json("[${entry(1, "Write")},${entry(2, "Read")}]")
         answers["DELETE /api/app/trash"] = json("""{"deleted":2}""")
-        model.open()
+        screen.show()
 
         model.empty()
         assertFalse("DELETE /api/app/trash" in requests)
@@ -179,7 +185,7 @@ class TrashViewModelTest {
     @Test
     fun anEmptyTrashAsksNothing() {
         answers[LIST] = json("[]")
-        model.open()
+        screen.show()
 
         model.askToEmpty()
 
@@ -189,7 +195,7 @@ class TrashViewModelTest {
     @Test
     fun cancellingTheQuestionKeepsTheTrash() {
         answers[LIST] = json("[${entry(1, "Write")}]")
-        model.open()
+        screen.show()
         model.askToEmpty()
 
         model.dismiss()

@@ -6,7 +6,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
-import com.github.e0ipso.tokkl.catalog.PageVisitEffect
 import com.github.e0ipso.tokkl.feature.projects.R
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
 import com.github.e0ipso.tokkl.navigation.NavigationHost
@@ -35,19 +34,12 @@ internal object ProjectsEntries : FeatureEntries {
 }
 
 /**
- * The Projects page from its view model: tells the model when the page opens and closes, and hands
- * its state and events to [ProjectsScreen].
+ * The Projects page from its view model: hands its state and events to [ProjectsScreen].
  */
 @Composable
 fun ProjectsPage(model: ProjectsViewModel, modifier: Modifier = Modifier) {
-    PageVisitEffect(onOpen = model::open, onClose = model::close)
     val page by model.page.collectAsStateWithLifecycle()
     val state = page.catalog
-    TaskListEffect(
-        project = (state.overlay as? ProjectForm.Edit)?.project?.id,
-        onOpen = model.tasks::open,
-        onClose = model.tasks::close,
-    )
     BackHandler(enabled = state.overlay != null) { model.closeForm() }
     ProjectsScreen(
         state = state,

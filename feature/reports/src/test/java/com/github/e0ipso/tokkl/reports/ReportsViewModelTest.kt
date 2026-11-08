@@ -4,12 +4,15 @@ import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
+import com.github.e0ipso.tokkl.platform.TestApp
+import com.github.e0ipso.tokkl.platform.TestScreen
 import com.github.e0ipso.tokkl.session.AccountSettings
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.test.TestCoroutineScheduler
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
@@ -40,10 +43,9 @@ import kotlin.coroutines.CoroutineContext
  * The model's work off the main thread waits in [io] until a test runs it, so a test sees what
  * the screen shows while the answer is on its way.
  *
- * Coming back to the foreground: AppEvents calls [ReportsViewModel.wentToBackground] on every stop
- * that is not a configuration change, and [ReportsViewModel.cameToForeground] on every start,
- * a rotation's too. ReportsForegroundTest checks the rotation on the emulator; these tests check
- * the model's half.
+ * The screen reads the page as the Reports route does ([TestScreen]), and the app goes to the
+ * background and back as ProcessLifecycleOwner reports it ([TestApp]). ReportsForegroundTest checks
+ * the rotation on the emulator; these tests check the model's half.
  */
 class ReportsViewModelTest {
 
@@ -55,6 +57,10 @@ class ReportsViewModelTest {
         AccountSettings(ZONE, DayOfWeek.WEDNESDAY, timeResolutionMinutes = null),
     )
     private lateinit var model: ReportsViewModel
+    private lateinit var screen: TestScreen
+    private val scheduler = TestCoroutineScheduler()
+    private val scope = CoroutineScope(UnconfinedTestDispatcher(scheduler))
+    private val app = TestApp(scheduler)
 
     /** The search gets the 503 of a proxy whose server is down. */
     @Volatile
@@ -88,10 +94,12 @@ class ReportsViewModelTest {
         model = reportsViewModel(
             accountSettings = settings,
             repository = ReportsRepository { testApi.api(url, ApiCredentials.ApiToken("token")) },
-            scope = CoroutineScope(Dispatchers.Unconfined),
+            scope = scope,
             io = io,
             clock = CLOCK,
+            app = app.app,
         )
+        screen = TestScreen(model.page, scope, scheduler)
     }
 
     @After
@@ -101,7 +109,7 @@ class ReportsViewModelTest {
 
     @Test
     fun opensOnThisWeekInTheAccountsTimezoneAndWeekStart() {
-        model.open()
+        screen.show()
         val thisWeek = RangeSelection(range("2026-10-21", "2026-10-27"), RangePreset.THIS_WEEK)
         assertEquals("no numbers before the answer", ReportsState.Loading(thisWeek), model.state.value)
 
@@ -115,7 +123,7 @@ class ReportsViewModelTest {
 
     @Test
     fun widgetTodayReplacesARetainedWeeklyTabAndItsFiltersWithTheAccountDay() {
-        model.open()
+        screen.show()
         io.runAll()
         model.applyFilters(ReportFilters(billable = BillableFilter.BILLABLE))
         model.selectTab(ReportTab.WEEKLY)
@@ -125,7 +133,7 @@ class ReportsViewModelTest {
         io.runAll()
         assertEquals(RangeSelection(range("2026-10-21", "2026-10-21"), RangePreset.TODAY), loaded().selection)
         assertSearched("2026-10-21", "2026-10-21")
-        model.close()
+        screen.leave()
         model.openToday()
         io.runAll()
         assertEquals(RangePreset.TODAY, loaded().selection.preset)
@@ -133,7 +141,7 @@ class ReportsViewModelTest {
 
     @Test
     fun presetsAndShiftsStartFromTheAccountsToday() {
-        model.open()
+        screen.show()
         io.runAll()
 
         model.select(RangePreset.TODAY)
@@ -161,16 +169,20 @@ class ReportsViewModelTest {
     }
 
     @Test
-    fun aStartAfterAStopAsksOnceForTheRangeOnScreen() {
-        model.open()
+    fun aTripToTheBackgroundAsksOnceForTheRangeOnScreen() {
+        screen.show()
         io.runAll()
         model.shift(-1)
         io.runAll()
         val shown = loaded()
 
-        model.wentToBackground()
+        screen.hide()
+        app.foreground.value = false
+        scheduler.runCurrent()
         assertSame("a stop alone asks nothing", shown, model.state.value)
-        model.cameToForeground()
+        app.foreground.value = true
+        scheduler.runCurrent()
+        screen.show()
 
         assertEquals(
             "no old numbers while the answer is on its way",
@@ -183,64 +195,52 @@ class ReportsViewModelTest {
         assertSearched("2026-10-14", "2026-10-20")
 
         val reloaded = model.state.value
-        model.cameToForeground()
-        assertSame("a second start asks nothing", reloaded, model.state.value)
+        screen.hide()
+        screen.show()
+        assertSame("a rotation asks nothing", reloaded, model.state.value)
         assertTrue("nothing waits to run", io.isEmpty())
         assertEquals(3, searches.size)
     }
 
     @Test
-    fun theStartReplayedWhenTheScreenOpensAsksNothing() {
-        model.open()
+    fun aTripWhileTheScreenIsClosedAsksNothing() {
+        app.trip()
+        screen.show()
         io.runAll()
-        val shown = loaded()
-
-        model.cameToForeground()
-
-        assertSame(shown, model.state.value)
-        assertTrue("nothing waits to run", io.isEmpty())
-        assertEquals(1, searches.size)
-    }
-
-    @Test
-    fun aStopWhileTheScreenIsClosedAsksNothing() {
-        model.wentToBackground()
-        model.open()
-        io.runAll()
-
-        model.cameToForeground()
 
         assertTrue("nothing waits to run", io.isEmpty())
         assertEquals(1, searches.size)
     }
 
     @Test
-    fun closingForgetsAStop() {
-        model.open()
+    fun aScreenThatWentForgetsItsReportAndOpensOnThisWeekAgain() {
+        screen.show()
         io.runAll()
-        model.wentToBackground()
-        model.close()
+        model.shift(-1)
+        io.runAll()
+        screen.leave()
         assertEquals(ReportsState.Closed, model.state.value)
 
-        model.cameToForeground()
+        app.trip()
         assertEquals("a closed screen loads nothing", ReportsState.Closed, model.state.value)
 
-        model.open()
+        screen.show()
         io.runAll()
-        model.cameToForeground()
+        assertEquals(RangePreset.THIS_WEEK, loaded().selection.preset)
         assertTrue("nothing waits to run", io.isEmpty())
-        assertEquals(2, searches.size)
+        assertEquals(3, searches.size)
     }
 
     @Test
-    fun aStartWithoutTheServerShowsWhyAndNoNumbers() {
-        model.open()
+    fun aTripWithoutTheServerShowsWhyAndNoNumbers() {
+        screen.show()
         io.runAll()
         val shown = loaded()
-        model.wentToBackground()
         server.close()
 
-        model.cameToForeground()
+        screen.hide()
+        app.trip()
+        screen.show()
         io.runAll()
 
         assertEquals(ReportsState.Failed(shown.selection, ReportFailure.Unreachable), model.state.value)
@@ -249,13 +249,13 @@ class ReportsViewModelTest {
     @Test
     fun theNetworksReturnAsksAgainForAReportThatGotNoAnswer() {
         searchUnreachable = true
-        model.open()
+        screen.show()
         io.runAll()
         val failed = model.state.value
         assertTrue("no answer: $failed", failed is ReportsState.Failed && failed.failure == ReportFailure.Unreachable)
 
         searchUnreachable = false
-        model.reconnected()
+        app.reconnect()
         assertEquals(ReportsState.Loading((failed as ReportsState.Failed).selection), model.state.value)
         io.runAll()
 
@@ -265,13 +265,13 @@ class ReportsViewModelTest {
 
     @Test
     fun theNetworksReturnAsksNothingForAShownOrClosedReport() {
-        model.reconnected()
+        app.reconnect()
         assertEquals("a closed screen loads nothing", ReportsState.Closed, model.state.value)
 
-        model.open()
+        screen.show()
         io.runAll()
         val shown = loaded()
-        model.reconnected()
+        app.reconnect()
 
         assertSame(shown, model.state.value)
         assertTrue("nothing waits to run", io.isEmpty())

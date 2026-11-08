@@ -44,6 +44,7 @@ import com.github.e0ipso.tokkl.feature.projects.R
 import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.model.Task
 import com.github.e0ipso.tokkl.orFail
+import com.github.e0ipso.tokkl.platform.AppForeground
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -120,7 +121,7 @@ class ProjectsServerTest {
             cachedProjects = app.cache.projects,
             cachedClients = app.cache.clients,
             offline = MutableStateFlow(false),
-            appEvents = emptyFlow(),
+            app = AppForeground(MutableStateFlow(true), emptyFlow()),
         )
     }
 

@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.catalog
 import androidx.compose.runtime.Immutable
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.model.WorkspaceId
+import com.github.e0ipso.tokkl.platform.PageLoads
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
@@ -58,11 +59,11 @@ data class CatalogState<D, O>(
 
 /**
  * The state of a page that manages one kind of the account's items on the server: projects,
- * clients or tags (docs/PRD.md P2 to P4). It loads them from [repository] each time the page opens and
- * each time the app comes back to the foreground with the page open, as [PageReloads] says, and
- * sends each change at once. Nothing is queued: offline, or with the server out of reach, nothing changes. After each
- * change the server accepts, [refreshCache] reloads the offline cache, so the picker, the history
- * and the reports show it.
+ * clients or tags (docs/PRD.md P2 to P4). It loads them from [repository] each time the page shows
+ * and each time the app comes back to the foreground with the page on screen, as its view model's
+ * stateInPage tells it through [PageLoads], and sends each change at once. Nothing is queued:
+ * offline, or with the server out of reach, nothing changes. After each change the server accepts,
+ * [refreshCache] reloads the offline cache, so the picker, the history and the reports show it.
  *
  * Call every function on the main thread.
  *
@@ -77,15 +78,14 @@ class CatalogModel<D, O>(
     private val refreshCache: () -> Unit,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
-) : PageEvents {
+) : PageLoads {
 
     private val mutableState = MutableStateFlow(CatalogState<D, O>())
     val state: StateFlow<CatalogState<D, O>> = mutableState.asStateFlow()
 
-    private val reloads = PageReloads(::load)
-
-    /** Whether the page is open: from [open] until [close], a configuration change included. */
-    val opened: Boolean get() = reloads.isOpen
+    /** Whether the page is open: from [shown] until [left], a configuration change included. */
+    var opened: Boolean = false
+        private set
 
     private var loading: Job? = null
 
@@ -95,35 +95,33 @@ class CatalogModel<D, O>(
     /** The workspace the page manages: the one the data came from, or else the stored one, or null. */
     fun workspace(): WorkspaceId? = workspace ?: workspaceId()
 
-    /** Loads the data. Does nothing while the page is open, so turning the phone sends no request. */
-    override fun open() = reloads.open()
+    /**
+     * The page shows: loads the data. A page that shows again after a trip to the background keeps
+     * what it shows until the answer comes, and an open form or question stays as it is.
+     */
+    override fun shown() {
+        opened = true
+        load()
+    }
 
     /** Loads the data again, as after a failure. */
-    fun retry() = reloads.retry()
+    fun retry() {
+        if (opened) load()
+    }
+
+    /** The app came back to the foreground with the page on screen: the data may have changed on the server. */
+    override fun returned() = retry()
 
     /** The network came back. Loads again when the server could not be reached. */
     override fun reconnected() {
         if (opened && state.value.loadProblem != null) load()
     }
 
-    /**
-     * The app went to the background with the page open. It is not called for a configuration
-     * change, which is no trip to the background.
-     */
-    override fun wentToBackground() = reloads.wentToBackground()
-
-    /**
-     * The app came back to the foreground. After [wentToBackground], loads the data again, since it
-     * may have changed on the server meanwhile. The list keeps what it shows until the answer
-     * comes, and an open form or question stays as it is.
-     */
-    override fun cameToForeground() = reloads.cameToForeground()
-
-    /** Closes the page: stops waiting and forgets what it loaded. A change already sent still lands. */
-    override fun close() {
+    /** The page went: stops waiting and forgets what it loaded. A change already sent still lands. */
+    override fun left() {
         loading?.cancel()
         loading = null
-        reloads.close()
+        opened = false
         workspace = null
         mutableState.value = CatalogState()
     }

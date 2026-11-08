@@ -37,8 +37,8 @@ typealias TasksState = CatalogState<TasksData, TaskOverlay>
 
 /**
  * The task list in the project form (docs/PRD.md P5): the project's tasks from the server, loaded
- * each time a project's form opens or the app comes back to it, and the changes the list sends at
- * once, as [CatalogModel] describes. Nothing is queued, and after each change the server accepts,
+ * each time a project's form opens or the app comes back to the page, and the changes the list
+ * sends at once, as [CatalogModel] describes. Nothing is queued, and after each change the server accepts,
  * [refreshCache] reloads the offline cache, so the entry editor's picker offers the change.
  *
  * @param repository the project's tasks on the server.
@@ -59,27 +59,28 @@ class TasksModel(
 
     val state: StateFlow<TasksState> = catalog.state
 
-    /** Opens the list of [project]'s tasks. Does nothing while it is open, so turning the phone sends no request. */
+    /** Opens the list of [project]'s tasks and loads them. Does nothing while that list is open. */
     fun open(project: ProjectId) {
+        if (this.project == project && catalog.opened) return
         if (this.project != project) {
-            catalog.close()
+            catalog.left()
             this.project = project
         }
-        catalog.open()
+        catalog.shown()
     }
 
+    /** Closes the list, as its form closes. */
     fun close() {
-        catalog.close()
+        catalog.left()
         project = null
     }
 
     fun retry() = catalog.retry()
 
+    /** The app came back to the foreground: an open list loads again. */
+    fun returned() = catalog.returned()
+
     fun reconnected() = catalog.reconnected()
-
-    fun wentToBackground() = catalog.wentToBackground()
-
-    fun cameToForeground() = catalog.cameToForeground()
 
     fun doneShown() = catalog.doneShown()
 

@@ -5,21 +5,17 @@ import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.capabilities.Capabilities
-import com.github.e0ipso.tokkl.catalog.PageEvents
-import com.github.e0ipso.tokkl.catalog.PageReloads
-import com.github.e0ipso.tokkl.catalog.followTrips
-import com.github.e0ipso.tokkl.platform.whileShown
+import com.github.e0ipso.tokkl.platform.AppForeground
+import com.github.e0ipso.tokkl.platform.PageLoads
+import com.github.e0ipso.tokkl.platform.stateInPage
 import com.github.e0ipso.tokkl.session.AccountSettings
-import com.github.e0ipso.tokkl.session.AppEvent
 import com.github.e0ipso.tokkl.time.AccountTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -31,7 +27,7 @@ import kotlin.coroutines.CoroutineContext
  * or the app comes back to the foreground, it asks the configured server for the report, and it
  * never asks on a timer. Every tab's request carries the filters. The detailed tab asks for its
  * next page when the list nears its end, and the weekly tab always shows one whole week from the
- * account's week start. Reports live in memory while the screen is open; [close] drops them.
+ * account's week start. Reports live in memory while the screen is open, and go when it leaves.
  * Explicit CSV sharing uses a separate bounded private export area.
  * When a request fails, the screen shows why and no numbers or entries, even those of pages that
  * loaded before.
@@ -43,8 +39,9 @@ import kotlin.coroutines.CoroutineContext
  * @param clock where today comes from, in the account's timezone.
  * @param filterOptions the projects, clients and tags the filter sheet offers, from the phone's cache.
  * @param exporter the CSV export, which runs on [scope] and is cancelled when this view model is.
- * @param appEvents MainActivity's trips to the background and back, which ask again for the range
- *   on screen, and the network's returns, each of which calls [reconnected].
+ * @param app the app's trips to the background, which ask again for the range on screen, and the
+ *   network's returns, which ask again for a report that could not reach the server, while the
+ *   screen shows ([stateInPage]).
  */
 class ReportsViewModel(
     val accountSettings: StateFlow<AccountSettings?>,
@@ -55,9 +52,8 @@ class ReportsViewModel(
     val filterOptions: StateFlow<FilterOptions>,
     val exportCapabilities: StateFlow<Capabilities>,
     private val exporter: ReportExportController,
-    appEvents: Flow<AppEvent>,
-) : ViewModel(scope),
-    PageEvents {
+    app: AppForeground,
+) : ViewModel(scope) {
 
     val exportState: StateFlow<ReportExportState> = exporter.state
 
@@ -107,6 +103,12 @@ class ReportsViewModel(
     /** The filters every tab's report applies. They stay when the screen closes and opens again, as the tab does. */
     val filters: StateFlow<ReportFilters> = mutableFilters.asStateFlow()
 
+    /** Whether the screen is open: from its first show, or a widget's [openToday], until it leaves. */
+    private var opened = false
+
+    /** [openToday] asked for the report the screen is about to show, so that show asks nothing. */
+    private var openedLoading = false
+
     /** What the screen shows, while it reads it. */
     val page: StateFlow<ReportsPageState> = combine(
         combine(state, tab, filters, ::Triple),
@@ -125,28 +127,69 @@ class ReportsViewModel(
             exportSupported = shownTab.csvKind()?.let(capabilities::supports) == true,
             exportState = export,
         )
-    }.stateIn(viewModelScope, whileShown, pageNow())
+    }.stateInPage(
+        viewModelScope,
+        pageNow(),
+        app,
+        object : PageLoads {
+            /**
+             * Opens the screen on this week. A screen that shows again after a trip to the
+             * background asks again for the range on screen instead.
+             */
+            override fun shown() {
+                when {
+                    openedLoading -> openedLoading = false
+
+                    opened -> retry()
+
+                    else -> {
+                        opened = true
+                        select(RangePreset.THIS_WEEK)
+                    }
+                }
+            }
+
+            /**
+             * Back from the background: asks again for the range on screen, and shows no numbers
+             * until the answer comes, so a phone that lost its connection in the background says
+             * that reports need the server instead of showing old numbers.
+             */
+            override fun returned() = retry()
+
+            /**
+             * The network came back. A report that failed for want of an answer asks again; any
+             * other state asks nothing.
+             */
+            override fun reconnected() {
+                val failed = state.value as? ReportsState.Failed ?: return
+                if (failed.failure == ReportFailure.Unreachable) load(failed.selection)
+            }
+
+            /** The screen went: stops waiting for an answer and forgets the report and the workspace. */
+            override fun left() {
+                exporter.cancel()
+                loading?.cancel()
+                loading = null
+                workspace = null
+                opened = false
+                openedLoading = false
+                mutableState.value = ReportsState.Closed
+            }
+        },
+    )
 
     /** The account's workspace and rounding, read once each time the screen opens. */
     private var workspace: ReportWorkspace? = null
 
     private var loading: Job? = null
 
-    /** The screen loads this week when it opens, and the range on screen after a trip to the background. */
-    private val reloads = PageReloads(open = { select(RangePreset.THIS_WEEK) }, reload = ::retry)
-
-    /**
-     * Opens the screen on this week. Does nothing while the screen is open, so a configuration
-     * change keeps the report it shows instead of asking the server again.
-     */
-    override fun open() = reloads.open()
-
     /** Opens the widget day report. */
     fun openToday() {
         // Weekly expands a one-day range to a week. Widget totals always describe one day.
         mutableTab.value = ReportTab.SUMMARY
         mutableFilters.value = ReportFilters()
-        reloads.openLoading()
+        opened = true
+        openedLoading = true
         select(RangePreset.TODAY)
     }
 
@@ -208,38 +251,6 @@ class ReportsViewModel(
     fun retry() {
         val current = selection()
         if (current == null) select(RangePreset.THIS_WEEK) else load(current)
-    }
-
-    /**
-     * The app went to the background with the screen open. It is not called for a configuration
-     * change, which is no trip to the background.
-     */
-    override fun wentToBackground() = reloads.wentToBackground()
-
-    /**
-     * The app came back to the foreground. After [wentToBackground], asks again for the range on
-     * screen, and shows no numbers until the answer comes, so a phone that lost its connection in
-     * the background says that reports need the server instead of showing old numbers.
-     */
-    override fun cameToForeground() = reloads.cameToForeground()
-
-    /**
-     * The network came back while the app is in the foreground. A report that failed for want of
-     * an answer asks again; any other state asks nothing.
-     */
-    override fun reconnected() {
-        val failed = state.value as? ReportsState.Failed ?: return
-        if (failed.failure == ReportFailure.Unreachable) load(failed.selection)
-    }
-
-    /** Closes the screen: stops waiting for an answer and forgets the report and the workspace. */
-    override fun close() {
-        exporter.cancel()
-        loading?.cancel()
-        loading = null
-        workspace = null
-        reloads.close()
-        mutableState.value = ReportsState.Closed
     }
 
     /** Times in the account's timezone, or null without settings or when the phone cannot resolve the zone. */
@@ -366,9 +377,4 @@ class ReportsViewModel(
         exportSupported = tab.value.csvKind()?.let(exportCapabilities.value::supports) == true,
         exportState = exportState.value,
     )
-
-    init {
-        followTrips(appEvents, viewModelScope)
-        viewModelScope.launch { appEvents.collect { if (it == AppEvent.RECONNECTED) reconnected() } }
-    }
 }

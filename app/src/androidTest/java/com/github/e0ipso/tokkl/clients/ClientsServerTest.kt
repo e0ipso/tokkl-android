@@ -41,6 +41,7 @@ import com.github.e0ipso.tokkl.feature.clients.R
 import com.github.e0ipso.tokkl.model.Client
 import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.orFail
+import com.github.e0ipso.tokkl.platform.AppForeground
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -104,7 +105,7 @@ class ClientsServerTest {
             io = Dispatchers.IO,
             cachedClients = app.cache.clients,
             offline = MutableStateFlow(false),
-            appEvents = emptyFlow(),
+            app = AppForeground(MutableStateFlow(true), emptyFlow()),
         )
     }
 

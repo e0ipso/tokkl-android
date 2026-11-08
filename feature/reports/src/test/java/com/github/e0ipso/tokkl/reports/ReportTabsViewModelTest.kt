@@ -4,12 +4,14 @@ import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
+import com.github.e0ipso.tokkl.platform.TestScreen
 import com.github.e0ipso.tokkl.session.AccountSettings
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.test.TestCoroutineScheduler
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
@@ -51,6 +53,9 @@ class ReportTabsViewModelTest {
         AccountSettings(ZONE, DayOfWeek.WEDNESDAY, timeResolutionMinutes = null),
     )
     private lateinit var model: ReportsViewModel
+    private lateinit var screen: TestScreen
+    private val scheduler = TestCoroutineScheduler()
+    private val scope = CoroutineScope(UnconfinedTestDispatcher(scheduler))
 
     /** The detailed search's pages after the first answer 503, as a proxy does while the server is down. */
     @Volatile
@@ -89,10 +94,11 @@ class ReportTabsViewModelTest {
         model = reportsViewModel(
             settings,
             ReportsRepository { testApi.api(url, ApiCredentials.ApiToken("tok-123")) },
-            CoroutineScope(Dispatchers.Unconfined),
+            scope,
             io,
             Clock.fixed(Instant.parse("2026-10-20T11:00:00Z"), ZoneOffset.UTC),
         )
+        screen = TestScreen(model.page, scope, scheduler)
     }
 
     @After
@@ -107,7 +113,7 @@ class ReportTabsViewModelTest {
      */
     @Test
     fun theDetailedTabPagesAsTheServerSays() {
-        model.open()
+        screen.show()
         io.runAll()
         model.selectTab(ReportTab.DETAILED)
         assertTrue(model.state.value is ReportsState.Loading)
@@ -161,7 +167,7 @@ class ReportTabsViewModelTest {
     @Test
     fun aFailedNextPageShowsWhyAndTryAgainLoadsTheFirstPage() {
         model.selectTab(ReportTab.DETAILED)
-        model.open()
+        screen.show()
         io.runAll()
         laterPagesFail = true
 
@@ -184,7 +190,7 @@ class ReportTabsViewModelTest {
      */
     @Test
     fun theWeeklyTabAsksForTheAccountsWeekAndSortsAsTheWebApp() {
-        model.open()
+        screen.show()
         io.runAll()
         model.select(RangePreset.THIS_MONTH)
         io.runAll()
@@ -237,7 +243,7 @@ class ReportTabsViewModelTest {
      */
     @Test
     fun theFiltersGoWithEveryTabsRequest() {
-        model.open()
+        screen.show()
         io.runAll()
         val filters = ReportFilters(
             projects = listOf(3L, null),
@@ -266,8 +272,8 @@ class ReportTabsViewModelTest {
         model.applyFilters(filters)
         assertTrue("the same filters ask nothing", io.isEmpty())
 
-        model.close()
-        model.open()
+        screen.leave()
+        screen.show()
         io.runAll()
         assertEquals("the filters stay", filters, model.filters.value)
         assertEquals(FILTER_FIELDS, weeklies.last().filterFields())
@@ -284,7 +290,7 @@ class ReportTabsViewModelTest {
     fun aWeeklyRowWithoutSevenDaysIsAnUnexpectedAnswer() {
         weeklyBody = """[{"project_id":1,"project_name":"x","seconds":[1,2]}]"""
         model.selectTab(ReportTab.WEEKLY)
-        model.open()
+        screen.show()
         io.runAll()
 
         assertEquals(ReportFailure.Unexpected(null), (model.state.value as ReportsState.Failed).failure)

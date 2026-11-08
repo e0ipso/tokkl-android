@@ -6,6 +6,7 @@ import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
+import com.github.e0ipso.tokkl.platform.AppForeground
 import com.github.e0ipso.tokkl.session.AccountSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -59,7 +60,7 @@ class CalendarTimeZoneTest {
             clock = NOW,
             allDayOffered = flowOf(false),
             overrides = emptyFlow(),
-            appEvents = emptyFlow(),
+            app = AppForeground(MutableStateFlow(true), emptyFlow()),
         )
 
         val state = model.state.first { it is CalendarState.Shown } as CalendarState.Shown
@@ -108,7 +109,7 @@ class CalendarTimeZoneTest {
             clock = NOW,
             allDayOffered = flowOf(false),
             overrides = emptyFlow(),
-            appEvents = emptyFlow(),
+            app = AppForeground(MutableStateFlow(true), emptyFlow()),
         )
 
         val state = model.state.first { it is CalendarState.Shown } as CalendarState.Shown

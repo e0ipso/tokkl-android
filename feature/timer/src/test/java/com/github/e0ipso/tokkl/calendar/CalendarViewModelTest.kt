@@ -10,6 +10,7 @@ import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
+import com.github.e0ipso.tokkl.platform.TestApp
 import com.github.e0ipso.tokkl.session.AccountSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.withTimeout
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
@@ -215,15 +217,11 @@ class CalendarViewModelTest {
 
         model.loadWeek(SEPTEMBER_21)
         assertEquals("no trip to the background, no request", 2, requests.size)
-        model.cameToForeground()
-        model.loadWeek(SEPTEMBER_21)
-        assertEquals("a start with no stop, as a rotation, asks nothing", 2, requests.size)
         assertEquals(0, model.foregrounds.value)
 
         // The entry is deleted on the server while the app is in the background.
         answer = "[]"
-        model.wentToBackground()
-        model.cameToForeground()
+        app.trip()
         assertEquals(1, model.foregrounds.value)
         model.loadWeek(SEPTEMBER_21)
         assertEquals("the shown week loads again", 3, requests.size)
@@ -248,8 +246,7 @@ class CalendarViewModelTest {
         shown(model) { it.weekStart == SEPTEMBER_28 && it.week == WeekSource.Loaded }
 
         server.close()
-        model.wentToBackground()
-        model.cameToForeground()
+        app.trip()
         model.loadWeek(SEPTEMBER_28)
         val week = shown(model) { it.weekStart == SEPTEMBER_28 }
 
@@ -271,14 +268,14 @@ class CalendarViewModelTest {
 
         status = 200
         answer = json(Triple(3L, "2026-09-29T10:00:00Z", "2026-09-29T11:00:00Z"))
-        model.reconnected()
+        app.reconnect()
         assertEquals("the calendar on screen loads its week", 1, model.foregrounds.value)
         model.loadWeek(SEPTEMBER_28)
         val week = shown(model) { it.weekStart == SEPTEMBER_28 && it.week == WeekSource.Loaded }
         assertEquals(listOf(3L), week.entries.map { it.id.value })
         assertEquals(2, requests.size)
 
-        model.reconnected()
+        app.reconnect()
         model.loadWeek(SEPTEMBER_28)
         assertEquals("a week loaded since asks nothing", 2, requests.size)
     }
@@ -305,7 +302,7 @@ class CalendarViewModelTest {
         model.loadWeek(SEPTEMBER_28)
         try {
             assertTrue("the first route's request is pending", started.await(TIMEOUT_MS, TimeUnit.MILLISECONDS))
-            model.reconnected()
+            app.reconnect()
             model.loadWeek(SEPTEMBER_28)
         } finally {
             release.countDown()
@@ -314,7 +311,7 @@ class CalendarViewModelTest {
         val week = shown(model) { it.weekStart == SEPTEMBER_28 && it.week == WeekSource.Loaded }
         assertEquals(listOf(3L), week.entries.map { it.id.value })
         assertEquals("one pending reconnect retries once", 2, attempts.get())
-        model.reconnected()
+        app.reconnect()
         model.loadWeek(SEPTEMBER_28)
         assertEquals("a loaded week sends nothing on another route update", 2, attempts.get())
     }
@@ -434,8 +431,7 @@ class CalendarViewModelTest {
         )
 
         answer = json(Triple(8L, "2026-10-06T13:00:00Z", "2026-10-06T14:00:00Z"))
-        model.wentToBackground()
-        model.cameToForeground()
+        app.trip()
         model.loadWeek(OCTOBER_5)
         val reloaded = shown(
             model,
@@ -577,6 +573,8 @@ class CalendarViewModelTest {
         assertEquals(true, shown(model(cached = emptyList(), allDayOffered = true)) { true }.allDayOffered)
     }
 
+    private val app = TestApp(TestCoroutineScheduler())
+
     private fun model(
         cached: List<TimeEntry>,
         settings: AccountSettings = SETTINGS,
@@ -595,7 +593,7 @@ class CalendarViewModelTest {
         clock = CLOCK,
         allDayOffered = flowOf(allDayOffered),
         overrides = emptyFlow(),
-        appEvents = emptyFlow(),
+        app = app.app,
     )
 
     private fun shown(model: CalendarViewModel, condition: (CalendarState.Shown) -> Boolean): CalendarState.Shown =

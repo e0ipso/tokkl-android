@@ -7,24 +7,19 @@ import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.HttpStatus
 import com.github.e0ipso.tokkl.api.TrashEntry
-import com.github.e0ipso.tokkl.catalog.PageEvents
-import com.github.e0ipso.tokkl.catalog.PageReloads
 import com.github.e0ipso.tokkl.catalog.ServerProblem
-import com.github.e0ipso.tokkl.catalog.followNetwork
-import com.github.e0ipso.tokkl.catalog.followTrips
 import com.github.e0ipso.tokkl.catalog.toServerProblem
-import com.github.e0ipso.tokkl.platform.whileShown
+import com.github.e0ipso.tokkl.platform.AppForeground
+import com.github.e0ipso.tokkl.platform.PageLoads
+import com.github.e0ipso.tokkl.platform.stateInPage
 import com.github.e0ipso.tokkl.session.AccountSettings
-import com.github.e0ipso.tokkl.session.AppEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -91,7 +86,8 @@ data class TrashPageState(
  * @param repository the account's trash on the server. Runs on [io].
  * @param settings the account settings, for the times, dates and durations the page shows.
  * @param offline whether the phone is offline, when nothing can change.
- * @param appEvents MainActivity's trips to the background and back, which load the page again.
+ * @param app the app's trips to the background and the network's returns, which load the page again
+ *   while it shows ([stateInPage]).
  */
 class TrashViewModel(
     private val repository: TrashRepository,
@@ -101,57 +97,49 @@ class TrashViewModel(
     private val io: CoroutineContext,
     settings: StateFlow<AccountSettings?>,
     private val offline: StateFlow<Boolean>,
-    appEvents: Flow<AppEvent>,
-) : ViewModel(scope),
-    PageEvents {
+    app: AppForeground,
+) : ViewModel(scope) {
 
     private val mutableState = MutableStateFlow(TrashState())
     val state: StateFlow<TrashState> = mutableState.asStateFlow()
 
-    /** What the page shows, while it reads it. */
-    val page: StateFlow<TrashPageState> = combine(state, offline, settings, ::TrashPageState)
-        .stateIn(viewModelScope, whileShown, TrashPageState(state.value, offline.value, settings.value))
-
-    private val reloads = PageReloads(::load)
-    private val opened: Boolean get() = reloads.isOpen
+    /** Whether the page is open: from its first show until it leaves, a configuration change included. */
+    private var opened = false
     private var loading: Job? = null
 
-    init {
-        followTrips(appEvents, viewModelScope)
-        followNetwork(offline, viewModelScope)
-    }
+    /** What the page shows, while it reads it. */
+    val page: StateFlow<TrashPageState> = combine(state, offline, settings, ::TrashPageState).stateInPage(
+        viewModelScope,
+        TrashPageState(state.value, offline.value, settings.value),
+        app,
+        object : PageLoads {
+            /** The page shows: loads the trash. */
+            override fun shown() {
+                opened = true
+                load()
+            }
 
-    /**
-     * The page opened: loads. When it comes back open after a configuration change, it loads
-     * nothing, but while the phone is online it loads again what could not reach the server.
-     */
-    override fun open() {
-        if (!opened) {
-            reloads.open()
-        } else if (!offline.value) {
-            reconnected()
-        }
-    }
+            /** Back from the background: the trash may have changed meanwhile. */
+            override fun returned() = retry()
+
+            /** The network came back. Loads again when the server could not be reached. */
+            override fun reconnected() {
+                if (opened && state.value.loadProblem != null) load()
+            }
+
+            /** The page went: stops waiting and forgets what it loaded. A change already sent still lands. */
+            override fun left() {
+                loading?.cancel()
+                loading = null
+                opened = false
+                mutableState.value = TrashState()
+            }
+        },
+    )
 
     /** Loads the trash again, as after a failure. */
-    fun retry() = reloads.retry()
-
-    /** The network came back. Loads again when the server could not be reached. */
-    override fun reconnected() {
-        if (opened && state.value.loadProblem != null) load()
-    }
-
-    override fun wentToBackground() = reloads.wentToBackground()
-
-    /** After [wentToBackground], loads the trash again, which may have changed meanwhile. */
-    override fun cameToForeground() = reloads.cameToForeground()
-
-    /** Closes the page: stops waiting and forgets what it loaded. A change already sent still lands. */
-    override fun close() {
-        loading?.cancel()
-        loading = null
-        reloads.close()
-        mutableState.value = TrashState()
+    fun retry() {
+        if (opened) load()
     }
 
     /** The page has said that [TrashState.done] happened. */

@@ -6,20 +6,20 @@ import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.catalog.CatalogChange
 import com.github.e0ipso.tokkl.catalog.CatalogModel
 import com.github.e0ipso.tokkl.catalog.CatalogState
-import com.github.e0ipso.tokkl.catalog.PageEvents
-import com.github.e0ipso.tokkl.catalog.followNetwork
-import com.github.e0ipso.tokkl.catalog.followTrips
 import com.github.e0ipso.tokkl.model.Client
 import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.model.WorkspaceId
-import com.github.e0ipso.tokkl.platform.whileShown
-import com.github.e0ipso.tokkl.session.AppEvent
+import com.github.e0ipso.tokkl.platform.AppForeground
+import com.github.e0ipso.tokkl.platform.PageLoads
+import com.github.e0ipso.tokkl.platform.stateInPage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 
 /** The project form: a new project, or [Edit] of one the server sent. */
@@ -69,7 +69,8 @@ data class ProjectsPageState(
  *   load.
  * @param cachedClients the clients on the phone, which the form offers and the list names.
  * @param offline whether the phone is offline, when nothing can change.
- * @param appEvents MainActivity's trips to the background and back, which load the page again.
+ * @param app the app's trips to the background and the network's returns, which load the page and
+ *   the open form's tasks again while the page shows ([stateInPage]).
  */
 class ProjectsViewModel(
     private val repository: ProjectsRepository,
@@ -81,9 +82,8 @@ class ProjectsViewModel(
     cachedProjects: Flow<List<Project>>,
     cachedClients: Flow<List<Client>>,
     private val offline: StateFlow<Boolean>,
-    appEvents: Flow<AppEvent>,
-) : ViewModel(scope),
-    PageEvents {
+    app: AppForeground,
+) : ViewModel(scope) {
 
     private val catalog = CatalogModel<ProjectsData, ProjectForm>(
         repository,
@@ -114,48 +114,39 @@ class ProjectsViewModel(
             clients = clients.filter { workspace == null || it.workspaceId == workspace },
             tasks = taskList,
         )
-    }.stateIn(viewModelScope, whileShown, ProjectsPageState(state.value, offline.value, tasks = tasks.state.value))
+    }.stateInPage(
+        viewModelScope,
+        ProjectsPageState(state.value, offline.value, tasks = tasks.state.value),
+        app,
+        object : PageLoads {
+            override fun shown() = catalog.shown()
+
+            override fun returned() {
+                catalog.returned()
+                tasks.returned()
+            }
+
+            override fun reconnected() {
+                catalog.reconnected()
+                tasks.reconnected()
+            }
+
+            override fun left() = catalog.left()
+        },
+    )
 
     init {
-        followTrips(appEvents, viewModelScope)
-        followNetwork(offline, viewModelScope)
+        // The form of a project the server sent lists its tasks, while it is open.
+        viewModelScope.launch {
+            state.map { (it.overlay as? ProjectForm.Edit)?.project?.id }.distinctUntilChanged().collect { project ->
+                if (project == null) tasks.close() else tasks.open(project)
+            }
+        }
     }
 
     fun workspace(): WorkspaceId? = catalog.workspace()
 
-    /**
-     * The page opened: loads. When it comes back open after a configuration change, it loads
-     * nothing, but while the phone is online it loads again what could not reach the server.
-     */
-    override fun open() {
-        if (!catalog.opened) {
-            catalog.open()
-        } else if (!offline.value) {
-            reconnected()
-        }
-    }
-
     fun retry() = catalog.retry()
-
-    override fun reconnected() {
-        catalog.reconnected()
-        tasks.reconnected()
-    }
-
-    override fun close() {
-        catalog.close()
-        tasks.close()
-    }
-
-    override fun wentToBackground() {
-        catalog.wentToBackground()
-        tasks.wentToBackground()
-    }
-
-    override fun cameToForeground() {
-        catalog.cameToForeground()
-        tasks.cameToForeground()
-    }
 
     fun doneShown() = catalog.doneShown()
 

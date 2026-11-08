@@ -12,8 +12,8 @@ import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.model.Task
 import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.platform.AppForeground
 import com.github.e0ipso.tokkl.session.AccountSettings
-import com.github.e0ipso.tokkl.session.AppEvent
 import com.github.e0ipso.tokkl.time.AccountTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -55,7 +55,7 @@ import kotlin.coroutines.CoroutineContext
  * @param client the signed-in account's API client, or null when signed out. Runs on [io].
  * @param clock where today comes from, in the account's timezone.
  * @param overrides the entry actions' deletes and restores, which [reconcile] applies.
- * @param appEvents each online report of the network calls [reconnected].
+ * @param app each return of the network while the app is in the foreground calls [reconnected].
  */
 class HistoryViewModel(
     entries: Flow<List<EntryWithSendState>>,
@@ -68,7 +68,7 @@ class HistoryViewModel(
     private val clock: Clock,
     private val ids: CurrentEntryIds,
     overrides: Flow<Map<EntryId, TimeEntry?>>,
-    appEvents: Flow<AppEvent>,
+    app: AppForeground,
 ) : ViewModel(scope) {
 
     private val older = MutableStateFlow(Older())
@@ -204,7 +204,7 @@ class HistoryViewModel(
      * answer load again, as a tap on Try again would; older days that loaded, or any other state,
      * ask nothing. Call it on the main thread.
      */
-    fun reconnected() {
+    private fun reconnected() {
         reconnects++
         if (older.value.status == OlderDays.Unreachable) loadOlder()
     }
@@ -282,7 +282,7 @@ class HistoryViewModel(
 
     init {
         viewModelScope.launch { overrides.collect(::reconcile) }
-        viewModelScope.launch { appEvents.collect { if (it == AppEvent.ONLINE) reconnected() } }
+        viewModelScope.launch { app.reconnects.collect { reconnected() } }
     }
 
     companion object {

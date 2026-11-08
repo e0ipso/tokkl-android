@@ -11,6 +11,7 @@ import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.model.Task
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
+import com.github.e0ipso.tokkl.platform.AppForeground
 import com.github.e0ipso.tokkl.session.AccountSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -18,6 +19,7 @@ import kotlinx.coroutines.ExecutorCoroutineDispatcher
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filterIsInstance
@@ -67,6 +69,7 @@ class HistoryViewModelTest {
     private val main: ExecutorService = Executors.newSingleThreadExecutor()
     private val mainDispatcher: ExecutorCoroutineDispatcher = main.asCoroutineDispatcher()
     private val scope = CoroutineScope(SupervisorJob() + mainDispatcher)
+    private val reconnects = MutableSharedFlow<Unit>(extraBufferCapacity = 8)
     private lateinit var client: TokklApi
 
     /** The day the account's first entry starts on, as `GET /api/app/bounds` says. */
@@ -272,19 +275,19 @@ class HistoryViewModelTest {
         val model = model()
         awaitShown(model) { it.days.size == 14 }
 
-        onMain { model.reconnected() }
+        reconnect()
         assertEquals("before any older day loads, the return asks nothing", emptyList<String>(), requests)
 
         onMain { model.loadOlder() }
         assertEquals(OlderDays.Unreachable, awaitShown(model) { it.older.settled() }.older)
 
         boundsAnswer = null
-        onMain { model.reconnected() }
+        reconnect()
         val loaded = awaitShown(model) { it.older != OlderDays.Loading && it.days.size > 14 }
         assertEquals(days("2026-10-19", "2026-09-22"), loaded.days.map { it.date })
         val asked = requests.toList()
 
-        onMain { model.reconnected() }
+        reconnect()
         awaitShown(model) { it.older.settled() || it.older == OlderDays.More(auto = true) }
         assertEquals("older days that loaded ask nothing", asked, requests.toList())
         assertEquals(loaded.days, awaitShown(model) { true }.days)
@@ -312,7 +315,7 @@ class HistoryViewModelTest {
         onMain { model.loadOlder() }
         try {
             assertTrue("the old route's request started", entered.await(5, TimeUnit.SECONDS))
-            onMain { model.reconnected() }
+            reconnect()
         } finally {
             release.countDown()
         }
@@ -400,7 +403,7 @@ class HistoryViewModelTest {
         clock = MovableClock(now),
         ids = { it },
         overrides = emptyFlow(),
-        appEvents = emptyFlow(),
+        app = AppForeground(MutableStateFlow(true), reconnects),
     )
 
     /**
@@ -411,6 +414,12 @@ class HistoryViewModelTest {
 
     /** loadOlder() runs on the main thread, which [scope] stands in for. */
     private fun onMain(block: () -> Unit) = runBlocking(mainDispatcher) { block() }
+
+    /** The network reaches the internet anew, and the view model has heard it on the main thread. */
+    private fun reconnect() {
+        onMain { reconnects.tryEmit(Unit) }
+        onMain {}
+    }
 
     /** Fails with the last state shown and the requests sent when [condition] never holds. */
     private fun awaitShown(model: HistoryViewModel, condition: (HistoryState.Shown) -> Boolean): HistoryState.Shown {

@@ -1,4 +1,4 @@
-package com.github.e0ipso.tokkl.session
+package com.github.e0ipso.tokkl.platform
 
 import org.junit.Assert.assertEquals
 import org.junit.Test

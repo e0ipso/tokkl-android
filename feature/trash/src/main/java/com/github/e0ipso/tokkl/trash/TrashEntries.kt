@@ -5,7 +5,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
-import com.github.e0ipso.tokkl.catalog.PageVisitEffect
 import com.github.e0ipso.tokkl.feature.trash.R
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
 import com.github.e0ipso.tokkl.navigation.NavigationHost
@@ -34,12 +33,10 @@ internal object TrashEntries : FeatureEntries {
 }
 
 /**
- * The Trash page from its view model: tells the model when the page opens and closes, and hands
- * its state and events to [TrashScreen].
+ * The Trash page from its view model: hands its state and events to [TrashScreen].
  */
 @Composable
 fun TrashPage(model: TrashViewModel, modifier: Modifier = Modifier) {
-    PageVisitEffect(onOpen = model::open, onClose = model::close)
     val page by model.page.collectAsStateWithLifecycle()
     TrashScreen(
         state = page.trash,

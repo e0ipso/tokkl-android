@@ -8,7 +8,6 @@ import com.github.e0ipso.tokkl.platform.offlineIn
 import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
 import com.github.e0ipso.tokkl.session.AccountRefresh
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
-import com.github.e0ipso.tokkl.session.AppEvents
 import com.github.e0ipso.tokkl.session.Session
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
@@ -29,7 +28,7 @@ val trashFeatureModule = module {
             io = io(),
             settings = accountSettings.state,
             offline = get<DefaultNetwork>().offlineIn(scope),
-            appEvents = get<AppEvents>().events,
+            app = get(),
         )
     }
 

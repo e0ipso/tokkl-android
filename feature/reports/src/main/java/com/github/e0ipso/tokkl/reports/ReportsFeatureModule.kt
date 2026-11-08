@@ -7,7 +7,6 @@ import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
-import com.github.e0ipso.tokkl.session.AppEvents
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.session.SignedInListener
 import kotlinx.coroutines.flow.SharingStarted
@@ -60,7 +59,7 @@ val reportsFeatureModule = module {
             // Only while the screen reads them.
             filterOptions = reportFilterOptions(cache, accountSettings.state, capabilities.state)
                 .stateIn(scope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), FilterOptions.NONE),
-            appEvents = get<AppEvents>().events,
+            app = get(),
         )
     }
 

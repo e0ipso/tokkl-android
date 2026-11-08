@@ -27,6 +27,7 @@ import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
+import com.github.e0ipso.tokkl.platform.AppForeground
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.DateWords
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -258,7 +259,7 @@ class CalendarGesturesTest {
             clock = CLOCK,
             allDayOffered = flowOf(allDayOffered),
             overrides = emptyFlow(),
-            appEvents = emptyFlow(),
+            app = AppForeground(MutableStateFlow(true), emptyFlow()),
         )
         composeRule.setContent {
             TokklTheme(darkTheme = false) {

@@ -20,4 +20,7 @@ fun viewModelCoroutineScope(): CoroutineScope = CoroutineScope(SupervisorJob() +
  * How a view model shares a flow that its screen reads: while the screen reads it, and for five
  * seconds after, so a rotation does not start it over.
  */
-val whileShown: SharingStarted = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5_000)
+val whileShown: SharingStarted = SharingStarted.WhileSubscribed(stopTimeoutMillis = SHOWN_TIMEOUT_MILLIS)
+
+/** How long a view model keeps sharing a screen's state after the screen stops reading it. */
+internal const val SHOWN_TIMEOUT_MILLIS = 5_000L

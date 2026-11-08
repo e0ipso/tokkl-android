@@ -4,6 +4,8 @@ import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
+import com.github.e0ipso.tokkl.platform.TestApp
+import com.github.e0ipso.tokkl.platform.TestScreen
 import com.github.e0ipso.tokkl.session.AccountSettings
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -14,6 +16,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.TestCoroutineScheduler
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
@@ -47,6 +51,10 @@ class AppSummaryViewModelTest {
     private val paths = CopyOnWriteArrayList<String>()
     private val io = QueuedDispatcher()
     private lateinit var model: ReportsViewModel
+    private lateinit var screen: TestScreen
+    private val scheduler = TestCoroutineScheduler()
+    private val scope = CoroutineScope(UnconfinedTestDispatcher(scheduler))
+    private val app = TestApp(scheduler)
 
     @Volatile private var summaryBody = APP_SUMMARY_FIXTURE
 
@@ -87,21 +95,23 @@ class AppSummaryViewModelTest {
                 AccountSettings("Pacific/Kiritimati", DayOfWeek.WEDNESDAY, timeResolutionMinutes = null),
             ),
             repository = ReportsRepository { testApi.api(url, ApiCredentials.ApiToken("test-token")) },
-            scope = CoroutineScope(Dispatchers.Unconfined),
+            scope = scope,
             io = io,
             clock = Clock.fixed(Instant.parse("2026-10-20T11:00:00Z"), ZoneOffset.UTC),
+            app = app.app,
         )
+        screen = TestScreen(model.page, scope, scheduler)
     }
 
     @After
     fun tearDown() {
-        model.close()
+        screen.leave()
         http.close()
     }
 
     @Test
     fun accountTimezoneAndWeekStartSelectTheAppReportDates() {
-        model.open()
+        screen.show()
         assertTrue(model.state.value is ReportsState.Loading)
         io.runAll()
         assertEquals("2026-10-21", requests.single().getValue("start_date").jsonPrimitive.content)
@@ -113,15 +123,17 @@ class AppSummaryViewModelTest {
 
     @Test
     fun foregroundRefreshDropsOldValuesAndUsesTheNewServerAnswer() {
-        model.open()
+        screen.show()
         io.runAll()
         val first = model.state.value
-        model.cameToForeground()
-        assertSame(first, model.state.value)
+        screen.hide()
+        screen.show()
+        assertSame("a rotation asks nothing", first, model.state.value)
         assertEquals(1, requests.size)
         summaryBody = APP_SUMMARY_FIXTURE.replace("7317", "9001")
-        model.wentToBackground()
-        model.cameToForeground()
+        screen.hide()
+        app.trip()
+        screen.show()
         assertTrue(model.state.value is ReportsState.Loading)
         io.runAll()
         assertEquals(9001L, report().totals.seconds)
@@ -130,7 +142,7 @@ class AppSummaryViewModelTest {
 
     @Test
     fun latestRangeAndFiltersCancelQueuedLoads() {
-        model.open()
+        screen.show()
         model.select(RangePreset.TODAY)
         model.applyFilters(ReportFilters(tags = listOf(null, 4), tagsNot = true))
         io.runAll()
@@ -142,16 +154,16 @@ class AppSummaryViewModelTest {
 
     @Test
     fun closeCancelsPendingLoadsAndReopenReadsTheAccountAgain() {
-        model.open()
-        model.close()
+        screen.show()
+        screen.leave()
         io.runAll()
         assertEquals(ReportsState.Closed, model.state.value)
         assertTrue(requests.isEmpty())
-        model.open()
+        screen.show()
         io.runAll()
         assertEquals(7317L, report().totals.seconds)
-        model.close()
-        model.open()
+        screen.leave()
+        screen.show()
         io.runAll()
         assertEquals(2, paths.count { it == "/api/v9/me" })
     }
@@ -164,7 +176,7 @@ class AppSummaryViewModelTest {
             entered.countDown()
             check(release.await(5, TimeUnit.SECONDS)) { "test did not release summary reply" }
         }
-        val liveScope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        val liveScope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(scheduler))
         val url = ServerUrl.parse(http.url("/").toString())!!
         val live = reportsViewModel(
             accountSettings = MutableStateFlow(
@@ -173,30 +185,32 @@ class AppSummaryViewModelTest {
             repository = ReportsRepository { testApi.api(url, ApiCredentials.ApiToken("test-token")) },
             scope = liveScope,
             io = Dispatchers.IO,
+            app = app.app,
         )
+        val liveScreen = TestScreen(live.page, liveScope, scheduler)
         try {
-            // The view model's own jobs, such as the one that shares its page state, are not the load.
-            val idle = liveScope.coroutineContext[Job]!!.children.toSet()
-            live.open()
+            liveScreen.show()
             assertTrue(withContext(Dispatchers.IO) { entered.await(5, TimeUnit.SECONDS) })
-            val loading = (liveScope.coroutineContext[Job]!!.children.toSet() - idle).single()
-            live.close()
+            liveScreen.leave()
             assertEquals(ReportsState.Closed, live.state.value)
+            // The load the screen's leaving cancelled, unless it already ended; the job that shares
+            // the page state stays.
+            val loading = liveScope.coroutineContext[Job]!!.children.filter { it.isCancelled }.toList()
             release.countDown()
-            withTimeout(5_000) { loading.join() }
+            withTimeout(5_000) { loading.forEach { it.join() } }
             assertEquals(ReportsState.Closed, live.state.value)
             assertEquals(1, requests.size)
         } finally {
             release.countDown()
             beforeSummaryReply = null
-            live.close()
+            liveScreen.leave()
             liveScope.cancel()
         }
     }
 
     @Test
     fun failureRefreshShowsNoStaleNumbersAndRetryCanRecover() {
-        model.open()
+        screen.show()
         io.runAll()
         summaryBody = "{}"
         model.retry()
@@ -211,7 +225,7 @@ class AppSummaryViewModelTest {
 
     @Test
     fun networkRecoveryRetriesSummaryButAuthAndQuotaRemainVisible() {
-        model.open()
+        screen.show()
         io.runAll()
         for ((status, expected) in listOf(
             503 to ReportFailure.Unreachable,
@@ -223,7 +237,7 @@ class AppSummaryViewModelTest {
             io.runAll()
             assertEquals(expected, (model.state.value as ReportsState.Failed).failure)
             val count = requests.size
-            model.reconnected()
+            app.reconnect()
             io.runAll()
             assertEquals(count + if (status == 503) 1 else 0, requests.size)
         }
@@ -232,7 +246,7 @@ class AppSummaryViewModelTest {
 
     @Test
     fun switchingTabsKeepsDetailedAndWeeklyOnTheirExistingEndpoints() {
-        model.open()
+        screen.show()
         io.runAll()
         model.selectTab(ReportTab.DETAILED)
         io.runAll()

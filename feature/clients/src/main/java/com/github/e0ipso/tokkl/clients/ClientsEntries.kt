@@ -6,7 +6,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
-import com.github.e0ipso.tokkl.catalog.PageVisitEffect
 import com.github.e0ipso.tokkl.feature.clients.R
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
 import com.github.e0ipso.tokkl.navigation.NavigationHost
@@ -34,12 +33,10 @@ internal object ClientsEntries : FeatureEntries {
 }
 
 /**
- * The Clients page from its view model: tells the model when the page opens and closes, and hands
- * its state and events to [ClientsScreen].
+ * The Clients page from its view model: hands its state and events to [ClientsScreen].
  */
 @Composable
 fun ClientsPage(model: ClientsViewModel, modifier: Modifier = Modifier) {
-    PageVisitEffect(onOpen = model::open, onClose = model::close)
     val page by model.page.collectAsStateWithLifecycle()
     val state = page.catalog
     BackHandler(

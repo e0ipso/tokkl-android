@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.reports
 
 import com.github.e0ipso.tokkl.capabilities.Capabilities
+import com.github.e0ipso.tokkl.platform.AppForeground
 import com.github.e0ipso.tokkl.session.AccountSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,8 +13,8 @@ import kotlin.coroutines.CoroutineContext
 
 /**
  * A Reports view model for tests that leave the filter sheet and the CSV export alone: no filter
- * options, no export capability, an export that no test starts and so writes no file, and no app
- * events.
+ * options, no export capability, and an export that no test starts and so writes no file. The app
+ * stays in the foreground with no network returns unless a test passes its own [app].
  */
 internal fun reportsViewModel(
     accountSettings: StateFlow<AccountSettings?>,
@@ -21,6 +22,7 @@ internal fun reportsViewModel(
     scope: CoroutineScope,
     io: CoroutineContext,
     clock: Clock = Clock.systemUTC(),
+    app: AppForeground = AppForeground(MutableStateFlow(true), emptyFlow()),
 ) = ReportsViewModel(
     accountSettings = accountSettings,
     repository = repository,
@@ -39,5 +41,5 @@ internal fun reportsViewModel(
             io = io,
         )
     },
-    appEvents = emptyFlow(),
+    app = app,
 )

@@ -15,8 +15,8 @@ import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.model.Task
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.fields
+import com.github.e0ipso.tokkl.platform.AppForeground
 import com.github.e0ipso.tokkl.session.AccountSettings
-import com.github.e0ipso.tokkl.session.AppEvent
 import com.github.e0ipso.tokkl.time.AccountTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
@@ -64,8 +65,7 @@ import kotlin.coroutines.CoroutineContext
  * before its window only until the send and the refresh after it, and the week then shows the copy
  * the cache last held, until the week loads again.
  *
- * Call [step], [showToday], [loadWeek], [wentToBackground], [cameToForeground], [reconnected],
- * [create], [move] and [resize] on the main thread.
+ * Call [step], [showToday], [loadWeek], [create], [move] and [resize] on the main thread.
  *
  * @param entries the cached entries with their send state, as AccountCache.entries gives them.
  * @param client the signed-in account's API client, or null when signed out. Runs on [io].
@@ -73,8 +73,8 @@ import kotlin.coroutines.CoroutineContext
  * @param allDayOffered whether the server stores no-time entries (`Capabilities.allDay == true`),
  *   which [CalendarState.Shown.allDayOffered] reports for the All day row.
  * @param overrides the entry actions' deletes and restores, which [reconcile] applies.
- * @param appEvents MainActivity's starts and stops and the network's reports, which call
- *   [cameToForeground], [wentToBackground] and [reconnected].
+ * @param app the app's trips to the background and back, and the network's returns, which make
+ *   the weeks on screen load again.
  */
 class CalendarViewModel(
     private val entries: Flow<List<EntryWithSendState>>,
@@ -88,7 +88,7 @@ class CalendarViewModel(
     private val clock: Clock,
     allDayOffered: Flow<Boolean>,
     overrides: Flow<Map<EntryId, TimeEntry?>>,
-    appEvents: Flow<AppEvent>,
+    app: AppForeground,
 ) : ViewModel(scope) {
 
     /** The chosen day, or null to follow today. */
@@ -233,11 +233,8 @@ class CalendarViewModel(
         }
     }
 
-    /**
-     * The app went to the background. Call it when the activity stops, but not for a
-     * configuration change, which is no trip to the background.
-     */
-    fun wentToBackground() {
+    /** The app went to the background. A configuration change is no trip to the background. */
+    private fun wentToBackground() {
         backgrounded = true
     }
 
@@ -246,7 +243,7 @@ class CalendarViewModel(
      * calendar on screen loads its week again when it failed or when it kept old entries offline.
      * A week that loaded since the last foreground asks nothing.
      */
-    fun reconnected() {
+    private fun reconnected() {
         foregroundCount.update { it + 1 }
     }
 
@@ -255,7 +252,7 @@ class CalendarViewModel(
      * again the next time it shows, and [foregrounds] counts up so the calendar on screen loads
      * its week at once.
      */
-    fun cameToForeground() {
+    private fun cameToForeground() {
         if (!backgrounded) return
         backgrounded = false
         loaded.update { weeks ->
@@ -379,15 +376,9 @@ class CalendarViewModel(
     init {
         viewModelScope.launch { overrides.collect(::reconcile) }
         viewModelScope.launch {
-            appEvents.collect { event ->
-                when (event) {
-                    AppEvent.CAME_TO_FOREGROUND -> cameToForeground()
-                    AppEvent.WENT_TO_BACKGROUND -> wentToBackground()
-                    AppEvent.ONLINE -> reconnected()
-                    AppEvent.RECONNECTED -> Unit
-                }
-            }
+            app.foreground.drop(1).collect { foreground -> if (foreground) cameToForeground() else wentToBackground() }
         }
+        viewModelScope.launch { app.reconnects.collect { reconnected() } }
     }
 
     companion object {

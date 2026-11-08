@@ -11,11 +11,11 @@ dependencies {
     implementation(project(":core:platform"))
     implementation(project(":core:session"))
     implementation(project(":core:cache"))
-    // ReportsViewModel, which the app's navigation host reads, is a catalog PageEvents.
-    api(project(":core:catalog"))
+    implementation(project(":core:catalog"))
     implementation(project(":core:navigation"))
     implementation(libs.androidx.activity.compose)
 
     testImplementation(libs.mockwebserver3)
     testImplementation(testFixtures(project(":core:api")))
+    testImplementation(testFixtures(project(":core:platform")))
 }

@@ -1,18 +1,22 @@
 package com.github.e0ipso.tokkl.di
 
 import android.net.ConnectivityManager
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ProcessLifecycleOwner
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ConfiguredServer
 import com.github.e0ipso.tokkl.api.ServerTrust
 import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.api.StoredServer
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
+import com.github.e0ipso.tokkl.platform.AppForeground
 import com.github.e0ipso.tokkl.platform.ConnectivityDefaultNetwork
 import com.github.e0ipso.tokkl.platform.CurrentWorkManager
 import com.github.e0ipso.tokkl.platform.DefaultDispatcher
 import com.github.e0ipso.tokkl.platform.DefaultNetwork
 import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.platform.MainDispatcher
+import com.github.e0ipso.tokkl.platform.foregroundReconnects
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
@@ -23,6 +27,9 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.bind
 import org.koin.dsl.binds
@@ -45,6 +52,16 @@ internal val coreModule = module {
     // The default network, which the activity, the pickers and the timer sync service follow.
     single<DefaultNetwork> {
         ConnectivityDefaultNetwork(androidContext().getSystemService(ConnectivityManager::class.java))
+    }
+
+    // Whether the app is on screen, as ProcessLifecycleOwner says, and the network's returns while
+    // it is, which the screens' view models load again on.
+    single {
+        val lifecycle = ProcessLifecycleOwner.get().lifecycle
+        val started = lifecycle.currentStateFlow
+            .map { it.isAtLeast(Lifecycle.State.STARTED) }
+            .stateIn(get(), SharingStarted.Eagerly, lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED))
+        AppForeground(started, foregroundReconnects(started, get()))
     }
 
     // The wall clock, for components that read the time on each event, such as the widget's day.

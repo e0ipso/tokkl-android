@@ -15,7 +15,6 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.currentStateAsState
 import androidx.navigation3.runtime.EntryProviderScope
-import com.github.e0ipso.tokkl.catalog.PageVisitEffect
 import com.github.e0ipso.tokkl.feature.reports.R
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
 import com.github.e0ipso.tokkl.navigation.LocalSignedInSession
@@ -44,12 +43,10 @@ internal object ReportsEntries : FeatureEntries {
 }
 
 /**
- * The Reports page from its view model: tells the model when the page opens and closes, and hands
- * its state and events to [ReportsScreen].
+ * The Reports page from its view model: hands its state and events to [ReportsScreen].
  */
 @Composable
 fun ReportsPage(model: ReportsViewModel, modifier: Modifier = Modifier) {
-    PageVisitEffect(onOpen = model::open, onClose = model::close)
     val context = LocalContext.current
     val shareTitle = stringResource(R.string.reports_share)
     val page by model.page.collectAsStateWithLifecycle()

@@ -40,6 +40,7 @@ import com.github.e0ipso.tokkl.feature.tags.R
 import com.github.e0ipso.tokkl.model.Tag
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.orFail
+import com.github.e0ipso.tokkl.platform.AppForeground
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -106,7 +107,7 @@ class TagsServerTest {
             io = Dispatchers.IO,
             cachedTags = app.cache.tags,
             offline = MutableStateFlow(false),
-            appEvents = emptyFlow(),
+            app = AppForeground(MutableStateFlow(true), emptyFlow()),
         )
     }
 

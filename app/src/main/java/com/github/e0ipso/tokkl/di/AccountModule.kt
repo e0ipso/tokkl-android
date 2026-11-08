@@ -19,7 +19,6 @@ import com.github.e0ipso.tokkl.session.AccountRefreshRequests
 import com.github.e0ipso.tokkl.session.AccountRefreshSteps
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
-import com.github.e0ipso.tokkl.session.AppEvents
 import com.github.e0ipso.tokkl.session.ForegroundRefresh
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -113,16 +112,12 @@ internal val accountModule = module {
         )
     }
 
-    // MainActivity's starts and stops and the network's reports, for the screens' view models.
-    single { AppEvents() }
-
-    // MainActivity's lifecycle observer: the foreground refresh, [AppEvents] and every module's
+    // MainActivity's lifecycle observer: the foreground refresh and every module's
     // foreground hooks. One for each MainActivity.
     factory {
         MainActivityForeground(
             context = androidContext(),
             refresh = get(),
-            events = get(),
             hooks = getAll(),
             http = get(),
             defaultNetwork = get(),

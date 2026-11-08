@@ -1,5 +1,5 @@
 // The frame the catalog pages share, Projects, Clients, Tags and Trash: the page and its rows,
-// its model with the reloads and the single create, the confirm dialog, and why the server
+// its model with the loads and the single create, the confirm dialog, and why the server
 // failed, which the other pages say in the same words.
 plugins {
     alias(libs.plugins.tokkl.android.library.compose)
@@ -16,9 +16,9 @@ dependencies {
     // The pages manage one workspace, by its model id.
     api(project(":core:model"))
     api(project(":core:ui"))
-    implementation(project(":core:session"))
+    // Its model loads as the pages' view models share their state.
+    api(project(":core:platform"))
 
-    implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui)
 

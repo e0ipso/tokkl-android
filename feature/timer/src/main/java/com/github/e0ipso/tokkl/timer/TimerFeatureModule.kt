@@ -23,7 +23,6 @@ import com.github.e0ipso.tokkl.platform.offlineIn
 import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
-import com.github.e0ipso.tokkl.session.AppEvents
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.TimerActions
@@ -74,7 +73,7 @@ val timerFeatureModule = module {
             clock = get(),
             ids = changes,
             overrides = params.overrides(),
-            appEvents = get<AppEvents>().events,
+            app = get(),
         )
     }
     viewModel {
@@ -105,7 +104,7 @@ val timerFeatureModule = module {
             // The capabilities load from disk on first read, off the main thread.
             allDayOffered = capabilities.allDayOffers(),
             overrides = params.overrides(),
-            appEvents = get<AppEvents>().events,
+            app = get(),
         )
     }
     viewModel {
