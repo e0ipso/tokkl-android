@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.sync
 
+import com.github.e0ipso.tokkl.cache.ChangeDiscards
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import com.github.e0ipso.tokkl.storage.ClearableStore
@@ -20,6 +21,7 @@ import kotlinx.coroutines.sync.withLock
  * app opens. The stored count loads from [store] as this is made, in [scope], off the main thread.
  */
 class DiscardedChanges(private val store: ClearableStore<Int>, private val scope: CoroutineScope) :
+    ChangeDiscards,
     AccountDataOwner,
     StartupLoad {
 
@@ -46,7 +48,7 @@ class DiscardedChanges(private val store: ClearableStore<Int>, private val scope
     private val writing = Mutex()
 
     /** [count] more changes were discarded. Called on the drain's thread, without waiting for the write. */
-    fun add(count: Int) {
+    override fun add(count: Int) {
         if (count <= 0) return
         set { it + count }
     }

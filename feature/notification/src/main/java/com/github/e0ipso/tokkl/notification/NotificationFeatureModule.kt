@@ -3,7 +3,6 @@ package com.github.e0ipso.tokkl.notification
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.platform.AppHook
-import com.github.e0ipso.tokkl.platform.AppHookOrder
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.preferences.ReminderSetting
 import com.github.e0ipso.tokkl.reminder.ReminderDelays
@@ -46,7 +45,8 @@ val notificationFeatureModule = module {
     single(named("hook-running-notification")) {
         val sync = inject<RunningNotificationSync>()
         AppHook(
-            AppHookOrder.RUNNING_NOTIFICATION,
+            // Right after the refresh requests: later hooks may change the running notification.
+            order = 20,
             // Reads the cache off the main thread, and posts or removes nothing for the entry the
             // notification already followed, so opening the app never brings back a dismissed one.
             processStart = { sync.value.start() },
@@ -84,7 +84,8 @@ val notificationFeatureModule = module {
         val scope = get<CoroutineScope>()
         val io = io()
         AppHook(
-            AppHookOrder.REMINDER,
+            // After the running notification and the Pomodoro session's, before the widgets.
+            order = 50,
             processStart = {
                 reminder.value.follow(
                     combine(cache.value.running, settings.value.loaded) { running, preferences ->

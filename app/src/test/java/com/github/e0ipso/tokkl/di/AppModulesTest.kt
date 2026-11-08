@@ -3,10 +3,8 @@ package com.github.e0ipso.tokkl.di
 import android.app.Application
 import android.content.Context
 import androidx.work.WorkerParameters
-import com.github.e0ipso.tokkl.cache.ChangeSenderEvents
 import com.github.e0ipso.tokkl.navigation.TopLevelDestination
 import com.github.e0ipso.tokkl.notification.RunningNotice
-import com.github.e0ipso.tokkl.platform.AppHookOrder
 import com.github.e0ipso.tokkl.pomodoro.PomodoroNotificationMemory
 import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionPoster
 import com.github.e0ipso.tokkl.reminder.ReminderNotice
@@ -17,7 +15,6 @@ import com.github.e0ipso.tokkl.shortcuts.PublishedShortcuts
 import com.github.e0ipso.tokkl.signin.SignIn
 import com.github.e0ipso.tokkl.storage.ClearableStore
 import com.github.e0ipso.tokkl.storage.ValueStore
-import com.github.e0ipso.tokkl.timersync.TimerSyncConnections
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import org.junit.Assert.assertEquals
@@ -63,14 +60,11 @@ class AppModulesTest {
                 ValueStore::class,
                 ClearableStore::class,
                 SignOutPhase::class,
-                AppHookOrder::class,
+                Int::class,
                 SignIn::class,
                 ReportExportController::class,
                 TopLevelDestination::class,
-                // The named callbacks a definition builds as a lambda or an object, and the
-                // collaborators it makes for one component.
-                ChangeSenderEvents::class,
-                TimerSyncConnections::class,
+                // The collaborators a definition makes for one component.
                 PomodoroNotificationMemory::class,
                 PomodoroSessionPoster::class,
                 RunningNotice::class,
@@ -96,13 +90,52 @@ class AppModulesTest {
         assertEquals(SIGN_OUT_OWNERS.sorted(), owners.sorted())
     }
 
+    /**
+     * Each core module and each feature defines its own components in a Koin module of its own.
+     * The app's modules define only the app's classes, and the few components that join every
+     * module's or every feature's parts, listed in [JOINED] with why.
+     */
+    @OptIn(KoinInternalApi::class)
+    @Test
+    fun theAppDefinesOnlyWhatJoinsTheModules() {
+        val koin = koinApplication { modules(lifecycleModule, startupModule, navigationModule) }.koin
+        val outside = koin.instanceRegistry.instances.values.map { it.beanDefinition }.distinct()
+            .map { it.primaryType.java }
+            .filterNot { type -> appPackageOf(type.`package`.name) in APP_PACKAGES }
+            .map { it.name }
+            .filterNot { it in JOINED }
+
+        assertEquals("core or feature classes the app's Koin modules define", emptyList<String>(), outside)
+    }
+
+    /** The app's package that [name] is or lies in, such as "di", "" for the root, or null outside the app. */
+    private fun appPackageOf(name: String): String? = when {
+        name == APP_PACKAGE -> ""
+        name.startsWith("$APP_PACKAGE.") -> name.removePrefix("$APP_PACKAGE.").substringBefore('.')
+        else -> null
+    }
+
     private companion object {
+        const val APP_PACKAGE = "com.github.e0ipso.tokkl"
+
+        /** The app's packages, under [APP_PACKAGE]: its root, di, navhost and lifecycle. */
+        val APP_PACKAGES = setOf("", "di", "navhost", "lifecycle")
+
+        /** The classes of other modules that the app defines, since each joins what every module or feature binds. */
+        val JOINED = setOf(
+            // Every store's load at process start, which MainActivity's first frame waits for.
+            "com.github.e0ipso.tokkl.storage.StartupLoads",
+            // Every feature's top-level pages and screens.
+            "com.github.e0ipso.tokkl.navigation.TopLevelPages",
+            "java.util.List",
+        )
+
         /** Each owner by its class, or by its Koin name for a step of no single component. */
         val SIGN_OUT_OWNERS = listOf(
             "Session", "AccountTimerStates", "PomodoroSignOut", "TimerSyncFollower", "BackgroundSend",
             "RunningCheck", "sign-out-http-calls", "AccountRefresh", "ChangeSender", "AccountCache",
             "TimerStateStore", "PomodoroWidgetFieldsStore", "ReminderSync", "ReminderSetting",
-            "RunningNotificationSync", "FavoriteShortcutSync", "AccountSettingsStore", "sign-out-capabilities",
+            "RunningNotificationSync", "FavoriteShortcutSync", "AccountSettingsStore", "CapabilitiesSignOut",
             "TimerViewSetting", "PomodoroDefaultsSetting", "ServerTrustStore", "SessionTrust", "LastAnswer",
             "DiscardedChanges", "ExportAccount",
         )

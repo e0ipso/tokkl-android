@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.shortcuts
 
 import com.github.e0ipso.tokkl.platform.AppHook
-import com.github.e0ipso.tokkl.platform.AppHookOrder
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import org.koin.android.ext.koin.androidContext
@@ -24,6 +23,7 @@ val shortcutsFeatureModule = module {
     } bind AccountDataOwner::class
     single(named("hook-favorite-shortcuts")) {
         val sync = inject<FavoriteShortcutSync>()
-        AppHook(AppHookOrder.FAVORITE_SHORTCUTS, processStart = { sync.value.start() })
+        // After the widgets, before the running entry's check.
+        AppHook(order = 80, processStart = { sync.value.start() })
     }
 }

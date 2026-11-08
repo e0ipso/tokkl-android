@@ -176,8 +176,6 @@ dependencies {
     // Navigation 3 keeps the back stack and gives each screen its own view model store.
     implementation(libs.androidx.navigation3.runtime)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
-    // ProcessLifecycleOwner tells the screens' view models when the app comes back on screen.
-    implementation(libs.androidx.lifecycle.process)
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
     // Dependency injection. Koin is Apache-2.0.
     implementation(platform(libs.koin.bom))

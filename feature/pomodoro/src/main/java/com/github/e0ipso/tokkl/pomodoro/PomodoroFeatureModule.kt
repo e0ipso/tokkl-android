@@ -9,7 +9,6 @@ import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
 import com.github.e0ipso.tokkl.picker.pickerSource
 import com.github.e0ipso.tokkl.platform.AppHook
-import com.github.e0ipso.tokkl.platform.AppHookOrder
 import com.github.e0ipso.tokkl.platform.DefaultNetwork
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.platform.offlineIn
@@ -93,7 +92,8 @@ val pomodoroFeatureModule = module {
         val scope = get<CoroutineScope>()
         val io = io()
         AppHook(
-            AppHookOrder.POMODORO_ALARM,
+            // After the running notification, before the session notification that shows its phase.
+            order = 30,
             // Arms, moves and drops the phase alarm and its ring on every held state and capability
             // change, from the stored state at process start on, also with the app in the background.
             processStart = {
@@ -138,7 +138,8 @@ val pomodoroFeatureModule = module {
     single(named("hook-pomodoro-notification")) {
         val sync = inject<PomodoroSessionNotificationSync>()
         AppHook(
-            AppHookOrder.POMODORO_NOTIFICATION,
+            // After the phase alarm, before the reminder.
+            order = 40,
             processStart = { sync.value.start() },
             notificationsAllowed = { sync.value.refresh(force = true) },
         )

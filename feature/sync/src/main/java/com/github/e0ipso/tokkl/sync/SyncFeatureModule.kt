@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.sync
 
 import com.github.e0ipso.tokkl.api.SuccessListener
+import com.github.e0ipso.tokkl.cache.ChangeDiscards
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
 import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
@@ -29,7 +30,7 @@ val syncFeatureModule = module {
     // entries, for the notice that says so (docs/PRD.md O6). It loads at process start from a file
     // of one value.
     single { DiscardedChanges(get<DiscardedChangesStore>(), get()) } binds
-        arrayOf(AccountDataOwner::class, StartupLoad::class)
+        arrayOf(ChangeDiscards::class, AccountDataOwner::class, StartupLoad::class)
 
     // The "needs attention" list of the changes the server refused (docs/PRD.md O6). Discarding
     // one refreshes the account, so the cache takes the server's entry back.

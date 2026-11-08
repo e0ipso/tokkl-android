@@ -190,7 +190,7 @@ class AppGraphTest {
             "RunningNotificationSync" to SignOutPhase.CLEAR_DATA,
             "FavoriteShortcutSync" to SignOutPhase.CLEAR_DATA,
             "AccountSettingsStore" to SignOutPhase.CLEAR_DATA,
-            "sign-out-capabilities" to SignOutPhase.CLEAR_DATA,
+            "CapabilitiesSignOut" to SignOutPhase.CLEAR_DATA,
             "TimerViewSetting" to SignOutPhase.CLEAR_DATA,
             "PomodoroDefaultsSetting" to SignOutPhase.CLEAR_DATA,
             "ServerTrustStore" to SignOutPhase.CLEAR_DATA,

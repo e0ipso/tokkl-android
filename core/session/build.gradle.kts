@@ -1,6 +1,6 @@
 // The signed-in account: the API token, the server and the certificate it trusts, the server's
 // capabilities, the account's settings and their refresh, sign-out, and the preferences synced
-// with the server.
+// with the server, and their Koin definitions.
 plugins {
     alias(libs.plugins.tokkl.android.library)
     alias(libs.plugins.kotlin.serialization)
@@ -18,6 +18,8 @@ dependencies {
     api(project(":core:time"))
     api(project(":core:platform"))
     implementation(libs.androidx.annotation)
+    implementation(platform(libs.koin.bom))
+    implementation(libs.koin.android)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

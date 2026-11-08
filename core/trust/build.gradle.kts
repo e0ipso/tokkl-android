@@ -12,6 +12,8 @@ dependencies {
     // The prompts show the API's refused requests, and the session stores what the user trusts.
     api(project(":core:session"))
     implementation(project(":core:ui"))
+    implementation(platform(libs.koin.bom))
+    implementation(libs.koin.android)
 
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui)

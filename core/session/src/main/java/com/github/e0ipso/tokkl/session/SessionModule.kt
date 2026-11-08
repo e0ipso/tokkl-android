@@ -1,0 +1,89 @@
+package com.github.e0ipso.tokkl.session
+
+import com.github.e0ipso.tokkl.api.ApiClientProvider
+import com.github.e0ipso.tokkl.api.ConfiguredServer
+import com.github.e0ipso.tokkl.api.ServerTrust
+import com.github.e0ipso.tokkl.api.SharedHttpClient
+import com.github.e0ipso.tokkl.api.StoredServer
+import com.github.e0ipso.tokkl.api.SuccessListener
+import com.github.e0ipso.tokkl.api.TrustListener
+import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
+import com.github.e0ipso.tokkl.capabilities.CapabilitiesStore
+import com.github.e0ipso.tokkl.credentials.ApiTokenStore
+import com.github.e0ipso.tokkl.platform.AppHook
+import com.github.e0ipso.tokkl.platform.io
+import com.github.e0ipso.tokkl.storage.StartupLoad
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import org.koin.android.ext.koin.androidContext
+import org.koin.core.qualifier.named
+import org.koin.dsl.bind
+import org.koin.dsl.binds
+import org.koin.dsl.module
+
+/**
+ * The stored server, token and trust, the one HTTP client, the signed-in [Session], the account's
+ * settings and capabilities with their refresh, and sign-out. What each refresh does after its
+ * `GET /api/v9/me` answered, the [AccountRefreshSteps], comes from the app, which knows every
+ * module that refreshes.
+ */
+val sessionModule = module {
+    single { ServerConfigStore(androidContext()) } bind StoredServer::class
+    single { ApiTokenStore(androidContext()) }
+    single { ServerTrustStore(androidContext()) } binds arrayOf(ServerTrust::class, AccountDataOwner::class)
+
+    // Every process sends requests only to the stored server, and to a plain http:// server only
+    // once the user has confirmed it, through the one HTTP client and its connection pool.
+    single { ConfiguredServer(get()) }
+    single { SharedHttpClient(server = get(), trust = get<ServerTrust>()) }
+    // Sign-out cancels every call in flight.
+    single(named("sign-out-http-calls")) {
+        SignOutStep(SignOutPhase.STOP_WORK, get<SharedHttpClient>()::cancelAll)
+    } bind AccountDataOwner::class
+
+    // Reports trust refusals to the session's trust prompt, and answers to the last answer's time.
+    single {
+        Session(
+            servers = get<ServerConfigStore>(),
+            tokens = get<ApiTokenStore>(),
+            http = get(),
+            io = io(),
+            trustListener = get<TrustListener>(),
+            successListener = get<SuccessListener>(),
+        )
+    } binds arrayOf(ApiClientProvider::class, AccountDataOwner::class)
+
+    single { AccountSettingsStore(androidContext()) } bind AccountDataOwner::class
+    single { CapabilitiesStore(androidContext()) }
+    // The account settings. They load at process start from a file of a few short values.
+    single { AccountSettingsSource(get<AccountSettingsStore>(), get()) } bind StartupLoad::class
+
+    // What the server offers. It loads at process start from a file of a few flags.
+    single { CapabilitiesSource(get<CapabilitiesStore>(), get()) } bind StartupLoad::class
+
+    single { AccountRefreshRequests() }
+    single(named("hook-refresh-requests")) {
+        val requests = get<AccountRefreshRequests>()
+        val refresh = inject<AccountRefresh>()
+        val scope = get<CoroutineScope>()
+        val io = io()
+        // First: the refreshes the other components ask for, from any process.
+        AppHook(order = 10, processStart = { scope.launch(io) { requests.forward(refresh) } })
+    }
+
+    single {
+        AccountRefresh(
+            client = get<Session>(),
+            settings = get(),
+            scope = get(),
+            io = io(),
+            steps = get(),
+        )
+    } bind AccountDataOwner::class
+
+    // Where each account begins and ends, which the timer state and the navigation follow.
+    single { AccountLifetime() }
+
+    // Sign-out (docs/PRD.md S6): every [AccountDataOwner], phase by phase in [SignOutPhase] order.
+    single { SignOut(owners = getAll(), lifetime = get(), io = io()) }
+}

@@ -2,7 +2,6 @@ package com.github.e0ipso.tokkl.widget
 
 import androidx.glance.appwidget.updateAll
 import com.github.e0ipso.tokkl.platform.AppHook
-import com.github.e0ipso.tokkl.platform.AppHookOrder
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.Session
@@ -61,7 +60,8 @@ val widgetFeatureModule = module {
     }
     single(named("hook-timer-widget")) {
         val sync = inject<WidgetSync>(TimerWidgetQualifier)
-        AppHook(AppHookOrder.TIMER_WIDGET, processStart = { sync.value.start() })
+        // After the notifications and the reminder, then the Pomodoro widget.
+        AppHook(order = 60, processStart = { sync.value.start() })
     }
 
     single {
@@ -96,6 +96,7 @@ val widgetFeatureModule = module {
     }
     single(named("hook-pomodoro-widget")) {
         val sync = inject<WidgetSync>(PomodoroWidgetQualifier)
-        AppHook(AppHookOrder.POMODORO_WIDGET, processStart = { sync.value.start() })
+        // After the Timer widget, before the launcher shortcuts.
+        AppHook(order = 70, processStart = { sync.value.start() })
     }
 }

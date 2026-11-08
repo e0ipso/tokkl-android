@@ -1,6 +1,6 @@
 // The account's data in Room and the queue of changes made on the phone, which it sends to the
 // server in order, from WorkManager too when the network comes back, and the check of a cached
-// running entry.
+// running entry, with their Koin definitions.
 plugins {
     alias(libs.plugins.tokkl.android.library)
     alias(libs.plugins.kotlin.serialization)
@@ -27,6 +27,9 @@ dependencies {
     api(libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.work.runtime)
+    implementation(platform(libs.koin.bom))
+    implementation(libs.koin.android)
+    implementation(libs.koin.androidx.workmanager)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
