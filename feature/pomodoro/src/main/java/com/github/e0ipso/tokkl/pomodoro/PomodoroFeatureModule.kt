@@ -24,8 +24,8 @@ import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.PomodoroAlarmScheduler
 import com.github.e0ipso.tokkl.timerstate.PomodoroRingingPhase
 import com.github.e0ipso.tokkl.timerstate.TimerActions
-import com.github.e0ipso.tokkl.timerstate.TimerSyncFollower
-import com.github.e0ipso.tokkl.timerstate.TimerSyncWatcher
+import com.github.e0ipso.tokkl.timersync.TimerSyncFollower
+import com.github.e0ipso.tokkl.timersync.TimerSyncWatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll

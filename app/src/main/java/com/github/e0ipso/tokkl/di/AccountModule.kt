@@ -26,7 +26,7 @@ import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.session.SignOut
 import com.github.e0ipso.tokkl.timer.TimerViewSetting
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
-import com.github.e0ipso.tokkl.timerstate.TimerSyncFollower
+import com.github.e0ipso.tokkl.timersync.TimerSyncFollower
 import com.github.e0ipso.tokkl.trust.SessionTrust
 import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsStore
 import com.github.e0ipso.tokkl.ui.theme.themeSettingsWithNightMode

@@ -1,7 +1,5 @@
-// The timer's state: the running entry's controls and totals, Pause, Resume and the Pomodoro
-// session of a Tokkl server with the timer API, its event stream and the foreground service that
-// holds it, and the steps of each account refresh, which join the session, the cache and the
-// timer state.
+// The timer's state: the running entry's controls and totals, and Pause, Resume and the Pomodoro
+// session of a Tokkl server with the timer API, which the server sends and the phone keeps.
 plugins {
     alias(libs.plugins.tokkl.android.library)
     alias(libs.plugins.kotlin.serialization)
@@ -16,8 +14,6 @@ android {
 dependencies {
     // The timer state's types and calls use the cache's types, and through it the session's.
     api(project(":core:cache"))
-    implementation(platform(libs.koin.bom))
-    implementation(libs.koin.android)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

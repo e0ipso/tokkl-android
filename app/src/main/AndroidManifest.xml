@@ -105,19 +105,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <!--
-            The timer sync service holds GET /api/app/timer/events while signed in to a Tokkl
-            server with the timer API. It keeps running when the app's task is removed.
-        -->
-        <service
-            android:name=".timerstate.TimerSyncService"
-            android:exported="false"
-            android:stopWithTask="false"
-            android:foregroundServiceType="specialUse">
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Keeps the user's self-hosted Tokkl server's timer event stream (Server-Sent Events) open, so a Pomodoro session or pause started on another device reaches the phone before its phase ends and every device rings together. The app ships on F-Droid without a push service, and the stream is the server's only way to reach the phone." />
-        </service>
         <!-- No worker runs in the foreground. -->
         <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"

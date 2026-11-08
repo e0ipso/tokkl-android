@@ -20,7 +20,7 @@ import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.io.IOException
-import com.github.e0ipso.tokkl.core.timerstate.R as TimerStateR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /** Separate alert channel; the ongoing notification and its Live Update are unchanged. */
 class ReminderNotifier(private val context: Context) {
@@ -41,7 +41,7 @@ class ReminderNotifier(private val context: Context) {
 
     /** The reminder for [timer], without posting it. [pausable] adds its Pause button. */
     fun build(timer: ReminderTimer, pausable: Boolean): Notification = Notification.Builder(context, CHANNEL)
-        .setSmallIcon(TimerStateR.drawable.ic_nav_timer)
+        .setSmallIcon(UiR.drawable.ic_nav_timer)
         .setContentTitle(context.getString(R.string.reminder_question))
         .setContentText(context.getString(R.string.reminder_summary))
         .setStyle(Notification.BigTextStyle().bigText(context.getString(R.string.reminder_question)))

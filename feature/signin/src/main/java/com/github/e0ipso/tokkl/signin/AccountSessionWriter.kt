@@ -8,7 +8,7 @@ import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.session.SignedInListener
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
-import com.github.e0ipso.tokkl.timerstate.TimerSyncFollower
+import com.github.e0ipso.tokkl.timersync.TimerSyncFollower
 import java.io.IOException
 import java.security.GeneralSecurityException
 

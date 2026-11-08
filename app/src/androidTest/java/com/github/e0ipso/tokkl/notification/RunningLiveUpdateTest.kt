@@ -21,7 +21,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.time.Instant
-import com.github.e0ipso.tokkl.core.timerstate.R as TimerStateR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /** Promotion adds to the running notification; declining it retains the clock and Stop (N2). */
 class RunningLiveUpdateTest {
@@ -81,7 +81,7 @@ class RunningLiveUpdateTest {
         assertFalse("not a group summary", notification.flags and Notification.FLAG_GROUP_SUMMARY != 0)
         assertFalse("never colorized", notification.extras.getBoolean(Notification.EXTRA_COLORIZED))
         assertEquals(TokklLightExtraColors.primaryFill.toArgb(), notification.color)
-        assertEquals(TimerStateR.drawable.ic_nav_timer, notification.smallIcon.resId)
+        assertEquals(UiR.drawable.ic_nav_timer, notification.smallIcon.resId)
         assertEquals(
             NotificationManager.IMPORTANCE_LOW,
             manager.getNotificationChannel(RunningNotifier.CHANNEL_ID).importance,

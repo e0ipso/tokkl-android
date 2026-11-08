@@ -12,8 +12,8 @@ import com.github.e0ipso.tokkl.platform.mainActivityIntent
 import com.github.e0ipso.tokkl.timerstate.PomodoroAlarmScheduler
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.timerstate.PomodoroWidgetRedraw
-import com.github.e0ipso.tokkl.timerstate.TimerSyncFollower
-import com.github.e0ipso.tokkl.timerstate.TimerSyncWatcher
+import com.github.e0ipso.tokkl.timersync.TimerSyncFollower
+import com.github.e0ipso.tokkl.timersync.TimerSyncWatcher
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch

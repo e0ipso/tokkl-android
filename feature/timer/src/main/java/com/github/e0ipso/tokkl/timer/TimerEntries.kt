@@ -32,7 +32,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
-import com.github.e0ipso.tokkl.core.timerstate.R as TimerStateR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * The Timer page, the fullscreen timer, the entry form and the timer templates. Each screen takes
@@ -199,7 +199,7 @@ private fun EntryForm(route: Route.Entry, navigator: Navigator) {
 val timerPage = TopLevelDestination(
     route = Route.Timer,
     label = R.string.nav_timer,
-    icon = TimerStateR.drawable.ic_nav_timer,
+    icon = UiR.drawable.ic_nav_timer,
     hue = SectionHues.timer,
     position = 0,
 )

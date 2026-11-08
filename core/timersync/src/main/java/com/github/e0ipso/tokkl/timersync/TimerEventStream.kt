@@ -1,4 +1,4 @@
-package com.github.e0ipso.tokkl.timerstate
+package com.github.e0ipso.tokkl.timersync
 
 import android.database.sqlite.SQLiteException
 import com.github.e0ipso.tokkl.api.ApiError
@@ -6,6 +6,8 @@ import com.github.e0ipso.tokkl.api.ApiJson
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.api.TokklApi
+import com.github.e0ipso.tokkl.timerstate.TimerStateRead
+import com.github.e0ipso.tokkl.timerstate.TimerStateSource
 import java.io.IOException
 import java.io.InputStream
 

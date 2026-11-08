@@ -19,13 +19,14 @@ import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.components.signOut
 import com.github.e0ipso.tokkl.components.timerState
-import com.github.e0ipso.tokkl.components.timerSyncService
+import com.github.e0ipso.tokkl.components.timerSyncServiceRuns
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmRearmReceiver
 import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotifier
 import com.github.e0ipso.tokkl.timer.TimerAcceptanceFixture
 import com.github.e0ipso.tokkl.timerState
+import com.github.e0ipso.tokkl.timersync.TimerSyncService
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -98,7 +99,7 @@ class TimerSyncServiceLifecycleTest {
         val next = postTimer("pomodoro", "next", revision = other.timerState().revision)
         assertNotNull(next.pomodoro)
         SystemClock.sleep(AT_ONCE_MS)
-        assertNull(app.timerSyncService)
+        assertFalse(app.timerSyncServiceRuns)
         assertNull(app.timerState.state.value)
         assertFalse(notifications.activeNotifications.any { it.id == PomodoroSessionNotifier.NOTIFICATION_ID })
         assertNull(alarms.nextAlarmClock)
@@ -111,8 +112,11 @@ class TimerSyncServiceLifecycleTest {
     private fun openTheAppAndReceiveASessionInTheBackground(): TimerPomodoro {
         ActivityScenario.launch(MainActivity::class.java).use {
             compose.awaitTimerPage()
-            val service = await("the timer sync service runs", STREAM_CONNECT_MS) { app.timerSyncService }
-            assertEquals(ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE, service.foregroundServiceType)
+            await("the timer sync service runs", STREAM_CONNECT_MS) { app.timerSyncServiceRuns.takeIf { it } }
+            assertTrue(TimerSyncService::class.java.name in RunningNotifications.foregroundServices())
+            val service = ComponentName(context, TimerSyncService::class.java)
+            val declared = context.packageManager.getServiceInfo(service, 0)
+            assertEquals(ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE, declared.foregroundServiceType)
             val shown = await("the sync notification", FGS_NOTIFICATION_DEFERRAL_MS) {
                 notifications.activeNotifications.singleOrNull { it.id == SYNC_NOTIFICATION_ID }
             }
@@ -150,7 +154,7 @@ class TimerSyncServiceLifecycleTest {
     }
 
     private fun awaitEverythingStopped(after: String) {
-        await("the timer sync service stops after $after", AT_ONCE_MS) { (app.timerSyncService == null).takeIf { it } }
+        await("the timer sync service stops after $after", AT_ONCE_MS) { (!app.timerSyncServiceRuns).takeIf { it } }
         await("the notifications go after $after", AT_ONCE_MS) {
             notifications.activeNotifications
                 .none { it.id == SYNC_NOTIFICATION_ID || it.id == PomodoroSessionNotifier.NOTIFICATION_ID }

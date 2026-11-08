@@ -7,6 +7,7 @@ import com.github.e0ipso.tokkl.platform.ConnectivityDefaultNetwork
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.time.AccountTime
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
+import com.github.e0ipso.tokkl.timersync.TimerSync
 import com.github.e0ipso.tokkl.trust.SessionTrust
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.io.ByteArrayInputStream
@@ -77,6 +78,7 @@ internal object ClassReferences {
         Session::class.java,
         AccountCache::class.java,
         AccountTimerStates::class.java,
+        TimerSync::class.java,
         SessionTrust::class.java,
         Navigator::class.java,
     ) + (CORE_MODULES + FEATURE_MODULES).map { Class.forName(it) }

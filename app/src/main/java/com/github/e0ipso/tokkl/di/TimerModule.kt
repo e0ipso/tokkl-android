@@ -15,11 +15,12 @@ import com.github.e0ipso.tokkl.timerstate.DiscardNotices
 import com.github.e0ipso.tokkl.timerstate.PauseActions
 import com.github.e0ipso.tokkl.timerstate.SessionActions
 import com.github.e0ipso.tokkl.timerstate.TimerActions
-import com.github.e0ipso.tokkl.timerstate.TimerEventConnections
 import com.github.e0ipso.tokkl.timerstate.TimerStateStore
 import com.github.e0ipso.tokkl.timerstate.TimerSurfaceActions
-import com.github.e0ipso.tokkl.timerstate.TimerSync
-import com.github.e0ipso.tokkl.timerstate.TimerSyncFollower
+import com.github.e0ipso.tokkl.timersync.TimerEventConnections
+import com.github.e0ipso.tokkl.timersync.TimerSync
+import com.github.e0ipso.tokkl.timersync.TimerSyncFollower
+import com.github.e0ipso.tokkl.timersync.TimerSyncService
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -72,7 +73,7 @@ internal val timerModule = module {
         )
     }
 
-    // The one owner of the timer event stream, which [TimerSyncService] runs for the account's
+    // The one owner of the timer event stream, which TimerSyncService runs for the account's
     // timer state, with its calls from [TimerEventConnections].
     //
     // Its state changes one at a time on a view of [DefaultDispatcher] that runs one task at a
@@ -81,10 +82,12 @@ internal val timerModule = module {
     // silent for all of it once the phone wakes.
     single {
         val default = get<CoroutineDispatcher>(DefaultDispatcher)
+        val follower = inject<TimerSyncFollower>()
         val connections = TimerEventConnections(
             session = get(),
             timerStates = get(),
             sender = get(),
+            stopService = { follower.value.stopService() },
             scope = CoroutineScope(SupervisorJob() + default),
             io = io(),
         )
@@ -93,13 +96,15 @@ internal val timerModule = module {
     }
 
     single {
+        val context = androidContext()
+        val sender = get<ChangeSender>()
         TimerSyncFollower(
-            context = androidContext(),
+            startService = { TimerSyncService.start(context) },
             signedIn = get<Session>()::isSignedIn,
-            timerStates = get(),
+            source = get<AccountTimerStates>()::source,
             timerSync = get(),
             timerApi = get<CapabilitiesSource>()::offersTimerApi,
-            sender = get(),
+            signInNeeded = { sender.signInNeeded.value },
             syncWatcher = get(),
         )
     } bind AccountDataOwner::class

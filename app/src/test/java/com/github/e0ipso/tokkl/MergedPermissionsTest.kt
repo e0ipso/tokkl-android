@@ -115,7 +115,7 @@ class MergedPermissionsTest {
         assertEquals(
             listOf(
                 "com.github.e0ipso.tokkl.pomodoro.PomodoroRingingService",
-                "com.github.e0ipso.tokkl.timerstate.TimerSyncService",
+                "com.github.e0ipso.tokkl.timersync.TimerSyncService",
             ),
             foreground.map { it.androidAttribute("name") }.sorted(),
         )
@@ -139,7 +139,7 @@ class MergedPermissionsTest {
                 "androidx.work.impl.background.systemjob.SystemJobService",
                 "com.github.e0ipso.tokkl.pomodoro.PomodoroRingingService",
                 "com.github.e0ipso.tokkl.tile.RunningTileService",
-                "com.github.e0ipso.tokkl.timerstate.TimerSyncService",
+                "com.github.e0ipso.tokkl.timersync.TimerSyncService",
             ),
             services.sorted(),
         )

@@ -1,6 +1,7 @@
-package com.github.e0ipso.tokkl.timerstate
+package com.github.e0ipso.tokkl.timersync
 
 import com.github.e0ipso.tokkl.api.ApiCallCancellation
+import com.github.e0ipso.tokkl.timerstate.TimerStateSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay

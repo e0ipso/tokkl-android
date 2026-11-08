@@ -17,7 +17,7 @@ import com.github.e0ipso.tokkl.shortcuts.PublishedShortcuts
 import com.github.e0ipso.tokkl.signin.SignIn
 import com.github.e0ipso.tokkl.storage.ClearableStore
 import com.github.e0ipso.tokkl.storage.ValueStore
-import com.github.e0ipso.tokkl.timerstate.TimerSyncConnections
+import com.github.e0ipso.tokkl.timersync.TimerSyncConnections
 import com.github.e0ipso.tokkl.ui.theme.SectionHue
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow

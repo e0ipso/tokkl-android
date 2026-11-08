@@ -12,6 +12,7 @@ dependencies {
     implementation(project(":core:session"))
     implementation(project(":core:cache"))
     implementation(project(":core:timerstate"))
+    implementation(project(":core:timersync"))
     implementation(project(":core:catalog"))
     implementation(project(":core:entryfields"))
     implementation(project(":core:timernotice"))

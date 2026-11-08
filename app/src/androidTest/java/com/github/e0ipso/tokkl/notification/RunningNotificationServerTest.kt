@@ -38,8 +38,8 @@ import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timerState
 import com.github.e0ipso.tokkl.timerstate.TimerControls
-import com.github.e0ipso.tokkl.timerstate.TimerSyncService
 import com.github.e0ipso.tokkl.timerstate.countsFrom
+import com.github.e0ipso.tokkl.timersync.TimerSyncService
 import com.github.e0ipso.tokkl.tokklApi
 import com.github.e0ipso.tokkl.trash.TrashServer
 import kotlinx.coroutines.delay

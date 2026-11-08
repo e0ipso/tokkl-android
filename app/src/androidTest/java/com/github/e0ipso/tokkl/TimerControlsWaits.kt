@@ -6,7 +6,7 @@ import com.github.e0ipso.tokkl.components.capabilities
 import com.github.e0ipso.tokkl.components.followTimerSync
 import com.github.e0ipso.tokkl.components.timerControls
 import com.github.e0ipso.tokkl.components.timerState
-import com.github.e0ipso.tokkl.components.timerSyncService
+import com.github.e0ipso.tokkl.components.timerSyncServiceRuns
 import com.github.e0ipso.tokkl.timerstate.TimerControls
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -53,7 +53,7 @@ fun TokklApplication.followNoTimerEvents() {
     followTimerSync()
     // A start still on its way decides for itself, against the forgotten capability, and stops.
     val deadline = System.nanoTime() + 10_000_000_000L
-    while (timerSyncService != null) {
+    while (timerSyncServiceRuns) {
         if (System.nanoTime() > deadline) throw AssertionError("the timer sync service did not stop")
         Thread.sleep(50)
     }

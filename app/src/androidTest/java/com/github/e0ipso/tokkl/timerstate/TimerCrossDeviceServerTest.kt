@@ -35,7 +35,7 @@ import com.github.e0ipso.tokkl.components.timerActions
 import com.github.e0ipso.tokkl.components.timerControls
 import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.components.timerSync
-import com.github.e0ipso.tokkl.components.timerSyncService
+import com.github.e0ipso.tokkl.components.timerSyncServiceRuns
 import com.github.e0ipso.tokkl.feature.pomodoro.R
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.ProjectId
@@ -446,7 +446,7 @@ class TimerCrossDeviceServerTest {
 
     private fun awaitTimerSyncService() {
         val deadline = SystemClock.elapsedRealtime() + 10_000
-        while (app.timerSyncService == null) {
+        while (!app.timerSyncServiceRuns) {
             if (SystemClock.elapsedRealtime() > deadline) throw AssertionError("the timer sync service did not start")
             SystemClock.sleep(POLL_MS)
         }

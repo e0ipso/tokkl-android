@@ -49,9 +49,8 @@ import com.github.e0ipso.tokkl.timerstate.PomodoroAlarmScheduler
 import com.github.e0ipso.tokkl.timerstate.TimerActions
 import com.github.e0ipso.tokkl.timerstate.TimerControls
 import com.github.e0ipso.tokkl.timerstate.TimerStateSource
-import com.github.e0ipso.tokkl.timerstate.TimerSync
-import com.github.e0ipso.tokkl.timerstate.TimerSyncFollower
-import com.github.e0ipso.tokkl.timerstate.TimerSyncService
+import com.github.e0ipso.tokkl.timersync.TimerSync
+import com.github.e0ipso.tokkl.timersync.TimerSyncFollower
 import com.github.e0ipso.tokkl.trust.SessionTrust
 import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsRepository
 import com.github.e0ipso.tokkl.widget.PomodoroWidgetState
@@ -108,8 +107,8 @@ internal val TokklApplication.pomodoroWidgetState: Flow<PomodoroWidgetState>
     get() = component<PomodoroWidgetStateSource>().state
 internal val TokklApplication.pomodoroSessionNotification: PomodoroSessionNotificationSync get() = component()
 
-/** [TimerSyncService] while it runs in the foreground. */
-val TokklApplication.timerSyncService: TimerSyncService? get() = TimerSyncService.running
+/** Whether [com.github.e0ipso.tokkl.timersync.TimerSyncService] runs in the foreground. */
+val TokklApplication.timerSyncServiceRuns: Boolean get() = component<TimerSyncFollower>().runningService.value != null
 
 /** The app's clock, which [com.github.e0ipso.tokkl.TestTokklApplication] makes a [TestClock]. */
 val TokklApplication.testClock: TestClock get() = component<Clock>() as TestClock

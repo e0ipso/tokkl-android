@@ -10,7 +10,6 @@ import android.graphics.drawable.Icon
 import com.github.e0ipso.tokkl.feature.pomodoro.R
 import com.github.e0ipso.tokkl.platform.mainActivityIntent
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
-import com.github.e0ipso.tokkl.core.timerstate.R as TimerStateR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /** The player owns sound/vibration; the high-importance channel adds neither a second sound nor haptics. */
@@ -53,7 +52,7 @@ class PomodoroRingingNotifier(private val context: Context) {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         val builder = Notification.Builder(context, CHANNEL_ID)
-            .setSmallIcon(TimerStateR.drawable.ic_nav_timer)
+            .setSmallIcon(UiR.drawable.ic_nav_timer)
             .setContentTitle(context.getString(R.string.pomodoro_alarm_title))
             .setContentText(context.getString(UiR.string.pomodoro_alarm_waiting))
             .setCategory(Notification.CATEGORY_ALARM)

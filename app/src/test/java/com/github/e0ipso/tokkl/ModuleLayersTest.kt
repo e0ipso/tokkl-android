@@ -171,15 +171,15 @@ class ModuleLayersTest {
          * the model, the API client, the time helpers, the design system and the Android
          * plumbing. Above it sit the session, the cache that reads it, and the timer state that
          * reads the cache.
-         * Then the parts several features show, and the routes. A timer notice reads as the
-         * catalog's problem, so it comes last.
+         * Then the timer state's event stream and its service, the parts several features show,
+         * and the routes. A timer notice reads as the catalog's problem, so it comes last.
          */
         val CORE_LAYERS: List<Set<String>> = listOf(
             setOf(":core:model", ":core:api", ":core:time", ":core:ui", ":core:platform"),
             setOf(":core:session"),
             setOf(":core:cache"),
             setOf(":core:timerstate"),
-            setOf(":core:catalog", ":core:entryfields", ":core:trust", ":core:navigation"),
+            setOf(":core:timersync", ":core:catalog", ":core:entryfields", ":core:trust", ":core:navigation"),
             setOf(":core:timernotice"),
         )
     }

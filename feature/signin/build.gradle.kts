@@ -10,6 +10,7 @@ dependencies {
     implementation(project(":core:session"))
     implementation(project(":core:cache"))
     implementation(project(":core:timerstate"))
+    implementation(project(":core:timersync"))
     implementation(project(":core:trust"))
     implementation(project(":core:navigation"))
 

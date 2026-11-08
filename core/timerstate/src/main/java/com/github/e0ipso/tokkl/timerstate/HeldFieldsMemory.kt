@@ -15,8 +15,3 @@ interface HeldFieldsMemory {
     @Throws(IOException::class)
     fun clear()
 }
-
-/** Hears each decision on whether the timer sync runs, so it can follow whether the server has the timer API. */
-fun interface TimerSyncWatcher {
-    fun watchTimerSync()
-}

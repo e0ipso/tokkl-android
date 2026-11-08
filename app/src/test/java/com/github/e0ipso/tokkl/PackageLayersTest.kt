@@ -169,13 +169,13 @@ class PackageLayersTest {
         /**
          * The layers, lowest first. Core leaves, the model among them, import no app package. Core
          * data holds what the phone keeps for the account and what reads and changes it. Shared
-         * parts are what several features show, and the routes by which they open one another's
-         * screens. The app shell starts the app and wires and navigates the features.
+         * parts are the timer state's event stream, what several features show, and the routes by
+         * which they open one another's screens. The app shell starts the app and wires and navigates the features.
          */
         val LAYERS: List<Set<String>> = listOf(
             setOf("model", "api", "time", "storage", "ui", "platform"),
             setOf("credentials", "capabilities", "session", "preferences", "cache", "timerstate"),
-            setOf("catalog", "picker", "entryfields", "trust", "timernotice", "navigation"),
+            setOf("timersync", "catalog", "picker", "entryfields", "trust", "timernotice", "navigation"),
             setOf(
                 "calendar", "clients", "entry", "favorites", "history", "licences", "notification", "pomodoro",
                 "projects", "reminder", "reports", "settings", "shortcuts", "signin", "sync", "tags", "tile",

@@ -1,4 +1,4 @@
-package com.github.e0ipso.tokkl.timerstate
+package com.github.e0ipso.tokkl.timersync
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -10,14 +10,13 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
-import android.os.Handler
 import android.os.IBinder
-import android.os.Looper
-import com.github.e0ipso.tokkl.core.timerstate.R
+import com.github.e0ipso.tokkl.core.timersync.R
 import com.github.e0ipso.tokkl.platform.DefaultNetwork
 import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.platform.NetworkReport
 import com.github.e0ipso.tokkl.platform.mainActivityIntent
+import com.github.e0ipso.tokkl.timerstate.TimerStateSource
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -27,6 +26,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.android.ext.android.inject
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * Keeps the timer event stream open while the phone is signed in to a Tokkl server with the timer
@@ -42,8 +42,9 @@ import org.koin.android.ext.android.inject
  * server loses the timer API and when the server refuses the credential.
  *
  * Every start promotes the service before anything else, as `startForegroundService` requires, and
- * only then checks that the stream is still wanted. A stop goes through [stopLatest], which leaves a
- * start that is still on its way to promote and decide for itself.
+ * only then checks that the stream is still wanted. While it runs in the foreground, the follower
+ * holds its number ([TimerSyncFollower.runningService]), and each stop request the follower sends
+ * stops it unless a newer start has arrived, which then promotes and decides for itself.
  */
 class TimerSyncService : Service() {
 
@@ -55,6 +56,9 @@ class TimerSyncService : Service() {
     private val defaultNetwork: DefaultNetwork by inject()
     private var network: Job? = null
     private var latestStart = 0
+
+    /** This instance's number once it runs in the foreground, which the follower holds. */
+    private var instance: Int? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -70,12 +74,15 @@ class TimerSyncService : Service() {
             stopSelf(startId)
             return START_NOT_STICKY
         }
-        running = this
+        val instance = instance ?: follower.serviceRuns().also {
+            instance = it
+            followStopRequests()
+        }
         if (network == null) network = followDefaultNetwork()
         scope.launch {
             val running = withContext(io) {
                 follower.wanted().also { wanted ->
-                    if (wanted) follower.run(this@TimerSyncService)
+                    if (wanted) follower.run(instance)
                 }
             }
             if (!running) stopSelf(startId)
@@ -84,7 +91,7 @@ class TimerSyncService : Service() {
     }
 
     override fun onDestroy() {
-        if (running === this) running = null
+        instance?.let(follower::serviceEnded)
         network?.cancel()
         network = null
         timerSync.stop()
@@ -94,9 +101,14 @@ class TimerSyncService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
-    /** Stops the service unless a newer start has arrived. Call it on the main thread. */
-    private fun stopLatest() {
-        stopSelf(latestStart)
+    /**
+     * Stops the service at each of the follower's stop requests, unless a newer start has arrived.
+     * The scope runs on the main thread at once, so it collects before this returns.
+     */
+    private fun followStopRequests() {
+        scope.launch {
+            follower.stopRequests.collect { stopSelf(latestStart) }
+        }
     }
 
     private fun promote() {
@@ -139,19 +151,6 @@ class TimerSyncService : Service() {
 
     companion object {
         /**
-         * The service while it runs in the foreground, which it sets and clears itself. A process
-         * runs at most one instance of a service. The app's device tests wait for it here too.
-         */
-        @Volatile
-        var running: TimerSyncService? = null
-            private set
-
-        /** Stops the service unless a newer start is on its way, which then decides for itself. */
-        fun stopRunning() {
-            Handler(Looper.getMainLooper()).post { running?.stopLatest() }
-        }
-
-        /**
          * Starts the service in the foreground. Returns false when the platform refuses, as it does
          * for an app in the background outside the boot and update broadcasts.
          */
@@ -187,7 +186,7 @@ internal object TimerSyncNotification {
     }
 
     fun build(context: Context): Notification = Notification.Builder(context, CHANNEL_ID)
-        .setSmallIcon(R.drawable.ic_nav_timer)
+        .setSmallIcon(UiR.drawable.ic_nav_timer)
         .setContentTitle(context.getString(R.string.timer_sync_title))
         .setContentText(context.getString(R.string.timer_sync_text))
         .setOngoing(true)
