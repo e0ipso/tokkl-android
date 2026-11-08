@@ -43,7 +43,8 @@ internal val dataModule = module {
     // The offline cache.
     single { AccountCache(get(), get()) } bind AccountDataOwner::class
 
-    single<ChangeStore> { RoomChangeStore(get()) }
+    // The queue's tables, which the queue writes and the sender reads.
+    single { RoomChangeStore(get()) } bind ChangeStore::class
 
     single { AccountServerSpans(get()) } bind ServerSpans::class
 

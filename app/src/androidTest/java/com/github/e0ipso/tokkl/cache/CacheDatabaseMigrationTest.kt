@@ -82,7 +82,7 @@ class CacheDatabaseMigrationTest {
             assertEquals(listOf("Website"), runBlocking { cache.projects().first() }.map { it.name })
 
             val queue = ChangeQueue(
-                database,
+                RoomChangeStore(database),
                 Dispatchers.IO,
                 onQueued = {},
                 clock = Clock.systemUTC(),
@@ -186,7 +186,7 @@ class CacheDatabaseMigrationTest {
             assertEquals("the queued create survived, marked, with no ids", queued, store.first())
 
             val queue = ChangeQueue(
-                database,
+                RoomChangeStore(database),
                 Dispatchers.IO,
                 onQueued = {},
                 clock = Clock.systemUTC(),
@@ -306,7 +306,7 @@ class CacheDatabaseMigrationTest {
             assertEquals(-1L, running.entry.id)
             assertTrue("the queued start shows unsent", running.unsent)
             val queue = ChangeQueue(
-                database,
+                RoomChangeStore(database),
                 Dispatchers.IO,
                 onQueued = {},
                 clock = Clock.systemUTC(),
@@ -528,7 +528,7 @@ class CacheDatabaseMigrationTest {
                     "Undo still queues its restore",
                     runBlocking {
                         ChangeQueue(
-                            database,
+                            RoomChangeStore(database),
                             Dispatchers.IO,
                             onQueued = {},
                             clock = Clock.systemUTC(),

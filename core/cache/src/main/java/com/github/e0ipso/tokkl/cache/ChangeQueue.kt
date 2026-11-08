@@ -77,12 +77,13 @@ fun interface QueuedListener {
  * out again: every change carries all of the entry's fields, so the newest one says everything the
  * server needs. [sendAgain] lets a held change go out as it is, and [discard] drops it.
  *
+ * @param store the queue's tables, which [ChangeSender] reads through the same store.
  * @param io where the database writes run.
  * @param spans the spans the server stores for a Stop: [ServerSpans.capturedStop] for a Stop now,
  *   and [ServerSpans.stopped] for a short Stop's snapped zero point.
  */
 class ChangeQueue(
-    private val database: CacheDatabase,
+    private val store: RoomChangeStore,
     private val io: CoroutineContext,
     private val onQueued: QueuedListener,
     private val clock: Clock,
@@ -91,7 +92,7 @@ class ChangeQueue(
     HeldChanges,
     UnsentChanges {
 
-    private val dao = database.changes()
+    private val dao = store.dao
 
     /** How many changes the server has not received (docs/PRD.md O5), held ones included. */
     val unsentCount: Flow<Int> = dao.count()
@@ -190,7 +191,7 @@ class ChangeQueue(
     }
 
     override suspend fun runningEntry(identity: RunningEntryIdentity): TimeEntry? = withContext(io) {
-        database.runInTransaction<CachedTimeEntry?> { activeEntry(identity) }?.toModel()
+        store.transaction { activeEntry(identity) }?.toModel()
     }
 
     override suspend fun updateRunning(identity: RunningEntryIdentity, fields: EntryFields, start: Instant): Boolean =
@@ -303,7 +304,7 @@ class ChangeQueue(
      */
     private suspend fun <T> queue(change: () -> T): T {
         val (result, holdsChanges) = withContext(io) {
-            database.runInTransaction<Pair<T, Boolean>> { change() to (dao.first() != null) }
+            store.transaction { change() to (dao.first() != null) }
         }
         if (holdsChanges) onQueued.queued()
         return result
@@ -465,5 +466,5 @@ class ChangeQueue(
     }
 
     /** The server's id for a local id the server has answered, or [entryId] as it is. */
-    private fun resolve(entryId: EntryId): Long = entryId.local?.let { dao.serverId(it.value) } ?: entryId.value
+    private fun resolve(entryId: EntryId): Long = store.resolve(entryId)
 }

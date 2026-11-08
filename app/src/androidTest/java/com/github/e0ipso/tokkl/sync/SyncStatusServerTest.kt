@@ -23,6 +23,7 @@ import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.cache.CacheDatabase
 import com.github.e0ipso.tokkl.cache.ChangeQueue
+import com.github.e0ipso.tokkl.cache.RoomChangeStore
 import com.github.e0ipso.tokkl.cache.ServerSpans
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.changes
@@ -222,7 +223,7 @@ class SyncStatusServerTest {
         val database = CacheDatabase.open(context)
         try {
             val quietQueue = ChangeQueue(
-                database,
+                RoomChangeStore(database),
                 Dispatchers.IO,
                 onQueued = {},
                 clock = Clock.systemUTC(),

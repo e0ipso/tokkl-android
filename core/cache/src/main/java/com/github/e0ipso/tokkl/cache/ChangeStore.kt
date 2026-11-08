@@ -92,10 +92,21 @@ sealed interface TakenBack {
     data object Unknown : TakenBack
 }
 
-/** The queue in [database]. */
+/**
+ * The queue in [database], and the one way into its tables: [ChangeSender] reads and records
+ * through [ChangeStore], and [ChangeQueue] writes its changes through [transaction] with the
+ * same DAO.
+ */
 class RoomChangeStore(private val database: CacheDatabase) : ChangeStore {
 
-    private val dao = database.changes()
+    /** The queue's reads and writes, for [ChangeQueue]'s flows and transactions. */
+    internal val dao = database.changes()
+
+    /** Runs [block] in one transaction. Blocks on disk I/O. */
+    internal fun <T> transaction(block: () -> T): T = database.runInTransaction<T>(block)
+
+    /** The id the cache holds [entryId] under: the server's once it answered the local create, or [entryId]. */
+    internal fun resolve(entryId: EntryId): Long = entryId.local?.let { dao.serverId(it.value) } ?: entryId.value
 
     override fun first(): PendingChange? = dao.first()
 
@@ -155,8 +166,7 @@ class RoomChangeStore(private val database: CacheDatabase) : ChangeStore {
     }
 
     override fun takeBackDelete(entryId: EntryId): TakenBack = database.runInTransaction<TakenBack> {
-        // The server's id once the server has answered the create of an entry made on the phone.
-        val id = entryId.local?.let { dao.serverId(it.value) } ?: entryId.value
+        val id = resolve(entryId)
         val delete = dao.queuedDelete(id)
         when {
             delete != null && !delete.maybeSent -> {

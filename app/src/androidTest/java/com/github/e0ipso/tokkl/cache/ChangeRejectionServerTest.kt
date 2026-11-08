@@ -66,7 +66,7 @@ class ChangeRejectionServerTest {
         token = account.apiToken
         database = Room.inMemoryDatabaseBuilder(context, CacheDatabase::class.java).build()
         queue = ChangeQueue(
-            database,
+            RoomChangeStore(database),
             Dispatchers.IO,
             onQueued = {},
             clock = Clock.systemUTC(),

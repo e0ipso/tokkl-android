@@ -9,9 +9,9 @@ import kotlinx.coroutines.flow.Flow
 import java.time.Instant
 
 /**
- * The queue's reads and writes. [ChangeQueue] and [RoomChangeStore] combine them in transactions,
- * so a change and its effect on the cached rows commit together. Every call but [count] blocks on
- * disk I/O.
+ * The queue's reads and writes. [RoomChangeStore] combines them in transactions, for itself and
+ * for [ChangeQueue], so a change and its effect on the cached rows commit together. Every call but
+ * [count] blocks on disk I/O.
  */
 @Dao
 abstract class ChangeDao {

@@ -152,7 +152,7 @@ class RunningEntryQueueTest {
     fun shortStopAndItsUndoCannotReviveTheRunningEditor() {
         runBlocking {
             queue = ChangeQueue(
-                database,
+                RoomChangeStore(database),
                 Dispatchers.IO,
                 onQueued = {},
                 clock = clock,
@@ -261,7 +261,13 @@ class RunningEntryQueueTest {
 
     private fun reopen() {
         database = Room.databaseBuilder(context, CacheDatabase::class.java, FILE).build()
-        queue = ChangeQueue(database, Dispatchers.IO, onQueued = {}, clock = clock, spans = ServerSpans.Unsnapped)
+        queue = ChangeQueue(
+            RoomChangeStore(database),
+            Dispatchers.IO,
+            onQueued = {},
+            clock = clock,
+            spans = ServerSpans.Unsnapped,
+        )
     }
 
     private fun identity(id: Long) = RunningEntryIdentity(EntryId(id), WorkspaceId(WORKSPACE), START)
