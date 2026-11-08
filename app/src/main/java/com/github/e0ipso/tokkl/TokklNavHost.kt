@@ -18,9 +18,9 @@ import androidx.navigation3.runtime.rememberDecoratedNavEntries
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.runtime.serialization.NavBackStackSerializer
 import com.github.e0ipso.tokkl.capabilities.Capabilities
+import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.navhost.AppNavigationBar
 import com.github.e0ipso.tokkl.navhost.AppNavigationRail
-import com.github.e0ipso.tokkl.navhost.AppNavigationViewModel
 import com.github.e0ipso.tokkl.navhost.NavigationRequestEffects
 import com.github.e0ipso.tokkl.navhost.NavigationRequests
 import com.github.e0ipso.tokkl.navhost.NavigationSession
@@ -38,8 +38,10 @@ import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.TopLevelPages
 import com.github.e0ipso.tokkl.navigation.contentKey
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
+import com.github.e0ipso.tokkl.session.AccountLifetime
 import kotlinx.coroutines.flow.StateFlow
-import org.koin.compose.viewmodel.koinViewModel
+import org.koin.compose.getKoin
+import org.koin.compose.koinInject
 
 /**
  * The app's navigation host: a Navigation 3 back stack of [Route]s that survives configuration
@@ -61,36 +63,40 @@ import org.koin.compose.viewmodel.koinViewModel
  * Each feature adds the entries of its routes ([FeatureEntries]) and binds its top-level pages, which
  * the bar, the rail and the More sheet show in order ([TopLevelPages]). Each route's screen takes its
  * own view models, which go when the route leaves the stack. The ones that several screens share
- * live in the signed-in session's store ([NavigationStores]). [model] reads the sign-outs, the
- * capabilities and the stored session.
+ * live in the signed-in session's store ([NavigationStores]). Each parameter defaults to what
+ * the app's Koin graph holds: [signOuts] counts the sign-outs that finished, and [session] reads
+ * the stored session off the main thread.
  */
 @Composable
 internal fun TokklNavHost(
     requests: NavigationRequests = remember { NavigationRequests() },
-    model: AppNavigationViewModel = koinViewModel(),
-    capabilities: StateFlow<Capabilities> = model.capabilities,
+    features: List<FeatureEntries> = getKoin().let { koin -> remember(koin) { koin.getAll() } },
+    pages: TopLevelPages = koinInject(),
+    signOuts: StateFlow<Int> = koinInject<AccountLifetime>().signOuts,
+    capabilities: StateFlow<Capabilities> = koinInject<CapabilitiesSource>().state,
+    session: NavigationSession = koinInject(),
     notificationPermission: NotificationPermissionAsk? = null,
     onNotificationsAllow: () -> Unit = {},
     stores: NavigationStores = viewModel { NavigationStores() },
 ) {
     // Collected while stopped too, so a sign-out that finished in the background shows sign-in
     // from the first frame back.
-    val signOuts by model.signOuts.collectAsState()
-    val discarded = remember(stores, signOuts) { stores.after(signOuts) }
-    LaunchedEffect(signOuts) {
+    val signOutCount by signOuts.collectAsState()
+    val discarded = remember(stores, signOutCount) { stores.after(signOutCount) }
+    LaunchedEffect(signOutCount) {
         // A tap from before the sign-out opens nothing for the next account.
         if (discarded) requests.clear()
     }
     // A sign-out starts the navigation over, at sign-in, with a back stack of its own.
-    key(signOuts) {
+    key(signOutCount) {
         CompositionLocalProvider(LocalSignedInSession provides stores.session) {
             Navigation(
                 stores = stores,
                 requests = requests,
                 capabilities = capabilities,
-                features = model.features,
-                pages = model.pages,
-                session = NavigationSession(model::isSignedIn, model::acceptsPomodoroTap),
+                features = features,
+                pages = pages,
+                session = session,
                 notificationPermission = notificationPermission,
                 onNotificationsAllow = onNotificationsAllow,
             )

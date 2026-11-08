@@ -1,39 +1,40 @@
 package com.github.e0ipso.tokkl.di
 
 import com.github.e0ipso.tokkl.cache.AccountCache
-import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
-import com.github.e0ipso.tokkl.navhost.AppNavigationViewModel
+import com.github.e0ipso.tokkl.navhost.NavigationSession
 import com.github.e0ipso.tokkl.navhost.SignedInViewModel
 import com.github.e0ipso.tokkl.navigation.TopLevelPages
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
-import com.github.e0ipso.tokkl.session.AccountLifetime
+import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationSync
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
+import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.sync.SyncStatusSource
 import com.github.e0ipso.tokkl.timer.TimerViewSetting
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 /**
- * The top-level pages, the navigation host's view model, and the signed-in frame's, which lives in
- * the session's store.
+ * The top-level pages, what the navigation host asks about the stored session, and the signed-in
+ * frame's view model, which lives in the session's store.
  */
 internal val navigationModule = module {
     // Every feature's top-level pages, in order.
     single { TopLevelPages(getAll()) }
 
-    viewModel {
-        AppNavigationViewModel(
-            features = getAll(),
-            pages = get(),
-            signOuts = get<AccountLifetime>().signOuts,
-            capabilities = get<CapabilitiesSource>().state,
-            session = get(),
-            pomodoroNotification = get(),
-            io = io(),
-            scope = viewModelCoroutineScope(),
+    // What the navigation host asks about the stored session, off the main thread: whether somebody
+    // is signed in, and whether a Pomodoro notification's tap still belongs to the account and its
+    // phase on the server.
+    single {
+        val session = get<Session>()
+        val pomodoroNotification = get<PomodoroSessionNotificationSync>()
+        val io = io()
+        NavigationSession(
+            isSignedIn = { withContext(io) { session.isSignedIn() } },
+            acceptsPomodoroTap = { tap -> withContext(io) { pomodoroNotification.acceptsTap(tap.account, tap.phase) } },
         )
     }
 

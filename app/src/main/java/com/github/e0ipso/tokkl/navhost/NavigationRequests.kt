@@ -50,7 +50,8 @@ class NavigationRequests {
 
 /**
  * What the navigation reads of the stored session: whether somebody [isSignedIn], and whether a
- * Pomodoro notification's tap still [acceptsPomodoroTap], as [AppNavigationViewModel] answers them.
+ * Pomodoro notification's tap still [acceptsPomodoroTap]. The app's navigation module builds it
+ * from the session and the Pomodoro session notification, and both read off the main thread.
  */
 internal class NavigationSession(
     val isSignedIn: suspend () -> Boolean,
