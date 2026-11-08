@@ -7,7 +7,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.rememberUpdatedState
 import com.github.e0ipso.tokkl.navigation.Navigator
-import com.github.e0ipso.tokkl.navigation.TopLevelPage
+import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.sessionViewModel
 import com.github.e0ipso.tokkl.pomodoro.PomodoroNotificationTap
 import com.github.e0ipso.tokkl.reports.ReportsViewModel
@@ -68,7 +68,7 @@ internal fun NavigationRequestEffects(
     requests: NavigationRequests,
     navigator: Navigator,
     session: NavigationSession,
-    unavailable: Set<TopLevelPage>,
+    unavailable: Set<Route>,
     onSignIn: Boolean,
 ) {
     val currentUnavailable by rememberUpdatedState(unavailable)
@@ -82,14 +82,14 @@ internal fun NavigationRequestEffects(
                             navigator.signIn()
                         } else {
                             when (request.page) {
-                                WidgetPage.TIMER -> navigator.open(TopLevelPage.TIMER, currentUnavailable)
+                                WidgetPage.TIMER -> navigator.open(Route.Timer, currentUnavailable)
 
                                 WidgetPage.TODAY -> {
                                     reports?.openToday()
-                                    navigator.open(TopLevelPage.REPORTS, currentUnavailable)
+                                    navigator.open(Route.Reports, currentUnavailable)
                                 }
 
-                                WidgetPage.POMODORO -> navigator.open(TopLevelPage.POMODORO, currentUnavailable)
+                                WidgetPage.POMODORO -> navigator.open(Route.Pomodoro, currentUnavailable)
                             }
                         }
                         requests.handled(request)
@@ -98,14 +98,14 @@ internal fun NavigationRequestEffects(
 
                 is NavigationRequest.Pomodoro -> LaunchedEffect(request) {
                     if (session.acceptsPomodoroTap(request.tap)) {
-                        navigator.open(TopLevelPage.POMODORO, currentUnavailable)
+                        navigator.open(Route.Pomodoro, currentUnavailable)
                     }
                     requests.handled(request)
                 }
 
                 NavigationRequest.ReminderTimer -> LaunchedEffect(request, onSignIn) {
                     if (onSignIn) return@LaunchedEffect
-                    navigator.open(TopLevelPage.TIMER)
+                    navigator.open(Route.Timer)
                     requests.handled(request)
                 }
             }

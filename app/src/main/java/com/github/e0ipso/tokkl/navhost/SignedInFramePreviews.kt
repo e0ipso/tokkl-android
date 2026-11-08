@@ -5,8 +5,18 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
-import com.github.e0ipso.tokkl.navigation.TopLevelPage
+import com.github.e0ipso.tokkl.clients.clientsPage
+import com.github.e0ipso.tokkl.navigation.Route
+import com.github.e0ipso.tokkl.navigation.TopLevelPages
+import com.github.e0ipso.tokkl.pomodoro.pomodoroPage
+import com.github.e0ipso.tokkl.projects.projectsPage
+import com.github.e0ipso.tokkl.reports.reportsPage
+import com.github.e0ipso.tokkl.settings.settingsPage
 import com.github.e0ipso.tokkl.sync.SyncStatus
+import com.github.e0ipso.tokkl.tags.tagsPage
+import com.github.e0ipso.tokkl.timer.templatesPage
+import com.github.e0ipso.tokkl.timer.timerPage
+import com.github.e0ipso.tokkl.trash.trashPage
 import com.github.e0ipso.tokkl.ui.WindowWidth
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.Clock
@@ -33,7 +43,8 @@ private fun FramePreview(width: WindowWidth) {
     val noon = Clock.fixed(Instant.parse("2026-10-15T12:00:00Z"), ZoneOffset.UTC)
     TokklTheme {
         SignedInFrame(
-            current = TopLevelPage.TIMER,
+            pages = previewPages,
+            current = Route.Timer,
             onOpen = {},
             timerRunning = true,
             syncStatus = SyncStatus(unsent = 1, lastAnswered = noon.instant().minusSeconds(480)),
@@ -44,3 +55,18 @@ private fun FramePreview(width: WindowWidth) {
         }
     }
 }
+
+/** The pages the features bind, as Koin hands them to the navigation host. */
+private val previewPages = TopLevelPages(
+    listOf(
+        timerPage,
+        pomodoroPage,
+        reportsPage,
+        projectsPage,
+        templatesPage,
+        clientsPage,
+        tagsPage,
+        trashPage,
+        settingsPage,
+    ),
+)

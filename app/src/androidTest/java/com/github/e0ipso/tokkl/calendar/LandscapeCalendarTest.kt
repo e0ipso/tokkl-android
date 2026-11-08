@@ -36,7 +36,8 @@ import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.navhost.SignedInFrame
-import com.github.e0ipso.tokkl.navigation.TopLevelPage
+import com.github.e0ipso.tokkl.navigation.Route
+import com.github.e0ipso.tokkl.navigation.topLevelPages
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.timer.TimerBarContent
 import com.github.e0ipso.tokkl.timer.TimerScreen
@@ -237,7 +238,7 @@ class UsualFontUprightCalendarTest : LandscapeCalendarTest(fontScale = 1f, hourR
  */
 @Composable
 private fun CalendarPage() {
-    SignedInFrame(current = TopLevelPage.TIMER, onOpen = {}) {
+    SignedInFrame(pages = topLevelPages, current = Route.Timer, onOpen = {}) {
         TimerScreen(
             view = TimerView.CALENDAR,
             onViewChange = {},

@@ -16,8 +16,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.navhost.label
-import com.github.e0ipso.tokkl.navigation.TopLevelPage
+import com.github.e0ipso.tokkl.navigation.topLevelPages
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.FutureTask
 import java.util.concurrent.TimeUnit
@@ -73,7 +72,7 @@ fun bottomBarItem(@StringRes label: Int): SemanticsMatcher {
 
 /** Opens a top-level page, using More for pages that live on its sheet. */
 fun ComposeTestRule.openBarPage(@StringRes label: Int, timeoutMillis: Long = START_TIMEOUT_MS) {
-    if (TopLevelPage.entries.any { it.label == label && it.inMore }) {
+    if (topLevelPages.all.any { it.label == label && it.inMore }) {
         openMorePage(label, timeoutMillis)
         return
     }

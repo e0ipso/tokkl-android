@@ -35,6 +35,7 @@ import com.github.e0ipso.tokkl.navigation.NavigationHost
 import com.github.e0ipso.tokkl.navigation.Navigator
 import com.github.e0ipso.tokkl.navigation.NotificationPrompts
 import com.github.e0ipso.tokkl.navigation.Route
+import com.github.e0ipso.tokkl.navigation.TopLevelPages
 import com.github.e0ipso.tokkl.navigation.contentKey
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
 import kotlinx.coroutines.flow.StateFlow
@@ -57,7 +58,8 @@ import org.koin.compose.viewmodel.koinViewModel
  * and a back stack restored from before the server lost it shows Timer. [requests] opens the
  * pages that widget, reminder and Pomodoro notification taps ask for.
  *
- * Each feature adds the entries of its routes ([FeatureEntries]). Each route's screen takes its
+ * Each feature adds the entries of its routes ([FeatureEntries]) and binds its top-level pages, which
+ * the bar, the rail and the More sheet show in order ([TopLevelPages]). Each route's screen takes its
  * own view models, which go when the route leaves the stack. The ones that several screens share
  * live in the signed-in session's store ([NavigationStores]). [model] reads the sign-outs, the
  * capabilities and the stored session.
@@ -87,6 +89,7 @@ internal fun TokklNavHost(
                 requests = requests,
                 capabilities = capabilities,
                 features = model.features,
+                pages = model.pages,
                 session = NavigationSession(model::isSignedIn, model::acceptsPomodoroTap),
                 notificationPermission = notificationPermission,
                 onNotificationsAllow = onNotificationsAllow,
@@ -101,6 +104,7 @@ private fun Navigation(
     requests: NavigationRequests,
     capabilities: StateFlow<Capabilities>,
     features: List<FeatureEntries>,
+    pages: TopLevelPages,
     session: NavigationSession,
     notificationPermission: NotificationPermissionAsk?,
     onNotificationsAllow: () -> Unit,
@@ -157,6 +161,7 @@ private fun Navigation(
         top = top,
         entries = entries,
         navigator = navigator,
+        pages = pages,
         unavailable = unavailable,
         prompts = prompts,
         notificationPermission = notificationPermission,

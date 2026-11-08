@@ -12,6 +12,7 @@ import com.github.e0ipso.tokkl.entry.EntryFormScreen
 import com.github.e0ipso.tokkl.entry.EntryFormViewModel
 import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
 import com.github.e0ipso.tokkl.favorites.TemplatesScreen
+import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.history.EntryActionsHost
 import com.github.e0ipso.tokkl.history.EntryActionsViewModel
 import com.github.e0ipso.tokkl.history.HistoryList
@@ -22,14 +23,16 @@ import com.github.e0ipso.tokkl.navigation.FeatureEntries
 import com.github.e0ipso.tokkl.navigation.NavigationHost
 import com.github.e0ipso.tokkl.navigation.Navigator
 import com.github.e0ipso.tokkl.navigation.Route
-import com.github.e0ipso.tokkl.navigation.TopLevelPage
+import com.github.e0ipso.tokkl.navigation.TopLevelDestination
 import com.github.e0ipso.tokkl.navigation.route
 import com.github.e0ipso.tokkl.navigation.routes
 import com.github.e0ipso.tokkl.navigation.sessionViewModel
+import com.github.e0ipso.tokkl.ui.theme.SectionHues
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import com.github.e0ipso.tokkl.core.timerstate.R as TimerStateR
 
 /**
  * The Timer page, the fullscreen timer, the entry form and the timer templates. Each screen takes
@@ -142,7 +145,7 @@ private fun timerBarActions(
     onResume = timer::resume,
     onStartTemplate = timer::startFrom,
     onSaveTemplate = { fields, onDone -> favorites.add(fields, onDone) },
-    onManageTemplates = { navigator.open(TopLevelPage.TEMPLATES) },
+    onManageTemplates = { navigator.open(Route.Templates) },
     onAddEntry = { navigator.openEntry(EntryOpening.New()) },
     onEditRunning = {
         scope.launch {
@@ -191,3 +194,22 @@ private fun EntryForm(route: Route.Entry, navigator: Navigator) {
         onClose = { navigator.close(route) },
     )
 }
+
+/** The Timer page, first in the bar and the rail. */
+val timerPage = TopLevelDestination(
+    route = Route.Timer,
+    label = R.string.nav_timer,
+    icon = TimerStateR.drawable.ic_nav_timer,
+    hue = SectionHues.timer,
+    position = 0,
+)
+
+/** The Timer templates page, on the More sheet after Reports. */
+val templatesPage = TopLevelDestination(
+    route = Route.Templates,
+    label = R.string.nav_templates,
+    icon = R.drawable.ic_nav_templates,
+    hue = SectionHues.more,
+    position = 40,
+    inMore = true,
+)

@@ -25,8 +25,9 @@ import com.github.e0ipso.tokkl.bottomBarItem
 import com.github.e0ipso.tokkl.cache.ChangeKind
 import com.github.e0ipso.tokkl.cache.PendingChange
 import com.github.e0ipso.tokkl.navhost.SignedInFrame
-import com.github.e0ipso.tokkl.navhost.label
-import com.github.e0ipso.tokkl.navigation.TopLevelPage
+import com.github.e0ipso.tokkl.navigation.Route
+import com.github.e0ipso.tokkl.navigation.label
+import com.github.e0ipso.tokkl.navigation.topLevelPages
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.sync.NeedsAttention
 import com.github.e0ipso.tokkl.sync.NeedsAttentionScreen
@@ -69,7 +70,12 @@ abstract class AdditionalAccessibilityTest(private val dark: Boolean) {
     fun pomodoroAndItsSpokenRunningMarkFitAtMaximumSizes() {
         val running = mutableStateOf(true)
         show {
-            SignedInFrame(current = TopLevelPage.POMODORO, onOpen = {}, pomodoroRunning = running.value) {
+            SignedInFrame(
+                pages = topLevelPages,
+                current = Route.Pomodoro,
+                onOpen = {},
+                pomodoroRunning = running.value,
+            ) {
                 Text(context.getString(UiR.string.pomodoro_title))
             }
         }
@@ -88,18 +94,23 @@ abstract class AdditionalAccessibilityTest(private val dark: Boolean) {
 
     @Test
     fun everyMoreChoiceIsReachableAtMaximumSizes() {
-        val current = mutableStateOf(TopLevelPage.TIMER)
+        val current = mutableStateOf<Route>(Route.Timer)
         show {
-            SignedInFrame(current = current.value, onOpen = { current.value = it }, timerRunning = true) {
+            SignedInFrame(
+                pages = topLevelPages,
+                current = current.value,
+                onOpen = { current.value = it },
+                timerRunning = true,
+            ) {
                 Text(context.getString(current.value.label))
             }
         }
         for (page in listOf(
-            TopLevelPage.REPORTS,
-            TopLevelPage.TEMPLATES,
-            TopLevelPage.CLIENTS,
-            TopLevelPage.TAGS,
-            TopLevelPage.TRASH,
+            Route.Reports,
+            Route.Templates,
+            Route.Clients,
+            Route.Tags,
+            Route.Trash,
         )) {
             compose.onNode(bottomBarItem(R.string.nav_more)).performClick()
             val choice = compose.onNode(hasText(context.getString(page.label)) and hasClickAction())

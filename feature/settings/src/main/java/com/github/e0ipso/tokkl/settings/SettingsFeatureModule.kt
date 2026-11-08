@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.settings
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
+import com.github.e0ipso.tokkl.navigation.topLevelDestination
 import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
 import com.github.e0ipso.tokkl.session.SignOut
 import org.koin.core.module.dsl.viewModel
@@ -32,4 +33,5 @@ val settingsFeatureModule = module {
     }
 
     single { SettingsEntries } bind FeatureEntries::class
+    topLevelDestination(settingsPage)
 }

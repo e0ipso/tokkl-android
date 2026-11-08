@@ -16,8 +16,6 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.navhost.AppNavigationBar
 import com.github.e0ipso.tokkl.navhost.AppNavigationRail
-import com.github.e0ipso.tokkl.navhost.hue
-import com.github.e0ipso.tokkl.navhost.label
 import com.github.e0ipso.tokkl.ui.theme.SectionHue
 import com.github.e0ipso.tokkl.ui.theme.SectionHues
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -72,16 +70,16 @@ class TabHueTest {
     fun inDarkTheRailKeepsTheRunningDotVisible() = assertRunningDot(dark = true, rail = true)
 
     private fun assertRunningDot(dark: Boolean, rail: Boolean) {
-        var current by mutableStateOf(TopLevelPage.TIMER)
+        var current by mutableStateOf<Route>(Route.Timer)
         var running by mutableStateOf(false)
         var unselectedDot = Color.Unspecified
         composeRule.setContent {
             TokklTheme(darkTheme = dark) {
                 unselectedDot = TokklTheme.extraColors.running
                 if (rail) {
-                    AppNavigationRail(current = current, onOpen = {}, timerRunning = running)
+                    AppNavigationRail(pages = topLevelPages, current = current, onOpen = {}, timerRunning = running)
                 } else {
-                    AppNavigationBar(current = current, onOpen = {}, timerRunning = running)
+                    AppNavigationBar(pages = topLevelPages, current = current, onOpen = {}, timerRunning = running)
                 }
             }
         }
@@ -89,15 +87,15 @@ class TabHueTest {
         val density = context.resources.displayMetrics.density
         // At least half the 6dp badge's area must visibly change to its expected colour.
         val minimumDotPixels = (kotlin.math.PI * 3 * 3 * density * density / 2).roundToInt()
-        for (page in TopLevelPage.entries) {
+        for (page in topLevelPages.all) {
             composeRule.runOnIdle {
-                current = page
+                current = page.route
                 running = false
             }
             val idle = timer.captureToImage().toPixelMap()
             composeRule.runOnIdle { running = true }
             val active = timer.captureToImage().toPixelMap()
-            val expected = if (page == TopLevelPage.TIMER) page.hue.onFill else unselectedDot
+            val expected = if (page.route == Route.Timer) page.hue.onFill else unselectedDot
             var dotPixels = 0
             for (x in 0 until active.width) {
                 for (y in 0 until active.height) {
@@ -105,24 +103,24 @@ class TabHueTest {
                 }
             }
             assertTrue(
-                "the running dot remains visible while $page shows: $dotPixels pixels",
+                "the running dot remains visible while ${page.route} shows: $dotPixels pixels",
                 dotPixels >= minimumDotPixels,
             )
         }
     }
 
     private fun assertMoreSheet(dark: Boolean) {
-        var current by mutableStateOf(TopLevelPage.CLIENTS)
+        var current by mutableStateOf<Route>(Route.Clients)
         composeRule.setContent {
-            TokklTheme(darkTheme = dark) { AppNavigationBar(current = current, onOpen = {}) }
+            TokklTheme(darkTheme = dark) { AppNavigationBar(pages = topLevelPages, current = current, onOpen = {}) }
         }
         tab(context.getString(R.string.nav_more)).performClick()
-        for (page in TopLevelPage.entries.filter { it.inMore }) {
-            composeRule.runOnIdle { current = page }
+        for (page in topLevelPages.all.filter { it.inMore }) {
+            composeRule.runOnIdle { current = page.route }
             val item = tab(context.getString(page.label))
             item.assertIsSelected()
             assertTrue(
-                "the selected $page sheet item fills with More's hue",
+                "the selected ${page.route} sheet item fills with More's hue",
                 huePixels(item, page.hue) >= minimumIndicatorPixels(rail = false),
             )
         }
@@ -133,23 +131,23 @@ class TabHueTest {
      * pink, and no other tab takes that fill.
      */
     private fun assertEveryTab(dark: Boolean, rail: Boolean) {
-        var current by mutableStateOf(TopLevelPage.TIMER)
+        var current by mutableStateOf<Route>(Route.Timer)
         composeRule.setContent {
             TokklTheme(darkTheme = dark) {
                 if (rail) {
-                    AppNavigationRail(current = current, onOpen = {}, timerRunning = false)
+                    AppNavigationRail(pages = topLevelPages, current = current, onOpen = {}, timerRunning = false)
                 } else {
-                    AppNavigationBar(current = current, onOpen = {}, timerRunning = false)
+                    AppNavigationBar(pages = topLevelPages, current = current, onOpen = {}, timerRunning = false)
                 }
             }
         }
-        val tabs = TopLevelPage.entries.filterNot { it.inMore }.map {
+        val tabs = topLevelPages.all.filterNot { it.inMore }.map {
             context.getString(
                 it.label,
             )
         } + context.getString(R.string.nav_more)
-        for (page in TopLevelPage.entries) {
-            current = page
+        for (page in topLevelPages.all) {
+            current = page.route
             composeRule.waitForIdle()
             val marked = if (page.inMore) context.getString(R.string.nav_more) else context.getString(page.label)
             val markedHue = if (page.inMore) SectionHues.more else page.hue
@@ -157,11 +155,11 @@ class TabHueTest {
                 val pixels = huePixels(tab(label), markedHue)
                 if (label == marked) {
                     assertTrue(
-                        "the $label tab shows $pixels pixels of its hue while $page shows",
+                        "the $label tab shows $pixels pixels of its hue while ${page.route} shows",
                         pixels >= minimumIndicatorPixels(rail),
                     )
                 } else {
-                    assertEquals("the $label tab shows $page's hue while $page shows", 0, pixels)
+                    assertEquals("the $label tab shows ${page.route}'s hue while ${page.route} shows", 0, pixels)
                 }
             }
         }

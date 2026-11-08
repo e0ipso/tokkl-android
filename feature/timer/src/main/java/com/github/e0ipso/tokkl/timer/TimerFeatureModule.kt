@@ -14,6 +14,7 @@ import com.github.e0ipso.tokkl.history.EntryActionsViewModel
 import com.github.e0ipso.tokkl.history.HistoryViewModel
 import com.github.e0ipso.tokkl.navigation.EntryFormRequest
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
+import com.github.e0ipso.tokkl.navigation.topLevelDestination
 import com.github.e0ipso.tokkl.picker.pickerSource
 import com.github.e0ipso.tokkl.platform.DefaultNetwork
 import com.github.e0ipso.tokkl.platform.io
@@ -169,6 +170,8 @@ val timerFeatureModule = module {
     }
 
     single { TimerEntries } bind FeatureEntries::class
+    topLevelDestination(timerPage)
+    topLevelDestination(templatesPage)
 }
 
 /** The entry actions' deletes and restores, which the Timer page passes, or none. */

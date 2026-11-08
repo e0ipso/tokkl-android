@@ -51,7 +51,6 @@ import com.github.e0ipso.tokkl.history.HistoryContent
 import com.github.e0ipso.tokkl.licences.LicencesScreen
 import com.github.e0ipso.tokkl.navhost.SignedInFrame
 import com.github.e0ipso.tokkl.navhost.SignedInPanes
-import com.github.e0ipso.tokkl.navhost.label
 import com.github.e0ipso.tokkl.navhost.showsEntryBeside
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.projects.ProjectForm
@@ -143,7 +142,8 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
         var sessionRunning by mutableStateOf(true)
         show {
             SignedInFrame(
-                current = TopLevelPage.PROJECTS,
+                pages = topLevelPages,
+                current = Route.Projects,
                 onOpen = {},
                 timerRunning = timerRunning,
                 pomodoroRunning = sessionRunning,
@@ -171,7 +171,9 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
     /** Compact windows put the five items in a row at the bottom, wider ones in a column at the start. */
     @Test
     fun theNavigationFollowsTheWidth() {
-        show { SignedInFrame(current = TopLevelPage.TIMER, onOpen = {}) { Box(Modifier.fillMaxSize()) } }
+        show {
+            SignedInFrame(pages = topLevelPages, current = Route.Timer, onOpen = {}) { Box(Modifier.fillMaxSize()) }
+        }
 
         val windowBounds = windowBounds()
         val items = navigationItems()
@@ -214,7 +216,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
     fun theRailScrollsWhereTheWindowIsShort() {
         if (width == WindowWidth.COMPACT) return
         show(size = DpSize(window.width, SHORT_HEIGHT), fontScale = LARGEST_FONT_SCALE) {
-            SignedInFrame(current = TopLevelPage.TIMER, onOpen = {}) { Box(Modifier.fillMaxSize()) }
+            SignedInFrame(pages = topLevelPages, current = Route.Timer, onOpen = {}) { Box(Modifier.fillMaxSize()) }
         }
 
         for (label in NAVIGATION_LABELS) {
@@ -244,7 +246,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
         val beside = showsEntryBeside(width, TimerView.LIST, listOf(Route.Timer, formRoute))
         assertEquals(width == WindowWidth.EXPANDED, beside)
         show {
-            SignedInFrame(current = TopLevelPage.TIMER, onOpen = {}) {
+            SignedInFrame(pages = topLevelPages, current = Route.Timer, onOpen = {}) {
                 SignedInPanes(top = formRoute, entryBeside = beside) { shown ->
                     when (shown) {
                         Route.Timer -> SampleTimerPage(TimerView.LIST)
@@ -279,7 +281,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
     @Test
     fun theCalendarTakesTheExtraWidthOnlyWhenExpanded() {
         var view by mutableStateOf(TimerView.CALENDAR)
-        show { Framed(TopLevelPage.TIMER) { SampleTimerPage(view) } }
+        show { Framed(Route.Timer) { SampleTimerPage(view) } }
 
         val calendar = switchWidth()
         composeRule.runOnIdle { view = TimerView.LIST }
@@ -406,7 +408,8 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
         fun SignInPage() = SignInScreen(signInModel, onSignedIn = {})
 
         @Composable
-        fun Framed(page: TopLevelPage, content: @Composable () -> Unit) = SignedInFrame(
+        fun Framed(page: Route, content: @Composable () -> Unit) = SignedInFrame(
+            pages = topLevelPages,
             current = page,
             onOpen = {},
             syncStatus = ScreenshotTest.SYNC_STATUS,
@@ -416,14 +419,14 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
 
     private val screens: List<Screen> = listOf(
         Screen("sign-in") { SignInPage() },
-        Screen("the Timer page's List view") { Framed(TopLevelPage.TIMER) { SampleTimerPage(TimerView.LIST) } },
-        Screen("the Timer page's Calendar view") { Framed(TopLevelPage.TIMER) { SampleTimerPage(TimerView.CALENDAR) } },
-        Screen("the entry form") { Framed(TopLevelPage.TIMER) { SampleEntryForm() } },
-        Screen("the Summary report") { Framed(TopLevelPage.REPORTS) { Reports(ReportTab.SUMMARY) } },
-        Screen("the Detailed report") { Framed(TopLevelPage.REPORTS) { Reports(ReportTab.DETAILED) } },
-        Screen("the Weekly report") { Framed(TopLevelPage.REPORTS) { Reports(ReportTab.WEEKLY) } },
+        Screen("the Timer page's List view") { Framed(Route.Timer) { SampleTimerPage(TimerView.LIST) } },
+        Screen("the Timer page's Calendar view") { Framed(Route.Timer) { SampleTimerPage(TimerView.CALENDAR) } },
+        Screen("the entry form") { Framed(Route.Timer) { SampleEntryForm() } },
+        Screen("the Summary report") { Framed(Route.Reports) { Reports(ReportTab.SUMMARY) } },
+        Screen("the Detailed report") { Framed(Route.Reports) { Reports(ReportTab.DETAILED) } },
+        Screen("the Weekly report") { Framed(Route.Reports) { Reports(ReportTab.WEEKLY) } },
         Screen("Projects") {
-            Framed(TopLevelPage.PROJECTS) {
+            Framed(Route.Projects) {
                 ProjectsContent(
                     CatalogSamples.PROJECTS_LOADED,
                     offline = false,
@@ -434,7 +437,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
             }
         },
         Screen("the project form") {
-            Framed(TopLevelPage.PROJECTS) {
+            Framed(Route.Projects) {
                 ProjectsContent(
                     CatalogSamples.PROJECTS_LOADED.copy(overlay = ProjectForm.New),
                     offline = false,
@@ -445,7 +448,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
             }
         },
         Screen("Clients") {
-            Framed(TopLevelPage.CLIENTS) {
+            Framed(Route.Clients) {
                 ClientsContent(
                     CatalogSamples.CLIENTS_LOADED,
                     offline = false,
@@ -455,7 +458,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
             }
         },
         Screen("the client form") {
-            Framed(TopLevelPage.CLIENTS) {
+            Framed(Route.Clients) {
                 ClientsContent(
                     CatalogSamples.CLIENTS_LOADED.copy(overlay = ClientsOverlay.New),
                     offline = false,
@@ -465,7 +468,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
             }
         },
         Screen("Tags") {
-            Framed(TopLevelPage.TAGS) {
+            Framed(Route.Tags) {
                 TagsContent(
                     CatalogSamples.TAGS_LOADED,
                     offline = false,
@@ -476,11 +479,11 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
         },
         Screen("Trash") {
             Framed(
-                TopLevelPage.TRASH,
+                Route.Trash,
             ) { TrashContent(TRASH, offline = false, settings = ScreenshotTest.ACCOUNT, actions = TrashActions()) }
         },
         Screen("Settings") {
-            Framed(TopLevelPage.SETTINGS) {
+            Framed(Route.Settings) {
                 SettingsContent(
                     settings = ThemeSettings(),
                     onModeChange = {},
@@ -493,7 +496,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
                 )
             }
         },
-        Screen("Licences") { Framed(TopLevelPage.SETTINGS) { LicencesScreen(onBack = {}) } },
+        Screen("Licences") { Framed(Route.Settings) { LicencesScreen(onBack = {}) } },
     )
 
     private companion object {

@@ -104,7 +104,7 @@ class AdaptiveStateTest {
     @Composable
     private fun Panes(stack: List<Route>) {
         val width = windowWidth()
-        SignedInFrame(current = TopLevelPage.TIMER, onOpen = {}, width = width) {
+        SignedInFrame(pages = topLevelPages, current = Route.Timer, onOpen = {}, width = width) {
             SignedInPanes(top = stack.last(), entryBeside = showsEntryBeside(width, TimerView.LIST, stack)) { shown ->
                 when (shown) {
                     Route.Timer -> Counter(PAGE)

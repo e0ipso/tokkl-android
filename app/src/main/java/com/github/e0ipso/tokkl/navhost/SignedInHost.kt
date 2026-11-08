@@ -19,7 +19,7 @@ import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.navigation.Navigator
 import com.github.e0ipso.tokkl.navigation.NotificationPrompts
 import com.github.e0ipso.tokkl.navigation.Route
-import com.github.e0ipso.tokkl.navigation.TopLevelPage
+import com.github.e0ipso.tokkl.navigation.TopLevelPages
 import com.github.e0ipso.tokkl.navigation.contentKey
 import com.github.e0ipso.tokkl.navigation.sessionViewModel
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
@@ -36,9 +36,9 @@ import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 
 /**
  * A signed-in back stack, [stack], with [top] on screen, in the [SignedInFrame]. The bar or the
- * rail marks the page [top] belongs to and opens pages ([Navigator.open]). While a time entry
+ * rail shows the [pages], marks the page [top] belongs to and opens pages ([Navigator.open]). While a time entry
  * runs, the bar's Timer item carries a dot, and while a Pomodoro session runs, Pomodoro's. The
- * pages in [unavailable] show nowhere, and a stack that holds one goes to Timer.
+ * pages whose routes are in [unavailable] show nowhere, and a stack that holds one goes to Timer.
  *
  * The fullscreen timer hides the bar, and so does the entry form opened from it. When the timer
  * goes idle, by the server's word, both close down to Timer. The entry form shows beside the
@@ -60,7 +60,8 @@ internal fun SignedInHost(
     top: Route,
     entries: List<NavEntry<Route>>,
     navigator: Navigator,
-    unavailable: Set<TopLevelPage>,
+    pages: TopLevelPages,
+    unavailable: Set<Route>,
     prompts: NotificationPrompts,
     notificationPermission: NotificationPermissionAsk?,
     onNotificationsAllow: () -> Unit,
@@ -70,7 +71,7 @@ internal fun SignedInHost(
     val state by model.state.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     LaunchedEffect(unavailable) {
-        if (stack.holdsAnyOf(unavailable)) navigator.open(TopLevelPage.TIMER)
+        if (stack.holdsAnyOf(unavailable)) navigator.open(Route.Timer)
     }
     val width = windowWidth()
     val focused = navigator.focused
@@ -108,9 +109,10 @@ internal fun SignedInHost(
     val permissionStarts = remember(timer, prompts) { merge(timer.starts, prompts.pomodoroStarts.receiveAsFlow()) }
     val permissionRetries = remember(prompts) { prompts.retries.receiveAsFlow() }
     SignedInFrame(
-        current = stack.currentPage(),
+        pages = pages,
+        current = pages.currentPage(stack),
         showNavigation = !focused,
-        onOpen = { page -> navigator.open(page, unavailable) },
+        onOpen = { route -> navigator.open(route, unavailable) },
         timerRunning = state.timerRunning,
         pomodoroRunning = state.pomodoroRunning,
         hidden = unavailable,

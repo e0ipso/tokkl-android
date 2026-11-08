@@ -4,6 +4,7 @@ import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.navhost.AppNavigationViewModel
 import com.github.e0ipso.tokkl.navhost.SignedInViewModel
+import com.github.e0ipso.tokkl.navigation.TopLevelPages
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
 import com.github.e0ipso.tokkl.session.AccountLifetime
@@ -15,11 +16,18 @@ import kotlinx.coroutines.flow.map
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
-/** The navigation host's view model, and the signed-in frame's, which lives in the session's store. */
+/**
+ * The top-level pages, the navigation host's view model, and the signed-in frame's, which lives in
+ * the session's store.
+ */
 internal val navigationModule = module {
+    // Every feature's top-level pages, in order.
+    single { TopLevelPages(getAll()) }
+
     viewModel {
         AppNavigationViewModel(
             features = getAll(),
+            pages = get(),
             signOuts = get<AccountLifetime>().signOuts,
             capabilities = get<CapabilitiesSource>().state,
             session = get(),

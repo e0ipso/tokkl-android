@@ -4,7 +4,6 @@ import androidx.navigation3.runtime.EntryProviderScope
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
 import com.github.e0ipso.tokkl.navigation.NavigationHost
 import com.github.e0ipso.tokkl.navigation.Route
-import com.github.e0ipso.tokkl.navigation.TopLevelPage
 import com.github.e0ipso.tokkl.navigation.routes
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -18,7 +17,7 @@ internal object SignInEntries : FeatureEntries {
                 model = model,
                 onSignedIn = {
                     model.reset()
-                    host.navigator.open(TopLevelPage.TIMER)
+                    host.navigator.open(Route.Timer)
                 },
             )
         }

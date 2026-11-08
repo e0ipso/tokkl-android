@@ -75,7 +75,7 @@ import com.github.e0ipso.tokkl.navhost.SignedInPanes
 import com.github.e0ipso.tokkl.navigation.EntryOpening
 import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.SampleEntryForm
-import com.github.e0ipso.tokkl.navigation.TopLevelPage
+import com.github.e0ipso.tokkl.navigation.topLevelPages
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmContent
 import com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmState
@@ -217,7 +217,8 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     fun timer() {
         show({
             SignedInFrame(
-                current = TopLevelPage.TIMER,
+                pages = topLevelPages,
+                current = Route.Timer,
                 onOpen = {},
                 syncStatus = SYNC_STATUS,
                 syncStatusClock = TODAY,
@@ -240,7 +241,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     @Test
     fun calendar() {
         show({
-            SignedInFrame(current = TopLevelPage.TIMER, onOpen = {}, timerRunning = true) {
+            SignedInFrame(pages = topLevelPages, current = Route.Timer, onOpen = {}, timerRunning = true) {
                 TimerPage(TimerView.CALENDAR)
             }
         }) {
@@ -260,7 +261,8 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
         show({
             DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(MEDIUM_WINDOW)) {
                 SignedInFrame(
-                    current = TopLevelPage.TIMER,
+                    pages = topLevelPages,
+                    current = Route.Timer,
                     onOpen = {},
                     syncStatus = SYNC_STATUS,
                     syncStatusClock = TODAY,
@@ -281,7 +283,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     fun entryBesideTheHistory() {
         show({
             DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(EXPANDED_WINDOW)) {
-                SignedInFrame(current = TopLevelPage.TIMER, onOpen = {}) {
+                SignedInFrame(pages = topLevelPages, current = Route.Timer, onOpen = {}) {
                     SignedInPanes(top = Route.Entry(EntryOpening.Edit(1), id = "form"), entryBeside = true) { shown ->
                         if (shown is Route.Entry) SampleEntryForm() else TimerPage(TimerView.LIST)
                     }
@@ -475,7 +477,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     @Test
     fun projects() {
         show({
-            SignedInFrame(current = TopLevelPage.PROJECTS, onOpen = {}) {
+            SignedInFrame(pages = topLevelPages, current = Route.Projects, onOpen = {}) {
                 ProjectsContent(
                     CatalogSamples.PROJECTS_LOADED,
                     offline = false,
@@ -495,7 +497,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     @Test
     fun clients() {
         show({
-            SignedInFrame(current = TopLevelPage.CLIENTS, onOpen = {}) {
+            SignedInFrame(pages = topLevelPages, current = Route.Clients, onOpen = {}) {
                 ClientsContent(
                     CatalogSamples.CLIENTS_LOADED,
                     offline = false,
@@ -514,7 +516,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     @Test
     fun tags() {
         show({
-            SignedInFrame(current = TopLevelPage.TAGS, onOpen = {}) {
+            SignedInFrame(pages = topLevelPages, current = Route.Tags, onOpen = {}) {
                 TagsContent(
                     CatalogSamples.TAGS_LOADED,
                     offline = false,
@@ -535,7 +537,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     @SignedOut
     @Test
     fun moreSheet() {
-        show({ SignedInFrame(current = TopLevelPage.TAGS, onOpen = {}) {} }) {
+        show({ SignedInFrame(pages = topLevelPages, current = Route.Tags, onOpen = {}) {} }) {
             composeRule.onNode(
                 hasText(string(R.string.nav_more)) and hasClickAction(),
             ).performSemanticsAction(SemanticsActions.OnClick)
@@ -631,7 +633,12 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     /** Shows [state] in a window of [window] when given, else in the device's own. */
     private fun showPomodoro(state: PomodoroPageState, window: DpSize? = null, steps: () -> Unit) {
         val page = @Composable {
-            SignedInFrame(current = TopLevelPage.POMODORO, onOpen = {}, pomodoroRunning = state.pomodoro != null) {
+            SignedInFrame(
+                pages = topLevelPages,
+                current = Route.Pomodoro,
+                onOpen = {},
+                pomodoroRunning = state.pomodoro != null,
+            ) {
                 PomodoroContent(
                     state = state,
                     onLengths = {
@@ -671,7 +678,12 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
 
     private fun showTimerTotals(view: TimerView, name: String) {
         show({
-            SignedInFrame(current = TopLevelPage.TIMER, onOpen = {}, timerRunning = view == TimerView.CALENDAR) {
+            SignedInFrame(
+                pages = topLevelPages,
+                current = Route.Timer,
+                onOpen = {},
+                timerRunning = view == TimerView.CALENDAR,
+            ) {
                 TimerPage(view)
             }
         }) {
@@ -743,7 +755,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     /** The reports screen with [state] on [tab], on [TODAY]. */
     @Composable
     private fun ReportsTab(state: ReportsState, tab: ReportTab) {
-        SignedInFrame(current = TopLevelPage.REPORTS, onOpen = {}) {
+        SignedInFrame(pages = topLevelPages, current = Route.Reports, onOpen = {}) {
             ReportsContent(
                 state = state,
                 tab = tab,

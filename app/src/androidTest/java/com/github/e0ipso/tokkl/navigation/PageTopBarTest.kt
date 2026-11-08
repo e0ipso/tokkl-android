@@ -24,7 +24,6 @@ import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.awaitPomodoroOffered
 import com.github.e0ipso.tokkl.awaitTimerPage
-import com.github.e0ipso.tokkl.navhost.label
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test

@@ -2,13 +2,8 @@ package com.github.e0ipso.tokkl.navhost
 
 import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.navigation.Route
-import com.github.e0ipso.tokkl.navigation.TopLevelPage
 import com.github.e0ipso.tokkl.timer.TimerView
 import com.github.e0ipso.tokkl.ui.WindowWidth
-
-/** The top-level page the screen on top belongs to: itself, or the nearest one below it. */
-internal fun List<Route>.currentPage(): TopLevelPage =
-    asReversed().firstNotNullOfOrNull(TopLevelPage::of) ?: TopLevelPage.TIMER
 
 /**
  * The pages the server's [flags] leave without a use: Trash without the trash API, Timer
@@ -16,25 +11,20 @@ internal fun List<Route>.currentPage(): TopLevelPage =
  * the session. The
  * bar, the rail and the More sheet leave them out, and the host opens none of them.
  */
-fun unavailablePages(flags: Capabilities): Set<TopLevelPage> = buildSet {
-    if (!flags.trash) add(TopLevelPage.TRASH)
-    if (!flags.favorites) add(TopLevelPage.TEMPLATES)
-    if (!flags.timerState) add(TopLevelPage.POMODORO)
+fun unavailablePages(flags: Capabilities): Set<Route> = buildSet {
+    if (!flags.trash) add(Route.Trash)
+    if (!flags.favorites) add(Route.Templates)
+    if (!flags.timerState) add(Route.Pomodoro)
 }
 
 /**
- * This route, or Timer when it belongs to a page in [unavailable]. A back stack restored from
+ * This route, or Timer when it is a page in [unavailable]. A back stack restored from
  * before a capability was lost, or a direct open of a page, then shows Timer.
  */
-fun Route.orTimerIfUnavailable(unavailable: Set<TopLevelPage>): Route =
-    if (TopLevelPage.of(this) in unavailable) Route.Timer else this
+fun Route.orTimerIfUnavailable(unavailable: Set<Route>): Route = if (this in unavailable) Route.Timer else this
 
-/** Whether a route on the stack belongs to a page in [unavailable]. */
-internal fun List<Route>.holdsAnyOf(unavailable: Set<TopLevelPage>): Boolean = any {
-    TopLevelPage.of(
-        it,
-    ) in unavailable
-}
+/** Whether the stack holds a page in [unavailable]. */
+internal fun List<Route>.holdsAnyOf(unavailable: Set<Route>): Boolean = any { it in unavailable }
 
 /**
  * Whether the entry form on top of [stack] shows beside the Timer page below it: on an expanded

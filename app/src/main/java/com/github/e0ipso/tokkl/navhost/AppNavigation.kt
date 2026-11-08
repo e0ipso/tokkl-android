@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.navhost
 
 import androidx.annotation.DrawableRes
-import androidx.annotation.StringRes
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -44,7 +43,9 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.window.DialogWindowProvider
 import androidx.core.view.WindowCompat
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.navigation.TopLevelPage
+import com.github.e0ipso.tokkl.navigation.Route
+import com.github.e0ipso.tokkl.navigation.TopLevelDestination
+import com.github.e0ipso.tokkl.navigation.TopLevelPages
 import com.github.e0ipso.tokkl.ui.theme.FrameWidth
 import com.github.e0ipso.tokkl.ui.theme.SectionHue
 import com.github.e0ipso.tokkl.ui.theme.SectionHues
@@ -54,90 +55,42 @@ import com.github.e0ipso.tokkl.ui.theme.TokklNavigationRailItem
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.navigationBarLabelWeight
 import kotlinx.coroutines.launch
-import com.github.e0ipso.tokkl.core.timerstate.R as TimerStateR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
-import com.github.e0ipso.tokkl.feature.clients.R as ClientsR
-import com.github.e0ipso.tokkl.feature.pomodoro.R as PomodoroR
-import com.github.e0ipso.tokkl.feature.projects.R as ProjectsR
-import com.github.e0ipso.tokkl.feature.reports.R as ReportsR
-import com.github.e0ipso.tokkl.feature.settings.R as SettingsR
-import com.github.e0ipso.tokkl.feature.tags.R as TagsR
 import com.github.e0ipso.tokkl.feature.timer.R as TimerR
-import com.github.e0ipso.tokkl.feature.trash.R as TrashR
-
-/** The page's label in the bar, the rail and the More sheet. */
-@get:StringRes
-val TopLevelPage.label: Int
-    get() = when (this) {
-        TopLevelPage.TIMER -> TimerR.string.nav_timer
-        TopLevelPage.POMODORO -> UiR.string.pomodoro_title
-        TopLevelPage.REPORTS -> ReportsR.string.reports
-        TopLevelPage.PROJECTS -> ProjectsR.string.nav_projects
-        TopLevelPage.TEMPLATES -> TimerR.string.nav_templates
-        TopLevelPage.CLIENTS -> ClientsR.string.nav_clients
-        TopLevelPage.TAGS -> TagsR.string.nav_tags
-        TopLevelPage.TRASH -> TrashR.string.nav_trash
-        TopLevelPage.SETTINGS -> SettingsR.string.settings
-    }
-
-/** The page's icon in the bar, the rail and the More sheet. */
-@get:DrawableRes
-val TopLevelPage.icon: Int
-    get() = when (this) {
-        TopLevelPage.TIMER -> TimerStateR.drawable.ic_nav_timer
-        TopLevelPage.POMODORO -> PomodoroR.drawable.ic_nav_pomodoro
-        TopLevelPage.REPORTS -> R.drawable.ic_nav_reports
-        TopLevelPage.PROJECTS -> UiR.drawable.ic_nav_projects
-        TopLevelPage.TEMPLATES -> TimerR.drawable.ic_nav_templates
-        TopLevelPage.CLIENTS -> R.drawable.ic_nav_clients
-        TopLevelPage.TAGS -> UiR.drawable.ic_nav_tags
-        TopLevelPage.TRASH -> UiR.drawable.ic_nav_trash
-        TopLevelPage.SETTINGS -> R.drawable.ic_nav_settings
-    }
 
 /**
- * The page's section hue, as NAV in App.tsx gives each item a section since tokkl d012228. The
- * pages on the More sheet take More's, except Reports, which keeps its own.
- */
-val TopLevelPage.hue: SectionHue
-    get() = when (this) {
-        TopLevelPage.TIMER, TopLevelPage.POMODORO -> SectionHues.timer
-        TopLevelPage.REPORTS -> SectionHues.reports
-        TopLevelPage.PROJECTS -> SectionHues.projects
-        TopLevelPage.TEMPLATES, TopLevelPage.CLIENTS, TopLevelPage.TAGS, TopLevelPage.TRASH -> SectionHues.more
-        TopLevelPage.SETTINGS -> SectionHues.settings
-    }
-
-/**
- * The bottom bar of a signed-in screen on a compact window: Timer, Pomodoro, Projects, Settings and
- * More, with [current] marked. More opens a sheet with the other pages, and is marked while one of
- * them shows. [onOpen] opens a page. A 1dp line in the border colour sits above the bar, as the
+ * The bottom bar of a signed-in screen on a compact window: the [pages] outside More, which are
+ * Timer, Pomodoro, Projects and Settings, then More, with the page of the route [current] marked.
+ * More opens a sheet with the other pages, and is marked while one of them shows. [onOpen] opens a
+ * page by its route. A 1dp line in the border colour sits above the bar, as the
  * web app draws it. Wider windows get [AppNavigationRail] with the same items.
  *
  * While [timerRunning] is true, because a time entry runs, the Timer item carries a dot, as the
  * web app's `.running-dot`, and TalkBack reads "Timer running" as its state, so the dot is not
  * the only sign. [pomodoroRunning] gives Pomodoro the same mark and its own spoken state.
- * The pages in [hidden], such as Trash on a server without it, show nowhere.
+ * The pages whose routes are in [hidden], such as Trash on a server without it, show nowhere.
  */
 @Composable
 fun AppNavigationBar(
-    current: TopLevelPage,
-    onOpen: (TopLevelPage) -> Unit,
+    pages: TopLevelPages,
+    current: Route,
+    onOpen: (Route) -> Unit,
     modifier: Modifier = Modifier,
     timerRunning: Boolean = false,
     pomodoroRunning: Boolean = false,
-    hidden: Set<TopLevelPage> = emptySet(),
+    hidden: Set<Route> = emptySet(),
 ) {
     var moreOpen by rememberSaveable { mutableStateOf(false) }
-    val items = navigationItems(hidden)
+    val items = navigationItems(pages, hidden)
+    val currentPage = pages.of(current)
     Column(modifier) {
         HorizontalDivider()
         NavigationBar {
             for (item in items) {
                 TokklNavigationBarItem(
-                    selected = item.selected(current),
-                    onClick = { if (item.page == null) moreOpen = true else onOpen(item.page) },
-                    icon = { ItemIcon(item, current, timerRunning, pomodoroRunning) },
+                    selected = item.selected(currentPage),
+                    onClick = { if (item.page == null) moreOpen = true else onOpen(item.page.route) },
+                    icon = { ItemIcon(item, currentPage, timerRunning, pomodoroRunning) },
                     label = item.label,
                     hue = item.hue,
                     barLabels = items.map { it.label },
@@ -146,7 +99,7 @@ fun AppNavigationBar(
             }
         }
     }
-    if (moreOpen) MoreSheet(current, hidden, onOpen, onClose = { moreOpen = false })
+    if (moreOpen) MoreSheet(pages, current, hidden, onOpen, onClose = { moreOpen = false })
 }
 
 /**
@@ -158,15 +111,17 @@ fun AppNavigationBar(
  */
 @Composable
 fun AppNavigationRail(
-    current: TopLevelPage,
-    onOpen: (TopLevelPage) -> Unit,
+    pages: TopLevelPages,
+    current: Route,
+    onOpen: (Route) -> Unit,
     modifier: Modifier = Modifier,
     timerRunning: Boolean = false,
     pomodoroRunning: Boolean = false,
-    hidden: Set<TopLevelPage> = emptySet(),
+    hidden: Set<Route> = emptySet(),
 ) {
     var moreOpen by rememberSaveable { mutableStateOf(false) }
-    val items = navigationItems(hidden)
+    val items = navigationItems(pages, hidden)
+    val currentPage = pages.of(current)
     Row(modifier) {
         NavigationRail(containerColor = NavigationBarDefaults.containerColor) {
             Column(
@@ -178,9 +133,9 @@ fun AppNavigationRail(
             ) {
                 for (item in items) {
                     TokklNavigationRailItem(
-                        selected = item.selected(current),
-                        onClick = { if (item.page == null) moreOpen = true else onOpen(item.page) },
-                        icon = { ItemIcon(item, current, timerRunning, pomodoroRunning) },
+                        selected = item.selected(currentPage),
+                        onClick = { if (item.page == null) moreOpen = true else onOpen(item.page.route) },
+                        icon = { ItemIcon(item, currentPage, timerRunning, pomodoroRunning) },
                         label = item.label,
                         hue = item.hue,
                         railLabels = items.map { it.label },
@@ -191,12 +146,12 @@ fun AppNavigationRail(
         }
         VerticalDivider()
     }
-    if (moreOpen) MoreSheet(current, hidden, onOpen, onClose = { moreOpen = false })
+    if (moreOpen) MoreSheet(pages, current, hidden, onOpen, onClose = { moreOpen = false })
 }
 
 /** An item of the bar or the rail: a [page], or More when [page] is null. */
 private class NavigationItem(
-    val page: TopLevelPage?,
+    val page: TopLevelDestination?,
     val label: String,
     @param:DrawableRes val icon: Int,
     val runningLabel: String,
@@ -205,12 +160,13 @@ private class NavigationItem(
     val hue: SectionHue get() = page?.hue ?: SectionHues.more
 
     /** Whether the item marks [current]: its own page, or for More a page on the sheet. */
-    fun selected(current: TopLevelPage): Boolean = if (page == null) current.inMore else page == current
+    fun selected(current: TopLevelDestination?): Boolean =
+        if (page == null) current?.inMore == true else page == current
 
     /** Whether the item carries the running dot. */
-    fun dot(timerRunning: Boolean, pomodoroRunning: Boolean): Boolean = when (page) {
-        TopLevelPage.TIMER -> timerRunning
-        TopLevelPage.POMODORO -> pomodoroRunning
+    fun dot(timerRunning: Boolean, pomodoroRunning: Boolean): Boolean = when (page?.route) {
+        Route.Timer -> timerRunning
+        Route.Pomodoro -> pomodoroRunning
         else -> false
     }
 }
@@ -219,26 +175,31 @@ private class NavigationItem(
 private fun Modifier.runningState(item: NavigationItem, timerRunning: Boolean, pomodoroRunning: Boolean): Modifier =
     if (item.dot(timerRunning, pomodoroRunning)) semantics { stateDescription = item.runningLabel } else this
 
-/** The pages outside More, less those in [hidden], then More. */
+/** The [pages] outside More, less those whose routes are in [hidden], then More. */
 @Composable
-private fun navigationItems(hidden: Set<TopLevelPage>): List<NavigationItem> {
+private fun navigationItems(pages: TopLevelPages, hidden: Set<Route>): List<NavigationItem> {
     val running = stringResource(R.string.nav_timer_running)
     val pomodoroRunning = stringResource(R.string.nav_pomodoro_running)
-    val pages = TopLevelPage.entries.filterNot { it.inMore || it in hidden }
+    val items = pages.all.filterNot { it.inMore || it.route in hidden }
         .map {
             NavigationItem(
                 it,
                 stringResource(it.label),
                 it.icon,
-                if (it == TopLevelPage.POMODORO) pomodoroRunning else running,
+                if (it.route == Route.Pomodoro) pomodoroRunning else running,
             )
         }
-    return pages + NavigationItem(null, stringResource(R.string.nav_more), TimerR.drawable.ic_nav_more, running)
+    return items + NavigationItem(null, stringResource(R.string.nav_more), TimerR.drawable.ic_nav_more, running)
 }
 
 /** The [item]'s icon, with its own running dot for Timer or Pomodoro. */
 @Composable
-private fun ItemIcon(item: NavigationItem, current: TopLevelPage, timerRunning: Boolean, pomodoroRunning: Boolean) {
+private fun ItemIcon(
+    item: NavigationItem,
+    current: TopLevelDestination?,
+    timerRunning: Boolean,
+    pomodoroRunning: Boolean,
+) {
     val icon = @Composable { Icon(painterResource(item.icon), contentDescription = null) }
     if (item.dot(
             timerRunning,
@@ -262,19 +223,20 @@ private fun RunningDot(selected: Boolean, hue: SectionHue) {
 }
 
 /**
- * The web app's More sheet: a heading, a close button and the pages that do not fit in the bar,
- * less those in [hidden].
+ * The web app's More sheet: a heading, a close button and the [pages] that do not fit in the bar,
+ * less those whose routes are in [hidden].
  * Choosing a page opens it and closes the sheet. Back, a tap outside and a swipe down close it too.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MoreSheet(
-    current: TopLevelPage,
-    hidden: Set<TopLevelPage>,
-    onOpen: (TopLevelPage) -> Unit,
+    pages: TopLevelPages,
+    current: Route,
+    hidden: Set<Route>,
+    onOpen: (Route) -> Unit,
     onClose: () -> Unit,
 ) {
-    val pages = TopLevelPage.entries.filter { it.inMore && it !in hidden }
+    val onSheet = pages.all.filter { it.inMore && it.route !in hidden }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
     val hide: () -> Unit = {
@@ -315,8 +277,8 @@ private fun MoreSheet(
                     .selectableGroup(),
                 verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space1),
             ) {
-                for (page in pages) {
-                    val selected = page == current
+                for (page in onSheet) {
+                    val selected = page.route == current
                     val shape = MaterialTheme.shapes.small
                     NavigationDrawerItem(
                         label = {
@@ -329,7 +291,7 @@ private fun MoreSheet(
                         icon = { Icon(painterResource(page.icon), contentDescription = null) },
                         selected = selected,
                         onClick = {
-                            onOpen(page)
+                            onOpen(page.route)
                             hide()
                         },
                         // The active item's outline, as the bar's indicator has one.

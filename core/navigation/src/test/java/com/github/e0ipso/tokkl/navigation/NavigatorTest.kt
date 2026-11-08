@@ -17,22 +17,22 @@ class NavigatorTest {
 
     @Test
     fun aBarPageReplacesWhateverStoodAboveTimer() {
-        navigator.open(TopLevelPage.SETTINGS)
+        navigator.open(Route.Settings)
         navigator.push(Route.Licences)
-        navigator.open(TopLevelPage.REPORTS)
+        navigator.open(Route.Reports)
         assertEquals(listOf(Route.Timer, Route.Reports), stack)
     }
 
     @Test
     fun anUnavailablePageOpensTimer() {
-        navigator.open(TopLevelPage.SETTINGS)
-        navigator.open(TopLevelPage.POMODORO, unavailable = setOf(TopLevelPage.POMODORO))
+        navigator.open(Route.Settings)
+        navigator.open(Route.Pomodoro, unavailable = setOf(Route.Pomodoro))
         assertEquals(listOf(Route.Timer), stack)
     }
 
     @Test
     fun backClosesTheScreenOnTopButNeverTimer() {
-        navigator.open(TopLevelPage.SETTINGS)
+        navigator.open(Route.Settings)
         navigator.push(Route.Licences)
         navigator.back()
         assertEquals(listOf(Route.Timer, Route.Settings), stack)
@@ -58,7 +58,7 @@ class NavigatorTest {
 
     @Test
     fun signInStartsOver() {
-        navigator.open(TopLevelPage.SETTINGS)
+        navigator.open(Route.Settings)
         navigator.signIn()
         assertEquals(listOf<Route>(Route.SignIn()), stack)
     }

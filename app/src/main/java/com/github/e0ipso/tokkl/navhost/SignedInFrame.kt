@@ -27,7 +27,7 @@ import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.navigation.Route
-import com.github.e0ipso.tokkl.navigation.TopLevelPage
+import com.github.e0ipso.tokkl.navigation.TopLevelPages
 import com.github.e0ipso.tokkl.sync.SyncStatus
 import com.github.e0ipso.tokkl.sync.SyncStatusBand
 import com.github.e0ipso.tokkl.trust.SessionTrust
@@ -95,8 +95,9 @@ internal fun SignedInPanes(top: Route, entryBeside: Boolean, screen: @Composable
 
 /**
  * A signed-in screen, [content], with the navigation that fits [width]: above the bottom bar on a compact window,
- * beside the navigation rail on wider ones. The bar or the rail marks [current] and opens pages with [onOpen], leaves
- * out the pages in [hidden], and puts a dot on Timer while [timerRunning]. Right above the bar, or at the bottom of the
+ * beside the navigation rail on wider ones. The bar or the rail shows the [pages], marks the page of the route
+ * [current] and opens pages with [onOpen], leaves out the pages whose routes are in [hidden], and puts a dot on Timer
+ * while [timerRunning]. Right above the bar, or at the bottom of the
  * screen beside the rail, shows [syncStatus] when it is not null, its "needs attention" button calls
  * [onOpenNeedsAttention] and its sign-in button [onSignInAgain]. Above both shows [notice], when there is one, and the
  * screens end at its top, so it covers none of them. The bar's height, status and system navigation bar included, is
@@ -105,11 +106,12 @@ internal fun SignedInPanes(top: Route, entryBeside: Boolean, screen: @Composable
  */
 @Composable
 internal fun SignedInFrame(
-    current: TopLevelPage,
-    onOpen: (TopLevelPage) -> Unit,
+    pages: TopLevelPages,
+    current: Route,
+    onOpen: (Route) -> Unit,
     timerRunning: Boolean = false,
     pomodoroRunning: Boolean = false,
-    hidden: Set<TopLevelPage> = emptySet(),
+    hidden: Set<Route> = emptySet(),
     syncStatus: SyncStatus? = null,
     onOpenNeedsAttention: (() -> Unit)? = null,
     onSignInAgain: (() -> Unit)? = null,
@@ -123,6 +125,7 @@ internal fun SignedInFrame(
     Row(Modifier.fillMaxSize()) {
         if (rail) {
             AppNavigationRail(
+                pages = pages,
                 current = current,
                 onOpen = onOpen,
                 timerRunning = timerRunning,
@@ -160,6 +163,7 @@ internal fun SignedInFrame(
                     }
                     if (showNavigation && !rail) {
                         AppNavigationBar(
+                            pages = pages,
                             current = current,
                             onOpen = onOpen,
                             timerRunning = timerRunning,
@@ -180,7 +184,8 @@ internal fun SignedInFrame(
             contentWindowInsets = WindowInsets(0),
         ) { innerPadding ->
             // The page's stickers take the current tab's hue, LocalSectionHue.
-            CompositionLocalProvider(LocalSectionHue provides current.hue) {
+            val hue = checkNotNull(pages.of(current)) { "$current is no top-level page" }.hue
+            CompositionLocalProvider(LocalSectionHue provides hue) {
                 Box(
                     Modifier
                         .fillMaxSize()

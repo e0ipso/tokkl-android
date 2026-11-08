@@ -1,7 +1,7 @@
 package com.github.e0ipso.tokkl.navhost
 
 import androidx.compose.ui.graphics.Color
-import com.github.e0ipso.tokkl.navigation.TopLevelPage
+import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.ui.theme.SectionHues
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
@@ -14,26 +14,27 @@ import org.junit.Test
  * TabHueTest checks that the bar and the rail draw them.
  */
 class TopLevelPageHueTest {
+    private val pages = appTopLevelPages
 
     @Test
     fun eachPageHasItsSectionsHue() {
         val expected = mapOf(
-            TopLevelPage.TIMER to Color(0xFFF05A00),
-            TopLevelPage.POMODORO to Color(0xFFF05A00),
-            TopLevelPage.REPORTS to Color(0xFF00B9FA),
-            TopLevelPage.PROJECTS to Color(0xFF8722FF),
-            TopLevelPage.TEMPLATES to Color(0xFFFF008C),
-            TopLevelPage.CLIENTS to Color(0xFFFF008C),
-            TopLevelPage.TAGS to Color(0xFFFF008C),
-            TopLevelPage.TRASH to Color(0xFFFF008C),
-            TopLevelPage.SETTINGS to Color(0xFFFFE600),
+            Route.Timer to Color(0xFFF05A00),
+            Route.Pomodoro to Color(0xFFF05A00),
+            Route.Reports to Color(0xFF00B9FA),
+            Route.Projects to Color(0xFF8722FF),
+            Route.Templates to Color(0xFFFF008C),
+            Route.Clients to Color(0xFFFF008C),
+            Route.Tags to Color(0xFFFF008C),
+            Route.Trash to Color(0xFFFF008C),
+            Route.Settings to Color(0xFFFFE600),
         )
-        assertEquals(TopLevelPage.entries.toSet(), expected.keys)
-        for ((page, fill) in expected) assertEquals("$page's hue", fill, page.hue.fill)
+        assertEquals(pages.all.map { it.route }.toSet(), expected.keys)
+        for ((route, fill) in expected) assertEquals("$route's hue", fill, pages.of(route)?.hue?.fill)
     }
 
     @Test
     fun reportsKeepsItsOwnHueOnTheMoreSheet() {
-        assertSame(SectionHues.reports, TopLevelPage.REPORTS.hue)
+        assertSame(SectionHues.reports, pages.of(Route.Reports)?.hue)
     }
 }

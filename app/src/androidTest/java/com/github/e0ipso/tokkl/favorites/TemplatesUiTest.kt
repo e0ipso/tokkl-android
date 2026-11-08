@@ -24,7 +24,8 @@ import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.navhost.AppNavigationBar
 import com.github.e0ipso.tokkl.navhost.AppNavigationRail
-import com.github.e0ipso.tokkl.navigation.TopLevelPage
+import com.github.e0ipso.tokkl.navigation.Route
+import com.github.e0ipso.tokkl.navigation.topLevelPages
 import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import org.junit.Assert.assertEquals
@@ -220,14 +221,24 @@ class TemplatesUiTest {
     fun theRailListsTemplatesFirstAndHidesThemWithoutTheCapability() = assertMoreOrder(rail = true)
 
     private fun assertMoreOrder(rail: Boolean) {
-        var hidden by mutableStateOf(setOf(TopLevelPage.TEMPLATES))
-        var opened by mutableStateOf<TopLevelPage?>(null)
+        var hidden by mutableStateOf<Set<Route>>(setOf(Route.Templates))
+        var opened by mutableStateOf<Route?>(null)
         composeRule.setContent {
             TokklTheme {
                 if (rail) {
-                    AppNavigationRail(current = TopLevelPage.TIMER, onOpen = { opened = it }, hidden = hidden)
+                    AppNavigationRail(
+                        pages = topLevelPages,
+                        current = Route.Timer,
+                        onOpen = { opened = it },
+                        hidden = hidden,
+                    )
                 } else {
-                    AppNavigationBar(current = TopLevelPage.TIMER, onOpen = { opened = it }, hidden = hidden)
+                    AppNavigationBar(
+                        pages = topLevelPages,
+                        current = Route.Timer,
+                        onOpen = { opened = it },
+                        hidden = hidden,
+                    )
                 }
             }
         }
@@ -239,7 +250,7 @@ class TemplatesUiTest {
         composeRule.waitForIdle()
         assertEquals(moreLabels(), sheetLabels())
         composeRule.onNode(isSelectable() and hasText(string(TimerR.string.nav_templates))).performClick()
-        assertEquals(TopLevelPage.TEMPLATES, opened)
+        assertEquals(Route.Templates, opened)
     }
 
     private fun showManagement(

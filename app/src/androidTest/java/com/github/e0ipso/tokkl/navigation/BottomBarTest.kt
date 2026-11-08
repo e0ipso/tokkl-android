@@ -34,7 +34,6 @@ import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.capabilities
 import com.github.e0ipso.tokkl.components.timerActions
 import com.github.e0ipso.tokkl.components.timerState
-import com.github.e0ipso.tokkl.navhost.label
 import com.github.e0ipso.tokkl.openMorePage
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.Session
@@ -89,7 +88,7 @@ class BottomBarTest {
     fun eachBarItemOpensItsPageAndBackGoesToTimer() {
         launch { scenario ->
             composeRule.awaitPomodoroOffered(NETWORK_TIMEOUT_MS)
-            for (page in listOf(TopLevelPage.POMODORO, TopLevelPage.PROJECTS, TopLevelPage.SETTINGS)) {
+            for (page in listOf(Route.Pomodoro, Route.Projects, Route.Settings)) {
                 barItem(page.label).performClick()
                 heading(page.label).assertIsDisplayed()
                 barItem(page.label).assertIsSelected()
@@ -145,11 +144,11 @@ class BottomBarTest {
                 NETWORK_TIMEOUT_MS,
             ) { app.capabilities.state.value.favorites }
             for (page in listOf(
-                TopLevelPage.REPORTS,
-                TopLevelPage.TEMPLATES,
-                TopLevelPage.CLIENTS,
-                TopLevelPage.TAGS,
-                TopLevelPage.TRASH,
+                Route.Reports,
+                Route.Templates,
+                Route.Clients,
+                Route.Tags,
+                Route.Trash,
             )) {
                 openMore()
                 val items = composeRule.onAllNodes(sheetItem())

@@ -2,7 +2,6 @@ package com.github.e0ipso.tokkl.navhost
 
 import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.navigation.Route
-import com.github.e0ipso.tokkl.navigation.TopLevelPage
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -17,21 +16,21 @@ class UnavailablePagesTest {
 
     @Test
     fun withoutTheTimerApiThePomodoroPageIsGone() {
-        assertEquals(setOf(TopLevelPage.POMODORO), unavailablePages(everything.copy(timerState = false)))
+        assertEquals(setOf(Route.Pomodoro), unavailablePages(everything.copy(timerState = false)))
     }
 
     @Test
     fun trashAndTemplatesStillFollowTheirOwnCapabilities() {
         assertEquals(
-            setOf(TopLevelPage.TRASH, TopLevelPage.TEMPLATES, TopLevelPage.POMODORO),
+            setOf(Route.Trash, Route.Templates, Route.Pomodoro),
             unavailablePages(Capabilities.NONE),
         )
-        assertEquals(setOf(TopLevelPage.TEMPLATES), unavailablePages(everything.copy(favorites = false)))
+        assertEquals(setOf(Route.Templates), unavailablePages(everything.copy(favorites = false)))
     }
 
     @Test
     fun aRestoredOrDirectOpenOfAnUnavailablePageShowsTimerAndOtherPagesStay() {
-        val unavailable = setOf(TopLevelPage.POMODORO)
+        val unavailable = setOf(Route.Pomodoro)
         assertEquals(Route.Timer, Route.Pomodoro.orTimerIfUnavailable(unavailable))
         assertEquals(Route.Reports, Route.Reports.orTimerIfUnavailable(unavailable))
         assertEquals(

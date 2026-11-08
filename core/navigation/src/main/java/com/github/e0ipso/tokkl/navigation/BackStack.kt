@@ -1,12 +1,12 @@
 package com.github.e0ipso.tokkl.navigation
 
 /**
- * The back stack after opening [page] from the bar, the rail or the More sheet: the page right
- * above Timer, or Timer alone. Back from the page goes to Timer, and Back from Timer closes the
- * app (docs/PRD.md B3).
+ * The back stack after opening the top-level page [route] from the bar, the rail or the More
+ * sheet: the page right above Timer, or Timer alone. Back from the page goes to Timer, and Back
+ * from Timer closes the app (docs/PRD.md B3).
  */
-internal fun stackOpening(page: TopLevelPage): List<Route> =
-    if (page == TopLevelPage.TIMER) listOf(Route.Timer) else listOf(Route.Timer, page.route)
+internal fun stackOpening(route: Route): List<Route> =
+    if (route == Route.Timer) listOf(Route.Timer) else listOf(Route.Timer, route)
 
 /** Whether the screen on top is the fullscreen timer, or the entry form opened from it. Both hide the bar. */
 internal fun List<Route>.isFocused(): Boolean = lastOrNull() == Route.FullscreenTimer || (

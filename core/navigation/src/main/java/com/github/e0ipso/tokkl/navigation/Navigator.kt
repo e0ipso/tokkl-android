@@ -15,12 +15,14 @@ class Navigator(private val stack: MutableList<Route>, val openings: EntryFormOp
     /** Whether the fullscreen timer, or the entry form opened from it, is on top ([isFocused]). */
     val focused: Boolean get() = stack.isFocused()
 
-    /** Shows [page] right above Timer, or Timer alone, dropping whatever stood above Timer before. */
-    fun open(page: TopLevelPage) = replace(stackOpening(page))
+    /**
+     * Shows the top-level page [route] right above Timer, or Timer alone, dropping whatever stood
+     * above Timer before.
+     */
+    fun open(route: Route) = replace(stackOpening(route))
 
     /** As [open], but a page in [unavailable] opens Timer instead. */
-    fun open(page: TopLevelPage, unavailable: Set<TopLevelPage>) =
-        open(if (page in unavailable) TopLevelPage.TIMER else page)
+    fun open(route: Route, unavailable: Set<Route>) = open(if (route in unavailable) Route.Timer else route)
 
     /** Puts [route] above the screen on top. */
     fun push(route: Route) {

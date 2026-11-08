@@ -11,9 +11,9 @@ class BackStackRulesTest {
 
     @Test
     fun aPageOpensRightAboveTimerAndTimerOpensAlone() {
-        assertEquals(listOf(Route.Timer, Route.Reports), stackOpening(TopLevelPage.REPORTS))
-        assertEquals(listOf(Route.Timer, Route.Settings), stackOpening(TopLevelPage.SETTINGS))
-        assertEquals(listOf(Route.Timer), stackOpening(TopLevelPage.TIMER))
+        assertEquals(listOf(Route.Timer, Route.Reports), stackOpening(Route.Reports))
+        assertEquals(listOf(Route.Timer, Route.Settings), stackOpening(Route.Settings))
+        assertEquals(listOf(Route.Timer), stackOpening(Route.Timer))
     }
 
     @Test
