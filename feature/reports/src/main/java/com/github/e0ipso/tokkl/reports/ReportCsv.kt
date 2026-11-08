@@ -1,10 +1,8 @@
 package com.github.e0ipso.tokkl.reports
 
+import com.github.e0ipso.tokkl.api.ReportCsvBody
 import com.github.e0ipso.tokkl.capabilities.ReportCsvKind
 import com.github.e0ipso.tokkl.time.DurationFormat
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 
 /** The CSV route of [this] tab, or null for a tab without one. */
 fun ReportTab.csvKind(): ReportCsvKind? = when (this) {
@@ -23,23 +21,19 @@ data class ReportCsvRequest(
 ) {
     val filename: String get() = "tokkl-${kind.path}-${range.from}-to-${range.to}.csv"
 
-    fun body(): JsonObject = buildJsonObject {
-        put("start_date", range.from.toString())
-        put("end_date", range.to.toString())
-        filters.writeTo(this)
-        put("rounding", workspace.rounding)
-        put("rounding_minutes", workspace.roundingMinutes)
-        put("duration_format", durationFormat.togglName)
-        when (kind) {
-            ReportCsvKind.SUMMARY -> {
-                put("grouping", "projects")
-                put("sub_grouping", "projects")
-            }
-
-            ReportCsvKind.DETAILED -> {
-                put("sort", "date")
-                put("dir", "desc")
-            }
+    /** The export's body: the summary groups by project, and the detailed export lists the newest first. */
+    fun body(): ReportCsvBody {
+        val body = ReportCsvBody(
+            startDate = range.from,
+            endDate = range.to,
+            filter = filters.apiFilter(),
+            rounding = workspace.rounding,
+            roundingMinutes = workspace.roundingMinutes,
+            durationFormat = durationFormat.togglName,
+        )
+        return when (kind) {
+            ReportCsvKind.SUMMARY -> body.copy(grouping = "projects", subGrouping = "projects")
+            ReportCsvKind.DETAILED -> body.copy(sort = "date", dir = "desc")
         }
     }
 }

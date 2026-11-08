@@ -2,7 +2,7 @@ package com.github.e0ipso.tokkl.cache
 
 import android.database.sqlite.SQLiteException
 import com.github.e0ipso.tokkl.api.Me
-import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.MePreferences
@@ -59,7 +59,7 @@ class AccountCache(private val database: CacheDatabase, private val clock: Clock
      * dispatcher.
      */
     suspend fun refresh(
-        api: TogglApiClient,
+        api: TokklApi,
         me: Me,
         preferences: MePreferences?,
         capabilities: Capabilities,

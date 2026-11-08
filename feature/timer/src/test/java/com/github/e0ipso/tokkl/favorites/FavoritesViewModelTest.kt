@@ -1,8 +1,9 @@
 package com.github.e0ipso.tokkl.favorites
 
 import com.github.e0ipso.tokkl.api.ApiError
-import com.github.e0ipso.tokkl.api.ApiJson
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.FavoriteBody
+import com.github.e0ipso.tokkl.api.FavoritesChange
 import com.github.e0ipso.tokkl.cache.CachedFavorite
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTask
@@ -20,7 +21,6 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
-import kotlinx.serialization.json.JsonElement
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -199,16 +199,20 @@ class FavoritesViewModelTest {
     ): List<FavoritesProblem?> = main.onMain { withTimeoutOrNull(TIMEOUT_MS) { outcomes.first { it.size >= count } } }
         ?: throw AssertionError("timed out waiting for $count outcomes; got ${outcomes.value}")
 
-    /** The body Tokkl's web app sends from TimerPage.tsx: the favorites key alone, with every field of each. */
+    /**
+     * The body Tokkl's web app sends from TimerPage.tsx: the favorites key alone, with every field of
+     * each. TokklApiTest pins its bytes.
+     */
     @Test
     fun theSavedBodyIsTheWebAppsFormat() {
-        val body = favoritesBody(listOf(REPORT.fields(), WEBSITE.fields()))
         assertEquals(
-            """{"favorites":[""" +
-                """{"description":"Write the report","project_id":1,"task_id":5,"tags":["call","deep work"],""" +
-                """"billable":true},""" +
-                """{"description":"Website","project_id":null,"task_id":null,"tags":[],"billable":false}]}""",
-            ApiJson.encodeToString(JsonElement.serializer(), body),
+            FavoritesChange(
+                listOf(
+                    FavoriteBody("Write the report", 1, 5, listOf("call", "deep work"), billable = true),
+                    FavoriteBody("Website", null, null, emptyList(), billable = false),
+                ),
+            ),
+            favoritesBody(listOf(REPORT.fields(), WEBSITE.fields())),
         )
     }
 

@@ -4,7 +4,7 @@ import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
-import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
@@ -65,7 +65,7 @@ class HistoryViewModelTest {
     private val main: ExecutorService = Executors.newSingleThreadExecutor()
     private val mainDispatcher: ExecutorCoroutineDispatcher = main.asCoroutineDispatcher()
     private val scope = CoroutineScope(SupervisorJob() + mainDispatcher)
-    private lateinit var client: TogglApiClient
+    private lateinit var client: TokklApi
 
     /** The day the account's first entry starts on, as `GET /api/app/bounds` says. */
     private var firstDay = LocalDate.parse("2026-01-01")
@@ -117,7 +117,7 @@ class HistoryViewModelTest {
         testApi.stored = configured
         // The user has confirmed the MockWebServer's plain http URL.
         testApi.trust = InMemoryServerTrust(configured)
-        client = testApi.client(configured, ApiCredentials.ApiToken("tok-123"))
+        client = testApi.api(configured, ApiCredentials.ApiToken("tok-123"))
     }
 
     @After

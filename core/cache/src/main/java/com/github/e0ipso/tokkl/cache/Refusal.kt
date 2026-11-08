@@ -3,8 +3,7 @@ package com.github.e0ipso.tokkl.cache
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.HttpStatus
-import com.github.e0ipso.tokkl.api.TogglApiClient
-import kotlinx.serialization.json.JsonObject
+import com.github.e0ipso.tokkl.api.TokklApi
 
 /** What the drain does with a refused change. */
 internal sealed interface Refusal {
@@ -36,7 +35,7 @@ internal sealed interface Refusal {
  * - A 400, and any other 4xx, is held for the user with the server's message.
  * - A 403, or a 401, pauses the whole queue and discards nothing.
  */
-internal suspend fun refusal(api: TogglApiClient, change: PendingChange, error: ApiError): Refusal {
+internal suspend fun refusal(api: TokklApi, change: PendingChange, error: ApiError): Refusal {
     if (error == ApiError.AuthFailed) return Refusal.SignInAgain
     val refused = error as? ApiError.UnexpectedStatus ?: return Refusal.Wait(error)
     val status = refused.status
@@ -58,7 +57,7 @@ internal suspend fun refusal(api: TogglApiClient, change: PendingChange, error: 
 
 /** A captured Stop the server refused: done when the server holds that stop, held or waiting otherwise. */
 private suspend fun capturedStopRefusal(
-    api: TogglApiClient,
+    api: TokklApi,
     change: PendingChange,
     refused: ApiError.UnexpectedStatus,
 ): Refusal = when (val found = stoppedOnServer(api, change)) {
@@ -73,7 +72,7 @@ private suspend fun capturedStopRefusal(
 
 /** A 404 for a change to an entry: gone when the server no longer has the entry. */
 private suspend fun missingEntryRefusal(
-    api: TogglApiClient,
+    api: TokklApi,
     change: PendingChange,
     refused: ApiError.UnexpectedStatus,
 ): Refusal = when (val entry = entryOnServer(api, change.entryId)) {
@@ -88,9 +87,12 @@ private suspend fun missingEntryRefusal(
     }
 }
 
-/** Whether the server has the entry [id], preserving a failed lookup's retry or sign-in outcome. */
-private suspend fun entryOnServer(api: TogglApiClient, id: Long): ApiResult<Boolean> =
-    when (val result = api.get(api.server.api("me", "time_entries", id.toString()), JsonObject.serializer())) {
+/**
+ * Whether the server has the entry [id], preserving a failed lookup's retry or sign-in outcome. A
+ * 2xx the phone cannot read as an entry still means the server has it.
+ */
+private suspend fun entryOnServer(api: TokklApi, id: Long): ApiResult<Boolean> =
+    when (val result = api.entries.get(id)) {
         is ApiResult.Success -> ApiResult.Success(true)
 
         is ApiResult.Failure -> when {

@@ -4,20 +4,15 @@ import androidx.annotation.StringRes
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.Refusable
+import com.github.e0ipso.tokkl.api.SessionStartBody
 import com.github.e0ipso.tokkl.api.TimerState
-import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.cache.CREATED_WITH
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.core.timerstate.R
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -49,7 +44,7 @@ class TimerActions(
 
     /** Reads the state with `GET /api/app/timer`. */
     override suspend fun read(): TimerActionResult = call { api ->
-        when (val answer = api.get(api.server.app("timer"), TimerState.serializer())) {
+        when (val answer = api.timer.state()) {
             is ApiResult.Success -> ApiResult.Success(Refusable(answer.value, refused = false))
             is ApiResult.Failure -> answer
         }
@@ -59,13 +54,13 @@ class TimerActions(
      * Pauses the running entry. The server refuses it during a session and while nothing runs.
      * Pause reads no field, so it sends an empty object.
      */
-    override suspend fun pause(): TimerActionResult = post(JsonObject(emptyMap()), "timer", "pause")
+    override suspend fun pause(): TimerActionResult = call { it.timer.pause() }
 
     /** Resumes the paused chain shown at [revision], with a clone of its fields. */
-    override suspend fun resume(revision: Long): TimerActionResult = post(revisioned(revision), "timer", "resume")
+    override suspend fun resume(revision: Long): TimerActionResult = call { it.timer.resume(revision) }
 
     /** Ends the paused chain shown at [revision], which is Stop while paused. */
-    override suspend fun discard(revision: Long): TimerActionResult = post(revisioned(revision), "timer", "discard")
+    override suspend fun discard(revision: Long): TimerActionResult = call { it.timer.discard(revision) }
 
     /**
      * Starts a session in [workspaceId] whose first pomodoro has [fields], with [lengths] in place
@@ -76,21 +71,17 @@ class TimerActions(
         workspaceId: Long,
         fields: EntryFields,
         lengths: SessionLengths,
-    ): TimerActionResult = post(sessionStart(workspaceId, fields, lengths), "pomodoro")
+    ): TimerActionResult = call { it.timer.startSession(sessionStart(workspaceId, fields, lengths)) }
 
     /** Confirms the phase shown at [revision] and starts the next one. */
-    override suspend fun nextPhase(revision: Long): TimerActionResult = post(revisioned(revision), "pomodoro", "next")
+    override suspend fun nextPhase(revision: Long): TimerActionResult = call { it.timer.nextPhase(revision) }
 
     /** Ends the session shown at [revision]. */
-    override suspend fun endSession(revision: Long): TimerActionResult = post(revisioned(revision), "pomodoro", "end")
-
-    private suspend fun post(body: JsonObject, vararg path: String): TimerActionResult = call { api ->
-        api.sendRefusable(HttpMethod.POST, api.server.app(*path), body, TimerState.serializer())
-    }
+    override suspend fun endSession(revision: Long): TimerActionResult = call { it.timer.endSession(revision) }
 
     // A tap's action reaches the server and its answer reaches the holder also when the caller is
     // cancelled meanwhile, as when the screen that sent it goes.
-    private suspend fun call(request: suspend (TogglApiClient) -> ApiResult<Refusable<TimerState>>): TimerActionResult =
+    private suspend fun call(request: suspend (TokklApi) -> ApiResult<Refusable<TimerState>>): TimerActionResult =
         withContext(io + NonCancellable) {
             val api = client() ?: return@withContext TimerActionResult.Failed(ApiError.AuthFailed)
             val holder = states.timerState()
@@ -217,24 +208,20 @@ data class SessionLengths(
     }
 }
 
-/** The body of an action that depends on the state the surface showed. */
-private fun revisioned(revision: Long): JsonObject = buildJsonObject { put("revision", revision) }
-
 /**
  * The body of `POST /api/app/pomodoro`: the first pomodoro's fields as a v9 start sends them, tags
  * by name and the app's `created_with`, and the four lengths.
  */
-private fun sessionStart(workspaceId: Long, fields: EntryFields, lengths: SessionLengths): JsonObject =
-    buildJsonObject {
-        put("workspace_id", workspaceId)
-        put("created_with", CREATED_WITH)
-        put("description", fields.description)
-        put("project_id", fields.projectId)
-        put("task_id", fields.taskId)
-        put("tags", JsonArray(fields.tags.map(::JsonPrimitive)))
-        put("billable", fields.billable)
-        put("work_minutes", lengths.workMinutes)
-        put("short_rest_minutes", lengths.shortRestMinutes)
-        put("long_rest_minutes", lengths.longRestMinutes)
-        put("long_rest_every", lengths.longRestEvery)
-    }
+private fun sessionStart(workspaceId: Long, fields: EntryFields, lengths: SessionLengths) = SessionStartBody(
+    workspaceId = workspaceId,
+    createdWith = CREATED_WITH,
+    description = fields.description,
+    projectId = fields.projectId,
+    taskId = fields.taskId,
+    tags = fields.tags,
+    billable = fields.billable,
+    workMinutes = lengths.workMinutes,
+    shortRestMinutes = lengths.shortRestMinutes,
+    longRestMinutes = lengths.longRestMinutes,
+    longRestEvery = lengths.longRestEvery,
+)

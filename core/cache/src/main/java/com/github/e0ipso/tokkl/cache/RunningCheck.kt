@@ -8,7 +8,6 @@ import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkerParameters
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.platform.CurrentWorkManager
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.Session
@@ -19,7 +18,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.builtins.nullable
 import java.time.Duration
 import kotlin.coroutines.CoroutineContext
 
@@ -103,12 +101,9 @@ class RunningCheckWorker(
 
     override suspend fun doWork(): Result = withContext(io) {
         val generation = results.generation()
-        val api = session.client() ?: return@withContext Result.success()
+        val api = session.api() ?: return@withContext Result.success()
         val before = cache.runningCheckStart()
-        val current = api.get(
-            api.server.api("me", "time_entries", "current"),
-            ServerTimeEntry.serializer().nullable,
-        )
+        val current = api.entries.current()
         if (current is ApiResult.Success) {
             results.write(generation) { cache.checkedRunning(before, current.value?.toCached()) }
         }

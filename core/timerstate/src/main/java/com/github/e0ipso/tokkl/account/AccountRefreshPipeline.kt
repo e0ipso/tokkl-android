@@ -1,7 +1,7 @@
 package com.github.e0ipso.tokkl.account
 
 import com.github.e0ipso.tokkl.api.Me
-import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.session.AccountRefreshListener
@@ -25,7 +25,7 @@ class AccountRefreshPipeline(
     private val listener: AccountRefreshListener,
 ) : AccountRefreshSteps {
 
-    override suspend fun afterAnswer(api: TogglApiClient, me: Me, preferences: MePreferences?) {
+    override suspend fun afterAnswer(api: TokklApi, me: Me, preferences: MePreferences?) {
         val flags = capabilities.refresh(api, me, timerStates.source)
         cache.refresh(api, me, preferences, flags, onAllDayMissing = capabilities::allDayMissing)
         listener.refreshed(AccountRefreshed(preferences, flags))

@@ -18,6 +18,7 @@ import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.signin.SignIn
 import com.github.e0ipso.tokkl.signin.SignInCredentials
 import com.github.e0ipso.tokkl.signin.SignInResult
+import com.github.e0ipso.tokkl.tokklApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -236,9 +237,9 @@ class ChangeRejectionServerTest {
         RoomChangeStore(database),
         client = {
             if (http == null) {
-                appApiClient(TokklTestServer.url, ApiCredentials.ApiToken(token))
+                appApiClient(TokklTestServer.url, ApiCredentials.ApiToken(token)).tokklApi()
             } else {
-                TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(token), httpClient = http)
+                TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(token), httpClient = http).tokklApi()
             }
         },
         scope = scope,

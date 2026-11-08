@@ -3,13 +3,12 @@ package com.github.e0ipso.tokkl.session
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.Me
-import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.platform.SingleFlight
 import com.github.e0ipso.tokkl.time.DurationFormat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.JsonObject
 import kotlin.coroutines.CoroutineContext
 
 /** What runs after each refresh whose `GET /api/v9/me` answered. */
@@ -19,7 +18,7 @@ fun interface AccountRefreshSteps {
      * Runs on the refresh's dispatcher, inside its job, with its client, its `/me` answer and its
      * `GET /api/v9/me/preferences`, null when that request failed.
      */
-    suspend fun afterAnswer(api: TogglApiClient, me: Me, preferences: MePreferences?)
+    suspend fun afterAnswer(api: TokklApi, me: Me, preferences: MePreferences?)
 }
 
 /**
@@ -107,8 +106,7 @@ class AccountRefresh(
     private suspend fun refreshNow() {
         val writesBefore = settings.writeCount()
         val api = client() ?: return
-        val url = api.server.api("me").newBuilder().addQueryParameter("with_related_data", "true").build()
-        val me = (api.get(url, Me.serializer()) as? ApiResult.Success)?.value ?: return
+        val me = (api.account.meWithRelatedData() as? ApiResult.Success)?.value ?: return
         synchronized(lock) { answers++ }
         val fromMe = me.accountSettings() ?: return
         val preferences = readPreferences(api)
@@ -126,8 +124,8 @@ class AccountRefresh(
     }
 
     /** The account's preferences, or null when the request fails. */
-    private suspend fun readPreferences(api: TogglApiClient): MePreferences? {
-        val answer = api.get(api.server.api("me", "preferences"), JsonObject.serializer())
+    private suspend fun readPreferences(api: TokklApi): MePreferences? {
+        val answer = api.account.preferences()
         return (answer as? ApiResult.Success)?.value?.let(::MePreferences)
     }
 }

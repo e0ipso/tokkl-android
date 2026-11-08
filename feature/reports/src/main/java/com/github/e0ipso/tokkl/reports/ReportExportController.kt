@@ -109,8 +109,8 @@ class ReportExportController(
         cancellation.check()
         val api = client() ?: return ReportExportState.Failed(ApiError.AuthFailed)
         val answer = FileOutputStream(staged.staging).use { output ->
-            val result = api.downloadCsv(
-                api.server.app("report", "${request.kind.path}.csv"),
+            val result = api.reports.exportCsv(
+                request.kind.path,
                 request.body(),
                 output,
                 ReportExportFiles.MAX_BYTES,

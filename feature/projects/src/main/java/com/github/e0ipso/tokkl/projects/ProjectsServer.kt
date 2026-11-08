@@ -1,15 +1,12 @@
 package com.github.e0ipso.tokkl.projects
 
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.api.HttpMethod
-import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.ProjectBody
+import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.catalog.createOnce
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 
 /**
  * A project as `GET /api/v9/workspaces/{wid}/projects` sends it, with the fields the projects page
@@ -56,13 +53,13 @@ data class ProjectFields(
  * The API v9 project calls of one [workspace] on the configured server. Each call suspends while
  * its request runs.
  */
-class ProjectsServer(private val api: TogglApiClient, private val workspace: Long) {
+class ProjectsServer(private val api: TokklApi, private val workspace: Long) {
 
     /** Every project of the workspace, archived ones included, in the server's order. */
-    suspend fun list(): ApiResult<List<Project>> = api.get(url(), ListSerializer(Project.serializer()))
+    suspend fun list(): ApiResult<List<Project>> = api.projects.list(workspace, ListSerializer(Project.serializer()))
 
     suspend fun defaults(): ApiResult<WorkspaceDefaults> =
-        api.get(api.server.api("workspaces", workspace.toString()), WorkspaceDefaults.serializer())
+        api.account.workspace(workspace, WorkspaceDefaults.serializer())
 
     /**
      * Creates the project once, as [createOnce] does. When the answer was lost, the project with
@@ -71,7 +68,7 @@ class ProjectsServer(private val api: TogglApiClient, private val workspace: Lon
      * @param known the ids of the projects the page lists, which the create cannot have made.
      */
     suspend fun create(fields: ProjectFields, known: Set<Long>): ApiResult<Project> = createOnce(
-        create = { api.send(HttpMethod.POST, url(), fields.toJson(), Project.serializer(), resend = false) },
+        create = { api.projects.create(workspace, fields.body(), Project.serializer()) },
         list = ::list,
         made = {
             it.id !in known && it.workspaceId == workspace && it.name == fields.name &&
@@ -80,26 +77,20 @@ class ProjectsServer(private val api: TogglApiClient, private val workspace: Lon
     )
 
     suspend fun update(id: Long, fields: ProjectFields): ApiResult<Project> =
-        api.send(HttpMethod.PUT, url(id), fields.toJson(), Project.serializer())
+        api.projects.update(workspace, id, fields.body(), Project.serializer())
 
     /** Archives the project when [active] is false and restores it when true. */
     suspend fun setActive(id: Long, active: Boolean): ApiResult<Project> =
-        api.send(HttpMethod.PUT, url(id), buildJsonObject { put("active", active) }, Project.serializer())
-
-    private fun url(id: Long? = null) = if (id == null) {
-        api.server.api("workspaces", workspace.toString(), "projects")
-    } else {
-        api.server.api("workspaces", workspace.toString(), "projects", id.toString())
-    }
+        api.projects.setActive(workspace, id, active, Project.serializer())
 }
 
 /** No client goes as 0, as the web app sends it. Tokkl reads 0 and null alike as no client. */
-private fun ProjectFields.toJson(): JsonObject = buildJsonObject {
-    put("name", name)
-    put("color", color)
-    put("client_id", clientId ?: 0L)
-    put("billable", billable)
-    put("rate", rate)
-    put("currency", currency)
-    put("estimated_hours", estimatedHours)
-}
+private fun ProjectFields.body() = ProjectBody(
+    name = name,
+    color = color,
+    clientId = clientId ?: 0L,
+    billable = billable,
+    rate = rate,
+    currency = currency,
+    estimatedHours = estimatedHours,
+)

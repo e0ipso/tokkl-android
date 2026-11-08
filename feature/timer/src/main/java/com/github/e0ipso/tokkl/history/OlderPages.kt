@@ -3,12 +3,10 @@ package com.github.e0ipso.tokkl.history
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.api.ServerTimeEntry
-import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.toCached
 import com.github.e0ipso.tokkl.time.AccountTime
-import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -59,11 +57,7 @@ internal suspend fun fetchOlderPage(
     val from = before.minusDays(HistoryViewModel.PAGE_DAYS)
     val start = from.atStartOfDay(time.zone).toInstant()
     val end = before.atStartOfDay(time.zone).toInstant()
-    val url = api.server.api("me", "time_entries").newBuilder()
-        .addQueryParameter("start_date", start.toString())
-        .addQueryParameter("end_date", end.toString())
-        .build()
-    val page = when (val answer = api.get(url, ListSerializer(ServerTimeEntry.serializer()))) {
+    val page = when (val answer = api.entries.list(start, end)) {
         is ApiResult.Failure -> OlderPage.NotLoaded(statusOf(answer.error))
 
         is ApiResult.Success -> {
@@ -79,17 +73,16 @@ internal suspend fun fetchOlderPage(
 }
 
 /** `GET /api/app/bounds`, Tokkl's first and last day with an entry in the account's timezone. */
-private suspend fun readBounds(api: TogglApiClient): BoundsAnswer =
-    when (val answer = api.get(api.server.app("bounds"), JsonObject.serializer())) {
-        is ApiResult.Success -> BoundsAnswer.Read(boundsOf(answer.value))
+private suspend fun readBounds(api: TokklApi): BoundsAnswer = when (val answer = api.entries.bounds()) {
+    is ApiResult.Success -> BoundsAnswer.Read(boundsOf(answer.value))
 
-        is ApiResult.Failure -> when (val status = statusOf(answer.error)) {
-            OlderDays.Unreachable, OlderDays.AuthFailed, OlderDays.TrustRefused -> BoundsAnswer.Failed(status)
+    is ApiResult.Failure -> when (val status = statusOf(answer.error)) {
+        OlderDays.Unreachable, OlderDays.AuthFailed, OlderDays.TrustRefused -> BoundsAnswer.Failed(status)
 
-            // A 404 from a server without it, or any other answer: page without knowing.
-            else -> BoundsAnswer.Read(HistoryBounds.Unknown)
-        }
+        // A 404 from a server without it, or any other answer: page without knowing.
+        else -> BoundsAnswer.Read(HistoryBounds.Unknown)
     }
+}
 
 private fun statusOf(error: ApiError): OlderDays = when (error) {
     is ApiError.Network -> OlderDays.Unreachable

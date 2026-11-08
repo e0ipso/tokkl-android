@@ -12,6 +12,7 @@ import com.github.e0ipso.tokkl.capabilities.ReportCsvKind
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.time.DurationFormat
+import com.github.e0ipso.tokkl.tokklApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
@@ -47,7 +48,7 @@ class ReportCsvServerTest {
         fixture = ReportAccount.create()
         Session(context).save(TokklTestServer.url, fixture.account.apiToken)
         exporter = ReportExportController(
-            client = { fixture.account.client },
+            client = { fixture.account.client.tokklApi() },
             files = files,
             account = GlobalContext.get().get(),
             csvMissing = {},
@@ -90,13 +91,15 @@ class ReportCsvServerTest {
             kind,
             ReportRange(fixture.today, fixture.today),
             ReportFilters(projects = listOf(selected)),
-            runBlocking { ReportsServer(fixture.account.client).workspace() }.orFail("read report workspace"),
+            runBlocking {
+                ReportsServer(fixture.account.client.tokklApi()).workspace()
+            }.orFail("read report workspace"),
             DurationFormat.DECIMAL,
         )
         val expected = ByteArrayOutputStream().use { output ->
             runBlocking {
-                fixture.account.client.downloadCsv(
-                    fixture.account.client.server.app("report", "${kind.path}.csv"),
+                fixture.account.client.tokklApi().reports.exportCsv(
+                    kind.path,
                     request.body(),
                     output,
                     ReportExportFiles.MAX_BYTES,

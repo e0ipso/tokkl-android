@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.session
 
+import com.github.e0ipso.tokkl.api.HttpTokklApi
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.storage.ClearableStore
@@ -33,22 +34,22 @@ class SessionTest {
 
     @Test
     fun theTokenIsReadOnceForEveryCallUntilTheAccountChanges() {
-        val client = session.client()
+        val client = session.api()
 
         assertNotNull(client)
         assertTrue(session.isSignedIn())
-        assertSame(client, session.client())
+        assertSame(client, session.api())
         assertEquals("one decrypt", 1, tokens.loads)
     }
 
     @Test
     fun savingAnAccountReadsTheNewOne() {
-        val before = session.client()
+        val before = session.api()
 
         session.save(OTHER, "tok-456")
 
-        val after = session.client()
-        assertEquals(OTHER, after?.server)
+        val after = session.api()
+        assertEquals(OTHER, (after as HttpTokklApi).client.server)
         assertTrue(before !== after)
         assertEquals(2, tokens.loads)
     }
@@ -60,18 +61,18 @@ class SessionTest {
         session.clear()
 
         assertFalse(session.isSignedIn())
-        assertNull(session.client())
+        assertNull(session.api())
     }
 
     @Test
     fun aReadThatFailsKeepsNothing() {
         tokens.failing = true
-        assertNull(session.client())
+        assertNull(session.api())
         assertFalse(session.isSignedIn())
 
         tokens.failing = false
 
-        assertNotNull("the next call reads again", session.client())
+        assertNotNull("the next call reads again", session.api())
     }
 
     @Test

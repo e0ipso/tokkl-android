@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.preferences
 
 import com.github.e0ipso.tokkl.api.ApiClientProvider
+import com.github.e0ipso.tokkl.api.PomodoroDefaultsChange
 import com.github.e0ipso.tokkl.capabilities.CapabilityCheck
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountRefreshListener
@@ -11,11 +12,8 @@ import com.github.e0ipso.tokkl.storage.ClearableStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.doubleOrNull
-import kotlinx.serialization.json.put
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -133,22 +131,22 @@ class PomodoroDefaultsSetting(
 
     internal companion object {
         /** Tokkl's preference keys, in the order of [PomodoroDefaults]'s values. */
-        const val WORK_MINUTES_KEY = "pomodoro_focus_interval_in_minutes"
-        const val SHORT_REST_MINUTES_KEY = "pomodoro_break_interval_in_minutes"
-        const val LONG_REST_MINUTES_KEY = "pomodoro_long_break_interval_in_minutes"
-        const val LONG_REST_EVERY_KEY = "pomodoro_long_break_every"
+        const val WORK_MINUTES_KEY = PomodoroDefaultsChange.WORK_MINUTES
+        const val SHORT_REST_MINUTES_KEY = PomodoroDefaultsChange.SHORT_REST_MINUTES
+        const val LONG_REST_MINUTES_KEY = PomodoroDefaultsChange.LONG_REST_MINUTES
+        const val LONG_REST_EVERY_KEY = PomodoroDefaultsChange.LONG_REST_EVERY
     }
 }
 
-/** The body of `POST /api/v9/me/preferences`: the four keys, clamped, and nothing else. */
-internal fun PomodoroDefaults.preferencesBody(): JsonObject {
+/** The change `POST /api/v9/me/preferences` sends: the four keys, clamped, and nothing else. */
+internal fun PomodoroDefaults.preferencesBody(): PomodoroDefaultsChange {
     val values = clamped()
-    return buildJsonObject {
-        put(PomodoroDefaultsSetting.WORK_MINUTES_KEY, values.workMinutes)
-        put(PomodoroDefaultsSetting.SHORT_REST_MINUTES_KEY, values.shortRestMinutes)
-        put(PomodoroDefaultsSetting.LONG_REST_MINUTES_KEY, values.longRestMinutes)
-        put(PomodoroDefaultsSetting.LONG_REST_EVERY_KEY, values.longRestEvery)
-    }
+    return PomodoroDefaultsChange(
+        workMinutes = values.workMinutes,
+        shortRestMinutes = values.shortRestMinutes,
+        longRestMinutes = values.longRestMinutes,
+        longRestEvery = values.longRestEvery,
+    )
 }
 
 /**

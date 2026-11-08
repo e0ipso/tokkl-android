@@ -40,7 +40,7 @@ class ReportsServerTest {
         val url = ServerUrl.parse(server.url("/").toString())!!
         testApi.stored = url
         testApi.trust = InMemoryServerTrust(url)
-        reports = ReportsServer(testApi.client(url, ApiCredentials.ApiToken("token")))
+        reports = ReportsServer(testApi.api(url, ApiCredentials.ApiToken("token")))
     }
 
     @After

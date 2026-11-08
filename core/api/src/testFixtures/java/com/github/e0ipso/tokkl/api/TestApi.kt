@@ -36,6 +36,16 @@ class TestApi(stored: ServerUrl?, trust: ServerTrust = InMemoryServerTrust(*list
         io: CoroutineContext = Dispatchers.Unconfined,
     ): TogglApiClient = TogglApiClient(server, credentials, httpClient, trustListener, successListener, io)
 
+    /** The app's [TokklApi] over [client] with the same arguments, as the signed-in session builds it. */
+    fun api(
+        server: ServerUrl = checkNotNull(stored) { "no stored server" },
+        credentials: ApiCredentials = ApiCredentials.ApiToken("tok-123"),
+        httpClient: OkHttpClient = http.instance,
+        trustListener: TrustListener? = null,
+        successListener: SuccessListener? = null,
+        io: CoroutineContext = Dispatchers.Unconfined,
+    ): TokklApi = HttpTokklApi(client(server, credentials, httpClient, trustListener, successListener, io))
+
     /** [trust] as it is at each call. */
     private inner class CurrentTrust : ServerTrust {
         override fun isCleartextConfirmed(server: ServerUrl): Boolean = trust.isCleartextConfirmed(server)

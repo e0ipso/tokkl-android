@@ -1,9 +1,9 @@
 package com.github.e0ipso.tokkl.reports
 
+import com.github.e0ipso.tokkl.api.ReportFilter
 import com.github.e0ipso.tokkl.cache.CachedClient
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTag
-import kotlinx.serialization.json.buildJsonObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -58,11 +58,11 @@ class ReportFiltersTest {
         assertEquals("a blank search keeps them all", options, options.matching("", picked = emptyList()))
     }
 
-    /** Toggl's Reports API v3 takes the same fields, with null for "without". */
+    /** Toggl's Reports API v3 takes the same fields, with null for "without". TokklApiTest pins their bytes. */
     @Test
     fun theFieldsAreTheWebAppsAndOnlyForFiltersInUse() {
         assertTrue(ReportFilters().isEmpty)
-        assertEquals("{}", buildJsonObject { ReportFilters().writeTo(this) }.toString())
+        assertEquals(ReportFilter(), ReportFilters().apiFilter())
 
         val filters = ReportFilters(
             projects = listOf(null, 9L),
@@ -71,10 +71,11 @@ class ReportFiltersTest {
         )
         assertFalse(filters.isEmpty)
         assertEquals(
-            """{"project_ids":[null,9],"tag_ids":[4,2],"billable":false}""",
-            buildJsonObject { filters.writeTo(this) }.toString(),
+            ReportFilter(projectIds = listOf(null, 9), tagIds = listOf(4, 2), billable = false),
+            filters.apiFilter(),
         )
         assertFalse(ReportFilters(billable = BillableFilter.BILLABLE).isEmpty)
+        assertEquals(ReportFilter(billable = true), ReportFilters(billable = BillableFilter.BILLABLE).apiFilter())
     }
 
     /** As the web app's idFilter: "Is not" sends a list in its exclude field instead, null still for "without". */
@@ -88,24 +89,24 @@ class ReportFiltersTest {
             clientsNot = true,
         )
         assertEquals(
-            """{"exclude_project_ids":[9],"exclude_client_ids":[null,5],"tag_ids":[4]}""",
-            buildJsonObject { filters.writeTo(this) }.toString(),
+            ReportFilter(
+                projectIds = listOf(9),
+                excludeProjects = true,
+                clientIds = listOf(null, 5),
+                excludeClients = true,
+                tagIds = listOf(4),
+            ),
+            filters.apiFilter(),
         )
         assertEquals(
             "a negated filter with nothing picked filters nothing, as in the web app",
-            "{}",
-            buildJsonObject {
-                ReportFilters(
-                    projectsNot = true,
-                    clientsNot = true,
-                    tagsNot = true,
-                ).writeTo(this)
-            }.toString(),
+            ReportFilter(excludeProjects = true, excludeClients = true, excludeTags = true),
+            ReportFilters(projectsNot = true, clientsNot = true, tagsNot = true).apiFilter(),
         )
         assertTrue(ReportFilters(tagsNot = true).isEmpty)
         assertEquals(
-            """{"project_ids":[9],"client_ids":[null,5],"tag_ids":[4]}""",
-            buildJsonObject { filters.withoutNegation().writeTo(this) }.toString(),
+            ReportFilter(projectIds = listOf(9), clientIds = listOf(null, 5), tagIds = listOf(4)),
+            filters.withoutNegation().apiFilter(),
         )
     }
 

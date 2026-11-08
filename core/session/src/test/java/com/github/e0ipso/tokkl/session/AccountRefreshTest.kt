@@ -4,7 +4,7 @@ import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
-import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.storage.InMemoryValueStore
 import com.github.e0ipso.tokkl.time.DurationFormat
 import com.github.e0ipso.tokkl.time.SnappedSpan
@@ -38,7 +38,7 @@ class AccountRefreshTest {
 
     private val server = MockWebServer()
     private val saved = mutableListOf<AccountSettings>()
-    private lateinit var client: TogglApiClient
+    private lateinit var client: TokklApi
 
     @Before
     fun setUp() {
@@ -48,7 +48,7 @@ class AccountRefreshTest {
         testApi.stored = configured
         // The user has confirmed the MockWebServer's plain http URL.
         testApi.trust = InMemoryServerTrust(configured)
-        client = testApi.client(configured, ApiCredentials.ApiToken("tok-123"))
+        client = testApi.api(configured, ApiCredentials.ApiToken("tok-123"))
     }
 
     @After
@@ -414,7 +414,7 @@ class AccountRefreshTest {
     private class Account(
         initial: AccountSettings?,
         save: (AccountSettings) -> Unit,
-        client: () -> TogglApiClient?,
+        client: () -> TokklApi?,
         scope: CoroutineScope,
         io: CoroutineContext,
         onRefresh: AccountRefreshSteps = AccountRefreshSteps { _, _, _ -> },

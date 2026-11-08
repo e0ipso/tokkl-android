@@ -70,7 +70,7 @@ class ChangeSenderTest {
         testApi.trust = InMemoryServerTrust(url)
         sender = changeSender(
             store,
-            client = { if (signedIn) testApi.client(url, ApiCredentials.ApiToken("tok-123")) else null },
+            client = { if (signedIn) testApi.api(url, ApiCredentials.ApiToken("tok-123")) else null },
             scope = scope,
             io = Dispatchers.IO,
             clock = clock,
@@ -595,7 +595,7 @@ class ChangeSenderTest {
         var discarded = 0
         sender = changeSender(
             store,
-            { testApi.client(url, ApiCredentials.ApiToken("tok-123")) },
+            { testApi.api(url, ApiCredentials.ApiToken("tok-123")) },
             scope,
             Dispatchers.IO,
             onDiscarded = { discarded += it },
@@ -734,7 +734,7 @@ class ChangeSenderTest {
     fun sendTriesAgainByItselfOnceRetryAfterHasPassed() = runTest {
         val realTime = changeSender(
             store,
-            client = { testApi.client(url, ApiCredentials.ApiToken("tok-123")) },
+            client = { testApi.api(url, ApiCredentials.ApiToken("tok-123")) },
             scope = scope,
             io = Dispatchers.IO,
         )
@@ -790,7 +790,7 @@ class ChangeSenderTest {
         lateinit var withOnSent: ChangeSender
         withOnSent = changeSender(
             store,
-            client = { testApi.client(url, ApiCredentials.ApiToken("tok-123")) },
+            client = { testApi.api(url, ApiCredentials.ApiToken("tok-123")) },
             scope = scope,
             io = Dispatchers.IO,
             onSent = {
@@ -825,7 +825,7 @@ class ChangeSenderTest {
         var calls = 0
         val withOnSent = changeSender(
             store,
-            client = { testApi.client(url, ApiCredentials.ApiToken("tok-123")) },
+            client = { testApi.api(url, ApiCredentials.ApiToken("tok-123")) },
             scope = scope,
             io = Dispatchers.IO,
             onSent = { calls++ },
@@ -851,7 +851,7 @@ class ChangeSenderTest {
         val calls = mutableListOf<String>()
         val withOnEmptied = changeSender(
             store,
-            client = { testApi.client(url, ApiCredentials.ApiToken("tok-123")) },
+            client = { testApi.api(url, ApiCredentials.ApiToken("tok-123")) },
             scope = scope,
             io = Dispatchers.IO,
             onSent = { synchronized(calls) { calls += "onSent" } },
@@ -884,7 +884,7 @@ class ChangeSenderTest {
         val finishCleanup = CountDownLatch(1)
         val withCleanup = changeSender(
             store,
-            client = { testApi.client(url, ApiCredentials.ApiToken("tok-123")) },
+            client = { testApi.api(url, ApiCredentials.ApiToken("tok-123")) },
             scope = scope,
             io = Dispatchers.IO,
             onEmptied = {
@@ -1076,7 +1076,7 @@ class ChangeSenderTest {
     fun aQueuedStartAndItsLaterChangesEndOnTheGridWhereTheLaterTimersStartSnaps() = runTest {
         val gridded = changeSender(
             store,
-            client = { testApi.client(url, ApiCredentials.ApiToken("tok-123")) },
+            client = { testApi.api(url, ApiCredentials.ApiToken("tok-123")) },
             scope = scope,
             io = Dispatchers.IO,
             clock = clock,
@@ -1252,7 +1252,7 @@ class ChangeSenderTest {
     fun aLostCreateMatchesTheStartWhereTheServerSnappedIt() = runTest {
         val snapping = changeSender(
             store,
-            client = { testApi.client(url, ApiCredentials.ApiToken("tok-123")) },
+            client = { testApi.api(url, ApiCredentials.ApiToken("tok-123")) },
             scope = scope,
             io = Dispatchers.IO,
             clock = clock,
@@ -1631,7 +1631,7 @@ class ChangeSenderTest {
         val refreshes = java.util.concurrent.atomic.AtomicInteger()
         val refreshing = changeSender(
             store,
-            client = { testApi.client(url, ApiCredentials.ApiToken("tok-123")) },
+            client = { testApi.api(url, ApiCredentials.ApiToken("tok-123")) },
             scope = scope,
             io = Dispatchers.IO,
             onSent = { refreshes.incrementAndGet() },
@@ -1706,7 +1706,7 @@ class ChangeSenderTest {
     /** A sender for a server that stores no-time entries, as `Capabilities.allDay` says. */
     private fun noTimeSender() = changeSender(
         store,
-        client = { testApi.client(url, ApiCredentials.ApiToken("tok-123")) },
+        client = { testApi.api(url, ApiCredentials.ApiToken("tok-123")) },
         scope = scope,
         io = Dispatchers.IO,
         clock = clock,

@@ -5,7 +5,7 @@ import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.HttpStatus
 import com.github.e0ipso.tokkl.api.Me
 import com.github.e0ipso.tokkl.api.TimerState
-import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.TokklApi
 import kotlinx.serialization.json.JsonArray
 
 /**
@@ -120,24 +120,23 @@ enum class TrashProbe {
 }
 
 /** Sends `GET /api/app/trash` once. */
-suspend fun probeTrash(api: TogglApiClient): TrashProbe =
-    when (val result = api.get(api.server.app("trash"), JsonArray.serializer())) {
-        is ApiResult.Success -> TrashProbe.PRESENT
+suspend fun probeTrash(api: TokklApi): TrashProbe = when (val result = api.trash.list(JsonArray.serializer())) {
+    is ApiResult.Success -> TrashProbe.PRESENT
 
-        is ApiResult.Failure -> when (val error = result.error) {
-            is ApiError.UnexpectedStatus -> if (error.status ==
-                HttpStatus.NOT_FOUND
-            ) {
-                TrashProbe.ABSENT
-            } else {
-                TrashProbe.UNKNOWN
-            }
-
-            is ApiError.InvalidResponse -> TrashProbe.ABSENT
-
-            else -> TrashProbe.UNKNOWN
+    is ApiResult.Failure -> when (val error = result.error) {
+        is ApiError.UnexpectedStatus -> if (error.status ==
+            HttpStatus.NOT_FOUND
+        ) {
+            TrashProbe.ABSENT
+        } else {
+            TrashProbe.UNKNOWN
         }
+
+        is ApiError.InvalidResponse -> TrashProbe.ABSENT
+
+        else -> TrashProbe.UNKNOWN
     }
+}
 
 /** What `GET /api/app/timer` said about the server-owned timer. */
 sealed interface TimerStateProbe {
@@ -152,21 +151,20 @@ sealed interface TimerStateProbe {
 }
 
 /** Sends `GET /api/app/timer` once. */
-suspend fun probeTimerState(api: TogglApiClient): TimerStateProbe =
-    when (val result = api.get(api.server.app("timer"), TimerState.serializer())) {
-        is ApiResult.Success -> TimerStateProbe.Present(result.value)
+suspend fun probeTimerState(api: TokklApi): TimerStateProbe = when (val result = api.timer.state()) {
+    is ApiResult.Success -> TimerStateProbe.Present(result.value)
 
-        is ApiResult.Failure -> when (val error = result.error) {
-            is ApiError.UnexpectedStatus -> if (error.status ==
-                HttpStatus.NOT_FOUND
-            ) {
-                TimerStateProbe.Absent
-            } else {
-                TimerStateProbe.Unknown
-            }
-
-            is ApiError.InvalidResponse -> TimerStateProbe.Absent
-
-            else -> TimerStateProbe.Unknown
+    is ApiResult.Failure -> when (val error = result.error) {
+        is ApiError.UnexpectedStatus -> if (error.status ==
+            HttpStatus.NOT_FOUND
+        ) {
+            TimerStateProbe.Absent
+        } else {
+            TimerStateProbe.Unknown
         }
+
+        is ApiError.InvalidResponse -> TimerStateProbe.Absent
+
+        else -> TimerStateProbe.Unknown
     }
+}

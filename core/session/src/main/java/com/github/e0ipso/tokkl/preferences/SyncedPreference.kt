@@ -2,7 +2,7 @@ package com.github.e0ipso.tokkl.preferences
 
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.api.HttpMethod
+import com.github.e0ipso.tokkl.api.PreferencesChange
 import com.github.e0ipso.tokkl.capabilities.CapabilityCheck
 import com.github.e0ipso.tokkl.session.MePreferences
 import com.github.e0ipso.tokkl.storage.ClearableStore
@@ -30,8 +30,8 @@ interface PreferenceCodec<T : Any> {
     /** The value in a refresh's [preferences]. */
     fun fromServer(preferences: MePreferences): T
 
-    /** The body that posts [value], with its keys and nothing else. */
-    fun body(value: T): JsonObject
+    /** The change that posts [value], with its keys and nothing else. */
+    fun body(value: T): PreferencesChange
 }
 
 /**
@@ -160,12 +160,7 @@ class SyncedPreference<T : Any>(
     private suspend fun send() = sending.withLock {
         val value = synchronized(lock) { state.value.value.takeIf { state.unsent } } ?: return@withLock
         val api = client() ?: return@withLock
-        val answer = api.send(
-            HttpMethod.POST,
-            api.server.api("me", "preferences"),
-            codec.body(value),
-            JsonObject.serializer(),
-        )
+        val answer = api.account.savePreferences(codec.body(value), JsonObject.serializer())
         if (answer !is ApiResult.Success) return@withLock
         synchronized(lock) {
             // A change while the request ran has its own write queued.

@@ -68,7 +68,7 @@ class TimerActionsTest {
             runningEnded = {},
         )
         actions = TimerActions(
-            client = { if (signedIn) testApi.client(url, credentials, trustListener = trustListener) else null },
+            client = { if (signedIn) testApi.api(url, credentials, trustListener = trustListener) else null },
             states = { holder },
             io = Dispatchers.IO,
         )

@@ -5,7 +5,7 @@ import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiJson
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TimerState
-import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.TokklApi
 import java.io.IOException
 import java.io.InputStream
 
@@ -45,12 +45,12 @@ sealed interface StreamEnd {
  *
  * @param api the signed-in account's client, or null when signed out.
  */
-internal suspend fun holdTimerEvents(api: TogglApiClient?, source: TimerStateSource, link: TimerSyncLink): StreamEnd {
+internal suspend fun holdTimerEvents(api: TokklApi?, source: TimerStateSource, link: TimerSyncLink): StreamEnd {
     api ?: return StreamEnd.SignedOut
     return try {
         // Before the request: the server builds the first event's state before it answers.
         val first = source.begin()
-        val answer = api.stream(api.server.app("timer", "events"), link.cancellation) { body ->
+        val answer = api.timer.events(link.cancellation) { body ->
             link.connected()
             readTimerEvents(body, source, link, first)
         }

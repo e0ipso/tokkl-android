@@ -158,10 +158,10 @@ private fun KoinComponent.dispatchPomodoroWidget(context: Context, tap: Pomodoro
     get<CoroutineScope>().launch(io) {
         val current = get<PomodoroWidgetStateSource>().state.first()
         if (timerStates.source !== source || !session.isSignedIn()) return@launch
-        val client = session.client()
+        val api = session.api()
         // Keep the captured holder and credential together across sign-out/account replacement.
         val actions = TimerActions(
-            client = { client.takeIf { timerStates.source === source && session.isSignedIn() } },
+            client = { api.takeIf { timerStates.source === source && session.isSignedIn() } },
             states = { source },
             io = io,
         )

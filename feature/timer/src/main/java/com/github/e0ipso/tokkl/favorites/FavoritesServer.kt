@@ -3,17 +3,12 @@ package com.github.e0ipso.tokkl.favorites
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.api.HttpMethod
+import com.github.e0ipso.tokkl.api.FavoriteBody
+import com.github.e0ipso.tokkl.api.FavoritesChange
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.CachedFavorite
 import com.github.e0ipso.tokkl.cache.EntryFields
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonNull
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonArray
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 
 /** The most favorites Tokkl keeps: `MAX_FAVORITES` in ../tokkl/packages/api/src/models/users.ts. */
 const val MAX_FAVORITES = 9
@@ -37,14 +32,7 @@ class FavoritesServer(private val client: ApiClientProvider, private val cache: 
      */
     override suspend fun save(favorites: List<EntryFields>): ApiResult<Unit> {
         val api = client() ?: return ApiResult.Failure(ApiError.AuthFailed)
-        return when (
-            val answer = api.send(
-                HttpMethod.POST,
-                api.server.api("me", "preferences"),
-                favoritesBody(favorites),
-                JsonElement.serializer(),
-            )
-        ) {
+        return when (val answer = api.account.savePreferences(favoritesBody(favorites), JsonElement.serializer())) {
             is ApiResult.Failure -> answer
 
             is ApiResult.Success -> {
@@ -63,24 +51,9 @@ class FavoritesServer(private val client: ApiClientProvider, private val cache: 
  * Tokkl merges the keys it gets into the stored preferences (`savePreferences` in
  * ../tokkl/packages/api/src/routes/togglV9.ts), so every other key stays as it was.
  */
-internal fun favoritesBody(favorites: List<EntryFields>): JsonObject = buildJsonObject {
-    put(
-        "favorites",
-        buildJsonArray {
-            for (favorite in favorites) {
-                add(
-                    buildJsonObject {
-                        put("description", favorite.description)
-                        put("project_id", favorite.projectId?.let(::JsonPrimitive) ?: JsonNull)
-                        put("task_id", favorite.taskId?.let(::JsonPrimitive) ?: JsonNull)
-                        put("tags", buildJsonArray { favorite.tags.forEach { add(JsonPrimitive(it)) } })
-                        put("billable", favorite.billable)
-                    },
-                )
-            }
-        },
-    )
-}
+internal fun favoritesBody(favorites: List<EntryFields>) = FavoritesChange(
+    favorites.map { FavoriteBody(it.description, it.projectId, it.taskId, it.tags, it.billable) },
+)
 
 private fun EntryFields.toFavorite(position: Int) = CachedFavorite(
     position = position,

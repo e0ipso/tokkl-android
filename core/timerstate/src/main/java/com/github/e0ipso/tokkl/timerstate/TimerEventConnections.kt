@@ -25,7 +25,7 @@ class TimerEventConnections(
 ) : TimerSyncConnections<TimerStateSource> {
 
     override fun open(account: TimerStateSource, link: TimerSyncLink) {
-        scope.launch(io) { link.ended(holdTimerEvents(session.client(), account, link)) }
+        scope.launch(io) { link.ended(holdTimerEvents(session.api(), account, link)) }
     }
 
     override fun stopped(account: TimerStateSource, end: StreamEnd) {

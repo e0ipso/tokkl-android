@@ -3,7 +3,6 @@ package com.github.e0ipso.tokkl.tile
 import android.database.sqlite.SQLiteException
 import android.os.SystemClock
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.RunningCheckResults
 import com.github.e0ipso.tokkl.cache.toCached
@@ -11,7 +10,6 @@ import com.github.e0ipso.tokkl.platform.DefaultNetwork
 import com.github.e0ipso.tokkl.session.Session
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.serialization.builtins.nullable
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -35,15 +33,12 @@ internal class TileRefresh(
             val generation = results.generation()
             val online = network.reachesInternet()
             if (!online) return@launch
-            val api = session.client() ?: return@launch
+            val api = session.api() ?: return@launch
             if (!throttle.tryStart(generation, online, SystemClock.elapsedRealtime())) return@launch
             var succeeded = false
             try {
                 val before = cache.runningCheckStart()
-                val current = api.get(
-                    api.server.api("me", "time_entries", "current"),
-                    ServerTimeEntry.serializer().nullable,
-                )
+                val current = api.entries.current()
                 if (current is ApiResult.Success) {
                     // Reuse the background check's sign-out, queued-change and newer-write guards.
                     results.write(generation) { cache.checkedRunning(before, current.value?.toCached()) }

@@ -3,9 +3,8 @@ package com.github.e0ipso.tokkl.cache
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
-import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.capabilities.CapabilityCheck
-import kotlinx.serialization.builtins.nullable
 import java.time.temporal.ChronoUnit
 
 /** The change as it went to the server, the server's id for its entry, and the entry as the server stored it. */
@@ -28,25 +27,15 @@ internal class ChangeTries(
     private val allDay: CapabilityCheck,
 ) {
 
-    /** Sends an update, a legacy stop or a restore as [request] builds it. */
-    suspend fun update(api: TogglApiClient, change: PendingChange): ApiResult<SentChange> {
-        val request = change.request(api.server, allDay.offered())
-        return when (
-            val result = api.send(
-                request.method,
-                request.url,
-                request.body,
-                ServerTimeEntry.serializer(),
-                resend = false,
-            )
-        ) {
+    /** Sends an update, a legacy stop or a restore, as [sendOnce] does. */
+    suspend fun update(api: TokklApi, change: PendingChange): ApiResult<SentChange> =
+        when (val result = sendOnce(api, change)) {
             is ApiResult.Success -> ApiResult.Success(SentChange(change, result.value.id, result.value.toCached()))
             is ApiResult.Failure -> result
         }
-    }
 
     /** A captured Stop may already have reached the server even when its reply was lost. */
-    suspend fun capturedStop(api: TogglApiClient, change: PendingChange): ApiResult<SentChange> {
+    suspend fun capturedStop(api: TokklApi, change: PendingChange): ApiResult<SentChange> {
         if (change.maybeSent) {
             when (val found = stoppedOnServer(api, change)) {
                 is ApiResult.Success -> if (found.value) {
@@ -59,16 +48,7 @@ internal class ChangeTries(
             }
         }
         store.maybeSent(change, true)
-        val request = change.request(api.server, allDay.offered())
-        return when (
-            val result = api.send(
-                request.method,
-                request.url,
-                request.body,
-                ServerTimeEntry.serializer(),
-                resend = false,
-            )
-        ) {
+        return when (val result = sendOnce(api, change)) {
             is ApiResult.Success -> if (result.value.matchesStop(change)) {
                 ApiResult.Success(
                     SentChange(change, result.value.id, if (change.shortStop) null else result.value.toCached()),
@@ -82,13 +62,30 @@ internal class ChangeTries(
     }
 
     /**
+     * Sends [change] once: an update as a PUT with every field, as [body] gives them; a Stop with
+     * its captured instant as a PATCH, and a legacy one without it as a PUT, which ends a running
+     * entry, never a no-time one; and a restore as a POST that Tokkl reads nothing from. Creates
+     * and deletes go through [create] and [delete].
+     */
+    private suspend fun sendOnce(api: TokklApi, change: PendingChange): ApiResult<ServerTimeEntry> =
+        when (change.kind) {
+            ChangeKind.RESTORE -> api.entries.restore(change.entryId, resend = false)
+
+            ChangeKind.STOP -> change.capturedStop?.let {
+                api.entries.stop(change.workspaceId, change.entryId, it.truncatedTo(ChronoUnit.SECONDS))
+            } ?: api.entries.update(change.workspaceId, change.entryId, change.body(allDay = false))
+
+            else -> api.entries.update(change.workspaceId, change.entryId, change.body(allDay.offered()))
+        }
+
+    /**
      * Posts the queued create [queued] once. Before posting it, marks it [PendingChange.maybeSent]
      * on disk, and clears the mark when a failure shows the server stored nothing, such as a 4xx or
      * no route. Neither Tokkl nor Toggl takes an idempotency key on a create, so before posting a
      * marked create again it reads the entries around its start ([earlierCopy]), and the entry an
      * earlier post made stands for it instead. A start goes as [endBeforeALaterTimer] has it.
      */
-    suspend fun create(api: TogglApiClient, queued: PendingChange): ApiResult<SentChange> {
+    suspend fun create(api: TokklApi, queued: PendingChange): ApiResult<SentChange> {
         if (queued.maybeSent) {
             when (val found = earlierCopy(api, queued, spans, store)) {
                 is ApiResult.Success -> found.value?.let {
@@ -109,16 +106,7 @@ internal class ChangeTries(
             queued
         }
         if (!change.maybeSent) store.maybeSent(change, true)
-        val request = change.request(api.server, allDay.offered())
-        return when (
-            val result = api.send(
-                request.method,
-                request.url,
-                request.body,
-                ServerTimeEntry.serializer(),
-                resend = false,
-            )
-        ) {
+        return when (val result = api.entries.create(change.workspaceId, change.body(allDay.offered()))) {
             is ApiResult.Success -> ApiResult.Success(SentChange(change, result.value.id, result.value.toCached()))
 
             is ApiResult.Failure -> {
@@ -136,10 +124,9 @@ internal class ChangeTries(
      * clears when another failure shows that the server deleted nothing. Once a try may have
      * reached the server, the mark stays whatever later tries get, so Undo goes through the server.
      */
-    suspend fun delete(api: TogglApiClient, change: PendingChange): ApiResult<SentChange>? {
+    suspend fun delete(api: TokklApi, change: PendingChange): ApiResult<SentChange>? {
         if (!store.maybeSent(change, true)) return null
-        val request = change.request(api.server, allDay.offered())
-        return when (val result = api.sendNoContent(request.method, request.url, request.body, resend = false)) {
+        return when (val result = api.entries.delete(change.workspaceId, change.entryId)) {
             is ApiResult.Success -> ApiResult.Success(SentChange(change, change.entryId, entry = null))
 
             is ApiResult.Failure -> when {
@@ -165,9 +152,8 @@ internal class ChangeTries(
      * the later timer keeps running ([ChangeStore.endBefore]). Otherwise the start goes as queued,
      * and the server stops an earlier timer itself.
      */
-    private suspend fun endBeforeALaterTimer(api: TogglApiClient, start: PendingChange): ApiResult<PendingChange> {
-        val current = api.get(api.server.api("me", "time_entries", "current"), ServerTimeEntry.serializer().nullable)
-        val running = when (current) {
+    private suspend fun endBeforeALaterTimer(api: TokklApi, start: PendingChange): ApiResult<PendingChange> {
+        val running = when (val current = api.entries.current()) {
             is ApiResult.Success -> current.value?.toCached()
             is ApiResult.Failure -> return current
         }

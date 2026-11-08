@@ -4,9 +4,7 @@ import android.database.sqlite.SQLiteException
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.api.HttpMethod
-import com.github.e0ipso.tokkl.api.ServerTimeEntry
-import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.capabilities.CapabilityCheck
 import com.github.e0ipso.tokkl.platform.SingleFlight
 import com.github.e0ipso.tokkl.session.AccountDataOwner
@@ -25,7 +23,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.JsonObject
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
@@ -351,40 +348,36 @@ class ChangeSender(
     }
 
     /** Settles [queued], which the server refused with [error], after [sent] changes went out. */
-    private suspend fun settleRefused(
-        api: TogglApiClient,
-        queued: PendingChange,
-        error: ApiError,
-        sent: Int,
-    ): RefusalStep = when (val refused = refusal(api, queued, error)) {
-        is Refusal.Wait -> {
-            val waiting = refused.error
-            RefusalStep.Stop(
-                if (waiting is ApiError.RateLimited) waitOut(sent, waiting) else Outcome.Stopped(sent, waiting),
-            )
-        }
+    private suspend fun settleRefused(api: TokklApi, queued: PendingChange, error: ApiError, sent: Int): RefusalStep =
+        when (val refused = refusal(api, queued, error)) {
+            is Refusal.Wait -> {
+                val waiting = refused.error
+                RefusalStep.Stop(
+                    if (waiting is ApiError.RateLimited) waitOut(sent, waiting) else Outcome.Stopped(sent, waiting),
+                )
+            }
 
-        Refusal.SignInAgain -> {
-            mutableSignInNeeded.value = true
-            RefusalStep.Stop(Outcome.Stopped(sent, ApiError.AuthFailed))
-        }
+            Refusal.SignInAgain -> {
+                mutableSignInNeeded.value = true
+                RefusalStep.Stop(Outcome.Stopped(sent, ApiError.AuthFailed))
+            }
 
-        Refusal.AlreadyDone -> {
-            store.sent(queued, queued.entryId, answer = null)
-            RefusalStep.Next(1)
-        }
+            Refusal.AlreadyDone -> {
+                store.sent(queued, queued.entryId, answer = null)
+                RefusalStep.Next(1)
+            }
 
-        Refusal.EntryGone -> {
-            val discarded = store.discardEntry(queued)
-            if (discarded > 0) events.discarded(discarded)
-            RefusalStep.Next(discarded)
-        }
+            Refusal.EntryGone -> {
+                val discarded = store.discardEntry(queued)
+                if (discarded > 0) events.discarded(discarded)
+                RefusalStep.Next(discarded)
+            }
 
-        is Refusal.Hold -> {
-            store.hold(queued, refused.reason)
-            RefusalStep.Next(0)
+            is Refusal.Hold -> {
+                store.hold(queued, refused.reason)
+                RefusalStep.Next(0)
+            }
         }
-    }
 
     /** Waits out the server's rate limit [error] before the next send. */
     private fun waitOut(sent: Int, error: ApiError.RateLimited): Outcome {
@@ -402,7 +395,7 @@ class ChangeSender(
     }
 
     /** Sends [change], or returns null when it left the queue before it went out. */
-    private suspend fun send(api: TogglApiClient, change: PendingChange): ApiResult<SentChange>? {
+    private suspend fun send(api: TokklApi, change: PendingChange): ApiResult<SentChange>? {
         if (change.kind == ChangeKind.CREATE) return tries.create(api, change)
         if (change.kind == ChangeKind.DELETE) return deletes.withLock { tries.delete(api, change) }
         if (change.kind == ChangeKind.STOP && change.capturedStop != null) return tries.capturedStop(api, change)
@@ -433,16 +426,7 @@ class ChangeSender(
     /** Asks the server to restore its entry [serverId], and records the answer. */
     private suspend fun restore(serverId: Long): UndoOutcome {
         val api = client() ?: return UndoOutcome.NeedsServer
-        val url = api.server.app("time_entries", serverId.toString(), "restore")
-        // OkHttp sends a POST only with a body. Tokkl reads none.
-        return when (
-            val result = api.send(
-                HttpMethod.POST,
-                url,
-                JsonObject(emptyMap()),
-                ServerTimeEntry.serializer(),
-            )
-        ) {
+        return when (val result = api.entries.restore(serverId, resend = true)) {
             is ApiResult.Success -> {
                 store.restored(serverId, result.value.toCached())
                 UndoOutcome.Restored

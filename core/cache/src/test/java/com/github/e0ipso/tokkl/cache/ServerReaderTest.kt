@@ -7,7 +7,7 @@ import com.github.e0ipso.tokkl.api.Me
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
-import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.session.AccountRefresh
@@ -41,7 +41,7 @@ class ServerReaderTest {
     private val testApi = TestApi(null)
 
     private val server = MockWebServer()
-    private lateinit var client: TogglApiClient
+    private lateinit var client: TokklApi
     private val answers = mutableMapOf<String, MockResponse>()
 
     @Before
@@ -54,7 +54,7 @@ class ServerReaderTest {
         val configured = ServerUrl.parse(server.url("/").toString())!!
         testApi.stored = configured
         testApi.trust = InMemoryServerTrust(configured)
-        client = testApi.client(configured, ApiCredentials.ApiToken("tok-123"))
+        client = testApi.api(configured, ApiCredentials.ApiToken("tok-123"))
     }
 
     @After

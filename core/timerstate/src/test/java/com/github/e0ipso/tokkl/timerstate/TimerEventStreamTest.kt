@@ -4,6 +4,7 @@ import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiJson
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.HttpTokklApi
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.ServerUrl
@@ -213,12 +214,12 @@ class TimerEventStreamTest {
     fun theStreamUsesTheAccountsServerPathAndCredentialWithNoReadTimeout() = runTest {
         // Same settings as the shared client, with a read timeout far shorter than the body's delay.
         val impatient = testApi.http.instance.newBuilder().readTimeout(200, TimeUnit.MILLISECONDS).build()
-        val api = testApi.client(url, credentials, impatient)
+        val client = testApi.client(url, credentials, impatient)
         server.enqueue(eventStream(timerEvent(state(12))).bodyDelay(600, TimeUnit.MILLISECONDS).build())
         // The same delay times out a plain request on that client.
         server.enqueue(eventStream("{}").bodyDelay(600, TimeUnit.MILLISECONDS).build())
 
-        val end = run { holdTimerEvents(api, holder, link.link) }
+        val end = run { holdTimerEvents(HttpTokklApi(client), holder, link.link) }
 
         assertEquals(StreamEnd.Ended, end)
         assertEquals(12L, holder.state.value?.state?.revision)
@@ -226,7 +227,7 @@ class TimerEventStreamTest {
         val request = server.takeRequest()
         assertEquals("GET" to "/tokkl/api/app/timer/events", request.method to request.url.encodedPath)
         assertEquals(credentials.authorizationHeader, request.headers["Authorization"])
-        val plain = run { api.get(url.app("timer"), JsonObject.serializer()) }
+        val plain = run { client.get(url.app("timer"), JsonObject.serializer()) }
         assertTrue(
             plain.toString(),
             plain is ApiResult.Failure && (plain.error as? ApiError.Network)?.cause is SocketTimeoutException,
@@ -235,7 +236,7 @@ class TimerEventStreamTest {
 
     @Test
     fun aRefusedCredentialEndsTheStreamBeforeAnyEventAndOtherFailuresRetry() = runTest {
-        val api = testApi.client(url, credentials)
+        val api = testApi.api(url, credentials)
         server.enqueue(answer(403, "application/json", "\"Incorrect username and/or password\""))
         server.enqueue(answer(401, "text/html", "<p>Unauthorized</p>"))
         server.enqueue(answer(502, "text/html", "<p>Bad gateway</p>"))

@@ -5,7 +5,7 @@ import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.Me
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
-import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.CurrentEntryCache
 import com.github.e0ipso.tokkl.cache.RunningCheckStart
@@ -34,7 +34,7 @@ class CapabilitiesTest {
     private val testApi = TestApi(null)
 
     private val server = MockWebServer()
-    private lateinit var client: TogglApiClient
+    private lateinit var client: TokklApi
     private val answers = mutableMapOf<String, MockResponse>()
     private val saved = mutableListOf<Capabilities>()
     private val timerStates = TimerStateSource(
@@ -55,7 +55,7 @@ class CapabilitiesTest {
         val configured = ServerUrl.parse(server.url("/").toString())!!
         testApi.stored = configured
         testApi.trust = InMemoryServerTrust(configured)
-        client = testApi.client(configured, ApiCredentials.ApiToken("tok-123"))
+        client = testApi.api(configured, ApiCredentials.ApiToken("tok-123"))
     }
 
     @After
@@ -297,7 +297,7 @@ class CapabilitiesTest {
     fun anUnreachableServerKeepsAPresentFlagForAnOfflinePhone() {
         val unreachable = ServerUrl.parse("http://127.0.0.1:1/")!!
         testApi.trust = InMemoryServerTrust(unreachable)
-        val offline = testApi.client(unreachable, ApiCredentials.ApiToken("tok-123"))
+        val offline = testApi.api(unreachable, ApiCredentials.ApiToken("tok-123"))
 
         assertTrue(source(initial = ALL).refresh(offline, me(TOKKL_ME)).timerState)
     }
@@ -331,7 +331,7 @@ class CapabilitiesTest {
         assertNull("a retired holder takes no state", timerStates.state.value)
     }
 
-    private fun CapabilitiesSource.refresh(api: TogglApiClient, me: Me) = runBlocking { refresh(api, me, timerStates) }
+    private fun CapabilitiesSource.refresh(api: TokklApi, me: Me) = runBlocking { refresh(api, me, timerStates) }
 
     private fun MockWebServer.requests(): List<String> = List(requestCount) { takeRequest().url.encodedPath }
 

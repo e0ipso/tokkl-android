@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.reports
 
 import androidx.compose.runtime.Immutable
+import com.github.e0ipso.tokkl.api.ReportFilter
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.CachedClient
 import com.github.e0ipso.tokkl.cache.CachedProject
@@ -9,11 +10,6 @@ import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.session.AccountSettings
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
-import kotlinx.serialization.json.JsonNull
-import kotlinx.serialization.json.JsonObjectBuilder
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.put
-import kotlinx.serialization.json.putJsonArray
 
 /** Which entries the billable filter keeps, the choices of the web app's Billable select. */
 enum class BillableFilter {
@@ -51,26 +47,24 @@ data class ReportFilters(
     fun withoutNegation(): ReportFilters = copy(projectsNot = false, clientsNot = false, tagsNot = false)
 
     /**
-     * Adds the fields of the web app's `filterBody` to a Reports API v3 request [body]. Tokkl reads
-     * them the same way on its v3 endpoints and on the web app's own, and so does Toggl Track,
-     * which also takes null for "without". A negated list goes in its `exclude_` field, as the web
-     * app's `idFilter` sends it; Toggl Track has no such field.
+     * These filters as a report request sends them, the fields of the web app's `filterBody`.
+     * Tokkl reads them the same way on its v3 endpoints and on the web app's own, and so does
+     * Toggl Track, which also takes null for "without". A negated list goes in its `exclude_`
+     * field, as the web app's `idFilter` sends it; Toggl Track has no such field.
      */
-    internal fun writeTo(body: JsonObjectBuilder) {
-        writeIds(body, if (projectsNot) "exclude_project_ids" else "project_ids", projects)
-        writeIds(body, if (clientsNot) "exclude_client_ids" else "client_ids", clients)
-        writeIds(body, if (tagsNot) "exclude_tag_ids" else "tag_ids", tags)
-        when (billable) {
-            BillableFilter.ALL -> Unit
-            BillableFilter.BILLABLE -> body.put("billable", true)
-            BillableFilter.NON_BILLABLE -> body.put("billable", false)
-        }
-    }
-
-    private fun writeIds(body: JsonObjectBuilder, field: String, ids: List<Long?>) {
-        if (ids.isEmpty()) return
-        body.putJsonArray(field) { for (id in ids) add(if (id == null) JsonNull else JsonPrimitive(id)) }
-    }
+    internal fun apiFilter(): ReportFilter = ReportFilter(
+        projectIds = projects,
+        excludeProjects = projectsNot,
+        clientIds = clients,
+        excludeClients = clientsNot,
+        tagIds = tags,
+        excludeTags = tagsNot,
+        billable = when (billable) {
+            BillableFilter.ALL -> null
+            BillableFilter.BILLABLE -> true
+            BillableFilter.NON_BILLABLE -> false
+        },
+    )
 }
 
 /** [this] with [id] added when it was not in it, or without it when it was. */

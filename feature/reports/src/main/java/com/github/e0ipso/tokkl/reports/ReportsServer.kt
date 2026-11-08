@@ -2,15 +2,15 @@ package com.github.e0ipso.tokkl.reports
 
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.api.HttpMethod
+import com.github.e0ipso.tokkl.api.AppSummaryBody
+import com.github.e0ipso.tokkl.api.DetailedSearchBody
 import com.github.e0ipso.tokkl.api.HttpStatus
-import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.TokklApi
+import com.github.e0ipso.tokkl.api.WeeklyReportBody
 import com.github.e0ipso.tokkl.api.WithHeaders
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.OffsetDateTime
@@ -34,21 +34,16 @@ data class ReportWorkspace(
  * The Reports API v3 calls behind the reports, on the configured server. Each call suspends
  * while its request runs. Nothing here stores what the server sends.
  */
-class ReportsServer(private val api: TogglApiClient) {
+class ReportsServer(private val api: TokklApi) {
 
     /** The account's default workspace from `GET /api/v9/me`, with its rounding from `GET /api/v9/workspaces/{id}`. */
     suspend fun workspace(): ApiResult<ReportWorkspace> {
-        val user = when (val answer = api.get(api.server.api("me"), ReportUser.serializer())) {
+        val user = when (val answer = api.account.me(ReportUser.serializer())) {
             is ApiResult.Success -> answer.value
             is ApiResult.Failure -> return answer
         }
         val id = user.defaultWorkspaceId
-        return when (
-            val answer = api.get(
-                api.server.api("workspaces", id.toString()),
-                WorkspaceRounding.serializer(),
-            )
-        ) {
+        return when (val answer = api.account.workspace(id, WorkspaceRounding.serializer())) {
             is ApiResult.Success -> ApiResult.Success(
                 ReportWorkspace(id, answer.value.rounding, answer.value.roundingMinutes, user.role != null),
             )
@@ -71,21 +66,14 @@ class ReportsServer(private val api: TogglApiClient) {
         filters: ReportFilters = ReportFilters(),
     ): ApiResult<SummaryReport> {
         if (workspace.appSummaryCandidate) {
-            val body = buildJsonObject {
-                put("start_date", range.from.toString())
-                put("end_date", range.to.toString())
-                put("grouping", "projects")
-                put("sub_grouping", "projects")
-                filters.writeTo(this)
-            }
-            when (
-                val answer = api.send(
-                    HttpMethod.POST,
-                    api.server.app("report"),
-                    body,
-                    kotlinx.serialization.json.JsonObject.serializer(),
-                )
-            ) {
+            val body = AppSummaryBody(
+                startDate = range.from,
+                endDate = range.to,
+                grouping = "projects",
+                subGrouping = "projects",
+                filter = filters.apiFilter(),
+            )
+            when (val answer = api.reports.appSummary(body)) {
                 is ApiResult.Success -> return decodeAppSummary(answer.value)
 
                 is ApiResult.Failure -> {
@@ -179,15 +167,14 @@ class ReportsServer(private val api: TogglApiClient) {
         weekStart: LocalDate,
         filters: ReportFilters = ReportFilters(),
     ): ApiResult<List<WeeklyRow>> {
-        val url = api.server.reports("workspace", workspace.id.toString(), "weekly", "time_entries")
-        val body = buildJsonObject {
-            put("start_date", weekStart.toString())
-            put("end_date", weekStart.plusDays(DAYS_IN_WEEK - 1L).toString())
-            put("rounding", workspace.rounding)
-            put("rounding_minutes", workspace.roundingMinutes)
-            filters.writeTo(this)
-        }
-        val rows = when (val answer = api.send(HttpMethod.POST, url, body, WEEKLY_ROWS)) {
+        val body = WeeklyReportBody(
+            startDate = weekStart,
+            endDate = weekStart.plusDays(DAYS_IN_WEEK - 1L),
+            rounding = workspace.rounding,
+            roundingMinutes = workspace.roundingMinutes,
+            filter = filters.apiFilter(),
+        )
+        val rows = when (val answer = api.reports.weekly(workspace.id, body, WEEKLY_ROWS)) {
             is ApiResult.Success -> answer.value
             is ApiResult.Failure -> return answer
         }
@@ -220,19 +207,18 @@ class ReportsServer(private val api: TogglApiClient) {
         pageSize: Int,
         firstRow: Int,
     ): ApiResult<WithHeaders<List<DetailedRow>>> {
-        val url = api.server.reports("workspace", workspace.id.toString(), "search", "time_entries")
-        val body = buildJsonObject {
-            put("start_date", range.from.toString())
-            put("end_date", range.to.toString())
-            put("rounding", workspace.rounding)
-            put("rounding_minutes", workspace.roundingMinutes)
-            put("order_by", "date")
-            put("order_dir", direction)
-            put("page_size", pageSize)
-            put("first_row_number", firstRow)
-            filters.writeTo(this)
-        }
-        return api.sendWithHeaders(HttpMethod.POST, url, body, ROWS)
+        val body = DetailedSearchBody(
+            startDate = range.from,
+            endDate = range.to,
+            rounding = workspace.rounding,
+            roundingMinutes = workspace.roundingMinutes,
+            orderBy = "date",
+            orderDir = direction,
+            pageSize = pageSize,
+            firstRowNumber = firstRow,
+            filter = filters.apiFilter(),
+        )
+        return api.reports.search(workspace.id, body, ROWS)
     }
 
     /**

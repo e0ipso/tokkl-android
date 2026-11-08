@@ -3,12 +3,10 @@ package com.github.e0ipso.tokkl.calendar
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.HistoryWindow
 import com.github.e0ipso.tokkl.cache.toCached
 import com.github.e0ipso.tokkl.time.AccountTime
-import kotlinx.serialization.builtins.ListSerializer
 import java.time.Instant
 import java.time.LocalDate
 /** The entries that start before [to] and run past [from], or still run. */
@@ -43,11 +41,7 @@ internal fun spanOf(time: AccountTime, weekStart: LocalDate, today: LocalDate): 
  */
 internal suspend fun fetchWeek(client: ApiClientProvider, span: WeekSpan): ServerWeek {
     val api = client() ?: return ServerWeek(emptyList(), WeekSource.AuthFailed)
-    val url = api.server.api("me", "time_entries").newBuilder()
-        .addQueryParameter("start_date", (span.from - CalendarViewModel.LONGEST_ENTRY).toString())
-        .addQueryParameter("end_date", span.to.toString())
-        .build()
-    return when (val answer = api.get(url, ListSerializer(ServerTimeEntry.serializer()))) {
+    return when (val answer = api.entries.list(span.from - CalendarViewModel.LONGEST_ENTRY, span.to)) {
         is ApiResult.Failure -> ServerWeek(emptyList(), statusOf(answer.error))
 
         is ApiResult.Success -> ServerWeek(

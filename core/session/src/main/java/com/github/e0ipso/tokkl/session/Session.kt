@@ -2,10 +2,12 @@ package com.github.e0ipso.tokkl.session
 
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiCredentials
+import com.github.e0ipso.tokkl.api.HttpTokklApi
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.api.SuccessListener
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.api.TrustListener
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
 import com.github.e0ipso.tokkl.storage.ClearableStore
@@ -17,19 +19,19 @@ import kotlin.coroutines.CoroutineContext
  * The account the app is signed in to: the configured server and its API token.
  * The token goes only through [ApiTokenStore]; no password is ever stored.
  *
- * The first [client] or [isSignedIn] reads the stores, with a Keystore decrypt, and keeps the
- * signed-in client in memory, so later calls touch neither the disk nor the Keystore. [save] and
+ * The first [api] or [isSignedIn] reads the stores, with a Keystore decrypt, and keeps the
+ * signed-in API in memory, so later calls touch neither the disk nor the Keystore. [save] and
  * [clear] drop what was kept, so the next call reads the stores again. A read that fails on the
  * disk or the Keystore keeps nothing, and the next call tries again. Make the first call off the
  * main thread.
  *
  * @param servers the configured server, a [ServerConfigStore] in the app.
  * @param tokens the API token, an [ApiTokenStore] in the app.
- * @param http the shared HTTP client, which every [client] sends through.
- * @param io where every [client] runs its calls.
- * @param trustListener hears every request of [client] that the trust checks
+ * @param http the shared HTTP client, which every [api] sends through.
+ * @param io where every [api] runs its calls.
+ * @param trustListener hears every request of [api] that the trust checks
  *   refuse, so the app can prompt from any screen.
- * @param successListener hears every 2xx answer to [client]'s requests.
+ * @param successListener hears every 2xx answer to [api]'s requests.
  * @param exports the report exports' account, which every change of account invalidates.
  * @param exportFiles the finished exports, which every change of account deletes.
  */
@@ -52,26 +54,28 @@ class Session(
 
     /**
      * What the last read of the stores found: the stored server and token, or null when signed
-     * out. The client comes on first use, so [isSignedIn] does not build the HTTP client.
+     * out. The API comes on first use, so [isSignedIn] does not build the HTTP client.
      */
     private inner class Read(private val server: ServerUrl?, private val token: String?) {
         val signedIn: Boolean get() = server != null && token != null
 
-        val client: TogglApiClient? by lazy {
+        val api: TokklApi? by lazy {
             if (server == null || token == null) return@lazy null
-            TogglApiClient(
-                server,
-                ApiCredentials.ApiToken(token),
-                http.instance,
-                trustListener = trustListener,
-                successListener = successListener,
-                io = io,
+            HttpTokklApi(
+                TogglApiClient(
+                    server,
+                    ApiCredentials.ApiToken(token),
+                    http.instance,
+                    trustListener = trustListener,
+                    successListener = successListener,
+                    io = io,
+                ),
             )
         }
     }
 
     /**
-     * Guards [generation]. A JVM lock, not a Mutex, because client() is read from any thread
+     * Guards [generation]. A JVM lock, not a Mutex, because api() is read from any thread
      * without suspending.
      */
     private val lock = Any()
@@ -90,12 +94,12 @@ class Session(
     override fun isSignedIn(): Boolean = read()?.signedIn == true
 
     /**
-     * The API client of the signed-in account, or null when signed out. A Keystore or disk
-     * failure counts as signed out, as in [isSignedIn].
+     * The API of the signed-in account, or null when signed out. A Keystore or disk failure
+     * counts as signed out, as in [isSignedIn].
      */
-    fun client(): TogglApiClient? = read()?.client
+    fun api(): TokklApi? = read()?.api
 
-    override fun invoke(): TogglApiClient? = client()
+    override fun invoke(): TokklApi? = api()
 
     /** The kept read, or a new one, which is kept unless the account changed meanwhile. Null on a failure. */
     private fun read(): Read? {
@@ -113,7 +117,7 @@ class Session(
         return read
     }
 
-    /** Drops the kept client, and any read that started before this call. */
+    /** Drops the kept API, and any read that started before this call. */
     private fun forgetKept() {
         synchronized(lock) {
             generation++

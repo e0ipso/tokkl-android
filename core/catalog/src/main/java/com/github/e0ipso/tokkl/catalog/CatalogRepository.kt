@@ -3,7 +3,7 @@ package com.github.e0ipso.tokkl.catalog
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.TokklApi
 
 /**
  * The server behind a page that manages one kind of the account's items: which workspace the page
@@ -19,13 +19,13 @@ interface CatalogRepository<D> {
 }
 
 /**
- * The signed-in account's [client], as the repositories over the server use it: every call fails
- * with [ApiError.AuthFailed] while signed out, before any request.
+ * The signed-in account's API from [client], as the repositories over the server use it: every
+ * call fails with [ApiError.AuthFailed] while signed out, before any request.
  */
 class SignedInApi(private val client: ApiClientProvider) {
 
-    /** [call] with the signed-in account's client, or [ApiError.AuthFailed] when signed out. */
-    suspend fun <R> call(call: suspend (TogglApiClient) -> ApiResult<R>): ApiResult<R> {
+    /** [call] with the signed-in account's API, or [ApiError.AuthFailed] when signed out. */
+    suspend fun <R> call(call: suspend (TokklApi) -> ApiResult<R>): ApiResult<R> {
         val api = client() ?: return ApiResult.Failure(ApiError.AuthFailed)
         return call(api)
     }

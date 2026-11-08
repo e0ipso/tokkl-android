@@ -2,7 +2,7 @@ package com.github.e0ipso.tokkl.capabilities
 
 import com.github.e0ipso.tokkl.api.Me
 import com.github.e0ipso.tokkl.api.TimerState
-import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.storage.ValueStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -66,7 +66,7 @@ class CapabilitiesSource(private val store: ValueStore<Capabilities>) {
      * process. Blocks the thread while another change runs, and writes the disk, so call it on the
      * IO dispatcher. Returns the new flags.
      */
-    suspend fun <R> refresh(api: TogglApiClient, me: Me, timerState: ProbedTimerState<R>): Capabilities {
+    suspend fun <R> refresh(api: TokklApi, me: Me, timerState: ProbedTimerState<R>): Capabilities {
         changing.acquire()
         try {
             val trash = probeTrash(api)

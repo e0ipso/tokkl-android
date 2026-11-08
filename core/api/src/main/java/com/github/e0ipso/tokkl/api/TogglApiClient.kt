@@ -19,9 +19,10 @@ import java.util.concurrent.TimeUnit
 import kotlin.coroutines.CoroutineContext
 
 /**
- * Client for the Toggl Track API v9 and Reports API v3, as served by Tokkl or
- * by Toggl Track. Build endpoint URLs with [server], then call [get], [send],
- * [sendRefusable], [sendWithHeaders] or [sendNoContent]. Each call suspends
+ * The transport under [HttpTokklApi], for the Toggl Track API v9 and Reports API v3, as served by
+ * Tokkl or by Toggl Track. [HttpTokklApi] builds each endpoint URL with [server] and calls [get],
+ * [send], [sendRefusable], [sendWithHeaders], [sendNoContent], [downloadCsv] or [stream]; the
+ * app's other code calls [TokklApi] and never this class. Each call suspends
  * while OkHttp runs it on [io], so call it from any thread. Cancelling the
  * caller cancels the OkHttp call, which then ends at once instead of waiting
  * for the server: the call fails with the coroutine's cancellation, not with

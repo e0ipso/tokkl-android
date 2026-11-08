@@ -4,7 +4,7 @@ import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
-import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.api.TrashEntry
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import kotlinx.coroutines.CoroutineScope
@@ -32,7 +32,7 @@ class TrashViewModelTest {
     private val testApi = TestApi(null)
 
     private val server = MockWebServer()
-    private lateinit var client: TogglApiClient
+    private lateinit var client: TokklApi
     private val answers = mutableMapOf<String, MockResponse>()
     private val requests = mutableListOf<String>()
     private var cacheRefreshes = 0
@@ -64,7 +64,7 @@ class TrashViewModelTest {
         val configured = ServerUrl.parse(server.url("/").toString())!!
         testApi.stored = configured
         testApi.trust = InMemoryServerTrust(configured)
-        client = testApi.client(configured, ApiCredentials.ApiToken("tok-123"))
+        client = testApi.api(configured, ApiCredentials.ApiToken("tok-123"))
     }
 
     @After

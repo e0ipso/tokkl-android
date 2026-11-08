@@ -2,9 +2,8 @@ package com.github.e0ipso.tokkl.cache
 
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
-import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.time.jsTrim
-import kotlinx.serialization.builtins.ListSerializer
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -18,17 +17,15 @@ import java.time.temporal.ChronoUnit
  * start.
  */
 internal suspend fun earlierCopy(
-    api: TogglApiClient,
+    api: TokklApi,
     create: PendingChange,
     spans: ServerSpans,
     store: ChangeStore,
 ): ApiResult<ServerTimeEntry?> {
     val start = create.start.truncatedTo(ChronoUnit.SECONDS)
-    val url = api.server.api("me", "time_entries").newBuilder()
-        .addQueryParameter("start_date", start.minus(ChangeSender.LOOKUP_MARGIN).toString())
-        .addQueryParameter("end_date", start.plus(ChangeSender.LOOKUP_MARGIN).toString())
-        .build()
-    val entries = when (val result = api.get(url, ListSerializer(ServerTimeEntry.serializer()))) {
+    val entries = when (
+        val result = api.entries.list(start.minus(ChangeSender.LOOKUP_MARGIN), start.plus(ChangeSender.LOOKUP_MARGIN))
+    ) {
         is ApiResult.Success -> result.value
         is ApiResult.Failure -> return result
     }

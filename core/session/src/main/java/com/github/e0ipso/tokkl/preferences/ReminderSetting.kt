@@ -2,7 +2,7 @@ package com.github.e0ipso.tokkl.preferences
 
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.api.HttpMethod
+import com.github.e0ipso.tokkl.api.ReminderChange
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountRefreshListener
 import com.github.e0ipso.tokkl.session.AccountRefreshed
@@ -20,9 +20,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
-import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.doubleOrNull
-import kotlinx.serialization.json.put
 import java.io.IOException
 import kotlin.coroutines.CoroutineContext
 
@@ -31,8 +29,8 @@ data class ReminderPreferences(val enabled: Boolean = true, val hours: Int = 8) 
     fun clamped() = copy(hours = hours.coerceIn(HOURS))
     companion object {
         val HOURS = 1..168
-        const val ENABLED_KEY = "long_timer_reminder_enabled"
-        const val HOURS_KEY = "long_timer_reminder_hours"
+        const val ENABLED_KEY = ReminderChange.ENABLED
+        const val HOURS_KEY = ReminderChange.HOURS
     }
 }
 
@@ -131,12 +129,7 @@ class ReminderSetting(
             lock,
         ) { loaded.state.value.takeIf { expected == generation && loaded.unsent && loaded.shared } } ?: return@withLock
         val api = client() ?: return@withLock
-        val result = api.send(
-            HttpMethod.POST,
-            api.server.api("me", "preferences"),
-            values.body(),
-            JsonObject.serializer(),
-        )
+        val result = api.account.savePreferences(values.body(), JsonObject.serializer())
         if (result is ApiResult.Success) {
             synchronized(lock) {
                 if (expected == generation && loaded.state.value == values) loaded.unsent = false
@@ -155,10 +148,7 @@ class ReminderSetting(
     }
 }
 
-internal fun ReminderPreferences.body() = buildJsonObject {
-    put(ReminderPreferences.ENABLED_KEY, enabled)
-    put(ReminderPreferences.HOURS_KEY, clamped().hours)
-}
+internal fun ReminderPreferences.body() = ReminderChange(enabled, clamped().hours)
 
 fun MePreferences.reminderPreferences(): ReminderPreferences {
     val enabled =

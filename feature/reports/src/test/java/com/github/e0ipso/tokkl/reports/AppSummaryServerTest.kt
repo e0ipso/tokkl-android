@@ -1,8 +1,8 @@
 package com.github.e0ipso.tokkl.reports
 
+import com.github.e0ipso.tokkl.api.ApiCallCancellation
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ApiError
-import com.github.e0ipso.tokkl.api.ApiJson
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
@@ -11,7 +11,6 @@ import com.github.e0ipso.tokkl.capabilities.ReportCsvKind
 import com.github.e0ipso.tokkl.time.DurationFormat
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import mockwebserver3.Dispatcher
@@ -20,10 +19,11 @@ import mockwebserver3.MockWebServer
 import mockwebserver3.RecordedRequest
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.io.ByteArrayOutputStream
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.ZoneId
@@ -51,7 +51,7 @@ class AppSummaryServerTest {
         val url = ServerUrl.parse(http.url("/prefix/tokkl/").toString())!!
         testApi.stored = url
         testApi.trust = InMemoryServerTrust(url)
-        server = ReportsServer(testApi.client(url, ApiCredentials.ApiToken("test-token")))
+        server = ReportsServer(testApi.api(url, ApiCredentials.ApiToken("test-token")))
     }
 
     @After
@@ -226,23 +226,23 @@ class AppSummaryServerTest {
             )
             val current = old.copy(workspace = workspace)
             assertEquals(old.body(), current.body())
-            assertTrue(current.body().containsKey("rounding"))
+            assertEquals(workspace.roundingMinutes, current.body().roundingMinutes)
         }
         assertEquals(null, ReportTab.WEEKLY.csvKind())
-        assertFalse(
+        assertNull(
             ReportCsvRequest(
                 ReportCsvKind.DETAILED,
                 range,
                 filters,
                 workspace,
                 DurationFormat.CLASSIC,
-            ).body().containsKey("grouping"),
+            ).body().grouping,
         )
     }
 
     /** The exact bytes of each CSV export's body, in the order the web app sends its fields. */
     @Test
-    fun csvExportsSendTheseBodies() {
+    fun csvExportsSendTheseBodies() = runTest {
         val dates = """"start_date":"2026-10-21","end_date":"2026-10-27""""
         val filtered = """"exclude_project_ids":[null,8],"client_ids":[9,null],"exclude_tag_ids":[10,null],""" +
             """"billable":true"""
@@ -256,10 +256,16 @@ class AppSummaryServerTest {
         assertEquals("""{$dates,$rounded,$sorted}""", csvBody(ReportCsvKind.DETAILED, ReportFilters()))
     }
 
-    private fun csvBody(kind: ReportCsvKind, filters: ReportFilters): String = ApiJson.encodeToString(
-        JsonElement.serializer(),
-        ReportCsvRequest(kind, range, filters, workspace, DurationFormat.CLASSIC).body(),
-    )
+    /** What the export of [kind] with [filters] sends, after checking where it sends it. */
+    private suspend fun csvBody(kind: ReportCsvKind, filters: ReportFilters): String {
+        val request = ReportCsvRequest(kind, range, filters, workspace, DurationFormat.CLASSIC)
+        http.enqueue(MockResponse.Builder().code(200).addHeader("Content-Type", "text/csv").body("a\n").build())
+        val api = testApi.api(checkNotNull(testApi.stored), ApiCredentials.ApiToken("test-token"))
+        api.reports.exportCsv(kind.path, request.body(), ByteArrayOutputStream(), MAX_CSV_BYTES, ApiCallCancellation())
+        val sent = http.takeRequest()
+        assertEquals("POST /prefix/tokkl/api/app/report/${kind.path}.csv", "${sent.method} ${sent.target}")
+        return sent.body!!.utf8()
+    }
 
     private fun json(body: String) = MockResponse.Builder().code(
         200,
@@ -268,6 +274,8 @@ class AppSummaryServerTest {
     private fun success(result: ApiResult<SummaryReport>) = (result as ApiResult.Success).value
 
     private companion object {
+        const val MAX_CSV_BYTES = 1_000L
+
         // Two independently rounded 84-cent entries. Do not derive the expected 168 cents from
         // a rate multiplied by their aggregate duration. The UTC dates become Oct 21 at UTC+14.
         const val FALLBACK_ROWS = """[{"billable":true,"currency":"EUR","billable_amount_in_cents":84,

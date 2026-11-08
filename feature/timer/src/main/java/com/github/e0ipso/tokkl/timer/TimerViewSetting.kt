@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.timer
 
 import com.github.e0ipso.tokkl.api.ApiClientProvider
+import com.github.e0ipso.tokkl.api.TimerViewChange
 import com.github.e0ipso.tokkl.capabilities.CapabilityCheck
 import com.github.e0ipso.tokkl.preferences.PreferenceCodec
 import com.github.e0ipso.tokkl.preferences.StoredPreference
@@ -14,8 +15,6 @@ import com.github.e0ipso.tokkl.storage.ClearableStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 import kotlin.coroutines.CoroutineContext
 
 /** The Timer page's view as the phone keeps it, and whether the server still has to get it. */
@@ -62,7 +61,7 @@ class TimerViewSetting(
         codec = object : PreferenceCodec<TimerView> {
             override fun fromServer(preferences: MePreferences) = preferences.timerView()
 
-            override fun body(value: TimerView) = buildJsonObject { put(PREFERENCE, value.preferenceValue) }
+            override fun body(value: TimerView) = TimerViewChange(value.preferenceValue)
         },
     )
 
@@ -96,7 +95,7 @@ class TimerViewSetting(
 
     internal companion object {
         /** Tokkl's preference key, which ../tokkl/packages/api/src/models/users.ts accepts as list or calendar. */
-        const val PREFERENCE = "timerView"
+        const val PREFERENCE = TimerViewChange.KEY
     }
 }
 

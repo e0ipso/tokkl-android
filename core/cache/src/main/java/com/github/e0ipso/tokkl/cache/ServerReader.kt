@@ -10,10 +10,9 @@ import com.github.e0ipso.tokkl.api.ServerProject
 import com.github.e0ipso.tokkl.api.ServerTag
 import com.github.e0ipso.tokkl.api.ServerTask
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
-import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.session.MePreferences
 import com.github.e0ipso.tokkl.session.accountSettings
-import kotlinx.serialization.builtins.ListSerializer
 import java.time.Clock
 import java.time.Instant
 import java.time.OffsetDateTime
@@ -30,7 +29,7 @@ import java.time.format.DateTimeParseException
  * no-time entries off. Toggl Track leaves the key out too, and has them off already.
  */
 suspend fun readServerSnapshot(
-    api: TogglApiClient,
+    api: TokklApi,
     me: Me,
     preferences: MePreferences?,
     clock: Clock,
@@ -55,16 +54,12 @@ suspend fun readServerSnapshot(
  * `all_day` calls [onAllDayMissing].
  */
 private suspend fun readTimeEntries(
-    api: TogglApiClient,
+    api: TokklApi,
     history: HistoryWindow,
     tokkl: Boolean,
     onAllDayMissing: () -> Unit,
 ): List<CachedTimeEntry>? {
-    val url = api.server.api("me", "time_entries").newBuilder()
-        .addQueryParameter("start_date", history.start.toString())
-        .addQueryParameter("end_date", history.end.toString())
-        .build()
-    val read = api.get(url, ListSerializer(ServerTimeEntry.serializer()))
+    val read = api.entries.list(history.start, history.end)
     val entries = (read as? ApiResult.Success)?.value ?: return null
     if (tokkl && entries.any { it.allDay == null }) onAllDayMissing()
     return entries.mapNotNull { it.toCached() }
