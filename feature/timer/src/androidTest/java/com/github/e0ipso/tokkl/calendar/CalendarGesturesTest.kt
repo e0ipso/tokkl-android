@@ -20,11 +20,13 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.EntryWithSendState
 import com.github.e0ipso.tokkl.feature.timer.R
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryWithSendState
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.DateWords
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -329,18 +331,18 @@ class CalendarGesturesTest {
         val calls = CopyOnWriteArrayList<String>()
 
         override suspend fun create(
-            workspaceId: Long,
+            workspaceId: WorkspaceId,
             fields: EntryFields,
             start: Instant,
             stop: Instant,
             noTimeDay: LocalDate?,
-        ): Long {
+        ): EntryId {
             calls += "create $workspaceId $fields $start $stop"
-            return LOCAL_ID
+            return EntryId(LOCAL_ID)
         }
 
         override suspend fun update(
-            entryId: Long,
+            entryId: EntryId,
             fields: EntryFields,
             start: Instant,
             stop: Instant?,
@@ -350,15 +352,15 @@ class CalendarGesturesTest {
             return true
         }
 
-        override suspend fun start(workspaceId: Long, fields: EntryFields): Long = throw AssertionError(
+        override suspend fun start(workspaceId: WorkspaceId, fields: EntryFields): EntryId = throw AssertionError(
             "the calendar starts no timer",
         )
 
-        override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean = throw AssertionError(
+        override suspend fun stop(entryId: EntryId, fields: EntryFields?): Boolean = throw AssertionError(
             "the calendar stops no timer",
         )
 
-        override suspend fun delete(entryId: Long): Boolean = throw AssertionError("the calendar deletes nothing")
+        override suspend fun delete(entryId: EntryId): Boolean = throw AssertionError("the calendar deletes nothing")
     }
 
     private companion object {
@@ -380,11 +382,16 @@ class CalendarGesturesTest {
         /** A window of medium width, an unfolded foldable or a tablet, where the week shows. */
         val MEDIUM = DpSize(840.dp, 900.dp)
 
-        val SETTINGS = AccountSettings("UTC", DayOfWeek.MONDAY, timeResolutionMinutes = 5.0, defaultWorkspaceId = 7)
+        val SETTINGS = AccountSettings(
+            "UTC",
+            DayOfWeek.MONDAY,
+            timeResolutionMinutes = 5.0,
+            defaultWorkspaceId = WorkspaceId(7),
+        )
 
-        val ENTRY = CachedTimeEntry(
-            id = 21,
-            workspaceId = 7,
+        val ENTRY = TimeEntry(
+            id = EntryId(21),
+            workspaceId = WorkspaceId(7),
             description = "Review the plan",
             projectId = null,
             taskId = null,
@@ -397,9 +404,9 @@ class CalendarGesturesTest {
         val FIELDS = EntryFields(description = "Review the plan")
 
         /** Thursday's no-time entry of three hours. */
-        val ALL_DAY_ENTRY = CachedTimeEntry(
-            id = 22,
-            workspaceId = 7,
+        val ALL_DAY_ENTRY = TimeEntry(
+            id = EntryId(22),
+            workspaceId = WorkspaceId(7),
             description = "Team offsite",
             projectId = null,
             taskId = null,

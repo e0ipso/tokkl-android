@@ -4,6 +4,9 @@ import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
+import com.github.e0ipso.tokkl.model.ClientId
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import kotlinx.coroutines.test.runTest
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
@@ -61,12 +64,12 @@ class ProjectsRequestsTest {
 
     @Test
     fun eachCallSendsItsRequest() = runTest {
-        assertTrue(repository.load(7) is ApiResult.Success)
+        assertTrue(repository.load(WorkspaceId(7)) is ApiResult.Success)
         val shop = ProjectFields("Shop", "#2da608", null, false, null, null, null)
-        assertTrue(repository.create(7, shop, known = setOf(5)) is ApiResult.Success)
-        val website = ProjectFields("Website", "#0b83d9", 9, true, 12.5, "USD", 40.0)
-        assertTrue(repository.update(7, 5, website) is ApiResult.Success)
-        assertTrue(repository.setActive(7, 5, active = false) is ApiResult.Success)
+        assertTrue(repository.create(WorkspaceId(7), shop, known = setOf(ProjectId(5))) is ApiResult.Success)
+        val website = ProjectFields("Website", "#0b83d9", ClientId(9), true, 12.5, "USD", 40.0)
+        assertTrue(repository.update(WorkspaceId(7), ProjectId(5), website) is ApiResult.Success)
+        assertTrue(repository.setActive(WorkspaceId(7), ProjectId(5), active = false) is ApiResult.Success)
 
         assertEquals(
             listOf(

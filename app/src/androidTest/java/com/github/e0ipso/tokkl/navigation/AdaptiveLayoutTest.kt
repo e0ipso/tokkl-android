@@ -37,7 +37,6 @@ import com.github.e0ipso.tokkl.accessibility.createComposeRule
 import com.github.e0ipso.tokkl.api.TrashEntry
 import com.github.e0ipso.tokkl.appConfiguredServer
 import com.github.e0ipso.tokkl.appHttp
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.calendar.CalendarContent
 import com.github.e0ipso.tokkl.catalog.CatalogSamples
 import com.github.e0ipso.tokkl.clients.ClientsActions
@@ -49,6 +48,10 @@ import com.github.e0ipso.tokkl.entry.EntryFormState
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.history.HistoryContent
 import com.github.e0ipso.tokkl.licences.LicencesScreen
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.navhost.SignedInFrame
 import com.github.e0ipso.tokkl.navhost.SignedInPanes
 import com.github.e0ipso.tokkl.navhost.showsEntryBeside
@@ -243,7 +246,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
     /** On an expanded window the form shares the width with the history, which stays in sight. */
     @Test
     fun theEntryFormShowsBesideTheHistoryOnlyWhenExpanded() {
-        val formRoute = Route.Entry(EntryOpening.Edit(1), id = "form")
+        val formRoute = Route.Entry(EntryOpening.Edit(EntryId(1)), id = "form")
         val beside = showsEntryBeside(width, TimerView.LIST, listOf(Route.Timer, formRoute))
         assertEquals(width == WindowWidth.EXPANDED, beside)
         show {
@@ -559,7 +562,7 @@ internal fun SampleTimerPage(view: TimerView) {
         onViewChange = {},
         timer = {
             TimerBarContent(
-                state = TimerState.Idle(EntryFields(), EntryLabels(), workspaceId = 1),
+                state = TimerState.Idle(EntryFields(), EntryLabels(), workspaceId = WorkspaceId(1)),
                 elapsedSeconds = 0,
                 onDescriptionChange = {},
                 onDescriptionFinish = {},
@@ -591,10 +594,10 @@ internal fun SampleEntryForm() {
     EntryFormContent(
         state = EntryFormState.Open(
             editing = true,
-            workspaceId = 1,
-            fields = EntryFields(description = "Sprint planning", projectId = ScreenshotTest.APP.id),
+            workspaceId = WorkspaceId(1),
+            fields = EntryFields(description = "Sprint planning", projectId = ProjectId(ScreenshotTest.APP.id)),
             labels = EntryLabels(project = ScreenshotTest.APP.name, projectColor = ScreenshotTest.APP.colour),
-            original = Picked(projectId = ScreenshotTest.APP.id),
+            original = Picked(projectId = ProjectId(ScreenshotTest.APP.id)),
             date = LocalDate.of(2026, 10, 14),
             start = "08:30",
             end = "12:00",

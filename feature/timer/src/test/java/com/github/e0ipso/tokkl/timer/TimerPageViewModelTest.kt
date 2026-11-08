@@ -1,8 +1,12 @@
 package com.github.e0ipso.tokkl.timer
 
-import com.github.e0ipso.tokkl.cache.CachedClient
-import com.github.e0ipso.tokkl.cache.CachedProject
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
+import com.github.e0ipso.tokkl.model.Client
+import com.github.e0ipso.tokkl.model.ClientId
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.session.AccountSettings
 import kotlinx.coroutines.CoroutineScope
@@ -94,9 +98,9 @@ class TimerPageViewModelTest {
         return first(shows).also { reader.cancel() }
     }
 
-    private fun entry(id: Long, description: String, projectId: Long?) = CachedTimeEntry(
-        id = id,
-        workspaceId = WORKSPACE,
+    private fun entry(id: Long, description: String, projectId: ProjectId?) = TimeEntry(
+        id = EntryId(id),
+        workspaceId = WorkspaceId(WORKSPACE),
         projectId = projectId,
         taskId = null,
         description = description,
@@ -109,10 +113,10 @@ class TimerPageViewModelTest {
 
     private companion object {
         const val WORKSPACE = 10L
-        val ACME = CachedClient(7, WORKSPACE, "Acme", archived = false)
-        val WEBSITE = CachedProject(
-            1,
-            WORKSPACE,
+        val ACME = Client(ClientId(7), WorkspaceId(WORKSPACE), "Acme", archived = false)
+        val WEBSITE = Project(
+            ProjectId(1),
+            WorkspaceId(WORKSPACE),
             clientId = ACME.id,
             name = "Website",
             color = "#0b83d9",

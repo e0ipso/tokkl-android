@@ -1,9 +1,11 @@
 package com.github.e0ipso.tokkl.shortcuts
 
-import com.github.e0ipso.tokkl.cache.CachedFavorite
-import com.github.e0ipso.tokkl.cache.CachedProject
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.fields
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.Favorite
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.WorkspaceId
+import com.github.e0ipso.tokkl.model.fields
 
 /** What a tap on a favorite shortcut did. */
 sealed interface ShortcutStart {
@@ -30,11 +32,11 @@ sealed interface ShortcutStart {
 suspend fun startFavoriteShortcut(
     id: String,
     available: Boolean,
-    favorites: List<CachedFavorite>,
-    projects: List<CachedProject>,
-    workspaceId: Long?,
+    favorites: List<Favorite>,
+    projects: List<Project>,
+    workspaceId: WorkspaceId?,
     names: FavoriteNames,
-    start: suspend (workspaceId: Long, fields: EntryFields) -> Long,
+    start: suspend (workspaceId: WorkspaceId, fields: EntryFields) -> EntryId,
 ): ShortcutStart {
     val favorite = favoriteForShortcut(id, favorites)?.takeIf { available } ?: return ShortcutStart.Gone
     if (workspaceId == null) return ShortcutStart.Gone

@@ -38,6 +38,7 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.feature.timer.R
+import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.navhost.SignedInFrame
 import com.github.e0ipso.tokkl.navhost.SignedInPanes
 import com.github.e0ipso.tokkl.navhost.showsEntryBeside
@@ -139,7 +140,7 @@ class AdaptiveStateTest {
     private companion object {
         const val PAGE = "Timer page"
         const val FORM = "Entry form"
-        val FORM_ROUTE = Route.Entry(EntryOpening.Edit(1), id = "form")
+        val FORM_ROUTE = Route.Entry(EntryOpening.Edit(EntryId(1)), id = "form")
         val COMPACT_WINDOW = DpSize(411.dp, 891.dp)
         val MEDIUM_WINDOW = DpSize(700.dp, 1000.dp)
         val EXPANDED_WINDOW = DpSize(1280.dp, 800.dp)

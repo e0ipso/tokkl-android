@@ -1,10 +1,15 @@
 package com.github.e0ipso.tokkl.widget
 
-import com.github.e0ipso.tokkl.cache.CachedFavorite
-import com.github.e0ipso.tokkl.cache.CachedProject
-import com.github.e0ipso.tokkl.cache.CachedTask
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
-import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.Favorite
+import com.github.e0ipso.tokkl.model.LocalEntryId
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.Task
+import com.github.e0ipso.tokkl.model.TaskId
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.storage.valueStore
 import com.github.e0ipso.tokkl.time.DurationFormat
@@ -32,22 +37,28 @@ import java.time.LocalDate
 class WidgetStateTest {
 
     private val start: Instant = Instant.parse("2026-10-20T08:15:30.250Z")
-    private val project = CachedProject(
-        id = 7,
-        workspaceId = 1,
+    private val project = Project(
+        id = ProjectId(7),
+        workspaceId = WorkspaceId(1),
         clientId = null,
         name = "Tokkl for Android",
         color = "#06aaf5",
         active = true,
         billable = false,
     )
-    private val task = CachedTask(id = 9, workspaceId = 1, projectId = 7, name = "Design", active = true)
+    private val task = Task(
+        id = TaskId(9),
+        workspaceId = WorkspaceId(1),
+        projectId = ProjectId(7),
+        name = "Design",
+        active = true,
+    )
     private val settings = AccountSettings("Asia/Tokyo", DayOfWeek.MONDAY, timeResolutionMinutes = null)
-    private val running = CachedTimeEntry(
-        id = -3,
-        workspaceId = 1,
-        projectId = 7,
-        taskId = 9,
+    private val running = TimeEntry(
+        id = EntryId(-3),
+        workspaceId = WorkspaceId(1),
+        projectId = ProjectId(7),
+        taskId = TaskId(9),
         description = "Widget",
         start = start,
         stop = null,
@@ -56,7 +67,7 @@ class WidgetStateTest {
         tagIds = emptyList(),
     )
     private val favorites = listOf(
-        CachedFavorite(
+        Favorite(
             position = 1,
             description = "Review",
             projectId = null,
@@ -64,11 +75,11 @@ class WidgetStateTest {
             tags = emptyList(),
             billable = false,
         ),
-        CachedFavorite(
+        Favorite(
             position = 0,
             description = "Write",
-            projectId = 7,
-            taskId = 9,
+            projectId = ProjectId(7),
+            taskId = TaskId(9),
             tags = listOf("docs"),
             billable = true,
         ),
@@ -76,17 +87,17 @@ class WidgetStateTest {
 
     /** The widget for the cache's running [entry] and the server's [held] timer state. */
     private fun state(
-        workspaceId: Long? = 1,
-        entry: CachedTimeEntry? = running,
+        workspaceId: WorkspaceId? = WorkspaceId(1),
+        entry: TimeEntry? = running,
         favoritesAvailable: Boolean = true,
-        projects: List<CachedProject> = listOf(project),
-        tasks: List<CachedTask> = listOf(task),
+        projects: List<Project> = listOf(project),
+        tasks: List<Task> = listOf(task),
         held: HeldTimerState? = null,
         timerApi: Boolean = true,
-        entries: List<CachedTimeEntry> = listOfNotNull(entry),
+        entries: List<TimeEntry> = listOfNotNull(entry),
         settings: AccountSettings = this.settings,
         now: Instant = start.plusSeconds(1_800),
-        serverIdOf: Map<Long, Long> = emptyMap(),
+        serverIdOf: Map<LocalEntryId, EntryId> = emptyMap(),
     ) = widgetState(
         workspaceId,
         ServerTimerStates.controls(
@@ -103,7 +114,11 @@ class WidgetStateTest {
         val recoloured = project.copy(color = "#ff5500")
         assertNotEquals(state().key(), state(projects = listOf(recoloured)).key())
 
-        val held = ServerTimerStates.held(3, start, ServerTimerStates.paused(600, EntryFields("Widget", projectId = 7)))
+        val held = ServerTimerStates.held(
+            3,
+            start,
+            ServerTimerStates.paused(600, EntryFields("Widget", projectId = ProjectId(7))),
+        )
         assertNotEquals(
             state(entry = null, held = held).key(),
             state(entry = null, held = held, projects = listOf(recoloured)).key(),
@@ -116,13 +131,13 @@ class WidgetStateTest {
 
         assertEquals(
             WidgetRunning(
-                entryId = -3,
+                entryId = EntryId(-3),
                 description = "Widget",
                 project = "Tokkl for Android",
                 task = "Design",
                 start = start,
                 accumulatedSeconds = 0,
-                target = TimerTarget.server(entryId = -3, account = ServerTimerStates.ACCOUNT),
+                target = TimerTarget.server(entryId = EntryId(-3), account = ServerTimerStates.ACCOUNT),
                 pausable = true,
                 projectColor = project.color,
             ),
@@ -137,13 +152,13 @@ class WidgetStateTest {
             held = ServerTimerStates.held(
                 revision = 4,
                 at = start,
-                pomodoro = ServerTimerStates.session(entryId = -3, at = start),
+                pomodoro = ServerTimerStates.session(entryId = EntryId(-3), at = start),
             ),
         ) as WidgetState.Ready
 
         assertFalse("no timer API", toggl.running!!.pausable)
         assertFalse("the server refuses Pause during a session", session.running!!.pausable)
-        assertEquals("Stop still acts on the entry", -3L, session.running.target.entryId)
+        assertEquals("Stop still acts on the entry", EntryId(-3), session.running.target.entryId)
     }
 
     @Test
@@ -168,7 +183,13 @@ class WidgetStateTest {
         assertEquals(
             listOf(
                 WidgetFavorite(
-                    EntryFields("Write", projectId = 7, taskId = 9, tags = listOf("docs"), billable = true),
+                    EntryFields(
+                        "Write",
+                        projectId = ProjectId(7),
+                        taskId = TaskId(9),
+                        tags = listOf("docs"),
+                        billable = true,
+                    ),
                     "Tokkl for Android",
                     "Design",
                 ),
@@ -224,7 +245,7 @@ class WidgetStateTest {
         val held = ServerTimerStates.held(
             revision = 3,
             at = start,
-            pause = ServerTimerStates.paused(600, EntryFields("Widget", projectId = 7, taskId = 9)),
+            pause = ServerTimerStates.paused(600, EntryFields("Widget", projectId = ProjectId(7), taskId = TaskId(9))),
         )
 
         val shown = state(entry = null, held = held) as WidgetState.Ready
@@ -255,7 +276,7 @@ class WidgetStateTest {
         val held = ServerTimerStates.held(
             revision = 4,
             at = start,
-            pause = ServerTimerStates.resumed(600, entryId = -3),
+            pause = ServerTimerStates.resumed(600, entryId = EntryId(-3)),
             offset = Duration.ofMillis(20_400),
         )
 
@@ -263,7 +284,7 @@ class WidgetStateTest {
 
         assertEquals(600L, shown.accumulatedSeconds)
         assertEquals("the clone's start on the phone's clock, to the second", start.minusSeconds(20), shown.start)
-        assertEquals(TimerTarget.server(entryId = -3, account = ServerTimerStates.ACCOUNT), shown.target)
+        assertEquals(TimerTarget.server(entryId = EntryId(-3), account = ServerTimerStates.ACCOUNT), shown.target)
         assertEquals(null, (state(held = held) as WidgetState.Ready).paused)
     }
 
@@ -274,7 +295,7 @@ class WidgetStateTest {
             held = ServerTimerStates.held(
                 4,
                 start,
-                ServerTimerStates.resumed(600, entryId = -3),
+                ServerTimerStates.resumed(600, entryId = EntryId(-3)),
                 offset = Duration.ofMillis(offsetMs),
             ),
         )
@@ -308,13 +329,18 @@ class WidgetStateTest {
 
     @Test
     fun dayReportMatchesTimerTotalsWithMappedRowsBillableTimeAndNoProject() {
-        val local = running.copy(id = -4, stop = start.plusSeconds(600), billable = true)
-        val server = local.copy(id = 80, stop = start.plusSeconds(10))
-        val otherProject = project.copy(id = 8, name = "Other", color = "#ff5500")
-        val other = local.copy(id = 2, projectId = 8, stop = start.plusSeconds(1_200), billable = false)
-        val unassigned = local.copy(id = 3, projectId = null, stop = start.plusSeconds(300))
+        val local = running.copy(id = EntryId(-4), stop = start.plusSeconds(600), billable = true)
+        val server = local.copy(id = EntryId(80), stop = start.plusSeconds(10))
+        val otherProject = project.copy(id = ProjectId(8), name = "Other", color = "#ff5500")
+        val other = local.copy(
+            id = EntryId(2),
+            projectId = ProjectId(8),
+            stop = start.plusSeconds(1_200),
+            billable = false,
+        )
+        val unassigned = local.copy(id = EntryId(3), projectId = null, stop = start.plusSeconds(300))
         val rows = listOf(server, local, local, other, unassigned)
-        val mapping = mapOf(-4L to 80L)
+        val mapping = mapOf(EntryId(-4).local!! to EntryId(80))
         val now = start.plusSeconds(1_800)
         val day = (
             state(
@@ -331,7 +357,7 @@ class WidgetStateTest {
         assertEquals(2_100L, day.stoppedSeconds)
         assertEquals(900L, day.billableSeconds(now))
         assertEquals(3, day.entryCount)
-        assertEquals(listOf(8L, 7L, null), day.projects.map { it.projectId })
+        assertEquals(listOf(8L, 7L, null), day.projects.map { it.projectId?.value })
         assertEquals(listOf(1_200L, 600L, 300L), day.projects.map { it.stoppedSeconds })
         assertEquals(listOf("Other", project.name, null), day.projects.map { it.project })
         assertEquals(listOf(otherProject.color, project.color, null), day.projects.map { it.projectColor })
@@ -343,7 +369,7 @@ class WidgetStateTest {
     @Test
     fun resumedDayCountsActualSegmentsWithoutAddingThePauseChainAgain() {
         val stopped = running.copy(
-            id = 1,
+            id = EntryId(1),
             start = start.minusSeconds(900),
             stop = start.minusSeconds(300),
             billable = true,
@@ -352,7 +378,7 @@ class WidgetStateTest {
         val held = ServerTimerStates.held(
             4,
             start,
-            ServerTimerStates.resumed(600, entryId = -3),
+            ServerTimerStates.resumed(600, entryId = EntryId(-3)),
             offset = Duration.ofSeconds(20),
         )
         val now = start.plusSeconds(100)
@@ -381,10 +407,10 @@ class WidgetStateTest {
     @Test
     fun aMappedRunningRowKeepsTheLocalContributionAndUnassignedRunningMarker() {
         val local = running.copy(projectId = null, billable = true)
-        val server = local.copy(id = 80, start = start.plusSeconds(50))
+        val server = local.copy(id = EntryId(80), start = start.plusSeconds(50))
         val now = start.plusSeconds(100)
         val rows = listOf(server, local)
-        val mappings = mapOf(local.id to server.id)
+        val mappings = mapOf(local.id.local!! to server.id)
         val day = (state(entry = server, entries = rows, now = now, serverIdOf = mappings) as WidgetState.Ready).day!!
 
         assertEquals(timerPeriodTotals(rows, settings, now, mappings)!!.todaySeconds, day.totalSeconds(now))
@@ -400,8 +426,12 @@ class WidgetStateTest {
         val before = Instant.parse("2026-10-20T14:59:00Z")
         val after = before.plusSeconds(120)
         val current = running.copy(start = before.minusSeconds(60))
-        val stopped = running.copy(id = 8, start = before.minusSeconds(300), stop = after)
-        val tomorrow = running.copy(id = 9, start = after.plusSeconds(86_400), stop = after.plusSeconds(86_500))
+        val stopped = running.copy(id = EntryId(8), start = before.minusSeconds(300), stop = after)
+        val tomorrow = running.copy(
+            id = EntryId(9),
+            start = after.plusSeconds(86_400),
+            stop = after.plusSeconds(86_500),
+        )
         val rows = listOf(current, stopped, tomorrow)
         val old = state(entry = current, entries = rows, now = before) as WidgetState.Ready
         val next = state(entry = current, entries = rows, now = after) as WidgetState.Ready
@@ -483,10 +513,10 @@ class WidgetStateTest {
             day.copy(stoppedBillableSeconds = 1),
             day.copy(entryCount = day.entryCount + 1),
             day.copy(durationFormat = DurationFormat.DECIMAL),
-            day.copy(running = segment.copy(entryId = 50)),
+            day.copy(running = segment.copy(entryId = EntryId(50))),
             day.copy(running = segment.copy(start = start.plusSeconds(1))),
             day.copy(running = segment.copy(billable = true)),
-            day.copy(projects = listOf(row.copy(projectId = 50))),
+            day.copy(projects = listOf(row.copy(projectId = ProjectId(50)))),
             day.copy(projects = listOf(row.copy(project = "Changed"))),
             day.copy(projects = listOf(row.copy(projectColor = "#ff5500"))),
             day.copy(projects = listOf(row.copy(stoppedSeconds = 50))),

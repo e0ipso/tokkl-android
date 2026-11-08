@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.session
 
 import com.github.e0ipso.tokkl.api.Me
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.time.AccountTime
 import com.github.e0ipso.tokkl.time.DAYS_PER_WEEK
 import com.github.e0ipso.tokkl.time.DurationFormat
@@ -51,7 +52,7 @@ data class AccountSettings(
     val beginningOfWeek: DayOfWeek,
     val timeResolutionMinutes: Double?,
     val durationFormat: DurationFormat = DurationFormat.IMPROVED,
-    val defaultWorkspaceId: Long? = null,
+    val defaultWorkspaceId: WorkspaceId? = null,
     val twelveHour: Boolean = false,
     val collapseSimilar: Boolean = true,
     val userId: Long? = null,
@@ -91,7 +92,13 @@ data class AccountSettings(
 
 /** The account settings, or null when `beginning_of_week` is not a day from 0 to 6. */
 fun Me.accountSettings(): AccountSettings? = dayOfWeek(beginningOfWeek)?.let {
-    AccountSettings(timezone, it, timeResolutionMinutes, defaultWorkspaceId = defaultWorkspaceId, userId = id)
+    AccountSettings(
+        timezone,
+        it,
+        timeResolutionMinutes,
+        defaultWorkspaceId = defaultWorkspaceId?.let(::WorkspaceId),
+        userId = id,
+    )
 }
 
 /**

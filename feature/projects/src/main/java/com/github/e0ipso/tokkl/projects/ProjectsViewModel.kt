@@ -3,13 +3,14 @@ package com.github.e0ipso.tokkl.projects
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.github.e0ipso.tokkl.cache.CachedClient
-import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.catalog.CatalogChange
 import com.github.e0ipso.tokkl.catalog.CatalogModel
 import com.github.e0ipso.tokkl.catalog.CatalogState
 import com.github.e0ipso.tokkl.catalog.PageEvents
 import com.github.e0ipso.tokkl.catalog.followTrips
+import com.github.e0ipso.tokkl.model.Client
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.platform.whileShown
 import com.github.e0ipso.tokkl.session.AppEvent
 import com.github.e0ipso.tokkl.session.DefaultWorkspace
@@ -26,17 +27,17 @@ import kotlin.coroutines.CoroutineContext
 sealed interface ProjectForm {
     data object New : ProjectForm
 
-    data class Edit(val project: Project) : ProjectForm
+    data class Edit(val project: ProjectDetails) : ProjectForm
 }
 
 /**
  * What the projects page loads: every project of the workspace, archived ones included, sorted as
  * Tokkl sorts them, and the workspace's rate and currency, or null when they did not load.
  */
-data class ProjectsData(val projects: List<Project>, val defaults: WorkspaceDefaults?) {
+data class ProjectsData(val projects: List<ProjectDetails>, val defaults: WorkspaceDefaults?) {
 
     /** With [project] as the server sent it after a change, in its place in the order. */
-    fun with(project: Project): ProjectsData = copy(
+    fun with(project: ProjectDetails): ProjectsData = copy(
         projects = (projects.filterNot { it.id == project.id } + project).sortedForList(),
     )
 }
@@ -53,8 +54,8 @@ typealias ProjectsState = CatalogState<ProjectsData, ProjectForm>
 data class ProjectsPageState(
     val catalog: ProjectsState = ProjectsState(),
     val offline: Boolean = false,
-    val cachedProjects: List<CachedProject> = emptyList(),
-    val clients: List<CachedClient> = emptyList(),
+    val cachedProjects: List<Project> = emptyList(),
+    val clients: List<Client> = emptyList(),
     val tasks: TasksState = TasksState(),
 )
 
@@ -78,8 +79,8 @@ class ProjectsViewModel(
     refreshCache: RefreshRequest,
     scope: CoroutineScope,
     io: CoroutineContext,
-    cachedProjects: Flow<List<CachedProject>>,
-    cachedClients: Flow<List<CachedClient>>,
+    cachedProjects: Flow<List<Project>>,
+    cachedClients: Flow<List<Client>>,
     offline: StateFlow<Boolean>,
     appEvents: Flow<AppEvent>,
 ) : ViewModel(scope),
@@ -120,7 +121,7 @@ class ProjectsViewModel(
         followTrips(appEvents, viewModelScope)
     }
 
-    fun workspace(): Long? = catalog.workspace()
+    fun workspace(): WorkspaceId? = catalog.workspace()
 
     override fun open() = catalog.open()
 
@@ -150,7 +151,7 @@ class ProjectsViewModel(
 
     fun newProject() = catalog.show(ProjectForm.New)
 
-    fun edit(project: Project) = catalog.show(ProjectForm.Edit(project))
+    fun edit(project: ProjectDetails) = catalog.show(ProjectForm.Edit(project))
 
     fun closeForm() = catalog.dismiss()
 
@@ -179,7 +180,7 @@ class ProjectsViewModel(
     }
 
     /** Archives [project] when [active] is false, and restores it when true. */
-    fun setActive(project: Project, active: Boolean) {
+    fun setActive(project: ProjectDetails, active: Boolean) {
         catalog.send(
             request = { workspace -> repository.setActive(workspace, project.id, active) },
             apply = ProjectsData::with,
@@ -197,5 +198,5 @@ class ProjectsViewModel(
 }
 
 /** By name, ignoring case, as Tokkl sorts them. */
-internal fun List<Project>.sortedForList(): List<Project> =
-    sortedWith(compareBy<Project, String>(String.CASE_INSENSITIVE_ORDER) { it.name }.thenBy { it.id })
+internal fun List<ProjectDetails>.sortedForList(): List<ProjectDetails> =
+    sortedWith(compareBy<ProjectDetails, String>(String.CASE_INSENSITIVE_ORDER) { it.name }.thenBy { it.id.value })

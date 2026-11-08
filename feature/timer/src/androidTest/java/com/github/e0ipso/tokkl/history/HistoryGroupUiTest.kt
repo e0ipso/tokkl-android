@@ -15,6 +15,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createComposeRule
 import com.github.e0ipso.tokkl.feature.timer.R
+import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -50,7 +51,7 @@ class HistoryGroupUiTest {
     ).around(composeRule)
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
-    private val edits = CopyOnWriteArrayList<Long>()
+    private val edits = CopyOnWriteArrayList<EntryId>()
 
     @Test
     fun aGroupShowsItsCountAndTotalAndExpandsToItsMembersWithTheStateForTalkBack() {
@@ -84,7 +85,7 @@ class HistoryGroupUiTest {
             hasText(context.getString(R.string.history_time_range, "10:00", "11:00")) and hasClickAction(),
         )
             .performSemanticsAction(SemanticsActions.OnClick)
-        assertEquals("a member opens for editing", listOf(2L), edits)
+        assertEquals("a member opens for editing", listOf(EntryId(2)), edits)
 
         group.performSemanticsAction(SemanticsActions.OnClick)
 
@@ -170,7 +171,7 @@ class HistoryGroupUiTest {
         )
 
         fun entry(id: Long, description: String, startHour: Int, stopHour: Int) = HistoryEntry(
-            id = id,
+            id = EntryId(id),
             description = description,
             project = null,
             projectColor = null,

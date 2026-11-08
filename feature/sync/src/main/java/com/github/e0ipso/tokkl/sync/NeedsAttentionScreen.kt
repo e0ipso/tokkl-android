@@ -26,8 +26,9 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.e0ipso.tokkl.cache.ChangeKind
-import com.github.e0ipso.tokkl.cache.PendingChange
+import com.github.e0ipso.tokkl.cache.HeldChange
 import com.github.e0ipso.tokkl.feature.sync.R
+import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.DateWords
 import com.github.e0ipso.tokkl.ui.TokklIconButton
@@ -47,7 +48,7 @@ import com.github.e0ipso.tokkl.core.ui.R as UiR
 @Composable
 fun NeedsAttentionScreen(
     model: NeedsAttentionViewModel,
-    onEdit: (entryId: Long) -> Unit,
+    onEdit: (entryId: EntryId) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -66,9 +67,9 @@ fun NeedsAttentionScreen(
 @Composable
 fun NeedsAttentionContent(
     state: NeedsAttentionState,
-    onEdit: (entryId: Long) -> Unit,
-    onSendAgain: (PendingChange) -> Unit,
-    onDiscard: (PendingChange) -> Unit,
+    onEdit: (entryId: EntryId) -> Unit,
+    onSendAgain: (HeldChange) -> Unit,
+    onDiscard: (HeldChange) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -101,7 +102,7 @@ fun NeedsAttentionContent(
                 HeldChange(
                     change = change,
                     settings = state.settings,
-                    onEdit = { onEdit(change.entryId) },
+                    onEdit = { onEdit(change.entry.id) },
                     onSendAgain = { onSendAgain(change) },
                     onDiscard = { onDiscard(change) },
                 )
@@ -113,7 +114,7 @@ fun NeedsAttentionContent(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun HeldChange(
-    change: PendingChange,
+    change: HeldChange,
     settings: AccountSettings?,
     onEdit: () -> Unit,
     onSendAgain: () -> Unit,
@@ -127,7 +128,7 @@ private fun HeldChange(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
-            text = change.description.ifBlank { stringResource(R.string.needs_attention_no_description) },
+            text = change.entry.description.ifBlank { stringResource(R.string.needs_attention_no_description) },
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.semantics { heading() },
         )
@@ -146,7 +147,7 @@ private fun HeldChange(
                     icon = UiR.drawable.ic_edit,
                     description = stringResource(
                         R.string.needs_attention_edit_named,
-                        change.description.ifBlank { stringResource(R.string.needs_attention_no_description) },
+                        change.entry.description.ifBlank { stringResource(R.string.needs_attention_no_description) },
                     ),
                     onClick = onEdit,
                 )
@@ -166,12 +167,12 @@ private fun ChangeKind.label(): Int = when (this) {
 }
 
 /** The entry's day and times in the account's zone, or null when the phone cannot resolve that zone. */
-private fun spanText(resources: Resources, change: PendingChange, settings: AccountSettings?): String? {
+private fun spanText(resources: Resources, change: HeldChange, settings: AccountSettings?): String? {
     val time = settings?.time() ?: return null
-    val start = time.local(change.start).toLocalDate()
+    val start = time.local(change.entry.start).toLocalDate()
     val words = DateWords(resources)
     val day = resources.getString(UiR.string.history_day, words.weekday(start), words.shortWithYear(start))
-    val from = settings.formatTime(change.start, time.zone)
-    val stop = change.stop ?: return resources.getString(R.string.needs_attention_running, day, from)
+    val from = settings.formatTime(change.entry.start, time.zone)
+    val stop = change.entry.stop ?: return resources.getString(R.string.needs_attention_running, day, from)
     return resources.getString(R.string.needs_attention_span, day, from, settings.formatTime(stop, time.zone))
 }

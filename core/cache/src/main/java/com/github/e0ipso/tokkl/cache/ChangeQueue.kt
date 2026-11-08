@@ -1,7 +1,13 @@
 package com.github.e0ipso.tokkl.cache
 
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.RunningEntryIdentity
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import java.time.Clock
 import java.time.Instant
@@ -12,7 +18,7 @@ import kotlin.coroutines.CoroutineContext
 interface HeldChanges {
 
     /** The held changes, oldest first. */
-    val held: Flow<List<PendingChange>>
+    val held: Flow<List<HeldChange>>
 
     /** Lets the held change [sequence] go out as it is. Returns false when it is not held. */
     suspend fun sendAgain(sequence: Long): Boolean
@@ -20,6 +26,15 @@ interface HeldChanges {
     /** Drops the held change [sequence] and the changes behind it. Returns false when it is not held. */
     suspend fun discard(sequence: Long): Boolean
 }
+
+/**
+ * A change the server refused, as the "needs attention" list shows it: what it does, the entry as
+ * the change leaves it, or as it was for a delete, and the server's reason, if it gave one.
+ */
+data class HeldChange(val sequence: Long, val kind: ChangeKind, val entry: TimeEntry, val refusal: String?)
+
+/** The latest short Stop, which Undo can take back, of the entry [entryId] at [capturedAt]. */
+data class ShortStopOffer(val entryId: EntryId, val capturedAt: Instant)
 
 /** How many changes the server has not received, held ones included, such as [ChangeQueue.unsentNow]. */
 fun interface UnsentChanges {
@@ -48,8 +63,8 @@ fun interface QueuedListener {
  * An entry created on the phone gets a negative local id. The calls take it, before and after the
  * server has answered the create with its own id.
  *
- * A no-time entry's change carries its flag and day ([CachedTimeEntry.allDay] and
- * [CachedTimeEntry.day]), and so does every cache row or queued change rebuilt from it. Running
+ * A no-time entry's change carries its flag and day ([TimeEntry.allDay] and
+ * [TimeEntry.day]), and so does every cache row or queued change rebuilt from it. Running
  * entries are never no-time ones.
  *
  * Pause, Resume and Pomodoro sessions belong to the server's timer state and never pass through
@@ -85,13 +100,15 @@ class ChangeQueue(
     override suspend fun unsentNow(): Int = unsentCount.first()
 
     /** The changes the server refused, which wait for the user, oldest first (docs/PRD.md O6). */
-    override val held: Flow<List<PendingChange>> = dao.held()
+    override val held: Flow<List<HeldChange>> = dao.held().map { changes -> changes.map { it.toHeld() } }
 
     /** How many changes the server refused wait for the user. */
     val heldCount: Flow<Int> = dao.heldCount()
 
     /** Latest short Stop, retained across process death until Undo or dismissal. */
-    val shortStopUndo: Flow<ShortStopUndo?> = dao.latestShortStop()
+    val shortStopUndo: Flow<ShortStopOffer?> = dao.latestShortStop().map { undo ->
+        undo?.let { ShortStopOffer(EntryId(it.entryId), it.capturedAt) }
+    }
 
     /**
      * Starts a timer in [workspaceId] with [fields], at the tap time. A cached running entry
@@ -99,11 +116,11 @@ class ChangeQueue(
      * back to back. Returns the new entry's local id. Pass the account's
      * `AccountSettings.defaultWorkspaceId`, which the phone keeps, so it is there offline too.
      */
-    override suspend fun start(workspaceId: Long, fields: EntryFields): Long {
+    override suspend fun start(workspaceId: WorkspaceId, fields: EntryFields): EntryId {
         val at = clock.instant()
         return queue {
             dao.runningEntries().forEach { running -> stopAt(running, at) }
-            queueCreate(workspaceId, fields, at, stop = null)
+            EntryId(queueCreate(workspaceId.value, fields, at, stop = null))
         }
     }
 
@@ -113,13 +130,13 @@ class ChangeQueue(
      * With [fields], the stop also sets them, in the same change, such as a description still
      * being typed when Stop was tapped. Returns false when the entry is not cached or not running.
      */
-    override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean {
+    override suspend fun stop(entryId: EntryId, fields: EntryFields?): Boolean {
         val at = clock.instant()
         return queue { stopRunning(entryId, fields, at) }
     }
 
     /** Queues a restore behind the short Stop and shows its zero-length row immediately offline. */
-    suspend fun undoShortStop(entryId: Long): Boolean = queue {
+    suspend fun undoShortStop(entryId: EntryId): Boolean = queue {
         val id = resolve(entryId)
         val undo = dao.shortStop(id) ?: return@queue false
         val change = PendingChange.of(ChangeKind.RESTORE, undo.entry)
@@ -130,7 +147,7 @@ class ChangeQueue(
     }
 
     /** Dismisses only the offer; the queued Stop and server trash remain intact. */
-    suspend fun dismissShortStop(entryId: Long) = withContext(io) { dao.deleteShortStop(resolve(entryId)) }
+    suspend fun dismissShortStop(entryId: EntryId) = withContext(io) { dao.deleteShortStop(resolve(entryId)) }
 
     /**
      * Creates a stopped entry in [workspaceId], as a manual entry does, or a no-time entry on
@@ -138,14 +155,14 @@ class ChangeQueue(
      * `AccountSettings.defaultWorkspaceId`, as for [start].
      */
     override suspend fun create(
-        workspaceId: Long,
+        workspaceId: WorkspaceId,
         fields: EntryFields,
         start: Instant,
         stop: Instant,
         noTimeDay: LocalDate?,
-    ): Long {
+    ): EntryId {
         require(!stop.isBefore(start)) { "The stop comes before the start." }
-        return queue { queueCreate(workspaceId, fields, start, stop, noTimeDay) }
+        return queue { EntryId(queueCreate(workspaceId.value, fields, start, stop, noTimeDay)) }
     }
 
     /**
@@ -156,7 +173,7 @@ class ChangeQueue(
      * the caller's real [start] and [stop]. Returns false when the entry is not cached.
      */
     override suspend fun update(
-        entryId: Long,
+        entryId: EntryId,
         fields: EntryFields,
         start: Instant,
         stop: Instant?,
@@ -172,8 +189,8 @@ class ChangeQueue(
         }
     }
 
-    override suspend fun runningEntry(identity: RunningEntryIdentity): CachedTimeEntry? = withContext(io) {
-        database.runInTransaction<CachedTimeEntry?> { activeEntry(identity) }
+    override suspend fun runningEntry(identity: RunningEntryIdentity): TimeEntry? = withContext(io) {
+        database.runInTransaction<CachedTimeEntry?> { activeEntry(identity) }?.toModel()
     }
 
     override suspend fun updateRunning(identity: RunningEntryIdentity, fields: EntryFields, start: Instant): Boolean =
@@ -189,11 +206,11 @@ class ChangeQueue(
         val current = dao.runningEntries().maxWithOrNull(
             compareBy<CachedTimeEntry> { it.start }.thenBy { it.id },
         ) ?: return null
-        if (current.id != id || current.workspaceId != identity.workspaceId) return null
+        if (current.id != id || current.workspaceId != identity.workspaceId.value) return null
         // Only a remapped local create may have lost fractional seconds in the server echo.
         val sameStart = current.start == identity.start ||
             (
-                id != identity.entryId && current.start == identity.start.truncatedTo(
+                id != identity.entryId.value && current.start == identity.start.truncatedTo(
                     java.time.temporal.ChronoUnit.SECONDS,
                 )
                 )
@@ -209,8 +226,8 @@ class ChangeQueue(
      * [workspaceId]. [noTimeDay] is as for [update].
      */
     override suspend fun updateOlder(
-        entryId: Long,
-        workspaceId: Long,
+        entryId: EntryId,
+        workspaceId: WorkspaceId,
         fields: EntryFields,
         start: Instant,
         stop: Instant,
@@ -221,7 +238,7 @@ class ChangeQueue(
             val id = resolve(entryId)
             enqueue(
                 ChangeKind.UPDATE,
-                entry(id, dao.entry(id)?.workspaceId ?: workspaceId, fields, start, stop, noTimeDay),
+                entry(id, dao.entry(id)?.workspaceId ?: workspaceId.value, fields, start, stop, noTimeDay),
             )
         }
     }
@@ -230,13 +247,13 @@ class ChangeQueue(
      * The id the cache holds the entry [entryId] under: the server's once the server has answered
      * the create of an entry made on the phone, or [entryId] as it is.
      */
-    override suspend fun currentId(entryId: Long): Long = withContext(io) { resolve(entryId) }
+    override suspend fun currentId(entryId: EntryId): EntryId = withContext(io) { EntryId(resolve(entryId)) }
 
     /**
      * Deletes the cached entry [entryId]. Returns false when it is missing or a delete is already
      * queued.
      */
-    override suspend fun delete(entryId: Long): Boolean = queue {
+    override suspend fun delete(entryId: EntryId): Boolean = queue {
         val id = resolve(entryId)
         if (dao.queuedDelete(id) != null) return@queue false
         val current = dao.entry(id) ?: return@queue false
@@ -249,12 +266,12 @@ class ChangeQueue(
      * transaction as DELETE. A missing local create is never recreated from a stale snapshot.
      * Returns the exact deleted fields and identity for reconciliation and Undo.
      */
-    override suspend fun delete(entry: CachedTimeEntry): CachedTimeEntry? = queue {
+    override suspend fun delete(entry: TimeEntry): TimeEntry? = queue {
         val id = resolve(entry.id)
         if (dao.queuedDelete(id) != null) return@queue null
-        val current = dao.entry(id) ?: entry.copy(id = id).takeIf { id > 0 } ?: return@queue null
+        val current = dao.entry(id) ?: entry.toCached().copy(id = id).takeIf { id > 0 } ?: return@queue null
         enqueue(ChangeKind.DELETE, current)
-        current
+        current.toModel()
     }
 
     /**
@@ -296,7 +313,7 @@ class ChangeQueue(
      * Stops the running entry [entryId] at [at] with [fields], as [stop] describes. With
      * [fields], they go in a change of their own before the captured Stop.
      */
-    private fun stopRunning(entryId: Long, fields: EntryFields?, at: Instant): Boolean {
+    private fun stopRunning(entryId: EntryId, fields: EntryFields?, at: Instant): Boolean {
         val running = dao.entry(resolve(entryId))?.takeIf { it.stop == null } ?: return false
         val stopped = if (fields == null) {
             running
@@ -434,8 +451,8 @@ class ChangeQueue(
         return CachedTimeEntry(
             id = id,
             workspaceId = workspaceId,
-            projectId = fields.projectId,
-            taskId = fields.taskId,
+            projectId = fields.projectId?.value,
+            taskId = fields.taskId?.value,
             description = fields.description,
             start = start,
             stop = stop,
@@ -448,5 +465,5 @@ class ChangeQueue(
     }
 
     /** The server's id for a local id the server has answered, or [entryId] as it is. */
-    private fun resolve(entryId: Long): Long = if (entryId < 0) dao.serverId(entryId) ?: entryId else entryId
+    private fun resolve(entryId: EntryId): Long = entryId.local?.let { dao.serverId(it.value) } ?: entryId.value
 }

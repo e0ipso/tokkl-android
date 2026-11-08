@@ -14,8 +14,10 @@ import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.feature.widget.R
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.time.DurationFormat
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages
@@ -115,11 +117,11 @@ abstract class TimerWidgetScreenshotTest(private val dark: Boolean, private val 
     private fun fixtures(): List<Pair<String, WidgetState>> {
         val now = Instant.now()
         val start = now.minusSeconds(754)
-        val target = TimerTarget.server(1, 42, "screenshot")
+        val target = TimerTarget.server(1, EntryId(42), "screenshot")
         val projects = listOf(
-            WidgetDayProject(1, "Tokkl for Android", "#0b83d9", 3600, "1:00", true),
-            WidgetDayProject(2, "Client site", "#9e5bd9", 1800, "0:30", false),
-            WidgetDayProject(3, "Admin", "#d94182", 900, "0:15", false),
+            WidgetDayProject(ProjectId(1), "Tokkl for Android", "#0b83d9", 3600, "1:00", true),
+            WidgetDayProject(ProjectId(2), "Client site", "#9e5bd9", 1800, "0:30", false),
+            WidgetDayProject(ProjectId(3), "Admin", "#d94182", 900, "0:15", false),
             WidgetDayProject(null, null, null, 900, "0:15", false),
         )
         val day = WidgetDayReport(
@@ -128,7 +130,7 @@ abstract class TimerWidgetScreenshotTest(private val dark: Boolean, private val 
             3600,
             7,
             projects,
-            WidgetDayRunning(42, start, true),
+            WidgetDayRunning(EntryId(42), start, true),
             DurationFormat.IMPROVED,
         )
         val favorites = listOf(
@@ -137,7 +139,12 @@ abstract class TimerWidgetScreenshotTest(private val dark: Boolean, private val 
             "Client call",
         ).map { WidgetFavorite(EntryFields(it), null, null) }
         val running =
-            WidgetRunning(42, "Widget mock-ups", "Tokkl for Android", "Design", start, 3600, target, true, "#0b83d9")
+            WidgetRunning(
+                EntryId(
+                    42,
+                ),
+                "Widget mock-ups", "Tokkl for Android", "Design", start, 3600, target, true, "#0b83d9",
+            )
         val ready = WidgetState.Ready(running, favorites, day = day)
         return listOf(
             "running" to ready,

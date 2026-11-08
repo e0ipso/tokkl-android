@@ -9,11 +9,13 @@ import com.github.e0ipso.tokkl.api.TimerPause
 import com.github.e0ipso.tokkl.api.TimerPomodoro
 import com.github.e0ipso.tokkl.api.TimerPomodoroPhase
 import com.github.e0ipso.tokkl.api.TimerState
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.CurrentEntryCache
 import com.github.e0ipso.tokkl.cache.RunningCheckStart
 import com.github.e0ipso.tokkl.cache.RunningCheckWrites
 import com.github.e0ipso.tokkl.cache.runningCheckWrites
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -61,7 +63,7 @@ class TimerStateSourceTest {
 
         assertEquals(6L, timer.state.value?.state?.revision)
         assertEquals("the disk keeps the newer state", 6L, stored()?.held?.state?.revision)
-        assertEquals("the cache keeps the newer running entry", listOf(2L), cache.running().map { it.id })
+        assertEquals("the cache keeps the newer running entry", listOf(EntryId(2)), cache.running().map { it.id })
     }
 
     @Test
@@ -142,17 +144,17 @@ class TimerStateSourceTest {
         // The create is answered and remapped while the next read is out.
         val read = timer.begin()
         cache.rows.remove(started.id)
-        cache.rows[101] = started.copy(id = 101)
+        cache.rows[EntryId(101)] = started.copy(id = EntryId(101))
         cache.pending.clear()
-        cache.mappings[started.id] = 101
+        cache.mappings[started.id] = EntryId(101)
 
         timer.accept(read, state(revision = 3, running = null))
-        assertEquals("the sent start stays", listOf(101L), cache.running().map { it.id })
+        assertEquals("the sent start stays", listOf(EntryId(101)), cache.running().map { it.id })
 
         timer.accept(timer.begin(), state(revision = 4, running = null))
         assertEquals(
             "a read begun after the send takes the server's stop",
-            emptyList<CachedTimeEntry>(),
+            emptyList<TimeEntry>(),
             cache.running(),
         )
     }
@@ -160,27 +162,27 @@ class TimerStateSourceTest {
     @Test
     fun anEditSentDuringTheReadIsNotUndoneByAStaleState() {
         val edited = cached(1, "Edited on the phone")
-        cache.rows[1] = edited
-        cache.pending += 1L
+        cache.rows[EntryId(1)] = edited
+        cache.pending += EntryId(1)
         val timer = source()
         val read = timer.begin()
         // The sender delivers the edit while the state is on its way.
         cache.pending.clear()
 
         timer.accept(read, state(revision = 7, running = serverEntry(1, "Before the edit")))
-        assertEquals(edited, cache.rows[1])
+        assertEquals(edited, cache.rows[EntryId(1)])
 
         timer.accept(timer.begin(), state(revision = 8, running = serverEntry(1, "Edited elsewhere")))
         assertEquals(
             "a read begun after the send takes the server's values",
             "Edited elsewhere",
-            cache.rows[1]?.description,
+            cache.rows[EntryId(1)]?.description,
         )
     }
 
     @Test
     fun aTimerStartedElsewhereReplacesTheCachedOneAndAsksForItsStop() {
-        cache.rows[1] = cached(1, "Stopped elsewhere")
+        cache.rows[EntryId(1)] = cached(1, "Stopped elsewhere")
         val timer = source()
 
         timer.accept(timer.begin(), state(revision = 2, running = serverEntry(2, "Started elsewhere")))
@@ -191,7 +193,7 @@ class TimerStateSourceTest {
 
     @Test
     fun aNewerStateUpdatesTheCacheAfterAnOlderOneWroteDuringItsRead() {
-        cache.rows[1] = cached(1, "Running")
+        cache.rows[EntryId(1)] = cached(1, "Running")
         val timer = source()
         val action = timer.begin()
         val event = timer.begin()
@@ -199,7 +201,7 @@ class TimerStateSourceTest {
         timer.accept(event, state(revision = 5, running = serverEntry(2, "From the stream")))
         timer.accept(action, state(revision = 6, running = serverEntry(3, "From the action")))
 
-        assertEquals("the cache agrees with the held state", listOf(3L), cache.running().map { it.id })
+        assertEquals("the cache agrees with the held state", listOf(EntryId(3)), cache.running().map { it.id })
     }
 
     @Test
@@ -230,7 +232,7 @@ class TimerStateSourceTest {
                 revision = 2,
                 serverTime = ENTRY_START.plusSeconds(90),
                 running = serverEntry(12, "Resumed"),
-                pause = pause(600, cloneEntryId = 12),
+                pause = pause(600, cloneEntryId = EntryId(12)),
             ),
             receivedAt = ENTRY_START.plusSeconds(30),
         )
@@ -331,8 +333,12 @@ class TimerStateSourceTest {
         tagIds = emptyList(),
     )
 
-    private fun cached(id: Long, description: String) =
-        CachedTimeEntry(id, WORKSPACE, null, null, description, ENTRY_START, null, false, emptyList(), emptyList())
+    private fun cached(id: Long, description: String) = TimeEntry(
+        EntryId(
+            id,
+        ),
+        WorkspaceId(WORKSPACE), null, null, description, ENTRY_START, null, false, emptyList(), emptyList(),
+    )
 
     private fun pomodoro(plannedEnd: Instant) = TimerPomodoro(
         workMinutes = 25,
@@ -347,7 +353,7 @@ class TimerStateSourceTest {
         pomodoroStart = ENTRY_START,
     )
 
-    private fun pause(seconds: Long, cloneEntryId: Long?) = TimerPause(
+    private fun pause(seconds: Long, cloneEntryId: EntryId?) = TimerPause(
         paused = cloneEntryId == null,
         seconds = seconds,
         workspaceId = WORKSPACE,
@@ -357,7 +363,7 @@ class TimerStateSourceTest {
         tagIds = emptyList(),
         tags = emptyList(),
         billable = false,
-        cloneEntryId = cloneEntryId,
+        cloneEntryId = cloneEntryId?.value,
     )
 
     /**
@@ -365,16 +371,16 @@ class TimerStateSourceTest {
      * reconciliation as AccountCache.checkedRunning.
      */
     private class FakeCache : CurrentEntryCache {
-        val rows = LinkedHashMap<Long, CachedTimeEntry>()
-        val pending = mutableSetOf<Long>()
-        val mappings = mutableMapOf<Long, Long>()
+        val rows = LinkedHashMap<EntryId, TimeEntry>()
+        val pending = mutableSetOf<EntryId>()
+        val mappings = mutableMapOf<EntryId, EntryId>()
 
-        fun running(): List<CachedTimeEntry> = rows.values.filter { it.stop == null }
+        fun running(): List<TimeEntry> = rows.values.filter { it.stop == null }
 
         override fun runningCheckStart() = RunningCheckStart(running(), pendingIds = pending.toSet())
 
-        override fun checkedRunning(before: RunningCheckStart, server: CachedTimeEntry?): RunningCheckWrites {
-            val mapped = before.pendingIds.filter { it < 0 }.mapNotNull(mappings::get)
+        override fun checkedRunning(before: RunningCheckStart, server: TimeEntry?): RunningCheckWrites {
+            val mapped = before.pendingIds.filter { it.local != null }.mapNotNull(mappings::get)
             val writes = runningCheckWrites(
                 before = before.running,
                 now = running(),

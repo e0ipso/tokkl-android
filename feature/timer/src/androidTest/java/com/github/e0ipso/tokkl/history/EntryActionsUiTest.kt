@@ -25,13 +25,15 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createComposeRule
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.ChangeSender.UndoOutcome
 import com.github.e0ipso.tokkl.cache.EntryChanges
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.EntryWithSendState
 import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
 import com.github.e0ipso.tokkl.feature.timer.R
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryWithSendState
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -363,30 +365,32 @@ class EntryActionsUiTest {
     private fun string(id: Int, vararg args: Any): String = context.getString(id, *args)
 
     private inner class RecordingChanges : EntryChanges {
-        override suspend fun delete(entryId: Long): Boolean {
+        override suspend fun delete(entryId: EntryId): Boolean {
             calls += "delete $entryId"
             return true
         }
 
-        override suspend fun start(workspaceId: Long, fields: EntryFields): Long = throw AssertionError(
+        override suspend fun start(workspaceId: WorkspaceId, fields: EntryFields): EntryId = throw AssertionError(
             "no timer starts",
         )
 
-        override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean = throw AssertionError("no timer stops")
+        override suspend fun stop(entryId: EntryId, fields: EntryFields?): Boolean = throw AssertionError(
+            "no timer stops",
+        )
 
         override suspend fun create(
-            workspaceId: Long,
+            workspaceId: WorkspaceId,
             fields: EntryFields,
             start: Instant,
             stop: Instant,
             noTimeDay: LocalDate?,
-        ): Long {
+        ): EntryId {
             calls += "create $workspaceId $start $stop"
-            return -1
+            return EntryId(-1)
         }
 
         override suspend fun update(
-            entryId: Long,
+            entryId: EntryId,
             fields: EntryFields,
             start: Instant,
             stop: Instant?,
@@ -423,9 +427,9 @@ class EntryActionsUiTest {
         )
 
         /** The cache's row of the first entry in [HISTORY]. */
-        val CACHED = CachedTimeEntry(
-            id = ENTRY,
-            workspaceId = 10,
+        val CACHED = TimeEntry(
+            id = EntryId(ENTRY),
+            workspaceId = WorkspaceId(10),
             projectId = null,
             taskId = null,
             description = DESCRIPTION,
@@ -437,7 +441,7 @@ class EntryActionsUiTest {
         )
 
         fun entry(id: Long, description: String, start: String, stop: String) = HistoryEntry(
-            id = id,
+            id = EntryId(id),
             description = description,
             project = null,
             projectColor = null,

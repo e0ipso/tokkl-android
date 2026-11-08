@@ -5,10 +5,12 @@ import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.api.TokklApi
-import com.github.e0ipso.tokkl.cache.CachedProject
-import com.github.e0ipso.tokkl.cache.CachedTask
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
-import com.github.e0ipso.tokkl.cache.EntryWithSendState
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryWithSendState
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.Task
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.AccountSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -82,7 +84,7 @@ class HistoryViewModelTest {
     private val pages = CopyOnWriteArrayList<String>()
 
     /** One entry a day on the server, from [firstDay] on. */
-    private val serverEntries: List<CachedTimeEntry>
+    private val serverEntries: List<TimeEntry>
         get() = generateSequence(firstDay) { it.plusDays(1) }.takeWhile { it <= LAST_DAY }.map(::entryOn).toList()
 
     @Before
@@ -329,10 +331,14 @@ class HistoryViewModelTest {
         awaitShown(model) { it.days.size == 28 }
 
         val cachedDay = LocalDate.parse("2026-10-10")
-        assertEquals(entryOn(cachedDay), model.entry(cachedDay.toEpochDay()))
+        assertEquals(entryOn(cachedDay), model.entry(EntryId(cachedDay.toEpochDay())))
         val olderDay = LocalDate.parse("2026-09-25")
-        assertEquals("from the page the server sent", entryOn(olderDay), model.entry(olderDay.toEpochDay()))
-        assertEquals("a day the history does not show", null, model.entry(LocalDate.parse("2026-09-01").toEpochDay()))
+        assertEquals("from the page the server sent", entryOn(olderDay), model.entry(EntryId(olderDay.toEpochDay())))
+        assertEquals(
+            "a day the history does not show",
+            null,
+            model.entry(EntryId(LocalDate.parse("2026-09-01").toEpochDay())),
+        )
     }
 
     /**
@@ -359,7 +365,7 @@ class HistoryViewModelTest {
         awaitShown(model) { !it.entryOn(day).unsent }
 
         // The refresh after the send drops it, and brings an entry the server has since today.
-        val later = entryOn(LocalDate.parse("2026-10-19")).copy(id = 999, description = "Later")
+        val later = entryOn(LocalDate.parse("2026-10-19")).copy(id = EntryId(999), description = "Later")
         cached.value = window + EntryWithSendState(later, unsent = false)
         val refreshed = awaitShown(model) { shown -> shown.days.first().entries.any { it.id == later.id } }
         val shown = refreshed.entryOn(day)
@@ -385,8 +391,8 @@ class HistoryViewModelTest {
 
     private fun model() = HistoryViewModel(
         entries = cached,
-        projects = MutableStateFlow(emptyList<CachedProject>()),
-        tasks = MutableStateFlow(emptyList<CachedTask>()),
+        projects = MutableStateFlow(emptyList<Project>()),
+        tasks = MutableStateFlow(emptyList<Task>()),
         accountSettings = MutableStateFlow(SETTINGS),
         client = { client },
         scope = scope,
@@ -456,11 +462,11 @@ class HistoryViewModelTest {
         val OCTOBER_19: Instant = Instant.parse("2026-10-19T10:00:00Z")
 
         /** An hour from nine in the morning, Madrid time. */
-        fun entryOn(day: LocalDate): CachedTimeEntry {
+        fun entryOn(day: LocalDate): TimeEntry {
             val start = day.atTime(9, 0).atZone(MADRID).toInstant()
-            return CachedTimeEntry(
-                id = day.toEpochDay(),
-                workspaceId = 1,
+            return TimeEntry(
+                id = EntryId(day.toEpochDay()),
+                workspaceId = WorkspaceId(1),
                 projectId = null,
                 taskId = null,
                 description = "Worked on $day",
@@ -472,7 +478,7 @@ class HistoryViewModelTest {
             )
         }
 
-        fun CachedTimeEntry.json(): String =
+        fun TimeEntry.json(): String =
             """{"id":$id,"workspace_id":$workspaceId,"description":"$description","start":"$start","stop":"$stop",""" +
                 """"billable":false,"tags":[],"tag_ids":[]}"""
     }

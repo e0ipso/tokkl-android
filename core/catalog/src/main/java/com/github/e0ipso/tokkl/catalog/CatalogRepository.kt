@@ -4,6 +4,7 @@ import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TokklApi
+import com.github.e0ipso.tokkl.model.WorkspaceId
 
 /**
  * The server behind a page that manages one kind of the account's items: which workspace the page
@@ -12,10 +13,10 @@ import com.github.e0ipso.tokkl.api.TokklApi
 interface CatalogRepository<D> {
 
     /** The workspace the page manages: [stored] from the account settings, or the server's default. */
-    suspend fun workspace(stored: Long?): ApiResult<Long>
+    suspend fun workspace(stored: WorkspaceId?): ApiResult<WorkspaceId>
 
     /** What the page lists in [workspace]. */
-    suspend fun load(workspace: Long): ApiResult<D>
+    suspend fun load(workspace: WorkspaceId): ApiResult<D>
 }
 
 /**
@@ -31,5 +32,5 @@ class SignedInApi(private val client: ApiClientProvider) {
     }
 
     /** The workspace the catalog pages manage, as [managedWorkspace] finds it. */
-    suspend fun workspace(stored: Long?): ApiResult<Long> = call { managedWorkspace(it, stored) }
+    suspend fun workspace(stored: WorkspaceId?): ApiResult<WorkspaceId> = call { managedWorkspace(it, stored) }
 }

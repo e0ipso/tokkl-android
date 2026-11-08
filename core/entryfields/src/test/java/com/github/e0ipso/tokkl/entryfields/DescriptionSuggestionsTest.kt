@@ -1,9 +1,14 @@
 package com.github.e0ipso.tokkl.entryfields
 
-import com.github.e0ipso.tokkl.cache.CachedClient
-import com.github.e0ipso.tokkl.cache.CachedProject
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
-import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.model.Client
+import com.github.e0ipso.tokkl.model.ClientId
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.TaskId
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.time.Instant
@@ -17,8 +22,8 @@ class DescriptionSuggestionsTest {
     @Test
     fun anEmptyQuerySuggestsTheNewestDistinctEntries() {
         val entries = listOf(
-            entry(1, "Write the report", WEBSITE.id, taskId = 5, tags = listOf("call"), billable = true),
-            entry(2, "Write the report", WEBSITE.id, taskId = 5, tags = listOf("other"), billable = false),
+            entry(1, "Write the report", WEBSITE.id, taskId = TaskId(5), tags = listOf("call"), billable = true),
+            entry(2, "Write the report", WEBSITE.id, taskId = TaskId(5), tags = listOf("other"), billable = false),
             entry(3, "", projectId = null),
             entry(4, "", WEBSITE.id),
             entry(5, "Write the report", projectId = null),
@@ -26,7 +31,7 @@ class DescriptionSuggestionsTest {
         assertEquals(
             listOf(
                 DescriptionSuggestion(
-                    EntryFields("Write the report", WEBSITE.id, 5, listOf("call"), billable = true),
+                    EntryFields("Write the report", WEBSITE.id, TaskId(5), listOf("call"), billable = true),
                     "Website",
                     "#0b83d9",
                 ),
@@ -80,12 +85,12 @@ class DescriptionSuggestionsTest {
     private fun entry(
         id: Long,
         description: String,
-        projectId: Long?,
-        taskId: Long? = null,
+        projectId: ProjectId?,
+        taskId: TaskId? = null,
         tags: List<String> = emptyList(),
         billable: Boolean = false,
-    ) = CachedTimeEntry(
-        id, WORKSPACE, projectId, taskId, description,
+    ) = TimeEntry(
+        EntryId(id), WorkspaceId(WORKSPACE), projectId, taskId, description,
         Instant.EPOCH.minusSeconds(
             id,
         ),
@@ -94,19 +99,19 @@ class DescriptionSuggestionsTest {
 
     private companion object {
         const val WORKSPACE = 10L
-        val ACME = CachedClient(7, WORKSPACE, "Acme", archived = false)
-        val WEBSITE = CachedProject(
-            1,
-            WORKSPACE,
+        val ACME = Client(ClientId(7), WorkspaceId(WORKSPACE), "Acme", archived = false)
+        val WEBSITE = Project(
+            ProjectId(1),
+            WorkspaceId(WORKSPACE),
             clientId = ACME.id,
             name = "Website",
             color = "#0b83d9",
             active = true,
             billable = false,
         )
-        val INTERNAL = CachedProject(
-            2,
-            WORKSPACE,
+        val INTERNAL = Project(
+            ProjectId(2),
+            WorkspaceId(WORKSPACE),
             clientId = null,
             name = "Internal",
             color = null,

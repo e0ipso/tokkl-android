@@ -1,6 +1,8 @@
 package com.github.e0ipso.tokkl.reminder
 
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.preferences.ReminderPreferences
 import com.github.e0ipso.tokkl.storage.valueStore
 import com.github.e0ipso.tokkl.timerstate.SurfaceTap
@@ -15,8 +17,8 @@ import java.time.Instant
 
 class ReminderSyncTest {
     private val now = Instant.parse("2026-10-21T12:00:00Z")
-    private val entry = CachedTimeEntry(
-        1, 1, null, null, "Work",
+    private val entry = TimeEntry(
+        EntryId(1), WorkspaceId(1), null, null, "Work",
         now.minusSeconds(
             9 * 3600,
         ),
@@ -26,8 +28,8 @@ class ReminderSyncTest {
     private var stored: ReminderTimer? = null
     private val waiting = mutableListOf<ReminderTimer>()
     private val posted = mutableListOf<ReminderTimer>()
-    private val stopped = mutableListOf<Long>()
-    private val mappings = mutableMapOf<Long, Long>()
+    private val stopped = mutableListOf<EntryId>()
+    private val mappings = mutableMapOf<EntryId, EntryId>()
     private var removals = 0
     private fun sync() = ReminderSync(
         inputs = { input },
@@ -111,12 +113,12 @@ class ReminderSyncTest {
         sync.fire(1, entry.start.epochSecond, entry.start.epochSecond * 1000 + input.preferences.hours * 3_600_000L)
         assertTrue(posted.isEmpty())
         assertTrue(waiting.isEmpty())
-        input = input.copy(running = entry.copy(id = 2))
+        input = input.copy(running = entry.copy(id = EntryId(2)))
         sync.act(1, entry.start.epochSecond, true)
         assertTrue(stopped.isEmpty())
         sync.fire(2, entry.start.epochSecond, entry.start.epochSecond * 1000 + input.preferences.hours * 3_600_000L)
         sync.act(2, entry.start.epochSecond, true)
-        assertEquals(listOf(2L), stopped)
+        assertEquals(listOf(EntryId(2)), stopped)
     }
 
     @Test fun startCorrectionInvalidatesTheOldStopAction() = runTest {
@@ -128,14 +130,14 @@ class ReminderSyncTest {
     }
 
     @Test fun serverIdMappingKeepsConfirmationAndResolvesStop() = runTest {
-        input = input.copy(running = entry.copy(id = -1))
+        input = input.copy(running = entry.copy(id = EntryId(-1)))
         sync().fire(-1, entry.start.epochSecond, entry.start.epochSecond * 1000 + input.preferences.hours * 3_600_000L)
-        mappings[-1] = 1
+        mappings[EntryId(-1)] = EntryId(1)
         input = input.copy(running = entry)
         sync().fire(1, entry.start.epochSecond, entry.start.epochSecond * 1000 + input.preferences.hours * 3_600_000L)
         assertEquals(1, posted.size)
         sync().act(-1, entry.start.epochSecond, true)
-        assertEquals(listOf(1L), stopped)
+        assertEquals(listOf(EntryId(1)), stopped)
     }
 
     @Test fun anOldThresholdCannotDeliverAfterTheHoursIncrease() = runTest {
@@ -174,7 +176,7 @@ class ReminderSyncTest {
         input = input.copy(running = null)
         sync.reconcile()
         assertTrue("a paused timer has no reminder", waiting.isEmpty())
-        input = input.copy(running = entry.copy(id = 2, start = now))
+        input = input.copy(running = entry.copy(id = EntryId(2), start = now))
         sync.reconcile()
         assertEquals(2L, waiting.single().id)
         assertEquals(now.plusSeconds(8 * 3600).toEpochMilli(), waiting.single().due)
@@ -201,7 +203,7 @@ class ReminderSyncTest {
     }
 
     @Test fun aPauseNotOfferedNowOrForAnotherTimerSendsNothing() = runTest {
-        val asked = mutableListOf<Long>()
+        val asked = mutableListOf<EntryId>()
         // No timer API, or a Pomodoro session: the app offers no Pause request.
         val sync = pausing { id ->
             asked += id
@@ -220,11 +222,11 @@ class ReminderSyncTest {
                 beforeRequest = { ended = true },
             ),
         )
-        assertEquals(listOf(1L), asked)
-        input = input.copy(running = entry.copy(id = 2))
+        assertEquals(listOf(EntryId(1)), asked)
+        input = input.copy(running = entry.copy(id = EntryId(2)))
         assertNull(sync.act(1, entry.start.epochSecond, stopTimer = false, pauseTimer = true))
 
-        assertEquals("another timer runs now, so Pause is not even asked", listOf(1L), asked)
+        assertEquals("another timer runs now, so Pause is not even asked", listOf(EntryId(1)), asked)
         assertFalse(ended)
         assertEquals(removed, removals)
     }

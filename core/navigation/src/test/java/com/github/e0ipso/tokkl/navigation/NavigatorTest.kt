@@ -1,7 +1,9 @@
 package com.github.e0ipso.tokkl.navigation
 
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
-import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.RunningEntryIdentity
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
@@ -66,24 +68,29 @@ class NavigatorTest {
     @Test
     fun aFormTakesWhatItOpensOnceAndAFormFromAnotherProcessNothing() {
         val older =
-            CachedTimeEntry(7, 1, null, null, "older", Instant.EPOCH, Instant.EPOCH, false, emptyList(), emptyList())
-        navigator.openEntry(EntryOpening.Edit(7), older)
+            TimeEntry(
+                EntryId(
+                    7,
+                ),
+                WorkspaceId(1), null, null, "older", Instant.EPOCH, Instant.EPOCH, false, emptyList(), emptyList(),
+            )
+        navigator.openEntry(EntryOpening.Edit(EntryId(7)), older)
         val form = stack.last() as Route.Entry
         val request = openings.take(form)
-        assertEquals(EntryOpening.Edit(7), request?.opening)
+        assertEquals(EntryOpening.Edit(EntryId(7)), request?.opening)
         assertSame(older, request?.older)
         assertNull("a configuration change makes no second opening", openings.take(form))
         assertNull(
             "a restored route that this process did not open",
-            openings.take(Route.Entry(EntryOpening.Edit(7), id = "restored")),
+            openings.take(Route.Entry(EntryOpening.Edit(EntryId(7)), id = "restored")),
         )
     }
 
     @Test
     fun theRouteOfARunningSegmentOrANewEntryKeepsWhatItOpens() {
         val identity = RunningEntryIdentity(
-            entryId = 3,
-            workspaceId = 4,
+            entryId = EntryId(3),
+            workspaceId = WorkspaceId(4),
             start = Instant.ofEpochSecond(1_700_000_000, 123),
         )
         assertEquals(identity, EntryOpening.Running.of(identity).identity)

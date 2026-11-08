@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.session
 
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.storage.ValueStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,7 +25,7 @@ class AccountSettingsSource(private val disk: ValueStore<AccountSettings>) : Def
     /** The stored settings, or null when none are stored yet. */
     val state: StateFlow<AccountSettings?> by lazy { mutableState.asStateFlow() }
 
-    override fun defaultWorkspaceId(): Long? = state.value?.defaultWorkspaceId
+    override fun defaultWorkspaceId(): WorkspaceId? = state.value?.defaultWorkspaceId
 
     /**
      * Guards [writes], and each write together with the state it sets. A JVM lock, not a Mutex,

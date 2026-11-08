@@ -53,8 +53,6 @@ import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitTimerPage
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.calendar.CalendarContent
 import com.github.e0ipso.tokkl.calendar.CalendarEditing
 import com.github.e0ipso.tokkl.calendar.CalendarEntry
@@ -70,6 +68,11 @@ import com.github.e0ipso.tokkl.history.HistoryDay
 import com.github.e0ipso.tokkl.history.HistoryEntry
 import com.github.e0ipso.tokkl.history.HistoryState
 import com.github.e0ipso.tokkl.history.OlderDays
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.navhost.SignedInFrame
 import com.github.e0ipso.tokkl.navhost.SignedInPanes
 import com.github.e0ipso.tokkl.navigation.EntryOpening
@@ -284,7 +287,10 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
         show({
             DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(EXPANDED_WINDOW)) {
                 SignedInFrame(pages = topLevelPages, current = Route.Timer, onOpen = {}) {
-                    SignedInPanes(top = Route.Entry(EntryOpening.Edit(1), id = "form"), entryBeside = true) { shown ->
+                    SignedInPanes(
+                        top = Route.Entry(EntryOpening.Edit(EntryId(1)), id = "form"),
+                        entryBeside = true,
+                    ) { shown ->
                         if (shown is Route.Entry) SampleEntryForm() else TimerPage(TimerView.LIST)
                     }
                 }
@@ -840,7 +846,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
         /** A Thursday at noon, in the middle of [WEEK]. */
         val TODAY: Clock = Clock.fixed(Instant.parse("2026-10-15T12:00:00Z"), ZoneOffset.UTC)
 
-        val POMODORO_ACCOUNT = ACCOUNT.copy(defaultWorkspaceId = 1)
+        val POMODORO_ACCOUNT = ACCOUNT.copy(defaultWorkspaceId = WorkspaceId(1))
 
         val POMODORO_FIELDS = EntryFields(description = "Write screenshot scenarios", billable = true)
 
@@ -987,30 +993,30 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
 
         /** Rows match each visible fixture, including the Calendar's single running entry. */
         val HISTORY_ROWS = HISTORY.days.flatMap { it.entries }.map { entry ->
-            CachedTimeEntry(
-                entry.id, 1, entry.projectId, entry.taskId, entry.description,
+            TimeEntry(
+                entry.id, WorkspaceId(1), entry.projectId, entry.taskId, entry.description,
                 entry.start, entry.stop, entry.billable, entry.tags, emptyList(),
             )
         }
 
         val CALENDAR_ROWS = CALENDAR.entries.map { entry ->
-            CachedTimeEntry(
-                entry.id, 1, null, null, entry.description,
+            TimeEntry(
+                entry.id, WorkspaceId(1), null, null, entry.description,
                 entry.start, entry.stop, false, emptyList(), emptyList(), allDay = entry.allDay, day = entry.day,
             )
         }
 
         /** The timer with nothing running, in the account's workspace. */
-        val IDLE_TIMER = TimerState.Idle(EntryFields(), EntryLabels(), workspaceId = 1)
+        val IDLE_TIMER = TimerState.Idle(EntryFields(), EntryLabels(), workspaceId = WorkspaceId(1))
 
         /** The running entry of [CALENDAR], "Calendar grid" since 11:15, at noon on [TODAY], not sent. */
         val RUNNING_TIMER = TimerState.Running(
-            entryId = 7,
-            workspaceId = 1,
+            entryId = EntryId(7),
+            workspaceId = WorkspaceId(1),
             start = Instant.parse("2026-10-15T11:15:00Z"),
-            fields = EntryFields(description = "Calendar grid", projectId = APP.id),
+            fields = EntryFields(description = "Calendar grid", projectId = ProjectId(APP.id)),
             labels = EntryLabels(project = APP.name, projectColor = APP.colour),
-            original = Picked(projectId = APP.id),
+            original = Picked(projectId = ProjectId(APP.id)),
             unsent = true,
         )
 
@@ -1062,7 +1068,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
             billable: Boolean = false,
             unsent: Boolean = false,
         ) = HistoryEntry(
-            id = id,
+            id = EntryId(id),
             description = description,
             project = project?.name,
             projectColor = project?.colour,
@@ -1085,7 +1091,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
             unsent: Boolean = false,
             allDay: Boolean = false,
         ) = CalendarEntry(
-            id = id,
+            id = EntryId(id),
             description = description,
             project = project?.name,
             projectColor = project?.colour,

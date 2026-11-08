@@ -16,7 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.entryfields.DescriptionSuggestion
 import com.github.e0ipso.tokkl.entryfields.DescriptionSuggestions
 import com.github.e0ipso.tokkl.entryfields.EntryFieldsEditor
@@ -25,6 +24,8 @@ import com.github.e0ipso.tokkl.favorites.FavoritesProblem
 import com.github.e0ipso.tokkl.favorites.FavoritesState
 import com.github.e0ipso.tokkl.favorites.TemplatesPopup
 import com.github.e0ipso.tokkl.feature.timer.R
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.picker.EntityPicker
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
@@ -38,7 +39,7 @@ import com.github.e0ipso.tokkl.core.ui.R as UiR
  */
 typealias WorkspacePicker =
     @Composable (
-        workspaceId: Long,
+        workspaceId: WorkspaceId,
         original: Picked,
         picked: Picked,
         onPickedChange: (Picked) -> Unit,

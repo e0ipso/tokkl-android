@@ -36,6 +36,7 @@ import com.github.e0ipso.tokkl.DeviceShell
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createComposeRule
 import com.github.e0ipso.tokkl.feature.timer.R
+import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.spokenDuration
 import com.github.e0ipso.tokkl.ui.theme.LocalSectionHue
@@ -335,7 +336,7 @@ class DayCalendarTest {
         )
 
         fun entry(id: Long, description: String, start: String, stop: String) = CalendarEntry(
-            id = id,
+            id = EntryId(id),
             description = description,
             project = null,
             projectColor = null,

@@ -29,10 +29,11 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.catalog.ConfirmDialog
 import com.github.e0ipso.tokkl.entryfields.EntryFieldsEditor
 import com.github.e0ipso.tokkl.feature.timer.R
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.picker.EntityPicker
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.ui.DateWords
@@ -51,7 +52,7 @@ import com.github.e0ipso.tokkl.core.ui.R as UiR
  */
 typealias EntryFormPicker =
     @Composable (
-        workspaceId: Long,
+        workspaceId: WorkspaceId,
         original: Picked,
         picked: Picked,
         onPickedChange: (Picked) -> Unit,
@@ -70,7 +71,7 @@ fun EntryFormScreen(
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
     canRestore: () -> Boolean = { false },
-    onEntryDelete: (CachedTimeEntry, Boolean) -> Unit = { _, _ -> },
+    onEntryDelete: (TimeEntry, Boolean) -> Unit = { _, _ -> },
 ) {
     LaunchedEffect(model) { if (!model.isOpen) onClose() }
     val state by model.state.collectAsStateWithLifecycle()

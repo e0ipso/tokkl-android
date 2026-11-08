@@ -11,6 +11,9 @@ import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -60,7 +63,7 @@ class ChangeQueueLostAnswerRestartTest {
 
         val id = runBlocking {
             app.changes.create(
-                workspace,
+                WorkspaceId(workspace),
                 EntryFields(description = "Sent before the process died"),
                 start,
                 start.plus(Duration.ofMinutes(30)),
@@ -123,7 +126,7 @@ class ChangeQueueLostAnswerRestartTest {
             assertEquals("one copy on the server: $copies", 1, copies.size)
             assertEquals(
                 "the phone's entry is that copy",
-                runBlocking { app.changes.currentId(saved.getProperty("entry").toLong()) },
+                runBlocking { app.changes.currentId(EntryId(saved.getProperty("entry").toLong())) }.value,
                 copies.single().getValue("id").jsonPrimitive.long,
             )
         } finally {

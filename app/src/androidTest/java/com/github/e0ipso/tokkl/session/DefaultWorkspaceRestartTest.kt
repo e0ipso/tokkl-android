@@ -8,11 +8,12 @@ import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.TogglApiClient
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.orFail
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -59,8 +60,8 @@ class DefaultWorkspaceRestartTest {
 
             runBlocking { app.accountRefresh.refresh().join() }
 
-            assertEquals(account.workspaceId, app.accountSettings.state.value?.defaultWorkspaceId)
-            assertEquals(account.workspaceId, AccountSettingsStore(context).load()?.defaultWorkspaceId)
+            assertEquals(account.workspaceId, app.accountSettings.state.value?.defaultWorkspaceId?.value)
+            assertEquals(account.workspaceId, AccountSettingsStore(context).load()?.defaultWorkspaceId?.value)
             state.writeText(listOf(currentProcess(), account.id, account.email, account.workspaceId).joinToString("\n"))
         } catch (e: Throwable) {
             TestAccounts.delete(account)
@@ -76,12 +77,16 @@ class DefaultWorkspaceRestartTest {
         assertNotEquals("the step before ran in this same process", previous, currentProcess())
         try {
             AirplaneMode.set(true, client)
-            assertEquals("read from the phone", workspace.toLong(), app.accountSettings.state.value?.defaultWorkspaceId)
+            assertEquals(
+                "read from the phone",
+                workspace.toLong(),
+                app.accountSettings.state.value?.defaultWorkspaceId?.value,
+            )
             runBlocking { app.accountRefresh.refresh().join() }
             assertEquals(
                 "a failed refresh keeps it",
                 workspace.toLong(),
-                app.accountSettings.state.value?.defaultWorkspaceId,
+                app.accountSettings.state.value?.defaultWorkspaceId?.value,
             )
 
             val stored = checkNotNull(app.accountSettings.state.value?.defaultWorkspaceId)
@@ -106,7 +111,7 @@ class DefaultWorkspaceRestartTest {
             assertEquals(
                 "read after a second restart",
                 workspace.toLong(),
-                app.accountSettings.state.value?.defaultWorkspaceId,
+                app.accountSettings.state.value?.defaultWorkspaceId?.value,
             )
             AirplaneMode.set(false, client)
             val deadline = System.nanoTime() + SEND_TIMEOUT_NANOS
@@ -115,7 +120,7 @@ class DefaultWorkspaceRestartTest {
                 runBlocking { app.sender.send().join() }
             }
 
-            val serverId = runBlocking { app.changes.currentId(lines[4].toLong()) }
+            val serverId = runBlocking { app.changes.currentId(EntryId(lines[4].toLong())) }
             val entry = runBlocking {
                 client.get(
                     client.server.api("me", "time_entries", serverId.toString()),

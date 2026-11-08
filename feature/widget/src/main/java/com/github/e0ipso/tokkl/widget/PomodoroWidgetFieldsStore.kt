@@ -2,7 +2,10 @@ package com.github.e0ipso.tokkl.widget
 
 import android.content.Context
 import com.github.e0ipso.tokkl.api.ApiJson
-import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.TaskId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import com.github.e0ipso.tokkl.storage.PreferencesFile
@@ -15,10 +18,10 @@ import java.io.IOException
 @Serializable
 data class RememberedPomodoroFields(
     val account: String,
-    val workspaceId: Long,
+    val workspaceId: WorkspaceId,
     val description: String,
-    val projectId: Long?,
-    val taskId: Long?,
+    val projectId: ProjectId?,
+    val taskId: TaskId?,
     val tags: List<String>,
     val billable: Boolean,
 ) {
@@ -30,10 +33,10 @@ internal fun rememberedPomodoroFields(account: String, held: HeldTimerState): Re
     val entry = held.state.runningEntry?.takeIf { it.id == session.entryId } ?: return null
     return RememberedPomodoroFields(
         account,
-        entry.workspaceId,
+        WorkspaceId(entry.workspaceId),
         entry.description.orEmpty(),
-        entry.projectId,
-        entry.taskId,
+        entry.projectId?.let(::ProjectId),
+        entry.taskId?.let(::TaskId),
         entry.tags.orEmpty(),
         entry.billable == true,
     )

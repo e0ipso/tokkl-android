@@ -64,11 +64,9 @@ import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.cache.CacheDatabase
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.ChangeKind
 import com.github.e0ipso.tokkl.cache.EntryChanges
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
+import com.github.e0ipso.tokkl.cache.modelOf
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.cache
@@ -79,6 +77,11 @@ import com.github.e0ipso.tokkl.components.timerActions
 import com.github.e0ipso.tokkl.components.timerControls
 import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.finishWithin
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.RunningEntryIdentity
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -341,7 +344,7 @@ class RunningEntryEditorServerTest {
             relay!!.hang()
             timerDescription().performTextInput("Offline midnight")
             startButton().performTouchInput { click() }
-            val local = awaitRunning("offline Start commits locally") { it.id < 0 }
+            val local = awaitRunning("offline Start commits locally") { it.id.value < 0 }
             assertEquals("one unsent create before editing", 1, queued())
             val openedDay = local.start.atZone(MADRID).toLocalDate()
             val correctedDay = openedDay.minusDays(1)
@@ -352,15 +355,15 @@ class RunningEntryEditorServerTest {
             save()
             val cached = awaitRunning("unsnapped midnight correction commits") { it.start == corrected }
             assertEquals(local.id, cached.id)
-            assertEquals(workspace, cached.workspaceId)
+            assertEquals(workspace, cached.workspaceId.value)
             assertEquals("create then one running UPDATE remain offline", 2, queued())
             assertElapsedFrom(corrected)
             // A separate Room connection proves committed persistence, not just the active model.
             val persisted = CacheDatabase.open(context)
             try {
                 runBlocking(Dispatchers.IO) {
-                    assertEquals(cached, persisted.changes().entry(local.id))
-                    val pending = persisted.changes().changesFor(local.id)
+                    assertEquals(cached, persisted.changes().entry(local.id.value)?.let(::modelOf))
+                    val pending = persisted.changes().changesFor(local.id.value)
                     assertEquals(listOf(ChangeKind.CREATE, ChangeKind.UPDATE), pending.map { it.kind })
                     assertEquals(corrected, pending.last().start)
                     assertEquals(null, pending.last().stop)
@@ -381,14 +384,14 @@ class RunningEntryEditorServerTest {
             relay!!.release()
             drain()
             val mapped = runBlocking { app.changes.currentId(local.id) }
-            assertTrue("create received a server id", mapped > 0)
+            assertTrue("create received a server id", mapped.value > 0)
             val current = serverCurrent()
-            assertRunning(current, mapped, corrected)
+            assertRunning(current, mapped.value, corrected)
             assertEquals("draft metadata is still unsaved", "Offline midnight", current.text("description"))
             save()
             drain()
-            assertRunning(serverEntry(mapped), mapped, corrected)
-            assertEquals("Saved after remapping", serverEntry(mapped).text("description"))
+            assertRunning(serverEntry(mapped.value), mapped.value, corrected)
+            assertEquals("Saved after remapping", serverEntry(mapped.value).text("description"))
             val serverRows = runBlocking {
                 web.get(
                     web.server.api("me", "time_entries"),
@@ -398,7 +401,7 @@ class RunningEntryEditorServerTest {
                 .map { it.jsonObject }
             assertEquals(
                 "one server entry after reconnect",
-                listOf(mapped),
+                listOf(mapped.value),
                 serverRows.map { it.getValue("id").jsonPrimitive.long },
             )
             assertEquals(
@@ -430,7 +433,7 @@ class RunningEntryEditorServerTest {
             awaitClosed()
             val running = awaitRunning("initial Start has an identity") { true }
             drain()
-            val settledId = runBlocking { app.changes.currentId(running.id) }
+            val settledId = runBlocking { app.changes.currentId(EntryId(running.id.value)) }
 
             writes.holdUpdate = true
             timerDescription().performTextClearance()
@@ -453,7 +456,7 @@ class RunningEntryEditorServerTest {
             drain()
             assertEquals(
                 "Latest focused typing",
-                serverEntry(runBlocking { app.changes.currentId(running.id) }).text("description"),
+                serverEntry(runBlocking { app.changes.currentId(running.id) }.value).text("description"),
             )
             assertEquals(
                 "one running entry",
@@ -480,7 +483,7 @@ class RunningEntryEditorServerTest {
                 )
             }.orFail("stop the captured fixture")
             refresh()
-            assertNotNull(runBlocking { app.cache.entries.first() }.single { it.entry.id == id }.entry.stop)
+            assertNotNull(runBlocking { app.cache.entries.first() }.single { it.entry.id.value == id }.entry.stop)
             val stopped = serverEntry(id)
             relay!!.hang()
             tap(R.string.entry_save)
@@ -532,7 +535,7 @@ class RunningEntryEditorServerTest {
             val replacement = createRunning("Same-instant replacement", fixtureStart)
             assertNotEquals(original, replacement)
             refresh()
-            awaitRunning("replacement reaches the cache") { it.id == replacement }
+            awaitRunning("replacement reaches the cache") { it.id.value == replacement }
             val before = serverEntry(replacement)
             relay!!.hang()
             tap(R.string.entry_save)
@@ -542,7 +545,9 @@ class RunningEntryEditorServerTest {
             assertRunning(serverCurrent(), replacement, fixtureStart)
             assertFalse(
                 "old segment stays stopped or absent",
-                runBlocking { app.cache.entries.first() }.any { it.entry.id == original && it.entry.stop == null },
+                runBlocking {
+                    app.cache.entries.first()
+                }.any { it.entry.id.value == original && it.entry.stop == null },
             )
         }
     }
@@ -886,7 +891,7 @@ class RunningEntryEditorServerTest {
         }
     }
 
-    private fun awaitRunning(message: String, predicate: (CachedTimeEntry) -> Boolean): CachedTimeEntry = runBlocking {
+    private fun awaitRunning(message: String, predicate: (TimeEntry) -> Boolean): TimeEntry = runBlocking {
         try {
             withTimeout(AT_ONCE_MS) { app.cache.running.first { it != null && predicate(it.entry) }!!.entry }
         } catch (e: TimeoutCancellationException) {
@@ -955,10 +960,10 @@ class RunningEntryEditorServerTest {
 
         @Volatile var holdUpdate = false
 
-        override suspend fun start(workspaceId: Long, fields: EntryFields): Long {
+        override suspend fun start(workspaceId: WorkspaceId, fields: EntryFields): EntryId {
             startEntered.complete(Unit)
             startRelease.await()
-            return real.start(workspaceId, fields)
+            return real.start(WorkspaceId(workspaceId.value), fields)
         }
 
         override suspend fun updateRunning(

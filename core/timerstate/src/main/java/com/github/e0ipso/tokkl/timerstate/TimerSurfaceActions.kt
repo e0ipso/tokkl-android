@@ -90,7 +90,7 @@ class TimerSurfaceActions(
             TimerSurfaceAction.Resume -> whilePaused(target) { server.resume(target.revision) }
 
             TimerSurfaceAction.Stop ->
-                if (target.entryId != 0L) {
+                if (target.entryId != null) {
                     SurfaceTap.Queued.takeIf { changes.stop(target.entryId) }
                 } else {
                     whilePaused(target) { server.discard(target.revision) }
@@ -100,14 +100,14 @@ class TimerSurfaceActions(
 
     /** A request for [action] on the paused chain [target] showed, while a chain is paused. */
     private suspend fun whilePaused(target: TimerTarget, action: suspend () -> TimerActionResult): SurfaceTap? {
-        if (target.entryId != 0L) return null
+        if (target.entryId != null) return null
         val paused = controls.current() as? TimerControls.Paused ?: return null
         return request(paused.target, action)
     }
 
     private suspend fun pause(target: TimerTarget): SurfaceTap? {
         val running = controls.current() as? TimerControls.Running ?: return null
-        if (!running.pausable || target.entryId == 0L || changes.currentId(
+        if (!running.pausable || target.entryId == null || changes.currentId(
                 target.entryId,
             ) != running.entry.id
         ) {

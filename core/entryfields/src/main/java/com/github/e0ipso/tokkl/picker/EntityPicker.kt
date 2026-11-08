@@ -41,8 +41,10 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.core.entryfields.R
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.Task
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 
 /**
@@ -60,7 +62,7 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 fun EntityPicker(
     source: PickerSource,
     offline: Boolean,
-    workspaceId: Long,
+    workspaceId: WorkspaceId,
     original: Picked,
     picked: Picked,
     onPickedChange: (Picked) -> Unit,
@@ -89,8 +91,8 @@ private fun EntityPickerContent(
     query: String,
     onQueryChange: (String) -> Unit,
     offline: Boolean,
-    onPickProject: (Long?) -> Unit,
-    onPickTask: (CachedTask) -> Unit,
+    onPickProject: (ProjectId?) -> Unit,
+    onPickTask: (Task) -> Unit,
     onToggleTag: (String) -> Unit,
     onAddTag: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -144,8 +146,8 @@ private fun EntityPickerContent(
 /** "No project", then each client's projects with their tasks under them, as one choice. */
 private fun LazyListScope.projectOptions(
     options: PickerOptions,
-    onPickProject: (Long?) -> Unit,
-    onPickTask: (CachedTask) -> Unit,
+    onPickProject: (ProjectId?) -> Unit,
+    onPickTask: (Task) -> Unit,
 ) {
     if (options.noProject) {
         item(key = "no-project") {

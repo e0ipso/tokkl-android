@@ -1,5 +1,8 @@
 package com.github.e0ipso.tokkl.cache
 
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.time.Instant
@@ -11,7 +14,7 @@ class RunningCheckTest {
     fun aTimerTheServerNoLongerRunsLeavesTheCache() {
         val running = entry(1)
 
-        assertEquals(RunningCheckWrites(delete = listOf(1)), writes(before = listOf(running), server = null))
+        assertEquals(RunningCheckWrites(delete = listOf(EntryId(1))), writes(before = listOf(running), server = null))
     }
 
     @Test
@@ -20,7 +23,7 @@ class RunningCheckTest {
         val elsewhere = entry(2, description = "Started elsewhere")
 
         assertEquals(
-            RunningCheckWrites(delete = listOf(1), upsert = elsewhere),
+            RunningCheckWrites(delete = listOf(EntryId(1)), upsert = elsewhere),
             writes(before = listOf(running), server = elsewhere),
         )
     }
@@ -63,7 +66,7 @@ class RunningCheckTest {
 
         assertEquals(
             "the cached running entry still goes",
-            RunningCheckWrites(delete = listOf(1)),
+            RunningCheckWrites(delete = listOf(EntryId(1))),
             writes(
                 before = listOf(running),
                 server = entry(2),
@@ -176,24 +179,24 @@ class RunningCheckTest {
 
     /** The writes for [server], with [now] the running entries and [cached] every row when the answer arrives. */
     private fun writes(
-        before: List<CachedTimeEntry>,
-        server: CachedTimeEntry?,
-        now: List<CachedTimeEntry> = before,
+        before: List<TimeEntry>,
+        server: TimeEntry?,
+        now: List<TimeEntry> = before,
         unsent: Set<Long> = emptySet(),
-        cached: List<CachedTimeEntry> = now,
+        cached: List<TimeEntry> = now,
         pendingAtStart: Set<Long> = emptySet(),
     ): RunningCheckWrites = runningCheckWrites(
         before = before,
         now = now,
         server = server,
-        unsent = { it in unsent },
+        unsent = { it.value in unsent },
         cached = { id -> cached.firstOrNull { it.id == id } },
-        pendingAtStart = pendingAtStart,
+        pendingAtStart = pendingAtStart.mapTo(HashSet(), ::EntryId),
     )
 
-    private fun entry(id: Long, description: String = "Running", stop: Instant? = null) = CachedTimeEntry(
-        id = id,
-        workspaceId = 7,
+    private fun entry(id: Long, description: String = "Running", stop: Instant? = null) = TimeEntry(
+        id = EntryId(id),
+        workspaceId = WorkspaceId(7),
         projectId = null,
         taskId = null,
         description = description,

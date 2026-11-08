@@ -11,6 +11,7 @@ import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.appApiClient
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.orFail
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
@@ -62,7 +63,7 @@ class AccountSettingsServerTest {
             "America/Sao_Paulo",
             DayOfWeek.SUNDAY,
             timeResolutionMinutes = 5.0,
-            defaultWorkspaceId = serverId("default_workspace_id"),
+            defaultWorkspaceId = WorkspaceId(serverId("default_workspace_id")),
             userId = serverId("id"),
         )
         assertEquals(expected, source.state.value)

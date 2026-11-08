@@ -1,8 +1,9 @@
 package com.github.e0ipso.tokkl.timerstate
 
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges
-import com.github.e0ipso.tokkl.cache.fields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.fields
 
 // Continue (docs/PRD.md T2), as continueEntry and the "c" shortcut in
 // ../tokkl/packages/web/src/pages/TimerPage.tsx at tokkl commit 0031de3: a new running entry with
@@ -14,14 +15,14 @@ import com.github.e0ipso.tokkl.cache.fields
  * creates over server entries, then the newest create: smaller negative queue IDs or larger
  * server IDs. Null when none is stopped.
  */
-fun lastStopped(entries: List<CachedTimeEntry>): CachedTimeEntry? =
+fun lastStopped(entries: List<TimeEntry>): TimeEntry? =
     entries.filter { it.stop != null }.maxWithOrNull(stoppedEntryOrder)
 
-private val stoppedEntryOrder = compareBy<CachedTimeEntry> { it.start }
-    .thenBy { it.id < 0 }
+private val stoppedEntryOrder = compareBy<TimeEntry> { it.start }
+    .thenBy { it.id.local != null }
     .thenComparator { a, b ->
         // Local IDs are negative queue sequences, so smaller means newer.
-        if (a.id < 0) b.id.compareTo(a.id) else a.id.compareTo(b.id)
+        if (a.id.local != null) b.id.value.compareTo(a.id.value) else a.id.value.compareTo(b.id.value)
     }
 
 /**
@@ -30,13 +31,13 @@ private val stoppedEntryOrder = compareBy<CachedTimeEntry> { it.start }
  * phone at once, works offline, and stops a running entry at the new one's start. Returns the new
  * entry's local id.
  */
-suspend fun EntryChanges.continueEntry(source: CachedTimeEntry): Long = start(source.workspaceId, source.fields())
+suspend fun EntryChanges.continueEntry(source: TimeEntry): EntryId = start(source.workspaceId, source.fields())
 
 /**
  * Continues the entry [lastStopped] picks among [entries], such as the cache's entries, for a
  * surface without the history, such as the Quick Settings tile (docs/PRD.md N4). Returns the new
  * entry's local id, or null when no entry is stopped.
  */
-suspend fun EntryChanges.continueLast(entries: List<CachedTimeEntry>): Long? = lastStopped(
+suspend fun EntryChanges.continueLast(entries: List<TimeEntry>): EntryId? = lastStopped(
     entries,
 )?.let { continueEntry(it) }

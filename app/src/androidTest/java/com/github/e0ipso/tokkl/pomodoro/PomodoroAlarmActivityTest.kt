@@ -21,11 +21,12 @@ import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.api.PhaseKind
 import com.github.e0ipso.tokkl.api.PhaseTransition
 import com.github.e0ipso.tokkl.api.TimerState
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.components.capabilities
 import com.github.e0ipso.tokkl.components.pomodoroRinging
 import com.github.e0ipso.tokkl.components.timerActions
 import com.github.e0ipso.tokkl.components.timerState
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.timer.TimerAcceptanceFixture
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
@@ -197,7 +198,11 @@ class PomodoroAlarmActivityTest {
             assertEquals(
                 TimerActionResult.Done,
                 runBlocking {
-                    app.timerActions.startSession(fixture.account.workspaceId, EntryFields("Alarm acceptance"), lengths)
+                    app.timerActions.startSession(
+                        WorkspaceId(fixture.account.workspaceId),
+                        EntryFields("Alarm acceptance"),
+                        lengths,
+                    )
                 },
             )
             // The server's one-minute work phase ends, and the phone rings from its planned end.

@@ -33,12 +33,12 @@ import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.HttpMethod
-import com.github.e0ipso.tokkl.cache.CachedTag
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.feature.tags.R
+import com.github.e0ipso.tokkl.model.Tag
+import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -135,7 +135,7 @@ class TagsServerTest {
         awaitText(string(CatalogR.string.catalog_created, "focus"))
         awaitMessageGone(string(CatalogR.string.catalog_created, "focus"))
         val id = tag("focus")!!.getValue("id").jsonPrimitive.long
-        awaitCache("the cache holds the new tag") { tags, _ -> tags.any { it.id == id && it.name == "focus" } }
+        awaitCache("the cache holds the new tag") { tags, _ -> tags.any { it.id.value == id && it.name == "focus" } }
         field(
             R.string.tags_new_name,
         ).assert(
@@ -158,7 +158,7 @@ class TagsServerTest {
         assertEquals(null, tag("focus"))
         assertEquals(id, tag("deep work")!!.getValue("id").jsonPrimitive.long)
         awaitCache("the cache and the history hold the new name") { tags, entries ->
-            tags.any { it.id == id && it.name == "deep work" } && entries.single().tags == listOf("deep work")
+            tags.any { it.id.value == id && it.name == "deep work" } && entries.single().tags == listOf("deep work")
         }
 
         composeRule.onNode(hasContentDescription(string(R.string.tags_delete_named, "deep work"))).tap()
@@ -168,7 +168,7 @@ class TagsServerTest {
         awaitText(string(CatalogR.string.catalog_deleted, "deep work"))
         assertEquals(null, tag("deep work"))
         awaitCache("the tag left the cache and the entry") { tags, entries ->
-            tags.none { it.id == id } && entries.single().tags.isEmpty()
+            tags.none { it.id.value == id } && entries.single().tags.isEmpty()
         }
     }
 
@@ -400,7 +400,7 @@ class TagsServerTest {
         hasText(name) and hasClickAction() and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button),
     )
 
-    private fun awaitCache(message: String, check: (List<CachedTag>, List<CachedTimeEntry>) -> Boolean) {
+    private fun awaitCache(message: String, check: (List<Tag>, List<TimeEntry>) -> Boolean) {
         runBlocking { refreshes.forEach { it.join() } }
         assertTrue(
             message,

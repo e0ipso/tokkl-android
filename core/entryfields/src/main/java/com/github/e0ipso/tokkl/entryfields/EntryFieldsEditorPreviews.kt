@@ -5,7 +5,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
-import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.TaskId
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 
@@ -14,7 +16,14 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 @PreviewLightDark
 @Composable
 private fun EntryFieldsEditorPreview() {
-    EditorPreview(EntryFields(description = "Write the history list", projectId = 1, taskId = 11, billable = true))
+    EditorPreview(
+        EntryFields(
+            description = "Write the history list",
+            projectId = ProjectId(1),
+            taskId = TaskId(11),
+            billable = true,
+        ),
+    )
 }
 
 @PreviewLightDark

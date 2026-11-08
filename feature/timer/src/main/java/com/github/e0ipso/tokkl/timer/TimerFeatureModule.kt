@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.timer
 
 import com.github.e0ipso.tokkl.cache.AccountCache
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.cache.ChangeSender
 import com.github.e0ipso.tokkl.calendar.CalendarViewModel
@@ -12,6 +11,8 @@ import com.github.e0ipso.tokkl.favorites.FavoritesServer
 import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
 import com.github.e0ipso.tokkl.history.EntryActionsViewModel
 import com.github.e0ipso.tokkl.history.HistoryViewModel
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.navigation.EntryFormRequest
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
 import com.github.e0ipso.tokkl.navigation.topLevelDestination
@@ -179,5 +180,5 @@ val timerFeatureModule = module {
 }
 
 /** The entry actions' deletes and restores, which the Timer page passes, or none. */
-private fun ParametersHolder.overrides(): Flow<Map<Long, CachedTimeEntry?>> =
-    getOrNull<StateFlow<Map<Long, CachedTimeEntry?>>>() ?: emptyFlow()
+private fun ParametersHolder.overrides(): Flow<Map<EntryId, TimeEntry?>> =
+    getOrNull<StateFlow<Map<EntryId, TimeEntry?>>>() ?: emptyFlow()

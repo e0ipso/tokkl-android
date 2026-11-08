@@ -11,12 +11,15 @@ import com.github.e0ipso.tokkl.api.TimerPause
 import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.api.TrustListener
 import com.github.e0ipso.tokkl.cache.CREATED_WITH
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.CurrentEntryCache
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.RunningCheckStart
 import com.github.e0ipso.tokkl.cache.RunningCheckWrites
 import com.github.e0ipso.tokkl.core.timerstate.R
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonElement
@@ -109,7 +112,7 @@ class TimerActionsTest {
         server.enqueue(answer(200, state(revision = 2)))
         val fields = EntryFields(
             description = "Write the report",
-            projectId = 5,
+            projectId = ProjectId(5),
             taskId = null,
             tags = listOf("deep", "writing"),
             billable = true,
@@ -120,7 +123,7 @@ class TimerActionsTest {
             TimerActionResult.Done,
             run {
                 actions.startSession(
-                    workspaceId = 7,
+                    workspaceId = WorkspaceId(7),
                     fields = fields,
                     lengths = SessionLengths(50, 10, 30, 3),
                 )
@@ -160,7 +163,11 @@ class TimerActionsTest {
 
         assertEquals(TimerActionResult.Done, run { actions.resume(3) })
         assertEquals(4L, holder.state.value?.state?.revision)
-        assertEquals("the running entry reaches the cache", listOf(40L), cache.written.filterNotNull().map { it.id })
+        assertEquals(
+            "the running entry reaches the cache",
+            listOf(EntryId(40)),
+            cache.written.filterNotNull().map { it.id },
+        )
 
         val refused = run { actions.nextPhase(4) }
         assertEquals(TimerActionResult.Refused, refused)
@@ -229,7 +236,7 @@ class TimerActionsTest {
             TimerActionResult.Failed(
                 ApiError.UnexpectedStatus(400, "Invalid work_minutes: expected an integer from 1 to 180"),
             ),
-            run { actions.startSession(7, EntryFields(), SessionLengths(25, 5, 15, 4)) },
+            run { actions.startSession(WorkspaceId(7), EntryFields(), SessionLengths(25, 5, 15, 4)) },
         )
         assertEquals(
             TimerActionResult.Failed(ApiError.UnexpectedStatus(409, "Time entry already stopped")),
@@ -322,11 +329,11 @@ class TimerActionsTest {
 
     /** A cache with no running entry that records each running entry a state writes to it. */
     private class RecordingCache : CurrentEntryCache {
-        val written = mutableListOf<CachedTimeEntry?>()
+        val written = mutableListOf<TimeEntry?>()
 
         override fun runningCheckStart() = RunningCheckStart(emptyList())
 
-        override fun checkedRunning(before: RunningCheckStart, server: CachedTimeEntry?): RunningCheckWrites? {
+        override fun checkedRunning(before: RunningCheckStart, server: TimeEntry?): RunningCheckWrites? {
             written += server
             return RunningCheckWrites(upsert = server)
         }

@@ -9,8 +9,9 @@ import com.github.e0ipso.tokkl.api.SessionStartBody
 import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.cache.CREATED_WITH
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.core.timerstate.R
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
@@ -68,7 +69,7 @@ class TimerActions(
      * the running entry and ends any pause chain.
      */
     override suspend fun startSession(
-        workspaceId: Long,
+        workspaceId: WorkspaceId,
         fields: EntryFields,
         lengths: SessionLengths,
     ): TimerActionResult = call { it.timer.startSession(sessionStart(workspaceId, fields, lengths)) }
@@ -131,7 +132,7 @@ interface SessionActions {
     suspend fun read(): TimerActionResult
 
     /** Starts a session in [workspaceId] whose first pomodoro has [fields], with [lengths]. */
-    suspend fun startSession(workspaceId: Long, fields: EntryFields, lengths: SessionLengths): TimerActionResult
+    suspend fun startSession(workspaceId: WorkspaceId, fields: EntryFields, lengths: SessionLengths): TimerActionResult
 
     /** Confirms the phase shown at [revision] and starts the next one. */
     suspend fun nextPhase(revision: Long): TimerActionResult
@@ -212,12 +213,12 @@ data class SessionLengths(
  * The body of `POST /api/app/pomodoro`: the first pomodoro's fields as a v9 start sends them, tags
  * by name and the app's `created_with`, and the four lengths.
  */
-private fun sessionStart(workspaceId: Long, fields: EntryFields, lengths: SessionLengths) = SessionStartBody(
-    workspaceId = workspaceId,
+private fun sessionStart(workspaceId: WorkspaceId, fields: EntryFields, lengths: SessionLengths) = SessionStartBody(
+    workspaceId = workspaceId.value,
     createdWith = CREATED_WITH,
     description = fields.description,
-    projectId = fields.projectId,
-    taskId = fields.taskId,
+    projectId = fields.projectId?.value,
+    taskId = fields.taskId?.value,
     tags = fields.tags,
     billable = fields.billable,
     workMinutes = lengths.workMinutes,

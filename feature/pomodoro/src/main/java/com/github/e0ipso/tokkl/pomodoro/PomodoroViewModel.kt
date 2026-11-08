@@ -3,16 +3,17 @@ package com.github.e0ipso.tokkl.pomodoro
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.api.TimerPomodoro
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.PendingChange
+import com.github.e0ipso.tokkl.cache.HeldChange
 import com.github.e0ipso.tokkl.cache.QueueSender
-import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
-import com.github.e0ipso.tokkl.cache.fields
-import com.github.e0ipso.tokkl.cache.toCached
+import com.github.e0ipso.tokkl.cache.toTimeEntry
 import com.github.e0ipso.tokkl.entryfields.entryLabels
 import com.github.e0ipso.tokkl.entryfields.withPicked
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.RunningEntryIdentity
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.fields
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.platform.whileShown
@@ -71,7 +72,7 @@ class PomodoroViewModel(
     private val defaults: StateFlow<PomodoroDefaults>,
     settings: StateFlow<AccountSettings?>,
     unsent: Flow<Int>,
-    refused: Flow<List<PendingChange>>,
+    refused: Flow<List<HeldChange>>,
     scope: CoroutineScope,
     private val sendQueued: QueueSender,
     private val alarmProbe: ExactAlarmCheck,
@@ -104,7 +105,7 @@ class PomodoroViewModel(
     private var controlsRead = false
 
     /** The cache's running entry, which carries queued edits the server does not have yet. */
-    private val cached = MutableStateFlow<CachedTimeEntry?>(null)
+    private val cached = MutableStateFlow<TimeEntry?>(null)
 
     /** The start form's fields. They follow the open pomodoro, so the form keeps them after End. */
     private var draft = EntryFields()
@@ -184,14 +185,14 @@ class PomodoroViewModel(
 
     /** The open pomodoro's fields: a typed edit, else the cache's running entry, else the server's. */
     private fun openFields(pomodoro: TimerPomodoro): EntryFields? {
-        edit?.takeIf { it.entryId == pomodoro.entryId }?.let { return it.fields }
+        edit?.takeIf { it.entryId.value == pomodoro.entryId }?.let { return it.fields }
         return openEntry(pomodoro)?.fields()
     }
 
     /** The open pomodoro's entry as the cache holds it, else as the server's state does. */
-    private fun openEntry(pomodoro: TimerPomodoro): CachedTimeEntry? =
-        cached.value?.takeIf { it.id == pomodoro.entryId }
-            ?: heldNow?.state?.runningEntry?.takeIf { it.id == pomodoro.entryId }?.toCached()
+    private fun openEntry(pomodoro: TimerPomodoro): TimeEntry? =
+        cached.value?.takeIf { it.id.value == pomodoro.entryId }
+            ?: heldNow?.state?.runningEntry?.takeIf { it.id == pomodoro.entryId }?.toTimeEntry()
 
     fun editLengths(lengths: PomodoroLengths) {
         if (state.value.loading || state.value.busy || state.value.pomodoro != null) return
@@ -206,17 +207,21 @@ class PomodoroViewModel(
      * for each letter of the description, the page shows the fields until [fieldsDone]; otherwise
      * they go to the queue now. Returns the write, or null when nothing was queued.
      */
-    fun editFields(fields: EntryFields, entryId: Long? = state.value.pomodoro?.entryId, send: Boolean = true): Job? {
+    fun editFields(
+        fields: EntryFields,
+        entryId: EntryId? = state.value.pomodoro?.entryId?.let(::EntryId),
+        send: Boolean = true,
+    ): Job? {
         val current = state.value
         if (current.loading || current.busy || current.workspaceId == null) return null
         val pomodoro = current.pomodoro
-        if (entryId != pomodoro?.entryId) return null
+        if (entryId?.value != pomodoro?.entryId) return null
         if (pomodoro == null) {
             draft = fields
             publish()
             return null
         }
-        val change = Edit(pomodoro.entryId, fields, sent = false)
+        val change = Edit(EntryId(pomodoro.entryId), fields, sent = false)
         edit = change
         publish()
         return if (send) write(change) else null
@@ -226,13 +231,14 @@ class PomodoroViewModel(
      * Gives [fields], which the page drew, the project, task and tags in [picked], as
      * [editFields] does. Picking a billable project makes them billable.
      */
-    fun pick(fields: EntryFields, picked: Picked, entryId: Long?): Job? =
+    fun pick(fields: EntryFields, picked: Picked, entryId: EntryId?): Job? =
         editFields(fields.withPicked(picked, picker.value.projects), entryId)
 
     /** Sends a description typed for the open pomodoro when it differs from the cache's. */
-    fun fieldsDone(entryId: Long? = state.value.pomodoro?.entryId): Job? {
+    fun fieldsDone(entryId: EntryId? = state.value.pomodoro?.entryId?.let(::EntryId)): Job? {
         val pomodoro = state.value.pomodoro ?: return null
-        val typed = edit?.takeIf { it.entryId == entryId && it.entryId == pomodoro.entryId && !it.sent } ?: return null
+        val typed =
+            edit?.takeIf { it.entryId == entryId && it.entryId.value == pomodoro.entryId && !it.sent } ?: return null
         if (typed.fields == openEntry(pomodoro)?.fields()) {
             edit = null
             publish()
@@ -350,7 +356,7 @@ class PomodoroViewModel(
     }
 
     /** Fields typed for the open pomodoro [entryId], shown until the cache has them. */
-    private data class Edit(val entryId: Long, val fields: EntryFields, val sent: Boolean)
+    private data class Edit(val entryId: EntryId, val fields: EntryFields, val sent: Boolean)
 
     private companion object {
         /** How long typed fields stay on screen waiting for the cache to show them. */

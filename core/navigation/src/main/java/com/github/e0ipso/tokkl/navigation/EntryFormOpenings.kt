@@ -1,6 +1,6 @@
 package com.github.e0ipso.tokkl.navigation
 
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
+import com.github.e0ipso.tokkl.model.TimeEntry
 import java.util.UUID
 
 /**
@@ -10,10 +10,10 @@ import java.util.UUID
  * fields went with the process, and so may the copy it opened on.
  */
 class EntryFormOpenings {
-    private val waiting = mutableMapOf<String, CachedTimeEntry?>()
+    private val waiting = mutableMapOf<String, TimeEntry?>()
 
     /** A new form's route for [opening], on [older] when the cache does not hold the entry. */
-    fun route(opening: EntryOpening, older: CachedTimeEntry?): Route.Entry {
+    fun route(opening: EntryOpening, older: TimeEntry?): Route.Entry {
         val route = Route.Entry(opening, UUID.randomUUID().toString())
         waiting[route.id] = older
         return route
@@ -27,4 +27,4 @@ class EntryFormOpenings {
 }
 
 /** What a new entry form opens on: [opening], with [older] for an entry the cache lacks. */
-class EntryFormRequest(val opening: EntryOpening, val older: CachedTimeEntry?)
+class EntryFormRequest(val opening: EntryOpening, val older: TimeEntry?)

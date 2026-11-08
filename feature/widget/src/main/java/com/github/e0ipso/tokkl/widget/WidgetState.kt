@@ -1,12 +1,16 @@
 package com.github.e0ipso.tokkl.widget
 
-import com.github.e0ipso.tokkl.cache.CachedFavorite
-import com.github.e0ipso.tokkl.cache.CachedProject
-import com.github.e0ipso.tokkl.cache.CachedTask
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.fields
 import com.github.e0ipso.tokkl.entryfields.entryLabels
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.Favorite
+import com.github.e0ipso.tokkl.model.LocalEntryId
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.Task
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
+import com.github.e0ipso.tokkl.model.fields
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.DurationFormat
 import com.github.e0ipso.tokkl.time.formatDuration
@@ -59,7 +63,7 @@ sealed interface WidgetState {
  * @param pausable whether Pause shows, which needs the server's timer API and no Pomodoro session.
  */
 data class WidgetRunning(
-    val entryId: Long,
+    val entryId: EntryId,
     val description: String,
     val project: String?,
     val task: String?,
@@ -108,13 +112,13 @@ data class WidgetDayReport(
 }
 
 /** Only this segment's elapsed time, excluding the pause chain already counted in stopped rows. */
-data class WidgetDayRunning(val entryId: Long, val start: Instant, val billable: Boolean) {
+data class WidgetDayRunning(val entryId: EntryId, val start: Instant, val billable: Boolean) {
     fun seconds(now: Instant): Long = timerEntrySeconds(start, null, now)
 }
 
 /** Project rows are sorted by stopped seconds. A null [projectId] is the unassigned group. */
 data class WidgetDayProject(
-    val projectId: Long?,
+    val projectId: ProjectId?,
     val project: String?,
     val projectColor: String?,
     val stoppedSeconds: Long,
@@ -130,16 +134,16 @@ data class WidgetDayProject(
  * start-day rule. The clock snapshot selects the day; it is not part of the redraw key.
  */
 fun widgetState(
-    workspaceId: Long?,
+    workspaceId: WorkspaceId?,
     controls: TimerControls,
-    favorites: List<CachedFavorite>,
+    favorites: List<Favorite>,
     favoritesAvailable: Boolean,
-    projects: List<CachedProject>,
-    tasks: List<CachedTask>,
-    entries: List<CachedTimeEntry> = emptyList(),
+    projects: List<Project>,
+    tasks: List<Task>,
+    entries: List<TimeEntry> = emptyList(),
     settings: AccountSettings? = null,
     now: Instant = Clock.systemUTC().instant(),
-    serverIdOf: Map<Long, Long> = emptyMap(),
+    serverIdOf: Map<LocalEntryId, EntryId> = emptyMap(),
 ): WidgetState {
     if (workspaceId == null) return WidgetState.NoAccount
     val shown = (controls as? TimerControls.Running)?.let { running ->
@@ -184,10 +188,10 @@ fun widgetState(
 /** The day report of [settings]' account for the day [now] falls on, or null without its time zone. */
 private fun dayReport(
     settings: AccountSettings,
-    entries: List<CachedTimeEntry>,
-    projects: List<CachedProject>,
+    entries: List<TimeEntry>,
+    projects: List<Project>,
     now: Instant,
-    serverIdOf: Map<Long, Long>,
+    serverIdOf: Map<LocalEntryId, EntryId>,
 ): WidgetDayReport? = settings.time()?.let { time ->
     val today = time.local(now).toLocalDate()
     val rows = countedTimerEntries(entries, time, now, serverIdOf).filter { it.day == today }
@@ -208,7 +212,7 @@ private fun dayReport(
             formattedStopped = settings.formatDurationWithoutSeconds(seconds),
             running = segments.any { it.entry.id == active?.id },
         )
-    }.sortedWith(compareByDescending<WidgetDayProject> { it.stoppedSeconds }.thenBy { it.projectId })
+    }.sortedWith(compareByDescending<WidgetDayProject> { it.stoppedSeconds }.thenBy { it.projectId?.value })
     WidgetDayReport(
         date = today,
         stoppedSeconds = stopped.sumOf { it.seconds },

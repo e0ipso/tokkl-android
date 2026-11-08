@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.database.sqlite.SQLiteException
+import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.platform.finishOnce
 import com.github.e0ipso.tokkl.timernotice.showTimerActionFailure
@@ -75,7 +76,7 @@ class StopTimerReceiver :
 /** Puts [target] in this intent's extras, for [timerTarget] to read back. */
 fun Intent.putTarget(target: TimerTarget): Intent = putExtra(StopTimerReceiver.EXTRA_ACCOUNT, target.account)
     .putExtra(StopTimerReceiver.EXTRA_REVISION, target.revision)
-    .putExtra(StopTimerReceiver.EXTRA_ENTRY_ID, target.entryId)
+    .putExtra(StopTimerReceiver.EXTRA_ENTRY_ID, target.entryId?.value ?: 0L)
 
 /**
  * The [TimerTarget] [putTarget] put here. An intent without an account, as from a notification
@@ -83,6 +84,6 @@ fun Intent.putTarget(target: TimerTarget): Intent = putExtra(StopTimerReceiver.E
  */
 fun Intent.timerTarget(): TimerTarget = TimerTarget.server(
     revision = getLongExtra(StopTimerReceiver.EXTRA_REVISION, 0),
-    entryId = getLongExtra(StopTimerReceiver.EXTRA_ENTRY_ID, 0),
+    entryId = getLongExtra(StopTimerReceiver.EXTRA_ENTRY_ID, 0).takeIf { it != 0L }?.let(::EntryId),
     account = getStringExtra(StopTimerReceiver.EXTRA_ACCOUNT).orEmpty(),
 )

@@ -1,11 +1,12 @@
 package com.github.e0ipso.tokkl.notification
 
 import com.github.e0ipso.tokkl.cache.AccountCache
-import com.github.e0ipso.tokkl.cache.CachedProject
-import com.github.e0ipso.tokkl.cache.CachedTask
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
-import com.github.e0ipso.tokkl.cache.fields
 import com.github.e0ipso.tokkl.entryfields.entryLabels
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.Task
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.fields
 import com.github.e0ipso.tokkl.timerstate.TimerControls
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import com.github.e0ipso.tokkl.timerstate.countsFrom
@@ -39,7 +40,7 @@ import java.time.Instant
  *   no Pomodoro session.
  */
 data class RunningNotificationContent(
-    val entryId: Long,
+    val entryId: EntryId,
     val description: String,
     val project: String?,
     val task: String?,
@@ -59,8 +60,8 @@ data class RunningNotificationContent(
  */
 fun runningNotificationContent(
     controls: TimerControls,
-    projects: List<CachedProject>,
-    tasks: List<CachedTask>,
+    projects: List<Project>,
+    tasks: List<Task>,
 ): RunningNotificationContent? = when (controls) {
     TimerControls.Idle -> null
 
@@ -83,7 +84,7 @@ fun runningNotificationContent(
         val fields = controls.fields
         val labels = entryLabels(fields, projects, tasks)
         RunningNotificationContent(
-            entryId = 0,
+            entryId = EntryId(0),
             description = fields.description,
             project = labels.project,
             task = labels.task,
@@ -111,9 +112,9 @@ fun runningNotificationContent(
 
 /** The notification for the [running] entry, or null when none runs. */
 fun runningNotificationContent(
-    running: CachedTimeEntry?,
-    projects: List<CachedProject>,
-    tasks: List<CachedTask>,
+    running: TimeEntry?,
+    projects: List<Project>,
+    tasks: List<Task>,
 ): RunningNotificationContent? {
     if (running == null || running.stop != null) return null
     val labels = entryLabels(running.fields(), projects, tasks)
@@ -155,7 +156,7 @@ sealed interface RunningNotificationChange {
  * @param entryId the id the cache held the entry under. Null for a key kept before the store kept
  *   the id too, which then matches any entry with that key.
  */
-data class FollowedEntry(val key: String, val entryId: Long?)
+data class FollowedEntry(val key: String, val entryId: EntryId?)
 
 /**
  * The change to make when the running entry is [content] and the notification last followed

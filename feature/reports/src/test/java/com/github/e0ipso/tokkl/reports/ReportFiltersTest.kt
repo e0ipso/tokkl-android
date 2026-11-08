@@ -1,9 +1,13 @@
 package com.github.e0ipso.tokkl.reports
 
 import com.github.e0ipso.tokkl.api.ReportFilter
-import com.github.e0ipso.tokkl.cache.CachedClient
-import com.github.e0ipso.tokkl.cache.CachedProject
-import com.github.e0ipso.tokkl.cache.CachedTag
+import com.github.e0ipso.tokkl.model.Client
+import com.github.e0ipso.tokkl.model.ClientId
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.Tag
+import com.github.e0ipso.tokkl.model.TagId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -16,18 +20,21 @@ class ReportFiltersTest {
     fun theOptionsAreTheWorkspacesWithActiveProjectsFirst() {
         // The cache lists each table by name.
         val projects = listOf(
-            CachedProject(1, WORKSPACE, null, "Archive", null, active = false, billable = false),
-            CachedProject(2, WORKSPACE, 5, "Beta", null, active = true, billable = true),
-            CachedProject(3, OTHER_WORKSPACE, null, "Other", null, active = true, billable = false),
-            CachedProject(4, WORKSPACE, null, "Zed", null, active = true, billable = false),
+            Project(ProjectId(1), WorkspaceId(WORKSPACE), null, "Archive", null, active = false, billable = false),
+            Project(ProjectId(2), WorkspaceId(WORKSPACE), ClientId(5), "Beta", null, active = true, billable = true),
+            Project(ProjectId(3), WorkspaceId(OTHER_WORKSPACE), null, "Other", null, active = true, billable = false),
+            Project(ProjectId(4), WorkspaceId(WORKSPACE), null, "Zed", null, active = true, billable = false),
         )
         val clients = listOf(
-            CachedClient(5, WORKSPACE, "Acme", archived = true),
-            CachedClient(6, OTHER_WORKSPACE, "Elsewhere", archived = false),
+            Client(ClientId(5), WorkspaceId(WORKSPACE), "Acme", archived = true),
+            Client(ClientId(6), WorkspaceId(OTHER_WORKSPACE), "Elsewhere", archived = false),
         )
-        val tags = listOf(CachedTag(7, WORKSPACE, "deep"), CachedTag(8, OTHER_WORKSPACE, "other"))
+        val tags = listOf(
+            Tag(TagId(7), WorkspaceId(WORKSPACE), "deep"),
+            Tag(TagId(8), WorkspaceId(OTHER_WORKSPACE), "other"),
+        )
 
-        val options = FilterOptions.of(projects, clients, tags, WORKSPACE, negation = true)
+        val options = FilterOptions.of(projects, clients, tags, WorkspaceId(WORKSPACE), negation = true)
 
         assertEquals(listOf(2L to "Beta", 4L to "Zed", 1L to "Archive"), options.projects.map { it.id to it.name })
         assertEquals(listOf(5L to "Acme"), options.clients.map { it.id to it.name })

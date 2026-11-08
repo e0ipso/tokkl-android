@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.calendar
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.DayOfWeek
@@ -46,7 +47,7 @@ private val NOON: Instant = Instant.parse("2026-10-15T12:00:00Z")
 
 private fun entry(id: Long, description: String, project: String?, color: String?, start: String, stop: String?) =
     CalendarEntry(
-        id = id,
+        id = EntryId(id),
         description = description,
         project = project,
         projectColor = color,

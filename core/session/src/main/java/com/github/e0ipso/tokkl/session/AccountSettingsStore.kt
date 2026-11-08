@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.session
 
 import android.content.Context
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.storage.PreferencesFile
 import com.github.e0ipso.tokkl.storage.ValueStore
 import com.github.e0ipso.tokkl.time.DurationFormat
@@ -34,7 +35,7 @@ class AccountSettingsStore(context: Context) :
         // Settings stored before the app kept the default workspace have none until the next refresh.
         val defaultWorkspaceId = KEY_DEFAULT_WORKSPACE_ID.takeIf(
             preferences::contains,
-        )?.let { preferences.getLong(it, 0) }
+        )?.let { WorkspaceId(preferences.getLong(it, 0)) }
         // Settings stored before the app read the clock format have none, which means 24-hour.
         val twelveHour = preferences.getBoolean(KEY_TWELVE_HOUR, false)
         // Settings stored before the app read the grouping preference have none, which means grouped.
@@ -73,7 +74,7 @@ class AccountSettingsStore(context: Context) :
                     KEY_DEFAULT_WORKSPACE_ID,
                 )
             } else {
-                putLong(KEY_DEFAULT_WORKSPACE_ID, defaultWorkspaceId)
+                putLong(KEY_DEFAULT_WORKSPACE_ID, defaultWorkspaceId.value)
             }
             putBoolean(KEY_TWELVE_HOUR, value.twelveHour)
             putBoolean(KEY_COLLAPSE_SIMILAR, value.collapseSimilar)

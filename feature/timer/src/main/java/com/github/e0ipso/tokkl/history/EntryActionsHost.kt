@@ -16,6 +16,7 @@ import com.github.e0ipso.tokkl.catalog.ConfirmDialog
 import com.github.e0ipso.tokkl.catalog.problemText
 import com.github.e0ipso.tokkl.favorites.MAX_FAVORITES
 import com.github.e0ipso.tokkl.feature.timer.R
+import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.session.AccountSettings
 
 /**
@@ -31,7 +32,7 @@ import com.github.e0ipso.tokkl.session.AccountSettings
 @Composable
 internal fun EntryActionsHost(
     state: EntryActionsState,
-    onUndo: (Long) -> Unit,
+    onUndo: (EntryId) -> Unit,
     onNoticeEnd: (EntryNotice) -> Unit,
     onConfirmDelete: () -> Unit,
     onCancelDelete: () -> Unit,
@@ -88,7 +89,7 @@ internal fun EntryActionsHost(
 }
 
 /** The entry whose delete Undo takes back, or null when the notice offers no Undo. */
-private fun EntryNotice.undoes(): Long? = when (this) {
+private fun EntryNotice.undoes(): EntryId? = when (this) {
     is EntryNotice.Deleted -> entryId.takeIf { undo }
 
     is EntryNotice.UndoNeedsServer -> entryId

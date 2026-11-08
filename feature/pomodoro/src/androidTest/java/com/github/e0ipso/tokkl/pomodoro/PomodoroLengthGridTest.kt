@@ -20,6 +20,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createComposeRule
 import com.github.e0ipso.tokkl.core.ui.R
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -102,7 +103,7 @@ class PomodoroLengthGridTest {
 
     @Test
     fun startStaysDisabledWhileACardHoldsAnInvalidLength() {
-        val account = AccountSettings("europe/madrid", DayOfWeek.MONDAY, null, defaultWorkspaceId = 1)
+        val account = AccountSettings("europe/madrid", DayOfWeek.MONDAY, null, defaultWorkspaceId = WorkspaceId(1))
         var page by mutableStateOf(PomodoroPageState(loading = false, account = account))
         composeRule.setContent {
             TokklTheme {

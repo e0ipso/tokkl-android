@@ -33,6 +33,7 @@ import com.github.e0ipso.tokkl.components.capabilities
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.feature.timer.R
+import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -96,14 +97,14 @@ class DeleteUndoServerTest {
         refresh()
         assertTrue("the server offers restore", app.capabilities.state.value.restore)
 
-        assertTrue(runBlocking { app.changes.delete(id) })
+        assertTrue(runBlocking { app.changes.delete(EntryId(id)) })
         sendTheQueue()
         assertEquals("the server deleted it", 404, (serverEntry(id) as? ApiResult.Failure)?.error?.status())
         assertEquals("into the trash", listOf(id), trash())
 
         val outcome = RequestCounter(TokklTestServer.url, "/api/app/time_entries/$id/restore HTTP/1.1").use { counter ->
             signIn(counter.url)
-            runBlocking { app.sender.undoDelete(id) }.also {
+            runBlocking { app.sender.undoDelete(EntryId(id)) }.also {
                 assertEquals("one restore request", 1, counter.count)
                 assertEquals(emptyList<String>(), counter.failures)
             }
@@ -113,7 +114,7 @@ class DeleteUndoServerTest {
         val restored = (serverEntry(id) as ApiResult.Success).value
         assertEquals("Deleted by mistake", restored.getValue("description").jsonPrimitive.content)
         assertEquals("out of the trash", emptyList<Long>(), trash())
-        val cached = runBlocking { app.cache.entries.first() }.single { it.entry.id == id }
+        val cached = runBlocking { app.cache.entries.first() }.single { it.entry.id.value == id }
         assertEquals(
             "the phone shows it again, sent",
             "Deleted by mistake" to false,
@@ -127,14 +128,14 @@ class DeleteUndoServerTest {
         refresh()
         // Nothing listens there, so the sender's try fails before any request reaches a server.
         signIn(NO_ROUTE)
-        assertTrue(runBlocking { app.changes.delete(id) })
+        assertTrue(runBlocking { app.changes.delete(EntryId(id)) })
         runBlocking { app.sender.send().join() }
         assertEquals("the delete waits in the queue", 1, unsentCount())
-        assertTrue("gone from the phone", runBlocking { app.cache.entries.first() }.none { it.entry.id == id })
+        assertTrue("gone from the phone", runBlocking { app.cache.entries.first() }.none { it.entry.id.value == id })
 
         val outcome = RequestCounter(TokklTestServer.url, " HTTP/1.1").use { counter ->
             signIn(counter.url)
-            runBlocking { app.sender.undoDelete(id) }.also {
+            runBlocking { app.sender.undoDelete(EntryId(id)) }.also {
                 assertEquals("no request", 0, counter.count)
                 assertEquals(emptyList<String>(), counter.failures)
             }
@@ -142,7 +143,7 @@ class DeleteUndoServerTest {
 
         assertEquals(ChangeSender.UndoOutcome.Cancelled, outcome)
         assertEquals("the queue is empty", 0, unsentCount())
-        val cached = runBlocking { app.cache.entries.first() }.single { it.entry.id == id }
+        val cached = runBlocking { app.cache.entries.first() }.single { it.entry.id.value == id }
         assertEquals(
             "the phone shows it again, as sent",
             "Kept after all" to false,
@@ -168,7 +169,7 @@ class DeleteUndoServerTest {
         HangingRelay(TokklTestServer.url).use { relay ->
             signIn(relay.url)
             relay.holdAnswerTo(DELETE)
-            assertTrue(runBlocking { app.changes.delete(id) })
+            assertTrue(runBlocking { app.changes.delete(EntryId(id)) })
             waitUntil("the server deleted the entry and its answer is held") { relay.holdsAnswer }
             assertEquals("the server put it in the trash", listOf(id), trash())
             // The connection drops before the answer reaches the phone, and the network stays quiet.
@@ -185,7 +186,7 @@ class DeleteUndoServerTest {
 
         val outcome = RequestCounter(TokklTestServer.url, "/api/app/time_entries/$id/restore HTTP/1.1").use { counter ->
             signIn(counter.url)
-            runBlocking { app.sender.undoDelete(id) }.also {
+            runBlocking { app.sender.undoDelete(EntryId(id)) }.also {
                 assertEquals("one restore request", 1, counter.count)
                 assertEquals(emptyList<String>(), counter.failures)
             }
@@ -197,7 +198,7 @@ class DeleteUndoServerTest {
         assertTrue("the server has it again: $restored", restored is ApiResult.Success)
         assertEquals("Answer lost", (restored as ApiResult.Success).value.getValue("description").jsonPrimitive.content)
         assertEquals("out of the trash", emptyList<Long>(), trash())
-        val cached = runBlocking { app.cache.entries.first() }.single { it.entry.id == id }
+        val cached = runBlocking { app.cache.entries.first() }.single { it.entry.id.value == id }
         assertEquals(
             "the phone shows it again, sent",
             "Answer lost" to false,
@@ -224,7 +225,7 @@ class DeleteUndoServerTest {
                 // A read right before, so the delete goes out on a pooled connection.
                 refresh()
                 relay.dropAnswerTo(DELETE)
-                assertTrue(runBlocking { app.changes.delete(id) })
+                assertTrue(runBlocking { app.changes.delete(EntryId(id)) })
                 sendTheQueue()
 
                 assertEquals("the relay dropped the delete's answer", 1, relay.droppedAnswers)
@@ -235,7 +236,7 @@ class DeleteUndoServerTest {
         signIn(TokklTestServer.url)
         assertEquals("the server put it in the trash", listOf(id), trash())
 
-        assertEquals(ChangeSender.UndoOutcome.Restored, runBlocking { app.sender.undoDelete(id) })
+        assertEquals(ChangeSender.UndoOutcome.Restored, runBlocking { app.sender.undoDelete(EntryId(id)) })
         val restored = serverEntry(id)
         assertTrue("the server has it again: $restored", restored is ApiResult.Success)
         assertEquals(

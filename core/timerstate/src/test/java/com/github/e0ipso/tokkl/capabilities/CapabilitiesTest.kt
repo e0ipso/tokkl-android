@@ -6,10 +6,10 @@ import com.github.e0ipso.tokkl.api.Me
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.api.TokklApi
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.CurrentEntryCache
 import com.github.e0ipso.tokkl.cache.RunningCheckStart
 import com.github.e0ipso.tokkl.cache.RunningCheckWrites
+import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.storage.InMemoryValueStore
 import com.github.e0ipso.tokkl.timerstate.TimerStateSource
 import kotlinx.coroutines.runBlocking
@@ -370,6 +370,6 @@ class CapabilitiesTest {
     private object EmptyCache : CurrentEntryCache {
         override fun runningCheckStart() = RunningCheckStart(emptyList())
 
-        override fun checkedRunning(before: RunningCheckStart, server: CachedTimeEntry?): RunningCheckWrites? = null
+        override fun checkedRunning(before: RunningCheckStart, server: TimeEntry?): RunningCheckWrites? = null
     }
 }

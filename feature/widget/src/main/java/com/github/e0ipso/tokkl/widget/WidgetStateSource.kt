@@ -67,13 +67,7 @@ class WidgetStateSource(
             cache.timeEntries,
             database.invalidationTracker.createFlow("entry_ids"),
             refreshes,
-        ) { entries, _, _ ->
-            val dao = database.changes()
-            val mappings = entries.filter { it.id < 0 }.mapNotNull { entry ->
-                dao.serverId(entry.id)?.let { entry.id to it }
-            }.toMap()
-            entries to mappings
-        }
+        ) { entries, _, _ -> entries to cache.serverIdsOf(entries) }
         val catalog = combine(
             cache.projects,
             cache.tasks,

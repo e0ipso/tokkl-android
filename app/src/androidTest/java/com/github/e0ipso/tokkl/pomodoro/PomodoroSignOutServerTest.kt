@@ -25,7 +25,6 @@ import com.github.e0ipso.tokkl.api.PhaseTransition
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.cache.BackgroundSend
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.changes
@@ -39,6 +38,8 @@ import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
 import com.github.e0ipso.tokkl.feature.settings.R
 import com.github.e0ipso.tokkl.finishWithin
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.openBarPage
 import com.github.e0ipso.tokkl.session.AccountSettings
@@ -88,7 +89,7 @@ class PomodoroSignOutServerTest {
         app.storeSignIn(
             TokklTestServer.url,
             account.apiToken,
-            suiteSettings.copy(defaultWorkspaceId = account.workspaceId, userId = account.id),
+            suiteSettings.copy(defaultWorkspaceId = WorkspaceId(account.workspaceId), userId = account.id),
         )
         runBlocking { app.accountRefresh.refresh().join() }
         settings = checkNotNull(app.accountSettings.state.value)
@@ -122,7 +123,7 @@ class PomodoroSignOutServerTest {
         )
         runBlocking {
             app.changes.create(
-                account.workspaceId,
+                WorkspaceId(account.workspaceId),
                 EntryFields("Unsent manual"),
                 Instant.now().minusSeconds(7200),
                 Instant.now().minusSeconds(3600),
@@ -193,7 +194,7 @@ class PomodoroSignOutServerTest {
         ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
         app.storeSignIn(TokklTestServer.url, TokklTestServer.apiToken, suiteSettings)
         val next = TestAccounts.create(timezone = "Etc/UTC").also(accounts::add)
-        signIn(next, suiteSettings.copy(defaultWorkspaceId = next.workspaceId, userId = next.id))
+        signIn(next, suiteSettings.copy(defaultWorkspaceId = WorkspaceId(next.workspaceId), userId = next.id))
         // Twenty minutes of the next account's work phase are left.
         val current = HeldPhases.hold(
             PhaseTransition.WORK_TO_SHORT_REST,

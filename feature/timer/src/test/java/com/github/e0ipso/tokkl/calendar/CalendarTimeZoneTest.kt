@@ -1,9 +1,11 @@
 package com.github.e0ipso.tokkl.calendar
 
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.EntryWithSendState
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryWithSendState
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.AccountSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -88,7 +90,7 @@ class CalendarTimeZoneTest {
     fun aQueuedNoTimeEntryStaysOnItsStoredDayWhenItsMidnightIsStale() = runTest {
         // 10:00 UTC on the 10th is 19:00 on the 10th in Tokyo, a day before the entry's day.
         val stale = LATE_CALL.copy(
-            id = 2,
+            id = EntryId(2),
             start = Instant.parse("2026-10-10T10:00:00Z"),
             stop = Instant.parse("2026-10-10T11:30:00Z"),
             allDay = true,
@@ -132,9 +134,9 @@ class CalendarTimeZoneTest {
         /** Noon on Wednesday 14 October in Tokyo, 20:00 on Tuesday the 13th in Los Angeles. */
         val NOW: Clock = Clock.fixed(Instant.parse("2026-10-14T03:00:00Z"), ZoneOffset.UTC)
 
-        val LATE_CALL = CachedTimeEntry(
-            id = 1,
-            workspaceId = 1,
+        val LATE_CALL = TimeEntry(
+            id = EntryId(1),
+            workspaceId = WorkspaceId(1),
             projectId = null,
             taskId = null,
             description = "Late call",
@@ -148,28 +150,30 @@ class CalendarTimeZoneTest {
 
     /** The calendar only shows entries here. */
     private object NoChanges : EntryChanges {
-        override suspend fun start(workspaceId: Long, fields: EntryFields): Long = throw AssertionError(
+        override suspend fun start(workspaceId: WorkspaceId, fields: EntryFields): EntryId = throw AssertionError(
             "nothing starts",
         )
 
-        override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean = throw AssertionError("nothing stops")
+        override suspend fun stop(entryId: EntryId, fields: EntryFields?): Boolean = throw AssertionError(
+            "nothing stops",
+        )
 
         override suspend fun create(
-            workspaceId: Long,
+            workspaceId: WorkspaceId,
             fields: EntryFields,
             start: Instant,
             stop: Instant,
             noTimeDay: LocalDate?,
-        ): Long = throw AssertionError("nothing is created")
+        ): EntryId = throw AssertionError("nothing is created")
 
         override suspend fun update(
-            entryId: Long,
+            entryId: EntryId,
             fields: EntryFields,
             start: Instant,
             stop: Instant?,
             noTimeDay: LocalDate?,
         ): Boolean = throw AssertionError("nothing is edited")
 
-        override suspend fun delete(entryId: Long): Boolean = throw AssertionError("nothing is deleted")
+        override suspend fun delete(entryId: EntryId): Boolean = throw AssertionError("nothing is deleted")
     }
 }

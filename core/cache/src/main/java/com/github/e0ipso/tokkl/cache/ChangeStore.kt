@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.cache
 
+import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.time.SnappedSpan
 import java.time.Instant
 
@@ -68,7 +69,7 @@ interface ChangeStore {
      * back in the cache as the delete found it. Otherwise the server has the delete, or may have
      * it, and only the server can restore the entry. Blocks on disk I/O.
      */
-    fun takeBackDelete(entryId: Long): TakenBack
+    fun takeBackDelete(entryId: EntryId): TakenBack
 
     /**
      * Records that the server restored its entry [serverId], in one transaction: a delete of it
@@ -153,9 +154,9 @@ class RoomChangeStore(private val database: CacheDatabase) : ChangeStore {
         dao.deleteFrom(change.entryId, sequence = Long.MIN_VALUE)
     }
 
-    override fun takeBackDelete(entryId: Long): TakenBack = database.runInTransaction<TakenBack> {
+    override fun takeBackDelete(entryId: EntryId): TakenBack = database.runInTransaction<TakenBack> {
         // The server's id once the server has answered the create of an entry made on the phone.
-        val id = if (entryId < 0) dao.serverId(entryId) ?: entryId else entryId
+        val id = entryId.local?.let { dao.serverId(it.value) } ?: entryId.value
         val delete = dao.queuedDelete(id)
         when {
             delete != null && !delete.maybeSent -> {

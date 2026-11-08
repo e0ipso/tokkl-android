@@ -26,11 +26,11 @@ import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.awaitControls
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitTimerPage
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.RunningCheck
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.cacheDatabase
 import com.github.e0ipso.tokkl.components.capabilities
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.sender
@@ -39,6 +39,9 @@ import com.github.e0ipso.tokkl.components.timerControls
 import com.github.e0ipso.tokkl.components.widgetState
 import com.github.e0ipso.tokkl.feature.widget.R
 import com.github.e0ipso.tokkl.followNoTimerEvents
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.notification.stopAction
 import com.github.e0ipso.tokkl.orFail
@@ -132,7 +135,7 @@ class WidgetServerTest {
         native.click(context.getString(R.string.widget_start_description))
         val entry = runBlocking { withTimeout(1_000) { app.cache.running.filterNotNull().first().entry } }
         native.awaitDescription(context.getString(R.string.widget_stop_description), 1_000)
-        assertEquals("the app's default workspace", workspace, entry.workspaceId)
+        assertEquals("the app's default workspace", workspace, entry.workspaceId.value)
         assertEquals("a blank Start has the app's empty fields", "", entry.description)
         assertEquals(queued + 1, unsentCount())
 
@@ -147,7 +150,8 @@ class WidgetServerTest {
             assertNotNull("the local entry was stopped", kept!!.stop)
         } else {
             assertEquals("the native Stop targets this entry's Undo", entry.id, undo.entryId)
-            assertEquals("a short Stop saves a zero span", undo.entry.start, undo.entry.stop)
+            val stopped = checkNotNull(app.cacheDatabase.changes().shortStop(undo.entryId.value)).entry
+            assertEquals("a short Stop saves a zero span", stopped.start, stopped.stop)
             assertTrue("the short Stop removes the entry from history", kept == null)
         }
     }
@@ -176,8 +180,8 @@ class WidgetServerTest {
             "the widget's Resume started the clone",
         ) { it.accumulatedSeconds == paused.seconds }
         native.awaitDescription(pauseLabel)
-        assertNotEquals("Resume starts a new entry", first, resumed.entry.id)
-        assertEquals("the server's clone", web.timerState().pause?.cloneEntryId, resumed.entry.id)
+        assertNotEquals("Resume starts a new entry", first, resumed.entry.id.value)
+        assertEquals("the server's clone", web.timerState().pause?.cloneEntryId, resumed.entry.id.value)
         assertEquals("Paused on the widget", resumed.entry.description)
 
         native.click(pauseLabel)
@@ -200,7 +204,7 @@ class WidgetServerTest {
         try {
             TimerActionToasts.await(TimerActionToasts.offline) { native.click(pauseLabel) }
             val shown = runBlocking { app.timerControls.first() } as TimerControls.Running
-            assertEquals("the timer runs on", id, shown.entry.id)
+            assertEquals("the timer runs on", id, shown.entry.id.value)
             native.awaitDescription(pauseLabel)
             assertEquals("Pause queues nothing", 0, unsentCount())
 
@@ -272,8 +276,8 @@ class WidgetServerTest {
                 ) { app.cache.running.filterNotNull().first { it.entry.description == "Favorite $index" }.entry }
             }
             native.awaitText("Favorite $index", 1_000)
-            assertEquals(project, running.projectId)
-            assertEquals(task, running.taskId)
+            assertEquals(project, running.projectId?.value)
+            assertEquals(task, running.taskId?.value)
             assertEquals(listOf("widget"), running.tags)
             assertTrue(running.billable)
             assertTrue("the favorite uses the offline queue", unsentCount() > queued)
@@ -303,7 +307,7 @@ class WidgetServerTest {
         )
         assertTrue(native.provider.widgetCategory and AppWidgetProviderInfo.WIDGET_CATEGORY_HOME_SCREEN != 0)
         signIn(NO_ROUTE, account.apiToken)
-        runBlocking { app.changes.start(workspace, EntryFields("A ticking widget")) }
+        runBlocking { app.changes.start(WorkspaceId(workspace), EntryFields("A ticking widget")) }
         native.awaitText("A ticking widget")
         native.awaitDescription(context.getString(R.string.widget_stop_description))
         // The active Glance composition can show Start's state before WidgetSync has
@@ -341,7 +345,7 @@ class WidgetServerTest {
         }
         runBlocking { app.accountRefresh.refreshAfterChange().join() }
         signIn(NO_ROUTE, account.apiToken)
-        runBlocking { app.changes.start(workspace, EntryFields("Billable ticking", billable = true)) }
+        runBlocking { app.changes.start(WorkspaceId(workspace), EntryFields("Billable ticking", billable = true)) }
         native.awaitText("Billable ticking")
         native.await("three native clocks are drawn") { native.clockBaseValues().size == 3 }
         val bases = native.clockBaseValues()
@@ -376,7 +380,7 @@ class WidgetServerTest {
             native.awaitDescription(context.getString(R.string.widget_start_description), 1_000)
         }
         val fields = EntryFields("Tile to widget")
-        val tileEntry = runBlocking { app.changes.start(workspace, fields) }
+        val tileEntry = runBlocking { app.changes.start(WorkspaceId(workspace), fields) }
         // Continue needs a retained stopped row. The prior immediate Stops exercise Trash above.
         runBlocking {
             val running = checkNotNull(app.cache.running.first()).entry
@@ -443,7 +447,7 @@ class WidgetServerTest {
                 ListSerializer(JsonObject.serializer()),
             )
         }.orFail("read stopped entry")
-        val stopped = entries.single { it["id"]!!.jsonPrimitive.long == id }
+        val stopped = entries.single { EntryId(it["id"]!!.jsonPrimitive.long) == id }
         assertTrue("the real server stored Stop", stopped["stop"] != null && stopped["stop"] != JsonNull)
     }
 

@@ -8,6 +8,8 @@ import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkerParameters
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.platform.CurrentWorkManager
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.Session
@@ -105,7 +107,7 @@ class RunningCheckWorker(
         val before = cache.runningCheckStart()
         val current = api.entries.current()
         if (current is ApiResult.Success) {
-            results.write(generation) { cache.checkedRunning(before, current.value?.toCached()) }
+            results.write(generation) { cache.checkedRunning(before, current.value?.toTimeEntry()) }
         }
         Result.success()
     }
@@ -137,9 +139,9 @@ class RunningCheckResults {
 /** What one running entry check writes to the cache. */
 data class RunningCheckWrites(
     /** The cached running entries the server no longer runs. */
-    val delete: List<Long> = emptyList(),
+    val delete: List<EntryId> = emptyList(),
     /** The server's running entry, to replace the cached row or to add. */
-    val upsert: CachedTimeEntry? = null,
+    val upsert: TimeEntry? = null,
 )
 
 /**
@@ -163,14 +165,14 @@ data class RunningCheckWrites(
  *   server may already run under its own id.
  */
 fun runningCheckWrites(
-    before: List<CachedTimeEntry>,
-    now: List<CachedTimeEntry>,
-    server: CachedTimeEntry?,
-    unsent: (Long) -> Boolean,
-    cached: (Long) -> CachedTimeEntry?,
-    pendingAtStart: Set<Long> = emptySet(),
+    before: List<TimeEntry>,
+    now: List<TimeEntry>,
+    server: TimeEntry?,
+    unsent: (EntryId) -> Boolean,
+    cached: (EntryId) -> TimeEntry?,
+    pendingAtStart: Set<EntryId> = emptySet(),
 ): RunningCheckWrites {
-    val held = { id: Long -> id in pendingAtStart || unsent(id) }
+    val held = { id: EntryId -> id in pendingAtStart || unsent(id) }
     val unchanged = now.filter { it in before && !held(it.id) }
     val running = server?.takeIf { it.stop == null && !held(it.id) }
     // A timer with a change the server may lack, such as an unsent start, runs as the phone has

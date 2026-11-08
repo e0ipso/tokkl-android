@@ -2,7 +2,9 @@ package com.github.e0ipso.tokkl.navigation
 
 import androidx.navigation3.runtime.NavKey
 import com.github.e0ipso.tokkl.api.ServerUrl
-import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.RunningEntryIdentity
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import kotlinx.serialization.Serializable
 import java.time.Instant
 import java.time.LocalDate
@@ -68,12 +70,16 @@ sealed interface EntryOpening {
 
     /** The past entry [entryId]. */
     @Serializable
-    data class Edit(val entryId: Long) : EntryOpening
+    data class Edit(val entryId: EntryId) : EntryOpening
 
     /** The running segment that started at [startSeconds] and [startNanos], and only that one. */
     @Serializable
-    data class Running(val entryId: Long, val workspaceId: Long, val startSeconds: Long, val startNanos: Int) :
-        EntryOpening {
+    data class Running(
+        val entryId: EntryId,
+        val workspaceId: WorkspaceId,
+        val startSeconds: Long,
+        val startNanos: Int,
+    ) : EntryOpening {
         val identity: RunningEntryIdentity
             get() = RunningEntryIdentity(entryId, workspaceId, Instant.ofEpochSecond(startSeconds, startNanos.toLong()))
 

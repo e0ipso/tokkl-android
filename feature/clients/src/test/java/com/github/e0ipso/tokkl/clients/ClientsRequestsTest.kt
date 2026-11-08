@@ -4,6 +4,8 @@ import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
+import com.github.e0ipso.tokkl.model.ClientId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import kotlinx.coroutines.test.runTest
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
@@ -65,12 +67,19 @@ class ClientsRequestsTest {
 
     @Test
     fun eachCallSendsItsRequest() = runTest {
-        assertEquals(ApiResult.Success(7L), repository.workspace(stored = null))
-        assertTrue(repository.load(7) is ApiResult.Success)
-        assertTrue(repository.create(7, "Surf school", notes = null, known = setOf(1)) is ApiResult.Success)
-        assertTrue(repository.update(7, 1, "Acme", "Pays late") is ApiResult.Success)
-        assertEquals(ApiResult.Success(Unit), repository.archive(7, 1))
-        assertTrue(repository.restore(7, 1) is ApiResult.Success)
+        assertEquals(ApiResult.Success(WorkspaceId(7)), repository.workspace(stored = null))
+        assertTrue(repository.load(WorkspaceId(7)) is ApiResult.Success)
+        assertTrue(
+            repository.create(
+                WorkspaceId(7),
+                "Surf school",
+                notes = null,
+                known = setOf(ClientId(1)),
+            ) is ApiResult.Success,
+        )
+        assertTrue(repository.update(WorkspaceId(7), ClientId(1), "Acme", "Pays late") is ApiResult.Success)
+        assertEquals(ApiResult.Success(Unit), repository.archive(WorkspaceId(7), ClientId(1)))
+        assertTrue(repository.restore(WorkspaceId(7), ClientId(1)) is ApiResult.Success)
 
         assertEquals(
             listOf(

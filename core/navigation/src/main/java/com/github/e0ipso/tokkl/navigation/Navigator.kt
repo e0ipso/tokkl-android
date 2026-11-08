@@ -1,7 +1,7 @@
 package com.github.e0ipso.tokkl.navigation
 
 import androidx.compose.runtime.snapshots.Snapshot
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
+import com.github.e0ipso.tokkl.model.TimeEntry
 
 /**
  * Changes the back stack, [stack], as the screens and the taps from outside the app ask. Each
@@ -40,7 +40,7 @@ class Navigator(private val stack: MutableList<Route>, val openings: EntryFormOp
     }
 
     /** Opens the entry form on [opening], on [older] when the cache does not hold the entry ([withEntry]). */
-    fun openEntry(opening: EntryOpening, older: CachedTimeEntry? = null) =
+    fun openEntry(opening: EntryOpening, older: TimeEntry? = null) =
         replace(stack.withEntry(openings.route(opening, older)))
 
     /** Opens the changes the server refused above the screen on top, unless they show already. */

@@ -142,8 +142,8 @@ class ContinueServerTest {
                         .fetchSemanticsNodes().size == 1
             }
             val continued = runBlocking { app.cache.running.first() }!!.entry
-            assertEquals(project, continued.projectId)
-            assertEquals(task, continued.taskId)
+            assertEquals(project, continued.projectId?.value)
+            assertEquals(task, continued.taskId?.value)
             assertEquals(setOf("outdoor", "spray"), continued.tags.toSet())
             assertTrue(continued.billable)
 

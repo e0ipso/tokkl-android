@@ -43,8 +43,9 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
-import com.github.e0ipso.tokkl.cache.CachedClient
 import com.github.e0ipso.tokkl.feature.projects.R
+import com.github.e0ipso.tokkl.model.Client
+import com.github.e0ipso.tokkl.model.ClientId
 import com.github.e0ipso.tokkl.picker.projectColor
 import com.github.e0ipso.tokkl.ui.theme.FrameWidth
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -138,7 +139,7 @@ private fun ColourOption(label: String, hex: String?, selected: Boolean, onSelec
 /** The client, from the clients on the phone, or No client. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun ClientField(clients: List<CachedClient>, clientId: Long?, onChoose: (Long?) -> Unit) {
+internal fun ClientField(clients: List<Client>, clientId: ClientId?, onChoose: (ClientId?) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     val noClient = stringResource(R.string.projects_no_client)
     val chosen = clients.firstOrNull { it.id == clientId }
@@ -179,5 +180,5 @@ internal fun ClientField(clients: List<CachedClient>, clientId: Long?, onChoose:
 }
 
 @Composable
-private fun clientLabel(client: CachedClient): String =
+private fun clientLabel(client: Client): String =
     if (client.archived) stringResource(R.string.project_client_archived, client.name) else client.name

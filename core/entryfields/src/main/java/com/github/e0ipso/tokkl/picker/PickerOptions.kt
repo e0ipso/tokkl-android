@@ -2,10 +2,13 @@ package com.github.e0ipso.tokkl.picker
 
 import androidx.compose.runtime.Immutable
 import com.github.e0ipso.tokkl.cache.AccountCache
-import com.github.e0ipso.tokkl.cache.CachedClient
-import com.github.e0ipso.tokkl.cache.CachedProject
-import com.github.e0ipso.tokkl.cache.CachedTag
-import com.github.e0ipso.tokkl.cache.CachedTask
+import com.github.e0ipso.tokkl.model.Client
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.Tag
+import com.github.e0ipso.tokkl.model.Task
+import com.github.e0ipso.tokkl.model.TaskId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 
@@ -13,13 +16,13 @@ import kotlinx.coroutines.flow.combine
  * What an entry has picked: a project or none, a task of that project or none, and tags by name.
  * The queue sends the tags by name, and the server creates the ones it does not know.
  */
-data class Picked(val projectId: Long? = null, val taskId: Long? = null, val tags: List<String> = emptyList()) {
+data class Picked(val projectId: ProjectId? = null, val taskId: TaskId? = null, val tags: List<String> = emptyList()) {
 
     /** The project alone, with no task. */
-    fun withProject(projectId: Long?): Picked = copy(projectId = projectId, taskId = null)
+    fun withProject(projectId: ProjectId?): Picked = copy(projectId = projectId, taskId = null)
 
     /** The task and its project. */
-    fun withTask(task: CachedTask): Picked = copy(projectId = task.projectId, taskId = task.id)
+    fun withTask(task: Task): Picked = copy(projectId = task.projectId, taskId = task.id)
 
     /** The tags with [name] added, or taken out when picked already. Tag names ignore case, as on the server. */
     fun withTagToggled(name: String): Picked = if (tags.any { it.equals(name, ignoreCase = true) }) {
@@ -35,10 +38,10 @@ data class Picked(val projectId: Long? = null, val taskId: Long? = null, val tag
  */
 @Immutable
 data class PickerSource(
-    val projects: List<CachedProject> = emptyList(),
-    val clients: List<CachedClient> = emptyList(),
-    val tasks: List<CachedTask> = emptyList(),
-    val tags: List<CachedTag> = emptyList(),
+    val projects: List<Project> = emptyList(),
+    val clients: List<Client> = emptyList(),
+    val tasks: List<Task> = emptyList(),
+    val tags: List<Tag> = emptyList(),
 )
 
 /** The cache's projects, clients, tasks and tags, each time one of them changes. */
@@ -49,13 +52,13 @@ data class ProjectGroup(val clientName: String?, val clientArchived: Boolean, va
 
 /** A project, [selected] when the entry has it, also together with one of its tasks. */
 data class ProjectOption(
-    val project: CachedProject,
+    val project: Project,
     val selected: Boolean,
     val archived: Boolean,
     val tasks: List<TaskOption>,
 )
 
-data class TaskOption(val task: CachedTask, val selected: Boolean, val archived: Boolean)
+data class TaskOption(val task: Task, val selected: Boolean, val archived: Boolean)
 
 /** A tag by name. [cached] is false for a name the phone has no tag for, such as one typed offline. */
 data class TagOption(val name: String, val selected: Boolean, val cached: Boolean)
@@ -86,7 +89,7 @@ data class PickerOptions(
  * [picked] that no cached tag has shows too, selected.
  */
 fun pickerOptions(
-    workspaceId: Long,
+    workspaceId: WorkspaceId,
     original: Picked,
     picked: Picked,
     query: String,

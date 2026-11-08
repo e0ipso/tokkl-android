@@ -10,10 +10,11 @@ import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.api.TimerState
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.CurrentEntryCache
 import com.github.e0ipso.tokkl.cache.RunningCheckStart
 import com.github.e0ipso.tokkl.cache.RunningCheckWrites
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.TimeEntry
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonObject
 import mockwebserver3.MockResponse
@@ -137,7 +138,11 @@ class TimerEventStreamTest {
 
         assertEquals(StreamEnd.Ended, end)
         assertEquals(4L, holder.state.value?.state?.revision)
-        assertEquals("the running entry reaches the cache", listOf(40L), cache.written.filterNotNull().map { it.id })
+        assertEquals(
+            "the running entry reaches the cache",
+            listOf(EntryId(40)),
+            cache.written.filterNotNull().map { it.id },
+        )
         assertEquals("two states, a keep-alive, a comment and an unknown event", 5, link.alive)
     }
 
@@ -207,7 +212,7 @@ class TimerEventStreamTest {
             ),
         )
         assertNull(holder.state.value)
-        assertEquals("the cache keeps nothing of it", emptyList<CachedTimeEntry?>(), cache.written)
+        assertEquals("the cache keeps nothing of it", emptyList<TimeEntry?>(), cache.written)
     }
 
     @Test
@@ -306,11 +311,11 @@ class TimerEventStreamTest {
     }
 
     private class RecordingCache : CurrentEntryCache {
-        val written = mutableListOf<CachedTimeEntry?>()
+        val written = mutableListOf<TimeEntry?>()
 
         override fun runningCheckStart() = RunningCheckStart(emptyList())
 
-        override fun checkedRunning(before: RunningCheckStart, server: CachedTimeEntry?): RunningCheckWrites? {
+        override fun checkedRunning(before: RunningCheckStart, server: TimeEntry?): RunningCheckWrites? {
             written += server
             return RunningCheckWrites(upsert = server)
         }

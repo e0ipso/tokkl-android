@@ -1,9 +1,13 @@
 package com.github.e0ipso.tokkl.history
 
-import com.github.e0ipso.tokkl.cache.CachedProject
-import com.github.e0ipso.tokkl.cache.CachedTask
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
-import com.github.e0ipso.tokkl.cache.EntryWithSendState
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryWithSendState
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.Task
+import com.github.e0ipso.tokkl.model.TaskId
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.time.AccountTime
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -32,14 +36,22 @@ class HistoryDaysTest {
             ),
             older = emptyList(),
             projects = listOf(
-                CachedProject(9, 1, null, "Tokkl for Android", "#0b83d9", active = true, billable = false),
+                Project(
+                    ProjectId(9),
+                    WorkspaceId(1),
+                    null,
+                    "Tokkl for Android",
+                    "#0b83d9",
+                    active = true,
+                    billable = false,
+                ),
             ),
-            tasks = listOf(CachedTask(90, 1, 9, "Reports", active = true)),
+            tasks = listOf(Task(TaskId(90), WorkspaceId(1), ProjectId(9), "Reports", active = true)),
             time = time(resolution = 15.0),
         )
 
         assertEquals(listOf(LocalDate.of(2026, 10, 15), LocalDate.of(2026, 10, 14)), days.map { it.date })
-        assertEquals("newest first, and no running entry", listOf(4L, 1L), days[0].entries.map { it.id })
+        assertEquals("newest first, and no running entry", listOf(4L, 1L), days[0].entries.map { it.id.value })
         assertEquals(3600L + 1800L, days[0].totalSeconds)
         assertEquals("whole seconds, as the web app's entrySeconds", 2730L, days[1].totalSeconds)
         val named = days[0].entries[0]
@@ -112,8 +124,8 @@ class HistoryDaysTest {
         )
 
         assertEquals(listOf(LocalDate.of(2026, 10, 14), LocalDate.of(2026, 9, 3)), days.map { it.date })
-        assertEquals(listOf(1L), days[0].entries.map { it.id })
-        assertEquals(listOf(2L), days[1].entries.map { it.id })
+        assertEquals(listOf(1L), days[0].entries.map { it.id.value })
+        assertEquals(listOf(2L), days[1].entries.map { it.id.value })
         assertTrue("the phone holds it, so the queue can edit it", days[0].entries.single().cached)
         assertFalse("only the server has it, so the queue cannot edit it", days[1].entries.single().cached)
     }
@@ -165,10 +177,10 @@ class HistoryDaysTest {
 
         val day = days.single()
         assertEquals(LocalDate.of(2026, 10, 14), day.date)
-        assertEquals(setOf(1L, 2L), day.entries.map { it.id }.toSet())
+        assertEquals(setOf(1L, 2L), day.entries.map { it.id.value }.toSet())
         assertEquals(1800L + 3600L, day.totalSeconds)
         assertTrue(day.entries.all { it.allDay })
-        assertEquals("a sent entry shows the stored times", stale.start, day.entries.single { it.id == 1L }.start)
+        assertEquals("a sent entry shows the stored times", stale.start, day.entries.single { it.id.value == 1L }.start)
     }
 
     /** The stored day also decides whether the entry is inside the cache window, not its midnight instant. */
@@ -221,23 +233,22 @@ class HistoryDaysTest {
 
     private fun time(resolution: Double?) = AccountTime(MADRID, DayOfWeek.MONDAY, resolution, CLOCK)
 
-    private fun sent(entry: CachedTimeEntry) = EntryWithSendState(entry, unsent = false)
+    private fun sent(entry: TimeEntry) = EntryWithSendState(entry, unsent = false)
 
-    private fun unsent(entry: CachedTimeEntry) = EntryWithSendState(entry, unsent = true)
+    private fun unsent(entry: TimeEntry) = EntryWithSendState(entry, unsent = true)
 
-    private fun entry(id: Long, start: String, stop: String?, project: Long? = null, task: Long? = null) =
-        CachedTimeEntry(
-            id = id,
-            workspaceId = 1,
-            projectId = project,
-            taskId = task,
-            description = "Entry $id",
-            start = Instant.parse(start),
-            stop = stop?.let(Instant::parse),
-            billable = false,
-            tags = emptyList(),
-            tagIds = emptyList(),
-        )
+    private fun entry(id: Long, start: String, stop: String?, project: Long? = null, task: Long? = null) = TimeEntry(
+        id = EntryId(id),
+        workspaceId = WorkspaceId(1),
+        projectId = project?.let(::ProjectId),
+        taskId = task?.let(::TaskId),
+        description = "Entry $id",
+        start = Instant.parse(start),
+        stop = stop?.let(Instant::parse),
+        billable = false,
+        tags = emptyList(),
+        tagIds = emptyList(),
+    )
 
     private companion object {
         val MADRID: ZoneId = ZoneId.of("Europe/Madrid")

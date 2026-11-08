@@ -9,10 +9,12 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.awaitControls
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.initializeTestWorkManager
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timerstate.TimerControls
@@ -48,7 +50,12 @@ class RunningNotificationRestartTest {
         signIn()
         RunningNotifications.allow()
 
-        val id = runBlocking { app.changes.start(WORKSPACE, EntryFields(description = "Dismissed before the restart")) }
+        val id = runBlocking {
+            app.changes.start(
+                WorkspaceId(WORKSPACE),
+                EntryFields(description = "Dismissed before the restart"),
+            )
+        }
         val start = runBlocking { app.cache.running.first() }!!.entry.start
         val controls = app.awaitControls<TimerControls.Running>("the new running entry") { it.entry.id == id }
         val content = checkNotNull(runningNotificationContent(controls, emptyList(), emptyList()))
@@ -84,7 +91,14 @@ class RunningNotificationRestartTest {
                 val edited = EntryFields(description = "Edited after the restart")
                 val start = Instant.parse(saved.getProperty("start"))
                 assertTrue(
-                    runBlocking { app.changes.update(saved.getProperty("id").toLong(), edited, start, stop = null) },
+                    runBlocking {
+                        app.changes.update(
+                            EntryId(saved.getProperty("id").toLong()),
+                            edited,
+                            start,
+                            stop = null,
+                        )
+                    },
                 )
                 RunningNotifications.awaitShown("the edit") {
                     it.notification.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString() == edited.description

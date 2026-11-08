@@ -1,6 +1,10 @@
 package com.github.e0ipso.tokkl.widget
 
-import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.TaskId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.timerstate.ServerTimerStates
 import com.github.e0ipso.tokkl.timerstate.SessionActions
@@ -17,8 +21,8 @@ import java.time.Instant
 class PomodoroWidgetActionsTest {
     private val at = Instant.parse("2026-10-29T08:00:00Z")
     private val entry = PomodoroWidgetEntry(
-        21,
-        EntryFields("Focus", 7, 9, listOf("one,two", "three"), true),
+        WorkspaceId(21),
+        EntryFields("Focus", ProjectId(7), TaskId(9), listOf("one,two", "three"), true),
         "Tokkl",
         "#0086d1",
         "Widget",
@@ -27,7 +31,7 @@ class PomodoroWidgetActionsTest {
     private val active = PomodoroWidgetState.Active(
         "account-a",
         17,
-        ServerTimerStates.session(42, at),
+        ServerTimerStates.session(EntryId(42), at),
         at.minusSeconds(120),
         at.plusSeconds(1380),
         false,
@@ -87,11 +91,11 @@ class PomodoroWidgetActionsTest {
             TimerActionResult.Done,
             sendPomodoroWidgetAction(
                 start,
-                idle.copy(defaults = PomodoroDefaults.DEFAULT, entry = entry.copy(workspaceId = 99)),
+                idle.copy(defaults = PomodoroDefaults.DEFAULT, entry = entry.copy(workspaceId = WorkspaceId(99))),
                 server,
             ),
         )
-        assertEquals(Triple(21L, entry.fields, SessionLengths(40, 7, 20, 3)), server.started)
+        assertEquals(Triple(WorkspaceId(21), entry.fields, SessionLengths(40, 7, 20, 3)), server.started)
         assertEquals(listOf("start"), server.calls)
     }
 
@@ -112,11 +116,11 @@ class PomodoroWidgetActionsTest {
 
     private class RecordingActions : SessionActions {
         val calls = mutableListOf<String>()
-        var started: Triple<Long, EntryFields, SessionLengths>? = null
+        var started: Triple<WorkspaceId, EntryFields, SessionLengths>? = null
         var result: TimerActionResult = TimerActionResult.Done
         override suspend fun read(): TimerActionResult = error("widget actions must never read first")
         override suspend fun startSession(
-            workspaceId: Long,
+            workspaceId: WorkspaceId,
             fields: EntryFields,
             lengths: SessionLengths,
         ): TimerActionResult {

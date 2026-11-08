@@ -9,6 +9,12 @@ sealed interface ApiResult<out T> {
     data class Failure(val error: ApiError) : ApiResult<Nothing>
 }
 
+/** The success's value through [transform], or the failure as it is. */
+inline fun <T, R> ApiResult<T>.map(transform: (T) -> R): ApiResult<R> = when (this) {
+    is ApiResult.Success -> ApiResult.Success(transform(value))
+    is ApiResult.Failure -> this
+}
+
 /** Why an API call failed. */
 sealed interface ApiError {
 

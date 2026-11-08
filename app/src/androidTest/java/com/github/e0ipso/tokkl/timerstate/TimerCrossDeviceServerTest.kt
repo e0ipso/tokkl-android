@@ -27,7 +27,6 @@ import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.awaitControls
 import com.github.e0ipso.tokkl.awaitPomodoroOffered
 import com.github.e0ipso.tokkl.awaitTimerPage
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.followTimerSync
 import com.github.e0ipso.tokkl.components.pomodoroRinging
@@ -38,6 +37,8 @@ import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.components.timerSync
 import com.github.e0ipso.tokkl.components.timerSyncService
 import com.github.e0ipso.tokkl.feature.pomodoro.R
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.notification.action
 import com.github.e0ipso.tokkl.openBarPage
@@ -244,7 +245,12 @@ class TimerCrossDeviceServerTest {
             )
         }.orFail("POST a tag")
         fixture.refresh()
-        val fields = EntryFields("Phone session", projectId = project, tags = listOf("shared"), billable = true)
+        val fields = EntryFields(
+            "Phone session",
+            projectId = ProjectId(project),
+            tags = listOf("shared"),
+            billable = true,
+        )
 
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             compose.awaitTimerPage()
@@ -276,7 +282,7 @@ class TimerCrossDeviceServerTest {
             val entry = checkNotNull(server.runningEntry)
             assertEquals("the open pomodoro is the running entry", entry.id, session.entryId)
             assertEquals(fields.description, entry.description)
-            assertEquals(fields.projectId, entry.projectId)
+            assertEquals(fields.projectId?.value, entry.projectId)
             assertEquals(fields.tags, entry.tags)
             assertEquals(true, entry.billable)
             assertEquals(workspace, entry.workspaceId)
@@ -356,7 +362,7 @@ class TimerCrossDeviceServerTest {
             )
             val running = app.awaitControls<TimerControls.Running>(
                 "the clone runs on the phone",
-            ) { it.entry.id == clone }
+            ) { it.entry.id.value == clone }
             assertNotEquals("Resume starts a new entry", first, clone)
             assertEquals(chain.seconds, running.accumulatedSeconds)
             assertChainTotalsAgree()
@@ -376,7 +382,7 @@ class TimerCrossDeviceServerTest {
             ) { it.accumulatedSeconds == again.seconds }
             val there = checkNotNull(other.timerState().pause)
             assertFalse(there.paused)
-            assertEquals("the other device sees the phone's clone", phoneClone.entry.id, there.cloneEntryId)
+            assertEquals("the other device sees the phone's clone", phoneClone.entry.id.value, there.cloneEntryId)
             assertEquals(secondTotal, there.seconds)
             assertChainTotalsAgree()
 

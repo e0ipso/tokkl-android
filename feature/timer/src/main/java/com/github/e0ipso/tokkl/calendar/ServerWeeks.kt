@@ -3,9 +3,9 @@ package com.github.e0ipso.tokkl.calendar
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.HistoryWindow
-import com.github.e0ipso.tokkl.cache.toCached
+import com.github.e0ipso.tokkl.cache.toTimeEntry
+import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.time.AccountTime
 import java.time.Instant
 import java.time.LocalDate
@@ -16,7 +16,7 @@ internal data class WeekSpan(val from: Instant, val to: Instant)
  * A span from the server: its [entries] once loaded, how its load went, and whether it is
  * [stale], loaded before the app last came back to the foreground and due to load again.
  */
-internal data class ServerWeek(val entries: List<CachedTimeEntry>, val status: WeekSource, val stale: Boolean = false)
+internal data class ServerWeek(val entries: List<TimeEntry>, val status: WeekSource, val stale: Boolean = false)
 
 /**
  * The server's part of the week from [weekStart]. For a week outside the cache, that is the
@@ -46,7 +46,7 @@ internal suspend fun fetchWeek(client: ApiClientProvider, span: WeekSpan): Serve
 
         is ApiResult.Success -> ServerWeek(
             answer.value.mapNotNull {
-                it.toCached()
+                it.toTimeEntry()
             }.filter { entry -> entry.stop.let { it == null || it > span.from } },
             WeekSource.Loaded,
         )

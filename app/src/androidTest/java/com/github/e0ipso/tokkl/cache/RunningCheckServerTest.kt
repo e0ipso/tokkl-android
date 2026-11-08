@@ -22,6 +22,9 @@ import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.followNoTimerEvents
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.reminder.ReminderWorker
@@ -100,7 +103,7 @@ class RunningCheckServerTest {
     fun startingATimerSchedulesOneCheckAndStoppingItCancelsIt() {
         assertEquals("no check before a timer starts", emptyList<WorkInfo>(), checkWork())
 
-        val first = runBlocking { app.changes.start(workspace, EntryFields(description = "First")) }
+        val first = runBlocking { app.changes.start(WorkspaceId(workspace), EntryFields(description = "First")) }
         runBlocking {
             app.changes.update(
                 first,
@@ -113,7 +116,7 @@ class RunningCheckServerTest {
         assertEquals("the work waits for a network", NetworkType.CONNECTED, check.constraints.requiredNetworkType)
         assertEquals("every 15 minutes", RunningCheck.INTERVAL.toMillis(), check.periodicityInfo?.repeatIntervalMillis)
 
-        val second = runBlocking { app.changes.start(workspace, EntryFields(description = "Second")) }
+        val second = runBlocking { app.changes.start(WorkspaceId(workspace), EntryFields(description = "Second")) }
         // Both timers need a normal, on-grid duration: replacing the first also queues a Stop.
         // This checks scheduling and cancellation, not short-Stop parity (TKA-0259).
         runBlocking {
@@ -188,7 +191,7 @@ class RunningCheckServerTest {
 
         awaitCondition(
             "the check puts the web's timer in the cache",
-        ) { runBlocking { app.cache.running.first() }?.entry?.id == elsewhere }
+        ) { runBlocking { app.cache.running.first() }?.entry?.id?.value == elsewhere }
         assertEquals("one running entry", 1, runBlocking { app.cache.timeEntries.first() }.count { it.stop == null })
         RunningNotifications.awaitShown("the web's timer") { it.title() == "Started on the web" }
         val next = awaitCheck("the check waits for the next period") { it.ranSince(check) }
@@ -205,7 +208,14 @@ class RunningCheckServerTest {
         // The edit cannot reach the server, so it waits in the queue.
         signIn(NO_ROUTE, account.apiToken)
         assertTrue(
-            runBlocking { app.changes.update(id, EntryFields(description = "Edited offline"), start, stop = null) },
+            runBlocking {
+                app.changes.update(
+                    EntryId(id),
+                    EntryFields(description = "Edited offline"),
+                    start,
+                    stop = null,
+                )
+            },
         )
         runBlocking { app.sender.sendAndWait() }
         assertEquals(1, unsentCount())
@@ -223,7 +233,7 @@ class RunningCheckServerTest {
         awaitCheck("the check ran and waits for the next period") { it.ranSince(check) }
 
         val running = checkNotNull(runBlocking { app.cache.running.first() }) { "the unsent entry still runs" }
-        assertEquals(id, running.entry.id)
+        assertEquals(id, running.entry.id.value)
         assertEquals("Edited offline", running.entry.description)
         assertTrue(running.unsent)
         assertEquals("the check sends nothing", 1, unsentCount())

@@ -6,6 +6,9 @@ import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.catalog.CatalogChange
 import com.github.e0ipso.tokkl.catalog.ServerProblem
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.Task
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import mockwebserver3.Dispatcher
@@ -79,7 +82,7 @@ class TasksModelTest {
         testApi.trust = InMemoryServerTrust(url)
         model = TasksModel(
             repository = ServerTasksRepository { testApi.api(url, ApiCredentials.ApiToken("tok-123")) },
-            workspaceId = { 7L },
+            workspaceId = { WorkspaceId(7) },
             refreshCache = { refreshes++ },
             scope = CoroutineScope(Dispatchers.Unconfined),
             io = Dispatchers.Unconfined,
@@ -93,7 +96,7 @@ class TasksModelTest {
 
     @Test
     fun openTasksComeBeforeDoneOnesEachByName() {
-        model.open(5)
+        model.open(ProjectId(5))
 
         assertEquals(listOf("Design", "brief"), model.state.value.data!!.tasks.map { it.name })
         assertEquals(listOf("GET /api/v9/workspaces/7/projects/5/tasks"), requests)
@@ -101,7 +104,7 @@ class TasksModelTest {
 
     @Test
     fun aNewTaskGoesWithItsNameTrimmedAndRefreshesTheCache() {
-        model.open(5)
+        model.open(ProjectId(5))
         val opened = requests.size
 
         model.create("  Copy ")
@@ -114,7 +117,7 @@ class TasksModelTest {
 
     @Test
     fun theFormRenamesTheTaskAndMarksItDone() {
-        model.open(5)
+        model.open(ProjectId(5))
         val design = model.state.value.data!!.tasks.first()
         model.askToEdit(design)
         val asked = requests.size
@@ -137,7 +140,7 @@ class TasksModelTest {
 
     @Test
     fun deletingAsksFirstAndCancellingKeepsTheTask() {
-        model.open(5)
+        model.open(ProjectId(5))
         val design = model.state.value.data!!.tasks.first()
         val opened = requests.size
 
@@ -157,11 +160,11 @@ class TasksModelTest {
 
     @Test
     fun anotherProjectsFormLoadsItsOwnTasks() {
-        model.open(5)
-        model.open(5)
-        model.open(6)
+        model.open(ProjectId(5))
+        model.open(ProjectId(5))
+        model.open(ProjectId(6))
 
-        assertEquals(emptyList<ProjectTask>(), model.state.value.data!!.tasks)
+        assertEquals(emptyList<Task>(), model.state.value.data!!.tasks)
         assertEquals(
             listOf("GET /api/v9/workspaces/7/projects/5/tasks", "GET /api/v9/workspaces/7/projects/6/tasks"),
             requests,
@@ -170,7 +173,7 @@ class TasksModelTest {
 
     @Test
     fun aRefusalKeepsTheListWithTheServersReason() {
-        model.open(6)
+        model.open(ProjectId(6))
 
         model.create("Copy")
 

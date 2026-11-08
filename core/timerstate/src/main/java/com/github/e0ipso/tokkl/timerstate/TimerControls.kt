@@ -1,8 +1,12 @@
 package com.github.e0ipso.tokkl.timerstate
 
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.EntryWithSendState
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryWithSendState
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.TaskId
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import java.time.Duration
 import java.time.Instant
@@ -18,17 +22,17 @@ import java.time.Instant
  * notification, a widget or a PendingIntent past a sign-out acts on nothing in the next account.
  *
  * @property revision the server revision a paused target was shown at, or 0.
- * @property entryId the running entry it showed, or 0 while paused.
+ * @property entryId the running entry it showed, or null while paused.
  * @property account the account the control was drawn for, as the timer state's store names it,
  *   or blank where no account names it.
  */
-data class TimerTarget(val revision: Long = 0, val entryId: Long = 0, val account: String = "") {
+data class TimerTarget(val revision: Long = 0, val entryId: EntryId? = null, val account: String = "") {
     companion object {
         /**
          * A control drawn from the server's timer state for [account]: the running entry
          * [entryId], or a paused chain shown at the server's [revision].
          */
-        fun server(revision: Long = 0, entryId: Long = 0, account: String = "") =
+        fun server(revision: Long = 0, entryId: EntryId? = null, account: String = "") =
             TimerTarget(revision = revision, entryId = entryId, account = account)
     }
 }
@@ -46,7 +50,7 @@ sealed interface TimerControls {
      * [entry] runs, marked [unsent] while the queue holds a change to it. Pause and Stop act on it.
      *
      * @property accumulatedSeconds what the chain's stopped entries store before this one, or 0
-     *   outside a chain. The clock shows it plus the time since [CachedTimeEntry.start].
+     *   outside a chain. The clock shows it plus the time since [TimeEntry.start].
      * @property clockOffset what to add to the phone's clock when counting from the entry's
      *   start: the server's clock offset while the entry is the server's resumed clone, whose
      *   start the server set, and zero otherwise.
@@ -54,7 +58,7 @@ sealed interface TimerControls {
      *   server refuses Pause during a Pomodoro session.
      */
     data class Running(
-        val entry: CachedTimeEntry,
+        val entry: TimeEntry,
         val unsent: Boolean,
         val accumulatedSeconds: Long,
         val target: TimerTarget,
@@ -66,8 +70,12 @@ sealed interface TimerControls {
      * A chain is paused at [seconds], the time its entries store. Resume starts [fields] in
      * [workspaceId] as a new entry, and Stop ends the chain.
      */
-    data class Paused(val seconds: Long, val workspaceId: Long, val fields: EntryFields, val target: TimerTarget) :
-        TimerControls
+    data class Paused(
+        val seconds: Long,
+        val workspaceId: WorkspaceId,
+        val fields: EntryFields,
+        val target: TimerTarget,
+    ) : TimerControls
 }
 
 /** The target these controls were drawn with, or null while idle. */
@@ -102,7 +110,7 @@ fun serverTimerControls(
     val pause = state?.pause
     if (running != null) {
         val entry = running.entry
-        val clone = pause?.takeIf { !it.paused && it.cloneEntryId == entry.id }
+        val clone = pause?.takeIf { !it.paused && it.cloneEntryId == entry.id.value }
         return TimerControls.Running(
             entry = entry,
             unsent = running.unsent,
@@ -115,8 +123,14 @@ fun serverTimerControls(
     if (pause != null && pause.paused) {
         return TimerControls.Paused(
             seconds = pause.seconds,
-            workspaceId = pause.workspaceId,
-            fields = EntryFields(pause.description, pause.projectId, pause.taskId, pause.tags, pause.billable),
+            workspaceId = WorkspaceId(pause.workspaceId),
+            fields = EntryFields(
+                pause.description,
+                pause.projectId?.let(::ProjectId),
+                pause.taskId?.let(::TaskId),
+                pause.tags,
+                pause.billable,
+            ),
             target = TimerTarget.server(revision = state?.revision ?: 0, account = account),
         )
     }

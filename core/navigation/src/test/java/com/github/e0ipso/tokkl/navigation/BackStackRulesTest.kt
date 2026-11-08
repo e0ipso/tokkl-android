@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.navigation
 
+import com.github.e0ipso.tokkl.model.EntryId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -7,7 +8,7 @@ import org.junit.Test
 
 /** The back stack rules of docs/PRD.md B3 and of the focused timer, on plain lists. */
 class BackStackRulesTest {
-    private val form = Route.Entry(EntryOpening.Edit(1), id = "a")
+    private val form = Route.Entry(EntryOpening.Edit(EntryId(1)), id = "a")
 
     @Test
     fun aPageOpensRightAboveTimerAndTimerOpensAlone() {
@@ -18,7 +19,7 @@ class BackStackRulesTest {
 
     @Test
     fun aFormOpenedOverAFormReplacesItAndOtherwiseStacks() {
-        val other = Route.Entry(EntryOpening.Edit(1), id = "b")
+        val other = Route.Entry(EntryOpening.Edit(EntryId(1)), id = "b")
         assertEquals(listOf(Route.Timer, form), listOf<Route>(Route.Timer).withEntry(form))
         assertEquals(listOf(Route.Timer, other), listOf(Route.Timer, form).withEntry(other))
         assertEquals(

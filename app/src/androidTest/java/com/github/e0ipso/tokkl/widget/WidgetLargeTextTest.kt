@@ -7,10 +7,12 @@ import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.ServerUrl
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.signOut
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -104,7 +106,12 @@ class WidgetLargeTextTest {
                     widget.resize(375, 338)
                     widget.awaitText("Read")
                 }
-                runBlocking { app.changes.start(workspace, EntryFields("Work", projectId = project)) }
+                runBlocking {
+                    app.changes.start(
+                        WorkspaceId(workspace),
+                        EntryFields("Work", projectId = ProjectId(project)),
+                    )
+                }
                 widget.awaitText("Work")
                 widget.awaitDescription("Stop the timer")
                 widget.assertTextFitsVertically()
@@ -119,7 +126,12 @@ class WidgetLargeTextTest {
                 widget.checkAccessibility()
                 widget.resize(240, 152)
                 widget.await("the minimum size leaves favorites out at the largest font") { !widget.hasText("Read") }
-                runBlocking { app.changes.start(workspace, EntryFields("Work", projectId = project)) }
+                runBlocking {
+                    app.changes.start(
+                        WorkspaceId(workspace),
+                        EntryFields("Work", projectId = ProjectId(project)),
+                    )
+                }
                 widget.awaitText("Work")
                 widget.assertTextFitsVertically()
                 widget.checkAccessibility()

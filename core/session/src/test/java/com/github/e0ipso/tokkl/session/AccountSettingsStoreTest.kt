@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.session
 
 import android.content.ContextWrapper
 import android.content.SharedPreferences
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.time.DurationFormat
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -51,7 +52,12 @@ class AccountSettingsStoreTest {
     @Test
     fun theDefaultWorkspaceReadsBackAsSavedAndGoesWhenNull() {
         val big = 9_007_199_254_740_993L
-        val settings = AccountSettings("UTC", DayOfWeek.MONDAY, timeResolutionMinutes = 5.0, defaultWorkspaceId = big)
+        val settings = AccountSettings(
+            "UTC",
+            DayOfWeek.MONDAY,
+            timeResolutionMinutes = 5.0,
+            defaultWorkspaceId = WorkspaceId(big),
+        )
 
         store.save(settings)
 

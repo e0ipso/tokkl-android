@@ -11,8 +11,10 @@ android {
 }
 
 dependencies {
-    // The routes carry the cache's and the API's types, and the host lends the capabilities.
-    api(project(":core:cache"))
+    // The routes carry the model's ids and the API's server address, and the host lends the
+    // session's capabilities.
+    api(project(":core:model"))
+    api(project(":core:session"))
     // Each route is a Navigation 3 key, and each feature adds its entries to the entry provider.
     api(libs.androidx.navigation3.runtime)
     // Each top-level page carries its section hue.

@@ -34,12 +34,12 @@ import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.HttpMethod
-import com.github.e0ipso.tokkl.cache.CachedClient
-import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.feature.clients.R
+import com.github.e0ipso.tokkl.model.Client
+import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -138,7 +138,7 @@ class ClientsServerTest {
         val id = server.id()
         awaitCache(
             "the cache holds the new client",
-        ) { clients, _ -> clients.any { it.id == id && it.name == "Acme" && !it.archived } }
+        ) { clients, _ -> clients.any { it.id.value == id && it.name == "Acme" && !it.archived } }
 
         val project = create(
             "projects",
@@ -166,7 +166,7 @@ class ClientsServerTest {
         assertEquals(null, server.string("notes"))
         awaitCache(
             "the cache holds the new name",
-        ) { clients, _ -> clients.any { it.id == id && it.name == "Acme Inc" } }
+        ) { clients, _ -> clients.any { it.id.value == id && it.name == "Acme Inc" } }
 
         composeRule.onNode(hasContentDescription(string(R.string.clients_archive_named, "Acme Inc"))).tap()
         awaitText(string(R.string.clients_archive_title, "Acme Inc"))
@@ -181,14 +181,14 @@ class ClientsServerTest {
         composeRule.onNode(hasText(string(R.string.clients_archived)) and isHeading()).assertExists()
         composeRule.onNode(hasText("Acme Inc") and hasClickAction()).assert(hasText(string(R.string.clients_archived)))
         awaitCache("the cache holds the archived client, and its project is archived") { clients, projects ->
-            clients.any { it.id == id && it.archived } && projects.none { it.id == project && it.active }
+            clients.any { it.id.value == id && it.archived } && projects.none { it.id.value == project && it.active }
         }
 
         composeRule.onNode(hasContentDescription(string(R.string.clients_restore_named, "Acme Inc"))).tap()
         awaitText(string(R.string.clients_restored_done, "Acme Inc"))
         assertEquals("false", client("Acme Inc").getValue("archived").jsonPrimitive.content)
         awaitCache("the cache holds the restored client and project") { clients, projects ->
-            clients.any { it.id == id && !it.archived } && projects.any { it.id == project && it.active }
+            clients.any { it.id.value == id && !it.archived } && projects.any { it.id.value == project && it.active }
         }
     }
 
@@ -423,7 +423,7 @@ class ClientsServerTest {
 
     private fun hasAnyAncestor(matcher: SemanticsMatcher) = androidx.compose.ui.test.hasAnyAncestor(matcher)
 
-    private fun awaitCache(message: String, check: (List<CachedClient>, List<CachedProject>) -> Boolean) {
+    private fun awaitCache(message: String, check: (List<Client>, List<Project>) -> Boolean) {
         runBlocking { refreshes.forEach { it.join() } }
         assertTrue(
             message,

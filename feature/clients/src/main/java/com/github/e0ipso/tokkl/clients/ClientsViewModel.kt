@@ -3,12 +3,14 @@ package com.github.e0ipso.tokkl.clients
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.github.e0ipso.tokkl.cache.CachedClient
 import com.github.e0ipso.tokkl.catalog.CatalogChange
 import com.github.e0ipso.tokkl.catalog.CatalogModel
 import com.github.e0ipso.tokkl.catalog.CatalogState
 import com.github.e0ipso.tokkl.catalog.PageEvents
 import com.github.e0ipso.tokkl.catalog.followTrips
+import com.github.e0ipso.tokkl.model.Client
+import com.github.e0ipso.tokkl.model.ClientId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.platform.whileShown
 import com.github.e0ipso.tokkl.session.AppEvent
 import com.github.e0ipso.tokkl.session.DefaultWorkspace
@@ -38,7 +40,7 @@ sealed interface ClientsOverlay {
  * What the clients page loads: every client of the workspace, archived ones included, sorted as
  * Tokkl sorts them, and how many projects each one has, archived ones included, by client id.
  */
-data class ClientsData(val clients: List<Client>, val projectCounts: Map<Long, Int>) {
+data class ClientsData(val clients: List<Client>, val projectCounts: Map<ClientId, Int>) {
 
     fun projectCount(client: Client): Int = projectCounts[client.id] ?: 0
 
@@ -59,7 +61,7 @@ typealias ClientsState = CatalogState<ClientsData, ClientsOverlay>
 data class ClientsPageState(
     val catalog: ClientsState = ClientsState(),
     val offline: Boolean = false,
-    val cachedClients: List<CachedClient> = emptyList(),
+    val cachedClients: List<Client> = emptyList(),
 )
 
 /**
@@ -80,7 +82,7 @@ class ClientsViewModel(
     refreshCache: RefreshRequest,
     scope: CoroutineScope,
     io: CoroutineContext,
-    cachedClients: Flow<List<CachedClient>>,
+    cachedClients: Flow<List<Client>>,
     offline: StateFlow<Boolean>,
     appEvents: Flow<AppEvent>,
 ) : ViewModel(scope),
@@ -110,7 +112,7 @@ class ClientsViewModel(
         followTrips(appEvents, viewModelScope)
     }
 
-    fun workspace(): Long? = catalog.workspace()
+    fun workspace(): WorkspaceId? = catalog.workspace()
 
     override fun open() = catalog.open()
 
@@ -189,4 +191,4 @@ class ClientsViewModel(
 
 /** By name, ignoring case, as Tokkl sorts them. */
 internal fun List<Client>.sortedForList(): List<Client> =
-    sortedWith(compareBy<Client, String>(String.CASE_INSENSITIVE_ORDER) { it.name }.thenBy { it.id })
+    sortedWith(compareBy<Client, String>(String.CASE_INSENSITIVE_ORDER) { it.name }.thenBy { it.id.value })

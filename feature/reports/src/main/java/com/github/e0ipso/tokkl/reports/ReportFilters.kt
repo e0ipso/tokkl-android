@@ -3,10 +3,11 @@ package com.github.e0ipso.tokkl.reports
 import androidx.compose.runtime.Immutable
 import com.github.e0ipso.tokkl.api.ReportFilter
 import com.github.e0ipso.tokkl.cache.AccountCache
-import com.github.e0ipso.tokkl.cache.CachedClient
-import com.github.e0ipso.tokkl.cache.CachedProject
-import com.github.e0ipso.tokkl.cache.CachedTag
 import com.github.e0ipso.tokkl.capabilities.Capabilities
+import com.github.e0ipso.tokkl.model.Client
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.Tag
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.AccountSettings
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -103,21 +104,21 @@ data class FilterOptions(
          * every cached workspace when it is unknown. The cache sorts each list by name.
          */
         fun of(
-            projects: List<CachedProject>,
-            clients: List<CachedClient>,
-            tags: List<CachedTag>,
-            workspaceId: Long?,
+            projects: List<Project>,
+            clients: List<Client>,
+            tags: List<Tag>,
+            workspaceId: WorkspaceId?,
             negation: Boolean,
         ): FilterOptions {
-            fun inWorkspace(id: Long) = workspaceId == null || id == workspaceId
+            fun inWorkspace(id: WorkspaceId) = workspaceId == null || id == workspaceId
             return FilterOptions(
                 projects = projects.filter {
                     inWorkspace(
                         it.workspaceId,
                     )
-                }.sortedBy { !it.active }.map { FilterOption(it.id, it.name) },
-                clients = clients.filter { inWorkspace(it.workspaceId) }.map { FilterOption(it.id, it.name) },
-                tags = tags.filter { inWorkspace(it.workspaceId) }.map { FilterOption(it.id, it.name) },
+                }.sortedBy { !it.active }.map { FilterOption(it.id.value, it.name) },
+                clients = clients.filter { inWorkspace(it.workspaceId) }.map { FilterOption(it.id.value, it.name) },
+                tags = tags.filter { inWorkspace(it.workspaceId) }.map { FilterOption(it.id.value, it.name) },
                 negation = negation,
             )
         }

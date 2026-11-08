@@ -40,10 +40,14 @@ import androidx.compose.ui.unit.toSize
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.entryfields.SplitHalves
 import com.github.e0ipso.tokkl.entryfields.SplitProblem
 import com.github.e0ipso.tokkl.feature.timer.R
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.TaskId
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.SnappedSpan
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
@@ -126,10 +130,10 @@ class HistoryFitTest {
     fun theUndoMessagesFit() {
         show(SOLO)
 
-        notice = EntryNotice.Deleted(serial = 1, entryId = SOLO_ID, undo = true)
+        notice = EntryNotice.Deleted(serial = 1, entryId = EntryId(SOLO_ID), undo = true)
         assertMessageFits(R.string.history_deleted)
 
-        notice = EntryNotice.UndoNeedsServer(serial = 2, entryId = SOLO_ID)
+        notice = EntryNotice.UndoNeedsServer(serial = 2, entryId = EntryId(SOLO_ID))
         assertMessageFits(R.string.history_undo_needs_server)
     }
 
@@ -487,7 +491,7 @@ class HistoryFitTest {
         /** An entry with every mark a row shows: a project and task, tags, billable and not sent. */
         val SOLO = listOf(
             HistoryEntry(
-                id = SOLO_ID,
+                id = EntryId(SOLO_ID),
                 description = SOLO_DESCRIPTION,
                 project = PROJECT,
                 projectColor = "#0b83d9",
@@ -497,8 +501,8 @@ class HistoryFitTest {
                 start = Instant.parse("2026-10-15T13:00:00Z"),
                 stop = Instant.parse("2026-10-15T14:30:00Z"),
                 unsent = true,
-                projectId = 7,
-                taskId = 70,
+                projectId = ProjectId(7),
+                taskId = TaskId(70),
             ),
         )
 
@@ -506,11 +510,11 @@ class HistoryFitTest {
         val SOLO_STOP: Instant = Instant.parse("2026-10-15T14:30:00Z")
 
         /** The cache's row of [SOLO], which the split dialog opens on. */
-        val SOLO_CACHED = CachedTimeEntry(
-            id = SOLO_ID,
-            workspaceId = 1,
-            projectId = 7,
-            taskId = 70,
+        val SOLO_CACHED = TimeEntry(
+            id = EntryId(SOLO_ID),
+            workspaceId = WorkspaceId(1),
+            projectId = ProjectId(7),
+            taskId = TaskId(70),
             description = SOLO_DESCRIPTION,
             start = SOLO_START,
             stop = SOLO_STOP,
@@ -525,7 +529,7 @@ class HistoryFitTest {
         /** Three similar entries, newest first, which the history shows as one group. */
         val GROUP = MEMBER_TIMES.mapIndexed { index, (start, stop) ->
             HistoryEntry(
-                id = 3L - index,
+                id = EntryId(3L - index),
                 description = GROUP_DESCRIPTION,
                 project = PROJECT,
                 projectColor = "#0b83d9",
@@ -535,7 +539,7 @@ class HistoryFitTest {
                 start = Instant.parse("2026-10-15T$start:00Z"),
                 stop = Instant.parse("2026-10-15T$stop:00Z"),
                 unsent = false,
-                projectId = 7,
+                projectId = ProjectId(7),
             )
         }
     }

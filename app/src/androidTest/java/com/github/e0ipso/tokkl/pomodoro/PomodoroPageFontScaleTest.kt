@@ -28,8 +28,9 @@ import androidx.core.view.WindowCompat
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.core.entryfields.R
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
@@ -59,7 +60,7 @@ class PomodoroPageFontScaleTest {
     private var state by mutableStateOf(
         PomodoroPageState(
             loading = false,
-            account = AccountSettings("europe/madrid", DayOfWeek.MONDAY, null, defaultWorkspaceId = 1),
+            account = AccountSettings("europe/madrid", DayOfWeek.MONDAY, null, defaultWorkspaceId = WorkspaceId(1)),
         ),
     )
     private var starts = 0

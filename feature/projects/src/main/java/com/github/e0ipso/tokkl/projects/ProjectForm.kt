@@ -24,11 +24,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
-import com.github.e0ipso.tokkl.cache.CachedClient
 import com.github.e0ipso.tokkl.catalog.ProblemBanner
 import com.github.e0ipso.tokkl.catalog.ServerNeededNotice
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.feature.projects.R
+import com.github.e0ipso.tokkl.model.Client
+import com.github.e0ipso.tokkl.model.ClientId
 import com.github.e0ipso.tokkl.ui.CheckboxOptionRow
 import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
@@ -48,7 +49,7 @@ import com.github.e0ipso.tokkl.core.catalog.R as CatalogR
 internal fun ProjectFormContent(
     form: ProjectForm,
     projectCount: Int,
-    clients: List<CachedClient>,
+    clients: List<Client>,
     defaults: WorkspaceDefaults?,
     canSave: Boolean,
     sending: Boolean,
@@ -57,7 +58,7 @@ internal fun ProjectFormContent(
     onRetry: () -> Unit,
     onSave: (ProjectFields) -> Unit,
     onCancel: () -> Unit,
-    tasks: @Composable (Project) -> Unit = {},
+    tasks: @Composable (ProjectDetails) -> Unit = {},
 ) {
     val project = (form as? ProjectForm.Edit)?.project
     // A new form starts from its own values, not from the last one's.
@@ -82,9 +83,9 @@ internal fun ProjectFormContent(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun FormFields(
-    project: Project?,
+    project: ProjectDetails?,
     projectCount: Int,
-    clients: List<CachedClient>,
+    clients: List<Client>,
     defaults: WorkspaceDefaults?,
     canSave: Boolean,
     sending: Boolean,
@@ -93,13 +94,15 @@ private fun FormFields(
     onRetry: () -> Unit,
     onSave: (ProjectFields) -> Unit,
     onCancel: () -> Unit,
-    tasks: @Composable (Project) -> Unit,
+    tasks: @Composable (ProjectDetails) -> Unit,
 ) {
     val initial = remember { ProjectDraft.of(project, ProjectPalette.forNewProject(projectCount)) }
     var name by rememberSaveable { mutableStateOf(initial.name) }
     var color by rememberSaveable { mutableStateOf(initial.color) }
     var custom by rememberSaveable { mutableStateOf(ProjectPalette.of(initial.color) == null) }
-    var clientId by rememberSaveable { mutableStateOf(initial.clientId) }
+    // The saved state keeps the id's number: a Bundle cannot hold a ClientId.
+    var clientIdValue by rememberSaveable { mutableStateOf(initial.clientId?.value) }
+    val clientId = clientIdValue?.let(::ClientId)
     var billable by rememberSaveable { mutableStateOf(initial.billable) }
     var rate by rememberSaveable { mutableStateOf(initial.rate) }
     var currency by rememberSaveable { mutableStateOf(initial.currency) }
@@ -162,7 +165,7 @@ private fun FormFields(
         ClientField(
             clients = clients.filter { !it.archived || it.id == clientId },
             clientId = clientId,
-            onChoose = { clientId = it },
+            onChoose = { clientIdValue = it?.value },
         )
         FormTextField(
             value = rate,

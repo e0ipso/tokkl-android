@@ -55,6 +55,7 @@ import com.github.e0ipso.tokkl.components.sessionViewModels
 import com.github.e0ipso.tokkl.components.timerPageViewModels
 import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.components.timerSync
+import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -335,7 +336,7 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             val replacementId = fixture.account.createEntry("Remote replacement", old.entry.start)
             runBlocking { app.accountRefresh.refresh().join() }
             compose.waitUntil("replacement reaches shared model", 15_000) {
-                (model.state.value as? TimerState.Running)?.entryId == replacementId
+                (model.state.value as? TimerState.Running)?.entryId?.value == replacementId
             }
             compose.runOnIdle { model.stopShown(old.target) }
             assertNull(runBlocking { model.runningForEditShown(old.target) })
@@ -347,7 +348,7 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
                     context.getString(TimerR.string.entry_form_missing),
                 ).fetchSemanticsNodes().isNotEmpty()
             }
-            assertEquals(replacementId, (fixture.shown() as TimerControls.Running).entry.id)
+            assertEquals(replacementId, (fixture.shown() as TimerControls.Running).entry.id.value)
             assertEquals("Remote replacement", (fixture.shown() as TimerControls.Running).entry.description)
             instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
             awaitFocused()
@@ -389,7 +390,7 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
                 compose.onAllNodesWithText("Unsent focused entry", substring = true).fetchSemanticsNodes().isNotEmpty()
             }
             openFocused()
-            assertTrue(started.entry.id < 0)
+            assertTrue(started.entry.id.value < 0)
             compose.onNodeWithText(context.getString(TimerR.string.history_unsent)).assertExists()
             focusedButton(TimerR.string.timer_focused_edit).performScrollTo().performClick()
             compose.awaitText(context.getString(TimerR.string.entry_form_edit_running))
@@ -479,7 +480,7 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
                 // The paused state took the running entry out of the cache, and the one refresh
                 // that brings it back stopped writes the cache after its last request.
                 compose.waitUntil("the refresh after Pause brings the entry back stopped", 10_000) {
-                    fixture.rows().any { it.id == running.entry.id && it.stop != null }
+                    fixture.rows().any { EntryId(it.id.value) == running.entry.id && it.stop != null }
                 }
                 val sent = requests.lines.drop(linesBeforePause)
                 assertEquals("one Pause and one refresh: $sent", pauseRequests + 1 + refreshRequests, requests.count)

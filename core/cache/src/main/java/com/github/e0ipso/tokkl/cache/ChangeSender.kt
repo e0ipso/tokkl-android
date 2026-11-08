@@ -6,6 +6,7 @@ import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.capabilities.CapabilityCheck
+import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.platform.SingleFlight
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountRefreshListener
@@ -55,7 +56,7 @@ fun interface QueueSender {
 
 /** Takes back the delete of an entry, such as [ChangeSender.undoDelete]. */
 fun interface DeleteUndo {
-    suspend fun undoDelete(entryId: Long): ChangeSender.UndoOutcome
+    suspend fun undoDelete(entryId: EntryId): ChangeSender.UndoOutcome
 }
 
 /**
@@ -409,7 +410,7 @@ class ChangeSender(
      * only when `Capabilities.restore` is true. Blocks the sender's deletes meanwhile. Once
      * started, the Undo reaches the server and the queue also when the caller is cancelled.
      */
-    override suspend fun undoDelete(entryId: Long): UndoOutcome {
+    override suspend fun undoDelete(entryId: EntryId): UndoOutcome {
         val outcome = withContext(io + NonCancellable) {
             deletes.withLock {
                 when (val found = store.takeBackDelete(entryId)) {

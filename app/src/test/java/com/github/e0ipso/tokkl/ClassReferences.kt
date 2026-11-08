@@ -59,6 +59,7 @@ internal object ClassReferences {
      */
     private val CORE_MODULES = listOf(
         "catalog.ServerProblem",
+        "model.EntryId",
         "picker.PickerOptionsKt",
         "timernotice.TimerNoticeKt",
     ).map { "com.github.e0ipso.tokkl.$it" }

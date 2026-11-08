@@ -53,7 +53,7 @@ import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.awaitTimerPage
-import com.github.e0ipso.tokkl.cache.toCached
+import com.github.e0ipso.tokkl.cache.toTimeEntry
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.cache
@@ -61,6 +61,7 @@ import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.entryfields.resolveRange
 import com.github.e0ipso.tokkl.feature.timer.R
+import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.session.ServerTrustStore
@@ -272,7 +273,7 @@ class EntryFormServerTest {
             }
             assertTrue(
                 "the refresh dropped it from the phone",
-                runBlocking { app.cache.entries.first() }.none { it.entry.id == entry },
+                runBlocking { app.cache.entries.first() }.none { it.entry.id.value == entry },
             )
             assertFalse(
                 "the server has it",
@@ -345,7 +346,7 @@ class EntryFormServerTest {
             drainUntilEmpty()
             assertTrue(
                 "the refresh dropped it from the phone",
-                runBlocking { app.cache.entries.first() }.none { it.entry.id == entry },
+                runBlocking { app.cache.entries.first() }.none { it.entry.id.value == entry },
             )
             replace(FieldsR.string.entry_description, "Old review, second")
             save()
@@ -556,11 +557,11 @@ class EntryFormServerTest {
             val id = created.getValue("id").jsonPrimitive.long
             withModel { model ->
                 model.edit(
-                    id,
+                    EntryId(id),
                     Json { ignoreUnknownKeys = true }.decodeFromJsonElement(
                         ServerTimeEntry.serializer(),
                         created,
-                    ).toCached(),
+                    ).toTimeEntry(),
                 )
                 model.state.first { it is EntryFormState.Open }
                 model.setDescription("$description edited")
@@ -676,10 +677,10 @@ class EntryFormServerTest {
         runBlocking { app.accountRefresh.refreshAfterChange().join() }
         assertTrue(
             "the restored fixture is in the cache",
-            runBlocking { app.cache.entries.first() }.any { it.entry.id == id },
+            runBlocking { app.cache.entries.first() }.any { it.entry.id.value == id },
         )
         withModel { model ->
-            model.edit(id)
+            model.edit(EntryId(id))
             model.state.first { it is EntryFormState.Open }
             model.setDescription("Legacy zero renamed")
             model.save()

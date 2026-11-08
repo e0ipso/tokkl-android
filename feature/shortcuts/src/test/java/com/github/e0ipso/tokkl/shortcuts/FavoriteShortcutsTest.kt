@@ -1,8 +1,12 @@
 package com.github.e0ipso.tokkl.shortcuts
 
-import com.github.e0ipso.tokkl.cache.CachedFavorite
-import com.github.e0ipso.tokkl.cache.CachedProject
-import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.Favorite
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.TaskId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOf
@@ -15,9 +19,9 @@ import org.junit.Test
 
 class FavoriteShortcutsTest {
 
-    private val project = CachedProject(
-        id = 7,
-        workspaceId = 1,
+    private val project = Project(
+        id = ProjectId(7),
+        workspaceId = WorkspaceId(1),
         clientId = null,
         name = "Website",
         color = "#06aaf5",
@@ -29,20 +33,20 @@ class FavoriteShortcutsTest {
     private val report = favorite(
         0,
         description = "Write the report",
-        projectId = 7,
+        projectId = ProjectId(7),
         tags = listOf("call"),
         billable = true,
     )
-    private val website = favorite(1, description = "", projectId = 7)
+    private val website = favorite(1, description = "", projectId = ProjectId(7))
     private val untitled = favorite(2, description = "")
 
     private fun favorite(
         position: Int,
         description: String,
-        projectId: Long? = null,
+        projectId: ProjectId? = null,
         tags: List<String> = emptyList(),
         billable: Boolean = false,
-    ) = CachedFavorite(
+    ) = Favorite(
         position = position,
         description = description,
         projectId = projectId,
@@ -53,7 +57,7 @@ class FavoriteShortcutsTest {
 
     private fun shortcuts(
         available: Boolean = true,
-        favorites: List<CachedFavorite> = listOf(
+        favorites: List<Favorite> = listOf(
             report,
             website,
             untitled,
@@ -92,8 +96,8 @@ class FavoriteShortcutsTest {
     fun theIdChangesWithEveryFieldAndHoldsNoName() {
         val fields = EntryFields(
             description = "Write the report",
-            projectId = 7,
-            taskId = 3,
+            projectId = ProjectId(7),
+            taskId = TaskId(3),
             tags = listOf("call"),
             billable = true,
         )
@@ -120,23 +124,25 @@ class FavoriteShortcutsTest {
 
     @Test
     fun aTapStartsTheFavoriteTheIdNamesInTheDefaultWorkspace() = runTest {
-        val started = mutableListOf<Pair<Long, EntryFields>>()
-        val result = tap(favoriteShortcutId(EntryFields(description = "", projectId = 7))) { workspace, fields ->
+        val started = mutableListOf<Pair<WorkspaceId, EntryFields>>()
+        val result = tap(
+            favoriteShortcutId(EntryFields(description = "", projectId = ProjectId(7))),
+        ) { workspace, fields ->
             started += workspace to fields
-            -1L
+            EntryId(-1L)
         }
 
         assertEquals(ShortcutStart.Started("Website"), result)
-        assertEquals(listOf(3L to EntryFields(description = "", projectId = 7)), started)
+        assertEquals(listOf(WorkspaceId(3) to EntryFields(description = "", projectId = ProjectId(7))), started)
     }
 
     @Test
     fun aTapOnAShortcutWhoseFavoriteIsGoneStartsNothing() = runTest {
         val id = shortcuts().first().id
         var starts = 0
-        val start: suspend (Long, EntryFields) -> Long = { _, _ ->
+        val start: suspend (WorkspaceId, EntryFields) -> EntryId = { _, _ ->
             starts++
-            -1L
+            EntryId(-1L)
         }
 
         assertEquals("removed", ShortcutStart.Gone, tap(id, favorites = listOf(website), start = start))
@@ -148,9 +154,9 @@ class FavoriteShortcutsTest {
     private suspend fun tap(
         id: String,
         available: Boolean = true,
-        favorites: List<CachedFavorite> = listOf(report, website, untitled),
-        workspaceId: Long? = 3,
-        start: suspend (Long, EntryFields) -> Long,
+        favorites: List<Favorite> = listOf(report, website, untitled),
+        workspaceId: WorkspaceId? = WorkspaceId(3),
+        start: suspend (WorkspaceId, EntryFields) -> EntryId,
     ) = startFavoriteShortcut(id, available, favorites, listOf(project), workspaceId, names, start)
 
     @Test

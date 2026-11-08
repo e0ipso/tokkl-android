@@ -37,6 +37,7 @@ import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
 import com.github.e0ipso.tokkl.feature.signin.R
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
@@ -109,7 +110,7 @@ class SignInScreenTest {
             "UTC",
             DayOfWeek.MONDAY,
             timeResolutionMinutes = 5.0,
-            defaultWorkspaceId = serverId("default_workspace_id"),
+            defaultWorkspaceId = WorkspaceId(serverId("default_workspace_id")),
             userId = serverId("id"),
         )
         assertEquals(settings, AccountSettingsStore(context).load())

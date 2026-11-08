@@ -23,7 +23,6 @@ import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.PhaseKind
 import com.github.e0ipso.tokkl.api.TimerState
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.changes
@@ -34,6 +33,8 @@ import com.github.e0ipso.tokkl.components.storeSignIn
 import com.github.e0ipso.tokkl.components.timerActions
 import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.feature.timer.R
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.openBarPage
 import com.github.e0ipso.tokkl.session.ServerTrustStore
@@ -79,7 +80,7 @@ class PomodoroSessionNotificationServerTest {
         Session(context).save(TokklTestServer.url, account.apiToken)
         runBlocking { app.accountRefresh.refresh().join() }
         val settings = checkNotNull(app.accountSettings.state.value)
-        workspace = checkNotNull(settings.defaultWorkspaceId)
+        workspace = checkNotNull(settings.defaultWorkspaceId).value
         app.storeSignIn(TokklTestServer.url, account.apiToken, settings)
         HeldPhases.learnTheTimerApi()
         RunningNotifications.allow()
@@ -134,7 +135,7 @@ class PomodoroSessionNotificationServerTest {
 
     @Test fun aSessionTapLeavesTheFocusedTimerRoute() {
         runBlocking {
-            app.changes.start(workspace, EntryFields("Regular timer"))
+            app.changes.start(WorkspaceId(workspace), EntryFields("Regular timer"))
             app.sender.sendAndWait()
         }
         RunningNotifications.awaitShown("the regular timer before session navigation")
@@ -253,7 +254,7 @@ class PomodoroSessionNotificationServerTest {
         assertEquals(
             TimerActionResult.Done,
             runBlocking {
-                app.timerActions.startSession(workspace, EntryFields("Notification acceptance"), lengths)
+                app.timerActions.startSession(WorkspaceId(workspace), EntryFields("Notification acceptance"), lengths)
             },
         )
         return HeldPhases.key(checkNotNull(app.timerState.state.value))

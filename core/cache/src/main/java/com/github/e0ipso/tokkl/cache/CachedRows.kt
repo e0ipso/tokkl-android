@@ -6,12 +6,12 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneId
 
 // The rows of the offline cache (docs/PRD.md O2): what the app last loaded from the server. The
 // server is the source of truth, and a refresh replaces these rows with its values. Ids are the
 // server's. The account settings are not here: AccountSettingsStore keeps them, and
-// AccountSettingsSource is the one place to read them.
+// AccountSettingsSource is the one place to read them. The rest of the app reads and writes the
+// model's types, which CacheModels.kt maps to and from these rows.
 
 /**
  * A time entry that started within the cached history. [stop] is null while it runs.
@@ -19,7 +19,7 @@ import java.time.ZoneId
  * @property allDay a no-time entry: a day and a duration with no start or end time. [start] is
  *   local midnight of its day and [stop] is [start] plus the duration. Rows from before
  *   database version 10 read false, so they show as timed until a refresh replaces them.
- * @property day the no-time entry's day in the account's timezone, which [noTimeDay] reads.
+ * @property day the no-time entry's day in the account's timezone, which `noTimeDay` reads.
  *   Queued no-time changes set it; rows from the server leave it null.
  */
 @Entity(tableName = "time_entries", indices = [Index("start")])
@@ -37,14 +37,6 @@ data class CachedTimeEntry(
     @ColumnInfo(defaultValue = "0") val allDay: Boolean = false,
     val day: LocalDate? = null,
 )
-
-/**
- * The day of a no-time entry. Rows from the server may leave [CachedTimeEntry.day] null, because
- * the server keeps their start at local midnight of the account's timezone [zone], and moves it
- * when that timezone changes. Queued no-time changes always set the day, so a midnight instant
- * that a later timezone change made stale never moves them to another day.
- */
-fun CachedTimeEntry.noTimeDay(zone: ZoneId): LocalDate = day ?: start.atZone(zone).toLocalDate()
 
 /** A project. An archived one ([active] false) stays only while a cached entry or favorite uses it. */
 @Entity(tableName = "projects")

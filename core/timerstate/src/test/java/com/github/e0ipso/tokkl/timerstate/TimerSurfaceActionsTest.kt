@@ -1,8 +1,10 @@
 package com.github.e0ipso.tokkl.timerstate
 
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges
-import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
@@ -25,7 +27,7 @@ class TimerSurfaceActionsTest {
     private val calls = mutableListOf<String>()
     private var now: TimerControls = TimerControls.Idle
     private var answer: TimerActionResult = TimerActionResult.Done
-    private val mappings = mutableMapOf<Long, Long>()
+    private val mappings = mutableMapOf<EntryId, EntryId>()
 
     /** While set, the server's Pause answers only once it completes. */
     private var held: CompletableDeferred<Unit>? = null
@@ -64,14 +66,19 @@ class TimerSurfaceActionsTest {
         now = running(id = 43)
         assertNull("another entry runs", tap(TimerSurfaceAction.Pause, running(id = 42).target))
 
-        now = TimerControls.Paused(600, 1, EntryFields("Paused"), TimerTarget.server(revision = 8, account = ACCOUNT))
+        now = TimerControls.Paused(
+            600,
+            WorkspaceId(1),
+            EntryFields("Paused"),
+            TimerTarget.server(revision = 8, account = ACCOUNT),
+        )
         assertNull("the timer was paused meanwhile", tap(TimerSurfaceAction.Pause, running(id = 42).target))
         assertTrue(calls.isEmpty())
     }
 
     @Test
     fun pauseOfAPhoneMadeEntryFollowsItsServerId() = runTest {
-        mappings[-5] = 42
+        mappings[EntryId(-5)] = EntryId(42)
         now = running(id = 42)
 
         val tap = tap(TimerSurfaceAction.Pause, running(id = -5).target) as SurfaceTap.Request
@@ -240,8 +247,8 @@ class TimerSurfaceActionsTest {
 
     private fun running(id: Long, pausable: Boolean = true, unsent: Boolean = false, accumulatedSeconds: Long = 0) =
         TimerControls.Running(
-            entry = CachedTimeEntry(
-                id, 1, null, null, "Work",
+            entry = TimeEntry(
+                EntryId(id), WorkspaceId(1), null, null, "Work",
                 Instant.parse(
                     "2026-10-28T09:00:00Z",
                 ),
@@ -249,12 +256,16 @@ class TimerSurfaceActionsTest {
             ),
             unsent = unsent,
             accumulatedSeconds = accumulatedSeconds,
-            target = TimerTarget.server(entryId = id, account = ACCOUNT),
+            target = TimerTarget.server(entryId = EntryId(id), account = ACCOUNT),
             pausable = pausable,
         )
 
-    private fun paused(revision: Long) =
-        TimerControls.Paused(600, 1, EntryFields("Paused"), TimerTarget.server(revision = revision, account = ACCOUNT))
+    private fun paused(revision: Long) = TimerControls.Paused(
+        600,
+        WorkspaceId(1),
+        EntryFields("Paused"),
+        TimerTarget.server(revision = revision, account = ACCOUNT),
+    )
 
     private inner class Server : PauseActions {
         override suspend fun pause(): TimerActionResult {
@@ -268,34 +279,34 @@ class TimerSurfaceActionsTest {
     }
 
     private inner class Queue : EntryChanges {
-        override suspend fun start(workspaceId: Long, fields: EntryFields): Long = throw AssertionError(
+        override suspend fun start(workspaceId: WorkspaceId, fields: EntryFields): EntryId = throw AssertionError(
             "nothing starts",
         )
 
-        override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean {
+        override suspend fun stop(entryId: EntryId, fields: EntryFields?): Boolean {
             calls += "stop $entryId"
             return (now as? TimerControls.Running)?.entry?.id == entryId
         }
 
-        override suspend fun currentId(entryId: Long): Long = mappings[entryId] ?: entryId
+        override suspend fun currentId(entryId: EntryId): EntryId = mappings[entryId] ?: entryId
 
         override suspend fun create(
-            workspaceId: Long,
+            workspaceId: WorkspaceId,
             fields: EntryFields,
             start: Instant,
             stop: Instant,
             noTimeDay: LocalDate?,
-        ): Long = throw AssertionError("nothing is created")
+        ): EntryId = throw AssertionError("nothing is created")
 
         override suspend fun update(
-            entryId: Long,
+            entryId: EntryId,
             fields: EntryFields,
             start: Instant,
             stop: Instant?,
             noTimeDay: LocalDate?,
         ): Boolean = throw AssertionError("nothing is edited")
 
-        override suspend fun delete(entryId: Long): Boolean = throw AssertionError("nothing is deleted")
+        override suspend fun delete(entryId: EntryId): Boolean = throw AssertionError("nothing is deleted")
     }
 
     private companion object {

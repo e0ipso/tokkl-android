@@ -1,12 +1,16 @@
 package com.github.e0ipso.tokkl.entry
 
-import com.github.e0ipso.tokkl.cache.CachedProject
-import com.github.e0ipso.tokkl.cache.CachedTask
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.EntryWithSendState
-import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryWithSendState
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.RunningEntryIdentity
+import com.github.e0ipso.tokkl.model.Task
+import com.github.e0ipso.tokkl.model.TaskId
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.session.AccountSettings
@@ -55,11 +59,11 @@ class RunningEntryEditorTest {
             timeZone = "Europe/Madrid",
             beginningOfWeek = DayOfWeek.MONDAY,
             timeResolutionMinutes = 15.0,
-            defaultWorkspaceId = 10,
+            defaultWorkspaceId = WorkspaceId(10),
         ),
     )
-    private val projects = MutableStateFlow(emptyList<CachedProject>())
-    private val tasks = MutableStateFlow(emptyList<CachedTask>())
+    private val projects = MutableStateFlow(emptyList<Project>())
+    private val tasks = MutableStateFlow(emptyList<Task>())
     private val clock = Clock.fixed(Instant.parse("2026-10-22T22:10:00Z"), ZoneOffset.UTC)
     private val changes = Changes()
     private val form = EntryFormViewModel(
@@ -119,7 +123,7 @@ class RunningEntryEditorTest {
         assertEquals("", opened.duration)
         onMain {
             form.setDescription("Correct the start")
-            form.pick(Picked(projectId = 12, taskId = 15, tags = listOf("offline")))
+            form.pick(Picked(projectId = ProjectId(12), taskId = TaskId(15), tags = listOf("offline")))
             form.setBillable(true)
             form.save()
         }
@@ -130,8 +134,8 @@ class RunningEntryEditorTest {
         assertEquals(ENTRY.id, update.id)
         assertEquals(ENTRY.workspaceId, update.workspaceId)
         assertEquals("Correct the start", update.description)
-        assertEquals(12L, update.projectId)
-        assertEquals(15L, update.taskId)
+        assertEquals(ProjectId(12), update.projectId)
+        assertEquals(TaskId(15), update.taskId)
         assertEquals(listOf("offline"), update.tags)
         assertTrue(update.billable)
     }
@@ -231,8 +235,8 @@ class RunningEntryEditorTest {
         assertFalse(opening.isCompleted)
         gate.complete(Unit)
         val identity = runBlocking { withTimeout(TIMEOUT) { opening.await() } }!!
-        assertEquals(-2L, identity.entryId)
-        assertEquals(10L, identity.workspaceId)
+        assertEquals(EntryId(-2), identity.entryId)
+        assertEquals(WorkspaceId(10), identity.workspaceId)
         assertEquals(clock.instant(), identity.start)
     }
 
@@ -258,21 +262,21 @@ class RunningEntryEditorTest {
     fun pendingDescriptionSurvivesServerIdAndWholeSecondRemapping() {
         onMain {
             timer.editDescription("Typed before reconnect")
-            changes.remap[ENTRY.id] = 201
+            changes.remap[ENTRY.id] = EntryId(201)
             rows.value = listOf(
                 EntryWithSendState(
-                    ENTRY.copy(id = 201, start = ENTRY.start.truncatedTo(ChronoUnit.SECONDS)),
+                    ENTRY.copy(id = EntryId(201), start = ENTRY.start.truncatedTo(ChronoUnit.SECONDS)),
                     unsent = false,
                 ),
             )
         }
-        val shown = timerState { it is TimerState.Running && it.entryId == 201L } as TimerState.Running
+        val shown = timerState { it is TimerState.Running && it.entryId?.value == 201L } as TimerState.Running
         assertEquals("Typed before reconnect", shown.fields.description)
         val identity = onMain { timer.runningForEdit() }!!
         onMain { form.editRunning(identity) }
         val opened = state { it is EntryFormState.Open } as EntryFormState.Open
         assertEquals("Typed before reconnect", opened.fields.description)
-        assertEquals(201L, changes.updates.single().id)
+        assertEquals(EntryId(201), changes.updates.single().id)
         assertEquals(ENTRY.start.truncatedTo(ChronoUnit.SECONDS), changes.updates.single().start)
     }
 
@@ -280,9 +284,11 @@ class RunningEntryEditorTest {
     fun sameInstantReplacementDoesNotInheritPendingTimerText() {
         onMain {
             timer.editDescription("Text for original")
-            rows.value = listOf(EntryWithSendState(ENTRY.copy(id = 202, description = "Replacement"), unsent = false))
+            rows.value = listOf(
+                EntryWithSendState(ENTRY.copy(id = EntryId(202), description = "Replacement"), unsent = false),
+            )
         }
-        val shown = timerState { it is TimerState.Running && it.entryId == 202L } as TimerState.Running
+        val shown = timerState { it is TimerState.Running && it.entryId?.value == 202L } as TimerState.Running
         assertEquals("Replacement", shown.fields.description)
         val identity = onMain { timer.runningForEdit() }!!
         onMain { form.editRunning(identity) }
@@ -326,26 +332,26 @@ class RunningEntryEditorTest {
     private fun <T> onMain(block: suspend () -> T): T = runBlocking(dispatcher) { block() }
 
     private inner class Changes : EntryChanges {
-        val remap = mutableMapOf<Long, Long>()
-        val updates = mutableListOf<CachedTimeEntry>()
+        val remap = mutableMapOf<EntryId, EntryId>()
+        val updates = mutableListOf<TimeEntry>()
         var startGate = CompletableDeferred(Unit)
         var updateGate = CompletableDeferred(Unit)
         val updateEntered = CompletableDeferred<Unit>()
 
-        override suspend fun start(workspaceId: Long, fields: EntryFields): Long {
+        override suspend fun start(workspaceId: WorkspaceId, fields: EntryFields): EntryId {
             startGate.await()
             rows.value = listOf(
                 EntryWithSendState(
-                    ENTRY.copy(id = -2, workspaceId = workspaceId, start = clock.instant()),
+                    ENTRY.copy(id = EntryId(-2), workspaceId = workspaceId, start = clock.instant()),
                     unsent = true,
                 ),
             )
-            return -2
+            return EntryId(-2)
         }
 
-        override suspend fun currentId(entryId: Long): Long = remap[entryId] ?: entryId
+        override suspend fun currentId(entryId: EntryId): EntryId = remap[entryId] ?: entryId
 
-        override suspend fun runningEntry(identity: RunningEntryIdentity): CachedTimeEntry? {
+        override suspend fun runningEntry(identity: RunningEntryIdentity): TimeEntry? {
             val id = remap[identity.entryId] ?: identity.entryId
             val current = rows.value.singleOrNull()?.entry ?: return null
             val sameStart = current.start == identity.start ||
@@ -379,37 +385,37 @@ class RunningEntryEditorTest {
         }
 
         override suspend fun update(
-            entryId: Long,
+            entryId: EntryId,
             fields: EntryFields,
             start: Instant,
             stop: Instant?,
             noTimeDay: LocalDate?,
         ): Boolean = throw AssertionError("A running editor must use the guarded update")
         override suspend fun updateOlder(
-            entryId: Long,
-            workspaceId: Long,
+            entryId: EntryId,
+            workspaceId: WorkspaceId,
             fields: EntryFields,
             start: Instant,
             stop: Instant,
             noTimeDay: LocalDate?,
         ) = throw AssertionError("A running editor cannot fall back to an older-entry PUT")
         override suspend fun create(
-            workspaceId: Long,
+            workspaceId: WorkspaceId,
             fields: EntryFields,
             start: Instant,
             stop: Instant,
             noTimeDay: LocalDate?,
-        ): Long = throw AssertionError("A running editor cannot create an entry")
-        override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean = throw AssertionError(
+        ): EntryId = throw AssertionError("A running editor cannot create an entry")
+        override suspend fun stop(entryId: EntryId, fields: EntryFields?): Boolean = throw AssertionError(
             "Unexpected stop",
         )
-        override suspend fun delete(entryId: Long): Boolean = throw AssertionError("Unexpected delete")
+        override suspend fun delete(entryId: EntryId): Boolean = throw AssertionError("Unexpected delete")
     }
 
     private companion object {
         const val TIMEOUT = 5_000L
-        val ENTRY = CachedTimeEntry(
-            -1, 20, null, null, "Running",
+        val ENTRY = TimeEntry(
+            EntryId(-1), WorkspaceId(20), null, null, "Running",
             Instant.parse(
                 "2026-10-22T22:03:41.123Z",
             ),

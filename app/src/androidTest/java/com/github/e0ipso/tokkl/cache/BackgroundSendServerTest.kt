@@ -22,6 +22,9 @@ import com.github.e0ipso.tokkl.components.backgroundSendRuns
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.reminder
 import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.reminder.ReminderWork
 import com.github.e0ipso.tokkl.reminder.ReminderWorker
@@ -110,7 +113,7 @@ class BackgroundSendServerTest {
         assertEquals("no work before anything is queued", emptyList<WorkInfo>(), allWork())
 
         AirplaneMode.set(true, web)
-        val id = runBlocking { app.changes.start(workspace, EntryFields(description = "Queued offline")) }
+        val id = runBlocking { app.changes.start(WorkspaceId(workspace), EntryFields(description = "Queued offline")) }
         assertTrue(runBlocking { app.changes.stop(id) })
         val shortStop = runBlocking { app.changes.shortStopUndo.first() }?.also {
             assertEquals("the offline Undo targets this entry", id, it.entryId)
@@ -142,7 +145,7 @@ class BackgroundSendServerTest {
 
         assertEquals(WorkInfo.State.SUCCEEDED, awaitWork(work.id) { it.state.isFinished }.state)
         assertEquals(0, unsentCount())
-        val sentId = serverId(id)
+        val sentId = serverId(id.value)
         if (shortStop) {
             val trashed = runBlocking {
                 TrashServer(
@@ -169,9 +172,9 @@ class BackgroundSendServerTest {
         val fields = EntryFields(description = "Not cached")
         val now = Instant.now()
 
-        assertFalse(runBlocking { app.changes.stop(NOT_CACHED) })
-        assertFalse(runBlocking { app.changes.update(NOT_CACHED, fields, now.minusSeconds(60), now) })
-        assertFalse(runBlocking { app.changes.delete(NOT_CACHED) })
+        assertFalse(runBlocking { app.changes.stop(EntryId(NOT_CACHED)) })
+        assertFalse(runBlocking { app.changes.update(EntryId(NOT_CACHED), fields, now.minusSeconds(60), now) })
+        assertFalse(runBlocking { app.changes.delete(EntryId(NOT_CACHED)) })
 
         assertEquals(0, unsentCount())
         assertEquals("no work while the queue is empty", emptyList<WorkInfo>(), allWork())
@@ -196,7 +199,7 @@ class BackgroundSendServerTest {
         val stop = Instant.now().truncatedTo(ChronoUnit.SECONDS)
         val id = runBlocking {
             app.changes.create(
-                workspace,
+                WorkspaceId(workspace),
                 EntryFields(description = "Sent by the retry"),
                 stop.minusSeconds(600),
                 stop,
@@ -222,7 +225,7 @@ class BackgroundSendServerTest {
             finished - ran >= BackgroundSend.BACKOFF.toMillis(),
         )
         assertEquals(0, unsentCount())
-        assertEquals("Sent by the retry", serverEntry(serverId(id)).string("description"))
+        assertEquals("Sent by the retry", serverEntry(serverId(id.value)).string("description"))
         assertEquals("still one work", listOf(work.id), allWork().map { it.id })
     }
 
@@ -237,7 +240,7 @@ class BackgroundSendServerTest {
         val stop = Instant.now().truncatedTo(ChronoUnit.SECONDS)
         val id = runBlocking {
             app.changes.create(
-                workspace,
+                WorkspaceId(workspace),
                 EntryFields(description = "Sent by the app"),
                 stop.minusSeconds(600),
                 stop,
@@ -252,7 +255,7 @@ class BackgroundSendServerTest {
         runBlocking { app.sender.send().join() }
 
         assertEquals(0, unsentCount())
-        assertEquals("Sent by the app", serverEntry(serverId(id)).string("description"))
+        assertEquals("Sent by the app", serverEntry(serverId(id.value)).string("description"))
         assertEquals(
             "no work waits once the app has sent the queue",
             WorkInfo.State.CANCELLED,
@@ -270,7 +273,14 @@ class BackgroundSendServerTest {
         signIn(relay.url, account.apiToken)
         relay.holdAnswerTo(CREATE)
         val stop = Instant.now().truncatedTo(ChronoUnit.SECONDS)
-        runBlocking { app.changes.create(workspace, EntryFields(description = "Joined"), stop.minusSeconds(600), stop) }
+        runBlocking {
+            app.changes.create(
+                WorkspaceId(workspace),
+                EntryFields(description = "Joined"),
+                stop.minusSeconds(600),
+                stop,
+            )
+        }
         awaitCondition("the server stored the entry and its answer is held") { relay.holdsAnswer }
         val work = queueWork().single()
 
@@ -318,8 +328,11 @@ class BackgroundSendServerTest {
 
     private fun unsentCount(): Int = runBlocking { app.changes.unsentCount.first() }
 
-    private fun serverId(localId: Long): Long =
-        runBlocking { app.changes.currentId(localId) }.also { check(it > 0) { "no server id for $localId" } }
+    private fun serverId(localId: Long): Long = runBlocking {
+        app.changes.currentId(
+            EntryId(localId),
+        )
+    }.value.also { check(it > 0) { "no server id for $localId" } }
 
     private fun serverEntry(id: Long): JsonObject = runBlocking {
         web.get(

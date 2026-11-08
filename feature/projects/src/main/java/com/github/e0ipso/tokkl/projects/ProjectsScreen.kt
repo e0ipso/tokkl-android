@@ -23,8 +23,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.github.e0ipso.tokkl.cache.CachedClient
-import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.catalog.ActiveThenArchived
 import com.github.e0ipso.tokkl.catalog.CatalogEmpty
 import com.github.e0ipso.tokkl.catalog.CatalogListRow
@@ -35,6 +33,9 @@ import com.github.e0ipso.tokkl.catalog.PageVisitEffect
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.catalog.changeText
 import com.github.e0ipso.tokkl.feature.projects.R
+import com.github.e0ipso.tokkl.model.Client
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.picker.projectColor
 import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklIconButton
@@ -94,8 +95,8 @@ fun ProjectsScreen(model: ProjectsViewModel, modifier: Modifier = Modifier) {
 class ProjectsActions(
     val onRetry: () -> Unit = {},
     val onNew: () -> Unit = {},
-    val onEdit: (Project) -> Unit = {},
-    val onSetActive: (Project, Boolean) -> Unit = { _, _ -> },
+    val onEdit: (ProjectDetails) -> Unit = {},
+    val onSetActive: (ProjectDetails, Boolean) -> Unit = { _, _ -> },
     val onSave: (ProjectFields) -> Unit = {},
     val onCloseForm: () -> Unit = {},
     val onDoneShow: () -> Unit = {},
@@ -106,8 +107,8 @@ class ProjectsActions(
 fun ProjectsContent(
     state: ProjectsState,
     offline: Boolean,
-    cachedProjects: List<CachedProject>,
-    clients: List<CachedClient>,
+    cachedProjects: List<Project>,
+    clients: List<Client>,
     actions: ProjectsActions,
     modifier: Modifier = Modifier,
     tasks: TasksState = TasksState(),
@@ -164,19 +165,19 @@ fun ProjectsContent(
  * A project as the list shows it. [project] is the server's, and null for a row from the phone, which offers no action.
  */
 internal data class ProjectRow(
-    val id: Long,
+    val id: ProjectId,
     val name: String,
     val color: String?,
     val clientName: String?,
     val active: Boolean,
     val billable: Boolean,
-    val project: Project? = null,
+    val project: ProjectDetails? = null,
 )
 
-private fun Project.toRow() = ProjectRow(id, name, color, clientName, active, billable, project = this)
+private fun ProjectDetails.toRow() = ProjectRow(id, name, color, clientName, active, billable, project = this)
 
 /** The projects on the phone, with their clients' names, sorted as the server sorts them. */
-private fun cachedRows(projects: List<CachedProject>, clients: List<CachedClient>): List<ProjectRow> {
+private fun cachedRows(projects: List<Project>, clients: List<Client>): List<ProjectRow> {
     val names = clients.associate { it.id to it.name }
     return projects.map { ProjectRow(it.id, it.name, it.color, it.clientId?.let(names::get), it.active, it.billable) }
 }

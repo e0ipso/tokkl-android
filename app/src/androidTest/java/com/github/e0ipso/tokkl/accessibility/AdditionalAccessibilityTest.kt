@@ -23,8 +23,11 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.bottomBarItem
 import com.github.e0ipso.tokkl.cache.ChangeKind
+import com.github.e0ipso.tokkl.cache.HeldChange
 import com.github.e0ipso.tokkl.cache.HeldChanges
-import com.github.e0ipso.tokkl.cache.PendingChange
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.navhost.SignedInFrame
 import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.label
@@ -126,16 +129,16 @@ abstract class AdditionalAccessibilityTest(private val dark: Boolean) {
 
     @Test
     fun refusedChangesExposeTheirReasonAndReachableActionsAtMaximumSizes() {
-        val held = MutableStateFlow(emptyList<PendingChange>())
+        val held = MutableStateFlow(emptyList<HeldChange>())
         val settings = MutableStateFlow<AccountSettings?>(
             AccountSettings(timeZone = "UTC", beginningOfWeek = DayOfWeek.MONDAY, timeResolutionMinutes = null),
         )
-        var edited: Long? = null
+        var edited: EntryId? = null
         var resent: Long? = null
         val refused = held
         val attention = NeedsAttention(
             changes = object : HeldChanges {
-                override val held: Flow<List<PendingChange>> = refused
+                override val held: Flow<List<HeldChange>> = refused
 
                 override suspend fun sendAgain(sequence: Long): Boolean {
                     resent = sequence
@@ -157,11 +160,15 @@ abstract class AdditionalAccessibilityTest(private val dark: Boolean) {
         compose.onNodeWithText(context.getString(SyncR.string.needs_attention_empty)).assertIsDisplayed()
         assertVisibleTextFits()
         for (kind in ChangeKind.entries) {
-            val change = PendingChange(
-                sequence = 1, kind = kind, entryId = 42, workspaceId = 7,
-                projectId = null, taskId = null, description = "A refused change with a long description",
-                start = Instant.parse("2026-10-19T07:00:00Z"), stop = null, billable = true,
-                tags = emptyList(), tagIds = emptyList(), held = true,
+            val change = HeldChange(
+                sequence = 1,
+                kind = kind,
+                entry = TimeEntry(
+                    id = EntryId(42), workspaceId = WorkspaceId(7),
+                    projectId = null, taskId = null, description = "A refused change with a long description",
+                    start = Instant.parse("2026-10-19T07:00:00Z"), stop = null, billable = true,
+                    tags = emptyList(), tagIds = emptyList(),
+                ),
                 refusal = "Time entries can not be longer than 999 hours",
             )
             held.value = listOf(change)
@@ -170,12 +177,12 @@ abstract class AdditionalAccessibilityTest(private val dark: Boolean) {
             assertVisibleTextFits()
             val edit = compose.onNode(
                 hasContentDescription(
-                    context.getString(SyncR.string.needs_attention_edit_named, change.description),
+                    context.getString(SyncR.string.needs_attention_edit_named, change.entry.description),
                 ) and hasClickAction(),
             )
             if (kind != ChangeKind.DELETE) {
                 edit.performScrollTo().assertIsDisplayed().performTouchInput { click() }
-                assertEquals(42L, edited)
+                assertEquals(EntryId(42), edited)
             } else {
                 edit.assertDoesNotExist()
             }
@@ -184,7 +191,7 @@ abstract class AdditionalAccessibilityTest(private val dark: Boolean) {
             compose.waitUntil("Send again was reachable", 5_000) { resent == change.sequence }
             action(SyncR.string.needs_attention_discard)
             compose.onNodeWithText(context.getString(SyncR.string.needs_attention_empty)).assertIsDisplayed()
-            assertEquals(emptyList<PendingChange>(), held.value)
+            assertEquals(emptyList<HeldChange>(), held.value)
             compose.checkAccessibility()
         }
     }

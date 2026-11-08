@@ -20,8 +20,9 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.navhost.AppNavigationBar
 import com.github.e0ipso.tokkl.navhost.AppNavigationRail
 import com.github.e0ipso.tokkl.navigation.Route
@@ -330,9 +331,14 @@ class TemplatesUiTest {
 
     private companion object {
         val REPORT = FavoriteItem(
-            EntryFields(description = "Write the report", projectId = 1, tags = listOf("call"), billable = true),
+            EntryFields(
+                description = "Write the report",
+                projectId = ProjectId(1),
+                tags = listOf("call"),
+                billable = true,
+            ),
             EntryLabels(project = "Website"),
         )
-        val WEBSITE = FavoriteItem(EntryFields(projectId = 1), EntryLabels(project = "Website"))
+        val WEBSITE = FavoriteItem(EntryFields(projectId = ProjectId(1)), EntryLabels(project = "Website"))
     }
 }

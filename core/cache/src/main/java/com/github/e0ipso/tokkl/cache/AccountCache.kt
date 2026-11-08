@@ -4,10 +4,20 @@ import android.database.sqlite.SQLiteException
 import com.github.e0ipso.tokkl.api.Me
 import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.capabilities.Capabilities
+import com.github.e0ipso.tokkl.model.Client
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryWithSendState
+import com.github.e0ipso.tokkl.model.Favorite
+import com.github.e0ipso.tokkl.model.LocalEntryId
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.Tag
+import com.github.e0ipso.tokkl.model.Task
+import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.MePreferences
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import java.time.Clock
 
 /**
@@ -29,23 +39,25 @@ class AccountCache(private val database: CacheDatabase, private val clock: Clock
     private val dao = database.cache()
 
     /** The cached history, newest entry first. */
-    val timeEntries: Flow<List<CachedTimeEntry>> = dao.timeEntries()
+    val timeEntries: Flow<List<TimeEntry>> = dao.timeEntries().map { rows -> rows.map { it.toModel() } }
 
     /** The cached history, newest entry first, each marked unsent while a change to it is queued. */
-    val entries: Flow<List<EntryWithSendState>> = dao.timeEntriesWithSendState()
+    val entries: Flow<List<EntryWithSendState>> = dao.timeEntriesWithSendState().map { rows ->
+        rows.map { it.toModel() }
+    }
 
     /**
      * The running entry, or null when none runs. The notification, widget and tile read it, so a
      * queued Start or Stop shows at once.
      */
-    val running: Flow<EntryWithSendState?> = dao.runningEntry()
-    val projects: Flow<List<CachedProject>> = dao.projects()
-    val clients: Flow<List<CachedClient>> = dao.clients()
-    val tags: Flow<List<CachedTag>> = dao.tags()
-    val tasks: Flow<List<CachedTask>> = dao.tasks()
+    val running: Flow<EntryWithSendState?> = dao.runningEntry().map { it?.toModel() }
+    val projects: Flow<List<Project>> = dao.projects().map { rows -> rows.map { it.toModel() } }
+    val clients: Flow<List<Client>> = dao.clients().map { rows -> rows.map { it.toModel() } }
+    val tags: Flow<List<Tag>> = dao.tags().map { rows -> rows.map { it.toModel() } }
+    val tasks: Flow<List<Task>> = dao.tasks().map { rows -> rows.map { it.toModel() } }
 
     /** In the user's order. */
-    val favorites: Flow<List<CachedFavorite>> = dao.favorites()
+    val favorites: Flow<List<Favorite>> = dao.favorites().map { rows -> rows.map { it.toModel() } }
 
     /**
      * Reads the server with [api] and replaces the cached rows, as [refreshedWith] describes, with
@@ -97,9 +109,25 @@ class AccountCache(private val database: CacheDatabase, private val clock: Clock
      * Replaces the cached favorites with [favorites], in the user's order, once the server has
      * stored them. Blocks, so call it off the main thread.
      */
-    fun replaceFavorites(favorites: List<CachedFavorite>) {
-        dao.replaceFavorites(favorites.mapIndexed { position, favorite -> favorite.copy(position = position) })
+    fun replaceFavorites(favorites: List<Favorite>) {
+        dao.replaceFavorites(
+            favorites.mapIndexed { position, favorite -> favorite.copy(position = position).toCached() },
+        )
     }
+
+    /**
+     * The server ids that replaced the local ids of [entries], for the entries the phone created
+     * whose creates the server has answered. Blocks on disk I/O.
+     */
+    fun serverIdsOf(entries: List<TimeEntry>): Map<LocalEntryId, EntryId> {
+        val changes = database.changes()
+        return entries.mapNotNull { it.id.local }.mapNotNull { local ->
+            changes.serverId(local.value)?.let { local to EntryId(it) }
+        }.toMap()
+    }
+
+    /** The running entry that started last, as [running] shows it, read now. Blocks on disk I/O. */
+    fun runningNow(): EntryWithSendState? = database.changes().latestRunning()?.toModel()
 
     /**
      * The cached running entries and the ids with queued changes, read together, as a running
@@ -108,7 +136,10 @@ class AccountCache(private val database: CacheDatabase, private val clock: Clock
     override fun runningCheckStart(): RunningCheckStart {
         val changes = database.changes()
         return database.runInTransaction<RunningCheckStart> {
-            RunningCheckStart(changes.runningEntries(), changes.pendingEntryIds().toSet())
+            RunningCheckStart(
+                changes.runningEntries().map { it.toModel() },
+                changes.pendingEntryIds().mapTo(HashSet(), ::EntryId),
+            )
         }
     }
 
@@ -121,22 +152,24 @@ class AccountCache(private val database: CacheDatabase, private val clock: Clock
      * Returns what it wrote, or null when the write failed and the cache stays for the next check.
      * Blocks on disk I/O.
      */
-    override fun checkedRunning(before: RunningCheckStart, server: CachedTimeEntry?): RunningCheckWrites? {
+    override fun checkedRunning(before: RunningCheckStart, server: TimeEntry?): RunningCheckWrites? {
         val changes = database.changes()
         return try {
             database.runInTransaction<RunningCheckWrites> {
                 // A pending local start may have been answered and remapped during the read.
-                val mappedIds = before.pendingIds.filter { it < 0 }.mapNotNull(changes::serverId)
+                val mappedIds = before.pendingIds.mapNotNull { it.local }
+                    .mapNotNull { changes.serverId(it.value) }
+                    .map(::EntryId)
                 val writes = runningCheckWrites(
                     before = before.running,
-                    now = changes.runningEntries(),
+                    now = changes.runningEntries().map { it.toModel() },
                     server = server,
-                    unsent = { changes.countFor(it) > 0 },
-                    cached = changes::entry,
+                    unsent = { changes.countFor(it.value) > 0 },
+                    cached = { changes.entry(it.value)?.toModel() },
                     pendingAtStart = before.pendingIds + mappedIds,
                 )
-                writes.delete.forEach(changes::deleteEntry)
-                writes.upsert?.let(changes::upsertEntry)
+                writes.delete.forEach { changes.deleteEntry(it.value) }
+                writes.upsert?.let { changes.upsertEntry(it.toCached()) }
                 writes
             }
         } catch (_: SQLiteException) {
@@ -158,7 +191,7 @@ class AccountCache(private val database: CacheDatabase, private val clock: Clock
  * What a running entry check read before its request: the [running] entries and the
  * [pendingIds] of the entries the queue held changes to.
  */
-class RunningCheckStart(val running: List<CachedTimeEntry>, val pendingIds: Set<Long> = emptySet())
+class RunningCheckStart(val running: List<TimeEntry>, val pendingIds: Set<EntryId> = emptySet())
 
 /**
  * The cache's current-entry reconciliation, for every server answer that names the running entry:
@@ -168,5 +201,5 @@ class RunningCheckStart(val running: List<CachedTimeEntry>, val pendingIds: Set<
 interface CurrentEntryCache {
     fun runningCheckStart(): RunningCheckStart
 
-    fun checkedRunning(before: RunningCheckStart, server: CachedTimeEntry?): RunningCheckWrites?
+    fun checkedRunning(before: RunningCheckStart, server: TimeEntry?): RunningCheckWrites?
 }

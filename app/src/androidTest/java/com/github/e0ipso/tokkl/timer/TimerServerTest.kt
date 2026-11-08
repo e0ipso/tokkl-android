@@ -46,17 +46,21 @@ import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.cache.CacheDatabase
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.ChangeKind
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.PendingChange
 import com.github.e0ipso.tokkl.cache.ShortStopUndo
-import com.github.e0ipso.tokkl.cache.fields
+import com.github.e0ipso.tokkl.cache.modelOf
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.cacheDatabase
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.components.sessionViewModels
 import com.github.e0ipso.tokkl.core.entryfields.R
 import com.github.e0ipso.tokkl.followNoTimerEvents
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.fields
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -175,7 +179,7 @@ class TimerServerTest {
 
             val database = CacheDatabase.open(context)
             try {
-                val running = queueRead { database.changes().runningEntries().single() }
+                val running = modelOf(queueRead { database.changes().runningEntries().single() })
                 var fields = EntryFields(description = "Write the timer")
                 billable().performClick()
                 awaitAtOnce("billable is on") { billableState() == ToggleableState.On }
@@ -193,7 +197,7 @@ class TimerServerTest {
                 awaitAtOnce(
                     "the tag shows",
                 ) { shows(composeRule.onNode(hasContentDescription(string(R.string.entry_tags_spoken, "call")))) }
-                fields = fields.copy(projectId = project, tags = listOf("call"))
+                fields = fields.copy(projectId = ProjectId(project), tags = listOf("call"))
                 awaitPersistedFields(database, running, fields, "picker")
 
                 description().performTextClearance()
@@ -215,10 +219,10 @@ class TimerServerTest {
                 stopped.await("Stop reaches the cache") { runBlocking { app.cache.running.first() } == null }
                 lateinit var stoppedQueue: TimerQueueSnapshot
                 stopped.await("Stop has its own captured queued operation") {
-                    stoppedQueue = queueRead { timerQueueSnapshot(database, running.id) }
+                    stoppedQueue = queueRead { timerQueueSnapshot(database, running.id.value) }
                     val previous = baseline.changes.map { it.sequence }.toSet()
                     stoppedQueue.changes.filter { it.sequence !in previous }.singleOrNull()?.let {
-                        it.kind == ChangeKind.STOP && it.entryId == running.id &&
+                        it.kind == ChangeKind.STOP && it.entryId == running.id.value &&
                             it.capturedStop != null && it.cachedEntry() == stoppedQueue.entry
                     } == true
                 }
@@ -540,7 +544,7 @@ class TimerServerTest {
     /** Observe the app connection's invalidations; a separate Room instance has no shared tracker. */
     private fun awaitPersistedFields(
         database: CacheDatabase,
-        running: CachedTimeEntry,
+        running: TimeEntry,
         fields: EntryFields,
         stage: String,
     ): TimerQueueSnapshot {
@@ -549,14 +553,16 @@ class TimerServerTest {
         val snapshot = runBlocking {
             withTimeout(AT_ONCE.toMillis()) {
                 app.changes.unsentCount.map {
-                    withContext(Dispatchers.IO) { timerQueueSnapshot(database, running.id) }
+                    withContext(Dispatchers.IO) { timerQueueSnapshot(database, running.id.value) }
                 }.first { snapshot ->
                     val entry = snapshot.entry
                     val update = snapshot.changes.lastOrNull()
-                    entry != null && entry.id == running.id && entry.workspaceId == running.workspaceId &&
-                        entry.start == running.start && entry.stop == null && entry.fields() == fields &&
-                        update != null && update.kind == ChangeKind.UPDATE && update.entryId == running.id &&
-                        update.start == running.start && update.stop == null && update.entry().fields() == fields
+                    entry != null && entry.id == running.id.value && entry.workspaceId == running.workspaceId.value &&
+                        entry.start == running.start && entry.stop == null && modelOf(entry).fields() == fields &&
+                        update != null && update.kind == ChangeKind.UPDATE && update.entryId == running.id.value &&
+                        update.start == running.start && update.stop == null && modelOf(
+                            update.entry(),
+                        ).fields() == fields
                 }
             }
         }
@@ -573,7 +579,7 @@ class TimerServerTest {
     private fun assertQueuedStop(
         before: TimerQueueSnapshot,
         after: TimerQueueSnapshot,
-        running: CachedTimeEntry,
+        running: TimeEntry,
         fields: EntryFields,
     ) {
         val previous = before.changes.map { it.sequence }.toSet()
@@ -587,9 +593,9 @@ class TimerServerTest {
         val stop = added.single()
         assertTrue("Stop has a new queue sequence", stop.sequence > previous.max())
         assertEquals("the target operation is Stop", ChangeKind.STOP, stop.kind)
-        assertEquals("Stop belongs to the running entry", running.id, stop.entryId)
-        assertEquals("Stop keeps the workspace", running.workspaceId, stop.workspaceId)
-        assertEquals("Stop keeps all persisted edited fields", fields, stop.entry().fields())
+        assertEquals("Stop belongs to the running entry", running.id.value, stop.entryId)
+        assertEquals("Stop keeps the workspace", running.workspaceId.value, stop.workspaceId)
+        assertEquals("Stop keeps all persisted edited fields", fields, modelOf(stop.entry()).fields())
         assertTrue("Stop retains its captured tap instant", stop.capturedStop != null)
         assertEquals("Stop and cache committed together", stop.cachedEntry(), after.entry)
         if (stop.shortStop) {
@@ -625,7 +631,8 @@ class TimerServerTest {
         if (undo == null) {
             assertTrue("a kept Stop remains in history", entries.any { it.stop != null })
         } else {
-            assertEquals("the short Stop holds a zero span for Undo", undo.entry.start, undo.entry.stop)
+            val stopped = checkNotNull(app.cacheDatabase.changes().shortStop(undo.entryId.value)).entry
+            assertEquals("the short Stop holds a zero span for Undo", stopped.start, stopped.stop)
             assertTrue("the short Stop leaves history", entries.none { it.id == undo.entryId })
         }
         return undo != null

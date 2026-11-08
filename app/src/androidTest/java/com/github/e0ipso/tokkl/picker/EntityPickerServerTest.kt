@@ -36,13 +36,16 @@ import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.TogglApiClient
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.defaultNetwork
 import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.core.entryfields.R
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.TaskId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -110,7 +113,7 @@ class EntityPickerServerTest {
 
     @Test
     fun theOldEntrysArchivedItemsStaySelectedWithALabelAndNoOtherArchivedItemIsOffered() {
-        show(Picked(seed.oldSite, seed.oldTask, listOf("legacy")))
+        show(Picked(ProjectId(seed.oldSite), TaskId(seed.oldTask), listOf("legacy")))
 
         option("Old site").assertIsSelected().assert(hasText(string(R.string.picker_archived)))
         option("Old task").assertIsSelected().assert(hasText(string(R.string.picker_archived)))
@@ -149,7 +152,7 @@ class EntityPickerServerTest {
         search("des")
         composeRule.onAllNodesWithText("Internal").assertCountEquals(0)
         option("Design").performClick()
-        assertEquals(Picked(seed.website, seed.design), picked)
+        assertEquals(Picked(ProjectId(seed.website), TaskId(seed.design)), picked)
         option("Design").assertIsSelected()
         option("Website").assertIsSelected()
 
@@ -173,7 +176,7 @@ class EntityPickerServerTest {
         val start = Instant.now().minus(1, ChronoUnit.HOURS).truncatedTo(ChronoUnit.MINUTES)
         val id = runBlocking {
             app.changes.create(
-                seed.workspace,
+                WorkspaceId(seed.workspace),
                 EntryFields(
                     description = "Picked offline",
                     projectId = picked.projectId,

@@ -1,8 +1,11 @@
 package com.github.e0ipso.tokkl.sync
 
 import com.github.e0ipso.tokkl.cache.ChangeKind
+import com.github.e0ipso.tokkl.cache.HeldChange
 import com.github.e0ipso.tokkl.cache.HeldChanges
-import com.github.e0ipso.tokkl.cache.PendingChange
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.AccountSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -22,12 +25,12 @@ import java.time.Instant
 class NeedsAttentionViewModelTest {
 
     private val scope = CoroutineScope(Dispatchers.Unconfined)
-    private val held = MutableStateFlow(emptyList<PendingChange>())
+    private val held = MutableStateFlow(emptyList<HeldChange>())
     private val settings = MutableStateFlow<AccountSettings?>(null)
     private val model = NeedsAttentionViewModel(
         attention = NeedsAttention(
             changes = object : HeldChanges {
-                override val held: Flow<List<PendingChange>> = this@NeedsAttentionViewModelTest.held
+                override val held: Flow<List<HeldChange>> = this@NeedsAttentionViewModelTest.held
 
                 override suspend fun sendAgain(sequence: Long) = true
 
@@ -61,20 +64,21 @@ class NeedsAttentionViewModelTest {
             beginningOfWeek = DayOfWeek.MONDAY,
             timeResolutionMinutes = null,
         )
-        val CHANGE = PendingChange(
+        val CHANGE = HeldChange(
             sequence = 3,
             kind = ChangeKind.UPDATE,
-            entryId = 42,
-            workspaceId = 7,
-            projectId = null,
-            taskId = null,
-            description = "Refused",
-            start = Instant.parse("2026-10-19T07:00:00Z"),
-            stop = null,
-            billable = false,
-            tags = emptyList(),
-            tagIds = emptyList(),
-            held = true,
+            entry = TimeEntry(
+                id = EntryId(42),
+                workspaceId = WorkspaceId(7),
+                projectId = null,
+                taskId = null,
+                description = "Refused",
+                start = Instant.parse("2026-10-19T07:00:00Z"),
+                stop = null,
+                billable = false,
+                tags = emptyList(),
+                tagIds = emptyList(),
+            ),
             refusal = "No",
         )
     }

@@ -37,12 +37,12 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.github.e0ipso.tokkl.api.PhaseKind
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.catalog.CatalogPage
 import com.github.e0ipso.tokkl.entryfields.EntryFieldsEditor
 import com.github.e0ipso.tokkl.entryfields.EntryPicker
 import com.github.e0ipso.tokkl.entryfields.picked
 import com.github.e0ipso.tokkl.feature.pomodoro.R
+import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.picker.EntityPicker
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
@@ -375,7 +375,7 @@ private fun PomodoroFeedback(state: PomodoroPageState) {
             ErrorBanner(
                 stringResource(
                     R.string.pomodoro_send_error,
-                    change.description.ifEmpty { stringResource(R.string.pomodoro_no_description) },
+                    change.entry.description.ifEmpty { stringResource(R.string.pomodoro_no_description) },
                     change.refusal ?: stringResource(R.string.pomodoro_unknown_refusal),
                 ),
             )

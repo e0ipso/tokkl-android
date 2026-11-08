@@ -30,11 +30,12 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.awaitPomodoroOffered
 import com.github.e0ipso.tokkl.awaitTimerPage
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.capabilities
 import com.github.e0ipso.tokkl.components.timerActions
 import com.github.e0ipso.tokkl.components.timerState
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.openMorePage
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.Session
@@ -288,7 +289,7 @@ class BottomBarTest {
                 TimerActionResult.Done,
                 runBlocking {
                     app.timerActions.startSession(
-                        account.workspaceId,
+                        WorkspaceId(account.workspaceId),
                         EntryFields(description = "Navigation session"),
                         SessionLengths(25, 5, 15, 4),
                     )

@@ -2,15 +2,16 @@ package com.github.e0ipso.tokkl.timer
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.github.e0ipso.tokkl.cache.CachedProject
-import com.github.e0ipso.tokkl.cache.CachedTask
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.QueueSender
-import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
-import com.github.e0ipso.tokkl.cache.fields
 import com.github.e0ipso.tokkl.entryfields.withPicked
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.RunningEntryIdentity
+import com.github.e0ipso.tokkl.model.Task
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
+import com.github.e0ipso.tokkl.model.fields
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.timernotice.TimerNotice
@@ -67,8 +68,8 @@ import java.time.temporal.ChronoUnit
  */
 class TimerViewModel(
     controls: Flow<TimerControls>,
-    projects: Flow<List<CachedProject>>,
-    tasks: Flow<List<CachedTask>>,
+    projects: Flow<List<Project>>,
+    tasks: Flow<List<Task>>,
     val accountSettings: StateFlow<AccountSettings?>,
     private val changes: EntryChanges,
     scope: CoroutineScope,
@@ -173,7 +174,7 @@ class TimerViewModel(
      * cache is unread, and while a tap the cache or the server does not show yet is pending, so a
      * double tap starts one entry.
      */
-    fun continueEntry(source: CachedTimeEntry) {
+    fun continueEntry(source: TimeEntry) {
         if (local.value.pending != null) return
         val typed = when (val shown = snapshot()) {
             TimerState.Loading -> return
@@ -222,7 +223,7 @@ class TimerViewModel(
      * running entry, which the start then stops. The idle timer's draft makes way for the new entry,
      * and comes back when nothing starts.
      */
-    private fun startWith(workspaceId: Long, fields: EntryFields, typed: TypedEdit?) {
+    private fun startWith(workspaceId: WorkspaceId, fields: EntryFields, typed: TypedEdit?) {
         val draft = local.value.draft
         val starting = PendingTap.Starting(clock.instant().truncatedTo(ChronoUnit.MILLIS), fields, workspaceId)
         local.update { it.copy(pending = starting, draft = EntryFields(), edit = if (typed != null) null else it.edit) }
@@ -351,10 +352,7 @@ class TimerViewModel(
         pauseOffered.value,
     )
 
-    private data class Catalog(
-        val projects: List<CachedProject> = emptyList(),
-        val tasks: List<CachedTask> = emptyList(),
-    )
+    private data class Catalog(val projects: List<Project> = emptyList(), val tasks: List<Task> = emptyList())
 
     private companion object {
         const val STOP_TIMEOUT_MS = 5_000L

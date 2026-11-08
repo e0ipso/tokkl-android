@@ -3,7 +3,7 @@ package com.github.e0ipso.tokkl.sync
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.github.e0ipso.tokkl.cache.PendingChange
+import com.github.e0ipso.tokkl.cache.HeldChange
 import com.github.e0ipso.tokkl.platform.whileShown
 import com.github.e0ipso.tokkl.session.AccountSettings
 import kotlinx.coroutines.CoroutineScope
@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.stateIn
 
 /** The "needs attention" list: the [held] changes the server refused, and the [settings] their times follow. */
 @Immutable
-data class NeedsAttentionState(val held: List<PendingChange> = emptyList(), val settings: AccountSettings? = null)
+data class NeedsAttentionState(val held: List<HeldChange> = emptyList(), val settings: AccountSettings? = null)
 
 /**
  * The "needs attention" screen's state, from [attention]'s refused changes, and its Send again
@@ -33,7 +33,7 @@ class NeedsAttentionViewModel(
         ::NeedsAttentionState,
     ).stateIn(viewModelScope, whileShown, NeedsAttentionState(settings = settings.value))
 
-    fun sendAgain(change: PendingChange) = attention.sendAgain(change)
+    fun sendAgain(change: HeldChange) = attention.sendAgain(change)
 
-    fun discard(change: PendingChange) = attention.discard(change)
+    fun discard(change: HeldChange) = attention.discard(change)
 }

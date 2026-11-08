@@ -4,7 +4,8 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.cache.ChangeQueue
-import com.github.e0ipso.tokkl.cache.ShortStopUndo
+import com.github.e0ipso.tokkl.cache.ShortStopOffer
+import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.navigation.SignInAgain
 import com.github.e0ipso.tokkl.platform.whileShown
 import com.github.e0ipso.tokkl.session.AccountSettings
@@ -36,7 +37,7 @@ internal data class SignedInState(
     val pomodoroRunning: Boolean = false,
     val syncStatus: SyncStatus? = null,
     val discardedCount: Int = 0,
-    val shortStopUndo: ShortStopUndo? = null,
+    val shortStopUndo: ShortStopOffer? = null,
     val trust: SessionTrust.State = SessionTrust.State(),
 )
 
@@ -104,12 +105,12 @@ internal class SignedInViewModel(
     }
 
     /** Takes back the short Stop of [entryId], as its snackbar's Undo does. */
-    suspend fun undoShortStop(entryId: Long) {
+    suspend fun undoShortStop(entryId: EntryId) {
         changes.undoShortStop(entryId)
     }
 
     /** Forgets the short Stop of [entryId], once its snackbar went without an Undo. */
-    suspend fun dismissShortStop(entryId: Long) {
+    suspend fun dismissShortStop(entryId: EntryId) {
         changes.dismissShortStop(entryId)
     }
 
@@ -124,7 +125,7 @@ internal class SignedInViewModel(
     private class Notices(
         val syncStatus: SyncStatus?,
         val discardedCount: Int,
-        val shortStopUndo: ShortStopUndo?,
+        val shortStopUndo: ShortStopOffer?,
         val trust: SessionTrust.State,
     )
 }

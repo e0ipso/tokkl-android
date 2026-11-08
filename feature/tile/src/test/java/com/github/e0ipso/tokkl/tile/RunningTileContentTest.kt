@@ -1,8 +1,12 @@
 package com.github.e0ipso.tokkl.tile
 
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges
-import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.TaskId
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.timerstate.PauseActions
 import com.github.e0ipso.tokkl.timerstate.ServerTimerStates
 import com.github.e0ipso.tokkl.timerstate.SurfaceTap
@@ -38,7 +42,10 @@ class RunningTileContentTest {
         val content = runningTileContent(now, listOf(stopped(1, "2026-10-19T08:00:00Z"), running))
 
         assertEquals(
-            RunningTileContent.Running(running, TimerTarget.server(entryId = 4, account = ServerTimerStates.ACCOUNT)),
+            RunningTileContent.Running(
+                running,
+                TimerTarget.server(entryId = EntryId(4), account = ServerTimerStates.ACCOUNT),
+            ),
             content,
         )
         assertEquals("queued, nothing goes to the server", SurfaceTap.Queued, tap(content))
@@ -50,13 +57,16 @@ class RunningTileContentTest {
         val clone = running(55)
         now = ServerTimerStates.controls(
             clone,
-            ServerTimerStates.held(9, start, ServerTimerStates.resumed(600, entryId = 55)),
+            ServerTimerStates.held(9, start, ServerTimerStates.resumed(600, entryId = EntryId(55))),
         )
 
         val content = runningTileContent(now, listOf(clone))
 
         assertEquals(
-            RunningTileContent.Running(clone, TimerTarget.server(entryId = 55, account = ServerTimerStates.ACCOUNT)),
+            RunningTileContent.Running(
+                clone,
+                TimerTarget.server(entryId = EntryId(55), account = ServerTimerStates.ACCOUNT),
+            ),
             content,
         )
         tap(content)
@@ -82,13 +92,13 @@ class RunningTileContentTest {
     @Test
     fun tiedSnappedStartsContinueTheNewestLocalEntryBeforeServerEntries() {
         val server = stopped(42, "2026-10-19T11:00:00Z")
-        val earlier = server.copy(id = -2, description = "Earlier local entry")
+        val earlier = server.copy(id = EntryId(-2), description = "Earlier local entry")
         val last = server.copy(
-            id = -4,
-            workspaceId = 50,
+            id = EntryId(-4),
+            workspaceId = WorkspaceId(50),
             description = "Last local entry",
-            projectId = 100,
-            taskId = 200,
+            projectId = ProjectId(100),
+            taskId = TaskId(200),
             tags = listOf("one", "two"),
             billable = false,
         )
@@ -167,7 +177,7 @@ class RunningTileContentTest {
         val shown = runningTileContent(now, emptyList())
         now = ServerTimerStates.controls(
             running(55),
-            ServerTimerStates.held(4, start, ServerTimerStates.resumed(600, entryId = 55)),
+            ServerTimerStates.held(4, start, ServerTimerStates.resumed(600, entryId = EntryId(55))),
         )
 
         assertNull(tap(shown))
@@ -183,11 +193,11 @@ class RunningTileContentTest {
         )
     }
 
-    private fun stopped(id: Long, start: String) = CachedTimeEntry(
-        id = id,
-        workspaceId = id * 10,
-        projectId = id + 100,
-        taskId = id + 200,
+    private fun stopped(id: Long, start: String) = TimeEntry(
+        id = EntryId(id),
+        workspaceId = WorkspaceId(id * 10),
+        projectId = ProjectId(id + 100),
+        taskId = TaskId(id + 200),
         description = "Entry $id",
         start = Instant.parse(start),
         stop = Instant.parse(start).plusSeconds(1800),
@@ -212,32 +222,32 @@ class RunningTileContentTest {
     }
 
     private inner class RecordingChanges : EntryChanges {
-        override suspend fun start(workspaceId: Long, fields: EntryFields): Long {
+        override suspend fun start(workspaceId: WorkspaceId, fields: EntryFields): EntryId {
             calls += "start $workspaceId $fields"
-            return -1L
+            return EntryId(-1L)
         }
 
-        override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean {
+        override suspend fun stop(entryId: EntryId, fields: EntryFields?): Boolean {
             calls += "stop $entryId"
             return true
         }
 
         override suspend fun create(
-            workspaceId: Long,
+            workspaceId: WorkspaceId,
             fields: EntryFields,
             start: Instant,
             stop: Instant,
             noTimeDay: LocalDate?,
-        ): Long = throw AssertionError("nothing is created")
+        ): EntryId = throw AssertionError("nothing is created")
 
         override suspend fun update(
-            entryId: Long,
+            entryId: EntryId,
             fields: EntryFields,
             start: Instant,
             stop: Instant?,
             noTimeDay: LocalDate?,
         ): Boolean = throw AssertionError("nothing is edited")
 
-        override suspend fun delete(entryId: Long): Boolean = throw AssertionError("nothing is deleted")
+        override suspend fun delete(entryId: EntryId): Boolean = throw AssertionError("nothing is deleted")
     }
 }

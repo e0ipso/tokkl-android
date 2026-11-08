@@ -3,14 +3,15 @@ package com.github.e0ipso.tokkl.history
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.api.ApiClientProvider
-import com.github.e0ipso.tokkl.cache.CachedProject
-import com.github.e0ipso.tokkl.cache.CachedTask
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.CurrentEntryIds
-import com.github.e0ipso.tokkl.cache.EntryWithSendState
 import com.github.e0ipso.tokkl.cache.HistoryWindow
 import com.github.e0ipso.tokkl.cache.reconcileEntryRows
 import com.github.e0ipso.tokkl.cache.resolveEntryOverrides
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryWithSendState
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.Task
+import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.AppEvent
 import com.github.e0ipso.tokkl.time.AccountTime
@@ -58,22 +59,22 @@ import kotlin.coroutines.CoroutineContext
  */
 class HistoryViewModel(
     entries: Flow<List<EntryWithSendState>>,
-    projects: Flow<List<CachedProject>>,
-    tasks: Flow<List<CachedTask>>,
+    projects: Flow<List<Project>>,
+    tasks: Flow<List<Task>>,
     private val accountSettings: StateFlow<AccountSettings?>,
     private val client: ApiClientProvider,
     scope: CoroutineScope,
     private val io: CoroutineContext,
     private val clock: Clock,
     private val ids: CurrentEntryIds,
-    overrides: Flow<Map<Long, CachedTimeEntry?>>,
+    overrides: Flow<Map<EntryId, TimeEntry?>>,
     appEvents: Flow<AppEvent>,
 ) : ViewModel(scope) {
 
     private val older = MutableStateFlow(Older())
-    private val reconciliation = MutableStateFlow<Map<Long, CachedTimeEntry?>>(emptyMap())
+    private val reconciliation = MutableStateFlow<Map<EntryId, TimeEntry?>>(emptyMap())
 
-    fun reconcile(overrides: Map<Long, CachedTimeEntry?>) {
+    fun reconcile(overrides: Map<EntryId, TimeEntry?>) {
         reconciliation.value = overrides
     }
 
@@ -90,19 +91,19 @@ class HistoryViewModel(
      * cached entries as [state] last saw them. Only [state]'s upstream reads and writes these, one
      * emission at a time.
      */
-    private var dropped: List<CachedTimeEntry> = emptyList()
-    private var lastCached: List<CachedTimeEntry> = emptyList()
+    private var dropped: List<TimeEntry> = emptyList()
+    private var lastCached: List<TimeEntry> = emptyList()
 
     /**
      * The newest copy the cache has shown of each entry from the older pages that it held before
      * its window, as after an edit on the phone, which the cache keeps until the send and the
      * refresh after it. Only [state]'s upstream reads and writes it.
      */
-    private var edited: Map<Long, CachedTimeEntry> = emptyMap()
+    private var edited: Map<EntryId, TimeEntry> = emptyMap()
 
     /** Each entry [state] last showed, by id, as [historyDays] picks the copy it shows. */
     @Volatile
-    private var shownEntries: Map<Long, CachedTimeEntry> = emptyMap()
+    private var shownEntries: Map<EntryId, TimeEntry> = emptyMap()
 
     val state: StateFlow<HistoryState> = combine(
         entries,
@@ -155,7 +156,7 @@ class HistoryViewModel(
      * The entry [entryId] as the history last showed it: the cache's copy, or the older days' for
      * an entry the phone does not hold. Null for an entry the history does not show.
      */
-    fun entry(entryId: Long): CachedTimeEntry? = shownEntries[entryId]
+    fun entry(entryId: EntryId): TimeEntry? = shownEntries[entryId]
 
     /**
      * Loads the [PAGE_DAYS] days before the oldest day loaded, or before the cached two weeks at
@@ -218,7 +219,7 @@ class HistoryViewModel(
         cached: List<EntryWithSendState>,
         until: LocalDate?,
         time: AccountTime,
-    ): List<CachedTimeEntry> {
+    ): List<TimeEntry> {
         val now = cached.map { it.entry }
         val before = lastCached
         lastCached = now
@@ -244,10 +245,10 @@ class HistoryViewModel(
      */
     private fun withEdits(
         cached: List<EntryWithSendState>,
-        pages: List<CachedTimeEntry>,
+        pages: List<TimeEntry>,
         firstCached: LocalDate,
         time: AccountTime,
-    ): List<CachedTimeEntry> {
+    ): List<TimeEntry> {
         if (pages.isEmpty()) return pages
         val ids = pages.mapTo(HashSet()) { it.id }
         var edits = edited
@@ -273,7 +274,7 @@ class HistoryViewModel(
      * server said no entry comes before it, and null until then.
      */
     private data class Older(
-        val entries: List<CachedTimeEntry> = emptyList(),
+        val entries: List<TimeEntry> = emptyList(),
         val from: LocalDate? = null,
         val until: LocalDate? = null,
         val status: OlderDays = OlderDays.More(auto = true),

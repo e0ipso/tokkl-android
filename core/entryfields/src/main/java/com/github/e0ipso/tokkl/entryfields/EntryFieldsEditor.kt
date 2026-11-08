@@ -45,8 +45,8 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.core.entryfields.R
+import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.ui.projectMark
 import com.github.e0ipso.tokkl.ui.theme.FrameWidth

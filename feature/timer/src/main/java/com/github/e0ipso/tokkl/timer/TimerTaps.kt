@@ -1,13 +1,15 @@
 package com.github.e0ipso.tokkl.timer
 
-import com.github.e0ipso.tokkl.cache.CachedProject
-import com.github.e0ipso.tokkl.cache.CachedTask
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
-import com.github.e0ipso.tokkl.cache.fields
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.entryfields.entryLabels
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.RunningEntryIdentity
+import com.github.e0ipso.tokkl.model.Task
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
+import com.github.e0ipso.tokkl.model.fields
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.timerstate.TimerControls
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
@@ -19,7 +21,7 @@ import java.time.temporal.ChronoUnit
 internal sealed interface CachedControls {
     data object Unread : CachedControls
 
-    data class Read(val controls: TimerControls, val editId: Long?, val resolvedEditId: Long?) : CachedControls
+    data class Read(val controls: TimerControls, val editId: EntryId?, val resolvedEditId: EntryId?) : CachedControls
 }
 
 /** What the taps have done that the cache or the server may not show yet. */
@@ -32,8 +34,8 @@ internal data class TimerTaps(
 
 /** [fields] for the running entry that started at [start], shown until the cache has them. [sent] once queued. */
 internal data class FieldEdit(
-    val entryId: Long,
-    val workspaceId: Long,
+    val entryId: EntryId,
+    val workspaceId: WorkspaceId,
     val start: Instant,
     val fields: EntryFields,
     val sent: Boolean,
@@ -45,8 +47,8 @@ internal data class TypedEdit(val identity: RunningEntryIdentity, val edit: Fiel
 /** A tap that the cache or the server may not show yet. */
 internal sealed interface PendingTap {
     /** Start was tapped at [at], in whole milliseconds as the cache keeps times. */
-    data class Starting(val at: Instant, val fields: EntryFields, val workspaceId: Long) : PendingTap {
-        val entryId = CompletableDeferred<Long?>()
+    data class Starting(val at: Instant, val fields: EntryFields, val workspaceId: WorkspaceId) : PendingTap {
+        val entryId = CompletableDeferred<EntryId?>()
     }
 
     /** Stop was tapped for the entry that started at [start]. */
@@ -62,7 +64,7 @@ internal sealed interface PendingTap {
  */
 internal fun timerState(
     cached: CachedControls,
-    defaultWorkspaceId: Long?,
+    defaultWorkspaceId: WorkspaceId?,
     taps: TimerTaps,
     pauseOffered: Boolean,
 ): TimerState {
@@ -126,7 +128,7 @@ internal fun timerState(
 }
 
 /** This state with the labels of its project, task and tags, named from [projects] and [tasks]. */
-internal fun TimerState.labelled(projects: List<CachedProject>, tasks: List<CachedTask>): TimerState = when (this) {
+internal fun TimerState.labelled(projects: List<Project>, tasks: List<Task>): TimerState = when (this) {
     TimerState.Loading -> this
     is TimerState.Idle -> copy(labels = entryLabels(fields, projects, tasks))
     is TimerState.Running -> copy(labels = entryLabels(fields, projects, tasks))
@@ -134,11 +136,11 @@ internal fun TimerState.labelled(projects: List<CachedProject>, tasks: List<Cach
 }
 
 /** Whether this edit is for [entry], also once the cache has remapped its local id as [read] says. */
-internal fun FieldEdit.matches(entry: CachedTimeEntry, read: CachedControls.Read): Boolean {
+internal fun FieldEdit.matches(entry: TimeEntry, read: CachedControls.Read): Boolean {
     val remapped = entryId != entry.id && read.editId == entryId && read.resolvedEditId == entry.id
     return (entryId == entry.id || remapped) && workspaceId == entry.workspaceId &&
         (start == entry.start || (remapped && start.truncatedTo(ChronoUnit.SECONDS) == entry.start))
 }
 
 /** The running entry, or null while idle or paused. */
-internal fun TimerControls.runningEntry(): CachedTimeEntry? = (this as? TimerControls.Running)?.entry
+internal fun TimerControls.runningEntry(): TimeEntry? = (this as? TimerControls.Running)?.entry

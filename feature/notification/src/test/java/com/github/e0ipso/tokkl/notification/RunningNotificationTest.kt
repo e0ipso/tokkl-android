@@ -1,9 +1,13 @@
 package com.github.e0ipso.tokkl.notification
 
-import com.github.e0ipso.tokkl.cache.CachedProject
-import com.github.e0ipso.tokkl.cache.CachedTask
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
-import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.Task
+import com.github.e0ipso.tokkl.model.TaskId
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.storage.valueStore
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.ServerTimerStates
@@ -28,21 +32,27 @@ import java.time.temporal.ChronoUnit
 class RunningNotificationTest {
 
     private val start: Instant = Instant.parse("2026-10-20T08:15:30.250Z")
-    private val project = CachedProject(
-        id = 7,
-        workspaceId = 1,
+    private val project = Project(
+        id = ProjectId(7),
+        workspaceId = WorkspaceId(1),
         clientId = null,
         name = "Tokkl for Android",
         color = "#06aaf5",
         active = true,
         billable = false,
     )
-    private val task = CachedTask(id = 9, workspaceId = 1, projectId = 7, name = "Design", active = true)
-    private val running = CachedTimeEntry(
-        id = -3,
-        workspaceId = 1,
-        projectId = 7,
-        taskId = 9,
+    private val task = Task(
+        id = TaskId(9),
+        workspaceId = WorkspaceId(1),
+        projectId = ProjectId(7),
+        name = "Design",
+        active = true,
+    )
+    private val running = TimeEntry(
+        id = EntryId(-3),
+        workspaceId = WorkspaceId(1),
+        projectId = ProjectId(7),
+        taskId = TaskId(9),
         description = "Notification",
         start = start,
         stop = null,
@@ -52,18 +62,18 @@ class RunningNotificationTest {
     )
 
     private fun content(
-        entry: CachedTimeEntry? = running,
-        projects: List<CachedProject> = listOf(
+        entry: TimeEntry? = running,
+        projects: List<Project> = listOf(
             project,
         ),
-        tasks: List<CachedTask> = listOf(task),
+        tasks: List<Task> = listOf(task),
     ) = runningNotificationContent(entry, projects, tasks)
 
     @Test
     fun showsTheDescriptionProjectTaskAndStartOfTheRunningEntry() {
         val shown = content()!!
 
-        assertEquals(-3L, shown.entryId)
+        assertEquals(EntryId(-3), shown.entryId)
         assertEquals("Notification", shown.description)
         assertEquals("Tokkl for Android", shown.project)
         assertEquals("Design", shown.task)
@@ -97,7 +107,7 @@ class RunningNotificationTest {
             running.copy(tags = listOf("androids")),
             running.copy(tags = emptyList()),
             running.copy(billable = true),
-            running.copy(workspaceId = 2),
+            running.copy(workspaceId = WorkspaceId(2)),
         )
 
         edits.forEach { edited -> assertNotEquals("$edited", key, content(entry = edited)!!.key) }
@@ -106,7 +116,7 @@ class RunningNotificationTest {
 
     @Test
     fun theKeyStaysWhenTheServerGivesTheEntryItsId() {
-        assertEquals(content()!!.key, content(entry = running.copy(id = 4_200))!!.key)
+        assertEquals(content()!!.key, content(entry = running.copy(id = EntryId(4_200)))!!.key)
     }
 
     @Test
@@ -139,11 +149,11 @@ class RunningNotificationTest {
 
     @Test
     fun theSyncPostsOnStartAndEditAndRemovesOnStop() = runTest {
-        val fake = FakeNotification(serverIds = mapOf(-3L to 4_200L))
+        val fake = FakeNotification(serverIds = mapOf(EntryId(-3) to EntryId(4_200)))
         val first = content()!!
         val edited = content(entry = running.copy(description = "Edited"))!!
         // The server answered the create: the same entry under its own id.
-        val idChanged = content(entry = running.copy(id = 4_200, description = "Edited"))!!
+        val idChanged = content(entry = running.copy(id = EntryId(4_200), description = "Edited"))!!
         val sync = fake.sync(flowOf(null, first, first, edited, idChanged, null, null))
 
         run { sync.follow() }
@@ -156,7 +166,7 @@ class RunningNotificationTest {
     fun twoStartsWithinOneSecondPostTheSecondForItsStop() = runTest {
         val fake = FakeNotification()
         val first = content()!!
-        val second = content(entry = running.copy(id = -4, start = start.plusMillis(400)))!!
+        val second = content(entry = running.copy(id = EntryId(-4), start = start.plusMillis(400)))!!
 
         run { fake.sync(flowOf(first, second)).follow() }
 
@@ -167,21 +177,23 @@ class RunningNotificationTest {
     @Test
     fun theServersIdForTheFollowedEntryPostsNothingAndIsKept() = runTest {
         val first = content()!!
-        val answered = content(entry = running.copy(id = 4_200, start = start.truncatedTo(ChronoUnit.SECONDS)))!!
-        val fake = FakeNotification(shown = first.followed(), serverIds = mapOf(-3L to 4_200L))
+        val answered = content(
+            entry = running.copy(id = EntryId(4_200), start = start.truncatedTo(ChronoUnit.SECONDS)),
+        )!!
+        val fake = FakeNotification(shown = first.followed(), serverIds = mapOf(EntryId(-3) to EntryId(4_200)))
 
         run { fake.sync(flowOf(answered)).follow() }
 
         assertEquals("a dismissed notification stays dismissed", emptyList<String>(), fake.calls)
-        assertEquals(FollowedEntry(first.key, 4_200), fake.shown)
+        assertEquals(FollowedEntry(first.key, EntryId(4_200)), fake.shown)
     }
 
     @Test
     fun anotherServerEntryWithTheSameKeyPosts() = runTest {
         val first = content()!!
         // A refresh finds a timer started elsewhere with the same fields in the same second.
-        val elsewhere = content(entry = running.copy(id = 9_000))!!
-        val fake = FakeNotification(shown = first.followed(), serverIds = mapOf(-3L to 4_200L))
+        val elsewhere = content(entry = running.copy(id = EntryId(9_000)))!!
+        val fake = FakeNotification(shown = first.followed(), serverIds = mapOf(EntryId(-3) to EntryId(4_200)))
 
         run { fake.sync(flowOf(elsewhere)).follow() }
 
@@ -275,7 +287,11 @@ class RunningNotificationTest {
         val offered = controlled()!!
         val toggl = controlled(timerApi = false)!!
         val session = controlled(
-            held = ServerTimerStates.held(4, start, pomodoro = ServerTimerStates.session(entryId = -3, at = start)),
+            held = ServerTimerStates.held(
+                4,
+                start,
+                pomodoro = ServerTimerStates.session(entryId = EntryId(-3), at = start),
+            ),
         )!!
 
         assertTrue(offered.pausable)
@@ -283,7 +299,7 @@ class RunningNotificationTest {
         assertFalse("the server refuses Pause during a session", session.pausable)
         assertEquals(
             "the actions act on the entry, for this account",
-            TimerTarget.server(entryId = -3, account = ServerTimerStates.ACCOUNT),
+            TimerTarget.server(entryId = EntryId(-3), account = ServerTimerStates.ACCOUNT),
             session.target,
         )
         assertNotEquals("losing Pause posts it again without the action", offered.key, toggl.key)
@@ -294,7 +310,7 @@ class RunningNotificationTest {
         val shown = paused()!!
 
         assertTrue(shown.paused)
-        assertEquals("no entry runs", 0L, shown.entryId)
+        assertEquals("no entry runs", EntryId(0), shown.entryId)
         assertEquals("Notification", shown.description)
         assertEquals("Tokkl for Android", shown.project)
         assertEquals("Design", shown.task)
@@ -313,7 +329,7 @@ class RunningNotificationTest {
             held = ServerTimerStates.held(
                 4,
                 start,
-                ServerTimerStates.resumed(600, entryId = -3),
+                ServerTimerStates.resumed(600, entryId = EntryId(-3)),
                 offset = Duration.ofMillis(20_400),
             ),
         )!!
@@ -331,7 +347,7 @@ class RunningNotificationTest {
             held = ServerTimerStates.held(
                 4,
                 start,
-                ServerTimerStates.resumed(600, entryId = -3),
+                ServerTimerStates.resumed(600, entryId = EntryId(-3)),
                 offset = Duration.ofMillis(offsetMs),
             ),
         )
@@ -351,11 +367,11 @@ class RunningNotificationTest {
     @Test
     fun eachPauseAndResumePostsTheNotificationAgain() = runTest {
         val fake = FakeNotification()
-        val clone = running.copy(id = 55, start = start.plusSeconds(900))
+        val clone = running.copy(id = EntryId(55), start = start.plusSeconds(900))
         val resumed = runningNotificationContent(
             ServerTimerStates.controls(
                 clone,
-                ServerTimerStates.held(5, start, ServerTimerStates.resumed(600, entryId = 55)),
+                ServerTimerStates.held(5, start, ServerTimerStates.resumed(600, entryId = EntryId(55))),
             ),
             listOf(project),
             listOf(task),
@@ -369,7 +385,7 @@ class RunningNotificationTest {
     @Test
     fun aPausedNotificationSwipedAwayStaysAwayInANewProcessUntilThePausedTimerChanges() = runTest {
         val shown = paused()!!
-        val edited = paused(EntryFields("Paused elsewhere", projectId = 7, taskId = 9))!!
+        val edited = paused(EntryFields("Paused elsewhere", projectId = ProjectId(7), taskId = TaskId(9)))!!
         val fake = FakeNotification(shown = shown.followed())
 
         run { fake.sync(flowOf(shown, edited)).follow() }
@@ -383,14 +399,14 @@ class RunningNotificationTest {
     }
 
     /** The notification for the cache's [entry] and the server's [held] state, as the app builds it. */
-    private fun controlled(entry: CachedTimeEntry = running, held: HeldTimerState? = null, timerApi: Boolean = true) =
+    private fun controlled(entry: TimeEntry = running, held: HeldTimerState? = null, timerApi: Boolean = true) =
         runningNotificationContent(ServerTimerStates.controls(entry, held, timerApi), listOf(project), listOf(task))
 
     private fun paused(
         fields: EntryFields = EntryFields(
             "Notification",
-            projectId = 7,
-            taskId = 9,
+            projectId = ProjectId(7),
+            taskId = TaskId(9),
             tags = listOf("android"),
         ),
         revision: Long = 3,
@@ -409,7 +425,7 @@ class RunningNotificationTest {
     private class FakeNotification(
         var shown: FollowedEntry? = null,
         private val failWrites: Boolean = false,
-        private val serverIds: Map<Long, Long> = emptyMap(),
+        private val serverIds: Map<EntryId, EntryId> = emptyMap(),
     ) {
         val calls = mutableListOf<String>()
 

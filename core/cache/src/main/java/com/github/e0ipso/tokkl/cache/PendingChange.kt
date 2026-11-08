@@ -144,7 +144,7 @@ data class ShortStopUndo(
 data class EntryIdMapping(@PrimaryKey val localId: Long, val serverId: Long)
 
 /** A cached entry, and whether the queue holds a change to it that the server has not received. */
-data class EntryWithSendState(@Embedded val entry: CachedTimeEntry, val unsent: Boolean)
+data class CachedEntryWithSendState(@Embedded val entry: CachedTimeEntry, val unsent: Boolean)
 
 /**
  * These entries with each of the [pending] changes applied in order, so a refresh keeps showing

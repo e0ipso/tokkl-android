@@ -18,7 +18,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.github.e0ipso.tokkl.cache.CachedClient
 import com.github.e0ipso.tokkl.catalog.ActiveThenArchived
 import com.github.e0ipso.tokkl.catalog.CatalogChange
 import com.github.e0ipso.tokkl.catalog.CatalogEmpty
@@ -31,6 +30,7 @@ import com.github.e0ipso.tokkl.catalog.PageVisitEffect
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.catalog.changeText
 import com.github.e0ipso.tokkl.feature.clients.R
+import com.github.e0ipso.tokkl.model.Client
 import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklIconButton
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -91,7 +91,7 @@ class ClientsActions(
 fun ClientsContent(
     state: ClientsState,
     offline: Boolean,
-    cachedClients: List<CachedClient>,
+    cachedClients: List<Client>,
     actions: ClientsActions,
     modifier: Modifier = Modifier,
 ) {
@@ -127,13 +127,7 @@ fun ClientsContent(
                 serverNeeded = serverNeeded,
                 canChange = canChange,
                 rows = state.data?.let { data -> data.clients.map { ClientRow(it, data.projectCount(it)) } }
-                    ?: cachedClients.map {
-                        ClientRow(
-                            Client(it.id, it.workspaceId, it.name, it.archived),
-                            projects = null,
-                            fromServer = false,
-                        )
-                    },
+                    ?: cachedClients.map { ClientRow(it, projects = null, fromServer = false) },
                 actions = actions,
             )
         }

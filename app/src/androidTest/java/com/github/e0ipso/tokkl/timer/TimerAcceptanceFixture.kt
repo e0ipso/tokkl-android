@@ -6,9 +6,6 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.cache
@@ -17,6 +14,10 @@ import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.components.storeSignIn
 import com.github.e0ipso.tokkl.components.timerActions
 import com.github.e0ipso.tokkl.components.timerControls
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.RunningEntryIdentity
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import com.github.e0ipso.tokkl.timerstate.TimerControls
@@ -59,7 +60,7 @@ internal class TimerAcceptanceFixture {
         }
     }
     fun refresh() = runBlocking { app.accountRefresh.refresh().join() }
-    fun rows(): List<CachedTimeEntry> = runBlocking { app.cache.timeEntries.first() }
+    fun rows(): List<TimeEntry> = runBlocking { app.cache.timeEntries.first() }
 
     /** What every timer surface shows: the cache's running entry and the server's pause chain. */
     fun shown(): TimerControls = runBlocking { app.timerControls.first() }
@@ -75,7 +76,7 @@ internal class TimerAcceptanceFixture {
         return shown() as TimerControls.Running
     }
     fun start(description: String = "Focused work"): TimerControls.Running {
-        runBlocking { app.changes.start(account.workspaceId, EntryFields(description)) }
+        runBlocking { app.changes.start(WorkspaceId(account.workspaceId), EntryFields(description)) }
         return shown() as TimerControls.Running
     }
     fun ageRunning(seconds: Long = 600): TimerControls.Running {

@@ -7,6 +7,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.e0ipso.tokkl.cache.AccountCache
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.platform.DefaultNetwork
 import com.github.e0ipso.tokkl.platform.offlineIn
 
@@ -27,5 +28,5 @@ fun CachedEntityPicker(
     val scope = rememberCoroutineScope()
     val source by remember(cache) { cache.pickerSource() }.collectAsStateWithLifecycle(PickerSource())
     val offline by remember(network, scope) { network.offlineIn(scope) }.collectAsStateWithLifecycle()
-    EntityPicker(source, offline, workspaceId, original, picked, onPickedChange, modifier)
+    EntityPicker(source, offline, WorkspaceId(workspaceId), original, picked, onPickedChange, modifier)
 }

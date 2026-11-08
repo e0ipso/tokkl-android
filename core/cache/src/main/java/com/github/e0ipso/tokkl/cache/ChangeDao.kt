@@ -125,7 +125,7 @@ abstract class ChangeDao {
         "SELECT time_entries.*, ${CacheDao.UNSENT} FROM time_entries WHERE stop IS NULL ORDER BY start DESC, id DESC " +
             "LIMIT 1",
     )
-    abstract fun latestRunning(): EntryWithSendState?
+    abstract fun latestRunning(): CachedEntryWithSendState?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     abstract fun upsertEntry(entry: CachedTimeEntry)

@@ -4,8 +4,8 @@ import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TokklApi
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
-import com.github.e0ipso.tokkl.cache.toCached
+import com.github.e0ipso.tokkl.cache.toTimeEntry
+import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.time.AccountTime
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
@@ -15,7 +15,7 @@ import java.time.format.DateTimeParseException
 
 /** One request for older days: the days it loaded, or the status the days end with instead. */
 internal sealed interface OlderPage {
-    data class Loaded(val from: LocalDate, val entries: List<CachedTimeEntry>, val status: OlderDays) : OlderPage
+    data class Loaded(val from: LocalDate, val entries: List<TimeEntry>, val status: OlderDays) : OlderPage
 
     /** Nothing new: the days stay as they were, with [status] at the end. */
     data class NotLoaded(val status: OlderDays) : OlderPage
@@ -61,7 +61,7 @@ internal suspend fun fetchOlderPage(
         is ApiResult.Failure -> OlderPage.NotLoaded(statusOf(answer.error))
 
         is ApiResult.Success -> {
-            val entries = answer.value.mapNotNull { it.toCached() }.filter { it.start >= start && it.start < end }
+            val entries = answer.value.mapNotNull { it.toTimeEntry() }.filter { it.start >= start && it.start < end }
             val status = when {
                 bounds.nothingBefore(from) -> OlderDays.End
                 else -> OlderDays.More(auto = entries.isNotEmpty() || bounds is HistoryBounds.Known)

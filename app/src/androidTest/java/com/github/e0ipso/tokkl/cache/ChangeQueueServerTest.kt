@@ -17,6 +17,9 @@ import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.capabilities
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -110,7 +113,7 @@ class ChangeQueueServerTest {
         val (id, startTook) = timed {
             runBlocking {
                 app.changes.start(
-                    workspace,
+                    WorkspaceId(workspace),
                     EntryFields(description = "Offline timer"),
                 )
             }
@@ -128,7 +131,7 @@ class ChangeQueueServerTest {
 
         relay.release()
         drainUntilEmpty()
-        val sent = serverEntry(serverId(id))
+        val sent = serverEntry(serverId(id.value))
         assertEquals("Offline timer", sent.string("description"))
         assertEquals(
             "the server keeps the tap time as the start",
@@ -149,10 +152,10 @@ class ChangeQueueServerTest {
         assertNull("the same prediction holds after the call", time().snapCapturedStop(running.entry.start, afterStop))
         assertTrue(
             "the short timer leaves history offline",
-            runBlocking { app.cache.entries.first() }.none { it.entry.id == serverId(id) },
+            runBlocking { app.cache.entries.first() }.none { it.entry.id.value == serverId(id.value) },
         )
         assertEquals("the captured Stop waits durably", 1, unsentCount())
-        assertEquals(serverId(id), runBlocking { app.changes.shortStopUndo.first() }?.entryId)
+        assertEquals(serverId(id.value), runBlocking { app.changes.shortStopUndo.first() }?.entryId?.value)
 
         relay.release()
         drainUntilEmpty()
@@ -162,26 +165,35 @@ class ChangeQueueServerTest {
                 ListSerializer(JsonObject.serializer()),
             )
         }.orFail("GET /api/app/trash")
-            .single { it.getValue("id").jsonPrimitive.long == serverId(id) }
+            .single { it.getValue("id").jsonPrimitive.long == serverId(id.value) }
         assertEquals("the server stores zero duration", 0L, trashed.getValue("duration").jsonPrimitive.long)
         assertEquals(trashed.instant("start"), trashed.instant("stop"))
         assertNull("the server no longer runs it", runningOnServer())
 
         relay.hang()
         assertTrue("Undo is queued offline", runBlocking { app.changes.undoShortStop(id) })
-        val restoredLocally = runBlocking { app.cache.entries.first() }.single { it.entry.id == serverId(id) }
+        val restoredLocally = runBlocking { app.cache.entries.first() }.single {
+            it.entry.id.value == serverId(
+                id.value,
+            )
+        }
         assertEquals(restoredLocally.entry.start, restoredLocally.entry.stop)
         assertTrue(restoredLocally.unsent)
         relay.release()
         drainUntilEmpty()
-        val restored = serverEntry(serverId(id))
+        val restored = serverEntry(serverId(id.value))
         assertEquals("Undo restores the stopped zero-length row", restored.instant("start"), restored.instant("stop"))
     }
 
     @Test
     fun createEditStopAndDeleteOfAnOfflineEntryReachTheServerInOrder() {
         relay.hang()
-        val timer = runBlocking { app.changes.start(workspace, EntryFields(description = "Started offline")) }
+        val timer = runBlocking {
+            app.changes.start(
+                WorkspaceId(workspace),
+                EntryFields(description = "Started offline"),
+            )
+        }
         assertTrue(
             runBlocking {
                 app.changes.update(
@@ -197,7 +209,7 @@ class ChangeQueueServerTest {
         val manualStart = Instant.now().minus(2, ChronoUnit.HOURS).truncatedTo(ChronoUnit.HOURS)
         val manual = runBlocking {
             app.changes.create(
-                workspace,
+                WorkspaceId(workspace),
                 EntryFields(description = "Made by hand", tags = listOf("typed offline"), billable = true),
                 start = manualStart,
                 stop = manualStart.plus(Duration.ofMinutes(30)),
@@ -214,7 +226,7 @@ class ChangeQueueServerTest {
         relay.release()
         drainUntilEmpty()
 
-        val made = serverEntry(serverId(manual))
+        val made = serverEntry(serverId(manual.value))
         assertEquals("Made by hand", made.string("description"))
         assertEquals(listOf("typed offline"), made.getValue("tags").jsonArray.map { it.jsonPrimitive.content })
         assertEquals(manualStart, made.instant("start"))
@@ -235,15 +247,15 @@ class ChangeQueueServerTest {
         val deleted = trash.single()
         assertEquals(
             "the timer was created, edited, stopped and then deleted",
-            serverId(timer),
+            serverId(timer.value),
             deleted.getValue("id").jsonPrimitive.long,
         )
         assertEquals("Edited offline", deleted.string("description"))
         assertTrue("stopped before the delete", deleted["stop"] !is JsonNull)
         assertEquals(
             "after the refresh that follows the drain, the phone shows the server's entry",
-            listOf(serverId(manual) to false),
-            runBlocking { app.cache.entries.first() }.map { it.entry.id to it.unsent },
+            listOf(serverId(manual.value) to false),
+            runBlocking { app.cache.entries.first() }.map { it.entry.id.value to it.unsent },
         )
     }
 
@@ -268,7 +280,7 @@ class ChangeQueueServerTest {
 
         relay.hang()
         val phone = EntryFields(description = "From the phone")
-        assertTrue(runBlocking { app.changes.update(entry, phone, start, start.plus(Duration.ofMinutes(30))) })
+        assertTrue(runBlocking { app.changes.update(EntryId(entry), phone, start, start.plus(Duration.ofMinutes(30))) })
         editOnTheWeb(entry, "From the web", billable = true)
         relay.release()
         drainUntilEmpty()
@@ -283,7 +295,7 @@ class ChangeQueueServerTest {
 
         editOnTheWeb(entry, "From the web, later", billable = true)
         runBlocking { app.accountRefresh.refresh().join() }
-        val row = runBlocking { app.cache.entries.first() }.single { it.entry.id == entry }
+        val row = runBlocking { app.cache.entries.first() }.single { it.entry.id.value == entry }
         assertEquals(
             "the web app's change came last and wins on the phone too",
             "From the web, later",
@@ -311,13 +323,17 @@ class ChangeQueueServerTest {
             )
         }.orFail("POST a running time entry").getValue("id").jsonPrimitive.long
         runBlocking { app.accountRefresh.refresh().join() }
-        assertEquals("the phone shows the web's timer", entry, runBlocking { app.cache.running.first() }?.entry?.id)
+        assertEquals(
+            "the phone shows the web's timer",
+            entry,
+            runBlocking { app.cache.running.first() }?.entry?.id?.value,
+        )
 
         // The server answers a refresh with the running entry, and the answer is slow to reach the phone.
         relay.holdAnswerTo(TIME_ENTRIES)
         val stale = app.accountRefresh.refresh()
         waitUntil("the server answered the refresh's entries") { relay.holdsAnswer }
-        assertTrue(runBlocking { app.changes.stop(entry) })
+        assertTrue(runBlocking { app.changes.stop(EntryId(entry)) })
         waitUntil("the sender sent the stop") { unsentCount() == 0 }
         val stopped = serverEntry(entry)
         assertTrue("the server has the stop", stopped["stop"] !is JsonNull)
@@ -327,7 +343,7 @@ class ChangeQueueServerTest {
         waitUntil("the cache shows the timer stopped, as the server has it") {
             runBlocking { app.cache.running.first() } == null
         }
-        val row = runBlocking { app.cache.entries.first() }.single { it.entry.id == entry }
+        val row = runBlocking { app.cache.entries.first() }.single { it.entry.id.value == entry }
         assertEquals(stopped.instant("stop"), row.entry.stop)
         assertFalse(row.unsent)
     }
@@ -337,7 +353,12 @@ class ChangeQueueServerTest {
         // A phone start in the second before a half step would make the laptop's start below snap
         // a step later, where a span that rounded its duration up ends too.
         awayFromAHalfStep()
-        val id = queueWithNoRoute { app.changes.start(workspace, EntryFields(description = "Started on the phone")) }
+        val id = queueWithNoRoute {
+            app.changes.start(
+                WorkspaceId(workspace),
+                EntryFields(description = "Started on the phone"),
+            )
+        }
         val queued = runBlocking { app.cache.running.first() }!!.entry
         // Half an hour and a second after the phone's start, which still waits in the queue, the
         // laptop starts a timer. A span that rounded its duration up would end a step after where
@@ -350,12 +371,12 @@ class ChangeQueueServerTest {
         val later = serverEntry(laptop)
         assertTrue("the later timer still runs: $later", later["stop"] is JsonNull)
         assertEquals(laterStart, later.instant("start"))
-        val phone = serverEntry(serverId(id))
+        val phone = serverEntry(serverId(id.value))
         assertEquals(time().snapInstant(queued.start), phone.instant("start"))
         assertEquals(
             "the phone shows the server's running entry without waiting for a refresh",
             laptop,
-            runBlocking { app.cache.running.first() }?.entry?.id,
+            runBlocking { app.cache.running.first() }?.entry?.id?.value,
         )
         assertEquals("one GET of the running entry for the queued start, and no more", 1, reads)
 
@@ -380,18 +401,23 @@ class ChangeQueueServerTest {
         val start = startPastAHalfStep(Duration.ofHours(1))
         val earlier = startOnTheWeb("Started on the web", start)
         runBlocking { app.accountRefresh.refresh().join() }
-        assertEquals("the phone shows the timer", earlier, runBlocking { app.cache.running.first() }?.entry?.id)
+        assertEquals("the phone shows the timer", earlier, runBlocking { app.cache.running.first() }?.entry?.id?.value)
 
         awayFromAHalfStep()
         val before = Instant.now()
-        val id = runBlocking { app.changes.start(workspace, EntryFields(description = "Started on the phone")) }
+        val id = runBlocking {
+            app.changes.start(
+                WorkspaceId(workspace),
+                EntryFields(description = "Started on the phone"),
+            )
+        }
         val started = Instant.now()
         drainUntilEmpty()
 
         val stopped = serverEntry(earlier)
         assertEquals(time().snapInstant(start), stopped.instant("start"))
         // Once the phone's timer stops, its start snaps to the grid point where the earlier one ends.
-        val later = stopOnTheWeb(serverId(id))
+        val later = stopOnTheWeb(serverId(id.value))
         assertEquals(
             "the two entries are back to back: $stopped, $later",
             later.instant("start"),
@@ -408,12 +434,12 @@ class ChangeQueueServerTest {
         val start = startPastAHalfStep(Duration.ofHours(1))
         val onPhone = startOnTheWeb("Stopped on the phone", start)
         runBlocking { app.accountRefresh.refresh().join() }
-        assertEquals("the phone shows the timer", onPhone, runBlocking { app.cache.running.first() }?.entry?.id)
+        assertEquals("the phone shows the timer", onPhone, runBlocking { app.cache.running.first() }?.entry?.id?.value)
 
         relay.hang()
         awayFromAHalfStep()
         val before = Instant.now()
-        assertTrue(runBlocking { app.changes.stop(onPhone) })
+        assertTrue(runBlocking { app.changes.stop(EntryId(onPhone)) })
         val tapped = Instant.now()
         val after = Instant.now()
         relay.release()
@@ -435,21 +461,26 @@ class ChangeQueueServerTest {
             stoppedOnPhone.instant("start") to stoppedOnPhone.instant("stop"),
             runBlocking {
                 app.cache.entries.first()
-            }.single { it.entry.id == onPhone }.entry.let { it.start to it.stop },
+            }.single { it.entry.id.value == onPhone }.entry.let { it.start to it.stop },
         )
     }
 
     @Test
     fun aQueuedStartRunsWhenNoTimerRunsOnTheServer() {
-        val id = queueWithNoRoute { app.changes.start(workspace, EntryFields(description = "Started on the phone")) }
+        val id = queueWithNoRoute {
+            app.changes.start(
+                WorkspaceId(workspace),
+                EntryFields(description = "Started on the phone"),
+            )
+        }
         val queued = runBlocking { app.cache.running.first() }!!.entry
 
         val reads = drainCountingRunningEntryReads()
 
-        val phone = serverEntry(serverId(id))
+        val phone = serverEntry(serverId(id.value))
         assertTrue("the queued start runs", phone["stop"] is JsonNull)
         assertEquals(queued.start.truncatedTo(ChronoUnit.SECONDS), phone.instant("start"))
-        assertEquals(serverId(id), runningOnServer()?.getValue("id")?.jsonPrimitive?.long)
+        assertEquals(serverId(id.value), runningOnServer()?.getValue("id")?.jsonPrimitive?.long)
         assertEquals("one GET of the running entry for the queued start, and no more", 1, reads)
     }
 
@@ -460,14 +491,19 @@ class ChangeQueueServerTest {
         val earlierStart = Instant.now().minus(1, ChronoUnit.HOURS).minusSeconds(1).truncatedTo(ChronoUnit.SECONDS)
         val laptop = startOnTheWeb("Started on the laptop", earlierStart)
         // The phone has not seen the laptop's timer, so its start queues no stop for it.
-        val id = queueWithNoRoute { app.changes.start(workspace, EntryFields(description = "Started on the phone")) }
+        val id = queueWithNoRoute {
+            app.changes.start(
+                WorkspaceId(workspace),
+                EntryFields(description = "Started on the phone"),
+            )
+        }
         val queued = runBlocking { app.cache.running.first() }!!.entry
 
         val reads = drainCountingRunningEntryReads()
 
-        val phone = serverEntry(serverId(id))
+        val phone = serverEntry(serverId(id.value))
         assertTrue("the queued start runs", phone["stop"] is JsonNull)
-        assertEquals(serverId(id), runningOnServer()?.getValue("id")?.jsonPrimitive?.long)
+        assertEquals(serverId(id.value), runningOnServer()?.getValue("id")?.jsonPrimitive?.long)
         // Tokkl 1.5.0 stops a running timer on the grid point nearest the moment it stops, where
         // the queued start snaps once it stops too, so the two entries are stored back to back.
         val earlier = serverEntry(laptop)
@@ -485,7 +521,7 @@ class ChangeQueueServerTest {
         relay.holdAnswerTo(CREATE)
         val id = runBlocking {
             app.changes.create(
-                workspace,
+                WorkspaceId(workspace),
                 EntryFields(description = "Answer lost"),
                 start,
                 start.plus(Duration.ofMinutes(30)),
@@ -504,7 +540,7 @@ class ChangeQueueServerTest {
         val copies = serverEntriesAround(start)
         assertEquals("one copy on the server: $copies", 1, copies.size)
         val copy = copies.single()
-        assertEquals(serverId(id), copy.getValue("id").jsonPrimitive.long)
+        assertEquals(serverId(id.value), copy.getValue("id").jsonPrimitive.long)
         assertEquals("the queued edit reached that copy", "Edited after the lost answer", copy.string("description"))
         assertEquals(start.plus(Duration.ofMinutes(45)), copy.instant("stop"))
     }
@@ -523,7 +559,7 @@ class ChangeQueueServerTest {
         relay.holdAnswerTo(CREATE)
         val id = runBlocking {
             app.changes.create(
-                workspace,
+                WorkspaceId(workspace),
                 EntryFields(description = "Tagged", tags = listOf("work")),
                 start,
                 start.plus(Duration.ofMinutes(30)),
@@ -540,7 +576,7 @@ class ChangeQueueServerTest {
 
         val copies = serverEntriesAround(start)
         assertEquals("one copy on the server: $copies", 1, copies.size)
-        assertEquals(serverId(id), copies.single().getValue("id").jsonPrimitive.long)
+        assertEquals(serverId(id.value), copies.single().getValue("id").jsonPrimitive.long)
         assertEquals("tagged with the server's name for the tag", listOf("Work"), copies.single().tags())
     }
 
@@ -559,7 +595,7 @@ class ChangeQueueServerTest {
         relay.hang()
         val id = runBlocking {
             app.changes.create(
-                workspace,
+                WorkspaceId(workspace),
                 EntryFields(description = "Tagged", tags = listOf("work")),
                 start,
                 stop,
@@ -574,9 +610,9 @@ class ChangeQueueServerTest {
 
         val entries = serverEntriesAround(start)
         assertEquals("the web app's entry and the create's: $entries", 2, entries.size)
-        assertTrue("the create made an entry of its own", serverId(id) != other)
-        assertEquals(setOf(other, serverId(id)), entries.map { it.getValue("id").jsonPrimitive.long }.toSet())
-        assertEquals(listOf("Work"), serverEntry(serverId(id)).tags())
+        assertTrue("the create made an entry of its own", serverId(id.value) != other)
+        assertEquals(setOf(other, serverId(id.value)), entries.map { it.getValue("id").jsonPrimitive.long }.toSet())
+        assertEquals(listOf("Work"), serverEntry(serverId(id.value)).tags())
     }
 
     @Test
@@ -585,7 +621,7 @@ class ChangeQueueServerTest {
         relay.hang()
         val id = runBlocking {
             app.changes.create(
-                workspace,
+                WorkspaceId(workspace),
                 EntryFields(description = "Never reached"),
                 start,
                 start.plus(Duration.ofMinutes(30)),
@@ -600,7 +636,7 @@ class ChangeQueueServerTest {
 
         val copies = serverEntriesAround(start)
         assertEquals("one copy on the server: $copies", 1, copies.size)
-        assertEquals(serverId(id), copies.single().getValue("id").jsonPrimitive.long)
+        assertEquals(serverId(id.value), copies.single().getValue("id").jsonPrimitive.long)
         assertEquals("Never reached", copies.single().string("description"))
     }
 
@@ -629,7 +665,14 @@ class ChangeQueueServerTest {
         }.orFail("POST a time entry").getValue("id").jsonPrimitive.long
         runBlocking { app.accountRefresh.refresh().join() }
         relay.hang()
-        val copy = runBlocking { app.changes.create(workspace, EntryFields(description = "Copied"), start, stop) }
+        val copy = runBlocking {
+            app.changes.create(
+                WorkspaceId(workspace),
+                EntryFields(description = "Copied"),
+                start,
+                stop,
+            )
+        }
         runBlocking { app.sender.send().join() }
         assertEquals("the copy stays queued", 1, unsentCount())
         relay.release()
@@ -637,8 +680,8 @@ class ChangeQueueServerTest {
 
         val entries = serverEntriesAround(start)
         assertEquals("the source and its copy: $entries", 2, entries.size)
-        assertTrue("the copy is an entry of its own", serverId(copy) != source)
-        assertEquals(setOf(source, serverId(copy)), entries.map { it.getValue("id").jsonPrimitive.long }.toSet())
+        assertTrue("the copy is an entry of its own", serverId(copy.value) != source)
+        assertEquals(setOf(source, serverId(copy.value)), entries.map { it.getValue("id").jsonPrimitive.long }.toSet())
     }
 
     /**
@@ -653,7 +696,7 @@ class ChangeQueueServerTest {
         relay.hang()
         val id = runBlocking {
             app.changes.create(
-                workspace,
+                WorkspaceId(workspace),
                 EntryFields(description = "Logged offline, no times"),
                 span.start,
                 span.stop,
@@ -665,7 +708,7 @@ class ChangeQueueServerTest {
         relay.release()
         drainUntilEmpty()
 
-        val stored = serverEntry(serverId(id))
+        val stored = serverEntry(serverId(id.value))
         assertEquals("Logged offline, no times", stored.string("description"))
         assertTrue("the server stores a no-time entry", stored.getValue("all_day").jsonPrimitive.boolean)
         assertEquals(5_400L, stored.getValue("duration").jsonPrimitive.long)
@@ -872,8 +915,11 @@ class ChangeQueueServerTest {
         runBlocking { app.accountRefresh.refresh().join() }
     }
 
-    private fun serverId(localId: Long): Long =
-        runBlocking { app.changes.currentId(localId) }.also { check(it > 0) { "no server id for $localId" } }
+    private fun serverId(localId: Long): Long = runBlocking {
+        app.changes.currentId(
+            EntryId(localId),
+        )
+    }.value.also { check(it > 0) { "no server id for $localId" } }
 
     private fun serverEntry(id: Long): JsonObject = runBlocking {
         web.get(

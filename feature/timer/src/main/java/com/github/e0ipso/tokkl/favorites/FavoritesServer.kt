@@ -6,8 +6,8 @@ import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.FavoriteBody
 import com.github.e0ipso.tokkl.api.FavoritesChange
 import com.github.e0ipso.tokkl.cache.AccountCache
-import com.github.e0ipso.tokkl.cache.CachedFavorite
-import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.Favorite
 import kotlinx.serialization.json.JsonElement
 
 /** The most favorites Tokkl keeps: `MAX_FAVORITES` in ../tokkl/packages/api/src/models/users.ts. */
@@ -52,10 +52,10 @@ class FavoritesServer(private val client: ApiClientProvider, private val cache: 
  * ../tokkl/packages/api/src/routes/togglV9.ts), so every other key stays as it was.
  */
 internal fun favoritesBody(favorites: List<EntryFields>) = FavoritesChange(
-    favorites.map { FavoriteBody(it.description, it.projectId, it.taskId, it.tags, it.billable) },
+    favorites.map { FavoriteBody(it.description, it.projectId?.value, it.taskId?.value, it.tags, it.billable) },
 )
 
-private fun EntryFields.toFavorite(position: Int) = CachedFavorite(
+private fun EntryFields.toFavorite(position: Int) = Favorite(
     position = position,
     description = description,
     projectId = projectId,

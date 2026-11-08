@@ -24,6 +24,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "tokkl-android"
 include(":app")
+include(":core:model")
 include(":core:api")
 include(":core:time")
 include(":core:ui")

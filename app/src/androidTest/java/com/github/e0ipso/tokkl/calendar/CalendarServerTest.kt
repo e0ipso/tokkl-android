@@ -42,8 +42,6 @@ import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.awaitTimerPage
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.EntryWithSendState
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.cache
@@ -52,6 +50,9 @@ import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.components.timerPageViewModels
 import com.github.e0ipso.tokkl.feature.timer.R
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryWithSendState
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.ui.DateWords
@@ -174,7 +175,7 @@ class CalendarServerTest {
                     .performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
                 composeRule.waitUntil("Delete closes the editor and removes the calendar block", LOAD_TIMEOUT_MS) {
                     !exists(hasText(string(R.string.entry_save))) && !exists(blockOf(description)) &&
-                        runBlocking { app.cache.entries.first() }.none { it.entry.id == id }
+                        runBlocking { app.cache.entries.first() }.none { it.entry.id.value == id }
                 }
                 assertEquals(1, runBlocking { app.changes.unsentCount.first() })
             }
@@ -184,7 +185,7 @@ class CalendarServerTest {
                 .performSemanticsAction(SemanticsActions.OnClick)
             awaitBlock(label)
             assertEquals("Undo cancels the offline delete", 0, runBlocking { app.changes.unsentCount.first() })
-            assertEquals(id, runBlocking { app.cache.entries.first() }.single().entry.id)
+            assertEquals(id, runBlocking { app.cache.entries.first() }.single().entry.id.value)
 
             deleteFromEditor()
             AirplaneMode.set(false, account.client)
@@ -217,7 +218,7 @@ class CalendarServerTest {
         AirplaneMode.set(true, account.client)
         runBlocking {
             app.changes.create(
-                workspace,
+                WorkspaceId(workspace),
                 EntryFields(description = "Logged offline"),
                 start.atZone(zone).toInstant(),
                 stop.atZone(zone).toInstant(),
@@ -411,7 +412,7 @@ class CalendarServerTest {
 
             val moved = awaitCached(
                 "the moved entry",
-            ) { it.entry.id == id && it.entry.start == instant(day.atTime(10, 0)) }
+            ) { it.entry.id.value == id && it.entry.start == instant(day.atTime(10, 0)) }
             assertTrue("unsent offline", moved.unsent)
             assertEquals(instant(day.atTime(11, 0)), moved.entry.stop)
             awaitBlock(
@@ -664,7 +665,7 @@ class CalendarServerTest {
             times == span.toList()
         }
         composeRule.waitUntil("the refresh drops the entry from the phone", LOAD_TIMEOUT_MS) {
-            runBlocking { app.cache.entries.first() }.none { it.entry.id == id }
+            runBlocking { app.cache.entries.first() }.none { it.entry.id.value == id }
         }
     }
 

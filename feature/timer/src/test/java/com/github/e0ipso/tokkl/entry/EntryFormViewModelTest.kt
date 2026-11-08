@@ -1,13 +1,17 @@
 package com.github.e0ipso.tokkl.entry
 
-import com.github.e0ipso.tokkl.cache.CachedProject
-import com.github.e0ipso.tokkl.cache.CachedTask
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.EntryWithSendState
-import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryWithSendState
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.RunningEntryIdentity
+import com.github.e0ipso.tokkl.model.Task
+import com.github.e0ipso.tokkl.model.TaskId
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.platform.MainDispatcherRule
@@ -82,7 +86,7 @@ class EntryFormViewModelTest {
         assertEquals(
             EntryFormState.Open(
                 editing = true,
-                workspaceId = WORKSPACE,
+                workspaceId = WorkspaceId(WORKSPACE),
                 fields = EntryFields(description = "Write the form"),
                 labels = EntryLabels(),
                 original = Picked(),
@@ -277,11 +281,11 @@ class EntryFormViewModelTest {
 
     @Test
     fun anEntryThatIsNotOnThePhoneOrRunsCannotBeEdited() {
-        onMain { model.edit(404) }
+        onMain { model.edit(EntryId(404)) }
         awaitState("an entry the cache lacks is missing") { it == EntryFormState.Missing }
 
         entries.value = listOf(EntryWithSendState(ENTRY.copy(stop = null), unsent = false))
-        onMain { model.edit(ENTRY_ID) }
+        onMain { model.edit(EntryId(ENTRY_ID)) }
         awaitState("the running entry is the timer's") { it == EntryFormState.Missing }
     }
 
@@ -323,7 +327,7 @@ class EntryFormViewModelTest {
     @Test
     fun withoutTheAccountsTimezoneTheFormTakesNoTimes() {
         settings.value = SETTINGS.copy(timeZone = "Mars/Olympus_Mons")
-        onMain { model.edit(ENTRY_ID) }
+        onMain { model.edit(EntryId(ENTRY_ID)) }
 
         awaitState("the form names the zone") { it == EntryFormState.NoAccountTime("Mars/Olympus_Mons") }
     }
@@ -333,7 +337,7 @@ class EntryFormViewModelTest {
         assertEquals(
             EntryFormState.Open(
                 editing = false,
-                workspaceId = WORKSPACE,
+                workspaceId = WorkspaceId(WORKSPACE),
                 fields = EntryFields(),
                 labels = EntryLabels(),
                 original = Picked(),
@@ -636,7 +640,7 @@ class EntryFormViewModelTest {
         assertEquals(
             EntryFormState.Open(
                 editing = false,
-                workspaceId = WORKSPACE,
+                workspaceId = WorkspaceId(WORKSPACE),
                 fields = EntryFields(),
                 labels = EntryLabels(),
                 original = Picked(),
@@ -950,7 +954,7 @@ class EntryFormViewModelTest {
         val form = awaitOpen("the form opens on the older entry") { true }
         assertEquals(LocalDate.of(2026, 9, 2), form.date)
         assertEquals("08:00" to "09:15", form.start to form.end)
-        assertEquals(OLDER_WORKSPACE, form.workspaceId)
+        assertEquals(WorkspaceId(OLDER_WORKSPACE), form.workspaceId)
 
         onMain { model.setDescription("Plan the sprint, again") }
         save()
@@ -969,7 +973,7 @@ class EntryFormViewModelTest {
 
     @Test
     fun theCachesCopyWinsOverTheOlderDaysOne() {
-        onMain { model.edit(ENTRY_ID, older = ENTRY.copy(description = "An older copy")) }
+        onMain { model.edit(EntryId(ENTRY_ID), older = ENTRY.copy(description = "An older copy")) }
         val form = awaitOpen("the form opens") { true }
         assertEquals("Write the form", form.fields.description)
 
@@ -994,7 +998,7 @@ class EntryFormViewModelTest {
         val stop: String,
     )
 
-    private fun openEntry(id: Long = ENTRY_ID): EntryFormState.Open {
+    private fun openEntry(id: EntryId = EntryId(ENTRY_ID)): EntryFormState.Open {
         onMain { model.edit(id) }
         return awaitOpen("the form opens") { true }
     }
@@ -1029,7 +1033,7 @@ class EntryFormViewModelTest {
         var updates = true
 
         override suspend fun update(
-            entryId: Long,
+            entryId: EntryId,
             fields: EntryFields,
             start: Instant,
             stop: Instant?,
@@ -1040,27 +1044,27 @@ class EntryFormViewModelTest {
         }
 
         override suspend fun create(
-            workspaceId: Long,
+            workspaceId: WorkspaceId,
             fields: EntryFields,
             start: Instant,
             stop: Instant,
             noTimeDay: LocalDate?,
-        ): Long {
+        ): EntryId {
             calls += "create $workspaceId $fields $start $stop" + noTimeDay.onDay()
-            return -1
+            return EntryId(-1)
         }
 
-        override suspend fun start(workspaceId: Long, fields: EntryFields): Long = throw AssertionError(
+        override suspend fun start(workspaceId: WorkspaceId, fields: EntryFields): EntryId = throw AssertionError(
             "the form starts no timer",
         )
 
-        override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean = throw AssertionError(
+        override suspend fun stop(entryId: EntryId, fields: EntryFields?): Boolean = throw AssertionError(
             "the form stops no timer",
         )
 
         override suspend fun updateOlder(
-            entryId: Long,
-            workspaceId: Long,
+            entryId: EntryId,
+            workspaceId: WorkspaceId,
             fields: EntryFields,
             start: Instant,
             stop: Instant,
@@ -1069,13 +1073,13 @@ class EntryFormViewModelTest {
             calls += "updateOlder $entryId $workspaceId $fields $start $stop" + noTimeDay.onDay()
         }
 
-        override suspend fun delete(entryId: Long): Boolean = throw AssertionError("the form deletes nothing")
+        override suspend fun delete(entryId: EntryId): Boolean = throw AssertionError("the form deletes nothing")
 
         /** The running entry the timer holds, if any. */
         @Volatile
-        var running: CachedTimeEntry? = null
+        var running: TimeEntry? = null
 
-        override suspend fun runningEntry(identity: RunningEntryIdentity): CachedTimeEntry? = running?.takeIf {
+        override suspend fun runningEntry(identity: RunningEntryIdentity): TimeEntry? = running?.takeIf {
             it.id ==
                 identity.entryId
         }
@@ -1096,32 +1100,32 @@ class EntryFormViewModelTest {
             timeZone = MADRID.id,
             beginningOfWeek = DayOfWeek.MONDAY,
             timeResolutionMinutes = null,
-            defaultWorkspaceId = WORKSPACE,
+            defaultWorkspaceId = WorkspaceId(WORKSPACE),
         )
-        val APP = CachedProject(
-            1,
-            WORKSPACE,
+        val APP = Project(
+            ProjectId(1),
+            WorkspaceId(WORKSPACE),
             clientId = null,
             name = "Tokkl for Android",
             color = "#0b83d9",
             active = true,
             billable = false,
         )
-        val CLIENT_WORK = CachedProject(
-            2,
-            WORKSPACE,
+        val CLIENT_WORK = Project(
+            ProjectId(2),
+            WorkspaceId(WORKSPACE),
             clientId = null,
             name = "Client work",
             color = "#d94182",
             active = true,
             billable = true,
         )
-        val DESIGN = CachedTask(5, WORKSPACE, projectId = APP.id, name = "Design", active = true)
+        val DESIGN = Task(TaskId(5), WorkspaceId(WORKSPACE), projectId = APP.id, name = "Design", active = true)
 
         /** 09:00:20 to 10:30:45 in Madrid on Wednesday 14 October 2026. */
-        val ENTRY = CachedTimeEntry(
-            id = ENTRY_ID,
-            workspaceId = WORKSPACE,
+        val ENTRY = TimeEntry(
+            id = EntryId(ENTRY_ID),
+            workspaceId = WorkspaceId(WORKSPACE),
             projectId = null,
             taskId = null,
             description = "Write the form",
@@ -1137,9 +1141,9 @@ class EntryFormViewModelTest {
          * A no-time entry of 1:37 on Wednesday 14 October 2026, as the server stores it: from
          * midnight in Madrid, with no day of its own.
          */
-        val ALL_DAY = CachedTimeEntry(
-            id = 8,
-            workspaceId = WORKSPACE,
+        val ALL_DAY = TimeEntry(
+            id = EntryId(8),
+            workspaceId = WorkspaceId(WORKSPACE),
             projectId = null,
             taskId = null,
             description = "Read the spec",
@@ -1154,9 +1158,9 @@ class EntryFormViewModelTest {
         const val OLDER_WORKSPACE = 20L
 
         /** 08:00 to 09:15 in Madrid on Wednesday 2 September 2026, a day older than the cache. */
-        val OLDER = CachedTimeEntry(
-            id = 300,
-            workspaceId = OLDER_WORKSPACE,
+        val OLDER = TimeEntry(
+            id = EntryId(300),
+            workspaceId = WorkspaceId(OLDER_WORKSPACE),
             projectId = APP.id,
             taskId = null,
             description = "Plan the sprint",

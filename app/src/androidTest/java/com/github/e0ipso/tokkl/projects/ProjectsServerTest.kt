@@ -37,12 +37,12 @@ import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.HttpMethod
-import com.github.e0ipso.tokkl.cache.CachedProject
-import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.feature.projects.R
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.Task
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -173,7 +173,7 @@ class ProjectsServerTest {
         assertEquals("true", server.getValue("billable").jsonPrimitive.content)
         awaitCache("the cache holds the new project") { cached ->
             cached.any {
-                it.id == server.id() && it.color == "#2da608" && it.clientId == acme && it.billable &&
+                it.id.value == server.id() && it.color == "#2da608" && it.clientId?.value == acme && it.billable &&
                     it.active
             }
         }
@@ -207,7 +207,7 @@ class ProjectsServerTest {
         assertEquals("false", server.getValue("billable").jsonPrimitive.content)
         awaitCache("the cache holds the edited project") { cached ->
             cached.any {
-                it.id == id && it.name == "Web site" && it.color == "#123456" && it.clientId == null &&
+                it.id.value == id && it.name == "Web site" && it.color == "#123456" && it.clientId == null &&
                     !it.billable
             }
         }
@@ -218,12 +218,12 @@ class ProjectsServerTest {
         composeRule.onNode(hasText(string(R.string.projects_archived)) and isHeading()).assertExists()
         awaitCache(
             "the cache no longer offers the archived project",
-        ) { cached -> cached.none { it.id == id && it.active } }
+        ) { cached -> cached.none { it.id.value == id && it.active } }
 
         composeRule.onNode(hasContentDescription(string(R.string.projects_restore_named, "Web site"))).tap()
         composeRule.awaitText(string(CatalogR.string.catalog_restored, "Web site"))
         assertEquals("true", project("Web site").getValue("active").jsonPrimitive.content)
-        awaitCache("the cache offers the restored project") { cached -> cached.any { it.id == id && it.active } }
+        awaitCache("the cache offers the restored project") { cached -> cached.any { it.id.value == id && it.active } }
     }
 
     @Test
@@ -334,7 +334,12 @@ class ProjectsServerTest {
         assertEquals("true", tasks(project).single().getValue("active").jsonPrimitive.content)
         awaitTasksCache(
             "the cache holds the new task",
-        ) { cached -> cached.any { it.id == id && it.projectId == project && it.name == "Design" && it.active } }
+        ) { cached ->
+            cached.any {
+                it.id.value == id && it.projectId?.value == project && it.name == "Design" &&
+                    it.active
+            }
+        }
         assertEveryControlHasALabel()
 
         row("Design").tap()
@@ -352,7 +357,7 @@ class ProjectsServerTest {
         assertEquals("true", saved.getValue("active").jsonPrimitive.content)
         awaitTasksCache(
             "the cache holds the renamed task",
-        ) { cached -> cached.any { it.id == id && it.name == "Wireframes" && it.active } }
+        ) { cached -> cached.any { it.id.value == id && it.name == "Wireframes" && it.active } }
 
         row("Wireframes").tap()
         composeRule.awaitText(string(R.string.project_task_edit_title, "Wireframes"))
@@ -364,7 +369,7 @@ class ProjectsServerTest {
         saved = tasks(project).single()
         assertEquals("false", saved.getValue("active").jsonPrimitive.content)
         // The cache keeps a done task only while an entry uses it, so the picker stops offering it.
-        awaitTasksCache("the cache drops the done task") { cached -> cached.none { it.id == id } }
+        awaitTasksCache("the cache drops the done task") { cached -> cached.none { it.id.value == id } }
         composeRule.onNode(hasText(string(R.string.project_task_done))).assertExists()
 
         val delete = composeRule.onNode(hasContentDescription(string(R.string.project_task_delete_named, "Wireframes")))
@@ -384,7 +389,7 @@ class ProjectsServerTest {
 
         composeRule.awaitText(string(CatalogR.string.catalog_deleted, "Wireframes"))
         assertEquals(emptyList<JsonObject>(), tasks(project))
-        awaitTasksCache("the cache no longer has the deleted task") { cached -> cached.none { it.id == id } }
+        awaitTasksCache("the cache no longer has the deleted task") { cached -> cached.none { it.id.value == id } }
         composeRule.awaitText(string(R.string.project_tasks_empty))
     }
 
@@ -602,12 +607,12 @@ class ProjectsServerTest {
         )
     }.orFail("GET tasks")
 
-    private fun awaitTasksCache(message: String, check: (List<CachedTask>) -> Boolean) {
+    private fun awaitTasksCache(message: String, check: (List<Task>) -> Boolean) {
         runBlocking { refreshes.forEach { it.join() } }
         assertTrue(message, check(runBlocking { app.cache.tasks.first() }))
     }
 
-    private fun awaitCache(message: String, check: (List<CachedProject>) -> Boolean) {
+    private fun awaitCache(message: String, check: (List<Project>) -> Boolean) {
         runBlocking { refreshes.forEach { it.join() } }
         assertTrue(message, check(runBlocking { app.cache.projects.first() }))
     }

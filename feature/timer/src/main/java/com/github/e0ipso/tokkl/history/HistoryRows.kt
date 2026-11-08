@@ -60,8 +60,8 @@ fun similarityKey(entry: HistoryEntry): String = listOf(
  * where its newest member falls; without it, each entry has its own.
  */
 fun rowsForDay(entries: List<HistoryEntry>, collapse: Boolean): List<HistoryRow> {
-    if (!collapse) return entries.map { HistoryRow(it.id, listOf(it)) }
+    if (!collapse) return entries.map { HistoryRow(it.id.value, listOf(it)) }
     val groups = LinkedHashMap<String, MutableList<HistoryEntry>>()
     for (entry in entries) groups.getOrPut(similarityKey(entry)) { mutableListOf() } += entry
-    return groups.values.map { members -> HistoryRow(members.minOf { it.id }, members) }
+    return groups.values.map { members -> HistoryRow(members.minOf { it.id.value }, members) }
 }

@@ -1,31 +1,18 @@
 package com.github.e0ipso.tokkl.cache
 
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.RunningEntryIdentity
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import java.time.Instant
 import java.time.LocalDate
-
-/** The fields of a time entry that the user picks, apart from its workspace and times. */
-data class EntryFields(
-    val description: String = "",
-    val projectId: Long? = null,
-    val taskId: Long? = null,
-    /** Tag names. A name the cache does not know is kept, and the server creates the tag. */
-    val tags: List<String> = emptyList(),
-    val billable: Boolean = false,
-)
-
-/**
- * A running segment's durable identity, captured before opening its editor. Starts always get a
- * new entry id, even at the same instant. Keep the local id: EntryIdMapping survives process
- * restarts and resolves it after the server answers. The original start also rejects a competing
- * time edit. Pause ends this segment and Resume gives it a new identity.
- */
-data class RunningEntryIdentity(val entryId: Long, val workspaceId: Long, val start: Instant)
 
 /** Where the cache holds an entry now, such as [ChangeQueue.currentId]. */
 fun interface CurrentEntryIds {
 
     /** The id the cache holds [entryId] under after a local create is answered, or [entryId]. */
-    suspend fun currentId(entryId: Long): Long
+    suspend fun currentId(entryId: EntryId): EntryId
 }
 
 /**
@@ -39,20 +26,20 @@ fun interface CurrentEntryIds {
  * one makes a timed entry, also when the entry was a no-time one.
  */
 interface EntryChanges : CurrentEntryIds {
-    suspend fun start(workspaceId: Long, fields: EntryFields): Long
+    suspend fun start(workspaceId: WorkspaceId, fields: EntryFields): EntryId
 
-    suspend fun stop(entryId: Long, fields: EntryFields? = null): Boolean
+    suspend fun stop(entryId: EntryId, fields: EntryFields? = null): Boolean
 
     suspend fun create(
-        workspaceId: Long,
+        workspaceId: WorkspaceId,
         fields: EntryFields,
         start: Instant,
         stop: Instant,
         noTimeDay: LocalDate? = null,
-    ): Long
+    ): EntryId
 
     suspend fun update(
-        entryId: Long,
+        entryId: EntryId,
         fields: EntryFields,
         start: Instant,
         stop: Instant?,
@@ -65,8 +52,8 @@ interface EntryChanges : CurrentEntryIds {
      * with no cache of its own treats it as [update].
      */
     suspend fun updateOlder(
-        entryId: Long,
-        workspaceId: Long,
+        entryId: EntryId,
+        workspaceId: WorkspaceId,
         fields: EntryFields,
         start: Instant,
         stop: Instant,
@@ -76,18 +63,18 @@ interface EntryChanges : CurrentEntryIds {
     }
 
     /** Reads this exact active segment, resolving a phone-made id after its create was sent. */
-    suspend fun runningEntry(identity: RunningEntryIdentity): CachedTimeEntry? = null
+    suspend fun runningEntry(identity: RunningEntryIdentity): TimeEntry? = null
 
     /** Checks the identity and running state in the same transaction as the unsnapped update. */
     suspend fun updateRunning(identity: RunningEntryIdentity, fields: EntryFields, start: Instant): Boolean = false
 
-    suspend fun delete(entryId: Long): Boolean
+    suspend fun delete(entryId: EntryId): Boolean
 
-    override suspend fun currentId(entryId: Long): Long = entryId
+    override suspend fun currentId(entryId: EntryId): EntryId = entryId
 
     /**
      * Deletes the current cached copy, or [entry] when the cache does not hold that server entry.
      * Returns the exact deleted row, or null when nothing was queued.
      */
-    suspend fun delete(entry: CachedTimeEntry): CachedTimeEntry? = if (delete(entry.id)) entry else null
+    suspend fun delete(entry: TimeEntry): TimeEntry? = if (delete(entry.id)) entry else null
 }

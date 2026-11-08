@@ -7,8 +7,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.TaskId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.Clock
@@ -34,7 +38,13 @@ private fun RunningTimerPreview() {
 @Composable
 private fun PausedTimerPreview() {
     TimerPreview(
-        TimerState.Paused(workspaceId = 1, seconds = 1_500, fields = FIELDS, labels = LABELS, original = Picked(1, 11)),
+        TimerState.Paused(
+            workspaceId = WorkspaceId(1),
+            seconds = 1_500,
+            fields = FIELDS,
+            labels = LABELS,
+            original = Picked(ProjectId(1), TaskId(11)),
+        ),
         elapsedSeconds = 0,
     )
 }
@@ -89,19 +99,24 @@ private fun TimerPreview(state: TimerState, elapsedSeconds: Long) {
 
 private val NOON: Clock = Clock.fixed(Instant.parse("2026-10-15T12:00:00Z"), ZoneOffset.UTC)
 
-private val FIELDS = EntryFields(description = "Write the history list", projectId = 1, taskId = 11, billable = true)
+private val FIELDS = EntryFields(
+    description = "Write the history list",
+    projectId = ProjectId(1),
+    taskId = TaskId(11),
+    billable = true,
+)
 
 private val LABELS = EntryLabels(project = "Website", projectColor = "#0b83d9", task = "Design")
 
-private val IDLE = TimerState.Idle(fields = EntryFields(), labels = EntryLabels(), workspaceId = 1)
+private val IDLE = TimerState.Idle(fields = EntryFields(), labels = EntryLabels(), workspaceId = WorkspaceId(1))
 
 private val RUNNING = TimerState.Running(
-    entryId = 1,
-    workspaceId = 1,
+    entryId = EntryId(1),
+    workspaceId = WorkspaceId(1),
     start = Instant.parse("2026-10-15T11:14:50Z"),
     fields = FIELDS,
     labels = LABELS,
-    original = Picked(1, 11),
+    original = Picked(ProjectId(1), TaskId(11)),
     unsent = true,
 )
 

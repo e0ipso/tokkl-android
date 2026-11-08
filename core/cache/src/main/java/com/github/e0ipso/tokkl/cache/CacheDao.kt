@@ -19,11 +19,11 @@ abstract class CacheDao {
 
     /** The newest entry first, each marked unsent while the queue holds a change to it. */
     @Query("SELECT time_entries.*, $UNSENT FROM time_entries ORDER BY start DESC, id DESC")
-    abstract fun timeEntriesWithSendState(): Flow<List<EntryWithSendState>>
+    abstract fun timeEntriesWithSendState(): Flow<List<CachedEntryWithSendState>>
 
     /** The running entry that started last, or null when none runs. */
     @Query("SELECT time_entries.*, $UNSENT FROM time_entries WHERE stop IS NULL ORDER BY start DESC, id DESC LIMIT 1")
-    abstract fun runningEntry(): Flow<EntryWithSendState?>
+    abstract fun runningEntry(): Flow<CachedEntryWithSendState?>
 
     @Query("SELECT * FROM projects ORDER BY name COLLATE NOCASE, id")
     abstract fun projects(): Flow<List<CachedProject>>
@@ -144,7 +144,7 @@ abstract class CacheDao {
     protected abstract fun insertFavorites(rows: List<CachedFavorite>)
 
     internal companion object {
-        /** The `unsent` column of [EntryWithSendState]. */
+        /** The `unsent` column of [CachedEntryWithSendState]. */
         const val UNSENT = "EXISTS (SELECT 1 FROM pending_changes WHERE pending_changes.entryId = time_entries.id) AS unsent"
     }
 }

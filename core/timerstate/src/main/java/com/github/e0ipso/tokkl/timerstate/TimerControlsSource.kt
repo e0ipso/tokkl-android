@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.timerstate
 
+import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.CacheDatabase
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -25,13 +26,13 @@ import kotlin.coroutines.CoroutineContext
 @OptIn(ExperimentalCoroutinesApi::class)
 class TimerControlsSource(
     database: CacheDatabase,
+    cache: AccountCache,
     timerStates: AccountTimerStates,
     capabilities: CapabilitiesSource,
     io: CoroutineContext,
 ) : CurrentTimerControls {
 
     val controls: Flow<TimerControls> = run {
-        val dao = database.changes()
         val heldStates = timerStates.states.flatMapLatest { it.source.state }
         combine(
             database.invalidationTracker.createFlow("time_entries", "pending_changes"),
@@ -41,7 +42,7 @@ class TimerControlsSource(
             val account = timerStates.current()
             account.source.withState { held ->
                 serverTimerControls(
-                    dao.latestRunning(),
+                    cache.runningNow(),
                     held,
                     flags.timerState,
                     account.account,

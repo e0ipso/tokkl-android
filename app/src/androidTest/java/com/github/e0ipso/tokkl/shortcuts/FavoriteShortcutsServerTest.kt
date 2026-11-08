@@ -225,9 +225,9 @@ class FavoriteShortcutsServerTest {
         val running = runBlocking { app.cache.running.first() }
         assertNotNull("a timer runs on the phone", running)
         assertEquals("Write the report", running!!.entry.description)
-        assertEquals(account.workspaceId, running.entry.workspaceId)
-        assertEquals(project, running.entry.projectId)
-        assertEquals(task, running.entry.taskId)
+        assertEquals(account.workspaceId, running.entry.workspaceId.value)
+        assertEquals(project, running.entry.projectId?.value)
+        assertEquals(task, running.entry.taskId?.value)
         assertEquals(listOf("shortcut"), running.entry.tags)
         assertTrue(running.entry.billable)
         assertTrue("the queue holds the start", runBlocking { app.changes.unsentCount.first() } > 0)

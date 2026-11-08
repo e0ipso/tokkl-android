@@ -61,7 +61,7 @@ private fun checkSpan(
     val predicted = time.snapUnsent(start, stop)
     // Tokkl permits an unchanged-time edit of a stored legacy short/zero-length entry.
     val target = form.target as? DraftTarget.Edit
-    val unchanged = target != null && target.entryId > 0 && start == target.start && stop == target.stop
+    val unchanged = target != null && target.entryId.value > 0 && start == target.start && stop == target.stop
     if (predicted == null && !unchanged) return CheckedTimes.Invalid(spanField, TimeMistake.TOO_SHORT)
     val seconds =
         predicted?.let { it.stop.epochSecond - it.start.epochSecond } ?: (stop.epochSecond - start.epochSecond)

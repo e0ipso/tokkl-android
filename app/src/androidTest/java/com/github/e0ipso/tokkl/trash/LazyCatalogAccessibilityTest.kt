@@ -18,7 +18,9 @@ import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
 import com.github.e0ipso.tokkl.api.TrashEntry
 import com.github.e0ipso.tokkl.feature.trash.R
-import com.github.e0ipso.tokkl.tags.Tag
+import com.github.e0ipso.tokkl.model.Tag
+import com.github.e0ipso.tokkl.model.TagId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.tags.TagsActions
 import com.github.e0ipso.tokkl.tags.TagsContent
 import com.github.e0ipso.tokkl.tags.TagsData
@@ -76,7 +78,7 @@ class LazyCatalogAccessibilityTest {
 
     @Test
     fun tagsKeepTheirVisibleTagAndReadingOrderAfterRemovingAnEarlierTag() {
-        val tags = mutableStateOf(List(500) { index -> Tag(index.toLong(), 7, "Tag $index") })
+        val tags = mutableStateOf(List(500) { index -> Tag(TagId(index.toLong()), WorkspaceId(7), "Tag $index") })
         compose.activityRule.scenario.onActivity { WindowCompat.enableEdgeToEdge(it.window) }
         compose.setContent {
             TokklTheme(

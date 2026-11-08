@@ -23,8 +23,11 @@ import com.github.e0ipso.tokkl.api.PhaseKind
 import com.github.e0ipso.tokkl.api.PhaseTransition
 import com.github.e0ipso.tokkl.api.TimerPomodoro
 import com.github.e0ipso.tokkl.api.TimerPomodoroPhase
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.core.ui.R
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.TaskId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
@@ -187,8 +190,8 @@ abstract class PomodoroWidgetScreenshotTest(private val dark: Boolean, private v
 
     private fun fixtures(): List<Pair<String, PomodoroWidgetState>> {
         val entry = PomodoroWidgetEntry(
-            1,
-            EntryFields("Write screenshot scenarios", 7, 9, listOf("tests", "docs"), true),
+            WorkspaceId(1),
+            EntryFields("Write screenshot scenarios", ProjectId(7), TaskId(9), listOf("tests", "docs"), true),
             "Tokkl for Android",
             "#0b83d9",
             "Widgets",

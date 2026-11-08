@@ -4,8 +4,10 @@ import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
-import com.github.e0ipso.tokkl.cache.CachedClient
 import com.github.e0ipso.tokkl.catalog.CatalogChange
+import com.github.e0ipso.tokkl.model.Client
+import com.github.e0ipso.tokkl.model.ClientId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -73,7 +75,7 @@ class ClientsViewModelTest {
         testApi.trust = InMemoryServerTrust(url)
         model = ClientsViewModel(
             repository = ServerClientsRepository { testApi.api(url, ApiCredentials.ApiToken("tok-123")) },
-            workspaceId = { 7L },
+            workspaceId = { WorkspaceId(7) },
             refreshCache = { refreshes++ },
             scope = CoroutineScope(Dispatchers.Unconfined),
             io = Dispatchers.Unconfined,
@@ -143,11 +145,13 @@ class ClientsViewModelTest {
             repository = ServerClientsRepository {
                 testApi.api(checkNotNull(testApi.stored), ApiCredentials.ApiToken("tok-123"))
             },
-            workspaceId = { 7L },
+            workspaceId = { WorkspaceId(7) },
             refreshCache = {},
             scope = scope,
             io = Dispatchers.Unconfined,
-            cachedClients = MutableStateFlow(listOf(CACHED_ACME, CachedClient(9, 8, "Elsewhere", archived = false))),
+            cachedClients = MutableStateFlow(
+                listOf(CACHED_ACME, Client(ClientId(9), WorkspaceId(8), "Elsewhere", archived = false)),
+            ),
             offline = offline,
             appEvents = emptyFlow(),
         )
@@ -169,6 +173,6 @@ class ClientsViewModelTest {
         .build()
 
     private companion object {
-        val CACHED_ACME = CachedClient(1, 7, "Acme", archived = false)
+        val CACHED_ACME = Client(ClientId(1), WorkspaceId(7), "Acme", archived = false)
     }
 }

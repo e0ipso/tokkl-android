@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
+import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.session.AccountSettings
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,7 +16,7 @@ import java.time.Clock
  */
 @Composable
 fun TimerTotalsOf(
-    entries: Flow<List<CachedTimeEntry>>,
+    entries: Flow<List<TimeEntry>>,
     settings: StateFlow<AccountSettings?>,
     clock: Clock = Clock.systemUTC(),
 ) {

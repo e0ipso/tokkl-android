@@ -38,8 +38,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.core.entryfields.R
+import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.ui.FillScreenWindow
 import com.github.e0ipso.tokkl.ui.projectMark

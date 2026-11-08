@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.catalog
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TokklApi
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -11,10 +12,10 @@ import kotlinx.serialization.Serializable
  * workspace, [stored] with the account settings, or from `GET /api/v9/me` when the stored
  * settings predate it.
  */
-suspend fun managedWorkspace(api: TokklApi, stored: Long?): ApiResult<Long> {
+suspend fun managedWorkspace(api: TokklApi, stored: WorkspaceId?): ApiResult<WorkspaceId> {
     if (stored != null) return ApiResult.Success(stored)
     return when (val me = api.account.me(MeWorkspace.serializer())) {
-        is ApiResult.Success -> me.value.defaultWorkspaceId?.let { ApiResult.Success(it) }
+        is ApiResult.Success -> me.value.defaultWorkspaceId?.let { ApiResult.Success(WorkspaceId(it)) }
             ?: ApiResult.Failure(ApiError.InvalidResponse(IllegalArgumentException("/me has no default_workspace_id")))
 
         is ApiResult.Failure -> me

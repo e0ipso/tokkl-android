@@ -9,6 +9,7 @@ import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.feature.notification.R
+import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.time.formatDuration
 import com.github.e0ipso.tokkl.ui.theme.TokklLightExtraColors
 import org.junit.After
@@ -31,7 +32,7 @@ class RunningLiveUpdateTest {
     private val manager = context.getSystemService(NotificationManager::class.java)
     private val notifier = RunningNotifier(context)
     private val content = RunningNotificationContent(
-        entryId = -1,
+        entryId = EntryId(-1),
         description = "A Live Update",
         project = "Tokkl",
         task = "Notifications",
@@ -129,7 +130,7 @@ class RunningLiveUpdateTest {
 
     @Test
     fun aPausedTimerIsQuietDismissibleAndAsksForNoPromotion() {
-        val paused = content.copy(entryId = 0, accumulatedSeconds = 3_900, paused = true, key = "paused-test")
+        val paused = content.copy(entryId = EntryId(0), accumulatedSeconds = 3_900, paused = true, key = "paused-test")
         val notification = notifier.build(paused, requestPromotion = true)
 
         assertFalse("it can be swiped away", notification.flags and Notification.FLAG_ONGOING_EVENT != 0)

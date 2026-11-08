@@ -2,8 +2,10 @@ package com.github.e0ipso.tokkl.entry
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.PreviewLightDark
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.LocalDate
@@ -31,10 +33,10 @@ private fun FormPreview(state: EntryFormState.Open) {
 
 private val SAMPLE_ENTRY = EntryFormState.Open(
     editing = true,
-    workspaceId = 1,
-    fields = EntryFields(description = "Sprint planning", projectId = 1),
+    workspaceId = WorkspaceId(1),
+    fields = EntryFields(description = "Sprint planning", projectId = ProjectId(1)),
     labels = EntryLabels(project = "Website", projectColor = "#0b83d9"),
-    original = Picked(projectId = 1),
+    original = Picked(projectId = ProjectId(1)),
     date = LocalDate.of(2026, 10, 14),
     start = "08:30",
     end = "12:00",

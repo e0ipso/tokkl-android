@@ -2,8 +2,9 @@ package com.github.e0ipso.tokkl.favorites
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.PreviewLightDark
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 
@@ -42,7 +43,7 @@ private val SAMPLE_TEMPLATES = FavoritesState(
     available = true,
     favorites = listOf(
         FavoriteItem(
-            EntryFields(description = "Stand-up", projectId = 1, billable = true),
+            EntryFields(description = "Stand-up", projectId = ProjectId(1), billable = true),
             EntryLabels(project = "Website", projectColor = "#0b83d9"),
         ),
         FavoriteItem(EntryFields(description = "Email"), EntryLabels()),

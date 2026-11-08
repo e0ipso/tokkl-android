@@ -1,9 +1,11 @@
 package com.github.e0ipso.tokkl.tile
 
 import android.service.quicksettings.TileService
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges
-import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.timerstate.PauseActions
 import com.github.e0ipso.tokkl.timerstate.ServerTimerStates
 import com.github.e0ipso.tokkl.timerstate.SurfaceTap
@@ -47,7 +49,12 @@ class TileControlsTest {
         assertFalse(panel.paused)
         assertEquals(listOf(TimerSurfaceAction.Pause, TimerSurfaceAction.Stop), panel.buttons.map { it.action })
         assertTrue(
-            panel.buttons.all { it.target == TimerTarget.server(entryId = 4, account = ServerTimerStates.ACCOUNT) },
+            panel.buttons.all {
+                it.target == TimerTarget.server(
+                    entryId = EntryId(4),
+                    account = ServerTimerStates.ACCOUNT,
+                )
+            },
         )
 
         val pause = press(panel.buttons[0]) as SurfaceTap.Request
@@ -59,7 +66,11 @@ class TileControlsTest {
 
     @Test
     fun pauseIsLeftOutWithoutTheTimerApiAndDuringAPomodoroSession() {
-        val session = ServerTimerStates.held(5, start, pomodoro = ServerTimerStates.session(entryId = 4, at = start))
+        val session = ServerTimerStates.held(
+            5,
+            start,
+            pomodoro = ServerTimerStates.session(entryId = EntryId(4), at = start),
+        )
 
         for (controls in listOf(
             ServerTimerStates.controls(entry(4), timerApi = false),
@@ -99,7 +110,7 @@ class TileControlsTest {
         now = ServerTimerStates.controls(entry(9))
 
         assertEquals(
-            TimerTarget.server(entryId = 9, account = ServerTimerStates.ACCOUNT),
+            TimerTarget.server(entryId = EntryId(9), account = ServerTimerStates.ACCOUNT),
             tileControlsPanel(now)!!.buttons.first().target,
         )
         assertNull("the drawn Pause acts on nothing once another entry runs", press(drawn.buttons.first()))
@@ -140,9 +151,9 @@ class TileControlsTest {
         ).tap(control.action, control.target)
     }
 
-    private fun entry(id: Long) = CachedTimeEntry(
-        id = id,
-        workspaceId = 10,
+    private fun entry(id: Long) = TimeEntry(
+        id = EntryId(id),
+        workspaceId = WorkspaceId(10),
         projectId = null,
         taskId = null,
         description = "Design review",
@@ -208,32 +219,32 @@ class TileControlsTest {
     }
 
     private inner class RecordingChanges : EntryChanges {
-        override suspend fun start(workspaceId: Long, fields: EntryFields): Long = throw AssertionError(
+        override suspend fun start(workspaceId: WorkspaceId, fields: EntryFields): EntryId = throw AssertionError(
             "nothing starts",
         )
 
-        override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean {
+        override suspend fun stop(entryId: EntryId, fields: EntryFields?): Boolean {
             calls += "stop $entryId"
             return true
         }
 
         override suspend fun create(
-            workspaceId: Long,
+            workspaceId: WorkspaceId,
             fields: EntryFields,
             start: Instant,
             stop: Instant,
             noTimeDay: LocalDate?,
-        ): Long = throw AssertionError("nothing is created")
+        ): EntryId = throw AssertionError("nothing is created")
 
         override suspend fun update(
-            entryId: Long,
+            entryId: EntryId,
             fields: EntryFields,
             start: Instant,
             stop: Instant?,
             noTimeDay: LocalDate?,
         ): Boolean = throw AssertionError("nothing is edited")
 
-        override suspend fun delete(entryId: Long): Boolean = throw AssertionError("nothing is deleted")
+        override suspend fun delete(entryId: EntryId): Boolean = throw AssertionError("nothing is deleted")
     }
 }
 

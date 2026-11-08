@@ -24,7 +24,6 @@ import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.awaitControls
 import com.github.e0ipso.tokkl.awaitPomodoroOffered
 import com.github.e0ipso.tokkl.awaitTimerPage
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.pomodoroRinging
 import com.github.e0ipso.tokkl.components.sessionViewModels
@@ -32,6 +31,7 @@ import com.github.e0ipso.tokkl.components.timerActions
 import com.github.e0ipso.tokkl.components.timerControls
 import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.core.ui.R
+import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.notification.action
 import com.github.e0ipso.tokkl.notification.stopAction
@@ -128,7 +128,9 @@ class TimerActionsOfflineServerTest {
         var pausedOffline: Snapshot? = null
         ActivityScenario.launch(MainActivity::class.java).use {
             compose.awaitTimerPage()
-            app.awaitControls<TimerControls.Running>("the other device's entry") { it.entry.id == entry && it.pausable }
+            app.awaitControls<TimerControls.Running>(
+                "the other device's entry",
+            ) { it.entry.id.value == entry && it.pausable }
             AirplaneMode.set(true, fixture.account.client)
             val running = snapshot()
 
@@ -143,7 +145,7 @@ class TimerActionsOfflineServerTest {
                 ).action(NotificationR.string.notification_pause).actionIntent.send()
             }
             assertUnchanged("Pause on the notification", running)
-            assertEquals(entry, (shown() as TimerControls.Running).entry.id)
+            assertEquals(entry, (shown() as TimerControls.Running).entry.id.value)
 
             // The other device pauses; the phone learns of it once it is back online.
             AirplaneMode.set(false, fixture.account.client)
@@ -204,14 +206,16 @@ class TimerActionsOfflineServerTest {
         fixture.refresh()
         ActivityScenario.launch(MainActivity::class.java).use {
             compose.awaitTimerPage()
-            app.awaitControls<TimerControls.Running>("the other device's entry") { it.entry.id == first && it.pausable }
+            app.awaitControls<TimerControls.Running>(
+                "the other device's entry",
+            ) { it.entry.id.value == first && it.pausable }
             tapOnTheTimerPage(R.string.timer_pause_spoken)
             val paused = app.awaitControls<TimerControls.Paused>("the phone's Pause")
             val resumed = postTimer("timer", "resume", revision = other.timerState().revision)
             val clone = checkNotNull(resumed.pause?.cloneEntryId)
             app.awaitControls<TimerControls.Running>(
                 "the clone",
-            ) { it.entry.id == clone && it.accumulatedSeconds == paused.seconds }
+            ) { it.entry.id.value == clone && it.accumulatedSeconds == paused.seconds }
             assertEquals(0, unsent())
 
             AirplaneMode.set(true, fixture.account.client)
@@ -234,7 +238,7 @@ class TimerActionsOfflineServerTest {
             tapOnTheTimerPage(TimerR.string.timer_start_spoken)
             val started = app.awaitControls<TimerControls.Running>("Start, at once", timeoutMs = AT_ONCE_MS)
             assertEquals(1, unsent())
-            assertFalse("a local entry is no clone", started.entry.id == clone)
+            assertFalse("a local entry is no clone", started.entry.id.value == clone)
             tapOnTheTimerPage(R.string.timer_stop_spoken)
             app.awaitControls<TimerControls.Idle>("Stop, at once", timeoutMs = AT_ONCE_MS)
             assertEquals(2, unsent())

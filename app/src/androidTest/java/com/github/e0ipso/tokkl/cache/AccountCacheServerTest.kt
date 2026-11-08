@@ -13,6 +13,9 @@ import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.model.Favorite
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.TaskId
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.Session
@@ -104,22 +107,34 @@ class AccountCacheServerTest {
         assertEquals(
             "today's and the archived project's entries, newest first; the 20-day-old one is outside the window",
             listOf(seed.todayEntry, seed.archivedProjectEntry),
-            runBlocking { cache.timeEntries.first() }.map { it.id },
+            runBlocking { cache.timeEntries.first() }.map { it.id.value },
         )
         val projects = runBlocking { cache.projects.first() }
         assertEquals(
             "the refreshed project and the archived one an entry uses, not the unused archived one",
             listOf(Triple(seed.archivedProject, "Archived, on an entry", false), Triple(seed.project, "Website", true)),
-            projects.map { Triple(it.id, it.name, it.active) },
+            projects.map { Triple(it.id.value, it.name, it.active) },
         )
-        assertEquals(listOf(seed.client to "Acme"), runBlocking { cache.clients.first() }.map { it.id to it.name })
+        assertEquals(
+            listOf(seed.client to "Acme"),
+            runBlocking { cache.clients.first() }.map { it.id.value to it.name },
+        )
         assertEquals(
             listOf(seed.tag to "focus", seed.oldTag to "legacy"),
-            runBlocking { cache.tags.first() }.map { it.id to it.name },
+            runBlocking { cache.tags.first() }.map { it.id.value to it.name },
         )
-        assertEquals(listOf(seed.task to "Design"), runBlocking { cache.tasks.first() }.map { it.id to it.name })
+        assertEquals(listOf(seed.task to "Design"), runBlocking { cache.tasks.first() }.map { it.id.value to it.name })
         assertEquals(
-            listOf(CachedFavorite(0, "Write report", seed.project, seed.task, listOf("focus"), billable = false)),
+            listOf(
+                Favorite(
+                    0,
+                    "Write report",
+                    ProjectId(seed.project),
+                    TaskId(seed.task),
+                    listOf("focus"),
+                    billable = false,
+                ),
+            ),
             runBlocking { cache.favorites.first() },
         )
 

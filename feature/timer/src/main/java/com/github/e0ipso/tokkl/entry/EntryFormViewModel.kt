@@ -2,14 +2,15 @@ package com.github.e0ipso.tokkl.entry
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.github.e0ipso.tokkl.cache.CachedProject
-import com.github.e0ipso.tokkl.cache.CachedTask
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges
-import com.github.e0ipso.tokkl.cache.EntryWithSendState
 import com.github.e0ipso.tokkl.cache.HistoryWindow
-import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
 import com.github.e0ipso.tokkl.entryfields.withPicked
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryWithSendState
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.RunningEntryIdentity
+import com.github.e0ipso.tokkl.model.Task
+import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.platform.whileShown
@@ -70,8 +71,8 @@ import java.time.LocalDate
  */
 class EntryFormViewModel(
     private val entries: Flow<List<EntryWithSendState>>,
-    projects: Flow<List<CachedProject>>,
-    tasks: Flow<List<CachedTask>>,
+    projects: Flow<List<Project>>,
+    tasks: Flow<List<Task>>,
     private val accountSettings: StateFlow<AccountSettings?>,
     private val changes: EntryChanges,
     scope: CoroutineScope,
@@ -106,7 +107,7 @@ class EntryFormViewModel(
      * hold it, such as an entry from the older days the history holds in memory. A save of [older]
      * goes to the queue as [EntryChanges.updateOlder], with every field.
      */
-    fun edit(entryId: Long, older: CachedTimeEntry? = null) = open(
+    fun edit(entryId: EntryId, older: TimeEntry? = null) = open(
         Opening.Edit(entryId, older?.takeIf { it.id == entryId }),
     )
 
@@ -263,7 +264,7 @@ class EntryFormViewModel(
     }
 
     /** Delete uses the entry as opened, never an unsaved field, and skips time validation. */
-    fun delete(canRestore: Boolean, onDeleted: (CachedTimeEntry, Boolean) -> Unit) {
+    fun delete(canRestore: Boolean, onDeleted: (TimeEntry, Boolean) -> Unit) {
         val form = (phase.value as? Phase.Open)?.form?.takeIf { !it.saving } ?: return
         if (form.target !is DraftTarget.Edit) return
         if (canRestore) {
@@ -275,12 +276,12 @@ class EntryFormViewModel(
 
     fun cancelDelete() = change { it.copy(confirmDelete = false) }
 
-    fun confirmDelete(onDeleted: (CachedTimeEntry, Boolean) -> Unit) {
+    fun confirmDelete(onDeleted: (TimeEntry, Boolean) -> Unit) {
         val form = (phase.value as? Phase.Open)?.form?.takeIf { it.confirmDelete && !it.saving } ?: return
         queueDelete(form, false, onDeleted)
     }
 
-    private fun queueDelete(form: EntryDraft, undo: Boolean, onDeleted: (CachedTimeEntry, Boolean) -> Unit) {
+    private fun queueDelete(form: EntryDraft, undo: Boolean, onDeleted: (TimeEntry, Boolean) -> Unit) {
         val target = form.target as? DraftTarget.Edit ?: return
         val deleting = form.copy(saving = true, confirmDelete = false, deleteFailed = false)
         phase.value = Phase.Open(deleting)
@@ -387,7 +388,7 @@ class EntryFormViewModel(
 
         data class New(val date: LocalDate?, val noTimes: Boolean = false) : Opening
 
-        data class Edit(val entryId: Long, val older: CachedTimeEntry?) : Opening
+        data class Edit(val entryId: EntryId, val older: TimeEntry?) : Opening
     }
 
     private sealed interface Phase {
@@ -405,10 +406,7 @@ class EntryFormViewModel(
         data class Open(val form: EntryDraft) : Phase
     }
 
-    private data class Catalog(
-        val projects: List<CachedProject> = emptyList(),
-        val tasks: List<CachedTask> = emptyList(),
-    )
+    private data class Catalog(val projects: List<Project> = emptyList(), val tasks: List<Task> = emptyList())
 
     private companion object {
         const val STOP_TIMEOUT_MS = 5_000L

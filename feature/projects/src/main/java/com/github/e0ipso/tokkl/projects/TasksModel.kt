@@ -6,6 +6,10 @@ import com.github.e0ipso.tokkl.catalog.CatalogChange
 import com.github.e0ipso.tokkl.catalog.CatalogModel
 import com.github.e0ipso.tokkl.catalog.CatalogRepository
 import com.github.e0ipso.tokkl.catalog.CatalogState
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.Task
+import com.github.e0ipso.tokkl.model.TaskId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.DefaultWorkspace
 import com.github.e0ipso.tokkl.session.RefreshRequest
 import kotlinx.coroutines.CoroutineScope
@@ -16,19 +20,19 @@ import kotlin.coroutines.CoroutineContext
 sealed interface TaskOverlay {
 
     /** The form that renames [task] and marks it done or not done. */
-    data class Edit(val task: ProjectTask) : TaskOverlay
+    data class Edit(val task: Task) : TaskOverlay
 
     /** The question whether to delete [task]. */
-    data class ConfirmDelete(val task: ProjectTask) : TaskOverlay
+    data class ConfirmDelete(val task: Task) : TaskOverlay
 }
 
 /** The project's tasks, open ones first and done ones after them, each part sorted as Tokkl sorts them. */
-data class TasksData(val tasks: List<ProjectTask>) {
+data class TasksData(val tasks: List<Task>) {
 
     /** With [task] as the server sent it after a change, in its place in the order. */
-    fun with(task: ProjectTask): TasksData = TasksData((without(task.id).tasks + task).sortedForList())
+    fun with(task: Task): TasksData = TasksData((without(task.id).tasks + task).sortedForList())
 
-    fun without(id: Long): TasksData = TasksData(tasks.filterNot { it.id == id })
+    fun without(id: TaskId): TasksData = TasksData(tasks.filterNot { it.id == id })
 }
 
 typealias TasksState = CatalogState<TasksData, TaskOverlay>
@@ -51,14 +55,14 @@ class TasksModel(
 
     /** The project whose tasks the list shows, while it is open. Loads read it on [io]. */
     @Volatile
-    private var project: Long? = null
+    private var project: ProjectId? = null
 
     private val catalog = CatalogModel<TasksData, TaskOverlay>(OpenProject(), workspaceId, refreshCache, scope, io)
 
     val state: StateFlow<TasksState> = catalog.state
 
     /** Opens the list of [project]'s tasks. Does nothing while it is open, so turning the phone sends no request. */
-    fun open(project: Long) {
+    fun open(project: ProjectId) {
         if (this.project != project) {
             catalog.close()
             this.project = project
@@ -81,9 +85,9 @@ class TasksModel(
 
     fun doneShown() = catalog.doneShown()
 
-    fun askToEdit(task: ProjectTask) = catalog.show(TaskOverlay.Edit(task))
+    fun askToEdit(task: Task) = catalog.show(TaskOverlay.Edit(task))
 
-    fun askToDelete(task: ProjectTask) = catalog.show(TaskOverlay.ConfirmDelete(task))
+    fun askToDelete(task: Task) = catalog.show(TaskOverlay.ConfirmDelete(task))
 
     /** Closes the form or the question, which keeps the task as it is. */
     fun dismiss() = catalog.dismiss()
@@ -125,9 +129,9 @@ class TasksModel(
 
     /** The tasks of the project open now, which the list loads. */
     private inner class OpenProject : CatalogRepository<TasksData> {
-        override suspend fun workspace(stored: Long?): ApiResult<Long> = repository.workspace(stored)
+        override suspend fun workspace(stored: WorkspaceId?): ApiResult<WorkspaceId> = repository.workspace(stored)
 
-        override suspend fun load(workspace: Long): ApiResult<TasksData> {
+        override suspend fun load(workspace: WorkspaceId): ApiResult<TasksData> {
             val project = project ?: return ApiResult.Failure(
                 ApiError.InvalidResponse(IllegalArgumentException("no project is open")),
             )
@@ -137,8 +141,8 @@ class TasksModel(
 }
 
 /** Open tasks before done ones, each by name ignoring case, as the web app lists them. */
-internal fun List<ProjectTask>.sortedForList(): List<ProjectTask> = sortedWith(
-    compareBy<ProjectTask> { !it.active }
+internal fun List<Task>.sortedForList(): List<Task> = sortedWith(
+    compareBy<Task> { !it.active }
         .thenBy(String.CASE_INSENSITIVE_ORDER) { it.name }
-        .thenBy { it.id },
+        .thenBy { it.id.value },
 )

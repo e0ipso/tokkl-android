@@ -5,6 +5,7 @@ import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.api.TokklApi
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.storage.InMemoryValueStore
 import com.github.e0ipso.tokkl.time.DurationFormat
 import com.github.e0ipso.tokkl.time.SnappedSpan
@@ -279,14 +280,19 @@ class AccountRefreshTest {
 
         source.refresh()
 
-        assertEquals(42L, source.state.value!!.defaultWorkspaceId)
-        assertEquals(listOf(42L), saved.map { it.defaultWorkspaceId })
+        assertEquals(42L, source.state.value!!.defaultWorkspaceId?.value)
+        assertEquals(listOf(42L), saved.map { it.defaultWorkspaceId?.value })
     }
 
     /** A `/me` that leaves the field out, or sends it as null, says nothing about the workspace. */
     @Test
     fun aMeWithoutTheDefaultWorkspaceKeepsTheStoredOne() {
-        val stored = AccountSettings("UTC", DayOfWeek.SUNDAY, timeResolutionMinutes = null, defaultWorkspaceId = 42)
+        val stored = AccountSettings(
+            "UTC",
+            DayOfWeek.SUNDAY,
+            timeResolutionMinutes = null,
+            defaultWorkspaceId = WorkspaceId(42),
+        )
         for (me in listOf(MADRID_MONDAY, MADRID_MONDAY.replace("}", ""","default_workspace_id":null}"""))) {
             saved.clear()
             server.enqueue(json(me))
@@ -295,7 +301,7 @@ class AccountRefreshTest {
 
             source.refresh()
 
-            val expected = MADRID_MONDAY_SETTINGS.copy(defaultWorkspaceId = 42)
+            val expected = MADRID_MONDAY_SETTINGS.copy(defaultWorkspaceId = WorkspaceId(42))
             assertEquals(me, expected, source.state.value)
             assertEquals(me, listOf(expected), saved)
         }
@@ -305,17 +311,17 @@ class AccountRefreshTest {
     fun aNewDefaultWorkspaceReplacesTheStoredOne() {
         server.enqueue(json(MADRID_MONDAY_IN_42.replace("42", "43")))
         server.enqueue(json(IMPROVED))
-        val source = source(initial = MADRID_MONDAY_SETTINGS.copy(defaultWorkspaceId = 42))
+        val source = source(initial = MADRID_MONDAY_SETTINGS.copy(defaultWorkspaceId = WorkspaceId(42)))
 
         source.refresh()
 
-        assertEquals(43L, source.state.value!!.defaultWorkspaceId)
+        assertEquals(43L, source.state.value!!.defaultWorkspaceId?.value)
     }
 
     @Test
     fun aFailedMeKeepsTheStoredDefaultWorkspace() {
         server.enqueue(MockResponse.Builder().code(503).build())
-        val stored = MADRID_MONDAY_SETTINGS.copy(defaultWorkspaceId = 42)
+        val stored = MADRID_MONDAY_SETTINGS.copy(defaultWorkspaceId = WorkspaceId(42))
         val source = source(initial = stored)
 
         source.refresh()

@@ -3,17 +3,18 @@ package com.github.e0ipso.tokkl.calendar
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.api.ApiClientProvider
-import com.github.e0ipso.tokkl.cache.CachedProject
-import com.github.e0ipso.tokkl.cache.CachedTask
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.EntryWithSendState
 import com.github.e0ipso.tokkl.cache.HistoryWindow
-import com.github.e0ipso.tokkl.cache.fields
 import com.github.e0ipso.tokkl.cache.reconcileEntryRows
 import com.github.e0ipso.tokkl.cache.resolveEntryOverrides
 import com.github.e0ipso.tokkl.entryfields.TimeRange
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryWithSendState
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.Task
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.fields
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.AppEvent
 import com.github.e0ipso.tokkl.time.AccountTime
@@ -77,8 +78,8 @@ import kotlin.coroutines.CoroutineContext
  */
 class CalendarViewModel(
     private val entries: Flow<List<EntryWithSendState>>,
-    projects: Flow<List<CachedProject>>,
-    tasks: Flow<List<CachedTask>>,
+    projects: Flow<List<Project>>,
+    tasks: Flow<List<Task>>,
     private val accountSettings: StateFlow<AccountSettings?>,
     private val changes: EntryChanges,
     private val client: ApiClientProvider,
@@ -86,7 +87,7 @@ class CalendarViewModel(
     private val io: CoroutineContext,
     private val clock: Clock,
     allDayOffered: Flow<Boolean>,
-    overrides: Flow<Map<Long, CachedTimeEntry?>>,
+    overrides: Flow<Map<EntryId, TimeEntry?>>,
     appEvents: Flow<AppEvent>,
 ) : ViewModel(scope) {
 
@@ -102,11 +103,11 @@ class CalendarViewModel(
      * refresh after it. [Edit.held] says whether the cache still held it when [state] last read
      * the cache. A load that starts once the cache no longer holds an entry replaces its copy.
      */
-    private val edited = MutableStateFlow<Map<Long, Edit>>(emptyMap())
+    private val edited = MutableStateFlow<Map<EntryId, Edit>>(emptyMap())
 
-    private val reconciliation = MutableStateFlow<Map<Long, CachedTimeEntry?>>(emptyMap())
+    private val reconciliation = MutableStateFlow<Map<EntryId, TimeEntry?>>(emptyMap())
 
-    fun reconcile(overrides: Map<Long, CachedTimeEntry?>) {
+    fun reconcile(overrides: Map<EntryId, TimeEntry?>) {
         val before = reconciliation.value
         val restored = overrides.filter { (id, entry) -> entry != null && before[id] != entry }.values.filterNotNull()
         // A response started before Undo must not replace its restored snapshot. Later loads
@@ -275,7 +276,7 @@ class CalendarViewModel(
      * The entry [id] as the server sent it for a week the phone does not keep, or null. The entry
      * form opens on this copy of an entry the cache lacks.
      */
-    fun serverEntry(id: Long): CachedTimeEntry? =
+    fun serverEntry(id: EntryId): TimeEntry? =
         loaded.value.values.firstNotNullOfOrNull { week -> week.entries.firstOrNull { it.id == id } }
             ?.let { edited.value[id]?.entry ?: it }
 
@@ -289,8 +290,8 @@ class CalendarViewModel(
         cached: List<EntryWithSendState>,
         weeks: Map<WeekSpan, ServerWeek>,
         time: AccountTime,
-        restored: Set<Long>,
-    ): Map<Long, Edit> {
+        restored: Set<EntryId>,
+    ): Map<EntryId, Edit> {
         val ids = weeks.values.flatMapTo(HashSet()) { week -> week.entries.map { it.id } } + restored
         val windowStart = HistoryWindow.endingToday(time).start
         val held = cached.filter { it.entry.id in ids }.associateBy { it.entry.id }
@@ -312,7 +313,7 @@ class CalendarViewModel(
      * so the entry form can open on it, as the web app's editor opens after a drag. A drag that
      * never grew makes nothing.
      */
-    fun create(day: LocalDate, fromMinute: Int, toMinute: Int, onCreated: (Long) -> Unit = {}) {
+    fun create(day: LocalDate, fromMinute: Int, toMinute: Int, onCreated: (EntryId) -> Unit = {}) {
         val settings = accountSettings.value ?: return
         val time = settings.time(clock) ?: return
         val workspaceId = settings.defaultWorkspaceId ?: return
@@ -368,12 +369,12 @@ class CalendarViewModel(
     private data class Choice(
         val day: LocalDate?,
         val weeks: Map<WeekSpan, ServerWeek>,
-        val overrides: Map<Long, CachedTimeEntry?>,
+        val overrides: Map<EntryId, TimeEntry?>,
         val allDayOffered: Boolean,
     )
 
     /** The copy of an entry changed on the phone, and whether the cache [held] it when last read. */
-    private data class Edit(val entry: CachedTimeEntry, val held: Boolean)
+    private data class Edit(val entry: TimeEntry, val held: Boolean)
 
     init {
         viewModelScope.launch { overrides.collect(::reconcile) }

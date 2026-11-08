@@ -1,7 +1,8 @@
 package com.github.e0ipso.tokkl.reminder
 
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.CurrentEntryIds
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.preferences.ReminderPreferences
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.SignOutPhase
@@ -19,7 +20,7 @@ import kotlin.coroutines.CoroutineContext
 
 /** Identity is id plus start to the second, as the web app's LongTimerReminder.tsx. */
 data class ReminderTimer(val id: Long, val start: Long, val due: Long, val handled: Boolean = false)
-data class ReminderInput(val running: CachedTimeEntry?, val preferences: ReminderPreferences)
+data class ReminderInput(val running: TimeEntry?, val preferences: ReminderPreferences)
 
 /** The signed-in account's running entry and reminder settings now. */
 fun interface ReminderInputs {
@@ -44,7 +45,7 @@ interface ReminderNotice {
 
 /** Stops the running entry with this id on the phone, and returns whether it did. */
 fun interface RunningEntryStop {
-    suspend fun stop(entryId: Long): Boolean
+    suspend fun stop(entryId: EntryId): Boolean
 }
 
 /**
@@ -52,7 +53,7 @@ fun interface RunningEntryStop {
  * offered for it now: without the server's timer API, or during a Pomodoro session.
  */
 fun interface ReminderPause {
-    suspend fun pause(entryId: Long): SurfaceTap.Request?
+    suspend fun pause(entryId: EntryId): SurfaceTap.Request?
 }
 
 /**
@@ -106,12 +107,12 @@ class ReminderSync(
         }
         val previous = timers.load()
         val same = previous != null && ids.currentId(
-            previous.id,
+            EntryId(previous.id),
         ) == entry.id && previous.start == entry.start.epochSecond
         val due = entry.start.epochSecond * 1000 + Duration.ofHours(
             input.preferences.clamped().hours.toLong(),
         ).toMillis()
-        val timer = if (same) previous.copy(due = due) else ReminderTimer(entry.id, entry.start.epochSecond, due)
+        val timer = if (same) previous.copy(due = due) else ReminderTimer(entry.id.value, entry.start.epochSecond, due)
         if (!same || previous.due != due) {
             delays.cancel()
             notice.remove()
@@ -125,7 +126,9 @@ class ReminderSync(
     /** A worker may arrive late, after cancellation, a start correction, sign-out or a switch. */
     suspend fun fire(id: Long, start: Long, due: Long): Unit = lock.withLock {
         val timer = update(inputs.latest()) ?: return@withLock
-        val same = timer.start == start && ids.currentId(id) == ids.currentId(timer.id) && !timer.handled
+        val same = timer.start == start && ids.currentId(
+            EntryId(id),
+        ) == ids.currentId(EntryId(timer.id)) && !timer.handled
         if (!same || timer.due != due) return@withLock
         // Persist first, so another process or a second delivery never posts it twice.
         timers.save(timer.copy(handled = true))
@@ -149,9 +152,14 @@ class ReminderSync(
         val request = lock.withLock {
             val input = inputs.latest()
             val entry = input.running ?: return null
-            if (entry.stop != null || entry.start.epochSecond != start || ids.currentId(id) != entry.id) return null
+            if (entry.stop != null || entry.start.epochSecond != start || ids.currentId(
+                    EntryId(id),
+                ) != entry.id
+            ) {
+                return null
+            }
             val timer = timers.load() ?: return null
-            if (timer.start != start || ids.currentId(timer.id) != entry.id) return null
+            if (timer.start != start || ids.currentId(EntryId(timer.id)) != entry.id) return null
             if (pauseTimer) {
                 pause.pause(entry.id) ?: return null
             } else {
@@ -165,7 +173,11 @@ class ReminderSync(
         if (result == TimerActionResult.Done) {
             lock.withLock {
                 // The server's paused state may have ended the reminder already.
-                timers.load()?.takeIf { it.start == start && ids.currentId(it.id) == ids.currentId(id) }?.let(::handled)
+                timers.load()?.takeIf {
+                    it.start == start && ids.currentId(
+                        EntryId(it.id),
+                    ) == ids.currentId(EntryId(id))
+                }?.let(::handled)
             }
         }
         return result

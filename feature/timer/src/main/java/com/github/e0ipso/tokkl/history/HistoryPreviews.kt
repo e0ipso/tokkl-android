@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.history
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.DayOfWeek
@@ -34,7 +35,7 @@ private fun entry(
     stop: String,
     unsent: Boolean = false,
 ) = HistoryEntry(
-    id = id,
+    id = EntryId(id),
     description = description,
     project = project,
     projectColor = color,

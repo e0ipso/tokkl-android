@@ -3,13 +3,17 @@ package com.github.e0ipso.tokkl.widget
 import com.github.e0ipso.tokkl.api.PhaseKind
 import com.github.e0ipso.tokkl.api.PhaseTransition
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
-import com.github.e0ipso.tokkl.cache.CachedProject
-import com.github.e0ipso.tokkl.cache.CachedTask
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.CurrentEntryCache
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.RunningCheckStart
 import com.github.e0ipso.tokkl.cache.RunningCheckWrites
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.Task
+import com.github.e0ipso.tokkl.model.TaskId
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
@@ -29,9 +33,9 @@ import java.time.ZoneOffset
 class PomodoroWidgetStateTest {
     private val at = Instant.parse("2026-10-29T08:00:00Z")
     private val account = "account-a"
-    private val fields = EntryFields("Build widget", 7, 9, listOf("android", "focus"), true)
-    private val project = CachedProject(7, 1, null, "Tokkl", "#06aaf5", true, true)
-    private val task = CachedTask(9, 1, 7, "Widget", true)
+    private val fields = EntryFields("Build widget", ProjectId(7), TaskId(9), listOf("android", "focus"), true)
+    private val project = Project(ProjectId(7), WorkspaceId(1), null, "Tokkl", "#06aaf5", true, true)
+    private val task = Task(TaskId(9), WorkspaceId(1), ProjectId(7), "Widget", true)
     private val serverEntry = ServerTimeEntry(
         id = 42,
         workspaceId = 1,
@@ -42,10 +46,18 @@ class PomodoroWidgetStateTest {
         billable = true,
         tags = fields.tags,
     )
-    private val session = ServerTimerStates.session(42, at)
+    private val session = ServerTimerStates.session(EntryId(42), at)
     private val held = ServerTimerStates.held(17, at, pomodoro = session, offset = Duration.ofSeconds(120))
         .let { it.copy(state = it.state.copy(runningEntry = serverEntry)) }
-    private val remembered = RememberedPomodoroFields(account, 1, fields.description, 7, 9, fields.tags, true)
+    private val remembered = RememberedPomodoroFields(
+        account,
+        WorkspaceId(1),
+        fields.description,
+        ProjectId(7),
+        TaskId(9),
+        fields.tags,
+        true,
+    )
 
     private fun state(
         held: HeldTimerState? = this.held,
@@ -54,11 +66,16 @@ class PomodoroWidgetStateTest {
         available: Boolean = true,
         remembered: RememberedPomodoroFields? = this.remembered,
         defaults: PomodoroDefaults = PomodoroDefaults.DEFAULT,
-        projects: List<CachedProject> = listOf(project),
-        tasks: List<CachedTask> = listOf(task),
+        projects: List<Project> = listOf(project),
+        tasks: List<Task> = listOf(task),
         now: Instant = at,
         ringing: PomodoroPhaseKey? = null,
-    ) = pomodoroWidgetState(workspace, account, available, held, defaults, remembered, projects, tasks, now, ringing)
+    ) = pomodoroWidgetState(
+        workspace?.let(
+            ::WorkspaceId,
+        ),
+        account, available, held, defaults, remembered, projects, tasks, now, ringing,
+    )
 
     @Test fun noAccountAndUnsupportedNeverExposeHeldFields() {
         assertEquals(PomodoroWidgetState.NoAccount, state(account = null))
@@ -70,7 +87,7 @@ class PomodoroWidgetStateTest {
         val defaults = PomodoroDefaults(45, 8, 20, 3)
         val idle = state(held = null, workspace = 99, defaults = defaults) as PomodoroWidgetState.Idle
         assertEquals(defaults, idle.defaults)
-        assertEquals(1L, idle.entry.workspaceId)
+        assertEquals(WorkspaceId(1), idle.entry.workspaceId)
         assertEquals(fields, idle.entry.fields)
         assertEquals("Tokkl", idle.entry.project)
         assertEquals("#06aaf5", idle.entry.projectColor)
@@ -81,7 +98,7 @@ class PomodoroWidgetStateTest {
         for (last in listOf(null, remembered.copy(account = "retired"))) {
             val idle = state(held = null, remembered = last, workspace = 99) as PomodoroWidgetState.Idle
             assertEquals(EntryFields(), idle.entry.fields)
-            assertEquals(99L, idle.entry.workspaceId)
+            assertEquals(WorkspaceId(99), idle.entry.workspaceId)
         }
     }
 
@@ -145,8 +162,8 @@ class PomodoroWidgetStateTest {
 
     @Test fun catalogLabelsAreScopedToTheEntryWorkspace() {
         val active = state(
-            projects = listOf(project.copy(workspaceId = 2)),
-            tasks = listOf(task.copy(workspaceId = 2)),
+            projects = listOf(project.copy(workspaceId = WorkspaceId(2))),
+            tasks = listOf(task.copy(workspaceId = WorkspaceId(2))),
         ) as PomodoroWidgetState.Active
         assertNull(active.entry.project)
         assertNull(active.entry.projectColor)
@@ -197,7 +214,7 @@ class PomodoroWidgetStateTest {
         var disk: String? = null
         val cache = object : CurrentEntryCache {
             override fun runningCheckStart() = RunningCheckStart(emptyList())
-            override fun checkedRunning(before: RunningCheckStart, server: CachedTimeEntry?) = RunningCheckWrites()
+            override fun checkedRunning(before: RunningCheckStart, server: TimeEntry?) = RunningCheckWrites()
         }
         val source = TimerStateSource(
             initial = null,

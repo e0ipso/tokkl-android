@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.catalog
 
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.junit.Assert.assertEquals
@@ -23,10 +24,12 @@ class CatalogModelTest {
     private var loads = 0
 
     private val repository = object : CatalogRepository<List<String>> {
-        override suspend fun workspace(stored: Long?): ApiResult<Long> = ApiResult.Success(checkNotNull(stored))
+        override suspend fun workspace(stored: WorkspaceId?): ApiResult<WorkspaceId> = ApiResult.Success(
+            checkNotNull(stored),
+        )
 
-        override suspend fun load(workspace: Long): ApiResult<List<String>> {
-            assertEquals(7L, workspace)
+        override suspend fun load(workspace: WorkspaceId): ApiResult<List<String>> {
+            assertEquals(WorkspaceId(7), workspace)
             loads++
             return server?.let {
                 ApiResult.Success(
@@ -38,7 +41,7 @@ class CatalogModelTest {
 
     private val model = CatalogModel<List<String>, String>(
         repository = repository,
-        workspaceId = { 7L },
+        workspaceId = { WorkspaceId(7) },
         refreshCache = {},
         scope = CoroutineScope(Dispatchers.Unconfined),
         io = Dispatchers.Unconfined,

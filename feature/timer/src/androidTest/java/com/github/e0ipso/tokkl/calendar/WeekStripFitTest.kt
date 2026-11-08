@@ -33,6 +33,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
 import com.github.e0ipso.tokkl.feature.timer.R
+import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.DurationFormat
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
@@ -287,7 +288,7 @@ class WeekStripFitTest {
         const val COLOUR_TOLERANCE = 0.06f
 
         fun entry(id: Long, description: String, start: String, stop: String) = CalendarEntry(
-            id = id,
+            id = EntryId(id),
             description = description,
             project = null,
             projectColor = null,

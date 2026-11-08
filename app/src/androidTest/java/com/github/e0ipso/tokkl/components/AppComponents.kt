@@ -17,6 +17,7 @@ import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.BackgroundSendRuns
+import com.github.e0ipso.tokkl.cache.CacheDatabase
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.cache.ChangeSender
 import com.github.e0ipso.tokkl.cache.RunningCheck
@@ -72,6 +73,7 @@ import java.time.Clock
 private inline fun <reified T : Any> component(qualifier: Qualifier? = null): T = GlobalContext.get().get(qualifier)
 
 val TokklApplication.cache: AccountCache get() = component()
+val TokklApplication.cacheDatabase: CacheDatabase get() = component()
 val TokklApplication.changes: ChangeQueue get() = component()
 val TokklApplication.sender: ChangeSender get() = component()
 val TokklApplication.accountSettings: AccountSettingsSource get() = component()

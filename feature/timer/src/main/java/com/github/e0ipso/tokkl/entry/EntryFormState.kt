@@ -1,8 +1,9 @@
 package com.github.e0ipso.tokkl.entry
 
 import androidx.compose.runtime.Immutable
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.picker.Picked
 import java.time.LocalDate
 
@@ -82,7 +83,7 @@ sealed interface EntryFormState {
      */
     data class Open(
         val editing: Boolean,
-        val workspaceId: Long?,
+        val workspaceId: WorkspaceId?,
         val fields: EntryFields,
         val labels: EntryLabels,
         val original: Picked,

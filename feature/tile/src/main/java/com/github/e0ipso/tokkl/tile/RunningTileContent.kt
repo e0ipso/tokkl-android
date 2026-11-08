@@ -1,7 +1,7 @@
 package com.github.e0ipso.tokkl.tile
 
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges
+import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.timerstate.SurfaceTap
 import com.github.e0ipso.tokkl.timerstate.TimerControls
 import com.github.e0ipso.tokkl.timerstate.TimerSurfaceAction
@@ -20,7 +20,7 @@ sealed interface RunningTileContent {
      * A timer runs: the tile is active, and a tap stops [entry], as [target] shows it, which ends
      * a pause chain.
      */
-    data class Running(val entry: CachedTimeEntry, val target: TimerTarget) : RunningTileContent
+    data class Running(val entry: TimeEntry, val target: TimerTarget) : RunningTileContent
 
     /**
      * The timer is paused (docs/PRD.md T1): the tile is inactive, says so, and a tap resumes
@@ -29,14 +29,14 @@ sealed interface RunningTileContent {
     data class Paused(val description: String, val target: TimerTarget) : RunningTileContent
 
     /** No timer runs: the tile is inactive, and a tap continues [last], the stopped entry that started last. */
-    data class Continue(val last: CachedTimeEntry) : RunningTileContent
+    data class Continue(val last: TimeEntry) : RunningTileContent
 
     /** No timer runs and no entry is cached to continue, as after sign-out: the tile is unavailable. */
     data object Nothing : RunningTileContent
 }
 
 /** The tile for what the timer [controls] show, a paused timer too, and the cache's [entries]. */
-fun runningTileContent(controls: TimerControls, entries: List<CachedTimeEntry>): RunningTileContent = when (controls) {
+fun runningTileContent(controls: TimerControls, entries: List<TimeEntry>): RunningTileContent = when (controls) {
     is TimerControls.Running -> RunningTileContent.Running(controls.entry, controls.target)
 
     is TimerControls.Paused -> RunningTileContent.Paused(controls.fields.description, controls.target)

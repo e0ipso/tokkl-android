@@ -2,16 +2,21 @@ package com.github.e0ipso.tokkl.history
 
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.cache.CachedFavorite
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.ChangeSender.UndoOutcome
 import com.github.e0ipso.tokkl.cache.EntryChanges
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.EntryWithSendState
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.entryfields.SplitProblem
 import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
 import com.github.e0ipso.tokkl.favorites.MAX_FAVORITES
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryWithSendState
+import com.github.e0ipso.tokkl.model.Favorite
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.TagId
+import com.github.e0ipso.tokkl.model.TaskId
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.platform.MainDispatcherRule
 import com.github.e0ipso.tokkl.session.AccountSettings
@@ -75,10 +80,10 @@ class EntryActionsViewModelTest {
     fun withRestoreADeleteGoesAtOnceAndOffersUndo() {
         val model = model(canRestore = true)
 
-        onMain { model.delete(ENTRY) }
+        onMain { model.delete(EntryId(ENTRY)) }
 
         val notice = awaitNotice(model) { it is EntryNotice.Deleted } as EntryNotice.Deleted
-        assertEquals(ENTRY to true, notice.entryId to notice.undo)
+        assertEquals(EntryId(ENTRY) to true, notice.entryId to notice.undo)
         assertNull("nothing to confirm", model.state.value.confirmDelete)
         assertEquals(listOf("delete $ENTRY"), calls)
     }
@@ -87,15 +92,15 @@ class EntryActionsViewModelTest {
     fun withoutRestoreADeleteAsksFirstAndOffersNoUndo() {
         val model = model(canRestore = false)
 
-        onMain { model.delete(ENTRY) }
+        onMain { model.delete(EntryId(ENTRY)) }
 
-        assertEquals(EntryActionsState(confirmDelete = ENTRY), model.state.value)
+        assertEquals(EntryActionsState(confirmDelete = EntryId(ENTRY)), model.state.value)
         assertEquals("nothing deleted before the answer", emptyList<String>(), calls)
 
         onMain { model.confirmDelete() }
 
         val notice = awaitNotice(model) { it is EntryNotice.Deleted } as EntryNotice.Deleted
-        assertEquals(ENTRY to false, notice.entryId to notice.undo)
+        assertEquals(EntryId(ENTRY) to false, notice.entryId to notice.undo)
         assertNull(model.state.value.confirmDelete)
         assertEquals(listOf("delete $ENTRY"), calls)
     }
@@ -105,7 +110,7 @@ class EntryActionsViewModelTest {
         val model = model(canRestore = false)
 
         onMain {
-            model.delete(ENTRY)
+            model.delete(EntryId(ENTRY))
             model.cancelDelete()
             model.confirmDelete()
         }
@@ -119,7 +124,7 @@ class EntryActionsViewModelTest {
         cached = false
         val model = model(canRestore = true)
 
-        onMain { model.delete(ENTRY) }
+        onMain { model.delete(EntryId(ENTRY)) }
 
         awaitCalls(1)
         onMain {}
@@ -132,10 +137,10 @@ class EntryActionsViewModelTest {
             calls.clear()
             undoOutcome = outcome
             val model = model(canRestore = true)
-            onMain { model.delete(ENTRY) }
+            onMain { model.delete(EntryId(ENTRY)) }
             awaitNotice(model) { it is EntryNotice.Deleted }
 
-            onMain { model.undo(ENTRY) }
+            onMain { model.undo(EntryId(ENTRY)) }
 
             awaitCalls(2)
             onMain {}
@@ -149,11 +154,11 @@ class EntryActionsViewModelTest {
         undoOutcome = UndoOutcome.NeedsServer
         val model = model(canRestore = true)
 
-        onMain { model.undo(ENTRY) }
+        onMain { model.undo(EntryId(ENTRY)) }
         val first = awaitNotice(model) { it is EntryNotice.UndoNeedsServer } as EntryNotice.UndoNeedsServer
-        assertEquals(ENTRY, first.entryId)
+        assertEquals(EntryId(ENTRY), first.entryId)
 
-        onMain { model.undo(ENTRY) }
+        onMain { model.undo(EntryId(ENTRY)) }
         val second = awaitNotice(model) { it is EntryNotice.UndoNeedsServer && it != first }
 
         assertEquals("the same message shows again, as a new one", first.copy(serial = second.serial), second)
@@ -165,7 +170,7 @@ class EntryActionsViewModelTest {
         undoOutcome = UndoOutcome.Failed(404)
         val model = model(canRestore = true)
 
-        onMain { model.undo(ENTRY) }
+        onMain { model.undo(EntryId(ENTRY)) }
 
         val notice = awaitNotice(model) { it is EntryNotice.UndoFailed } as EntryNotice.UndoFailed
         assertEquals(404, notice.status)
@@ -174,10 +179,10 @@ class EntryActionsViewModelTest {
     @Test
     fun aDismissedMessageGoesAndALaterOneStays() {
         val model = model(canRestore = true)
-        onMain { model.delete(ENTRY) }
+        onMain { model.delete(EntryId(ENTRY)) }
         val first = awaitNotice(model) { it is EntryNotice.Deleted }
-        onMain { model.delete(OTHER) }
-        val second = awaitNotice(model) { it is EntryNotice.Deleted && it.entryId == OTHER }
+        onMain { model.delete(EntryId(OTHER)) }
+        val second = awaitNotice(model) { it is EntryNotice.Deleted && it.entryId.value == OTHER }
 
         onMain { model.noticeDone(first) }
         assertEquals("a message that went already leaves the new one", second, model.state.value.notice)
@@ -195,8 +200,8 @@ class EntryActionsViewModelTest {
         awaitNotice(model) { it is EntryNotice.Duplicated }
         val fields = EntryFields(
             description = "Code review",
-            projectId = 3,
-            taskId = 4,
+            projectId = ProjectId(3),
+            taskId = TaskId(4),
             tags = listOf("review", "remote"),
             billable = true,
         )
@@ -213,7 +218,7 @@ class EntryActionsViewModelTest {
 
         onMain {
             model.duplicate(RUNNING.id)
-            model.duplicate(DROPPED)
+            model.duplicate(EntryId(DROPPED))
         }
         onMain {}
 
@@ -237,8 +242,8 @@ class EntryActionsViewModelTest {
         awaitNotice(model) { it is EntryNotice.Duplicated }
         val fields = EntryFields(
             description = "Code review",
-            projectId = 3,
-            taskId = 4,
+            projectId = ProjectId(3),
+            taskId = TaskId(4),
             tags = listOf("review", "remote"),
             billable = true,
         )
@@ -304,8 +309,8 @@ class EntryActionsViewModelTest {
         assertNull("the dialog closes", model.state.value.split)
         val fields = EntryFields(
             description = "Code review",
-            projectId = 3,
-            taskId = 4,
+            projectId = ProjectId(3),
+            taskId = TaskId(4),
             tags = listOf("review", "remote"),
             billable = true,
         )
@@ -349,7 +354,7 @@ class EntryActionsViewModelTest {
 
         onMain {
             model.split(RUNNING.id)
-            model.split(DROPPED)
+            model.split(EntryId(DROPPED))
         }
         onMain {}
 
@@ -381,8 +386,8 @@ class EntryActionsViewModelTest {
         awaitNotice(model) { it is EntryNotice.Pinned }
         val fields = EntryFields(
             description = "Code review",
-            projectId = 3,
-            taskId = 4,
+            projectId = ProjectId(3),
+            taskId = TaskId(4),
             tags = listOf("review", "remote"),
             billable = true,
         )
@@ -439,7 +444,7 @@ class EntryActionsViewModelTest {
         val favorites = favorites(listOf(PINNED))
         val model = model(canRestore = true)
 
-        onMain { model.pin(DROPPED, favorites, offline = false) }
+        onMain { model.pin(EntryId(DROPPED), favorites, offline = false) }
         // A notice after it shows that the pin of the dropped entry had its turn on the main thread.
         onMain { model.pin(STOPPED.id, favorites, offline = true) }
 
@@ -450,7 +455,7 @@ class EntryActionsViewModelTest {
     }
 
     /** Favorites that hold [cachedFavorites] and save to [saved], shown as the Timer page shows them. */
-    private fun favorites(cachedFavorites: List<CachedFavorite>): FavoritesViewModel {
+    private fun favorites(cachedFavorites: List<Favorite>): FavoritesViewModel {
         val cachedFlow = MutableStateFlow(cachedFavorites)
         val model = FavoritesViewModel(
             favorites = cachedFlow,
@@ -462,7 +467,7 @@ class EntryActionsViewModelTest {
                 favoritesAnswer.also { answer ->
                     if (answer is ApiResult.Success) {
                         cachedFlow.value = list.mapIndexed { at, fields ->
-                            CachedFavorite(
+                            Favorite(
                                 at,
                                 fields.description,
                                 fields.projectId,
@@ -489,7 +494,7 @@ class EntryActionsViewModelTest {
         return model
     }
 
-    private fun CachedFavorite.fields() = EntryFields(description, projectId, taskId, tags, billable)
+    private fun Favorite.fields() = EntryFields(description, projectId, taskId, tags, billable)
 
     private fun awaitSplit(model: EntryActionsViewModel): SplitDialog = awaitState(model) { it.split != null }.split!!
 
@@ -539,30 +544,32 @@ class EntryActionsViewModelTest {
     }
 
     private inner class FakeChanges : EntryChanges {
-        override suspend fun delete(entryId: Long): Boolean {
+        override suspend fun delete(entryId: EntryId): Boolean {
             calls += "delete $entryId"
             return cached
         }
 
-        override suspend fun start(workspaceId: Long, fields: EntryFields): Long = throw AssertionError(
+        override suspend fun start(workspaceId: WorkspaceId, fields: EntryFields): EntryId = throw AssertionError(
             "no timer starts",
         )
 
-        override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean = throw AssertionError("no timer stops")
+        override suspend fun stop(entryId: EntryId, fields: EntryFields?): Boolean = throw AssertionError(
+            "no timer stops",
+        )
 
         override suspend fun create(
-            workspaceId: Long,
+            workspaceId: WorkspaceId,
             fields: EntryFields,
             start: Instant,
             stop: Instant,
             noTimeDay: LocalDate?,
-        ): Long {
+        ): EntryId {
             calls += "create $workspaceId $fields $start $stop" + (noTimeDay?.let { " noTimeDay=$it" } ?: "")
-            return -1
+            return EntryId(-1)
         }
 
         override suspend fun update(
-            entryId: Long,
+            entryId: EntryId,
             fields: EntryFields,
             start: Instant,
             stop: Instant?,
@@ -581,31 +588,31 @@ class EntryActionsViewModelTest {
         const val DROPPED = 57L
 
         /** An entry with a change the server lacks: the copy takes its times as the cache holds them. */
-        val STOPPED = CachedTimeEntry(
-            id = 70,
-            workspaceId = 10,
-            projectId = 3,
-            taskId = 4,
+        val STOPPED = TimeEntry(
+            id = EntryId(70),
+            workspaceId = WorkspaceId(10),
+            projectId = ProjectId(3),
+            taskId = TaskId(4),
             description = "Code review",
             start = Instant.parse("2026-10-19T08:00:12.250Z"),
             stop = Instant.parse("2026-10-19T09:05:40.500Z"),
             billable = true,
             tags = listOf("review", "remote"),
-            tagIds = listOf(1, 2),
+            tagIds = listOf(TagId(1), TagId(2)),
         )
 
-        val RUNNING = STOPPED.copy(id = 71, stop = null)
+        val RUNNING = STOPPED.copy(id = EntryId(71), stop = null)
 
         /** A no-time entry on 19 October in Madrid: its start is local midnight, 22:00 UTC the day before. */
         val NO_TIME = STOPPED.copy(
-            id = 72,
+            id = EntryId(72),
             start = Instant.parse("2026-10-18T22:00:00Z"),
             stop = Instant.parse("2026-10-18T23:30:00Z"),
             allDay = true,
             day = LocalDate.of(2026, 10, 19),
         )
 
-        val PINNED = CachedFavorite(
+        val PINNED = Favorite(
             0,
             "Write the report",
             projectId = null,

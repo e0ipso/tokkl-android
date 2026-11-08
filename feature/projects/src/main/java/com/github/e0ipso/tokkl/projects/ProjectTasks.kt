@@ -44,6 +44,8 @@ import com.github.e0ipso.tokkl.catalog.DetailLine
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.catalog.problemText
 import com.github.e0ipso.tokkl.feature.projects.R
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.Task
 import com.github.e0ipso.tokkl.ui.CheckboxOptionRow
 import com.github.e0ipso.tokkl.ui.ErrorBanner
 import com.github.e0ipso.tokkl.ui.TokklButton
@@ -57,7 +59,7 @@ import com.github.e0ipso.tokkl.core.ui.R as UiR
  * request.
  */
 @Composable
-internal fun TaskListEffect(project: Long?, onOpen: (Long) -> Unit, onClose: () -> Unit) {
+internal fun TaskListEffect(project: ProjectId?, onOpen: (ProjectId) -> Unit, onClose: () -> Unit) {
     val activity = LocalActivity.current
     val opened by rememberUpdatedState(onOpen)
     val closed by rememberUpdatedState(onClose)
@@ -75,7 +77,7 @@ internal fun TaskListEffect(project: Long?, onOpen: (Long) -> Unit, onClose: () 
  * every action is off and the list says that changing tasks needs the server.
  */
 @Composable
-internal fun ProjectTasks(state: TasksState, project: Project, offline: Boolean, actions: TaskActions) {
+internal fun ProjectTasks(state: TasksState, project: ProjectDetails, offline: Boolean, actions: TaskActions) {
     val serverNeeded = offline || state.loadProblem == ServerProblem.Unreachable
     val canChange = state.canChange && !offline
     var newName by rememberSaveable(project.id) { mutableStateOf("") }
@@ -192,7 +194,7 @@ private fun NewTaskField(
  * can change.
  */
 @Composable
-private fun TaskRow(task: ProjectTask, canChange: Boolean, actions: TaskActions) {
+private fun TaskRow(task: Task, canChange: Boolean, actions: TaskActions) {
     CatalogListRow {
         Column(
             modifier = Modifier
@@ -228,7 +230,7 @@ private fun TaskRow(task: ProjectTask, canChange: Boolean, actions: TaskActions)
  */
 @Composable
 private fun TaskDialog(
-    task: ProjectTask,
+    task: Task,
     canSave: Boolean,
     problem: ServerProblem?,
     onSave: (name: String, done: Boolean) -> Unit,

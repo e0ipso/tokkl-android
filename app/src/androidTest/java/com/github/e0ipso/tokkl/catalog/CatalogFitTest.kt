@@ -17,7 +17,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
-import com.github.e0ipso.tokkl.cache.CachedTag
 import com.github.e0ipso.tokkl.catalog.CatalogSamples.CACHED_CLIENTS
 import com.github.e0ipso.tokkl.catalog.CatalogSamples.CLIENTS
 import com.github.e0ipso.tokkl.catalog.CatalogSamples.CLIENTS_LOADED
@@ -31,6 +30,9 @@ import com.github.e0ipso.tokkl.clients.ClientsActions
 import com.github.e0ipso.tokkl.clients.ClientsContent
 import com.github.e0ipso.tokkl.clients.ClientsOverlay
 import com.github.e0ipso.tokkl.feature.projects.R
+import com.github.e0ipso.tokkl.model.Tag
+import com.github.e0ipso.tokkl.model.TagId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.projects.ProjectForm
 import com.github.e0ipso.tokkl.projects.ProjectsActions
 import com.github.e0ipso.tokkl.projects.ProjectsContent
@@ -265,7 +267,7 @@ abstract class CatalogFitTest(private val fontScale: Float) {
 
     @Test
     fun tagsOffline() {
-        val cached = listOf(CachedTag(1, 7, "focus"), CachedTag(2, 7, "meeting"))
+        val cached = listOf(Tag(TagId(1), WorkspaceId(7), "focus"), Tag(TagId(2), WorkspaceId(7), "meeting"))
         show {
             TagsContent(
                 CatalogState(loadProblem = ServerProblem.Unreachable),

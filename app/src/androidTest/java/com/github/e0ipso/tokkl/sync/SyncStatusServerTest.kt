@@ -23,7 +23,6 @@ import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.cache.CacheDatabase
 import com.github.e0ipso.tokkl.cache.ChangeQueue
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.ServerSpans
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.changes
@@ -32,6 +31,9 @@ import com.github.e0ipso.tokkl.components.lastAnswer
 import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.feature.sync.R
 import com.github.e0ipso.tokkl.followNoTimerEvents
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -137,7 +139,7 @@ class SyncStatusServerTest {
             val start = Instant.now().minusSeconds(3600)
             runBlocking {
                 app.changes.create(
-                    account.workspaceId,
+                    WorkspaceId(account.workspaceId),
                     EntryFields(description = "Invalid draft"),
                     start,
                     start.plusSeconds(1000 * 3600),
@@ -184,7 +186,7 @@ class SyncStatusServerTest {
             assertTrue(
                 runBlocking {
                     app.changes.update(
-                        id,
+                        EntryId(id),
                         EntryFields(description = "Offline edit"),
                         start,
                         start.plusSeconds(1800),
@@ -228,7 +230,7 @@ class SyncStatusServerTest {
             )
             runBlocking {
                 quietQueue.create(
-                    workspace,
+                    WorkspaceId(workspace),
                     EntryFields(description = "Saved before restart"),
                     start,
                     start.plusSeconds(1800),
@@ -274,7 +276,7 @@ class SyncStatusServerTest {
             val start = Instant.now().minusSeconds(3600)
             runBlocking {
                 app.changes.create(
-                    workspace,
+                    WorkspaceId(workspace),
                     EntryFields(description = "Waiting for sign-in"),
                     start,
                     start.plusSeconds(1800),

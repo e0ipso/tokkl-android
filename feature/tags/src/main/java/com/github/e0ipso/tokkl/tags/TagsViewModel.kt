@@ -3,12 +3,14 @@ package com.github.e0ipso.tokkl.tags
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.github.e0ipso.tokkl.cache.CachedTag
 import com.github.e0ipso.tokkl.catalog.CatalogChange
 import com.github.e0ipso.tokkl.catalog.CatalogModel
 import com.github.e0ipso.tokkl.catalog.CatalogState
 import com.github.e0ipso.tokkl.catalog.PageEvents
 import com.github.e0ipso.tokkl.catalog.followTrips
+import com.github.e0ipso.tokkl.model.Tag
+import com.github.e0ipso.tokkl.model.TagId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.platform.whileShown
 import com.github.e0ipso.tokkl.session.AppEvent
 import com.github.e0ipso.tokkl.session.DefaultWorkspace
@@ -37,7 +39,7 @@ data class TagsData(val tags: List<Tag>) {
     /** With [tag] as the server sent it after a change, in its place in the order. */
     fun with(tag: Tag): TagsData = TagsData((without(tag.id).tags + tag).sortedForList())
 
-    fun without(id: Long): TagsData = TagsData(tags.filterNot { it.id == id })
+    fun without(id: TagId): TagsData = TagsData(tags.filterNot { it.id == id })
 }
 
 typealias TagsState = CatalogState<TagsData, TagsOverlay>
@@ -51,7 +53,7 @@ typealias TagsState = CatalogState<TagsData, TagsOverlay>
 data class TagsPageState(
     val catalog: TagsState = TagsState(),
     val offline: Boolean = false,
-    val cachedTags: List<CachedTag> = emptyList(),
+    val cachedTags: List<Tag> = emptyList(),
 )
 
 /**
@@ -70,7 +72,7 @@ class TagsViewModel(
     refreshCache: RefreshRequest,
     scope: CoroutineScope,
     io: CoroutineContext,
-    cachedTags: Flow<List<CachedTag>>,
+    cachedTags: Flow<List<Tag>>,
     offline: StateFlow<Boolean>,
     appEvents: Flow<AppEvent>,
 ) : ViewModel(scope),
@@ -100,7 +102,7 @@ class TagsViewModel(
         followTrips(appEvents, viewModelScope)
     }
 
-    fun workspace(): Long? = catalog.workspace()
+    fun workspace(): WorkspaceId? = catalog.workspace()
 
     override fun open() = catalog.open()
 
@@ -158,4 +160,4 @@ class TagsViewModel(
 
 /** By name, ignoring case, as Tokkl sorts them. */
 internal fun List<Tag>.sortedForList(): List<Tag> =
-    sortedWith(compareBy<Tag, String>(String.CASE_INSENSITIVE_ORDER) { it.name }.thenBy { it.id })
+    sortedWith(compareBy<Tag, String>(String.CASE_INSENSITIVE_ORDER) { it.name }.thenBy { it.id.value })

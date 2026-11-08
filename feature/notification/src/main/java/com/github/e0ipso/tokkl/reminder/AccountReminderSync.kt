@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.reminder
 import android.content.Context
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.ChangeQueue
+import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.preferences.ReminderSetting
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timerstate.SurfaceTap
@@ -30,7 +31,7 @@ internal fun accountReminderSync(
 ): ReminderSync {
     val notifier = ReminderNotifier(context)
 
-    suspend fun runningNow(entryId: Long) = (controls.current() as? TimerControls.Running)?.takeIf {
+    suspend fun runningNow(entryId: EntryId) = (controls.current() as? TimerControls.Running)?.takeIf {
         it.entry.id ==
             entryId
     }
@@ -42,7 +43,7 @@ internal fun accountReminderSync(
         delays = work,
         notice = object : ReminderNotice {
             override suspend fun post(timer: ReminderTimer) =
-                notifier.post(timer, pausable = runningNow(changes.currentId(timer.id))?.pausable == true)
+                notifier.post(timer, pausable = runningNow(changes.currentId(EntryId(timer.id)))?.pausable == true)
 
             override fun remove() = notifier.remove()
         },

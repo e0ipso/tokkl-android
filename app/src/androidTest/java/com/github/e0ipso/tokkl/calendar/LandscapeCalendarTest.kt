@@ -32,9 +32,11 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.accessibility.createEmptyComposeRule
 import com.github.e0ipso.tokkl.awaitText
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.feature.timer.R
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.navhost.SignedInFrame
 import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.topLevelPages
@@ -245,7 +247,7 @@ private fun CalendarPage() {
             timer = {
                 Column {
                     TimerBarContent(
-                        state = TimerState.Idle(EntryFields(), EntryLabels(), workspaceId = 1),
+                        state = TimerState.Idle(EntryFields(), EntryLabels(), workspaceId = WorkspaceId(1)),
                         elapsedSeconds = 0,
                         onDescriptionChange = {},
                         onDescriptionFinish = {},
@@ -311,7 +313,7 @@ private val WEEK = CalendarState.Shown(
 )
 
 private fun entry(id: Long, description: String, start: String, stop: String, allDay: Boolean = false) = CalendarEntry(
-    id = id,
+    id = EntryId(id),
     description = description,
     project = "Tokkl for Android",
     projectColor = "#0b83d9",
@@ -324,7 +326,7 @@ private fun entry(id: Long, description: String, start: String, stop: String, al
 )
 
 // Keep the real totals in every usual/large-font calendar positioning regression.
-private val TOTAL_ROWS = MutableStateFlow(emptyList<com.github.e0ipso.tokkl.cache.CachedTimeEntry>())
+private val TOTAL_ROWS = MutableStateFlow(emptyList<com.github.e0ipso.tokkl.model.TimeEntry>())
 private val TOTAL_SETTINGS = MutableStateFlow<AccountSettings?>(
     AccountSettings("UTC", DayOfWeek.MONDAY, null),
 )

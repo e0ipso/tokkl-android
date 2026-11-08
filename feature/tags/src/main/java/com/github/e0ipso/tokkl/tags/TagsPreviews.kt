@@ -2,6 +2,9 @@ package com.github.e0ipso.tokkl.tags
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import com.github.e0ipso.tokkl.model.Tag
+import com.github.e0ipso.tokkl.model.TagId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 
 // Design-time previews of the tags page, with sample tags.
@@ -11,10 +14,14 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 private fun TagsPreview() {
     TokklTheme {
         TagsContent(
-            state = TagsState(data = TagsData(listOf(Tag(1, 7, "call"), Tag(2, 7, "review"), Tag(3, 7, "travel")))),
+            state = TagsState(data = TagsData(listOf(tag(1, "call"), tag(2, "review"), tag(3, "travel")))),
             offline = false,
             cachedTags = emptyList(),
             actions = TagsActions(),
         )
     }
 }
+
+private fun tag(id: Long, name: String) = Tag(TagId(id), SAMPLE_WORKSPACE, name)
+
+private val SAMPLE_WORKSPACE = WorkspaceId(7)

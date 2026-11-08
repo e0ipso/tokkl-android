@@ -10,6 +10,7 @@ import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.capabilities.CapabilityCheck
+import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.time.SnappedSpan
 import com.github.e0ipso.tokkl.time.stopSpan
 import kotlinx.coroutines.CoroutineScope
@@ -1464,7 +1465,7 @@ class ChangeSenderTest {
         store.queue(ChangeKind.UPDATE, 54, TAP, stop = TAP.plusSeconds(60), description = "Other")
         store.queue(ChangeKind.DELETE, 55, TAP, stop = TAP.plusSeconds(90), description = "Deleted")
 
-        assertEquals(ChangeSender.UndoOutcome.Cancelled, run { sender.undoDelete(55) })
+        assertEquals(ChangeSender.UndoOutcome.Cancelled, run { sender.undoDelete(EntryId(55)) })
 
         assertEquals("no request", 0, server.requestCount)
         assertEquals("the other change stays queued", listOf(54L), store.changes.map { it.entryId })
@@ -1480,7 +1481,7 @@ class ChangeSenderTest {
         store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = TAP.plusSeconds(60), description = "Made offline")
         store.queue(ChangeKind.DELETE, LOCAL, TAP, stop = TAP.plusSeconds(60), description = "Made offline")
 
-        assertEquals(ChangeSender.UndoOutcome.Cancelled, run { sender.undoDelete(LOCAL) })
+        assertEquals(ChangeSender.UndoOutcome.Cancelled, run { sender.undoDelete(EntryId(LOCAL)) })
 
         assertEquals(0, server.requestCount)
         assertEquals(listOf(ChangeKind.CREATE), store.changes.map { it.kind })
@@ -1494,7 +1495,7 @@ class ChangeSenderTest {
         assertEquals(ChangeSender.Outcome.Empty(sent = 1), run { sender.drain() })
         server.enqueue(entry(55, "Deleted", stop = "2026-10-19T08:01:30+00:00"))
 
-        assertEquals(ChangeSender.UndoOutcome.Restored, run { sender.undoDelete(55) })
+        assertEquals(ChangeSender.UndoOutcome.Restored, run { sender.undoDelete(EntryId(55)) })
 
         val (delete, restore) = List(2) { server.takeRequest() }
         assertEquals("DELETE /api/v9/workspaces/7/time_entries/55", "${delete.method} ${delete.url.encodedPath}")
@@ -1517,7 +1518,7 @@ class ChangeSenderTest {
         assertEquals(ChangeSender.Outcome.Empty(sent = 2), run { sender.drain() })
         server.enqueue(entry(101, "Made offline", stop = "2026-10-19T08:01:00+00:00"))
 
-        assertEquals(ChangeSender.UndoOutcome.Restored, run { sender.undoDelete(LOCAL) })
+        assertEquals(ChangeSender.UndoOutcome.Restored, run { sender.undoDelete(EntryId(LOCAL)) })
 
         val restore = remainingRequests().last()
         assertEquals("POST /api/app/time_entries/101/restore", "${restore.method} ${restore.url.encodedPath}")
@@ -1534,7 +1535,7 @@ class ChangeSenderTest {
         assertTrue("the server may have deleted it", store.changes.single().maybeSent)
         server.enqueue(entry(55, "Deleted", stop = "2026-10-19T08:01:30+00:00"))
 
-        assertEquals(ChangeSender.UndoOutcome.Restored, run { sender.undoDelete(55) })
+        assertEquals(ChangeSender.UndoOutcome.Restored, run { sender.undoDelete(EntryId(55)) })
 
         val restore = remainingRequests().last()
         assertEquals("POST /api/app/time_entries/55/restore", "${restore.method} ${restore.url.encodedPath}")
@@ -1549,7 +1550,7 @@ class ChangeSenderTest {
         assertEquals(ChangeSender.Outcome.Empty(sent = 0), run { sender.drain() })
         assertFalse("a 4xx deleted nothing", store.changes.single().maybeSent)
 
-        assertEquals(ChangeSender.UndoOutcome.Cancelled, run { sender.undoDelete(55) })
+        assertEquals(ChangeSender.UndoOutcome.Cancelled, run { sender.undoDelete(EntryId(55)) })
 
         assertEquals("only the refused delete", 1, server.requestCount)
     }
@@ -1563,7 +1564,7 @@ class ChangeSenderTest {
             runBlocking {
                 assertEquals(
                     ChangeSender.UndoOutcome.Cancelled,
-                    sender.undoDelete(it.entryId),
+                    sender.undoDelete(EntryId(it.entryId)),
                 )
             }
         }
@@ -1585,15 +1586,15 @@ class ChangeSenderTest {
         server.enqueue(MockResponse.Builder().code(503).build())
         server.enqueue(MockResponse.Builder().code(429).build())
 
-        assertEquals("no network", ChangeSender.UndoOutcome.NeedsServer, run { sender.undoDelete(55) })
+        assertEquals("no network", ChangeSender.UndoOutcome.NeedsServer, run { sender.undoDelete(EntryId(55)) })
         assertEquals(
             "a proxy whose server is down",
             ChangeSender.UndoOutcome.NeedsServer,
-            run { sender.undoDelete(55) },
+            run { sender.undoDelete(EntryId(55)) },
         )
-        assertEquals("too many requests", ChangeSender.UndoOutcome.NeedsServer, run { sender.undoDelete(55) })
+        assertEquals("too many requests", ChangeSender.UndoOutcome.NeedsServer, run { sender.undoDelete(EntryId(55)) })
         signedIn = false
-        assertEquals("signed out", ChangeSender.UndoOutcome.NeedsServer, run { sender.undoDelete(55) })
+        assertEquals("signed out", ChangeSender.UndoOutcome.NeedsServer, run { sender.undoDelete(EntryId(55)) })
 
         assertTrue(store.restores.isEmpty())
     }
@@ -1610,8 +1611,8 @@ class ChangeSenderTest {
         )
         server.enqueue(MockResponse.Builder().code(403).build())
 
-        assertEquals(ChangeSender.UndoOutcome.Failed(404), run { sender.undoDelete(55) })
-        assertEquals(ChangeSender.UndoOutcome.Failed(403), run { sender.undoDelete(55) })
+        assertEquals(ChangeSender.UndoOutcome.Failed(404), run { sender.undoDelete(EntryId(55)) })
+        assertEquals(ChangeSender.UndoOutcome.Failed(403), run { sender.undoDelete(EntryId(55)) })
         assertTrue(store.restores.isEmpty())
     }
 
@@ -1621,7 +1622,7 @@ class ChangeSenderTest {
             MockResponse.Builder().code(200).addHeader("Content-Type", "application/json").body("[]").build(),
         )
 
-        assertEquals(ChangeSender.UndoOutcome.Restored, run { sender.undoDelete(55) })
+        assertEquals(ChangeSender.UndoOutcome.Restored, run { sender.undoDelete(EntryId(55)) })
 
         assertEquals(listOf(55L to null), store.restores)
     }
@@ -1638,17 +1639,17 @@ class ChangeSenderTest {
             clock = clock,
         )
         store.queue(ChangeKind.DELETE, 54, TAP, stop = TAP.plusSeconds(60), description = "Unsent")
-        assertEquals(ChangeSender.UndoOutcome.Cancelled, run { refreshing.undoDelete(54) })
+        assertEquals(ChangeSender.UndoOutcome.Cancelled, run { refreshing.undoDelete(EntryId(54)) })
         assertEquals(0, refreshes.get())
 
         server.enqueue(entry(55, "Deleted", stop = "2026-10-19T08:01:30+00:00"))
-        assertEquals(ChangeSender.UndoOutcome.Restored, run { refreshing.undoDelete(55) })
+        assertEquals(ChangeSender.UndoOutcome.Restored, run { refreshing.undoDelete(EntryId(55)) })
         assertEquals(1, refreshes.get())
     }
 
     @Test
     fun undoOfAnEntryMadeOnThePhoneThatNeitherQueueNorServerHasFails() = runTest {
-        assertEquals(ChangeSender.UndoOutcome.Failed(status = null), run { sender.undoDelete(LOCAL) })
+        assertEquals(ChangeSender.UndoOutcome.Failed(status = null), run { sender.undoDelete(EntryId(LOCAL)) })
         assertEquals(0, server.requestCount)
     }
 
@@ -1862,8 +1863,9 @@ class ChangeSenderTest {
 
         /** Takes a delete back as [RoomChangeStore] does, and keeps the entry it puts back for the test. */
         @Synchronized
-        override fun takeBackDelete(entryId: Long): TakenBack {
-            val id = if (entryId < 0) mapped.firstOrNull { it.first == entryId }?.second ?: entryId else entryId
+        override fun takeBackDelete(entryId: EntryId): TakenBack {
+            val id = entryId.local?.let { local -> mapped.firstOrNull { it.first == local.value }?.second }
+                ?: entryId.value
             val delete = changes.lastOrNull { it.entryId == id && it.kind == ChangeKind.DELETE }
             return when {
                 delete != null && !delete.maybeSent -> {

@@ -5,7 +5,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.github.e0ipso.tokkl.cache.ChangeKind
-import com.github.e0ipso.tokkl.cache.PendingChange
+import com.github.e0ipso.tokkl.cache.HeldChange
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.Clock
@@ -57,19 +60,20 @@ private val NOON: Clock = Clock.fixed(Instant.parse("2026-10-15T12:00:00Z"), Zon
 
 private val SETTINGS = AccountSettings("UTC", DayOfWeek.MONDAY, timeResolutionMinutes = null)
 
-private val SAMPLE_CHANGE = PendingChange(
+private val SAMPLE_CHANGE = HeldChange(
     sequence = 1,
     kind = ChangeKind.UPDATE,
-    entryId = 42,
-    workspaceId = 7,
-    projectId = null,
-    taskId = null,
-    description = "Sprint planning",
-    start = Instant.parse("2026-10-14T08:30:00Z"),
-    stop = Instant.parse("2026-10-14T12:00:00Z"),
-    billable = false,
-    tags = emptyList(),
-    tagIds = emptyList(),
-    held = true,
+    entry = TimeEntry(
+        id = EntryId(42),
+        workspaceId = WorkspaceId(7),
+        projectId = null,
+        taskId = null,
+        description = "Sprint planning",
+        start = Instant.parse("2026-10-14T08:30:00Z"),
+        stop = Instant.parse("2026-10-14T12:00:00Z"),
+        billable = false,
+        tags = emptyList(),
+        tagIds = emptyList(),
+    ),
     refusal = "Time entries can not be longer than 999 hours",
 )

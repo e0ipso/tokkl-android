@@ -9,7 +9,10 @@ import androidx.glance.action.actionParametersOf
 import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionRunCallback
 import com.github.e0ipso.tokkl.cache.ChangeQueue
-import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.TaskId
 import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.timernotice.showTimerActionFailure
@@ -118,13 +121,13 @@ fun resumeTimer(target: TimerTarget): Action = actionRunCallback<ResumeTimerActi
 private fun TimerTarget.toParameters(): ActionParameters = actionParametersOf(
     ACCOUNT to account,
     REVISION to revision,
-    ENTRY_ID to entryId,
+    ENTRY_ID to (entryId?.value ?: 0L),
 )
 
 /** The target [toParameters] put here. A widget drawn by an older version names no account, so it acts on nothing. */
 private fun ActionParameters.target(): TimerTarget = TimerTarget.server(
     revision = this[REVISION] ?: 0,
-    entryId = this[ENTRY_ID] ?: 0,
+    entryId = this[ENTRY_ID]?.takeIf { it != 0L }?.let(::EntryId),
     account = this[ACCOUNT].orEmpty(),
 )
 
@@ -135,8 +138,8 @@ private fun ActionParameters.target(): TimerTarget = TimerTarget.server(
 private fun EntryFields.toParameters(): ActionParameters {
     val pairs = buildList {
         add(DESCRIPTION to description)
-        projectId?.let { add(PROJECT_ID to it) }
-        taskId?.let { add(TASK_ID to it) }
+        projectId?.let { add(PROJECT_ID to it.value) }
+        taskId?.let { add(TASK_ID to it.value) }
         add(TAGS to tags.toTypedArray())
         add(BILLABLE to billable)
     }
@@ -145,8 +148,8 @@ private fun EntryFields.toParameters(): ActionParameters {
 
 private fun ActionParameters.fields(): EntryFields = EntryFields(
     description = this[DESCRIPTION].orEmpty(),
-    projectId = this[PROJECT_ID],
-    taskId = this[TASK_ID],
+    projectId = this[PROJECT_ID]?.let(::ProjectId),
+    taskId = this[TASK_ID]?.let(::TaskId),
     tags = this[TAGS]?.toList().orEmpty(),
     billable = this[BILLABLE] ?: false,
 )

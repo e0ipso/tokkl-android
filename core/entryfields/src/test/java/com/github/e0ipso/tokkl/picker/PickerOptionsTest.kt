@@ -1,10 +1,15 @@
 package com.github.e0ipso.tokkl.picker
 
 import androidx.compose.ui.graphics.toArgb
-import com.github.e0ipso.tokkl.cache.CachedClient
-import com.github.e0ipso.tokkl.cache.CachedProject
-import com.github.e0ipso.tokkl.cache.CachedTag
-import com.github.e0ipso.tokkl.cache.CachedTask
+import com.github.e0ipso.tokkl.model.Client
+import com.github.e0ipso.tokkl.model.ClientId
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.Tag
+import com.github.e0ipso.tokkl.model.TagId
+import com.github.e0ipso.tokkl.model.Task
+import com.github.e0ipso.tokkl.model.TaskId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -22,89 +27,95 @@ class PickerOptionsTest {
             project(ELSEWHERE, "Other workspace", client = null, workspace = 2),
         ),
         clients = listOf(
-            CachedClient(ACME, WORKSPACE, "Acme", archived = false),
-            CachedClient(BETA, WORKSPACE, "Beta", archived = true),
+            Client(ClientId(ACME), WorkspaceId(WORKSPACE), "Acme", archived = false),
+            Client(ClientId(BETA), WorkspaceId(WORKSPACE), "Beta", archived = true),
         ),
         tasks = listOf(
-            CachedTask(DESIGN, WORKSPACE, WEBSITE, "Design", active = true),
-            CachedTask(DROPPED, WORKSPACE, WEBSITE, "Dropped", active = false),
-            CachedTask(OLD_TASK, WORKSPACE, OLD_SITE, "Old task", active = false),
+            Task(TaskId(DESIGN), WorkspaceId(WORKSPACE), ProjectId(WEBSITE), "Design", active = true),
+            Task(TaskId(DROPPED), WorkspaceId(WORKSPACE), ProjectId(WEBSITE), "Dropped", active = false),
+            Task(TaskId(OLD_TASK), WorkspaceId(WORKSPACE), ProjectId(OLD_SITE), "Old task", active = false),
         ),
         tags = listOf(
-            CachedTag(1, WORKSPACE, "focus"),
-            CachedTag(2, WORKSPACE, "legacy"),
-            CachedTag(3, 2, "elsewhere"),
+            Tag(TagId(1), WorkspaceId(WORKSPACE), "focus"),
+            Tag(TagId(2), WorkspaceId(WORKSPACE), "legacy"),
+            Tag(TagId(3), WorkspaceId(2), "elsewhere"),
         ),
     )
 
     @Test
     fun archivedItemsTheEntryUsesStaySelectedWithTheirLabelAndNoOtherArchivedItemShows() {
-        val original = Picked(OLD_SITE, OLD_TASK, listOf("legacy"))
+        val original = Picked(ProjectId(OLD_SITE), TaskId(OLD_TASK), listOf("legacy"))
 
-        val options = pickerOptions(WORKSPACE, original, original, "", source)
+        val options = pickerOptions(WorkspaceId(WORKSPACE), original, original, "", source)
 
         assertEquals(listOf(null, "Acme"), options.groups.map { it.clientName })
-        assertEquals(listOf(INTERNAL), options.groups[0].projects.map { it.project.id })
+        assertEquals(listOf(INTERNAL), options.groups[0].projects.map { it.project.id.value })
         val acme = options.groups[1].projects
-        assertEquals("Retired is archived and unused", listOf(OLD_SITE, WEBSITE), acme.map { it.project.id })
+        assertEquals("Retired is archived and unused", listOf(OLD_SITE, WEBSITE), acme.map { it.project.id.value })
         val oldSite = acme[0]
         assertTrue(oldSite.selected && oldSite.archived)
         assertEquals(
             listOf(Triple(OLD_TASK, true, true)),
-            oldSite.tasks.map { Triple(it.task.id, it.selected, it.archived) },
+            oldSite.tasks.map { Triple(it.task.id.value, it.selected, it.archived) },
         )
-        assertEquals("Dropped is done and unused", listOf(DESIGN), acme[1].tasks.map { it.task.id })
+        assertEquals("Dropped is done and unused", listOf(DESIGN), acme[1].tasks.map { it.task.id.value })
         assertFalse(options.noProjectSelected)
         assertEquals(listOf(TagOption("focus", false, true), TagOption("legacy", true, true)), options.tags)
     }
 
     @Test
     fun anArchivedProjectStaysOnOfferAfterTheUserPicksAnotherOne() {
-        val original = Picked(OLD_SITE, null)
+        val original = Picked(ProjectId(OLD_SITE), null)
 
-        val options = pickerOptions(WORKSPACE, original, original.withProject(WEBSITE), "", source)
+        val options = pickerOptions(
+            WorkspaceId(WORKSPACE),
+            original,
+            original.withProject(ProjectId(WEBSITE)),
+            "",
+            source,
+        )
 
         val acme = options.groups.single { it.clientName == "Acme" }.projects
-        assertEquals(listOf(OLD_SITE to false, WEBSITE to true), acme.map { it.project.id to it.selected })
+        assertEquals(listOf(OLD_SITE to false, WEBSITE to true), acme.map { it.project.id.value to it.selected })
     }
 
     @Test
     fun searchMatchesProjectClientAndTaskNamesIgnoringCase() {
-        val byTask = pickerOptions(WORKSPACE, Picked(), Picked(), "  DES ", source)
+        val byTask = pickerOptions(WorkspaceId(WORKSPACE), Picked(), Picked(), "  DES ", source)
         assertEquals(listOf("Acme"), byTask.groups.map { it.clientName })
         assertEquals(
             listOf(WEBSITE to listOf(DESIGN)),
-            byTask.groups.single().projects.map { it.project.id to it.tasks.map { t -> t.task.id } },
+            byTask.groups.single().projects.map { it.project.id.value to it.tasks.map { t -> t.task.id.value } },
         )
         assertFalse("No project shows only without a search", byTask.noProject)
 
-        val byClient = pickerOptions(WORKSPACE, Picked(), Picked(), "acme", source)
-        assertEquals(listOf(WEBSITE), byClient.groups.single().projects.map { it.project.id })
+        val byClient = pickerOptions(WorkspaceId(WORKSPACE), Picked(), Picked(), "acme", source)
+        assertEquals(listOf(WEBSITE), byClient.groups.single().projects.map { it.project.id.value })
         assertEquals(
             "a matching project lists all its tasks",
             listOf(DESIGN),
-            byClient.groups.single().projects.single().tasks.map { it.task.id },
+            byClient.groups.single().projects.single().tasks.map { it.task.id.value },
         )
 
-        val none = pickerOptions(WORKSPACE, Picked(), Picked(), "zzz", source)
+        val none = pickerOptions(WorkspaceId(WORKSPACE), Picked(), Picked(), "zzz", source)
         assertTrue(none.groups.isEmpty())
     }
 
     @Test
     fun aTagTypedByNameIsOfferedAsNewAndKeptByName() {
-        val typed = pickerOptions(WORKSPACE, Picked(), Picked(), "client call", source)
+        val typed = pickerOptions(WorkspaceId(WORKSPACE), Picked(), Picked(), "client call", source)
         assertEquals("client call", typed.newTag)
         assertTrue(typed.tags.isEmpty())
 
         val picked = Picked().withTagToggled("client call")
-        val after = pickerOptions(WORKSPACE, Picked(), picked, "", source)
+        val after = pickerOptions(WorkspaceId(WORKSPACE), Picked(), picked, "", source)
         assertEquals(TagOption("client call", selected = true, cached = false), after.tags.last())
-        assertNull(pickerOptions(WORKSPACE, Picked(), picked, "Client Call", source).newTag)
+        assertNull(pickerOptions(WorkspaceId(WORKSPACE), Picked(), picked, "Client Call", source).newTag)
     }
 
     @Test
     fun anExistingTagIsNotOfferedAgainInAnotherCase() {
-        val options = pickerOptions(WORKSPACE, Picked(), Picked(), "FOCUS", source)
+        val options = pickerOptions(WorkspaceId(WORKSPACE), Picked(), Picked(), "FOCUS", source)
 
         assertNull(options.newTag)
         assertEquals(listOf("focus"), options.tags.map { it.name })
@@ -113,11 +124,11 @@ class PickerOptionsTest {
 
     @Test
     fun pickingATaskPicksItsProjectAndPickingAProjectDropsTheTask() {
-        val task = source.tasks.first { it.id == DESIGN }
+        val task = source.tasks.first { it.id.value == DESIGN }
 
         val withTask = Picked().withTask(task)
-        assertEquals(Picked(WEBSITE, DESIGN), withTask)
-        assertEquals(Picked(INTERNAL, null), withTask.withProject(INTERNAL))
+        assertEquals(Picked(ProjectId(WEBSITE), TaskId(DESIGN)), withTask)
+        assertEquals(Picked(ProjectId(INTERNAL), null), withTask.withProject(ProjectId(INTERNAL)))
         assertEquals(Picked(null, null), withTask.withProject(null))
     }
 
@@ -129,7 +140,15 @@ class PickerOptionsTest {
     }
 
     private fun project(id: Long, name: String, client: Long?, active: Boolean = true, workspace: Long = WORKSPACE) =
-        CachedProject(id, workspace, client, name, "#0b83d9", active, billable = false)
+        Project(
+            ProjectId(id),
+            WorkspaceId(workspace),
+            client?.let(::ClientId),
+            name,
+            "#0b83d9",
+            active,
+            billable = false,
+        )
 
     private companion object {
         const val WORKSPACE = 1L

@@ -1,8 +1,10 @@
 package com.github.e0ipso.tokkl.timer
 
 import androidx.compose.runtime.Immutable
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import java.time.Duration
@@ -22,7 +24,7 @@ sealed interface TimerState {
     data class Idle(
         val fields: EntryFields,
         val labels: EntryLabels,
-        val workspaceId: Long?,
+        val workspaceId: WorkspaceId?,
         val authoritative: Boolean = false,
     ) : TimerState
 
@@ -43,8 +45,8 @@ sealed interface TimerState {
      *   the server's clock offset for the clone, whose start the server set, and zero otherwise.
      */
     data class Running(
-        val entryId: Long?,
-        val workspaceId: Long,
+        val entryId: EntryId?,
+        val workspaceId: WorkspaceId,
         val start: Instant,
         val fields: EntryFields,
         val labels: EntryLabels,
@@ -64,7 +66,7 @@ sealed interface TimerState {
      * @property original the project, task and tags the chain keeps.
      */
     data class Paused(
-        val workspaceId: Long,
+        val workspaceId: WorkspaceId,
         val seconds: Long,
         val fields: EntryFields,
         val labels: EntryLabels,

@@ -8,6 +8,9 @@ import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.appApiClient
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.tokklApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -84,7 +87,7 @@ class CacheDatabaseMigrationTest {
                 clock = Clock.systemUTC(),
                 spans = ServerSpans.Unsnapped,
             )
-            assertTrue("the migrated file takes a queued stop", runBlocking { queue.stop(42) })
+            assertTrue("the migrated file takes a queued stop", runBlocking { queue.stop(EntryId(42)) })
             assertEquals(1, runBlocking { queue.unsentCount.first() })
             assertTrue(runBlocking { cache.timeEntriesWithSendState().first() }.single().unsent)
         } finally {
@@ -190,7 +193,7 @@ class CacheDatabaseMigrationTest {
             )
             val copy = runBlocking {
                 queue.create(
-                    7,
+                    WorkspaceId(7),
                     EntryFields(description = "From the server"),
                     START,
                     START.plusSeconds(1800),
@@ -199,7 +202,7 @@ class CacheDatabaseMigrationTest {
             assertEquals(
                 "a create queued now records the server's entry around its start",
                 listOf(42L),
-                database.changes().changesFor(copy).single().existingIds,
+                database.changes().changesFor(copy.value).single().existingIds,
             )
         } finally {
             database.close()
@@ -308,7 +311,7 @@ class CacheDatabaseMigrationTest {
                 clock = Clock.systemUTC(),
                 spans = ServerSpans.Unsnapped,
             )
-            assertTrue("the migrated file takes a Stop", runBlocking { queue.stop(-1) })
+            assertTrue("the migrated file takes a Stop", runBlocking { queue.stop(EntryId(-1)) })
             assertEquals(listOf(ChangeKind.CREATE, ChangeKind.STOP), database.changes().changesFor(-1).map { it.kind })
         } finally {
             database.close()
@@ -526,7 +529,7 @@ class CacheDatabaseMigrationTest {
                             onQueued = {},
                             clock = Clock.systemUTC(),
                             spans = ServerSpans.Unsnapped,
-                        ).undoShortStop(77)
+                        ).undoShortStop(EntryId(77))
                     },
                 )
                 assertEquals(listOf(ChangeKind.RESTORE), changes.changesFor(77).map { it.kind })

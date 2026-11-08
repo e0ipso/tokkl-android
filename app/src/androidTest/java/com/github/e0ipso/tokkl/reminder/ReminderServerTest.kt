@@ -18,7 +18,6 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TimerState
-import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.cache
@@ -30,6 +29,8 @@ import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.components.signOut
 import com.github.e0ipso.tokkl.components.storeSignIn
 import com.github.e0ipso.tokkl.feature.notification.R
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.RunningEntryIdentity
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.notification.action
 import com.github.e0ipso.tokkl.notification.stopAction
@@ -167,7 +168,7 @@ class ReminderServerTest {
         // NotificationManager processes cancellation asynchronously after the action.
         awaitNotificationGone()
         assertNull(notification())
-        assertEquals(id, runBlocking { app.cache.running.first() }!!.entry.id)
+        assertEquals(id, runBlocking { app.cache.running.first() }!!.entry.id.value)
         runBlocking { app.reminder.reconcile() }
         assertTrue(
             "confirmed timer adds no wakeup",
@@ -178,14 +179,14 @@ class ReminderServerTest {
         assertTrue(
             runBlocking {
                 app.changes.updateRunning(
-                    RunningEntryIdentity(id, old.workspaceId, old.start),
-                    com.github.e0ipso.tokkl.cache.EntryFields(description = "Corrected"),
+                    RunningEntryIdentity(EntryId(id), old.workspaceId, old.start),
+                    com.github.e0ipso.tokkl.model.EntryFields(description = "Corrected"),
                     old.start.minusSeconds(3600),
                 )
             },
         )
         val cached = runBlocking { app.cache.running.first() }!!.entry
-        assertEquals(id, cached.id)
+        assertEquals(id, cached.id.value)
         assertEquals(old.start.minusSeconds(3600), cached.start)
         assertNull(cached.stop)
         val corrected = fire()
@@ -204,7 +205,7 @@ class ReminderServerTest {
         val resumed = awaitWork { !it.state.isFinished }
         assertNotEquals(pending.id, resumed.id)
         signIn(NO_ROUTE)
-        assertTrue(runBlocking { app.changes.stop(id) })
+        assertTrue(runBlocking { app.changes.stop(EntryId(id)) })
         awaitFinished(resumed.id)
         assertNull(notification())
         runBlocking { app.reminder.fire(id, 0, 0) }
@@ -247,7 +248,7 @@ class ReminderServerTest {
             TimerActionToasts.offline,
         ) { send(reminder.action(R.string.notification_pause).actionIntent) }
         assertNotNull("the reminder stays for another try", notification())
-        assertEquals("the timer runs on", id, runBlocking { app.cache.running.first() }?.entry?.id)
+        assertEquals("the timer runs on", id, runBlocking { app.cache.running.first() }?.entry?.id?.value)
         assertEquals("Pause queues nothing", 0, runBlocking { app.changes.unsentCount.first() })
 
         signIn(TokklTestServer.url)

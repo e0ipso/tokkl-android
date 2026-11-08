@@ -2,11 +2,11 @@ package com.github.e0ipso.tokkl.shortcuts
 
 import android.content.Context
 import com.github.e0ipso.tokkl.cache.AccountCache
-import com.github.e0ipso.tokkl.cache.CachedFavorite
-import com.github.e0ipso.tokkl.cache.CachedProject
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.fields
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.Favorite
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.fields
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
@@ -33,8 +33,8 @@ class FavoriteNames(val untitled: String, val withProject: (name: String, projec
  */
 fun favoriteShortcuts(
     available: Boolean,
-    favorites: List<CachedFavorite>,
-    projects: List<CachedProject>,
+    favorites: List<Favorite>,
+    projects: List<Project>,
     limit: Int,
     names: FavoriteNames,
 ): List<FavoriteShortcut> {
@@ -46,13 +46,13 @@ fun favoriteShortcuts(
 }
 
 /** The favorite among [favorites] that the shortcut [id] starts, or null when the list has none. */
-fun favoriteForShortcut(id: String, favorites: List<CachedFavorite>): CachedFavorite? =
+fun favoriteForShortcut(id: String, favorites: List<Favorite>): Favorite? =
     favorites.firstOrNull { favoriteShortcutId(it.fields()) == id }
 
 /**
  * The name of the favorite with [fields]: the description, else the project, else Untitled, as TimerPage.tsx names it.
  */
-fun favoriteName(fields: EntryFields, projects: List<CachedProject>, names: FavoriteNames): String =
+fun favoriteName(fields: EntryFields, projects: List<Project>, names: FavoriteNames): String =
     fields.description.ifEmpty { projectName(fields, projects) ?: names.untitled }
 
 /** A SHA-256 hash of [fields], so the id the launcher keeps holds no description or name. */
@@ -68,7 +68,7 @@ fun favoriteShortcutId(fields: EntryFields): String {
     return ID_PREFIX + digest.joinToString("") { "%02x".format(it) }
 }
 
-private fun EntryFields.shortcut(projects: List<CachedProject>, names: FavoriteNames): FavoriteShortcut {
+private fun EntryFields.shortcut(projects: List<Project>, names: FavoriteNames): FavoriteShortcut {
     val name = favoriteName(this, projects, names)
     val project = projectName(this, projects)?.takeIf { description.isNotEmpty() }
     return FavoriteShortcut(
@@ -78,7 +78,7 @@ private fun EntryFields.shortcut(projects: List<CachedProject>, names: FavoriteN
     )
 }
 
-private fun projectName(fields: EntryFields, projects: List<CachedProject>): String? =
+private fun projectName(fields: EntryFields, projects: List<Project>): String? =
     fields.projectId?.let { id -> projects.firstOrNull { it.id == id }?.name }
 
 /** Each value with its length first, so no two lists of values give the same text. */

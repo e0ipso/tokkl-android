@@ -1,11 +1,14 @@
 package com.github.e0ipso.tokkl.history
 
 import androidx.compose.runtime.Immutable
-import com.github.e0ipso.tokkl.cache.CachedProject
-import com.github.e0ipso.tokkl.cache.CachedTask
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
-import com.github.e0ipso.tokkl.cache.EntryWithSendState
-import com.github.e0ipso.tokkl.cache.noTimeDay
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryWithSendState
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.Task
+import com.github.e0ipso.tokkl.model.TaskId
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.noTimeDay
 import com.github.e0ipso.tokkl.time.AccountTime
 import java.time.Instant
 import java.time.LocalDate
@@ -28,7 +31,7 @@ import java.time.LocalDate
  */
 @Immutable
 data class HistoryEntry(
-    val id: Long,
+    val id: EntryId,
     val description: String,
     val project: String?,
     val projectColor: String?,
@@ -39,8 +42,8 @@ data class HistoryEntry(
     val stop: Instant,
     val unsent: Boolean,
     val cached: Boolean = true,
-    val projectId: Long? = null,
-    val taskId: Long? = null,
+    val projectId: ProjectId? = null,
+    val taskId: TaskId? = null,
     val allDay: Boolean = false,
 ) {
     /** Whole seconds from [start] to [stop], as entrySeconds in the web app's lib/settings.ts. */
@@ -86,9 +89,9 @@ data class HistoryDay(
  */
 fun historyDays(
     cached: List<EntryWithSendState>,
-    older: List<CachedTimeEntry>,
-    projects: List<CachedProject>,
-    tasks: List<CachedTask>,
+    older: List<TimeEntry>,
+    projects: List<Project>,
+    tasks: List<Task>,
     time: AccountTime,
     collapse: Boolean = true,
     windowStart: LocalDate? = null,
@@ -96,7 +99,7 @@ fun historyDays(
     val cachedIds = cached.mapTo(HashSet()) { it.entry.id }
     // An entry edited between two pages can come in both; the later page has its newer values.
     val olderOnly = older.associateBy { it.id }.values.filter { it.id !in cachedIds }
-    val inWindow = { entry: CachedTimeEntry -> windowStart == null || entry.dayIn(time) >= windowStart }
+    val inWindow = { entry: TimeEntry -> windowStart == null || entry.dayIn(time) >= windowStart }
     val rows = cached.map {
         Row(
             it.entry,
@@ -136,19 +139,19 @@ fun historyDays(
 }
 
 /** An entry the history shows, from the phone's cache or from the older days. */
-private class Row(val entry: CachedTimeEntry, val unsent: Boolean, val cached: Boolean)
+private class Row(val entry: TimeEntry, val unsent: Boolean, val cached: Boolean)
 
 /** The day of an entry as the cache holds it: a no-time entry's stored day, else the day of its start. */
-private fun CachedTimeEntry.dayIn(time: AccountTime): LocalDate =
+private fun TimeEntry.dayIn(time: AccountTime): LocalDate =
     if (allDay) noTimeDay(time.zone) else time.local(start).toLocalDate()
 
 /** The entry as the history shows it, or null while it runs. */
-private fun CachedTimeEntry.shown(
+private fun TimeEntry.shown(
     unsent: Boolean,
     cached: Boolean,
     time: AccountTime,
-    projects: Map<Long, CachedProject>,
-    tasks: Map<Long, CachedTask>,
+    projects: Map<ProjectId, Project>,
+    tasks: Map<TaskId, Task>,
 ): HistoryEntry? {
     val stop = stop ?: return null
     // A no-time entry never goes through snapUnsent: its span is its day's midnight plus the snapped duration.
@@ -182,4 +185,4 @@ private fun CachedTimeEntry.shown(
     )
 }
 
-private val NEWEST_FIRST = compareByDescending<HistoryEntry> { it.start }.thenByDescending { it.id }
+private val NEWEST_FIRST = compareByDescending<HistoryEntry> { it.start }.thenByDescending { it.id.value }

@@ -2,12 +2,13 @@ package com.github.e0ipso.tokkl.timerstate
 
 import com.github.e0ipso.tokkl.api.DiscardedPomodoro
 import com.github.e0ipso.tokkl.api.TimerState
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.CurrentEntryCache
 import com.github.e0ipso.tokkl.cache.RunningCheckStart
 import com.github.e0ipso.tokkl.cache.RunningCheckWrites
-import com.github.e0ipso.tokkl.cache.toCached
+import com.github.e0ipso.tokkl.cache.toTimeEntry
 import com.github.e0ipso.tokkl.capabilities.ProbedTimerState
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.session.RefreshRequest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -170,9 +171,9 @@ class TimerStateSource(
      * running entry left the cache. Call it holding [lock].
      */
     private fun writeRunning(read: TimerStateRead, state: TimerState): Boolean {
-        val server: CachedTimeEntry? = state.runningEntry?.let { entry ->
+        val server: TimeEntry? = state.runningEntry?.let { entry ->
             // A running entry the phone cannot read leaves the cache as it is.
-            entry.toCached() ?: return false
+            entry.toTimeEntry() ?: return false
         }
         val since = recentWrites.filter { (number, _) -> number > read.written }.map { it.second }
         val writes = cache.checkedRunning(read.before.withWrites(since), server) ?: return false
@@ -199,7 +200,7 @@ private fun HeldTimerState.unshownDiscard(acknowledged: Long?): DiscardedPomodor
 /** These running entries as they would read had [writes] happened before them. */
 private fun RunningCheckStart.withWrites(writes: List<RunningCheckWrites>): RunningCheckStart {
     if (writes.isEmpty()) return this
-    val rows = LinkedHashMap<Long, CachedTimeEntry>()
+    val rows = LinkedHashMap<EntryId, TimeEntry>()
     running.forEach { rows[it.id] = it }
     for (write in writes) {
         write.delete.forEach(rows::remove)

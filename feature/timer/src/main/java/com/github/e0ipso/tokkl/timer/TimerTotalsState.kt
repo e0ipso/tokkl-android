@@ -1,7 +1,7 @@
 package com.github.e0ipso.tokkl.timer
 
 import androidx.compose.runtime.Immutable
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
+import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.timerstate.nextTotalsDelay
 import com.github.e0ipso.tokkl.timerstate.timerPeriodTotals
@@ -33,7 +33,7 @@ sealed interface TimerTotalsState {
  * at [now]. The pause chain's cumulative clock is not added, since its segments are rows already.
  * Null [entries] or [settings] have not been read yet.
  */
-fun timerTotalsAt(entries: List<CachedTimeEntry>?, settings: AccountSettings?, now: Instant): TimerTotalsState {
+fun timerTotalsAt(entries: List<TimeEntry>?, settings: AccountSettings?, now: Instant): TimerTotalsState {
     if (entries == null || settings == null) return TimerTotalsState.Hidden
     val totals = timerPeriodTotals(entries, settings, now) ?: return TimerTotalsState.UnknownZone(settings.timeZone)
     val text = totals.formatted(settings)
@@ -48,7 +48,7 @@ fun timerTotalsAt(entries: List<CachedTimeEntry>?, settings: AccountSettings?, n
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 fun timerTotals(
-    entries: Flow<List<CachedTimeEntry>>,
+    entries: Flow<List<TimeEntry>>,
     settings: Flow<AccountSettings?>,
     clock: Clock,
 ): Flow<TimerTotalsState> = combine(settings, entries) { account, rows -> account to rows }

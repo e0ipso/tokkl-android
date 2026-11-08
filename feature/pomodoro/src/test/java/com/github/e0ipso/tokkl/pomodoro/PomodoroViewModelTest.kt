@@ -1,10 +1,14 @@
 package com.github.e0ipso.tokkl.pomodoro
 
-import com.github.e0ipso.tokkl.cache.CachedProject
-import com.github.e0ipso.tokkl.cache.CachedTask
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.RunningEntryIdentity
+import com.github.e0ipso.tokkl.model.Task
+import com.github.e0ipso.tokkl.model.TaskId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
@@ -49,12 +53,18 @@ class PomodoroViewModelTest {
         val f = idle()
         val drawn = f.scope.launch { f.page.page.collect {} }
         f.picker.value = PickerSource(
-            projects = listOf(CachedProject(7, WORKSPACE, null, "Ops", "#d94182", active = true, billable = true)),
-            tasks = listOf(CachedTask(70, WORKSPACE, 7, "Triage", active = true)),
+            projects = listOf(
+                Project(ProjectId(7), WorkspaceId(WORKSPACE), null, "Ops", "#d94182", active = true, billable = true),
+            ),
+            tasks = listOf(Task(TaskId(70), WorkspaceId(WORKSPACE), ProjectId(7), "Triage", active = true)),
         )
-        f.page.pick(EntryFields(description = "Rota"), Picked(projectId = 7, taskId = 70), entryId = null)
+        f.page.pick(
+            EntryFields(description = "Rota"),
+            Picked(projectId = ProjectId(7), taskId = TaskId(70)),
+            entryId = null,
+        )
         assertEquals(
-            EntryFields(description = "Rota", projectId = 7, taskId = 70, billable = true),
+            EntryFields(description = "Rota", projectId = ProjectId(7), taskId = TaskId(70), billable = true),
             f.page.state.value.fields,
         )
         assertEquals(EntryLabels(project = "Ops", projectColor = "#d94182", task = "Triage"), f.page.page.value.labels)
@@ -188,10 +198,13 @@ class PomodoroViewModelTest {
     fun aPickOrBillableEditGoesToTheQueuedRunningEntryEditOfThePomodorosEntry() = runTest {
         val f = running()
         val shown = f.page.state.value.shown!!
-        f.page.editFields(EntryFields("Focused work", projectId = 9, billable = true), shown.entryId)!!.join()
+        f.page.editFields(
+            EntryFields("Focused work", projectId = ProjectId(9), billable = true),
+            shown.entryId,
+        )!!.join()
         val (identity, fields) = f.changes.updates.single()
-        assertEquals(RunningEntryIdentity(ENTRY, WORKSPACE, T0), identity)
-        assertEquals(EntryFields("Focused work", projectId = 9, billable = true), fields)
+        assertEquals(RunningEntryIdentity(EntryId(ENTRY), WorkspaceId(WORKSPACE), T0), identity)
+        assertEquals(EntryFields("Focused work", projectId = ProjectId(9), billable = true), fields)
         assertEquals(fields, f.page.state.value.fields)
         // No session request: the server carries the fields to the later pomodoros.
         assertTrue(f.server.calls.isEmpty())
@@ -221,7 +234,7 @@ class PomodoroViewModelTest {
     @Test
     fun anEditFromAPageDrawnForAnotherPomodoroChangesNothing() {
         val f = running()
-        assertNull(f.page.editFields(EntryFields("Stale"), entryId = ENTRY + 1))
+        assertNull(f.page.editFields(EntryFields("Stale"), entryId = EntryId(ENTRY + 1)))
         assertNull(f.page.editFields(EntryFields("Stale form edit"), entryId = null))
         assertEquals("Focused work", f.page.state.value.fields.description)
         assertTrue(f.changes.updates.isEmpty())

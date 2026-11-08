@@ -1,16 +1,18 @@
 package com.github.e0ipso.tokkl.entry
 
-import com.github.e0ipso.tokkl.cache.CachedProject
-import com.github.e0ipso.tokkl.cache.CachedTask
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.EntryWithSendState
-import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
-import com.github.e0ipso.tokkl.cache.fields
-import com.github.e0ipso.tokkl.cache.noTimeDay
 import com.github.e0ipso.tokkl.entryfields.entryLabels
 import com.github.e0ipso.tokkl.entryfields.picked
 import com.github.e0ipso.tokkl.entryfields.snappedSeconds
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryWithSendState
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.RunningEntryIdentity
+import com.github.e0ipso.tokkl.model.Task
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
+import com.github.e0ipso.tokkl.model.fields
+import com.github.e0ipso.tokkl.model.noTimeDay
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.AccountTime
@@ -78,8 +80,8 @@ internal sealed interface DraftTarget {
      * entry, which Delete uses when the cache no longer holds it.
      */
     data class Edit(
-        val entryId: Long,
-        val workspaceId: Long,
+        val entryId: EntryId,
+        val workspaceId: WorkspaceId,
         val start: Instant,
         val stop: Instant,
         val date: LocalDate,
@@ -87,7 +89,7 @@ internal sealed interface DraftTarget {
         val endText: String,
         val original: Picked,
         val onPhone: Boolean,
-        val snapshot: CachedTimeEntry,
+        val snapshot: TimeEntry,
     ) : DraftTarget
 }
 
@@ -115,7 +117,7 @@ internal fun newForm(time: AccountTime, date: LocalDate?, noTimes: Boolean): Ent
 
 /** The draft of the running segment [entry], captured as [identity]. */
 internal fun runningForm(
-    entry: CachedTimeEntry,
+    entry: TimeEntry,
     identity: RunningEntryIdentity,
     settings: AccountSettings,
     time: AccountTime,
@@ -170,7 +172,7 @@ internal fun editForm(
  * the server rounds it. The server keeps its start at midnight, so it has no times to show and
  * no span to predict. Its times open as empty texts, so times the user gives it count as typed.
  */
-internal fun noTimeForm(entry: CachedTimeEntry, stop: Instant, time: AccountTime, onPhone: Boolean): EntryDraft {
+internal fun noTimeForm(entry: TimeEntry, stop: Instant, time: AccountTime, onPhone: Boolean): EntryDraft {
     val date = entry.noTimeDay(time.zone)
     val duration = formatDuration(time.snapDuration(stop.epochSecond - entry.start.epochSecond))
     val fields = entry.fields()
@@ -194,8 +196,8 @@ internal fun noTimeForm(entry: CachedTimeEntry, stop: Instant, time: AccountTime
  * whether the server stores no-time entries.
  */
 internal fun EntryDraft.shown(
-    projects: List<CachedProject>,
-    tasks: List<CachedTask>,
+    projects: List<Project>,
+    tasks: List<Task>,
     settings: AccountSettings,
     time: AccountTime,
     allDay: Boolean,
@@ -229,7 +231,7 @@ internal fun EntryDraft.shown(
 }
 
 /** Where the draft saves: its entry's workspace, or the account's default for a manual entry. */
-internal fun EntryDraft.workspaceId(settings: AccountSettings): Long? = when (target) {
+internal fun EntryDraft.workspaceId(settings: AccountSettings): WorkspaceId? = when (target) {
     DraftTarget.New -> settings.defaultWorkspaceId
     is DraftTarget.Edit -> target.workspaceId
     is DraftTarget.Running -> target.identity.workspaceId

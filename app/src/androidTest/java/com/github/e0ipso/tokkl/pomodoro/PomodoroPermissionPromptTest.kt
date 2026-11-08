@@ -23,6 +23,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.feature.pomodoro.R
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
 import com.github.e0ipso.tokkl.notification.NotificationPermissionPrompt
 import com.github.e0ipso.tokkl.session.AccountSettings
@@ -59,7 +60,7 @@ class PomodoroPermissionPromptTest {
     private var page by mutableStateOf(
         PomodoroPageState(
             loading = false,
-            account = AccountSettings("Europe/Madrid", DayOfWeek.MONDAY, null, defaultWorkspaceId = 11),
+            account = AccountSettings("Europe/Madrid", DayOfWeek.MONDAY, null, defaultWorkspaceId = WorkspaceId(11)),
             notificationsDenied = true,
             alarmDenied = true,
             fullScreenDenied = true,

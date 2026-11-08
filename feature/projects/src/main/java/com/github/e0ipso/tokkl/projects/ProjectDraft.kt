@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.projects
 
 import androidx.annotation.StringRes
 import com.github.e0ipso.tokkl.feature.projects.R
+import com.github.e0ipso.tokkl.model.ClientId
 import java.math.BigDecimal
 import java.util.Locale
 
@@ -46,7 +47,7 @@ enum class ProjectField { NAME, COLOR, RATE, CURRENCY, ESTIMATE }
 data class ProjectDraft(
     val name: String,
     val color: String,
-    val clientId: Long?,
+    val clientId: ClientId?,
     val billable: Boolean,
     val rate: String,
     val currency: String,
@@ -91,7 +92,7 @@ data class ProjectDraft(
     companion object {
 
         /** The form for [project] as the server sent it, or for a new project in [newColor]. */
-        fun of(project: Project?, newColor: ProjectPalette): ProjectDraft = if (project == null) {
+        fun of(project: ProjectDetails?, newColor: ProjectPalette): ProjectDraft = if (project == null) {
             ProjectDraft(
                 "",
                 newColor.hex,

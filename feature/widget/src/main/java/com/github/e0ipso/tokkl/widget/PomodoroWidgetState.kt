@@ -2,10 +2,11 @@ package com.github.e0ipso.tokkl.widget
 
 import com.github.e0ipso.tokkl.api.ApiJson
 import com.github.e0ipso.tokkl.api.TimerPomodoro
-import com.github.e0ipso.tokkl.cache.CachedProject
-import com.github.e0ipso.tokkl.cache.CachedTask
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.entryfields.entryLabels
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.Task
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
@@ -38,7 +39,7 @@ sealed interface PomodoroWidgetState {
 
 /** Fields for Start and the labels for the last or active session's entry. */
 data class PomodoroWidgetEntry(
-    val workspaceId: Long,
+    val workspaceId: WorkspaceId,
     val fields: EntryFields,
     val project: String?,
     val projectColor: String?,
@@ -51,14 +52,14 @@ data class PomodoroWidgetEntry(
  * launcher ticks between emissions, so no polling or idle wakeup is needed.
  */
 fun pomodoroWidgetState(
-    workspaceId: Long?,
+    workspaceId: WorkspaceId?,
     account: String?,
     available: Boolean,
     held: HeldTimerState?,
     defaults: PomodoroDefaults,
     remembered: RememberedPomodoroFields?,
-    projects: List<CachedProject>,
-    tasks: List<CachedTask>,
+    projects: List<Project>,
+    tasks: List<Task>,
     deviceNow: Instant,
     ringing: PomodoroPhaseKey? = null,
 ): PomodoroWidgetState {

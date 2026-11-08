@@ -3,8 +3,8 @@ package com.github.e0ipso.tokkl.timer
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.entryfields.DescriptionSuggestions
+import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.platform.whileShown
 import com.github.e0ipso.tokkl.session.AccountSettings
@@ -42,7 +42,7 @@ data class TimerPageState(
  */
 class TimerPageViewModel(
     private val views: TimerViewChoice,
-    entries: Flow<List<CachedTimeEntry>>,
+    entries: Flow<List<TimeEntry>>,
     picker: Flow<PickerSource>,
     settings: StateFlow<AccountSettings?>,
     offline: StateFlow<Boolean>,

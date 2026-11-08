@@ -4,15 +4,16 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.cache.CachedFavorite
-import com.github.e0ipso.tokkl.cache.CachedProject
-import com.github.e0ipso.tokkl.cache.CachedTask
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.fields
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.catalog.toServerProblem
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.entryfields.entryLabels
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.Favorite
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.Task
+import com.github.e0ipso.tokkl.model.WorkspaceId
+import com.github.e0ipso.tokkl.model.fields
 import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.platform.whileShown
 import kotlinx.coroutines.CoroutineScope
@@ -42,7 +43,7 @@ data class TemplatesPageState(
     val favorites: FavoritesState = FavoritesState(),
     val picker: PickerSource = PickerSource(),
     val offline: Boolean = false,
-    val workspaceId: Long? = null,
+    val workspaceId: WorkspaceId? = null,
 )
 
 /** Why the last change to the favorites did not happen. */
@@ -91,16 +92,16 @@ data class FavoritesState(
  * @param workspaceId the account's default workspace, whose projects the templates page offers.
  */
 class FavoritesViewModel(
-    favorites: Flow<List<CachedFavorite>>,
-    projects: Flow<List<CachedProject>>,
-    tasks: Flow<List<CachedTask>>,
+    favorites: Flow<List<Favorite>>,
+    projects: Flow<List<Project>>,
+    tasks: Flow<List<Task>>,
     available: Flow<Boolean>,
     private val store: FavoritesStore,
     scope: CoroutineScope,
     private val io: CoroutineContext,
     picker: Flow<PickerSource>,
     offline: StateFlow<Boolean>,
-    workspaceId: Flow<Long?>,
+    workspaceId: Flow<WorkspaceId?>,
 ) : ViewModel(scope),
     TemplateAdder {
 

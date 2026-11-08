@@ -1,10 +1,12 @@
 package com.github.e0ipso.tokkl.calendar
 
-import com.github.e0ipso.tokkl.cache.CachedProject
-import com.github.e0ipso.tokkl.cache.CachedTask
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
-import com.github.e0ipso.tokkl.cache.EntryWithSendState
-import com.github.e0ipso.tokkl.cache.noTimeDay
+import com.github.e0ipso.tokkl.model.EntryWithSendState
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.Task
+import com.github.e0ipso.tokkl.model.TaskId
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.noTimeDay
 import com.github.e0ipso.tokkl.time.AccountTime
 import java.time.Duration
 import java.time.LocalDate
@@ -17,9 +19,9 @@ import java.time.LocalDate
  */
 internal fun weekEntries(
     cached: List<EntryWithSendState>,
-    server: List<CachedTimeEntry>,
-    projects: List<CachedProject>,
-    tasks: List<CachedTask>,
+    server: List<TimeEntry>,
+    projects: List<Project>,
+    tasks: List<Task>,
     time: AccountTime,
     weekStart: LocalDate,
 ): List<CalendarEntry> {
@@ -38,7 +40,7 @@ internal fun weekEntries(
 }
 
 /** The entry with the times the server stores once it gets it: a stopped entry's span snapped. */
-internal fun CachedTimeEntry.stored(time: AccountTime): CachedTimeEntry {
+internal fun TimeEntry.stored(time: AccountTime): TimeEntry {
     if (allDay) {
         val span = stop?.let {
             time.noTimeSpan(
@@ -53,11 +55,11 @@ internal fun CachedTimeEntry.stored(time: AccountTime): CachedTimeEntry {
     return copy(start = span.start, stop = span.stop)
 }
 
-private fun CachedTimeEntry.shown(
+private fun TimeEntry.shown(
     unsent: Boolean,
     time: AccountTime,
-    projects: Map<Long, CachedProject>,
-    tasks: Map<Long, CachedTask>,
+    projects: Map<ProjectId, Project>,
+    tasks: Map<TaskId, Task>,
 ): CalendarEntry {
     // A no-time entry is on its stored day, from the midnight of the account's zone, with the
     // duration the server will store. The instant it was stored at may be stale after a timezone change.

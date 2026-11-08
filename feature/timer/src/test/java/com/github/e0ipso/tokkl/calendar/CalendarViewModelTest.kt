@@ -4,10 +4,12 @@ import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.EntryWithSendState
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryWithSendState
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.AccountSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -106,7 +108,7 @@ class CalendarViewModelTest {
         model.loadWeek(SEPTEMBER_28)
         val week = shown(model) { it.weekStart == SEPTEMBER_28 && it.week == WeekSource.Loaded }
 
-        assertEquals(listOf(1L, 3L), week.entries.map { it.id }.sorted())
+        assertEquals(listOf(1L, 3L), week.entries.map { it.id.value }.sorted())
         assertEquals(listOf("2026-08-17T09:00:00Z 2026-10-05T00:00:00Z"), requests)
     }
 
@@ -129,7 +131,7 @@ class CalendarViewModelTest {
         val week = shown(model) { it.weekStart == OCTOBER_12 && it.entries.size == 2 }
 
         assertEquals(WeekSource.Cached, week.week)
-        assertEquals(listOf(5L, 9L), week.entries.map { it.id }.sorted())
+        assertEquals(listOf(5L, 9L), week.entries.map { it.id.value }.sorted())
         assertEquals(listOf("2026-08-31T09:00:00Z 2026-10-12T00:00:00Z"), requests)
 
         model.showToday()
@@ -148,7 +150,7 @@ class CalendarViewModelTest {
         val week = shown(model) { it.weekStart == OCTOBER_12 }
 
         assertEquals(WeekSource.Cached, week.week)
-        assertEquals(listOf(5L), week.entries.map { it.id })
+        assertEquals(listOf(5L), week.entries.map { it.id.value })
     }
 
     @Test
@@ -168,7 +170,7 @@ class CalendarViewModelTest {
         model.loadWeek(SEPTEMBER_28)
         val week = shown(model) { it.weekStart == SEPTEMBER_28 && it.week == WeekSource.Loaded }
 
-        assertEquals(listOf(3L), week.entries.map { it.id })
+        assertEquals(listOf(3L), week.entries.map { it.id.value })
         assertEquals(2, requests.size)
     }
 
@@ -205,7 +207,7 @@ class CalendarViewModelTest {
         model.step(-27)
         model.loadWeek(SEPTEMBER_28)
         val first = shown(model) { it.weekStart == SEPTEMBER_28 && it.week == WeekSource.Loaded }
-        assertEquals(listOf(3L), first.entries.map { it.id })
+        assertEquals(listOf(3L), first.entries.map { it.id.value })
         model.step(-7)
         model.loadWeek(SEPTEMBER_21)
         shown(model) { it.weekStart == SEPTEMBER_21 && it.week == WeekSource.Loaded }
@@ -228,7 +230,7 @@ class CalendarViewModelTest {
 
         model.step(7)
         val old = shown(model) { it.weekStart == SEPTEMBER_28 }
-        assertEquals("the other week shows its old entries until it loads", listOf(3L), old.entries.map { it.id })
+        assertEquals("the other week shows its old entries until it loads", listOf(3L), old.entries.map { it.id.value })
         model.loadWeek(SEPTEMBER_28)
         val reloaded = shown(model) { it.weekStart == SEPTEMBER_28 && it.entries.isEmpty() }
         assertEquals(WeekSource.Loaded, reloaded.week)
@@ -252,7 +254,7 @@ class CalendarViewModelTest {
         val week = shown(model) { it.weekStart == SEPTEMBER_28 }
 
         assertEquals(WeekSource.Loaded, week.week)
-        assertEquals(listOf(3L), week.entries.map { it.id })
+        assertEquals(listOf(3L), week.entries.map { it.id.value })
     }
 
     /**
@@ -273,7 +275,7 @@ class CalendarViewModelTest {
         assertEquals("the calendar on screen loads its week", 1, model.foregrounds.value)
         model.loadWeek(SEPTEMBER_28)
         val week = shown(model) { it.weekStart == SEPTEMBER_28 && it.week == WeekSource.Loaded }
-        assertEquals(listOf(3L), week.entries.map { it.id })
+        assertEquals(listOf(3L), week.entries.map { it.id.value })
         assertEquals(2, requests.size)
 
         model.reconnected()
@@ -310,7 +312,7 @@ class CalendarViewModelTest {
         }
 
         val week = shown(model) { it.weekStart == SEPTEMBER_28 && it.week == WeekSource.Loaded }
-        assertEquals(listOf(3L), week.entries.map { it.id })
+        assertEquals(listOf(3L), week.entries.map { it.id.value })
         assertEquals("one pending reconnect retries once", 2, attempts.get())
         model.reconnected()
         model.loadWeek(SEPTEMBER_28)
@@ -342,13 +344,13 @@ class CalendarViewModelTest {
     @Test
     fun aCreateDragQueuesAnEntryInTheDefaultWorkspace() {
         val model = model(cached = emptyList(), settings = DRAG_SETTINGS)
-        val created = mutableListOf<Long>()
+        val created = mutableListOf<EntryId>()
 
         model.create(OCTOBER_20, fromMinute = 600, toMinute = 690) { created += it }
         model.create(OCTOBER_20, fromMinute = 600, toMinute = 600) { created += it }
 
         assertEquals(listOf("create 7 ${EntryFields()} 2026-10-20T10:00:00Z 2026-10-20T11:30:00Z"), changes.calls)
-        assertEquals(listOf(LOCAL_ID), created)
+        assertEquals(listOf(EntryId(LOCAL_ID)), created)
     }
 
     /** A move and a resize of a cached entry queue it with every field, from the times its block shows. */
@@ -392,7 +394,7 @@ class CalendarViewModelTest {
             listOf("updateOlder 8 1 ${EntryFields(description = "e8")} 2026-10-06T08:30:00Z 2026-10-06T09:30:00Z"),
             changes.calls,
         )
-        assertEquals(8L, model.serverEntry(8)?.id)
+        assertEquals(EntryId(8), model.serverEntry(EntryId(8))?.id)
     }
 
     /**
@@ -420,7 +422,7 @@ class CalendarViewModelTest {
             Instant.parse("2026-10-06T10:00:00Z") to Instant.parse("2026-10-06T11:00:00Z"),
             kept.start to kept.stop,
         )
-        assertEquals(moved, model.serverEntry(8))
+        assertEquals(moved, model.serverEntry(EntryId(8)))
 
         model.move(kept, OCTOBER_5.plusDays(1), deltaMinutes = 60, dayMode = false)
         assertEquals(
@@ -493,8 +495,14 @@ class CalendarViewModelTest {
         val state = shown(model) { it.entries.size == 2 }
         val now = CLOCK.instant()
 
-        assertEquals(listOf(4L), calendarBlocks(state.entries, state.weekDays, state.zone, now).map { it.entry.id })
-        assertEquals(mapOf(OCTOBER_20 to listOf(6L)), state.allDay.mapValues { (_, entries) -> entries.map { it.id } })
+        assertEquals(
+            listOf(4L),
+            calendarBlocks(state.entries, state.weekDays, state.zone, now).map { it.entry.id.value },
+        )
+        assertEquals(
+            mapOf(OCTOBER_20 to listOf(6L)),
+            state.allDay.mapValues { (_, entries) -> entries.map { it.id.value } },
+        )
         assertEquals(3600L + 5400L, dayTotalSeconds(state.entries, OCTOBER_20, state.zone, now))
         assertEquals(3600L + 5400L, state.weekDays.sumOf { dayTotalSeconds(state.entries, it, state.zone, now) })
     }
@@ -515,7 +523,7 @@ class CalendarViewModelTest {
 
         assertEquals(
             mapOf(OCTOBER_20 to listOf(3L, 9L), OCTOBER_25 to listOf(5L)),
-            byDay.mapValues { (_, entries) -> entries.map { it.id } },
+            byDay.mapValues { (_, entries) -> entries.map { it.id.value } },
         )
     }
 
@@ -570,7 +578,7 @@ class CalendarViewModelTest {
     }
 
     private fun model(
-        cached: List<CachedTimeEntry>,
+        cached: List<TimeEntry>,
         settings: AccountSettings = SETTINGS,
         cache: Flow<List<EntryWithSendState>> = flowOf(cached.map { EntryWithSendState(it, unsent = false) }),
         io: CoroutineContext = Dispatchers.Unconfined,
@@ -597,9 +605,9 @@ class CalendarViewModelTest {
             ) { model.state.first { it is CalendarState.Shown && condition(it) } as CalendarState.Shown }
         }
 
-    private fun entry(id: Long, start: String, stop: String?) = CachedTimeEntry(
-        id = id,
-        workspaceId = 1,
+    private fun entry(id: Long, start: String, stop: String?) = TimeEntry(
+        id = EntryId(id),
+        workspaceId = WorkspaceId(1),
         description = "e$id",
         projectId = null,
         taskId = null,
@@ -615,7 +623,7 @@ class CalendarViewModelTest {
         entry(id, start, null).copy(stop = Instant.parse(start).plusSeconds(seconds), allDay = true)
 
     private fun noTimeCalendarEntry(id: Long, day: LocalDate) = CalendarEntry(
-        id = id,
+        id = EntryId(id),
         description = "e$id",
         project = null,
         projectColor = null,
@@ -642,18 +650,18 @@ class CalendarViewModelTest {
         val calls = CopyOnWriteArrayList<String>()
 
         override suspend fun create(
-            workspaceId: Long,
+            workspaceId: WorkspaceId,
             fields: EntryFields,
             start: Instant,
             stop: Instant,
             noTimeDay: LocalDate?,
-        ): Long {
+        ): EntryId {
             calls += "create $workspaceId $fields $start $stop"
-            return LOCAL_ID
+            return EntryId(LOCAL_ID)
         }
 
         override suspend fun update(
-            entryId: Long,
+            entryId: EntryId,
             fields: EntryFields,
             start: Instant,
             stop: Instant?,
@@ -664,8 +672,8 @@ class CalendarViewModelTest {
         }
 
         override suspend fun updateOlder(
-            entryId: Long,
-            workspaceId: Long,
+            entryId: EntryId,
+            workspaceId: WorkspaceId,
             fields: EntryFields,
             start: Instant,
             stop: Instant,
@@ -674,15 +682,15 @@ class CalendarViewModelTest {
             calls += "updateOlder $entryId $workspaceId $fields $start $stop"
         }
 
-        override suspend fun start(workspaceId: Long, fields: EntryFields): Long = throw AssertionError(
+        override suspend fun start(workspaceId: WorkspaceId, fields: EntryFields): EntryId = throw AssertionError(
             "the calendar starts no timer",
         )
 
-        override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean = throw AssertionError(
+        override suspend fun stop(entryId: EntryId, fields: EntryFields?): Boolean = throw AssertionError(
             "the calendar stops no timer",
         )
 
-        override suspend fun delete(entryId: Long): Boolean = throw AssertionError("the calendar deletes nothing")
+        override suspend fun delete(entryId: EntryId): Boolean = throw AssertionError("the calendar deletes nothing")
     }
 
     private companion object {
@@ -695,7 +703,7 @@ class CalendarViewModelTest {
             "UTC",
             DayOfWeek.MONDAY,
             timeResolutionMinutes = 5.0,
-            defaultWorkspaceId = 7,
+            defaultWorkspaceId = WorkspaceId(7),
         )
 
         /** Sunday 25 October at noon. */

@@ -4,6 +4,8 @@ import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
+import com.github.e0ipso.tokkl.model.TagId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import kotlinx.coroutines.test.runTest
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
@@ -62,11 +64,11 @@ class TagsRequestsTest {
 
     @Test
     fun eachCallSendsItsRequest() = runTest {
-        assertEquals(ApiResult.Success(7L), repository.workspace(stored = null))
-        assertTrue(repository.load(7) is ApiResult.Success)
-        assertTrue(repository.create(7, "Deep work", known = setOf(3)) is ApiResult.Success)
-        assertTrue(repository.rename(7, 3, "Focus") is ApiResult.Success)
-        assertEquals(ApiResult.Success(Unit), repository.delete(7, 3))
+        assertEquals(ApiResult.Success(WorkspaceId(7)), repository.workspace(stored = null))
+        assertTrue(repository.load(WorkspaceId(7)) is ApiResult.Success)
+        assertTrue(repository.create(WorkspaceId(7), "Deep work", known = setOf(TagId(3))) is ApiResult.Success)
+        assertTrue(repository.rename(WorkspaceId(7), TagId(3), "Focus") is ApiResult.Success)
+        assertEquals(ApiResult.Success(Unit), repository.delete(WorkspaceId(7), TagId(3)))
 
         assertEquals(
             listOf(

@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.widget
 
+import com.github.e0ipso.tokkl.model.ProjectId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -25,7 +26,16 @@ class TimerWidgetLayoutTest {
     }
 
     @Test fun moreThanFiveProjectsFoldIntoOtherWithoutLosingTimeOrRunningMarker() {
-        val projects = (1L..7).map { WidgetDayProject(it, "Project $it", "#0086D1", it * 60, "$it min", it == 7L) }
+        val projects = (1L..7).map {
+            WidgetDayProject(
+                ProjectId(it),
+                "Project $it",
+                "#0086D1",
+                it * 60,
+                "$it min",
+                it == 7L,
+            )
+        }
         val segments = timerWidgetSegments(projects)
         assertEquals(5, segments.size)
         assertEquals(projects.take(4), segments.take(4))

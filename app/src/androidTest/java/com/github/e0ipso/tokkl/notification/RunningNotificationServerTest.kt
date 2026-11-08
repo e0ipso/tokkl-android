@@ -21,14 +21,18 @@ import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.awaitControls
 import com.github.e0ipso.tokkl.cache.BackgroundSend
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.cacheDatabase
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.components.timerControls
 import com.github.e0ipso.tokkl.feature.notification.R
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.RunningEntryIdentity
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -123,7 +127,12 @@ class RunningNotificationServerTest {
     @Test
     fun anOfflineStartShowsTheEntryWithAClockTheSystemTicks() {
         AirplaneMode.set(true, web)
-        runBlocking { app.changes.start(workspace, EntryFields(description = "Started offline", projectId = project)) }
+        runBlocking {
+            app.changes.start(
+                WorkspaceId(workspace),
+                EntryFields(description = "Started offline", projectId = ProjectId(project)),
+            )
+        }
         val start = runBlocking { app.cache.running.first() }!!.entry.start
 
         val shown = RunningNotifications.awaitShown("the offline start")
@@ -162,8 +171,8 @@ class RunningNotificationServerTest {
     @Test
     fun anOfflineStartCorrectionMovesTheNotificationsChronometerToTheCachedStart() {
         AirplaneMode.set(true, web)
-        val fields = EntryFields(description = "Corrected offline", projectId = project)
-        val id = runBlocking { app.changes.start(workspace, fields) }
+        val fields = EntryFields(description = "Corrected offline", projectId = ProjectId(project))
+        val id = runBlocking { app.changes.start(WorkspaceId(workspace), fields) }
         val original = runBlocking { app.cache.running.first() }!!.entry
         val before = RunningNotifications.awaitShown("the original offline start") {
             it.notification.`when` == original.start.toEpochMilli()
@@ -174,7 +183,7 @@ class RunningNotificationServerTest {
         assertTrue(
             runBlocking {
                 app.changes.updateRunning(
-                    RunningEntryIdentity(id, workspace, original.start),
+                    RunningEntryIdentity(id, WorkspaceId(workspace), original.start),
                     fields,
                     corrected,
                 )
@@ -183,7 +192,7 @@ class RunningNotificationServerTest {
 
         val cached = runBlocking { app.cache.running.first() }!!.entry
         assertEquals("correction keeps the running identity", id, cached.id)
-        assertEquals(workspace, cached.workspaceId)
+        assertEquals(workspace, cached.workspaceId.value)
         assertEquals("cached start is unsnapped", corrected, cached.start)
         assertNull("correction does not stop the entry", cached.stop)
         assertEquals("Start and corrected UPDATE wait offline", 2, unsentCount())
@@ -205,7 +214,12 @@ class RunningNotificationServerTest {
 
     @Test
     fun aStopRemovesTheNotification() {
-        val id = runBlocking { app.changes.start(workspace, EntryFields(description = "Stopped in the app")) }
+        val id = runBlocking {
+            app.changes.start(
+                WorkspaceId(workspace),
+                EntryFields(description = "Stopped in the app"),
+            )
+        }
         RunningNotifications.awaitShown("the start")
 
         assertTrue(runBlocking { app.changes.stop(id) })
@@ -215,10 +229,10 @@ class RunningNotificationServerTest {
 
     @Test
     fun aStartStopsTheRunningEntryAndShowsTheNewOne() {
-        runBlocking { app.changes.start(workspace, EntryFields(description = "First")) }
+        runBlocking { app.changes.start(WorkspaceId(workspace), EntryFields(description = "First")) }
         RunningNotifications.awaitShown("the first start") { it.title() == "First" }
 
-        runBlocking { app.changes.start(workspace, EntryFields(description = "")) }
+        runBlocking { app.changes.start(WorkspaceId(workspace), EntryFields(description = "")) }
 
         val shown = RunningNotifications.awaitShown(
             "the second start",
@@ -230,7 +244,7 @@ class RunningNotificationServerTest {
     fun stopFromTheNotificationWorksOfflineAndTheQueueSendsItWhenTheNetworkReturns() {
         val id = runBlocking {
             app.changes.start(
-                workspace,
+                WorkspaceId(workspace),
                 EntryFields(description = "Stopped from the notification"),
             )
         }
@@ -277,7 +291,7 @@ class RunningNotificationServerTest {
                 TrashServer(
                     web.tokklApi(),
                 ).list()
-            }.orFail("GET /api/app/trash").single { it.id == serverId }
+            }.orFail("GET /api/app/trash").single { EntryId(it.id) == serverId }
             assertEquals("Stopped from the notification", trashed.description)
             assertEquals("the notification's short Stop reached Trash", trashed.start, trashed.stop)
             assertEquals(0L, trashed.duration)
@@ -329,8 +343,8 @@ class RunningNotificationServerTest {
         val clock = RunningNotifications.awaitShown(
             "the resumed timer",
         ) { it.notification.flags and Notification.FLAG_ONGOING_EVENT != 0 }
-        assertNotEquals("Resume starts a new entry", first, resumed.entry.id)
-        assertEquals("the server's clone", web.timerState().pause?.cloneEntryId, resumed.entry.id)
+        assertNotEquals("Resume starts a new entry", first, resumed.entry.id.value)
+        assertEquals("the server's clone", web.timerState().pause?.cloneEntryId, resumed.entry.id.value)
         assertEquals(
             "the clock counts on from the chain's total",
             resumed.countsFrom.toEpochMilli() - chain.seconds * 1_000,
@@ -353,8 +367,8 @@ class RunningNotificationServerTest {
         AirplaneMode.set(true, web)
         val id = runBlocking {
             app.changes.start(
-                workspace,
-                EntryFields(description = "Paused offline", projectId = project),
+                WorkspaceId(workspace),
+                EntryFields(description = "Paused offline", projectId = ProjectId(project)),
             )
         }
         val running = RunningNotifications.awaitShown("the offline start")
@@ -383,7 +397,7 @@ class RunningNotificationServerTest {
         HangingRelay(TokklTestServer.url).use { relay ->
             signIn(relay.url, account.apiToken)
             runBlocking { app.accountRefresh.refresh().join() }
-            runBlocking { withTimeout(TIMEOUT_MS) { app.cache.running.first { it?.entry?.id == serverId } } }
+            runBlocking { withTimeout(TIMEOUT_MS) { app.cache.running.first { it?.entry?.id?.value == serverId } } }
             val shown = RunningNotifications.awaitShown("the existing entry") { it.title() == description }
             assertEquals("the fixture has no queued changes", 0, unsentCount())
 
@@ -424,7 +438,7 @@ class RunningNotificationServerTest {
 
     @Test
     fun aDismissedNotificationStaysGoneWhenTheAppOpensAndTheNextEditOrStartPostsItAgain() {
-        val id = runBlocking { app.changes.start(workspace, EntryFields(description = "Dismissed")) }
+        val id = runBlocking { app.changes.start(WorkspaceId(workspace), EntryFields(description = "Dismissed")) }
         val start = runBlocking { app.cache.running.first() }!!.entry.start
         RunningNotifications.awaitShown("the start")
         RunningNotifications.dismiss()
@@ -436,7 +450,7 @@ class RunningNotificationServerTest {
             RunningNotifications.awaitShown("the edit") { it.title() == "Edited" }
 
             RunningNotifications.dismiss()
-            runBlocking { app.changes.start(workspace, EntryFields(description = "Started again")) }
+            runBlocking { app.changes.start(WorkspaceId(workspace), EntryFields(description = "Started again")) }
             RunningNotifications.awaitShown("the next start") { it.title() == "Started again" }
         }
     }
@@ -444,14 +458,14 @@ class RunningNotificationServerTest {
     @Test
     fun twoStartsWithinOneSecondLeaveTheStopOnTheNewerEntry() {
         AirplaneMode.set(true, web)
-        val fields = EntryFields(description = "Started twice", projectId = project)
+        val fields = EntryFields(description = "Started twice", projectId = ProjectId(project))
         // Just as a second begins, so both starts fall in it.
         Thread.sleep(1_000 - System.currentTimeMillis() % 1_000)
-        val first = runBlocking { app.changes.start(workspace, fields) }
+        val first = runBlocking { app.changes.start(WorkspaceId(workspace), fields) }
         val firstShown = RunningNotifications.awaitShown("the first start")
         // Read before the second start stops the first entry and puts its start on the grid.
         val firstStart = runBlocking { app.cache.running.first() }!!.entry.start
-        val second = runBlocking { app.changes.start(workspace, fields) }
+        val second = runBlocking { app.changes.start(WorkspaceId(workspace), fields) }
         val secondStart = runBlocking { app.cache.running.first() }!!.entry.start
         assertEquals("both starts fall in one second", firstStart.epochSecond, secondStart.epochSecond)
 
@@ -463,7 +477,8 @@ class RunningNotificationServerTest {
         assertNotNull("the newer entry has a short Stop Undo", undo)
         val shortStop = checkNotNull(undo)
         assertEquals("Undo targets the newer start, not the first", second, shortStop.entryId)
-        assertEquals("the newer entry stopped at zero duration", shortStop.entry.start, shortStop.entry.stop)
+        val stopped = checkNotNull(app.cacheDatabase.changes().shortStop(shortStop.entryId.value)).entry
+        assertEquals("the newer entry stopped at zero duration", stopped.start, stopped.stop)
         assertTrue(
             "the short Stop removed the newer entry from history",
             runBlocking { app.cache.timeEntries.first() }.none { it.id == second },
@@ -481,14 +496,14 @@ class RunningNotificationServerTest {
         val secondServerId = runBlocking { app.changes.currentId(second) }
         assertTrue(
             "the starts have distinct server ids",
-            firstServerId > 0 && secondServerId > 0 && firstServerId != secondServerId,
+            firstServerId.value > 0 && secondServerId.value > 0 && firstServerId != secondServerId,
         )
         val trashed = runBlocking { TrashServer(web.tokklApi()).list() }.orFail("GET /api/app/trash")
-        assertTrue("the first start was also short", trashed.any { it.id == firstServerId })
-        val secondTrash = trashed.single { it.id == secondServerId }
+        assertTrue("the first start was also short", trashed.any { EntryId(it.id) == firstServerId })
+        val secondTrash = trashed.single { EntryId(it.id) == secondServerId }
         assertEquals(
             "the notification stopped the newer entry",
-            shortStop.entry.start.epochSecond,
+            stopped.start.epochSecond,
             java.time.OffsetDateTime.parse(secondTrash.start).toEpochSecond(),
         )
         assertEquals(secondTrash.start, secondTrash.stop)
@@ -497,15 +512,15 @@ class RunningNotificationServerTest {
         AirplaneMode.set(true, web)
         assertTrue("Undo restores the newer stopped entry offline", runBlocking { app.changes.undoShortStop(second) })
         val restored = runBlocking { app.cache.timeEntries.first() }.single { it.id == secondServerId }
-        assertEquals(shortStop.entry.start, restored.start)
-        assertEquals(shortStop.entry.stop, restored.stop)
+        assertEquals(stopped.start, restored.start)
+        assertEquals(stopped.stop, restored.stop)
         assertNull("Undo must not restart the notification", runBlocking { app.cache.running.first() })
         AirplaneMode.set(false, web)
         runBlocking { app.sender.sendAndWait() }
         assertEquals("Undo reached the server", 0, unsentCount())
         val remainingTrash = runBlocking { TrashServer(web.tokklApi()).list() }.orFail("GET /api/app/trash")
-        assertTrue("Undo left the older entry in Trash", remainingTrash.any { it.id == firstServerId })
-        assertTrue("Undo restored only the newer entry", remainingTrash.none { it.id == secondServerId })
+        assertTrue("Undo left the older entry in Trash", remainingTrash.any { EntryId(it.id) == firstServerId })
+        assertTrue("Undo restored only the newer entry", remainingTrash.none { EntryId(it.id) == secondServerId })
         val restoredOnServer = runBlocking {
             web.get(
                 web.server.api("me", "time_entries", secondServerId.toString()),
@@ -521,8 +536,8 @@ class RunningNotificationServerTest {
         AirplaneMode.set(true, web)
         val id = runBlocking {
             app.changes.start(
-                workspace,
-                EntryFields(description = "Answered later", projectId = project),
+                WorkspaceId(workspace),
+                EntryFields(description = "Answered later", projectId = ProjectId(project)),
             )
         }
         RunningNotifications.awaitShown("the offline start")
@@ -532,7 +547,7 @@ class RunningNotificationServerTest {
         runBlocking { app.sender.sendAndWait() }
         assertEquals("the start reached the server", 0, unsentCount())
         val serverId = runBlocking { app.changes.currentId(id) }
-        assertTrue("the server gave the entry its id", serverId > 0)
+        assertTrue("the server gave the entry its id", serverId.value > 0)
         runBlocking { withTimeout(TIMEOUT_MS) { app.cache.running.first { it?.entry?.id == serverId } } }
 
         RunningNotifications.assertStaysGone("the server's answer to the start")

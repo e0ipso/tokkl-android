@@ -21,6 +21,8 @@ room {
 dependencies {
     // The cache's types and calls use the session's types, and through it the API's.
     api(project(":core:session"))
+    // Every read and change of the account's data takes and gives the model's types.
+    api(project(":core:model"))
     // CacheDatabase is a RoomDatabase, and the widgets watch its invalidation tracker.
     api(libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)

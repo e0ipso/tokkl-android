@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.catalog
 
 import androidx.compose.runtime.Immutable
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.DefaultWorkspace
 import com.github.e0ipso.tokkl.session.RefreshRequest
 import kotlinx.coroutines.CoroutineScope
@@ -88,10 +89,10 @@ class CatalogModel<D, O>(
     private var loading: Job? = null
 
     /** The workspace the data came from, once a load found it. */
-    private var workspace: Long? = null
+    private var workspace: WorkspaceId? = null
 
     /** The workspace the page manages: the one the data came from, or else the stored one, or null. */
-    fun workspace(): Long? = workspace ?: workspaceId.defaultWorkspaceId()
+    fun workspace(): WorkspaceId? = workspace ?: workspaceId.defaultWorkspaceId()
 
     /** Loads the data. Does nothing while the page is open, so turning the phone sends no request. */
     override fun open() = reloads.open()
@@ -150,7 +151,11 @@ class CatalogModel<D, O>(
      * turns every action off until a load gets through. Once sent, the change reaches the server
      * also when the page's scope is cancelled meanwhile.
      */
-    fun <R> send(request: suspend (workspace: Long) -> ApiResult<R>, apply: (D, R) -> D, done: (R) -> CatalogChange) {
+    fun <R> send(
+        request: suspend (workspace: WorkspaceId) -> ApiResult<R>,
+        apply: (D, R) -> D,
+        done: (R) -> CatalogChange,
+    ) {
         val workspace = workspace ?: return
         if (!opened || !state.value.canChange) return
         mutableState.update { it.copy(sending = true, changeProblem = null) }
@@ -208,11 +213,11 @@ class CatalogModel<D, O>(
 
     private sealed interface Answer<out D>
 
-    private class Loaded<D>(val workspace: Long, val data: D) : Answer<D>
+    private class Loaded<D>(val workspace: WorkspaceId, val data: D) : Answer<D>
 
     private class NotLoaded(val problem: ServerProblem) : Answer<Nothing>
 
-    private suspend fun read(stored: Long?): Answer<D> {
+    private suspend fun read(stored: WorkspaceId?): Answer<D> {
         val workspace = when (val answer = repository.workspace(stored)) {
             is ApiResult.Success -> answer.value
             is ApiResult.Failure -> return NotLoaded(answer.error.toServerProblem())

@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.calendar
 
 import androidx.compose.ui.geometry.Offset
+import com.github.e0ipso.tokkl.model.EntryId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -152,7 +153,7 @@ class CalendarGeometryTest {
     }
 
     private fun entry(start: Instant, stop: Instant?) = CalendarEntry(
-        id = 1,
+        id = EntryId(1),
         description = "Work",
         project = null,
         projectColor = null,

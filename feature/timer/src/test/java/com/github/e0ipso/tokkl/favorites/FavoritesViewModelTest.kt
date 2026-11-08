@@ -4,13 +4,16 @@ import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.FavoriteBody
 import com.github.e0ipso.tokkl.api.FavoritesChange
-import com.github.e0ipso.tokkl.cache.CachedFavorite
-import com.github.e0ipso.tokkl.cache.CachedProject
-import com.github.e0ipso.tokkl.cache.CachedTask
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.fields
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.Favorite
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.Task
+import com.github.e0ipso.tokkl.model.TaskId
+import com.github.e0ipso.tokkl.model.WorkspaceId
+import com.github.e0ipso.tokkl.model.fields
 import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.platform.MainDispatcherRule
 import kotlinx.coroutines.cancel
@@ -230,7 +233,7 @@ class FavoritesViewModelTest {
         main.runCurrent()
     }
 
-    private fun EntryFields.cached(position: Int) = CachedFavorite(
+    private fun EntryFields.cached(position: Int) = Favorite(
         position,
         description,
         projectId,
@@ -243,17 +246,17 @@ class FavoritesViewModelTest {
         const val TIMEOUT_MS = 5_000L
         const val SETTLE_PAUSE_MS = 300L
         const val WORKSPACE = 10L
-        val APP = CachedProject(
-            1,
-            WORKSPACE,
+        val APP = Project(
+            ProjectId(1),
+            WorkspaceId(WORKSPACE),
             clientId = null,
             name = "Tokkl for Android",
             color = "#0b83d9",
             active = true,
             billable = false,
         )
-        val DESIGN = CachedTask(5, WORKSPACE, projectId = APP.id, name = "Design", active = true)
-        val REPORT = CachedFavorite(
+        val DESIGN = Task(TaskId(5), WorkspaceId(WORKSPACE), projectId = APP.id, name = "Design", active = true)
+        val REPORT = Favorite(
             0,
             "Write the report",
             APP.id,
@@ -261,7 +264,7 @@ class FavoritesViewModelTest {
             listOf("call", "deep work"),
             billable = true,
         )
-        val WEBSITE = CachedFavorite(
+        val WEBSITE = Favorite(
             1,
             "Website",
             projectId = null,

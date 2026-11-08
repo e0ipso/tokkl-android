@@ -13,6 +13,8 @@ android {
 dependencies {
     // The session's types and calls use the API's, the time helpers' and the disk stores' types.
     api(project(":core:api"))
+    // The account's default workspace is a model id.
+    api(project(":core:model"))
     api(project(":core:time"))
     api(project(":core:platform"))
     implementation(libs.androidx.annotation)

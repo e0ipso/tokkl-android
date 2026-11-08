@@ -11,6 +11,8 @@ import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -64,7 +66,12 @@ class ChangeQueueRestartTest {
         // Nothing listens on this port, so every request fails for want of a route.
         signIn(checkNotNull(ServerUrl.parse("http://127.0.0.1:9")), account.apiToken)
 
-        val id = runBlocking { app.changes.start(workspace, EntryFields(description = "Started before the restart")) }
+        val id = runBlocking {
+            app.changes.start(
+                WorkspaceId(workspace),
+                EntryFields(description = "Started before the restart"),
+            )
+        }
         val start = runBlocking { app.cache.running.first() }!!.entry.start
         assertTrue(
             runBlocking {

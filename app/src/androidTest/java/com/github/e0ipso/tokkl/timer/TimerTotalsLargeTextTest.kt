@@ -23,9 +23,10 @@ import androidx.core.view.WindowCompat
 import androidx.test.core.app.ActivityScenario
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -49,7 +50,7 @@ class TimerTotalsLargeTextTest {
 
     @SignedOut @Test
     fun listTotalsFitAndScrollAwayWithTheTimer() {
-        val rows = MutableStateFlow(emptyList<CachedTimeEntry>())
+        val rows = MutableStateFlow(emptyList<TimeEntry>())
         val settings = MutableStateFlow<AccountSettings?>(AccountSettings("UTC", DayOfWeek.SUNDAY, null))
         ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
@@ -62,7 +63,7 @@ class TimerTotalsLargeTextTest {
                             timer = {
                                 Column {
                                     TimerBarContent(
-                                        TimerState.Idle(EntryFields(), EntryLabels(), 1), 0,
+                                        TimerState.Idle(EntryFields(), EntryLabels(), WorkspaceId(1)), 0,
                                         {}, {}, {}, {}, {}, {}, {}, { _, _, _, _, _ -> },
                                     )
                                     TimerTotalsOf(

@@ -1,6 +1,8 @@
 package com.github.e0ipso.tokkl.timerstate
 
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.LocalEntryId
+import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.AccountTime
 import java.time.Duration
@@ -42,10 +44,10 @@ data class FormattedTimerTotals(val today: String, val week: String)
  * an input, so browsing another week leaves these dates where they are.
  */
 fun timerPeriodTotals(
-    entries: List<CachedTimeEntry>,
+    entries: List<TimeEntry>,
     time: AccountTime,
     now: Instant,
-    serverIdOf: Map<Long, Long> = emptyMap(),
+    serverIdOf: Map<LocalEntryId, EntryId> = emptyMap(),
 ): TimerPeriodTotals {
     val today = time.local(now).toLocalDate()
     val weekStart = time.startOfWeek(today)
@@ -64,10 +66,10 @@ fun timerPeriodTotals(
  * timezone. The device's zone is not a stand-in, matching [AccountSettings.time].
  */
 fun timerPeriodTotals(
-    entries: List<CachedTimeEntry>,
+    entries: List<TimeEntry>,
     settings: AccountSettings,
     now: Instant,
-    serverIdOf: Map<Long, Long> = emptyMap(),
+    serverIdOf: Map<LocalEntryId, EntryId> = emptyMap(),
 ): TimerPeriodTotals? {
     val time = settings.time() ?: return null
     return timerPeriodTotals(entries, time, now, serverIdOf)
@@ -92,14 +94,14 @@ fun timerEntrySeconds(start: Instant, stop: Instant?, now: Instant): Long {
 }
 
 /** One effective cached segment, its account-local start day, and its nonnegative elapsed seconds. */
-data class CountedTimerEntry(val entry: CachedTimeEntry, val day: LocalDate, val seconds: Long)
+data class CountedTimerEntry(val entry: TimeEntry, val day: LocalDate, val seconds: Long)
 
 /** Shared by the Timer page and widget so remaps, start days and elapsed time cannot drift. */
 fun countedTimerEntries(
-    entries: List<CachedTimeEntry>,
+    entries: List<TimeEntry>,
     time: AccountTime,
     now: Instant,
-    serverIdOf: Map<Long, Long> = emptyMap(),
+    serverIdOf: Map<LocalEntryId, EntryId> = emptyMap(),
 ): List<CountedTimerEntry> = entries.countedOnce(serverIdOf).map { entry ->
     CountedTimerEntry(entry, time.local(entry.start).toLocalDate(), timerEntrySeconds(entry.start, entry.stop, now))
 }
@@ -108,18 +110,18 @@ fun countedTimerEntries(
  * One row per entry. A server row with a mapped local row present yields to the local row, and
  * two rows that share a canonical id count as the first of them.
  */
-private fun List<CachedTimeEntry>.countedOnce(serverIdOf: Map<Long, Long>): List<CachedTimeEntry> {
-    val present = HashSet<Long>(size)
+private fun List<TimeEntry>.countedOnce(serverIdOf: Map<LocalEntryId, EntryId>): List<TimeEntry> {
+    val present = HashSet<EntryId>(size)
     for (entry in this) present.add(entry.id)
-    val hiddenServers = HashSet<Long>()
+    val hiddenServers = HashSet<EntryId>()
     for ((localId, serverId) in serverIdOf) {
-        if (localId in present && serverId in present) hiddenServers.add(serverId)
+        if (localId.entryId in present && serverId in present) hiddenServers.add(serverId)
     }
-    val seen = HashSet<Long>()
-    val kept = ArrayList<CachedTimeEntry>(size)
+    val seen = HashSet<EntryId>()
+    val kept = ArrayList<TimeEntry>(size)
     for (entry in this) {
         if (entry.id in hiddenServers) continue
-        if (seen.add(serverIdOf[entry.id] ?: entry.id)) kept.add(entry)
+        if (seen.add(entry.id.local?.let(serverIdOf::get) ?: entry.id)) kept.add(entry)
     }
     return kept
 }

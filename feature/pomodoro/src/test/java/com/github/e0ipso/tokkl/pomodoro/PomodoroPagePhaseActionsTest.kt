@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.pomodoro
 
-import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.test.runTest
@@ -97,7 +98,7 @@ class PomodoroPagePhaseActionsTest {
         val f = page(revision = 4)
         // The edit moves the server's revision to 5, which the read brings to the phone.
         f.server.onRead = { f.held.value = heldState(revision = 5, description = "Typed") }
-        f.page.editFields(EntryFields("Typed"), ENTRY)!!.join()
+        f.page.editFields(EntryFields("Typed"), EntryId(ENTRY))!!.join()
         f.page.next()!!.join()
         assertEquals(listOf("send"), f.queueSends)
         assertEquals(
@@ -112,7 +113,7 @@ class PomodoroPagePhaseActionsTest {
     fun anEditSentJustBeforeEndGoesFirstToo() = runTest {
         val f = page(revision = 4)
         f.server.onRead = { f.held.value = heldState(revision = 5, description = "Typed") }
-        f.page.editFields(EntryFields("Typed"), ENTRY)!!.join()
+        f.page.editFields(EntryFields("Typed"), EntryId(ENTRY))!!.join()
         f.page.end()!!.join()
         assertEquals(listOf("read", "end 5"), f.server.calls)
     }
@@ -121,7 +122,7 @@ class PomodoroPagePhaseActionsTest {
     fun ifAnotherDeviceMovedThePhaseWhileTheEditWasSentNothingAdvances() = runTest {
         val f = page(revision = 4)
         f.server.onRead = { f.held.value = heldState(revision = 6, pomodoro = rest()) }
-        f.page.editFields(EntryFields("Typed"), ENTRY)!!.join()
+        f.page.editFields(EntryFields("Typed"), EntryId(ENTRY))!!.join()
         f.page.next()!!.join()
         assertEquals("only the read went out", listOf("read"), f.server.calls)
         assertEquals(PomodoroProblem(PomodoroAction.NEXT, TimerActionResult.Refused), f.page.state.value.problem)
@@ -154,6 +155,6 @@ class PomodoroPagePhaseActionsTest {
         assertEquals(3, session.number)
         assertEquals(4, session.longRestEvery)
         assertEquals(com.github.e0ipso.tokkl.api.PhaseKind.SHORT_REST, session.upcomingPhase)
-        assertEquals(PomodoroShown(4, T0, ENTRY), f.page.state.value.shown)
+        assertEquals(PomodoroShown(4, T0, EntryId(ENTRY)), f.page.state.value.shown)
     }
 }

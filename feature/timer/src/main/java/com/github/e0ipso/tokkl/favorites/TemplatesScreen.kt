@@ -16,7 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.catalog.CatalogPage
 import com.github.e0ipso.tokkl.entryfields.EntryFieldsEditor
 import com.github.e0ipso.tokkl.entryfields.EntryPicker
@@ -24,6 +23,7 @@ import com.github.e0ipso.tokkl.entryfields.entryLabels
 import com.github.e0ipso.tokkl.entryfields.picked
 import com.github.e0ipso.tokkl.entryfields.withPicked
 import com.github.e0ipso.tokkl.feature.timer.R
+import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.picker.EntityPicker
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.picker.PickerSource

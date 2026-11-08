@@ -81,7 +81,7 @@ private fun favoritesFrom(preferences: MePreferences?): List<CachedFavorite>? {
 }
 
 /** Null when [ServerTimeEntry.start] is not an RFC 3339 timestamp. */
-fun ServerTimeEntry.toCached(): CachedTimeEntry? {
+internal fun ServerTimeEntry.toCached(): CachedTimeEntry? {
     val start = instant(start) ?: return null
     return CachedTimeEntry(
         id = id,

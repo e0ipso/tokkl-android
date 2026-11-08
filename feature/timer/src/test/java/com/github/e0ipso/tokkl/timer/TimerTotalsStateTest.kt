@@ -1,6 +1,8 @@
 package com.github.e0ipso.tokkl.timer
 
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.AccountSettings
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.onStart
@@ -87,9 +89,9 @@ class TimerTotalsStateTest {
         assertEquals(1, subscriptions)
     }
 
-    private fun entry(id: Long, start: String, stop: String?) = CachedTimeEntry(
-        id = id,
-        workspaceId = 1,
+    private fun entry(id: Long, start: String, stop: String?) = TimeEntry(
+        id = EntryId(id),
+        workspaceId = WorkspaceId(1),
         projectId = null,
         taskId = null,
         description = "",

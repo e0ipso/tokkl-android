@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.navhost
 
+import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.navigation.EntryOpening
 import com.github.e0ipso.tokkl.navigation.Route
 import org.junit.Assert.assertEquals
@@ -10,7 +11,7 @@ import org.junit.Test
 /** The navigation host's rules over the back stack: the page the bar marks and the pages a server lacks. */
 class BackStackRulesTest {
     private val pages = appTopLevelPages
-    private val form = Route.Entry(EntryOpening.Edit(1), id = "a")
+    private val form = Route.Entry(EntryOpening.Edit(EntryId(1)), id = "a")
 
     @Test
     fun theBarMarksThePageAScreenWasOpenedFrom() {

@@ -35,7 +35,6 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.github.e0ipso.tokkl.cache.CachedTag
 import com.github.e0ipso.tokkl.catalog.CancelAndConfirm
 import com.github.e0ipso.tokkl.catalog.CatalogChange
 import com.github.e0ipso.tokkl.catalog.CatalogEmpty
@@ -48,6 +47,7 @@ import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.catalog.changeText
 import com.github.e0ipso.tokkl.catalog.problemText
 import com.github.e0ipso.tokkl.feature.tags.R
+import com.github.e0ipso.tokkl.model.Tag
 import com.github.e0ipso.tokkl.ui.ErrorBanner
 import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklIconButton
@@ -101,7 +101,7 @@ class TagsActions(
 fun TagsContent(
     state: TagsState,
     offline: Boolean,
-    cachedTags: List<CachedTag>,
+    cachedTags: List<Tag>,
     actions: TagsActions,
     modifier: Modifier = Modifier,
 ) {
@@ -113,7 +113,7 @@ fun TagsContent(
         if (state.done is CatalogChange.Created) newName = ""
     }
     val rows = state.data?.tags?.map { TagRow(it, fromServer = true) }
-        ?: cachedTags.map { TagRow(Tag(it.id, it.workspaceId, it.name), fromServer = false) }
+        ?: cachedTags.map { TagRow(it, fromServer = false) }
     val hasNotices = serverNeeded || state.loadProblem != null ||
         (state.loading && state.data == null) || (state.changeProblem != null && state.overlay == null)
     CatalogPage(
@@ -160,7 +160,7 @@ fun TagsContent(
                     CatalogEmpty(stringResource(R.string.tags_empty_title), stringResource(R.string.tags_empty_message))
                 }
             }
-            itemsIndexed(rows, key = { _, row -> row.tag.id }) { index, row ->
+            itemsIndexed(rows, key = { _, row -> row.tag.id.value }) { index, row ->
                 Column {
                     if (index > 0) HorizontalDivider()
                     TagListRow(row, canChange, actions)

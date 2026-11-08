@@ -1,6 +1,8 @@
 package com.github.e0ipso.tokkl.timerstate
 
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.AccountTime
 import com.github.e0ipso.tokkl.time.DurationFormat
@@ -176,8 +178,8 @@ class TimerTotalsTest {
         val now = Instant.parse("2026-10-24T03:00:00Z")
         val time = tokyo(DayOfWeek.MONDAY)
         val local = entry(-4, "2026-10-24T01:00:00Z", "2026-10-24T01:00:40Z")
-        val server = local.copy(id = 80, stop = local.start.plusSeconds(10))
-        val map = mapOf(local.id to server.id)
+        val server = local.copy(id = EntryId(80), stop = local.start.plusSeconds(10))
+        val map = mapOf(local.id.local!! to server.id)
 
         assertEquals(40L, timerPeriodTotals(listOf(local), time, now).todaySeconds)
         assertEquals(10L, timerPeriodTotals(listOf(server), time, now).todaySeconds)
@@ -191,7 +193,7 @@ class TimerTotalsTest {
             listOf(local, otherLocal),
             time,
             now,
-            mapOf(local.id to 80L, otherLocal.id to 80L),
+            mapOf(local.id.local!! to EntryId(80), otherLocal.id.local!! to EntryId(80)),
         )
         assertEquals(40L, collapsed.todaySeconds)
     }
@@ -253,9 +255,9 @@ class TimerTotalsTest {
     private fun settings(format: DurationFormat) =
         AccountSettings("Asia/Tokyo", DayOfWeek.MONDAY, timeResolutionMinutes = null, durationFormat = format)
 
-    private fun entry(id: Long, start: String, stop: String?) = CachedTimeEntry(
-        id = id,
-        workspaceId = 1,
+    private fun entry(id: Long, start: String, stop: String?) = TimeEntry(
+        id = EntryId(id),
+        workspaceId = WorkspaceId(1),
         projectId = null,
         taskId = null,
         description = "Entry $id",

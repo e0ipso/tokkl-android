@@ -1,6 +1,6 @@
 package com.github.e0ipso.tokkl.timer
 
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
+import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.timerstate.TimerControls
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,7 +30,7 @@ internal class TimerTapState(
 
     fun controls(): TimerControls? = (cached.value as? CachedControls.Read)?.controls
 
-    fun running(): CachedTimeEntry? = controls()?.runningEntry()
+    fun running(): TimeEntry? = controls()?.runningEntry()
 
     /** The edit shown over the running entry [shown], while it still matches the cache's entry. */
     fun editFor(shown: TimerState.Running): FieldEdit? {

@@ -6,11 +6,13 @@ import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.TimerPomodoro
 import com.github.e0ipso.tokkl.api.TimerPomodoroPhase
 import com.github.e0ipso.tokkl.api.TimerState
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.PendingChange
-import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
+import com.github.e0ipso.tokkl.cache.HeldChange
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.RunningEntryIdentity
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.session.AccountSettings
@@ -76,10 +78,14 @@ internal fun rest(start: Instant = T0.plusSeconds(1_500)) = TimerPomodoro(
     number = 1, entryId = ENTRY, pomodoroStart = T0,
 )
 
-internal fun cachedEntry(description: String = "Focused work", id: Long = ENTRY, start: Instant = T0) =
-    CachedTimeEntry(id, WORKSPACE, null, null, description, start, null, false, emptyList(), emptyList())
+internal fun cachedEntry(description: String = "Focused work", id: Long = ENTRY, start: Instant = T0) = TimeEntry(
+    EntryId(
+        id,
+    ),
+    WorkspaceId(WORKSPACE), null, null, description, start, null, false, emptyList(), emptyList(),
+)
 
-internal fun running(entry: CachedTimeEntry) = TimerControls.Running(
+internal fun running(entry: TimeEntry) = TimerControls.Running(
     entry,
     unsent = false,
     accumulatedSeconds = 0,
@@ -114,7 +120,7 @@ internal class FakeServer(val held: MutableStateFlow<HeldTimerState?>) : Session
     }
 
     override suspend fun startSession(
-        workspaceId: Long,
+        workspaceId: WorkspaceId,
         fields: EntryFields,
         lengths: SessionLengths,
     ): TimerActionResult {
@@ -164,23 +170,23 @@ internal class FakeChanges(private val cache: MutableStateFlow<TimerControls>) :
         return true
     }
 
-    override suspend fun start(workspaceId: Long, fields: EntryFields): Long = error(
+    override suspend fun start(workspaceId: WorkspaceId, fields: EntryFields): EntryId = error(
         "the page starts nothing on the phone",
     )
-    override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean = error(
+    override suspend fun stop(entryId: EntryId, fields: EntryFields?): Boolean = error(
         "the page stops nothing on the phone",
     )
     override suspend fun create(
-        workspaceId: Long,
+        workspaceId: WorkspaceId,
         fields: EntryFields,
         start: Instant,
         stop: Instant,
         noTimeDay: LocalDate?,
-    ): Long = error(
+    ): EntryId = error(
         "no create",
     )
     override suspend fun update(
-        entryId: Long,
+        entryId: EntryId,
         fields: EntryFields,
         start: Instant,
         stop: Instant?,
@@ -188,13 +194,13 @@ internal class FakeChanges(private val cache: MutableStateFlow<TimerControls>) :
     ): Boolean = error(
         "no update",
     )
-    override suspend fun delete(entryId: Long): Boolean = error("no delete")
+    override suspend fun delete(entryId: EntryId): Boolean = error("no delete")
 }
 
 /** A page over a fake server, the cache and the account, running on the calling thread. */
 internal class PageFixture(
     initial: HeldTimerState? = null,
-    entry: CachedTimeEntry? = null,
+    entry: TimeEntry? = null,
     val defaults: MutableStateFlow<PomodoroDefaults> = MutableStateFlow(PomodoroDefaults(40, 8, 20, 3)),
 ) {
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
@@ -203,10 +209,10 @@ internal class PageFixture(
     val server = FakeServer(held)
     val changes = FakeChanges(controls)
     val settings = MutableStateFlow<AccountSettings?>(
-        AccountSettings("europe/madrid", DayOfWeek.MONDAY, null, defaultWorkspaceId = WORKSPACE),
+        AccountSettings("europe/madrid", DayOfWeek.MONDAY, null, defaultWorkspaceId = WorkspaceId(WORKSPACE)),
     )
     val unsent = MutableStateFlow(0)
-    val refused = MutableStateFlow<List<PendingChange>>(emptyList())
+    val refused = MutableStateFlow<List<HeldChange>>(emptyList())
     val queueSends = CopyOnWriteArrayList<String>()
     var alarmsDenied = false
     val picker = MutableStateFlow(PickerSource())

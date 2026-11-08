@@ -3,7 +3,8 @@ package com.github.e0ipso.tokkl.pomodoro
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.github.e0ipso.tokkl.api.PhaseKind
-import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -76,7 +77,7 @@ private val IDLE = PomodoroPageState(
         timeZone = "UTC",
         beginningOfWeek = DayOfWeek.MONDAY,
         timeResolutionMinutes = null,
-        defaultWorkspaceId = 1,
+        defaultWorkspaceId = WorkspaceId(1),
     ),
     fields = EntryFields(description = "Write the release notes", billable = true),
     lengths = PomodoroLengths("25", "5", "15", "4"),

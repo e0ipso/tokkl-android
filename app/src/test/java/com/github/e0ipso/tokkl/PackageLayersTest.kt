@@ -2,13 +2,19 @@ package com.github.e0ipso.tokkl
 
 import com.github.e0ipso.tokkl.SourceTree.ROOT
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.File
 
 /**
  * Keeps the app's packages in layers. A package imports packages of lower layers, and a package of
  * its own layer only where [SAME_LAYER] lists it. The test reads the main sources of every Gradle
  * module: each `import com.github.e0ipso.tokkl.<package>` and each fully qualified name in code.
  * The R classes belong to no layer; ModuleLayersTest checks the modules that hold the packages.
+ *
+ * Two rules keep the model between the screens and the storage and wire formats below them. The
+ * cache's Room rows never leave core:cache, which maps them to the model. A feature's view models
+ * and composables import no core:api wire type, apart from [SERVER_STATE].
  */
 class PackageLayersTest {
 
@@ -37,6 +43,33 @@ class PackageLayersTest {
         val graph = imports.mapValues { (from, uses) -> uses.map { it.target }.filter { it != from }.toSet() }
 
         assertEquals(emptyList<List<String>>(), cycles(graph))
+    }
+
+    @Test
+    fun cacheRowsStayInTheCache() {
+        val rows = cacheRows()
+        assertTrue("the cache declares Room rows", "CachedTimeEntry" in rows && "PendingChange" in rows)
+        val outside = mainFiles().filterNot { (module, _) -> module == ":core:cache" }.flatMap { (_, file) ->
+            val code = withoutComments(file.readText())
+            rows.filter { Regex("""(?<!\w)$it\b""").containsMatchIn(code) }.map { "${file.relativeTo(ROOT_DIR)}: $it" }
+        }
+
+        assertEquals("main sources outside core:cache that name a Room row", emptyList<String>(), outside)
+    }
+
+    @Test
+    fun screensImportNoWireTypes() {
+        val wire = wireTypes()
+        assertTrue("core:api declares wire types", "ServerTimeEntry" in wire && "TimerState" in wire)
+        val screens = mainFiles().filter { (module, file) -> module.startsWith(":feature:") && file.isScreen() }
+        assertTrue("the features have screens", screens.size > 10)
+        val imported = screens.flatMap { (_, file) ->
+            API_IMPORT.findAll(file.readText()).map { it.groupValues[1] }
+                .filter { it in wire && it !in SERVER_STATE }
+                .map { "${file.relativeTo(ROOT_DIR)}: $it" }
+        }
+
+        assertEquals("view models and composables that import an API wire type", emptyList<String>(), imported)
     }
 
     private fun allowed(from: String, to: String): Boolean {
@@ -76,7 +109,56 @@ class PackageLayersTest {
         return found
     }
 
+    /** Every main source file, with the path of the module that holds it. */
+    private fun mainFiles(): List<Pair<String, File>> = SourceTree.modules.flatMap { module ->
+        File(module.directory, "src/main/java").walkTopDown().filter { it.isFile && it.extension == "kt" }
+            .map { module.path to it }.toList()
+    }
+
+    /** The classes core:cache stores with Room: its entities and the rows a query reads into. */
+    private fun cacheRows(): Set<String> = mainFiles().filter { it.first == ":core:cache" }.flatMap { (_, file) ->
+        val text = file.readText()
+        ENTITY.findAll(text).map { it.groupValues[1] } + EMBEDDING.findAll(text).map { it.groupValues[1] }
+    }.toSet()
+
+    /** The classes core:api reads from and writes to JSON. */
+    private fun wireTypes(): Set<String> = mainFiles().filter { it.first == ":core:api" }
+        .flatMap { (_, file) -> SERIALIZABLE.findAll(file.readText()).map { it.groupValues[1] } }
+        .toSet()
+
+    /** A file of a screen: one that declares a view model or a composable. */
+    private fun File.isScreen(): Boolean = readText().let { "@Composable" in it || VIEW_MODEL.containsMatchIn(it) }
+
+    private fun withoutComments(text: String): String =
+        text.replace(Regex("""/\*.*?\*/""", RegexOption.DOT_MATCHES_ALL), " ").replace(Regex("""//[^\n]*"""), " ")
+
     companion object {
+        private val ROOT_DIR: File get() = SourceTree.root
+        private val ENTITY = Regex("""@Entity\b[^\n]*\n(?:@[^\n]*\n)*\s*(?:data )?class (\w+)""")
+        private val EMBEDDING = Regex("""(?:data )?class (\w+)\(\s*@Embedded\b""")
+        private val SERIALIZABLE = Regex(
+            """@Serializable\s*\n\s*(?:(?:internal|private|data|enum|sealed) )*(?:class|object|interface) (\w+)""",
+        )
+        private val VIEW_MODEL = Regex("""\)\s*:\s*ViewModel\(""")
+        private val API_IMPORT = Regex("""^import com\.github\.e0ipso\.tokkl\.api\.(\w+)$""", RegexOption.MULTILINE)
+
+        /**
+         * The wire types a screen may import. The server owns the timer state, Pomodoro and pause
+         * (docs/PRD.md T1): core:timerstate holds and stores it as the server sent it, and the
+         * Pomodoro page, the widget and the timer's notices read its parts. The trash page shows
+         * each deleted entry as the server lists it, for display only.
+         */
+        val SERVER_STATE = setOf(
+            "TimerState",
+            "TimerPause",
+            "TimerPomodoro",
+            "TimerPomodoroPhase",
+            "DiscardedPomodoro",
+            "PhaseKind",
+            "PhaseTransition",
+            "TrashEntry",
+        )
+
         /** The layer of [pkg], counted from 0 for the lowest. */
         fun layerOf(pkg: String): Int = LAYERS.indexOfFirst { pkg in it }.also {
             check(
@@ -85,13 +167,13 @@ class PackageLayersTest {
         }
 
         /**
-         * The layers, lowest first. Core leaves import no app package. Core data holds what the
-         * phone keeps for the account and what reads and changes it. Shared parts are what several
-         * features show, and the routes by which they open one another's screens. The app shell
-         * starts the app and wires and navigates the features.
+         * The layers, lowest first. Core leaves, the model among them, import no app package. Core
+         * data holds what the phone keeps for the account and what reads and changes it. Shared
+         * parts are what several features show, and the routes by which they open one another's
+         * screens. The app shell starts the app and wires and navigates the features.
          */
         val LAYERS: List<Set<String>> = listOf(
-            setOf("api", "time", "storage", "ui", "platform"),
+            setOf("model", "api", "time", "storage", "ui", "platform"),
             setOf("credentials", "capabilities", "session", "preferences", "cache", "timerstate", "account"),
             setOf("catalog", "picker", "entryfields", "trust", "timernotice", "navigation"),
             setOf(

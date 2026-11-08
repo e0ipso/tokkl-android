@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.notification
 
 import android.content.Context
+import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.storage.PreferencesFile
 import com.github.e0ipso.tokkl.storage.ValueStore
 import java.io.IOException
@@ -20,14 +21,14 @@ class RunningNotificationStore(context: Context) : ValueStore<FollowedEntry?> {
     override fun load(): FollowedEntry? {
         val key = preferences.getString(KEY_SHOWN, null) ?: return null
         val entryId = if (preferences.contains(KEY_SHOWN_ENTRY)) preferences.getLong(KEY_SHOWN_ENTRY, 0) else null
-        return FollowedEntry(key, entryId)
+        return FollowedEntry(key, entryId?.let(::EntryId))
     }
 
     @Throws(IOException::class)
     override fun save(value: FollowedEntry?) {
         file.commit {
             if (value == null) remove(KEY_SHOWN) else putString(KEY_SHOWN, value.key)
-            if (value?.entryId == null) remove(KEY_SHOWN_ENTRY) else putLong(KEY_SHOWN_ENTRY, value.entryId)
+            if (value?.entryId == null) remove(KEY_SHOWN_ENTRY) else putLong(KEY_SHOWN_ENTRY, value.entryId.value)
         }
     }
 

@@ -1,7 +1,11 @@
 package com.github.e0ipso.tokkl.history
 
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
-import com.github.e0ipso.tokkl.cache.EntryWithSendState
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryWithSendState
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.TaskId
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.AccountSettings
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -46,9 +50,12 @@ class HistoryRowsTest {
         assertEquals(
             "the solo row first, as its entry is the day's newest, then the group, keyed by its oldest member",
             listOf(5L to listOf(5L), 1L to listOf(3L, 2L, 1L)),
-            days[0].rows.map { it.key to it.entries.map(HistoryEntry::id) },
+            days[0].rows.map { it.key to it.entries.map { entry -> entry.id.value } },
         )
-        assertEquals(listOf(4L to listOf(4L)), days[1].rows.map { it.key to it.entries.map(HistoryEntry::id) })
+        assertEquals(
+            listOf(4L to listOf(4L)),
+            days[1].rows.map { it.key to it.entries.map { entry -> entry.id.value } },
+        )
         val group = days[0].rows[1]
         assertTrue(group.grouped)
         assertEquals("the members' total", 3 * 3600L, group.seconds)
@@ -61,16 +68,16 @@ class HistoryRowsTest {
     fun eachFieldOfTheKeyKeepsEntriesApart() {
         val base = entry(1, "Work")
         val others = listOf(
-            base.copy(id = 2, description = "Other work"),
-            base.copy(id = 3, projectId = 9),
-            base.copy(id = 4, taskId = 8),
-            base.copy(id = 5, billable = true),
-            base.copy(id = 6, tags = listOf("extra")),
+            base.copy(id = EntryId(2), description = "Other work"),
+            base.copy(id = EntryId(3), projectId = ProjectId(9)),
+            base.copy(id = EntryId(4), taskId = TaskId(8)),
+            base.copy(id = EntryId(5), billable = true),
+            base.copy(id = EntryId(6), tags = listOf("extra")),
         )
         for (other in others) {
             assertEquals(other.toString(), 2, rowsForDay(listOf(other, base), collapse = true).size)
         }
-        assertEquals(1, rowsForDay(listOf(base.copy(id = 7), base), collapse = true).size)
+        assertEquals(1, rowsForDay(listOf(base.copy(id = EntryId(7)), base), collapse = true).size)
     }
 
     @Test
@@ -94,7 +101,7 @@ class HistoryRowsTest {
 
         assertEquals(
             listOf(listOf(1L, 2L, 3L)),
-            rowsForDay(listOf(a, b, c), collapse = true).map { r -> r.entries.map { it.id }.sorted() },
+            rowsForDay(listOf(a, b, c), collapse = true).map { r -> r.entries.map { it.id.value }.sorted() },
         )
         assertEquals("a\u0000\u0000\u0000false\u0000a,b", similarityKey(entry(4, "a").copy(tags = listOf("b", "a"))))
     }
@@ -113,7 +120,7 @@ class HistoryRowsTest {
     fun theKeyWritesFieldsAsJavaScriptJoinDoes() {
         assertEquals(
             "Work\u000012\u000034\u0000true\u0000",
-            similarityKey(entry(1, "Work").copy(projectId = 12, taskId = 34, billable = true)),
+            similarityKey(entry(1, "Work").copy(projectId = ProjectId(12), taskId = TaskId(34), billable = true)),
         )
     }
 
@@ -172,10 +179,10 @@ class HistoryRowsTest {
         val noTime = entry(1, "Work").copy(start = midnight, stop = midnight.plusSeconds(1800), allDay = true)
 
         assertNull(rowsForDay(listOf(noTime), collapse = false).single().range)
-        assertNull(rowsForDay(listOf(noTime, noTime.copy(id = 2)), collapse = true).single().range)
+        assertNull(rowsForDay(listOf(noTime, noTime.copy(id = EntryId(2))), collapse = true).single().range)
     }
 
-    private fun days(entries: List<CachedTimeEntry>, collapse: Boolean): List<HistoryDay> {
+    private fun days(entries: List<TimeEntry>, collapse: Boolean): List<HistoryDay> {
         val time = AccountSettings("UTC", DayOfWeek.MONDAY, timeResolutionMinutes = null).time(CLOCK)!!
         return historyDays(
             entries.map { EntryWithSendState(it, unsent = false) },
@@ -190,10 +197,10 @@ class HistoryRowsTest {
     private fun at(day: LocalDate, hour: Int): Instant = day.atTime(hour, 0).toInstant(ZoneOffset.UTC)
 
     private fun cached(id: Long, description: String, start: Instant, stop: Instant) =
-        CachedTimeEntry(id, 7, null, null, description, start, stop, false, emptyList(), emptyList())
+        TimeEntry(EntryId(id), WorkspaceId(7), null, null, description, start, stop, false, emptyList(), emptyList())
 
     private fun entry(id: Long, description: String, project: String? = null) = HistoryEntry(
-        id = id,
+        id = EntryId(id),
         description = description,
         project = project,
         projectColor = null,

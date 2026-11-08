@@ -1,11 +1,11 @@
 package com.github.e0ipso.tokkl.entryfields
 
 import androidx.compose.runtime.Immutable
-import com.github.e0ipso.tokkl.cache.CachedClient
-import com.github.e0ipso.tokkl.cache.CachedProject
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.fields
+import com.github.e0ipso.tokkl.model.Client
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.fields
 import com.github.e0ipso.tokkl.time.jsTrim
 
 /**
@@ -49,11 +49,7 @@ class DescriptionSuggestions private constructor(private val candidates: List<Ca
         val NONE = DescriptionSuggestions(emptyList())
 
         /** The suggestions among the cached [entries], newest first, with their [projects] and [clients]. */
-        fun of(
-            entries: List<CachedTimeEntry>,
-            projects: List<CachedProject>,
-            clients: List<CachedClient>,
-        ): DescriptionSuggestions {
+        fun of(entries: List<TimeEntry>, projects: List<Project>, clients: List<Client>): DescriptionSuggestions {
             val projectsById = projects.associateBy { it.id }
             val clientsById = clients.associateBy { it.id }
             val candidates = entries
@@ -73,13 +69,13 @@ class DescriptionSuggestions private constructor(private val candidates: List<Ca
     }
 
     /** An entry that may become a suggestion, with the text the query searches. */
-    private class Candidate(val entry: CachedTimeEntry, val haystack: String, val suggestion: DescriptionSuggestion)
+    private class Candidate(val entry: TimeEntry, val haystack: String, val suggestion: DescriptionSuggestion)
 }
 
 /** The suggestions for [query] among the cached [entries], as [DescriptionSuggestions.forQuery] ranks them. */
 fun descriptionSuggestions(
-    entries: List<CachedTimeEntry>,
-    projects: List<CachedProject>,
-    clients: List<CachedClient>,
+    entries: List<TimeEntry>,
+    projects: List<Project>,
+    clients: List<Client>,
     query: String,
 ): List<DescriptionSuggestion> = DescriptionSuggestions.of(entries, projects, clients).forQuery(query)

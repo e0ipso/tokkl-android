@@ -38,6 +38,7 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import com.github.e0ipso.tokkl.favorites.FavoritesState
 import com.github.e0ipso.tokkl.feature.timer.R
+import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.DateWords
 import com.github.e0ipso.tokkl.ui.daySticker
@@ -59,11 +60,11 @@ import com.github.e0ipso.tokkl.core.ui.R as UiR
 fun HistoryList(
     state: HistoryState,
     onLoadOlder: () -> Unit,
-    onEdit: (Long) -> Unit,
-    onContinue: (Long) -> Unit,
-    onDuplicate: (Long) -> Unit,
-    onSplit: (Long) -> Unit,
-    onDelete: (Long) -> Unit,
+    onEdit: (EntryId) -> Unit,
+    onContinue: (EntryId) -> Unit,
+    onDuplicate: (EntryId) -> Unit,
+    onSplit: (EntryId) -> Unit,
+    onDelete: (EntryId) -> Unit,
     modifier: Modifier = Modifier,
     pin: PinAction? = null,
 ) {
@@ -85,10 +86,10 @@ fun HistoryList(
  * The menu's Save as template: [onPin] gets the entry's id, and [enabled] is false while another
  * change to the templates is on its way to the server.
  */
-class PinAction(val enabled: Boolean, val onPin: (Long) -> Unit)
+class PinAction(val enabled: Boolean, val onPin: (EntryId) -> Unit)
 
 /** Save as template through [onPin], or null when the server keeps no timer [templates]. */
-fun pinAction(templates: FavoritesState, onPin: (Long) -> Unit): PinAction? =
+fun pinAction(templates: FavoritesState, onPin: (EntryId) -> Unit): PinAction? =
     if (templates.available) PinAction(enabled = !templates.saving, onPin = onPin) else null
 
 /** [HistoryList] without its models. Without [pin], the menu offers no Save as template. */
@@ -97,11 +98,11 @@ fun HistoryContent(
     state: HistoryState,
     onLoadOlder: () -> Unit,
     modifier: Modifier = Modifier,
-    onEdit: (Long) -> Unit = {},
-    onContinue: (Long) -> Unit = {},
-    onDuplicate: (Long) -> Unit = {},
-    onSplit: (Long) -> Unit = {},
-    onDelete: (Long) -> Unit = {},
+    onEdit: (EntryId) -> Unit = {},
+    onContinue: (EntryId) -> Unit = {},
+    onDuplicate: (EntryId) -> Unit = {},
+    onSplit: (EntryId) -> Unit = {},
+    onDelete: (EntryId) -> Unit = {},
     pin: PinAction? = null,
 ) {
     when (state) {
@@ -126,11 +127,11 @@ fun HistoryContent(
 
 /** What a tap on an entry, or on one of its actions, does with the entry's id. */
 internal class EntryCallbacks(
-    val onEdit: (Long) -> Unit,
-    val onContinue: (Long) -> Unit,
-    val onDuplicate: (Long) -> Unit,
-    val onSplit: (Long) -> Unit,
-    val onDelete: (Long) -> Unit,
+    val onEdit: (EntryId) -> Unit,
+    val onContinue: (EntryId) -> Unit,
+    val onDuplicate: (EntryId) -> Unit,
+    val onSplit: (EntryId) -> Unit,
+    val onDelete: (EntryId) -> Unit,
     val pin: PinAction?,
 )
 

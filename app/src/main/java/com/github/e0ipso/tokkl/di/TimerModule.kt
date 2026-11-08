@@ -53,7 +53,7 @@ internal val timerModule = module {
     )
     single { HeldTimerFlows(get(), get(), io()) } bind DiscardNotices::class
     single {
-        TimerControlsSource(database = get(), timerStates = get(), capabilities = get(), io = io())
+        TimerControlsSource(database = get(), cache = get(), timerStates = get(), capabilities = get(), io = io())
     } bind CurrentTimerControls::class
 
     // Pause, Resume and Discard, and a Pomodoro session's Start, Next phase and End, sent to the

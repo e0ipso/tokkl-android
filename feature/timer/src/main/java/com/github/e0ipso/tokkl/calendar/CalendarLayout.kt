@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.calendar
 
 import androidx.compose.runtime.Immutable
+import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.time.MILLIS_PER_SECOND
 import com.github.e0ipso.tokkl.time.MINUTES_PER_HOUR
 import com.github.e0ipso.tokkl.time.SECONDS_PER_MINUTE
@@ -21,7 +22,7 @@ import java.time.ZoneId
  */
 @Immutable
 data class CalendarEntry(
-    val id: Long,
+    val id: EntryId,
     val description: String,
     val project: String?,
     val projectColor: String?,
@@ -112,7 +113,7 @@ fun calendarBlocks(
     }
 }
 
-private val entryOrder = compareBy<CalendarEntry> { it.start }.thenBy { it.id }
+private val entryOrder = compareBy<CalendarEntry> { it.start }.thenBy { it.id.value }
 
 /** The day of a no-time [CalendarEntry]: its stored [CalendarEntry.day], or the date of its start in [zone]. */
 private fun CalendarEntry.noTimeDayIn(zone: ZoneId): LocalDate = day ?: start.atZone(zone).toLocalDate()

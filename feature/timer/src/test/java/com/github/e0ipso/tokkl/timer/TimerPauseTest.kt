@@ -7,16 +7,20 @@ import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.TimerPause
 import com.github.e0ipso.tokkl.api.TimerPomodoro
 import com.github.e0ipso.tokkl.api.TimerPomodoroPhase
-import com.github.e0ipso.tokkl.cache.CachedProject
-import com.github.e0ipso.tokkl.cache.CachedTask
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.CurrentEntryCache
 import com.github.e0ipso.tokkl.cache.EntryChanges
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.EntryWithSendState
 import com.github.e0ipso.tokkl.cache.RunningCheckStart
 import com.github.e0ipso.tokkl.cache.RunningCheckWrites
-import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryWithSendState
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.RunningEntryIdentity
+import com.github.e0ipso.tokkl.model.Task
+import com.github.e0ipso.tokkl.model.TaskId
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.platform.MainDispatcherRule
 import com.github.e0ipso.tokkl.session.AccountSettings
@@ -122,7 +126,7 @@ class TimerPauseTest {
     @Test
     fun pauseWaitsForTheServerAndThenShowsItsFrozenSeconds() {
         phone.value = Phone(running(), held(revision = 2))
-        awaitState("the running entry shows") { it is TimerState.Running && it.entryId == RUNNING_ID }
+        awaitState("the running entry shows") { it is TimerState.Running && it.entryId?.value == RUNNING_ID }
 
         server.gate = CompletableDeferred()
         onMain { model.pause() }
@@ -133,13 +137,13 @@ class TimerPauseTest {
         assertEquals("one Pause, sent to the server", listOf("pause"), calls)
         assertTrue("nothing went to the queue", changes.calls.isEmpty())
         val inFlight = model.state.value as TimerState.Running
-        assertEquals("the timer keeps running until the server answers", RUNNING_ID, inFlight.entryId)
+        assertEquals("the timer keeps running until the server answers", EntryId(RUNNING_ID), inFlight.entryId)
 
         server.gate.complete(Unit)
         val paused = awaitState("the server's pause shows") { it is TimerState.Paused } as TimerState.Paused
         assertEquals("the server's stored seconds", 90L, paused.seconds)
         assertEquals(FIELDS, paused.fields)
-        assertEquals(WORKSPACE, paused.workspaceId)
+        assertEquals(WorkspaceId(WORKSPACE), paused.workspaceId)
         assertEquals(TimerTarget.server(revision = 3), paused.target)
         assertTrue("nothing was queued", changes.calls.isEmpty())
     }
@@ -178,7 +182,7 @@ class TimerPauseTest {
         val shown = awaitState(
             "taps count again",
         ) { it is TimerState.Running && model.isShown(it.target!!) } as TimerState.Running
-        assertEquals(RUNNING_ID, shown.entryId)
+        assertEquals(EntryId(RUNNING_ID), shown.entryId)
         assertTrue("nothing was queued", changes.calls.isEmpty())
         assertEquals(listOf("pause"), calls)
 
@@ -237,7 +241,7 @@ class TimerPauseTest {
         server.gate.complete(Unit)
         val resumed = awaitState(
             "the clone shows",
-        ) { it is TimerState.Running && it.entryId == CLONE_ID } as TimerState.Running
+        ) { it is TimerState.Running && it.entryId?.value == CLONE_ID } as TimerState.Running
         assertEquals("the clock goes on from the chain's seconds", 600L, resumed.accumulatedSeconds)
         assertEquals("the clone counts on the server's clock", OFFSET, resumed.clockOffset)
         assertEquals("Resume starts the fields kept at Pause", FIELDS, resumed.fields)
@@ -312,15 +316,18 @@ class TimerPauseTest {
         assertEquals(listOf("start $WORKSPACE ${PAST.fields()}"), changes.calls)
         val started = awaitState(
             "the continued entry runs",
-        ) { it is TimerState.Running && it.entryId == STARTED_ID } as TimerState.Running
+        ) { it is TimerState.Running && it.entryId?.value == STARTED_ID } as TimerState.Running
         assertEquals("a new timer leaves the chain's seconds behind", 0L, started.accumulatedSeconds)
         assertTrue("the server's chain is not resumed", calls.isEmpty())
     }
 
     @Test
     fun stopOfTheRunningCloneIsAQueuedStop() {
-        phone.value = Phone(clone(), held(revision = 13, pause = pause(seconds = 600, cloneEntryId = CLONE_ID)))
-        awaitState("the clone runs") { it is TimerState.Running && it.entryId == CLONE_ID }
+        phone.value = Phone(
+            clone(),
+            held(revision = 13, pause = pause(seconds = 600, cloneEntryId = EntryId(CLONE_ID))),
+        )
+        awaitState("the clone runs") { it is TimerState.Running && it.entryId?.value == CLONE_ID }
 
         onMain { model.stop() }
 
@@ -334,7 +341,7 @@ class TimerPauseTest {
         phone.value = Phone(running(), held(revision = 2))
         val old = awaitState("old focused context") { it is TimerState.Running } as TimerState.Running
         phone.value = Phone(running(id = 99), held(revision = 3))
-        awaitState("replacement context") { it is TimerState.Running && it.entryId == 99L }
+        awaitState("replacement context") { it is TimerState.Running && it.entryId?.value == 99L }
 
         onMain {
             model.pauseShown(old.target!!)
@@ -343,7 +350,7 @@ class TimerPauseTest {
 
         assertNull(main.onMain { model.runningForEditShown(old.target!!) })
         assertTrue(calls.isEmpty() && changes.calls.isEmpty())
-        assertEquals(TimerTarget.server(entryId = 99), model.state.value.target)
+        assertEquals(TimerTarget.server(entryId = EntryId(99)), model.state.value.target)
     }
 
     @Test
@@ -372,9 +379,9 @@ class TimerPauseTest {
         ) { it is TimerState.Running && model.isShown(it.target!!) } as TimerState.Running
         assertEquals(listOf("pause", "resume 4"), calls)
         assertEquals(90L, resumed.accumulatedSeconds)
-        assertEquals(CLONE_ID, resumed.entryId)
+        assertEquals(EntryId(CLONE_ID), resumed.entryId)
         val identity = main.onMain { model.runningForEditShown(resumed.target!!) }
-        assertEquals(RunningEntryIdentity(CLONE_ID, WORKSPACE, CLONE_START), identity)
+        assertEquals(RunningEntryIdentity(EntryId(CLONE_ID), WorkspaceId(WORKSPACE), CLONE_START), identity)
     }
 
     @Test
@@ -482,8 +489,8 @@ class TimerPauseTest {
     }
 
     private fun running(id: Long = RUNNING_ID) = EntryWithSendState(
-        CachedTimeEntry(
-            id, WORKSPACE, FIELDS.projectId, FIELDS.taskId, FIELDS.description,
+        TimeEntry(
+            EntryId(id), WorkspaceId(WORKSPACE), FIELDS.projectId, FIELDS.taskId, FIELDS.description,
             TAP.minusSeconds(
                 90,
             ),
@@ -493,9 +500,9 @@ class TimerPauseTest {
     )
 
     private fun clone() = EntryWithSendState(
-        CachedTimeEntry(
-            CLONE_ID,
-            WORKSPACE,
+        TimeEntry(
+            EntryId(CLONE_ID),
+            WorkspaceId(WORKSPACE),
             FIELDS.projectId,
             FIELDS.taskId,
             FIELDS.description,
@@ -508,7 +515,7 @@ class TimerPauseTest {
         unsent = false,
     )
 
-    private fun CachedTimeEntry.fields() = EntryFields(description, projectId, taskId, tags, billable)
+    private fun TimeEntry.fields() = EntryFields(description, projectId, taskId, tags, billable)
 
     /** A state the phone received at [TAP], with the server's clock [offset] ahead. */
     private fun held(
@@ -538,17 +545,17 @@ class TimerPauseTest {
         )
     }
 
-    private fun pause(seconds: Long, cloneEntryId: Long?) = TimerPause(
+    private fun pause(seconds: Long, cloneEntryId: EntryId?) = TimerPause(
         paused = cloneEntryId == null,
         seconds = seconds,
         workspaceId = WORKSPACE,
         description = FIELDS.description,
-        projectId = FIELDS.projectId,
-        taskId = FIELDS.taskId,
+        projectId = FIELDS.projectId?.value,
+        taskId = FIELDS.taskId?.value,
         tagIds = listOf(3),
         tags = FIELDS.tags,
         billable = FIELDS.billable,
-        cloneEntryId = cloneEntryId,
+        cloneEntryId = cloneEntryId?.value,
     )
 
     private fun pomodoro() = TimerPomodoro(
@@ -596,7 +603,10 @@ class TimerPauseTest {
 
         override suspend fun resume(revision: Long): TimerActionResult = act("resume $revision") { shown ->
             val chain = shown.held?.state?.pause ?: return@act shown
-            Phone(clone(), held(revision(shown) + 1, pause = pause(seconds = chain.seconds, cloneEntryId = CLONE_ID)))
+            Phone(
+                clone(),
+                held(revision(shown) + 1, pause = pause(seconds = chain.seconds, cloneEntryId = EntryId(CLONE_ID))),
+            )
         }
 
         override suspend fun discard(revision: Long): TimerActionResult = act("discard $revision") { shown ->
@@ -628,13 +638,13 @@ class TimerPauseTest {
         @Volatile
         var gate: CompletableDeferred<Unit> = CompletableDeferred(Unit)
 
-        override suspend fun start(workspaceId: Long, fields: EntryFields): Long {
+        override suspend fun start(workspaceId: WorkspaceId, fields: EntryFields): EntryId {
             val at = clock.instant()
             calls += "start $workspaceId $fields"
             gate.await()
             val entry =
-                CachedTimeEntry(
-                    STARTED_ID,
+                TimeEntry(
+                    EntryId(STARTED_ID),
                     workspaceId,
                     fields.projectId,
                     fields.taskId,
@@ -646,10 +656,10 @@ class TimerPauseTest {
                     emptyList(),
                 )
             phone.value = phone.value.copy(running = EntryWithSendState(entry, unsent = true))
-            return STARTED_ID
+            return EntryId(STARTED_ID)
         }
 
-        override suspend fun stop(entryId: Long, fields: EntryFields?): Boolean {
+        override suspend fun stop(entryId: EntryId, fields: EntryFields?): Boolean {
             calls += "stop $entryId $fields"
             gate.await()
             if (phone.value.running?.entry?.id != entryId) return false
@@ -657,7 +667,7 @@ class TimerPauseTest {
             return true
         }
 
-        override suspend fun runningEntry(identity: RunningEntryIdentity): CachedTimeEntry? =
+        override suspend fun runningEntry(identity: RunningEntryIdentity): TimeEntry? =
             phone.value.running?.entry?.takeIf {
                 it.id == identity.entryId && it.workspaceId == identity.workspaceId && it.start == identity.start
             }
@@ -683,7 +693,7 @@ class TimerPauseTest {
         }
 
         override suspend fun update(
-            entryId: Long,
+            entryId: EntryId,
             fields: EntryFields,
             start: Instant,
             stop: Instant?,
@@ -691,21 +701,21 @@ class TimerPauseTest {
         ): Boolean = throw AssertionError("these timers edit running entries through updateRunning")
 
         override suspend fun create(
-            workspaceId: Long,
+            workspaceId: WorkspaceId,
             fields: EntryFields,
             start: Instant,
             stop: Instant,
             noTimeDay: LocalDate?,
-        ): Long = throw AssertionError("the timer creates no stopped entry")
+        ): EntryId = throw AssertionError("the timer creates no stopped entry")
 
-        override suspend fun delete(entryId: Long): Boolean = throw AssertionError("the timer deletes nothing")
+        override suspend fun delete(entryId: EntryId): Boolean = throw AssertionError("the timer deletes nothing")
     }
 
     /** A cache with no running entry, for states that name none. */
     private object NoRunningEntries : CurrentEntryCache {
         override fun runningCheckStart() = RunningCheckStart(emptyList())
 
-        override fun checkedRunning(before: RunningCheckStart, server: CachedTimeEntry?): RunningCheckWrites? = null
+        override fun checkedRunning(before: RunningCheckStart, server: TimeEntry?): RunningCheckWrites? = null
     }
 
     private companion object {
@@ -726,24 +736,24 @@ class TimerPauseTest {
             timeZone = "Europe/Madrid",
             beginningOfWeek = DayOfWeek.MONDAY,
             timeResolutionMinutes = null,
-            defaultWorkspaceId = WORKSPACE,
+            defaultWorkspaceId = WorkspaceId(WORKSPACE),
         )
-        val APP = CachedProject(
-            1,
-            WORKSPACE,
+        val APP = Project(
+            ProjectId(1),
+            WorkspaceId(WORKSPACE),
             clientId = null,
             name = "Tokkl for Android",
             color = "#0b83d9",
             active = true,
             billable = false,
         )
-        val DESIGN = CachedTask(5, WORKSPACE, projectId = APP.id, name = "Design", active = true)
+        val DESIGN = Task(TaskId(5), WorkspaceId(WORKSPACE), projectId = APP.id, name = "Design", active = true)
         val FIELDS = EntryFields("Pause the timer", projectId = APP.id, taskId = DESIGN.id, tags = listOf("android"))
 
         /** A stopped entry in the default workspace, which Continue starts again. */
-        val PAST = CachedTimeEntry(
-            id = 7,
-            workspaceId = WORKSPACE,
+        val PAST = TimeEntry(
+            id = EntryId(7),
+            workspaceId = WorkspaceId(WORKSPACE),
             projectId = APP.id,
             taskId = null,
             description = "Review the mockups",

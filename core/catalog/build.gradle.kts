@@ -13,6 +13,8 @@ android {
 dependencies {
     // The model and the problems carry the API's errors, and the pages draw with the design system.
     api(project(":core:api"))
+    // The pages manage one workspace, by its model id.
+    api(project(":core:model"))
     api(project(":core:ui"))
     implementation(project(":core:session"))
 

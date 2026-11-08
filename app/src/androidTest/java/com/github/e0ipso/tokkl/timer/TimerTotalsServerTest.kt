@@ -27,13 +27,15 @@ import com.github.e0ipso.tokkl.RequestCounter
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.awaitTimerPage
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.feature.timer.R
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -74,7 +76,7 @@ class TimerTotalsServerTest {
         val now = Instant.now()
         runBlocking {
             app.changes.create(
-                fixture.account.workspaceId,
+                WorkspaceId(fixture.account.workspaceId),
                 EntryFields("Today"),
                 now.minusSeconds(600),
                 now,
@@ -148,7 +150,7 @@ class TimerTotalsServerTest {
                         assertTrue(
                             runBlocking {
                                 app.changes.update(
-                                    stopped.id,
+                                    EntryId(stopped.id.value),
                                     EntryFields("Edited total"),
                                     stopped.start.minusSeconds(600),
                                     stopped.stop,
@@ -159,7 +161,7 @@ class TimerTotalsServerTest {
                         assertTrue(runBlocking { app.changes.delete(stopped.id) })
                         assertTrue(fixture.rows().isEmpty())
                         assertStoppedTotals()
-                        runBlocking { app.sender.undoDelete(stopped.id) }
+                        runBlocking { app.sender.undoDelete(EntryId(stopped.id.value)) }
                         assertEquals(stopped.id, fixture.rows().single().id)
                         assertStoppedTotals()
                         fixture.start("Second offline timer")
@@ -175,8 +177,8 @@ class TimerTotalsServerTest {
                         assertStoppedTotals()
                         assertEquals(2, fixture.rows().size)
                         assertEquals(2, fixture.rows().map { it.id }.distinct().size)
-                        assertTrue(localIds.any { it < 0 })
-                        assertTrue(fixture.rows().all { it.id > 0 })
+                        assertTrue(localIds.any { it.value < 0 })
+                        assertTrue(fixture.rows().all { it.id.value > 0 })
                         relay.hang()
                         AirplaneMode.set(true, fixture.account.client)
                         fixture.start("Offline start and final stop")
@@ -206,8 +208,8 @@ class TimerTotalsServerTest {
         val settings = MutableStateFlow<AccountSettings?>(AccountSettings("Asia/Tokyo", DayOfWeek.SUNDAY, null))
         val rows = MutableStateFlow(
             listOf(
-                CachedTimeEntry(
-                    1, 20, null, null, "segment",
+                TimeEntry(
+                    EntryId(1), WorkspaceId(20), null, null, "segment",
                     start.minusSeconds(
                         10,
                     ),
@@ -266,7 +268,7 @@ class TimerTotalsServerTest {
         val time = settings.time()!!
         val today = time.local(Instant.now()).toLocalDate()
         val week = time.startOfWeek(today)
-        fun seconds(row: CachedTimeEntry) = Math.floorDiv(
+        fun seconds(row: TimeEntry) = Math.floorDiv(
             Duration.between(row.start, row.stop!!).toMillis(),
             1_000,
         ).coerceAtLeast(0)

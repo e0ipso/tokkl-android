@@ -6,9 +6,11 @@ import com.github.e0ipso.tokkl.api.TimerPause
 import com.github.e0ipso.tokkl.api.TimerPomodoro
 import com.github.e0ipso.tokkl.api.TimerPomodoroPhase
 import com.github.e0ipso.tokkl.api.TimerState
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.EntryWithSendState
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryWithSendState
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import java.time.Duration
 import java.time.Instant
 
@@ -35,7 +37,7 @@ object ServerTimerStates {
     )
 
     /** A chain paused at [seconds], which Resume starts with [fields] in [workspaceId]. */
-    fun paused(seconds: Long, fields: EntryFields, workspaceId: Long = 1) = pause(
+    fun paused(seconds: Long, fields: EntryFields, workspaceId: WorkspaceId = WorkspaceId(1)) = pause(
         seconds,
         fields,
         workspaceId,
@@ -43,11 +45,17 @@ object ServerTimerStates {
     )
 
     /** A chain whose clone [entryId] runs after [seconds] its earlier entries store. */
-    fun resumed(seconds: Long, entryId: Long, fields: EntryFields = EntryFields(), workspaceId: Long = 1) =
-        pause(seconds, fields, workspaceId, cloneEntryId = entryId)
+    fun resumed(
+        seconds: Long,
+        entryId: EntryId,
+        fields: EntryFields = EntryFields(),
+        workspaceId: WorkspaceId = WorkspaceId(
+            1,
+        ),
+    ) = pause(seconds, fields, workspaceId, cloneEntryId = entryId)
 
     /** A Pomodoro session whose open pomodoro is [entryId], in its first work phase from [at]. */
-    fun session(entryId: Long, at: Instant) = TimerPomodoro(
+    fun session(entryId: EntryId, at: Instant) = TimerPomodoro(
         workMinutes = 25,
         shortRestMinutes = 5,
         longRestMinutes = 15,
@@ -56,13 +64,13 @@ object ServerTimerStates {
         upcomingPhase = PhaseKind.SHORT_REST,
         transition = PhaseTransition.WORK_TO_SHORT_REST,
         number = 1,
-        entryId = entryId,
+        entryId = entryId.value,
         pomodoroStart = at,
     )
 
     /** The shared controls for the cache's [running] entry and the [held] state, for [ACCOUNT]. */
     fun controls(
-        running: CachedTimeEntry?,
+        running: TimeEntry?,
         held: HeldTimerState? = null,
         timerApi: Boolean = true,
         unsent: Boolean = false,
@@ -73,16 +81,17 @@ object ServerTimerStates {
         ACCOUNT,
     )
 
-    private fun pause(seconds: Long, fields: EntryFields, workspaceId: Long, cloneEntryId: Long?) = TimerPause(
-        paused = cloneEntryId == null,
-        seconds = seconds,
-        workspaceId = workspaceId,
-        description = fields.description,
-        projectId = fields.projectId,
-        taskId = fields.taskId,
-        tagIds = emptyList(),
-        tags = fields.tags,
-        billable = fields.billable,
-        cloneEntryId = cloneEntryId,
-    )
+    private fun pause(seconds: Long, fields: EntryFields, workspaceId: WorkspaceId, cloneEntryId: EntryId?) =
+        TimerPause(
+            paused = cloneEntryId == null,
+            seconds = seconds,
+            workspaceId = workspaceId.value,
+            description = fields.description,
+            projectId = fields.projectId?.value,
+            taskId = fields.taskId?.value,
+            tagIds = emptyList(),
+            tags = fields.tags,
+            billable = fields.billable,
+            cloneEntryId = cloneEntryId?.value,
+        )
 }

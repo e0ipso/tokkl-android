@@ -3,20 +3,29 @@ package com.github.e0ipso.tokkl.clients
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ClientBody
 import com.github.e0ipso.tokkl.api.TokklApi
+import com.github.e0ipso.tokkl.api.map
 import com.github.e0ipso.tokkl.catalog.createOnce
+import com.github.e0ipso.tokkl.model.Client
+import com.github.e0ipso.tokkl.model.ClientId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 
-/** A client as `GET /api/v9/workspaces/{wid}/clients` sends it. Toggl names its workspace `wid`. */
+/**
+ * A client as `GET /api/v9/workspaces/{wid}/clients` sends it, which the page reads as a [Client].
+ * Toggl names its workspace `wid`.
+ */
 @Serializable
-data class Client(
+private class ServerClient(
     val id: Long,
     @SerialName("wid") val workspaceId: Long,
     val name: String = "",
     val archived: Boolean = false,
     val notes: String? = null,
-)
+) {
+    fun toClient() = Client(ClientId(id), WorkspaceId(workspaceId), name, archived, notes)
+}
 
 /** A project's client, for the number of projects each client has. */
 @Serializable
@@ -26,14 +35,17 @@ class ClientProject(val id: Long, @SerialName("client_id") val clientId: Long? =
  * The API v9 client calls of one [workspace] on the configured server. Each call suspends while
  * its request runs.
  */
-class ClientsServer(private val api: TokklApi, private val workspace: Long) {
+class ClientsServer(private val api: TokklApi, private val workspace: WorkspaceId) {
 
     /** Every client of the workspace, archived ones included. */
-    suspend fun list(): ApiResult<List<Client>> = api.clients.list(workspace, ListSerializer(Client.serializer()))
+    suspend fun list(): ApiResult<List<Client>> = api.clients.list(
+        workspace.value,
+        ListSerializer(ServerClient.serializer()),
+    ).map { it.map(ServerClient::toClient) }
 
     /** Every project of the workspace, archived ones included, for the number each client has. */
     suspend fun projects(): ApiResult<List<ClientProject>> =
-        api.projects.list(workspace, ListSerializer(ClientProject.serializer()), activeBoth = true)
+        api.projects.list(workspace.value, ListSerializer(ClientProject.serializer()), activeBoth = true)
 
     /**
      * Creates the client once, as [createOnce] does. When the answer was lost, the client named
@@ -42,21 +54,32 @@ class ClientsServer(private val api: TokklApi, private val workspace: Long) {
      *
      * @param known the ids of the clients the page lists, which the create cannot have made.
      */
-    suspend fun create(name: String, notes: String?, known: Set<Long>): ApiResult<Client> = createOnce(
-        create = { api.clients.create(workspace, ClientBody(name, notes), Client.serializer()) },
+    suspend fun create(name: String, notes: String?, known: Set<ClientId>): ApiResult<Client> = createOnce(
+        create = {
+            api.clients.create(
+                workspace.value,
+                ClientBody(name, notes),
+                ServerClient.serializer(),
+            ).map { it.toClient() }
+        },
         list = ::list,
         made = { it.id !in known && it.workspaceId == workspace && it.name == name },
     )
 
-    suspend fun update(id: Long, name: String, notes: String?): ApiResult<Client> =
-        api.clients.update(workspace, id, ClientBody(name, notes), Client.serializer())
+    suspend fun update(id: ClientId, name: String, notes: String?): ApiResult<Client> = api.clients.update(
+        workspace.value,
+        id.value,
+        ClientBody(name, notes),
+        ServerClient.serializer(),
+    ).map { it.toClient() }
 
     /**
      * Archives the client and, as in Toggl, its projects. Tokkl answers with the ids of the
      * projects it archived, which the page does not need.
      */
-    suspend fun archive(id: Long): ApiResult<Unit> = api.clients.archive(workspace, id)
+    suspend fun archive(id: ClientId): ApiResult<Unit> = api.clients.archive(workspace.value, id.value)
 
     /** Restores the client and every one of its projects, as the web app asks. */
-    suspend fun restore(id: Long): ApiResult<Client> = api.clients.restore(workspace, id, Client.serializer())
+    suspend fun restore(id: ClientId): ApiResult<Client> =
+        api.clients.restore(workspace.value, id.value, ServerClient.serializer()).map { it.toClient() }
 }

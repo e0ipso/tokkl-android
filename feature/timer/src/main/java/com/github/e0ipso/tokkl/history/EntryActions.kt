@@ -3,13 +3,9 @@ package com.github.e0ipso.tokkl.history
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.ChangeSender.UndoOutcome
 import com.github.e0ipso.tokkl.cache.DeleteUndo
 import com.github.e0ipso.tokkl.cache.EntryChanges
-import com.github.e0ipso.tokkl.cache.EntryWithSendState
-import com.github.e0ipso.tokkl.cache.fields
-import com.github.e0ipso.tokkl.cache.noTimeDay
 import com.github.e0ipso.tokkl.capabilities.CapabilityCheck
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.entryfields.SplitHalves
@@ -18,6 +14,11 @@ import com.github.e0ipso.tokkl.entryfields.SplitResult
 import com.github.e0ipso.tokkl.entryfields.splitTimes
 import com.github.e0ipso.tokkl.favorites.FavoritesProblem
 import com.github.e0ipso.tokkl.favorites.TemplateAdder
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryWithSendState
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.fields
+import com.github.e0ipso.tokkl.model.noTimeDay
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.SnappedSpan
 import kotlinx.coroutines.CoroutineScope
@@ -39,10 +40,10 @@ sealed interface EntryNotice {
     val serial: Long
 
     /** [entryId] is deleted. With [undo], Undo can take the delete back. */
-    data class Deleted(override val serial: Long, val entryId: Long, val undo: Boolean) : EntryNotice
+    data class Deleted(override val serial: Long, val entryId: EntryId, val undo: Boolean) : EntryNotice
 
     /** Undo of the delete of [entryId] needs the server, which the phone cannot reach. Undo can be tried again. */
-    data class UndoNeedsServer(override val serial: Long, val entryId: Long) : EntryNotice
+    data class UndoNeedsServer(override val serial: Long, val entryId: EntryId) : EntryNotice
 
     /** The server did not restore the entry. [status] is its HTTP status, or null without one. */
     data class UndoFailed(override val serial: Long, val status: Int?) : EntryNotice
@@ -77,7 +78,7 @@ sealed interface EntryNotice {
  * @property problem why Split did not split, until the time changes.
  */
 data class SplitDialog(
-    val source: CachedTimeEntry,
+    val source: TimeEntry,
     val whole: SnappedSpan,
     val zone: ZoneId,
     val text: String = "",
@@ -95,7 +96,7 @@ data class SplitDialog(
  */
 @Immutable
 data class EntryActionsState(
-    val confirmDelete: Long? = null,
+    val confirmDelete: EntryId? = null,
     val notice: EntryNotice? = null,
     val split: SplitDialog? = null,
 )
@@ -130,16 +131,16 @@ class EntryActionsViewModel(
 
     private val mutableState = MutableStateFlow(EntryActionsState())
 
-    private val mutableReconciliation = MutableStateFlow<Map<Long, CachedTimeEntry?>>(emptyMap())
-    val reconciliation: StateFlow<Map<Long, CachedTimeEntry?>> = mutableReconciliation.asStateFlow()
-    private val deletedEntries = mutableMapOf<Long, CachedTimeEntry>()
-    private val deleting = mutableSetOf<Long>()
+    private val mutableReconciliation = MutableStateFlow<Map<EntryId, TimeEntry?>>(emptyMap())
+    val reconciliation: StateFlow<Map<EntryId, TimeEntry?>> = mutableReconciliation.asStateFlow()
+    private val deletedEntries = mutableMapOf<EntryId, TimeEntry>()
+    private val deleting = mutableSetOf<EntryId>()
     private var undoing = false
 
     fun canRestoreDelete(): Boolean = canRestore.offered()
 
     /** Called only after the editor's deletion transaction commits. Kept by HistoryViewModel. */
-    fun deleted(entry: CachedTimeEntry, undo: Boolean) {
+    fun deleted(entry: TimeEntry, undo: Boolean) {
         deletedEntries[entry.id] = entry
         mutableReconciliation.update { it + (entry.id to null) }
         mutableState.update { it.copy(notice = EntryNotice.Deleted(++serial, entry.id, undo)) }
@@ -150,7 +151,7 @@ class EntryActionsViewModel(
     val state: StateFlow<EntryActionsState> = mutableState.asStateFlow()
 
     /** Deletes the cached entry [entryId], or asks first when the server cannot restore it. */
-    fun delete(entryId: Long) {
+    fun delete(entryId: EntryId) {
         if (canRestore.offered()) {
             queueDelete(entryId, undo = true)
         } else {
@@ -170,7 +171,7 @@ class EntryActionsViewModel(
     }
 
     /** Takes back the delete of [entryId], which a [EntryNotice.Deleted] or [EntryNotice.UndoNeedsServer] offered. */
-    fun undo(entryId: Long) {
+    fun undo(entryId: EntryId) {
         if (undoing) return
         undoing = true
         val offered = mutableState.value.notice
@@ -205,7 +206,7 @@ class EntryActionsViewModel(
      * longer holds makes no copy, as the web app duplicates only a stopped one. A no-time source
      * makes a no-time copy on its day; without an account timezone to read that day in, it makes none.
      */
-    fun duplicate(entryId: Long) {
+    fun duplicate(entryId: EntryId) {
         viewModelScope.launch {
             val source = entries.first().firstOrNull { it.entry.id == entryId }?.entry ?: return@launch
             val stop = source.stop ?: return@launch
@@ -224,7 +225,7 @@ class EntryActionsViewModel(
      * no longer holds, a no-time entry, which has no time to cut at, or an account timezone the
      * phone cannot resolve opens nothing.
      */
-    fun split(entryId: Long) {
+    fun split(entryId: EntryId) {
         viewModelScope.launch {
             val source = entries.first().firstOrNull { it.entry.id == entryId }?.entry ?: return@launch
             if (source.allDay) return@launch
@@ -243,7 +244,7 @@ class EntryActionsViewModel(
      * not store the list, says why nothing was saved. An entry the cache no longer holds saves
      * nothing.
      */
-    fun pin(entryId: Long, templates: TemplateAdder, offline: Boolean) {
+    fun pin(entryId: EntryId, templates: TemplateAdder, offline: Boolean) {
         if (offline) {
             mutableState.update { it.copy(notice = EntryNotice.PinNeedsServer(++serial)) }
             return
@@ -326,14 +327,14 @@ class EntryActionsViewModel(
     }
 
     /** What [text] cuts the stopped [source] into, or null without an account timezone. */
-    private fun splitOf(source: CachedTimeEntry, text: String): SplitResult? {
+    private fun splitOf(source: TimeEntry, text: String): SplitResult? {
         val settings = accountSettings.value ?: return null
         val time = settings.time(clock) ?: return null
         val stop = source.stop ?: return null
         return splitTimes(text, source.start, stop, time, settings.twelveHour)
     }
 
-    private fun queueDelete(entryId: Long, undo: Boolean) {
+    private fun queueDelete(entryId: EntryId, undo: Boolean) {
         if (!deleting.add(entryId)) return
         viewModelScope.launch {
             try {

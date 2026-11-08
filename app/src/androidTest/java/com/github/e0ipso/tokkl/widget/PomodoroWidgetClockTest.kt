@@ -17,8 +17,9 @@ import com.github.e0ipso.tokkl.api.PhaseKind
 import com.github.e0ipso.tokkl.api.PhaseTransition
 import com.github.e0ipso.tokkl.api.TimerPomodoro
 import com.github.e0ipso.tokkl.api.TimerPomodoroPhase
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.core.ui.R
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -63,7 +64,7 @@ class PomodoroWidgetClockTest {
                     start,
                     end,
                     ended,
-                    PomodoroWidgetEntry(1, EntryFields("Focus"), null, null, null),
+                    PomodoroWidgetEntry(WorkspaceId(1), EntryFields("Focus"), null, null, null),
                 )
                 val before = SystemClock.elapsedRealtime() + Duration.between(Instant.now(), end).toMillis()
                 val views = runBlocking { Fixture(state).compose(context, size = DpSize(298.dp, 222.dp)) }

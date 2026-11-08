@@ -25,12 +25,13 @@ import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.awaitTimerPage
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.feature.timer.R
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -239,7 +240,14 @@ class HistoryServerTest {
         relay.hang()
         val start = Instant.now().minus(2, ChronoUnit.HOURS).truncatedTo(ChronoUnit.MINUTES).plusMillis(451_500)
         val stop = start.plusMillis(3_125_250)
-        val id = runBlocking { app.changes.create(workspace, EntryFields(description = "Logged offline"), start, stop) }
+        val id = runBlocking {
+            app.changes.create(
+                WorkspaceId(workspace),
+                EntryFields(description = "Logged offline"),
+                start,
+                stop,
+            )
+        }
         val settings = app.accountSettings.state.value!!
         val snapped = settings.time()!!.snapUnsent(start, stop)!!
         val range = context.getString(

@@ -1,8 +1,8 @@
 package com.github.e0ipso.tokkl.entryfields
 
-import com.github.e0ipso.tokkl.cache.CachedProject
-import com.github.e0ipso.tokkl.cache.CachedTask
-import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.Task
 import com.github.e0ipso.tokkl.picker.Picked
 
 /**
@@ -12,7 +12,7 @@ import com.github.e0ipso.tokkl.picker.Picked
 data class EntryLabels(val project: String? = null, val projectColor: String? = null, val task: String? = null)
 
 /** The labels of [fields]'s project and task among the cached [projects] and [tasks]. */
-fun entryLabels(fields: EntryFields, projects: List<CachedProject>, tasks: List<CachedTask>): EntryLabels {
+fun entryLabels(fields: EntryFields, projects: List<Project>, tasks: List<Task>): EntryLabels {
     val project = fields.projectId?.let { id -> projects.firstOrNull { it.id == id } }
     val task = fields.taskId?.let { id -> tasks.firstOrNull { it.id == id } }
     return EntryLabels(project = project?.name, projectColor = project?.color, task = task?.name)
@@ -26,7 +26,7 @@ val EntryFields.picked: Picked get() = Picked(projectId = projectId, taskId = ta
  * project makes the entry billable, and a pick of tags alone leaves billable as it was, as the
  * web app's timer does (TimerBar.tsx in ../tokkl/packages/web).
  */
-fun EntryFields.withPicked(picked: Picked, projects: List<CachedProject>): EntryFields {
+fun EntryFields.withPicked(picked: Picked, projects: List<Project>): EntryFields {
     val projectPicked = picked.projectId != projectId || picked.taskId != taskId
     val project = picked.projectId?.let { id -> projects.firstOrNull { it.id == id } }
     return copy(

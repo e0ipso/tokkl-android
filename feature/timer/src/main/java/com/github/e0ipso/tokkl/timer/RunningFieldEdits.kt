@@ -1,11 +1,11 @@
 package com.github.e0ipso.tokkl.timer
 
-import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.EntryChanges
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
-import com.github.e0ipso.tokkl.cache.fields
 import com.github.e0ipso.tokkl.entryfields.withPicked
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.RunningEntryIdentity
+import com.github.e0ipso.tokkl.model.fields
 import com.github.e0ipso.tokkl.picker.Picked
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
 internal class RunningFieldEdits(
     private val taps: TimerTapState,
     private val changes: EntryChanges,
-    private val projects: () -> List<CachedProject>,
+    private val projects: () -> List<Project>,
 ) {
     private val writes = mutableSetOf<Job>()
     private var openingRunning = false

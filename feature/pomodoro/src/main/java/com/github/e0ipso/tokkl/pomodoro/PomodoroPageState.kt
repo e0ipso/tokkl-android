@@ -2,9 +2,11 @@ package com.github.e0ipso.tokkl.pomodoro
 
 import androidx.compose.runtime.Immutable
 import com.github.e0ipso.tokkl.api.TimerPomodoro
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.PendingChange
+import com.github.e0ipso.tokkl.cache.HeldChange
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
@@ -47,7 +49,7 @@ data class PomodoroProblem(val action: PomodoroAction, val result: TimerActionRe
  * tap on a page drawn before another device changed the timer gets the server's refusal and
  * cannot act on a phase or an entry the user never saw.
  */
-data class PomodoroShown(val revision: Long, val phaseStart: Instant, val entryId: Long)
+data class PomodoroShown(val revision: Long, val phaseStart: Instant, val entryId: EntryId)
 
 @Immutable
 data class PomodoroPageState(
@@ -65,7 +67,7 @@ data class PomodoroPageState(
     val fullScreenDenied: Boolean = false,
     val notificationsDenied: Boolean = false,
     val unsentCount: Int? = null,
-    val refused: List<PendingChange> = emptyList(),
+    val refused: List<HeldChange> = emptyList(),
     val problem: PomodoroProblem? = null,
 ) {
     /** The server's session, or null without one. */
@@ -75,12 +77,14 @@ data class PomodoroPageState(
         get() {
             val state = held?.state ?: return null
             val session = state.pomodoro ?: return null
-            return PomodoroShown(state.revision, session.phase.start, session.entryId)
+            return PomodoroShown(state.revision, session.phase.start, EntryId(session.entryId))
         }
 
     /** The session's workspace while it runs, and the account's default for a new one. */
-    val workspaceId: Long?
-        get() = held?.state?.takeIf { it.pomodoro != null }?.runningEntry?.workspaceId ?: account?.defaultWorkspaceId
+    val workspaceId: WorkspaceId?
+        get() = held?.state?.takeIf { it.pomodoro != null }?.runningEntry?.workspaceId?.let(
+            ::WorkspaceId,
+        ) ?: account?.defaultWorkspaceId
 
     val canStart: Boolean get() = !loading && !busy && pomodoro == null && workspaceId != null &&
         lengths.sessionLengths() != null
