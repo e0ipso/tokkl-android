@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.favorites
 
 import com.github.e0ipso.tokkl.api.ApiError
+import com.github.e0ipso.tokkl.api.ApiJson
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.cache.CachedFavorite
 import com.github.e0ipso.tokkl.cache.CachedProject
@@ -19,7 +20,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
-import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -203,15 +204,11 @@ class FavoritesViewModelTest {
     fun theSavedBodyIsTheWebAppsFormat() {
         val body = favoritesBody(listOf(REPORT.fields(), WEBSITE.fields()))
         assertEquals(
-            Json.parseToJsonElement(
-                """
-                {"favorites": [
-                  {"description": "Write the report", "project_id": 1, "task_id": 5, "tags": ["call", "deep work"], "billable": true},
-                  {"description": "Website", "project_id": null, "task_id": null, "tags": [], "billable": false}
-                ]}
-                """,
-            ),
-            body,
+            """{"favorites":[""" +
+                """{"description":"Write the report","project_id":1,"task_id":5,"tags":["call","deep work"],""" +
+                """"billable":true},""" +
+                """{"description":"Website","project_id":null,"task_id":null,"tags":[],"billable":false}]}""",
+            ApiJson.encodeToString(JsonElement.serializer(), body),
         )
     }
 

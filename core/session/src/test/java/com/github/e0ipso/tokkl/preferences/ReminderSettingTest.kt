@@ -65,7 +65,7 @@ class ReminderSettingTest {
         val request = server.takeRequest()
         assertEquals("POST", request.method)
         assertEquals("/api/v9/me/preferences", request.target)
-        assertEquals(ReminderPreferences(false, 4).body(), Json.parseToJsonElement(request.body!!.utf8()).jsonObject)
+        assertEquals("""{"long_timer_reminder_enabled":false,"long_timer_reminder_hours":4}""", request.body!!.utf8())
         assertFalse(saved.last().unsent)
         setting.refreshed(prefs(), true)
         assertEquals("stale refresh cannot revert a change", ReminderPreferences(false, 4), setting.state.value)

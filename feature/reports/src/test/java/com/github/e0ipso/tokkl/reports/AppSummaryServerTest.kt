@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.reports
 
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ApiError
+import com.github.e0ipso.tokkl.api.ApiJson
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
@@ -10,6 +11,7 @@ import com.github.e0ipso.tokkl.capabilities.ReportCsvKind
 import com.github.e0ipso.tokkl.time.DurationFormat
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import mockwebserver3.Dispatcher
@@ -237,6 +239,27 @@ class AppSummaryServerTest {
             ).body().containsKey("grouping"),
         )
     }
+
+    /** The exact bytes of each CSV export's body, in the order the web app sends its fields. */
+    @Test
+    fun csvExportsSendTheseBodies() {
+        val dates = """"start_date":"2026-10-21","end_date":"2026-10-27""""
+        val filtered = """"exclude_project_ids":[null,8],"client_ids":[9,null],"exclude_tag_ids":[10,null],""" +
+            """"billable":true"""
+        val rounded = """"rounding":1,"rounding_minutes":15,"duration_format":"classic""""
+        assertEquals(
+            """{$dates,$filtered,$rounded,"grouping":"projects","sub_grouping":"projects"}""",
+            csvBody(ReportCsvKind.SUMMARY, filters),
+        )
+        val sorted = """"sort":"date","dir":"desc""""
+        assertEquals("""{$dates,$filtered,$rounded,$sorted}""", csvBody(ReportCsvKind.DETAILED, filters))
+        assertEquals("""{$dates,$rounded,$sorted}""", csvBody(ReportCsvKind.DETAILED, ReportFilters()))
+    }
+
+    private fun csvBody(kind: ReportCsvKind, filters: ReportFilters): String = ApiJson.encodeToString(
+        JsonElement.serializer(),
+        ReportCsvRequest(kind, range, filters, workspace, DurationFormat.CLASSIC).body(),
+    )
 
     private fun json(body: String) = MockResponse.Builder().code(
         200,

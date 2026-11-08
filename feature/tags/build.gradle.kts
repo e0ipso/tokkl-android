@@ -12,4 +12,7 @@ dependencies {
     implementation(project(":core:cache"))
     implementation(project(":core:catalog"))
     implementation(project(":core:navigation"))
+
+    testImplementation(libs.mockwebserver3)
+    testImplementation(testFixtures(project(":core:api")))
 }
