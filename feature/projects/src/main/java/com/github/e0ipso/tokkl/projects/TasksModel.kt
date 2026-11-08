@@ -11,7 +11,6 @@ import com.github.e0ipso.tokkl.model.Task
 import com.github.e0ipso.tokkl.model.TaskId
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.DefaultWorkspace
-import com.github.e0ipso.tokkl.session.RefreshRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import kotlin.coroutines.CoroutineContext
@@ -48,7 +47,7 @@ typealias TasksState = CatalogState<TasksData, TaskOverlay>
 class TasksModel(
     private val repository: TasksRepository,
     workspaceId: DefaultWorkspace,
-    refreshCache: RefreshRequest,
+    refreshCache: () -> Unit,
     scope: CoroutineScope,
     io: CoroutineContext,
 ) {

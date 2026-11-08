@@ -508,7 +508,7 @@ class EntryActionsViewModelTest {
     private fun model(canRestore: Boolean) = EntryActionsViewModel(
         entries = entries,
         changes = FakeChanges(),
-        undo = { entryId ->
+        undoDelete = { entryId ->
             calls += "undo $entryId"
             undoOutcome
         },

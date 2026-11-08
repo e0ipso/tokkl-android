@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.di
 
 import android.net.ConnectivityManager
-import androidx.work.WorkManager
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ConfiguredServer
 import com.github.e0ipso.tokkl.api.ServerTrust
@@ -42,7 +41,7 @@ internal val coreModule = module {
     single<CoroutineScope> { CoroutineScope(SupervisorJob() + Dispatchers.Main) }
 
     // The process's WorkManager, which TokklApplication initialises with Koin's worker factory.
-    single { CurrentWorkManager { WorkManager.getInstance(androidContext()) } }
+    single { CurrentWorkManager(androidContext()) }
 
     // The default network, which the activity, the pickers and the timer sync service follow.
     single<DefaultNetwork> {

@@ -10,7 +10,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import com.github.e0ipso.tokkl.core.timerstate.R
 import com.github.e0ipso.tokkl.platform.DefaultNetwork
 import com.github.e0ipso.tokkl.platform.IoDispatcher
@@ -48,7 +50,6 @@ class TimerSyncService : Service() {
     /** Cancelled in [onDestroy]. */
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val follower: TimerSyncFollower by inject()
-    private val slot: TimerSyncServiceSlot by inject()
     private val timerSync: TimerSync<TimerStateSource> by inject()
     private val io: CoroutineDispatcher by inject(IoDispatcher)
     private val defaultNetwork: DefaultNetwork by inject()
@@ -69,7 +70,7 @@ class TimerSyncService : Service() {
             stopSelf(startId)
             return START_NOT_STICKY
         }
-        slot.service = this
+        running = this
         if (network == null) network = followDefaultNetwork()
         scope.launch {
             val running = withContext(io) {
@@ -83,7 +84,7 @@ class TimerSyncService : Service() {
     }
 
     override fun onDestroy() {
-        if (slot.service === this) slot.service = null
+        if (running === this) running = null
         network?.cancel()
         network = null
         timerSync.stop()
@@ -94,7 +95,7 @@ class TimerSyncService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     /** Stops the service unless a newer start has arrived. Call it on the main thread. */
-    internal fun stopLatest() {
+    private fun stopLatest() {
         stopSelf(latestStart)
     }
 
@@ -137,6 +138,19 @@ class TimerSyncService : Service() {
     }
 
     companion object {
+        /**
+         * The service while it runs in the foreground, which it sets and clears itself. A process
+         * runs at most one instance of a service. The app's device tests wait for it here too.
+         */
+        @Volatile
+        var running: TimerSyncService? = null
+            private set
+
+        /** Stops the service unless a newer start is on its way, which then decides for itself. */
+        fun stopRunning() {
+            Handler(Looper.getMainLooper()).post { running?.stopLatest() }
+        }
+
         /**
          * Starts the service in the foreground. Returns false when the platform refuses, as it does
          * for an app in the background outside the boot and update broadcasts.

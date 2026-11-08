@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.timer
 
-import com.github.e0ipso.tokkl.cache.QueueSender
 import com.github.e0ipso.tokkl.timerstate.PauseActions
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import com.github.e0ipso.tokkl.timerstate.TimerControls
@@ -24,7 +23,7 @@ internal class PauseChainTaps(
     private val taps: TimerTapState,
     private val actions: PauseActions?,
     private val fields: RunningFieldEdits,
-    private val sendQueued: QueueSender,
+    private val sendQueued: suspend () -> Unit,
     private val notices: TimerNoticeBoard,
     private val resumed: () -> Unit,
 ) {
@@ -41,7 +40,7 @@ internal class PauseChainTaps(
         act(running.target, done = { it.target != running.target }) {
             if (typed != null) {
                 fields.awaitWrites()
-                sendQueued.sendQueued()
+                sendQueued()
             }
             actions.pause()
         }

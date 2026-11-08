@@ -11,7 +11,7 @@ import com.github.e0ipso.tokkl.session.AccountLifetime
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.sync.SyncStatusSource
 import com.github.e0ipso.tokkl.timer.TimerViewSetting
-import com.github.e0ipso.tokkl.timerstate.HeldTimerFlows
+import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import kotlinx.coroutines.flow.map
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
@@ -41,7 +41,7 @@ internal val navigationModule = module {
         SignedInViewModel(
             timerView = get<TimerViewSetting>().view,
             timerRunning = get<AccountCache>().running.map { it != null },
-            pomodoroRunning = get<HeldTimerFlows>().held.map { it?.state?.pomodoro != null },
+            pomodoroRunning = get<AccountTimerStates>().held.map { it?.state?.pomodoro != null },
             syncStatus = get<SyncStatusSource>().status,
             discarded = get(),
             changes = get(),

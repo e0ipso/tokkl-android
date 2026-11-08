@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.platform
 
+import android.content.Context
 import androidx.work.WorkManager
 
 /**
@@ -8,6 +9,6 @@ import androidx.work.WorkManager
  * because the instrumented tests put an empty test WorkManager in its place before each test,
  * after the app's components were made.
  */
-fun interface CurrentWorkManager {
-    fun get(): WorkManager
+class CurrentWorkManager(private val context: Context) {
+    fun get(): WorkManager = WorkManager.getInstance(context)
 }

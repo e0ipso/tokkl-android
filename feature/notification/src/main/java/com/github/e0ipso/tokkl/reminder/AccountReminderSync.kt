@@ -6,9 +6,9 @@ import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.preferences.ReminderSetting
 import com.github.e0ipso.tokkl.session.SignedInCheck
+import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.SurfaceTap
 import com.github.e0ipso.tokkl.timerstate.TimerControls
-import com.github.e0ipso.tokkl.timerstate.TimerControlsSource
 import com.github.e0ipso.tokkl.timerstate.TimerSurfaceAction
 import com.github.e0ipso.tokkl.timerstate.TimerSurfaceActions
 import kotlinx.coroutines.flow.first
@@ -25,13 +25,13 @@ internal fun accountReminderSync(
     changes: ChangeQueue,
     cache: AccountCache,
     settings: ReminderSetting,
-    controls: TimerControlsSource,
+    controls: AccountTimerStates,
     surfaceActions: TimerSurfaceActions,
     work: ReminderWork,
 ): ReminderSync {
     val notifier = ReminderNotifier(context)
 
-    suspend fun runningNow(entryId: EntryId) = (controls.current() as? TimerControls.Running)?.takeIf {
+    suspend fun runningNow(entryId: EntryId) = (controls.currentControls() as? TimerControls.Running)?.takeIf {
         it.entry.id ==
             entryId
     }

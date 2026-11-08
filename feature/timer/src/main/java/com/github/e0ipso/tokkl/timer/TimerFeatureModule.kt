@@ -3,7 +3,7 @@ package com.github.e0ipso.tokkl.timer
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.cache.ChangeSender
-import com.github.e0ipso.tokkl.cache.DeleteUndo
+import com.github.e0ipso.tokkl.cache.DeleteUndoer
 import com.github.e0ipso.tokkl.calendar.CalendarViewModel
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.entry.EntryFormViewModel
@@ -26,9 +26,8 @@ import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.AppEvents
 import com.github.e0ipso.tokkl.session.Session
-import com.github.e0ipso.tokkl.timerstate.HeldTimerFlows
+import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.TimerActions
-import com.github.e0ipso.tokkl.timerstate.TimerControlsSource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emptyFlow
@@ -85,7 +84,7 @@ val timerFeatureModule = module {
         EntryActionsViewModel(
             entries = get<AccountCache>().entries,
             changes = get<ChangeQueue>(),
-            undo = get<DeleteUndo>(),
+            undoDelete = get<DeleteUndoer>()::undoDelete,
             canRestore = capabilities::offersRestore,
             accountSettings = get<AccountSettingsSource>().state,
             scope = viewModelCoroutineScope(),
@@ -115,7 +114,7 @@ val timerFeatureModule = module {
         val cache = get<AccountCache>()
         val sender = get<ChangeSender>()
         TimerViewModel(
-            controls = get<TimerControlsSource>().controls,
+            controls = get<AccountTimerStates>().controls,
             projects = cache.projects,
             tasks = cache.tasks,
             accountSettings = get<AccountSettingsSource>().state,
@@ -124,8 +123,8 @@ val timerFeatureModule = module {
             clock = get(),
             trace = get(),
             pauseChain = get<TimerActions>(),
-            sendQueued = sender,
-            discards = get<HeldTimerFlows>(),
+            sendQueued = sender::sendQueued,
+            discards = get<AccountTimerStates>(),
             timerApi = get<CapabilitiesSource>().state.map { it.timerState },
         )
     }

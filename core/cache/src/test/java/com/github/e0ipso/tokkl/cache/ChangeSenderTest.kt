@@ -9,7 +9,6 @@ import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
-import com.github.e0ipso.tokkl.capabilities.CapabilityCheck
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.time.SnappedSpan
 import com.github.e0ipso.tokkl.time.stopSpan
@@ -1954,7 +1953,7 @@ private fun changeSender(
     onDiscarded: (Int) -> Unit = {},
     clock: Clock = Clock.systemUTC(),
     spans: ServerSpans = ServerSpans.Unsnapped,
-    allDay: CapabilityCheck = CapabilityCheck { false },
+    allDay: () -> Boolean = { false },
     undo: DeleteUndoer = DeleteUndoer(store, client, io, restored = {}),
 ) = ChangeSender(
     store,

@@ -1,18 +1,5 @@
 package com.github.e0ipso.tokkl.session
 
-/** The reads [ForegroundRefresh] starts. */
-interface ForegroundReads {
-
-    /** Reads the running entry and the cached data again. */
-    fun refresh()
-
-    /**
-     * Does the same when the network comes back, and once more after a refresh that was running
-     * then ends without an answer.
-     */
-    fun refreshOnReconnect()
-}
-
 /**
  * When the app reads the server again while it is in the foreground (docs/PRD.md O2): once each
  * time it comes to the foreground, and once each time the network comes back while it is there.
@@ -25,8 +12,12 @@ interface ForegroundReads {
  *
  * It lives as long as the process, so it knows across a rotation that the activity only changed
  * its configuration.
+ *
+ * @param refresh reads the running entry and the cached data again.
+ * @param refreshOnReconnect does the same when the network comes back, and once more after a
+ *   refresh that was running then ends without an answer.
  */
-class ForegroundRefresh(private val reads: ForegroundReads) {
+class ForegroundRefresh(private val refresh: () -> Unit, private val refreshOnReconnect: () -> Unit) {
 
     /** The activity stopped for a configuration change, so its next start is no trip back. */
     private var changingConfigurations = false
@@ -40,7 +31,7 @@ class ForegroundRefresh(private val reads: ForegroundReads) {
         if (changingConfigurations) {
             changingConfigurations = false
         } else {
-            reads.refresh()
+            refresh()
         }
     }
 
@@ -66,7 +57,7 @@ class ForegroundRefresh(private val reads: ForegroundReads) {
         val before = this.online ?: return false
         this.online = online
         val back = online && !before
-        if (back) reads.refreshOnReconnect()
+        if (back) refreshOnReconnect()
         if (online) onOnline()
         return back
     }

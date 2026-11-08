@@ -2,10 +2,7 @@ package com.github.e0ipso.tokkl.timerstate
 
 import android.content.Context
 import com.github.e0ipso.tokkl.cache.ChangeSender
-import com.github.e0ipso.tokkl.capabilities.CapabilityCheck
 import com.github.e0ipso.tokkl.session.AccountDataOwner
-import com.github.e0ipso.tokkl.session.AccountRefreshListener
-import com.github.e0ipso.tokkl.session.AccountRefreshed
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import com.github.e0ipso.tokkl.session.SignedInCheck
 
@@ -16,14 +13,12 @@ import com.github.e0ipso.tokkl.session.SignedInCheck
 class TimerSyncFollower(
     private val context: Context,
     private val session: SignedInCheck,
-    private val timerStates: SignedInTimerState,
+    private val timerStates: AccountTimerStates,
     private val timerSync: TimerSync<TimerStateSource>,
-    private val timerApi: CapabilityCheck,
+    private val timerApi: () -> Boolean,
     private val sender: ChangeSender,
     private val syncWatcher: TimerSyncWatcher,
-    private val slot: TimerSyncServiceSlot,
-) : AccountRefreshListener,
-    AccountDataOwner {
+) : AccountDataOwner {
 
     override val signOutPhase = SignOutPhase.STOP_WORK
 
@@ -36,12 +31,7 @@ class TimerSyncFollower(
      * Whether the timer event stream should run: signed in to a server with the timer API, whose
      * token the server has not refused. Reads the disk.
      */
-    internal fun wanted(): Boolean = timerApi.offered() && !sender.signInNeeded.value && session.isSignedIn()
-
-    /** The first refresh after sign-in learns the capability, and any refresh can lose it. */
-    override fun refreshed(refresh: AccountRefreshed) {
-        follow()
-    }
+    internal fun wanted(): Boolean = timerApi() && !sender.signInNeeded.value && session.isSignedIn()
 
     /**
      * Starts [TimerSyncService], or points the running one at the account signed in now, while
@@ -52,7 +42,7 @@ class TimerSyncFollower(
      */
     fun follow() {
         syncWatcher.watchTimerSync()
-        val running = slot.service
+        val running = TimerSyncService.running
         if (!wanted()) {
             timerSync.stop()
             stopService()
@@ -68,13 +58,13 @@ class TimerSyncFollower(
      * the stream is still wanted.
      */
     internal fun run(running: TimerSyncService) {
-        timerSync.run(timerStates.timerState()) {
-            slot.service === running && timerApi.offered() && !sender.signInNeeded.value
+        timerSync.run(timerStates.source) {
+            TimerSyncService.running === running && timerApi() && !sender.signInNeeded.value
         }
     }
 
     /** Stops [TimerSyncService] unless a newer start is on its way, which then decides for itself. */
     fun stopService() {
-        slot.stop()
+        TimerSyncService.stopRunning()
     }
 }

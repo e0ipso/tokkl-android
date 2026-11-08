@@ -15,7 +15,7 @@ val settingsFeatureModule = module {
     // The Settings page's sign-out button and its warning about unsent changes.
     single {
         SignOutConfirmation(
-            unsentCount = get<ChangeQueue>(),
+            unsentCount = get<ChangeQueue>()::unsentNow,
             clear = get<SignOut>(),
             scope = get(),
         )

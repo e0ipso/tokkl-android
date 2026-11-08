@@ -4,7 +4,6 @@ import androidx.compose.runtime.Immutable
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.DefaultWorkspace
-import com.github.e0ipso.tokkl.session.RefreshRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
@@ -76,7 +75,7 @@ data class CatalogState<D, O>(
 class CatalogModel<D, O>(
     private val repository: CatalogRepository<D>,
     private val workspaceId: DefaultWorkspace,
-    private val refreshCache: RefreshRequest,
+    private val refreshCache: () -> Unit,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
 ) : PageEvents {
@@ -163,7 +162,7 @@ class CatalogModel<D, O>(
             val answer = withContext(io + NonCancellable) { request(workspace) }
             // The page closed while the request ran. What the server accepted still reaches the cache.
             if (!opened) {
-                if (answer is ApiResult.Success) refreshCache.request()
+                if (answer is ApiResult.Success) refreshCache()
                 return@launch
             }
             when (answer) {
@@ -176,7 +175,7 @@ class CatalogModel<D, O>(
                             done = done(answer.value),
                         )
                     }
-                    refreshCache.request()
+                    refreshCache()
                 }
 
                 is ApiResult.Failure -> {

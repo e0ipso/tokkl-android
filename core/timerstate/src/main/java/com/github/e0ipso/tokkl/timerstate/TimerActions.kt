@@ -38,7 +38,7 @@ import kotlin.coroutines.CoroutineContext
  */
 class TimerActions(
     private val client: ApiClientProvider,
-    private val states: SignedInTimerState,
+    private val states: () -> TimerStateSource,
     private val io: CoroutineContext,
 ) : PauseActions,
     SessionActions {
@@ -85,7 +85,7 @@ class TimerActions(
     private suspend fun call(request: suspend (TokklApi) -> ApiResult<Refusable<TimerState>>): TimerActionResult =
         withContext(io + NonCancellable) {
             val api = client() ?: return@withContext TimerActionResult.Failed(ApiError.AuthFailed)
-            val holder = states.timerState()
+            val holder = states()
             // Before the request, so its answer cannot undo a change the phone makes meanwhile.
             val read = holder.begin()
             when (val answer = request(api)) {

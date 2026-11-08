@@ -2,10 +2,7 @@ package com.github.e0ipso.tokkl.preferences
 
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.PomodoroDefaultsChange
-import com.github.e0ipso.tokkl.capabilities.CapabilityCheck
 import com.github.e0ipso.tokkl.session.AccountDataOwner
-import com.github.e0ipso.tokkl.session.AccountRefreshListener
-import com.github.e0ipso.tokkl.session.AccountRefreshed
 import com.github.e0ipso.tokkl.session.MePreferences
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import com.github.e0ipso.tokkl.storage.ClearableStore
@@ -68,11 +65,10 @@ typealias StoredPomodoroDefaults = StoredPreference<PomodoroDefaults>
 class PomodoroDefaultsSetting(
     store: ClearableStore<StoredPomodoroDefaults>,
     client: ApiClientProvider,
-    private val keepsPreferences: CapabilityCheck,
+    private val keepsPreferences: () -> Boolean,
     scope: CoroutineScope,
     io: CoroutineContext,
-) : AccountRefreshListener,
-    AccountDataOwner {
+) : AccountDataOwner {
 
     override val signOutPhase = SignOutPhase.CLEAR_DATA
 
@@ -104,12 +100,8 @@ class PomodoroDefaultsSetting(
      * them to the server in the background. Call it on the main thread.
      */
     fun change(defaults: PomodoroDefaults): Job {
-        val keepsPreferences = keepsPreferences.offered()
+        val keepsPreferences = keepsPreferences()
         return preference.change(defaults.clamped(), unsent = keepsPreferences, sendIf = { keepsPreferences })
-    }
-
-    override fun refreshed(refresh: AccountRefreshed) {
-        refreshed(refresh.preferences, keepsPreferences = refresh.capabilities.favorites)
     }
 
     /**

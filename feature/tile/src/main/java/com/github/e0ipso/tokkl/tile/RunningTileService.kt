@@ -7,8 +7,8 @@ import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.timernotice.showTimerActionFailure
+import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.SurfaceTap
-import com.github.e0ipso.tokkl.timerstate.TimerControlsSource
 import com.github.e0ipso.tokkl.timerstate.TimerSurfaceActions
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -47,7 +47,7 @@ import org.koin.android.ext.android.inject
  */
 class RunningTileService : TileService() {
 
-    private val timerControls: TimerControlsSource by inject()
+    private val timerControls: AccountTimerStates by inject()
     private val cache: AccountCache by inject()
     private val changes: ChangeQueue by inject()
     private val surfaceActions: TimerSurfaceActions by inject()

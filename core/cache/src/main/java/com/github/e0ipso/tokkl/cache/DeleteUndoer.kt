@@ -4,19 +4,13 @@ import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.model.EntryId
-import com.github.e0ipso.tokkl.session.RefreshRequest
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
 
-/** Takes back the delete of an entry, such as [DeleteUndoer.undoDelete]. */
-fun interface DeleteUndo {
-    suspend fun undoDelete(entryId: EntryId): UndoOutcome
-}
-
-/** What [DeleteUndo.undoDelete] did. */
+/** What [DeleteUndoer.undoDelete] did. */
 sealed interface UndoOutcome {
     /** The delete had not gone out. It left the queue and the entry is back, with no request. */
     data object Cancelled : UndoOutcome
@@ -52,8 +46,8 @@ class DeleteUndoer(
     private val store: ChangeStore,
     private val client: ApiClientProvider,
     private val io: CoroutineContext,
-    private val restored: RefreshRequest,
-) : DeleteUndo {
+    private val restored: () -> Unit,
+) {
 
     /** Held while a delete goes out and while [undoDelete] takes one back, so the two never overlap. */
     private val deletes = Mutex()
@@ -67,7 +61,7 @@ class DeleteUndoer(
      * entry. Blocks the sender's deletes meanwhile. Once started, the Undo reaches the server and
      * the queue also when the caller is cancelled.
      */
-    override suspend fun undoDelete(entryId: EntryId): UndoOutcome {
+    suspend fun undoDelete(entryId: EntryId): UndoOutcome {
         val outcome = withContext(io + NonCancellable) {
             deletes.withLock {
                 when (val found = store.takeBackDelete(entryId)) {
@@ -77,7 +71,7 @@ class DeleteUndoer(
                 }
             }
         }
-        if (outcome == UndoOutcome.Restored) withContext(io) { restored.request() }
+        if (outcome == UndoOutcome.Restored) withContext(io) { restored() }
         return outcome
     }
 

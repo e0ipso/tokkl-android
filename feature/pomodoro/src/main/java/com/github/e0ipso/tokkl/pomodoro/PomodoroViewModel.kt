@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.api.TimerPomodoro
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.HeldChange
-import com.github.e0ipso.tokkl.cache.QueueSender
 import com.github.e0ipso.tokkl.cache.toTimeEntry
 import com.github.e0ipso.tokkl.entryfields.entryLabels
 import com.github.e0ipso.tokkl.entryfields.withPicked
@@ -74,7 +73,7 @@ class PomodoroViewModel(
     unsent: Flow<Int>,
     refused: Flow<List<HeldChange>>,
     scope: CoroutineScope,
-    private val sendQueued: QueueSender,
+    private val sendQueued: suspend () -> Unit,
     private val alarmProbe: ExactAlarmCheck,
     picker: Flow<PickerSource>,
     val offline: StateFlow<Boolean>,
@@ -327,7 +326,7 @@ class PomodoroViewModel(
         fieldWrites.toList().joinAll()
         if (!unflushed) return shown.revision
         unflushed = false
-        sendQueued.sendQueued()
+        sendQueued()
         actions.read()
         val moved = withTimeoutOrNull(REFRESH_MS) {
             state.first { it.shown.let { now -> now == null || now.revision > shown.revision } }

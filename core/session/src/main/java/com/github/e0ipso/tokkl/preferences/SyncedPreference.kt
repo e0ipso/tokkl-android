@@ -3,7 +3,6 @@ package com.github.e0ipso.tokkl.preferences
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.PreferencesChange
-import com.github.e0ipso.tokkl.capabilities.CapabilityCheck
 import com.github.e0ipso.tokkl.session.MePreferences
 import com.github.e0ipso.tokkl.storage.ClearableStore
 import kotlinx.coroutines.CoroutineScope
@@ -94,7 +93,7 @@ class SyncedPreference<T : Any>(
      * Shows [value] at once, marked [unsent], keeps it on the phone and then, in the background,
      * sends it to the server when [sendIf] says so. Call it on the main thread.
      */
-    fun change(value: T, unsent: Boolean, sendIf: CapabilityCheck): Job {
+    fun change(value: T, unsent: Boolean, sendIf: () -> Boolean): Job {
         synchronized(lock) {
             state.value.value = value
             state.unsent = unsent
@@ -102,7 +101,7 @@ class SyncedPreference<T : Any>(
         }
         return scope.launch(io) {
             persist()
-            if (sendIf.offered()) send()
+            if (sendIf()) send()
         }
     }
 

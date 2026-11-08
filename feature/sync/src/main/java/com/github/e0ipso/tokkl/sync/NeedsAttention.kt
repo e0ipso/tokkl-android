@@ -2,7 +2,6 @@ package com.github.e0ipso.tokkl.sync
 
 import com.github.e0ipso.tokkl.cache.HeldChange
 import com.github.e0ipso.tokkl.cache.HeldChanges
-import com.github.e0ipso.tokkl.session.RefreshRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
@@ -19,7 +18,7 @@ import kotlinx.coroutines.launch
  */
 class NeedsAttention(
     private val changes: HeldChanges,
-    private val afterDiscard: RefreshRequest,
+    private val afterDiscard: () -> Unit,
     private val scope: CoroutineScope,
 ) {
 
@@ -30,6 +29,6 @@ class NeedsAttention(
     }
 
     fun discard(change: HeldChange) {
-        scope.launch { if (changes.discard(change.sequence)) afterDiscard.request() }
+        scope.launch { if (changes.discard(change.sequence)) afterDiscard() }
     }
 }

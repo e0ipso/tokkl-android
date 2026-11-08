@@ -1,23 +1,36 @@
 package com.github.e0ipso.tokkl.timerstate
 
-import com.github.e0ipso.tokkl.cache.CurrentEntryCache
+import com.github.e0ipso.tokkl.api.DiscardedPomodoro
+import com.github.e0ipso.tokkl.cache.AccountCache
+import com.github.e0ipso.tokkl.cache.CacheDatabase
+import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountLifetime
 import com.github.e0ipso.tokkl.session.AccountRefreshRequests
 import com.github.e0ipso.tokkl.session.SignOutPhase
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.time.Clock
+import kotlin.coroutines.CoroutineContext
 
-/** The signed-in account's [TimerStateSource], read anew for each call, such as [AccountTimerStates]. */
-fun interface SignedInTimerState {
-    fun timerState(): TimerStateSource
-}
+/** The too-short pomodoro notice of the signed-in account, such as [AccountTimerStates] keeps. */
+interface DiscardNotices {
 
-/** The signed-in account's held timer state now, or null without one, such as [AccountTimerStates.held]. */
-fun interface CurrentHeldState {
-    fun held(): HeldTimerState?
+    /** The too-short pomodoro of the account's timer state that no screen has shown yet. */
+    val discardNotice: Flow<DiscardedPomodoro?>
+
+    /** Takes the [discardNotice] on show, or returns null when none is left to show. */
+    suspend fun takeDiscardNotice(): DiscardedPomodoro?
 }
 
 /** The account's [TimerStateSource], and the name its timer controls carry in their targets. */
@@ -25,22 +38,28 @@ class AccountTimerState(val source: TimerStateSource, val account: String)
 
 /**
  * The account's timer state from a Tokkl server with the timer API, which every timer request,
- * action and event feeds. Each account of the [lifetime] gets its own, made on first use: the
- * first one of the process from the stored state, a small file, and each one after a sign-in
- * from nothing. Sign-out retires it. Take it once per request or stream and give its answer to
- * the same source: an answer kept for a retired source changes nothing.
+ * action and event feeds, and what every timer surface reads from it. Each account of the
+ * [lifetime] gets its own, made on first use: the first one of the process from the stored state,
+ * a small file, and each one after a sign-in from nothing. Sign-out retires it. Take it once per
+ * request or stream and give its answer to the same source: an answer kept for a retired source
+ * changes nothing.
+ *
+ * The flows follow the signed-in account across sign-ins and load the stored state off the main
+ * thread, on [io].
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 class AccountTimerStates(
     private val store: TimerStateStore,
     private val lastFields: HeldFieldsMemory,
-    private val cache: CurrentEntryCache,
+    private val cache: AccountCache,
+    private val database: CacheDatabase,
+    private val capabilities: CapabilitiesSource,
     private val refreshes: AccountRefreshRequests,
     private val lifetime: AccountLifetime,
     private val clock: Clock,
+    private val io: CoroutineContext,
 ) : AccountDataOwner,
-    SignedInTimerState,
-    SignedInAccountName,
-    CurrentHeldState {
+    DiscardNotices {
 
     override val signOutPhase = SignOutPhase.RETIRE_STATE
 
@@ -57,15 +76,11 @@ class AccountTimerStates(
     val source: TimerStateSource
         get() = current().source
 
-    override fun timerState(): TimerStateSource = source
-
     /** The signed-in account's held state now, or null without one. Loads the stored state on first use. */
-    override fun held(): HeldTimerState? = source.state.value
+    fun heldNow(): HeldTimerState? = source.state.value
 
     /** The name the signed-in account's timer controls carry in their targets. */
     fun account(): String = current().account
-
-    override fun name(): String = account()
 
     /** The source and the account name of the account signed in now, read together. */
     fun current(): AccountTimerState {
@@ -82,6 +97,46 @@ class AccountTimerStates(
      * loads the stored state, so collect it off the main thread.
      */
     val states: Flow<AccountTimerState> = lifetime.accounts.map { current() }
+
+    /** The signed-in account's held timer state, or null without one. */
+    val held: Flow<HeldTimerState?> = states.flatMapLatest { it.source.state }.flowOn(io)
+
+    /**
+     * [held] while the account's server offers the timer API, and null otherwise: what the
+     * full-screen alarm shows.
+     */
+    val session: Flow<HeldTimerState?> =
+        combine(held, flow { emitAll(capabilities.state) }) { held, flags -> held.takeIf { flags.timerState } }
+            .flowOn(io)
+
+    override val discardNotice: Flow<DiscardedPomodoro?> =
+        states.flatMapLatest { it.source.discardNotice }.flowOn(io)
+
+    /** Records the notice as shown in the account's timer state store, on [io]. */
+    override suspend fun takeDiscardNotice(): DiscardedPomodoro? = withContext(io) { source.takeDiscardNotice() }
+
+    /**
+     * What every timer surface shows and acts on (docs/PRD.md T1, N1, N3, N4, N7): the Timer page,
+     * the full-screen timer, the running notification, the widget, the Quick Settings tile and the
+     * reminder. It is the cache's running entry, with its queued Starts, Stops and edits, and the
+     * pause chain of the held state, as [serverTimerControls] puts them together, while the server
+     * offers the timer API, with targets that name the account. Each value reads the cache and the
+     * held state under the holder's lock, so a state never shows apart from the running entry it
+     * wrote to the cache.
+     */
+    val controls: Flow<TimerControls> = combine(
+        database.invalidationTracker.createFlow("time_entries", "pending_changes"),
+        states.flatMapLatest { it.source.state },
+        flow { emitAll(capabilities.state) },
+    ) { _, _, flags ->
+        val account = current()
+        account.source.withState { held ->
+            serverTimerControls(cache.runningNow(), held, flags.timerState, account.account)
+        }
+    }.flowOn(io).distinctUntilChanged()
+
+    /** What [controls] holds now. */
+    suspend fun currentControls(): TimerControls = controls.first()
 
     /**
      * Retires the source and clears its store and the remembered Start fields, so the account

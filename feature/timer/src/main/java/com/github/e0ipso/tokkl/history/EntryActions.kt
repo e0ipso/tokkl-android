@@ -3,10 +3,8 @@ package com.github.e0ipso.tokkl.history
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.github.e0ipso.tokkl.cache.DeleteUndo
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.UndoOutcome
-import com.github.e0ipso.tokkl.capabilities.CapabilityCheck
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.entryfields.SplitHalves
 import com.github.e0ipso.tokkl.entryfields.SplitProblem
@@ -116,14 +114,14 @@ data class EntryActionsState(
  *   and Split cuts.
  * @param accountSettings the account's timezone, time resolution and clock format, which Split
  *   reads the time with.
- * @param undo takes back the delete of an entry, as `DeleteUndoer.undoDelete` does.
+ * @param undoDelete takes back the delete of an entry, as `DeleteUndoer.undoDelete` does.
  * @param canRestore whether the server restores deleted entries, `Capabilities.restore`.
  */
 class EntryActionsViewModel(
     private val entries: Flow<List<EntryWithSendState>>,
     private val changes: EntryChanges,
-    private val undo: DeleteUndo,
-    private val canRestore: CapabilityCheck,
+    private val undoDelete: suspend (EntryId) -> UndoOutcome,
+    private val canRestore: () -> Boolean,
     private val accountSettings: StateFlow<AccountSettings?>,
     scope: CoroutineScope,
     private val clock: Clock,
@@ -137,7 +135,7 @@ class EntryActionsViewModel(
     private val deleting = mutableSetOf<EntryId>()
     private var undoing = false
 
-    fun canRestoreDelete(): Boolean = canRestore.offered()
+    fun canRestoreDelete(): Boolean = canRestore()
 
     /** Called only after the editor's deletion transaction commits. Kept by HistoryViewModel. */
     fun deleted(entry: TimeEntry, undo: Boolean) {
@@ -152,7 +150,7 @@ class EntryActionsViewModel(
 
     /** Deletes the cached entry [entryId], or asks first when the server cannot restore it. */
     fun delete(entryId: EntryId) {
-        if (canRestore.offered()) {
+        if (canRestore()) {
             queueDelete(entryId, undo = true)
         } else {
             mutableState.update { it.copy(confirmDelete = entryId) }
@@ -177,7 +175,7 @@ class EntryActionsViewModel(
         val offered = mutableState.value.notice
         viewModelScope.launch {
             try {
-                val notice = when (val outcome = undo.undoDelete(entryId)) {
+                val notice = when (val outcome = undoDelete(entryId)) {
                     UndoOutcome.Cancelled, UndoOutcome.Restored -> {
                         val id = changes.currentId(entryId)
                         val restored = entries.first().firstOrNull { it.entry.id == id }?.entry

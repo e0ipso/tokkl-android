@@ -7,7 +7,6 @@ import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.HttpStatus
 import com.github.e0ipso.tokkl.api.TrashEntry
-import com.github.e0ipso.tokkl.capabilities.CapabilityMissing
 import com.github.e0ipso.tokkl.catalog.PageEvents
 import com.github.e0ipso.tokkl.catalog.PageReloads
 import com.github.e0ipso.tokkl.catalog.ServerProblem
@@ -16,7 +15,6 @@ import com.github.e0ipso.tokkl.catalog.toServerProblem
 import com.github.e0ipso.tokkl.platform.whileShown
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.AppEvent
-import com.github.e0ipso.tokkl.session.RefreshRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
@@ -96,8 +94,8 @@ data class TrashPageState(
  */
 class TrashViewModel(
     private val repository: TrashRepository,
-    private val refreshCache: RefreshRequest,
-    private val trashMissing: CapabilityMissing,
+    private val refreshCache: () -> Unit,
+    private val trashMissing: () -> Unit,
     scope: CoroutineScope,
     private val io: CoroutineContext,
     settings: StateFlow<AccountSettings?>,
@@ -209,7 +207,7 @@ class TrashViewModel(
         mutableState.update { it.copy(sending = true, changeProblem = null) }
         viewModelScope.launch {
             val answer = withContext(io + NonCancellable) { request(repository) }
-            if (answer is ApiResult.Success && restored) refreshCache.request()
+            if (answer is ApiResult.Success && restored) refreshCache()
             // The page closed while the request ran.
             if (!opened) return@launch
             when (answer) {
@@ -244,7 +242,7 @@ class TrashViewModel(
             // A cancelled load cancels its request and drops its answer.
             val answer = withContext(io) {
                 repository.list().also {
-                    if (it is ApiResult.Failure && it.error.meansNoTrash()) trashMissing.missing()
+                    if (it is ApiResult.Failure && it.error.meansNoTrash()) trashMissing()
                 }
             }
             when (answer) {

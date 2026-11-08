@@ -9,6 +9,8 @@ import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
 import com.github.e0ipso.tokkl.navigation.topLevelDestination
 import com.github.e0ipso.tokkl.picker.pickerSource
+import com.github.e0ipso.tokkl.platform.AppHook
+import com.github.e0ipso.tokkl.platform.AppHookOrder
 import com.github.e0ipso.tokkl.platform.DefaultNetwork
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.platform.offlineIn
@@ -19,18 +21,19 @@ import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.session.SignedInListener
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
-import com.github.e0ipso.tokkl.timerstate.HeldTimerFlows
 import com.github.e0ipso.tokkl.timerstate.PomodoroAlarmScheduler
 import com.github.e0ipso.tokkl.timerstate.PomodoroRingingPhase
 import com.github.e0ipso.tokkl.timerstate.TimerActions
-import com.github.e0ipso.tokkl.timerstate.TimerControlsSource
 import com.github.e0ipso.tokkl.timerstate.TimerSyncFollower
 import com.github.e0ipso.tokkl.timerstate.TimerSyncWatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.launch
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
+import org.koin.core.qualifier.named
 import org.koin.dsl.bind
 import org.koin.dsl.binds
 import org.koin.dsl.module
@@ -78,7 +81,7 @@ val pomodoroFeatureModule = module {
     // first call loads the held state and the capabilities from disk.
     single {
         PomodoroPhaseAlarm(
-            held = get<AccountTimerStates>(),
+            held = get<AccountTimerStates>()::heldNow,
             available = get<CapabilitiesSource>()::offersTimerApi,
             alarms = get<AlarmClockPomodoroScheduler>(),
             ringing = get<ServicePomodoroRinging>(),
@@ -86,6 +89,24 @@ val pomodoroFeatureModule = module {
             clock = get(),
         )
     } bind PomodoroRingCheck::class
+    single(named("hook-pomodoro-alarm")) {
+        val alarm = inject<PomodoroPhaseAlarm>()
+        val timerStates = inject<AccountTimerStates>()
+        val capabilities = inject<CapabilitiesSource>()
+        val scope = get<CoroutineScope>()
+        val io = io()
+        AppHook(
+            AppHookOrder.POMODORO_ALARM,
+            // Arms, moves and drops the phase alarm and its ring on every held state and capability
+            // change, from the stored state at process start on, also with the app in the background.
+            processStart = {
+                scope.launch(io) {
+                    combine(timerStates.value.held, flow { emitAll(capabilities.value.state) }) { _, _ -> Unit }
+                        .collect { alarm.value.follow() }
+                }
+            },
+        )
+    }
 
     // What the boot, update, clock and exact-alarm broadcasts do: arm the held phase again, and
     // start the timer sync service after boot and an update.
@@ -101,7 +122,7 @@ val pomodoroFeatureModule = module {
     single {
         val store = PomodoroSessionNotificationStore(androidContext())
         val notifier = PomodoroSessionNotifier(androidContext())
-        val held = get<HeldTimerFlows>()
+        val held = get<AccountTimerStates>()
         val capabilities = get<CapabilitiesSource>()
         val ringing = get<ServicePomodoroRinging>()
         val session = get<Session>()
@@ -117,6 +138,14 @@ val pomodoroFeatureModule = module {
             io = io(),
         )
     } bind SignedInListener::class
+    single(named("hook-pomodoro-notification")) {
+        val sync = inject<PomodoroSessionNotificationSync>()
+        AppHook(
+            AppHookOrder.POMODORO_NOTIFICATION,
+            processStart = { sync.value.start() },
+            notificationsAllowed = { sync.value.refresh(force = true) },
+        )
+    }
 
     // What the session notification's buttons do.
     single<PomodoroSessionButtons> { SessionNotificationButtons(androidContext(), notification = get()) }
@@ -137,8 +166,8 @@ val pomodoroFeatureModule = module {
         val alarms = get<PomodoroAlarmScheduler>()
         val scope = viewModelCoroutineScope()
         PomodoroViewModel(
-            held = get<HeldTimerFlows>().held,
-            controls = get<TimerControlsSource>().controls,
+            held = get<AccountTimerStates>().held,
+            controls = get<AccountTimerStates>().controls,
             actions = get<TimerActions>(),
             changes = changes,
             defaults = get<PomodoroDefaultsSetting>().defaults,
@@ -146,7 +175,7 @@ val pomodoroFeatureModule = module {
             unsent = changes.unsentCount,
             refused = changes.held,
             scope = scope,
-            sendQueued = sender,
+            sendQueued = sender::sendQueued,
             alarmProbe = { alarms.permissionDenied },
             picker = get<AccountCache>().pickerSource(),
             offline = get<DefaultNetwork>().offlineIn(scope),
@@ -154,7 +183,7 @@ val pomodoroFeatureModule = module {
     }
     viewModel {
         PomodoroAlarmViewModel(
-            held = get<HeldTimerFlows>().session,
+            held = get<AccountTimerStates>().session,
             actions = get<TimerActions>(),
             scope = viewModelCoroutineScope(),
             clock = get(),

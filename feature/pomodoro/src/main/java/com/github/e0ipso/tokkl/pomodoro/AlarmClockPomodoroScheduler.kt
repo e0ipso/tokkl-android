@@ -7,7 +7,6 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import com.github.e0ipso.tokkl.capabilities.CapabilityCheck
 import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.platform.mainActivityIntent
 import com.github.e0ipso.tokkl.timerstate.PomodoroAlarmScheduler
@@ -51,7 +50,7 @@ fun interface ExactAlarmCheck {
  */
 class AlarmClockPomodoroScheduler(
     private val context: Context,
-    private val timerSyncStarts: CapabilityCheck,
+    private val timerSyncStarts: () -> Boolean,
     private val exactAlarms: ExactAlarmCheck,
 ) : PomodoroAlarmScheduler,
     TimerSyncWatcher {
@@ -100,7 +99,7 @@ class AlarmClockPomodoroScheduler(
     }
 
     private fun applyRearmReceiver() {
-        val state = if (timerSyncStarts.offered()) {
+        val state = if (timerSyncStarts()) {
             PackageManager.COMPONENT_ENABLED_STATE_ENABLED
         } else {
             PackageManager.COMPONENT_ENABLED_STATE_DISABLED

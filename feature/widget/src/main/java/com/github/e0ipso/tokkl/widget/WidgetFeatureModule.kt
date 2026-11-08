@@ -1,6 +1,8 @@
 package com.github.e0ipso.tokkl.widget
 
 import androidx.glance.appwidget.updateAll
+import com.github.e0ipso.tokkl.platform.AppHook
+import com.github.e0ipso.tokkl.platform.AppHookOrder
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.timerstate.HeldFieldsMemory
@@ -56,11 +58,14 @@ val widgetFeatureModule = module {
             io = io(),
         )
     }
+    single(named("hook-timer-widget")) {
+        val sync = inject<WidgetSync>(TimerWidgetQualifier)
+        AppHook(AppHookOrder.TIMER_WIDGET, processStart = { sync.value.start() })
+    }
 
     single {
         PomodoroWidgetStateSource(
             fields = get(),
-            held = get(),
             timerStates = get(),
             cache = get(),
             ringing = get(),
@@ -87,5 +92,9 @@ val widgetFeatureModule = module {
             scope = get(),
             io = io(),
         )
+    }
+    single(named("hook-pomodoro-widget")) {
+        val sync = inject<WidgetSync>(PomodoroWidgetQualifier)
+        AppHook(AppHookOrder.POMODORO_WIDGET, processStart = { sync.value.start() })
     }
 }

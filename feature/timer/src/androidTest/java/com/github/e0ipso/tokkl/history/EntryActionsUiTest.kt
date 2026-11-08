@@ -317,7 +317,7 @@ class EntryActionsUiTest {
         val model = EntryActionsViewModel(
             entries = MutableStateFlow(listOf(EntryWithSendState(CACHED, unsent = false))),
             changes = RecordingChanges(),
-            undo = { entryId ->
+            undoDelete = { entryId ->
                 calls += "undo $entryId"
                 undo
             },

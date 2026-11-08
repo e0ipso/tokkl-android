@@ -9,7 +9,6 @@ import com.github.e0ipso.tokkl.cache.toTimeEntry
 import com.github.e0ipso.tokkl.capabilities.ProbedTimerState
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.TimeEntry
-import com.github.e0ipso.tokkl.session.RefreshRequest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -56,7 +55,7 @@ class TimerStateSource(
     private val store: TimerStateWriter,
     private val cache: CurrentEntryCache,
     private val clock: Clock,
-    private val runningEnded: RefreshRequest,
+    private val runningEnded: () -> Unit,
 ) : ProbedTimerState<TimerStateRead> {
 
     // A JVM lock, not a Mutex: answers and events arrive on OkHttp and IO threads, and flows read
@@ -115,7 +114,7 @@ class TimerStateSource(
             mutableNotice.value = next.unshownDiscard(acknowledged)
             writeRunning(read, state)
         }
-        if (ended) runningEnded.request()
+        if (ended) runningEnded()
         return true
     }
 

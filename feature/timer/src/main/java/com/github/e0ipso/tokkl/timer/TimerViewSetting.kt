@@ -2,13 +2,10 @@ package com.github.e0ipso.tokkl.timer
 
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.TimerViewChange
-import com.github.e0ipso.tokkl.capabilities.CapabilityCheck
 import com.github.e0ipso.tokkl.preferences.PreferenceCodec
 import com.github.e0ipso.tokkl.preferences.StoredPreference
 import com.github.e0ipso.tokkl.preferences.SyncedPreference
 import com.github.e0ipso.tokkl.session.AccountDataOwner
-import com.github.e0ipso.tokkl.session.AccountRefreshListener
-import com.github.e0ipso.tokkl.session.AccountRefreshed
 import com.github.e0ipso.tokkl.session.MePreferences
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import com.github.e0ipso.tokkl.storage.ClearableStore
@@ -38,11 +35,10 @@ typealias StoredTimerView = StoredPreference<TimerView>
 class TimerViewSetting(
     store: ClearableStore<StoredTimerView>,
     client: ApiClientProvider,
-    private val keepsTimerView: CapabilityCheck,
+    private val keepsTimerView: () -> Boolean,
     scope: CoroutineScope,
     io: CoroutineContext,
 ) : TimerViewChoice,
-    AccountRefreshListener,
     AccountDataOwner {
 
     override val signOutPhase = SignOutPhase.CLEAR_DATA
@@ -70,10 +66,6 @@ class TimerViewSetting(
     /** Shows [view] at once, keeps it on the phone and sends it to the server in the background. */
     override fun choose(view: TimerView) {
         preference.change(view, unsent = true, sendIf = keepsTimerView)
-    }
-
-    override fun refreshed(refresh: AccountRefreshed) {
-        refreshed(refresh.preferences, keepsTimerView = refresh.capabilities.favorites)
     }
 
     /**

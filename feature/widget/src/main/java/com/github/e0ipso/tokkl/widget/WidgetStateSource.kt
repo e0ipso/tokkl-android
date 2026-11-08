@@ -9,7 +9,7 @@ import com.github.e0ipso.tokkl.cache.RunningCheck
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.platform.CurrentWorkManager
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
-import com.github.e0ipso.tokkl.timerstate.TimerControlsSource
+import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -36,7 +36,7 @@ class WidgetStateSource(
     database: CacheDatabase,
     accountSettings: AccountSettingsSource,
     capabilities: CapabilitiesSource,
-    timerControls: TimerControlsSource,
+    timerControls: AccountTimerStates,
     workManager: CurrentWorkManager,
     clock: Clock,
     io: CoroutineContext,

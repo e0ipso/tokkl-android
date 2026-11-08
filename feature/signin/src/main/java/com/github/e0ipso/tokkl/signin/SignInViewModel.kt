@@ -6,7 +6,6 @@ import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.api.ServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.navigation.SignInAgain
-import com.github.e0ipso.tokkl.session.RefreshRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
@@ -98,7 +97,7 @@ class SignInViewModel(
     scope: CoroutineScope,
     private val io: CoroutineContext,
     private val clock: Clock,
-    onSignedIn: RefreshRequest,
+    onSignedIn: () -> Unit,
 ) : ViewModel(scope) {
 
     private val mutableState = MutableStateFlow(SignInState())
@@ -106,7 +105,7 @@ class SignInViewModel(
 
     init {
         viewModelScope.launch {
-            state.map { it.signedIn }.distinctUntilChanged().filter { it }.collect { onSignedIn.request() }
+            state.map { it.signedIn }.distinctUntilChanged().filter { it }.collect { onSignedIn() }
         }
     }
 

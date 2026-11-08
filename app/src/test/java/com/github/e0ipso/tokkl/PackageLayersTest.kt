@@ -174,7 +174,7 @@ class PackageLayersTest {
          */
         val LAYERS: List<Set<String>> = listOf(
             setOf("model", "api", "time", "storage", "ui", "platform"),
-            setOf("credentials", "capabilities", "session", "preferences", "cache", "timerstate", "account"),
+            setOf("credentials", "capabilities", "session", "preferences", "cache", "timerstate"),
             setOf("catalog", "picker", "entryfields", "trust", "timernotice", "navigation"),
             setOf(
                 "calendar", "clients", "entry", "favorites", "history", "licences", "notification", "pomodoro",
@@ -187,14 +187,12 @@ class PackageLayersTest {
         /** The imports allowed between packages of one layer. */
         val SAME_LAYER: Map<String, Set<String>> = mapOf(
             // Core data, in the order it builds up: the session reads the capabilities, the shared
-            // preferences and the cache the capabilities and the session, the timer state the
-            // cache, and the account's refresh and reads the capabilities, the session, the cache
-            // and the timer state.
+            // preferences and the cache the capabilities and the session, and the timer state the
+            // cache.
             "session" to setOf("credentials", "capabilities"),
             "preferences" to setOf("capabilities", "session"),
             "cache" to setOf("capabilities", "session"),
             "timerstate" to setOf("capabilities", "session", "cache"),
-            "account" to setOf("capabilities", "session", "cache", "timerstate"),
             // The entry fields pick projects and tags; a timer notice reads as a catalog problem.
             "entryfields" to setOf("picker"),
             "timernotice" to setOf("catalog"),

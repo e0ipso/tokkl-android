@@ -7,7 +7,6 @@ import com.github.e0ipso.tokkl.preferences.PomodoroDefaultsSetting
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.SignedInCheck
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
-import com.github.e0ipso.tokkl.timerstate.HeldTimerFlows
 import com.github.e0ipso.tokkl.timerstate.PomodoroRingingPhase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -30,7 +29,6 @@ import kotlin.coroutines.CoroutineContext
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 class PomodoroWidgetStateSource(
     fields: PomodoroWidgetFieldsStore,
-    held: HeldTimerFlows,
     timerStates: AccountTimerStates,
     cache: AccountCache,
     ringing: PomodoroRingingPhase,
@@ -44,7 +42,7 @@ class PomodoroWidgetStateSource(
 
     val state: Flow<PomodoroWidgetState> = run {
         val deadlines = pomodoroWidgetDeadlineChanges(
-            held.held.map { held ->
+            timerStates.held.map { held ->
                 held?.let { it.state.pomodoro?.phase?.plannedEnd?.minus(it.clockOffset) }
             },
             clock,
@@ -58,7 +56,7 @@ class PomodoroWidgetStateSource(
             Triple(projects, tasks, ring)
         }
         combine(
-            held.held,
+            timerStates.held,
             flow { emitAll(capabilities.state) },
             flow { emitAll(accountSettings.state) },
             flow { emitAll(pomodoroDefaults.defaults) },

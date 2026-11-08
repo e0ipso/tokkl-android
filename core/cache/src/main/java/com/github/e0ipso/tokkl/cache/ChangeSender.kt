@@ -5,10 +5,7 @@ import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TokklApi
-import com.github.e0ipso.tokkl.capabilities.CapabilityCheck
 import com.github.e0ipso.tokkl.session.AccountDataOwner
-import com.github.e0ipso.tokkl.session.AccountRefreshListener
-import com.github.e0ipso.tokkl.session.AccountRefreshed
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -41,11 +38,6 @@ interface ChangeSenderEvents {
 
     /** A 404 took [count] changes out of the queue because the server no longer has their entry. */
     fun discarded(count: Int)
-}
-
-/** Sends the queued changes now and waits until the drain ends, such as [ChangeSender]. */
-fun interface QueueSender {
-    suspend fun sendQueued()
 }
 
 /**
@@ -92,11 +84,9 @@ class ChangeSender(
     private val events: ChangeSenderEvents,
     private val clock: Clock,
     private val spans: ServerSpans,
-    private val allDay: CapabilityCheck,
+    private val allDay: () -> Boolean,
     private val undo: DeleteUndoer,
-) : QueueSender,
-    AccountRefreshListener,
-    AccountDataOwner {
+) : AccountDataOwner {
 
     override val signOutPhase = SignOutPhase.FINISH_SENDING
 
@@ -167,11 +157,6 @@ class ChangeSender(
         mutableSignInNeeded.value = true
     }
 
-    /** The server has just answered the account's refresh, so the queue may go out now. */
-    override fun refreshed(refresh: AccountRefreshed) {
-        send()
-    }
-
     /** Lifts the pause after a refused token, once the user has signed in again, and drains the queue. */
     fun resume() {
         mutableSignInNeeded.value = false
@@ -198,7 +183,7 @@ class ChangeSender(
     }
 
     /** Drains the queue as [sendAndWait] does, for a caller that needs no outcome. */
-    override suspend fun sendQueued() {
+    suspend fun sendQueued() {
         sendAndWait()
     }
 

@@ -17,9 +17,8 @@ import kotlin.coroutines.CoroutineContext
  */
 class TimerEventConnections(
     private val session: ApiClientProvider,
-    private val timerStates: SignedInTimerState,
+    private val timerStates: AccountTimerStates,
     private val sender: ChangeSender,
-    private val service: TimerSyncServiceSlot,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
 ) : TimerSyncConnections<TimerStateSource> {
@@ -29,7 +28,7 @@ class TimerEventConnections(
     }
 
     override fun stopped(account: TimerStateSource, end: StreamEnd) {
-        if (end == StreamEnd.Refused && account === timerStates.timerState()) sender.signInRefused()
-        service.stop()
+        if (end == StreamEnd.Refused && account === timerStates.source) sender.signInRefused()
+        TimerSyncService.stopRunning()
     }
 }

@@ -4,8 +4,6 @@ import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ReminderChange
 import com.github.e0ipso.tokkl.session.AccountDataOwner
-import com.github.e0ipso.tokkl.session.AccountRefreshListener
-import com.github.e0ipso.tokkl.session.AccountRefreshed
 import com.github.e0ipso.tokkl.session.MePreferences
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import com.github.e0ipso.tokkl.storage.ClearableStore
@@ -46,8 +44,7 @@ class ReminderSetting(
     private val client: ApiClientProvider,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
-) : AccountRefreshListener,
-    AccountDataOwner {
+) : AccountDataOwner {
 
     override val signOutPhase = SignOutPhase.CLEAR_DATA
 
@@ -86,10 +83,6 @@ class ReminderSetting(
             persist(expected)
             send(expected)
         }
-    }
-
-    override fun refreshed(refresh: AccountRefreshed) {
-        refreshed(refresh.preferences, tokkl = refresh.capabilities.favorites)
     }
 
     /** Receives the existing account refresh, without another GET. Blocks on disk I/O. */

@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.settings
 
-import com.github.e0ipso.tokkl.cache.UnsentChanges
 import com.github.e0ipso.tokkl.session.AccountSignOut
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -19,7 +18,7 @@ import kotlinx.coroutines.launch
  * @param scope outlives every screen, so leaving the app does not stop a sign-out half way.
  */
 class SignOutConfirmation(
-    private val unsentCount: UnsentChanges,
+    private val unsentCount: suspend () -> Int,
     private val clear: AccountSignOut,
     private val scope: CoroutineScope,
 ) {
@@ -40,7 +39,7 @@ class SignOutConfirmation(
         mutableState.value = State(signingOut = true)
         scope.launch {
             val unsent = try {
-                unsentCount.unsentNow()
+                unsentCount()
             } catch (e: CancellationException) {
                 throw e
             } catch (_: Exception) {

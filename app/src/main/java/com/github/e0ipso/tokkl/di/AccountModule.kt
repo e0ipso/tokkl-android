@@ -1,12 +1,13 @@
 package com.github.e0ipso.tokkl.di
 
-import com.github.e0ipso.tokkl.account.AccountRefreshPipeline
-import com.github.e0ipso.tokkl.account.SendThenRefresh
 import com.github.e0ipso.tokkl.api.TrustListener
+import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.ChangeSender
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesStore
 import com.github.e0ipso.tokkl.lifecycle.MainActivityForeground
+import com.github.e0ipso.tokkl.platform.AppHook
+import com.github.e0ipso.tokkl.platform.AppHookOrder
 import com.github.e0ipso.tokkl.platform.MainDispatcher
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaultsSetting
@@ -14,7 +15,6 @@ import com.github.e0ipso.tokkl.preferences.ReminderSetting
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountLifetime
 import com.github.e0ipso.tokkl.session.AccountRefresh
-import com.github.e0ipso.tokkl.session.AccountRefreshListener
 import com.github.e0ipso.tokkl.session.AccountRefreshRequests
 import com.github.e0ipso.tokkl.session.AccountRefreshSteps
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
@@ -22,18 +22,21 @@ import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.AccountSignOut
 import com.github.e0ipso.tokkl.session.AppEvents
 import com.github.e0ipso.tokkl.session.DefaultWorkspace
-import com.github.e0ipso.tokkl.session.ForegroundReads
 import com.github.e0ipso.tokkl.session.ForegroundRefresh
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.session.SignOut
 import com.github.e0ipso.tokkl.timer.TimerViewSetting
+import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.TimerSyncFollower
 import com.github.e0ipso.tokkl.trust.SessionTrust
 import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsStore
 import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsWriter
 import com.github.e0ipso.tokkl.ui.theme.themeSettingsWithNightMode
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.koin.android.ext.koin.androidContext
+import org.koin.core.qualifier.named
 import org.koin.dsl.bind
 import org.koin.dsl.binds
 import org.koin.dsl.module
@@ -55,27 +58,39 @@ internal val accountModule = module {
     single { CapabilitiesSource(get<CapabilitiesStore>()) }
 
     single { AccountRefreshRequests() }
+    single(named("hook-refresh-requests")) {
+        val requests = get<AccountRefreshRequests>()
+        val refresh = inject<AccountRefresh>()
+        val scope = get<CoroutineScope>()
+        val io = io()
+        AppHook(AppHookOrder.REFRESH_REQUESTS, processStart = { scope.launch(io) { requests.forward(refresh) } })
+    }
 
-    // Each refresh refreshes the capabilities and the cache too, with the same `GET /api/v9/me`.
-    // Then, in this order, the Timer view, the Pomodoro defaults and the reminder take their
-    // preferences from the settings' `GET /api/v9/me/preferences`, the [ChangeSender] sends the
-    // queue, since the server has just answered, and the timer sync follows the capabilities.
+    // What each refresh does after `GET /api/v9/me` answered, in this order, with the same answers:
+    // the capabilities refresh and feed the account's timer state what their probe read, and the
+    // cache refreshes with those capabilities. Then the Timer view, the Pomodoro defaults and the
+    // reminder take their preferences from `GET /api/v9/me/preferences`, the [ChangeSender] sends
+    // the queue, since the server has just answered, and the timer sync follows the capabilities,
+    // since any refresh can learn or lose the timer API.
     single {
-        AccountRefreshPipeline(
-            capabilities = get(),
-            timerStates = get(),
-            cache = get(),
-            listener = AccountRefreshListener.inOrder(
-                listOf(
-                    get<TimerViewSetting>(),
-                    get<PomodoroDefaultsSetting>(),
-                    get<ReminderSetting>(),
-                    get<ChangeSender>(),
-                    get<TimerSyncFollower>(),
-                ),
-            ),
-        )
-    } bind AccountRefreshSteps::class
+        val capabilities = get<CapabilitiesSource>()
+        val timerStates = get<AccountTimerStates>()
+        val cache = get<AccountCache>()
+        val timerView = get<TimerViewSetting>()
+        val pomodoroDefaults = get<PomodoroDefaultsSetting>()
+        val reminder = get<ReminderSetting>()
+        val sender = get<ChangeSender>()
+        val timerSync = get<TimerSyncFollower>()
+        AccountRefreshSteps { api, me, preferences ->
+            val flags = capabilities.refresh(api, me, timerStates.source)
+            cache.refresh(api, me, preferences, flags, onAllDayMissing = capabilities::allDayMissing)
+            timerView.refreshed(preferences, keepsTimerView = flags.favorites)
+            pomodoroDefaults.refreshed(preferences, keepsPreferences = flags.favorites)
+            reminder.refreshed(preferences, tokkl = flags.favorites)
+            sender.send()
+            timerSync.follow()
+        }
+    }
 
     single {
         AccountRefresh(
@@ -83,7 +98,7 @@ internal val accountModule = module {
             settings = get(),
             scope = get(),
             io = io(),
-            steps = get<AccountRefreshPipeline>(),
+            steps = get(),
         )
     } bind AccountDataOwner::class
 
@@ -91,22 +106,35 @@ internal val accountModule = module {
     // to the foreground and each time the network comes back while it is there.
     // [MainActivityForeground] reports MainActivity's starts, stops and network changes. Nothing
     // refreshes on a timer.
-    single<ForegroundReads> { SendThenRefresh(get(), get()) }
-    single { ForegroundRefresh(get()) }
+    // Each read tries the queued changes first, then refreshes the account. The send does not wait
+    // for the refresh, so an expired token still asks for sign-in when `/me` fails on opening the
+    // app with a saved queue.
+    single {
+        val sender = get<ChangeSender>()
+        val account = get<AccountRefresh>()
+        ForegroundRefresh(
+            refresh = {
+                sender.send()
+                account.refresh()
+            },
+            refreshOnReconnect = {
+                sender.send()
+                account.refreshOnReconnect()
+            },
+        )
+    }
 
     // MainActivity's starts and stops and the network's reports, for the screens' view models.
     single { AppEvents() }
 
-    // MainActivity's lifecycle observer: the foreground refresh, the timer sync and [AppEvents]. One for each
-    // MainActivity.
+    // MainActivity's lifecycle observer: the foreground refresh, [AppEvents] and every module's
+    // foreground hooks. One for each MainActivity.
     factory {
         MainActivityForeground(
             context = androidContext(),
             refresh = get(),
             events = get(),
-            timerSync = get(),
-            runningNotification = get(),
-            pomodoroNotification = get(),
+            hooks = getAll(),
             http = get(),
             defaultNetwork = get(),
             scope = get(),

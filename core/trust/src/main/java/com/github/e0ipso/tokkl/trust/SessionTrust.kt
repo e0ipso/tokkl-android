@@ -5,7 +5,6 @@ import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ServerTrust
 import com.github.e0ipso.tokkl.api.TrustListener
 import com.github.e0ipso.tokkl.session.AccountDataOwner
-import com.github.e0ipso.tokkl.session.RefreshRequest
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,7 +37,7 @@ import kotlin.coroutines.CoroutineContext
  */
 class SessionTrust(
     private val trust: ServerTrust,
-    private val retry: RefreshRequest,
+    private val retry: () -> Unit,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
 ) : TrustListener,
@@ -98,7 +97,7 @@ class SessionTrust(
             }
             if (stored) {
                 mutableState.update { if (it.refusal == refusal) State() else it }
-                retry.request()
+                retry()
             }
         }
     }

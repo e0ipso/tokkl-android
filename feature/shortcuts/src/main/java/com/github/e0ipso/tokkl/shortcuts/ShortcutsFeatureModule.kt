@@ -1,8 +1,11 @@
 package com.github.e0ipso.tokkl.shortcuts
 
+import com.github.e0ipso.tokkl.platform.AppHook
+import com.github.e0ipso.tokkl.platform.AppHookOrder
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import org.koin.android.ext.koin.androidContext
+import org.koin.core.qualifier.named
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
@@ -20,4 +23,8 @@ val shortcutsFeatureModule = module {
             io = io(),
         )
     } bind AccountDataOwner::class
+    single(named("hook-favorite-shortcuts")) {
+        val sync = inject<FavoriteShortcutSync>()
+        AppHook(AppHookOrder.FAVORITE_SHORTCUTS, processStart = { sync.value.start() })
+    }
 }

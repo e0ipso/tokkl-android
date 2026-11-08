@@ -4,11 +4,10 @@ import android.app.Application
 import android.content.Context
 import androidx.work.WorkerParameters
 import com.github.e0ipso.tokkl.cache.ChangeSenderEvents
-import com.github.e0ipso.tokkl.capabilities.CapabilityCheck
-import com.github.e0ipso.tokkl.capabilities.CapabilityMissing
 import com.github.e0ipso.tokkl.favorites.FavoritesStore
 import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.notification.RunningNotice
+import com.github.e0ipso.tokkl.platform.AppHookOrder
 import com.github.e0ipso.tokkl.pomodoro.ExactAlarmCheck
 import com.github.e0ipso.tokkl.pomodoro.PomodoroNotificationMemory
 import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionPoster
@@ -21,8 +20,6 @@ import com.github.e0ipso.tokkl.reminder.RunningEntryStop
 import com.github.e0ipso.tokkl.reports.CsvMissing
 import com.github.e0ipso.tokkl.reports.ReportExportController
 import com.github.e0ipso.tokkl.session.AccountDataOwner
-import com.github.e0ipso.tokkl.session.AccountRefreshListener
-import com.github.e0ipso.tokkl.session.RefreshRequest
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import com.github.e0ipso.tokkl.shortcuts.PublishedShortcuts
 import com.github.e0ipso.tokkl.signin.SignIn
@@ -76,16 +73,13 @@ class AppModulesTest {
                 ValueStore::class,
                 ClearableStore::class,
                 SignOutPhase::class,
-                AccountRefreshListener::class,
+                AppHookOrder::class,
                 SignIn::class,
                 ReportExportController::class,
                 Route::class,
                 SectionHue::class,
                 // The named callbacks a definition builds as a lambda or an object, and the
                 // collaborators it makes for one component.
-                RefreshRequest::class,
-                CapabilityCheck::class,
-                CapabilityMissing::class,
                 ChangeSenderEvents::class,
                 TimerSyncConnections::class,
                 FavoritesStore::class,

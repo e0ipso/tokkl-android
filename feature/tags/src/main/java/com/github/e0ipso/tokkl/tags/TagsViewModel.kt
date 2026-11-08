@@ -14,7 +14,6 @@ import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.platform.whileShown
 import com.github.e0ipso.tokkl.session.AppEvent
 import com.github.e0ipso.tokkl.session.DefaultWorkspace
-import com.github.e0ipso.tokkl.session.RefreshRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -69,7 +68,7 @@ data class TagsPageState(
 class TagsViewModel(
     private val repository: TagsRepository,
     workspaceId: DefaultWorkspace,
-    refreshCache: RefreshRequest,
+    refreshCache: () -> Unit,
     scope: CoroutineScope,
     io: CoroutineContext,
     cachedTags: Flow<List<Tag>>,

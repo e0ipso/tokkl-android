@@ -9,14 +9,12 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.github.e0ipso.tokkl.api.SharedHttpClient
-import com.github.e0ipso.tokkl.notification.RunningNotificationSync
+import com.github.e0ipso.tokkl.platform.AppHook
 import com.github.e0ipso.tokkl.platform.DefaultNetwork
-import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationSync
 import com.github.e0ipso.tokkl.session.AppEvent
 import com.github.e0ipso.tokkl.session.AppEvents
 import com.github.e0ipso.tokkl.session.ForegroundRefresh
 import com.github.e0ipso.tokkl.session.NetworkWatch
-import com.github.e0ipso.tokkl.timerstate.TimerSyncFollower
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -28,17 +26,15 @@ import kotlinx.coroutines.launch
  * Coming to the foreground reads the account settings again (docs/PRD.md S7) and refreshes the
  * offline cache with the same `GET /api/v9/me` (O2), but a rotation's start does not. From a start
  * to the next stop the network is watched, so its return refreshes too. Nothing refreshes on a
- * timer. Every start, a rotation's too, starts the timer sync service when it should run, since
- * the app is on screen and the platform lets it start, also offline. [events] tells the screens'
- * view models about the starts, the trips to the background and the network.
+ * timer. Every start, a rotation's too, runs each of [hooks]' [AppHook.foregroundStart], and a
+ * grant of notifications their [AppHook.notificationsAllowed], in order. [events] tells the
+ * screens' view models about the starts, the trips to the background and the network.
  */
 internal class MainActivityForeground(
     private val context: Context,
     private val refresh: ForegroundRefresh,
     private val events: AppEvents,
-    private val timerSync: TimerSyncFollower,
-    private val runningNotification: RunningNotificationSync,
-    private val pomodoroNotification: PomodoroSessionNotificationSync,
+    hooks: List<AppHook>,
     private val http: SharedHttpClient,
     defaultNetwork: DefaultNetwork,
     private val scope: CoroutineScope,
@@ -46,6 +42,7 @@ internal class MainActivityForeground(
     private val io: CoroutineDispatcher,
 ) : DefaultLifecycleObserver {
 
+    private val hooks = hooks.sortedBy { it.order }
     private val network = NetworkWatch(defaultNetwork, scope, main, listener = ::networkChanged)
     private var notificationsAllowed = allowsNotifications()
 
@@ -56,7 +53,7 @@ internal class MainActivityForeground(
         notificationsAllowed = allowed
         refresh.started(online = network.start())
         events.send(AppEvent.CAME_TO_FOREGROUND)
-        owner.lifecycleScope.launch(io) { timerSync.follow() }
+        owner.lifecycleScope.launch(io) { hooks.forEach { it.foregroundStart() } }
     }
 
     /** Going to the background, which a configuration change is not. */
@@ -70,10 +67,7 @@ internal class MainActivityForeground(
     /** The user allowed notifications: the running timer and the Pomodoro session show again. */
     fun notificationsGranted() {
         notificationsAllowed = true
-        scope.launch(io) {
-            runningNotification.repost()
-            pomodoroNotification.refresh(force = true)
-        }
+        scope.launch(io) { hooks.forEach { it.notificationsAllowed() } }
     }
 
     /**

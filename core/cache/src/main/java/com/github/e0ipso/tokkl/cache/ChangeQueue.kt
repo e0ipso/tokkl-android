@@ -36,16 +36,6 @@ data class HeldChange(val sequence: Long, val kind: ChangeKind, val entry: TimeE
 /** The latest short Stop, which Undo can take back, of the entry [entryId] at [capturedAt]. */
 data class ShortStopOffer(val entryId: EntryId, val capturedAt: Instant)
 
-/** How many changes the server has not received, held ones included, such as [ChangeQueue.unsentNow]. */
-fun interface UnsentChanges {
-    suspend fun unsentNow(): Int
-}
-
-/** Hears that [ChangeQueue] took a change the server has not received, such as [SendOnQueue]. */
-fun interface QueuedListener {
-    fun queued()
-}
-
 /**
  * Starts, stops, creates, edits and deletes time entries on the phone (docs/PRD.md O1). Each call
  * changes the cached entry at once and queues the change, in one transaction, then asks [onQueued]
@@ -85,20 +75,19 @@ fun interface QueuedListener {
 class ChangeQueue(
     private val store: RoomChangeStore,
     private val io: CoroutineContext,
-    private val onQueued: QueuedListener,
+    private val onQueued: () -> Unit,
     private val clock: Clock,
     private val spans: ServerSpans,
 ) : EntryChanges,
-    HeldChanges,
-    UnsentChanges {
+    HeldChanges {
 
     private val dao = store.dao
 
     /** How many changes the server has not received (docs/PRD.md O5), held ones included. */
     val unsentCount: Flow<Int> = dao.count()
 
-    /** [unsentCount] now. */
-    override suspend fun unsentNow(): Int = unsentCount.first()
+    /** How many changes the server has not received, held ones included: [unsentCount] now. */
+    suspend fun unsentNow(): Int = unsentCount.first()
 
     /** The changes the server refused, which wait for the user, oldest first (docs/PRD.md O6). */
     override val held: Flow<List<HeldChange>> = dao.held().map { changes -> changes.map { it.toHeld() } }
@@ -306,7 +295,7 @@ class ChangeQueue(
         val (result, holdsChanges) = withContext(io) {
             store.transaction { change() to (dao.first() != null) }
         }
-        if (holdsChanges) onQueued.queued()
+        if (holdsChanges) onQueued()
         return result
     }
 

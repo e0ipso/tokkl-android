@@ -41,12 +41,11 @@ import java.util.concurrent.TimeUnit
  * - View models launch their collections on the main thread. They are made while the main thread
  *   waits, then cleared, which cancels those coroutines before any of them runs.
  * - Workers are only constructed. Nothing calls doWork.
- * - A component that takes [Lazy] parameters in its constructor, as AppStartup takes Koin's
- *   inject(), gets each lazy it holds unread read, since inject() resolves only then. The lazies
- *   other components make for themselves, such as `by lazy` properties, stay unread.
  *
  * Lookups inside a definition's deferred lambdas, such as a flow that calls `get()` when it is
- * collected, and `by inject()` in activities, services and receivers, stay outside this test.
+ * collected or an app hook's `inject()`, and `by inject()` in activities, services and receivers,
+ * stay outside this test. Each component a hook loads is a definition of its own, which this test
+ * resolves.
  */
 @OptIn(KoinInternalApi::class)
 class AppGraphTest {
@@ -91,8 +90,7 @@ class AppGraphTest {
     }
 
     private fun resolve(definition: BeanDefinition<*>) {
-        val instance: Any = koin.get(definition.primaryType, definition.qualifier)
-        readInjectedLazies(instance)
+        koin.get<Any>(definition.primaryType, definition.qualifier)
     }
 
     /** Makes the view model, then clears it in a store of its own, which cancels its scope. */
@@ -104,8 +102,7 @@ class AppGraphTest {
         }
         try {
             @Suppress("UNCHECKED_CAST")
-            val model = ViewModelProvider(store, factory)[definition.primaryType.java as Class<ViewModel>]
-            readInjectedLazies(model)
+            ViewModelProvider(store, factory)[definition.primaryType.java as Class<ViewModel>]
         } finally {
             store.clear()
         }
@@ -144,25 +141,6 @@ class AppGraphTest {
         }
         failure?.let { throw it }
         assertEquals("the worker Koin makes for $name", name, made?.javaClass?.name)
-    }
-
-    /**
-     * Reads each unread [Lazy] that [instance] holds when its class takes lazies in its
-     * constructor, where a definition passes Koin's inject(). A class that takes none keeps its
-     * lazies unread.
-     */
-    private fun readInjectedLazies(instance: Any) {
-        val type = instance.javaClass
-        val takesLazies = type.declaredConstructors.any { constructor ->
-            constructor.parameterTypes.any { Lazy::class.java.isAssignableFrom(it) }
-        }
-        if (!takesLazies) return
-        for (field in type.declaredFields) {
-            if (!Lazy::class.java.isAssignableFrom(field.type)) continue
-            field.isAccessible = true
-            val lazy = field.get(instance) as? Lazy<*> ?: continue
-            if (!lazy.isInitialized()) lazy.value
-        }
     }
 
     private fun failureOf(definition: BeanDefinition<*>, resolve: () -> Unit): String? = try {

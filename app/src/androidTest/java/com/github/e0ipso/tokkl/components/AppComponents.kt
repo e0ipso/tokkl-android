@@ -48,12 +48,10 @@ import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.PomodoroAlarmScheduler
 import com.github.e0ipso.tokkl.timerstate.TimerActions
 import com.github.e0ipso.tokkl.timerstate.TimerControls
-import com.github.e0ipso.tokkl.timerstate.TimerControlsSource
 import com.github.e0ipso.tokkl.timerstate.TimerStateSource
 import com.github.e0ipso.tokkl.timerstate.TimerSync
 import com.github.e0ipso.tokkl.timerstate.TimerSyncFollower
 import com.github.e0ipso.tokkl.timerstate.TimerSyncService
-import com.github.e0ipso.tokkl.timerstate.TimerSyncServiceSlot
 import com.github.e0ipso.tokkl.trust.SessionTrust
 import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsRepository
 import com.github.e0ipso.tokkl.widget.PomodoroWidgetState
@@ -104,14 +102,14 @@ internal val TokklApplication.pomodoroRinging: ServicePomodoroRinging get() = co
 /** The signed-in account's timer state source, taken anew on each read as the app does. */
 val TokklApplication.timerState: TimerStateSource get() = component<AccountTimerStates>().source
 
-val TokklApplication.timerControls: Flow<TimerControls> get() = component<TimerControlsSource>().controls
+val TokklApplication.timerControls: Flow<TimerControls> get() = component<AccountTimerStates>().controls
 val TokklApplication.widgetState: Flow<WidgetState> get() = component<WidgetStateSource>().state
 internal val TokklApplication.pomodoroWidgetState: Flow<PomodoroWidgetState>
     get() = component<PomodoroWidgetStateSource>().state
 internal val TokklApplication.pomodoroSessionNotification: PomodoroSessionNotificationSync get() = component()
 
 /** [TimerSyncService] while it runs in the foreground. */
-val TokklApplication.timerSyncService: TimerSyncService? get() = component<TimerSyncServiceSlot>().service
+val TokklApplication.timerSyncService: TimerSyncService? get() = TimerSyncService.running
 
 /** The app's clock, which [com.github.e0ipso.tokkl.TestTokklApplication] makes a [TestClock]. */
 val TokklApplication.testClock: TestClock get() = component<Clock>() as TestClock

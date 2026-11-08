@@ -4,7 +4,6 @@ import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.TokklApi
-import com.github.e0ipso.tokkl.capabilities.CapabilityCheck
 import java.time.temporal.ChronoUnit
 
 /** The change as it went to the server, the server's id for its entry, and the entry as the server stored it. */
@@ -24,7 +23,7 @@ internal class SentChange(val change: PendingChange, val serverId: Long, val ent
 internal class ChangeTries(
     private val store: ChangeStore,
     private val spans: ServerSpans,
-    private val allDay: CapabilityCheck,
+    private val allDay: () -> Boolean,
 ) {
 
     /** Sends an update, a legacy stop or a restore, as [sendOnce] does. */
@@ -75,7 +74,7 @@ internal class ChangeTries(
                 api.entries.stop(change.workspaceId, change.entryId, it.truncatedTo(ChronoUnit.SECONDS))
             } ?: api.entries.update(change.workspaceId, change.entryId, change.body(allDay = false))
 
-            else -> api.entries.update(change.workspaceId, change.entryId, change.body(allDay.offered()))
+            else -> api.entries.update(change.workspaceId, change.entryId, change.body(allDay()))
         }
 
     /**
@@ -106,7 +105,7 @@ internal class ChangeTries(
             queued
         }
         if (!change.maybeSent) store.maybeSent(change, true)
-        return when (val result = api.entries.create(change.workspaceId, change.body(allDay.offered()))) {
+        return when (val result = api.entries.create(change.workspaceId, change.body(allDay()))) {
             is ApiResult.Success -> ApiResult.Success(SentChange(change, result.value.id, result.value.toCached()))
 
             is ApiResult.Failure -> {

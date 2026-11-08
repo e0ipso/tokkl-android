@@ -30,9 +30,9 @@ import androidx.compose.ui.text.style.TextAlign
 import com.github.e0ipso.tokkl.feature.tile.R
 import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.timernotice.showTimerActionFailure
+import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.SurfaceTap
 import com.github.e0ipso.tokkl.timerstate.TimerControls
-import com.github.e0ipso.tokkl.timerstate.TimerControlsSource
 import com.github.e0ipso.tokkl.timerstate.TimerSurfaceAction
 import com.github.e0ipso.tokkl.timerstate.TimerSurfaceActions
 import com.github.e0ipso.tokkl.ui.TokklButton
@@ -47,7 +47,7 @@ import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * The Quick Settings tile's long press (docs/PRD.md N4, T1). SystemUI starts it with
- * [TileService.ACTION_QS_TILE_PREFERENCES]. It reads [TimerControlsSource.controls] and offers
+ * [TileService.ACTION_QS_TILE_PREFERENCES]. It reads [AccountTimerStates.controls] and offers
  * Stop while a timer runs, with Pause where the server's timer offers it, or Resume and Stop while
  * one is paused. Each button keeps the [com.github.e0ipso.tokkl.timerstate.TimerTarget] it was drawn
  * with. The intent's extras are ignored, so the caller cannot name a timer. With nothing running
@@ -56,7 +56,7 @@ import com.github.e0ipso.tokkl.core.ui.R as UiR
  */
 class TileControlsActivity : ComponentActivity() {
 
-    private val timerControls: TimerControlsSource by inject()
+    private val timerControls: AccountTimerStates by inject()
     private val surfaceActions: TimerSurfaceActions by inject()
     private val scope: CoroutineScope by inject()
     private val io: CoroutineDispatcher by inject(IoDispatcher)
