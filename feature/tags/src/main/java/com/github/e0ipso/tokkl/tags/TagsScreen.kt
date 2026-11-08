@@ -34,7 +34,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.e0ipso.tokkl.catalog.CancelAndConfirm
 import com.github.e0ipso.tokkl.catalog.CatalogChange
 import com.github.e0ipso.tokkl.catalog.CatalogEmpty
@@ -42,7 +41,6 @@ import com.github.e0ipso.tokkl.catalog.CatalogListRow
 import com.github.e0ipso.tokkl.catalog.CatalogNotices
 import com.github.e0ipso.tokkl.catalog.CatalogPage
 import com.github.e0ipso.tokkl.catalog.ConfirmDialog
-import com.github.e0ipso.tokkl.catalog.PageVisitEffect
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.catalog.changeText
 import com.github.e0ipso.tokkl.catalog.problemText
@@ -62,43 +60,7 @@ import com.github.e0ipso.tokkl.core.ui.R as UiR
  * off. Coming back online, or to the foreground, loads the tags again.
  */
 @Composable
-fun TagsScreen(model: TagsViewModel, modifier: Modifier = Modifier) {
-    PageVisitEffect(onOpen = model::open, onClose = model::close)
-    val page by model.page.collectAsStateWithLifecycle()
-    LaunchedEffect(page.offline) { if (!page.offline) model.reconnected() }
-    TagsContent(
-        state = page.catalog,
-        offline = page.offline,
-        cachedTags = page.cachedTags,
-        actions = TagsActions(
-            onRetry = model::retry,
-            onCreate = model::create,
-            onAskToRename = model::askToRename,
-            onRename = model::rename,
-            onAskToDelete = model::askToDelete,
-            onDelete = model::delete,
-            onDismiss = model::dismiss,
-            onDoneShow = model::doneShown,
-        ),
-        modifier = modifier,
-    )
-}
-
-/** What the page's controls do. */
-class TagsActions(
-    val onRetry: () -> Unit = {},
-    val onCreate: (String) -> Unit = {},
-    val onAskToRename: (Tag) -> Unit = {},
-    val onRename: (String) -> Unit = {},
-    val onAskToDelete: (Tag) -> Unit = {},
-    val onDelete: () -> Unit = {},
-    val onDismiss: () -> Unit = {},
-    val onDoneShow: () -> Unit = {},
-)
-
-/** [TagsScreen] without its model. */
-@Composable
-fun TagsContent(
+fun TagsScreen(
     state: TagsState,
     offline: Boolean,
     cachedTags: List<Tag>,
@@ -201,6 +163,18 @@ fun TagsContent(
         null -> Unit
     }
 }
+
+/** What the page's controls do. */
+class TagsActions(
+    val onRetry: () -> Unit = {},
+    val onCreate: (String) -> Unit = {},
+    val onAskToRename: (Tag) -> Unit = {},
+    val onRename: (String) -> Unit = {},
+    val onAskToDelete: (Tag) -> Unit = {},
+    val onDelete: () -> Unit = {},
+    val onDismiss: () -> Unit = {},
+    val onDoneShow: () -> Unit = {},
+)
 
 /**
  * A tag as the list shows it. A row the phone had and the server did not send ([fromServer] false) offers no action.

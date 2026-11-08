@@ -27,19 +27,19 @@ import com.github.e0ipso.tokkl.catalog.CatalogSamples.TAGS_LOADED
 import com.github.e0ipso.tokkl.catalog.CatalogSamples.TASKS
 import com.github.e0ipso.tokkl.catalog.CatalogSamples.TASKS_LOADED
 import com.github.e0ipso.tokkl.clients.ClientsActions
-import com.github.e0ipso.tokkl.clients.ClientsContent
 import com.github.e0ipso.tokkl.clients.ClientsOverlay
+import com.github.e0ipso.tokkl.clients.ClientsScreen
 import com.github.e0ipso.tokkl.feature.projects.R
 import com.github.e0ipso.tokkl.model.Tag
 import com.github.e0ipso.tokkl.model.TagId
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.projects.ProjectForm
 import com.github.e0ipso.tokkl.projects.ProjectsActions
-import com.github.e0ipso.tokkl.projects.ProjectsContent
+import com.github.e0ipso.tokkl.projects.ProjectsScreen
 import com.github.e0ipso.tokkl.projects.TaskOverlay
 import com.github.e0ipso.tokkl.tags.TagsActions
-import com.github.e0ipso.tokkl.tags.TagsContent
 import com.github.e0ipso.tokkl.tags.TagsOverlay
+import com.github.e0ipso.tokkl.tags.TagsScreen
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import org.junit.Assert.assertEquals
@@ -70,7 +70,7 @@ abstract class CatalogFitTest(private val fontScale: Float) {
     @Test
     fun projectsList() {
         show {
-            ProjectsContent(
+            ProjectsScreen(
                 PROJECTS_LOADED,
                 offline = false,
                 cachedProjects = emptyList(),
@@ -84,7 +84,7 @@ abstract class CatalogFitTest(private val fontScale: Float) {
     @Test
     fun projectsOffline() {
         show {
-            ProjectsContent(
+            ProjectsScreen(
                 PROJECTS_LOADED,
                 offline = true,
                 cachedProjects = emptyList(),
@@ -99,7 +99,7 @@ abstract class CatalogFitTest(private val fontScale: Float) {
     fun projectForm() {
         val editing = PROJECTS_LOADED.copy(overlay = ProjectForm.Edit(PROJECTS.first()))
         show {
-            ProjectsContent(
+            ProjectsScreen(
                 editing,
                 offline = false,
                 cachedProjects = emptyList(),
@@ -117,7 +117,7 @@ abstract class CatalogFitTest(private val fontScale: Float) {
     fun newProjectFormWithMistakes() {
         val creating = PROJECTS_LOADED.copy(overlay = ProjectForm.New)
         show {
-            ProjectsContent(
+            ProjectsScreen(
                 creating,
                 offline = false,
                 cachedProjects = emptyList(),
@@ -137,7 +137,7 @@ abstract class CatalogFitTest(private val fontScale: Float) {
     fun projectFormWithTasks() {
         val editing = PROJECTS_LOADED.copy(overlay = ProjectForm.Edit(PROJECTS.first()))
         show {
-            ProjectsContent(
+            ProjectsScreen(
                 editing,
                 offline = false,
                 cachedProjects = emptyList(),
@@ -157,7 +157,7 @@ abstract class CatalogFitTest(private val fontScale: Float) {
     fun projectFormWithTasksOffline() {
         val editing = PROJECTS_LOADED.copy(overlay = ProjectForm.Edit(PROJECTS.first()))
         show {
-            ProjectsContent(
+            ProjectsScreen(
                 editing,
                 offline = true,
                 cachedProjects = emptyList(),
@@ -176,7 +176,7 @@ abstract class CatalogFitTest(private val fontScale: Float) {
         val editing = PROJECTS_LOADED.copy(overlay = ProjectForm.Edit(PROJECTS.first()))
         val tasks = TASKS_LOADED.copy(overlay = TaskOverlay.Edit(TASKS[1]))
         show {
-            ProjectsContent(
+            ProjectsScreen(
                 editing,
                 offline = false,
                 cachedProjects = emptyList(),
@@ -193,7 +193,7 @@ abstract class CatalogFitTest(private val fontScale: Float) {
         val editing = PROJECTS_LOADED.copy(overlay = ProjectForm.Edit(PROJECTS.first()))
         val tasks = TASKS_LOADED.copy(overlay = TaskOverlay.ConfirmDelete(TASKS[1]))
         show {
-            ProjectsContent(
+            ProjectsScreen(
                 editing,
                 offline = false,
                 cachedProjects = emptyList(),
@@ -208,7 +208,7 @@ abstract class CatalogFitTest(private val fontScale: Float) {
     @Test
     fun clientsList() {
         show {
-            ClientsContent(
+            ClientsScreen(
                 CLIENTS_LOADED,
                 offline = false,
                 cachedClients = emptyList(),
@@ -221,21 +221,21 @@ abstract class CatalogFitTest(private val fontScale: Float) {
     @Test
     fun clientArchiveQuestion() {
         val asking = CLIENTS_LOADED.copy(overlay = ClientsOverlay.ConfirmArchive(CLIENTS.first()))
-        show { ClientsContent(asking, offline = false, cachedClients = emptyList(), actions = ClientsActions()) }
+        show { ClientsScreen(asking, offline = false, cachedClients = emptyList(), actions = ClientsActions()) }
         assertNoTextCutOff("the question before archiving a client")
     }
 
     @Test
     fun clientForm() {
         val editing = CLIENTS_LOADED.copy(overlay = ClientsOverlay.Edit(CLIENTS.first()))
-        show { ClientsContent(editing, offline = false, cachedClients = emptyList(), actions = ClientsActions()) }
+        show { ClientsScreen(editing, offline = false, cachedClients = emptyList(), actions = ClientsActions()) }
         assertNoTextCutOff("the client form")
     }
 
     @Test
     fun clientsOffline() {
         show {
-            ClientsContent(
+            ClientsScreen(
                 CatalogState(loadProblem = ServerProblem.Unreachable),
                 offline = true,
                 cachedClients = CACHED_CLIENTS,
@@ -247,21 +247,21 @@ abstract class CatalogFitTest(private val fontScale: Float) {
 
     @Test
     fun tagsList() {
-        show { TagsContent(TAGS_LOADED, offline = false, cachedTags = emptyList(), actions = TagsActions()) }
+        show { TagsScreen(TAGS_LOADED, offline = false, cachedTags = emptyList(), actions = TagsActions()) }
         assertNoTextCutOff("the tags")
     }
 
     @Test
     fun tagDeleteQuestion() {
         val asking = TAGS_LOADED.copy(overlay = TagsOverlay.ConfirmDelete(TAGS.first()))
-        show { TagsContent(asking, offline = false, cachedTags = emptyList(), actions = TagsActions()) }
+        show { TagsScreen(asking, offline = false, cachedTags = emptyList(), actions = TagsActions()) }
         assertNoTextCutOff("the question before deleting a tag")
     }
 
     @Test
     fun tagRenameForm() {
         val renaming = TAGS_LOADED.copy(overlay = TagsOverlay.Rename(TAGS[1]))
-        show { TagsContent(renaming, offline = false, cachedTags = emptyList(), actions = TagsActions()) }
+        show { TagsScreen(renaming, offline = false, cachedTags = emptyList(), actions = TagsActions()) }
         assertNoTextCutOff("the form that renames a tag")
     }
 
@@ -269,7 +269,7 @@ abstract class CatalogFitTest(private val fontScale: Float) {
     fun tagsOffline() {
         val cached = listOf(Tag(TagId(1), WorkspaceId(7), "focus"), Tag(TagId(2), WorkspaceId(7), "meeting"))
         show {
-            TagsContent(
+            TagsScreen(
                 CatalogState(loadProblem = ServerProblem.Unreachable),
                 offline = true,
                 cachedTags = cached,

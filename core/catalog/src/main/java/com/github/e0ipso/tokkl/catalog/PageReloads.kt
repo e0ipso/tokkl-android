@@ -13,9 +13,10 @@ import kotlinx.coroutines.launch
 
 /**
  * What a page that shows what it loads from the server tells its model: the catalog pages, the
- * trash and the reports. [open] and [close] come from the page, through [PageVisitEffect]. The
- * trips to the background and back come from MainActivity's lifecycle, as AppEvents carries them
- * ([followTrips]). [reconnected] comes from the network, as each page follows it.
+ * trash and the reports. [open] and [close] come from the page's route, through [PageVisitEffect].
+ * The trips to the background and back come from MainActivity's lifecycle, as AppEvents carries
+ * them ([followTrips]). [reconnected] comes from the network, as each model follows it, such as
+ * with [followNetwork].
  */
 interface PageEvents {
     /** The page opened. */
@@ -103,6 +104,14 @@ fun PageEvents.followTrips(events: Flow<AppEvent>, scope: CoroutineScope): Job =
             AppEvent.ONLINE, AppEvent.RECONNECTED -> Unit
         }
     }
+}
+
+/**
+ * Calls [PageEvents.reconnected] each time [offline] says the phone is online, its current value
+ * first, while [scope] runs. A model that is not open ignores it.
+ */
+fun PageEvents.followNetwork(offline: Flow<Boolean>, scope: CoroutineScope): Job = scope.launch {
+    offline.collect { isOffline -> if (!isOffline) reconnected() }
 }
 
 /**

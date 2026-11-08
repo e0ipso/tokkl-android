@@ -83,7 +83,10 @@ class CatalogModel<D, O>(
     val state: StateFlow<CatalogState<D, O>> = mutableState.asStateFlow()
 
     private val reloads = PageReloads(::load)
-    private val opened: Boolean get() = reloads.isOpen
+
+    /** Whether the page is open: from [open] until [close], a configuration change included. */
+    val opened: Boolean get() = reloads.isOpen
+
     private var loading: Job? = null
 
     /** The workspace the data came from, once a load found it. */

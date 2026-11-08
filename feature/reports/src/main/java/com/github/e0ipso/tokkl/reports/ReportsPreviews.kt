@@ -27,7 +27,7 @@ private fun ReportFailedPreview() {
 @Composable
 private fun ReportsPreview(state: ReportsState) {
     TokklTheme {
-        ReportsContent(
+        ReportsScreen(
             state = state,
             tab = ReportTab.SUMMARY,
             settings = SETTINGS,

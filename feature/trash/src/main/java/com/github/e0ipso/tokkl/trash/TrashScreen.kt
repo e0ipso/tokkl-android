@@ -13,22 +13,18 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.e0ipso.tokkl.api.TrashEntry
 import com.github.e0ipso.tokkl.catalog.CatalogEmpty
 import com.github.e0ipso.tokkl.catalog.CatalogNotices
 import com.github.e0ipso.tokkl.catalog.CatalogPage
 import com.github.e0ipso.tokkl.catalog.ConfirmDialog
 import com.github.e0ipso.tokkl.catalog.DetailLine
-import com.github.e0ipso.tokkl.catalog.PageVisitEffect
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.feature.trash.R
 import com.github.e0ipso.tokkl.session.AccountSettings
@@ -53,41 +49,7 @@ import com.github.e0ipso.tokkl.core.ui.R as UiR
  * every action is off. Coming back online, or to the foreground, loads the trash again.
  */
 @Composable
-fun TrashScreen(model: TrashViewModel, modifier: Modifier = Modifier) {
-    PageVisitEffect(onOpen = model::open, onClose = model::close)
-    val page by model.page.collectAsStateWithLifecycle()
-    LaunchedEffect(page.offline) { if (!page.offline) model.reconnected() }
-    TrashContent(
-        state = page.trash,
-        offline = page.offline,
-        settings = page.settings,
-        actions = TrashActions(
-            onRetry = model::retry,
-            onRestore = model::restore,
-            onPurge = model::purge,
-            onAskToEmpty = model::askToEmpty,
-            onEmpty = model::empty,
-            onDismiss = model::dismiss,
-            onDoneShow = model::doneShown,
-        ),
-        modifier = modifier,
-    )
-}
-
-/** What the page's controls do. */
-class TrashActions(
-    val onRetry: () -> Unit = {},
-    val onRestore: (Long) -> Unit = {},
-    val onPurge: (Long) -> Unit = {},
-    val onAskToEmpty: () -> Unit = {},
-    val onEmpty: () -> Unit = {},
-    val onDismiss: () -> Unit = {},
-    val onDoneShow: () -> Unit = {},
-)
-
-/** [TrashScreen] without its model. */
-@Composable
-fun TrashContent(
+fun TrashScreen(
     state: TrashState,
     offline: Boolean,
     settings: AccountSettings?,
@@ -193,6 +155,17 @@ fun TrashContent(
         )
     }
 }
+
+/** What the page's controls do. */
+class TrashActions(
+    val onRetry: () -> Unit = {},
+    val onRestore: (Long) -> Unit = {},
+    val onPurge: (Long) -> Unit = {},
+    val onAskToEmpty: () -> Unit = {},
+    val onEmpty: () -> Unit = {},
+    val onDismiss: () -> Unit = {},
+    val onDoneShow: () -> Unit = {},
+)
 
 /** What [change] did, in the web app's words. */
 @Composable

@@ -13,7 +13,7 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 @Composable
 private fun ClientsPreview() {
     TokklTheme {
-        ClientsContent(
+        ClientsScreen(
             state = ClientsState(
                 data = ClientsData(SAMPLE_CLIENTS, projectCounts = mapOf(ClientId(1) to 3, ClientId(2) to 1)),
             ),
@@ -28,7 +28,7 @@ private fun ClientsPreview() {
 @Composable
 private fun ClientsOfflinePreview() {
     TokklTheme {
-        ClientsContent(
+        ClientsScreen(
             state = ClientsState(),
             offline = true,
             cachedClients = listOf(Client(ClientId(1), WorkspaceId(7), "Acme", archived = false)),

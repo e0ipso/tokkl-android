@@ -10,6 +10,7 @@ import com.github.e0ipso.tokkl.api.TrashEntry
 import com.github.e0ipso.tokkl.catalog.PageEvents
 import com.github.e0ipso.tokkl.catalog.PageReloads
 import com.github.e0ipso.tokkl.catalog.ServerProblem
+import com.github.e0ipso.tokkl.catalog.followNetwork
 import com.github.e0ipso.tokkl.catalog.followTrips
 import com.github.e0ipso.tokkl.catalog.toServerProblem
 import com.github.e0ipso.tokkl.platform.whileShown
@@ -99,7 +100,7 @@ class TrashViewModel(
     scope: CoroutineScope,
     private val io: CoroutineContext,
     settings: StateFlow<AccountSettings?>,
-    offline: StateFlow<Boolean>,
+    private val offline: StateFlow<Boolean>,
     appEvents: Flow<AppEvent>,
 ) : ViewModel(scope),
     PageEvents {
@@ -117,10 +118,20 @@ class TrashViewModel(
 
     init {
         followTrips(appEvents, viewModelScope)
+        followNetwork(offline, viewModelScope)
     }
 
-    /** Loads the trash. Does nothing while the page is open, so turning the phone sends no request. */
-    override fun open() = reloads.open()
+    /**
+     * The page opened: loads. When it comes back open after a configuration change, it loads
+     * nothing, but while the phone is online it loads again what could not reach the server.
+     */
+    override fun open() {
+        if (!opened) {
+            reloads.open()
+        } else if (!offline.value) {
+            reconnected()
+        }
+    }
 
     /** Loads the trash again, as after a failure. */
     fun retry() = reloads.retry()

@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.clients
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,14 +9,11 @@ import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.e0ipso.tokkl.catalog.ActiveThenArchived
 import com.github.e0ipso.tokkl.catalog.CatalogChange
 import com.github.e0ipso.tokkl.catalog.CatalogEmpty
@@ -26,7 +22,6 @@ import com.github.e0ipso.tokkl.catalog.CatalogNotices
 import com.github.e0ipso.tokkl.catalog.CatalogPage
 import com.github.e0ipso.tokkl.catalog.ConfirmDialog
 import com.github.e0ipso.tokkl.catalog.DetailLine
-import com.github.e0ipso.tokkl.catalog.PageVisitEffect
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.catalog.changeText
 import com.github.e0ipso.tokkl.feature.clients.R
@@ -46,49 +41,7 @@ import com.github.e0ipso.tokkl.core.ui.R as UiR
  * foreground, loads the clients again.
  */
 @Composable
-fun ClientsScreen(model: ClientsViewModel, modifier: Modifier = Modifier) {
-    PageVisitEffect(onOpen = model::open, onClose = model::close)
-    val page by model.page.collectAsStateWithLifecycle()
-    val state = page.catalog
-    LaunchedEffect(page.offline) { if (!page.offline) model.reconnected() }
-    BackHandler(
-        enabled = state.overlay is ClientsOverlay.New || state.overlay is ClientsOverlay.Edit,
-    ) { model.dismiss() }
-    ClientsContent(
-        state = state,
-        offline = page.offline,
-        cachedClients = page.cachedClients,
-        actions = ClientsActions(
-            onRetry = model::retry,
-            onNew = model::newClient,
-            onEdit = model::edit,
-            onAskToArchive = model::askToArchive,
-            onArchive = model::archive,
-            onRestore = model::restore,
-            onSave = model::save,
-            onDismiss = model::dismiss,
-            onDoneShow = model::doneShown,
-        ),
-        modifier = modifier,
-    )
-}
-
-/** What the page's controls do. */
-class ClientsActions(
-    val onRetry: () -> Unit = {},
-    val onNew: () -> Unit = {},
-    val onEdit: (Client) -> Unit = {},
-    val onAskToArchive: (Client) -> Unit = {},
-    val onArchive: () -> Unit = {},
-    val onRestore: (Client) -> Unit = {},
-    val onSave: (String, String) -> Unit = { _, _ -> },
-    val onDismiss: () -> Unit = {},
-    val onDoneShow: () -> Unit = {},
-)
-
-/** [ClientsScreen] without its model. */
-@Composable
-fun ClientsContent(
+fun ClientsScreen(
     state: ClientsState,
     offline: Boolean,
     cachedClients: List<Client>,
@@ -144,6 +97,19 @@ fun ClientsContent(
         )
     }
 }
+
+/** What the page's controls do. */
+class ClientsActions(
+    val onRetry: () -> Unit = {},
+    val onNew: () -> Unit = {},
+    val onEdit: (Client) -> Unit = {},
+    val onAskToArchive: (Client) -> Unit = {},
+    val onArchive: () -> Unit = {},
+    val onRestore: (Client) -> Unit = {},
+    val onSave: (String, String) -> Unit = { _, _ -> },
+    val onDismiss: () -> Unit = {},
+    val onDoneShow: () -> Unit = {},
+)
 
 /** The web app's messages, which say that archiving and restoring a client do the same to its projects. */
 @Composable

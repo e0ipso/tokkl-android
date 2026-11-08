@@ -14,7 +14,7 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 @Composable
 private fun ProjectsPreview() {
     TokklTheme {
-        ProjectsContent(
+        ProjectsScreen(
             state = ProjectsState(data = ProjectsData(SAMPLE_PROJECTS, WorkspaceDefaults("EUR", 50.0))),
             offline = false,
             cachedProjects = emptyList(),

@@ -24,7 +24,7 @@ private fun TrashOfflinePreview() {
 @Composable
 private fun TrashPagePreview(offline: Boolean) {
     TokklTheme {
-        TrashContent(
+        TrashScreen(
             state = TrashState(entries = SAMPLE_ENTRIES),
             offline = offline,
             settings = AccountSettings("UTC", DayOfWeek.MONDAY, timeResolutionMinutes = null),

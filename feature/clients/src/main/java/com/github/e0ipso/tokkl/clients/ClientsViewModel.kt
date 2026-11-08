@@ -7,6 +7,7 @@ import com.github.e0ipso.tokkl.catalog.CatalogChange
 import com.github.e0ipso.tokkl.catalog.CatalogModel
 import com.github.e0ipso.tokkl.catalog.CatalogState
 import com.github.e0ipso.tokkl.catalog.PageEvents
+import com.github.e0ipso.tokkl.catalog.followNetwork
 import com.github.e0ipso.tokkl.catalog.followTrips
 import com.github.e0ipso.tokkl.model.Client
 import com.github.e0ipso.tokkl.model.ClientId
@@ -81,7 +82,7 @@ class ClientsViewModel(
     scope: CoroutineScope,
     io: CoroutineContext,
     cachedClients: Flow<List<Client>>,
-    offline: StateFlow<Boolean>,
+    private val offline: StateFlow<Boolean>,
     appEvents: Flow<AppEvent>,
 ) : ViewModel(scope),
     PageEvents {
@@ -108,11 +109,22 @@ class ClientsViewModel(
 
     init {
         followTrips(appEvents, viewModelScope)
+        followNetwork(offline, viewModelScope)
     }
 
     fun workspace(): WorkspaceId? = catalog.workspace()
 
-    override fun open() = catalog.open()
+    /**
+     * The page opened: loads. When it comes back open after a configuration change, it loads
+     * nothing, but while the phone is online it loads again what could not reach the server.
+     */
+    override fun open() {
+        if (!catalog.opened) {
+            catalog.open()
+        } else if (!offline.value) {
+            reconnected()
+        }
+    }
 
     fun retry() = catalog.retry()
 

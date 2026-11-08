@@ -1,6 +1,11 @@
 package com.github.e0ipso.tokkl.trash
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
+import com.github.e0ipso.tokkl.catalog.PageVisitEffect
 import com.github.e0ipso.tokkl.feature.trash.R
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
 import com.github.e0ipso.tokkl.navigation.NavigationHost
@@ -23,8 +28,33 @@ internal object TrashEntries : FeatureEntries {
     }
 
     override fun EntryProviderScope<Route>.addEntries(host: NavigationHost) {
-        route(TrashRoute) { TrashScreen(model = koinViewModel()) }
+        route(TrashRoute) { TrashPage(model = koinViewModel()) }
     }
+}
+
+/**
+ * The Trash page from its view model: tells the model when the page opens and closes, and hands
+ * its state and events to [TrashScreen].
+ */
+@Composable
+fun TrashPage(model: TrashViewModel, modifier: Modifier = Modifier) {
+    PageVisitEffect(onOpen = model::open, onClose = model::close)
+    val page by model.page.collectAsStateWithLifecycle()
+    TrashScreen(
+        state = page.trash,
+        offline = page.offline,
+        settings = page.settings,
+        actions = TrashActions(
+            onRetry = model::retry,
+            onRestore = model::restore,
+            onPurge = model::purge,
+            onAskToEmpty = model::askToEmpty,
+            onEmpty = model::empty,
+            onDismiss = model::dismiss,
+            onDoneShow = model::doneShown,
+        ),
+        modifier = modifier,
+    )
 }
 
 /** The Trash page, last on the More sheet. */

@@ -174,7 +174,7 @@ class ReportFiltersFitTest {
     private fun show() {
         composeRule.setContent {
             TokklTheme {
-                ReportsContent(
+                ReportsScreen(
                     state = ReportsState.Loaded(
                         RangeSelection(WEEK, RangePreset.THIS_WEEK),
                         SummaryReport.of(emptyList(), WEEK, DayOfWeek.MONDAY),

@@ -1,6 +1,11 @@
 package com.github.e0ipso.tokkl.tags
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
+import com.github.e0ipso.tokkl.catalog.PageVisitEffect
 import com.github.e0ipso.tokkl.feature.tags.R
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
 import com.github.e0ipso.tokkl.navigation.NavigationHost
@@ -23,8 +28,34 @@ internal object TagsEntries : FeatureEntries {
     }
 
     override fun EntryProviderScope<Route>.addEntries(host: NavigationHost) {
-        route(TagsRoute) { TagsScreen(model = koinViewModel()) }
+        route(TagsRoute) { TagsPage(model = koinViewModel()) }
     }
+}
+
+/**
+ * The Tags page from its view model: tells the model when the page opens and closes, and hands
+ * its state and events to [TagsScreen].
+ */
+@Composable
+fun TagsPage(model: TagsViewModel, modifier: Modifier = Modifier) {
+    PageVisitEffect(onOpen = model::open, onClose = model::close)
+    val page by model.page.collectAsStateWithLifecycle()
+    TagsScreen(
+        state = page.catalog,
+        offline = page.offline,
+        cachedTags = page.cachedTags,
+        actions = TagsActions(
+            onRetry = model::retry,
+            onCreate = model::create,
+            onAskToRename = model::askToRename,
+            onRename = model::rename,
+            onAskToDelete = model::askToDelete,
+            onDelete = model::delete,
+            onDismiss = model::dismiss,
+            onDoneShow = model::doneShown,
+        ),
+        modifier = modifier,
+    )
 }
 
 /** The Tags page, on the More sheet after Clients. */

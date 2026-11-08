@@ -100,7 +100,7 @@ class TrashFitTest {
 
     @Composable
     private fun Content(state: TrashState, offline: Boolean) {
-        TrashContent(state = state, offline = offline, settings = SETTINGS, actions = TrashActions())
+        TrashScreen(state = state, offline = offline, settings = SETTINGS, actions = TrashActions())
     }
 
     private fun control(@StringRes label: Int, name: String) = composeRule.onNode(controlMatcher(label, name))

@@ -339,7 +339,7 @@ class TagsServerTest {
             WindowCompat.enableEdgeToEdge(window)
             window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
         }
-        composeRule.setContent { TokklTheme { TagsScreen(model) } }
+        composeRule.setContent { TokklTheme { TagsPage(model) } }
     }
 
     /** Types [text] into the field, as a user does. */

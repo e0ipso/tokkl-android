@@ -1,9 +1,5 @@
 package com.github.e0ipso.tokkl.reports
 
-import android.content.ActivityNotFoundException
-import android.content.Intent
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -24,19 +20,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.compose.currentStateAsState
-import com.github.e0ipso.tokkl.catalog.PageVisitEffect
 import com.github.e0ipso.tokkl.feature.reports.R
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.AccountTime
@@ -55,68 +44,13 @@ import com.github.e0ipso.tokkl.ui.theme.screenContent
  * and asks nothing. Offline, it says that reports need the server and shows no numbers or entries,
  * and once the network comes back with the app on screen it asks again.
  * It is a page of the bottom bar, so it has no back button; system Back goes to Timer.
+ *
+ * [time] is null when the phone cannot resolve the account's timezone. [filterOptions] are what
+ * the filter sheet offers. A detailed report with entries scrolls as a lazy list, so a long range
+ * composes only the rows in view; everything else scrolls as one column.
  */
 @Composable
-fun ReportsScreen(model: ReportsViewModel, modifier: Modifier = Modifier) {
-    PageVisitEffect(onOpen = model::open, onClose = model::close)
-    val context = LocalContext.current
-    val shareTitle = stringResource(R.string.reports_share)
-    val page by model.page.collectAsStateWithLifecycle()
-    val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
-    val chooser = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-        // The chooser may return RESULT_CANCELED even after a selection. Files stay bounded
-        // and readable for receivers that open their stream after the chooser has closed.
-        model.exportShareFinished()
-    }
-    LaunchedEffect(page.exportState, lifecycleState) {
-        if (page.exportState is ReportExportState.Ready && lifecycleState.isAtLeast(Lifecycle.State.STARTED)) {
-            model.launchExportShare { file ->
-                try {
-                    val send = ReportCsvShare.intent(context, file)
-                    if (ReportCsvShare.hasTarget(context, send)) {
-                        chooser.launch(Intent.createChooser(send, shareTitle))
-                    } else {
-                        model.exportNoShareTarget()
-                    }
-                } catch (_: ActivityNotFoundException) {
-                    model.exportNoShareTarget()
-                } catch (_: IllegalArgumentException) {
-                    model.exportShareFailed()
-                } catch (_: SecurityException) {
-                    model.exportShareFailed()
-                }
-            }
-        }
-    }
-    ReportsContent(
-        state = page.report,
-        tab = page.tab,
-        settings = page.settings,
-        time = page.time,
-        filters = page.filters,
-        filterOptions = page.filterOptions,
-        onTab = model::selectTab,
-        onShift = model::shift,
-        onPreset = model::select,
-        onCustom = model::selectCustom,
-        onFilters = model::applyFilters,
-        onRetry = model::retry,
-        onLoadMore = model::loadMore,
-        exportSupported = page.exportSupported,
-        exportState = page.exportState,
-        onExport = model::exportCsv,
-        modifier = modifier,
-    )
-}
-
-/**
- * [ReportsScreen] without its model. [time] is null when the phone cannot resolve the account's
- * timezone. [filterOptions] are what the filter sheet offers. A detailed report with entries
- * scrolls as a lazy list, so a long range composes only the rows in view; everything else scrolls
- * as one column.
- */
-@Composable
-fun ReportsContent(
+fun ReportsScreen(
     state: ReportsState,
     tab: ReportTab,
     settings: AccountSettings?,

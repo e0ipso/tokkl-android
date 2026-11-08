@@ -13,7 +13,7 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 @Composable
 private fun TagsPreview() {
     TokklTheme {
-        TagsContent(
+        TagsScreen(
             state = TagsState(data = TagsData(listOf(tag(1, "call"), tag(2, "review"), tag(3, "travel")))),
             offline = false,
             cachedTags = emptyList(),

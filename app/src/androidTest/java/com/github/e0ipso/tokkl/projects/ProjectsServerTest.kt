@@ -494,7 +494,7 @@ class ProjectsServerTest {
             WindowCompat.enableEdgeToEdge(window)
             window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
         }
-        composeRule.setContent { TokklTheme { ProjectsScreen(model) } }
+        composeRule.setContent { TokklTheme { ProjectsPage(model) } }
     }
 
     /** Types [text] into the field, as a user does. */

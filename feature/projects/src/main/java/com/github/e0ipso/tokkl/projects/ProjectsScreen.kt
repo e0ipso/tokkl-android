@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.projects
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,21 +14,17 @@ import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.e0ipso.tokkl.catalog.ActiveThenArchived
 import com.github.e0ipso.tokkl.catalog.CatalogEmpty
 import com.github.e0ipso.tokkl.catalog.CatalogListRow
 import com.github.e0ipso.tokkl.catalog.CatalogNotices
 import com.github.e0ipso.tokkl.catalog.CatalogPage
 import com.github.e0ipso.tokkl.catalog.DetailLine
-import com.github.e0ipso.tokkl.catalog.PageVisitEffect
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.catalog.changeText
 import com.github.e0ipso.tokkl.feature.projects.R
@@ -42,55 +37,6 @@ import com.github.e0ipso.tokkl.ui.TokklIconButton
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
-/**
- * The projects page (docs/PRD.md P2): the workspace's projects from the server, archived ones in a
- * section of their own, with New project, and Archive or Restore on each row. A tap on a row opens
- * its form, which lists the project's tasks (P5). Each change goes to the server at once. While
- * the phone is offline or the server out of reach, the page lists the projects on the phone and
- * says that changing them needs the server, with every action off. Coming back online, or to the
- * foreground, loads the projects again.
- */
-@Composable
-fun ProjectsScreen(model: ProjectsViewModel, modifier: Modifier = Modifier) {
-    PageVisitEffect(onOpen = model::open, onClose = model::close)
-    val page by model.page.collectAsStateWithLifecycle()
-    val state = page.catalog
-    LaunchedEffect(page.offline) { if (!page.offline) model.reconnected() }
-    TaskListEffect(
-        project = (state.overlay as? ProjectForm.Edit)?.project?.id,
-        onOpen = model.tasks::open,
-        onClose = model.tasks::close,
-    )
-    BackHandler(enabled = state.overlay != null) { model.closeForm() }
-    ProjectsContent(
-        state = state,
-        offline = page.offline,
-        cachedProjects = page.cachedProjects,
-        clients = page.clients,
-        actions = ProjectsActions(
-            onRetry = model::retry,
-            onNew = model::newProject,
-            onEdit = model::edit,
-            onSetActive = model::setActive,
-            onSave = model::save,
-            onCloseForm = model::closeForm,
-            onDoneShow = model::doneShown,
-        ),
-        tasks = page.tasks,
-        taskActions = TaskActions(
-            onRetry = model.tasks::retry,
-            onCreate = model.tasks::create,
-            onAskToEdit = model.tasks::askToEdit,
-            onSave = model.tasks::save,
-            onAskToDelete = model.tasks::askToDelete,
-            onDelete = model.tasks::delete,
-            onDismiss = model.tasks::dismiss,
-            onDoneShow = model.tasks::doneShown,
-        ),
-        modifier = modifier,
-    )
-}
-
 /** What the page's controls do. */
 class ProjectsActions(
     val onRetry: () -> Unit = {},
@@ -102,9 +48,16 @@ class ProjectsActions(
     val onDoneShow: () -> Unit = {},
 )
 
-/** [ProjectsScreen] without its model. */
+/**
+ * The projects page (docs/PRD.md P2): the workspace's projects from the server, archived ones in a
+ * section of their own, with New project, and Archive or Restore on each row. A tap on a row opens
+ * its form, which lists the project's tasks (P5). Each change goes to the server at once. While
+ * the phone is offline or the server out of reach, the page lists the projects on the phone and
+ * says that changing them needs the server, with every action off. Coming back online, or to the
+ * foreground, loads the projects again.
+ */
 @Composable
-fun ProjectsContent(
+fun ProjectsScreen(
     state: ProjectsState,
     offline: Boolean,
     cachedProjects: List<Project>,

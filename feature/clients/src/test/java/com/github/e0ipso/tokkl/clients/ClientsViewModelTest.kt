@@ -41,6 +41,11 @@ class ClientsViewModelTest {
     /** Each request's method, path and body, in order. */
     private val requests = CopyOnWriteArrayList<String>()
     private var refreshes = 0
+    private val offline = MutableStateFlow(false)
+
+    /** While true, the server answers every request with a 503. */
+    @Volatile
+    private var failing = false
     private lateinit var model: ClientsViewModel
 
     @Before
@@ -48,6 +53,7 @@ class ClientsViewModelTest {
         server.dispatcher = object : Dispatcher() {
             override fun dispatch(request: RecordedRequest): MockResponse {
                 requests += "${request.method} ${request.url.encodedPath} ${request.body?.utf8().orEmpty()}".trim()
+                if (failing) return MockResponse.Builder().code(503).build()
                 return when ("${request.method} ${request.url.encodedPath}") {
                     "GET /api/v9/workspaces/7/clients" -> json("""[{"id":1,"wid":7,"name":"Acme","archived":false}]""")
 
@@ -80,7 +86,7 @@ class ClientsViewModelTest {
             scope = CoroutineScope(Dispatchers.Unconfined),
             io = Dispatchers.Unconfined,
             cachedClients = flowOf(emptyList()),
-            offline = MutableStateFlow(false),
+            offline = offline,
             appEvents = emptyFlow(),
         )
     }
@@ -89,6 +95,42 @@ class ClientsViewModelTest {
     fun tearDown() {
         server.close()
     }
+
+    /**
+     * A page that could not load loads again when the network comes back, and when it comes back
+     * open after a configuration change while online. A closed page, or one that loaded, asks
+     * nothing.
+     */
+    @Test
+    fun theNetworksReturnAndARotationLoadAgainWhatFailed() {
+        failing = true
+        model.open()
+        assertEquals("the first load", 1, clientLoads())
+        assertNull(model.state.value.data)
+
+        offline.value = true
+        offline.value = false
+        assertEquals("the network came back", 2, clientLoads())
+
+        model.open()
+        assertEquals("the page came back after a rotation", 3, clientLoads())
+
+        failing = false
+        model.open()
+        assertEquals(4, clientLoads())
+        assertEquals("Acme", model.state.value.data!!.clients.single().name)
+        model.open()
+        offline.value = true
+        offline.value = false
+        assertEquals("a page that loaded asks nothing", 4, clientLoads())
+
+        model.close()
+        offline.value = true
+        offline.value = false
+        assertEquals("a closed page asks nothing", 4, clientLoads())
+    }
+
+    private fun clientLoads(): Int = requests.count { it == "GET /api/v9/workspaces/7/clients" }
 
     /** Archiving asks first, since it archives the client's projects too. */
     @Test

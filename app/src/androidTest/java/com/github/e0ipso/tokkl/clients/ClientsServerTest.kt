@@ -360,7 +360,7 @@ class ClientsServerTest {
             WindowCompat.enableEdgeToEdge(window)
             window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
         }
-        composeRule.setContent { TokklTheme { ClientsScreen(model) } }
+        composeRule.setContent { TokklTheme { ClientsPage(model) } }
     }
 
     /** Types [text] into the field, as a user does. */

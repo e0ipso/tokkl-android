@@ -1,6 +1,12 @@
 package com.github.e0ipso.tokkl.projects
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
+import com.github.e0ipso.tokkl.catalog.PageVisitEffect
 import com.github.e0ipso.tokkl.feature.projects.R
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
 import com.github.e0ipso.tokkl.navigation.NavigationHost
@@ -23,8 +29,52 @@ internal object ProjectsEntries : FeatureEntries {
     }
 
     override fun EntryProviderScope<Route>.addEntries(host: NavigationHost) {
-        route(ProjectsRoute) { ProjectsScreen(model = koinViewModel()) }
+        route(ProjectsRoute) { ProjectsPage(model = koinViewModel()) }
     }
+}
+
+/**
+ * The Projects page from its view model: tells the model when the page opens and closes, and hands
+ * its state and events to [ProjectsScreen].
+ */
+@Composable
+fun ProjectsPage(model: ProjectsViewModel, modifier: Modifier = Modifier) {
+    PageVisitEffect(onOpen = model::open, onClose = model::close)
+    val page by model.page.collectAsStateWithLifecycle()
+    val state = page.catalog
+    TaskListEffect(
+        project = (state.overlay as? ProjectForm.Edit)?.project?.id,
+        onOpen = model.tasks::open,
+        onClose = model.tasks::close,
+    )
+    BackHandler(enabled = state.overlay != null) { model.closeForm() }
+    ProjectsScreen(
+        state = state,
+        offline = page.offline,
+        cachedProjects = page.cachedProjects,
+        clients = page.clients,
+        actions = ProjectsActions(
+            onRetry = model::retry,
+            onNew = model::newProject,
+            onEdit = model::edit,
+            onSetActive = model::setActive,
+            onSave = model::save,
+            onCloseForm = model::closeForm,
+            onDoneShow = model::doneShown,
+        ),
+        tasks = page.tasks,
+        taskActions = TaskActions(
+            onRetry = model.tasks::retry,
+            onCreate = model.tasks::create,
+            onAskToEdit = model.tasks::askToEdit,
+            onSave = model.tasks::save,
+            onAskToDelete = model.tasks::askToDelete,
+            onDelete = model.tasks::delete,
+            onDismiss = model.tasks::dismiss,
+            onDoneShow = model.tasks::doneShown,
+        ),
+        modifier = modifier,
+    )
 }
 
 /** The Projects page, in the bar after Pomodoro. */

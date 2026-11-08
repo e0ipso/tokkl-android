@@ -61,8 +61,8 @@ import com.github.e0ipso.tokkl.calendar.ResizeEdge
 import com.github.e0ipso.tokkl.calendar.WeekSource
 import com.github.e0ipso.tokkl.catalog.CatalogSamples
 import com.github.e0ipso.tokkl.clients.ClientsActions
-import com.github.e0ipso.tokkl.clients.ClientsContent
 import com.github.e0ipso.tokkl.clients.ClientsRoute
+import com.github.e0ipso.tokkl.clients.ClientsScreen
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.history.HistoryContent
 import com.github.e0ipso.tokkl.history.HistoryDay
@@ -92,8 +92,8 @@ import com.github.e0ipso.tokkl.pomodoro.lengthCardMatcher
 import com.github.e0ipso.tokkl.pomodoro.ring
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.projects.ProjectsActions
-import com.github.e0ipso.tokkl.projects.ProjectsContent
 import com.github.e0ipso.tokkl.projects.ProjectsRoute
+import com.github.e0ipso.tokkl.projects.ProjectsScreen
 import com.github.e0ipso.tokkl.reports.DetailedEntry
 import com.github.e0ipso.tokkl.reports.DetailedReport
 import com.github.e0ipso.tokkl.reports.FilterOptions
@@ -103,8 +103,8 @@ import com.github.e0ipso.tokkl.reports.ReportEntry
 import com.github.e0ipso.tokkl.reports.ReportFilters
 import com.github.e0ipso.tokkl.reports.ReportRange
 import com.github.e0ipso.tokkl.reports.ReportTab
-import com.github.e0ipso.tokkl.reports.ReportsContent
 import com.github.e0ipso.tokkl.reports.ReportsRoute
+import com.github.e0ipso.tokkl.reports.ReportsScreen
 import com.github.e0ipso.tokkl.reports.ReportsState
 import com.github.e0ipso.tokkl.reports.SummaryReport
 import com.github.e0ipso.tokkl.reports.WeeklyReport
@@ -115,8 +115,8 @@ import com.github.e0ipso.tokkl.settings.followTheSystemNightMode
 import com.github.e0ipso.tokkl.settings.systemIsDark
 import com.github.e0ipso.tokkl.sync.SyncStatus
 import com.github.e0ipso.tokkl.tags.TagsActions
-import com.github.e0ipso.tokkl.tags.TagsContent
 import com.github.e0ipso.tokkl.tags.TagsRoute
+import com.github.e0ipso.tokkl.tags.TagsScreen
 import com.github.e0ipso.tokkl.timer.TimerBarContent
 import com.github.e0ipso.tokkl.timer.TimerScreen
 import com.github.e0ipso.tokkl.timer.TimerState
@@ -489,7 +489,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     fun projects() {
         show({
             SignedInFrame(pages = topLevelPages, current = ProjectsRoute, onOpen = {}) {
-                ProjectsContent(
+                ProjectsScreen(
                     CatalogSamples.PROJECTS_LOADED,
                     offline = false,
                     cachedProjects = emptyList(),
@@ -509,7 +509,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     fun clients() {
         show({
             SignedInFrame(pages = topLevelPages, current = ClientsRoute, onOpen = {}) {
-                ClientsContent(
+                ClientsScreen(
                     CatalogSamples.CLIENTS_LOADED,
                     offline = false,
                     cachedClients = emptyList(),
@@ -528,7 +528,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     fun tags() {
         show({
             SignedInFrame(pages = topLevelPages, current = TagsRoute, onOpen = {}) {
-                TagsContent(
+                TagsScreen(
                     CatalogSamples.TAGS_LOADED,
                     offline = false,
                     cachedTags = emptyList(),
@@ -768,7 +768,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     @Composable
     private fun ReportsTab(state: ReportsState, tab: ReportTab) {
         SignedInFrame(pages = topLevelPages, current = ReportsRoute, onOpen = {}) {
-            ReportsContent(
+            ReportsScreen(
                 state = state,
                 tab = tab,
                 settings = ACCOUNT,
