@@ -14,6 +14,9 @@ import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.timerstate.TimerControls
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
@@ -24,13 +27,58 @@ internal sealed interface CachedControls {
     data class Read(val controls: TimerControls, val editId: EntryId?, val resolvedEditId: EntryId?) : CachedControls
 }
 
-/** What the taps have done that the cache or the server may not show yet. */
+/**
+ * What the taps have done that the cache or the server may not show yet. It changes only through
+ * the transitions below, one for each tap and for each end of one.
+ */
 internal data class TimerTaps(
     /** What Start starts with. */
     val draft: EntryFields = EntryFields(),
     val edit: FieldEdit? = null,
     val pending: PendingTap? = null,
-)
+) {
+    /**
+     * A Start tap: [tap] waits for the queue, and the draft makes way for the new entry. A [typed]
+     * edit goes with it.
+     */
+    fun startTapped(tap: PendingTap.Starting, typed: Boolean) =
+        copy(pending = tap, draft = EntryFields(), edit = if (typed) null else edit)
+
+    /**
+     * The Start [tap] ended, unless a newer tap replaced it. When it [queued] nothing and no new draft
+     * was typed meanwhile, the [draft] it cleared comes back.
+     */
+    fun startEnded(tap: PendingTap.Starting, queued: Boolean, draft: EntryFields) = when {
+        pending != tap -> this
+        !queued && this.draft == EntryFields() -> copy(pending = null, draft = draft)
+        else -> copy(pending = null)
+    }
+
+    /** A Stop tap: [tap] waits for the queue, and the edit it sends with it no longer shows. */
+    fun stopTapped(tap: PendingTap.Stopping) = copy(pending = tap, edit = null)
+
+    /** A Pause, Resume or Stop while paused: [tap] waits for the server. */
+    fun actionTapped(tap: PendingTap.Acting) = copy(pending = tap)
+
+    /** [tap] ended, unless a newer tap replaced it. */
+    fun tapEnded(tap: PendingTap) = if (pending == tap) copy(pending = null) else this
+
+    /** The idle timer's draft changed with [change]. */
+    fun drafted(change: (EntryFields) -> EntryFields) = copy(draft = change(draft))
+
+    /** [edit] shows over the running entry. */
+    fun editing(edit: FieldEdit) = copy(edit = edit)
+
+    /** [edit] no longer shows, unless a newer edit replaced it: the cache has it, or it gave way. */
+    fun editEnded(edit: FieldEdit) = if (this.edit == edit) copy(edit = null) else this
+
+    /** The edit shown over the running entry [shown], while it still matches the [cached] entry. */
+    fun editFor(shown: TimerState.Running, cached: CachedControls): FieldEdit? {
+        val read = cached as? CachedControls.Read ?: return null
+        val entry = read.controls.runningEntry()?.takeIf { it.id == shown.entryId } ?: return null
+        return edit?.takeIf { it.matches(entry, read) }
+    }
+}
 
 /** [fields] for the running entry that started at [start], shown until the cache has them. [sent] once queued. */
 internal data class FieldEdit(
@@ -144,3 +192,19 @@ internal fun FieldEdit.matches(entry: TimeEntry, read: CachedControls.Read): Boo
 
 /** The running entry, or null while idle or paused. */
 internal fun TimerControls.runningEntry(): TimeEntry? = (this as? TimerControls.Running)?.entry
+
+/** The controls, or null while unread. */
+internal fun CachedControls.controls(): TimerControls? = (this as? CachedControls.Read)?.controls
+
+/**
+ * Waits until the controls pass [done], or gives up after [SETTLE_MS]: far longer than a write to
+ * the phone's database or a server's answer reaching the cache takes, so only a cache that never
+ * shows the tap reaches it.
+ */
+internal suspend fun StateFlow<CachedControls>.settle(done: (TimerControls) -> Boolean) {
+    withTimeoutOrNull(SETTLE_MS) {
+        first { it is CachedControls.Read && done(it.controls) }
+    }
+}
+
+private const val SETTLE_MS = 5_000L

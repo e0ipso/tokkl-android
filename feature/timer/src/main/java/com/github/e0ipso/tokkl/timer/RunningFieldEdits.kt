@@ -7,8 +7,11 @@ import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.model.RunningEntryIdentity
 import com.github.e0ipso.tokkl.model.fields
 import com.github.e0ipso.tokkl.picker.Picked
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.joinAll
@@ -19,11 +22,21 @@ import kotlinx.coroutines.launch
  * fields. A pick of project, task or tags, billable and a picked suggestion go to [changes] at
  * once. A description goes once typing ends, so the queue does not get a change for every letter.
  * Until the cache has an edit, the timer shows it over the cache's entry. A paused timer's fields
- * are read-only.
+ * are read-only. Use it on the main thread.
+ *
+ * @param local what the timer's taps did that the cache may not show yet, which the view model
+ *   shares with it.
+ * @param cached the controls as the cache read them.
+ * @param scope the view model's scope.
+ * @param snapshot the timer state as of now, without labels.
+ * @param projects the cached projects, for a pick.
  */
 internal class RunningFieldEdits(
-    private val taps: TimerTapState,
+    private val local: MutableStateFlow<TimerTaps>,
+    private val cached: StateFlow<CachedControls>,
     private val changes: EntryChanges,
+    private val scope: CoroutineScope,
+    private val snapshot: () -> TimerState,
     private val projects: () -> List<Project>,
 ) {
     private val writes = mutableSetOf<Job>()
@@ -32,11 +45,11 @@ internal class RunningFieldEdits(
     fun editDescription(description: String) = edit(send = false) { it.copy(description = description) }
 
     fun descriptionDone() {
-        if (taps.local.value.pending != null) return
-        val shown = taps.shown() as? TimerState.Running ?: return
-        val edit = taps.editFor(shown)?.takeIf { !it.sent } ?: return
-        if (edit.fields == taps.running()?.fields()) {
-            taps.local.update { if (it.edit == edit) it.copy(edit = null) else it }
+        if (local.value.pending != null) return
+        val shown = snapshot() as? TimerState.Running ?: return
+        val edit = local.value.editFor(shown, cached.value)?.takeIf { !it.sent } ?: return
+        if (edit.fields == cached.value.controls()?.runningEntry()?.fields()) {
+            local.update { it.editEnded(edit) }
         } else {
             send(shown, edit.fields)
         }
@@ -56,21 +69,21 @@ internal class RunningFieldEdits(
     /** See [TimerViewModel.runningForEdit]. */
     suspend fun runningForEdit(): RunningEntryIdentity? {
         if (openingRunning) return null
-        val shown = taps.shown() as? TimerState.Running ?: return null
-        val pending = taps.local.value.pending
+        val shown = snapshot() as? TimerState.Running ?: return null
+        val pending = local.value.pending
         if (pending is PendingTap.Stopping || pending is PendingTap.Acting) return null
         openingRunning = true
         try {
             val id = if (pending is PendingTap.Starting) {
                 val startedId = pending.entryId.await() ?: return null
-                taps.local.first { it.pending != pending }
+                local.first { it.pending != pending }
                 startedId
             } else {
                 shown.entryId ?: return null
             }
             descriptionDone()
             awaitWrites()
-            val settled = taps.shown() as? TimerState.Running ?: return null
+            val settled = snapshot() as? TimerState.Running ?: return null
             val identity = RunningEntryIdentity(
                 id,
                 shown.workspaceId,
@@ -88,23 +101,21 @@ internal class RunningFieldEdits(
      * not known yet, or it is stopping.
      */
     private fun edit(send: Boolean, change: (EntryFields) -> EntryFields) {
-        when (val shown = taps.shown()) {
+        when (val shown = snapshot()) {
             TimerState.Loading, is TimerState.Paused -> Unit
 
-            is TimerState.Idle -> taps.local.update { it.copy(draft = change(it.draft)) }
+            is TimerState.Idle -> local.update { it.drafted(change) }
 
             is TimerState.Running -> {
-                if (taps.local.value.pending != null || shown.entryId == null) return
+                if (local.value.pending != null || shown.entryId == null) return
                 val fields = change(shown.fields)
                 when {
                     fields == shown.fields -> Unit
 
                     send -> send(shown, fields)
 
-                    else -> taps.local.update {
-                        it.copy(
-                            edit = FieldEdit(shown.entryId, shown.workspaceId, shown.start, fields, sent = false),
-                        )
+                    else -> local.update {
+                        it.editing(FieldEdit(shown.entryId, shown.workspaceId, shown.start, fields, sent = false))
                     }
                 }
             }
@@ -117,10 +128,10 @@ internal class RunningFieldEdits(
      */
     fun send(shown: TimerState.Running, fields: EntryFields) {
         val entryId = shown.entryId ?: return
-        val before = taps.running()?.fields()
+        val before = cached.value.controls()?.runningEntry()?.fields()
         val edit = FieldEdit(entryId, shown.workspaceId, shown.start, fields, sent = true)
-        taps.local.update { it.copy(edit = edit) }
-        val write = taps.scope.launch(start = CoroutineStart.UNDISPATCHED) {
+        local.update { it.editing(edit) }
+        val write = scope.launch(start = CoroutineStart.UNDISPATCHED) {
             try {
                 if (changes.updateRunning(
                         RunningEntryIdentity(entryId, shown.workspaceId, shown.start),
@@ -128,14 +139,14 @@ internal class RunningFieldEdits(
                         shown.start,
                     )
                 ) {
-                    taps.settle { controls ->
+                    cached.settle { controls ->
                         val entry = controls.runningEntry()
                         entry == null || entry.start != shown.start ||
                             entry.fields().let { it == fields || it != before }
                     }
                 }
             } finally {
-                taps.local.update { if (it.edit == edit) it.copy(edit = null) else it }
+                local.update { it.editEnded(edit) }
             }
         }
         writes += write

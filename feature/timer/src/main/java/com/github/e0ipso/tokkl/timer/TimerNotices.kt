@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.filterNotNull
  * to the screen and a too-short pomodoro shows once, whichever page shows it.
  */
 @Composable
-fun TimerNotices(notices: TimerNoticeQueue, host: SnackbarHostState) {
+fun TimerNotices(notices: TimerViewModel, host: SnackbarHostState) {
     val resources = LocalResources.current
     LaunchedEffect(notices, host, resources) {
         notices.notice.filterNotNull().collect { notice ->

@@ -16,6 +16,7 @@ import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.timernotice.TimerNotice
 import com.github.e0ipso.tokkl.timerstate.DiscardNotices
 import com.github.e0ipso.tokkl.timerstate.PauseActions
+import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import com.github.e0ipso.tokkl.timerstate.TimerControls
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import com.github.e0ipso.tokkl.timerstate.target
@@ -45,8 +46,14 @@ import java.time.temporal.ChronoUnit
  * queue, so they never wait for the network (docs/PRD.md principle 2). From such a tap until the
  * cache shows it, the timer shows what the tap did and ignores other taps, so a double tap starts
  * one entry. A start stops a cached running entry first, as the server does, so one entry runs at
- * a time, offline too. Pause, Resume and Stop while paused go to the server ([PauseChainTaps]),
- * and field edits are [RunningFieldEdits].
+ * a time, offline too. Pause, Resume and Stop while paused belong to the server's pause chain and
+ * go to [pauseChain] at once, at the revision the timer was shown at, so a stale tap gets a
+ * refusal; until the server's state shows, the timer keeps what it showed and ignores other taps.
+ * A refusal or no answer becomes a [notice]. Field edits are [RunningFieldEdits].
+ *
+ * [local] holds what the taps did that the cache or the server may not show yet, and changes only
+ * through the transitions in TimerTaps.kt. The shown [state] is [timerState] of [local] over the
+ * cached controls.
  *
  * Call the tap handlers on the main thread. The running clock counts from
  * [TimerState.Running.start] on the phone and never asks the server (principle 3).
@@ -78,8 +85,7 @@ class TimerViewModel(
     private val sendQueued: suspend () -> Unit,
     discards: DiscardNotices,
     timerApi: Flow<Boolean>,
-) : ViewModel(scope),
-    TimerNoticeQueue {
+) : ViewModel(scope) {
 
     private val local = MutableStateFlow(TimerTaps())
 
@@ -119,26 +125,22 @@ class TimerViewModel(
         timerState(running, settings?.defaultWorkspaceId, taps, offered).labelled(names.projects, names.tasks)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), TimerState.Loading)
 
+    private val fieldEdits = RunningFieldEdits(local, cached, changes, viewModelScope, ::snapshot) {
+        catalog.value.projects
+    }
+
+    /** The trace section of the last Start or Stop tap, until the screen shows what it did. */
+    private var openTap: OpenTap? = null
+
     private val notices = TimerNoticeBoard(discards)
-
-    private val taps = TimerTapState(local, cached, viewModelScope, trace, ::snapshot)
-
-    private val fieldEdits = RunningFieldEdits(taps, changes) { catalog.value.projects }
-
-    private val pauseTaps = PauseChainTaps(
-        taps,
-        pauseChain,
-        fieldEdits,
-        sendQueued,
-        notices,
-    ) { queuedStarts.tryEmit(Unit) }
 
     /**
      * What the timer's screens should say now, or null: a claimed notice until it has shown, then
      * the latest failed pause chain action, then a too-short pomodoro no screen has shown yet. A
-     * screen [claim]s a notice before it shows it and calls [noticeShown] after.
+     * screen [claim]s a notice before it shows it and calls [noticeShown] after, so each notice
+     * shows on one screen.
      */
-    override val notice: StateFlow<TimerNotice?> = notices.notices(discards.discardNotice)
+    val notice: StateFlow<TimerNotice?> = notices.notices(discards.discardNotice)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
 
     /**
@@ -146,17 +148,17 @@ class TimerViewModel(
      * there is nothing left to show. A too-short pomodoro is recorded as shown here, once, so a
      * replay of its state or a restart does not show it again.
      */
-    override suspend fun claim(notice: TimerNotice): TimerNotice? = notices.claim(notice)
+    suspend fun claim(notice: TimerNotice): TimerNotice? = notices.claim(notice)
 
     /** The screen has shown [notice], or stopped showing it. */
-    override fun noticeShown(notice: TimerNotice) = notices.shown(notice)
+    fun noticeShown(notice: TimerNotice) = notices.shown(notice)
 
     /** Starts a timer with the idle timer's fields, unless one runs or no workspace is known yet. */
     fun start() {
         if (local.value.pending != null) return
         val shown = snapshot() as? TimerState.Idle ?: return
         val workspaceId = shown.workspaceId ?: return
-        taps.beginTap(TapTrace.START) { it is TimerState.Running }
+        beginTap(TapTrace.START) { it is TimerState.Running }
         startWith(workspaceId, shown.fields, typed = null)
     }
 
@@ -164,7 +166,20 @@ class TimerViewModel(
      * Tells the view model that the screen has drawn [state], which ends the trace section of a Start
      * or Stop tap once [state] shows what the tap did. Call it on the main thread.
      */
-    fun shown(state: TimerState) = taps.drawn(state)
+    fun shown(state: TimerState) {
+        val tap = openTap ?: return
+        if (tap.done(state)) {
+            openTap = null
+            tap.end()
+        }
+    }
+
+    /** Opens [section] of the trace until the screen draws a state that is [done]. */
+    private fun beginTap(section: String, done: (TimerState) -> Boolean) {
+        // A screen that stopped showing the timer never reported the last tap's state.
+        openTap?.end()
+        openTap = OpenTap(trace.begin(section), done)
+    }
 
     /**
      * Continues [source] (docs/PRD.md T2): starts a timer with its description, project, task,
@@ -213,7 +228,7 @@ class TimerViewModel(
 
     /** The description still being typed for the running entry [shown], not queued yet. */
     private fun typedFor(shown: TimerState.Running): TypedEdit? =
-        taps.editFor(shown)?.takeIf { !it.sent }?.let { edit ->
+        local.value.editFor(shown, cached.value)?.takeIf { !it.sent }?.let { edit ->
             shown.entryId?.let { TypedEdit(RunningEntryIdentity(it, shown.workspaceId, shown.start), edit) }
         }
 
@@ -225,7 +240,7 @@ class TimerViewModel(
     private fun startWith(workspaceId: WorkspaceId, fields: EntryFields, typed: TypedEdit?) {
         val draft = local.value.draft
         val starting = PendingTap.Starting(clock.instant().truncatedTo(ChronoUnit.MILLIS), fields, workspaceId)
-        local.update { it.copy(pending = starting, draft = EntryFields(), edit = if (typed != null) null else it.edit) }
+        local.update { it.startTapped(starting, typed = typed != null) }
         // Undispatched, so the queue reads the tap time within the tap's handler.
         viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
             var queued = false
@@ -234,19 +249,10 @@ class TimerViewModel(
                 starting.entryId.complete(changes.start(workspaceId, starting.fields))
                 queued = true
                 queuedStarts.tryEmit(Unit)
-                taps.settle { it.runningEntry()?.start?.isBefore(starting.at) == false }
+                cached.settle { it.runningEntry()?.start?.isBefore(starting.at) == false }
             } finally {
                 starting.entryId.complete(null)
-                local.update { taps ->
-                    when {
-                        taps.pending != starting -> taps
-
-                        // Nothing started, so the draft comes back.
-                        !queued && taps.draft == EntryFields() -> taps.copy(pending = null, draft = draft)
-
-                        else -> taps.copy(pending = null)
-                    }
-                }
+                local.update { it.startEnded(starting, queued, draft) }
             }
         }
     }
@@ -260,22 +266,22 @@ class TimerViewModel(
         if (local.value.pending != null) return
         when (val shown = snapshot()) {
             is TimerState.Running -> stopRunning(shown)
-            is TimerState.Paused -> pauseTaps.discard()
+            is TimerState.Paused -> discard()
             else -> Unit
         }
     }
 
     private fun stopRunning(shown: TimerState.Running) {
         val entryId = shown.entryId ?: return
-        val edited = taps.editFor(shown)?.fields
-        taps.beginTap(TapTrace.STOP) { it is TimerState.Idle }
+        val edited = local.value.editFor(shown, cached.value)?.fields
+        beginTap(TapTrace.STOP) { it is TimerState.Idle }
         val stopping = PendingTap.Stopping(shown.start)
-        local.update { it.copy(pending = stopping, edit = null) }
+        local.update { it.stopTapped(stopping) }
         viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
             try {
-                if (changes.stop(entryId, edited)) taps.settle { it.runningEntry()?.start != shown.start }
+                if (changes.stop(entryId, edited)) cached.settle { it.runningEntry()?.start != shown.start }
             } finally {
-                local.update { if (it.pending == stopping) it.copy(pending = null) else it }
+                local.update { it.tapEnded(stopping) }
             }
         }
     }
@@ -285,17 +291,75 @@ class TimerViewModel(
      * queued and sent first, so the chain keeps it. The timer shows what it showed until the
      * server's paused state does.
      */
-    fun pause() = pauseTaps.pause()
+    fun pause() {
+        val actions = pauseChain ?: return
+        if (local.value.pending != null) return
+        val shown = snapshot() as? TimerState.Running ?: return
+        val running = cached.value.controls() as? TimerControls.Running ?: return
+        if (!running.pausable || shown.entryId != running.entry.id) return
+        val typed = local.value.editFor(shown, cached.value)?.takeIf { !it.sent }
+        if (typed != null) fieldEdits.send(shown, typed.fields)
+        act(running.target, done = { it.target != running.target }) {
+            if (typed != null) {
+                fieldEdits.awaitWrites()
+                sendQueued()
+            }
+            actions.pause()
+        }
+    }
 
     /**
      * Resumes the paused chain on the server (docs/PRD.md T1), at the revision it was shown at:
      * the server starts a clone with the fields kept at Pause, and the clock goes on from the
      * chain's seconds. The paused view stays until the server's clone shows.
      */
-    fun resume() = pauseTaps.resume()
+    fun resume() {
+        val actions = pauseChain ?: return
+        if (local.value.pending != null) return
+        if (snapshot() !is TimerState.Paused) return
+        val paused = cached.value.controls() as? TimerControls.Paused ?: return
+        act(paused.target, done = { it.target != paused.target }, onDone = { queuedStarts.tryEmit(Unit) }) {
+            actions.resume(paused.target.revision)
+        }
+    }
+
+    /** Ends the paused chain on the server, at the revision it was shown at. */
+    private fun discard() {
+        val actions = pauseChain ?: return
+        val paused = cached.value.controls() as? TimerControls.Paused ?: return
+        beginTap(TapTrace.STOP) { it is TimerState.Idle }
+        act(paused.target, done = { it.target != paused.target }) { actions.discard(paused.target.revision) }
+    }
+
+    /**
+     * Sends a pause chain action for what [target] showed, ignoring other taps until the server
+     * answers and its state shows, as [done] tells. A refusal or no answer becomes a [notice].
+     */
+    private fun act(
+        target: TimerTarget,
+        done: (TimerControls) -> Boolean,
+        onDone: () -> Unit = {},
+        send: suspend () -> TimerActionResult,
+    ) {
+        val acting = PendingTap.Acting(target)
+        local.update { it.actionTapped(acting) }
+        viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            try {
+                val result = send()
+                if (result == TimerActionResult.Done) {
+                    onDone()
+                    cached.settle(done)
+                } else {
+                    notices.failed(result)
+                }
+            } finally {
+                local.update { it.tapEnded(acting) }
+            }
+        }
+    }
 
     /** A focused control keeps the durable target that supplied its displayed context. */
-    fun isShown(target: TimerTarget): Boolean = local.value.pending == null && taps.controls()?.target == target
+    fun isShown(target: TimerTarget): Boolean = local.value.pending == null && cached.value.controls()?.target == target
 
     fun pauseShown(target: TimerTarget) {
         if (isShown(target)) pause()
@@ -304,12 +368,7 @@ class TimerViewModel(
         if (isShown(target)) resume()
     }
     fun stopShown(target: TimerTarget) {
-        if (!isShown(target)) return
-        when (val shown = snapshot()) {
-            is TimerState.Running -> stopRunning(shown)
-            is TimerState.Paused -> pauseTaps.discard()
-            else -> Unit
-        }
+        if (isShown(target)) stop()
     }
 
     /** Reuse the editor's local-write settlement and identity/remap checks. */
@@ -350,6 +409,9 @@ class TimerViewModel(
         local.value,
         pauseOffered.value,
     )
+
+    /** A tap's open trace section, which [end] closes once the screen shows a state that is [done]. */
+    private class OpenTap(val end: () -> Unit, val done: (TimerState) -> Boolean)
 
     private data class Catalog(val projects: List<Project> = emptyList(), val tasks: List<Task> = emptyList())
 
