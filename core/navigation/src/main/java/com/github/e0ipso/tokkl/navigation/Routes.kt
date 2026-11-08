@@ -13,6 +13,8 @@ import java.time.LocalDate
  * `@Serializable` classes and registers them in [FeatureEntries.registerRoutes], so the stack is
  * saved with their serializers and survives configuration changes and process death. Timer and the
  * entry form stay here: every signed-in stack starts at Timer, and other features open the form.
+ * The routes that moved to their features keep, with `@SerialName`, the serial names they had as
+ * members of a sealed Route here, so a back stack saved before the move reads as before.
  */
 interface Route : NavKey {
 

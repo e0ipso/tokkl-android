@@ -9,6 +9,7 @@ import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.TopLevelDestination
 import com.github.e0ipso.tokkl.navigation.route
 import com.github.e0ipso.tokkl.ui.theme.SectionHues
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.PolymorphicModuleBuilder
 import kotlinx.serialization.modules.subclass
@@ -43,8 +44,10 @@ val settingsPage = TopLevelDestination(
 
 /** The Settings page. */
 @Serializable
+@SerialName("com.github.e0ipso.tokkl.navigation.Route.Settings")
 data object SettingsRoute : Route
 
 /** The Licences screen, which Settings opens above itself. */
 @Serializable
+@SerialName("com.github.e0ipso.tokkl.navigation.Route.Licences")
 data object LicencesRoute : Route

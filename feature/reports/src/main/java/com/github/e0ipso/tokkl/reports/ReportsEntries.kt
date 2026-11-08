@@ -24,6 +24,7 @@ import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.TopLevelDestination
 import com.github.e0ipso.tokkl.navigation.route
 import com.github.e0ipso.tokkl.ui.theme.SectionHues
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.PolymorphicModuleBuilder
 import kotlinx.serialization.modules.subclass
@@ -111,4 +112,5 @@ val reportsPage = TopLevelDestination(
 
 /** The Reports page. */
 @Serializable
+@SerialName("com.github.e0ipso.tokkl.navigation.Route.Reports")
 data object ReportsRoute : Route

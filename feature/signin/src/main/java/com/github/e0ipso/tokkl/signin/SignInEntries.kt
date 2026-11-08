@@ -6,6 +6,7 @@ import com.github.e0ipso.tokkl.navigation.FeatureEntries
 import com.github.e0ipso.tokkl.navigation.NavigationHost
 import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.routes
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.PolymorphicModuleBuilder
 import kotlinx.serialization.modules.subclass
@@ -37,6 +38,7 @@ internal object SignInEntries : FeatureEntries {
  * the form starts filled in for it, and the sign-in checks it is the same user.
  */
 @Serializable
+@SerialName("com.github.e0ipso.tokkl.navigation.Route.SignIn")
 data class SignInRoute(val server: String? = null, val userId: Long? = null) : Route {
     /** The account to sign in again to, or null for a plain sign-in. */
     val again: SignInAgain? get() = server?.let(ServerUrl::parse)?.let { SignInAgain(it, userId) }

@@ -7,6 +7,7 @@ import com.github.e0ipso.tokkl.navigation.NavigationHost
 import com.github.e0ipso.tokkl.navigation.Navigator
 import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.route
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.PolymorphicModuleBuilder
 import kotlinx.serialization.modules.subclass
@@ -32,6 +33,7 @@ internal object SyncEntries : FeatureEntries {
 
 /** The changes the server refused. */
 @Serializable
+@SerialName("com.github.e0ipso.tokkl.navigation.Route.NeedsAttention")
 data object NeedsAttentionRoute : Route
 
 /** Opens the changes the server refused above the screen on top, unless they show already. */

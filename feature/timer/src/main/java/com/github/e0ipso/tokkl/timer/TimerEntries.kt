@@ -30,6 +30,7 @@ import com.github.e0ipso.tokkl.navigation.routes
 import com.github.e0ipso.tokkl.ui.theme.SectionHues
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.PolymorphicModuleBuilder
 import kotlinx.serialization.modules.subclass
@@ -229,10 +230,12 @@ val templatesPage = TopLevelDestination(
 
 /** The running timer on its own, without the bar. */
 @Serializable
+@SerialName("com.github.e0ipso.tokkl.navigation.Route.FullscreenTimer")
 data object FullscreenTimerRoute : Route {
     override val focused: Boolean get() = true
 }
 
 /** The Timer templates page. */
 @Serializable
+@SerialName("com.github.e0ipso.tokkl.navigation.Route.Templates")
 data object TemplatesRoute : Route

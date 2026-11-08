@@ -65,4 +65,42 @@ class SavedBackStackTest {
         assertEquals(stack.toList(), restored.toList())
         assertEquals(stack.map { it.contentKey }, restored.map { it.contentKey })
     }
+
+    /**
+     * Each route keeps the serial name it had when the routes were nested in a sealed Route of
+     * core:navigation, so a back stack saved by an earlier version reads as before.
+     */
+    @Test
+    fun eachScreenKeepsTheSerialNameOfTheSealedRoute() {
+        val stack = NavBackStack(
+            SignInRoute(),
+            Route.Timer,
+            FullscreenTimerRoute,
+            PomodoroRoute,
+            ReportsRoute,
+            ProjectsRoute,
+            ClientsRoute,
+            TagsRoute,
+            TrashRoute,
+            TemplatesRoute,
+            SettingsRoute,
+            LicencesRoute,
+            NeedsAttentionRoute,
+            Route.Entry(EntryOpening.New(), id = "a"),
+        )
+
+        val saved = json.encodeToString(serializer, stack)
+
+        assertEquals(
+            listOf(
+                "SignIn", "Timer", "FullscreenTimer", "Pomodoro", "Reports", "Projects", "Clients", "Tags", "Trash",
+                "Templates", "Settings", "Licences", "NeedsAttention", "Entry",
+            ).map { "com.github.e0ipso.tokkl.navigation.Route.$it" },
+            ROUTE_NAME.findAll(saved).map { it.groupValues[1] }.toList(),
+        )
+    }
+
+    private companion object {
+        val ROUTE_NAME = Regex(""""type":"(com\.github\.e0ipso\.tokkl\.navigation\.Route\.\w+)"""")
+    }
 }
