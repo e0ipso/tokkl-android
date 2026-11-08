@@ -11,7 +11,7 @@ android {
 
 dependencies {
     // The routes carry the cache's and the API's types, and the host lends the capabilities.
-    api(project(":core:data"))
+    api(project(":core:cache"))
     // Each route is a Navigation 3 key, and each feature adds its entries to the entry provider.
     api(libs.androidx.navigation3.runtime)
 

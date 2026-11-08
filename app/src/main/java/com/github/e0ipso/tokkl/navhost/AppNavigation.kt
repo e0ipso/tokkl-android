@@ -54,8 +54,8 @@ import com.github.e0ipso.tokkl.ui.theme.TokklNavigationRailItem
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.navigationBarLabelWeight
 import kotlinx.coroutines.launch
-import com.github.e0ipso.tokkl.core.data.R as DataR
 import com.github.e0ipso.tokkl.core.shared.R as SharedR
+import com.github.e0ipso.tokkl.core.timerstate.R as TimerStateR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.feature.clients.R as ClientsR
 import com.github.e0ipso.tokkl.feature.pomodoro.R as PomodoroR
@@ -85,7 +85,7 @@ val TopLevelPage.label: Int
 @get:DrawableRes
 val TopLevelPage.icon: Int
     get() = when (this) {
-        TopLevelPage.TIMER -> DataR.drawable.ic_nav_timer
+        TopLevelPage.TIMER -> TimerStateR.drawable.ic_nav_timer
         TopLevelPage.POMODORO -> PomodoroR.drawable.ic_nav_pomodoro
         TopLevelPage.REPORTS -> R.drawable.ic_nav_reports
         TopLevelPage.PROJECTS -> SharedR.drawable.ic_nav_projects

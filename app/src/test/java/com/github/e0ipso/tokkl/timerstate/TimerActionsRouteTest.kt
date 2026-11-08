@@ -6,7 +6,7 @@ import org.junit.Test
 
 /**
  * Timer actions go to the server only, never through the change queue. The test reads the
- * constant pool of the actions' compiled classes through [ClassReferences]; core:data's
+ * constant pool of the actions' compiled classes through [ClassReferences]; core:timerstate's
  * TimerActionsTest checks what the actions send.
  */
 class TimerActionsRouteTest {

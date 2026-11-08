@@ -7,5 +7,5 @@ dependencies {
     implementation(project(":core:shared"))
     implementation(libs.androidx.activity.compose)
 
-    testImplementation(testFixtures(project(":core:data")))
+    testImplementation(testFixtures(project(":core:timerstate")))
 }

@@ -9,11 +9,12 @@ import org.junit.Test
  * Keeps the Gradle modules in the layers of [PackageLayersTest]. Each package lives in one module,
  * and a module depends only on modules whose packages sit no higher than its own lowest package,
  * so no core module depends on the app and the layers stay in order. A module depends only on
- * modules its main sources use, by their packages or their R class, so core:data, which draws
+ * modules its main sources use, by their packages or their R class, so core:cache, which draws
  * nothing, does not depend on core:ui.
  * A feature module depends on core modules only, never on another feature or the app, and the
- * app depends on every feature. The test reads settings.gradle.kts, each module's build file and
- * its main sources.
+ * app depends on every feature. The core modules sit in [CORE_LAYERS] and depend only on lower
+ * ones, and no modules depend on each other in a cycle. The test reads settings.gradle.kts, each
+ * module's build file and its main sources.
  */
 class ModuleLayersTest {
 
@@ -111,6 +112,44 @@ class ModuleLayersTest {
         assertEquals("modules the app does not reach", emptyList<String>(), modules.map { it.path } - reached - ":app")
     }
 
+    @Test
+    fun everyCoreModuleHasACoreLayer() {
+        val core = modules.map { it.path }.filter { it.startsWith(":core:") }.toSet()
+
+        assertEquals(core, CORE_LAYERS.flatten().toSet())
+    }
+
+    @Test
+    fun coreModulesDependOnLowerCoreLayersOnly() {
+        val wrong = modules.filter { it.path.startsWith(":core:") }.flatMap { module ->
+            val layer = coreLayerOf(module.path)
+            (module.mainDependencies + module.fixtureDependencies)
+                .filter { it.startsWith(":core:") && coreLayerOf(it) >= layer }
+                .map { "${module.path} -> $it" }
+        }
+
+        assertEquals("core module dependencies against CORE_LAYERS", emptyList<String>(), wrong)
+    }
+
+    @Test
+    fun noModulesDependOnEachOtherInACycle() {
+        val graph = modules.associate { it.path to (it.mainDependencies + it.fixtureDependencies) }
+        val cycles = mutableListOf<List<String>>()
+        val done = mutableSetOf<String>()
+
+        fun visit(path: String, trail: List<String>) {
+            if (path in trail) {
+                cycles += trail.drop(trail.indexOf(path)) + path
+                return
+            }
+            if (!done.add(path)) return
+            graph[path].orEmpty().forEach { visit(it, trail + path) }
+        }
+
+        graph.keys.sorted().forEach { visit(it, emptyList()) }
+        assertEquals(emptyList<List<String>>(), cycles)
+    }
+
     /** The modules whose classes [module] compiles against: its dependencies and what they expose with `api`. */
     private fun visibleFrom(module: SourceTree.Module): Set<String> {
         val seen = mutableSetOf<String>()
@@ -120,5 +159,25 @@ class ModuleLayersTest {
             if (seen.add(path)) queue += byPath.getValue(path).apiDependencies
         }
         return seen
+    }
+
+    private fun coreLayerOf(path: String): Int = CORE_LAYERS.indexOfFirst { path in it }.also {
+        check(it >= 0) { "$path has no core layer" }
+    }
+
+    private companion object {
+        /**
+         * The core modules in layers, lowest first. The bottom layer needs no other core module:
+         * the API client, the time helpers, the design system and the Android plumbing. Above it
+         * sit the session, the cache that reads it, and the timer state that reads the cache.
+         * The parts several features show and the routes come last.
+         */
+        val CORE_LAYERS: List<Set<String>> = listOf(
+            setOf(":core:api", ":core:time", ":core:ui", ":core:platform"),
+            setOf(":core:session"),
+            setOf(":core:cache"),
+            setOf(":core:timerstate"),
+            setOf(":core:shared", ":core:navigation"),
+        )
     }
 }

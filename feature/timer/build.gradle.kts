@@ -11,5 +11,5 @@ dependencies {
 
     testImplementation(libs.mockwebserver3)
     testImplementation(testFixtures(project(":core:api")))
-    testImplementation(testFixtures(project(":core:data")))
+    testImplementation(testFixtures(project(":core:platform")))
 }

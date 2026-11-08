@@ -10,5 +10,6 @@ dependencies {
     implementation(libs.koin.androidx.workmanager)
     implementation(libs.androidx.activity.compose)
 
-    testImplementation(testFixtures(project(":core:data")))
+    testImplementation(testFixtures(project(":core:platform")))
+    testImplementation(testFixtures(project(":core:timerstate")))
 }

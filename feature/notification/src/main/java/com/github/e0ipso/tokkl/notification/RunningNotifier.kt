@@ -18,7 +18,7 @@ import com.github.e0ipso.tokkl.platform.mainActivityIntent
 import com.github.e0ipso.tokkl.time.formatDuration
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import com.github.e0ipso.tokkl.ui.theme.TokklLightExtraColors
-import com.github.e0ipso.tokkl.core.data.R as DataR
+import com.github.e0ipso.tokkl.core.timerstate.R as TimerStateR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
@@ -62,7 +62,7 @@ class RunningNotifier(context: Context) {
             manager.canPostPromotedNotifications(),
     ): Notification {
         val builder = Notification.Builder(context, CHANNEL_ID)
-            .setSmallIcon(DataR.drawable.ic_nav_timer)
+            .setSmallIcon(TimerStateR.drawable.ic_nav_timer)
             .setContentTitle(content.description.ifBlank { context.getString(R.string.notification_no_description) })
             .setOnlyAlertOnce(true)
             .setContentIntent(openApp())

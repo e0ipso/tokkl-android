@@ -1,9 +1,12 @@
 package com.github.e0ipso.tokkl
 
 import com.github.e0ipso.tokkl.api.SharedHttpClient
+import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.navigation.Navigator
+import com.github.e0ipso.tokkl.platform.ConnectivityDefaultNetwork
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.time.AccountTime
+import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.trust.SessionTrust
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.io.ByteArrayInputStream
@@ -59,7 +62,10 @@ internal object ClassReferences {
         SharedHttpClient::class.java,
         AccountTime::class.java,
         TokklTheme::class.java,
+        ConnectivityDefaultNetwork::class.java,
         Session::class.java,
+        AccountCache::class.java,
+        AccountTimerStates::class.java,
         SessionTrust::class.java,
         Navigator::class.java,
     ) + FEATURE_MODULES.map { Class.forName(it) }

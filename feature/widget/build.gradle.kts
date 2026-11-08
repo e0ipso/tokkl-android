@@ -10,5 +10,6 @@ dependencies {
     implementation(libs.androidx.glance.appwidget)
     implementation(libs.androidx.work.runtime)
 
-    testImplementation(testFixtures(project(":core:data")))
+    testImplementation(testFixtures(project(":core:platform")))
+    testImplementation(testFixtures(project(":core:timerstate")))
 }

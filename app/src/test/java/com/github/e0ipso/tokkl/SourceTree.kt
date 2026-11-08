@@ -20,7 +20,7 @@ internal object SourceTree {
     /** A use of [target], an app package, in [file]. */
     data class Use(val target: String, val file: String)
 
-    /** One Gradle module: its path, such as `:core:data`, and what its build file and sources hold. */
+    /** One Gradle module: its path, such as `:core:cache`, and what its build file and sources hold. */
     class Module(val path: String, val directory: File) {
 
         private val buildFile: String by lazy { File(directory, "build.gradle.kts").readText() }

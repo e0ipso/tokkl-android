@@ -7,5 +7,5 @@ dependencies {
     implementation(project(":core:shared"))
     implementation(project(":core:navigation"))
 
-    testImplementation(testFixtures(project(":core:data")))
+    testImplementation(testFixtures(project(":core:platform")))
 }

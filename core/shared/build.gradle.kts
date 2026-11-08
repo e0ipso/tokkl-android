@@ -10,7 +10,7 @@ android {
 }
 
 dependencies {
-    api(project(":core:data"))
+    api(project(":core:timerstate"))
     api(project(":core:ui"))
 
     implementation(libs.androidx.activity.compose)
