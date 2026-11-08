@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.navigation
 
 import androidx.navigation3.runtime.NavKey
-import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.RunningEntryIdentity
 import com.github.e0ipso.tokkl.model.WorkspaceId
@@ -10,51 +9,21 @@ import java.time.Instant
 import java.time.LocalDate
 
 /**
- * The app's screens, as the back stack holds them. The stack is saved with these serializers, so
- * it survives configuration changes and process death.
+ * A screen, as the back stack holds it. Each feature declares the routes of its screens as
+ * `@Serializable` classes and registers them in [FeatureEntries.registerRoutes], so the stack is
+ * saved with their serializers and survives configuration changes and process death. Timer and the
+ * entry form stay here: every signed-in stack starts at Timer, and other features open the form.
  */
-@Serializable
-sealed interface Route : NavKey {
+interface Route : NavKey {
 
     /**
-     * Sign-in. With [server], signing in again to that account after the server refused its
-     * token: the form starts filled in for it, and the sign-in checks it is the same user.
+     * Whether this screen takes the whole window without the bar or the rail, as the fullscreen
+     * timer does. The entry form opened above such a screen hides them too ([isFocused]).
      */
-    @Serializable
-    data class SignIn(val server: String? = null, val userId: Long? = null) : Route {
-        /** The account to sign in again to, or null for a plain sign-in. */
-        val again: SignInAgain? get() = server?.let(ServerUrl::parse)?.let { SignInAgain(it, userId) }
+    val focused: Boolean get() = false
 
-        companion object {
-            fun again(account: SignInAgain) = SignIn(account.server.toString(), account.userId)
-        }
-    }
-
+    /** The Timer page, at the bottom of every signed-in back stack. */
     @Serializable data object Timer : Route
-
-    /** The running timer on its own, without the bar. */
-    @Serializable data object FullscreenTimer : Route
-
-    @Serializable data object Pomodoro : Route
-
-    @Serializable data object Reports : Route
-
-    @Serializable data object Projects : Route
-
-    @Serializable data object Clients : Route
-
-    @Serializable data object Tags : Route
-
-    @Serializable data object Trash : Route
-
-    @Serializable data object Templates : Route
-
-    @Serializable data object Settings : Route
-
-    @Serializable data object Licences : Route
-
-    /** The changes the server refused. */
-    @Serializable data object NeedsAttention : Route
 
     /**
      * The entry form, for what [opening] says. [id] tells one opening from another, so an entry

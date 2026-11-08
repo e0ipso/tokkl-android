@@ -11,18 +11,14 @@ android {
 }
 
 dependencies {
-    // The routes carry the model's ids and the API's server address, and the host lends the
-    // session's capabilities.
+    // The entry form's route carries the model's ids.
     api(project(":core:model"))
-    api(project(":core:session"))
     // Each route is a Navigation 3 key, and each feature adds its entries to the entry provider.
     api(libs.androidx.navigation3.runtime)
     // Each top-level page carries its section hue.
     api(project(":core:ui"))
 
     implementation(libs.androidx.lifecycle.viewmodel.compose)
-    implementation(platform(libs.koin.bom))
-    implementation(libs.koin.androidx.compose)
 
     testImplementation(libs.junit)
 }

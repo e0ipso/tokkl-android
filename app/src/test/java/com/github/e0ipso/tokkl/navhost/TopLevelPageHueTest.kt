@@ -1,7 +1,15 @@
 package com.github.e0ipso.tokkl.navhost
 
 import androidx.compose.ui.graphics.Color
+import com.github.e0ipso.tokkl.clients.ClientsRoute
 import com.github.e0ipso.tokkl.navigation.Route
+import com.github.e0ipso.tokkl.pomodoro.PomodoroRoute
+import com.github.e0ipso.tokkl.projects.ProjectsRoute
+import com.github.e0ipso.tokkl.reports.ReportsRoute
+import com.github.e0ipso.tokkl.settings.SettingsRoute
+import com.github.e0ipso.tokkl.tags.TagsRoute
+import com.github.e0ipso.tokkl.timer.TemplatesRoute
+import com.github.e0ipso.tokkl.trash.TrashRoute
 import com.github.e0ipso.tokkl.ui.theme.SectionHues
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
@@ -20,14 +28,14 @@ class TopLevelPageHueTest {
     fun eachPageHasItsSectionsHue() {
         val expected = mapOf(
             Route.Timer to Color(0xFFF05A00),
-            Route.Pomodoro to Color(0xFFF05A00),
-            Route.Reports to Color(0xFF00B9FA),
-            Route.Projects to Color(0xFF8722FF),
-            Route.Templates to Color(0xFFFF008C),
-            Route.Clients to Color(0xFFFF008C),
-            Route.Tags to Color(0xFFFF008C),
-            Route.Trash to Color(0xFFFF008C),
-            Route.Settings to Color(0xFFFFE600),
+            PomodoroRoute to Color(0xFFF05A00),
+            ReportsRoute to Color(0xFF00B9FA),
+            ProjectsRoute to Color(0xFF8722FF),
+            TemplatesRoute to Color(0xFFFF008C),
+            ClientsRoute to Color(0xFFFF008C),
+            TagsRoute to Color(0xFFFF008C),
+            TrashRoute to Color(0xFFFF008C),
+            SettingsRoute to Color(0xFFFFE600),
         )
         assertEquals(pages.all.map { it.route }.toSet(), expected.keys)
         for ((route, fill) in expected) assertEquals("$route's hue", fill, pages.of(route)?.hue?.fill)
@@ -35,6 +43,6 @@ class TopLevelPageHueTest {
 
     @Test
     fun reportsKeepsItsOwnHueOnTheMoreSheet() {
-        assertSame(SectionHues.reports, pages.of(Route.Reports)?.hue)
+        assertSame(SectionHues.reports, pages.of(ReportsRoute)?.hue)
     }
 }

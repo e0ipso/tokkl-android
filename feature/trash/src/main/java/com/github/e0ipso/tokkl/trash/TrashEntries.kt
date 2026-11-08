@@ -8,22 +8,35 @@ import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.TopLevelDestination
 import com.github.e0ipso.tokkl.navigation.route
 import com.github.e0ipso.tokkl.ui.theme.SectionHues
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.modules.PolymorphicModuleBuilder
+import kotlinx.serialization.modules.subclass
 import org.koin.compose.viewmodel.koinViewModel
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /** The Trash page, with a view model of its own that goes when the page closes. */
 internal object TrashEntries : FeatureEntries {
+    override val pages get() = listOf(trashPage)
+
+    override fun PolymorphicModuleBuilder<Route>.registerRoutes() {
+        subclass(TrashRoute::class)
+    }
+
     override fun EntryProviderScope<Route>.addEntries(host: NavigationHost) {
-        route(Route.Trash) { TrashScreen(model = koinViewModel()) }
+        route(TrashRoute) { TrashScreen(model = koinViewModel()) }
     }
 }
 
 /** The Trash page, last on the More sheet. */
 val trashPage = TopLevelDestination(
-    route = Route.Trash,
+    route = TrashRoute,
     label = R.string.nav_trash,
     icon = UiR.drawable.ic_nav_trash,
     hue = SectionHues.more,
     position = 70,
     inMore = true,
 )
+
+/** The Trash page. */
+@Serializable
+data object TrashRoute : Route

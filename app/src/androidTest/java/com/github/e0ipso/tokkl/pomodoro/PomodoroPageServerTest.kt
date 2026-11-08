@@ -30,7 +30,6 @@ import com.github.e0ipso.tokkl.components.koinViewModels
 import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.core.ui.R
 import com.github.e0ipso.tokkl.navhost.SignedInPanes
-import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.timer.TimerAcceptanceFixture
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
@@ -246,8 +245,8 @@ class PomodoroPageServerTest {
         }
         compose.setContent {
             TokklTheme {
-                SignedInPanes(Route.Pomodoro, entryBeside = false) { route ->
-                    check(route == Route.Pomodoro)
+                SignedInPanes(PomodoroRoute, entryBeside = false) { route ->
+                    check(route == PomodoroRoute)
                     PomodoroScreen(model)
                 }
             }

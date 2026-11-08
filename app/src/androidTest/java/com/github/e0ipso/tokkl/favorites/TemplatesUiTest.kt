@@ -28,6 +28,7 @@ import com.github.e0ipso.tokkl.navhost.AppNavigationRail
 import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.topLevelPages
 import com.github.e0ipso.tokkl.picker.PickerSource
+import com.github.e0ipso.tokkl.timer.TemplatesRoute
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -222,7 +223,7 @@ class TemplatesUiTest {
     fun theRailListsTemplatesFirstAndHidesThemWithoutTheCapability() = assertMoreOrder(rail = true)
 
     private fun assertMoreOrder(rail: Boolean) {
-        var hidden by mutableStateOf<Set<Route>>(setOf(Route.Templates))
+        var hidden by mutableStateOf<Set<Route>>(setOf(TemplatesRoute))
         var opened by mutableStateOf<Route?>(null)
         composeRule.setContent {
             TokklTheme {
@@ -251,7 +252,7 @@ class TemplatesUiTest {
         composeRule.waitForIdle()
         assertEquals(moreLabels(), sheetLabels())
         composeRule.onNode(isSelectable() and hasText(string(TimerR.string.nav_templates))).performClick()
-        assertEquals(Route.Templates, opened)
+        assertEquals(TemplatesRoute, opened)
     }
 
     private fun showManagement(

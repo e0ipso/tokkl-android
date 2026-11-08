@@ -6,12 +6,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.rememberUpdatedState
+import com.github.e0ipso.tokkl.navigation.LocalSignedInSession
 import com.github.e0ipso.tokkl.navigation.Navigator
 import com.github.e0ipso.tokkl.navigation.Route
-import com.github.e0ipso.tokkl.navigation.sessionViewModel
 import com.github.e0ipso.tokkl.pomodoro.PomodoroNotificationTap
+import com.github.e0ipso.tokkl.pomodoro.PomodoroRoute
+import com.github.e0ipso.tokkl.reports.ReportsRoute
 import com.github.e0ipso.tokkl.reports.ReportsViewModel
+import com.github.e0ipso.tokkl.signin.SignInRoute
 import com.github.e0ipso.tokkl.widget.WidgetPage
+import org.koin.compose.viewmodel.koinViewModel
 
 /** A page that a tap outside the app asks MainActivity to open. */
 sealed interface NavigationRequest {
@@ -77,20 +81,24 @@ internal fun NavigationRequestEffects(
         key(request) {
             when (request) {
                 is NavigationRequest.Widget -> {
-                    val reports = if (request.page == WidgetPage.TODAY) sessionViewModel<ReportsViewModel>() else null
+                    val reports = if (request.page == WidgetPage.TODAY) {
+                        koinViewModel<ReportsViewModel>(viewModelStoreOwner = LocalSignedInSession.current)
+                    } else {
+                        null
+                    }
                     LaunchedEffect(request) {
                         if (!session.isSignedIn()) {
-                            navigator.signIn()
+                            navigator.startOver(SignInRoute())
                         } else {
                             when (request.page) {
                                 WidgetPage.TIMER -> navigator.open(Route.Timer, currentUnavailable)
 
                                 WidgetPage.TODAY -> {
                                     reports?.openToday()
-                                    navigator.open(Route.Reports, currentUnavailable)
+                                    navigator.open(ReportsRoute, currentUnavailable)
                                 }
 
-                                WidgetPage.POMODORO -> navigator.open(Route.Pomodoro, currentUnavailable)
+                                WidgetPage.POMODORO -> navigator.open(PomodoroRoute, currentUnavailable)
                             }
                         }
                         requests.handled(request)
@@ -99,7 +107,7 @@ internal fun NavigationRequestEffects(
 
                 is NavigationRequest.Pomodoro -> LaunchedEffect(request) {
                     if (session.acceptsPomodoroTap(request.tap)) {
-                        navigator.open(Route.Pomodoro, currentUnavailable)
+                        navigator.open(PomodoroRoute, currentUnavailable)
                     }
                     requests.handled(request)
                 }

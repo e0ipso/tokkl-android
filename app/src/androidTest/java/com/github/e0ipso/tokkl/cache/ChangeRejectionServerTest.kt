@@ -17,9 +17,9 @@ import com.github.e0ipso.tokkl.appHttp
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.WorkspaceId
-import com.github.e0ipso.tokkl.navigation.SignInAgain
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.signin.SignIn
+import com.github.e0ipso.tokkl.signin.SignInAgain
 import com.github.e0ipso.tokkl.signin.SignInCredentials
 import com.github.e0ipso.tokkl.signin.SignInResult
 import com.github.e0ipso.tokkl.tokklApi

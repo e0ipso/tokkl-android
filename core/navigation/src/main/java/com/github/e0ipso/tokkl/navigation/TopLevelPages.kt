@@ -4,8 +4,6 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
 import com.github.e0ipso.tokkl.ui.theme.SectionHue
-import org.koin.core.module.Module
-import org.koin.core.qualifier.named
 
 /**
  * A top-level page that a feature puts in the bottom bar, the navigation rail or, [inMore], on
@@ -24,15 +22,7 @@ data class TopLevelDestination(
 )
 
 /**
- * Binds [destination] in this feature's Koin module. The navigation host collects every feature's
- * with `getAll()` into [TopLevelPages].
- */
-fun Module.topLevelDestination(destination: TopLevelDestination) {
-    single(named("top-level-page-${destination.route.contentKey}")) { destination }
-}
-
-/**
- * The app's top-level pages, from every feature's [TopLevelDestination], in the order of their
+ * The app's top-level pages, from every feature's [FeatureEntries.pages], in the order of their
  * positions. As on the web app on a phone, the pages in More sit on the More sheet, not in the
  * bottom bar. Admin stays out, since the app has no admin features.
  */

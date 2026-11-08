@@ -8,12 +8,12 @@ package com.github.e0ipso.tokkl.navigation
 internal fun stackOpening(route: Route): List<Route> =
     if (route == Route.Timer) listOf(Route.Timer) else listOf(Route.Timer, route)
 
-/** Whether the screen on top is the fullscreen timer, or the entry form opened from it. Both hide the bar. */
-internal fun List<Route>.isFocused(): Boolean = lastOrNull() == Route.FullscreenTimer || (
-    lastOrNull() is Route.Entry && getOrNull(
-        lastIndex - 1,
-    ) == Route.FullscreenTimer
-    )
+/**
+ * Whether the screen on top is [focused][Route.focused], such as the fullscreen timer, or the entry
+ * form opened from one. Both hide the bar.
+ */
+internal fun List<Route>.isFocused(): Boolean = lastOrNull()?.focused == true ||
+    (lastOrNull() is Route.Entry && getOrNull(lastIndex - 1)?.focused == true)
 
 /**
  * The stack with [entry] on top: in place of a form already on top, so a form opened beside the

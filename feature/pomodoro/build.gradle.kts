@@ -2,6 +2,7 @@
 // notification.
 plugins {
     alias(libs.plugins.tokkl.android.feature)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 dependencies {

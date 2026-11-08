@@ -4,7 +4,7 @@ import android.app.Application
 import android.content.Context
 import androidx.work.WorkerParameters
 import com.github.e0ipso.tokkl.cache.ChangeSenderEvents
-import com.github.e0ipso.tokkl.navigation.Route
+import com.github.e0ipso.tokkl.navigation.TopLevelDestination
 import com.github.e0ipso.tokkl.notification.RunningNotice
 import com.github.e0ipso.tokkl.platform.AppHookOrder
 import com.github.e0ipso.tokkl.pomodoro.PomodoroNotificationMemory
@@ -18,7 +18,6 @@ import com.github.e0ipso.tokkl.signin.SignIn
 import com.github.e0ipso.tokkl.storage.ClearableStore
 import com.github.e0ipso.tokkl.storage.ValueStore
 import com.github.e0ipso.tokkl.timersync.TimerSyncConnections
-import com.github.e0ipso.tokkl.ui.theme.SectionHue
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import org.junit.Assert.assertEquals
@@ -40,7 +39,7 @@ class AppModulesTest {
      * The types listed here are what a definition passes itself: the Android context, the stored
      * values it loads, flows and callbacks it builds, the listeners and clock it builds for one
      * component, the helpers it makes for one view model, such as the sign-in request and the CSV
-     * exporter, and the route and section hue of each top-level page. A component handed over as
+     * exporter, and the top-level pages the features name. A component handed over as
      * one of its interfaces is bound to that interface, so it needs no entry here. This check
      * reads constructors only; the device's AppGraphTest resolves every definition.
      */
@@ -67,8 +66,7 @@ class AppModulesTest {
                 AppHookOrder::class,
                 SignIn::class,
                 ReportExportController::class,
-                Route::class,
-                SectionHue::class,
+                TopLevelDestination::class,
                 // The named callbacks a definition builds as a lambda or an object, and the
                 // collaborators it makes for one component.
                 ChangeSenderEvents::class,

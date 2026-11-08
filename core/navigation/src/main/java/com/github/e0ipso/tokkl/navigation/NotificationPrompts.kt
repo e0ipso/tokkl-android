@@ -6,12 +6,13 @@ import androidx.compose.runtime.setValue
 import kotlinx.coroutines.channels.Channel
 
 /**
- * What the Pomodoro page and the frame's notification permission prompt share: the page's
- * starts and retries, which may ask for the permission, and a count of the prompt's answers,
- * which tells the page to read the permission again.
+ * What a screen shares with the signed-in frame's notification permission prompt: the [starts]
+ * and [retries] it makes, which may ask for the permission, and a count of the prompt's
+ * [answers], which tells the screen to read the permission again. The Pomodoro page uses it; the
+ * Timer page's starts reach the prompt through its view model.
  */
 class NotificationPrompts {
-    val pomodoroStarts = Channel<Unit>(Channel.UNLIMITED)
+    val starts = Channel<Unit>(Channel.UNLIMITED)
     val retries = Channel<Unit>(Channel.UNLIMITED)
     var answers by mutableIntStateOf(0)
 }

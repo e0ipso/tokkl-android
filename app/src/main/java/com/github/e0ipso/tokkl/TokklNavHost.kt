@@ -17,6 +17,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberDecoratedNavEntries
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.runtime.serialization.NavBackStackSerializer
+import androidx.savedstate.serialization.SavedStateConfiguration
 import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.navhost.AppNavigationBar
 import com.github.e0ipso.tokkl.navhost.AppNavigationRail
@@ -36,9 +37,12 @@ import com.github.e0ipso.tokkl.navigation.NotificationPrompts
 import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.TopLevelPages
 import com.github.e0ipso.tokkl.navigation.contentKey
+import com.github.e0ipso.tokkl.navigation.routeSerializers
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
+import com.github.e0ipso.tokkl.signin.SignInRoute
 import com.github.e0ipso.tokkl.timernotice.TimerFrame
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.serialization.PolymorphicSerializer
 
 /**
  * The app's navigation host: a Navigation 3 back stack of [Route]s that survives configuration
@@ -57,8 +61,9 @@ import kotlinx.coroutines.flow.StateFlow
  * and a back stack restored from before the server lost it shows Timer. [requests] opens the
  * pages that widget, reminder and Pomodoro notification taps ask for.
  *
- * Each feature adds the entries of its routes ([FeatureEntries]) and binds its top-level pages, which
- * the bar, the rail and the More sheet show in order ([TopLevelPages]). Each route's screen takes its
+ * Each feature declares its routes, adds their entries ([FeatureEntries]) and names its top-level
+ * pages, which the bar, the rail and the More sheet show in order ([TopLevelPages]). The back stack
+ * is saved with the serializers of every feature's routes ([routeSerializers]). Each route's screen takes its
  * own view models, which go when the route leaves the stack. The ones that several screens share
  * live in the signed-in session's store ([NavigationStores]). MainActivity hands over what the
  * app's Koin graph holds: [signOuts] counts the sign-outs that finished, [session] reads the
@@ -115,14 +120,16 @@ private fun Navigation(
     notificationPermission: NotificationPermissionAsk?,
     onNotificationsAllow: () -> Unit,
 ) {
+    val routes = remember(features) { SavedStateConfiguration { serializersModule = routeSerializers(features) } }
     val backStack = rememberSerializable(
-        serializer = NavBackStackSerializer(Route.serializer()),
+        serializer = NavBackStackSerializer(PolymorphicSerializer(Route::class)),
+        configuration = routes,
     ) { NavBackStack<Route>() }
     val savedStates = rememberSaveableStateHolder()
     val navigator = remember(backStack, stores) { Navigator(backStack, stores.entryOpenings) }
     val prompts = remember { NotificationPrompts() }
-    val entryProvider = remember(features, navigator, prompts, capabilities) {
-        val host = NavigationHost(navigator, prompts, capabilities)
+    val entryProvider = remember(features, navigator, prompts) {
+        val host = NavigationHost(navigator, prompts)
         entryProvider<Route> { features.forEach { feature -> with(feature) { addEntries(host) } } }
     }
     val entries = rememberDecoratedNavEntries(
@@ -136,17 +143,17 @@ private fun Navigation(
     // A signed-in page restored from saved state can outlive its session: a sign-out that finished
     // in the background before the process died, or a token that no longer decrypts. The page
     // shows while the stores are read, once per composition of the host, so sign-in pays nothing.
-    val restoredSignedIn = remember { backStack.lastOrNull().let { it != null && it !is Route.SignIn } }
+    val restoredSignedIn = remember { backStack.lastOrNull().let { it != null && it !is SignInRoute } }
     if (restoredSignedIn) {
         LaunchedEffect(Unit) {
-            if (!session.isSignedIn()) navigator.signIn()
+            if (!session.isSignedIn()) navigator.startOver(SignInRoute())
         }
     }
     if (backStack.isEmpty()) {
         // Shows the window background, which matches the theme, while the
         // stores are read off the main thread.
         LaunchedEffect(Unit) {
-            backStack.add(if (session.isSignedIn()) Route.Timer else Route.SignIn())
+            backStack.add(if (session.isSignedIn()) Route.Timer else SignInRoute())
         }
         return
     }
@@ -155,9 +162,9 @@ private fun Navigation(
     val unavailable = unavailablePages(flags)
     // A page the server lacks never shows, not even for the frame before the stack is corrected.
     val top = backStack.last().orTimerIfUnavailable(unavailable)
-    NavigationRequestEffects(requests, navigator, session, unavailable, onSignIn = top is Route.SignIn)
+    NavigationRequestEffects(requests, navigator, session, unavailable, onSignIn = top is SignInRoute)
     BackHandler(enabled = backStack.size > 1) { navigator.back() }
-    if (top is Route.SignIn) {
+    if (top is SignInRoute) {
         LaunchedEffect(Unit) { savedStates.removeState(Route.Timer.contentKey) }
         entries.Show(top)
         return

@@ -20,16 +20,19 @@ import com.github.e0ipso.tokkl.history.HistoryViewModel
 import com.github.e0ipso.tokkl.history.pinAction
 import com.github.e0ipso.tokkl.navigation.EntryOpening
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
+import com.github.e0ipso.tokkl.navigation.LocalSignedInSession
 import com.github.e0ipso.tokkl.navigation.NavigationHost
 import com.github.e0ipso.tokkl.navigation.Navigator
 import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.TopLevelDestination
 import com.github.e0ipso.tokkl.navigation.route
 import com.github.e0ipso.tokkl.navigation.routes
-import com.github.e0ipso.tokkl.navigation.sessionViewModel
 import com.github.e0ipso.tokkl.ui.theme.SectionHues
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.modules.PolymorphicModuleBuilder
+import kotlinx.serialization.modules.subclass
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import com.github.e0ipso.tokkl.core.ui.R as UiR
@@ -37,15 +40,25 @@ import com.github.e0ipso.tokkl.core.ui.R as UiR
 /**
  * The Timer page, the fullscreen timer, the entry form and the timer templates. Each screen takes
  * its view models: its own, which live in its back stack entry and go when it closes, or the
- * signed-in session's ([sessionViewModel]) when other screens share them or their state outlives
+ * signed-in session's ([LocalSignedInSession]) when other screens share them or their state outlives
  * the page. The screens get plain state from them and send their events back.
  */
 internal object TimerEntries : FeatureEntries {
+    override val pages get() = listOf(timerPage, templatesPage)
+
+    override fun PolymorphicModuleBuilder<Route>.registerRoutes() {
+        subclass(FullscreenTimerRoute::class)
+        subclass(TemplatesRoute::class)
+    }
+
     override fun EntryProviderScope<Route>.addEntries(host: NavigationHost) {
         route(Route.Timer) { TimerPage(host.navigator) }
-        route(Route.FullscreenTimer) { FullscreenTimer(host.navigator) }
+        route(FullscreenTimerRoute) { FullscreenTimer(host.navigator) }
         routes<Route.Entry> { route -> EntryForm(route, host.navigator) }
-        route(Route.Templates) { TemplatesScreen(model = sessionViewModel<FavoritesViewModel>()) }
+        route(TemplatesRoute) {
+            val favorites = koinViewModel<FavoritesViewModel>(viewModelStoreOwner = LocalSignedInSession.current)
+            TemplatesScreen(model = favorites)
+        }
     }
 }
 
@@ -58,9 +71,9 @@ internal object TimerEntries : FeatureEntries {
  */
 @Composable
 private fun TimerPage(navigator: Navigator) {
-    val timer = sessionViewModel<TimerViewModel>()
-    val favorites = sessionViewModel<FavoritesViewModel>()
-    val actions = sessionViewModel<EntryActionsViewModel>()
+    val timer = koinViewModel<TimerViewModel>(viewModelStoreOwner = LocalSignedInSession.current)
+    val favorites = koinViewModel<FavoritesViewModel>(viewModelStoreOwner = LocalSignedInSession.current)
+    val actions = koinViewModel<EntryActionsViewModel>(viewModelStoreOwner = LocalSignedInSession.current)
     val page = koinViewModel<TimerPageViewModel>()
     val history = koinViewModel<HistoryViewModel>(parameters = { parametersOf(actions.reconciliation) })
     val calendar = koinViewModel<CalendarViewModel>(parameters = { parametersOf(actions.reconciliation) })
@@ -145,7 +158,7 @@ private fun timerBarActions(
     onResume = timer::resume,
     onStartTemplate = timer::startFrom,
     onSaveTemplate = { fields, onDone -> favorites.add(fields, onDone) },
-    onManageTemplates = { navigator.open(Route.Templates) },
+    onManageTemplates = { navigator.open(TemplatesRoute) },
     onAddEntry = { navigator.openEntry(EntryOpening.New()) },
     onEditRunning = {
         scope.launch {
@@ -155,23 +168,23 @@ private fun timerBarActions(
         }
     },
     onOpenFullscreen = {
-        if (navigator.top == Route.Timer && timer.state.value.target != null) navigator.push(Route.FullscreenTimer)
+        if (navigator.top == Route.Timer && timer.state.value.target != null) navigator.push(FullscreenTimerRoute)
     },
 )
 
 /** The running timer on its own. Its edit button opens the entry form on the segment it shows. */
 @Composable
 private fun FullscreenTimer(navigator: Navigator) {
-    val timer = sessionViewModel<TimerViewModel>()
+    val timer = koinViewModel<TimerViewModel>(viewModelStoreOwner = LocalSignedInSession.current)
     val scope = rememberCoroutineScope()
     FullscreenTimerScreen(
         model = timer,
-        onExit = { navigator.close(Route.FullscreenTimer) },
+        onExit = { navigator.close(FullscreenTimerRoute) },
         onEditRunning = { target ->
             scope.launch {
-                if (navigator.top != Route.FullscreenTimer) return@launch
+                if (navigator.top != FullscreenTimerRoute) return@launch
                 val identity = timer.runningForEditShown(target) ?: return@launch
-                if (navigator.top == Route.FullscreenTimer) navigator.openEntry(EntryOpening.Running.of(identity))
+                if (navigator.top == FullscreenTimerRoute) navigator.openEntry(EntryOpening.Running.of(identity))
             }
         },
     )
@@ -186,7 +199,7 @@ private fun FullscreenTimer(navigator: Navigator) {
 private fun EntryForm(route: Route.Entry, navigator: Navigator) {
     val openings = navigator.openings
     val model = koinViewModel<EntryFormViewModel>(parameters = { parametersOf(openings.take(route)) })
-    val actions = sessionViewModel<EntryActionsViewModel>()
+    val actions = koinViewModel<EntryActionsViewModel>(viewModelStoreOwner = LocalSignedInSession.current)
     EntryFormScreen(
         model = model,
         canRestore = actions::canRestoreDelete,
@@ -206,10 +219,20 @@ val timerPage = TopLevelDestination(
 
 /** The Timer templates page, on the More sheet after Reports. */
 val templatesPage = TopLevelDestination(
-    route = Route.Templates,
+    route = TemplatesRoute,
     label = R.string.nav_templates,
     icon = R.drawable.ic_nav_templates,
     hue = SectionHues.more,
     position = 40,
     inMore = true,
 )
+
+/** The running timer on its own, without the bar. */
+@Serializable
+data object FullscreenTimerRoute : Route {
+    override val focused: Boolean get() = true
+}
+
+/** The Timer templates page. */
+@Serializable
+data object TemplatesRoute : Route

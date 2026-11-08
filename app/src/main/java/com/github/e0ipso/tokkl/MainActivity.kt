@@ -23,8 +23,8 @@ import com.github.e0ipso.tokkl.navhost.NavigationRequest
 import com.github.e0ipso.tokkl.navhost.NavigationRequests
 import com.github.e0ipso.tokkl.navhost.NavigationSession
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
+import com.github.e0ipso.tokkl.navigation.LocalSignedInSession
 import com.github.e0ipso.tokkl.navigation.TopLevelPages
-import com.github.e0ipso.tokkl.navigation.sessionViewModel
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
 import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.pomodoro.pomodoroSessionOpenIntent
@@ -38,6 +38,7 @@ import com.github.e0ipso.tokkl.widget.WidgetPage
 import com.github.e0ipso.tokkl.widget.takeWidgetPage
 import kotlinx.coroutines.CoroutineDispatcher
 import org.koin.android.ext.android.inject
+import org.koin.compose.viewmodel.koinViewModel
 
 class MainActivity : ComponentActivity() {
 
@@ -82,7 +83,7 @@ class MainActivity : ComponentActivity() {
                     signOuts = lifetime.signOuts,
                     capabilities = capabilities.state,
                     session = session,
-                    timerFrame = { sessionViewModel<TimerViewModel>() },
+                    timerFrame = { koinViewModel<TimerViewModel>(viewModelStoreOwner = LocalSignedInSession.current) },
                     notificationPermission = remember { NotificationPermissionAsk.forApp(this, io) },
                     onNotificationsAllow = foreground::notificationsGranted,
                 )

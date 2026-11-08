@@ -12,8 +12,8 @@ class BackStackRulesTest {
 
     @Test
     fun aPageOpensRightAboveTimerAndTimerOpensAlone() {
-        assertEquals(listOf(Route.Timer, Route.Reports), stackOpening(Route.Reports))
-        assertEquals(listOf(Route.Timer, Route.Settings), stackOpening(Route.Settings))
+        assertEquals(listOf(Route.Timer, PageRoute), stackOpening(PageRoute))
+        assertEquals(listOf(Route.Timer, OtherPageRoute), stackOpening(OtherPageRoute))
         assertEquals(listOf(Route.Timer), stackOpening(Route.Timer))
     }
 
@@ -22,35 +22,30 @@ class BackStackRulesTest {
         val other = Route.Entry(EntryOpening.Edit(EntryId(1)), id = "b")
         assertEquals(listOf(Route.Timer, form), listOf<Route>(Route.Timer).withEntry(form))
         assertEquals(listOf(Route.Timer, other), listOf(Route.Timer, form).withEntry(other))
-        assertEquals(
-            listOf(Route.Timer, Route.FullscreenTimer, form),
-            listOf(Route.Timer, Route.FullscreenTimer).withEntry(form),
-        )
-        assertEquals(
-            listOf(Route.Timer, Route.NeedsAttention, form),
-            listOf(Route.Timer, Route.NeedsAttention).withEntry(form),
-        )
+        assertEquals(listOf(Route.Timer, FocusedRoute, form), listOf(Route.Timer, FocusedRoute).withEntry(form))
+        assertEquals(listOf(Route.Timer, AboveRoute, form), listOf(Route.Timer, AboveRoute).withEntry(form))
     }
 
     @Test
-    fun theFullscreenTimerAndTheFormOpenedFromItHideTheBar() {
-        assertTrue(listOf(Route.Timer, Route.FullscreenTimer).isFocused())
-        assertTrue(listOf(Route.Timer, Route.FullscreenTimer, form).isFocused())
+    fun aFocusedScreenAndTheFormOpenedFromItHideTheBar() {
+        assertTrue(listOf(Route.Timer, FocusedRoute).isFocused())
+        assertTrue(listOf(Route.Timer, FocusedRoute, form).isFocused())
         assertFalse(listOf(Route.Timer, form).isFocused())
+        assertFalse(listOf(Route.Timer, AboveRoute, form).isFocused())
         assertFalse(listOf<Route>(Route.Timer).isFocused())
     }
 
     @Test
     fun anIdleTimerClosesTheFocusedScreensDownToTimer() {
-        assertEquals(listOf(Route.Timer), listOf(Route.Timer, Route.FullscreenTimer, form).downToTimer())
-        assertEquals(listOf(Route.Timer), listOf(Route.Timer, Route.FullscreenTimer).downToTimer())
-        assertEquals(listOf<Route>(Route.Pomodoro), listOf<Route>(Route.Pomodoro).downToTimer())
+        assertEquals(listOf(Route.Timer), listOf(Route.Timer, FocusedRoute, form).downToTimer())
+        assertEquals(listOf(Route.Timer), listOf(Route.Timer, FocusedRoute).downToTimer())
+        assertEquals(listOf<Route>(PageRoute), listOf<Route>(PageRoute).downToTimer())
     }
 
     @Test
     fun eachOpeningOfTheSameEntryHasItsOwnKey() {
         val again = form.copy(id = "b")
         assertTrue(form.contentKey != again.contentKey)
-        assertTrue(Route.SignIn().contentKey != Route.SignIn(server = "https://tokkl.example", userId = 1).contentKey)
+        assertTrue(StartRoute().contentKey != StartRoute(name = "again").contentKey)
     }
 }

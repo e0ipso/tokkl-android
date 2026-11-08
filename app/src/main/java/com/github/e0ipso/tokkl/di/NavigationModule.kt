@@ -30,7 +30,7 @@ internal val navigationModule = module {
     single(FeatureScreens) { getAll<FeatureEntries>() }
 
     // Every feature's top-level pages, in order.
-    single { TopLevelPages(getAll()) }
+    single { TopLevelPages(get<List<FeatureEntries>>(FeatureScreens).flatMap { it.pages }) }
 
     // What the navigation host asks about the stored session, off the main thread: whether somebody
     // is signed in, and whether a Pomodoro notification's tap still belongs to the account and its

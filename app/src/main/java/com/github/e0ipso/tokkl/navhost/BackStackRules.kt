@@ -2,7 +2,10 @@ package com.github.e0ipso.tokkl.navhost
 
 import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.navigation.Route
+import com.github.e0ipso.tokkl.pomodoro.PomodoroRoute
+import com.github.e0ipso.tokkl.timer.TemplatesRoute
 import com.github.e0ipso.tokkl.timer.TimerView
+import com.github.e0ipso.tokkl.trash.TrashRoute
 import com.github.e0ipso.tokkl.ui.WindowWidth
 
 /**
@@ -12,9 +15,9 @@ import com.github.e0ipso.tokkl.ui.WindowWidth
  * bar, the rail and the More sheet leave them out, and the host opens none of them.
  */
 fun unavailablePages(flags: Capabilities): Set<Route> = buildSet {
-    if (!flags.trash) add(Route.Trash)
-    if (!flags.favorites) add(Route.Templates)
-    if (!flags.timerState) add(Route.Pomodoro)
+    if (!flags.trash) add(TrashRoute)
+    if (!flags.favorites) add(TemplatesRoute)
+    if (!flags.timerState) add(PomodoroRoute)
 }
 
 /**

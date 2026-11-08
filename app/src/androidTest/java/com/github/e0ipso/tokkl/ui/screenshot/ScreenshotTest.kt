@@ -62,6 +62,7 @@ import com.github.e0ipso.tokkl.calendar.WeekSource
 import com.github.e0ipso.tokkl.catalog.CatalogSamples
 import com.github.e0ipso.tokkl.clients.ClientsActions
 import com.github.e0ipso.tokkl.clients.ClientsContent
+import com.github.e0ipso.tokkl.clients.ClientsRoute
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.history.HistoryContent
 import com.github.e0ipso.tokkl.history.HistoryDay
@@ -85,12 +86,14 @@ import com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmState
 import com.github.e0ipso.tokkl.pomodoro.PomodoroContent
 import com.github.e0ipso.tokkl.pomodoro.PomodoroLengths
 import com.github.e0ipso.tokkl.pomodoro.PomodoroPageState
+import com.github.e0ipso.tokkl.pomodoro.PomodoroRoute
 import com.github.e0ipso.tokkl.pomodoro.heldSession
 import com.github.e0ipso.tokkl.pomodoro.lengthCardMatcher
 import com.github.e0ipso.tokkl.pomodoro.ring
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.projects.ProjectsActions
 import com.github.e0ipso.tokkl.projects.ProjectsContent
+import com.github.e0ipso.tokkl.projects.ProjectsRoute
 import com.github.e0ipso.tokkl.reports.DetailedEntry
 import com.github.e0ipso.tokkl.reports.DetailedReport
 import com.github.e0ipso.tokkl.reports.FilterOptions
@@ -101,6 +104,7 @@ import com.github.e0ipso.tokkl.reports.ReportFilters
 import com.github.e0ipso.tokkl.reports.ReportRange
 import com.github.e0ipso.tokkl.reports.ReportTab
 import com.github.e0ipso.tokkl.reports.ReportsContent
+import com.github.e0ipso.tokkl.reports.ReportsRoute
 import com.github.e0ipso.tokkl.reports.ReportsState
 import com.github.e0ipso.tokkl.reports.SummaryReport
 import com.github.e0ipso.tokkl.reports.WeeklyReport
@@ -112,6 +116,7 @@ import com.github.e0ipso.tokkl.settings.systemIsDark
 import com.github.e0ipso.tokkl.sync.SyncStatus
 import com.github.e0ipso.tokkl.tags.TagsActions
 import com.github.e0ipso.tokkl.tags.TagsContent
+import com.github.e0ipso.tokkl.tags.TagsRoute
 import com.github.e0ipso.tokkl.timer.TimerBarContent
 import com.github.e0ipso.tokkl.timer.TimerScreen
 import com.github.e0ipso.tokkl.timer.TimerState
@@ -483,7 +488,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     @Test
     fun projects() {
         show({
-            SignedInFrame(pages = topLevelPages, current = Route.Projects, onOpen = {}) {
+            SignedInFrame(pages = topLevelPages, current = ProjectsRoute, onOpen = {}) {
                 ProjectsContent(
                     CatalogSamples.PROJECTS_LOADED,
                     offline = false,
@@ -503,7 +508,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     @Test
     fun clients() {
         show({
-            SignedInFrame(pages = topLevelPages, current = Route.Clients, onOpen = {}) {
+            SignedInFrame(pages = topLevelPages, current = ClientsRoute, onOpen = {}) {
                 ClientsContent(
                     CatalogSamples.CLIENTS_LOADED,
                     offline = false,
@@ -522,7 +527,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     @Test
     fun tags() {
         show({
-            SignedInFrame(pages = topLevelPages, current = Route.Tags, onOpen = {}) {
+            SignedInFrame(pages = topLevelPages, current = TagsRoute, onOpen = {}) {
                 TagsContent(
                     CatalogSamples.TAGS_LOADED,
                     offline = false,
@@ -543,7 +548,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     @SignedOut
     @Test
     fun moreSheet() {
-        show({ SignedInFrame(pages = topLevelPages, current = Route.Tags, onOpen = {}) {} }) {
+        show({ SignedInFrame(pages = topLevelPages, current = TagsRoute, onOpen = {}) {} }) {
             composeRule.onNode(
                 hasText(string(R.string.nav_more)) and hasClickAction(),
             ).performSemanticsAction(SemanticsActions.OnClick)
@@ -641,7 +646,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
         val page = @Composable {
             SignedInFrame(
                 pages = topLevelPages,
-                current = Route.Pomodoro,
+                current = PomodoroRoute,
                 onOpen = {},
                 pomodoroRunning = state.pomodoro != null,
             ) {
@@ -762,7 +767,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     /** The reports screen with [state] on [tab], on [TODAY]. */
     @Composable
     private fun ReportsTab(state: ReportsState, tab: ReportTab) {
-        SignedInFrame(pages = topLevelPages, current = Route.Reports, onOpen = {}) {
+        SignedInFrame(pages = topLevelPages, current = ReportsRoute, onOpen = {}) {
             ReportsContent(
                 state = state,
                 tab = tab,

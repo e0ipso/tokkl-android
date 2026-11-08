@@ -30,6 +30,7 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.awaitPomodoroOffered
 import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.clients.ClientsRoute
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.capabilities
 import com.github.e0ipso.tokkl.components.timerActions
@@ -38,9 +39,16 @@ import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.openMorePage
 import com.github.e0ipso.tokkl.orFail
+import com.github.e0ipso.tokkl.pomodoro.PomodoroRoute
+import com.github.e0ipso.tokkl.projects.ProjectsRoute
+import com.github.e0ipso.tokkl.reports.ReportsRoute
 import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.settings.SettingsRoute
+import com.github.e0ipso.tokkl.tags.TagsRoute
+import com.github.e0ipso.tokkl.timer.TemplatesRoute
 import com.github.e0ipso.tokkl.timerstate.SessionLengths
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
+import com.github.e0ipso.tokkl.trash.TrashRoute
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -90,7 +98,7 @@ class BottomBarTest {
     fun eachBarItemOpensItsPageAndBackGoesToTimer() {
         launch { scenario ->
             composeRule.awaitPomodoroOffered(NETWORK_TIMEOUT_MS)
-            for (page in listOf(Route.Pomodoro, Route.Projects, Route.Settings)) {
+            for (page in listOf(PomodoroRoute, ProjectsRoute, SettingsRoute)) {
                 barItem(page.label).performClick()
                 heading(page.label).assertIsDisplayed()
                 barItem(page.label).assertIsSelected()
@@ -146,11 +154,11 @@ class BottomBarTest {
                 NETWORK_TIMEOUT_MS,
             ) { app.capabilities.state.value.favorites }
             for (page in listOf(
-                Route.Reports,
-                Route.Templates,
-                Route.Clients,
-                Route.Tags,
-                Route.Trash,
+                ReportsRoute,
+                TemplatesRoute,
+                ClientsRoute,
+                TagsRoute,
+                TrashRoute,
             )) {
                 openMore()
                 val items = composeRule.onAllNodes(sheetItem())

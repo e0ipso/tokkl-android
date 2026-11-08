@@ -43,13 +43,8 @@ class Navigator(private val stack: MutableList<Route>, val openings: EntryFormOp
     fun openEntry(opening: EntryOpening, older: TimeEntry? = null) =
         replace(stack.withEntry(openings.route(opening, older)))
 
-    /** Opens the changes the server refused above the screen on top, unless they show already. */
-    fun openNeedsAttention() {
-        if (stack.lastOrNull() != Route.NeedsAttention) stack.add(Route.NeedsAttention)
-    }
-
-    /** Starts over at sign-in. */
-    fun signIn() = replace(listOf(Route.SignIn()))
+    /** Starts over with [route] alone, as sign-in does. */
+    fun startOver(route: Route) = replace(listOf(route))
 
     /** Closes the focused timer and what stands above it, down to Timer ([downToTimer]). */
     fun downToTimer() = replace(stack.downToTimer())

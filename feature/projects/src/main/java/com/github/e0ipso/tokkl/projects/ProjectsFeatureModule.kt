@@ -2,7 +2,6 @@ package com.github.e0ipso.tokkl.projects
 
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
-import com.github.e0ipso.tokkl.navigation.topLevelDestination
 import com.github.e0ipso.tokkl.platform.DefaultNetwork
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.platform.offlineIn
@@ -39,5 +38,4 @@ val projectsFeatureModule = module {
     }
 
     single { ProjectsEntries } bind FeatureEntries::class
-    topLevelDestination(projectsPage)
 }

@@ -46,6 +46,7 @@ import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.TopLevelDestination
 import com.github.e0ipso.tokkl.navigation.TopLevelPages
+import com.github.e0ipso.tokkl.pomodoro.PomodoroRoute
 import com.github.e0ipso.tokkl.ui.theme.FrameWidth
 import com.github.e0ipso.tokkl.ui.theme.SectionHue
 import com.github.e0ipso.tokkl.ui.theme.SectionHues
@@ -165,7 +166,7 @@ private class NavigationItem(
     /** Whether the item carries the running dot. */
     fun dot(timerRunning: Boolean, pomodoroRunning: Boolean): Boolean = when (page?.route) {
         Route.Timer -> timerRunning
-        Route.Pomodoro -> pomodoroRunning
+        PomodoroRoute -> pomodoroRunning
         else -> false
     }
 }
@@ -185,7 +186,7 @@ private fun navigationItems(pages: TopLevelPages, hidden: Set<Route>): List<Navi
                 it,
                 stringResource(it.label),
                 it.icon,
-                if (it.route == Route.Pomodoro) pomodoroRunning else running,
+                if (it.route == PomodoroRoute) pomodoroRunning else running,
             )
         }
     return items + NavigationItem(null, stringResource(R.string.nav_more), UiR.drawable.ic_nav_more, running)

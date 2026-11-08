@@ -6,10 +6,10 @@ import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.cache.ShortStopOffer
 import com.github.e0ipso.tokkl.model.EntryId
-import com.github.e0ipso.tokkl.navigation.SignInAgain
 import com.github.e0ipso.tokkl.platform.whileShown
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.ServerConfigStore
+import com.github.e0ipso.tokkl.signin.SignInAgain
 import com.github.e0ipso.tokkl.sync.DiscardedChanges
 import com.github.e0ipso.tokkl.sync.SyncStatus
 import com.github.e0ipso.tokkl.timer.TimerView

@@ -42,6 +42,7 @@ import com.github.e0ipso.tokkl.catalog.CatalogSamples
 import com.github.e0ipso.tokkl.clients.ClientsActions
 import com.github.e0ipso.tokkl.clients.ClientsContent
 import com.github.e0ipso.tokkl.clients.ClientsOverlay
+import com.github.e0ipso.tokkl.clients.ClientsRoute
 import com.github.e0ipso.tokkl.entry.EntryFormActions
 import com.github.e0ipso.tokkl.entry.EntryFormContent
 import com.github.e0ipso.tokkl.entry.EntryFormState
@@ -59,15 +60,18 @@ import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.projects.ProjectForm
 import com.github.e0ipso.tokkl.projects.ProjectsActions
 import com.github.e0ipso.tokkl.projects.ProjectsContent
+import com.github.e0ipso.tokkl.projects.ProjectsRoute
 import com.github.e0ipso.tokkl.reports.FilterOptions
 import com.github.e0ipso.tokkl.reports.RangePreset
 import com.github.e0ipso.tokkl.reports.RangeSelection
 import com.github.e0ipso.tokkl.reports.ReportFilters
 import com.github.e0ipso.tokkl.reports.ReportTab
 import com.github.e0ipso.tokkl.reports.ReportsContent
+import com.github.e0ipso.tokkl.reports.ReportsRoute
 import com.github.e0ipso.tokkl.reports.ReportsState
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.settings.SettingsContent
+import com.github.e0ipso.tokkl.settings.SettingsRoute
 import com.github.e0ipso.tokkl.settings.SignOutConfirmation
 import com.github.e0ipso.tokkl.signin.SignIn
 import com.github.e0ipso.tokkl.signin.SignInCooldownStore
@@ -75,12 +79,14 @@ import com.github.e0ipso.tokkl.signin.SignInScreen
 import com.github.e0ipso.tokkl.signin.SignInViewModel
 import com.github.e0ipso.tokkl.tags.TagsActions
 import com.github.e0ipso.tokkl.tags.TagsContent
+import com.github.e0ipso.tokkl.tags.TagsRoute
 import com.github.e0ipso.tokkl.timer.TimerBarContent
 import com.github.e0ipso.tokkl.timer.TimerScreen
 import com.github.e0ipso.tokkl.timer.TimerState
 import com.github.e0ipso.tokkl.timer.TimerView
 import com.github.e0ipso.tokkl.trash.TrashActions
 import com.github.e0ipso.tokkl.trash.TrashContent
+import com.github.e0ipso.tokkl.trash.TrashRoute
 import com.github.e0ipso.tokkl.trash.TrashState
 import com.github.e0ipso.tokkl.ui.WindowWidth
 import com.github.e0ipso.tokkl.ui.screenshot.ScreenshotTest
@@ -147,7 +153,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
         show {
             SignedInFrame(
                 pages = topLevelPages,
-                current = Route.Projects,
+                current = ProjectsRoute,
                 onOpen = {},
                 timerRunning = timerRunning,
                 pomodoroRunning = sessionRunning,
@@ -428,11 +434,11 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
         Screen("the Timer page's List view") { Framed(Route.Timer) { SampleTimerPage(TimerView.LIST) } },
         Screen("the Timer page's Calendar view") { Framed(Route.Timer) { SampleTimerPage(TimerView.CALENDAR) } },
         Screen("the entry form") { Framed(Route.Timer) { SampleEntryForm() } },
-        Screen("the Summary report") { Framed(Route.Reports) { Reports(ReportTab.SUMMARY) } },
-        Screen("the Detailed report") { Framed(Route.Reports) { Reports(ReportTab.DETAILED) } },
-        Screen("the Weekly report") { Framed(Route.Reports) { Reports(ReportTab.WEEKLY) } },
+        Screen("the Summary report") { Framed(ReportsRoute) { Reports(ReportTab.SUMMARY) } },
+        Screen("the Detailed report") { Framed(ReportsRoute) { Reports(ReportTab.DETAILED) } },
+        Screen("the Weekly report") { Framed(ReportsRoute) { Reports(ReportTab.WEEKLY) } },
         Screen("Projects") {
-            Framed(Route.Projects) {
+            Framed(ProjectsRoute) {
                 ProjectsContent(
                     CatalogSamples.PROJECTS_LOADED,
                     offline = false,
@@ -443,7 +449,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
             }
         },
         Screen("the project form") {
-            Framed(Route.Projects) {
+            Framed(ProjectsRoute) {
                 ProjectsContent(
                     CatalogSamples.PROJECTS_LOADED.copy(overlay = ProjectForm.New),
                     offline = false,
@@ -454,7 +460,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
             }
         },
         Screen("Clients") {
-            Framed(Route.Clients) {
+            Framed(ClientsRoute) {
                 ClientsContent(
                     CatalogSamples.CLIENTS_LOADED,
                     offline = false,
@@ -464,7 +470,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
             }
         },
         Screen("the client form") {
-            Framed(Route.Clients) {
+            Framed(ClientsRoute) {
                 ClientsContent(
                     CatalogSamples.CLIENTS_LOADED.copy(overlay = ClientsOverlay.New),
                     offline = false,
@@ -474,7 +480,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
             }
         },
         Screen("Tags") {
-            Framed(Route.Tags) {
+            Framed(TagsRoute) {
                 TagsContent(
                     CatalogSamples.TAGS_LOADED,
                     offline = false,
@@ -485,11 +491,11 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
         },
         Screen("Trash") {
             Framed(
-                Route.Trash,
+                TrashRoute,
             ) { TrashContent(TRASH, offline = false, settings = ScreenshotTest.ACCOUNT, actions = TrashActions()) }
         },
         Screen("Settings") {
-            Framed(Route.Settings) {
+            Framed(SettingsRoute) {
                 SettingsContent(
                     settings = ThemeSettings(),
                     onModeChange = {},
@@ -502,7 +508,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
                 )
             }
         },
-        Screen("Licences") { Framed(Route.Settings) { LicencesScreen(onBack = {}) } },
+        Screen("Licences") { Framed(SettingsRoute) { LicencesScreen(onBack = {}) } },
     )
 
     private companion object {

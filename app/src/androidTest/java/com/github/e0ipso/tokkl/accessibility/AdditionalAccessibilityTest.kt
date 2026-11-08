@@ -25,6 +25,7 @@ import com.github.e0ipso.tokkl.bottomBarItem
 import com.github.e0ipso.tokkl.cache.ChangeKind
 import com.github.e0ipso.tokkl.cache.HeldChange
 import com.github.e0ipso.tokkl.cache.HeldChanges
+import com.github.e0ipso.tokkl.clients.ClientsRoute
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
@@ -32,10 +33,15 @@ import com.github.e0ipso.tokkl.navhost.SignedInFrame
 import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.label
 import com.github.e0ipso.tokkl.navigation.topLevelPages
+import com.github.e0ipso.tokkl.pomodoro.PomodoroRoute
+import com.github.e0ipso.tokkl.reports.ReportsRoute
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.sync.NeedsAttention
 import com.github.e0ipso.tokkl.sync.NeedsAttentionScreen
 import com.github.e0ipso.tokkl.sync.NeedsAttentionViewModel
+import com.github.e0ipso.tokkl.tags.TagsRoute
+import com.github.e0ipso.tokkl.timer.TemplatesRoute
+import com.github.e0ipso.tokkl.trash.TrashRoute
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import kotlinx.coroutines.CoroutineScope
@@ -77,7 +83,7 @@ abstract class AdditionalAccessibilityTest(private val dark: Boolean) {
         show {
             SignedInFrame(
                 pages = topLevelPages,
-                current = Route.Pomodoro,
+                current = PomodoroRoute,
                 onOpen = {},
                 pomodoroRunning = running.value,
             ) {
@@ -111,11 +117,11 @@ abstract class AdditionalAccessibilityTest(private val dark: Boolean) {
             }
         }
         for (page in listOf(
-            Route.Reports,
-            Route.Templates,
-            Route.Clients,
-            Route.Tags,
-            Route.Trash,
+            ReportsRoute,
+            TemplatesRoute,
+            ClientsRoute,
+            TagsRoute,
+            TrashRoute,
         )) {
             compose.onNode(bottomBarItem(R.string.nav_more)).performClick()
             val choice = compose.onNode(hasText(context.getString(page.label)) and hasClickAction())

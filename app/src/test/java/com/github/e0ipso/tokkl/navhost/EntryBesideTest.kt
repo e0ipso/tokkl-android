@@ -2,6 +2,8 @@ package com.github.e0ipso.tokkl.navhost
 
 import com.github.e0ipso.tokkl.navigation.EntryOpening
 import com.github.e0ipso.tokkl.navigation.Route
+import com.github.e0ipso.tokkl.reports.ReportsRoute
+import com.github.e0ipso.tokkl.settings.SettingsRoute
 import com.github.e0ipso.tokkl.timer.TimerView
 import com.github.e0ipso.tokkl.ui.WindowWidth
 import org.junit.Assert.assertFalse
@@ -35,10 +37,10 @@ class EntryBesideTest {
     @Test
     fun onlyTheFormOnTopOfTheTimerPageGoesBeside() {
         assertFalse(showsEntryBeside(WindowWidth.EXPANDED, TimerView.LIST, listOf(Route.Timer)))
-        assertFalse(showsEntryBeside(WindowWidth.EXPANDED, TimerView.LIST, listOf(Route.Timer, Route.Reports)))
+        assertFalse(showsEntryBeside(WindowWidth.EXPANDED, TimerView.LIST, listOf(Route.Timer, ReportsRoute)))
         assertFalse(showsEntryBeside(WindowWidth.EXPANDED, TimerView.LIST, listOf(form)))
         assertFalse(
-            showsEntryBeside(WindowWidth.EXPANDED, TimerView.LIST, listOf(Route.Timer, Route.Settings, form)),
+            showsEntryBeside(WindowWidth.EXPANDED, TimerView.LIST, listOf(Route.Timer, SettingsRoute, form)),
         )
     }
 }

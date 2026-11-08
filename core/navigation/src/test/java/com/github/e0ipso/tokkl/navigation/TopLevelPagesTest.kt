@@ -7,8 +7,8 @@ import org.junit.Test
 /** The order of the pages the features bind, whatever order Koin hands them over in. */
 class TopLevelPagesTest {
     private val timer = page(Route.Timer, position = 0)
-    private val reports = page(Route.Reports, position = 20)
-    private val settings = page(Route.Settings, position = 80)
+    private val reports = page(PageRoute, position = 20)
+    private val settings = page(OtherPageRoute, position = 80)
 
     @Test
     fun pagesStandInTheOrderOfTheirPositions() {
@@ -17,7 +17,7 @@ class TopLevelPagesTest {
 
     @Test(expected = IllegalArgumentException::class)
     fun twoPagesCannotShareAPosition() {
-        TopLevelPages(listOf(timer, page(Route.Pomodoro, position = 0)))
+        TopLevelPages(listOf(timer, page(AboveRoute, position = 0)))
     }
 
     private fun page(route: Route, position: Int) =

@@ -7,7 +7,6 @@ import com.github.e0ipso.tokkl.api.ServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.api.UntrustedCertificateException
-import com.github.e0ipso.tokkl.navigation.SignInAgain
 import com.github.e0ipso.tokkl.session.AccountSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

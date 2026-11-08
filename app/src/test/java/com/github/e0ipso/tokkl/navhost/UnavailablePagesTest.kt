@@ -2,6 +2,11 @@ package com.github.e0ipso.tokkl.navhost
 
 import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.navigation.Route
+import com.github.e0ipso.tokkl.pomodoro.PomodoroRoute
+import com.github.e0ipso.tokkl.reports.ReportsRoute
+import com.github.e0ipso.tokkl.settings.LicencesRoute
+import com.github.e0ipso.tokkl.timer.TemplatesRoute
+import com.github.e0ipso.tokkl.trash.TrashRoute
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -16,28 +21,28 @@ class UnavailablePagesTest {
 
     @Test
     fun withoutTheTimerApiThePomodoroPageIsGone() {
-        assertEquals(setOf(Route.Pomodoro), unavailablePages(everything.copy(timerState = false)))
+        assertEquals(setOf(PomodoroRoute), unavailablePages(everything.copy(timerState = false)))
     }
 
     @Test
     fun trashAndTemplatesStillFollowTheirOwnCapabilities() {
         assertEquals(
-            setOf(Route.Trash, Route.Templates, Route.Pomodoro),
+            setOf(TrashRoute, TemplatesRoute, PomodoroRoute),
             unavailablePages(Capabilities.NONE),
         )
-        assertEquals(setOf(Route.Templates), unavailablePages(everything.copy(favorites = false)))
+        assertEquals(setOf(TemplatesRoute), unavailablePages(everything.copy(favorites = false)))
     }
 
     @Test
     fun aRestoredOrDirectOpenOfAnUnavailablePageShowsTimerAndOtherPagesStay() {
-        val unavailable = setOf(Route.Pomodoro)
-        assertEquals(Route.Timer, Route.Pomodoro.orTimerIfUnavailable(unavailable))
-        assertEquals(Route.Reports, Route.Reports.orTimerIfUnavailable(unavailable))
+        val unavailable = setOf(PomodoroRoute)
+        assertEquals(Route.Timer, PomodoroRoute.orTimerIfUnavailable(unavailable))
+        assertEquals(ReportsRoute, ReportsRoute.orTimerIfUnavailable(unavailable))
         assertEquals(
             "a screen below a page is not a page",
-            Route.Licences,
-            Route.Licences.orTimerIfUnavailable(unavailable),
+            LicencesRoute,
+            LicencesRoute.orTimerIfUnavailable(unavailable),
         )
-        assertEquals(Route.Pomodoro, Route.Pomodoro.orTimerIfUnavailable(emptySet()))
+        assertEquals(PomodoroRoute, PomodoroRoute.orTimerIfUnavailable(emptySet()))
     }
 }

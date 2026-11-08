@@ -5,8 +5,10 @@ import com.github.e0ipso.tokkl.model.RunningEntryIdentity
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.Instant
 import java.time.LocalDate
@@ -19,25 +21,25 @@ class NavigatorTest {
 
     @Test
     fun aBarPageReplacesWhateverStoodAboveTimer() {
-        navigator.open(Route.Settings)
-        navigator.push(Route.Licences)
-        navigator.open(Route.Reports)
-        assertEquals(listOf(Route.Timer, Route.Reports), stack)
+        navigator.open(PageRoute)
+        navigator.push(AboveRoute)
+        navigator.open(OtherPageRoute)
+        assertEquals(listOf(Route.Timer, OtherPageRoute), stack)
     }
 
     @Test
     fun anUnavailablePageOpensTimer() {
-        navigator.open(Route.Settings)
-        navigator.open(Route.Pomodoro, unavailable = setOf(Route.Pomodoro))
+        navigator.open(PageRoute)
+        navigator.open(OtherPageRoute, unavailable = setOf(OtherPageRoute))
         assertEquals(listOf(Route.Timer), stack)
     }
 
     @Test
     fun backClosesTheScreenOnTopButNeverTimer() {
-        navigator.open(Route.Settings)
-        navigator.push(Route.Licences)
+        navigator.open(PageRoute)
+        navigator.push(AboveRoute)
         navigator.back()
-        assertEquals(listOf(Route.Timer, Route.Settings), stack)
+        assertEquals(listOf(Route.Timer, PageRoute), stack)
         navigator.back()
         navigator.back()
         assertEquals(listOf(Route.Timer), stack)
@@ -45,24 +47,27 @@ class NavigatorTest {
 
     @Test
     fun closeClosesOnlyTheScreenOnTop() {
-        navigator.push(Route.FullscreenTimer)
+        navigator.push(FocusedRoute)
         navigator.openEntry(EntryOpening.New())
-        navigator.close(Route.FullscreenTimer)
+        navigator.close(FocusedRoute)
         assertEquals(3, stack.size)
     }
 
     @Test
-    fun theNeedsAttentionListOpensOnce() {
-        navigator.openNeedsAttention()
-        navigator.openNeedsAttention()
-        assertEquals(listOf(Route.Timer, Route.NeedsAttention), stack)
+    fun startingOverLeavesTheRouteAlone() {
+        navigator.open(PageRoute)
+        navigator.startOver(StartRoute())
+        assertEquals(listOf<Route>(StartRoute()), stack)
     }
 
     @Test
-    fun signInStartsOver() {
-        navigator.open(Route.Settings)
-        navigator.signIn()
-        assertEquals(listOf<Route>(Route.SignIn()), stack)
+    fun theFocusedScreenAndTheFormAboveItHideTheBar() {
+        navigator.push(FocusedRoute)
+        assertTrue(navigator.focused)
+        navigator.openEntry(EntryOpening.New())
+        assertTrue(navigator.focused)
+        navigator.downToTimer()
+        assertFalse(navigator.focused)
     }
 
     @Test

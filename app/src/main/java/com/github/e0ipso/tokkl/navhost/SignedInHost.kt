@@ -17,15 +17,19 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavEntry
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.navigation.LocalSignedInSession
 import com.github.e0ipso.tokkl.navigation.Navigator
 import com.github.e0ipso.tokkl.navigation.NotificationPrompts
 import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.TopLevelPages
 import com.github.e0ipso.tokkl.navigation.contentKey
-import com.github.e0ipso.tokkl.navigation.sessionViewModel
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
 import com.github.e0ipso.tokkl.notification.NotificationPermissionPrompt
+import com.github.e0ipso.tokkl.pomodoro.PomodoroRoute
+import com.github.e0ipso.tokkl.signin.SignInRoute
 import com.github.e0ipso.tokkl.sync.DiscardNotice
+import com.github.e0ipso.tokkl.sync.openNeedsAttention
+import com.github.e0ipso.tokkl.timer.FullscreenTimerRoute
 import com.github.e0ipso.tokkl.timernotice.TimerFrame
 import com.github.e0ipso.tokkl.timernotice.timerNoticeText
 import com.github.e0ipso.tokkl.ui.windowWidth
@@ -33,6 +37,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import org.koin.compose.viewmodel.koinViewModel
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
@@ -69,7 +74,7 @@ internal fun SignedInHost(
     onNotificationsAllow: () -> Unit,
     timerFrame: @Composable () -> TimerFrame,
 ) {
-    val model = sessionViewModel<SignedInViewModel>()
+    val model = koinViewModel<SignedInViewModel>(viewModelStoreOwner = LocalSignedInSession.current)
     val timer = timerFrame()
     val state by model.state.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
@@ -107,7 +112,7 @@ internal fun SignedInHost(
             model.dismissShortStop(pending.entryId)
         }
     }
-    val permissionStarts = remember(timer, prompts) { merge(timer.starts, prompts.pomodoroStarts.receiveAsFlow()) }
+    val permissionStarts = remember(timer, prompts) { merge(timer.starts, prompts.starts.receiveAsFlow()) }
     val permissionRetries = remember(prompts) { prompts.retries.receiveAsFlow() }
     SignedInFrame(
         pages = pages,
@@ -122,7 +127,7 @@ internal fun SignedInHost(
         onSignInAgain = {
             scope.launch {
                 val account = model.signInAgain() ?: return@launch
-                navigator.push(Route.SignIn.again(account))
+                navigator.push(SignInRoute.again(account))
             }
         },
         width = width,
@@ -135,7 +140,7 @@ internal fun SignedInHost(
             )
         },
     ) {
-        if (top == Route.FullscreenTimer) {
+        if (top == FullscreenTimerRoute) {
             entries.Show(top)
         } else {
             SignedInPanes(
@@ -198,4 +203,4 @@ internal fun List<NavEntry<Route>>.Show(route: Route) {
  * The pages that show the timer, where its notices show: a failed Pause, Resume or Stop while
  * paused, and a pomodoro too short to save.
  */
-private val TIMER_PAGES = setOf(Route.Timer, Route.FullscreenTimer, Route.Pomodoro)
+private val TIMER_PAGES = setOf(Route.Timer, FullscreenTimerRoute, PomodoroRoute)

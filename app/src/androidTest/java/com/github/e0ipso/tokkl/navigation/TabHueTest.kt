@@ -14,6 +14,7 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.performClick
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.clients.ClientsRoute
 import com.github.e0ipso.tokkl.navhost.AppNavigationBar
 import com.github.e0ipso.tokkl.navhost.AppNavigationRail
 import com.github.e0ipso.tokkl.ui.theme.SectionHue
@@ -110,7 +111,7 @@ class TabHueTest {
     }
 
     private fun assertMoreSheet(dark: Boolean) {
-        var current by mutableStateOf<Route>(Route.Clients)
+        var current by mutableStateOf<Route>(ClientsRoute)
         composeRule.setContent {
             TokklTheme(darkTheme = dark) { AppNavigationBar(pages = topLevelPages, current = current, onOpen = {}) }
         }
