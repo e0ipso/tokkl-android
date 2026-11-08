@@ -12,11 +12,14 @@ kk_schema_version: 3
 kk_id: map-tokkl-toggl-api
 kk_derived_from:
   - docs/PRD.md
-kk_relates_to: []
+kk_relates_to:
+  - map-api-client-shared-okhttp-serverurl-and-errors
 kk_depends_on: []
 kk_confidence: high
 ---
 Tokkl implements a subset of the Toggl Track API v9 at `https://<server>/api/v9` and of the Reports API v3 at `https://<server>/reports/api/v3`. A client that accepts a base URL needs no other change to talk to it. The server URL may carry a path, such as `https://example.com/tokkl`. Toggl Track's API lives at `api.track.toggl.com`.
+
+The requests the app sends are the methods of `TokklApi` in `:core:api`, one per request, as the API client node describes; nothing else in the app builds a URL or a request body.
 
 Both APIs use HTTP Basic auth with `<api_token>:api_token` or `<email>:<password>`. The API token is the default sign-in (S1). Failed auth returns 403. Tokkl returns 429 with `Retry-After` after too many failed password attempts.
 

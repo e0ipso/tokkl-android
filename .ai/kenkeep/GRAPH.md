@@ -1,6 +1,6 @@
 ---
 schema_version: 3
-nodes_hash: 'sha256:060a583e25f58b8741a72d2f87dfd0e2c2a0157de4efd604d3b0390bc63df228'
+nodes_hash: 'sha256:1e8ad54ea3f75583d5c33b2dd019b9b1970b251d4014ad7a6d3ad12ea04f71c4'
 node_count: 95
 ---
 # kenkeep Graph
@@ -26,7 +26,7 @@ Total nodes: 95
 ## map-api-client-shared-okhttp-serverurl-and-errors
 
 - **kind:** map
-- **title:** API client: one OkHttpClient, ServerUrl, TogglApiClient and ApiError
+- **title:** API client: one OkHttpClient, the TokklApi contract, TogglApiClient and ApiError
 - **path:** api-and-security/map-api-client-shared-okhttp-serverurl-and-errors.md
 - **tags:** api, network, okhttp
 - **relates_to:** map-timer-state-holder-and-sync-service, map-tokkl-toggl-api, practice-talk-only-to-configured-server, practice-pin-self-signed-certs-warn-on-http, map-connection-trust-store-pinning-and-prompts
@@ -408,6 +408,7 @@ Total nodes: 95
 - **title:** Tokkl and Toggl API endpoints, auth and Tokkl-only extensions
 - **path:** api-and-security/map-tokkl-toggl-api.md
 - **tags:** api, toggl, network
+- **relates_to:** map-api-client-shared-okhttp-serverurl-and-errors
 - **derived_from:** docs/PRD.md
 
 ## map-trash-capability-and-server-operations
