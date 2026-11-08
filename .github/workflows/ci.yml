@@ -32,7 +32,7 @@ jobs:
         with:
           packages: platform-tools platforms;android-37.0 build-tools;36.0.0
       # Caches Gradle's files and checks the wrapper jar.
-      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
       - run: ./gradlew assembleDebug check --stacktrace
       # check writes the debug JVM JUnit XML under
       # app/build/test-results/testDebugUnitTest/ and the debug lint reports
@@ -82,7 +82,7 @@ jobs:
       - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
         with:
           packages: platform-tools platforms;android-37.0 build-tools;36.0.0
-      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
       - run: scripts/reproducible-release.sh
 
   # The instrumented tests on an API 36 and an API 31 emulator, against the
@@ -124,7 +124,7 @@ jobs:
       - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
         with:
           packages: platform-tools platforms;android-37.0 build-tools;36.0.0
-      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
       # From android-emulator-runner's README. The emulator on GitHub's Ubuntu
       # runners can use KVM only after this rule opens /dev/kvm to every user.
       - name: Enable KVM
@@ -267,7 +267,7 @@ jobs:
       - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
         with:
           packages: platform-tools platforms;android-37.0 build-tools;36.0.0
-      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
       - name: Build the signed release APK
         env:
           TOKKL_RELEASE_KEYSTORE_BASE64: ${{ secrets.TOKKL_RELEASE_KEYSTORE_BASE64 }}
