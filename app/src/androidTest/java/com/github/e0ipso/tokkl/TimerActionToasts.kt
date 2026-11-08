@@ -3,7 +3,7 @@ package com.github.e0ipso.tokkl
 import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.core.timernotice.R as TimerNoticeR
+import com.github.e0ipso.tokkl.core.timerstate.R as TimerNoticeR
 
 /**
  * Reads the toast in which the native timer surfaces say that a server action did not go through.

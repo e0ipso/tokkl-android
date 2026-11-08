@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.catalog
 
-import android.content.res.Resources
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -21,11 +20,13 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import com.github.e0ipso.tokkl.core.catalog.R
+import com.github.e0ipso.tokkl.session.ServerProblem
 import com.github.e0ipso.tokkl.ui.ErrorBanner
 import com.github.e0ipso.tokkl.ui.StickerCard
 import com.github.e0ipso.tokkl.ui.TokklGhostButton
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.core.ui.R as UiR
+import com.github.e0ipso.tokkl.session.problemText as serverProblemText
 
 /** What [change] did, in the web app's words, such as "Created Website". */
 @Composable
@@ -40,21 +41,7 @@ fun changeText(change: CatalogChange): String = when (change) {
 
 /** What [problem] means for the user, in a sentence. */
 @Composable
-fun problemText(problem: ServerProblem): String = problemText(LocalResources.current, problem)
-
-/** What [problem] means for the user, in a sentence, from [resources], for text made outside composition. */
-fun problemText(resources: Resources, problem: ServerProblem): String = when (problem) {
-    ServerProblem.Unreachable -> resources.getString(R.string.catalog_error_unreachable)
-
-    ServerProblem.AuthFailed -> resources.getString(R.string.catalog_error_auth)
-
-    ServerProblem.TrustRefused -> resources.getString(R.string.catalog_error_trust)
-
-    is ServerProblem.Refused -> problem.reason
-
-    is ServerProblem.Unexpected -> problem.status?.let { resources.getString(R.string.catalog_error_status, it) }
-        ?: resources.getString(R.string.catalog_error_unreadable)
-}
+fun problemText(problem: ServerProblem): String = serverProblemText(LocalResources.current, problem)
 
 /**
  * Says that the page's changes need the server, which the phone cannot reach now: a warning icon,

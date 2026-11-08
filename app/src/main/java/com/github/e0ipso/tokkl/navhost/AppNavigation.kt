@@ -50,11 +50,7 @@ import com.github.e0ipso.tokkl.pomodoro.PomodoroRoute
 import com.github.e0ipso.tokkl.ui.theme.FrameWidth
 import com.github.e0ipso.tokkl.ui.theme.SectionHue
 import com.github.e0ipso.tokkl.ui.theme.SectionHues
-import com.github.e0ipso.tokkl.ui.theme.TokklNavigationBarDefaults
-import com.github.e0ipso.tokkl.ui.theme.TokklNavigationBarItem
-import com.github.e0ipso.tokkl.ui.theme.TokklNavigationRailItem
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import com.github.e0ipso.tokkl.ui.theme.navigationBarLabelWeight
 import kotlinx.coroutines.launch
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 

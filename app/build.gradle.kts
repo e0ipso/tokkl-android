@@ -153,7 +153,6 @@ dependencies {
     implementation(project(":core:cache"))
     implementation(project(":core:timerstate"))
     implementation(project(":core:timersync"))
-    implementation(project(":core:timernotice"))
     implementation(project(":core:trust"))
     implementation(project(":core:navigation"))
     implementation(project(":feature:signin"))

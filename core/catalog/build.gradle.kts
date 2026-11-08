@@ -1,6 +1,5 @@
 // The frame the catalog pages share, Projects, Clients, Tags and Trash: the page and its rows,
-// its model with the loads and the single create, the confirm dialog, and why the server
-// failed, which the other pages say in the same words.
+// its model with the loads and the single create, and the confirm dialog.
 plugins {
     alias(libs.plugins.tokkl.android.library.compose)
     alias(libs.plugins.kotlin.serialization)
@@ -11,8 +10,10 @@ android {
 }
 
 dependencies {
-    // The model and the problems carry the API's errors, and the pages draw with the design system.
+    // The model carries the API's errors, and the pages draw with the design system.
     api(project(":core:api"))
+    // Why the server failed, which the model and the pages say in the session's words.
+    api(project(":core:session"))
     // The pages manage one workspace, by its model id.
     api(project(":core:model"))
     api(project(":core:ui"))

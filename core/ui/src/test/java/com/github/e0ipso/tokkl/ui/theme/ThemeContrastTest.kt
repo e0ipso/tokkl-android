@@ -88,7 +88,7 @@ class ThemeContrastTest {
         return surfacePairs + surfaceOnlyMarks + fills + huePairs() + stickerPairs(
             s,
             x,
-        ) + navigationBarPairs(s) + texturePairs(s, x) + sceneOverlapPairs(s, x) +
+        ) + texturePairs(s, x) + sceneOverlapPairs(s, x) +
             reportPairs(s, x)
     }
 
@@ -135,30 +135,6 @@ class ThemeContrastTest {
                 Pair("$name sticker on surface", hue.fill, s.surface, Kind.NON_TEXT).takeUnless { outlined },
             )
         }
-    }
-
-    /**
-     * The colours Tokkl gives a bottom bar item, for the hue of every tab: the icon and, on Timer,
-     * the running dot sit on the hue's indicator, whose outline draws its edge on the bar, which is
-     * surfaceContainer, and the label sits below it, on the bar.
-     */
-    private fun navigationBarPairs(s: ColorScheme): List<Pair> {
-        val bar = s.surfaceContainer
-        val active = SECTION_HUES.flatMap { (name, hue) ->
-            val item = navigationBarItemColors(s, hue)
-            val indicator = navigationIndicator(s, hue)
-            listOf(
-                Pair("active nav icon on the $name indicator", item.selectedIconColor, indicator.fill, Kind.NON_TEXT),
-                Pair("running dot on the $name indicator", hue.onFill, indicator.fill, Kind.NON_TEXT),
-                Pair("$name indicator outline on bar", indicator.outline, bar, Kind.NON_TEXT),
-                Pair("active nav label on bar, $name", item.selectedTextColor, bar, Kind.TEXT),
-            )
-        }
-        val item = navigationBarItemColors(s, SectionHues.timer)
-        return active + listOf(
-            Pair("inactive nav icon on bar", item.unselectedIconColor, bar, Kind.NON_TEXT),
-            Pair("inactive nav label on bar", item.unselectedTextColor, bar, Kind.TEXT),
-        )
     }
 
     /**

@@ -13,7 +13,6 @@ dependencies {
     implementation(project(":core:cache"))
     implementation(project(":core:timerstate"))
     implementation(project(":core:entryfields"))
-    implementation(project(":core:timernotice"))
     implementation(libs.androidx.glance.material3)
     implementation(libs.androidx.glance.appwidget)
     implementation(libs.androidx.work.runtime)

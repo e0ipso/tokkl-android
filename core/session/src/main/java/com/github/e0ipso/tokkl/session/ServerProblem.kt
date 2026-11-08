@@ -1,12 +1,15 @@
-package com.github.e0ipso.tokkl.catalog
+package com.github.e0ipso.tokkl.session
 
+import android.content.res.Resources
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.HttpStatus
+import com.github.e0ipso.tokkl.core.session.R
 
 /**
- * Why a page that changes the account's projects, clients or tags could not load them from the
- * server or send a change. These pages change things on the server at once and queue nothing, so
- * every problem leaves the server as it was.
+ * Why the server failed a request, as the user reads it: the catalog pages, which change the
+ * account's projects, clients and tags on the server at once and queue nothing, say it for a load
+ * or a change, and the timer's surfaces for a timer action. Every problem leaves the server as it
+ * was.
  */
 sealed interface ServerProblem {
 
@@ -50,3 +53,17 @@ fun ApiError.toServerProblem(): ServerProblem = when (this) {
 
 /** Bad gateway, service unavailable and gateway timeout. */
 private val PROXY_UNREACHABLE = setOf(502, 503, 504)
+
+/** What [problem] means for the user, in a sentence, from [resources]. */
+fun problemText(resources: Resources, problem: ServerProblem): String = when (problem) {
+    ServerProblem.Unreachable -> resources.getString(R.string.server_problem_unreachable)
+
+    ServerProblem.AuthFailed -> resources.getString(R.string.server_problem_auth)
+
+    ServerProblem.TrustRefused -> resources.getString(R.string.server_problem_trust)
+
+    is ServerProblem.Refused -> problem.reason
+
+    is ServerProblem.Unexpected -> problem.status?.let { resources.getString(R.string.server_problem_status, it) }
+        ?: resources.getString(R.string.server_problem_unreadable)
+}

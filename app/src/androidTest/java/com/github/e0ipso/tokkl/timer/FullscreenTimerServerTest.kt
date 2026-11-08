@@ -85,7 +85,7 @@ import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
-import com.github.e0ipso.tokkl.core.timernotice.R as TimerNoticeR
+import com.github.e0ipso.tokkl.core.timerstate.R as TimerNoticeR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 

@@ -9,7 +9,6 @@ dependencies {
     implementation(project(":core:platform"))
     implementation(project(":core:cache"))
     implementation(project(":core:timerstate"))
-    implementation(project(":core:timernotice"))
     implementation(libs.androidx.activity.compose)
 
     testImplementation(testFixtures(project(":core:timerstate")))

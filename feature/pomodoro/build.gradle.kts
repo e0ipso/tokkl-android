@@ -16,7 +16,6 @@ dependencies {
     implementation(project(":core:timersync"))
     implementation(project(":core:catalog"))
     implementation(project(":core:entryfields"))
-    implementation(project(":core:timernotice"))
     implementation(project(":core:navigation"))
     implementation(libs.androidx.activity.compose)
 }

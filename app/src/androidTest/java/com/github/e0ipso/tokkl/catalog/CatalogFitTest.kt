@@ -37,6 +37,7 @@ import com.github.e0ipso.tokkl.projects.ProjectForm
 import com.github.e0ipso.tokkl.projects.ProjectsActions
 import com.github.e0ipso.tokkl.projects.ProjectsScreen
 import com.github.e0ipso.tokkl.projects.TaskOverlay
+import com.github.e0ipso.tokkl.session.ServerProblem
 import com.github.e0ipso.tokkl.tags.TagsActions
 import com.github.e0ipso.tokkl.tags.TagsOverlay
 import com.github.e0ipso.tokkl.tags.TagsScreen

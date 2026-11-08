@@ -1,10 +1,10 @@
 package com.github.e0ipso.tokkl.timernotice
 
 import android.content.res.Resources
-import com.github.e0ipso.tokkl.catalog.ServerProblem
-import com.github.e0ipso.tokkl.catalog.problemText
-import com.github.e0ipso.tokkl.catalog.toServerProblem
-import com.github.e0ipso.tokkl.core.timernotice.R
+import com.github.e0ipso.tokkl.core.timerstate.R
+import com.github.e0ipso.tokkl.session.ServerProblem
+import com.github.e0ipso.tokkl.session.problemText
+import com.github.e0ipso.tokkl.session.toServerProblem
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 
 /**
@@ -26,7 +26,7 @@ sealed interface TimerNotice {
 
 /**
  * What [notice] says, in a sentence: the timer's own words for a refusal or no answer, and
- * otherwise why the server failed, as the catalog pages say it.
+ * otherwise why the server failed, in the words of the catalog pages ([problemText]).
  */
 fun timerNoticeText(resources: Resources, notice: TimerNotice): String = when (notice) {
     is TimerNotice.PomodoroDiscarded -> resources.getString(R.string.timer_pomodoro_too_short)

@@ -65,7 +65,7 @@ import org.junit.rules.RuleChain
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
-import com.github.e0ipso.tokkl.core.timernotice.R as TimerNoticeR
+import com.github.e0ipso.tokkl.core.timerstate.R as TimerNoticeR
 import com.github.e0ipso.tokkl.feature.notification.R as NotificationR
 import com.github.e0ipso.tokkl.feature.pomodoro.R as PomodoroR
 import com.github.e0ipso.tokkl.feature.timer.R as TimerR

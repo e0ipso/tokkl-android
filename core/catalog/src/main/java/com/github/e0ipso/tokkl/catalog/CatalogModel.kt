@@ -4,6 +4,8 @@ import androidx.compose.runtime.Immutable
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.platform.PageLoads
+import com.github.e0ipso.tokkl.session.ServerProblem
+import com.github.e0ipso.tokkl.session.toServerProblem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Why the server failed a request, as every page that changes something on the server at once
+    says it, and as the timer's surfaces say it when a timer action fails.
+-->
+<resources>
+    <string name="server_problem_unreachable">The server can\'t be reached, so nothing changed. Check the connection and try again.</string>
+    <string name="server_problem_auth">The server didn\'t accept this phone\'s API token. Sign in again.</string>
+    <string name="server_problem_trust">The app sends nothing to the server until you review its connection.</string>
+    <string name="server_problem_status">The server answered with HTTP %d, so nothing changed.</string>
+    <string name="server_problem_unreadable">The server\'s answer wasn\'t one the app can read.</string>
+</resources>

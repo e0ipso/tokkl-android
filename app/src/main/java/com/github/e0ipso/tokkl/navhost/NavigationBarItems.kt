@@ -1,4 +1,4 @@
-package com.github.e0ipso.tokkl.ui.theme
+package com.github.e0ipso.tokkl.navhost
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.RowScope
@@ -37,6 +37,8 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.github.e0ipso.tokkl.ui.theme.FrameWidth
+import com.github.e0ipso.tokkl.ui.theme.SectionHue
 
 /** Material 3's alpha for a disabled item. */
 private const val DISABLED_ALPHA = 0.38f
@@ -93,12 +95,12 @@ internal fun navigationIndicator(scheme: ColorScheme, hue: SectionHue) = Navigat
  * The weight of an item's label. The active one is bold, 700, so that the weight and the
  * indicator's shape mark it without colour. An inactive label keeps the weight it inherits.
  */
-fun navigationBarLabelWeight(selected: Boolean): FontWeight? = if (selected) FontWeight.Bold else null
+internal fun navigationBarLabelWeight(selected: Boolean): FontWeight? = if (selected) FontWeight.Bold else null
 
 /**
  * What a screen needs to build a bar or rail item from [NavigationBarItem] or [NavigationRailItem] in Tokkl's colours.
  */
-object TokklNavigationBarDefaults {
+internal object TokklNavigationBarDefaults {
     /** The colours of [NavigationBarItem] for a page with [hue], in the current theme. */
     @Composable
     @ReadOnlyComposable
@@ -142,7 +144,7 @@ object TokklNavigationBarDefaults {
  * it stays whole on one line.
  */
 @Composable
-fun RowScope.TokklNavigationBarItem(
+internal fun RowScope.TokklNavigationBarItem(
     selected: Boolean,
     onClick: () -> Unit,
     icon: @Composable () -> Unit,
@@ -171,7 +173,7 @@ fun RowScope.TokklNavigationBarItem(
  * label shrinks only where the window leaves the rail too little width.
  */
 @Composable
-fun TokklNavigationRailItem(
+internal fun TokklNavigationRailItem(
     selected: Boolean,
     onClick: () -> Unit,
     icon: @Composable () -> Unit,

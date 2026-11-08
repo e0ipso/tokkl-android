@@ -223,9 +223,8 @@ class PackageLayersTest {
             "preferences" to setOf("capabilities", "session"),
             "cache" to setOf("capabilities", "session"),
             "timerstate" to setOf("capabilities", "session", "cache"),
-            // The entry fields pick projects and tags; a timer notice reads as a catalog problem.
+            // The entry fields pick projects and tags.
             "entryfields" to setOf("picker"),
-            "timernotice" to setOf("catalog"),
             // The Timer page shows the history, the calendar and the timer templates and opens the
             // entry form, and the history pins entries as timer templates. Settings opens Licences.
             // The notification feature's Koin module defines the reminder's notification too.

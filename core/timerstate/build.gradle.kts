@@ -1,6 +1,7 @@
 // The timer's state: the running entry's controls and totals, and Pause, Resume and the Pomodoro
 // session of a Tokkl server with the timer API, which the server sends and the phone keeps, with
-// their Koin definitions.
+// their Koin definitions, and what the timer's surfaces say when a timer action does not go
+// through.
 plugins {
     alias(libs.plugins.tokkl.android.library)
     alias(libs.plugins.kotlin.serialization)
