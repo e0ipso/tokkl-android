@@ -70,7 +70,10 @@ class Session(
         }
     }
 
-    /** Guards [generation]. */
+    /**
+     * Guards [generation]. A JVM lock, not a Mutex, because client() is read from any thread
+     * without suspending.
+     */
     private val lock = Any()
 
     /** Counts the changes of account, so a read that overlaps one keeps nothing. */

@@ -132,7 +132,11 @@ class ApiTokenStore(context: Context) : ClearableStore<String> {
         private const val FORMAT_VERSION: Byte = 1
         private const val HEADER_SIZE = 2
 
-        /** One lock for every instance, since they share the file and the key. */
+        /**
+         * One lock for every instance, since they share the file and the key. A JVM lock, not a
+         * Mutex, because any thread may read or write the token, without suspending, and the
+         * Keystore and the file must change together.
+         */
         private val LOCK = Any()
     }
 }

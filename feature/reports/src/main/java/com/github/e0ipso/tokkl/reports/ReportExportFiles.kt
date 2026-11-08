@@ -88,6 +88,9 @@ class ReportExportFiles(private val root: File, private val clock: Clock) : Expo
         const val MAX_BYTES = 16L * 1024 * 1024
         const val MAX_FILES = 4
         const val MAX_AGE_MILLIS = 24L * 60 * 60 * 1000
+
+        // A JVM lock, not a Mutex: the Session's account change clears the files without
+        // suspending, while exports write them.
         private val LOCK = Any()
 
         /** Validate UTF-8 and CSV quoting without rewriting a byte or retaining report rows. */

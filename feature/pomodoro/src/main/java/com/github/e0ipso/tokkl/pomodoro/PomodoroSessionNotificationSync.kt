@@ -75,6 +75,8 @@ class PomodoroSessionNotificationSync internal constructor(
 
     @Volatile private var retired = false
 
+    // A JVM lock, not a Mutex: process start and sign-in call these without suspending; lock orders
+    // the suspending work.
     @Synchronized fun start() {
         if (retired) return
         observing.launch { changes.collect { refresh() } }

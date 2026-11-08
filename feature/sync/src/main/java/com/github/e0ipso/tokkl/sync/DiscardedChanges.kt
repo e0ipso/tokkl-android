@@ -28,6 +28,8 @@ class DiscardedChanges(private val store: ClearableStore<Int>) : AccountDataOwne
     /** The count the notice shows, or 0 while it shows none. */
     val state: StateFlow<Int> by lazy { mutableState.asStateFlow() }
 
+    // A JVM lock, not a Mutex: called on the drain's thread without suspending; the disk write
+    // keeps the count's order.
     private val lock = Any()
 
     /** [count] more changes were discarded. Called on the drain's thread. */

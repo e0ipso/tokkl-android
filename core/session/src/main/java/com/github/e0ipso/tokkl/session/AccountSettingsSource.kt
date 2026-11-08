@@ -26,7 +26,10 @@ class AccountSettingsSource(private val disk: ValueStore<AccountSettings>) : Def
 
     override fun defaultWorkspaceId(): Long? = state.value?.defaultWorkspaceId
 
-    /** Guards [writes], and each write together with the state it sets. */
+    /**
+     * Guards [writes], and each write together with the state it sets. A JVM lock, not a Mutex,
+     * because the refresh on the IO dispatcher and the main thread write without suspending.
+     */
     private val lock = Any()
 
     /** Counts the writes, so a refresh drops an answer that a newer write has replaced. */

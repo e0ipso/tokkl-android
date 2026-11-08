@@ -73,7 +73,11 @@ class SyncedPreference<T : Any>(
     /** The value on show. */
     val value: StateFlow<T> by lazy { state.value.asStateFlow() }
 
-    /** Guards [Loaded.unsent], [changedSinceRefresh] and each change of [value] with them. */
+    /**
+     * Guards [Loaded.unsent], [changedSinceRefresh] and each change of [value] with them. A JVM
+     * lock, not a Mutex, because change() runs on the main thread and refreshed() on the IO
+     * dispatcher, neither suspending.
+     */
     private val lock = Any()
 
     /** A change came after the last refresh, whose preferences may predate it. */

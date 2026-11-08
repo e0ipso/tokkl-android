@@ -8,6 +8,8 @@ class ApiCallCancellation {
     private var cancelled = false
     private val calls = mutableSetOf<Call>()
 
+    // A JVM lock, not a Mutex: OkHttp's threads and the cancelling coroutine call these without
+    // suspending.
     @Synchronized
     internal fun attach(call: Call) {
         if (cancelled) call.cancel() else calls.add(call)

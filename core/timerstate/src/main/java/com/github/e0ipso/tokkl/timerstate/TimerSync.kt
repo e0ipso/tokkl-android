@@ -53,6 +53,8 @@ interface TimerSyncConnections<A : Any> {
  */
 class TimerSync<A : Any>(private val clock: TimerSyncClock, private val connections: TimerSyncConnections<A>) {
 
+    // A JVM lock, not a Mutex: OkHttp's stream threads and the timer clock call back without
+    // suspending.
     private val lock = Any()
 
     /** The account the stream is held for, or null while stopped. */

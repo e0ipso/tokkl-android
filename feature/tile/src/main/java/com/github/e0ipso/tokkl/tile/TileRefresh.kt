@@ -65,6 +65,7 @@ internal class TileRefreshThrottle {
     private var lastAttempt: Long? = null
     private var lastSuccess: Long? = null
 
+    // A JVM lock, not a Mutex: TileService calls these on its binder thread without suspending.
     @Synchronized
     fun tryStart(generation: Long, online: Boolean, now: Long): Boolean {
         if (!online || generation < accountGeneration) return false

@@ -30,6 +30,8 @@ class LastAnswer(private val store: ValueStore<Instant?>, private val clock: Clo
 
     val state: StateFlow<Instant?> by lazy { mutableState.asStateFlow() }
 
+    // A JVM lock, not a Mutex: called on each request's OkHttp thread without suspending; the disk
+    // write keeps the value's order.
     private val lock = Any()
 
     /** Called on the thread of the request that the server answered. */

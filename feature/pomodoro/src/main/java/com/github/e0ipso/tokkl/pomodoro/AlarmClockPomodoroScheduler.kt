@@ -96,6 +96,8 @@ class AlarmClockPomodoroScheduler(
 
     /** Applies a change of [timerSyncStarts] to the receiver. */
     override fun watchTimerSync() {
+        // A JVM lock, not a Mutex: the timer sync follower and the sign-out call this without
+        // suspending.
         synchronized(this) { applyRearmReceiver() }
     }
 

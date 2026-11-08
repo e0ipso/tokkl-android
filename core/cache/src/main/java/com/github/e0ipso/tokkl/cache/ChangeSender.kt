@@ -164,7 +164,11 @@ class ChangeSender(
         data class Failed(val status: Int?) : UndoOutcome
     }
 
-    /** Guards [sending] and [again], and [retry]'s cancellation with them. */
+    /**
+     * Guards [sending] and [again], and [retry]'s cancellation with them. A JVM lock, not a Mutex,
+     * because send() is called without suspending from the main thread, the IO dispatcher and
+     * WorkManager.
+     */
     private val lock = Any()
 
     /** Held while a delete goes out and while [undoDelete] takes one back, so the two never overlap. */

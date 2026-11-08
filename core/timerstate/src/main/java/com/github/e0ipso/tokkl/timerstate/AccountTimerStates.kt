@@ -49,6 +49,7 @@ class AccountTimerStates(
     /** The timer state of one account of the [lifetime], made on first use. */
     private class ForAccount(val account: Int, val state: Lazy<AccountTimerState>)
 
+    // A JVM lock, not a Mutex: current() is read from any thread without suspending.
     private val lock = Any()
     private var forAccount = ForAccount(lifetime.accounts.value, lazy { newTimerState(restore = true) })
 

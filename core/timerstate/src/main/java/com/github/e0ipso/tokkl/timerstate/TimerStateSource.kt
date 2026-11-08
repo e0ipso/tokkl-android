@@ -58,6 +58,8 @@ class TimerStateSource(
     private val runningEnded: RefreshRequest,
 ) : ProbedTimerState<TimerStateRead> {
 
+    // A JVM lock, not a Mutex: answers and events arrive on OkHttp and IO threads, and flows read
+    // the state, none of them suspending.
     /** Orders acceptance, storage, cache writes, notice taking and retirement. */
     private val lock = Any()
 

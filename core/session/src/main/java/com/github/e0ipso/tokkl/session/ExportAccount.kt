@@ -19,6 +19,8 @@ class ExportAccount {
     private val leases = mutableSetOf<Lease>()
 
     inner class Lease internal constructor(internal val generation: Long, internal val cancel: () -> Unit) {
+        // A JVM lock, not a Mutex: export calls on OkHttp threads and sign-out use these without
+        // suspending.
         fun <T> current(action: () -> T): T? = synchronized(this@ExportAccount) {
             if (generation == this@ExportAccount.generation && this in leases) action() else null
         }

@@ -45,7 +45,11 @@ class AccountRefresh(
 
     override suspend fun forgetAccount() = forget()
 
-    /** Guards [answers], and [refreshing]'s job read with it. */
+    /**
+     * Guards [answers], and [refreshing]'s job read with it. A JVM lock, not a Mutex, because
+     * refreshOnReconnect() is called without suspending, and reads the running job and the count
+     * together.
+     */
     private val lock = Any()
 
     /** Counts the refreshes whose `GET /api/v9/me` answered, so [refreshOnReconnect] can tell. */

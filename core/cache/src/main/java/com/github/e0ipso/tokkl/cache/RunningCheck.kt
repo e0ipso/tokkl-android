@@ -123,6 +123,8 @@ class RunningCheckWorker(
 class RunningCheckResults {
     private var generation = 0L
 
+    // A JVM lock, not a Mutex: WorkManager's threads and the sign-out call these without
+    // suspending.
     @Synchronized
     fun generation(): Long = generation
 

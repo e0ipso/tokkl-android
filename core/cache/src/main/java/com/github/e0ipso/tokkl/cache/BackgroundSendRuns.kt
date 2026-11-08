@@ -10,6 +10,7 @@ import java.util.concurrent.ExecutionException
  * Every callback may block on disk; call these methods off the main thread.
  */
 class BackgroundSendRuns {
+    // A JVM lock, not a Mutex: WorkManager's threads call this without suspending.
     private val lock = Any()
     private val joined = mutableSetOf<UUID>()
 

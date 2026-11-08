@@ -69,6 +69,9 @@ class ReminderSetting(
 
     /** The preferences the reminder follows, loaded from the store on the first read. */
     val state: StateFlow<ReminderPreferences> by lazy { loaded.state.asStateFlow() }
+
+    // A JVM lock, not a Mutex: changes come from the main thread and refreshes from the IO
+    // dispatcher, neither suspending.
     private val lock = Any()
     private val sending = Mutex()
     private var changed = false
