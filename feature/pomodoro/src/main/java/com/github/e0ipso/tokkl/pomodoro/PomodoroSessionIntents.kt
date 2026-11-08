@@ -15,8 +15,8 @@ internal const val POMODORO_NOTIFICATION_ACCOUNT = "pomodoro_notification_accoun
  * also carries the [revision] its notification showed.
  */
 internal fun Intent.putNotificationIdentity(account: String, phase: PomodoroPhaseKey, revision: Long? = null): Intent =
-    putPhase(phase, revision, unique = true).apply {
-        data = data!!.buildUpon().appendQueryParameter("account", account).build()
+    putPhase(phase, revision).apply {
+        data = phaseUri(phase, revision).buildUpon().appendQueryParameter("account", account).build()
         putExtra(POMODORO_NOTIFICATION_ACCOUNT, account)
     }
 

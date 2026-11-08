@@ -112,6 +112,9 @@ class PomodoroRingingService : Service() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val ringing: ServicePomodoroRinging by inject()
     private val pomodoroAlarm: PomodoroPhaseAlarm by inject()
+
+    // These three need the service as a Context, which Android attaches only just before
+    // onCreate, and onCreate makes them in this order before anything reads them.
     private lateinit var notifier: PomodoroRingingNotifier
 
     @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)

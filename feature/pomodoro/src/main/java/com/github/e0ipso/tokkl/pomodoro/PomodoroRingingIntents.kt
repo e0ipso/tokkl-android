@@ -17,13 +17,16 @@ private const val EXTRA_REVISION = "pomodoro_revision"
 fun Intent.putPhase(phase: PomodoroPhaseKey, revision: Long? = null, unique: Boolean = false): Intent = apply {
     putExtra(EXTRA_PHASE_START, phase.start.toEpochMilli())
     if (revision != null) putExtra(EXTRA_REVISION, revision)
-    if (unique) {
-        val uri = Uri.Builder().scheme(
-            "tokkl-pomodoro",
-        ).authority("phase").appendPath(phase.start.toEpochMilli().toString())
-        if (revision != null) uri.appendPath(revision.toString())
-        data = uri.build()
-    }
+    if (unique) data = phaseUri(phase, revision)
+}
+
+/** The data URI that keeps one phase's, and one revision's, PendingIntents apart. */
+internal fun phaseUri(phase: PomodoroPhaseKey, revision: Long?): Uri {
+    val uri = Uri.Builder().scheme(
+        "tokkl-pomodoro",
+    ).authority("phase").appendPath(phase.start.toEpochMilli().toString())
+    if (revision != null) uri.appendPath(revision.toString())
+    return uri.build()
 }
 
 /** The phase this intent carries, or null without one. */

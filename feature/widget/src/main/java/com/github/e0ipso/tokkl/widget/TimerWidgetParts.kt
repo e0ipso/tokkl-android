@@ -238,7 +238,7 @@ internal fun Dot(color: ColorProvider) {
 internal fun StackedBar(context: Context, projects: List<WidgetDayProject>, day: WidgetDayReport?, width: Float) {
     val total = projects.sumOf { it.stoppedSeconds }.coerceAtLeast(1)
     val label = projects.mapIndexed { index, project ->
-        val name = projectName(context, project, index == 4 && day!!.projects.size > 5)
+        val name = projectName(context, project, index == 4 && day?.projects.orEmpty().size > 5)
         val duration = project.formattedStopped.ifEmpty {
             formatDurationWithoutSeconds(
                 project.stoppedSeconds,

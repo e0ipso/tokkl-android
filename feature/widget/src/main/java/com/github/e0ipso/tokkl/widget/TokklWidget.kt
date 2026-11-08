@@ -330,7 +330,8 @@ private fun ColumnScope.TimerCard(context: Context, state: WidgetState.Ready, ki
         }
         val billableRow = !active && !large && count > 0
         segments.take(if (billableRow) count - 1 else count).forEachIndexed { index, project ->
-            val other = index == WidgetLayout.MAX_SEGMENTS - 1 && day!!.projects.size > WidgetLayout.MAX_SEGMENTS
+            val other = index == WidgetLayout.MAX_SEGMENTS - 1 &&
+                day?.projects.orEmpty().size > WidgetLayout.MAX_SEGMENTS
             ProjectRow(context, project, day, other, large, width, scale)
         }
         if (billableRow) {

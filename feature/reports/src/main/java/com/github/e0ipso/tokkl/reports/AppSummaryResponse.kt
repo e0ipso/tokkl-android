@@ -122,9 +122,10 @@ private fun amountsOf(
     rawTotals: JsonObject,
     extras: ReportExtraProjection,
 ): List<Amount> {
-    val rawAmounts = rawTotals["amounts"] as? JsonArray
+    // The decoded amounts come from this array, so without it there are none.
+    val rawAmounts = rawTotals["amounts"] as? JsonArray ?: return emptyList()
     return response.totals.amounts.orEmpty().mapIndexedNotNull { index, amount ->
-        val raw = rawAmounts!![index].jsonObject
+        val raw = rawAmounts[index].jsonObject
         raw.requireStrings("currency")
         raw.requireNumbers("cents")
         // A currency with no amount must not be turned into a zero-priced currency.

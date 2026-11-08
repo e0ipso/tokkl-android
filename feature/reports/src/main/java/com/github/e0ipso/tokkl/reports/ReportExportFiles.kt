@@ -14,7 +14,9 @@ import java.util.UUID
  * day and sign-out removes both areas. The provider also refuses expired reads.
  */
 class ReportExportFiles(private val root: File, private val now: () -> Long = System::currentTimeMillis) : ExportFiles {
-    class Pending internal constructor(val staging: File, val completed: File) : Closeable {
+    class Pending internal constructor(val staging: File, val directory: File, filename: String) : Closeable {
+        val completed = File(directory, filename)
+
         override fun close() {
             staging.delete()
         }
@@ -36,7 +38,7 @@ class ReportExportFiles(private val root: File, private val now: () -> Long = Sy
         val id = UUID.randomUUID().toString()
         val part = File(staging, "$id.part")
         if (!part.createNewFile()) throw IOException("Cannot create export file")
-        Pending(part, File(File(shared, id), filename))
+        Pending(part, File(shared, id), filename)
     }
 
     /** Must run inside the account lease. fsync/close precede this atomic rename. */
@@ -46,7 +48,7 @@ class ReportExportFiles(private val root: File, private val now: () -> Long = Sy
         }
         validateCsv(pending.staging)
         prune(File(root, "shared"), MAX_FILES - 1)
-        val directory = pending.completed.parentFile!!
+        val directory = pending.directory
         if (!directory.mkdirs()) throw IOException("Cannot create export destination")
         if (!pending.staging.renameTo(pending.completed)) {
             directory.delete()

@@ -88,6 +88,8 @@ internal fun FullscreenTimerContent(state: TimerState, actions: FullscreenTimerA
     val token = state.target
     val elapsed = rememberElapsedSeconds(running?.countsFrom, clock) + (running?.accumulatedSeconds ?: 0)
     val seconds = paused?.seconds ?: elapsed
+    val fields = running?.fields ?: paused?.fields
+    val labels = running?.labels ?: paused?.labels
     val focus = LocalFocusManager.current
     Scaffold(contentWindowInsets = ScrollingScreenInsets) { padding ->
         Column(
@@ -103,7 +105,7 @@ internal fun FullscreenTimerContent(state: TimerState, actions: FullscreenTimerA
             }) {
                 Text(stringResource(R.string.timer_exit_fullscreen))
             }
-            if (token != null && (running != null || paused != null)) {
+            if (token != null && fields != null && labels != null) {
                 Text(
                     stringResource(if (paused != null) UiR.string.timer_paused else UiR.string.timer_running),
                     style = MaterialTheme.typography.titleLarge,
@@ -117,8 +119,6 @@ internal fun FullscreenTimerContent(state: TimerState, actions: FullscreenTimerA
                     style = TokklTheme.clockTextStyle.copy(fontSize = 56.sp, lineHeight = 64.sp),
                     modifier = Modifier.testTag("fullscreen_elapsed").semantics { contentDescription = spoken },
                 )
-                val fields = running?.fields ?: paused!!.fields
-                val labels = running?.labels ?: paused!!.labels
                 Text(
                     fields.description.ifEmpty { stringResource(FieldsR.string.timer_suggestion_no_description) },
                     style = MaterialTheme.typography.headlineSmall,
