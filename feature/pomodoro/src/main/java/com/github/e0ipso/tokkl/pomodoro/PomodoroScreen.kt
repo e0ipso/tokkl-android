@@ -41,12 +41,10 @@ import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.catalog.CatalogPage
 import com.github.e0ipso.tokkl.entryfields.EntryFieldsEditor
 import com.github.e0ipso.tokkl.entryfields.EntryPicker
-import com.github.e0ipso.tokkl.entryfields.entryLabels
 import com.github.e0ipso.tokkl.entryfields.picked
-import com.github.e0ipso.tokkl.entryfields.withPicked
 import com.github.e0ipso.tokkl.feature.pomodoro.R
 import com.github.e0ipso.tokkl.picker.EntityPicker
-import com.github.e0ipso.tokkl.picker.PickerSource
+import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.time.SECONDS_PER_MINUTE
 import com.github.e0ipso.tokkl.timernotice.TimerNotice
@@ -70,7 +68,7 @@ fun PomodoroScreen(
     onNotificationRetry: () -> Unit = {},
     notificationPermissionRevision: Int = 0,
 ) {
-    val state by model.state.collectAsStateWithLifecycle()
+    val state by model.page.collectAsStateWithLifecycle()
     val catalog by model.picker.collectAsStateWithLifecycle()
     val offline by model.offline.collectAsStateWithLifecycle()
     val lifecycle = LocalLifecycleOwner.current.lifecycle
@@ -96,6 +94,7 @@ fun PomodoroScreen(
         state = state,
         onLengths = model::editLengths,
         onFields = { model.editFields(it, displayed?.entryId) },
+        onPick = { fields, picked -> model.pick(fields, picked, displayed?.entryId) },
         onDescription = { model.editFields(it, displayed?.entryId, send = false) },
         onDescriptionFinish = { model.fieldsDone(displayed?.entryId) },
         onStart = {
@@ -104,7 +103,6 @@ fun PomodoroScreen(
         },
         onNext = { model.next(displayed) },
         onEnd = { model.end(displayed) },
-        catalog = catalog,
         picker = { original, picked, onPicked, pickerModifier ->
             state.workspaceId?.let { workspace ->
                 EntityPicker(catalog, offline, workspace, original, picked, onPicked, pickerModifier)
@@ -145,13 +143,13 @@ fun PomodoroContent(
     state: PomodoroPageState,
     onLengths: (PomodoroLengths) -> Unit,
     onFields: (EntryFields) -> Unit,
+    onPick: (EntryFields, Picked) -> Unit,
     onDescription: (EntryFields) -> Unit,
     onDescriptionFinish: () -> Unit,
     onStart: () -> Unit,
     onNext: () -> Unit,
     onEnd: () -> Unit,
     modifier: Modifier = Modifier,
-    catalog: PickerSource = PickerSource(),
     picker: EntryPicker = { _, _, _, _ -> },
     clock: Clock = Clock.systemUTC(),
     onFullScreenSettings: () -> Unit = {},
@@ -249,12 +247,12 @@ fun PomodoroContent(
                 }
                 EntryFieldsEditor(
                     fields = state.fields,
-                    labels = entryLabels(state.fields, catalog.projects, catalog.tasks),
+                    labels = state.labels,
                     original = state.fields.picked,
                     descriptionHint = stringResource(R.string.pomodoro_description_hint),
                     onDescriptionChange = { onDescription(state.fields.copy(description = it)) },
                     onDescriptionFinish = onDescriptionFinish,
-                    onPick = { onFields(state.fields.withPicked(it, catalog.projects)) },
+                    onPick = { onPick(state.fields, it) },
                     onBillableChange = { onFields(state.fields.copy(billable = it)) },
                     picker = picker,
                     enabled = !state.busy && state.workspaceId != null,

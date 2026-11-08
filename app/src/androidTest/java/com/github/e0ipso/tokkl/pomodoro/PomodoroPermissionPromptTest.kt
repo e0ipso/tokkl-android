@@ -93,7 +93,7 @@ class PomodoroPermissionPromptTest {
                 TokklTheme {
                     Box {
                         PomodoroContent(
-                            page, {}, {}, {}, {}, onStart = {
+                            page, {}, {}, { _, _ -> }, {}, {}, onStart = {
                                 started++
                                 starts.trySend(Unit)
                             },

@@ -151,6 +151,7 @@ class PomodoroPageFontScaleTest {
                     state,
                     onLengths = { state = state.copy(lengths = it) },
                     onFields = { state = state.copy(fields = it) },
+                    onPick = { _, _ -> },
                     onDescription = { state = state.copy(fields = it) },
                     onDescriptionFinish = {},
                     onStart = { starts++ }, onNext = { nexts++ }, onEnd = { ends++ }, clock = clock,

@@ -114,7 +114,8 @@ class PomodoroAlarmContentTest {
                 PomodoroContent(
                     page, onLengths = {
                     }, onFields = {
-                    }, onDescription = {}, onDescriptionFinish = {}, onStart = {}, onNext = {}, onEnd = {},
+                    }, onPick = { _, _ -> }, onDescription = {}, onDescriptionFinish = {}, onStart = {},
+                    onNext = {}, onEnd = {},
                     onFullScreenSettings = { settings++ },
                 )
             }
@@ -150,7 +151,8 @@ class PomodoroAlarmContentTest {
                     PomodoroPageState(loading = false, fullScreenDenied = true),
                     onLengths = {
                     }, onFields = {
-                    }, onDescription = {}, onDescriptionFinish = {}, onStart = {}, onNext = {}, onEnd = {},
+                    }, onPick = { _, _ -> }, onDescription = {}, onDescriptionFinish = {}, onStart = {},
+                    onNext = {}, onEnd = {},
                     fullScreenSettingsUnavailable = true,
                 )
             }

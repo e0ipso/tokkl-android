@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import com.github.e0ipso.tokkl.api.TimerPomodoro
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.PendingChange
+import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
@@ -55,6 +56,8 @@ data class PomodoroPageState(
     val lengths: PomodoroLengths = PomodoroLengths.from(PomodoroDefaults.DEFAULT),
     /** The start form's entry fields while idle, and the open pomodoro's while a session runs. */
     val fields: EntryFields = EntryFields(),
+    /** The names of [fields]'s project and task, from the cached rows the picker offers. */
+    val labels: EntryLabels = EntryLabels(),
     /** The server's timer state with the time the phone got it. */
     val held: HeldTimerState? = null,
     val account: AccountSettings? = null,

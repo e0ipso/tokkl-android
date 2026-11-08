@@ -643,7 +643,8 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
                     state = state,
                     onLengths = {
                     }, onFields = {
-                    }, onDescription = {}, onDescriptionFinish = {}, onStart = {}, onNext = {}, onEnd = {},
+                    }, onPick = { _, _ -> }, onDescription = {}, onDescriptionFinish = {}, onStart = {},
+                    onNext = {}, onEnd = {},
                     clock = TODAY,
                 )
             }

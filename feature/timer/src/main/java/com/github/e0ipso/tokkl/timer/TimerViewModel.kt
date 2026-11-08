@@ -81,7 +81,8 @@ class TimerViewModel(
     discardNotices: Flow<DiscardedPomodoro?> = flowOf(null),
     takeDiscardNotice: suspend () -> DiscardedPomodoro? = { null },
     timerApi: Flow<Boolean> = flowOf(true),
-) : ViewModel(scope) {
+) : ViewModel(scope),
+    TimerNoticeQueue {
 
     private val local = MutableStateFlow(TimerTaps())
 
@@ -140,7 +141,7 @@ class TimerViewModel(
      * the latest failed pause chain action, then a too-short pomodoro no screen has shown yet. A
      * screen [claim]s a notice before it shows it and calls [noticeShown] after.
      */
-    val notice: StateFlow<TimerNotice?> = notices.notices(discardNotices)
+    override val notice: StateFlow<TimerNotice?> = notices.notices(discardNotices)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
 
     /**
@@ -148,10 +149,10 @@ class TimerViewModel(
      * there is nothing left to show. A too-short pomodoro is recorded as shown here, once, so a
      * replay of its state or a restart does not show it again.
      */
-    suspend fun claim(notice: TimerNotice): TimerNotice? = notices.claim(notice)
+    override suspend fun claim(notice: TimerNotice): TimerNotice? = notices.claim(notice)
 
     /** The screen has shown [notice], or stopped showing it. */
-    fun noticeShown(notice: TimerNotice) = notices.shown(notice)
+    override fun noticeShown(notice: TimerNotice) = notices.shown(notice)
 
     /** Starts a timer with the idle timer's fields, unless one runs or no workspace is known yet. */
     fun start() {

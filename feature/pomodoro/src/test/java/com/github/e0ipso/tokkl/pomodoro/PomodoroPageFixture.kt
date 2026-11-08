@@ -11,6 +11,7 @@ import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.PendingChange
 import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
+import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
@@ -208,10 +209,12 @@ internal class PageFixture(
     val refused = MutableStateFlow<List<PendingChange>>(emptyList())
     val queueSends = CopyOnWriteArrayList<String>()
     var alarmsDenied = false
+    val picker = MutableStateFlow(PickerSource())
     val page = PomodoroViewModel(
         held, controls, server, changes, defaults, settings, unsent, refused, scope,
         sendQueued = { queueSends += "send" },
         alarmProbe = { alarmsDenied },
+        picker = picker,
     )
 
     fun close() = scope.cancel()

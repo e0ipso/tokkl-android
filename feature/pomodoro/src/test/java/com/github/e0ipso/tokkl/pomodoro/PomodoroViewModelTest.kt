@@ -1,10 +1,16 @@
 package com.github.e0ipso.tokkl.pomodoro
 
+import com.github.e0ipso.tokkl.cache.CachedProject
+import com.github.e0ipso.tokkl.cache.CachedTask
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
+import com.github.e0ipso.tokkl.entryfields.EntryLabels
+import com.github.e0ipso.tokkl.picker.Picked
+import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -34,6 +40,23 @@ class PomodoroViewModelTest {
         assertEquals(PomodoroDefaults(40, 8, 20, 3), f.defaults.value)
         f.defaults.value = PomodoroDefaults(45, 9, 20, 3)
         assertEquals("a changed default does not overwrite what the user typed", "30", f.page.state.value.lengths.work)
+    }
+
+    @Test
+    fun thePageNamesTheFieldsProjectAndTaskAndPickingABillableProjectMakesThemBillable() {
+        val f = idle()
+        val drawn = f.scope.launch { f.page.page.collect {} }
+        f.picker.value = PickerSource(
+            projects = listOf(CachedProject(7, WORKSPACE, null, "Ops", "#d94182", active = true, billable = true)),
+            tasks = listOf(CachedTask(70, WORKSPACE, 7, "Triage", active = true)),
+        )
+        f.page.pick(EntryFields(description = "Rota"), Picked(projectId = 7, taskId = 70), entryId = null)
+        assertEquals(
+            EntryFields(description = "Rota", projectId = 7, taskId = 70, billable = true),
+            f.page.state.value.fields,
+        )
+        assertEquals(EntryLabels(project = "Ops", projectColor = "#d94182", task = "Triage"), f.page.page.value.labels)
+        drawn.cancel()
     }
 
     @Test

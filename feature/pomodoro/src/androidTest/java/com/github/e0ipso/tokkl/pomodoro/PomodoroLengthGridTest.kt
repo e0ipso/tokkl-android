@@ -110,6 +110,7 @@ class PomodoroLengthGridTest {
                     page,
                     onLengths = { page = page.copy(lengths = it) },
                     onFields = {},
+                    onPick = { _, _ -> },
                     onDescription = {},
                     onDescriptionFinish = {},
                     onStart = {},

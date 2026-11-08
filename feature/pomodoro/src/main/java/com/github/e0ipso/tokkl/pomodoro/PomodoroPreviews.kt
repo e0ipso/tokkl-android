@@ -57,6 +57,7 @@ private fun FormPreview(state: PomodoroPageState) {
             state = state,
             onLengths = {},
             onFields = {},
+            onPick = { _, _ -> },
             onDescription = {},
             onDescriptionFinish = {},
             onStart = {},

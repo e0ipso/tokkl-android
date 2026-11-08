@@ -10,6 +10,9 @@ import com.github.e0ipso.tokkl.cache.PendingChange
 import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
 import com.github.e0ipso.tokkl.cache.fields
 import com.github.e0ipso.tokkl.cache.toCached
+import com.github.e0ipso.tokkl.entryfields.entryLabels
+import com.github.e0ipso.tokkl.entryfields.withPicked
+import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.platform.whileShown
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
@@ -26,6 +29,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
@@ -84,6 +88,11 @@ class PomodoroViewModel(
 
     /** What the page's picker offers, while the page reads it. */
     val picker: StateFlow<PickerSource> = picker.stateIn(viewModelScope, whileShown, PickerSource())
+
+    /** What the page draws: [state], with its fields' project and task named from [picker]'s rows. */
+    val page: StateFlow<PomodoroPageState> = combine(state, this.picker) { shown, source ->
+        shown.copy(labels = entryLabels(shown.fields, source.projects, source.tasks))
+    }.stateIn(viewModelScope, whileShown, state.value)
 
     /** Commands to the server run one at a time, in tap order. */
     private val commands = Mutex()
@@ -212,6 +221,13 @@ class PomodoroViewModel(
         publish()
         return if (send) write(change) else null
     }
+
+    /**
+     * Gives [fields], which the page drew, the project, task and tags in [picked], as
+     * [editFields] does. Picking a billable project makes them billable.
+     */
+    fun pick(fields: EntryFields, picked: Picked, entryId: Long?): Job? =
+        editFields(fields.withPicked(picked, picker.value.projects), entryId)
 
     /** Sends a description typed for the open pomodoro when it differs from the cache's. */
     fun fieldsDone(entryId: Long? = state.value.pomodoro?.entryId): Job? {
