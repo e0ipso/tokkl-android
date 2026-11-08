@@ -143,7 +143,7 @@ val timerFeatureModule = module {
             store = FavoritesServer(client = get<Session>(), cache = cache)::save,
             scope = scope,
             io = io(),
-            picker = cache.pickerSource(),
+            picker = pickerSource(cache.projects, cache.clients, cache.tasks, cache.tags),
             offline = get<DefaultNetwork>().offlineIn(scope),
             workspaceId = get<AccountSettingsSource>().state.map { it?.defaultWorkspaceId },
         )
@@ -160,7 +160,7 @@ val timerFeatureModule = module {
             scope = scope,
             clock = get(),
             allDay = get<CapabilitiesSource>().state.map { it.allDay == true },
-            picker = cache.pickerSource(),
+            picker = pickerSource(cache.projects, cache.clients, cache.tasks, cache.tags),
             offline = get<DefaultNetwork>().offlineIn(scope),
         ).also { form -> params.getOrNull<EntryFormRequest>()?.openIn(form) }
     }
@@ -170,7 +170,7 @@ val timerFeatureModule = module {
         TimerPageViewModel(
             views = get(),
             entries = cache.timeEntries,
-            picker = cache.pickerSource(),
+            picker = pickerSource(cache.projects, cache.clients, cache.tasks, cache.tags),
             settings = get<AccountSettingsSource>().state,
             offline = get<DefaultNetwork>().offlineIn(scope),
             clock = get(),

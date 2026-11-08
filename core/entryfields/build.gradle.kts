@@ -10,8 +10,10 @@ android {
 }
 
 dependencies {
-    // The fields and the picker's options are the cache's projects, tasks, tags and entries.
-    api(project(":core:cache"))
+    // The fields and the picker's options are the model's projects, tasks, tags and entries, in
+    // the account's time, drawn with the design system.
+    api(project(":core:model"))
+    api(project(":core:time"))
     api(project(":core:ui"))
 
     implementation(libs.androidx.compose.material3)

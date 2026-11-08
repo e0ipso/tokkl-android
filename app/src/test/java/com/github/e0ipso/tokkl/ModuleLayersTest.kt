@@ -131,6 +131,18 @@ class ModuleLayersTest {
         assertEquals("core module dependencies against CORE_LAYERS", emptyList<String>(), wrong)
     }
 
+    /**
+     * A module exposes with `api` only the modules whose types its public API carries, so a module
+     * that uses it compiles against no more than it needs: a picker brings no Room or OkHttp to its
+     * users. [EXPOSED] lists every such dependency with why, so a new one needs a reason.
+     */
+    @Test
+    fun everyExposedModuleIsListed() {
+        val exposed = modules.filter { it.apiDependencies.isNotEmpty() }.associate { it.path to it.apiDependencies }
+
+        assertEquals(EXPOSED, exposed)
+    }
+
     @Test
     fun noModulesDependOnEachOtherInACycle() {
         val graph = modules.associate { it.path to (it.mainDependencies + it.fixtureDependencies) }
@@ -166,6 +178,28 @@ class ModuleLayersTest {
     }
 
     private companion object {
+        /** The modules each module exposes with `api`, because its public signatures carry their types. */
+        val EXPOSED: Map<String, Set<String>> = mapOf(
+            // The session's stores, refresh and sign-out take and give the API's, the model's, the
+            // account time's and the disk stores' types.
+            ":core:session" to setOf(":core:api", ":core:model", ":core:time", ":core:platform"),
+            // The cache's reads and changes take the session's types and give the model's.
+            ":core:cache" to setOf(":core:session", ":core:model"),
+            // The timer state reads the cache's running entry and queue.
+            ":core:timerstate" to setOf(":core:cache"),
+            // The timer event stream feeds the account's timer state.
+            ":core:timersync" to setOf(":core:timerstate"),
+            // The catalog pages' model carries the API's errors, the session's server problems, the
+            // model's ids and the platform's page loads, and draws with the design system.
+            ":core:catalog" to setOf(":core:api", ":core:session", ":core:model", ":core:ui", ":core:platform"),
+            // The entry fields edit the model's entries in the account's time with the design system.
+            ":core:entryfields" to setOf(":core:model", ":core:time", ":core:ui"),
+            // The trust prompts show the session's trust state.
+            ":core:trust" to setOf(":core:session"),
+            // Routes carry the model's ids, and pages their section hue and the capabilities they need.
+            ":core:navigation" to setOf(":core:model", ":core:ui"),
+        )
+
         /**
          * The core modules in layers, lowest first. The bottom layer needs no other core module:
          * the model, the API client, the time helpers, the design system and the Android

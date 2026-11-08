@@ -165,6 +165,7 @@ val pomodoroFeatureModule = module {
         val changes = get<ChangeQueue>()
         val sender = get<ChangeSender>()
         val alarms = get<PomodoroAlarmScheduler>()
+        val cache = get<AccountCache>()
         val scope = viewModelCoroutineScope()
         PomodoroViewModel(
             held = get<AccountTimerStates>().held,
@@ -178,7 +179,7 @@ val pomodoroFeatureModule = module {
             scope = scope,
             sendQueued = sender::sendQueued,
             alarmProbe = { alarms.permissionDenied },
-            picker = get<AccountCache>().pickerSource(),
+            picker = pickerSource(cache.projects, cache.clients, cache.tasks, cache.tags),
             offline = get<DefaultNetwork>().offlineIn(scope),
         )
     }

@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.picker
 
 import androidx.compose.runtime.Immutable
-import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.model.Client
 import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.model.ProjectId
@@ -44,8 +43,13 @@ data class PickerSource(
     val tags: List<Tag> = emptyList(),
 )
 
-/** The cache's projects, clients, tasks and tags, each time one of them changes. */
-fun AccountCache.pickerSource(): Flow<PickerSource> = combine(projects, clients, tasks, tags, ::PickerSource)
+/** The [projects], [clients], [tasks] and [tags], such as the cache's, each time one of them changes. */
+fun pickerSource(
+    projects: Flow<List<Project>>,
+    clients: Flow<List<Client>>,
+    tasks: Flow<List<Task>>,
+    tags: Flow<List<Tag>>,
+): Flow<PickerSource> = combine(projects, clients, tasks, tags, ::PickerSource)
 
 /** The projects of one client, or of none when [clientName] is null. */
 data class ProjectGroup(val clientName: String?, val clientArchived: Boolean, val projects: List<ProjectOption>)

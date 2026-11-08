@@ -26,7 +26,9 @@ fun CachedEntityPicker(
     modifier: Modifier = Modifier,
 ) {
     val scope = rememberCoroutineScope()
-    val source by remember(cache) { cache.pickerSource() }.collectAsStateWithLifecycle(PickerSource())
+    val source by remember(cache) {
+        pickerSource(cache.projects, cache.clients, cache.tasks, cache.tags)
+    }.collectAsStateWithLifecycle(PickerSource())
     val offline by remember(network, scope) { network.offlineIn(scope) }.collectAsStateWithLifecycle()
     EntityPicker(source, offline, WorkspaceId(workspaceId), original, picked, onPickedChange, modifier)
 }
