@@ -21,7 +21,7 @@ kk_relates_to:
 kk_depends_on: []
 kk_confidence: high
 ---
-`core/cache/src/main/java/com/github/e0ipso/tokkl/cache/RunningCheck.kt` owns unique periodic WorkManager work named `running-check`. `RunningCheck` and `RunningCheckResults` are Koin singles, and `AppStartup` follows whether the cache holds a running timer through `RunningCheck.follow`. One connected check waits every 15 minutes while running and is cancelled when idle; the first check also waits a period.
+`core/cache/src/main/java/com/github/e0ipso/tokkl/cache/RunningCheck.kt` owns unique periodic WorkManager work named `running-check`. `RunningCheck` and `RunningCheckResults` are Koin singles, and the data module's `AppHook` (`AppHookOrder.RUNNING_CHECK`), which `AppStartup` runs at process start, follows whether the cache holds a running timer through `RunningCheck.follow`. One connected check waits every 15 minutes while running and is cancelled when idle; the first check also waits a period.
 
 `RunningCheckWorker` reads only `GET /api/v9/me/time_entries/current`, then calls `AccountCache.checkedRunning`. It neither drains the queue nor refreshes history. A failed request leaves the cache unchanged until the next period, with no intervening retry. A remote stop clears the cached running row, which also clears the cache-following notification, widget and tile.
 
