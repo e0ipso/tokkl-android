@@ -7,6 +7,8 @@ import com.github.e0ipso.tokkl.api.Refusable
 import com.github.e0ipso.tokkl.api.SessionStartBody
 import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.api.TokklApi
+import com.github.e0ipso.tokkl.api.fold
+import com.github.e0ipso.tokkl.api.map
 import com.github.e0ipso.tokkl.cache.CREATED_WITH
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.WorkspaceId
@@ -43,10 +45,7 @@ class TimerActions(
 
     /** Reads the state with `GET /api/app/timer`. */
     override suspend fun read(): TimerActionResult = call { api ->
-        when (val answer = api.timer.state()) {
-            is ApiResult.Success -> ApiResult.Success(Refusable(answer.value, refused = false))
-            is ApiResult.Failure -> answer
-        }
+        api.timer.state().map { Refusable(it, refused = false) }
     }
 
     /**
@@ -86,21 +85,13 @@ class TimerActions(
             val holder = states()
             // Before the request, so its answer cannot undo a change the phone makes meanwhile.
             val read = holder.begin()
-            when (val answer = request(api)) {
-                is ApiResult.Success -> {
-                    holder.accept(read, answer.value.value)
-                    if (answer.value.refused) TimerActionResult.Refused else TimerActionResult.Done
-                }
-
-                is ApiResult.Failure ->
-                    if (answer.error is ApiError.Network) {
-                        TimerActionResult.Offline
-                    } else {
-                        TimerActionResult.Failed(
-                            answer.error,
-                        )
-                    }
-            }
+            request(api).fold(
+                onSuccess = { answer ->
+                    holder.accept(read, answer.value)
+                    if (answer.refused) TimerActionResult.Refused else TimerActionResult.Done
+                },
+                onFailure = { if (it is ApiError.Network) TimerActionResult.Offline else TimerActionResult.Failed(it) },
+            )
         }
 }
 

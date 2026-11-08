@@ -5,6 +5,7 @@ import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.FavoriteBody
 import com.github.e0ipso.tokkl.api.FavoritesChange
+import com.github.e0ipso.tokkl.api.map
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.Favorite
@@ -27,13 +28,8 @@ class FavoritesServer(private val client: ApiClientProvider, private val cache: 
      */
     suspend fun save(favorites: List<EntryFields>): ApiResult<Unit> {
         val api = client() ?: return ApiResult.Failure(ApiError.AuthFailed)
-        return when (val answer = api.account.savePreferences(favoritesBody(favorites), JsonElement.serializer())) {
-            is ApiResult.Failure -> answer
-
-            is ApiResult.Success -> {
-                cache.replaceFavorites(favorites.mapIndexed { position, fields -> fields.toFavorite(position) })
-                ApiResult.Success(Unit)
-            }
+        return api.account.savePreferences(favoritesBody(favorites), JsonElement.serializer()).map {
+            cache.replaceFavorites(favorites.mapIndexed { position, fields -> fields.toFavorite(position) })
         }
     }
 }

@@ -4,6 +4,10 @@ import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.TokklApi
+import com.github.e0ipso.tokkl.api.flatMap
+import com.github.e0ipso.tokkl.api.getOrElse
+import com.github.e0ipso.tokkl.api.map
+import com.github.e0ipso.tokkl.api.onFailure
 import java.time.temporal.ChronoUnit
 
 /** The change as it went to the server, the server's id for its entry, and the entry as the server stored it. */
@@ -28,35 +32,20 @@ internal class ChangeTries(
 
     /** Sends an update, a legacy stop or a restore, as [sendOnce] does. */
     suspend fun update(api: TokklApi, change: PendingChange): ApiResult<SentChange> =
-        when (val result = sendOnce(api, change)) {
-            is ApiResult.Success -> ApiResult.Success(SentChange(change, result.value.id, result.value.toCached()))
-            is ApiResult.Failure -> result
-        }
+        sendOnce(api, change).map { SentChange(change, it.id, it.toCached()) }
 
     /** A captured Stop may already have reached the server even when its reply was lost. */
     suspend fun capturedStop(api: TokklApi, change: PendingChange): ApiResult<SentChange> {
-        if (change.maybeSent) {
-            when (val found = stoppedOnServer(api, change)) {
-                is ApiResult.Success -> if (found.value) {
-                    return ApiResult.Success(
-                        SentChange(change, change.entryId, if (change.shortStop) null else change.entry()),
-                    )
-                }
-
-                is ApiResult.Failure -> return found
-            }
+        if (change.maybeSent && stoppedOnServer(api, change).getOrElse { return it }) {
+            return ApiResult.Success(SentChange(change, change.entryId, if (change.shortStop) null else change.entry()))
         }
         store.maybeSent(change, true)
-        return when (val result = sendOnce(api, change)) {
-            is ApiResult.Success -> if (result.value.matchesStop(change)) {
-                ApiResult.Success(
-                    SentChange(change, result.value.id, if (change.shortStop) null else result.value.toCached()),
-                )
+        return sendOnce(api, change).flatMap { entry ->
+            if (entry.matchesStop(change)) {
+                ApiResult.Success(SentChange(change, entry.id, if (change.shortStop) null else entry.toCached()))
             } else {
                 ApiResult.Failure(ApiError.UnexpectedStatus(CONFLICT, "The server stored a different Stop outcome"))
             }
-
-            is ApiResult.Failure -> result
         }
     }
 
@@ -86,33 +75,15 @@ internal class ChangeTries(
      */
     suspend fun create(api: TokklApi, queued: PendingChange): ApiResult<SentChange> {
         if (queued.maybeSent) {
-            when (val found = earlierCopy(api, queued, spans, store)) {
-                is ApiResult.Success -> found.value?.let {
-                    return ApiResult.Success(
-                        SentChange(queued, it.id, it.toCached()),
-                    )
-                }
-
-                is ApiResult.Failure -> return found
+            earlierCopy(api, queued, spans, store).getOrElse { return it }?.let {
+                return ApiResult.Success(SentChange(queued, it.id, it.toCached()))
             }
         }
-        val change = if (queued.stop == null) {
-            when (val result = endBeforeALaterTimer(api, queued)) {
-                is ApiResult.Success -> result.value
-                is ApiResult.Failure -> return result
-            }
-        } else {
-            queued
-        }
+        val change = if (queued.stop == null) endBeforeALaterTimer(api, queued).getOrElse { return it } else queued
         if (!change.maybeSent) store.maybeSent(change, true)
-        return when (val result = api.entries.create(change.workspaceId, change.body(allDay()))) {
-            is ApiResult.Success -> ApiResult.Success(SentChange(change, result.value.id, result.value.toCached()))
-
-            is ApiResult.Failure -> {
-                if (result.error.leftNothingOnTheServer()) store.maybeSent(change, false)
-                result
-            }
-        }
+        return api.entries.create(change.workspaceId, change.body(allDay()))
+            .onFailure { if (it.leftNothingOnTheServer()) store.maybeSent(change, false) }
+            .map { SentChange(change, it.id, it.toCached()) }
     }
 
     /**
@@ -152,10 +123,7 @@ internal class ChangeTries(
      * and the server stops an earlier timer itself.
      */
     private suspend fun endBeforeALaterTimer(api: TokklApi, start: PendingChange): ApiResult<PendingChange> {
-        val running = when (val current = api.entries.current()) {
-            is ApiResult.Success -> current.value?.toCached()
-            is ApiResult.Failure -> return current
-        }
+        val running = api.entries.current().getOrElse { return it }?.toCached()
         val later = running?.takeIf { it.stop == null && it.start.isAfter(start.start.truncatedTo(ChronoUnit.SECONDS)) }
         spans.ready()
         return ApiResult.Success(if (later == null) start else store.endBefore(start, later, spans::switched))

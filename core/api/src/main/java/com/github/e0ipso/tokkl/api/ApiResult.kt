@@ -10,9 +10,37 @@ sealed interface ApiResult<out T> {
 }
 
 /** The success's value through [transform], or the failure as it is. */
-inline fun <T, R> ApiResult<T>.map(transform: (T) -> R): ApiResult<R> = when (this) {
-    is ApiResult.Success -> ApiResult.Success(transform(value))
+inline fun <T, R> ApiResult<T>.map(transform: (T) -> R): ApiResult<R> = flatMap { ApiResult.Success(transform(it)) }
+
+/** The result of [transform] on the success's value, such as the next call, or the failure as it is. */
+inline fun <T, R> ApiResult<T>.flatMap(transform: (T) -> ApiResult<R>): ApiResult<R> = when (this) {
+    is ApiResult.Success -> transform(value)
     is ApiResult.Failure -> this
+}
+
+/** [onSuccess] of the value, or [onFailure] of the error. */
+inline fun <T, R> ApiResult<T>.fold(onSuccess: (T) -> R, onFailure: (ApiError) -> R): R = when (this) {
+    is ApiResult.Success -> onSuccess(value)
+    is ApiResult.Failure -> onFailure(error)
+}
+
+/**
+ * The success's value, or what [onFailure] gives for the failure. A caller that passes a failure on
+ * returns it from the lambda: `val me = api.account.me(...).getOrElse { return it }`.
+ */
+inline fun <T> ApiResult<T>.getOrElse(onFailure: (ApiResult.Failure) -> T): T = when (this) {
+    is ApiResult.Success -> value
+    is ApiResult.Failure -> onFailure(this)
+}
+
+/** Runs [action] with the success's value, and gives the result as it is. */
+inline fun <T> ApiResult<T>.onSuccess(action: (T) -> Unit): ApiResult<T> = also {
+    if (it is ApiResult.Success) action(it.value)
+}
+
+/** Runs [action] with the failure's error, and gives the result as it is. */
+inline fun <T> ApiResult<T>.onFailure(action: (ApiError) -> Unit): ApiResult<T> = also {
+    if (it is ApiResult.Failure) action(it.error)
 }
 
 /** Why an API call failed. */

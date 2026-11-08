@@ -5,6 +5,7 @@ import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.api.TrashEntry
+import com.github.e0ipso.tokkl.api.flatMap
 import kotlinx.serialization.builtins.ListSerializer
 import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
@@ -22,14 +23,12 @@ internal suspend fun stoppedOnServer(api: TokklApi, change: PendingChange): ApiR
         }
 
         is ApiResult.Failure -> if (change.shortStop && (result.error as? ApiError.Http)?.status == NOT_FOUND) {
-            when (val trash = api.trash.list(ListSerializer(TrashEntry.serializer()))) {
-                is ApiResult.Success -> if (trash.value.any { it.matchesStop(change) }) {
+            api.trash.list(ListSerializer(TrashEntry.serializer())).flatMap { trash ->
+                if (trash.any { it.matchesStop(change) }) {
                     ApiResult.Success(true)
                 } else {
                     ApiResult.Failure(ApiError.UnexpectedStatus(CONFLICT, "The short Stop is not in Trash"))
                 }
-
-                is ApiResult.Failure -> trash
             }
         } else {
             result

@@ -2,6 +2,8 @@ package com.github.e0ipso.tokkl.projects
 
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.getOrElse
+import com.github.e0ipso.tokkl.api.map
 import com.github.e0ipso.tokkl.catalog.CatalogRepository
 import com.github.e0ipso.tokkl.catalog.SignedInApi
 import com.github.e0ipso.tokkl.model.ProjectId
@@ -18,15 +20,11 @@ class ProjectsRepository(client: ApiClientProvider) : CatalogRepository<Projects
     /** The workspace's projects and, for the form's hints only, its defaults, which may fail alone. */
     override suspend fun load(workspace: WorkspaceId): ApiResult<ProjectsData> = api.call { client ->
         val server = ProjectsServer(client, workspace)
-        when (val projects = server.list()) {
-            is ApiResult.Success -> ApiResult.Success(
-                ProjectsData(
-                    projects = projects.value.filter { it.workspaceId == workspace }.sortedForList(),
-                    defaults = (server.defaults() as? ApiResult.Success)?.value,
-                ),
+        server.list().map { projects ->
+            ProjectsData(
+                projects = projects.filter { it.workspaceId == workspace }.sortedForList(),
+                defaults = server.defaults().getOrElse { null },
             )
-
-            is ApiResult.Failure -> projects
         }
     }
 
@@ -55,12 +53,8 @@ class TasksRepository(client: ApiClientProvider) {
 
     /** [project]'s tasks, open ones first, as the web app lists them. */
     suspend fun load(workspace: WorkspaceId, project: ProjectId): ApiResult<TasksData> = api.call { client ->
-        when (val answer = TasksServer(client, workspace, project).list()) {
-            is ApiResult.Success -> ApiResult.Success(
-                TasksData(answer.value.filter { it.projectId == project }.sortedForList()),
-            )
-
-            is ApiResult.Failure -> answer
+        TasksServer(client, workspace, project).list().map { tasks ->
+            TasksData(tasks.filter { it.projectId == project }.sortedForList())
         }
     }
 

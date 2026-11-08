@@ -2,6 +2,8 @@ package com.github.e0ipso.tokkl.catalog
 
 import androidx.compose.runtime.Immutable
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.fold
+import com.github.e0ipso.tokkl.api.getOrElse
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.platform.PageLoads
 import com.github.e0ipso.tokkl.session.ServerProblem
@@ -225,13 +227,7 @@ class CatalogModel<D, O>(
     private class NotLoaded(val problem: ServerProblem) : Answer<Nothing>
 
     private suspend fun read(stored: WorkspaceId?): Answer<D> {
-        val workspace = when (val answer = repository.workspace(stored)) {
-            is ApiResult.Success -> answer.value
-            is ApiResult.Failure -> return NotLoaded(answer.error.toServerProblem())
-        }
-        return when (val answer = repository.load(workspace)) {
-            is ApiResult.Success -> Loaded(workspace, answer.value)
-            is ApiResult.Failure -> NotLoaded(answer.error.toServerProblem())
-        }
+        val workspace = repository.workspace(stored).getOrElse { return NotLoaded(it.error.toServerProblem()) }
+        return repository.load(workspace).fold({ Loaded(workspace, it) }, { NotLoaded(it.toServerProblem()) })
     }
 }

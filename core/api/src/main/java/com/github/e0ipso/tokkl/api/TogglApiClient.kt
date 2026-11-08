@@ -85,10 +85,7 @@ class TogglApiClient(
         resend = false,
         onConflict = { response -> refusal(response.body.string(), deserializer) },
     ) { response ->
-        when (val decoded = decode(response.body.string(), deserializer)) {
-            is ApiResult.Success -> ApiResult.Success(Refusable(decoded.value, refused = false))
-            is ApiResult.Failure -> decoded
-        }
+        decode(response.body.string(), deserializer).map { Refusable(it, refused = false) }
     }
 
     /**
@@ -102,10 +99,7 @@ class TogglApiClient(
         body: JsonElement?,
         deserializer: DeserializationStrategy<T>,
     ): ApiResult<WithHeaders<T>> = execute(method, url, body, resend = true) { response ->
-        when (val decoded = decode(response.body.string(), deserializer)) {
-            is ApiResult.Success -> ApiResult.Success(WithHeaders(decoded.value, response.headers))
-            is ApiResult.Failure -> decoded
-        }
+        decode(response.body.string(), deserializer).map { WithHeaders(it, response.headers) }
     }
 
     /**
@@ -292,13 +286,12 @@ class TogglApiClient(
 
     /** A 409 [text] for [sendRefusable]: the refusal's body, the server's reason, or an invalid response. */
     private fun <T> refusal(text: String, deserializer: DeserializationStrategy<T>): ApiResult<Refusable<T>> =
-        when (val decoded = decode(text, deserializer)) {
-            is ApiResult.Success -> ApiResult.Success(Refusable(decoded.value, refused = true))
-
-            is ApiResult.Failure -> reasonIn(
-                text,
-            )?.let { ApiResult.Failure(ApiError.UnexpectedStatus(CONFLICT, it)) } ?: decoded
-        }
+        decode(text, deserializer).fold(
+            onSuccess = { ApiResult.Success(Refusable(it, refused = true)) },
+            onFailure = { error ->
+                ApiResult.Failure(reasonIn(text)?.let { ApiError.UnexpectedStatus(CONFLICT, it) } ?: error)
+            },
+        )
 
     private fun <T> decode(text: String, deserializer: DeserializationStrategy<T>): ApiResult<T> = try {
         ApiResult.Success(ApiJson.decodeFromString(deserializer, text))

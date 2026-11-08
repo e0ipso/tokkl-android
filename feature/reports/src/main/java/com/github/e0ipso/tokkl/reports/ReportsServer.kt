@@ -8,6 +8,9 @@ import com.github.e0ipso.tokkl.api.HttpStatus
 import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.api.WeeklyReportBody
 import com.github.e0ipso.tokkl.api.WithHeaders
+import com.github.e0ipso.tokkl.api.flatMap
+import com.github.e0ipso.tokkl.api.getOrElse
+import com.github.e0ipso.tokkl.api.map
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
@@ -38,17 +41,10 @@ class ReportsServer(private val api: TokklApi) {
 
     /** The account's default workspace from `GET /api/v9/me`, with its rounding from `GET /api/v9/workspaces/{id}`. */
     suspend fun workspace(): ApiResult<ReportWorkspace> {
-        val user = when (val answer = api.account.me(ReportUser.serializer())) {
-            is ApiResult.Success -> answer.value
-            is ApiResult.Failure -> return answer
-        }
+        val user = api.account.me(ReportUser.serializer()).getOrElse { return it }
         val id = user.defaultWorkspaceId
-        return when (val answer = api.account.workspace(id, WorkspaceRounding.serializer())) {
-            is ApiResult.Success -> ApiResult.Success(
-                ReportWorkspace(id, answer.value.rounding, answer.value.roundingMinutes, user.role != null),
-            )
-
-            is ApiResult.Failure -> answer
+        return api.account.workspace(id, WorkspaceRounding.serializer()).map {
+            ReportWorkspace(id, it.rounding, it.roundingMinutes, user.role != null)
         }
     }
 
@@ -73,25 +69,13 @@ class ReportsServer(private val api: TokklApi) {
                 subGrouping = "projects",
                 filter = filters.apiFilter(),
             )
-            when (val answer = api.reports.appSummary(body)) {
-                is ApiResult.Success -> return decodeAppSummary(answer.value)
-
-                is ApiResult.Failure -> {
-                    val error = answer.error
-                    if (error !is ApiError.UnexpectedStatus || error.status !in setOf(
-                            HttpStatus.NOT_FOUND,
-                            HttpStatus.GONE,
-                        )
-                    ) {
-                        return answer
-                    }
-                }
+            val answer = api.reports.appSummary(body)
+            val absent = answer is ApiResult.Failure && answer.error.let {
+                it is ApiError.UnexpectedStatus && it.status in setOf(HttpStatus.NOT_FOUND, HttpStatus.GONE)
             }
+            if (!absent) return answer.flatMap(::decodeAppSummary)
         }
-        return when (val answer = entries(workspace, range, zone, filters)) {
-            is ApiResult.Success -> ApiResult.Success(SummaryReport.of(answer.value, range, firstDayOfWeek))
-            is ApiResult.Failure -> answer
-        }
+        return entries(workspace, range, zone, filters).map { SummaryReport.of(it, range, firstDayOfWeek) }
     }
 
     /**
@@ -110,10 +94,7 @@ class ReportsServer(private val api: TokklApi) {
         val entries = mutableListOf<ReportEntry>()
         var firstRow = 1
         repeat(MAX_PAGES) {
-            val page = when (val answer = search(workspace, range, filters, "ASC", PAGE_SIZE, firstRow)) {
-                is ApiResult.Success -> answer.value
-                is ApiResult.Failure -> return answer
-            }
+            val page = search(workspace, range, filters, "ASC", PAGE_SIZE, firstRow).getOrElse { return it }
             for (row in page.value) {
                 try {
                     entries += row.entries(zone)
@@ -121,10 +102,7 @@ class ReportsServer(private val api: TokklApi) {
                     return notADateAndTime(e)
                 }
             }
-            firstRow = when (val next = nextRow(page, firstRow)) {
-                is ApiResult.Success -> next.value ?: return ApiResult.Success(entries)
-                is ApiResult.Failure -> return next
-            }
+            firstRow = nextRow(page, firstRow).getOrElse { return it } ?: return ApiResult.Success(entries)
         }
         return ApiResult.Failure(ApiError.InvalidResponse(IllegalArgumentException("more than $MAX_PAGES pages")))
     }
@@ -142,19 +120,13 @@ class ReportsServer(private val api: TokklApi) {
         firstRow: Int,
         filters: ReportFilters = ReportFilters(),
     ): ApiResult<DetailedPage> {
-        val page = when (val answer = search(workspace, range, filters, "DESC", DETAILED_PAGE_SIZE, firstRow)) {
-            is ApiResult.Success -> answer.value
-            is ApiResult.Failure -> return answer
-        }
+        val page = search(workspace, range, filters, "DESC", DETAILED_PAGE_SIZE, firstRow).getOrElse { return it }
         val entries = try {
             page.value.flatMap { it.detailed(zone) }
         } catch (e: DateTimeParseException) {
             return notADateAndTime(e)
         }
-        return when (val next = nextRow(page, firstRow)) {
-            is ApiResult.Success -> ApiResult.Success(DetailedPage(entries, next.value))
-            is ApiResult.Failure -> next
-        }
+        return nextRow(page, firstRow).map { DetailedPage(entries, it) }
     }
 
     /**
@@ -174,10 +146,7 @@ class ReportsServer(private val api: TokklApi) {
             roundingMinutes = workspace.roundingMinutes,
             filter = filters.apiFilter(),
         )
-        val rows = when (val answer = api.reports.weekly(workspace.id, body, WEEKLY_ROWS)) {
-            is ApiResult.Success -> answer.value
-            is ApiResult.Failure -> return answer
-        }
+        val rows = api.reports.weekly(workspace.id, body, WEEKLY_ROWS).getOrElse { return it }
         if (rows.any { it.seconds.size != DAYS_IN_WEEK }) {
             return ApiResult.Failure(
                 ApiError.InvalidResponse(IllegalArgumentException("a weekly row does not hold $DAYS_IN_WEEK days")),

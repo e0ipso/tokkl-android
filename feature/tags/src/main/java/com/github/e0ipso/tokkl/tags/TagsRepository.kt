@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.tags
 
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.map
 import com.github.e0ipso.tokkl.catalog.CatalogRepository
 import com.github.e0ipso.tokkl.catalog.SignedInApi
 import com.github.e0ipso.tokkl.model.TagId
@@ -16,12 +17,8 @@ class TagsRepository(client: ApiClientProvider) : CatalogRepository<TagsData> {
 
     /** The workspace's tags, sorted as Tokkl sorts them. */
     override suspend fun load(workspace: WorkspaceId): ApiResult<TagsData> = api.call { client ->
-        when (val answer = TagsServer(client, workspace).list()) {
-            is ApiResult.Success -> ApiResult.Success(
-                TagsData(answer.value.filter { it.workspaceId == workspace }.sortedForList()),
-            )
-
-            is ApiResult.Failure -> answer
+        TagsServer(client, workspace).list().map { tags ->
+            TagsData(tags.filter { it.workspaceId == workspace }.sortedForList())
         }
     }
 

@@ -2,6 +2,8 @@ package com.github.e0ipso.tokkl.clients
 
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.getOrElse
+import com.github.e0ipso.tokkl.api.map
 import com.github.e0ipso.tokkl.catalog.CatalogRepository
 import com.github.e0ipso.tokkl.catalog.SignedInApi
 import com.github.e0ipso.tokkl.model.ClientId
@@ -17,20 +19,10 @@ class ClientsRepository(client: ApiClientProvider) : CatalogRepository<ClientsDa
     /** The workspace's clients, sorted as Tokkl sorts them, and the number of projects each has. */
     override suspend fun load(workspace: WorkspaceId): ApiResult<ClientsData> = api.call { client ->
         val server = ClientsServer(client, workspace)
-        val clients = when (val answer = server.list()) {
-            is ApiResult.Success -> answer.value.filter { it.workspaceId == workspace }.sortedForList()
-            is ApiResult.Failure -> return@call answer
+        val clients = server.list().getOrElse { return@call it }.filter { it.workspaceId == workspace }.sortedForList()
+        server.projects().map { projects ->
+            ClientsData(clients, projects.mapNotNull { it.clientId?.let(::ClientId) }.groupingBy { it }.eachCount())
         }
-        val counts = when (val answer = server.projects()) {
-            is ApiResult.Success -> answer.value.mapNotNull {
-                it.clientId?.let(
-                    ::ClientId,
-                )
-            }.groupingBy { it }.eachCount()
-
-            is ApiResult.Failure -> return@call answer
-        }
-        ApiResult.Success(ClientsData(clients, counts))
     }
 
     /**
