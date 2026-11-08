@@ -34,7 +34,7 @@ Compose keeps a focused field in view when the keyboard opens only if the field 
 
 A Compose `Dialog` with `usePlatformDefaultWidth = false` keeps its window at WRAP_CONTENT height. Android 11 measured it twice in every pass, at 1079 and at 1080 px on a 1080 px screen, and with the date range picker inside the dialog laid itself out on every frame and the main thread never went idle. Android 12 still never went idle there. `FillScreenWindow()` in `ui/FillScreenWindow.kt` sets the window to MATCH_PARENT, which ends it. Call it first inside any full-width dialog, as the reports' range and filter dialogs, the entry form's date dialog and the picker dialog of `EntryFieldsEditor` do.
 
-`ModalBottomSheet` opens in a window of its own, and that window keeps Android's navigation bar contrast enforcement, which paints a translucent band over a three-button navigation bar. `SheetWindowEdgeToEdge()` in `navigation/AppNavigation.kt` turns it off for the More sheet, so the sheet's own colour shows behind the navigation bar, as every screen's does. Any other sheet needs the same.
+`ModalBottomSheet` opens in a window of its own, and that window keeps Android's navigation bar contrast enforcement, which paints a translucent band over a three-button navigation bar. `SheetWindowEdgeToEdge()` in `navhost/AppNavigation.kt` turns it off for the More sheet, so the sheet's own colour shows behind the navigation bar, as every screen's does. Any other sheet needs the same.
 
 The bottom bar's labels share one font size through `SharedLabelSize` in `ui/theme/NavigationBar.kt`. `TextAutoSizeLayoutScope` lays out only the item's own text, so `SharedLabelSize` measures the other labels with a `TextMeasurer`.
 
