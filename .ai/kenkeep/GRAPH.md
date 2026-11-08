@@ -1,11 +1,11 @@
 ---
 schema_version: 3
-nodes_hash: 'sha256:b710525daaea34bc3b23bf092f0caddb235c207bdb309521cff078f8f72e80b7'
-node_count: 94
+nodes_hash: 'sha256:060a583e25f58b8741a72d2f87dfd0e2c2a0157de4efd604d3b0390bc63df228'
+node_count: 95
 ---
 # kenkeep Graph
 
-Total nodes: 94
+Total nodes: 95
 
 ## map-account-cache-and-capabilities
 
@@ -801,6 +801,15 @@ Total nodes: 94
 - **tags:** testing, android, emulator
 - **relates_to:** practice-use-the-instrumented-runner-and-its-device-selection, practice-screenshot-references-on-tokkl-api36
 - **derived_from:** scripts/instrumented-tests.sh, 9c8de91d-411b-498c-b4ed-241fabaa877e:practice:4
+
+## practice-wait-on-the-apps-handlers-not-production-latches
+
+- **kind:** practice
+- **title:** Wait on the app's own handlers, never on a latch in production code
+- **path:** testing/instrumented-test-authoring/practice-wait-on-the-apps-handlers-not-production-latches.md
+- **tags:** testing, android
+- **relates_to:** practice-isolate-session-and-background-state-with-shared-rules, map-pomodoro-phase-alarms-and-rearming
+- **derived_from:** app/src/androidTest/java/com/github/e0ipso/tokkl/pomodoro/PomodoroWorkWaits.kt, feature/pomodoro/src/main/java/com/github/e0ipso/tokkl/pomodoro/PomodoroButtons.kt
 
 ## practice-wordmark-only-on-sign-in-and-splash
 

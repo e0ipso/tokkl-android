@@ -34,9 +34,9 @@
 - Open [**Never make Start or Stop wait for the server**](practice-never-wait-for-server-on-start-stop.md) — Start and Stop change state on the phone at once and queue the change. Pause, Resume and session actions wait for the server. No sync engine.
 - Open [**Ordered entry sending and refusals**](change-queue/map-ordered-entry-sending-and-refusals.md) — Oldest-first HTTP delivery, retry boundaries, held refusals and reauthentication.
 ### #android
+- Open [**Wait on the app's own handlers, never on a latch in production code**](../testing/instrumented-test-authoring/practice-wait-on-the-apps-handlers-not-production-latches.md) — Device tests wait for receiver and service work by wrapping the handler in the Koin graph, or on an effect the app already shows. Production has no test latches or test-only branches.
 - Open [**Let the runner own emulator boot and settings**](../testing/emulator-runtime/practice-let-the-runner-own-emulator-boot-and-settings.md) — The runner owns adb startup, emulator readiness and temporary device settings.
 - Open [**Choose plain AOSP images and compatible renderers**](../testing/emulator-runtime/practice-choose-plain-aosp-images-and-compatible-renderers.md) — API 36 references and API 31 compatibility use launcher-capable AOSP images and bounded renderers.
-- Open [**Account for emulator recording and screenshot quirks**](../testing/emulator-runtime/practice-account-for-emulator-recording-and-screenshot-quirks.md) — Hold the final video frame and distinguish framebuffer captures from launch splash failures.
 ### #pomodoro
 - Open [**Timer state holder and sync service: the server owns Pomodoro and pause**](map-timer-state-holder-and-sync-service.md) — One holder keeps the server's timer state; a specialUse service holds its event stream. Session and pause actions go online, never queued.
 - Open [**Pomodoro home screen widget**](../screens/map-pomodoro-home-screen-widget.md) — A separate provider shows the server session and uses native countdowns and online-only session actions.

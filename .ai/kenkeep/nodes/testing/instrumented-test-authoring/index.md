@@ -10,12 +10,13 @@
 _None._
 
 ## Conventions (how we build)
-- Open [**Assert text height and dialog bounds at large fonts**](practice-assert-text-height-and-dialog-bounds-at-large-fonts.md) to learn about: Compose text and dialog acceptance must detect real wrapping, overflow and overlap. #testing #android #accessibility
 - Open [**Isolate session and background state with shared rules**](practice-isolate-session-and-background-state-with-shared-rules.md) to learn about: SessionRule retires prior account observers and work before composing the next test. #testing #android #offline
+- Open [**Assert text height and dialog bounds at large fonts**](practice-assert-text-height-and-dialog-bounds-at-large-fonts.md) to learn about: Compose text and dialog acceptance must detect real wrapping, overflow and overlap. #testing #android #accessibility
 - Open [**Match production windows and real touch hit testing**](practice-match-production-windows-and-real-touch-hit-testing.md) to learn about: Edge-to-edge, keyboard insets, stable controls and visible press points prevent false UI results. #testing #android #ui
 - Open [**Reuse relays and throwaway server accounts**](practice-reuse-relays-and-throwaway-server-accounts.md) to learn about: Shared relay helpers and a bounded failed-password budget keep real-server tests isolated. #testing #android #api
 - Open [**Split process restart acceptance into orchestrated steps**](practice-split-process-restart-acceptance-into-orchestrated-steps.md) to learn about: Instrumentation cannot survive killing its own process, so restart assertions span isolated steps. #testing #android #lifecycle
 - Open [**Use runner annotations and owned settings across APIs**](practice-use-runner-annotations-and-owned-settings-across-apis.md) to learn about: SdkSuppress and test rules make API-specific coverage and device settings explicit. #testing #android #emulator
+- Open [**Wait on the app's own handlers, never on a latch in production code**](practice-wait-on-the-apps-handlers-not-production-latches.md) to learn about: Device tests wait for receiver and service work by wrapping the handler in the Koin graph, or on an effect the app already shows. Production has no test latches or test-only branches. #testing #android
 
 ## Components (what exists)
 _None yet._
@@ -23,9 +24,9 @@ _None yet._
 ## By topic
 
 ### #android
+- Open [**Wait on the app's own handlers, never on a latch in production code**](practice-wait-on-the-apps-handlers-not-production-latches.md) — Device tests wait for receiver and service work by wrapping the handler in the Koin graph, or on an effect the app already shows. Production has no test latches or test-only branches.
 - Open [**Let the runner own emulator boot and settings**](../emulator-runtime/practice-let-the-runner-own-emulator-boot-and-settings.md) — The runner owns adb startup, emulator readiness and temporary device settings.
 - Open [**Choose plain AOSP images and compatible renderers**](../emulator-runtime/practice-choose-plain-aosp-images-and-compatible-renderers.md) — API 36 references and API 31 compatibility use launcher-capable AOSP images and bounded renderers.
-- Open [**Account for emulator recording and screenshot quirks**](../emulator-runtime/practice-account-for-emulator-recording-and-screenshot-quirks.md) — Hold the final video frame and distinguish framebuffer captures from launch splash failures.
 ### #testing
 - Open [**Let the runner own emulator boot and settings**](../emulator-runtime/practice-let-the-runner-own-emulator-boot-and-settings.md) — The runner owns adb startup, emulator readiness and temporary device settings.
 - Open [**Choose plain AOSP images and compatible renderers**](../emulator-runtime/practice-choose-plain-aosp-images-and-compatible-renderers.md) — API 36 references and API 31 compatibility use launcher-capable AOSP images and bounded renderers.
