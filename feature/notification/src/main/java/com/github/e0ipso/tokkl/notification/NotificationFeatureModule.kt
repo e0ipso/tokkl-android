@@ -96,4 +96,5 @@ val notificationFeatureModule = module {
     }
 
     worker { params -> ReminderWorker(androidContext(), params.get(), get(), io()) }
+    worker { params -> TimerActionWorker(androidContext(), params.get(), get(), io()) }
 }

@@ -5,10 +5,8 @@ import android.content.Context
 import android.content.Intent
 import android.database.sqlite.SQLiteException
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.platform.CurrentWorkManager
 import com.github.e0ipso.tokkl.platform.IoDispatcher
-import com.github.e0ipso.tokkl.platform.finishOnce
-import com.github.e0ipso.tokkl.timernotice.showTimerActionFailure
-import com.github.e0ipso.tokkl.timerstate.SurfaceTap
 import com.github.e0ipso.tokkl.timerstate.TimerSurfaceAction
 import com.github.e0ipso.tokkl.timerstate.TimerSurfaceActions
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
@@ -21,11 +19,11 @@ import org.koin.core.component.inject
 /**
  * The notification's Stop, Pause and Resume actions (docs/PRD.md N1, T1), for what the
  * notification showed, without opening the app. [TimerSurfaceActions] decides
- * each one. Stop of a running entry changes the phone and queues the change, so it works offline,
- * and [RunningNotificationSync] shows the result. Pause, Resume and Stop while paused go to the
- * server after the broadcast has ended; one that fails, offline included, changes nothing and says
- * why in a toast. An action shown for a state the phone no longer holds, such as a second tap or a
- * tap after sign-out, does nothing.
+ * each one. Stop of a running entry changes the phone and queues the change while the broadcast
+ * lasts, so it works offline, and [RunningNotificationSync] shows the result. Pause, Resume and
+ * Stop while paused need the server, so they go to WorkManager ([sendTimerAction]); one that fails,
+ * offline included, changes nothing and says why in a toast. An action shown for a state the phone
+ * no longer holds, such as a second tap or a tap after sign-out, does nothing.
  *
  * Declared in the manifest and not exported: only the notification's own PendingIntents reach it.
  */
@@ -34,6 +32,7 @@ class StopTimerReceiver :
     KoinComponent {
 
     private val surfaceActions: TimerSurfaceActions by inject()
+    private val workManager: CurrentWorkManager by inject()
     private val scope: CoroutineScope by inject()
     private val io: CoroutineDispatcher by inject(IoDispatcher)
 
@@ -45,19 +44,18 @@ class StopTimerReceiver :
             else -> return
         }
         val target = intent.timerTarget()
-        val app = context.applicationContext
-        val finish = goAsync().finishOnce()
+        if (action != TimerSurfaceAction.Stop || target.entryId == null) {
+            workManager.sendTimerAction(action, target)
+            return
+        }
+        val pending = goAsync()
         scope.launch(io) {
             try {
-                val tap = surfaceActions.tap(action, target)
-                // The server may be slow to answer. The timer sync service, which runs wherever
-                // these actions are offered, keeps the process alive meanwhile.
-                finish()
-                if (tap is SurfaceTap.Request) tap.send()?.let { showTimerActionFailure(app, it) }
+                surfaceActions.tap(action, target)
             } catch (_: SQLiteException) {
                 // The disk refused the change. The timer keeps running, and the notification with it.
             } finally {
-                finish()
+                pending.finish()
             }
         }
     }
