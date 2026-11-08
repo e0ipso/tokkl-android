@@ -16,14 +16,20 @@ import androidx.core.graphics.drawable.toDrawable
 import androidx.core.os.BundleCompat
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
+import com.github.e0ipso.tokkl.di.FeatureScreens
 import com.github.e0ipso.tokkl.lifecycle.MainActivityForeground
 import com.github.e0ipso.tokkl.navhost.NavigationRequest
 import com.github.e0ipso.tokkl.navhost.NavigationRequests
+import com.github.e0ipso.tokkl.navhost.NavigationSession
+import com.github.e0ipso.tokkl.navigation.FeatureEntries
+import com.github.e0ipso.tokkl.navigation.TopLevelPages
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
 import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.pomodoro.pomodoroSessionOpenIntent
 import com.github.e0ipso.tokkl.pomodoro.takePomodoroNotificationTap
 import com.github.e0ipso.tokkl.reminder.ReminderNotifier
+import com.github.e0ipso.tokkl.session.AccountLifetime
 import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsRepository
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.widget.WidgetPage
@@ -36,6 +42,11 @@ class MainActivity : ComponentActivity() {
     private val themeSettings: ThemeSettingsRepository by inject()
     private val foreground: MainActivityForeground by inject()
     private val io: CoroutineDispatcher by inject(IoDispatcher)
+    private val features: List<FeatureEntries> by inject(FeatureScreens)
+    private val pages: TopLevelPages by inject()
+    private val lifetime: AccountLifetime by inject()
+    private val capabilities: CapabilitiesSource by inject()
+    private val session: NavigationSession by inject()
 
     /** The pages that taps outside the app asked to open, until the navigation opens them. */
     private val requests = NavigationRequests()
@@ -64,6 +75,11 @@ class MainActivity : ComponentActivity() {
                 WindowFollowsTheme(darkTheme)
                 TokklNavHost(
                     requests = requests,
+                    features = features,
+                    pages = pages,
+                    signOuts = lifetime.signOuts,
+                    capabilities = capabilities.state,
+                    session = session,
                     notificationPermission = remember { NotificationPermissionAsk.forApp(this, io) },
                     onNotificationsAllow = foreground::notificationsGranted,
                 )

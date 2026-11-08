@@ -41,11 +41,11 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
+import com.github.e0ipso.tokkl.AppNavHost
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
-import com.github.e0ipso.tokkl.TokklNavHost
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.HttpMethod
@@ -852,7 +852,7 @@ class EntryFormServerTest {
                 activity.setContent {
                     DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(EXPANDED_WINDOW)) {
                         TokklTheme(darkTheme = false) {
-                            TokklNavHost()
+                            AppNavHost()
                         }
                     }
                 }

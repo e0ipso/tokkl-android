@@ -18,7 +18,6 @@ import androidx.navigation3.runtime.rememberDecoratedNavEntries
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.runtime.serialization.NavBackStackSerializer
 import com.github.e0ipso.tokkl.capabilities.Capabilities
-import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.navhost.AppNavigationBar
 import com.github.e0ipso.tokkl.navhost.AppNavigationRail
 import com.github.e0ipso.tokkl.navhost.NavigationRequestEffects
@@ -38,10 +37,7 @@ import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.TopLevelPages
 import com.github.e0ipso.tokkl.navigation.contentKey
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
-import com.github.e0ipso.tokkl.session.AccountLifetime
 import kotlinx.coroutines.flow.StateFlow
-import org.koin.compose.getKoin
-import org.koin.compose.koinInject
 
 /**
  * The app's navigation host: a Navigation 3 back stack of [Route]s that survives configuration
@@ -63,18 +59,18 @@ import org.koin.compose.koinInject
  * Each feature adds the entries of its routes ([FeatureEntries]) and binds its top-level pages, which
  * the bar, the rail and the More sheet show in order ([TopLevelPages]). Each route's screen takes its
  * own view models, which go when the route leaves the stack. The ones that several screens share
- * live in the signed-in session's store ([NavigationStores]). Each parameter defaults to what
- * the app's Koin graph holds: [signOuts] counts the sign-outs that finished, and [session] reads
- * the stored session off the main thread.
+ * live in the signed-in session's store ([NavigationStores]). MainActivity hands over what the
+ * app's Koin graph holds: [signOuts] counts the sign-outs that finished, and [session] reads the
+ * stored session off the main thread.
  */
 @Composable
 internal fun TokklNavHost(
-    requests: NavigationRequests = remember { NavigationRequests() },
-    features: List<FeatureEntries> = getKoin().let { koin -> remember(koin) { koin.getAll() } },
-    pages: TopLevelPages = koinInject(),
-    signOuts: StateFlow<Int> = koinInject<AccountLifetime>().signOuts,
-    capabilities: StateFlow<Capabilities> = koinInject<CapabilitiesSource>().state,
-    session: NavigationSession = koinInject(),
+    requests: NavigationRequests,
+    features: List<FeatureEntries>,
+    pages: TopLevelPages,
+    signOuts: StateFlow<Int>,
+    capabilities: StateFlow<Capabilities>,
+    session: NavigationSession,
     notificationPermission: NotificationPermissionAsk? = null,
     onNotificationsAllow: () -> Unit = {},
     stores: NavigationStores = viewModel { NavigationStores() },

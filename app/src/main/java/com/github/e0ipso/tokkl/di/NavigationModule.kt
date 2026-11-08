@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.di
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.navhost.NavigationSession
 import com.github.e0ipso.tokkl.navhost.SignedInViewModel
+import com.github.e0ipso.tokkl.navigation.FeatureEntries
 import com.github.e0ipso.tokkl.navigation.TopLevelPages
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
@@ -15,13 +16,19 @@ import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import org.koin.core.module.dsl.viewModel
+import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
+/** Every feature's screens, as the navigation host adds them to its entry provider. */
+internal val FeatureScreens = named("feature-screens")
+
 /**
- * The top-level pages, what the navigation host asks about the stored session, and the signed-in
- * frame's view model, which lives in the session's store.
+ * The features' screens and top-level pages, what the navigation host asks about the stored
+ * session, and the signed-in frame's view model, which lives in the session's store.
  */
 internal val navigationModule = module {
+    single(FeatureScreens) { getAll<FeatureEntries>() }
+
     // Every feature's top-level pages, in order.
     single { TopLevelPages(getAll()) }
 

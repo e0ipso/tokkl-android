@@ -18,8 +18,8 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
+import com.github.e0ipso.tokkl.AppNavHost
 import com.github.e0ipso.tokkl.SessionRule
-import com.github.e0ipso.tokkl.TokklNavHost
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.core.ui.R
@@ -106,7 +106,7 @@ class PomodoroAvailabilityTest {
             activity.setContent {
                 DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(DpSize(width.dp, 900.dp))) {
                     TokklTheme(darkTheme = false) {
-                        TokklNavHost(capabilities = capabilities)
+                        AppNavHost(capabilities = capabilities)
                     }
                 }
             }

@@ -50,12 +50,12 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
 import androidx.test.runner.lifecycle.Stage
+import com.github.e0ipso.tokkl.AppNavHost
 import com.github.e0ipso.tokkl.HangingRelay
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
-import com.github.e0ipso.tokkl.TokklNavHost
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.DiscardedPomodoro
@@ -592,7 +592,7 @@ class RunningEntryEditorServerTest {
                 activity.setContent {
                     DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(DpSize(width.dp, 900.dp))) {
                         TokklTheme(darkTheme = false) {
-                            TokklNavHost()
+                            AppNavHost()
                         }
                     }
                 }
