@@ -15,6 +15,7 @@
 - Open [**Record screenshot references on tokkl-api36, in the commit that changes the look**](practice-screenshot-references-on-tokkl-api36.md) to learn about: Four classes compare every screen with PNGs in androidTest/assets/screenshots. Only tokkl-api36 renders them, and captures carry no ripple. #testing #android #emulator #ui
 - Open [**Test against a real Tokkl server**](practice-test-against-a-real-tokkl-server.md) to learn about: Instrumented tests use the real ghcr.io/e0ipso/tokkl image, never a fake. #testing #ci
 - Open [**Reuse drain checks by content and test configuration**](practice-reuse-drain-checks-by-content-and-test-configuration.md) to learn about: Commit IDs and cherry-picks do not invalidate checks when all checked inputs and the test environment are unchanged. #sift #testing #agents
+- Open [**Run JVM coroutine tests in virtual time, and never sleep**](practice-run-coroutine-tests-in-virtual-time.md) to learn about: JVM tests use runTest and MainDispatcherRule from core:platform's test fixtures. Time passes by advancing the test scheduler, not by Thread.sleep; real waits stay only for a real server or thread. #testing #kotlin #coroutines
 
 ## Components (what exists)
 _None yet._
@@ -37,10 +38,15 @@ _None yet._
 - Open [**Keep release builds reproducible and signed with the project key**](../release/practice-reproducible-builds-project-key.md) — Reproducible builds let F-Droid publish the APK signed with the project key. The key lives in Actions secrets and CI pins actions by SHA.
 - Open [**Release signing key, Actions secrets and signature checks**](../release/map-release-signing-key-actions-secrets-and-signature-checks.md) — The owner's PKCS12 key signs releases through four Actions secrets. Fingerprint and apksigcopier commands check what F-Droid checks.
 - Open [**Test against a real Tokkl server**](practice-test-against-a-real-tokkl-server.md) — Instrumented tests use the real ghcr.io/e0ipso/tokkl image, never a fake.
+### #coroutines
+- Open [**Run JVM coroutine tests in virtual time, and never sleep**](practice-run-coroutine-tests-in-virtual-time.md) — JVM tests use runTest and MainDispatcherRule from core:platform's test fixtures. Time passes by advancing the test scheduler, not by Thread.sleep; real waits stay only for a real server or thread.
 ### #emulator
 - Open [**Let the runner own emulator boot and settings**](emulator-runtime/practice-let-the-runner-own-emulator-boot-and-settings.md) — The runner owns adb startup, emulator readiness and temporary device settings.
 - Open [**Choose plain AOSP images and compatible renderers**](emulator-runtime/practice-choose-plain-aosp-images-and-compatible-renderers.md) — API 36 references and API 31 compatibility use launcher-capable AOSP images and bounded renderers.
 - Open [**Account for emulator recording and screenshot quirks**](emulator-runtime/practice-account-for-emulator-recording-and-screenshot-quirks.md) — Hold the final video frame and distinguish framebuffer captures from launch splash failures.
+### #kotlin
+- Open [**Fix detekt findings in code, and baseline only a fix that changes behaviour**](../build-and-tooling/practice-fix-detekt-findings-in-code.md) — check runs detekt 2 with ktlint's intellij_idea rules and the Compose rules on every module. Fix findings in code; a baseline entry needs a behaviour change as its reason.
+- Open [**Run JVM coroutine tests in virtual time, and never sleep**](practice-run-coroutine-tests-in-virtual-time.md) — JVM tests use runTest and MainDispatcherRule from core:platform's test fixtures. Time passes by advancing the test scheduler, not by Thread.sleep; real waits stay only for a real server or thread.
 ### #sift
 - Open [**Reuse drain checks by content and test configuration**](practice-reuse-drain-checks-by-content-and-test-configuration.md) — Commit IDs and cherry-picks do not invalidate checks when all checked inputs and the test environment are unchanged.
 - Open [**Run drain Gradle and device jobs in the OOM-safe scope, not behind a sitting cap**](../build-and-tooling/practice-drain-sittings-gate-on-memory-not-a-sitting-cap.md) — Drain Gradle and device runs start directly in the OOM-safe scope, one heavy job at a time; no fixed cap on sittings. T3 checkpoint refs are not reviewer writes.

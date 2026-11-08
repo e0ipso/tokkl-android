@@ -1,11 +1,11 @@
 ---
 schema_version: 3
-nodes_hash: 'sha256:5832e39d40a460b2c9d5a35d3636082e3d4784537d97e7135d22ace5c86cb50f'
-node_count: 93
+nodes_hash: 'sha256:b710525daaea34bc3b23bf092f0caddb235c207bdb309521cff078f8f72e80b7'
+node_count: 94
 ---
 # kenkeep Graph
 
-Total nodes: 93
+Total nodes: 94
 
 ## map-account-cache-and-capabilities
 
@@ -697,6 +697,15 @@ Total nodes: 93
 - **tags:** testing, android, api
 - **relates_to:** practice-use-the-pinned-test-server-and-tls-proxies
 - **derived_from:** 9c8de91d-411b-498c-b4ed-241fabaa877e:practice:3
+
+## practice-run-coroutine-tests-in-virtual-time
+
+- **kind:** practice
+- **title:** Run JVM coroutine tests in virtual time, and never sleep
+- **path:** testing/practice-run-coroutine-tests-in-virtual-time.md
+- **tags:** testing, kotlin, coroutines
+- **relates_to:** map-gradle-build-sdk-levels-kotlin-and-memory, practice-isolate-all-known-failing-tests-before-full-suite-validation
+- **derived_from:** core/platform/src/testFixtures/java/com/github/e0ipso/tokkl/platform/MainDispatcherRule.kt
 
 ## practice-run-native-permission-probes-alone-with-a-fresh-permission
 

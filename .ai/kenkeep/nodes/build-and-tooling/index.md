@@ -19,8 +19,8 @@ _None._
 ## Components (what exists)
 - Open [**An OOM kill inside an agent session's scope ends the whole session**](map-oom-kill-ends-agent-session.md) to learn about: Agent sessions run in t3code-claude-*.scope with OOMPolicy=stop. Run Gradle and the test script in a scope of their own with choom 1000. #agents #machine #memory #emulator
 - Open [**JDK and Android SDK on this machine, and how agent shells reach them**](map-jdk-android-sdk-and-agent-shells.md) to learn about: Temurin 21 in ~/.local/share/jdk/21, SDK in ~/Android/Sdk. Agents reach java, adb and the SDK tools through wrappers in ~/.local/bin. #android #tooling #agents #build
-- Open [**Android stack: shipped UI, cache and native timer surfaces**](map-planned-android-stack.md) to learn about: Compose, Room, WorkManager, OkHttp, Glance, the Quick Settings tile and favorite shortcuts are built. #architecture #android #offline
 - Open [**Gradle build settings: SDK levels, Kotlin version, memory and build cache**](map-gradle-build-sdk-levels-kotlin-and-memory.md) to learn about: minSdk 31, compileSdk from the dependencies, targetSdk from the emulator, Kotlin from the catalog, a small heap and the local build cache. #android #build #gradle
+- Open [**Android stack: shipped UI, cache and native timer surfaces**](map-planned-android-stack.md) to learn about: Compose, Room, WorkManager, OkHttp, Glance, the Quick Settings tile and favorite shortcuts are built. #architecture #android #offline
 - Open [**T3 restarts daily and ends running agent sessions**](map-t3-daily-restart-stops-agent-sessions.md) to learn about: t3-update.timer fires daily with up to 1h delay and restarts t3.service even without an update, which stops every agent session. #agents #tooling #machine
 
 ## By topic
@@ -65,6 +65,7 @@ _None._
 - Open [**Run npm install in every new clone or worktree to turn on the commit hook**](practice-run-npm-install-in-every-clone-and-worktree.md) — The commit-msg hook lives in git-ignored .husky/_, so a clone or worktree that skipped npm install commits with no checks.
 ### #kotlin
 - Open [**Fix detekt findings in code, and baseline only a fix that changes behaviour**](practice-fix-detekt-findings-in-code.md) — check runs detekt 2 with ktlint's intellij_idea rules and the Compose rules on every module. Fix findings in code; a baseline entry needs a behaviour change as its reason.
+- Open [**Run JVM coroutine tests in virtual time, and never sleep**](../testing/practice-run-coroutine-tests-in-virtual-time.md) — JVM tests use runTest and MainDispatcherRule from core:platform's test fixtures. Time passes by advancing the test scheduler, not by Thread.sleep; real waits stay only for a real server or thread.
 ### #offline
 - Open [**Background queue work and empty-queue cancellation**](../data-and-offline/change-queue/map-background-queue-work-and-empty-queue-cancellation.md) — Connected WorkManager delivery and serialized cancellation when the queue empties.
 - Open [**Ordered entry sending and refusals**](../data-and-offline/change-queue/map-ordered-entry-sending-and-refusals.md) — Oldest-first HTTP delivery, retry boundaries, held refusals and reauthentication.
