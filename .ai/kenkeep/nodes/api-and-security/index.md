@@ -50,7 +50,7 @@ _None._
 - Open [**Check server capabilities instead of requiring a server version**](practice-check-capabilities-not-server-version.md) — Probe optional Tokkl features by capability; snapping follows the latest supported contract, with no version selector.
 ### #credentials
 - Open [**Sign-out ordering and account cleanup**](../screens/session-and-navigation/map-sign-out-ordering-and-account-cleanup.md) — Warn about unsent work and retire account tasks before clearing local session data.
-- Open [**Session stores and pre-frame preferences**](../screens/session-and-navigation/map-session-stores-and-pre-frame-preferences.md) — Private session stores separate credentials, account settings, trust and device preferences.
+- Open [**Session stores and pre-frame preferences**](../screens/session-and-navigation/map-session-stores-and-pre-frame-preferences.md) — Private session stores separate credentials, account settings, trust and device preferences; their holders load at process start and write through suspend calls.
 - Open [**Sign-in request and credential admission**](../screens/session-and-navigation/map-sign-in-request-and-credential-admission.md) — Validate configured-server credentials and required account settings before storing a session.
 ### #dialogs
 - Open [**Connection trust: ServerTrustStore, PinningTrustManager and the trust prompts**](map-connection-trust-store-pinning-and-prompts.md) — The shared client refuses unconfirmed http and unpinned self-signed certificates. SessionTrust prompts on every screen but sign-in.

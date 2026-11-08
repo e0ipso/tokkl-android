@@ -16,7 +16,7 @@ _None yet._
 - Open [**Saveable navigation stack and session guard**](map-saveable-navigation-stack-and-session-guard.md) to learn about: Destination names survive restoration, while the host checks the session and presents trust prompts. #android #ui #navigation
 - Open [**Sign-out ordering and account cleanup**](map-sign-out-ordering-and-account-cleanup.md) to learn about: Warn about unsent work and retire account tasks before clearing local session data. #android #credentials #offline
 - Open [**Trash capability and server operations**](map-trash-capability-and-server-operations.md) to learn about: Tokkl-only Trash routes, cached rows and explicit unsupported-endpoint handling. #android #ui #api
-- Open [**Session stores and pre-frame preferences**](map-session-stores-and-pre-frame-preferences.md) to learn about: Private session stores separate credentials, account settings, trust and device preferences. #android #credentials #storage
+- Open [**Session stores and pre-frame preferences**](map-session-stores-and-pre-frame-preferences.md) to learn about: Private session stores separate credentials, account settings, trust and device preferences; their holders load at process start and write through suspend calls. #android #credentials #storage
 - Open [**Sign-in request and credential admission**](map-sign-in-request-and-credential-admission.md) to learn about: Validate configured-server credentials and required account settings before storing a session. #android #ui #credentials
 - Open [**Signed-in navigation chrome and adaptive windows**](map-signed-in-navigation-chrome-and-adaptive-windows.md) to learn about: Bar, rail, back-stack and width rules control signed-in page layout. #android #ui #navigation
 
@@ -32,7 +32,7 @@ _None yet._
 - Open [**Timer List and Calendar preference sync**](../timer-history-calendar/map-timer-list-and-calendar-preference-sync.md) — View selection persists locally and writes the supported server preference without blocking navigation.
 ### #credentials
 - Open [**Sign-out ordering and account cleanup**](map-sign-out-ordering-and-account-cleanup.md) — Warn about unsent work and retire account tasks before clearing local session data.
-- Open [**Session stores and pre-frame preferences**](map-session-stores-and-pre-frame-preferences.md) — Private session stores separate credentials, account settings, trust and device preferences.
+- Open [**Session stores and pre-frame preferences**](map-session-stores-and-pre-frame-preferences.md) — Private session stores separate credentials, account settings, trust and device preferences; their holders load at process start and write through suspend calls.
 - Open [**Sign-in request and credential admission**](map-sign-in-request-and-credential-admission.md) — Validate configured-server credentials and required account settings before storing a session.
 ### #navigation
 - Open [**Saveable navigation stack and session guard**](map-saveable-navigation-stack-and-session-guard.md) — Destination names survive restoration, while the host checks the session and presents trust prompts.
@@ -46,4 +46,4 @@ _None yet._
 - Open [**Ordered entry sending and refusals**](../../data-and-offline/change-queue/map-ordered-entry-sending-and-refusals.md) — Oldest-first HTTP delivery, retry boundaries, held refusals and reauthentication.
 - Open [**Remote running conflicts and lost create responses**](../../data-and-offline/change-queue/map-remote-running-conflicts-and-lost-create-responses.md) — Captured start conflict handling and duplicate prevention after uncertain POST delivery.
 ### #storage
-- Open [**Session stores and pre-frame preferences**](map-session-stores-and-pre-frame-preferences.md) — Private session stores separate credentials, account settings, trust and device preferences.
+- Open [**Session stores and pre-frame preferences**](map-session-stores-and-pre-frame-preferences.md) — Private session stores separate credentials, account settings, trust and device preferences; their holders load at process start and write through suspend calls.
