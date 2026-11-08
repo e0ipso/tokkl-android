@@ -1,4 +1,4 @@
-package com.github.e0ipso.tokkl
+package com.github.e0ipso.tokkl.navhost
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
@@ -18,28 +18,17 @@ import androidx.navigation3.runtime.rememberDecoratedNavEntries
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.runtime.serialization.NavBackStackSerializer
 import androidx.savedstate.serialization.SavedStateConfiguration
-import com.github.e0ipso.tokkl.capabilities.Capabilities
-import com.github.e0ipso.tokkl.navhost.AppNavigationBar
-import com.github.e0ipso.tokkl.navhost.AppNavigationRail
-import com.github.e0ipso.tokkl.navhost.NavigationRequestEffects
-import com.github.e0ipso.tokkl.navhost.NavigationRequests
-import com.github.e0ipso.tokkl.navhost.NavigationSession
-import com.github.e0ipso.tokkl.navhost.NavigationStores
-import com.github.e0ipso.tokkl.navhost.Show
-import com.github.e0ipso.tokkl.navhost.SignedInHost
-import com.github.e0ipso.tokkl.navhost.orTimerIfUnavailable
-import com.github.e0ipso.tokkl.navhost.unavailablePages
+import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
 import com.github.e0ipso.tokkl.navigation.LocalSignedInSession
 import com.github.e0ipso.tokkl.navigation.NavigationHost
 import com.github.e0ipso.tokkl.navigation.Navigator
 import com.github.e0ipso.tokkl.navigation.NotificationPrompts
 import com.github.e0ipso.tokkl.navigation.Route
+import com.github.e0ipso.tokkl.navigation.SignInRoutes
 import com.github.e0ipso.tokkl.navigation.TopLevelPages
 import com.github.e0ipso.tokkl.navigation.contentKey
 import com.github.e0ipso.tokkl.navigation.routeSerializers
-import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
-import com.github.e0ipso.tokkl.signin.SignInRoute
 import com.github.e0ipso.tokkl.timernotice.TimerFrame
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.PolymorphicSerializer
@@ -47,27 +36,28 @@ import kotlinx.serialization.PolymorphicSerializer
 /**
  * The app's navigation host: a Navigation 3 back stack of [Route]s that survives configuration
  * changes and process death. It starts at sign-in until a server and its token are stored, and at
- * the Timer page after that. A restored signed-in back stack goes to sign-in when nobody is signed
- * in any more, and a sign-out starts the navigation over at sign-in, with new view models.
+ * the Timer page after that, as [signIns] says. A restored signed-in back stack goes to sign-in
+ * when nobody is signed in any more, and a sign-out starts the navigation over at sign-in, with
+ * new view models.
  *
  * Every signed-in screen has the bottom bar ([AppNavigationBar]), or on a medium or expanded
  * window the navigation rail ([AppNavigationRail]) with the same items. Opening a page from it puts
  * that page right above Timer, so Back from any page in the bar or the More sheet goes to Timer,
  * and Back from Timer closes the app (docs/PRD.md B3). A screen opened from a page, such as Licences from
- * Settings, stacks above that page, and the bar keeps marking the page. Trash shows only while the
- * server's [capabilities] have it, and Timer templates while the server keeps that key: when they
- * lose it, the page goes back to Timer. Pomodoro shows in the bar and the rail only while the
- * server has the timer API, since the server owns the session. Without it the page opens nowhere,
- * and a back stack restored from before the server lost it shows Timer. [requests] opens the
- * pages that widget, reminder and Pomodoro notification taps ask for.
+ * Settings, stacks above that page, and the bar keeps marking the page. A page shows only while
+ * the server's [capabilities] offer what it needs ([TopLevelPages.unavailable]), such as Trash, Timer
+ * templates and Pomodoro: when the server loses it, the page goes back to Timer, the page opens
+ * nowhere, and a back stack restored from before shows Timer. [requests] opens the pages that
+ * taps from outside the app ask for, through the features that read them.
  *
  * Each feature declares its routes, adds their entries ([FeatureEntries]) and names its top-level
  * pages, which the bar, the rail and the More sheet show in order ([TopLevelPages]). The back stack
  * is saved with the serializers of every feature's routes ([routeSerializers]). Each route's screen takes its
  * own view models, which go when the route leaves the stack. The ones that several screens share
  * live in the signed-in session's store ([NavigationStores]). MainActivity hands over what the
- * app's Koin graph holds: [signOuts] counts the sign-outs that finished, [session] reads the
- * stored session off the main thread, and [timerFrame] gives what the frame reads of the timer.
+ * app's Koin graph holds: [signOuts] counts the sign-outs that finished, [signIns] reads the
+ * stored session off the main thread, [timerFrame] gives what the frame reads of the timer, and
+ * [notificationPrompt] asks for the notification permission.
  */
 @Composable
 internal fun TokklNavHost(
@@ -76,10 +66,9 @@ internal fun TokklNavHost(
     pages: TopLevelPages,
     signOuts: StateFlow<Int>,
     capabilities: StateFlow<Capabilities>,
-    session: NavigationSession,
+    signIns: SignInRoutes,
     timerFrame: @Composable () -> TimerFrame,
-    notificationPermission: NotificationPermissionAsk? = null,
-    onNotificationsAllow: () -> Unit = {},
+    notificationPrompt: NotificationPrompt? = null,
     stores: NavigationStores = viewModel { NavigationStores() },
 ) {
     // Collected while stopped too, so a sign-out that finished in the background shows sign-in
@@ -99,10 +88,9 @@ internal fun TokklNavHost(
                 capabilities = capabilities,
                 features = features,
                 pages = pages,
-                session = session,
+                signIns = signIns,
                 timerFrame = timerFrame,
-                notificationPermission = notificationPermission,
-                onNotificationsAllow = onNotificationsAllow,
+                notificationPrompt = notificationPrompt,
             )
         }
     }
@@ -115,10 +103,9 @@ private fun Navigation(
     capabilities: StateFlow<Capabilities>,
     features: List<FeatureEntries>,
     pages: TopLevelPages,
-    session: NavigationSession,
+    signIns: SignInRoutes,
     timerFrame: @Composable () -> TimerFrame,
-    notificationPermission: NotificationPermissionAsk?,
-    onNotificationsAllow: () -> Unit,
+    notificationPrompt: NotificationPrompt?,
 ) {
     val routes = remember(features) { SavedStateConfiguration { serializersModule = routeSerializers(features) } }
     val backStack = rememberSerializable(
@@ -128,8 +115,8 @@ private fun Navigation(
     val savedStates = rememberSaveableStateHolder()
     val navigator = remember(backStack, stores) { Navigator(backStack, stores.entryOpenings) }
     val prompts = remember { NotificationPrompts() }
-    val entryProvider = remember(features, navigator, prompts) {
-        val host = NavigationHost(navigator, prompts)
+    val host = remember(navigator, prompts) { NavigationHost(navigator, prompts) }
+    val entryProvider = remember(features, host) {
         entryProvider<Route> { features.forEach { feature -> with(feature) { addEntries(host) } } }
     }
     val entries = rememberDecoratedNavEntries(
@@ -143,28 +130,29 @@ private fun Navigation(
     // A signed-in page restored from saved state can outlive its session: a sign-out that finished
     // in the background before the process died, or a token that no longer decrypts. The page
     // shows while the stores are read, once per composition of the host, so sign-in pays nothing.
-    val restoredSignedIn = remember { backStack.lastOrNull().let { it != null && it !is SignInRoute } }
+    val restoredSignedIn = remember { backStack.lastOrNull().let { it != null && !signIns.isSignIn(it) } }
     if (restoredSignedIn) {
         LaunchedEffect(Unit) {
-            if (!session.isSignedIn()) navigator.startOver(SignInRoute())
+            if (!signIns.isSignedIn()) navigator.startOver(signIns.signIn())
         }
     }
     if (backStack.isEmpty()) {
         // Shows the window background, which matches the theme, while the
         // stores are read off the main thread.
         LaunchedEffect(Unit) {
-            backStack.add(if (session.isSignedIn()) Route.Timer else SignInRoute())
+            backStack.add(if (signIns.isSignedIn()) Route.Timer else signIns.signIn())
         }
         return
     }
     // Collected while stopped too: a page the server lost never shows, not even on the first frame back.
     val flags by capabilities.collectAsState()
-    val unavailable = unavailablePages(flags)
+    val unavailable = pages.unavailable(flags)
     // A page the server lacks never shows, not even for the frame before the stack is corrected.
     val top = backStack.last().orTimerIfUnavailable(unavailable)
-    NavigationRequestEffects(requests, navigator, session, unavailable, onSignIn = top is SignInRoute)
+    val onSignIn = signIns.isSignIn(top)
+    NavigationRequestEffects(requests, features, navigator, signIns, unavailable, onSignIn = onSignIn)
     BackHandler(enabled = backStack.size > 1) { navigator.back() }
-    if (top is SignInRoute) {
+    if (onSignIn) {
         LaunchedEffect(Unit) { savedStates.removeState(Route.Timer.contentKey) }
         entries.Show(top)
         return
@@ -173,12 +161,11 @@ private fun Navigation(
         stack = backStack,
         top = top,
         entries = entries,
-        navigator = navigator,
+        host = host,
+        features = features,
         pages = pages,
         unavailable = unavailable,
-        prompts = prompts,
-        notificationPermission = notificationPermission,
-        onNotificationsAllow = onNotificationsAllow,
+        notificationPrompt = notificationPrompt,
         timerFrame = timerFrame,
     )
 }

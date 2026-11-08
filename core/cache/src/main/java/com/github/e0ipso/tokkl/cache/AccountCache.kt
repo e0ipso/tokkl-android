@@ -3,7 +3,7 @@ package com.github.e0ipso.tokkl.cache
 import android.database.sqlite.SQLiteException
 import com.github.e0ipso.tokkl.api.Me
 import com.github.e0ipso.tokkl.api.TokklApi
-import com.github.e0ipso.tokkl.capabilities.Capabilities
+import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.model.Client
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.EntryWithSendState

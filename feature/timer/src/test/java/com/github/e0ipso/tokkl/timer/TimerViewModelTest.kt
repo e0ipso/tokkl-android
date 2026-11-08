@@ -86,6 +86,7 @@ class TimerViewModelTest {
             sendQueued = {},
             discards = discardNotices(),
             timerApi = flowOf(true),
+            view = MutableStateFlow(TimerView.LIST),
         )
         // The screen collects the state while it shows.
         scope.launch { model.state.collect {} }

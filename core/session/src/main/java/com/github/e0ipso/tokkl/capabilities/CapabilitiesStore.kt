@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.capabilities
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.storage.PreferencesFile
 import com.github.e0ipso.tokkl.storage.ValueStore
 import java.io.IOException

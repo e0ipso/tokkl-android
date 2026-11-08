@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.github.e0ipso.tokkl.capabilities.Capabilities
+import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.platform.AppForeground
 import com.github.e0ipso.tokkl.session.AccountSettings
 import kotlinx.coroutines.CoroutineScope

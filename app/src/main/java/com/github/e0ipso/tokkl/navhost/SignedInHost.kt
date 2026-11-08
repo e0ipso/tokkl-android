@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.navhost
 
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -9,7 +10,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
@@ -17,67 +17,60 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavEntry
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.navigation.FeatureEntries
 import com.github.e0ipso.tokkl.navigation.LocalSignedInSession
+import com.github.e0ipso.tokkl.navigation.NavigationHost
 import com.github.e0ipso.tokkl.navigation.Navigator
-import com.github.e0ipso.tokkl.navigation.NotificationPrompts
+import com.github.e0ipso.tokkl.navigation.PageBadge
 import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.TopLevelPages
 import com.github.e0ipso.tokkl.navigation.contentKey
-import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
-import com.github.e0ipso.tokkl.notification.NotificationPermissionPrompt
-import com.github.e0ipso.tokkl.pomodoro.PomodoroRoute
-import com.github.e0ipso.tokkl.signin.SignInRoute
-import com.github.e0ipso.tokkl.sync.DiscardNotice
-import com.github.e0ipso.tokkl.sync.openNeedsAttention
-import com.github.e0ipso.tokkl.timer.FullscreenTimerRoute
 import com.github.e0ipso.tokkl.timernotice.TimerFrame
 import com.github.e0ipso.tokkl.timernotice.timerNoticeText
 import com.github.e0ipso.tokkl.ui.windowWidth
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
- * A signed-in back stack, [stack], with [top] on screen, in the [SignedInFrame]. The bar or the
- * rail shows the [pages], marks the page [top] belongs to and opens pages ([Navigator.open]). While a time entry
- * runs, the bar's Timer item carries a dot, and while a Pomodoro session runs, Pomodoro's. The
- * pages whose routes are in [unavailable] show nowhere, and a stack that holds one goes to Timer.
+ * A signed-in back stack, [stack], with [top] on screen, in the [SignedInFrame], with what the
+ * [host] lends every screen. The bar or the rail shows the [pages], marks the page [top] belongs
+ * to and opens pages ([Navigator.open]). The items of the pages whose [PageBadge]s say so carry a
+ * running dot. The pages whose routes are in [unavailable] show nowhere, and a stack that holds
+ * one goes to Timer.
  *
- * The fullscreen timer hides the bar, and so does the entry form opened from it. When the timer
- * goes idle, by the server's word, both close down to Timer. The entry form shows beside the
- * Timer page's List view on an expanded window ([SignedInPanes]).
+ * A focused screen, the fullscreen timer, hides the bar, and so does the entry form opened from
+ * it. When the timer goes idle, by the server's word, both close down to Timer. The entry form
+ * shows beside the Timer page's List view on an expanded window ([SignedInPanes]).
  *
- * Above the bar, or at the bottom beside the rail, shows the sync status while changes wait to
- * reach the server (docs/PRD.md O5, O6). Its button opens the changes the server refused above
- * the page, and after a refused token its other button opens sign-in above the page, filled in
- * for the account, so the user signs in again to the same account. Above the bar shows the
- * session's trust prompt, or after a cancel the notice that reopens it. At the bottom of the
- * screen, a notice says how many changes were discarded, until dismissed. On the pages that show
- * the timer, the short Stop's Undo and the timer's notices share one snackbar host, so they
- * queue, never overlap. With [notificationPermission], a timer start or a Pomodoro start may ask
- * for the notification permission, and [onNotificationsAllow] hears the grant. [timerFrame] gives
- * what the frame reads of the timer, from the signed-in session's store.
+ * Each of the [features] may show a band above the bar, or at the bottom beside the rail, such as
+ * the sync status, and a notice over the page, such as the changes discarded. Above the bar shows
+ * the session's trust prompt, or after a cancel the notice that reopens it. On the pages that show
+ * the timer ([Route.showsTimerNotices]), the short Stop's Undo and the timer's notices share one
+ * snackbar host, so they queue, never overlap. With [notificationPrompt], a timer start or a
+ * Pomodoro start may ask for the notification permission. [timerFrame] gives what the frame reads
+ * of the timer, from the signed-in session's store.
  */
 @Composable
 internal fun SignedInHost(
     stack: List<Route>,
     top: Route,
     entries: List<NavEntry<Route>>,
-    navigator: Navigator,
+    host: NavigationHost,
+    features: List<FeatureEntries>,
     pages: TopLevelPages,
     unavailable: Set<Route>,
-    prompts: NotificationPrompts,
-    notificationPermission: NotificationPermissionAsk?,
-    onNotificationsAllow: () -> Unit,
+    notificationPrompt: NotificationPrompt?,
     timerFrame: @Composable () -> TimerFrame,
 ) {
+    val navigator = host.navigator
+    val prompts = host.prompts
     val model = koinViewModel<SignedInViewModel>(viewModelStoreOwner = LocalSignedInSession.current)
     val timer = timerFrame()
     val state by model.state.collectAsStateWithLifecycle()
-    val scope = rememberCoroutineScope()
     LaunchedEffect(unavailable) {
         if (stack.holdsAnyOf(unavailable)) navigator.open(Route.Timer)
     }
@@ -92,6 +85,7 @@ internal fun SignedInHost(
             navigator.downToTimer()
         }
     }
+    val listView by timer.listView.collectAsStateWithLifecycle()
     val shortUndo = state.shortStopUndo
     // The short Stop's Undo and the timer's notices share one host, so they queue, never overlap.
     val shortHost = remember { SnackbarHostState() }
@@ -119,17 +113,9 @@ internal fun SignedInHost(
         current = pages.currentPage(stack),
         showNavigation = !focused,
         onOpen = { route -> navigator.open(route, unavailable) },
-        timerRunning = state.timerRunning,
-        pomodoroRunning = state.pomodoroRunning,
+        badges = state.badges,
         hidden = unavailable,
-        syncStatus = state.syncStatus,
-        onOpenNeedsAttention = navigator::openNeedsAttention,
-        onSignInAgain = {
-            scope.launch {
-                val account = model.signInAgain() ?: return@launch
-                navigator.push(SignInRoute.again(account))
-            }
-        },
+        band = features.firstNotNullOfOrNull { it.frameBand(host) },
         width = width,
         notice = {
             SessionTrustPrompts(
@@ -140,37 +126,32 @@ internal fun SignedInHost(
             )
         },
     ) {
-        if (top == FullscreenTimerRoute) {
+        if (top.focused) {
             entries.Show(top)
         } else {
             SignedInPanes(
                 top = top,
-                entryBeside = showsEntryBeside(width, state.timerView, stack),
+                entryBeside = showsEntryBeside(width, listView, stack),
             ) { route -> entries.Show(route) }
         }
-        if (state.discardedCount > 0) {
-            DiscardNotice(
-                state.discardedCount,
-                onDismiss = model::dismissDiscarded,
-                modifier = Modifier.align(Alignment.BottomCenter),
-            )
+        for (feature in features) {
+            feature.frameNotice(host)?.invoke(Modifier.align(Alignment.BottomCenter))
         }
-        if (top in TIMER_PAGES) {
+        if (top.showsTimerNotices) {
             TimerNotices(timer, shortHost)
             SnackbarHost(shortHost, Modifier.align(Alignment.BottomCenter))
         }
-        if (notificationPermission != null) {
-            NotificationPermissionPrompt(
-                permissionStarts,
-                notificationPermission,
-                onAllow = onNotificationsAllow,
-                modifier = Modifier.align(Alignment.BottomCenter),
-                retries = permissionRetries,
-                onResult = { prompts.answers++ },
-            )
-        }
+        notificationPrompt?.invoke(this, permissionStarts, permissionRetries) { prompts.answers++ }
     }
 }
+
+/**
+ * The notification permission's prompt, which MainActivity hands the host: it asks for the
+ * permission after the timer's or a Pomodoro start in `starts`, again on each of `retries`, and
+ * calls `onAnswer` once the user answered, so a page reads the permission again.
+ */
+internal typealias NotificationPrompt =
+    @Composable BoxScope.(starts: Flow<Unit>, retries: Flow<Unit>, onAnswer: () -> Unit) -> Unit
 
 /**
  * Shows the timer's notices in [host], one after another, while it is in the composition: a Pause,
@@ -198,9 +179,3 @@ private fun TimerNotices(notices: TimerFrame, host: SnackbarHostState) {
 internal fun List<NavEntry<Route>>.Show(route: Route) {
     firstOrNull { it.contentKey == route.contentKey }?.Content()
 }
-
-/**
- * The pages that show the timer, where its notices show: a failed Pause, Resume or Stop while
- * paused, and a pomodoro too short to save.
- */
-private val TIMER_PAGES = setOf(Route.Timer, FullscreenTimerRoute, PomodoroRoute)

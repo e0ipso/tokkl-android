@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.di
 import android.app.Application
 import android.content.Context
 import androidx.work.WorkerParameters
+import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.TopLevelDestination
 import com.github.e0ipso.tokkl.notification.RunningNotice
 import com.github.e0ipso.tokkl.pomodoro.PomodoroNotificationMemory
@@ -36,7 +37,7 @@ class AppModulesTest {
      * The types listed here are what a definition passes itself: the Android context, the stored
      * values it loads, flows and callbacks it builds, the listeners and clock it builds for one
      * component, the helpers it makes for one view model, such as the sign-in request and the CSV
-     * exporter, and the top-level pages the features name. A component handed over as
+     * exporter, and the top-level pages and the routes of the badges the features name. A component handed over as
      * one of its interfaces is bound to that interface, so it needs no entry here. This check
      * reads constructors only; the device's AppGraphTest resolves every definition.
      */
@@ -64,6 +65,7 @@ class AppModulesTest {
                 SignIn::class,
                 ReportExportController::class,
                 TopLevelDestination::class,
+                Route::class,
                 // The collaborators a definition makes for one component.
                 PomodoroNotificationMemory::class,
                 PomodoroSessionPoster::class,

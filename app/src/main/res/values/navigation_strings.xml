@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The bottom bar and its More sheet, and the Timer page. -->
+<!-- The bottom bar and its More sheet. -->
 <resources>
     <string name="nav_more">More</string>
     <string name="nav_more_close">Close</string>
-    <!-- What TalkBack reads as the Timer item's state while a time entry runs, as the web app's running dot says. -->
-    <string name="nav_timer_running">Timer running</string>
-    <string name="nav_pomodoro_running">Pomodoro session running</string>
 </resources>

@@ -4,7 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.capabilities.Capabilities
+import com.github.e0ipso.tokkl.capabilities.supports
+import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.platform.AppForeground
 import com.github.e0ipso.tokkl.platform.PageLoads
 import com.github.e0ipso.tokkl.platform.stateInPage

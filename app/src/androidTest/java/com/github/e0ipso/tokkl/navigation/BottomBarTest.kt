@@ -62,6 +62,7 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.feature.clients.R as ClientsR
+import com.github.e0ipso.tokkl.feature.pomodoro.R as PomodoroR
 import com.github.e0ipso.tokkl.feature.projects.R as ProjectsR
 import com.github.e0ipso.tokkl.feature.reports.R as ReportsR
 import com.github.e0ipso.tokkl.feature.tags.R as TagsR
@@ -246,7 +247,10 @@ class BottomBarTest {
         )
         launch {
             val runningItem = barItemMatcher(TimerR.string.nav_timer) and
-                SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, string(R.string.nav_timer_running))
+                SemanticsMatcher.expectValue(
+                    SemanticsProperties.StateDescription,
+                    string(TimerR.string.nav_timer_running),
+                )
             composeRule.waitUntil("the Timer item says a timer runs", NETWORK_TIMEOUT_MS) {
                 composeRule.onAllNodes(runningItem).fetchSemanticsNodes().isNotEmpty()
             }
@@ -286,7 +290,7 @@ class BottomBarTest {
             val marker = barItemMatcher(UiR.string.pomodoro_title) and
                 SemanticsMatcher.expectValue(
                     SemanticsProperties.StateDescription,
-                    string(R.string.nav_pomodoro_running),
+                    string(PomodoroR.string.nav_pomodoro_running),
                 )
             assertEquals(0, composeRule.onAllNodes(marker).fetchSemanticsNodes().size)
             barItem(UiR.string.pomodoro_title).performClick()

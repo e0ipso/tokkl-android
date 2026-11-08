@@ -55,7 +55,9 @@ import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.navhost.SignedInFrame
 import com.github.e0ipso.tokkl.navhost.SignedInPanes
+import com.github.e0ipso.tokkl.navhost.runningBadges
 import com.github.e0ipso.tokkl.navhost.showsEntryBeside
+import com.github.e0ipso.tokkl.navhost.syncBand
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.projects.ProjectForm
 import com.github.e0ipso.tokkl.projects.ProjectsActions
@@ -106,6 +108,7 @@ import java.time.Clock
 import java.time.LocalDate
 import kotlin.math.abs
 import com.github.e0ipso.tokkl.core.ui.R as UiR
+import com.github.e0ipso.tokkl.feature.pomodoro.R as PomodoroR
 import com.github.e0ipso.tokkl.feature.projects.R as ProjectsR
 import com.github.e0ipso.tokkl.feature.settings.R as SettingsR
 import com.github.e0ipso.tokkl.feature.timer.R as TimerR
@@ -155,8 +158,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
                 pages = topLevelPages,
                 current = ProjectsRoute,
                 onOpen = {},
-                timerRunning = timerRunning,
-                pomodoroRunning = sessionRunning,
+                badges = runningBadges(timer = timerRunning, pomodoro = sessionRunning),
             ) {
                 Box(Modifier.fillMaxSize())
             }
@@ -164,8 +166,8 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
         fun marked(label: Int, state: Int) = navigationItem(label) and
             SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, string(state))
         fun count(matcher: SemanticsMatcher) = composeRule.onAllNodes(matcher).fetchSemanticsNodes().size
-        val pomodoro = marked(UiR.string.pomodoro_title, R.string.nav_pomodoro_running)
-        val timer = marked(TimerR.string.nav_timer, R.string.nav_timer_running)
+        val pomodoro = marked(UiR.string.pomodoro_title, PomodoroR.string.nav_pomodoro_running)
+        val timer = marked(TimerR.string.nav_timer, TimerR.string.nav_timer_running)
         assertEquals(1, count(pomodoro))
         assertEquals(0, count(timer))
         composeRule.runOnIdle { timerRunning = true }
@@ -253,7 +255,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
     @Test
     fun theEntryFormShowsBesideTheHistoryOnlyWhenExpanded() {
         val formRoute = Route.Entry(EntryOpening.Edit(EntryId(1)), id = "form")
-        val beside = showsEntryBeside(width, TimerView.LIST, listOf(Route.Timer, formRoute))
+        val beside = showsEntryBeside(width, listView = true, listOf(Route.Timer, formRoute))
         assertEquals(width == WindowWidth.EXPANDED, beside)
         show {
             SignedInFrame(pages = topLevelPages, current = Route.Timer, onOpen = {}) {
@@ -424,8 +426,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
             pages = topLevelPages,
             current = page,
             onOpen = {},
-            syncStatus = ScreenshotTest.SYNC_STATUS,
-            syncStatusClock = ScreenshotTest.TODAY,
+            band = syncBand(ScreenshotTest.SYNC_STATUS, ScreenshotTest.TODAY),
         ) { content() }
     }
 

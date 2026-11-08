@@ -72,6 +72,7 @@ import java.time.temporal.ChronoUnit
  *   timer state, which a screen takes when it shows it.
  * @param timerApi whether the server offers the timer API, which decides whether a timer that
  *   the cache does not show yet offers Pause.
+ * @param view the Timer page's view, List or Calendar, as the Timer view setting keeps it.
  */
 class TimerViewModel(
     controls: Flow<TimerControls>,
@@ -86,6 +87,7 @@ class TimerViewModel(
     private val sendQueued: suspend () -> Unit,
     discards: DiscardNotices,
     timerApi: Flow<Boolean>,
+    view: StateFlow<TimerView>,
 ) : ViewModel(scope),
     TimerFrame {
 
@@ -126,6 +128,10 @@ class TimerViewModel(
     ) { running, names, settings, taps, offered ->
         timerState(running, settings?.defaultWorkspaceId, taps, offered).labelled(names.projects, names.tasks)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), TimerState.Loading)
+
+    // Kept up to date while the view model lives, so the frame's first frame back reads it.
+    override val listView: StateFlow<Boolean> =
+        view.map { it == TimerView.LIST }.stateIn(viewModelScope, SharingStarted.Eagerly, view.value == TimerView.LIST)
 
     /** Whether [state] shows the timer idle by the cache's word, with no tap of its own on the way. */
     override val settledIdle: Flow<Boolean> = state.map { (it as? TimerState.Idle)?.authoritative == true }

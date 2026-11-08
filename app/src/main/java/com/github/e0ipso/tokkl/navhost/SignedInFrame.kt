@@ -28,15 +28,12 @@ import androidx.compose.ui.Modifier
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.TopLevelPages
-import com.github.e0ipso.tokkl.sync.SyncStatus
-import com.github.e0ipso.tokkl.sync.SyncStatusBand
 import com.github.e0ipso.tokkl.trust.SessionTrust
 import com.github.e0ipso.tokkl.trust.TrustPrompt
 import com.github.e0ipso.tokkl.trust.TrustRefusedNotice
 import com.github.e0ipso.tokkl.ui.WindowWidth
 import com.github.e0ipso.tokkl.ui.theme.LocalSectionHue
 import com.github.e0ipso.tokkl.ui.windowWidth
-import java.time.Clock
 
 /**
  * The signed-in screen on top, [top], drawn by [screen]. With [entryBeside], which an expanded
@@ -96,10 +93,9 @@ internal fun SignedInPanes(top: Route, entryBeside: Boolean, screen: @Composable
 /**
  * A signed-in screen, [content], with the navigation that fits [width]: above the bottom bar on a compact window,
  * beside the navigation rail on wider ones. The bar or the rail shows the [pages], marks the page of the route
- * [current] and opens pages with [onOpen], leaves out the pages whose routes are in [hidden], and puts a dot on Timer
- * while [timerRunning]. Right above the bar, or at the bottom of the
- * screen beside the rail, shows [syncStatus] when it is not null, its "needs attention" button calls
- * [onOpenNeedsAttention] and its sign-in button [onSignInAgain]. Above both shows [notice], when there is one, and the
+ * [current] and opens pages with [onOpen], leaves out the pages whose routes are in [hidden], and puts a dot on the
+ * pages in [badges]. Right above the bar, or at the bottom of the screen beside the rail, shows [band] when it is not
+ * null, such as the sync status. Above both shows [notice], when there is one, and the
  * screens end at its top, so it covers none of them. The bar's height, status and system navigation bar included, is
  * padding the screens consume, so their own navigation bar padding adds nothing above the bar. Beside the rail, which
  * keeps clear of the system bars at its side, the screens consume that side's insets.
@@ -109,13 +105,9 @@ internal fun SignedInFrame(
     pages: TopLevelPages,
     current: Route,
     onOpen: (Route) -> Unit,
-    timerRunning: Boolean = false,
-    pomodoroRunning: Boolean = false,
+    badges: Map<Route, Int> = emptyMap(),
     hidden: Set<Route> = emptySet(),
-    syncStatus: SyncStatus? = null,
-    onOpenNeedsAttention: (() -> Unit)? = null,
-    onSignInAgain: (() -> Unit)? = null,
-    syncStatusClock: Clock = Clock.systemUTC(),
+    band: (@Composable () -> Unit)? = null,
     width: WindowWidth = windowWidth(),
     showNavigation: Boolean = true,
     notice: @Composable () -> Unit = {},
@@ -128,8 +120,7 @@ internal fun SignedInFrame(
                 pages = pages,
                 current = current,
                 onOpen = onOpen,
-                timerRunning = timerRunning,
-                pomodoroRunning = pomodoroRunning,
+                badges = badges,
                 hidden = hidden,
             )
         }
@@ -149,28 +140,20 @@ internal fun SignedInFrame(
                 Column {
                     // The bar, or the band's spacer, keeps clear of the system navigation bar for
                     // the notice too.
-                    val clearsSystemBar = (showNavigation && !rail) || syncStatus != null
+                    val clearsSystemBar = (showNavigation && !rail) || band != null
                     Box(
                         if (clearsSystemBar) Modifier.consumeWindowInsets(WindowInsets.navigationBars) else Modifier,
                     ) { notice() }
-                    if (syncStatus != null) {
-                        SyncStatusBand(
-                            syncStatus,
-                            onOpenNeedsAttention,
-                            onSignInAgain = onSignInAgain,
-                            clock = syncStatusClock,
-                        )
-                    }
+                    band?.invoke()
                     if (showNavigation && !rail) {
                         AppNavigationBar(
                             pages = pages,
                             current = current,
                             onOpen = onOpen,
-                            timerRunning = timerRunning,
-                            pomodoroRunning = pomodoroRunning,
+                            badges = badges,
                             hidden = hidden,
                         )
-                    } else if (syncStatus != null) {
+                    } else if (band != null) {
                         // Without the bar, the band keeps above the system navigation bar on its own.
                         Spacer(
                             Modifier

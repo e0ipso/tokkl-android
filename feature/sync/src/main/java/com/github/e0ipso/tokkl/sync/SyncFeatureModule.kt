@@ -55,5 +55,16 @@ val syncFeatureModule = module {
         SyncStatusSource(changes = get(), lastAnswer = get(), accountSettings = get(), sender = get(), scope = get())
     }
 
+    // The sync status band and the discarded changes' notice in the signed-in frame, in the
+    // session's store.
+    viewModel {
+        SyncFrameViewModel(
+            status = get<SyncStatusSource>().status,
+            discarded = get(),
+            signIns = get(),
+            scope = viewModelCoroutineScope(),
+        )
+    }
+
     single { SyncEntries } bind FeatureEntries::class
 }

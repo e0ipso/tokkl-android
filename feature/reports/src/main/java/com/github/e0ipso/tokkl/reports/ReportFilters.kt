@@ -3,7 +3,7 @@ package com.github.e0ipso.tokkl.reports
 import androidx.compose.runtime.Immutable
 import com.github.e0ipso.tokkl.api.ReportFilter
 import com.github.e0ipso.tokkl.cache.AccountCache
-import com.github.e0ipso.tokkl.capabilities.Capabilities
+import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.model.Client
 import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.model.Tag

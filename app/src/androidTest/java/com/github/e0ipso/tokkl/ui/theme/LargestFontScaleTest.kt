@@ -49,9 +49,9 @@ import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.bottomBarItem
-import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.capabilities
+import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.settings.PomodoroDefaultField

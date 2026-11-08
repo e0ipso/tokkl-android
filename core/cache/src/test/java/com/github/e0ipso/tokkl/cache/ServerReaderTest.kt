@@ -8,8 +8,8 @@ import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.api.TokklApi
-import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
+import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.session.AccountRefresh
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.MePreferences

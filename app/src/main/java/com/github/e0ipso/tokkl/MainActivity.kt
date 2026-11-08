@@ -13,6 +13,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.view.WindowCompat
@@ -24,13 +26,17 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.di.FeatureScreens
 import com.github.e0ipso.tokkl.lifecycle.MainActivityForeground
+import com.github.e0ipso.tokkl.navhost.DeepLinks
 import com.github.e0ipso.tokkl.navhost.NavigationRequests
-import com.github.e0ipso.tokkl.navhost.NavigationSession
+import com.github.e0ipso.tokkl.navhost.TokklNavHost
 import com.github.e0ipso.tokkl.navhost.takeDeepLinks
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
 import com.github.e0ipso.tokkl.navigation.LocalSignedInSession
+import com.github.e0ipso.tokkl.navigation.SignInRoutes
 import com.github.e0ipso.tokkl.navigation.TopLevelPages
+import com.github.e0ipso.tokkl.navigation.requestSerializers
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
+import com.github.e0ipso.tokkl.notification.NotificationPermissionPrompt
 import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.platform.holdDrawingUntil
 import com.github.e0ipso.tokkl.session.AccountLifetime
@@ -52,13 +58,16 @@ class MainActivity : ComponentActivity() {
     private val pages: TopLevelPages by inject()
     private val lifetime: AccountLifetime by inject()
     private val capabilities: CapabilitiesSource by inject()
-    private val session: NavigationSession by inject()
+    private val signIns: SignInRoutes by inject()
     private val loads: StartupLoads by inject()
 
     /** The pages that taps outside the app asked to open, until the navigation opens them. */
     private val requests: NavigationRequests by viewModels {
-        viewModelFactory { initializer { NavigationRequests(createSavedStateHandle()) } }
+        viewModelFactory { initializer { NavigationRequests(createSavedStateHandle(), requestSerializers(features)) } }
     }
+
+    /** What each feature reads of the taps from outside the app. */
+    private val links by lazy { DeepLinks(features) }
 
     /** Whether the screens are composed, which they are once every store has loaded. */
     private var composed = false
@@ -68,7 +77,7 @@ class MainActivity : ComponentActivity() {
         // Keeps the splash screen up, and draws no frame, until the screens are composed.
         findViewById<View>(android.R.id.content).holdDrawingUntil { composed }
         drawEdgeToEdge()
-        intent?.takeDeepLinks()?.forEach(requests::request)
+        intent?.takeDeepLinks(links)?.forEach(requests::request)
         lifecycle.addObserver(foreground)
         // The screens compose once every store has loaded off the main thread, so they show the
         // stored theme, account settings and capabilities from their first composition. At once
@@ -90,16 +99,25 @@ class MainActivity : ComponentActivity() {
             val darkTheme = settings.mode.isDark(systemIsDark = isSystemInDarkTheme())
             TokklTheme(darkTheme = darkTheme, dynamicColor = settings.dynamicColor) {
                 WindowFollowsTheme(darkTheme)
+                val ask = remember { NotificationPermissionAsk.forApp(this, io) }
                 TokklNavHost(
                     requests = requests,
                     features = features,
                     pages = pages,
                     signOuts = lifetime.signOuts,
                     capabilities = capabilities.state,
-                    session = session,
+                    signIns = signIns,
                     timerFrame = { koinViewModel<TimerViewModel>(viewModelStoreOwner = LocalSignedInSession.current) },
-                    notificationPermission = remember { NotificationPermissionAsk.forApp(this, io) },
-                    onNotificationsAllow = foreground::notificationsGranted,
+                    notificationPrompt = { starts, retries, onAnswer ->
+                        NotificationPermissionPrompt(
+                            starts,
+                            ask,
+                            onAllow = foreground::notificationsGranted,
+                            modifier = Modifier.align(Alignment.BottomCenter),
+                            retries = retries,
+                            onResult = { onAnswer() },
+                        )
+                    },
                 )
             }
         }
@@ -112,7 +130,7 @@ class MainActivity : ComponentActivity() {
      */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        intent.takeDeepLinks().forEach(requests::request)
+        intent.takeDeepLinks(links).forEach(requests::request)
     }
 
     /**

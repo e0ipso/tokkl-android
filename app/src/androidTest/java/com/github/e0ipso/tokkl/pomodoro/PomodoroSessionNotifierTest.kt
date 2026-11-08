@@ -9,8 +9,9 @@ import android.content.pm.PackageManager
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.api.PhaseKind
+import com.github.e0ipso.tokkl.di.FeatureScreens
 import com.github.e0ipso.tokkl.feature.pomodoro.R
-import com.github.e0ipso.tokkl.navhost.NavigationRequest
+import com.github.e0ipso.tokkl.navhost.DeepLinks
 import com.github.e0ipso.tokkl.navhost.takeDeepLinks
 import com.github.e0ipso.tokkl.notification.RunningNotifier
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
@@ -21,6 +22,7 @@ import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.koin.core.context.GlobalContext
 import java.time.Instant
 import java.util.UUID
 
@@ -83,16 +85,17 @@ class PomodoroSessionNotifierTest {
         val tap = pomodoroSessionOpenIntent(context, "tap-account", key)
         assertTrue(tap.flags and Intent.FLAG_ACTIVITY_SINGLE_TOP != 0)
         assertTrue(tap.flags and Intent.FLAG_ACTIVITY_CLEAR_TOP != 0)
+        val links = DeepLinks(GlobalContext.get().get(FeatureScreens))
         assertEquals(
             PomodoroNotificationTap("tap-account", key),
-            (tap.takeDeepLinks().single() as NavigationRequest.Pomodoro).tap,
+            (tap.takeDeepLinks(links).single() as PomodoroSessionTap).tap,
         )
-        assertTrue(tap.takeDeepLinks().isEmpty())
+        assertTrue(tap.takeDeepLinks(links).isEmpty())
         val launcher = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
-        assertTrue(launcher.takeDeepLinks().isEmpty())
+        assertTrue(launcher.takeDeepLinks(links).isEmpty())
         assertEquals(Intent.ACTION_MAIN, launcher.action)
         assertTrue(launcher.hasCategory(Intent.CATEGORY_LAUNCHER))
-        assertTrue(Intent("com.github.e0ipso.tokkl.action.SHOW_POMODORO_SESSION").takeDeepLinks().isEmpty())
+        assertTrue(Intent("com.github.e0ipso.tokkl.action.SHOW_POMODORO_SESSION").takeDeepLinks(links).isEmpty())
     }
 
     @Test fun shownIdentitySurvivesReopenAndForgetErasesAllPersistedDisplayData() = runBlocking<Unit> {

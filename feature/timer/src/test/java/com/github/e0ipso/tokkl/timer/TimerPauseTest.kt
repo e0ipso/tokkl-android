@@ -121,6 +121,7 @@ class TimerPauseTest {
         discards = discardNotices(discardNotices, takeDiscardNotice),
         trace = TapTrace.None,
         timerApi = flowOf(true),
+        view = MutableStateFlow(TimerView.LIST),
     )
 
     @Test

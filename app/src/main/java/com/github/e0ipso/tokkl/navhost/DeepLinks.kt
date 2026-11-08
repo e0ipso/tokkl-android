@@ -1,66 +1,21 @@
 package com.github.e0ipso.tokkl.navhost
 
 import android.content.Intent
-import com.github.e0ipso.tokkl.pomodoro.EXTRA_PHASE_START
-import com.github.e0ipso.tokkl.pomodoro.EXTRA_REVISION
-import com.github.e0ipso.tokkl.pomodoro.POMODORO_NOTIFICATION_ACCOUNT
-import com.github.e0ipso.tokkl.pomodoro.SHOW_POMODORO
-import com.github.e0ipso.tokkl.reminder.ReminderNotifier
-import com.github.e0ipso.tokkl.widget.WidgetNavigation
-import com.github.e0ipso.tokkl.widget.WidgetPage
-
-/** What [DeepLinks] reads of one of MainActivity's intents: its action and its extras. */
-internal interface LinkIntent {
-    val action: String?
-
-    /** The boolean extra [key], false when absent. */
-    fun flag(key: String): Boolean
-
-    /** The string extra [key], or null. */
-    fun text(key: String): String?
-
-    /** The long extra [key], or null when absent. */
-    fun number(key: String): Long?
-}
+import com.github.e0ipso.tokkl.navigation.FeatureEntries
+import com.github.e0ipso.tokkl.navigation.LinkIntent
+import com.github.e0ipso.tokkl.navigation.NavigationRequest
 
 /**
- * The pages that one of MainActivity's intents asks to open: a widget's page, a Pomodoro session
- * notification's tap, which names its account and phase, and a reminder's tap, which opens Timer.
+ * The pages that one of MainActivity's intents asks to open, as each of the [features] reads its
+ * own taps from it ([FeatureEntries.readLinks]), such as a widget's page or a notification's tap.
  * It reads only what [LinkIntent] gives it, so it has no Android in it.
  */
-internal object DeepLinks {
+internal class DeepLinks(private val features: List<FeatureEntries>) {
 
     /** Every extra [parse] reads. MainActivity removes them once read, so a rotation opens nothing again. */
-    val extras = listOf(
-        WidgetNavigation.OPEN_POMODORO,
-        WidgetNavigation.OPEN_TODAY,
-        WidgetNavigation.OPEN_TIMER,
-        POMODORO_NOTIFICATION_ACCOUNT,
-        EXTRA_PHASE_START,
-        EXTRA_REVISION,
-        ReminderNotifier.OPEN_TIMER,
-    )
+    val extras: List<String> get() = features.flatMap { it.linkExtras }
 
-    fun parse(intent: LinkIntent): List<NavigationRequest> = listOfNotNull(
-        pomodoro(intent),
-        NavigationRequest.ReminderTimer.takeIf { intent.flag(ReminderNotifier.OPEN_TIMER) },
-        widgetPage(intent)?.let(NavigationRequest::Widget),
-    )
-
-    /** A session notification's tap, when it names both its account and its phase. */
-    private fun pomodoro(intent: LinkIntent): NavigationRequest.Pomodoro? {
-        if (intent.action != SHOW_POMODORO) return null
-        val account = intent.text(POMODORO_NOTIFICATION_ACCOUNT) ?: return null
-        val phaseStart = intent.number(EXTRA_PHASE_START) ?: return null
-        return NavigationRequest.Pomodoro(account, phaseStart)
-    }
-
-    private fun widgetPage(intent: LinkIntent): WidgetPage? = when {
-        intent.flag(WidgetNavigation.OPEN_POMODORO) -> WidgetPage.POMODORO
-        intent.flag(WidgetNavigation.OPEN_TODAY) -> WidgetPage.TODAY
-        intent.flag(WidgetNavigation.OPEN_TIMER) -> WidgetPage.TIMER
-        else -> null
-    }
+    fun parse(intent: LinkIntent): List<NavigationRequest> = features.flatMap { it.readLinks(intent) }
 }
 
 /**
@@ -68,9 +23,9 @@ internal object DeepLinks {
  * open nothing again. The action and the data stay, so the activity keeps the identity it was
  * started with.
  */
-internal fun Intent.takeDeepLinks(): List<NavigationRequest> {
+internal fun Intent.takeDeepLinks(links: DeepLinks): List<NavigationRequest> {
     val intent = this
-    val requests = DeepLinks.parse(
+    val requests = links.parse(
         object : LinkIntent {
             override val action: String? get() = intent.action
 
@@ -81,6 +36,6 @@ internal fun Intent.takeDeepLinks(): List<NavigationRequest> {
             override fun number(key: String) = if (intent.hasExtra(key)) intent.getLongExtra(key, 0) else null
         },
     )
-    DeepLinks.extras.forEach(::removeExtra)
+    links.extras.forEach(::removeExtra)
     return requests
 }

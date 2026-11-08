@@ -17,6 +17,7 @@ import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.clients.ClientsRoute
 import com.github.e0ipso.tokkl.navhost.AppNavigationBar
 import com.github.e0ipso.tokkl.navhost.AppNavigationRail
+import com.github.e0ipso.tokkl.navhost.runningBadges
 import com.github.e0ipso.tokkl.ui.theme.SectionHue
 import com.github.e0ipso.tokkl.ui.theme.SectionHues
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -78,9 +79,19 @@ class TabHueTest {
             TokklTheme(darkTheme = dark) {
                 unselectedDot = TokklTheme.extraColors.running
                 if (rail) {
-                    AppNavigationRail(pages = topLevelPages, current = current, onOpen = {}, timerRunning = running)
+                    AppNavigationRail(
+                        pages = topLevelPages,
+                        current = current,
+                        onOpen = {},
+                        badges = runningBadges(timer = running),
+                    )
                 } else {
-                    AppNavigationBar(pages = topLevelPages, current = current, onOpen = {}, timerRunning = running)
+                    AppNavigationBar(
+                        pages = topLevelPages,
+                        current = current,
+                        onOpen = {},
+                        badges = runningBadges(timer = running),
+                    )
                 }
             }
         }
@@ -136,9 +147,19 @@ class TabHueTest {
         composeRule.setContent {
             TokklTheme(darkTheme = dark) {
                 if (rail) {
-                    AppNavigationRail(pages = topLevelPages, current = current, onOpen = {}, timerRunning = false)
+                    AppNavigationRail(
+                        pages = topLevelPages,
+                        current = current,
+                        onOpen = {},
+                        badges = runningBadges(timer = false),
+                    )
                 } else {
-                    AppNavigationBar(pages = topLevelPages, current = current, onOpen = {}, timerRunning = false)
+                    AppNavigationBar(
+                        pages = topLevelPages,
+                        current = current,
+                        onOpen = {},
+                        badges = runningBadges(timer = false),
+                    )
                 }
             }
         }

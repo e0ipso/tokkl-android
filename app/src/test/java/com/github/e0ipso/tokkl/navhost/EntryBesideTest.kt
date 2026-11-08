@@ -4,7 +4,6 @@ import com.github.e0ipso.tokkl.navigation.EntryOpening
 import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.reports.ReportsRoute
 import com.github.e0ipso.tokkl.settings.SettingsRoute
-import com.github.e0ipso.tokkl.timer.TimerView
 import com.github.e0ipso.tokkl.ui.WindowWidth
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -20,27 +19,33 @@ class EntryBesideTest {
 
     @Test
     fun anExpandedWindowShowsTheFormBesideTheHistory() {
-        assertTrue(showsEntryBeside(WindowWidth.EXPANDED, TimerView.LIST, formOverTimer))
+        assertTrue(showsEntryBeside(WindowWidth.EXPANDED, LIST_VIEW, formOverTimer))
     }
 
     @Test
     fun compactAndMediumWindowsShowTheFormAlone() {
-        assertFalse(showsEntryBeside(WindowWidth.COMPACT, TimerView.LIST, formOverTimer))
-        assertFalse(showsEntryBeside(WindowWidth.MEDIUM, TimerView.LIST, formOverTimer))
+        assertFalse(showsEntryBeside(WindowWidth.COMPACT, LIST_VIEW, formOverTimer))
+        assertFalse(showsEntryBeside(WindowWidth.MEDIUM, LIST_VIEW, formOverTimer))
     }
 
     @Test
     fun theCalendarKeepsTheWholeWidth() {
-        assertFalse(showsEntryBeside(WindowWidth.EXPANDED, TimerView.CALENDAR, formOverTimer))
+        assertFalse(showsEntryBeside(WindowWidth.EXPANDED, CALENDAR_VIEW, formOverTimer))
     }
 
     @Test
     fun onlyTheFormOnTopOfTheTimerPageGoesBeside() {
-        assertFalse(showsEntryBeside(WindowWidth.EXPANDED, TimerView.LIST, listOf(Route.Timer)))
-        assertFalse(showsEntryBeside(WindowWidth.EXPANDED, TimerView.LIST, listOf(Route.Timer, ReportsRoute)))
-        assertFalse(showsEntryBeside(WindowWidth.EXPANDED, TimerView.LIST, listOf(form)))
+        assertFalse(showsEntryBeside(WindowWidth.EXPANDED, LIST_VIEW, listOf(Route.Timer)))
+        assertFalse(showsEntryBeside(WindowWidth.EXPANDED, LIST_VIEW, listOf(Route.Timer, ReportsRoute)))
+        assertFalse(showsEntryBeside(WindowWidth.EXPANDED, LIST_VIEW, listOf(form)))
         assertFalse(
-            showsEntryBeside(WindowWidth.EXPANDED, TimerView.LIST, listOf(Route.Timer, SettingsRoute, form)),
+            showsEntryBeside(WindowWidth.EXPANDED, LIST_VIEW, listOf(Route.Timer, SettingsRoute, form)),
         )
+    }
+
+    private companion object {
+        /** The Timer page's List view, beside which the form may open, and its Calendar view. */
+        const val LIST_VIEW = true
+        const val CALENDAR_VIEW = false
     }
 }

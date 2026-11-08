@@ -21,8 +21,8 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AppNavHost
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.awaitTimerPage
-import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.core.ui.R
+import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.After

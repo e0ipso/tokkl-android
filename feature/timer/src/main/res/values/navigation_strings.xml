@@ -4,4 +4,6 @@
     <string name="nav_templates">Timer templates</string>
     <string name="timer_view_list">List</string>
     <string name="timer_view_calendar">Calendar</string>
+    <!-- What TalkBack reads as the Timer item's state while a time entry runs, as the web app's running dot says. -->
+    <string name="nav_timer_running">Timer running</string>
 </resources>

@@ -30,6 +30,7 @@ import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.navhost.SignedInFrame
+import com.github.e0ipso.tokkl.navhost.runningBadges
 import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.label
 import com.github.e0ipso.tokkl.navigation.topLevelPages
@@ -59,6 +60,7 @@ import org.junit.rules.RuleChain
 import java.time.DayOfWeek
 import java.time.Instant
 import com.github.e0ipso.tokkl.core.ui.R as UiR
+import com.github.e0ipso.tokkl.feature.pomodoro.R as PomodoroR
 import com.github.e0ipso.tokkl.feature.sync.R as SyncR
 
 /** More and the actual Needs attention screen, without server or account fixtures. */
@@ -85,7 +87,7 @@ abstract class AdditionalAccessibilityTest(private val dark: Boolean) {
                 pages = topLevelPages,
                 current = PomodoroRoute,
                 onOpen = {},
-                pomodoroRunning = running.value,
+                badges = runningBadges(pomodoro = running.value),
             ) {
                 Text(context.getString(UiR.string.pomodoro_title))
             }
@@ -93,7 +95,7 @@ abstract class AdditionalAccessibilityTest(private val dark: Boolean) {
         val marker = bottomBarItem(UiR.string.pomodoro_title) and
             SemanticsMatcher.expectValue(
                 SemanticsProperties.StateDescription,
-                context.getString(R.string.nav_pomodoro_running),
+                context.getString(PomodoroR.string.nav_pomodoro_running),
             )
         compose.onNode(marker).assertIsDisplayed()
         assertVisibleTextFits()
@@ -111,7 +113,7 @@ abstract class AdditionalAccessibilityTest(private val dark: Boolean) {
                 pages = topLevelPages,
                 current = current.value,
                 onOpen = { current.value = it },
-                timerRunning = true,
+                badges = runningBadges(timer = true),
             ) {
                 Text(context.getString(current.value.label))
             }

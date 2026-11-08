@@ -6,7 +6,9 @@ import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.cache.ChangeSender
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
+import com.github.e0ipso.tokkl.feature.pomodoro.R
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
+import com.github.e0ipso.tokkl.navigation.PageBadge
 import com.github.e0ipso.tokkl.picker.pickerSource
 import com.github.e0ipso.tokkl.platform.AppHook
 import com.github.e0ipso.tokkl.platform.DefaultNetwork
@@ -27,6 +29,7 @@ import com.github.e0ipso.tokkl.timersync.TimerSyncFollower
 import com.github.e0ipso.tokkl.timersync.TimerSyncWatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
@@ -188,5 +191,11 @@ val pomodoroFeatureModule = module {
         )
     }
 
-    single { PomodoroEntries } bind FeatureEntries::class
+    single { PomodoroEntries(notification = inject(), io = io()) } bind FeatureEntries::class
+
+    // The bar's running dot on Pomodoro while the server's session runs.
+    single(named("badge-pomodoro")) {
+        val running = get<AccountTimerStates>().held.map { it?.state?.pomodoro != null }
+        PageBadge(PomodoroRoute, R.string.nav_pomodoro_running, running)
+    }
 }

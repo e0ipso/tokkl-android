@@ -38,6 +38,21 @@ class PackageLayersTest {
         assertEquals("imports outside the layers", emptyList<String>(), forbidden)
     }
 
+    /**
+     * The navigation host names no feature, by package or R class: each feature hands it its pages,
+     * badges, taps from outside the app and frame parts through core:navigation's FeatureEntries.
+     */
+    @Test
+    fun theNavigationHostNamesNoFeature() {
+        val features = LAYERS[FEATURE_LAYER]
+        val packages = imports["navhost"].orEmpty().filter { it.target in features }.map { "${it.target} (${it.file})" }
+        val resources = mainFiles().filter { (module, file) -> module == ":app" && file.parentFile.name == "navhost" }
+            .filter { (_, file) -> FEATURE_R.containsMatchIn(file.readText()) }
+            .map { (_, file) -> "R (${file.name})" }
+
+        assertEquals("features the navigation host names", emptyList<String>(), (packages + resources).sorted())
+    }
+
     @Test
     fun noPackagesImportEachOtherInACycle() {
         val graph = imports.mapValues { (from, uses) -> uses.map { it.target }.filter { it != from }.toSet() }
@@ -158,6 +173,12 @@ class PackageLayersTest {
             """@Serializable\s*\n\s*(?:(?:internal|private|data|enum|sealed) )*(?:class|object|interface) (\w+)""",
         )
         private val VIEW_MODEL = Regex("""\)\s*:\s*ViewModel\(""")
+
+        /** The layer of the feature packages in [LAYERS]. */
+        private const val FEATURE_LAYER = 3
+
+        /** A feature module's R class. */
+        private val FEATURE_R = Regex("""\bcom\.github\.e0ipso\.tokkl\.feature\.\w+\.R\b""")
 
         /** Room's package, the cache's database and its invalidation tracker, by name. */
         private val ROOM_NAMES = listOf(

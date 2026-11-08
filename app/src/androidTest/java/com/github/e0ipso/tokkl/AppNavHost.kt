@@ -3,11 +3,14 @@ package com.github.e0ipso.tokkl
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.lifecycle.SavedStateHandle
-import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.di.FeatureScreens
+import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.navhost.NavigationRequests
+import com.github.e0ipso.tokkl.navhost.TokklNavHost
+import com.github.e0ipso.tokkl.navigation.FeatureEntries
 import com.github.e0ipso.tokkl.navigation.LocalSignedInSession
+import com.github.e0ipso.tokkl.navigation.requestSerializers
 import com.github.e0ipso.tokkl.session.AccountLifetime
 import com.github.e0ipso.tokkl.timer.TimerViewModel
 import kotlinx.coroutines.flow.StateFlow
@@ -23,13 +26,14 @@ internal fun AppNavHost(
     capabilities: StateFlow<Capabilities> = remember { GlobalContext.get().get<CapabilitiesSource>().state },
 ) {
     val koin = remember { GlobalContext.get() }
+    val features = remember { koin.get<List<FeatureEntries>>(FeatureScreens) }
     TokklNavHost(
-        requests = remember { NavigationRequests(SavedStateHandle()) },
-        features = remember { koin.get(FeatureScreens) },
+        requests = remember { NavigationRequests(SavedStateHandle(), requestSerializers(features)) },
+        features = features,
         pages = remember { koin.get() },
         signOuts = remember { koin.get<AccountLifetime>().signOuts },
         capabilities = capabilities,
-        session = remember { koin.get() },
+        signIns = remember { koin.get() },
         timerFrame = { koinViewModel<TimerViewModel>(viewModelStoreOwner = LocalSignedInSession.current) },
     )
 }

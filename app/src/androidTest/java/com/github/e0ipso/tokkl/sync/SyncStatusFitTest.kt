@@ -19,6 +19,7 @@ import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
 import com.github.e0ipso.tokkl.bottomBarItem
 import com.github.e0ipso.tokkl.navhost.SignedInFrame
+import com.github.e0ipso.tokkl.navhost.syncBand
 import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.topLevelPages
 import com.github.e0ipso.tokkl.session.AccountSettings
@@ -72,9 +73,7 @@ class SyncStatusFitTest {
                     pages = topLevelPages,
                     current = Route.Timer,
                     onOpen = {},
-                    syncStatus = STATUS,
-                    onOpenNeedsAttention = { opened++ },
-                    syncStatusClock = NOW,
+                    band = syncBand(STATUS, NOW, onOpenNeedsAttention = { opened++ }),
                 ) {}
             }
         }

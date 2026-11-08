@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.timer
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalFocusManager
@@ -20,9 +21,12 @@ import com.github.e0ipso.tokkl.history.HistoryViewModel
 import com.github.e0ipso.tokkl.history.pinAction
 import com.github.e0ipso.tokkl.navigation.EntryOpening
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
+import com.github.e0ipso.tokkl.navigation.LinkIntent
 import com.github.e0ipso.tokkl.navigation.LocalSignedInSession
 import com.github.e0ipso.tokkl.navigation.NavigationHost
+import com.github.e0ipso.tokkl.navigation.NavigationRequest
 import com.github.e0ipso.tokkl.navigation.Navigator
+import com.github.e0ipso.tokkl.navigation.RequestOpening
 import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.TopLevelDestination
 import com.github.e0ipso.tokkl.navigation.route
@@ -50,6 +54,38 @@ internal object TimerEntries : FeatureEntries {
     override fun PolymorphicModuleBuilder<Route>.registerRoutes() {
         subclass(FullscreenTimerRoute::class)
         subclass(TemplatesRoute::class)
+    }
+
+    override val linkExtras get() = listOf(TIMER_WIDGET_TAP, REMINDER_TAP)
+
+    override fun readLinks(intent: LinkIntent): List<NavigationRequest> = listOfNotNull(
+        ReminderTap.takeIf { intent.flag(REMINDER_TAP) },
+        TimerWidgetTap.takeIf { intent.flag(TIMER_WIDGET_TAP) },
+    )
+
+    override fun PolymorphicModuleBuilder<NavigationRequest>.registerRequests() {
+        subclass(TimerWidgetTap::class)
+        subclass(ReminderTap::class)
+    }
+
+    /**
+     * A Timer widget's tap opens Timer when somebody is signed in, and sign-in otherwise. A
+     * reminder's tap opens Timer, but waits while sign-in shows.
+     */
+    @Composable
+    override fun OpenRequest(request: NavigationRequest, opening: RequestOpening) {
+        when (request) {
+            TimerWidgetTap -> LaunchedEffect(request) {
+                opening.openSignedIn(Route.Timer)
+                opening.handled(request)
+            }
+
+            ReminderTap -> LaunchedEffect(request, opening.onSignIn) {
+                if (opening.onSignIn) return@LaunchedEffect
+                opening.navigator.open(Route.Timer)
+                opening.handled(request)
+            }
+        }
     }
 
     override fun EntryProviderScope<Route>.addEntries(host: NavigationHost) {
@@ -218,7 +254,7 @@ val timerPage = TopLevelDestination(
     position = 0,
 )
 
-/** The Timer templates page, on the More sheet after Reports. */
+/** The Timer templates page, on the More sheet after Reports, while the server keeps the favorites key. */
 val templatesPage = TopLevelDestination(
     route = TemplatesRoute,
     label = R.string.nav_templates,
@@ -226,13 +262,36 @@ val templatesPage = TopLevelDestination(
     hue = SectionHues.more,
     position = 40,
     inMore = true,
+    isAvailable = { it.favorites },
 )
+
+/**
+ * The extra of a Timer widget's tap, which the widget puts in its intent (`WidgetNavigation.OPEN_TIMER`
+ * in the widget feature). The app's DeepLinksTest checks that the two agree.
+ */
+internal const val TIMER_WIDGET_TAP = "open_timer_widget"
+
+/**
+ * The extra of a reminder notification's tap, which the reminder puts in its intent
+ * (`ReminderNotifier.OPEN_TIMER` in the notification feature).
+ */
+internal const val REMINDER_TAP = "com.github.e0ipso.tokkl.OPEN_TIMER_REMINDER"
+
+/** A Timer widget's tap. */
+@Serializable
+data object TimerWidgetTap : NavigationRequest
+
+/** A reminder notification's tap. */
+@Serializable
+data object ReminderTap : NavigationRequest
 
 /** The running timer on its own, without the bar. */
 @Serializable
 @SerialName("com.github.e0ipso.tokkl.navigation.Route.FullscreenTimer")
 data object FullscreenTimerRoute : Route {
     override val focused: Boolean get() = true
+
+    override val showsTimerNotices: Boolean get() = true
 }
 
 /** The Timer templates page. */

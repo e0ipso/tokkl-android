@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.capabilities
 import com.github.e0ipso.tokkl.api.Me
 import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.api.TokklApi
+import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.storage.LoadedState
 import com.github.e0ipso.tokkl.storage.StartupLoad
 import com.github.e0ipso.tokkl.storage.ValueStore

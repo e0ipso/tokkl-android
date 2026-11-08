@@ -55,7 +55,7 @@ fun TrashPage(model: TrashViewModel, modifier: Modifier = Modifier) {
     )
 }
 
-/** The Trash page, last on the More sheet. */
+/** The Trash page, last on the More sheet, while the server has the trash API. */
 val trashPage = TopLevelDestination(
     route = TrashRoute,
     label = R.string.nav_trash,
@@ -63,6 +63,7 @@ val trashPage = TopLevelDestination(
     hue = SectionHues.more,
     position = 70,
     inMore = true,
+    isAvailable = { it.trash },
 )
 
 /** The Trash page. */

@@ -9,6 +9,7 @@ import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.cache.CurrentEntryCache
 import com.github.e0ipso.tokkl.cache.RunningCheckStart
 import com.github.e0ipso.tokkl.cache.RunningCheckWrites
+import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.storage.InMemoryValueStore
 import com.github.e0ipso.tokkl.storage.ValueStore

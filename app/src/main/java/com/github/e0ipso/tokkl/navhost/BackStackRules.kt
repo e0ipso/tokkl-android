@@ -1,28 +1,12 @@
 package com.github.e0ipso.tokkl.navhost
 
-import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.navigation.Route
-import com.github.e0ipso.tokkl.pomodoro.PomodoroRoute
-import com.github.e0ipso.tokkl.timer.TemplatesRoute
-import com.github.e0ipso.tokkl.timer.TimerView
-import com.github.e0ipso.tokkl.trash.TrashRoute
 import com.github.e0ipso.tokkl.ui.WindowWidth
 
 /**
- * The pages the server's [flags] leave without a use: Trash without the trash API, Timer
- * templates without the favorites key, and Pomodoro without the timer API, since the server owns
- * the session. The
- * bar, the rail and the More sheet leave them out, and the host opens none of them.
- */
-fun unavailablePages(flags: Capabilities): Set<Route> = buildSet {
-    if (!flags.trash) add(TrashRoute)
-    if (!flags.favorites) add(TemplatesRoute)
-    if (!flags.timerState) add(PomodoroRoute)
-}
-
-/**
- * This route, or Timer when it is a page in [unavailable]. A back stack restored from
- * before a capability was lost, or a direct open of a page, then shows Timer.
+ * This route, or Timer when it is a page in [unavailable], the pages the server lacks
+ * (`TopLevelPages.unavailable`). A back stack restored from before a capability was lost, or a
+ * direct open of a page, then shows Timer.
  */
 fun Route.orTimerIfUnavailable(unavailable: Set<Route>): Route = if (this in unavailable) Route.Timer else this
 
@@ -31,9 +15,10 @@ internal fun List<Route>.holdsAnyOf(unavailable: Set<Route>): Boolean = any { it
 
 /**
  * Whether the entry form on top of [stack] shows beside the Timer page below it: on an expanded
- * window ([width]) in the List [view], so the history and the form share the width. The Calendar
- * view keeps the whole width for the week, so there the form takes the screen, as on a phone.
+ * window ([width]) while the Timer page shows its List view ([listView]), so the history and the
+ * form share the width. The Calendar view keeps the whole width for the week, so there the form
+ * takes the screen, as on a phone.
  */
-internal fun showsEntryBeside(width: WindowWidth, view: TimerView, stack: List<Route>): Boolean =
-    width == WindowWidth.EXPANDED && view == TimerView.LIST &&
+internal fun showsEntryBeside(width: WindowWidth, listView: Boolean, stack: List<Route>): Boolean =
+    width == WindowWidth.EXPANDED && listView &&
         stack.lastOrNull() is Route.Entry && stack.getOrNull(stack.lastIndex - 1) == Route.Timer

@@ -27,7 +27,6 @@ import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.cache.BackgroundSend
 import com.github.e0ipso.tokkl.cache.CacheDatabase
 import com.github.e0ipso.tokkl.calendar.CalendarViewModel
-import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesStore
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
@@ -46,6 +45,7 @@ import com.github.e0ipso.tokkl.feature.settings.R
 import com.github.e0ipso.tokkl.finishWithin
 import com.github.e0ipso.tokkl.history.EntryActionsViewModel
 import com.github.e0ipso.tokkl.history.HistoryViewModel
+import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.openBarPage
 import com.github.e0ipso.tokkl.orFail

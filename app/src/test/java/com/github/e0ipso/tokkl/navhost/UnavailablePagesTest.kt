@@ -1,6 +1,6 @@
 package com.github.e0ipso.tokkl.navhost
 
-import com.github.e0ipso.tokkl.capabilities.Capabilities
+import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.pomodoro.PomodoroRoute
 import com.github.e0ipso.tokkl.reports.ReportsRoute
@@ -11,26 +11,27 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+/** The pages each feature leaves out while its server lacks what the page needs. */
 class UnavailablePagesTest {
     private val everything = Capabilities.NONE.copy(trash = true, favorites = true, timerState = true)
 
     @Test
     fun aServerWithEveryFeatureOffersEveryPage() {
-        assertTrue(unavailablePages(everything).isEmpty())
+        assertTrue(appTopLevelPages.unavailable(everything).isEmpty())
     }
 
     @Test
     fun withoutTheTimerApiThePomodoroPageIsGone() {
-        assertEquals(setOf(PomodoroRoute), unavailablePages(everything.copy(timerState = false)))
+        assertEquals(setOf(PomodoroRoute), appTopLevelPages.unavailable(everything.copy(timerState = false)))
     }
 
     @Test
     fun trashAndTemplatesStillFollowTheirOwnCapabilities() {
         assertEquals(
             setOf(TrashRoute, TemplatesRoute, PomodoroRoute),
-            unavailablePages(Capabilities.NONE),
+            appTopLevelPages.unavailable(Capabilities.NONE),
         )
-        assertEquals(setOf(TemplatesRoute), unavailablePages(everything.copy(favorites = false)))
+        assertEquals(setOf(TemplatesRoute), appTopLevelPages.unavailable(everything.copy(favorites = false)))
     }
 
     @Test

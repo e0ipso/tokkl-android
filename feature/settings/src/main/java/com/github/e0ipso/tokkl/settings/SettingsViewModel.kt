@@ -3,7 +3,7 @@ package com.github.e0ipso.tokkl.settings
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.github.e0ipso.tokkl.capabilities.Capabilities
+import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.platform.whileShown
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaultsSetting

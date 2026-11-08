@@ -17,8 +17,11 @@ import androidx.lifecycle.compose.currentStateAsState
 import androidx.navigation3.runtime.EntryProviderScope
 import com.github.e0ipso.tokkl.feature.reports.R
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
+import com.github.e0ipso.tokkl.navigation.LinkIntent
 import com.github.e0ipso.tokkl.navigation.LocalSignedInSession
 import com.github.e0ipso.tokkl.navigation.NavigationHost
+import com.github.e0ipso.tokkl.navigation.NavigationRequest
+import com.github.e0ipso.tokkl.navigation.RequestOpening
 import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.TopLevelDestination
 import com.github.e0ipso.tokkl.navigation.route
@@ -32,7 +35,8 @@ import org.koin.core.parameter.parametersOf
 
 /**
  * Reports. Its view model is the route's own, and its tab and filters ([ReportChoices]) the
- * signed-in session's, so they stay after the page closes while the range starts over.
+ * signed-in session's, so they stay after the page closes while the range starts over. The Timer
+ * widget's day report opens it on today's summary.
  */
 internal object ReportsEntries : FeatureEntries {
     override val pages get() = listOf(reportsPage)
@@ -47,7 +51,41 @@ internal object ReportsEntries : FeatureEntries {
             ReportsPage(model = koinViewModel { parametersOf(choices) })
         }
     }
+
+    override val linkExtras get() = listOf(TODAY_REPORT_TAP)
+
+    override fun readLinks(intent: LinkIntent): List<NavigationRequest> =
+        listOfNotNull(TodayReportTap.takeIf { intent.flag(TODAY_REPORT_TAP) })
+
+    override fun PolymorphicModuleBuilder<NavigationRequest>.registerRequests() {
+        subclass(TodayReportTap::class)
+    }
+
+    /**
+     * The widget's day report opens Reports on today's summary, with no filters, when somebody is
+     * signed in, and sign-in otherwise.
+     */
+    @Composable
+    override fun OpenRequest(request: NavigationRequest, opening: RequestOpening) {
+        if (request != TodayReportTap) return
+        val choices = koinViewModel<ReportChoices>(viewModelStoreOwner = LocalSignedInSession.current)
+        LaunchedEffect(request) {
+            opening.openSignedIn(ReportsRoute, before = choices::openToday)
+            opening.handled(request)
+        }
+    }
 }
+
+/**
+ * The extra of the Timer widget's day report tap, which the widget puts in its intent
+ * (`WidgetNavigation.OPEN_TODAY` in the widget feature). The app's DeepLinksTest checks that the
+ * two agree.
+ */
+internal const val TODAY_REPORT_TAP = "open_today_widget"
+
+/** The Timer widget's day report tap. */
+@Serializable
+data object TodayReportTap : NavigationRequest
 
 /**
  * The Reports page from its view model: hands its state and events to [ReportsScreen].

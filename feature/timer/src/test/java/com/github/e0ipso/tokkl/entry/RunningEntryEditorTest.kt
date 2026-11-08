@@ -16,6 +16,7 @@ import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.timer.TapTrace
 import com.github.e0ipso.tokkl.timer.TimerState
+import com.github.e0ipso.tokkl.timer.TimerView
 import com.github.e0ipso.tokkl.timer.TimerViewModel
 import com.github.e0ipso.tokkl.timer.discardNotices
 import com.github.e0ipso.tokkl.timerstate.serverTimerControls
@@ -97,6 +98,7 @@ class RunningEntryEditorTest {
         sendQueued = {},
         discards = discardNotices(),
         timerApi = flowOf(true),
+        view = MutableStateFlow(TimerView.LIST),
     )
 
     @Before

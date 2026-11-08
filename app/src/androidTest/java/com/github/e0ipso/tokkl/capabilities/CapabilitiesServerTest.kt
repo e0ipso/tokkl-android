@@ -9,6 +9,7 @@ import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.appApiClient
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.capabilities
+import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session

@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.signin
 
 import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
+import com.github.e0ipso.tokkl.navigation.SignInRoutes
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
 import com.github.e0ipso.tokkl.session.AccountRefresh
@@ -52,4 +53,8 @@ val signInFeatureModule = module {
     }
 
     single { SignInEntries } bind FeatureEntries::class
+
+    // Whether somebody is signed in, and sign-in's routes, for the navigation host and the sync status.
+    single { AccountSignInRoutes(session = get(), servers = get(), settings = get(), io = io()) } bind
+        SignInRoutes::class
 }

@@ -75,6 +75,7 @@ import com.github.e0ipso.tokkl.components.navigationStores
 import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.components.timerActions
 import com.github.e0ipso.tokkl.components.timerControls
+import com.github.e0ipso.tokkl.components.timerView
 import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.finishWithin
 import com.github.e0ipso.tokkl.model.EntryFields
@@ -583,6 +584,7 @@ class RunningEntryEditorServerTest {
                             override suspend fun takeDiscardNotice(): DiscardedPomodoro? = null
                         },
                         timerApi = flowOf(true),
+                        view = app.timerView.view,
                     )
                     ViewModelProvider(
                         navigationStores(activity).session,

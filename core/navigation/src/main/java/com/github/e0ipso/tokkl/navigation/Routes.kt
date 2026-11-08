@@ -24,8 +24,16 @@ interface Route : NavKey {
      */
     val focused: Boolean get() = false
 
+    /**
+     * Whether this screen shows the timer, so the timer's notices show above it: a failed Pause,
+     * Resume or Stop while paused, and a pomodoro too short to save.
+     */
+    val showsTimerNotices: Boolean get() = false
+
     /** The Timer page, at the bottom of every signed-in back stack. */
-    @Serializable data object Timer : Route
+    @Serializable data object Timer : Route {
+        override val showsTimerNotices: Boolean get() = true
+    }
 
     /**
      * The entry form, for what [opening] says. [id] tells one opening from another, so an entry

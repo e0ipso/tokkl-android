@@ -14,4 +14,6 @@
         <item quantity="one">%1$d change has not reached the server.</item>
         <item quantity="other">%1$d changes have not reached the server.</item>
     </plurals>
+    <!-- What TalkBack reads as the Pomodoro item's state in the bar while a session runs. -->
+    <string name="nav_pomodoro_running">Pomodoro session running</string>
 </resources>

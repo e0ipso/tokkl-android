@@ -42,7 +42,6 @@ import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.navhost.SignedInFrame
 import com.github.e0ipso.tokkl.navhost.SignedInPanes
 import com.github.e0ipso.tokkl.navhost.showsEntryBeside
-import com.github.e0ipso.tokkl.timer.TimerView
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.windowWidth
 import org.junit.Assert.assertEquals
@@ -106,7 +105,7 @@ class AdaptiveStateTest {
     private fun Panes(stack: List<Route>) {
         val width = windowWidth()
         SignedInFrame(pages = topLevelPages, current = Route.Timer, onOpen = {}, width = width) {
-            SignedInPanes(top = stack.last(), entryBeside = showsEntryBeside(width, TimerView.LIST, stack)) { shown ->
+            SignedInPanes(top = stack.last(), entryBeside = showsEntryBeside(width, listView = true, stack)) { shown ->
                 when (shown) {
                     Route.Timer -> Counter(PAGE)
                     is Route.Entry -> Counter(FORM)

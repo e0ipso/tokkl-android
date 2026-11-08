@@ -76,6 +76,8 @@ import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.navhost.SignedInFrame
 import com.github.e0ipso.tokkl.navhost.SignedInPanes
+import com.github.e0ipso.tokkl.navhost.runningBadges
+import com.github.e0ipso.tokkl.navhost.syncBand
 import com.github.e0ipso.tokkl.navigation.EntryOpening
 import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.SampleEntryForm
@@ -229,8 +231,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
                 pages = topLevelPages,
                 current = Route.Timer,
                 onOpen = {},
-                syncStatus = SYNC_STATUS,
-                syncStatusClock = TODAY,
+                band = syncBand(SYNC_STATUS, TODAY),
             ) {
                 TimerPage(TimerView.LIST)
             }
@@ -250,7 +251,12 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
     @Test
     fun calendar() {
         show({
-            SignedInFrame(pages = topLevelPages, current = Route.Timer, onOpen = {}, timerRunning = true) {
+            SignedInFrame(
+                pages = topLevelPages,
+                current = Route.Timer,
+                onOpen = {},
+                badges = runningBadges(timer = true),
+            ) {
                 TimerPage(TimerView.CALENDAR)
             }
         }) {
@@ -273,8 +279,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
                     pages = topLevelPages,
                     current = Route.Timer,
                     onOpen = {},
-                    syncStatus = SYNC_STATUS,
-                    syncStatusClock = TODAY,
+                    band = syncBand(SYNC_STATUS, TODAY),
                 ) {
                     TimerPage(TimerView.LIST)
                 }
@@ -649,7 +654,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
                 pages = topLevelPages,
                 current = PomodoroRoute,
                 onOpen = {},
-                pomodoroRunning = state.pomodoro != null,
+                badges = runningBadges(pomodoro = state.pomodoro != null),
             ) {
                 PomodoroContent(
                     state = state,
@@ -695,7 +700,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
                 pages = topLevelPages,
                 current = Route.Timer,
                 onOpen = {},
-                timerRunning = view == TimerView.CALENDAR,
+                badges = runningBadges(timer = view == TimerView.CALENDAR),
             ) {
                 TimerPage(view)
             }
