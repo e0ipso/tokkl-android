@@ -3,14 +3,11 @@ package com.github.e0ipso.tokkl.timerstate
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.timerstate.PauseActions
-import com.github.e0ipso.tokkl.timerstate.TimerActionResult
-import com.github.e0ipso.tokkl.timerstate.TimerControls
-import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -42,14 +39,14 @@ class TimerSurfaceActionsTest {
     )
 
     @Test
-    fun pauseOfTheShownEntryGoesToTheServerAndQueuesNothing() {
+    fun pauseOfTheShownEntryGoesToTheServerAndQueuesNothing() = runTest {
         now = running(id = 42)
 
         val tap = tap(TimerSurfaceAction.Pause, running(id = 42).target)
 
         assertTrue(tap is SurfaceTap.Request)
         assertTrue("nothing goes out before the surface sends it", calls.isEmpty())
-        assertEquals(TimerActionResult.Done, runBlocking { (tap as SurfaceTap.Request).send() })
+        assertEquals(TimerActionResult.Done, run { (tap as SurfaceTap.Request).send() })
         assertEquals(listOf("pause"), calls)
     }
 
@@ -73,27 +70,27 @@ class TimerSurfaceActionsTest {
     }
 
     @Test
-    fun pauseOfAPhoneMadeEntryFollowsItsServerId() {
+    fun pauseOfAPhoneMadeEntryFollowsItsServerId() = runTest {
         mappings[-5] = 42
         now = running(id = 42)
 
         val tap = tap(TimerSurfaceAction.Pause, running(id = -5).target) as SurfaceTap.Request
-        runBlocking { tap.send() }
+        run { tap.send() }
 
         assertEquals(listOf("pause"), calls)
     }
 
     @Test
-    fun pauseOfAnUnsentEntrySendsTheQueueFirst() {
+    fun pauseOfAnUnsentEntrySendsTheQueueFirst() = runTest {
         now = running(id = -5, unsent = true)
 
-        runBlocking { (tap(TimerSurfaceAction.Pause, running(id = -5).target) as SurfaceTap.Request).send() }
+        run { (tap(TimerSurfaceAction.Pause, running(id = -5).target) as SurfaceTap.Request).send() }
 
         assertEquals("the server runs the shown entry before it pauses it", listOf("send queue", "pause"), calls)
     }
 
     @Test
-    fun resumeSendsTheRevisionTheControlWasDrawnAt() {
+    fun resumeSendsTheRevisionTheControlWasDrawnAt() = runTest {
         now = paused(revision = 9)
 
         val tap = tap(TimerSurfaceAction.Resume, paused(revision = 7).target) as SurfaceTap.Request
@@ -102,7 +99,7 @@ class TimerSurfaceActionsTest {
         assertEquals(
             "the server refuses a tap on a state it moved past",
             TimerActionResult.Refused,
-            runBlocking { tap.send() },
+            run { tap.send() },
         )
         assertEquals(listOf("resume 7"), calls)
     }
@@ -134,11 +131,11 @@ class TimerSurfaceActionsTest {
     }
 
     @Test
-    fun stopWhilePausedDiscardsAtTheDrawnRevision() {
+    fun stopWhilePausedDiscardsAtTheDrawnRevision() = runTest {
         now = paused(revision = 9)
 
         val tap = tap(TimerSurfaceAction.Stop, paused(revision = 9).target) as SurfaceTap.Request
-        runBlocking { tap.send() }
+        run { tap.send() }
 
         assertEquals(listOf("discard 9"), calls)
     }
@@ -166,7 +163,7 @@ class TimerSurfaceActionsTest {
     }
 
     @Test
-    fun aTapWhileAServerActionIsOnItsWaySendsNothingButStopStillQueues() = runBlocking {
+    fun aTapWhileAServerActionIsOnItsWaySendsNothingButStopStillQueues() = runTest {
         now = running(id = 42)
         val target = running(id = 42).target
         val gate = CompletableDeferred<Unit>()
@@ -186,7 +183,7 @@ class TimerSurfaceActionsTest {
     }
 
     @Test
-    fun aTapOnThePublishedNextStateWaitsForThePreviousRequestToReturn() = runBlocking {
+    fun aTapOnThePublishedNextStateWaitsForThePreviousRequestToReturn() = runTest {
         now = running(id = 42)
         val gate = CompletableDeferred<Unit>()
         held = gate
@@ -210,7 +207,7 @@ class TimerSurfaceActionsTest {
     }
 
     @Test
-    fun aWaitingActionDoesNothingIfItsStateChangesAgain() = runBlocking {
+    fun aWaitingActionDoesNothingIfItsStateChangesAgain() = runTest {
         now = running(id = 42)
         val gate = CompletableDeferred<Unit>()
         held = gate

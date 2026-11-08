@@ -27,6 +27,7 @@ dependencies {
     implementation(libs.androidx.work.runtime)
 
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockwebserver3)
     testImplementation(testFixtures(project(":core:api")))
     testImplementation(testFixtures(project(":core:platform")))

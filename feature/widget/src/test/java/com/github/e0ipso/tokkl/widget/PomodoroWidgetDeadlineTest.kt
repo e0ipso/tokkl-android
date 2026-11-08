@@ -1,130 +1,94 @@
 package com.github.e0ipso.tokkl.widget
 
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
+import org.junit.Assert.assertFalse
 import org.junit.Test
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
 
+/** The Pomodoro widget's redraw at a phase's end, in virtual time from the epoch. */
 class PomodoroWidgetDeadlineTest {
-    @Test fun aFractionalMillisecondCannotRedrawBeforeThePhaseEnds() = runBlocking {
-        val time = Time()
-        val draws = Channel<Unit>(Channel.UNLIMITED)
-        val job = launch(Dispatchers.Unconfined) {
-            pomodoroWidgetDeadlineChanges(MutableStateFlow(Instant.ofEpochSecond(0, 1)), time, time::wait)
-                .collect { draws.send(Unit) }
-        }
-        try {
-            withTimeout(1_000) { draws.receive() }
-            val pending = withTimeout(1_000) { time.waits.receive() }
-            assertEquals("round up so the ended state is true at redraw", 1L, pending.milliseconds)
-            time.now = 1
-            pending.release.complete(Unit)
-            withTimeout(1_000) { draws.receive() }
-        } finally {
-            job.cancel()
-        }
+    @Test fun aFractionalMillisecondCannotRedrawBeforeThePhaseEnds() = runTest {
+        val end = Instant.ofEpochSecond(0, 1)
+        val draws = follow(MutableStateFlow(end))
+        runCurrent()
+        assertEquals("the phase draws at once", 1, draws.size)
+        advanceTimeBy(1)
+        runCurrent()
+        assertEquals("round up, so the redraw comes a whole millisecond later", 2, draws.size)
+        assertFalse("the ended state is true at the redraw", draws.last().isBefore(end))
     }
 
-    @Test fun phaseEndRedrawDoesNotDependOnAnAlarmOrAnotherServerEvent() = runBlocking {
-        val time = Time()
+    @Test fun phaseEndRedrawDoesNotDependOnAnAlarmOrAnotherServerEvent() = runTest {
+        val draws = follow(MutableStateFlow(Instant.ofEpochMilli(1_000)))
+        advanceTimeBy(999)
+        runCurrent()
+        assertEquals("nothing redraws before the end", 1, draws.size)
+        advanceTimeBy(1)
+        runCurrent()
+        assertEquals("the end redraws", listOf(Instant.EPOCH, Instant.ofEpochMilli(1_000)), draws)
+        advanceUntilIdle()
+        assertEquals("one phase has one deadline, and nothing redraws again", 2, draws.size)
+    }
+
+    @Test fun aNewPhaseCancelsThePreviousDeadline() = runTest {
         val ends = MutableStateFlow<Instant?>(Instant.ofEpochMilli(1_000))
-        val draws = Channel<Unit>(Channel.UNLIMITED)
-        val job = launch(Dispatchers.Unconfined) {
-            pomodoroWidgetDeadlineChanges(ends, time, time::wait).collect { draws.send(Unit) }
-        }
-        try {
-            withTimeout(1_000) { draws.receive() }
-            val pending = withTimeout(1_000) { time.waits.receive() }
-            assertEquals(1_000L, pending.milliseconds)
-            assertTrue(draws.tryReceive().isFailure)
-            time.now = 1_000
-            pending.release.complete(Unit)
-            withTimeout(1_000) { draws.receive() }
-            assertTrue("one phase has one deadline", time.waits.tryReceive().isFailure)
-            assertTrue("no repeated redraws", draws.tryReceive().isFailure)
-        } finally {
-            job.cancel()
-        }
+        val draws = follow(ends)
+        advanceTimeBy(500)
+        ends.value = Instant.ofEpochMilli(3_000)
+        runCurrent()
+        assertEquals("the new phase draws at once", 2, draws.size)
+        advanceTimeBy(500)
+        runCurrent()
+        assertEquals("the old phase cannot redraw", 2, draws.size)
+        advanceTimeBy(2_000)
+        runCurrent()
+        assertEquals("the new phase redraws at its end", Instant.ofEpochMilli(3_000), draws.last())
+        assertEquals(3, draws.size)
     }
 
-    @Test fun aNewPhaseCancelsThePreviousDeadline() = runBlocking {
-        val time = Time()
+    @Test fun sessionEndCancelsTheDeadlineAndPastEndsNeedNoFutureWork() = runTest {
         val ends = MutableStateFlow<Instant?>(Instant.ofEpochMilli(1_000))
-        val draws = Channel<Unit>(Channel.UNLIMITED)
-        val job = launch(Dispatchers.Unconfined) {
-            pomodoroWidgetDeadlineChanges(ends, time, time::wait).collect { draws.send(Unit) }
-        }
-        try {
-            withTimeout(1_000) { draws.receive() }
-            val previous = withTimeout(1_000) { time.waits.receive() }
-            time.now = 500
-            ends.value = Instant.ofEpochMilli(3_000)
-            withTimeout(1_000) { draws.receive() }
-            val current = withTimeout(1_000) { time.waits.receive() }
-            assertTrue("the old wait was cancelled", previous.finished)
-            assertEquals(2_500L, current.milliseconds)
-            previous.release.complete(Unit)
-            assertTrue("the old phase cannot redraw", draws.tryReceive().isFailure)
-            time.now = 3_000
-            current.release.complete(Unit)
-            withTimeout(1_000) { draws.receive() }
-        } finally {
-            job.cancel()
-        }
+        val draws = follow(ends)
+        runCurrent()
+        ends.value = null
+        runCurrent()
+        assertEquals("the end of the session draws", 2, draws.size)
+        advanceUntilIdle()
+        assertEquals("idle has no deadline", 2, draws.size)
+        advanceTimeBy(10_000)
+        ends.value = Instant.EPOCH
+        runCurrent()
+        assertEquals("an overdue restored phase draws at once", 3, draws.size)
+        val now = testScheduler.currentTime
+        advanceUntilIdle()
+        assertEquals("and needs no future wait", now, testScheduler.currentTime)
+        assertEquals(3, draws.size)
     }
 
-    @Test fun sessionEndCancelsTheDeadlineAndPastEndsNeedNoFutureWork() = runBlocking {
-        val time = Time()
-        val ends = MutableStateFlow<Instant?>(Instant.ofEpochMilli(1_000))
-        val draws = Channel<Unit>(Channel.UNLIMITED)
-        val job = launch(Dispatchers.Unconfined) {
-            pomodoroWidgetDeadlineChanges(ends, time, time::wait).collect { draws.send(Unit) }
-        }
-        try {
-            withTimeout(1_000) { draws.receive() }
-            val pending = withTimeout(1_000) { time.waits.receive() }
-            ends.value = null
-            withTimeout(1_000) { draws.receive() }
-            assertTrue(pending.finished)
-            assertTrue("idle has no deadline", time.waits.tryReceive().isFailure)
-            time.now = 10_000
-            ends.value = Instant.EPOCH
-            withTimeout(1_000) { draws.receive() }
-            assertTrue("an overdue restored phase needs no future wait", time.waits.tryReceive().isFailure)
-        } finally {
-            job.cancel()
-        }
+    /** Collects the redraws of [ends] until the test ends, each as the virtual time it came at. */
+    private fun TestScope.follow(ends: MutableStateFlow<out Instant?>): List<Instant> {
+        val clock = VirtualClock(this)
+        val draws = mutableListOf<Instant>()
+        backgroundScope.launch { pomodoroWidgetDeadlineChanges(ends, clock).collect { draws += clock.instant() } }
+        return draws
     }
 
-    private class Pending(val milliseconds: Long) {
-        val release = CompletableDeferred<Unit>()
-        var finished = false
-    }
-
-    private class Time : Clock() {
-        var now = 0L
-        val waits = Channel<Pending>(Channel.UNLIMITED)
+    /** The test's virtual time, as milliseconds since the epoch. */
+    private class VirtualClock(private val scope: TestScope) : Clock() {
         override fun getZone(): ZoneId = ZoneOffset.UTC
+
         override fun withZone(zone: ZoneId): Clock = this
-        override fun instant(): Instant = Instant.ofEpochMilli(now)
-        suspend fun wait(milliseconds: Long) {
-            val pending = Pending(milliseconds)
-            waits.send(pending)
-            try {
-                pending.release.await()
-            } finally {
-                pending.finished = true
-            }
-        }
+
+        override fun instant(): Instant = Instant.ofEpochMilli(scope.testScheduler.currentTime)
     }
 }

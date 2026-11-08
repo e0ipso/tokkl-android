@@ -9,15 +9,12 @@ import com.github.e0ipso.tokkl.cache.EntryWithSendState
 import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.picker.Picked
+import com.github.e0ipso.tokkl.platform.MainDispatcherRule
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.timerstate.continueEntry
 import com.github.e0ipso.tokkl.timerstate.serverTimerControls
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.ExecutorCoroutineDispatcher
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -25,12 +22,12 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import java.time.Clock
 import java.time.DayOfWeek
@@ -39,8 +36,6 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -50,9 +45,9 @@ import java.util.concurrent.atomic.AtomicReference
  */
 class TimerViewModelTest {
 
-    private val main: ExecutorService = Executors.newSingleThreadExecutor()
-    private val mainDispatcher: ExecutorCoroutineDispatcher = main.asCoroutineDispatcher()
-    private val scope = CoroutineScope(SupervisorJob() + mainDispatcher)
+    @get:Rule
+    val main = MainDispatcherRule()
+    private val scope = main.scope
     private val now = AtomicReference(TAP)
     private val clock = object : Clock() {
         override fun instant(): Instant = now.get()
@@ -95,7 +90,6 @@ class TimerViewModelTest {
     @After
     fun tearDown() {
         scope.cancel()
-        main.shutdown()
     }
 
     @Test
@@ -263,7 +257,7 @@ class TimerViewModelTest {
 
         // A refresh brings the server's description while the user types.
         running.value = cachedRunning(description = "Changed on the web")
-        Thread.sleep(SETTLE_PAUSE_MS)
+        main.settle(SETTLE_PAUSE_MS)
         assertEquals("Typed on the phone", (model.state.value as TimerState.Running).fields.description)
 
         onMain { model.descriptionDone() }
@@ -397,7 +391,7 @@ class TimerViewModelTest {
         settings.value = null
         awaitIdle()
         onMain { model.startFrom(EntryFields(description = "Write the report")) }
-        Thread.sleep(SETTLE_PAUSE_MS)
+        main.settle(SETTLE_PAUSE_MS)
         assertEquals(emptyList<String>(), changes.calls)
     }
 
@@ -526,7 +520,7 @@ class TimerViewModelTest {
         changes.gate = CompletableDeferred()
         onMain { model.start() }
         awaitState("the draft runs") { it is TimerState.Running }
-        Thread.sleep(SETTLE_PAUSE_MS)
+        main.settle(SETTLE_PAUSE_MS)
         assertEquals("nothing is announced while the queue writes the start", emptyList<Int>(), announced)
         changes.gate.complete(Unit)
         awaitAnnounced(announced, listOf(1))
@@ -539,7 +533,7 @@ class TimerViewModelTest {
 
         changes.failStart = true
         tapUntilTaken { model.continueEntry(PAST) }
-        Thread.sleep(SETTLE_PAUSE_MS)
+        main.settle(SETTLE_PAUSE_MS)
         assertEquals("a refused start is not announced", listOf(1, 2, 3), announced)
     }
 
@@ -560,26 +554,28 @@ class TimerViewModelTest {
     }
 
     private fun awaitAnnounced(announced: List<Int>, expected: List<Int>) {
-        val deadline = System.nanoTime() + TIMEOUT_MS * 1_000_000
+        var waited = 0L
         while (announced != expected) {
-            if (System.nanoTime() > deadline) {
+            if (waited >= TIMEOUT_MS) {
                 throw AssertionError(
                     "announced $announced, not $expected, after ${changes.calls}",
                 )
             }
-            Thread.sleep(POLL_MS)
+            main.settle(POLL_MS)
+            waited += POLL_MS
         }
     }
 
     /** Taps until the model takes the tap, which it ignores while the last start is pending. */
     private fun tapUntilTaken(tap: () -> Unit) {
         val before = changes.calls.size
-        val deadline = System.nanoTime() + TIMEOUT_MS * 1_000_000
+        var waited = 0L
         while (true) {
             onMain(tap)
             if (changes.calls.size > before) return
-            if (System.nanoTime() > deadline) throw AssertionError("the tap was never taken, after ${changes.calls}")
-            Thread.sleep(POLL_MS)
+            if (waited >= TIMEOUT_MS) throw AssertionError("the tap was never taken, after ${changes.calls}")
+            main.settle(POLL_MS)
+            waited += POLL_MS
         }
     }
 
@@ -589,26 +585,31 @@ class TimerViewModelTest {
 
     private fun awaitState(what: String, condition: (TimerState) -> Boolean): TimerState {
         var last: TimerState? = null
-        return runBlocking {
+        return main.onMain {
             withTimeoutOrNull(TIMEOUT_MS) { model.state.onEach { last = it }.first(condition) }
         } ?: throw AssertionError("timed out waiting until $what; the last state was $last, after ${changes.calls}")
     }
 
     /** Waits until the running entry the cache shows passes [condition]. */
     private fun awaitCache(what: String, condition: (CachedTimeEntry?) -> Boolean) {
-        val deadline = System.nanoTime() + TIMEOUT_MS * 1_000_000
+        var waited = 0L
         while (!condition(running.value?.entry)) {
-            if (System.nanoTime() > deadline) {
+            if (waited >= TIMEOUT_MS) {
                 throw AssertionError(
                     "timed out waiting until $what, after ${changes.calls}",
                 )
             }
-            Thread.sleep(POLL_MS)
+            main.settle(POLL_MS)
+            waited += POLL_MS
         }
     }
 
-    /** The tap handlers run on the main thread, which [scope] stands in for. */
-    private fun onMain(block: () -> Unit) = runBlocking(mainDispatcher) { block() }
+    /** The tap handlers run on the main thread, which [main] stands in for. */
+    private fun onMain(block: () -> Unit) {
+        main.runCurrent()
+        block()
+        main.runCurrent()
+    }
 
     private fun cachedRunning(
         description: String,

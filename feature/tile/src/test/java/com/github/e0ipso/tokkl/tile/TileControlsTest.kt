@@ -13,6 +13,7 @@ import com.github.e0ipso.tokkl.timerstate.TimerSurfaceAction
 import com.github.e0ipso.tokkl.timerstate.TimerSurfaceActions
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -38,7 +39,7 @@ class TileControlsTest {
     private var now: TimerControls = TimerControls.Idle
 
     @Test
-    fun aRunningTimerOffersPauseAndStopForTheTargetItShows() {
+    fun aRunningTimerOffersPauseAndStopForTheTargetItShows() = runTest {
         now = ServerTimerStates.controls(entry(4))
         val panel = tileControlsPanel(now)!!
 
@@ -51,7 +52,7 @@ class TileControlsTest {
 
         val pause = press(panel.buttons[0]) as SurfaceTap.Request
         assertTrue("Pause waits for the server, and queues nothing", calls.isEmpty())
-        runBlocking { pause.send() }
+        run { pause.send() }
         assertEquals(SurfaceTap.Queued, press(panel.buttons[1]))
         assertEquals(listOf("pause", "stop 4"), calls)
     }
@@ -69,7 +70,7 @@ class TileControlsTest {
     }
 
     @Test
-    fun aPausedTimerOffersResumeAndStopOnTheServerAtTheRevisionItShows() {
+    fun aPausedTimerOffersResumeAndStopOnTheServerAtTheRevisionItShows() = runTest {
         now = ServerTimerStates.controls(
             null,
             ServerTimerStates.held(3, start, ServerTimerStates.paused(600, EntryFields("Paused work"))),
@@ -82,7 +83,7 @@ class TileControlsTest {
         assertTrue(
             panel.buttons.all { it.target == TimerTarget.server(revision = 3, account = ServerTimerStates.ACCOUNT) },
         )
-        runBlocking { panel.buttons.forEach { (press(it) as SurfaceTap.Request).send() } }
+        run { panel.buttons.forEach { (press(it) as SurfaceTap.Request).send() } }
         assertEquals(listOf("resume 3", "discard 3"), calls)
     }
 

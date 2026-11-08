@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -56,7 +56,7 @@ class NetworkWatchTest {
     }
 
     @Test
-    fun onlineFollowsCapabilitiesAndLosses() = runBlocking {
+    fun onlineFollowsCapabilitiesAndLosses() = runTest {
         val reports = flowOf(
             NetworkReport.Available(1),
             NetworkReport.Capabilities(NetworkState(1, internet = true, validated = false)),

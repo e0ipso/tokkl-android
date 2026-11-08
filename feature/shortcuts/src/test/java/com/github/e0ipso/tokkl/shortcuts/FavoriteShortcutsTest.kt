@@ -6,7 +6,7 @@ import com.github.e0ipso.tokkl.cache.EntryFields
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -119,7 +119,7 @@ class FavoriteShortcutsTest {
     }
 
     @Test
-    fun aTapStartsTheFavoriteTheIdNamesInTheDefaultWorkspace() = runBlocking {
+    fun aTapStartsTheFavoriteTheIdNamesInTheDefaultWorkspace() = runTest {
         val started = mutableListOf<Pair<Long, EntryFields>>()
         val result = tap(favoriteShortcutId(EntryFields(description = "", projectId = 7))) { workspace, fields ->
             started += workspace to fields
@@ -131,7 +131,7 @@ class FavoriteShortcutsTest {
     }
 
     @Test
-    fun aTapOnAShortcutWhoseFavoriteIsGoneStartsNothing() = runBlocking {
+    fun aTapOnAShortcutWhoseFavoriteIsGoneStartsNothing() = runTest {
         val id = shortcuts().first().id
         var starts = 0
         val start: suspend (Long, EntryFields) -> Long = { _, _ ->
@@ -154,7 +154,7 @@ class FavoriteShortcutsTest {
     ) = startFavoriteShortcut(id, available, favorites, listOf(project), workspaceId, names, start)
 
     @Test
-    fun theSyncSetsOnlyAListTheLauncherLacks() = runBlocking {
+    fun theSyncSetsOnlyAListTheLauncherLacks() = runTest {
         var launcher = shortcuts()
         val set = mutableListOf<List<FavoriteShortcut>>()
         val sync = FavoriteShortcutSync(

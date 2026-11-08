@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.widget
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
@@ -15,23 +16,20 @@ import java.time.Instant
  * session end cancels it; idle schedules nothing. A restored overdue phase draws immediately.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-internal fun pomodoroWidgetDeadlineChanges(
-    ends: Flow<Instant?>,
-    clock: Clock,
-    wait: suspend (Long) -> Unit = { kotlinx.coroutines.delay(it) },
-): Flow<Unit> = ends.distinctUntilChanged().flatMapLatest { end ->
-    flow {
-        emit(Unit)
-        val now = clock.instant()
-        val remaining = end?.let {
-            val milliseconds = Duration.between(now, it).toMillis()
-            // delay() takes whole milliseconds. Rounding down could redraw just before the
-            // boundary, leaving ended=false with no later event when exact alarms are denied.
-            milliseconds + if (now.plusMillis(milliseconds).isBefore(it)) 1L else 0L
-        } ?: 0L
-        if (remaining > 0L) {
-            wait(remaining)
+internal fun pomodoroWidgetDeadlineChanges(ends: Flow<Instant?>, clock: Clock): Flow<Unit> =
+    ends.distinctUntilChanged().flatMapLatest { end ->
+        flow {
             emit(Unit)
+            val now = clock.instant()
+            val remaining = end?.let {
+                val milliseconds = Duration.between(now, it).toMillis()
+                // delay() takes whole milliseconds. Rounding down could redraw just before the
+                // boundary, leaving ended=false with no later event when exact alarms are denied.
+                milliseconds + if (now.plusMillis(milliseconds).isBefore(it)) 1L else 0L
+            } ?: 0L
+            if (remaining > 0L) {
+                delay(remaining)
+                emit(Unit)
+            }
         }
     }
-}

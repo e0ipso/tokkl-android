@@ -12,7 +12,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -56,7 +56,7 @@ class PomodoroSessionNotificationTest {
         assertEquals("", heldState(revision = 6, entryId = 999).notificationContent()?.description)
     }
 
-    @Test fun idleRemovesAndASessionPostsOnceIncludingAfterObserverRecreation() = runBlocking {
+    @Test fun idleRemovesAndASessionPostsOnceIncludingAfterObserverRecreation() = runTest {
         val f = Fixture(held = null)
         f.sync.refresh()
         assertEquals(1, f.removes)
@@ -72,7 +72,7 @@ class PomodoroSessionNotificationTest {
         assertFalse(checkNotNull(shown).shown!!.contains("Focused work"))
     }
 
-    @Test fun eachRevisionReplacesTheNotificationAndADenialCanBeRepostedOnGrant() = runBlocking {
+    @Test fun eachRevisionReplacesTheNotificationAndADenialCanBeRepostedOnGrant() = runTest {
         val f = Fixture()
         f.allowed = false
         f.sync.refresh()
@@ -92,7 +92,7 @@ class PomodoroSessionNotificationTest {
         assertNotEquals(f.posts[0].key, f.posts[1].key)
     }
 
-    @Test fun aFailedDisplayWriteDoesNotRepostAndTheNextEmissionPersistsIt() = runBlocking {
+    @Test fun aFailedDisplayWriteDoesNotRepostAndTheNextEmissionPersistsIt() = runTest {
         val f = Fixture()
         f.writeFailure = true
         f.sync.refresh()
@@ -111,7 +111,7 @@ class PomodoroSessionNotificationTest {
         assertTrue(f.removes > 0)
     }
 
-    @Test fun theRingOwnsTheSharedIdUntilTheServiceHasStopped() = runBlocking {
+    @Test fun theRingOwnsTheSharedIdUntilTheServiceHasStopped() = runTest {
         val f = Fixture()
         f.sync.refresh()
         val removals = f.removes
@@ -136,7 +136,7 @@ class PomodoroSessionNotificationTest {
         assertEquals(3, PomodoroSessionNotifier.NOTIFICATION_ID)
     }
 
-    @Test fun aPhasePastItsPlannedEndLeavesTheSharedIdToItsAlarm() = runBlocking {
+    @Test fun aPhasePastItsPlannedEndLeavesTheSharedIdToItsAlarm() = runTest {
         // The ring must add its notification, not replace this one, or Android opens no
         // full-screen alarm. The alarm of a phase past its end goes off at once.
         val f = Fixture()
@@ -150,7 +150,7 @@ class PomodoroSessionNotificationTest {
         assertEquals(PhaseKind.SHORT_REST, f.posts.single().kind)
     }
 
-    @Test fun withoutTheTimerApiOrSignedOutNothingIsPostedAndNothingIsSent() = runBlocking {
+    @Test fun withoutTheTimerApiOrSignedOutNothingIsPostedAndNothingIsSent() = runTest {
         val f = Fixture()
         f.alarm.available = false
         f.sync.refresh()
@@ -169,7 +169,7 @@ class PomodoroSessionNotificationTest {
         assertTrue(f.server.calls.isEmpty())
     }
 
-    @Test fun buttonsSendTheirShownRevisionOnlyForTheirAccountAndTheHeldPhase() = runBlocking {
+    @Test fun buttonsSendTheirShownRevisionOnlyForTheirAccountAndTheHeldPhase() = runTest {
         val f = Fixture()
         f.sync.refresh()
         val account = checkNotNull(f.saved).account
@@ -191,7 +191,7 @@ class PomodoroSessionNotificationTest {
         assertEquals(listOf("next 3", "end 4"), f.server.calls)
     }
 
-    @Test fun aStaleRevisionGetsTheServersRefusalAndOfflineChangesNothing() = runBlocking {
+    @Test fun aStaleRevisionGetsTheServersRefusalAndOfflineChangesNothing() = runTest {
         val f = Fixture()
         f.sync.refresh()
         val account = checkNotNull(f.saved).account
@@ -207,7 +207,7 @@ class PomodoroSessionNotificationTest {
         assertEquals(1, f.posts.size)
     }
 
-    @Test fun forgetCancelsARefreshWaitingForTheAlarmBeforeErasingTheDisplay() = runBlocking {
+    @Test fun forgetCancelsARefreshWaitingForTheAlarmBeforeErasingTheDisplay() = runTest {
         val f = Fixture()
         f.sync.refresh()
         val account = checkNotNull(f.saved).account
@@ -236,7 +236,7 @@ class PomodoroSessionNotificationTest {
         assertNull(f.saved)
     }
 
-    @Test fun aNewAccountRejectsAnOldIdentityEvenForTheSamePhase() = runBlocking {
+    @Test fun aNewAccountRejectsAnOldIdentityEvenForTheSamePhase() = runTest {
         val f = Fixture()
         f.sync.refresh()
         val oldAccount = checkNotNull(f.saved).account
@@ -250,7 +250,7 @@ class PomodoroSessionNotificationTest {
         assertTrue(next.server.calls.isEmpty())
     }
 
-    @Test fun aSignInAfterSignOutFollowsTheNewAccountUnderANewIdentity() = runBlocking {
+    @Test fun aSignInAfterSignOutFollowsTheNewAccountUnderANewIdentity() = runTest {
         val f = Fixture()
         f.sync.refresh()
         val oldAccount = checkNotNull(f.saved).account
@@ -268,7 +268,7 @@ class PomodoroSessionNotificationTest {
         assertTrue(f.server.calls.isEmpty())
     }
 
-    @Test fun aSignInAgainWithoutASignOutKeepsWhatIsShown() = runBlocking {
+    @Test fun aSignInAgainWithoutASignOutKeepsWhatIsShown() = runTest {
         val f = Fixture()
         f.sync.refresh()
         val shown = f.saved
@@ -280,7 +280,7 @@ class PomodoroSessionNotificationTest {
         assertEquals(1, f.posts.size)
     }
 
-    @Test fun signOutDropsTheAlarmAndTheNotificationBeforeTheSharedIdAlsoAfterAFailure() = runBlocking {
+    @Test fun signOutDropsTheAlarmAndTheNotificationBeforeTheSharedIdAlsoAfterAFailure() = runTest {
         val f = Fixture()
         f.alarm.ringNow()
         f.sync.refresh()

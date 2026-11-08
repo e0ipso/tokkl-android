@@ -27,6 +27,7 @@ class AndroidFeatureConventionPlugin : Plugin<Project> {
             add("implementation", libs.findLibrary("koin-androidx-compose").get())
 
             add("testImplementation", libs.findLibrary("junit").get())
+            add("testImplementation", libs.findLibrary("kotlinx-coroutines-test").get())
         }
     }
 }

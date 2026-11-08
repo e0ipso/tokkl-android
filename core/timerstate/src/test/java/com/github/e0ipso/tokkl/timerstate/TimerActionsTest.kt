@@ -18,7 +18,7 @@ import com.github.e0ipso.tokkl.cache.RunningCheckStart
 import com.github.e0ipso.tokkl.cache.RunningCheckWrites
 import com.github.e0ipso.tokkl.core.timerstate.R
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonElement
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -80,7 +80,7 @@ class TimerActionsTest {
     }
 
     @Test
-    fun revisionedActionsSendTheRevisionTheyWereShownAtNotTheNewerHeldOne() {
+    fun revisionedActionsSendTheRevisionTheyWereShownAtNotTheNewerHeldOne() = runTest {
         // The phone holds revision 9, and a notification posted at revision 7 is tapped.
         hold(state(revision = 9))
         val shown = 7L
@@ -94,7 +94,7 @@ class TimerActionsTest {
         for ((path, action) in sent) {
             server.enqueue(answer(409, state(revision = 9)))
 
-            assertEquals(path, TimerActionResult.Refused, runBlocking { action() })
+            assertEquals(path, TimerActionResult.Refused, run { action() })
 
             val request = server.takeRequest()
             assertEquals(path, "POST" to path, request.method to request.url.encodedPath)
@@ -104,7 +104,7 @@ class TimerActionsTest {
     }
 
     @Test
-    fun pauseAndSessionStartSendTheBodiesTheReleaseDefines() {
+    fun pauseAndSessionStartSendTheBodiesTheReleaseDefines() = runTest {
         server.enqueue(answer(200, state(revision = 1)))
         server.enqueue(answer(200, state(revision = 2)))
         val fields = EntryFields(
@@ -115,10 +115,10 @@ class TimerActionsTest {
             billable = true,
         )
 
-        assertEquals(TimerActionResult.Done, runBlocking { actions.pause() })
+        assertEquals(TimerActionResult.Done, run { actions.pause() })
         assertEquals(
             TimerActionResult.Done,
-            runBlocking {
+            run {
                 actions.startSession(
                     workspaceId = 7,
                     fields = fields,
@@ -148,44 +148,44 @@ class TimerActionsTest {
     }
 
     @Test
-    fun anAnswerOrARefusalPutsTheServersStateInTheHolder() {
+    fun anAnswerOrARefusalPutsTheServersStateInTheHolder() = runTest {
         val running = serverEntry(40, "Focus")
         server.enqueue(answer(200, state(revision = 3)))
         server.enqueue(answer(200, state(revision = 4, running = running)))
         server.enqueue(answer(409, state(revision = 6, running = running)))
 
-        assertEquals(TimerActionResult.Done, runBlocking { actions.read() })
+        assertEquals(TimerActionResult.Done, run { actions.read() })
         assertEquals("GET" to "/tokkl/api/app/timer", server.takeRequest().let { it.method to it.url.encodedPath })
         assertEquals(3L, holder.state.value?.state?.revision)
 
-        assertEquals(TimerActionResult.Done, runBlocking { actions.resume(3) })
+        assertEquals(TimerActionResult.Done, run { actions.resume(3) })
         assertEquals(4L, holder.state.value?.state?.revision)
         assertEquals("the running entry reaches the cache", listOf(40L), cache.written.filterNotNull().map { it.id })
 
-        val refused = runBlocking { actions.nextPhase(4) }
+        val refused = run { actions.nextPhase(4) }
         assertEquals(TimerActionResult.Refused, refused)
         assertEquals(R.string.timer_action_refused, refused.message)
         assertEquals("the refusal's state is held", 6L, holder.state.value?.state?.revision)
     }
 
     @Test
-    fun anAnswerOlderThanTheHeldStateDoesNotReplaceIt() {
+    fun anAnswerOlderThanTheHeldStateDoesNotReplaceIt() = runTest {
         // The stream delivered revision 15 while the actions were on their way.
         hold(state(revision = 15))
         server.enqueue(answer(200, state(revision = 14)))
         server.enqueue(answer(409, state(revision = 13)))
 
-        assertEquals(TimerActionResult.Done, runBlocking { actions.pause() })
-        assertEquals(TimerActionResult.Refused, runBlocking { actions.endSession(13) })
+        assertEquals(TimerActionResult.Done, run { actions.pause() })
+        assertEquals(TimerActionResult.Refused, run { actions.endSession(13) })
 
         assertEquals(15L, holder.state.value?.state?.revision)
     }
 
     @Test
-    fun aLostAnswerSaysTheServerIsUnreachableChangesNothingAndIsNotSentAgain() {
+    fun aLostAnswerSaysTheServerIsUnreachableChangesNothingAndIsNotSentAgain() = runTest {
         // A read leaves its connection in the pool, so the action reuses it, as a phone often does.
         server.enqueue(answer(200, state(revision = 8, pause = pause())))
-        runBlocking { actions.read() }
+        run { actions.read() }
         server.takeRequest()
         val held = holder.state.value
         val savesBefore = saves
@@ -194,7 +194,7 @@ class TimerActionsTest {
         server.enqueue(MockResponse.Builder().onResponseStart(SocketEffect.CloseSocket()).build())
         server.enqueue(answer(200, state(revision = 9)))
 
-        val result = runBlocking { actions.resume(8) }
+        val result = run { actions.resume(8) }
 
         assertEquals(TimerActionResult.Offline, result)
         assertEquals(R.string.timer_action_offline, result.message)
@@ -209,13 +209,13 @@ class TimerActionsTest {
 
         // No server at all: the same message, and still nothing changes.
         server.close()
-        assertEquals(TimerActionResult.Offline, runBlocking { actions.discard(8) })
+        assertEquals(TimerActionResult.Offline, run { actions.discard(8) })
         assertSame(held, holder.state.value)
         assertEquals(savesBefore, saves)
     }
 
     @Test
-    fun otherFailuresKeepTheAppsErrorsAndChangeNothing() {
+    fun otherFailuresKeepTheAppsErrorsAndChangeNothing() = runTest {
         hold(state(revision = 2))
         val held = holder.state.value
         server.enqueue(answer(403, "\"Incorrect username and/or password\""))
@@ -224,26 +224,26 @@ class TimerActionsTest {
         server.enqueue(answer(200, """{"revision":"not a state"}"""))
         server.enqueue(answer(409, """{"revision":"not a state"}"""))
 
-        assertEquals(TimerActionResult.Failed(ApiError.AuthFailed), runBlocking { actions.pause() })
+        assertEquals(TimerActionResult.Failed(ApiError.AuthFailed), run { actions.pause() })
         assertEquals(
             TimerActionResult.Failed(
                 ApiError.UnexpectedStatus(400, "Invalid work_minutes: expected an integer from 1 to 180"),
             ),
-            runBlocking { actions.startSession(7, EntryFields(), SessionLengths(25, 5, 15, 4)) },
+            run { actions.startSession(7, EntryFields(), SessionLengths(25, 5, 15, 4)) },
         )
         assertEquals(
             TimerActionResult.Failed(ApiError.UnexpectedStatus(409, "Time entry already stopped")),
-            runBlocking { actions.nextPhase(2) },
+            run { actions.nextPhase(2) },
         )
         assertTrue(
-            runBlocking {
+            run {
                 actions.endSession(
                     2,
                 )
             }.let { it is TimerActionResult.Failed && it.error is ApiError.InvalidResponse },
         )
         assertTrue(
-            runBlocking {
+            run {
                 actions.resume(
                     2,
                 )
@@ -262,12 +262,12 @@ class TimerActionsTest {
         }
         testApi.trust = InMemoryServerTrust()
         val requestsBefore = server.requestCount
-        assertEquals(TimerActionResult.Failed(ApiError.CleartextNotConfirmed(url)), runBlocking { actions.discard(2) })
+        assertEquals(TimerActionResult.Failed(ApiError.CleartextNotConfirmed(url)), run { actions.discard(2) })
         assertEquals(listOf<ApiError.TrustRefused>(ApiError.CleartextNotConfirmed(url)), refusals)
 
         // Signed out, there is no account to send for.
         signedIn = false
-        assertEquals(TimerActionResult.Failed(ApiError.AuthFailed), runBlocking { actions.pause() })
+        assertEquals(TimerActionResult.Failed(ApiError.AuthFailed), run { actions.pause() })
         assertEquals("nothing reached the server", requestsBefore, server.requestCount)
         assertSame(held, holder.state.value)
     }

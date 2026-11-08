@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.yield
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -61,7 +61,7 @@ class TimerTotalsStateTest {
     }
 
     @Test
-    fun theFlowFollowsTheSettingsWithOneSubscriptionToTheCache() = runBlocking {
+    fun theFlowFollowsTheSettingsWithOneSubscriptionToTheCache() = runTest {
         val settings = MutableStateFlow<AccountSettings?>(SETTINGS)
         val rows = MutableStateFlow(listOf(entry(1, start = "2026-10-15T09:00:00Z", stop = "2026-10-15T10:00:00Z")))
         var subscriptions = 0

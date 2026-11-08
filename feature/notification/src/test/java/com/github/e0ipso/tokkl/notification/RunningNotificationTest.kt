@@ -13,7 +13,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -138,7 +138,7 @@ class RunningNotificationTest {
     }
 
     @Test
-    fun theSyncPostsOnStartAndEditAndRemovesOnStop() {
+    fun theSyncPostsOnStartAndEditAndRemovesOnStop() = runTest {
         val fake = FakeNotification(serverIds = mapOf(-3L to 4_200L))
         val first = content()!!
         val edited = content(entry = running.copy(description = "Edited"))!!
@@ -146,108 +146,108 @@ class RunningNotificationTest {
         val idChanged = content(entry = running.copy(id = 4_200, description = "Edited"))!!
         val sync = fake.sync(flowOf(null, first, first, edited, idChanged, null, null))
 
-        runBlocking { sync.follow() }
+        run { sync.follow() }
 
         assertEquals(listOf("post Notification -3", "post Edited -3", "remove"), fake.calls)
         assertNull(fake.shown)
     }
 
     @Test
-    fun twoStartsWithinOneSecondPostTheSecondForItsStop() {
+    fun twoStartsWithinOneSecondPostTheSecondForItsStop() = runTest {
         val fake = FakeNotification()
         val first = content()!!
         val second = content(entry = running.copy(id = -4, start = start.plusMillis(400)))!!
 
-        runBlocking { fake.sync(flowOf(first, second)).follow() }
+        run { fake.sync(flowOf(first, second)).follow() }
 
         assertEquals(listOf("post Notification -3", "post Notification -4"), fake.calls)
         assertEquals(second.followed(), fake.shown)
     }
 
     @Test
-    fun theServersIdForTheFollowedEntryPostsNothingAndIsKept() {
+    fun theServersIdForTheFollowedEntryPostsNothingAndIsKept() = runTest {
         val first = content()!!
         val answered = content(entry = running.copy(id = 4_200, start = start.truncatedTo(ChronoUnit.SECONDS)))!!
         val fake = FakeNotification(shown = first.followed(), serverIds = mapOf(-3L to 4_200L))
 
-        runBlocking { fake.sync(flowOf(answered)).follow() }
+        run { fake.sync(flowOf(answered)).follow() }
 
         assertEquals("a dismissed notification stays dismissed", emptyList<String>(), fake.calls)
         assertEquals(FollowedEntry(first.key, 4_200), fake.shown)
     }
 
     @Test
-    fun anotherServerEntryWithTheSameKeyPosts() {
+    fun anotherServerEntryWithTheSameKeyPosts() = runTest {
         val first = content()!!
         // A refresh finds a timer started elsewhere with the same fields in the same second.
         val elsewhere = content(entry = running.copy(id = 9_000))!!
         val fake = FakeNotification(shown = first.followed(), serverIds = mapOf(-3L to 4_200L))
 
-        runBlocking { fake.sync(flowOf(elsewhere)).follow() }
+        run { fake.sync(flowOf(elsewhere)).follow() }
 
         assertEquals(listOf("post Notification 9000"), fake.calls)
         assertEquals(elsewhere.followed(), fake.shown)
     }
 
     @Test
-    fun aKeyKeptWithoutAnIdPostsNothingAndKeepsTheId() {
+    fun aKeyKeptWithoutAnIdPostsNothingAndKeepsTheId() = runTest {
         val first = content()!!
         val fake = FakeNotification(shown = FollowedEntry(first.key, entryId = null))
 
-        runBlocking { fake.sync(flowOf(first)).follow() }
+        run { fake.sync(flowOf(first)).follow() }
 
         assertEquals(emptyList<String>(), fake.calls)
         assertEquals(first.followed(), fake.shown)
     }
 
     @Test
-    fun aNewProcessPostsNothingForTheEntryTheNotificationFollowed() {
+    fun aNewProcessPostsNothingForTheEntryTheNotificationFollowed() = runTest {
         val first = content()!!
         val fake = FakeNotification(shown = first.followed())
 
-        runBlocking { fake.sync(flowOf(first)).follow() }
+        run { fake.sync(flowOf(first)).follow() }
 
         assertEquals("a dismissed notification stays dismissed", emptyList<String>(), fake.calls)
         assertEquals(first.followed(), fake.shown)
     }
 
     @Test
-    fun aNewProcessRemovesTheNotificationOfAnEntryStoppedMeanwhile() {
+    fun aNewProcessRemovesTheNotificationOfAnEntryStoppedMeanwhile() = runTest {
         val fake = FakeNotification(shown = content()!!.followed())
 
-        runBlocking { fake.sync(flowOf(null)).follow() }
+        run { fake.sync(flowOf(null)).follow() }
 
         assertEquals(listOf("remove"), fake.calls)
         assertNull(fake.shown)
     }
 
     @Test
-    fun forgettingRemovesTheNotificationAndTheKey() {
+    fun forgettingRemovesTheNotificationAndTheKey() = runTest {
         val fake = FakeNotification(shown = content()!!.followed())
         val sync = fake.sync(flowOf())
 
-        runBlocking { sync.forget() }
+        run { sync.forget() }
 
         assertEquals(listOf("remove"), fake.calls)
         assertNull(fake.shown)
     }
 
     @Test
-    fun aFailedWriteKeepsFollowingAndMakesTheChangeAgainLater() {
+    fun aFailedWriteKeepsFollowingAndMakesTheChangeAgainLater() = runTest {
         val fake = FakeNotification(failWrites = true)
         val first = content()!!
 
-        runBlocking { fake.sync(flowOf(first, null, first)).follow() }
+        run { fake.sync(flowOf(first, null, first)).follow() }
 
         assertEquals(listOf("post Notification -3", "post Notification -3"), fake.calls)
     }
 
     @Test
-    fun grantingPermissionRepostsTheLatestEntryEvenIfItsStartWasAlreadyFollowed() {
+    fun grantingPermissionRepostsTheLatestEntryEvenIfItsStartWasAlreadyFollowed() = runTest {
         val first = content()!!
         val fake = FakeNotification(shown = first.followed())
         val sync = fake.sync(flowOf())
-        runBlocking {
+        run {
             sync.apply(first)
             assertEquals(emptyList<String>(), fake.calls)
             sync.repost()
@@ -258,11 +258,11 @@ class RunningNotificationTest {
     }
 
     @Test
-    fun aGrantAfterSignOutCannotRepostThePreviousAccountsEntry() {
+    fun aGrantAfterSignOutCannotRepostThePreviousAccountsEntry() = runTest {
         val first = content()!!
         val fake = FakeNotification(shown = first.followed())
         val sync = fake.sync(flowOf())
-        runBlocking {
+        run {
             sync.apply(first)
             sync.forget()
             sync.repost()
@@ -349,7 +349,7 @@ class RunningNotificationTest {
     }
 
     @Test
-    fun eachPauseAndResumePostsTheNotificationAgain() {
+    fun eachPauseAndResumePostsTheNotificationAgain() = runTest {
         val fake = FakeNotification()
         val clone = running.copy(id = 55, start = start.plusSeconds(900))
         val resumed = runningNotificationContent(
@@ -361,18 +361,18 @@ class RunningNotificationTest {
             listOf(task),
         )
 
-        runBlocking { fake.sync(flowOf(controlled(), paused(), resumed)).follow() }
+        run { fake.sync(flowOf(controlled(), paused(), resumed)).follow() }
 
         assertEquals(listOf("post Notification -3", "post Notification 0", "post Notification 55"), fake.calls)
     }
 
     @Test
-    fun aPausedNotificationSwipedAwayStaysAwayInANewProcessUntilThePausedTimerChanges() {
+    fun aPausedNotificationSwipedAwayStaysAwayInANewProcessUntilThePausedTimerChanges() = runTest {
         val shown = paused()!!
         val edited = paused(EntryFields("Paused elsewhere", projectId = 7, taskId = 9))!!
         val fake = FakeNotification(shown = shown.followed())
 
-        runBlocking { fake.sync(flowOf(shown, edited)).follow() }
+        run { fake.sync(flowOf(shown, edited)).follow() }
 
         assertEquals(listOf("post Paused elsewhere 0"), fake.calls)
         assertNotEquals(

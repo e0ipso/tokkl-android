@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -46,7 +46,7 @@ class NeedsAttentionViewModelTest {
     }
 
     @Test
-    fun theScreenShowsTheHeldChangesInTheAccountsSettings() = runBlocking {
+    fun theScreenShowsTheHeldChangesInTheAccountsSettings() = runTest {
         val reader = scope.launch { model.state.collect {} }
         held.value = listOf(CHANGE)
         settings.value = SETTINGS

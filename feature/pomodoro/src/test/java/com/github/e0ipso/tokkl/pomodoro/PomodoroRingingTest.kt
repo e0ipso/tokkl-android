@@ -9,7 +9,7 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -28,7 +28,7 @@ class PomodoroRingingTest {
     private val key = PomodoroPhaseKey(T0)
 
     @Test
-    fun thePhaseEndStartsBothOutputsWithTheTransitionsSoundAndNeverMovesThePhaseOn() = runBlocking {
+    fun thePhaseEndStartsBothOutputsWithTheTransitionsSoundAndNeverMovesThePhaseOn() = runTest {
         val f = AlarmFixture(heldState(revision = 3))
         f.ringNow()
 
@@ -41,7 +41,7 @@ class PomodoroRingingTest {
     }
 
     @Test
-    fun everyServerTransitionSelectsItsOwnSound() = runBlocking {
+    fun everyServerTransitionSelectsItsOwnSound() = runTest {
         val cases = mapOf(
             PhaseTransition.WORK_TO_SHORT_REST to PomodoroSound.WORK_TO_SHORT_REST,
             PhaseTransition.WORK_TO_LONG_REST to PomodoroSound.WORK_TO_LONG_REST,
@@ -65,7 +65,7 @@ class PomodoroRingingTest {
     }
 
     @Test
-    fun duplicateDeliveriesDoNotRestartOrMultiplyTheOutput() = runBlocking {
+    fun duplicateDeliveriesDoNotRestartOrMultiplyTheOutput() = runTest {
         val f = AlarmFixture(heldState(revision = 3))
         f.ringNow()
         repeat(5) { f.alarm.onAlarm(key) }
@@ -77,7 +77,7 @@ class PomodoroRingingTest {
     }
 
     @Test
-    fun daysOfOvertimeHaveNoSilenceOrDurationCap() = runBlocking {
+    fun daysOfOvertimeHaveNoSilenceOrDurationCap() = runTest {
         val f = AlarmFixture(heldState(revision = 3))
         f.ringNow()
         f.clock.now = T0.plus(Duration.ofDays(365))
@@ -91,7 +91,7 @@ class PomodoroRingingTest {
     }
 
     @Test
-    fun aNewRevisionOfTheRingingPhaseKeepsPlayingAndShowsThatRevision() = runBlocking {
+    fun aNewRevisionOfTheRingingPhaseKeepsPlayingAndShowsThatRevision() = runTest {
         val f = AlarmFixture(heldState(revision = 3))
         f.ringNow()
         val posts = f.output.posts
@@ -106,7 +106,7 @@ class PomodoroRingingTest {
     }
 
     @Test
-    fun aConfirmOnAnyDeviceStopsBothOutputs() = runBlocking {
+    fun aConfirmOnAnyDeviceStopsBothOutputs() = runTest {
         val f = AlarmFixture(heldState(revision = 3))
         f.ringNow()
 
@@ -120,7 +120,7 @@ class PomodoroRingingTest {
     }
 
     @Test
-    fun anOfflineButtonLeavesTheRingAndTheStateAsTheyWere() = runBlocking {
+    fun anOfflineButtonLeavesTheRingAndTheStateAsTheyWere() = runTest {
         val f = AlarmFixture(heldState(revision = 3))
         f.ringNow()
         val server = FakeServer(MutableStateFlow(f.held)).apply { answer = TimerActionResult.Offline }
@@ -136,7 +136,7 @@ class PomodoroRingingTest {
     }
 
     @Test
-    fun oldPhaseDeliveriesButtonsRepostsAndServiceStartsCannotTouchTheNewPhase() = runBlocking {
+    fun oldPhaseDeliveriesButtonsRepostsAndServiceStartsCannotTouchTheNewPhase() = runTest {
         val f = AlarmFixture(heldState(revision = 3))
         f.ringNow()
         f.held = heldState(revision = 4, pomodoro = rest())
@@ -160,7 +160,7 @@ class PomodoroRingingTest {
     }
 
     @Test
-    fun aRestartedServiceRingsOnlyTheHeldPhasePastItsPlannedEnd() = runBlocking {
+    fun aRestartedServiceRingsOnlyTheHeldPhasePastItsPlannedEnd() = runTest {
         val f = AlarmFixture(heldState(revision = 3))
         f.alarm.follow()
         assertFalse(f.alarm.withRingingPhase(null) { error("not due") })
@@ -182,7 +182,7 @@ class PomodoroRingingTest {
     }
 
     @Test
-    fun aSwipeRepostsWithoutStoppingEitherOutput() = runBlocking {
+    fun aSwipeRepostsWithoutStoppingEitherOutput() = runTest {
         val f = AlarmFixture(heldState(revision = 3))
         f.ringNow()
         val posts = f.output.posts
@@ -196,7 +196,7 @@ class PomodoroRingingTest {
     }
 
     @Test
-    fun theServiceCheckAndAConfirmElsewhereCannotRace() = runBlocking {
+    fun theServiceCheckAndAConfirmElsewhereCannotRace() = runTest {
         val f = AlarmFixture(heldState(revision = 3))
         f.alarm.follow()
         f.clock.now = T0.plusSeconds(1_500)

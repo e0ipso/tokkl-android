@@ -17,6 +17,7 @@ dependencies {
     implementation(libs.androidx.compose.ui)
 
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockwebserver3)
     testImplementation(testFixtures(project(":core:api")))
 }

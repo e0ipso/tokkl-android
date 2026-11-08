@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.api
 
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -51,39 +52,39 @@ class ConfiguredServerGuardTest {
     }
 
     @Test
-    fun requestToTheConfiguredServerPasses() {
+    fun requestToTheConfiguredServerPasses() = runTest {
         configured.enqueue(me())
 
-        assertEquals(ApiResult.Success(Me(7)), runBlocking { client.get(server.api("me"), Me.serializer()) })
+        assertEquals(ApiResult.Success(Me(7)), run { client.get(server.api("me"), Me.serializer()) })
         assertEquals(1, configured.requestCount)
     }
 
     @Test
-    fun requestToAnotherPortFailsWithTheOriginAndSendsNothing() {
+    fun requestToAnotherPortFailsWithTheOriginAndSendsNothing() = runTest {
         val url = other.url("/api/v9/me")
 
-        val result = runBlocking { client.get(url, Me.serializer()) }
+        val result = run { client.get(url, Me.serializer()) }
 
         assertEquals(ApiResult.Failure(ApiError.HostNotAllowed(origin(url))), result)
         assertEquals(0, other.requestCount)
     }
 
     @Test
-    fun requestToAnotherHostFailsWithTheHostName() {
+    fun requestToAnotherHostFailsWithTheHostName() = runTest {
         val otherHost = if (configured.hostName == "127.0.0.1") "localhost" else "127.0.0.1"
         val url = server.api("me").newBuilder().host(otherHost).build()
 
-        val error = failure(runBlocking { client.get(url, Me.serializer()) })
+        val error = failure(run { client.get(url, Me.serializer()) })
 
         assertEquals(ApiError.HostNotAllowed("http://$otherHost:${configured.port}"), error)
         assertEquals(0, configured.requestCount)
     }
 
     @Test
-    fun requestWithAnotherSchemeFails() {
+    fun requestWithAnotherSchemeFails() = runTest {
         val url = server.api("me").newBuilder().scheme("https").port(configured.port).build()
 
-        assertEquals(ApiError.HostNotAllowed(origin(url)), failure(runBlocking { client.get(url, Me.serializer()) }))
+        assertEquals(ApiError.HostNotAllowed(origin(url)), failure(run { client.get(url, Me.serializer()) }))
         assertEquals(0, configured.requestCount)
     }
 
@@ -120,12 +121,12 @@ class ConfiguredServerGuardTest {
     }
 
     @Test
-    fun redirectToAnotherHostIsRefused() {
+    fun redirectToAnotherHostIsRefused() = runTest {
         val target = other.url("/api/v9/me")
         configured.enqueue(MockResponse.Builder().code(302).addHeader("Location", target.toString()).build())
         other.enqueue(me())
 
-        val error = failure(runBlocking { client.get(server.api("me"), Me.serializer()) })
+        val error = failure(run { client.get(server.api("me"), Me.serializer()) })
 
         assertEquals(ApiError.HostNotAllowed(origin(target)), error)
         assertEquals(1, configured.requestCount)
@@ -133,11 +134,11 @@ class ConfiguredServerGuardTest {
     }
 
     @Test
-    fun redirectToTheSameOriginIsFollowedWithTheCredentials() {
+    fun redirectToTheSameOriginIsFollowedWithTheCredentials() = runTest {
         configured.enqueue(MockResponse.Builder().code(301).addHeader("Location", "/tokkl/api/v9/me/again").build())
         configured.enqueue(me())
 
-        val result = runBlocking { client.get(server.api("me"), Me.serializer()) }
+        val result = run { client.get(server.api("me"), Me.serializer()) }
 
         assertEquals(ApiResult.Success(Me(7)), result)
         configured.takeRequest()
@@ -147,15 +148,15 @@ class ConfiguredServerGuardTest {
     }
 
     @Test
-    fun redirectsAfterAPostKeepOkHttpsMethodRules() {
+    fun redirectsAfterAPostKeepOkHttpsMethodRules() = runTest {
         val body = buildJsonObject { put("name", "x") }
         configured.enqueue(MockResponse.Builder().code(303).addHeader("Location", "/tokkl/seen").build())
         configured.enqueue(me())
         configured.enqueue(MockResponse.Builder().code(307).addHeader("Location", "/tokkl/again").build())
         configured.enqueue(me())
 
-        runBlocking { client.send("POST", server.api("tags"), body, Me.serializer()) }
-        runBlocking { client.send("POST", server.api("tags"), body, Me.serializer()) }
+        run { client.send("POST", server.api("tags"), body, Me.serializer()) }
+        run { client.send("POST", server.api("tags"), body, Me.serializer()) }
 
         val requests = List(4) { configured.takeRequest() }
         assertEquals(listOf("POST", "GET", "POST", "POST"), requests.map { it.method })
@@ -164,27 +165,27 @@ class ConfiguredServerGuardTest {
     }
 
     @Test
-    fun withoutAConfiguredServerEveryRequestIsRefused() {
+    fun withoutAConfiguredServerEveryRequestIsRefused() = runTest {
         testApi.stored = null
 
         assertEquals(
             ApiError.HostNotAllowed(origin(server.api("me"))),
-            failure(runBlocking { client.get(server.api("me"), Me.serializer()) }),
+            failure(run { client.get(server.api("me"), Me.serializer()) }),
         )
         assertEquals(0, configured.requestCount)
     }
 
     @Test
-    fun signInMakesTheUrlBeingTriedTheConfiguredServerUntilItReturns() {
+    fun signInMakesTheUrlBeingTriedTheConfiguredServerUntilItReturns() = runTest {
         testApi.stored = null
         configured.enqueue(me())
 
-        val during = runBlocking {
+        val during = run {
             testApi.configured.signingIn(
                 server,
             ) { client.get(server.api("me"), Me.serializer()) }
         }
-        val after = runBlocking { client.get(server.api("me"), Me.serializer()) }
+        val after = run { client.get(server.api("me"), Me.serializer()) }
 
         assertEquals(ApiResult.Success(Me(7)), during)
         assertEquals(ApiResult.Failure(ApiError.HostNotAllowed(origin(server.api("me")))), after)
@@ -193,36 +194,36 @@ class ConfiguredServerGuardTest {
 
     /** The check sits in the shared client, so it holds for every call, not only the sign-in button. */
     @Test
-    fun plainHttpServerGetsNoRequestUntilTheUserConfirmsIt() {
+    fun plainHttpServerGetsNoRequestUntilTheUserConfirmsIt() = runTest {
         trust.cleartextConfirmed.clear()
         configured.enqueue(me())
 
-        val refused = runBlocking { client.get(server.api("me"), Me.serializer()) }
+        val refused = run { client.get(server.api("me"), Me.serializer()) }
 
         assertEquals(ApiResult.Failure(ApiError.CleartextNotConfirmed(server)), refused)
         assertEquals("nothing reached the server", 0, configured.requestCount)
 
         trust.confirmCleartext(server)
-        val sent = runBlocking { client.get(server.api("me"), Me.serializer()) }
+        val sent = run { client.get(server.api("me"), Me.serializer()) }
 
         assertEquals(ApiResult.Success(Me(7)), sent)
         assertEquals(credentials.authorizationHeader, configured.takeRequest().headers["Authorization"])
     }
 
     @Test
-    fun confirmationCoversOnlyTheUrlTheUserConfirmed() {
+    fun confirmationCoversOnlyTheUrlTheUserConfirmed() = runTest {
         val elsewhere = ServerUrl.parse(configured.url("/other/").toString())!!
         testApi.stored = elsewhere
         configured.enqueue(me())
 
-        val result = runBlocking { testApi.client(elsewhere, credentials).get(elsewhere.api("me"), Me.serializer()) }
+        val result = run { testApi.client(elsewhere, credentials).get(elsewhere.api("me"), Me.serializer()) }
 
         assertEquals(ApiResult.Failure(ApiError.CleartextNotConfirmed(elsewhere)), result)
         assertEquals(0, configured.requestCount)
     }
 
     @Test
-    fun httpsServerNeedsNoConfirmation() {
+    fun httpsServerNeedsNoConfirmation() = runTest {
         trust.cleartextConfirmed.clear()
         // The MockWebServer speaks plain HTTP, so the TLS handshake fails, but only after the guard let the call
         // through.
@@ -231,7 +232,7 @@ class ConfiguredServerGuardTest {
         )!!
         testApi.stored = https
 
-        val error = failure(runBlocking { testApi.client(https, credentials).get(https.api("me"), Me.serializer()) })
+        val error = failure(run { testApi.client(https, credentials).get(https.api("me"), Me.serializer()) })
 
         assertTrue(error.toString(), error is ApiError.Network)
     }

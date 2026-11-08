@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -97,7 +97,7 @@ class PomodoroViewModelTest {
     }
 
     @Test
-    fun startSendsTheFormToTheServerAndCreatesNothingOnThePhone() = runBlocking {
+    fun startSendsTheFormToTheServerAndCreatesNothingOnThePhone() = runTest {
         val f = idle()
         f.page.editLengths(PomodoroLengths("30", "5", "12", "2"))
         f.page.editFields(EntryFields(description = "First work", tags = listOf("deep")))
@@ -119,7 +119,7 @@ class PomodoroViewModelTest {
     }
 
     @Test
-    fun aStartThatDoesNotGoThroughKeepsTheFormAndSaysWhy() = runBlocking {
+    fun aStartThatDoesNotGoThroughKeepsTheFormAndSaysWhy() = runTest {
         for (result in listOf(TimerActionResult.Offline, TimerActionResult.Refused)) {
             val f = idle()
             f.server.answer = result
@@ -135,7 +135,7 @@ class PomodoroViewModelTest {
     }
 
     @Test
-    fun aSecondTapWhileTheFirstIsOnItsWayStartsNothing() = runBlocking {
+    fun aSecondTapWhileTheFirstIsOnItsWayStartsNothing() = runTest {
         val f = idle()
         f.server.gate = kotlinx.coroutines.CompletableDeferred()
         val first = f.page.start()!!
@@ -185,7 +185,7 @@ class PomodoroViewModelTest {
     }
 
     @Test
-    fun aPickOrBillableEditGoesToTheQueuedRunningEntryEditOfThePomodorosEntry() = runBlocking {
+    fun aPickOrBillableEditGoesToTheQueuedRunningEntryEditOfThePomodorosEntry() = runTest {
         val f = running()
         val shown = f.page.state.value.shown!!
         f.page.editFields(EntryFields("Focused work", projectId = 9, billable = true), shown.entryId)!!.join()
@@ -198,7 +198,7 @@ class PomodoroViewModelTest {
     }
 
     @Test
-    fun aTypedDescriptionShowsAtOnceAndGoesToTheQueueWhenTheFieldIsDone() = runBlocking {
+    fun aTypedDescriptionShowsAtOnceAndGoesToTheQueueWhenTheFieldIsDone() = runTest {
         val f = running()
         val entry = f.page.state.value.shown!!.entryId
         assertNull(f.page.editFields(EntryFields("Focused work, typed"), entry, send = false))
@@ -228,7 +228,7 @@ class PomodoroViewModelTest {
     }
 
     @Test
-    fun anEditTheQueueRefusesDoesNotStayOnScreen() = runBlocking {
+    fun anEditTheQueueRefusesDoesNotStayOnScreen() = runTest {
         val f = running()
         f.changes.accepts = false
         f.page.editFields(EntryFields("Lost"), f.page.state.value.shown!!.entryId)!!.join()

@@ -11,6 +11,7 @@ import com.github.e0ipso.tokkl.timerstate.TimerControls
 import com.github.e0ipso.tokkl.timerstate.TimerSurfaceActions
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -137,7 +138,7 @@ class RunningTileContentTest {
     }
 
     @Test
-    fun aPausedTimerMakesTheTileResumeTheChainOnTheServerAtTheShownRevision() {
+    fun aPausedTimerMakesTheTileResumeTheChainOnTheServerAtTheShownRevision() = runTest {
         now = ServerTimerStates.controls(
             null,
             ServerTimerStates.held(3, start, ServerTimerStates.paused(600, EntryFields("Paused work"))),
@@ -153,7 +154,7 @@ class RunningTileContentTest {
         )
         val request = tap(content) as SurfaceTap.Request
         assertTrue("nothing queued", calls.isEmpty())
-        assertEquals(TimerActionResult.Offline, runBlocking { request.send() })
+        assertEquals(TimerActionResult.Offline, run { request.send() })
         assertEquals(listOf("resume 3"), calls)
     }
 

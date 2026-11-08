@@ -4,7 +4,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertNull
@@ -17,7 +17,7 @@ class SingleFlightTest {
     private val flight = SingleFlight(CoroutineScope(Dispatchers.Unconfined))
 
     @Test
-    fun aCallWhileAJobRunsGetsThatJob() = runBlocking {
+    fun aCallWhileAJobRunsGetsThatJob() = runTest {
         val release = CompletableDeferred<Unit>()
         var runs = 0
 
@@ -36,7 +36,7 @@ class SingleFlightTest {
     }
 
     @Test
-    fun aCallAfterTheJobEndedStartsAnother() = runBlocking {
+    fun aCallAfterTheJobEndedStartsAnother() = runTest {
         var runs = 0
 
         val first = flight.launch { runs++ }
@@ -49,7 +49,7 @@ class SingleFlightTest {
     }
 
     @Test
-    fun aJobThatCallsLaunchGetsItself() = runBlocking {
+    fun aJobThatCallsLaunchGetsItself() = runTest {
         var inner: Job? = null
 
         val outer = flight.launch { inner = flight.launch { error("must not start a second job") } }
@@ -59,7 +59,7 @@ class SingleFlightTest {
     }
 
     @Test
-    fun cancelEndsTheJobAndTheNextCallStartsAnother() = runBlocking {
+    fun cancelEndsTheJobAndTheNextCallStartsAnother() = runTest {
         val first = flight.launch { CompletableDeferred<Unit>().await() }
 
         flight.cancel()

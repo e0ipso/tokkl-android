@@ -18,6 +18,7 @@ import com.github.e0ipso.tokkl.cache.RunningCheckStart
 import com.github.e0ipso.tokkl.cache.RunningCheckWrites
 import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
 import com.github.e0ipso.tokkl.picker.Picked
+import com.github.e0ipso.tokkl.platform.MainDispatcherRule
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.timernotice.TimerNotice
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
@@ -28,10 +29,6 @@ import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import com.github.e0ipso.tokkl.timerstate.continueEntry
 import com.github.e0ipso.tokkl.timerstate.serverTimerControls
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExecutorCoroutineDispatcher
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,7 +37,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -49,6 +45,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import java.time.Clock
 import java.time.DayOfWeek
@@ -58,8 +55,6 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -71,9 +66,9 @@ import java.util.concurrent.atomic.AtomicReference
  */
 class TimerPauseTest {
 
-    private val main: ExecutorService = Executors.newSingleThreadExecutor()
-    private val mainDispatcher: ExecutorCoroutineDispatcher = main.asCoroutineDispatcher()
-    private val scope = CoroutineScope(SupervisorJob() + mainDispatcher)
+    @get:Rule
+    val main = MainDispatcherRule()
+    private val scope = main.scope
     private val now = AtomicReference(TAP)
     private val clock = object : Clock() {
         override fun instant(): Instant = now.get()
@@ -104,7 +99,6 @@ class TimerPauseTest {
     @After
     fun tearDown() {
         scope.cancel()
-        main.shutdown()
     }
 
     private fun timerModel(
@@ -188,7 +182,7 @@ class TimerPauseTest {
         assertTrue("nothing was queued", changes.calls.isEmpty())
         assertEquals(listOf("pause"), calls)
 
-        assertEquals(notice, runBlocking(mainDispatcher) { model.claim(notice) })
+        assertEquals(notice, main.onMain { model.claim(notice) })
         onMain { model.noticeShown(notice) }
         awaitNotice { it == null }
     }
@@ -226,7 +220,7 @@ class TimerPauseTest {
         awaitState("the pomodoro shows") { it is TimerState.Running && !it.pausable }
         onMain { model.pause() }
 
-        Thread.sleep(SETTLE_PAUSE_MS)
+        main.settle(SETTLE_PAUSE_MS)
         assertTrue("no Pause went anywhere", calls.isEmpty() && changes.calls.isEmpty())
     }
 
@@ -250,7 +244,7 @@ class TimerPauseTest {
         assertTrue(resumed.pausable)
         assertNotNull(
             "a resume asks about notifications as a start does",
-            runBlocking { withTimeoutOrNull(TIMEOUT_MS) { model.starts.first() } },
+            main.onMain { withTimeoutOrNull(TIMEOUT_MS) { model.starts.first() } },
         )
         assertTrue("nothing was queued", changes.calls.isEmpty())
     }
@@ -303,7 +297,7 @@ class TimerPauseTest {
             model.fill(EntryFields("Filled while paused"))
         }
 
-        Thread.sleep(SETTLE_PAUSE_MS)
+        main.settle(SETTLE_PAUSE_MS)
         assertEquals(FIELDS, (model.state.value as TimerState.Paused).fields)
         assertTrue("nothing went anywhere", calls.isEmpty() && changes.calls.isEmpty())
     }
@@ -347,7 +341,7 @@ class TimerPauseTest {
             model.stopShown(old.target!!)
         }
 
-        assertNull(runBlocking(mainDispatcher) { model.runningForEditShown(old.target!!) })
+        assertNull(main.onMain { model.runningForEditShown(old.target!!) })
         assertTrue(calls.isEmpty() && changes.calls.isEmpty())
         assertEquals(TimerTarget.server(entryId = 99), model.state.value.target)
     }
@@ -379,7 +373,7 @@ class TimerPauseTest {
         assertEquals(listOf("pause", "resume 4"), calls)
         assertEquals(90L, resumed.accumulatedSeconds)
         assertEquals(CLONE_ID, resumed.entryId)
-        val identity = runBlocking(mainDispatcher) { model.runningForEditShown(resumed.target!!) }
+        val identity = main.onMain { model.runningForEditShown(resumed.target!!) }
         assertEquals(RunningEntryIdentity(CLONE_ID, WORKSPACE, CLONE_START), identity)
     }
 
@@ -407,7 +401,7 @@ class TimerPauseTest {
         onMain { model.stopShown(paused.target!!) }
 
         assertFalse("taps wait for the server's answer", model.isShown(paused.target!!))
-        assertNull(runBlocking(mainDispatcher) { model.runningForEdit() })
+        assertNull(main.onMain { model.runningForEdit() })
         onMain { model.stopShown(paused.target!!) }
         assertEquals(listOf("discard 12"), calls)
         server.gate.complete(Unit)
@@ -421,10 +415,10 @@ class TimerPauseTest {
         server.gate = CompletableDeferred()
         onMain { model.pause() }
 
-        assertNull("Pause is on its way", runBlocking(mainDispatcher) { model.runningForEdit() })
+        assertNull("Pause is on its way", main.onMain { model.runningForEdit() })
         server.gate.complete(Unit)
         awaitState("the server's pause shows") { it is TimerState.Paused }
-        assertNull("paused", runBlocking(mainDispatcher) { model.runningForEdit() })
+        assertNull("paused", main.onMain { model.runningForEdit() })
     }
 
     @Test
@@ -447,21 +441,21 @@ class TimerPauseTest {
         assertTrue(holder.accept(holder.begin(), state))
         val notice = awaitNotice(notices) { it is TimerNotice.PomodoroDiscarded }
         assertEquals(TimerNotice.PomodoroDiscarded(70), notice)
-        assertEquals(notice, runBlocking(mainDispatcher) { notices.claim(notice!!) })
+        assertEquals(notice, main.onMain { notices.claim(notice!!) })
         assertNull("the holder recorded it as shown", holder.discardNotice.value)
         awaitNotice(notices) { it == notice }
 
         onMain { notices.noticeShown(notice!!) }
         awaitNotice(notices) { it == null }
         assertTrue("the same state arrives again", holder.accept(holder.begin(), state))
-        Thread.sleep(SETTLE_PAUSE_MS)
+        main.settle(SETTLE_PAUSE_MS)
         assertNull("its notice does not come back", notices.notice.value)
-        assertNull("nor can a screen claim it", runBlocking(mainDispatcher) { notices.claim(notice!!) })
+        assertNull("nor can a screen claim it", main.onMain { notices.claim(notice!!) })
     }
 
     private fun awaitState(what: String, condition: (TimerState) -> Boolean): TimerState {
         var last: TimerState? = null
-        return runBlocking {
+        return main.onMain {
             withTimeoutOrNull(TIMEOUT_MS) { model.state.onEach { last = it }.first(condition) }
         } ?: throw AssertionError(
             "timed out waiting until $what; the last state was $last, after ${changes.calls} and $calls",
@@ -471,7 +465,7 @@ class TimerPauseTest {
     private fun awaitNotice(from: TimerViewModel = model, condition: (TimerNotice?) -> Boolean): TimerNotice? {
         var last: TimerNotice? = null
         var matched = false
-        val found = runBlocking {
+        val found = main.onMain {
             withTimeoutOrNull(TIMEOUT_MS) {
                 from.notice.onEach { last = it }.first(condition).also { matched = true }
             }
@@ -480,8 +474,12 @@ class TimerPauseTest {
         return found
     }
 
-    /** The tap handlers run on the main thread, which [scope] stands in for. */
-    private fun onMain(block: () -> Unit) = runBlocking(mainDispatcher) { block() }
+    /** The tap handlers run on the main thread, which [main] stands in for. */
+    private fun onMain(block: () -> Unit) {
+        main.runCurrent()
+        block()
+        main.runCurrent()
+    }
 
     private fun running(id: Long = RUNNING_ID) = EntryWithSendState(
         CachedTimeEntry(

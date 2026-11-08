@@ -8,7 +8,7 @@ import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.capabilities.ReportCsvKind
 import com.github.e0ipso.tokkl.time.DurationFormat
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
@@ -58,18 +58,18 @@ class AppSummaryServerTest {
     }
 
     @Test
-    fun defaultWorkspaceAndRoleMakeACandidateWithoutHostnameOrVersionChecks() {
+    fun defaultWorkspaceAndRoleMakeACandidateWithoutHostnameOrVersionChecks() = runTest {
         http.enqueue(json("""{"default_workspace_id":7,"role":"user"}"""))
         http.enqueue(json("""{"rounding":1,"rounding_minutes":15}"""))
-        assertEquals(ApiResult.Success(workspace), runBlocking { server.workspace() })
+        assertEquals(ApiResult.Success(workspace), run { server.workspace() })
         assertEquals("/prefix/tokkl/api/v9/me", http.takeRequest().url.encodedPath)
         assertEquals("/prefix/tokkl/api/v9/workspaces/7", http.takeRequest().url.encodedPath)
     }
 
     @Test
-    fun appPostPreservesPrefixFiltersAndInclusiveDatesButDoesNotOverrideCurrentRounding() {
+    fun appPostPreservesPrefixFiltersAndInclusiveDatesButDoesNotOverrideCurrentRounding() = runTest {
         http.enqueue(json(APP_SUMMARY_FIXTURE))
-        val report = success(runBlocking { server.summary(workspace, range, zone, DayOfWeek.WEDNESDAY, filters) })
+        val report = success(run { server.summary(workspace, range, zone, DayOfWeek.WEDNESDAY, filters) })
         assertEquals(7317L, report.totals.seconds)
         val request = http.takeRequest()
         assertEquals("POST", request.method)
@@ -86,7 +86,7 @@ class AppSummaryServerTest {
     }
 
     @Test
-    fun allFilterVariantsAreForwardedWithoutChangingTheirMeaning() {
+    fun allFilterVariantsAreForwardedWithoutChangingTheirMeaning() = runTest {
         val cases = listOf(
             ReportFilters() to "{}",
             ReportFilters(
@@ -100,7 +100,7 @@ class AppSummaryServerTest {
         )
         for ((selected, expected) in cases) {
             http.enqueue(json(APP_SUMMARY_FIXTURE))
-            success(runBlocking { server.summary(workspace, range, zone, DayOfWeek.WEDNESDAY, selected) })
+            success(run { server.summary(workspace, range, zone, DayOfWeek.WEDNESDAY, selected) })
             val body = jsonObject(http.takeRequest().body!!.utf8())
             assertEquals(
                 jsonObject(expected),
@@ -110,11 +110,11 @@ class AppSummaryServerTest {
     }
 
     @Test
-    fun onlyDefinitiveAppEndpointAbsenceUsesRoundedDetailedFallback() {
+    fun onlyDefinitiveAppEndpointAbsenceUsesRoundedDetailedFallback() = runTest {
         for (status in listOf(404, 410)) {
             http.enqueue(MockResponse.Builder().code(status).build())
             http.enqueue(json(FALLBACK_ROWS))
-            val report = success(runBlocking { server.summary(workspace, range, zone, DayOfWeek.WEDNESDAY, filters) })
+            val report = success(run { server.summary(workspace, range, zone, DayOfWeek.WEDNESDAY, filters) })
             assertEquals(ReportTotals(1800, 1800, 2, listOf(Amount("EUR", 168))), report.totals)
             assertEquals(1800L, report.series.first().seconds)
             assertEquals(LocalDate.parse("2026-10-21"), report.series.first().start)
@@ -135,10 +135,10 @@ class AppSummaryServerTest {
     }
 
     @Test
-    fun nonCandidateUsesExistingDetailedSearchWithoutAnAppProbe() {
+    fun nonCandidateUsesExistingDetailedSearchWithoutAnAppProbe() = runTest {
         http.enqueue(json(FALLBACK_ROWS))
         val report = success(
-            runBlocking {
+            run {
                 server.summary(
                     workspace.copy(appSummaryCandidate = false),
                     range,
@@ -153,7 +153,7 @@ class AppSummaryServerTest {
     }
 
     @Test
-    fun authQuotaAndServerFailuresNeverFallBack() {
+    fun authQuotaAndServerFailuresNeverFallBack() = runTest {
         for (status in listOf(401, 403, 429, 500, 502, 503, 504)) {
             // A dispatcher also prevents an accidental fallback from hanging the test.
             http.dispatcher = object : Dispatcher() {
@@ -162,7 +162,7 @@ class AppSummaryServerTest {
                 ).addHeader("Retry-After", "17").build()
             }
             val before = http.requestCount
-            val answer = runBlocking {
+            val answer = run {
                 server.summary(
                     workspace,
                     range,
@@ -177,13 +177,13 @@ class AppSummaryServerTest {
     }
 
     @Test
-    fun malformedSuccessfulResponsesStayErrorsAndDoNotSearch() {
+    fun malformedSuccessfulResponsesStayErrorsAndDoNotSearch() = runTest {
         for (body in listOf("{}", "[]", "not JSON", APP_SUMMARY_FIXTURE.replace("2026-10-28", "bad-date"))) {
             http.dispatcher = object : Dispatcher() {
                 override fun dispatch(request: RecordedRequest) = json(body)
             }
             val before = http.requestCount
-            val answer = runBlocking {
+            val answer = run {
                 server.summary(
                     workspace,
                     range,
@@ -198,21 +198,21 @@ class AppSummaryServerTest {
     }
 
     @Test
-    fun unreachableServerStaysANetworkFailure() {
+    fun unreachableServerStaysANetworkFailure() = runTest {
         http.close()
-        val answer = runBlocking { server.summary(workspace, range, zone, DayOfWeek.WEDNESDAY) } as ApiResult.Failure
+        val answer = run { server.summary(workspace, range, zone, DayOfWeek.WEDNESDAY) } as ApiResult.Failure
         assertTrue(answer.error is ApiError.Network)
     }
 
     @Test
-    fun detailedWeeklyAndCsvKeepTheirExistingContractsForTokklCandidates() {
+    fun detailedWeeklyAndCsvKeepTheirExistingContractsForTokklCandidates() = runTest {
         http.enqueue(json("[]"))
-        runBlocking { server.detailedPage(workspace, range, zone, 1, filters) }
+        run { server.detailedPage(workspace, range, zone, 1, filters) }
         val detailed = http.takeRequest()
         assertEquals("/prefix/tokkl/reports/api/v3/workspace/7/search/time_entries", detailed.url.encodedPath)
         assertEquals("DESC", jsonObject(detailed.body!!.utf8()).getValue("order_dir").toString().trim('"'))
         http.enqueue(json("[]"))
-        runBlocking { server.weekly(workspace, range.from, filters) }
+        run { server.weekly(workspace, range.from, filters) }
         assertEquals("/prefix/tokkl/reports/api/v3/workspace/7/weekly/time_entries", http.takeRequest().url.encodedPath)
         for (kind in ReportCsvKind.entries) {
             val old = ReportCsvRequest(

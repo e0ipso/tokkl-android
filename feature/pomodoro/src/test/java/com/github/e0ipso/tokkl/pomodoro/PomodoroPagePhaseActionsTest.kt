@@ -3,7 +3,7 @@ package com.github.e0ipso.tokkl.pomodoro
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -21,7 +21,7 @@ class PomodoroPagePhaseActionsTest {
     fun stop() = fixtures.forEach { it.close() }
 
     @Test
-    fun nextPhaseSendsTheDisplayedRevisionAndTheServersAnswerIsTheNewPhase() = runBlocking {
+    fun nextPhaseSendsTheDisplayedRevisionAndTheServersAnswerIsTheNewPhase() = runTest {
         val f = page(revision = 4)
         f.page.next()!!.join()
         assertEquals(listOf("next 4"), f.server.calls)
@@ -32,7 +32,7 @@ class PomodoroPagePhaseActionsTest {
     }
 
     @Test
-    fun endSendsTheDisplayedRevisionAndTheFormComesBack() = runBlocking {
+    fun endSendsTheDisplayedRevisionAndTheFormComesBack() = runTest {
         val f = page(revision = 4)
         f.page.end()!!.join()
         assertEquals(listOf("end 4"), f.server.calls)
@@ -41,7 +41,7 @@ class PomodoroPagePhaseActionsTest {
     }
 
     @Test
-    fun aTapDrawnBeforeAnotherDeviceAdvancedTheTimerCannotAdvanceItAgain() = runBlocking {
+    fun aTapDrawnBeforeAnotherDeviceAdvancedTheTimerCannotAdvanceItAgain() = runTest {
         val f = page(revision = 4)
         val drawn = f.page.state.value.shown!!
         // The user's other device moves on to the rest, then the old page's buttons are tapped.
@@ -55,7 +55,7 @@ class PomodoroPagePhaseActionsTest {
     }
 
     @Test
-    fun aRefusalAndNoConnectionLeaveTheShownPhaseAsItWasAndSayWhy() = runBlocking {
+    fun aRefusalAndNoConnectionLeaveTheShownPhaseAsItWasAndSayWhy() = runTest {
         for (result in listOf(TimerActionResult.Refused, TimerActionResult.Offline)) {
             val f = page(revision = 4)
             f.server.answer = result
@@ -72,7 +72,7 @@ class PomodoroPagePhaseActionsTest {
     }
 
     @Test
-    fun aSecondTapWhileTheFirstWaitsForTheServerSendsNothing() = runBlocking {
+    fun aSecondTapWhileTheFirstWaitsForTheServerSendsNothing() = runTest {
         val f = page()
         f.server.gate = CompletableDeferred()
         val first = f.page.next()!!
@@ -93,7 +93,7 @@ class PomodoroPagePhaseActionsTest {
     }
 
     @Test
-    fun anEditSentJustBeforeNextPhaseReachesTheServerFirstAndNextSendsTheRevisionItProduced() = runBlocking {
+    fun anEditSentJustBeforeNextPhaseReachesTheServerFirstAndNextSendsTheRevisionItProduced() = runTest {
         val f = page(revision = 4)
         // The edit moves the server's revision to 5, which the read brings to the phone.
         f.server.onRead = { f.held.value = heldState(revision = 5, description = "Typed") }
@@ -109,7 +109,7 @@ class PomodoroPagePhaseActionsTest {
     }
 
     @Test
-    fun anEditSentJustBeforeEndGoesFirstToo() = runBlocking {
+    fun anEditSentJustBeforeEndGoesFirstToo() = runTest {
         val f = page(revision = 4)
         f.server.onRead = { f.held.value = heldState(revision = 5, description = "Typed") }
         f.page.editFields(EntryFields("Typed"), ENTRY)!!.join()
@@ -118,7 +118,7 @@ class PomodoroPagePhaseActionsTest {
     }
 
     @Test
-    fun ifAnotherDeviceMovedThePhaseWhileTheEditWasSentNothingAdvances() = runBlocking {
+    fun ifAnotherDeviceMovedThePhaseWhileTheEditWasSentNothingAdvances() = runTest {
         val f = page(revision = 4)
         f.server.onRead = { f.held.value = heldState(revision = 6, pomodoro = rest()) }
         f.page.editFields(EntryFields("Typed"), ENTRY)!!.join()
@@ -128,7 +128,7 @@ class PomodoroPagePhaseActionsTest {
     }
 
     @Test
-    fun withoutAnEditTheQueueIsNotSentAndTheStateIsNotRead() = runBlocking {
+    fun withoutAnEditTheQueueIsNotSentAndTheStateIsNotRead() = runTest {
         val f = page(revision = 4)
         f.page.next()!!.join()
         assertTrue(f.queueSends.isEmpty())

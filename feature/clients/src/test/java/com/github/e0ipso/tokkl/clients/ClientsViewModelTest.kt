@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -136,7 +136,7 @@ class ClientsViewModelTest {
     }
 
     @Test
-    fun thePageListsTheCachedClientsOfItsWorkspaceAndSaysWhenThePhoneIsOffline() = runBlocking {
+    fun thePageListsTheCachedClientsOfItsWorkspaceAndSaysWhenThePhoneIsOffline() = runTest {
         val scope = CoroutineScope(Dispatchers.Unconfined)
         val offline = MutableStateFlow(false)
         val page = ClientsViewModel(

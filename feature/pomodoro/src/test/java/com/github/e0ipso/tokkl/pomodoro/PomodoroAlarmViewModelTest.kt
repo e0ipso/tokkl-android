@@ -10,7 +10,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -125,7 +125,7 @@ class PomodoroAlarmViewModelTest {
         assertEquals(listOf("next 4"), server.calls)
     }
 
-    @Test fun nextSendsTheShownRevisionOnceAndTheServersAnswerClosesIt() = runBlocking {
+    @Test fun nextSendsTheShownRevisionOnceAndTheServersAnswerClosesIt() = runTest {
         model.open(key)
         server.gate = CompletableDeferred()
         val action = model.next()!!
@@ -141,7 +141,7 @@ class PomodoroAlarmViewModelTest {
         assertNull(model.state.value.problem)
     }
 
-    @Test fun endSendsTheShownRevisionAndClosesWhenTheSessionIsGone() = runBlocking {
+    @Test fun endSendsTheShownRevisionAndClosesWhenTheSessionIsGone() = runTest {
         model.open(key)
         model.end()!!.join()
 
@@ -150,7 +150,7 @@ class PomodoroAlarmViewModelTest {
         assertTrue(model.state.value.closed)
     }
 
-    @Test fun offlineLeavesTheAlarmOpenWithTheStandardMessageAndTheUserCanRetry() = runBlocking {
+    @Test fun offlineLeavesTheAlarmOpenWithTheStandardMessageAndTheUserCanRetry() = runTest {
         model.open(key)
         server.answer = TimerActionResult.Offline
         model.next()!!.join()
@@ -167,7 +167,7 @@ class PomodoroAlarmViewModelTest {
         assertTrue(model.state.value.closed)
     }
 
-    @Test fun aRefusalWithinTheSamePhaseStaysOpenAtTheServersRevision() = runBlocking {
+    @Test fun aRefusalWithinTheSamePhaseStaysOpenAtTheServersRevision() = runTest {
         model.open(key)
         server.answer = TimerActionResult.Refused
         server.gate = CompletableDeferred()

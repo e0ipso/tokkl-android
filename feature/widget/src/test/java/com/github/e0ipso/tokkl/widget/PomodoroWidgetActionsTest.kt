@@ -6,7 +6,7 @@ import com.github.e0ipso.tokkl.timerstate.ServerTimerStates
 import com.github.e0ipso.tokkl.timerstate.SessionActions
 import com.github.e0ipso.tokkl.timerstate.SessionLengths
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -49,7 +49,7 @@ class PomodoroWidgetActionsTest {
         assertFalse(clock.countDown)
     }
 
-    @Test fun anotherAccountOrUnavailableSurfaceSendsNothing() = runBlocking {
+    @Test fun anotherAccountOrUnavailableSurfaceSendsNothing() = runTest {
         for (current in listOf(
             PomodoroWidgetState.NoAccount,
             PomodoroWidgetState.Unsupported,
@@ -62,7 +62,7 @@ class PomodoroWidgetActionsTest {
         assertTrue(server.calls.isEmpty())
     }
 
-    @Test fun phaseControlsNeverActOnANewerPhaseOrAnEndedSession() = runBlocking {
+    @Test fun phaseControlsNeverActOnANewerPhaseOrAnEndedSession() = runTest {
         assertNull(
             sendPomodoroWidgetAction(
                 next,
@@ -76,13 +76,13 @@ class PomodoroWidgetActionsTest {
         assertTrue(server.calls.isEmpty())
     }
 
-    @Test fun nextAndEndSendTheDisplayedRevisionEvenAfterASamePhaseEdit() = runBlocking {
+    @Test fun nextAndEndSendTheDisplayedRevisionEvenAfterASamePhaseEdit() = runTest {
         assertEquals(TimerActionResult.Done, sendPomodoroWidgetAction(next, active.copy(revision = 19), server))
         assertEquals(TimerActionResult.Done, sendPomodoroWidgetAction(next.copy(endSession = true), active, server))
         assertEquals(listOf("next:17", "end:17"), server.calls)
     }
 
-    @Test fun idleStartKeepsAllDisplayedFieldsWorkspaceAndFourDefaults() = runBlocking {
+    @Test fun idleStartKeepsAllDisplayedFieldsWorkspaceAndFourDefaults() = runTest {
         assertEquals(
             TimerActionResult.Done,
             sendPomodoroWidgetAction(
@@ -95,12 +95,12 @@ class PomodoroWidgetActionsTest {
         assertEquals(listOf("start"), server.calls)
     }
 
-    @Test fun staleIdleStartRefusesWithoutReplacingTheActiveSession() = runBlocking {
+    @Test fun staleIdleStartRefusesWithoutReplacingTheActiveSession() = runTest {
         assertEquals(TimerActionResult.Refused, sendPomodoroWidgetAction(start, active, server))
         assertTrue(server.calls.isEmpty())
     }
 
-    @Test fun offlineAndConflictReturnOnceWithoutReadingRetryingOrAdvancingLocally() = runBlocking {
+    @Test fun offlineAndConflictReturnOnceWithoutReadingRetryingOrAdvancingLocally() = runTest {
         for (result in listOf(TimerActionResult.Offline, TimerActionResult.Refused)) {
             server.result = result
             assertEquals(result, sendPomodoroWidgetAction(next, active, server))

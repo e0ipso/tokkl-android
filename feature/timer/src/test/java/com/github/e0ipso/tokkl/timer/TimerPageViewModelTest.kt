@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -55,7 +55,7 @@ class TimerPageViewModelTest {
     }
 
     @Test
-    fun theSuggestionsJoinTheCachedEntriesWithTheirProjectsAndClients() = runBlocking {
+    fun theSuggestionsJoinTheCachedEntriesWithTheirProjectsAndClients() = runTest {
         val shown = model.state.shownWhere { it.picker.projects.isNotEmpty() }
 
         assertEquals(picker.value, shown.picker)
@@ -64,7 +64,7 @@ class TimerPageViewModelTest {
     }
 
     @Test
-    fun theViewTheNetworkAndTheSettingsFollowTheirSources() = runBlocking {
+    fun theViewTheNetworkAndTheSettingsFollowTheirSources() = runTest {
         model.chooseView(TimerView.CALENDAR)
         offline.value = true
         settings.value = SETTINGS
@@ -78,7 +78,7 @@ class TimerPageViewModelTest {
     }
 
     @Test
-    fun theTotalsFollowTheCacheInTheAccountsSettings() = runBlocking {
+    fun theTotalsFollowTheCacheInTheAccountsSettings() = runTest {
         assertEquals(TimerTotalsState.Hidden, model.totals.value)
         settings.value = SETTINGS
 

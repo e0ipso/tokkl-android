@@ -1,7 +1,7 @@
 package com.github.e0ipso.tokkl.pomodoro
 
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -20,7 +20,7 @@ class PomodoroPhaseAlarmTest {
     private val key = PomodoroPhaseKey(T0)
 
     @Test
-    fun armsOneAlarmAtThePlannedEndLessTheClockOffsetKeyedByThePhaseStart() = runBlocking {
+    fun armsOneAlarmAtThePlannedEndLessTheClockOffsetKeyedByThePhaseStart() = runTest {
         // The server's clock reads 90 s later than the phone's, so its planned end comes 90 s
         // earlier on the phone's clock.
         val f = AlarmFixture(heldState(revision = 3, offset = Duration.ofSeconds(90)))
@@ -34,7 +34,7 @@ class PomodoroPhaseAlarmTest {
     }
 
     @Test
-    fun eachStateRecomputesTheAlarmAndAnUnchangedOneArmsNothingMore() = runBlocking {
+    fun eachStateRecomputesTheAlarmAndAnUnchangedOneArmsNothingMore() = runTest {
         val f = AlarmFixture(heldState(revision = 3))
         f.alarm.follow()
         f.alarm.follow()
@@ -50,7 +50,7 @@ class PomodoroPhaseAlarmTest {
     }
 
     @Test
-    fun aNewPhaseCancelsTheOldRingAndArmsTheNewPhase() = runBlocking {
+    fun aNewPhaseCancelsTheOldRingAndArmsTheNewPhase() = runTest {
         val f = AlarmFixture(heldState(revision = 3))
         f.ringNow()
         assertEquals(key, f.controller.current?.phase)
@@ -66,7 +66,7 @@ class PomodoroPhaseAlarmTest {
     }
 
     @Test
-    fun noSessionCancelsTheAlarmAndStopsTheRing() = runBlocking {
+    fun noSessionCancelsTheAlarmAndStopsTheRing() = runTest {
         val f = AlarmFixture(heldState(revision = 3))
         f.ringNow()
 
@@ -80,7 +80,7 @@ class PomodoroPhaseAlarmTest {
     }
 
     @Test
-    fun withoutTheTimerApiOrAHeldStateNothingIsArmed() = runBlocking {
+    fun withoutTheTimerApiOrAHeldStateNothingIsArmed() = runTest {
         val f = AlarmFixture(heldState(revision = 3))
         f.available = false
         f.alarm.follow()
@@ -104,7 +104,7 @@ class PomodoroPhaseAlarmTest {
     }
 
     @Test
-    fun aMissedEndIsArmedInThePastAndItsDeliveryRingsWithoutMovingThePhaseOn() = runBlocking {
+    fun aMissedEndIsArmedInThePastAndItsDeliveryRingsWithoutMovingThePhaseOn() = runTest {
         val f = AlarmFixture(heldState(revision = 3))
         f.clock.now = T0.plusSeconds(1_800)
 
@@ -121,7 +121,7 @@ class PomodoroPhaseAlarmTest {
     }
 
     @Test
-    fun anEarlyDeliveryArmsThePlannedEndAgain() = runBlocking {
+    fun anEarlyDeliveryArmsThePlannedEndAgain() = runTest {
         val f = AlarmFixture(heldState(revision = 3))
         f.alarm.follow()
         f.alarms.armed = null
@@ -134,7 +134,7 @@ class PomodoroPhaseAlarmTest {
     }
 
     @Test
-    fun aDeliveryForAnotherPhaseRingsNothing() = runBlocking {
+    fun aDeliveryForAnotherPhaseRingsNothing() = runTest {
         val f = AlarmFixture(heldState(revision = 4, pomodoro = rest()))
         f.alarm.follow()
         f.clock.now = T0.plusSeconds(2_000)
@@ -146,7 +146,7 @@ class PomodoroPhaseAlarmTest {
     }
 
     @Test
-    fun rearmingArmsTheStoredPhaseAgainAndAPastEndOnlyThroughTheAlarm() = runBlocking {
+    fun rearmingArmsTheStoredPhaseAgainAndAPastEndOnlyThroughTheAlarm() = runTest {
         val f = AlarmFixture(heldState(revision = 3))
         f.alarm.follow()
         f.alarm.follow(rearm = true)
@@ -161,7 +161,7 @@ class PomodoroPhaseAlarmTest {
     }
 
     @Test
-    fun aDeniedPermissionArmsNothingRingsAPastEndAtOnceAndAGrantArmsAgain() = runBlocking {
+    fun aDeniedPermissionArmsNothingRingsAPastEndAtOnceAndAGrantArmsAgain() = runTest {
         val f = AlarmFixture(heldState(revision = 3))
         f.alarms.denied = true
         f.alarm.follow()
@@ -181,7 +181,7 @@ class PomodoroPhaseAlarmTest {
     }
 
     @Test
-    fun aRevisionWithinTheRingingPhaseKeepsItsRingAndArmsNothing() = runBlocking {
+    fun aRevisionWithinTheRingingPhaseKeepsItsRingAndArmsNothing() = runTest {
         val f = AlarmFixture(heldState(revision = 3))
         f.ringNow()
         val scheduled = f.alarms.scheduled.size
@@ -196,7 +196,7 @@ class PomodoroPhaseAlarmTest {
     }
 
     @Test
-    fun releaseCancelsTheAlarmAndStopsTheRing() = runBlocking {
+    fun releaseCancelsTheAlarmAndStopsTheRing() = runTest {
         val f = AlarmFixture(heldState(revision = 3))
         f.ringNow()
 
@@ -208,7 +208,7 @@ class PomodoroPhaseAlarmTest {
     }
 
     @Test
-    fun theAlarmEndFollowsAnOffsetOfEitherSign() = runBlocking {
+    fun theAlarmEndFollowsAnOffsetOfEitherSign() = runTest {
         val behind = AlarmFixture(heldState(revision = 3, offset = Duration.ofSeconds(-30)))
         behind.alarm.follow()
         assertEquals(Instant.parse("2026-10-28T08:25:30Z"), behind.alarms.armed?.first)

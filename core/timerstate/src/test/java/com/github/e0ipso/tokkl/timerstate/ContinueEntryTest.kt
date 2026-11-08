@@ -3,7 +3,7 @@ package com.github.e0ipso.tokkl.timerstate
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.EntryFields
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -20,7 +20,7 @@ class ContinueEntryTest {
     private val calls = mutableListOf<String>()
 
     @Test
-    fun continueLastStartsTheStoppedEntryThatStartedLast() {
+    fun continueLastStartsTheStoppedEntryThatStartedLast() = runTest {
         // Out of order, and the running entry started after every stopped one.
         val entries = listOf(
             entry(1, "2026-10-19T08:00:00Z"),
@@ -29,16 +29,16 @@ class ContinueEntryTest {
             running(4),
         )
 
-        val id = runBlocking { RecordingChanges().continueLast(entries) }
+        val id = run { RecordingChanges().continueLast(entries) }
 
         assertEquals(LOCAL_ID, id)
         assertEquals(listOf("start 20 ${entry(2, "2026-10-19T11:00:00Z").fieldsOf()}"), calls)
     }
 
     @Test
-    fun withoutAStoppedEntryNothingStarts() {
+    fun withoutAStoppedEntryNothingStarts() = runTest {
         assertNull(lastStopped(emptyList()))
-        assertNull(runBlocking { RecordingChanges().continueLast(listOf(running(4))) })
+        assertNull(run { RecordingChanges().continueLast(listOf(running(4))) })
         assertEquals(emptyList<String>(), calls)
     }
 
@@ -75,7 +75,7 @@ class ContinueEntryTest {
     }
 
     @Test
-    fun continueLastCopiesEveryFieldOfTheNewestTiedLocalEntry() {
+    fun continueLastCopiesEveryFieldOfTheNewestTiedLocalEntry() = runTest {
         val server = entry(42, "2026-10-19T11:00:00Z")
         val older = server.copy(id = -2, description = "Older local entry")
         val newer = server.copy(
@@ -90,7 +90,7 @@ class ContinueEntryTest {
 
         for (order in permutations(listOf(server, older, newer))) {
             calls.clear()
-            assertEquals(LOCAL_ID, runBlocking { RecordingChanges().continueLast(order) })
+            assertEquals(LOCAL_ID, run { RecordingChanges().continueLast(order) })
             assertEquals(listOf("start 50 ${newer.fieldsOf()}"), calls)
         }
     }

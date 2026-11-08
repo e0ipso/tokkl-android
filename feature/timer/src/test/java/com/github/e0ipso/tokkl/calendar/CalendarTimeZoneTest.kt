@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -44,7 +44,7 @@ class CalendarTimeZoneTest {
     }
 
     @Test
-    fun theWeekAndItsBlocksFollowTheAccountTimezone() = runBlocking {
+    fun theWeekAndItsBlocksFollowTheAccountTimezone() = runTest {
         val model = CalendarViewModel(
             entries = flowOf(listOf(EntryWithSendState(LATE_CALL, unsent = false))),
             projects = flowOf(emptyList()),
@@ -85,7 +85,7 @@ class CalendarTimeZoneTest {
      * the midnight of the account's zone.
      */
     @Test
-    fun aQueuedNoTimeEntryStaysOnItsStoredDayWhenItsMidnightIsStale() = runBlocking {
+    fun aQueuedNoTimeEntryStaysOnItsStoredDayWhenItsMidnightIsStale() = runTest {
         // 10:00 UTC on the 10th is 19:00 on the 10th in Tokyo, a day before the entry's day.
         val stale = LATE_CALL.copy(
             id = 2,

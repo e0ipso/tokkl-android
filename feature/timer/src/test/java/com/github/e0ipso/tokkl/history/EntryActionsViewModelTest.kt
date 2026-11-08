@@ -13,23 +13,20 @@ import com.github.e0ipso.tokkl.entryfields.SplitProblem
 import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
 import com.github.e0ipso.tokkl.favorites.MAX_FAVORITES
 import com.github.e0ipso.tokkl.picker.PickerSource
+import com.github.e0ipso.tokkl.platform.MainDispatcherRule
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.SnappedSpan
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExecutorCoroutineDispatcher
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Rule
 import org.junit.Test
 import java.io.IOException
 import java.time.Clock
@@ -37,8 +34,6 @@ import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 
 /**
  * The history's entry actions against a cache the test fills and a change queue and an Undo that
@@ -51,9 +46,10 @@ import java.util.concurrent.Executors
  */
 class EntryActionsViewModelTest {
 
-    private val main: ExecutorService = Executors.newSingleThreadExecutor()
-    private val mainDispatcher: ExecutorCoroutineDispatcher = main.asCoroutineDispatcher()
-    private val scope = CoroutineScope(SupervisorJob() + mainDispatcher)
+    @get:Rule
+    val main = MainDispatcherRule()
+    private val mainDispatcher = main.dispatcher
+    private val scope = main.scope
     private val calls = CopyOnWriteArrayList<String>()
 
     @Volatile
@@ -73,7 +69,6 @@ class EntryActionsViewModelTest {
     @After
     fun tearDown() {
         scope.cancel()
-        main.shutdown()
     }
 
     @Test
@@ -486,7 +481,7 @@ class EntryActionsViewModelTest {
             workspaceId = flowOf(null),
         )
         scope.launch { model.state.collect {} }
-        runBlocking {
+        main.onMain {
             withTimeoutOrNull(
                 TIMEOUT_MS,
             ) { model.state.first { it.favorites.size == cachedFavorites.size && it.available } }
@@ -500,7 +495,7 @@ class EntryActionsViewModelTest {
 
     private fun awaitState(model: EntryActionsViewModel, condition: (EntryActionsState) -> Boolean): EntryActionsState {
         var last: EntryActionsState? = null
-        return runBlocking {
+        return main.onMain {
             withTimeoutOrNull(TIMEOUT_MS) { model.state.onEach { last = it }.first(condition) }
         } ?: throw AssertionError("timed out; the last state was $last, after $calls")
     }
@@ -520,7 +515,7 @@ class EntryActionsViewModelTest {
 
     private fun awaitNotice(model: EntryActionsViewModel, condition: (EntryNotice) -> Boolean): EntryNotice {
         var last: EntryActionsState? = null
-        return runBlocking {
+        return main.onMain {
             withTimeoutOrNull(
                 TIMEOUT_MS,
             ) { model.state.onEach { last = it }.first { it.notice?.let(condition) == true } }
@@ -528,15 +523,20 @@ class EntryActionsViewModelTest {
     }
 
     private fun awaitCalls(count: Int) {
-        val deadline = System.nanoTime() + TIMEOUT_MS * 1_000_000
+        var waited = 0L
         while (calls.size < count) {
-            if (System.nanoTime() > deadline) throw AssertionError("timed out after $calls")
-            Thread.sleep(POLL_MS)
+            if (waited >= TIMEOUT_MS) throw AssertionError("timed out after $calls")
+            main.settle(POLL_MS)
+            waited += POLL_MS
         }
     }
 
-    /** The model's handlers run on the main thread, which [scope] stands in for. */
-    private fun onMain(block: () -> Unit) = runBlocking(mainDispatcher) { block() }
+    /** The model's handlers run on the main thread, which [main] stands in for. */
+    private fun onMain(block: () -> Unit) {
+        main.runCurrent()
+        block()
+        main.runCurrent()
+    }
 
     private inner class FakeChanges : EntryChanges {
         override suspend fun delete(entryId: Long): Boolean {

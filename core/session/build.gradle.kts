@@ -18,6 +18,7 @@ dependencies {
     implementation(libs.androidx.annotation)
 
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockwebserver3)
     testImplementation(testFixtures(project(":core:api")))
     testImplementation(testFixtures(project(":core:platform")))

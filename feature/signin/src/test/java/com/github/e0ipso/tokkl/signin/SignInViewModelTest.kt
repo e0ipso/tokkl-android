@@ -11,7 +11,7 @@ import com.github.e0ipso.tokkl.navigation.SignInAgain
 import com.github.e0ipso.tokkl.session.AccountSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.OkHttpClient
@@ -206,7 +206,7 @@ class SignInViewModelTest {
     }
 
     @Test
-    fun aFormOpenedBeforeSettingsLoadStillChecksThePersistedIdentity() {
+    fun aFormOpenedBeforeSettingsLoadStillChecksThePersistedIdentity() = runTest {
         val url = ServerUrl.parse(baseUrl("/"))!!
         val signIn = SignIn(
             session = { _, _, _ -> error("must not replace the existing account") },
@@ -218,12 +218,12 @@ class SignInViewModelTest {
         server.enqueue(me("""{"id":8,$SETTINGS,"api_token":"$TOKEN"}"""))
         assertEquals(
             SignInResult.OtherAccount,
-            runBlocking { signIn.attempt(url, SignInCredentials.ApiToken(TOKEN), SignInAgain(url, null)) },
+            run { signIn.attempt(url, SignInCredentials.ApiToken(TOKEN), SignInAgain(url, null)) },
         )
     }
 
     @Test
-    fun aRestoredFormStillChecksThePersistedAccountBeforeStoringCredentials() {
+    fun aRestoredFormStillChecksThePersistedAccountBeforeStoringCredentials() = runTest {
         val signIn = SignIn(
             session = { _, _, _ -> error("must not replace the existing account") },
             httpClient = testApi.http.instance,
@@ -234,7 +234,7 @@ class SignInViewModelTest {
         server.enqueue(me("""{"id":8,$SETTINGS,"api_token":"$TOKEN"}"""))
         assertEquals(
             SignInResult.OtherAccount,
-            runBlocking { signIn.attempt(ServerUrl.parse(baseUrl("/"))!!, SignInCredentials.ApiToken(TOKEN)) },
+            run { signIn.attempt(ServerUrl.parse(baseUrl("/"))!!, SignInCredentials.ApiToken(TOKEN)) },
         )
     }
 

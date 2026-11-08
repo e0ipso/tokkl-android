@@ -16,7 +16,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -497,7 +497,7 @@ class WidgetStateTest {
     }
 
     @Test
-    fun theSyncUpdatesTheWidgetOnlyWhenWhatItShowsChanged() {
+    fun theSyncUpdatesTheWidgetOnlyWhenWhatItShowsChanged() = runTest {
         val first = state()
         val second = state(entry = null)
         var shown: String? = first.key()
@@ -510,14 +510,14 @@ class WidgetStateTest {
             io = Dispatchers.Unconfined,
         )
 
-        runBlocking { sync.follow() }
+        run { sync.follow() }
 
         assertEquals("one update, for the stop, before the key moved on", listOf(first.key()), updates)
         assertEquals(second.key(), shown)
     }
 
     @Test
-    fun aNewProcessUpdatesTheWidgetWhenThePhoneChangedSinceItWasDrawn() {
+    fun aNewProcessUpdatesTheWidgetWhenThePhoneChangedSinceItWasDrawn() = runTest {
         var updates = 0
         var shown: String? = state(entry = null).key()
         val sync = WidgetSync(
@@ -528,14 +528,14 @@ class WidgetStateTest {
             io = Dispatchers.Unconfined,
         )
 
-        runBlocking { sync.follow() }
+        run { sync.follow() }
 
         assertEquals(1, updates)
         assertEquals(state().key(), shown)
     }
 
     @Test
-    fun aFailedSaveKeepsFollowing() {
+    fun aFailedSaveKeepsFollowing() = runTest {
         var updates = 0
         val sync = WidgetSync(
             keys = flowOf(state(), state(entry = null)).map { it.key() },
@@ -545,7 +545,7 @@ class WidgetStateTest {
             io = Dispatchers.Unconfined,
         )
 
-        runBlocking { sync.follow() }
+        run { sync.follow() }
 
         assertEquals(2, updates)
     }

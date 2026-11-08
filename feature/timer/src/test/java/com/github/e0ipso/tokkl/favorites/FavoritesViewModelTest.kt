@@ -10,10 +10,7 @@ import com.github.e0ipso.tokkl.cache.fields
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.picker.PickerSource
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExecutorCoroutineDispatcher
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.asCoroutineDispatcher
+import com.github.e0ipso.tokkl.platform.MainDispatcherRule
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -21,7 +18,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.Json
 import org.junit.After
@@ -30,11 +26,10 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import java.io.IOException
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 
 /**
  * The favorites' model against a cache the test sets and a server that stores what it gets, or
@@ -42,9 +37,10 @@ import java.util.concurrent.Executors
  */
 class FavoritesViewModelTest {
 
-    private val main: ExecutorService = Executors.newSingleThreadExecutor()
-    private val mainDispatcher: ExecutorCoroutineDispatcher = main.asCoroutineDispatcher()
-    private val scope = CoroutineScope(SupervisorJob() + mainDispatcher)
+    @get:Rule
+    val main = MainDispatcherRule()
+    private val mainDispatcher = main.dispatcher
+    private val scope = main.scope
     private val cached = MutableStateFlow(listOf(REPORT, WEBSITE))
     private val available = MutableStateFlow(true)
     private val saved = CopyOnWriteArrayList<List<EntryFields>>()
@@ -85,7 +81,6 @@ class FavoritesViewModelTest {
     @After
     fun tearDown() {
         scope.cancel()
-        main.shutdown()
     }
 
     @Test
@@ -110,7 +105,7 @@ class FavoritesViewModelTest {
         awaitState("the favorites are hidden") { !it.available && it.favorites.size == 2 }
         onMain { model.add(EntryFields(description = "New")) }
         onMain { model.remove(0) }
-        Thread.sleep(SETTLE_PAUSE_MS)
+        main.settle(SETTLE_PAUSE_MS)
         assertEquals(emptyList<List<EntryFields>>(), saved)
     }
 
@@ -200,7 +195,7 @@ class FavoritesViewModelTest {
     private fun awaitOutcomes(
         outcomes: MutableStateFlow<List<FavoritesProblem?>>,
         count: Int,
-    ): List<FavoritesProblem?> = runBlocking { withTimeoutOrNull(TIMEOUT_MS) { outcomes.first { it.size >= count } } }
+    ): List<FavoritesProblem?> = main.onMain { withTimeoutOrNull(TIMEOUT_MS) { outcomes.first { it.size >= count } } }
         ?: throw AssertionError("timed out waiting for $count outcomes; got ${outcomes.value}")
 
     /** The body Tokkl's web app sends from TimerPage.tsx: the favorites key alone, with every field of each. */
@@ -222,13 +217,17 @@ class FavoritesViewModelTest {
 
     private fun awaitState(what: String, condition: (FavoritesState) -> Boolean): FavoritesState {
         var last: FavoritesState? = null
-        return runBlocking {
+        return main.onMain {
             withTimeoutOrNull(TIMEOUT_MS) { model.state.onEach { last = it }.first(condition) }
         } ?: throw AssertionError("timed out waiting until $what; the last state was $last, after saving $saved")
     }
 
-    /** The tap handlers run on the main thread, which [scope] stands in for. */
-    private fun onMain(block: () -> Unit) = runBlocking(mainDispatcher) { block() }
+    /** The tap handlers run on the main thread, which [main] stands in for. */
+    private fun onMain(block: () -> Unit) {
+        main.runCurrent()
+        block()
+        main.runCurrent()
+    }
 
     private fun EntryFields.cached(position: Int) = CachedFavorite(
         position,

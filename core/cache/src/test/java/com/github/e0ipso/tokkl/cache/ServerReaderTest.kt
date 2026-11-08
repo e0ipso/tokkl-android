@@ -18,6 +18,7 @@ import com.github.e0ipso.tokkl.time.DurationFormat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
@@ -63,7 +64,7 @@ class ServerReaderTest {
 
     /** 10:30 UTC on 18 October is 23:30 in Auckland, so the window starts at its midnight of 5 October. */
     @Test
-    fun entriesAreAskedForTheWindowInTheAccountZoneAndParsed() {
+    fun entriesAreAskedForTheWindowInTheAccountZoneAndParsed() = runTest {
         answers["/api/v9/me/time_entries"] = json(
             """[{"id":1,"workspace_id":7,"project_id":3,"task_id":null,"description":"Stopped","start":"2026-10-17T09:00:00+00:00",
                "stop":"2026-10-17T10:00:00+00:00","duration":3600,"billable":true,"tags":["a"],"tag_ids":[5]},
@@ -72,7 +73,7 @@ class ServerReaderTest {
         )
         val preferences = preferences("""{"date_format":"YYYY-MM-DD"}""")
 
-        val snapshot = runBlocking {
+        val snapshot = run {
             readServerSnapshot(
                 client,
                 me("Pacific/Auckland"),
@@ -109,7 +110,7 @@ class ServerReaderTest {
      * out. The wire model keeps a missing key apart from false, and the cache stores both as timed.
      */
     @Test
-    fun noTimeEntriesAreCachedAsNoTimeAndAMissingFlagStaysApartFromFalse() {
+    fun noTimeEntriesAreCachedAsNoTimeAndAMissingFlagStaysApartFromFalse() = runTest {
         val body = """[{"id":1,"workspace_id":7,"description":"Workshop","start":"2026-10-17T00:00:00+00:00",
                          "stop":"2026-10-17T01:30:00+00:00","duration":5400,"all_day":true,"duronly":true},
                         {"id":2,"workspace_id":7,"description":"Timed","start":"2026-10-17T09:00:00+00:00",
@@ -118,7 +119,7 @@ class ServerReaderTest {
                          "stop":"2026-10-17T12:00:00Z","duration":3600}]"""
         answers["/api/v9/me/time_entries"] = json(body)
 
-        val snapshot = runBlocking {
+        val snapshot = run {
             readServerSnapshot(
                 client,
                 me("UTC"),
@@ -193,11 +194,11 @@ class ServerReaderTest {
 
     /** Tokkl leaves `favorites` out of /me/preferences until the user saves one. */
     @Test
-    fun preferencesWithoutFavoritesMeanNoFavorites() {
+    fun preferencesWithoutFavoritesMeanNoFavorites() = runTest {
         answers["/api/v9/me/time_entries"] = json("[]")
         val preferences = preferences("""{"date_format":"YYYY-MM-DD"}""")
 
-        val snapshot = runBlocking {
+        val snapshot = run {
             readServerSnapshot(
                 client,
                 me("UTC"),
@@ -212,11 +213,11 @@ class ServerReaderTest {
 
     /** The favorites decode on their own, so a broken key leaves the duration format readable. */
     @Test
-    fun favoritesThatDoNotDecodeAreUnreadAlone() {
+    fun favoritesThatDoNotDecodeAreUnreadAlone() = runTest {
         answers["/api/v9/me/time_entries"] = json("[]")
         val preferences = preferences("""{"duration_format":"classic","favorites":"broken"}""")
 
-        val snapshot = runBlocking {
+        val snapshot = run {
             readServerSnapshot(
                 client,
                 me("UTC"),
@@ -232,11 +233,11 @@ class ServerReaderTest {
 
     /** Toggl Track has no favorites, so the snapshot keeps none, whatever the preferences hold. */
     @Test
-    fun withoutFavoritesNoneAreKept() {
+    fun withoutFavoritesNoneAreKept() = runTest {
         answers["/api/v9/me/time_entries"] = json("[]")
         val preferences = preferences("""{"favorites":[{"description":"Standup"}]}""")
 
-        val snapshot = runBlocking {
+        val snapshot = run {
             readServerSnapshot(
                 client,
                 me("UTC"),
@@ -254,8 +255,8 @@ class ServerReaderTest {
     }
 
     @Test
-    fun failedRequestsLeaveTheirListsUnread() {
-        val snapshot = runBlocking {
+    fun failedRequestsLeaveTheirListsUnread() = runTest {
+        val snapshot = run {
             readServerSnapshot(
                 client,
                 me("UTC"),
@@ -270,10 +271,10 @@ class ServerReaderTest {
     }
 
     @Test
-    fun anUnknownZoneReadsNoEntries() {
+    fun anUnknownZoneReadsNoEntries() = runTest {
         val preferences = preferences("{}")
 
-        val snapshot = runBlocking {
+        val snapshot = run {
             readServerSnapshot(
                 client,
                 me("Mars/Olympus_Mons"),

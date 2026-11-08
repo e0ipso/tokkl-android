@@ -7,7 +7,8 @@ plugins {
 
 android {
     namespace = "com.github.e0ipso.tokkl.core.platform"
-    // The in-memory value store that the unit tests of this module and of the modules above it share.
+    // The in-memory value store and the main dispatcher rule that the unit tests of this module
+    // and of the modules above it share.
     testFixtures.enable = true
 }
 
@@ -19,4 +20,7 @@ dependencies {
     implementation(libs.koin.android)
 
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testFixturesApi(libs.junit)
+    testFixturesApi(libs.kotlinx.coroutines.test)
 }

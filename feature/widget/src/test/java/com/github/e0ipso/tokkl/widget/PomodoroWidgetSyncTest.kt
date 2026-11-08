@@ -4,13 +4,13 @@ import com.github.e0ipso.tokkl.storage.valueStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.io.IOException
 
 class PomodoroWidgetSyncTest {
-    @Test fun eachProviderKeepsItsOwnKeyAcrossChangesAndProcessRestart() = runBlocking {
+    @Test fun eachProviderKeepsItsOwnKeyAcrossChangesAndProcessRestart() = runTest {
         val disk = mutableMapOf("timer" to "running", "pomodoro" to "work")
         val updates = mutableListOf<String>()
         fun sync(name: String, vararg keys: String) = WidgetSync(
@@ -30,7 +30,7 @@ class PomodoroWidgetSyncTest {
         assertEquals("ended", disk["pomodoro"])
     }
 
-    @Test fun aFailedDrawDoesNotRememberAKeyThatWasNeverDrawn() = runBlocking {
+    @Test fun aFailedDrawDoesNotRememberAKeyThatWasNeverDrawn() = runTest {
         var saved: String? = "work"
         val sync = WidgetSync(
             keys = flowOf("ended"),
@@ -45,7 +45,7 @@ class PomodoroWidgetSyncTest {
         assertEquals("work", saved)
     }
 
-    @Test fun failedStorageStillAllowsTheNextPhaseToDraw() = runBlocking {
+    @Test fun failedStorageStillAllowsTheNextPhaseToDraw() = runTest {
         var draws = 0
         val sync = WidgetSync(
             keys = flowOf("work", "work", "ended"),

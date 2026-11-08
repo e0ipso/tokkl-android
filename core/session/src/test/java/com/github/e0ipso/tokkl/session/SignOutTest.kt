@@ -3,7 +3,7 @@ package com.github.e0ipso.tokkl.session
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.yield
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -22,7 +22,7 @@ class SignOutTest {
     }
 
     @Test
-    fun runsThePhasesInOrderAndEndsTheAccount() {
+    fun runsThePhasesInOrderAndEndsTheAccount() = runTest {
         val signOut = SignOut(
             listOf(
                 step("cache", SignOutPhase.CLEAR_CACHE),
@@ -37,14 +37,14 @@ class SignOutTest {
             Dispatchers.Unconfined,
         )
 
-        assertTrue(runBlocking { signOut.run() })
+        assertTrue(run { signOut.run() })
 
         assertEquals(listOf("session", "timer state", "stream", "refresh", "sender", "cache", "settings"), ran)
         assertEquals(1, lifetime.signOuts.value)
     }
 
     @Test
-    fun aPhaseStartsOnlyOnceTheOneBeforeHasEnded() = runBlocking {
+    fun aPhaseStartsOnlyOnceTheOneBeforeHasEnded() = runTest {
         val drainEnds = CompletableDeferred<Unit>()
         val signOut = SignOut(
             listOf(
@@ -68,21 +68,21 @@ class SignOutTest {
     }
 
     @Test
-    fun stepsOfOnePhaseAllRun() {
+    fun stepsOfOnePhaseAllRun() = runTest {
         val signOut = SignOut(
             listOf(step("a", SignOutPhase.CLEAR_DATA), step("b", SignOutPhase.CLEAR_DATA)),
             lifetime,
             Dispatchers.Unconfined,
         )
 
-        assertTrue(runBlocking { signOut.run() })
+        assertTrue(run { signOut.run() })
 
         assertEquals(setOf("a", "b"), ran.toSet())
         assertEquals(2, ran.size)
     }
 
     @Test
-    fun aFailedStepDoesNotStopTheOthersButTheAccountDoesNotEnd() {
+    fun aFailedStepDoesNotStopTheOthersButTheAccountDoesNotEnd() = runTest {
         val signOut = SignOut(
             listOf(
                 step("session", SignOutPhase.FORGET_SESSION),
@@ -93,14 +93,14 @@ class SignOutTest {
             Dispatchers.Unconfined,
         )
 
-        assertFalse(runBlocking { signOut.run() })
+        assertFalse(run { signOut.run() })
 
         assertEquals(listOf("session", "sender", "cache"), ran)
         assertEquals(0, lifetime.signOuts.value)
     }
 
     @Test
-    fun aSecondSignOutRunsEveryStepAgain() {
+    fun aSecondSignOutRunsEveryStepAgain() = runTest {
         var failing = true
         val signOut = SignOut(
             listOf(
@@ -111,9 +111,9 @@ class SignOutTest {
             Dispatchers.Unconfined,
         )
 
-        assertFalse(runBlocking { signOut.run() })
+        assertFalse(run { signOut.run() })
         failing = false
-        assertTrue(runBlocking { signOut.run() })
+        assertTrue(run { signOut.run() })
 
         assertEquals(listOf("session", "cache", "session", "cache"), ran)
         assertEquals(1, lifetime.signOuts.value)

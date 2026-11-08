@@ -10,22 +10,19 @@ import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.picker.PickerSource
+import com.github.e0ipso.tokkl.platform.MainDispatcherRule
 import com.github.e0ipso.tokkl.session.AccountSettings
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExecutorCoroutineDispatcher
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import java.time.Clock
 import java.time.DayOfWeek
@@ -34,8 +31,6 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 
 /**
  * The entry form's model, in Madrid, against entries the test puts in the cache and a change
@@ -44,9 +39,9 @@ import java.util.concurrent.Executors
  */
 class EntryFormViewModelTest {
 
-    private val main: ExecutorService = Executors.newSingleThreadExecutor()
-    private val mainDispatcher: ExecutorCoroutineDispatcher = main.asCoroutineDispatcher()
-    private val scope = CoroutineScope(SupervisorJob() + mainDispatcher)
+    @get:Rule
+    val main = MainDispatcherRule()
+    private val scope = main.scope
     private val entries = MutableStateFlow(
         listOf(EntryWithSendState(ENTRY, unsent = false), EntryWithSendState(ALL_DAY, unsent = false)),
     )
@@ -78,7 +73,6 @@ class EntryFormViewModelTest {
     @After
     fun tearDown() {
         scope.cancel()
-        main.shutdown()
     }
 
     @Test
@@ -1015,13 +1009,17 @@ class EntryFormViewModelTest {
 
     private fun awaitState(what: String, condition: (EntryFormState) -> Boolean): EntryFormState {
         var last: EntryFormState? = null
-        return runBlocking {
+        return main.onMain {
             withTimeoutOrNull(TIMEOUT_MS) { model.state.onEach { last = it }.first(condition) }
         } ?: throw AssertionError("timed out waiting until $what; the last state was $last, after ${changes.calls}")
     }
 
     /** The form's handlers run on the main thread, which [scope] stands in for. */
-    private fun onMain(block: () -> Unit) = runBlocking(mainDispatcher) { block() }
+    private fun onMain(block: () -> Unit) {
+        main.runCurrent()
+        block()
+        main.runCurrent()
+    }
 
     private class FakeChanges : EntryChanges {
         val calls = CopyOnWriteArrayList<String>()

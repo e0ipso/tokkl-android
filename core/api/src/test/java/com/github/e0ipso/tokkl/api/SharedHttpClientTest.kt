@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.api
 
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonObject
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -44,7 +45,7 @@ class SharedHttpClientTest {
     }
 
     @Test
-    fun aQueueRequestGoesOutOnceWhenItsPooledConnectionDropsBeforeTheAnswer() {
+    fun aQueueRequestGoesOutOnceWhenItsPooledConnectionDropsBeforeTheAnswer() = runTest {
         for (method in METHODS) {
             poolAConnection()
             server.enqueue(dropBeforeTheAnswer())
@@ -55,7 +56,7 @@ class SharedHttpClientTest {
             assertTrue("$method: $result", result is ApiResult.Failure && result.error is ApiError.Network)
             assertEquals("one $method on that try", listOf(method), remainingRequests().map { it.method })
             // The answer OkHttp would have used for a second request is still there.
-            assertTrue(method, runBlocking { client.get(url.api("me"), JsonObject.serializer()) } is ApiResult.Success)
+            assertTrue(method, run { client.get(url.api("me"), JsonObject.serializer()) } is ApiResult.Success)
             assertEquals(listOf("GET"), remainingRequests().map { it.method })
         }
     }
