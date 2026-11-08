@@ -2,10 +2,12 @@ plugins {
     `kotlin-dsl`
 }
 
-// The plugins compile against AGP and detekt only. The main build puts those and the Kotlin plugins
-// on its classpath through the root build.gradle.kts, so every module runs the same plugin classes.
+// The plugins compile against AGP, the Kotlin Gradle plugin and detekt only. The main build puts
+// those on its classpath through the root build.gradle.kts, so every module runs the same plugin
+// classes.
 dependencies {
     compileOnly(libs.android.gradlePlugin)
+    compileOnly(libs.kotlin.gradlePlugin)
     compileOnly(libs.detekt.gradlePlugin)
 }
 
@@ -26,6 +28,10 @@ gradlePlugin {
         register("androidFeature") {
             id = "tokkl.android.feature"
             implementationClass = "AndroidFeatureConventionPlugin"
+        }
+        register("jvmLibrary") {
+            id = "tokkl.jvm.library"
+            implementationClass = "JvmLibraryConventionPlugin"
         }
     }
 }

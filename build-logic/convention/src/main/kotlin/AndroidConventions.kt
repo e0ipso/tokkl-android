@@ -63,7 +63,7 @@ internal val Project.libs: VersionCatalog
 // From the build cache, one checkout's analysis made another checkout's lint
 // report cite the first checkout's files. With the checkout's path as an
 // input, the analysis comes from the cache only for the checkout that ran it.
-private fun Project.keepLintAnalysisToThisCheckout() {
+internal fun Project.keepLintAnalysisToThisCheckout() {
     val checkoutDir: String = rootDir.absolutePath
     tasks.withType<AndroidLintAnalysisTask>().configureEach {
         inputs.property("checkoutDir", checkoutDir)

@@ -36,10 +36,12 @@ jobs:
       - run: ./gradlew assembleDebug check --stacktrace
       # check runs the unit tests, lint and detekt of the app and of every
       # core and feature module.
-      # Each module writes its debug JVM JUnit XML under
+      # Each Android module writes its debug JVM JUnit XML under
       # <module>/build/test-results/testDebugUnitTest/ and its debug lint
-      # reports as lint-results-debug.html, .sarif, .txt and .xml. Keep those
-      # files when check fails after writing them. An empty match fails the
+      # reports as lint-results-debug.html, .sarif, .txt and .xml. The
+      # Kotlin/JVM core modules, core:api and core:time, write theirs under
+      # build/test-results/test/ and as lint-results.html, .sarif, .txt and
+      # .xml. Keep those files when check fails after writing them. An empty match fails the
       # upload, so a missing report is not a passing suite. The rest of build/
       # stays out.
       - name: Preserve JVM JUnit reports
@@ -50,6 +52,7 @@ jobs:
           path: |
             app/build/test-results/testDebugUnitTest/TEST-*.xml
             core/*/build/test-results/testDebugUnitTest/TEST-*.xml
+            core/*/build/test-results/test/TEST-*.xml
             feature/*/build/test-results/testDebugUnitTest/TEST-*.xml
           if-no-files-found: error
           retention-days: 90
@@ -78,6 +81,10 @@ jobs:
             core/*/build/reports/lint-results-debug.sarif
             core/*/build/reports/lint-results-debug.txt
             core/*/build/reports/lint-results-debug.xml
+            core/*/build/reports/lint-results.html
+            core/*/build/reports/lint-results.sarif
+            core/*/build/reports/lint-results.txt
+            core/*/build/reports/lint-results.xml
             feature/*/build/reports/lint-results-debug.html
             feature/*/build/reports/lint-results-debug.sarif
             feature/*/build/reports/lint-results-debug.txt

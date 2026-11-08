@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.api
 
-import android.annotation.SuppressLint
 import okhttp3.internal.tls.OkHostnameVerifier
 import java.io.IOException
 import java.net.Socket
@@ -104,7 +103,7 @@ private const val MAX_CAUSES = 8
  * Lint warns about any custom trust manager, since many skip the check. This
  * one calls the platform's first and adds only the exact pinned leaf.
  */
-@SuppressLint("CustomX509TrustManager")
+@Suppress("CustomX509TrustManager")
 internal class PinningTrustManager(
     private val platform: X509TrustManager,
     private val pinnedSha256: (host: String, port: Int) -> String?,

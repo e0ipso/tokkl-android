@@ -7,6 +7,8 @@ plugins {
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.android.library) apply false
     alias(libs.plugins.kotlin.compose) apply false
+    // The core modules without Android code build as plain Kotlin/JVM libraries.
+    alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.kotlin.serialization) apply false
     // KSP extends the Kotlin Gradle plugin, so it loads beside it.
     alias(libs.plugins.ksp) apply false
