@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.reports
 
-import com.github.e0ipso.tokkl.session.ExportFiles
 import java.io.Closeable
 import java.io.File
 import java.io.IOException
@@ -14,7 +13,7 @@ import java.util.UUID
  * never exposed. At most four 16 MiB files in each area, pruned on export; files expire after a
  * day and sign-out removes both areas. The provider also refuses expired reads.
  */
-class ReportExportFiles(private val root: File, private val clock: Clock) : ExportFiles {
+class ReportExportFiles(private val root: File, private val clock: Clock) {
     class Pending internal constructor(val staging: File, val directory: File, filename: String) : Closeable {
         val completed = File(directory, filename)
 
@@ -69,7 +68,8 @@ class ReportExportFiles(private val root: File, private val clock: Clock) : Expo
         }
     }
 
-    override fun clear() = synchronized(LOCK) {
+    @Throws(IOException::class)
+    fun clear() = synchronized(LOCK) {
         if (root.exists() && !root.deleteRecursively()) throw IOException("Cannot clear exports")
     }
 
@@ -89,8 +89,8 @@ class ReportExportFiles(private val root: File, private val clock: Clock) : Expo
         const val MAX_FILES = 4
         const val MAX_AGE_MILLIS = 24L * 60 * 60 * 1000
 
-        // A JVM lock, not a Mutex: the Session's account change clears the files without
-        // suspending, while exports write them.
+        // A JVM lock, not a Mutex: the account's sign-in and sign-out steps clear the files
+        // without suspending, while exports write and discard them on other threads.
         private val LOCK = Any()
 
         /** Validate UTF-8 and CSV quoting without rewriting a byte or retaining report rows. */

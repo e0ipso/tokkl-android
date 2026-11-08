@@ -25,7 +25,7 @@ val signInFeatureModule = module {
             timerStates = get(),
             lifetime = get(),
             session = get(),
-            signedIn = get(),
+            signedIn = getAll(),
             sender = get(),
             timerSync = get(),
         )

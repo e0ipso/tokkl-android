@@ -15,7 +15,6 @@ import com.github.e0ipso.tokkl.platform.DefaultNetwork
 import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.platform.MainDispatcher
 import com.github.e0ipso.tokkl.session.AccountDataOwner
-import com.github.e0ipso.tokkl.session.ExportAccount
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -62,9 +61,6 @@ internal val coreModule = module {
     single { ConfiguredServer(get()) }
     single { SharedHttpClient(server = get(), trust = get<ServerTrust>()) }
 
-    // The report exports' account, which the Session invalidates on every change of account.
-    single { ExportAccount() }
-
     // Reports trust refusals to the [SessionTrust], and answers to the [LastAnswer], which
     // loads on the first answer, off the main thread.
     single {
@@ -75,8 +71,6 @@ internal val coreModule = module {
             io = get(IoDispatcher),
             trustListener = get<SessionTrust>(),
             successListener = get<LastAnswer>(),
-            exports = get(),
-            exportFiles = get(),
         )
     } binds arrayOf(ApiClientProvider::class, SignedInCheck::class, AccountDataOwner::class)
 }

@@ -2,7 +2,6 @@ package com.github.e0ipso.tokkl.reports
 
 import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.session.AccountSettings
-import com.github.e0ipso.tokkl.session.ExportAccount
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -30,13 +29,15 @@ internal fun reportsViewModel(
     clock = clock,
     filterOptions = MutableStateFlow(FilterOptions.NONE),
     exportCapabilities = MutableStateFlow(Capabilities.NONE),
-    exporter = ReportExportController(
-        client = { null },
-        files = ReportExportFiles(File("unused-report-exports"), clock),
-        account = ExportAccount(),
-        csvMissing = {},
-        scope = scope,
-        io = io,
-    ),
+    exporter = ReportExportFiles(File("unused-report-exports"), clock).let { files ->
+        ReportExportController(
+            client = { null },
+            files = files,
+            account = ExportAccount(files),
+            csvMissing = {},
+            scope = scope,
+            io = io,
+        )
+    },
     appEvents = emptyFlow(),
 )

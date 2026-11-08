@@ -25,7 +25,7 @@ internal class AccountSessionWriter(
     private val timerStates: AccountTimerStates,
     private val lifetime: AccountLifetime,
     private val session: Session,
-    private val signedIn: SignedInListener,
+    private val signedIn: List<SignedInListener>,
     private val sender: ChangeSender,
     private val timerSync: TimerSyncFollower,
 ) : SessionWriter {
@@ -36,7 +36,7 @@ internal class AccountSessionWriter(
         timerStates.clearForSignIn()
         lifetime.begin()
         session.save(server, token)
-        signedIn.signedIn()
+        signedIn.forEach(SignedInListener::signedIn)
         if (sender.signInNeeded.value) sender.resume()
         // Signing in again over a refused token keeps the capability: the stream restarts for the
         // new source now. A first sign-in starts it once its refresh has learned the capability.

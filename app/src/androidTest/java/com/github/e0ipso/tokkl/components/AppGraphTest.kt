@@ -195,6 +195,7 @@ class AppGraphTest {
 
         val SIGN_OUT_PHASES = mapOf(
             "Session" to SignOutPhase.FORGET_SESSION,
+            "ExportAccount" to SignOutPhase.FORGET_SESSION,
             "AccountTimerStates" to SignOutPhase.RETIRE_STATE,
             "PomodoroSignOut" to SignOutPhase.STOP_WORK,
             "TimerSyncFollower" to SignOutPhase.STOP_WORK,

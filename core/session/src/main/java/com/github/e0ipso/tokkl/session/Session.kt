@@ -32,8 +32,6 @@ import kotlin.coroutines.CoroutineContext
  * @param trustListener hears every request of [api] that the trust checks
  *   refuse, so the app can prompt from any screen.
  * @param successListener hears every 2xx answer to [api]'s requests.
- * @param exports the report exports' account, which every change of account invalidates.
- * @param exportFiles the finished exports, which every change of account deletes.
  */
 class Session(
     private val servers: ClearableStore<ServerUrl>,
@@ -42,8 +40,6 @@ class Session(
     private val io: CoroutineContext,
     private val trustListener: TrustListener?,
     private val successListener: SuccessListener?,
-    private val exports: ExportAccount,
-    private val exportFiles: ExportFiles,
 ) : ApiClientProvider,
     SignedInCheck,
     AccountDataOwner {
@@ -132,16 +128,13 @@ class Session(
      */
     @Throws(GeneralSecurityException::class, IOException::class)
     fun save(server: ServerUrl, token: String) {
-        exports.change {
+        forgetKept()
+        try {
+            servers.clear()
+            tokens.save(token)
+            servers.save(server)
+        } finally {
             forgetKept()
-            try {
-                servers.clear()
-                exportFiles.clear()
-                tokens.save(token)
-                servers.save(server)
-            } finally {
-                forgetKept()
-            }
         }
     }
 
@@ -151,15 +144,12 @@ class Session(
      */
     @Throws(GeneralSecurityException::class, IOException::class)
     fun clear() {
-        exports.change {
+        forgetKept()
+        try {
+            servers.clear()
+            tokens.clear()
+        } finally {
             forgetKept()
-            try {
-                servers.clear()
-                tokens.clear()
-            } finally {
-                forgetKept()
-                exportFiles.clear()
-            }
         }
     }
 }

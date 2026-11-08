@@ -28,8 +28,6 @@ class SessionTest {
         io = Dispatchers.Unconfined,
         trustListener = null,
         successListener = null,
-        exports = ExportAccount(),
-        exportFiles = ExportFiles {},
     )
 
     @Test

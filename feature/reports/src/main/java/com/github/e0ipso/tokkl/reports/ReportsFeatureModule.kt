@@ -6,21 +6,23 @@ import com.github.e0ipso.tokkl.navigation.FeatureEntries
 import com.github.e0ipso.tokkl.navigation.topLevelDestination
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
+import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.AppEvents
-import com.github.e0ipso.tokkl.session.ExportFiles
 import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.session.SignedInListener
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
+import org.koin.dsl.binds
 import org.koin.dsl.module
 import java.io.File
 
 /**
- * Reports: the Reports API repository, the report CSV files, which a sign-out deletes, the view model
- * and the screen.
+ * Reports: the Reports API repository, the report CSV files and their account, which each sign-in
+ * and sign-out invalidates, the view model and the screen.
  */
 val reportsFeatureModule = module {
     single<ReportsRepository> { ServerReportsRepository(get<Session>()) }
@@ -29,7 +31,10 @@ val reportsFeatureModule = module {
             File(androidContext().cacheDir, ReportExportFiles.DIRECTORY),
             get(),
         )
-    } bind ExportFiles::class
+    }
+
+    // The exports' account, which every sign-in and sign-out invalidates, deleting the files.
+    single { ExportAccount(get()) } binds arrayOf(AccountDataOwner::class, SignedInListener::class)
 
     viewModel {
         val session = get<Session>()
