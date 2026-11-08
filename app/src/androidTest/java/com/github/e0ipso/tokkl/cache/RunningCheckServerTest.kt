@@ -13,6 +13,7 @@ import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.components.accountRefresh
@@ -152,7 +153,7 @@ class RunningCheckServerTest {
 
         runBlocking {
             web.sendNoContent(
-                "PATCH",
+                HttpMethod.PATCH,
                 web.server.api("workspaces", workspace.toString(), "time_entries", id.toString(), "stop"),
                 buildJsonObject {},
             )
@@ -211,7 +212,7 @@ class RunningCheckServerTest {
         signIn(TokklTestServer.url, account.apiToken)
         runBlocking {
             web.sendNoContent(
-                "PATCH",
+                HttpMethod.PATCH,
                 web.server.api("workspaces", workspace.toString(), "time_entries", id.toString(), "stop"),
                 buildJsonObject {},
             )
@@ -242,7 +243,7 @@ class RunningCheckServerTest {
     /** Starts a running entry on the server, as the web app does, which stops the one running there. */
     private fun startOnTheWeb(description: String): Long = runBlocking {
         web.send(
-            "POST",
+            HttpMethod.POST,
             web.server.api("workspaces", workspace.toString(), "time_entries"),
             buildJsonObject {
                 put("workspace_id", workspace)

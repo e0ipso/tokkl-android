@@ -4,12 +4,10 @@ import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import androidx.annotation.VisibleForTesting
 import androidx.core.content.FileProvider
 import java.io.File
 
 /** Only explicit user-directed sharing grants a receiver access to this one completed file. */
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 object ReportCsvShare {
     fun intent(context: Context, file: File): Intent {
         val uri = FileProvider.getUriForFile(context, "${context.packageName}.report-exports", file)

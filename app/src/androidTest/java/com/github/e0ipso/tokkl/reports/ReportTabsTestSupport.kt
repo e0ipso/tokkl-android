@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.reports
 
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import kotlinx.coroutines.runBlocking
@@ -73,7 +74,7 @@ internal class ReportAccount private constructor(val account: TestAccounts.Accou
         }
         runBlocking {
             api.send(
-                "POST",
+                HttpMethod.POST,
                 api.server.api("workspaces", account.workspaceId.toString(), "time_entries"),
                 body,
                 JsonObject.serializer(),
@@ -85,7 +86,7 @@ internal class ReportAccount private constructor(val account: TestAccounts.Accou
     /** POSTs [body] to `/api/v9/workspaces/<id>/<what>` and returns the new item's id. */
     private fun create(what: String, body: JsonObject): Long = runBlocking {
         api.send(
-            "POST",
+            HttpMethod.POST,
             api.server.api("workspaces", account.workspaceId.toString(), what),
             body,
             JsonObject.serializer(),
@@ -97,7 +98,7 @@ internal class ReportAccount private constructor(val account: TestAccounts.Accou
     /** POSTs [body] to Tokkl's own report endpoint `/api/app/report/<path>`, which the web app reads. */
     fun webReport(path: String, body: JsonObject): JsonObject = runBlocking {
         api.send(
-            "POST",
+            HttpMethod.POST,
             TokklTestServer.url.app("report", path),
             body,
             JsonObject.serializer(),
@@ -114,7 +115,7 @@ internal class ReportAccount private constructor(val account: TestAccounts.Accou
                 val api = account.client
                 runBlocking {
                     api.send(
-                        "PUT",
+                        HttpMethod.PUT,
                         api.server.api("me"),
                         buildJsonObject { put("beginning_of_week", 3) },
                         JsonObject.serializer(),
@@ -127,7 +128,7 @@ internal class ReportAccount private constructor(val account: TestAccounts.Accou
                 }
                 runBlocking {
                     api.send(
-                        "PUT",
+                        HttpMethod.PUT,
                         api.server.api("workspaces", account.workspaceId.toString()),
                         rounding,
                         JsonObject.serializer(),
@@ -136,7 +137,7 @@ internal class ReportAccount private constructor(val account: TestAccounts.Accou
                     .orFail("PUT /api/v9/workspaces/<id>")
                 runBlocking {
                     api.send(
-                        "POST",
+                        HttpMethod.POST,
                         api.server.api("me", "preferences"),
                         buildJsonObject { put("timeofday_format", "h:mm A") },
                         JsonObject.serializer(),

@@ -33,6 +33,7 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.cache.CachedClient
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.components.accountRefresh
@@ -277,7 +278,7 @@ class ClientsServerTest {
         val gone = create("clients", buildJsonObject { put("name", "Gone") })
         runBlocking {
             account.client.sendNoContent(
-                "POST",
+                HttpMethod.POST,
                 url("clients", gone.toString(), "archive"),
                 buildJsonObject {},
             )
@@ -449,7 +450,7 @@ class ClientsServerTest {
 
     private fun create(collection: String, body: JsonObject): Long = runBlocking {
         account.client.send(
-            "POST",
+            HttpMethod.POST,
             url(collection),
             body,
             JsonObject.serializer(),

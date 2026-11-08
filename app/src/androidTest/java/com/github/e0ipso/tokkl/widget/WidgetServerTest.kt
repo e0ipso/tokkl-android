@@ -20,6 +20,7 @@ import com.github.e0ipso.tokkl.TimerActionToasts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.awaitControls
@@ -216,7 +217,7 @@ class WidgetServerTest {
     fun favoritesResizeAndEachNativeTapQueuesAllItsFieldsOffline() {
         val project = runBlocking {
             web.send(
-                "POST",
+                HttpMethod.POST,
                 web.server.api("workspaces", "$workspace", "projects"),
                 buildJsonObject {
                     put("name", "Widget project")
@@ -227,7 +228,7 @@ class WidgetServerTest {
         }.orFail("create project")["id"]!!.jsonPrimitive.long
         val task = runBlocking {
             web.send(
-                "POST",
+                HttpMethod.POST,
                 web.server.api("workspaces", "$workspace", "projects", "$project", "tasks"),
                 buildJsonObject { put("name", "Widget task") },
                 JsonObject.serializer(),
@@ -241,7 +242,7 @@ class WidgetServerTest {
         }
         runBlocking {
             web.sendNoContent(
-                "POST",
+                HttpMethod.POST,
                 web.server.api("me", "preferences"),
                 buildJsonObject {
                     put("favorites", kotlinx.serialization.json.JsonArray(favorites))
@@ -324,7 +325,7 @@ class WidgetServerTest {
         for ((billable, seconds) in listOf(true to 600L, false to 300L)) {
             runBlocking {
                 web.send(
-                    "POST",
+                    HttpMethod.POST,
                     web.server.api("workspaces", "$workspace", "time_entries"),
                     buildJsonObject {
                         put("workspace_id", workspace)
@@ -414,7 +415,7 @@ class WidgetServerTest {
         // Use an entry old enough for the existing Stop API. Exact captured short Stop is TKA-0259.
         runBlocking {
             web.send(
-                "POST",
+                HttpMethod.POST,
                 web.server.api("workspaces", "$workspace", "time_entries"),
                 buildJsonObject {
                     put("workspace_id", workspace)
@@ -467,7 +468,7 @@ class WidgetServerTest {
         }
         runBlocking {
             web.sendNoContent(
-                "PATCH",
+                HttpMethod.PATCH,
                 web.server.api("workspaces", "$workspace", "time_entries", "$id", "stop"),
                 buildJsonObject {},
             )

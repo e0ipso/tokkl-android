@@ -2,7 +2,6 @@ package com.github.e0ipso.tokkl.widget
 
 import android.content.Context
 import android.content.Intent
-import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -63,7 +62,7 @@ class PomodoroWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = PomodoroWidget()
 }
 
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
+/** The Pomodoro widget's colours: Tokkl's light and dark schemes, never the wallpaper's. */
 val PomodoroColors = ColorProviders(light = TokklLightColorScheme, dark = TokklDarkColorScheme)
 
 /** The same content is rendered in a native RemoteViews host for deterministic layout references. */

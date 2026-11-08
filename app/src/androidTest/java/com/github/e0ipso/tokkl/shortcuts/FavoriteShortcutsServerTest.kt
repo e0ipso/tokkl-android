@@ -22,6 +22,7 @@ import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.cache
@@ -92,7 +93,7 @@ class FavoriteShortcutsServerTest {
         account = TestAccounts.create(timezone = "Europe/Madrid")
         project = runBlocking {
             web.send(
-                "POST",
+                HttpMethod.POST,
                 web.server.api("workspaces", account.workspaceId.toString(), "projects"),
                 buildJsonObject { put("name", "Website") },
                 JsonObject.serializer(),
@@ -205,7 +206,7 @@ class FavoriteShortcutsServerTest {
     fun aTapStartsTheFavoriteOfflineAndShowsAToastInsteadOfTheApp() {
         val task = runBlocking {
             web.send(
-                "POST",
+                HttpMethod.POST,
                 web.server.api("workspaces", "${account.workspaceId}", "projects", "$project", "tasks"),
                 buildJsonObject { put("name", "Shortcut task") },
                 JsonObject.serializer(),
@@ -321,7 +322,7 @@ class FavoriteShortcutsServerTest {
         val body = Json.parseToJsonElement("""{"favorites": [${favorites.joinToString(",")}]}""")
         runBlocking {
             web.send(
-                "POST",
+                HttpMethod.POST,
                 web.server.api("me", "preferences"),
                 body,
                 JsonElement.serializer(),

@@ -5,6 +5,7 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.components.accountRefresh
@@ -70,7 +71,7 @@ class WidgetLargeTextTest {
             val workspace = account.workspaceId
             val project = runBlocking {
                 api.send(
-                    "POST",
+                    HttpMethod.POST,
                     api.server.api("workspaces", "$workspace", "projects"),
                     buildJsonObject { put("name", "Demo") },
                     JsonObject.serializer(),
@@ -78,7 +79,7 @@ class WidgetLargeTextTest {
             }.orFail("create project")["id"]!!.jsonPrimitive.long
             runBlocking {
                 api.sendNoContent(
-                    "POST",
+                    HttpMethod.POST,
                     api.server.api("me", "preferences"),
                     Json.parseToJsonElement(
                         """{"favorites":[{"description":"Read","project_id":$project,"task_id":null,"tags":[]""" +

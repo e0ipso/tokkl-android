@@ -42,6 +42,7 @@ import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.RequestCounter
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitTimerPage
@@ -355,7 +356,7 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             val client = fixture.account.client
             runBlocking {
                 client.send(
-                    "PATCH",
+                    HttpMethod.PATCH,
                     client.server.api(
                         "workspaces",
                         fixture.account.workspaceId.toString(),
@@ -511,7 +512,7 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             val client = fixture.account.client
             runBlocking {
                 client.send(
-                    "PATCH",
+                    HttpMethod.PATCH,
                     client.server.api(
                         "workspaces",
                         fixture.account.workspaceId.toString(),

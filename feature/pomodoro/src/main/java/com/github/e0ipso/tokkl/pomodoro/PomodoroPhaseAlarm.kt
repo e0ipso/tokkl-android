@@ -45,7 +45,7 @@ class PomodoroPhaseAlarm(
     private val ringing: PomodoroRinging,
     private val io: CoroutineContext,
     private val clock: Clock,
-) {
+) : PomodoroRingCheck {
 
     private val lock = Mutex()
 
@@ -92,19 +92,15 @@ class PomodoroPhaseAlarm(
         if (ring.due(clock.instant())) ringLocked(ring) else arm(ring)
     }
 
-    /**
-     * Calls [use] with the ring of the held phase while it is [expected], or any for null, and its
-     * planned end has come, and returns whether it did. The ringing service checks a start, or its
-     * restart after the process died, through this before it plays.
-     */
-    suspend fun withRingingPhase(expected: PomodoroPhaseKey?, use: suspend (PomodoroRing) -> Unit): Boolean = locked {
-        val ring = currentLocked()
-            ?.takeIf { (expected == null || it.phase == expected) && it.due(clock.instant()) }
-            ?: return@locked false
-        rung = ring.phase
-        use(ring)
-        true
-    }
+    override suspend fun withRingingPhase(expected: PomodoroPhaseKey?, use: suspend (PomodoroRing) -> Unit): Boolean =
+        locked {
+            val ring = currentLocked()
+                ?.takeIf { (expected == null || it.phase == expected) && it.due(clock.instant()) }
+                ?: return@locked false
+            rung = ring.phase
+            use(ring)
+            true
+        }
 
     /** Posts the ringing notification of [phase] again after a swipe, while it still rings. */
     suspend fun repost(phase: PomodoroPhaseKey) = locked {
@@ -172,4 +168,15 @@ suspend fun PomodoroPhaseAlarm.sendPhaseAction(
 ): TimerActionResult? {
     if (current()?.phase != phase) return null
     return if (end) actions.endSession(revision) else actions.nextPhase(revision)
+}
+
+/** The check the ringing service makes before it plays, which [PomodoroPhaseAlarm] answers. */
+interface PomodoroRingCheck {
+
+    /**
+     * Calls [use] with the ring of the held phase while it is [expected], or any for null, and its
+     * planned end has come, and returns whether it did. The ringing service checks a start, or its
+     * restart after the process died, through this before it plays.
+     */
+    suspend fun withRingingPhase(expected: PomodoroPhaseKey?, use: suspend (PomodoroRing) -> Unit): Boolean
 }

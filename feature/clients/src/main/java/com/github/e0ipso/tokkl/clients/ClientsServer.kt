@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.clients
 
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.catalog.createOnce
 import kotlinx.serialization.SerialName
@@ -49,13 +50,13 @@ class ClientsServer(private val api: TogglApiClient, private val workspace: Long
      * @param known the ids of the clients the page lists, which the create cannot have made.
      */
     suspend fun create(name: String, notes: String?, known: Set<Long>): ApiResult<Client> = createOnce(
-        create = { api.send("POST", url(), body(name, notes), Client.serializer(), resend = false) },
+        create = { api.send(HttpMethod.POST, url(), body(name, notes), Client.serializer(), resend = false) },
         list = ::list,
         made = { it.id !in known && it.workspaceId == workspace && it.name == name },
     )
 
     suspend fun update(id: Long, name: String, notes: String?): ApiResult<Client> =
-        api.send("PUT", url(id.toString()), body(name, notes), Client.serializer())
+        api.send(HttpMethod.PUT, url(id.toString()), body(name, notes), Client.serializer())
 
     /**
      * Archives the client and, as in Toggl, its projects. Tokkl answers with the ids of the
@@ -63,14 +64,14 @@ class ClientsServer(private val api: TogglApiClient, private val workspace: Long
      * the body is an empty object.
      */
     suspend fun archive(id: Long): ApiResult<Unit> = api.sendNoContent(
-        "POST",
+        HttpMethod.POST,
         url(id.toString(), "archive"),
         buildJsonObject {},
     )
 
     /** Restores the client and every one of its projects, as the web app asks. */
     suspend fun restore(id: Long): ApiResult<Client> = api.send(
-        "POST",
+        HttpMethod.POST,
         url(id.toString(), "restore"),
         buildJsonObject { put("restore_all_projects", true) },
         Client.serializer(),

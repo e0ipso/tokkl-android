@@ -2,7 +2,6 @@ package com.github.e0ipso.tokkl.pomodoro
 
 import android.content.Intent
 import android.net.Uri
-import androidx.annotation.VisibleForTesting
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import java.time.Instant
 
@@ -13,7 +12,6 @@ private const val EXTRA_REVISION = "pomodoro_revision"
  * Puts [phase], and the [revision] a button was shown at, on this intent. With [unique], they also
  * go in its data, which PendingIntent identity includes, so an old button never becomes a new one.
  */
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 fun Intent.putPhase(phase: PomodoroPhaseKey, revision: Long? = null, unique: Boolean = false): Intent = apply {
     putExtra(EXTRA_PHASE_START, phase.start.toEpochMilli())
     if (revision != null) putExtra(EXTRA_REVISION, revision)
@@ -30,7 +28,6 @@ internal fun phaseUri(phase: PomodoroPhaseKey, revision: Long?): Uri {
 }
 
 /** The phase this intent carries, or null without one. */
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 fun Intent.phaseKey(): PomodoroPhaseKey? = if (hasExtra(
         EXTRA_PHASE_START,
     )

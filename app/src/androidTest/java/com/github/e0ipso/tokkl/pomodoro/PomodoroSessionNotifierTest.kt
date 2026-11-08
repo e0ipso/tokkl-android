@@ -86,7 +86,7 @@ class PomodoroSessionNotifierTest {
         assertNull(launcher.takePomodoroNotificationTap())
         assertEquals(Intent.ACTION_MAIN, launcher.action)
         assertTrue(launcher.hasCategory(Intent.CATEGORY_LAUNCHER))
-        assertNull(Intent(SHOW_POMODORO).takePomodoroNotificationTap())
+        assertNull(Intent("com.github.e0ipso.tokkl.action.SHOW_POMODORO_SESSION").takePomodoroNotificationTap())
     }
 
     @Test fun shownIdentitySurvivesReopenAndForgetErasesAllPersistedDisplayData() {

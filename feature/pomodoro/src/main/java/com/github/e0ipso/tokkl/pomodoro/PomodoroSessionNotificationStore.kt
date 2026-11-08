@@ -1,14 +1,12 @@
 package com.github.e0ipso.tokkl.pomodoro
 
 import android.content.Context
-import androidx.annotation.VisibleForTesting
 import com.github.e0ipso.tokkl.storage.PreferencesFile
 
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
+/** What the session notification showed: the random identity of its [account] and the hash of what it [shown]. */
 data class PomodoroNotificationDisplay(val account: String, val shown: String? = null)
 
 /** Persists only a random account identity and a content hash, never entry fields. */
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 class PomodoroSessionNotificationStore(context: Context) : PomodoroNotificationMemory {
     private val file = PreferencesFile(context, "pomodoro_notification")
 

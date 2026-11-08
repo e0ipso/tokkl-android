@@ -5,6 +5,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.test.core.app.ActivityScenario
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.SessionRule
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.components.timerState
@@ -43,7 +44,7 @@ class TimerNoticeServerTest {
         val client = fixture.account.client
         val started = runBlocking {
             client.send(
-                "POST",
+                HttpMethod.POST,
                 client.server.app("pomodoro"),
                 buildJsonObject {
                     put("workspace_id", fixture.account.workspaceId)
@@ -54,7 +55,7 @@ class TimerNoticeServerTest {
         }.orFail("POST /api/app/pomodoro")
         val ended = runBlocking {
             client.send(
-                "POST",
+                HttpMethod.POST,
                 client.server.app("pomodoro", "end"),
                 buildJsonObject { put("revision", started.revision) },
                 TimerState.serializer(),

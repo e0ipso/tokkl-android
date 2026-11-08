@@ -7,6 +7,7 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.appApiClient
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
@@ -79,7 +80,7 @@ class AccountSettingsServerTest {
             put("beginning_of_week", beginningOfWeek)
         }
         // Fails with the error alone, so neither a response body nor a secret lands in the message.
-        val result = runBlocking { client.send("PUT", client.server.api("me"), body, JsonObject.serializer()) }
+        val result = runBlocking { client.send(HttpMethod.PUT, client.server.api("me"), body, JsonObject.serializer()) }
         if (result is ApiResult.Failure) {
             val error = result.error
             val reason = if (error is ApiError.Http) "HTTP ${error.status}" else error::class.simpleName

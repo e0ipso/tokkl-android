@@ -90,7 +90,8 @@ class TypeScaleTest {
         for ((name, style) in roles) {
             val axes = drawn.getValue(name)
             assertEquals("$name weight as drawn", checkNotNull(style.fontWeight).weight.toFloat(), axes["wght"])
-            assertEquals("$name width as drawn", ANYBODY_WIDTH, axes["wdth"])
+            // font-stretch: 85% on the display-face rule in the web app's styles.css.
+            assertEquals("$name width as drawn", 85f, axes["wdth"])
         }
     }
 

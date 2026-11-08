@@ -26,6 +26,7 @@ sealed interface SurfaceTap {
      * runs in a broadcast ends the broadcast first, so a slow server cannot hold it past its time
      * limit.
      */
+    // Public for the JVM tests of the surfaces in other modules, which stand in for a tap with it.
     class Request
     @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
     constructor(

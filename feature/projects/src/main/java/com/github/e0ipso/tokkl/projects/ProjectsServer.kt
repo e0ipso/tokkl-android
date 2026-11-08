@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.projects
 
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.catalog.createOnce
 import kotlinx.serialization.SerialName
@@ -70,7 +71,7 @@ class ProjectsServer(private val api: TogglApiClient, private val workspace: Lon
      * @param known the ids of the projects the page lists, which the create cannot have made.
      */
     suspend fun create(fields: ProjectFields, known: Set<Long>): ApiResult<Project> = createOnce(
-        create = { api.send("POST", url(), fields.toJson(), Project.serializer(), resend = false) },
+        create = { api.send(HttpMethod.POST, url(), fields.toJson(), Project.serializer(), resend = false) },
         list = ::list,
         made = {
             it.id !in known && it.workspaceId == workspace && it.name == fields.name &&
@@ -79,11 +80,11 @@ class ProjectsServer(private val api: TogglApiClient, private val workspace: Lon
     )
 
     suspend fun update(id: Long, fields: ProjectFields): ApiResult<Project> =
-        api.send("PUT", url(id), fields.toJson(), Project.serializer())
+        api.send(HttpMethod.PUT, url(id), fields.toJson(), Project.serializer())
 
     /** Archives the project when [active] is false and restores it when true. */
     suspend fun setActive(id: Long, active: Boolean): ApiResult<Project> =
-        api.send("PUT", url(id), buildJsonObject { put("active", active) }, Project.serializer())
+        api.send(HttpMethod.PUT, url(id), buildJsonObject { put("active", active) }, Project.serializer())
 
     private fun url(id: Long? = null) = if (id == null) {
         api.server.api("workspaces", workspace.toString(), "projects")

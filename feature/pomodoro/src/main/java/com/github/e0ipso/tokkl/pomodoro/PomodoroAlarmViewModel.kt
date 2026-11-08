@@ -41,7 +41,8 @@ data class PomodoroAlarmState(
  * message. Closing, Back, Home and recreation have no ringing side effects. A command in flight
  * outlives a rotation and is not sent again.
  *
- * All public methods are called on the main thread.
+ * All public methods are called on the main thread. The class is public for the app's device
+ * tests, which read the alarm screen's state from its model.
  *
  * @param held the held timer state while the server offers the timer API, and null otherwise.
  */

@@ -7,7 +7,6 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import androidx.annotation.VisibleForTesting
 import com.github.e0ipso.tokkl.capabilities.CapabilityCheck
 import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.platform.mainActivityIntent
@@ -23,7 +22,6 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
 import org.koin.core.component.inject
 import java.time.Instant
-import java.util.concurrent.CountDownLatch
 
 /** Whether Android refuses exact alarms to the app now, as `AlarmManager.canScheduleExactAlarms` says. */
 fun interface ExactAlarmCheck {
@@ -115,8 +113,7 @@ class AlarmClockPomodoroScheduler(
     }
 
     /** The broadcast the alarm delivers. [create] false returns null when the intent is not armed. */
-    @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-    fun operation(create: Boolean, phase: PomodoroPhaseKey? = null, redraw: Boolean = false): PendingIntent? {
+    private fun operation(create: Boolean, phase: PomodoroPhaseKey? = null, redraw: Boolean = false): PendingIntent? {
         val flags = PendingIntent.FLAG_IMMUTABLE or
             if (create) PendingIntent.FLAG_UPDATE_CURRENT else PendingIntent.FLAG_NO_CREATE
         val intent = Intent(context, PomodoroPhaseAlarmReceiver::class.java)
@@ -189,12 +186,8 @@ class PomodoroPhaseAlarmReceiver :
 
 /**
  * Arms the phase alarm again from the stored timer state after boot, an app update, a clock or
- * timezone change, or a grant of the exact-alarm permission, with no request to the server. A
- * planned end that has already passed is armed in the past, so the alarm rings at once and the
- * phase stays in overtime: API 35 and later forbid starting the ringing service from
- * BOOT_COMPLETED, and an alarm delivery may. After boot and an app update it also starts the timer
- * sync service, which those two broadcasts allow from the background. A start the platform refuses
- * anyway is dropped: the next app open starts it, and the armed alarm still rings.
+ * timezone change, or a grant of the exact-alarm permission, with no request to the server. It
+ * hands each of these broadcasts to [PomodoroAlarmRearm].
  *
  * Declared disabled. [AlarmClockPomodoroScheduler] enables it while the account's server has the
  * timer API. The system sends these protected broadcasts, so the receiver is exported.
@@ -202,23 +195,19 @@ class PomodoroPhaseAlarmReceiver :
 class PomodoroAlarmRearmReceiver :
     BroadcastReceiver(),
     KoinComponent {
-    private val pomodoroAlarm: PomodoroPhaseAlarm by inject()
-    private val timerSync: TimerSyncFollower by inject()
+    private val rearm: PomodoroAlarmRearm by inject()
     private val scope: CoroutineScope by inject()
     private val io: CoroutineDispatcher by inject(IoDispatcher)
 
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action !in ACTIONS) return
-        val done = completed
+        val action = intent.action
+        if (action == null || action !in ACTIONS) return
         val pending = goAsync()
         scope.launch(io) {
             try {
-                pomodoroAlarm.follow(rearm = true)
-                if (intent.action in TIMER_SYNC_STARTS) timerSync.follow()
+                rearm.rearm(action)
             } finally {
-                // A direct receiver invocation in the boot test has no active broadcast result.
-                pending?.finish()
-                done?.countDown()
+                pending.finish()
             }
         }
     }
@@ -231,13 +220,28 @@ class PomodoroAlarmRearmReceiver :
             Intent.ACTION_TIMEZONE_CHANGED,
             AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED,
         )
+    }
+}
 
+/**
+ * What [PomodoroAlarmRearmReceiver] does with each of its broadcasts. It arms the held phase's
+ * alarm again from the stored timer state, even where this process armed it already. A planned
+ * end that has already passed is armed in the past, so the alarm rings at once and the phase stays
+ * in overtime: API 35 and later forbid starting the ringing service from BOOT_COMPLETED, and an
+ * alarm delivery may. After boot and an app update it also starts the timer sync service, which
+ * those two broadcasts allow from the background. A start the platform refuses anyway is dropped:
+ * the next app open starts it, and the armed alarm still rings.
+ */
+class PomodoroAlarmRearm(private val alarm: PomodoroPhaseAlarm, private val timerSync: TimerSyncFollower) {
+
+    /** Arms the held phase again after the broadcast [action]. */
+    suspend fun rearm(action: String) {
+        alarm.follow(rearm = true)
+        if (action in TIMER_SYNC_STARTS) timerSync.follow()
+    }
+
+    private companion object {
         /** The broadcasts that may start a foreground service from the background. */
-        private val TIMER_SYNC_STARTS = setOf(Intent.ACTION_BOOT_COMPLETED, Intent.ACTION_MY_PACKAGE_REPLACED)
-
-        /** The boot test waits on this. Production leaves it null. */
-        @Volatile
-        @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-        var completed: CountDownLatch? = null
+        val TIMER_SYNC_STARTS = setOf(Intent.ACTION_BOOT_COMPLETED, Intent.ACTION_MY_PACKAGE_REPLACED)
     }
 }

@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.projects
 
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.catalog.createOnce
 import kotlinx.serialization.SerialName
@@ -36,7 +37,7 @@ class TasksServer(private val api: TogglApiClient, private val workspace: Long, 
     suspend fun create(name: String, known: Set<Long>): ApiResult<ProjectTask> = createOnce(
         create = {
             api.send(
-                "POST",
+                HttpMethod.POST,
                 url(),
                 buildJsonObject { put("name", name) },
                 ProjectTask.serializer(),
@@ -49,7 +50,7 @@ class TasksServer(private val api: TogglApiClient, private val workspace: Long, 
 
     /** Renames the task and marks it done or not done, as the web app's task row does. */
     suspend fun update(id: Long, name: String, done: Boolean): ApiResult<ProjectTask> = api.send(
-        "PUT",
+        HttpMethod.PUT,
         url(id.toString()),
         buildJsonObject {
             put("name", name)
@@ -59,7 +60,7 @@ class TasksServer(private val api: TogglApiClient, private val workspace: Long, 
     )
 
     /** Deletes the task. The server takes it off the time entries that had it, which stay. */
-    suspend fun delete(id: Long): ApiResult<Unit> = api.sendNoContent("DELETE", url(id.toString()))
+    suspend fun delete(id: Long): ApiResult<Unit> = api.sendNoContent(HttpMethod.DELETE, url(id.toString()))
 
     private fun url(vararg path: String) =
         api.server.api("workspaces", workspace.toString(), "projects", project.toString(), "tasks", *path)

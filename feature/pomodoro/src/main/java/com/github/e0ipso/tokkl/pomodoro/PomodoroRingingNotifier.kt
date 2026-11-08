@@ -7,7 +7,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.graphics.drawable.Icon
-import androidx.annotation.VisibleForTesting
 import com.github.e0ipso.tokkl.feature.pomodoro.R
 import com.github.e0ipso.tokkl.platform.mainActivityIntent
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
@@ -15,7 +14,6 @@ import com.github.e0ipso.tokkl.core.timerstate.R as TimerStateR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /** The player owns sound/vibration; the high-importance channel adds neither a second sound nor haptics. */
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 class PomodoroRingingNotifier(private val context: Context) {
     private val manager = context.getSystemService(NotificationManager::class.java)
 

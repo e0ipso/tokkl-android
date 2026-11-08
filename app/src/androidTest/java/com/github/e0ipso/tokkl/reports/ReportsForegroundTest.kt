@@ -18,6 +18,7 @@ import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
@@ -256,7 +257,7 @@ class ReportsForegroundTest {
         }
         runBlocking {
             api.send(
-                "POST",
+                HttpMethod.POST,
                 api.server.api("workspaces", workspace.toString(), "time_entries"),
                 body,
                 JsonObject.serializer(),

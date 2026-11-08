@@ -8,6 +8,7 @@ import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.components.accountRefresh
@@ -251,7 +252,7 @@ class ChangeQueueServerTest {
         val start = Instant.now().minus(3, ChronoUnit.HOURS).truncatedTo(ChronoUnit.HOURS)
         val entry = runBlocking {
             web.send(
-                "POST",
+                HttpMethod.POST,
                 web.server.api("workspaces", workspace.toString(), "time_entries"),
                 buildJsonObject {
                     put("workspace_id", workspace)
@@ -297,7 +298,7 @@ class ChangeQueueServerTest {
         val start = Instant.now().minus(1, ChronoUnit.HOURS).truncatedTo(ChronoUnit.SECONDS)
         val entry = runBlocking {
             web.send(
-                "POST",
+                HttpMethod.POST,
                 web.server.api("workspaces", workspace.toString(), "time_entries"),
                 buildJsonObject {
                     put("workspace_id", workspace)
@@ -614,7 +615,7 @@ class ChangeQueueServerTest {
         val stop = start.plus(Duration.ofMinutes(30))
         val source = runBlocking {
             web.send(
-                "POST",
+                HttpMethod.POST,
                 web.server.api("workspaces", workspace.toString(), "time_entries"),
                 buildJsonObject {
                     put("workspace_id", workspace)
@@ -700,7 +701,7 @@ class ChangeQueueServerTest {
     /** A timer the web app starts at [start], which may be in the future. */
     private fun startOnTheWeb(description: String, start: Instant): Long = runBlocking {
         web.send(
-            "POST",
+            HttpMethod.POST,
             web.server.api("workspaces", workspace.toString(), "time_entries"),
             buildJsonObject {
                 put("workspace_id", workspace)
@@ -716,7 +717,7 @@ class ChangeQueueServerTest {
     /** The web app's Stop: Tokkl's `PATCH .../stop`, which stops [entry] at the server's clock. */
     private fun stopOnTheWeb(entry: Long): JsonObject = runBlocking {
         web.send(
-            "PATCH",
+            HttpMethod.PATCH,
             web.server.api("workspaces", workspace.toString(), "time_entries", entry.toString(), "stop"),
             // OkHttp sends a PATCH only with a body. Tokkl reads none.
             JsonObject(emptyMap()),
@@ -727,7 +728,7 @@ class ChangeQueueServerTest {
     private fun tagOnTheWeb(name: String) {
         runBlocking {
             web.send(
-                "POST",
+                HttpMethod.POST,
                 web.server.api("workspaces", workspace.toString(), "tags"),
                 buildJsonObject { put("name", name) },
                 JsonObject.serializer(),
@@ -739,7 +740,7 @@ class ChangeQueueServerTest {
     private fun entryOnTheWeb(description: String, start: Instant, stop: Instant, tags: List<String>): Long =
         runBlocking {
             web.send(
-                "POST",
+                HttpMethod.POST,
                 web.server.api("workspaces", workspace.toString(), "time_entries"),
                 buildJsonObject {
                     put("workspace_id", workspace)
@@ -841,7 +842,7 @@ class ChangeQueueServerTest {
     private fun editOnTheWeb(entry: Long, description: String, billable: Boolean) {
         runBlocking {
             web.send(
-                "PUT",
+                HttpMethod.PUT,
                 web.server.api("workspaces", workspace.toString(), "time_entries", entry.toString()),
                 buildJsonObject {
                     put("description", description)

@@ -7,6 +7,7 @@ import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ApiError
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.appApiClient
@@ -183,7 +184,7 @@ class ChangeRejectionServerTest {
         }
         val newToken = runBlocking {
             web.send(
-                "POST",
+                HttpMethod.POST,
                 web.server.api("me", "reset_token"),
                 JsonObject(emptyMap()),
                 String.serializer(),

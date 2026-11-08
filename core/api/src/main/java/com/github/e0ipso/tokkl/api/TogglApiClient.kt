@@ -41,7 +41,7 @@ class TogglApiClient(
     private val sendingOnce: OkHttpClient by lazy { SharedHttpClient.sendingOnce(httpClient) }
 
     suspend fun <T> get(url: HttpUrl, deserializer: DeserializationStrategy<T>): ApiResult<T> =
-        send("GET", url, body = null, deserializer)
+        send(HttpMethod.GET, url, body = null, deserializer)
 
     /**
      * Sends [body] as JSON, or no body when it is null, and decodes the 2xx
@@ -57,7 +57,7 @@ class TogglApiClient(
      * [SharedHttpClient.sendingOnce], and the caller gets the failure.
      */
     suspend fun <T> send(
-        method: String,
+        method: HttpMethod,
         url: HttpUrl,
         body: JsonElement?,
         deserializer: DeserializationStrategy<T>,
@@ -73,7 +73,7 @@ class TogglApiClient(
      * neither is [ApiError.InvalidResponse]. Other statuses fail as in [send].
      */
     suspend fun <T> sendRefusable(
-        method: String,
+        method: HttpMethod,
         url: HttpUrl,
         body: JsonElement,
         deserializer: DeserializationStrategy<T>,
@@ -96,7 +96,7 @@ class TogglApiClient(
      * the next page of a detailed report starts at.
      */
     suspend fun <T> sendWithHeaders(
-        method: String,
+        method: HttpMethod,
         url: HttpUrl,
         body: JsonElement?,
         deserializer: DeserializationStrategy<T>,
@@ -115,7 +115,7 @@ class TogglApiClient(
      * [resend] works as in [send].
      */
     suspend fun sendNoContent(
-        method: String,
+        method: HttpMethod,
         url: HttpUrl,
         body: JsonElement? = null,
         resend: Boolean = true,
@@ -134,7 +134,7 @@ class TogglApiClient(
         cancellation: ApiCallCancellation,
     ): ApiResult<Long> {
         require(maxBytes > 0)
-        return execute("POST", url, body, resend = true, cancellation = cancellation) { response ->
+        return execute(HttpMethod.POST, url, body, resend = true, cancellation = cancellation) { response ->
             val content = response.body
             val type = content.contentType()
             val length = content.contentLength()
@@ -178,7 +178,14 @@ class TogglApiClient(
      * the call is cancelled, is [ApiError.Network]. Other statuses fail as in [send].
      */
     suspend fun <T> stream(url: HttpUrl, cancellation: ApiCallCancellation, read: (InputStream) -> T): ApiResult<T> =
-        execute("GET", url, body = null, resend = true, cancellation = cancellation, streaming = true) { response ->
+        execute(
+            HttpMethod.GET,
+            url,
+            body = null,
+            resend = true,
+            cancellation = cancellation,
+            streaming = true,
+        ) { response ->
             val type = response.body.contentType()
             if (type == null || type.type != "text" || type.subtype != "event-stream") {
                 ApiResult.Failure(ApiError.InvalidResponse(IllegalArgumentException("Expected an event stream")))
@@ -189,7 +196,7 @@ class TogglApiClient(
 
     @Suppress("LongParameterList")
     private suspend fun <T> execute(
-        method: String,
+        method: HttpMethod,
         url: HttpUrl,
         body: JsonElement?,
         resend: Boolean,
@@ -202,7 +209,7 @@ class TogglApiClient(
         val request = Request.Builder()
             .url(url)
             .header("Authorization", credentials.authorizationHeader)
-            .method(method, json)
+            .method(method.name, json)
             .apply { if (streaming) tag(StreamingRead::class.java, StreamingRead) }
             .build()
         val call = (if (resend) httpClient else sendingOnce).newCall(request)

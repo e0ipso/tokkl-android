@@ -13,6 +13,7 @@ import com.github.e0ipso.tokkl.BackgroundTrip
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklApplication
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.TimerPomodoro
 import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.awaitTimerPage
@@ -113,11 +114,11 @@ class TimerSyncServiceLifecycleTest {
             val service = await("the timer sync service runs", STREAM_CONNECT_MS) { app.timerSyncService }
             assertEquals(ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE, service.foregroundServiceType)
             val shown = await("the sync notification", FGS_NOTIFICATION_DEFERRAL_MS) {
-                notifications.activeNotifications.singleOrNull { it.id == TimerSyncNotification.ID }
+                notifications.activeNotifications.singleOrNull { it.id == SYNC_NOTIFICATION_ID }
             }
-            assertEquals(TimerSyncNotification.CHANNEL_ID, shown.notification.channelId)
+            assertEquals(SYNC_CHANNEL_ID, shown.notification.channelId)
             assertTrue("the sync notification stays", shown.isOngoing)
-            val channel = checkNotNull(notifications.getNotificationChannel(TimerSyncNotification.CHANNEL_ID))
+            val channel = checkNotNull(notifications.getNotificationChannel(SYNC_CHANNEL_ID))
             assertEquals(NotificationManager.IMPORTANCE_LOW, channel.importance)
             assertNull("the channel makes no sound", channel.sound)
             assertFalse("the channel does not vibrate", channel.shouldVibrate())
@@ -152,7 +153,7 @@ class TimerSyncServiceLifecycleTest {
         await("the timer sync service stops after $after", AT_ONCE_MS) { (app.timerSyncService == null).takeIf { it } }
         await("the notifications go after $after", AT_ONCE_MS) {
             notifications.activeNotifications
-                .none { it.id == TimerSyncNotification.ID || it.id == PomodoroSessionNotifier.NOTIFICATION_ID }
+                .none { it.id == SYNC_NOTIFICATION_ID || it.id == PomodoroSessionNotifier.NOTIFICATION_ID }
                 .takeIf { it }
         }
         await("the phase alarm goes after $after", AT_ONCE_MS) { (alarms.nextAlarmClock == null).takeIf { it } }
@@ -190,7 +191,7 @@ class TimerSyncServiceLifecycleTest {
         }
         val created = runBlocking {
             other.send(
-                "POST",
+                HttpMethod.POST,
                 other.server.api("workspaces", "$workspace", "time_entries"),
                 body,
                 JsonObject.serializer(),
@@ -216,7 +217,7 @@ class TimerSyncServiceLifecycleTest {
     private fun postTimer(vararg path: String, revision: Long? = null, body: JsonObject? = null): TimerState =
         runBlocking {
             other.send(
-                "POST",
+                HttpMethod.POST,
                 other.server.app(*path),
                 body ?: buildJsonObject { if (revision != null) put("revision", revision) },
                 TimerState.serializer(),
@@ -236,6 +237,13 @@ class TimerSyncServiceLifecycleTest {
          * notification, and the sync notification asks for no exception, so allow a little more.
          */
         const val FGS_NOTIFICATION_DEFERRAL_MS = 12_000L
+
+        /**
+         * The sync notification's id and channel. A channel's id outlives the app's updates, as the
+         * user's settings for it do, so it is spelled out here.
+         */
+        const val SYNC_NOTIFICATION_ID = 4
+        const val SYNC_CHANNEL_ID = "timer_sync"
 
         const val POLL_MS = 50L
     }

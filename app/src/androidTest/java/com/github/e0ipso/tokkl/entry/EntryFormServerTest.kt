@@ -48,6 +48,7 @@ import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklNavHost
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
@@ -520,7 +521,7 @@ class EntryFormServerTest {
         for ((index, case) in cases.withIndex()) {
             val changed = runBlocking {
                 web.send(
-                    "PUT",
+                    HttpMethod.PUT,
                     web.server.api("me"),
                     buildJsonObject { put("timezone", case[0]) },
                     JsonObject.serializer(),
@@ -623,7 +624,7 @@ class EntryFormServerTest {
         val fixtureStart = day.atTime(23, 31).atZone(MADRID).toInstant()
         val running = runBlocking {
             web.send(
-                "POST",
+                HttpMethod.POST,
                 web.server.api(
                     "workspaces",
                     workspace.toString(),
@@ -642,7 +643,7 @@ class EntryFormServerTest {
         val id = running.getValue("id").jsonPrimitive.long
         runBlocking {
             web.send(
-                "PATCH",
+                HttpMethod.PATCH,
                 web.server.api(
                     "workspaces",
                     workspace.toString(),
@@ -658,7 +659,7 @@ class EntryFormServerTest {
         }.orFail("stop fixture timer")
         val legacy = runBlocking {
             web.send(
-                "POST",
+                HttpMethod.POST,
                 web.server.app("time_entries", id.toString(), "restore"),
                 buildJsonObject {},
                 JsonObject.serializer(),
@@ -795,7 +796,7 @@ class EntryFormServerTest {
         }
         runBlocking {
             admin.send(
-                "PUT",
+                HttpMethod.PUT,
                 url,
                 buildJsonObject { put("time_resolution_minutes", minutes) },
                 JsonObject.serializer(),
@@ -966,7 +967,7 @@ class EntryFormServerTest {
 
     private fun createEntry(description: String, start: Instant, stop: Instant): Long = runBlocking {
         web.send(
-            "POST",
+            HttpMethod.POST,
             web.server.api("workspaces", workspace.toString(), "time_entries"),
             buildJsonObject {
                 put("workspace_id", workspace)
@@ -981,7 +982,7 @@ class EntryFormServerTest {
 
     private fun createProject(name: String): Long = runBlocking {
         web.send(
-            "POST",
+            HttpMethod.POST,
             web.server.api("workspaces", workspace.toString(), "projects"),
             buildJsonObject { put("name", name) },
             JsonObject.serializer(),

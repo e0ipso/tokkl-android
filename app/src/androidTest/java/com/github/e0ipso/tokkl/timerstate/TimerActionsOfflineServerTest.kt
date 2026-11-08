@@ -19,6 +19,7 @@ import com.github.e0ipso.tokkl.BackgroundTrip
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TimerActionToasts
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.awaitControls
 import com.github.e0ipso.tokkl.awaitPomodoroOffered
@@ -39,9 +40,8 @@ import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.pomodoro.PomodoroAction
 import com.github.e0ipso.tokkl.pomodoro.PomodoroLengths
 import com.github.e0ipso.tokkl.pomodoro.PomodoroProblem
-import com.github.e0ipso.tokkl.pomodoro.PomodoroRingingActionReceiver
-import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionActionReceiver
 import com.github.e0ipso.tokkl.pomodoro.PomodoroViewModel
+import com.github.e0ipso.tokkl.pomodoro.PomodoroWorkWaits
 import com.github.e0ipso.tokkl.pomodoro.pomodoroAlarmIntent
 import com.github.e0ipso.tokkl.timer.TimerAcceptanceFixture
 import com.github.e0ipso.tokkl.widget.NativeWidget
@@ -65,8 +65,6 @@ import org.junit.rules.RuleChain
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 import com.github.e0ipso.tokkl.feature.notification.R as NotificationR
 import com.github.e0ipso.tokkl.feature.pomodoro.R as PomodoroR
 import com.github.e0ipso.tokkl.feature.timer.R as TimerR
@@ -105,8 +103,6 @@ class TimerActionsOfflineServerTest {
 
     @After
     fun cleanup() {
-        PomodoroSessionActionReceiver.completed = null
-        PomodoroRingingActionReceiver.completed = null
         try {
             TimerSurfaces.closeAlarms()
             AirplaneMode.set(false, fixture.account.client)
@@ -353,7 +349,7 @@ class TimerActionsOfflineServerTest {
         val workspace = fixture.account.workspaceId
         return runBlocking {
             other.send(
-                "POST",
+                HttpMethod.POST,
                 other.server.api("workspaces", "$workspace", "time_entries"),
                 buildJsonObject {
                     put("workspace_id", workspace)
@@ -415,27 +411,11 @@ class TimerActionsOfflineServerTest {
         }
     }
 
-    private fun sessionAction(what: String, action: () -> Unit) {
-        val done = CountDownLatch(1)
-        PomodoroSessionActionReceiver.completed = done
-        try {
-            toast(what, action)
-            assertTrue("$what finished", done.await(15, TimeUnit.SECONDS))
-        } finally {
-            PomodoroSessionActionReceiver.completed = null
-        }
-    }
+    private fun sessionAction(what: String, action: () -> Unit) =
+        PomodoroWorkWaits.sessionButtons(1, what = what) { toast(what, action) }
 
-    private fun ringAction(what: String, action: () -> Unit) {
-        val done = CountDownLatch(1)
-        PomodoroRingingActionReceiver.completed = done
-        try {
-            toast(what, action)
-            assertTrue("$what finished", done.await(15, TimeUnit.SECONDS))
-        } finally {
-            PomodoroRingingActionReceiver.completed = null
-        }
-    }
+    private fun ringAction(what: String, action: () -> Unit) =
+        PomodoroWorkWaits.ringingButtons(1, seconds = 15, what = what) { toast(what, action) }
 
     /**
      * Opens a new full-screen alarm for [phase], taps [label] on it and waits until it says the
@@ -476,7 +456,7 @@ class TimerActionsOfflineServerTest {
     /** A timer action from the other device, which must succeed. */
     private fun postTimer(vararg path: String, revision: Long? = null): TimerState = runBlocking {
         other.send(
-            "POST",
+            HttpMethod.POST,
             other.server.app(*path),
             buildJsonObject { if (revision != null) put("revision", revision) },
             TimerState.serializer(),

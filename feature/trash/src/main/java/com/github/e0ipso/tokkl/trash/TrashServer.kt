@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.trash
 
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.api.TrashEntry
 import kotlinx.serialization.Serializable
@@ -25,18 +26,27 @@ class TrashServer(private val api: TogglApiClient) {
 
     /** Puts entry [id] back among the time entries. Tokkl answers with the entry. */
     suspend fun restore(id: Long): ApiResult<Unit> = // OkHttp sends a POST only with a body. Tokkl reads none.
-        api.sendNoContent("POST", api.server.app("time_entries", id.toString(), "restore"), JsonObject(emptyMap()))
+        api.sendNoContent(
+            HttpMethod.POST,
+            api.server.app("time_entries", id.toString(), "restore"),
+            JsonObject(emptyMap()),
+        )
 
     /** Deletes entry [id] for good. A 404 means it is no longer in the trash. */
     suspend fun purge(id: Long): ApiResult<Purged> = api.send(
-        "DELETE",
+        HttpMethod.DELETE,
         api.server.app("trash", id.toString()),
         null,
         Purged.serializer(),
     )
 
     /** Deletes every entry in the trash for good. */
-    suspend fun purgeAll(): ApiResult<Purged> = api.send("DELETE", api.server.app("trash"), null, Purged.serializer())
+    suspend fun purgeAll(): ApiResult<Purged> = api.send(
+        HttpMethod.DELETE,
+        api.server.app("trash"),
+        null,
+        Purged.serializer(),
+    )
 
     companion object {
         /** Tokkl lists no more than this many deleted entries. */

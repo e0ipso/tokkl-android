@@ -24,6 +24,7 @@ internal fun pomodoroAlarmAudioAttributes(): AudioAttributes = AudioAttributes.B
 internal val POMODORO_VIBRATION_PATTERN: List<Long> = listOf(0L, 700L, 300L, 700L, 1_300L)
 internal const val POMODORO_VIBRATION_REPEAT = 0
 
+// Public for the app's device tests, which check that each sound has its own file.
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 fun PomodoroSound.rawResource(): Int = when (this) {
     PomodoroSound.WORK_TO_SHORT_REST -> R.raw.pomodoro_work_to_short_rest
@@ -32,7 +33,10 @@ fun PomodoroSound.rawResource(): Int = when (this) {
     PomodoroSound.LONG_REST_TO_WORK -> R.raw.pomodoro_long_rest_to_work
 }
 
-/** Main-thread-only framework output. A foreground service owns its entire lifetime. */
+/**
+ * Main-thread-only framework output. A foreground service owns its entire lifetime. Public for the
+ * app's device tests, which observe the player and the vibrator through it.
+ */
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 class AndroidPomodoroRingOutput(
     private val service: PomodoroRingingService,
@@ -103,7 +107,6 @@ class AndroidPomodoroRingOutput(
         }
     }
 
-    @Suppress("DEPRECATION")
     override fun vibrate() {
         val effect = VibrationEffect.createWaveform(POMODORO_VIBRATION_PATTERN.toLongArray(), POMODORO_VIBRATION_REPEAT)
         // API 31/32 accepts AudioAttributes; API 33+ has the equivalent VibrationAttributes.
@@ -114,6 +117,8 @@ class AndroidPomodoroRingOutput(
             vibrator.vibrate(effect, attributes)
             vibrationUsage = attributes.usage
         } else {
+            // The only overload with alarm usage before API 33, deprecated there for the one above.
+            @Suppress("DEPRECATION")
             vibrator.vibrate(effect, audioAttributes)
             // The legacy alarm AudioAttributes map to the platform alarm vibration usage.
             vibrationUsage = VibrationAttributes.USAGE_ALARM

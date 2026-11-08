@@ -17,6 +17,7 @@ import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createEmptyComposeRule
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.components.accountRefresh
@@ -275,7 +276,7 @@ class PomodoroDefaultsServerTest {
     private fun setOnTheServer(body: JsonObject) {
         runBlocking {
             account.client.send(
-                "POST",
+                HttpMethod.POST,
                 account.client.server.api("me", "preferences"),
                 body,
                 JsonObject.serializer(),

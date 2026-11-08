@@ -39,6 +39,7 @@ import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.awaitTimerPage
@@ -317,7 +318,7 @@ class TimerServerTest {
             app.followNoTimerEvents()
             val fromTheWeb = runBlocking {
                 web.send(
-                    "POST",
+                    HttpMethod.POST,
                     web.server.api("workspaces", workspace.toString(), "time_entries"),
                     buildJsonObject {
                         put("workspace_id", workspace)
@@ -409,7 +410,7 @@ class TimerServerTest {
 
     private fun createProject(name: String): Long = runBlocking {
         web.send(
-            "POST",
+            HttpMethod.POST,
             web.server.api("workspaces", workspace.toString(), "projects"),
             buildJsonObject { put("name", name) },
             JsonObject.serializer(),

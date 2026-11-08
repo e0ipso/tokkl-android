@@ -4,6 +4,7 @@ import android.database.sqlite.SQLiteException
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.capabilities.CapabilityCheck
@@ -434,7 +435,14 @@ class ChangeSender(
         val api = client() ?: return UndoOutcome.NeedsServer
         val url = api.server.app("time_entries", serverId.toString(), "restore")
         // OkHttp sends a POST only with a body. Tokkl reads none.
-        return when (val result = api.send("POST", url, JsonObject(emptyMap()), ServerTimeEntry.serializer())) {
+        return when (
+            val result = api.send(
+                HttpMethod.POST,
+                url,
+                JsonObject(emptyMap()),
+                ServerTimeEntry.serializer(),
+            )
+        ) {
             is ApiResult.Success -> {
                 store.restored(serverId, result.value.toCached())
                 UndoOutcome.Restored

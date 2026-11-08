@@ -22,12 +22,14 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.android.ext.android.inject
-import java.util.concurrent.CountDownLatch
 
 /**
  * The ringing service as [PomodoroPhaseAlarm] drives it. Stop releases both outputs on the main
  * thread before returning, including when the phone has no network. A queued service start still
  * checks the held phase before it plays.
+ *
+ * It, [service], [state] and [PomodoroRingingState] are public for the app's device tests, which
+ * observe the ring through them.
  */
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 class ServicePomodoroRinging(private val context: Context) :
@@ -111,12 +113,13 @@ data class PomodoroRingingState(
 class PomodoroRingingService : Service() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val ringing: ServicePomodoroRinging by inject()
-    private val pomodoroAlarm: PomodoroPhaseAlarm by inject()
+    private val ringCheck: PomodoroRingCheck by inject()
 
     // These three need the service as a Context, which Android attaches only just before
     // onCreate, and onCreate makes them in this order before anything reads them.
     private lateinit var notifier: PomodoroRingingNotifier
 
+    // Public for the app's device tests, as [current] is.
     @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
     lateinit var output: AndroidPomodoroRingOutput
         private set
@@ -139,7 +142,6 @@ class PomodoroRingingService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val done = processed
         val expected = intent?.phaseKey()
         if (!promoted) {
             // The session notification shares the id. Android opens a full-screen intent only for
@@ -151,19 +153,14 @@ class PomodoroRingingService : Service() {
         promote(notifier.build(current, current?.phase ?: expected))
         if (intent != null && (intent.action != ServicePomodoroRinging.START || expected == null)) {
             if (current == null) finishRinging(startId)
-            done?.countDown()
             return START_NOT_STICKY
         }
         scope.launch {
-            try {
-                val valid = pomodoroAlarm.withRingingPhase(expected) { ring ->
-                    withContext(Dispatchers.Main.immediate) { controller.start(ring) }
-                }
-                // An old start must neither play nor stop a newer valid ring.
-                if (!valid && current == null) finishRinging(startId)
-            } finally {
-                done?.countDown()
+            val valid = ringCheck.withRingingPhase(expected) { ring ->
+                withContext(Dispatchers.Main.immediate) { controller.start(ring) }
             }
+            // An old start must neither play nor stop a newer valid ring.
+            if (!valid && current == null) finishRinging(startId)
         }
         return START_STICKY
     }
@@ -196,13 +193,6 @@ class PomodoroRingingService : Service() {
     internal fun finishRinging(startId: Int? = null) {
         controller.stop()
         if (startId == null) stopSelf() else stopSelfResult(startId)
-    }
-
-    companion object {
-        /** Device tests await intent validation. Production leaves this null. */
-        @Volatile
-        @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-        var processed: CountDownLatch? = null
     }
 
     override fun onBind(intent: Intent?): IBinder? = null

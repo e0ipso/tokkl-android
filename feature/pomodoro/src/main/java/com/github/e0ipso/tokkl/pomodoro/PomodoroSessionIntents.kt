@@ -2,12 +2,10 @@ package com.github.e0ipso.tokkl.pomodoro
 
 import android.content.Context
 import android.content.Intent
-import androidx.annotation.VisibleForTesting
 import com.github.e0ipso.tokkl.platform.mainActivityIntent
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-const val SHOW_POMODORO = "com.github.e0ipso.tokkl.action.SHOW_POMODORO_SESSION"
+internal const val SHOW_POMODORO = "com.github.e0ipso.tokkl.action.SHOW_POMODORO_SESSION"
 internal const val POMODORO_NOTIFICATION_ACCOUNT = "pomodoro_notification_account"
 
 /**

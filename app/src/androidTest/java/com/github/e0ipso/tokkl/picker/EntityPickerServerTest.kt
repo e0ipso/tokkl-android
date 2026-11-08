@@ -34,6 +34,7 @@ import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.components.accountRefresh
@@ -351,7 +352,7 @@ class EntityPickerServerTest {
 
         private fun update(path: String, body: JsonObject) {
             val url = api.server.api("workspaces", workspace.toString(), *path.split('/').toTypedArray())
-            runBlocking { api.send("PUT", url, body, JsonObject.serializer()) }.orFail("PUT $path")
+            runBlocking { api.send(HttpMethod.PUT, url, body, JsonObject.serializer()) }.orFail("PUT $path")
         }
 
         /** POSTs [body] to a workspace collection such as `clients` and returns the new id. */
@@ -359,7 +360,7 @@ class EntityPickerServerTest {
             val url = api.server.api("workspaces", workspace.toString(), *collection.split('/').toTypedArray())
             return runBlocking {
                 api.send(
-                    "POST",
+                    HttpMethod.POST,
                     url,
                     body,
                     JsonObject.serializer(),

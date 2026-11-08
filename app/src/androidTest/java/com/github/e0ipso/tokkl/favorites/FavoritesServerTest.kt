@@ -27,6 +27,7 @@ import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.awaitTimerPage
@@ -365,7 +366,7 @@ class FavoritesServerTest {
     private fun saveOnTheWeb(json: String) {
         runBlocking {
             web.send(
-                "POST",
+                HttpMethod.POST,
                 web.server.api("me", "preferences"),
                 Json.parseToJsonElement(json),
                 JsonElement.serializer(),
@@ -381,7 +382,7 @@ class FavoritesServerTest {
 
     private fun createProject(name: String): Long = runBlocking {
         web.send(
-            "POST",
+            HttpMethod.POST,
             web.server.api("workspaces", workspace.toString(), "projects"),
             buildJsonObject { put("name", name) },
             JsonObject.serializer(),
@@ -393,7 +394,7 @@ class FavoritesServerTest {
         val stop = Instant.now().truncatedTo(ChronoUnit.MINUTES).minus(1, ChronoUnit.HOURS)
         runBlocking {
             web.send(
-                "POST",
+                HttpMethod.POST,
                 web.server.api("workspaces", workspace.toString(), "time_entries"),
                 buildJsonObject {
                     put("workspace_id", workspace)

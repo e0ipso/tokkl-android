@@ -63,7 +63,7 @@ class TogglApiClientTest {
 
         run {
             client.send(
-                "POST",
+                HttpMethod.POST,
                 client.server.reports("workspace", "1", "search", "time_entries"),
                 body,
                 Me.serializer(),
@@ -147,7 +147,7 @@ class TogglApiClientTest {
 
         val result = run {
             client.sendNoContent(
-                "DELETE",
+                HttpMethod.DELETE,
                 client.server.api("workspaces", "1", "time_entries", "2"),
             )
         }
@@ -163,7 +163,7 @@ class TogglApiClientTest {
     fun noContentCallSucceedsOn204() = runTest {
         server.enqueue(MockResponse.Builder().code(204).build())
 
-        assertEquals(ApiResult.Success(Unit), run { client.sendNoContent("DELETE", client.server.api("me")) })
+        assertEquals(ApiResult.Success(Unit), run { client.sendNoContent(HttpMethod.DELETE, client.server.api("me")) })
     }
 
     @Test
@@ -173,12 +173,12 @@ class TogglApiClientTest {
         server.enqueue(json(404, "\"Not found\""))
         val url = client.server.api("workspaces", "1", "time_entries", "2")
 
-        assertEquals(ApiError.AuthFailed, failure(run { client.sendNoContent("DELETE", url) }))
-        assertEquals(ApiError.RateLimited(5), failure(run { client.sendNoContent("DELETE", url) }))
+        assertEquals(ApiError.AuthFailed, failure(run { client.sendNoContent(HttpMethod.DELETE, url) }))
+        assertEquals(ApiError.RateLimited(5), failure(run { client.sendNoContent(HttpMethod.DELETE, url) }))
         // The body is a JSON string, so the error carries it as the server's reason.
         assertEquals(
             ApiError.UnexpectedStatus(404, "Not found"),
-            failure(run { client.sendNoContent("DELETE", url) }),
+            failure(run { client.sendNoContent(HttpMethod.DELETE, url) }),
         )
     }
 
@@ -187,7 +187,7 @@ class TogglApiClientTest {
         val url = serverUrl()
         server.close()
 
-        val error = failure(run { testApi.client(url, credentials).sendNoContent("DELETE", url.api("me")) })
+        val error = failure(run { testApi.client(url, credentials).sendNoContent(HttpMethod.DELETE, url.api("me")) })
 
         assertTrue(error.toString(), error is ApiError.Network)
     }
@@ -240,7 +240,7 @@ class TogglApiClientTest {
         run { counting.get(counting.server.api("me"), Me.serializer()) }
         run { counting.get(counting.server.api("me"), Me.serializer()) }
         assertEquals("after a 500 and a 403", 1, successes)
-        run { counting.sendNoContent("DELETE", counting.server.api("me")) }
+        run { counting.sendNoContent(HttpMethod.DELETE, counting.server.api("me")) }
         assertEquals("after a 204", 2, successes)
     }
 

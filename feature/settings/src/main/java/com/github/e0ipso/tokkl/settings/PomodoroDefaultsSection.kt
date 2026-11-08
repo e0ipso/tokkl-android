@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.settings
 
 import androidx.annotation.StringRes
-import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -131,8 +130,8 @@ internal fun ColumnScope.PomodoroDefaultsSection(
     }
 }
 
+/** The field's label in Settings' editor of the Pomodoro defaults. */
 @get:StringRes
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 val PomodoroDefaultField.label: Int get() = when (this) {
     PomodoroDefaultField.WORK -> R.string.pomodoro_work_minutes
     PomodoroDefaultField.SHORT_REST -> R.string.pomodoro_short_rest_minutes
@@ -142,7 +141,6 @@ val PomodoroDefaultField.label: Int get() = when (this) {
 
 /** The short label on the field's stepper card, as the Pomodoro page's length cards have it. */
 @get:StringRes
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 val PomodoroDefaultField.cardLabel: Int get() = when (this) {
     PomodoroDefaultField.WORK -> UiR.string.pomodoro_card_work
     PomodoroDefaultField.SHORT_REST -> UiR.string.pomodoro_card_short_rest

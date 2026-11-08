@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.reports
 
-import androidx.annotation.VisibleForTesting
 import com.github.e0ipso.tokkl.feature.reports.R
 import com.github.e0ipso.tokkl.time.jsShortestDecimal
 import com.github.e0ipso.tokkl.ui.DateWords
@@ -34,7 +33,6 @@ internal fun sharePercent(part: Long, whole: Long): String {
  * accepts every three-letter code and returns numeric code 0 when the code is absent from
  * the ISO table. Both mean the code is unknown.
  */
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 fun formatMoney(cents: Long, currency: String, locale: Locale): String {
     val amount = BigDecimal.valueOf(cents, 2)
     val known = try {
@@ -58,7 +56,6 @@ fun formatMoney(cents: Long, currency: String, locale: Locale): String {
  * The range as formatRange writes it, such as `13 Oct to 19 Oct`. A year shows where the
  * range spans two years, and on both ends when it lies in another year than [today].
  */
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 fun DateWords.range(range: ReportRange, today: LocalDate): String {
     val sameYear = range.from.year == range.to.year
     val showYear = !sameYear || range.from.year != today.year
@@ -68,7 +65,6 @@ fun DateWords.range(range: ReportRange, today: LocalDate): String {
 }
 
 /** A bar's label: `Mon 13 Oct` for a day, `Week of 13 Oct` for a week, `Oct 2026` for a month. */
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 fun DateWords.bucket(start: LocalDate, resolution: Resolution): String = when (resolution) {
     Resolution.DAY -> resources.getString(UiR.string.reports_bucket_day, weekday(start), short(start))
     Resolution.WEEK -> resources.getString(R.string.reports_bucket_week, short(start))

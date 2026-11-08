@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.reports
 
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.HttpStatus
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.api.WithHeaders
@@ -79,7 +80,7 @@ class ReportsServer(private val api: TogglApiClient) {
             }
             when (
                 val answer = api.send(
-                    "POST",
+                    HttpMethod.POST,
                     api.server.app("report"),
                     body,
                     kotlinx.serialization.json.JsonObject.serializer(),
@@ -186,7 +187,7 @@ class ReportsServer(private val api: TogglApiClient) {
             put("rounding_minutes", workspace.roundingMinutes)
             filters.writeTo(this)
         }
-        val rows = when (val answer = api.send("POST", url, body, WEEKLY_ROWS)) {
+        val rows = when (val answer = api.send(HttpMethod.POST, url, body, WEEKLY_ROWS)) {
             is ApiResult.Success -> answer.value
             is ApiResult.Failure -> return answer
         }
@@ -231,7 +232,7 @@ class ReportsServer(private val api: TogglApiClient) {
             put("first_row_number", firstRow)
             filters.writeTo(this)
         }
-        return api.sendWithHeaders("POST", url, body, ROWS)
+        return api.sendWithHeaders(HttpMethod.POST, url, body, ROWS)
     }
 
     /**

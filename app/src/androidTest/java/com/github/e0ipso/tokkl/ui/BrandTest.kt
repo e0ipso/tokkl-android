@@ -99,7 +99,7 @@ class BrandTest {
     fun aRowWideEnoughKeepsTheWordmarkAtItsWidth() {
         show(width = 400.dp)
 
-        assertEquals(BrandSize.LARGE.wordmarkWidth.value, wordmarkBounds().let { it.right - it.left }.value, PIXEL_DP)
+        assertEquals(wordmarkWidth(BrandSize.LARGE), wordmarkBounds().let { it.right - it.left }.value, PIXEL_DP)
     }
 
     @Test
@@ -148,7 +148,7 @@ class BrandTest {
             val wordmark = wordmarkBounds()
             assertEquals(
                 "the $each wordmark's width",
-                each.wordmarkWidth.value,
+                wordmarkWidth(each),
                 (wordmark.right - wordmark.left).value,
                 PIXEL_DP,
             )
@@ -215,6 +215,11 @@ class BrandTest {
     }
 
     private enum class Look { DARK, LIGHT, ON_MARKER }
+
+    /** Each size's wordmark width in dp, as Brand.tsx has it. */
+    private fun wordmarkWidth(size: BrandSize): Float = when (size) {
+        BrandSize.LARGE -> 260f
+    }
 
     private companion object {
         const val FRAME = "frame"

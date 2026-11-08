@@ -38,8 +38,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.time.Duration
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -84,8 +82,6 @@ class PomodoroRingingServiceTest {
     @After
     fun removeFixturesAndRestoreDeviceState() {
         try {
-            PomodoroRingingActionReceiver.completed = null
-            PomodoroRingingService.processed = null
             HeldPhases.holdNoSession()
             awaitStopped()
             awaitSessionNotifications(0)
@@ -242,23 +238,22 @@ class PomodoroRingingServiceTest {
 
     @Test
     fun duplicateDeliveryAndStaleServiceIntentsCannotReplaceTheCurrentRing() {
-        val old = HeldPhases.key(seedDuePhase())
-        val original = awaitPlaying()
-        runBlocking { app.pomodoroAlarm.onAlarm(old) }
-        assertEquals(original.audioSessionId, app.pomodoroRinging.state.value.audioSessionId)
-        val stale = PomodoroPhaseKey(old.start.minusSeconds(1))
-        val processed = CountDownLatch(1)
-        PomodoroRingingService.processed = processed
-        try {
-            context.startForegroundService(
-                Intent(
-                    context,
-                    PomodoroRingingService::class.java,
-                ).setAction(ServicePomodoroRinging.START).putPhase(stale),
-            )
-            assertTrue("stale start was not processed", processed.await(10, TimeUnit.SECONDS))
-        } finally {
-            PomodoroRingingService.processed = null
+        // Counting from before the service starts, so the service resolves the counting check.
+        val (old, original) = PomodoroWorkWaits.RingChecks().use { checks ->
+            val old = HeldPhases.key(seedDuePhase())
+            val original = awaitPlaying()
+            runBlocking { app.pomodoroAlarm.onAlarm(old) }
+            assertEquals(original.audioSessionId, app.pomodoroRinging.state.value.audioSessionId)
+            val stale = PomodoroPhaseKey(old.start.minusSeconds(1))
+            checks.awaitOne("stale start") {
+                context.startForegroundService(
+                    Intent(
+                        context,
+                        PomodoroRingingService::class.java,
+                    ).setAction(ServicePomodoroRinging.START).putPhase(stale),
+                )
+            }
+            old to original
         }
         onMain {
             val current = checkNotNull(app.pomodoroRinging.service)
@@ -313,16 +308,7 @@ class PomodoroRingingServiceTest {
         device.pressHome()
     }
 
-    private fun awaitActions(count: Int, send: () -> Unit) {
-        val done = CountDownLatch(count)
-        PomodoroRingingActionReceiver.completed = done
-        try {
-            send()
-            assertTrue("notification action did not finish", done.await(10, TimeUnit.SECONDS))
-        } finally {
-            PomodoroRingingActionReceiver.completed = null
-        }
-    }
+    private fun awaitActions(count: Int, send: () -> Unit) = PomodoroWorkWaits.ringingButtons(count, send = send)
 
     /**
      * Holds a [transition] phase whose planned end passed 65 s ago. The held state arms its alarm

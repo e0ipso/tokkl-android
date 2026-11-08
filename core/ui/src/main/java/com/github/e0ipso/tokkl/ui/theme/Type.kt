@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.ui.theme
 
-import androidx.annotation.VisibleForTesting
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
@@ -12,8 +11,7 @@ import androidx.compose.ui.unit.sp
 import com.github.e0ipso.tokkl.core.ui.R
 
 /** The width every Anybody role uses: `font-stretch: 85%` on the display-face rule in styles.css. */
-@VisibleForTesting
-const val ANYBODY_WIDTH = 85f
+private const val ANYBODY_WIDTH = 85f
 
 /**
  * Anybody, Tokkl's display face (docs/PRD.md, Visual direction, Type), from the variable font in

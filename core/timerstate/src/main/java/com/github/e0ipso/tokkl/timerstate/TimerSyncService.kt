@@ -12,7 +12,6 @@ import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
 import android.os.SystemClock
-import androidx.annotation.VisibleForTesting
 import com.github.e0ipso.tokkl.core.timerstate.R
 import com.github.e0ipso.tokkl.platform.DefaultNetwork
 import com.github.e0ipso.tokkl.platform.IoDispatcher
@@ -154,8 +153,7 @@ class TimerSyncService : Service() {
 }
 
 /** The timer sync service's notification: silent, low importance, on its own channel. */
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-object TimerSyncNotification {
+internal object TimerSyncNotification {
 
     /** After the running timer (1), the reminder (2) and the Pomodoro session and alarm (3). */
     const val ID = 4

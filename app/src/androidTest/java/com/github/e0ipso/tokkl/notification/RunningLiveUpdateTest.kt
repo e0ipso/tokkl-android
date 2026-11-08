@@ -63,7 +63,7 @@ class RunningLiveUpdateTest {
     fun theRequestMeetsEveryPromotionRequirement() {
         // Exercise the request even on an Android 16 release that declines Live Updates.
         val notification = notifier.build(content, requestPromotion = true)
-        assertTrue(notification.extras.getBoolean(RunningNotifier.REQUEST_PROMOTED_ONGOING))
+        assertTrue(notification.extras.getBoolean(Notification.EXTRA_REQUEST_PROMOTED_ONGOING))
         if (Build.VERSION.SDK_INT_FULL >= Build.VERSION_CODES_FULL.BAKLAVA_1) {
             assertTrue("current platform promotion characteristics", notification.hasPromotableCharacteristics())
         } else {
@@ -96,13 +96,13 @@ class RunningLiveUpdateTest {
         val notification = RunningNotifications.awaitShown(
             "the Live Update request or its regular fallback",
         ).notification
-        assertEquals(allowed, notification.extras.getBoolean(RunningNotifier.REQUEST_PROMOTED_ONGOING))
+        assertEquals(allowed, notification.extras.getBoolean(Notification.EXTRA_REQUEST_PROMOTED_ONGOING))
         assertRegularContent(notification)
         assertFalse("never colorized", notification.extras.getBoolean(Notification.EXTRA_COLORIZED))
         val promoted = notification.flags and Notification.FLAG_PROMOTED_ONGOING != 0
         println(
             "Live Update on API ${Build.VERSION.SDK_INT}: allowed=$allowed, requested=${notification.extras.getBoolean(
-                RunningNotifier.REQUEST_PROMOTED_ONGOING,
+                Notification.EXTRA_REQUEST_PROMOTED_ONGOING,
             )}, promoted=$promoted",
         )
         if (promoted) assertTrue("only the system promotes it when allowed", allowed)
@@ -112,7 +112,7 @@ class RunningLiveUpdateTest {
     fun aDeclinedRequestStillPostsTheRegularNotificationWithItsClockAndStop() {
         manager.notify(RunningNotifier.NOTIFICATION_ID, notifier.build(content, requestPromotion = false))
         val notification = RunningNotifications.awaitShown("the regular fallback").notification
-        assertFalse(notification.extras.getBoolean(RunningNotifier.REQUEST_PROMOTED_ONGOING))
+        assertFalse(notification.extras.getBoolean(Notification.EXTRA_REQUEST_PROMOTED_ONGOING))
         assertFalse(notification.extras.getBoolean(Notification.EXTRA_COLORIZED))
         assertEquals("the fallback's accent is unchanged", Notification.COLOR_DEFAULT, notification.color)
         assertRegularContent(notification)
@@ -122,7 +122,7 @@ class RunningLiveUpdateTest {
     @SdkSuppress(maxSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM)
     fun belowAndroid16NoPromotionRequestOrColorIsAdded() {
         val notification = notifier.build(content, requestPromotion = true)
-        assertFalse(notification.extras.containsKey(RunningNotifier.REQUEST_PROMOTED_ONGOING))
+        assertFalse(notification.extras.containsKey(Notification.EXTRA_REQUEST_PROMOTED_ONGOING))
         assertEquals(Notification.COLOR_DEFAULT, notification.color)
         assertRegularContent(notification)
     }
@@ -133,7 +133,7 @@ class RunningLiveUpdateTest {
         val notification = notifier.build(paused, requestPromotion = true)
 
         assertFalse("it can be swiped away", notification.flags and Notification.FLAG_ONGOING_EVENT != 0)
-        assertFalse(notification.extras.containsKey(RunningNotifier.REQUEST_PROMOTED_ONGOING))
+        assertFalse(notification.extras.containsKey(Notification.EXTRA_REQUEST_PROMOTED_ONGOING))
         assertFalse("no clock ticks", notification.extras.getBoolean(Notification.EXTRA_SHOW_CHRONOMETER))
         assertFalse(notification.extras.getBoolean(Notification.EXTRA_SHOW_WHEN))
         assertEquals(

@@ -22,6 +22,7 @@ import androidx.core.view.WindowCompat
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.SessionRule
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.PhaseKind
 import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.components.cache
@@ -71,7 +72,7 @@ class PomodoroPageServerTest {
         val client = fixture.account.client
         runBlocking {
             client.send(
-                "POST",
+                HttpMethod.POST,
                 client.server.api("me", "preferences"),
                 buildJsonObject {
                     put("pomodoro_focus_interval_in_minutes", 40)
@@ -152,7 +153,7 @@ class PomodoroPageServerTest {
         val client = fixture.account.client
         runBlocking {
             client.send(
-                "POST",
+                HttpMethod.POST,
                 client.server.app("pomodoro", "next"),
                 buildJsonObject { put("revision", drawn.revision) },
                 TimerState.serializer(),

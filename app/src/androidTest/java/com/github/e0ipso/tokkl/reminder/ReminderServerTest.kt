@@ -15,6 +15,7 @@ import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TimerActionToasts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
@@ -277,7 +278,7 @@ class ReminderServerTest {
         assertTrue(ReminderStore(context).load()!!.shared)
         runBlocking {
             account.client.send(
-                "POST",
+                HttpMethod.POST,
                 account.client.server.api("me", "preferences"),
                 buildJsonObject {
                     put(ReminderPreferences.ENABLED_KEY, false)

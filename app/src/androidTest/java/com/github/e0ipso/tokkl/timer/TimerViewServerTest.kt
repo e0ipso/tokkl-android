@@ -17,6 +17,7 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.feature.timer.R
@@ -168,7 +169,7 @@ class TimerViewServerTest {
     private fun setOnTheServer(view: String) {
         runBlocking {
             account.client.send(
-                "POST",
+                HttpMethod.POST,
                 account.client.server.api("me", "preferences"),
                 buildJsonObject { put("timerView", view) },
                 JsonObject.serializer(),

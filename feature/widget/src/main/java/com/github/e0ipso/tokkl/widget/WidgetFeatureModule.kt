@@ -30,7 +30,17 @@ val widgetFeatureModule = module {
     } binds arrayOf(HeldFieldsMemory::class, AccountDataOwner::class)
 
     single {
-        WidgetStateSource(androidApplication(), get(), get(), get(), get(), get(), get(), clock = get(), io = io())
+        WidgetStateSource(
+            application = androidApplication(),
+            cache = get(),
+            database = get(),
+            accountSettings = get(),
+            capabilities = get(),
+            timerControls = get(),
+            workManager = get(),
+            clock = get(),
+            io = io(),
+        )
     }
     single(TimerWidgetQualifier) { WidgetStore(androidContext()) }
 
@@ -49,15 +59,15 @@ val widgetFeatureModule = module {
 
     single {
         PomodoroWidgetStateSource(
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
+            fields = get(),
+            held = get(),
+            timerStates = get(),
+            cache = get(),
+            ringing = get(),
+            capabilities = get(),
+            accountSettings = get(),
+            pomodoroDefaults = get(),
+            session = get(),
             clock = get(),
             io = io(),
         )

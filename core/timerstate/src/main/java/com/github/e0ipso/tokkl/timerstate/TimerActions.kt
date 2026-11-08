@@ -4,6 +4,7 @@ import androidx.annotation.StringRes
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.Refusable
 import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.api.TogglApiClient
@@ -84,7 +85,7 @@ class TimerActions(
     override suspend fun endSession(revision: Long): TimerActionResult = post(revisioned(revision), "pomodoro", "end")
 
     private suspend fun post(body: JsonObject, vararg path: String): TimerActionResult = call { api ->
-        api.sendRefusable("POST", api.server.app(*path), body, TimerState.serializer())
+        api.sendRefusable(HttpMethod.POST, api.server.app(*path), body, TimerState.serializer())
     }
 
     // A tap's action reaches the server and its answer reaches the holder also when the caller is

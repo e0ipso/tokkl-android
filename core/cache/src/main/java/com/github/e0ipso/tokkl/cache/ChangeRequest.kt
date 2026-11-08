@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.cache
 
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.ServerUrl
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonNull
@@ -11,7 +12,7 @@ import okhttp3.HttpUrl
 import java.time.temporal.ChronoUnit
 
 /** One change as an HTTP request. */
-internal class ChangeRequest(val method: String, val url: HttpUrl, val body: JsonObject?)
+internal class ChangeRequest(val method: HttpMethod, val url: HttpUrl, val body: JsonObject?)
 
 /** What the app names itself as in a created entry's `created_with`, which Toggl requires. */
 const val CREATED_WITH = "Tokkl for Android"
@@ -35,16 +36,16 @@ internal fun PendingChange.request(server: ServerUrl, allDay: Boolean = false): 
         ).build()
     }
     return when (kind) {
-        ChangeKind.CREATE -> ChangeRequest("POST", url, body(allDay))
+        ChangeKind.CREATE -> ChangeRequest(HttpMethod.POST, url, body(allDay))
 
-        ChangeKind.UPDATE -> ChangeRequest("PUT", url, body(allDay))
+        ChangeKind.UPDATE -> ChangeRequest(HttpMethod.PUT, url, body(allDay))
 
         // A legacy stop ends a running entry, which is never a no-time one.
         ChangeKind.STOP -> if (capturedStop == null) {
-            ChangeRequest("PUT", url, body(allDay = false))
+            ChangeRequest(HttpMethod.PUT, url, body(allDay = false))
         } else {
             ChangeRequest(
-                "PATCH",
+                HttpMethod.PATCH,
                 url.newBuilder().addPathSegment("stop").build(),
                 buildJsonObject {
                     put("stop", capturedStop.truncatedTo(ChronoUnit.SECONDS).toString())
@@ -53,12 +54,12 @@ internal fun PendingChange.request(server: ServerUrl, allDay: Boolean = false): 
         }
 
         ChangeKind.RESTORE -> ChangeRequest(
-            "POST",
+            HttpMethod.POST,
             server.app("time_entries", entryId.toString(), "restore"),
             JsonObject(emptyMap()),
         )
 
-        ChangeKind.DELETE -> ChangeRequest("DELETE", url, body = null)
+        ChangeKind.DELETE -> ChangeRequest(HttpMethod.DELETE, url, body = null)
     }
 }
 

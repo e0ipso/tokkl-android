@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.SerialName
@@ -70,7 +71,7 @@ object TestAccounts {
                 put("start", start.toString())
                 if (stop == null) put("duration", -1) else put("stop", stop.toString())
             }
-            return runBlocking { client.send("POST", entries(), body, JsonObject.serializer()) }
+            return runBlocking { client.send(HttpMethod.POST, entries(), body, JsonObject.serializer()) }
                 .orFail("POST /api/v9/workspaces/<id>/time_entries")
                 .getValue("id").jsonPrimitive.long
         }
@@ -88,7 +89,7 @@ object TestAccounts {
                 put("start_date", day.toString())
                 put("duration", seconds)
             }
-            return runBlocking { client.send("POST", entries(), body, JsonObject.serializer()) }
+            return runBlocking { client.send(HttpMethod.POST, entries(), body, JsonObject.serializer()) }
                 .orFail("POST /api/v9/workspaces/<id>/time_entries")
                 .getValue("id").jsonPrimitive.long
         }
@@ -101,7 +102,7 @@ object TestAccounts {
         fun deleteEntry(id: Long) {
             runBlocking {
                 client.sendNoContent(
-                    "DELETE",
+                    HttpMethod.DELETE,
                     entries(id.toString()),
                 )
             }.orFail("DELETE /api/v9/workspaces/<id>/time_entries/<id>")
@@ -124,7 +125,7 @@ object TestAccounts {
     fun create(timezone: String): Account {
         val invite = runBlocking {
             admin.send(
-                "POST",
+                HttpMethod.POST,
                 TokklTestServer.url.app("admin", "invites"),
                 buildJsonObject { put("role", "user") },
                 JsonObject.serializer(),
@@ -164,7 +165,7 @@ object TestAccounts {
         val confirm = buildJsonObject { put("email", account.email) }
         runBlocking {
             admin.sendNoContent(
-                "DELETE",
+                HttpMethod.DELETE,
                 TokklTestServer.url.app("admin", "users", account.id.toString()),
                 confirm,
             )

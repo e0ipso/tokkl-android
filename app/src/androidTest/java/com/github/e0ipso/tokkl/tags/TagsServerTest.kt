@@ -32,6 +32,7 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.cache.CachedTag
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.components.accountRefresh
@@ -432,7 +433,7 @@ class TagsServerTest {
         }
         runBlocking {
             account.client.send(
-                "POST",
+                HttpMethod.POST,
                 url("time_entries"),
                 body,
                 JsonObject.serializer(),
@@ -445,7 +446,7 @@ class TagsServerTest {
     private fun create(name: String) {
         runBlocking {
             account.client.send(
-                "POST",
+                HttpMethod.POST,
                 url("tags"),
                 buildJsonObject { put("name", name) },
                 JsonObject.serializer(),

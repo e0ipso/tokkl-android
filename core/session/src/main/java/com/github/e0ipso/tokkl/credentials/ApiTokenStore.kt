@@ -4,7 +4,6 @@ import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.AtomicFile
-import androidx.annotation.VisibleForTesting
 import com.github.e0ipso.tokkl.storage.ClearableStore
 import java.io.File
 import java.io.FileNotFoundException
@@ -115,14 +114,9 @@ class ApiTokenStore(context: Context) : ClearableStore<String> {
     private fun keyStore(): KeyStore = KeyStore.getInstance(ANDROID_KEY_STORE).apply { load(null) }
 
     companion object {
-        @VisibleForTesting
-        const val FILE_NAME = "api_token.bin"
-
-        @VisibleForTesting
-        const val KEY_ALIAS = "api_token"
-
-        @VisibleForTesting
-        const val ANDROID_KEY_STORE = "AndroidKeyStore"
+        private const val FILE_NAME = "api_token.bin"
+        private const val KEY_ALIAS = "api_token"
+        private const val ANDROID_KEY_STORE = "AndroidKeyStore"
 
         private const val TRANSFORMATION = "AES/GCM/NoPadding"
         private const val KEY_BITS = 256

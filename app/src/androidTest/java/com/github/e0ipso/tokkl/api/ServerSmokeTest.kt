@@ -94,7 +94,7 @@ class ServerSmokeTest {
             val pause = {
                 runBlocking {
                     client.sendRefusable(
-                        "POST",
+                        HttpMethod.POST,
                         client.server.app("timer", "pause"),
                         JsonObject(emptyMap()),
                         TimerState.serializer(),
@@ -117,7 +117,7 @@ class ServerSmokeTest {
         val name = "smoke-${UUID.randomUUID()}"
         val tag = runBlocking {
             client.send(
-                "POST",
+                HttpMethod.POST,
                 tags,
                 buildJsonObject { put("name", name) },
                 JsonObject.serializer(),
@@ -128,7 +128,7 @@ class ServerSmokeTest {
 
         val deleted = runBlocking {
             client.sendNoContent(
-                "DELETE",
+                HttpMethod.DELETE,
                 tags.newBuilder().addPathSegment(tag.string("id")).build(),
             )
         }

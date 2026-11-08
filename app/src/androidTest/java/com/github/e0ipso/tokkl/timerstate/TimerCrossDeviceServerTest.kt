@@ -19,6 +19,7 @@ import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TimerActionToasts
 import com.github.e0ipso.tokkl.TokklApplication
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.PhaseKind
 import com.github.e0ipso.tokkl.api.TimerPomodoro
 import com.github.e0ipso.tokkl.api.TimerState
@@ -43,9 +44,9 @@ import com.github.e0ipso.tokkl.openBarPage
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.pomodoro.PomodoroLengths
 import com.github.e0ipso.tokkl.pomodoro.PomodoroRing
-import com.github.e0ipso.tokkl.pomodoro.PomodoroRingingActionReceiver
 import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotifier
 import com.github.e0ipso.tokkl.pomodoro.PomodoroViewModel
+import com.github.e0ipso.tokkl.pomodoro.PomodoroWorkWaits
 import com.github.e0ipso.tokkl.pomodoro.pomodoroAlarmIntent
 import com.github.e0ipso.tokkl.timer.TimerAcceptanceFixture
 import kotlinx.coroutines.flow.first
@@ -72,8 +73,6 @@ import java.time.Duration
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.feature.notification.R as NotificationR
@@ -110,7 +109,6 @@ class TimerCrossDeviceServerTest {
 
     @After
     fun cleanup() {
-        PomodoroRingingActionReceiver.completed = null
         try {
             TimerSurfaces.closeAlarms()
             if (signedInToTheMainServer) {
@@ -230,7 +228,7 @@ class TimerCrossDeviceServerTest {
         val workspace = fixture.account.workspaceId
         val project = runBlocking {
             other.send(
-                "POST",
+                HttpMethod.POST,
                 other.server.api("workspaces", "$workspace", "projects"),
                 buildJsonObject { put("name", "Shared project") },
                 JsonObject.serializer(),
@@ -239,7 +237,7 @@ class TimerCrossDeviceServerTest {
             .getValue("id").jsonPrimitive.long
         runBlocking {
             other.send(
-                "POST",
+                HttpMethod.POST,
                 other.server.api("workspaces", "$workspace", "tags"),
                 buildJsonObject { put("name", "shared") },
                 JsonObject.serializer(),
@@ -301,10 +299,9 @@ class TimerCrossDeviceServerTest {
             assertEquals("the phone has not heard of it", drawn, held())
             assertTrue("the phone still rings the work phase", app.pomodoroRinging.state.value.playing)
 
-            val done = CountDownLatch(1)
-            PomodoroRingingActionReceiver.completed = done
-            TimerActionToasts.await(TimerActionResult.Refused.message) { next.actionIntent.send() }
-            assertTrue("the ringing Next phase finished", done.await(15, TimeUnit.SECONDS))
+            PomodoroWorkWaits.ringingButtons(1, seconds = 15, what = "the ringing Next phase") {
+                TimerActionToasts.await(TimerActionResult.Refused.message) { next.actionIntent.send() }
+            }
 
             val after = other.timerState()
             assertEquals("the refused Next advanced nothing", moved.revision, after.revision)
@@ -416,7 +413,7 @@ class TimerCrossDeviceServerTest {
         val start = Instant.now().minusSeconds(startedSecondsAgo).truncatedTo(ChronoUnit.SECONDS)
         val id = runBlocking {
             other.send(
-                "POST",
+                HttpMethod.POST,
                 other.server.api("workspaces", "$workspace", "time_entries"),
                 buildJsonObject {
                     put("workspace_id", workspace)
@@ -608,7 +605,7 @@ class TimerCrossDeviceServerTest {
     private fun postTimer(vararg path: String, revision: Long? = null, body: JsonObject? = null): TimerState =
         runBlocking {
             other.send(
-                "POST",
+                HttpMethod.POST,
                 other.server.app(*path),
                 body ?: buildJsonObject { if (revision != null) put("revision", revision) },
                 TimerState.serializer(),

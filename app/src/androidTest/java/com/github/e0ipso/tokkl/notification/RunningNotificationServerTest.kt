@@ -16,6 +16,7 @@ import com.github.e0ipso.tokkl.TimerActionToasts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.awaitControls
@@ -91,7 +92,7 @@ class RunningNotificationServerTest {
             .getValue("default_workspace_id").jsonPrimitive.long
         project = runBlocking {
             web.send(
-                "POST",
+                HttpMethod.POST,
                 web.server.api("workspaces", workspace.toString(), "projects"),
                 buildJsonObject { put("name", "Notifications") },
                 Created.serializer(),

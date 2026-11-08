@@ -19,13 +19,16 @@ import java.util.UUID
 import javax.crypto.SecretKey
 import javax.crypto.SecretKeyFactory
 
-/** Runs against the real Android Keystore of the device. */
+/**
+ * Runs against the real Android Keystore of the device. The file and key names are spelled out
+ * here: a token stored by an earlier version must still load, so they must never change.
+ */
 class ApiTokenStoreTest {
 
     private val context: Context = InstrumentationRegistry.getInstrumentation().targetContext
     private val store = ApiTokenStore(context)
     private val token = "test-token-${UUID.randomUUID()}"
-    private val storedFile = File(context.filesDir, ApiTokenStore.FILE_NAME)
+    private val storedFile = File(context.filesDir, FILE_NAME)
 
     @Before
     @After
@@ -82,9 +85,9 @@ class ApiTokenStoreTest {
     fun keyIsANonExportableAesGcmKeyInTheKeystore() {
         store.save(token)
 
-        val key = keyStore().getKey(ApiTokenStore.KEY_ALIAS, null) as SecretKey
+        val key = keyStore().getKey(KEY_ALIAS, null) as SecretKey
         assertNull("the key material is readable", key.encoded)
-        val info = SecretKeyFactory.getInstance(key.algorithm, ApiTokenStore.ANDROID_KEY_STORE)
+        val info = SecretKeyFactory.getInstance(key.algorithm, ANDROID_KEY_STORE)
             .getKeySpec(key, KeyInfo::class.java) as KeyInfo
         assertEquals(KeyProperties.KEY_ALGORITHM_AES, key.algorithm)
         assertEquals(256, info.keySize)
@@ -95,12 +98,12 @@ class ApiTokenStoreTest {
     fun clearDeletesTheKeyAndTheCiphertext() {
         store.save(token)
         assertTrue(storedFile.exists())
-        assertTrue(keyStore().containsAlias(ApiTokenStore.KEY_ALIAS))
+        assertTrue(keyStore().containsAlias(KEY_ALIAS))
 
         store.clear()
 
         assertFalse("the ciphertext is still on disk", storedFile.exists())
-        assertFalse("the key is still in the Keystore", keyStore().containsAlias(ApiTokenStore.KEY_ALIAS))
+        assertFalse("the key is still in the Keystore", keyStore().containsAlias(KEY_ALIAS))
         assertNull(store.load())
     }
 
@@ -117,13 +120,19 @@ class ApiTokenStoreTest {
     @Test
     fun ciphertextWithoutItsKeyLoadsNull() {
         store.save(token)
-        keyStore().deleteEntry(ApiTokenStore.KEY_ALIAS)
+        keyStore().deleteEntry(KEY_ALIAS)
 
         assertNull(store.load())
     }
 
-    private fun keyStore(): KeyStore = KeyStore.getInstance(ApiTokenStore.ANDROID_KEY_STORE).apply { load(null) }
+    private fun keyStore(): KeyStore = KeyStore.getInstance(ANDROID_KEY_STORE).apply { load(null) }
 
     private fun ByteArray.contains(needle: ByteArray): Boolean =
         (0..size - needle.size).any { start -> needle.indices.all { this[start + it] == needle[it] } }
+
+    private companion object {
+        const val FILE_NAME = "api_token.bin"
+        const val KEY_ALIAS = "api_token"
+        const val ANDROID_KEY_STORE = "AndroidKeyStore"
+    }
 }

@@ -25,6 +25,7 @@ import com.github.e0ipso.tokkl.navhost.NavigationStores
 import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.contentKey
 import com.github.e0ipso.tokkl.platform.DefaultNetwork
+import com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmRearm
 import com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseAlarm
 import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationSync
 import com.github.e0ipso.tokkl.pomodoro.ServicePomodoroRinging
@@ -93,6 +94,7 @@ val TokklApplication.defaultNetwork: DefaultNetwork get() = component()
 val TokklApplication.timerSync: TimerSync<TimerStateSource> get() = component()
 val TokklApplication.pomodoroAlarms: PomodoroAlarmScheduler get() = component()
 internal val TokklApplication.pomodoroAlarm: PomodoroPhaseAlarm get() = component()
+internal val TokklApplication.pomodoroAlarmRearm: PomodoroAlarmRearm get() = component()
 internal val TokklApplication.pomodoroRinging: ServicePomodoroRinging get() = component()
 
 /** The signed-in account's timer state source, taken anew on each read as the app does. */

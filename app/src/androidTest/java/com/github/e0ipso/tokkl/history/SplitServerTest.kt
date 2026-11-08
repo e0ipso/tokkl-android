@@ -19,6 +19,7 @@ import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.awaitTimerPage
@@ -102,7 +103,7 @@ class SplitServerTest {
         val workspace = account.workspaceId
         val project = runBlocking {
             web.send(
-                "POST",
+                HttpMethod.POST,
                 web.server.api("workspaces", workspace.toString(), "projects"),
                 buildJsonObject { put("name", "Mural") },
                 JsonObject.serializer(),
@@ -113,7 +114,7 @@ class SplitServerTest {
         val start = stop.minus(2, ChronoUnit.HOURS)
         val source = runBlocking {
             web.send(
-                "POST",
+                HttpMethod.POST,
                 web.server.api("workspaces", workspace.toString(), "time_entries"),
                 buildJsonObject {
                     put("workspace_id", workspace)

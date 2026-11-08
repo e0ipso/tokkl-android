@@ -155,8 +155,8 @@ class ConfiguredServerGuardTest {
         configured.enqueue(MockResponse.Builder().code(307).addHeader("Location", "/tokkl/again").build())
         configured.enqueue(me())
 
-        run { client.send("POST", server.api("tags"), body, Me.serializer()) }
-        run { client.send("POST", server.api("tags"), body, Me.serializer()) }
+        run { client.send(HttpMethod.POST, server.api("tags"), body, Me.serializer()) }
+        run { client.send(HttpMethod.POST, server.api("tags"), body, Me.serializer()) }
 
         val requests = List(4) { configured.takeRequest() }
         assertEquals(listOf("POST", "GET", "POST", "POST"), requests.map { it.method })

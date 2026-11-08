@@ -59,6 +59,7 @@ import com.github.e0ipso.tokkl.TokklNavHost
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.DiscardedPomodoro
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.awaitTimerPage
@@ -268,7 +269,7 @@ class RunningEntryEditorServerTest {
         val id = seedRunning("Metadata original")
         val project = runBlocking {
             web.send(
-                "POST",
+                HttpMethod.POST,
                 web.server.api("workspaces", workspace.toString(), "projects"),
                 buildJsonObject { put("name", "Running project") },
                 JsonObject.serializer(),
@@ -328,7 +329,7 @@ class RunningEntryEditorServerTest {
         setResolution(60)
         runBlocking {
             web.send(
-                "POST",
+                HttpMethod.POST,
                 web.server.api("me", "preferences"),
                 buildJsonObject { put("timeofday_format", "h:mm A") },
                 JsonObject.serializer(),
@@ -472,7 +473,7 @@ class RunningEntryEditorServerTest {
             val stop = fixtureStart.plusSeconds(3600)
             runBlocking {
                 web.send(
-                    "PATCH",
+                    HttpMethod.PATCH,
                     web.server.api("workspaces", workspace.toString(), "time_entries", id.toString(), "stop"),
                     buildJsonObject { put("stop", stop.toString()) },
                     JsonObject.serializer(),
@@ -842,7 +843,7 @@ class RunningEntryEditorServerTest {
     private fun seedRunning(description: String): Long = createRunning(description, fixtureStart).also { refresh() }
     private fun createRunning(description: String, start: Instant): Long = runBlocking {
         web.send(
-            "POST",
+            HttpMethod.POST,
             web.server.api("workspaces", workspace.toString(), "time_entries"),
             buildJsonObject {
                 put("workspace_id", workspace)
@@ -911,7 +912,7 @@ class RunningEntryEditorServerTest {
         }
         runBlocking {
             admin.send(
-                "PUT",
+                HttpMethod.PUT,
                 url,
                 buildJsonObject { put("time_resolution_minutes", minutes) },
                 JsonObject.serializer(),

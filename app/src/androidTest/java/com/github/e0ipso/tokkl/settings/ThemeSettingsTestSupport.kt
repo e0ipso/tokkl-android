@@ -108,7 +108,8 @@ fun ComposeTestRule.awaitNightModeFor(mode: ThemeMode, activity: Activity, syste
  * choice for the next process to read.
  */
 fun awaitModeOnDisk(mode: ThemeMode, timeoutMillis: Long = 5_000) {
-    val file = File(targetContext.dataDir, "shared_prefs/${ThemeSettingsStore.FILE_NAME}.xml")
+    // ThemeSettingsStore's file, named here because a choice an earlier version stored must still load.
+    val file = File(targetContext.dataDir, "shared_prefs/theme_settings.xml")
     val deadline = System.nanoTime() + timeoutMillis * 1_000_000
     while (!(file.exists() && file.readText().contains(">${mode.name}<"))) {
         check(System.nanoTime() < deadline) { "$file does not hold $mode" }

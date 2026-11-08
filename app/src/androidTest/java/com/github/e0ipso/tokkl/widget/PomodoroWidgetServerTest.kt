@@ -7,6 +7,7 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TimerActionToasts
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.PhaseKind
 import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.appConfiguredServer
@@ -85,7 +86,7 @@ class PomodoroWidgetServerTest {
         val workspace = fixture.account.workspaceId
         val project = runBlocking {
             api.send(
-                "POST",
+                HttpMethod.POST,
                 api.server.api("workspaces", "$workspace", "projects"),
                 buildJsonObject {
                     put("name", "Widget focus")
@@ -96,7 +97,7 @@ class PomodoroWidgetServerTest {
         }.orFail("create project").getValue("id").jsonPrimitive.long
         val task = runBlocking {
             api.send(
-                "POST",
+                HttpMethod.POST,
                 api.server.api(
                     "workspaces",
                     "$workspace",
@@ -112,7 +113,7 @@ class PomodoroWidgetServerTest {
         }.orFail("create task").getValue("id").jsonPrimitive.long
         runBlocking {
             api.sendNoContent(
-                "POST",
+                HttpMethod.POST,
                 api.server.api("me", "preferences"),
                 buildJsonObject {
                     put("pomodoro_focus_interval_in_minutes", 40)
@@ -145,7 +146,7 @@ class PomodoroWidgetServerTest {
         assertTrue(remembered.billable)
         runBlocking {
             api.send(
-                "POST",
+                HttpMethod.POST,
                 api.server.app("pomodoro", "end"),
                 buildJsonObject { put("revision", remote.revision) },
                 TimerState.serializer(),
@@ -319,7 +320,7 @@ class PomodoroWidgetServerTest {
             val oldPomodoroKey = WidgetStore(context, WidgetStore.POMODORO_KEY).load()
             runBlocking {
                 fixture.account.otherDevice.sendNoContent(
-                    "POST",
+                    HttpMethod.POST,
                     TokklTestServer.url.api(
                         "me",
                         "preferences",
@@ -349,7 +350,7 @@ class PomodoroWidgetServerTest {
         val api = fixture.account.otherDevice
         return runBlocking {
             api.send(
-                "POST",
+                HttpMethod.POST,
                 api.server.app("pomodoro"),
                 buildJsonObject {
                     put("workspace_id", fixture.account.workspaceId)
@@ -374,7 +375,7 @@ class PomodoroWidgetServerTest {
         val api = fixture.account.otherDevice
         runBlocking {
             api.send(
-                "PUT",
+                HttpMethod.PUT,
                 api.server.api(
                     "workspaces",
                     "${fixture.account.workspaceId}",

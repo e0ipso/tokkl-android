@@ -18,6 +18,7 @@ import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.cache.CacheDatabase
@@ -238,7 +239,7 @@ class SyncStatusServerTest {
         }
         runBlocking {
             direct.send(
-                "POST",
+                HttpMethod.POST,
                 direct.server.api("me", "reset_token"),
                 JsonObject(emptyMap()),
                 String.serializer(),
@@ -263,7 +264,7 @@ class SyncStatusServerTest {
             val workspace = account.workspaceId
             val newToken = runBlocking {
                 direct.send(
-                    "POST",
+                    HttpMethod.POST,
                     direct.server.api("me", "reset_token"),
                     JsonObject(emptyMap()),
                     String.serializer(),

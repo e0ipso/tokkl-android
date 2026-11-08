@@ -7,7 +7,6 @@ import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.VisibleForTesting
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -98,6 +97,6 @@ fun openNotificationSettings(context: Context) {
     context.startActivity(notificationSettingsIntent(context))
 }
 
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
+/** The intent that opens this app's page of the system notification settings. */
 fun notificationSettingsIntent(context: Context): Intent =
     Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)

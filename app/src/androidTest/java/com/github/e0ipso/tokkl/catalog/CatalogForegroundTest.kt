@@ -24,6 +24,7 @@ import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.appApiClient
 import com.github.e0ipso.tokkl.components.accountRefresh
@@ -195,7 +196,7 @@ class CatalogForegroundTest {
     /** Creates an item named [name] in the workspace's [collection] and returns its id. */
     private fun create(collection: String, name: String): Long = runBlocking {
         account.client.send(
-            "POST",
+            HttpMethod.POST,
             url(collection),
             buildJsonObject { put("name", name) },
             JsonObject.serializer(),
@@ -210,7 +211,7 @@ class CatalogForegroundTest {
     private fun rename(collection: String, id: Long, name: String, api: TogglApiClient = account.client) {
         runBlocking {
             api.send(
-                "PUT",
+                HttpMethod.PUT,
                 url(collection, id.toString(), api = api),
                 buildJsonObject { put("name", name) },
                 JsonObject.serializer(),

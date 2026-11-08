@@ -121,11 +121,11 @@ class SharedHttpClientTest {
     private fun call(method: String, resend: Boolean): ApiResult<*> {
         val target = url.api("workspaces", "7", "time_entries", "55")
         return if (method == "DELETE") {
-            runBlocking { client.sendNoContent(method, target, resend = resend) }
+            runBlocking { client.sendNoContent(HttpMethod.valueOf(method), target, resend = resend) }
         } else {
             runBlocking {
                 client.send(
-                    method,
+                    HttpMethod.valueOf(method),
                     target,
                     JsonObject(emptyMap()),
                     JsonObject.serializer(),

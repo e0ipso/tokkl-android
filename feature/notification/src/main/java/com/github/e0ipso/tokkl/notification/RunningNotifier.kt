@@ -11,7 +11,6 @@ import android.os.Build
 import android.os.Bundle
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.annotation.VisibleForTesting
 import androidx.compose.ui.graphics.toArgb
 import com.github.e0ipso.tokkl.feature.notification.R
 import com.github.e0ipso.tokkl.platform.mainActivityIntent
@@ -55,7 +54,10 @@ class RunningNotifier(context: Context) : RunningNotice {
     )
         .apply { description = context.getString(R.string.notification_channel_running_description) }
 
-    @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
+    /**
+     * The running notification for [content], without posting it. [requestPromotion] asks Android
+     * 16 and later to show it as a Live Update, where the user allows that.
+     */
     fun build(
         content: RunningNotificationContent,
         requestPromotion: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA &&
@@ -168,7 +170,6 @@ class RunningNotifier(context: Context) : RunningNotice {
 
         // Notification.EXTRA_REQUEST_PROMOTED_ONGOING's documented key. The native setter was
         // added in 36.1; the extra also safely requests it on Android 16.0 and falls back there.
-        @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-        const val REQUEST_PROMOTED_ONGOING = "android.requestPromotedOngoing"
+        private const val REQUEST_PROMOTED_ONGOING = "android.requestPromotedOngoing"
     }
 }

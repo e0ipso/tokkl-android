@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.reports
 
 import android.content.Intent
 import android.net.Uri
+import androidx.core.content.IntentCompat
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
@@ -131,8 +132,7 @@ class ReportCsvServerTest {
         assertEquals(Intent.ACTION_SEND, send.action)
         assertEquals("text/csv", send.type)
         assertEquals(Intent.FLAG_GRANT_READ_URI_PERMISSION, send.flags)
-        @Suppress("DEPRECATION")
-        val uri = checkNotNull(send.getParcelableExtra<Uri>(Intent.EXTRA_STREAM))
+        val uri = checkNotNull(IntentCompat.getParcelableExtra(send, Intent.EXTRA_STREAM, Uri::class.java))
         assertEquals("content", uri.scheme)
         assertEquals(uri, send.clipData!!.getItemAt(0).uri)
         assertEquals("text/csv", context.contentResolver.getType(uri))

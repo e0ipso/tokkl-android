@@ -13,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.drawable.toDrawable
+import androidx.core.os.BundleCompat
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.e0ipso.tokkl.lifecycle.MainActivityForeground
@@ -42,8 +43,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         drawEdgeToEdge()
-        @Suppress("DEPRECATION")
-        val pendingPomodoro = savedInstanceState?.getParcelable<Intent>(PENDING_POMODORO)
+        val pendingPomodoro =
+            savedInstanceState?.let { BundleCompat.getParcelable(it, PENDING_POMODORO, Intent::class.java) }
         (pendingPomodoro?.takePomodoroNotificationTap() ?: intent?.takePomodoroNotificationTap())
             ?.let { requests.request(NavigationRequest.Pomodoro(it)) }
         intent?.takeReminderTap()

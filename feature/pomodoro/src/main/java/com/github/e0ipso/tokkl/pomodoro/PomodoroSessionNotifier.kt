@@ -10,7 +10,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.drawable.Icon
 import android.os.Build
-import androidx.annotation.VisibleForTesting
 import com.github.e0ipso.tokkl.api.PhaseKind
 import com.github.e0ipso.tokkl.feature.pomodoro.R
 import com.github.e0ipso.tokkl.core.ui.R as UiR
@@ -19,7 +18,6 @@ import com.github.e0ipso.tokkl.core.ui.R as UiR
 class PomodoroSessionNotifier(private val context: Context) : PomodoroSessionPoster {
     private val manager = context.getSystemService(NotificationManager::class.java)
 
-    @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
     override fun post(content: PomodoroSessionNotificationContent, account: String): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
@@ -54,7 +52,7 @@ class PomodoroSessionNotifier(private val context: Context) : PomodoroSessionPos
         manager.cancel(NOTIFICATION_ID)
     }
 
-    @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
+    /** The session notification for [content], whose buttons carry [account], without posting it. */
     fun build(content: PomodoroSessionNotificationContent, account: String): Notification {
         val label = phaseLabel(content.kind)
         val open = PendingIntent.getActivity(

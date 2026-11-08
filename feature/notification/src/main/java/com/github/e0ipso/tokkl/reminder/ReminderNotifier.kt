@@ -8,7 +8,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.database.sqlite.SQLiteException
-import androidx.annotation.VisibleForTesting
 import androidx.core.net.toUri
 import com.github.e0ipso.tokkl.feature.notification.R
 import com.github.e0ipso.tokkl.platform.IoDispatcher
@@ -40,7 +39,7 @@ class ReminderNotifier(private val context: Context) {
         manager.notify(ID, build(timer, pausable))
     }
 
-    @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
+    /** The reminder for [timer], without posting it. [pausable] adds its Pause button. */
     fun build(timer: ReminderTimer, pausable: Boolean): Notification = Notification.Builder(context, CHANNEL)
         .setSmallIcon(TimerStateR.drawable.ic_nav_timer)
         .setContentTitle(context.getString(R.string.reminder_question))

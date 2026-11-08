@@ -8,6 +8,7 @@ import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
@@ -191,7 +192,7 @@ class AccountCacheServerTest {
             }
             runBlocking {
                 api.send(
-                    "POST",
+                    HttpMethod.POST,
                     api.server.api("me", "preferences"),
                     buildJsonObject { put("favorites", JsonArray(listOf(favorite))) },
                     JsonObject.serializer(),
@@ -216,7 +217,7 @@ class AccountCacheServerTest {
         private fun archive(project: Long) {
             runBlocking {
                 api.send(
-                    "PUT",
+                    HttpMethod.PUT,
                     api.server.api("workspaces", workspace.toString(), "projects", project.toString()),
                     buildJsonObject { put("active", false) },
                     JsonObject.serializer(),
@@ -227,7 +228,14 @@ class AccountCacheServerTest {
         /** POSTs [body] to a workspace collection such as `clients` and returns the new id. */
         private fun create(collection: String, body: JsonObject): Long {
             val url = api.server.api("workspaces", workspace.toString(), *collection.split('/').toTypedArray())
-            return runBlocking { api.send("POST", url, body, Created.serializer()) }.orFail("POST $collection").id
+            return runBlocking {
+                api.send(
+                    HttpMethod.POST,
+                    url,
+                    body,
+                    Created.serializer(),
+                )
+            }.orFail("POST $collection").id
         }
     }
 

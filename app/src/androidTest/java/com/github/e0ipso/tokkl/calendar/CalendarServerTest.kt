@@ -40,6 +40,7 @@ import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.EntryWithSendState
@@ -112,7 +113,7 @@ class CalendarServerTest {
         val me = buildJsonObject { put("beginning_of_week", beginningOfWeek) }
         runBlocking {
             account.client.send(
-                "PUT",
+                HttpMethod.PUT,
                 account.client.server.api("me"),
                 me,
                 JsonObject.serializer(),

@@ -48,7 +48,9 @@ val syncFeatureModule = module {
         )
     }
 
-    single { SyncStatusSource(get(), get(), get(), get(), get()) }
+    single {
+        SyncStatusSource(changes = get(), lastAnswer = get(), accountSettings = get(), sender = get(), scope = get())
+    }
 
     single { SyncEntries } bind FeatureEntries::class
 }

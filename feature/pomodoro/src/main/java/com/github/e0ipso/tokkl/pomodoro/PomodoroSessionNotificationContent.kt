@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.pomodoro
 
-import androidx.annotation.VisibleForTesting
 import com.github.e0ipso.tokkl.api.PhaseKind
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
@@ -15,7 +14,6 @@ import java.time.Instant
  *
  * @property end the phone's time of the planned end, corrected by the state's clock offset.
  */
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 data class PomodoroSessionNotificationContent(
     val phase: PomodoroPhaseKey,
     val kind: PhaseKind,
@@ -32,7 +30,6 @@ data class PomodoroSessionNotificationContent(
 }
 
 /** The session notification of this state, or null without a session. */
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 fun HeldTimerState.notificationContent(): PomodoroSessionNotificationContent? {
     val session = state.pomodoro ?: return null
     val ring = ring() ?: return null

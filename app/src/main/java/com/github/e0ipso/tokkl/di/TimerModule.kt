@@ -36,14 +36,25 @@ import org.koin.dsl.module
 internal val timerModule = module {
     single { TimerStateStore(androidContext()) } bind AccountDataOwner::class
 
-    single { AccountTimerStates(get(), get(), get(), get(), get(), get()) } binds arrayOf(
+    single {
+        AccountTimerStates(
+            store = get(),
+            lastFields = get(),
+            cache = get(),
+            refreshes = get(),
+            lifetime = get(),
+            clock = get(),
+        )
+    } binds arrayOf(
         AccountDataOwner::class,
         SignedInTimerState::class,
         SignedInAccountName::class,
         CurrentHeldState::class,
     )
     single { HeldTimerFlows(get(), get(), io()) } bind DiscardNotices::class
-    single { TimerControlsSource(get(), get(), get(), io()) } bind CurrentTimerControls::class
+    single {
+        TimerControlsSource(database = get(), timerStates = get(), capabilities = get(), io = io())
+    } bind CurrentTimerControls::class
 
     // Pause, Resume and Discard, and a Pomodoro session's Start, Next phase and End, sent to the
     // server at once and never queued. Each answer, refusals included, goes to the account's
@@ -79,20 +90,27 @@ internal val timerModule = module {
     // thread, for its reconnect delays.
     single {
         val scope = CoroutineScope(SupervisorJob() + get<CoroutineDispatcher>(DefaultDispatcher))
-        val connections = TimerEventConnections(get(), get(), get(), get(), scope, io())
+        val connections = TimerEventConnections(
+            session = get(),
+            timerStates = get(),
+            sender = get(),
+            service = get(),
+            scope = scope,
+            io = io(),
+        )
         TimerSync(ElapsedTimerSyncClock(scope), connections)
     }
 
     single {
         TimerSyncFollower(
-            androidContext(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
+            context = androidContext(),
+            session = get(),
+            timerStates = get(),
+            timerSync = get(),
+            capabilities = get(),
+            sender = get(),
+            syncWatcher = get(),
+            slot = get(),
         )
     } bind AccountDataOwner::class
 }

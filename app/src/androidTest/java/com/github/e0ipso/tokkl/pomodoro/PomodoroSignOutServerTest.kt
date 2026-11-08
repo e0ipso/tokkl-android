@@ -60,8 +60,6 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 import java.time.Duration
 import java.time.Instant
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 import com.github.e0ipso.tokkl.core.catalog.R as CatalogR
 import com.github.e0ipso.tokkl.feature.signin.R as SigninR
 
@@ -103,7 +101,6 @@ class PomodoroSignOutServerTest {
             scenario?.let { finishWithin("closing Pomodoro sign-out activity") { it.close() } }
         } finally {
             try {
-                PomodoroRingingActionReceiver.completed = null
                 awaitStopped()
                 ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
                 // Restore the suite account before deleting its disposable test accounts.
@@ -237,15 +234,10 @@ class PomodoroSignOutServerTest {
     }
 
     private fun sendOldButtons(notification: Notification) {
-        val done = CountDownLatch(3)
-        PomodoroRingingActionReceiver.completed = done
-        try {
+        PomodoroWorkWaits.ringingButtons(3, what = "late actions") {
             notification.actions[0].actionIntent.send()
             notification.actions[1].actionIntent.send()
             notification.deleteIntent.send()
-            assertTrue("late actions finished", done.await(10, TimeUnit.SECONDS))
-        } finally {
-            PomodoroRingingActionReceiver.completed = null
         }
     }
 

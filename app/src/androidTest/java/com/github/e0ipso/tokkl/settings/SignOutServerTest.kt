@@ -20,6 +20,7 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.awaitText
@@ -249,7 +250,8 @@ class SignOutServerTest {
         assertNull("the server", ServerConfigStore(context).load())
         assertNull("the token", ApiTokenStore(context).load())
         val keyStore = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
-        assertFalse("the token's Keystore key", keyStore.containsAlias(ApiTokenStore.KEY_ALIAS))
+        // ApiTokenStore's key alias, which a token stored by an earlier version still uses.
+        assertFalse("the token's Keystore key", keyStore.containsAlias("api_token"))
         assertNull("the stored settings", AccountSettingsStore(context).load())
         assertNull("the settings in memory", app.accountSettings.state.value)
         assertNull("the stored capabilities", CapabilitiesStore(context).load())
@@ -311,7 +313,7 @@ class SignOutServerTest {
         }
         val created = runBlocking {
             api.send(
-                "POST",
+                HttpMethod.POST,
                 api.server.api("workspaces", account.workspaceId.toString(), "projects"),
                 body,
                 JsonObject.serializer(),

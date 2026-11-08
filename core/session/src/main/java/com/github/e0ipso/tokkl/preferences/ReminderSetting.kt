@@ -1,8 +1,8 @@
 package com.github.e0ipso.tokkl.preferences
 
-import androidx.annotation.VisibleForTesting
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountRefreshListener
 import com.github.e0ipso.tokkl.session.AccountRefreshed
@@ -131,7 +131,12 @@ class ReminderSetting(
             lock,
         ) { loaded.state.value.takeIf { expected == generation && loaded.unsent && loaded.shared } } ?: return@withLock
         val api = client() ?: return@withLock
-        val result = api.send("POST", api.server.api("me", "preferences"), values.body(), JsonObject.serializer())
+        val result = api.send(
+            HttpMethod.POST,
+            api.server.api("me", "preferences"),
+            values.body(),
+            JsonObject.serializer(),
+        )
         if (result is ApiResult.Success) {
             synchronized(lock) {
                 if (expected == generation && loaded.state.value == values) loaded.unsent = false
@@ -155,7 +160,6 @@ internal fun ReminderPreferences.body() = buildJsonObject {
     put(ReminderPreferences.HOURS_KEY, clamped().hours)
 }
 
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 fun MePreferences.reminderPreferences(): ReminderPreferences {
     val enabled =
         (body[ReminderPreferences.ENABLED_KEY] as? JsonPrimitive)?.takeUnless { it.isString }?.booleanOrNull ?: true

@@ -2,7 +2,6 @@ package com.github.e0ipso.tokkl.ui.theme
 
 import android.content.Context
 import android.content.SharedPreferences
-import androidx.annotation.VisibleForTesting
 import java.io.IOException
 
 /**
@@ -47,8 +46,7 @@ class ThemeSettingsStore(context: Context) : ThemeSettingsWriter {
     }
 
     companion object {
-        @VisibleForTesting
-        const val FILE_NAME = "theme_settings"
+        private const val FILE_NAME = "theme_settings"
         private const val KEY_MODE = "mode"
         private const val KEY_DYNAMIC_COLOR = "dynamic_color"
     }

@@ -1,10 +1,8 @@
 package com.github.e0ipso.tokkl.settings
 
-import androidx.annotation.VisibleForTesting
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 
 /** Settings validates drafts before passing them to the shared defaults repository. */
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 enum class PomodoroDefaultField(val range: IntRange) {
     WORK(PomodoroDefaults.WORK_MINUTES),
     SHORT_REST(PomodoroDefaults.SHORT_REST_MINUTES),

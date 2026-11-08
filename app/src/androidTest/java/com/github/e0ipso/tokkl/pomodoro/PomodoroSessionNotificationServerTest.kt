@@ -50,13 +50,10 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.feature.pomodoro.R as PomodoroR
 import com.github.e0ipso.tokkl.feature.settings.R as SettingsR
@@ -89,8 +86,6 @@ class PomodoroSessionNotificationServerTest {
     }
 
     @After fun cleanup() {
-        PomodoroSessionActionReceiver.completed = null
-        PomodoroRingingActionReceiver.completed = null
         try {
             AirplaneMode.set(false, account.client)
             runBlocking {
@@ -214,13 +209,8 @@ class PomodoroSessionNotificationServerTest {
         }
         val ring = manager.activeNotifications.single { it.id == PomodoroSessionNotifier.NOTIFICATION_ID }.notification
         assertEquals(phase, app.pomodoroRinging.state.value.ring?.phase)
-        val done = CountDownLatch(1)
-        PomodoroRingingActionReceiver.completed = done
-        try {
+        PomodoroWorkWaits.ringingButtons(1, what = "Next phase on the ringing notification") {
             ring.actions[0].actionIntent.send()
-            assertTrue(done.await(10, TimeUnit.SECONDS))
-        } finally {
-            PomodoroRingingActionReceiver.completed = null
         }
         runBlocking { withTimeout(10_000) { app.pomodoroRinging.state.first { !it.serviceRunning } } }
         awaitSessionNotification(PhaseKind.SHORT_REST)
@@ -275,16 +265,7 @@ class PomodoroSessionNotificationServerTest {
         checkNotNull(app.timerState.state.value).state
     }
 
-    private fun sendActions(count: Int, block: () -> Unit) {
-        val done = CountDownLatch(count)
-        PomodoroSessionActionReceiver.completed = done
-        try {
-            block()
-            assertTrue("notification actions finished", done.await(15, TimeUnit.SECONDS))
-        } finally {
-            PomodoroSessionActionReceiver.completed = null
-        }
-    }
+    private fun sendActions(count: Int, block: () -> Unit) = PomodoroWorkWaits.sessionButtons(count, send = block)
 
     private fun awaitSessionNotification(kind: PhaseKind = PhaseKind.WORK): Notification {
         val label = context.getString(

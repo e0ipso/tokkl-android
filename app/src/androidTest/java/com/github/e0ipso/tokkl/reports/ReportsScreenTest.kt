@@ -27,6 +27,7 @@ import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createEmptyComposeRule
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
@@ -328,7 +329,7 @@ class ReportsScreenTest {
         }
         val web = runBlocking {
             account.client.send(
-                "POST",
+                HttpMethod.POST,
                 TokklTestServer.url.app("report"),
                 body,
                 JsonObject.serializer(),
@@ -503,7 +504,7 @@ class ReportsScreenTest {
         init {
             runBlocking {
                 api.send(
-                    "PUT",
+                    HttpMethod.PUT,
                     api.server.api("me"),
                     buildJsonObject { put("beginning_of_week", 3) },
                     JsonObject.serializer(),
@@ -517,7 +518,7 @@ class ReportsScreenTest {
             }
             runBlocking {
                 api.send(
-                    "PUT",
+                    HttpMethod.PUT,
                     api.server.api("workspaces", workspace.toString()),
                     rounding,
                     JsonObject.serializer(),
@@ -525,7 +526,7 @@ class ReportsScreenTest {
             }.orFail("PUT the workspace")
             runBlocking {
                 api.send(
-                    "POST",
+                    HttpMethod.POST,
                     api.server.api("me", "preferences"),
                     buildJsonObject { put("duration_format", "classic") },
                     JsonObject.serializer(),
@@ -569,7 +570,7 @@ class ReportsScreenTest {
         fun setRoundingMinutes(minutes: Int) {
             runBlocking {
                 api.send(
-                    "PUT",
+                    HttpMethod.PUT,
                     api.server.api("workspaces", workspace.toString()),
                     buildJsonObject {
                         put("rounding", 1)
@@ -601,7 +602,7 @@ class ReportsScreenTest {
 
         private fun project(body: JsonObject): Long = runBlocking {
             api.send(
-                "POST",
+                HttpMethod.POST,
                 api.server.api("workspaces", workspace.toString(), "projects"),
                 body,
                 Created.serializer(),
@@ -620,7 +621,7 @@ class ReportsScreenTest {
             }
             runBlocking {
                 api.send(
-                    "POST",
+                    HttpMethod.POST,
                     api.server.api("workspaces", workspace.toString(), "time_entries"),
                     body,
                     Created.serializer(),

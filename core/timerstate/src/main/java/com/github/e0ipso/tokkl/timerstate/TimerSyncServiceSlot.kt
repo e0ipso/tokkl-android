@@ -7,6 +7,7 @@ import androidx.annotation.VisibleForTesting
 /** [TimerSyncService] while it runs in the foreground. The service sets and clears it. */
 class TimerSyncServiceSlot {
 
+    // Public for the app's device tests, which wait for the service through it.
     @Volatile
     @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
     var service: TimerSyncService? = null

@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.ui
 
 import androidx.annotation.DrawableRes
-import androidx.annotation.VisibleForTesting
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.github.e0ipso.tokkl.core.ui.R
@@ -14,11 +13,7 @@ import com.github.e0ipso.tokkl.core.ui.R
  * points them at one file per density. res/raw/brand_images_source.txt records where the files
  * come from.
  */
-enum class BrandSize(
-    @get:VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-    val wordmarkWidth: Dp,
-    @DrawableRes internal val wordmark: Int,
-) {
+enum class BrandSize(internal val wordmarkWidth: Dp, @DrawableRes internal val wordmark: Int) {
     /** Tokkl's lg, on its own above a screen's content, as on sign-in. */
     LARGE(260.dp, R.drawable.tokkl_wordmark_lg),
 }

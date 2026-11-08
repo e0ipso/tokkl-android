@@ -24,6 +24,7 @@ import com.github.e0ipso.tokkl.timerstate.PomodoroAlarmScheduler
 import com.github.e0ipso.tokkl.timerstate.PomodoroRingingPhase
 import com.github.e0ipso.tokkl.timerstate.TimerActions
 import com.github.e0ipso.tokkl.timerstate.TimerControlsSource
+import com.github.e0ipso.tokkl.timerstate.TimerSyncFollower
 import com.github.e0ipso.tokkl.timerstate.TimerSyncWatcher
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
@@ -84,6 +85,15 @@ val pomodoroFeatureModule = module {
             io = io(),
             clock = get(),
         )
+    } bind PomodoroRingCheck::class
+
+    // What the boot, update, clock and exact-alarm broadcasts do: arm the held phase again, and
+    // start the timer sync service after boot and an update.
+    single { PomodoroAlarmRearm(alarm = get(), timerSync = get<TimerSyncFollower>()) }
+
+    // What the ringing notification's buttons do.
+    single<PomodoroRingingButtons> {
+        AlarmRingingButtons(androidContext(), alarm = get(), actions = get<TimerActions>())
     }
 
     // The session notification, made at process start, which restores what the last process
@@ -107,6 +117,9 @@ val pomodoroFeatureModule = module {
             io = io(),
         )
     } bind SignedInListener::class
+
+    // What the session notification's buttons do.
+    single<PomodoroSessionButtons> { SessionNotificationButtons(androidContext(), notification = get()) }
 
     // Sign-out: the alarm, the session notification and the notification ID they share.
     single {

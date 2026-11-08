@@ -1,11 +1,9 @@
 import com.android.build.api.dsl.CommonExtension
-import com.android.build.gradle.internal.lint.AndroidLintAnalysisTask
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.api.artifacts.VersionCatalog
 import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.kotlin.dsl.getByType
-import org.gradle.kotlin.dsl.withType
 
 /**
  * The app's targetSdk, the API level of the test emulator tokkl-api36. Raise it together with the
@@ -63,9 +61,16 @@ internal val Project.libs: VersionCatalog
 // From the build cache, one checkout's analysis made another checkout's lint
 // report cite the first checkout's files. With the checkout's path as an
 // input, the analysis comes from the cache only for the checkout that ran it.
+//
+// The analysis tasks are found by name, lintAnalyze<Variant> and
+// lintVitalAnalyze<Variant>, as AGP names them: their class is internal to AGP
+// and its public API has no hook for lint's tasks. With AGP 9.4.1 the names
+// match the same 167 tasks as the class did.
 internal fun Project.keepLintAnalysisToThisCheckout() {
     val checkoutDir: String = rootDir.absolutePath
-    tasks.withType<AndroidLintAnalysisTask>().configureEach {
+    tasks.named { LINT_ANALYSIS.matches(it) }.configureEach {
         inputs.property("checkoutDir", checkoutDir)
     }
 }
+
+private val LINT_ANALYSIS = Regex("lint(Vital)?Analyze.*")

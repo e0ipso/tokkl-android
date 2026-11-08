@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.favorites
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.CachedFavorite
 import com.github.e0ipso.tokkl.cache.EntryFields
@@ -38,7 +39,7 @@ class FavoritesServer(private val client: ApiClientProvider, private val cache: 
         val api = client() ?: return ApiResult.Failure(ApiError.AuthFailed)
         return when (
             val answer = api.send(
-                "POST",
+                HttpMethod.POST,
                 api.server.api("me", "preferences"),
                 favoritesBody(favorites),
                 JsonElement.serializer(),

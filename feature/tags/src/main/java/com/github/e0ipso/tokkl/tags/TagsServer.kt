@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.tags
 
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.catalog.createOnce
 import kotlinx.serialization.SerialName
@@ -28,17 +29,25 @@ class TagsServer(private val api: TogglApiClient, private val workspace: Long) {
      * @param known the ids of the tags the page lists, which the create cannot have made.
      */
     suspend fun create(name: String, known: Set<Long>): ApiResult<Tag> = createOnce(
-        create = { api.send("POST", url(), buildJsonObject { put("name", name) }, Tag.serializer(), resend = false) },
+        create = {
+            api.send(
+                HttpMethod.POST,
+                url(),
+                buildJsonObject { put("name", name) },
+                Tag.serializer(),
+                resend = false,
+            )
+        },
         list = ::list,
         made = { it.id !in known && it.workspaceId == workspace && it.name == name },
     )
 
     /** Renames the tag. The server renames it on every entry that has it. */
     suspend fun rename(id: Long, name: String): ApiResult<Tag> =
-        api.send("PUT", url(id.toString()), buildJsonObject { put("name", name) }, Tag.serializer())
+        api.send(HttpMethod.PUT, url(id.toString()), buildJsonObject { put("name", name) }, Tag.serializer())
 
     /** Deletes the tag, which comes off every entry that has it. Tokkl answers with an empty body. */
-    suspend fun delete(id: Long): ApiResult<Unit> = api.sendNoContent("DELETE", url(id.toString()))
+    suspend fun delete(id: Long): ApiResult<Unit> = api.sendNoContent(HttpMethod.DELETE, url(id.toString()))
 
     private fun url(vararg path: String) = api.server.api("workspaces", workspace.toString(), "tags", *path)
 }
