@@ -52,7 +52,8 @@ class ReportTabsViewModelTest {
     private val settings = MutableStateFlow<AccountSettings?>(
         AccountSettings(ZONE, DayOfWeek.WEDNESDAY, timeResolutionMinutes = null),
     )
-    private lateinit var model: ReportsViewModel
+    private lateinit var route: TestReportsRoute
+    private val model get() = route.model
     private lateinit var screen: TestScreen
     private val scheduler = TestCoroutineScheduler()
     private val scope = CoroutineScope(UnconfinedTestDispatcher(scheduler))
@@ -91,13 +92,16 @@ class ReportTabsViewModelTest {
         testApi.stored = url
         // The user has confirmed the MockWebServer's plain http URL.
         testApi.trust = InMemoryServerTrust(url)
-        model = reportsViewModel(
-            settings,
-            ReportsRepository { testApi.api(url, ApiCredentials.ApiToken("tok-123")) },
-            scope,
-            io,
-            Clock.fixed(Instant.parse("2026-10-20T11:00:00Z"), ZoneOffset.UTC),
-        )
+        route = TestReportsRoute(scope) { choices, own ->
+            reportsViewModel(
+                settings,
+                ReportsRepository { testApi.api(url, ApiCredentials.ApiToken("tok-123")) },
+                own,
+                io,
+                Clock.fixed(Instant.parse("2026-10-20T11:00:00Z"), ZoneOffset.UTC),
+                choices = choices,
+            )
+        }
         screen = TestScreen(model.page, scope, scheduler)
     }
 
@@ -273,9 +277,12 @@ class ReportTabsViewModelTest {
         assertTrue("the same filters ask nothing", io.isEmpty())
 
         screen.leave()
+        route.reopen()
+        screen = TestScreen(model.page, scope, scheduler)
         screen.show()
         io.runAll()
         assertEquals("the filters stay", filters, model.filters.value)
+        assertEquals("the tab stays", ReportTab.WEEKLY, model.tab.value)
         assertEquals(FILTER_FIELDS, weeklies.last().filterFields())
 
         model.applyFilters(ReportFilters(billable = BillableFilter.NON_BILLABLE))

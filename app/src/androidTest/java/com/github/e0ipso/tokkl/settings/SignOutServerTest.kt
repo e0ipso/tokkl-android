@@ -53,7 +53,7 @@ import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaultsStore
 import com.github.e0ipso.tokkl.pomodoro.PomodoroViewModel
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.preferences.StoredPomodoroDefaults
-import com.github.e0ipso.tokkl.reports.ReportsViewModel
+import com.github.e0ipso.tokkl.reports.ReportChoices
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
@@ -357,7 +357,7 @@ class SignOutServerTest {
         val BOOKKEEPING_TABLES = setOf("android_metadata", "room_master_table", "sqlite_sequence")
 
         val SESSION_VIEW_MODELS: List<Class<out ViewModel>> = listOf(
-            ReportsViewModel::class.java,
+            ReportChoices::class.java,
             TimerViewModel::class.java,
             EntryActionsViewModel::class.java,
             FavoritesViewModel::class.java,

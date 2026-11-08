@@ -56,7 +56,8 @@ class ReportsViewModelTest {
     private val settings = MutableStateFlow<AccountSettings?>(
         AccountSettings(ZONE, DayOfWeek.WEDNESDAY, timeResolutionMinutes = null),
     )
-    private lateinit var model: ReportsViewModel
+    private lateinit var route: TestReportsRoute
+    private val model get() = route.model
     private lateinit var screen: TestScreen
     private val scheduler = TestCoroutineScheduler()
     private val scope = CoroutineScope(UnconfinedTestDispatcher(scheduler))
@@ -91,14 +92,17 @@ class ReportsViewModelTest {
         val url = ServerUrl.parse(server.url("/").toString())!!
         testApi.stored = url
         testApi.trust = InMemoryServerTrust(url)
-        model = reportsViewModel(
-            accountSettings = settings,
-            repository = ReportsRepository { testApi.api(url, ApiCredentials.ApiToken("token")) },
-            scope = scope,
-            io = io,
-            clock = CLOCK,
-            app = app.app,
-        )
+        route = TestReportsRoute(scope) { choices, own ->
+            reportsViewModel(
+                accountSettings = settings,
+                repository = ReportsRepository { testApi.api(url, ApiCredentials.ApiToken("token")) },
+                scope = own,
+                io = io,
+                clock = CLOCK,
+                app = app.app,
+                choices = choices,
+            )
+        }
         screen = TestScreen(model.page, scope, scheduler)
     }
 
@@ -127,16 +131,37 @@ class ReportsViewModelTest {
         io.runAll()
         model.applyFilters(ReportFilters(billable = BillableFilter.BILLABLE))
         model.selectTab(ReportTab.WEEKLY)
-        model.openToday()
+        route.choices.openToday()
         assertEquals(ReportTab.SUMMARY, model.tab.value)
         assertEquals(ReportFilters(), model.filters.value)
         io.runAll()
         assertEquals(RangeSelection(range("2026-10-21", "2026-10-21"), RangePreset.TODAY), loaded().selection)
         assertSearched("2026-10-21", "2026-10-21")
         screen.leave()
-        model.openToday()
+        route.reopen()
+        route.choices.openToday()
+        screen = TestScreen(model.page, scope, scheduler)
+        screen.show()
         io.runAll()
+        assertEquals("the tap asks before the page shows, which asks nothing", 3, searches.size)
         assertEquals(RangePreset.TODAY, loaded().selection.preset)
+    }
+
+    @Test
+    fun aWidgetTapBeforeThePageOpensShowsTodayOnce() {
+        route.choices.tab.value = ReportTab.WEEKLY
+        route.choices.filters.value = ReportFilters(billable = BillableFilter.BILLABLE)
+        route.leave()
+        route.choices.openToday()
+        route.reopen()
+        screen = TestScreen(model.page, scope, scheduler)
+        screen.show()
+        io.runAll()
+
+        assertEquals(ReportTab.SUMMARY, model.tab.value)
+        assertEquals(ReportFilters(), model.filters.value)
+        assertEquals(RangeSelection(range("2026-10-21", "2026-10-21"), RangePreset.TODAY), loaded().selection)
+        assertEquals(1, searches.size)
     }
 
     @Test
@@ -212,13 +237,43 @@ class ReportsViewModelTest {
         assertEquals(1, searches.size)
     }
 
+    /**
+     * Another activity, such as the Pomodoro alarm or the tile's dialog, hides the screen for
+     * longer than the page state is shared. The range, the tab and the filters stay, and the
+     * screen asks again for them when it shows.
+     */
+    @Test
+    fun aScreenHiddenForLongerKeepsItsChoicesAndAsksAgainForThem() {
+        screen.show()
+        io.runAll()
+        val filters = ReportFilters(billable = BillableFilter.BILLABLE)
+        model.applyFilters(filters)
+        model.select(RangePreset.LAST_WEEK)
+        io.runAll()
+        val shown = loaded()
+
+        screen.leave()
+        assertSame("hiding asks nothing", shown, model.state.value)
+        screen.show()
+
+        assertEquals(ReportsState.Loading(shown.selection), model.state.value)
+        io.runAll()
+        assertEquals(RangeSelection(range("2026-10-14", "2026-10-20"), RangePreset.LAST_WEEK), loaded().selection)
+        assertSearched("2026-10-14", "2026-10-20")
+        assertEquals(filters, model.filters.value)
+        assertEquals(3, searches.size)
+    }
+
     @Test
     fun aScreenThatWentForgetsItsReportAndOpensOnThisWeekAgain() {
         screen.show()
         io.runAll()
+        model.selectTab(ReportTab.DETAILED)
         model.shift(-1)
         io.runAll()
         screen.leave()
+        route.reopen()
+        screen = TestScreen(model.page, scope, scheduler)
         assertEquals(ReportsState.Closed, model.state.value)
 
         app.trip()
@@ -227,6 +282,7 @@ class ReportsViewModelTest {
         screen.show()
         io.runAll()
         assertEquals(RangePreset.THIS_WEEK, loaded().selection.preset)
+        assertEquals("the tab stays", ReportTab.DETAILED, model.tab.value)
         assertTrue("nothing waits to run", io.isEmpty())
         assertEquals(3, searches.size)
     }

@@ -31,7 +31,7 @@ import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.sessionViewModels
+import com.github.e0ipso.tokkl.components.reportsViewModel
 import com.github.e0ipso.tokkl.feature.reports.R
 import com.github.e0ipso.tokkl.finishWithin
 import com.github.e0ipso.tokkl.openMorePage
@@ -454,7 +454,7 @@ class ReportsScreenTest {
     private fun modelState(): ReportsState {
         var state: ReportsState? = null
         finishWithin("reading the report's state") {
-            scenario!!.onActivity { state = sessionViewModels(it)[ReportsViewModel::class.java].state.value }
+            scenario!!.onActivity { state = reportsViewModel(it).state.value }
         }
         return state!!
     }

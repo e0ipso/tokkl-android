@@ -205,6 +205,24 @@ class TrashViewModelTest {
         assertEquals(listOf(1L), model.state.value.entries?.map { it.id })
     }
 
+    /**
+     * Another activity hides the page for longer than its state is shared. The question whether
+     * to empty the trash stays, and the page loads the trash again when it shows.
+     */
+    @Test
+    fun theQuestionSurvivesTheScreenHiddenForLonger() {
+        answers[LIST] = json("[${entry(1, "Write")}]")
+        screen.show()
+        model.askToEmpty()
+
+        screen.leave()
+        screen.show()
+
+        assertTrue(model.state.value.confirmingEmpty)
+        assertEquals(listOf(1L), model.state.value.entries?.map { it.id })
+        assertEquals(2, requests.count { it == LIST })
+    }
+
     private fun json(body: String) = MockResponse.Builder()
         .code(200)
         .addHeader("Content-Type", "application/json")

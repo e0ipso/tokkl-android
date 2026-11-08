@@ -22,7 +22,7 @@ import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.sessionViewModels
+import com.github.e0ipso.tokkl.components.reportsViewModel
 import com.github.e0ipso.tokkl.feature.reports.R
 import com.github.e0ipso.tokkl.openMorePage
 import com.github.e0ipso.tokkl.orFail
@@ -198,7 +198,7 @@ class ReportsForegroundTest {
 
     private fun modelOf(activity: MainActivity): ReportsViewModel {
         var model: ReportsViewModel? = null
-        instrumentation.runOnMainSync { model = sessionViewModels(activity)[ReportsViewModel::class.java] }
+        instrumentation.runOnMainSync { model = reportsViewModel(activity) }
         return model!!
     }
 

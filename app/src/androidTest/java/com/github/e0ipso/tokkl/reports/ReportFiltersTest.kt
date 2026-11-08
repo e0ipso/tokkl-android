@@ -34,7 +34,7 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.capabilities
-import com.github.e0ipso.tokkl.components.sessionViewModels
+import com.github.e0ipso.tokkl.components.reportsViewModel
 import com.github.e0ipso.tokkl.feature.reports.R
 import com.github.e0ipso.tokkl.finishWithin
 import com.github.e0ipso.tokkl.openMorePage
@@ -534,7 +534,7 @@ class ReportFiltersTest {
     private fun model(): ReportsViewModel {
         var model: ReportsViewModel? = null
         finishWithin("reading the reports model") {
-            checkNotNull(scenario).onActivity { model = sessionViewModels(it)[ReportsViewModel::class.java] }
+            checkNotNull(scenario).onActivity { model = reportsViewModel(it) }
         }
         return checkNotNull(model)
     }

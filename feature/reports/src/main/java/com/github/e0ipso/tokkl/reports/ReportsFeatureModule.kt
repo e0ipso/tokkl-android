@@ -20,7 +20,7 @@ import java.io.File
 
 /**
  * Reports: the Reports API repository, the report CSV files and their account, which each sign-in
- * and sign-out invalidates, the view model and the screen.
+ * and sign-out invalidates, the choices that outlive the page, the view model and the screen.
  */
 val reportsFeatureModule = module {
     single { ReportsRepository(get<Session>()) }
@@ -34,7 +34,11 @@ val reportsFeatureModule = module {
     // The exports' account, which every sign-in and sign-out invalidates, deleting the files.
     single { ExportAccount(get()) } binds arrayOf(AccountDataOwner::class, SignedInListener::class)
 
-    viewModel {
+    // The tab and the filters, in the signed-in session's store, which the next visit opens on.
+    viewModel { ReportChoices() }
+
+    // The Reports route's own view model, which goes when the route leaves the back stack.
+    viewModel { (choices: ReportChoices) ->
         val session = get<Session>()
         val accountSettings = get<AccountSettingsSource>()
         val capabilities = get<CapabilitiesSource>()
@@ -42,6 +46,7 @@ val reportsFeatureModule = module {
         // The exporter shares the view model's scope, so clearing the view model cancels it too.
         val scope = viewModelCoroutineScope()
         ReportsViewModel(
+            choices = choices,
             accountSettings = accountSettings.state,
             repository = get(),
             clock = get(),

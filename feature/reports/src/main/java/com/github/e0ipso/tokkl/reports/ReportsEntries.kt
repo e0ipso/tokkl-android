@@ -28,8 +28,12 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.PolymorphicModuleBuilder
 import kotlinx.serialization.modules.subclass
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 
-/** Reports. Its view model is the signed-in session's, so the report keeps its filters after the page closes. */
+/**
+ * Reports. Its view model is the route's own, and its tab and filters ([ReportChoices]) the
+ * signed-in session's, so they stay after the page closes while the range starts over.
+ */
 internal object ReportsEntries : FeatureEntries {
     override val pages get() = listOf(reportsPage)
 
@@ -38,7 +42,10 @@ internal object ReportsEntries : FeatureEntries {
     }
 
     override fun EntryProviderScope<Route>.addEntries(host: NavigationHost) {
-        route(ReportsRoute) { ReportsPage(model = koinViewModel(viewModelStoreOwner = LocalSignedInSession.current)) }
+        route(ReportsRoute) {
+            val choices = koinViewModel<ReportChoices>(viewModelStoreOwner = LocalSignedInSession.current)
+            ReportsPage(model = koinViewModel { parametersOf(choices) })
+        }
     }
 }
 

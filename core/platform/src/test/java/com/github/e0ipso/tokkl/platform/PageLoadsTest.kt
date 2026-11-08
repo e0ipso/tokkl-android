@@ -30,10 +30,6 @@ class PageLoadsTest {
             override fun reconnected() {
                 calls += "reconnected"
             }
-
-            override fun left() {
-                calls += "left"
-            }
         },
     )
     private val screen = TestScreen(page, scope, scheduler)
@@ -69,12 +65,12 @@ class PageLoadsTest {
     }
 
     @Test
-    fun aPageThatWentLeavesAndLoadsWhenItShowsAgain() {
+    fun aScreenHiddenForLongerLoadsWhenItShowsAgain() {
         screen.show()
         screen.leave()
         screen.show()
 
-        assertEquals(listOf("shown", "left", "shown"), calls)
+        assertEquals(listOf("shown", "shown"), calls)
     }
 
     @Test
@@ -84,6 +80,6 @@ class PageLoadsTest {
         screen.leave()
         app.reconnect()
 
-        assertEquals(listOf("shown", "reconnected", "left"), calls)
+        assertEquals(listOf("shown", "reconnected"), calls)
     }
 }

@@ -34,6 +34,8 @@ import com.github.e0ipso.tokkl.pomodoro.ServicePomodoroRinging
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaultsSetting
 import com.github.e0ipso.tokkl.preferences.ReminderSetting
 import com.github.e0ipso.tokkl.reminder.ReminderSync
+import com.github.e0ipso.tokkl.reports.ReportsRoute
+import com.github.e0ipso.tokkl.reports.ReportsViewModel
 import com.github.e0ipso.tokkl.session.AccountLifetime
 import com.github.e0ipso.tokkl.session.AccountRefresh
 import com.github.e0ipso.tokkl.session.AccountSettings
@@ -160,7 +162,7 @@ internal fun navigationStores(activity: ComponentActivity): NavigationStores =
 
 /**
  * The view models of [activity]'s signed-in session, which the screens share: the timer, the entry
- * actions, the timer templates, the reports and the Pomodoro page.
+ * actions, the timer templates, the reports' tab and filters and the Pomodoro page.
  */
 internal fun sessionViewModels(activity: ComponentActivity): ViewModelProvider = koinViewModels(
     navigationStores(activity).session,
@@ -169,3 +171,9 @@ internal fun sessionViewModels(activity: ComponentActivity): ViewModelProvider =
 /** The view models of [activity]'s Timer page: its history and its calendar. */
 internal fun timerPageViewModels(activity: ComponentActivity): ViewModelProvider =
     koinViewModels(navigationStores(activity).entries.getOrCreateOwner(Route.Timer.contentKey))
+
+/** The view model of [activity]'s Reports page, which must be on the back stack. */
+internal fun reportsViewModel(activity: ComponentActivity): ReportsViewModel =
+    koinViewModels(navigationStores(activity).entries.getOrCreateOwner(ReportsRoute.contentKey))[
+        ReportsViewModel::class.java,
+    ]

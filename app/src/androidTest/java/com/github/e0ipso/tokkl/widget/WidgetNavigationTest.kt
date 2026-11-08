@@ -15,7 +15,7 @@ import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.capabilities
-import com.github.e0ipso.tokkl.components.sessionViewModels
+import com.github.e0ipso.tokkl.components.reportsViewModel
 import com.github.e0ipso.tokkl.reports.RangePreset
 import com.github.e0ipso.tokkl.reports.ReportTab
 import com.github.e0ipso.tokkl.reports.ReportsState
@@ -43,7 +43,7 @@ class WidgetNavigationTest {
         ).use { scenario ->
             assertToday(scenario)
             lateinit var model: ReportsViewModel
-            scenario.onActivity { model = sessionViewModels(it)[ReportsViewModel::class.java] }
+            scenario.onActivity { model = reportsViewModel(it) }
             InstrumentationRegistry.getInstrumentation().runOnMainSync {
                 model.selectTab(ReportTab.WEEKLY)
                 model.select(RangePreset.LAST_WEEK)
@@ -105,7 +105,7 @@ class WidgetNavigationTest {
         compose.waitUntil(15_000) {
             var today = false
             scenario.onActivity {
-                val model = sessionViewModels(it)[ReportsViewModel::class.java]
+                val model = reportsViewModel(it)
                 val selection = when (val state = model.state.value) {
                     is ReportsState.Loaded -> state.selection
                     is ReportsState.Loading -> state.selection

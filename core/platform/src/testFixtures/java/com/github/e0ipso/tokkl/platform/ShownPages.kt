@@ -55,7 +55,11 @@ class TestScreen(
         scheduler.runCurrent()
     }
 
-    /** The screen goes, and more than five seconds pass. */
+    /**
+     * The screen stops reading, and more than five seconds pass, as when another activity covers
+     * it or its route leaves the back stack. A route that leaves also clears its view model, which
+     * this does not.
+     */
     fun leave() {
         hide()
         scheduler.advanceTimeBy(LEAVE_MILLIS)

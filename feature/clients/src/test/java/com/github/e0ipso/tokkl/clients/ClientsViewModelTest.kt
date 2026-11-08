@@ -136,6 +136,24 @@ class ClientsViewModelTest {
 
     private fun clientLoads(): Int = requests.count { it == "GET /api/v9/workspaces/7/clients" }
 
+    /**
+     * Another activity hides the page for longer than its state is shared. The open form stays,
+     * and the page loads the clients again when it shows.
+     */
+    @Test
+    fun theOpenFormSurvivesTheScreenHiddenForLonger() {
+        screen.show()
+        val acme = model.state.value.data!!.clients.single()
+        model.edit(acme)
+
+        screen.leave()
+        screen.show()
+
+        assertEquals(ClientsOverlay.Edit(acme), model.state.value.overlay)
+        assertEquals("Acme", model.state.value.data!!.clients.single().name)
+        assertEquals(2, clientLoads())
+    }
+
     /** Archiving asks first, since it archives the client's projects too. */
     @Test
     fun archivingAsksFirstThenArchivesTheClientAndRefreshesTheCache() {

@@ -13,7 +13,7 @@ import com.github.e0ipso.tokkl.navigation.EntryFormOpenings
  * model decorator clears when the route leaves the stack. [session], a store of the same provider
  * under a key no route has, holds the view models that serve several screens of a signed-in
  * session, or keep a page's state after the page closes: the timer, the entry actions, the timer
- * templates, the reports and the Pomodoro page. A sign-out discards them all, so nothing an
+ * templates, the reports' tab and filters and the Pomodoro page. A sign-out discards them all, so nothing an
  * account's screens held in memory, such as the history's older days, reaches the next sign-in.
  *
  * Lifecycle's own `rememberViewModelStoreProvider` clears its stores when its call leaves the

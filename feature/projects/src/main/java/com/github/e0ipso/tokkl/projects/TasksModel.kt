@@ -63,7 +63,7 @@ class TasksModel(
     fun open(project: ProjectId) {
         if (this.project == project && catalog.opened) return
         if (this.project != project) {
-            catalog.left()
+            catalog.close()
             this.project = project
         }
         catalog.shown()
@@ -71,7 +71,7 @@ class TasksModel(
 
     /** Closes the list, as its form closes. */
     fun close() {
-        catalog.left()
+        catalog.close()
         project = null
     }
 

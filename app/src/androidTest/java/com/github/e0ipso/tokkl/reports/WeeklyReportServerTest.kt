@@ -25,7 +25,7 @@ import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createEmptyComposeRule
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
-import com.github.e0ipso.tokkl.components.sessionViewModels
+import com.github.e0ipso.tokkl.components.reportsViewModel
 import com.github.e0ipso.tokkl.feature.reports.R
 import com.github.e0ipso.tokkl.finishWithin
 import com.github.e0ipso.tokkl.openMorePage
@@ -361,7 +361,7 @@ class WeeklyReportServerTest {
         finishWithin("reading the reports state") {
             checkNotNull(
                 scenario,
-            ).onActivity { state = sessionViewModels(it)[ReportsViewModel::class.java].state.value }
+            ).onActivity { state = reportsViewModel(it).state.value }
         }
         return checkNotNull(state)
     }

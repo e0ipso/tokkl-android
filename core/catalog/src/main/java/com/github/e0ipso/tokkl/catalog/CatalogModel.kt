@@ -61,9 +61,11 @@ data class CatalogState<D, O>(
  * The state of a page that manages one kind of the account's items on the server: projects,
  * clients or tags (docs/PRD.md P2 to P4). It loads them from [repository] each time the page shows
  * and each time the app comes back to the foreground with the page on screen, as its view model's
- * stateInPage tells it through [PageLoads], and sends each change at once. Nothing is queued:
- * offline, or with the server out of reach, nothing changes. After each change the server accepts,
- * [refreshCache] reloads the offline cache, so the picker, the history and the reports show it.
+ * stateInPage tells it through [PageLoads], and sends each change at once. A load keeps the list
+ * and the form or question open over it until the answer comes. They go with the view model, when
+ * the page's route leaves the back stack. Nothing is queued: offline, or with the server out of
+ * reach, nothing changes. After each change the server accepts, [refreshCache] reloads the offline
+ * cache, so the picker, the history and the reports show it.
  *
  * Call every function on the main thread.
  *
@@ -83,7 +85,7 @@ class CatalogModel<D, O>(
     private val mutableState = MutableStateFlow(CatalogState<D, O>())
     val state: StateFlow<CatalogState<D, O>> = mutableState.asStateFlow()
 
-    /** Whether the page is open: from [shown] until [left], a configuration change included. */
+    /** Whether the list is open: from [shown] until [close], a configuration change included. */
     var opened: Boolean = false
         private set
 
@@ -117,8 +119,12 @@ class CatalogModel<D, O>(
         if (opened && state.value.loadProblem != null) load()
     }
 
-    /** The page went: stops waiting and forgets what it loaded. A change already sent still lands. */
-    override fun left() {
+    /**
+     * The list closed, as the task list does when its project's form closes: stops waiting and
+     * forgets what it loaded. A change already sent still lands. A page's list never closes: it
+     * goes with its view model.
+     */
+    fun close() {
         loading?.cancel()
         loading = null
         opened = false
@@ -160,7 +166,7 @@ class CatalogModel<D, O>(
         mutableState.update { it.copy(sending = true, changeProblem = null) }
         scope.launch {
             val answer = withContext(io + NonCancellable) { request(workspace) }
-            // The page closed while the request ran. What the server accepted still reaches the cache.
+            // The list closed while the request ran. What the server accepted still reaches the cache.
             if (!opened) {
                 if (answer is ApiResult.Success) refreshCache()
                 return@launch

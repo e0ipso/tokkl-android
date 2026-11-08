@@ -119,7 +119,11 @@ class ProjectsViewModel(
         ProjectsPageState(state.value, offline.value, tasks = tasks.state.value),
         app,
         object : PageLoads {
-            override fun shown() = catalog.shown()
+            /** The page shows: loads the projects, and again the tasks of a form left open. */
+            override fun shown() {
+                catalog.shown()
+                tasks.returned()
+            }
 
             override fun returned() {
                 catalog.returned()
@@ -130,8 +134,6 @@ class ProjectsViewModel(
                 catalog.reconnected()
                 tasks.reconnected()
             }
-
-            override fun left() = catalog.left()
         },
     )
 

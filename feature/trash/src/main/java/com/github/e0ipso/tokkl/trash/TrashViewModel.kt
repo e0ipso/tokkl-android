@@ -74,7 +74,9 @@ data class TrashPageState(
 /**
  * The trash page's state (docs/PRD.md H7): the deleted entries from `GET /api/app/trash`, loaded
  * each time the page opens and each time the app comes back to it, and the restores and purges the
- * page sends at once. Nothing is queued, so offline nothing changes, as on the catalog pages.
+ * page sends at once. A load keeps the list and the question open over it until the answer comes;
+ * they go with the view model, when the page's route leaves the back stack. Nothing is queued, so
+ * offline nothing changes, as on the catalog pages.
  * After a restore, [refreshCache] reloads the offline cache, so the history shows the entry again.
  *
  * A server without the trash answers the list with a 404, or with something that is not a list.
@@ -103,7 +105,7 @@ class TrashViewModel(
     private val mutableState = MutableStateFlow(TrashState())
     val state: StateFlow<TrashState> = mutableState.asStateFlow()
 
-    /** Whether the page is open: from its first show until it leaves, a configuration change included. */
+    /** Whether the page has shown, so it has asked for the trash. */
     private var opened = false
     private var loading: Job? = null
 
@@ -125,14 +127,6 @@ class TrashViewModel(
             /** The network came back. Loads again when the server could not be reached. */
             override fun reconnected() {
                 if (opened && state.value.loadProblem != null) load()
-            }
-
-            /** The page went: stops waiting and forgets what it loaded. A change already sent still lands. */
-            override fun left() {
-                loading?.cancel()
-                loading = null
-                opened = false
-                mutableState.value = TrashState()
             }
         },
     )
@@ -207,8 +201,6 @@ class TrashViewModel(
         viewModelScope.launch {
             val answer = withContext(io + NonCancellable) { request(repository) }
             if (answer is ApiResult.Success && restored) refreshCache()
-            // The page closed while the request ran.
-            if (!opened) return@launch
             when (answer) {
                 is ApiResult.Success -> mutableState.update { current ->
                     current.copy(

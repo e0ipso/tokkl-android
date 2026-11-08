@@ -27,13 +27,15 @@ import kotlin.coroutines.CoroutineContext
  * or the app comes back to the foreground, it asks the configured server for the report, and it
  * never asks on a timer. Every tab's request carries the filters. The detailed tab asks for its
  * next page when the list nears its end, and the weekly tab always shows one whole week from the
- * account's week start. Reports live in memory while the screen is open, and go when it leaves.
- * Explicit CSV sharing uses a separate bounded private export area.
- * When a request fails, the screen shows why and no numbers or entries, even those of pages that
- * loaded before.
+ * account's week start. It is the Reports route's own view model: the range and the reports live
+ * in memory while the route is on the back stack, and go with it, while the tab and the filters
+ * stay in [choices] for the next visit. Explicit CSV sharing uses a separate bounded private
+ * export area. When a request fails, the screen shows why and no numbers or entries, even those of
+ * pages that loaded before.
  *
  * Call every function on the main thread.
  *
+ * @param choices the tab and the filters, which outlive the page, and a widget's ask for today.
  * @param accountSettings the account's timezone, week start and duration format.
  * @param repository the Reports API calls. Runs on [io].
  * @param clock where today comes from, in the account's timezone.
@@ -44,6 +46,7 @@ import kotlin.coroutines.CoroutineContext
  *   screen shows ([stateInPage]).
  */
 class ReportsViewModel(
+    private val choices: ReportChoices,
     val accountSettings: StateFlow<AccountSettings?>,
     private val repository: ReportsRepository,
     scope: CoroutineScope,
@@ -93,20 +96,20 @@ class ReportsViewModel(
     private val mutableState = MutableStateFlow<ReportsState>(ReportsState.Closed)
     val state: StateFlow<ReportsState> = mutableState.asStateFlow()
 
-    private val mutableTab = MutableStateFlow(ReportTab.SUMMARY)
+    private val mutableTab = choices.tab
 
     /** The tab on screen. It stays when the screen closes and opens again. */
     val tab: StateFlow<ReportTab> = mutableTab.asStateFlow()
 
-    private val mutableFilters = MutableStateFlow(ReportFilters())
+    private val mutableFilters = choices.filters
 
     /** The filters every tab's report applies. They stay when the screen closes and opens again, as the tab does. */
     val filters: StateFlow<ReportFilters> = mutableFilters.asStateFlow()
 
-    /** Whether the screen is open: from its first show, or a widget's [openToday], until it leaves. */
+    /** Whether the screen has opened: from its first show, or a widget's day tap. */
     private var opened = false
 
-    /** [openToday] asked for the report the screen is about to show, so that show asks nothing. */
+    /** A widget's day tap asked for the report the screen is about to show, so that show asks nothing. */
     private var openedLoading = false
 
     /** What the screen shows, while it reads it. */
@@ -133,8 +136,8 @@ class ReportsViewModel(
         app,
         object : PageLoads {
             /**
-             * Opens the screen on this week. A screen that shows again after a trip to the
-             * background asks again for the range on screen instead.
+             * Opens the screen on this week. A screen that shows again, after a trip to the
+             * background or with another activity over it, asks again for the range on screen.
              */
             override fun shown() {
                 when {
@@ -164,17 +167,6 @@ class ReportsViewModel(
                 val failed = state.value as? ReportsState.Failed ?: return
                 if (failed.failure == ReportFailure.Unreachable) load(failed.selection)
             }
-
-            /** The screen went: stops waiting for an answer and forgets the report and the workspace. */
-            override fun left() {
-                exporter.cancel()
-                loading?.cancel()
-                loading = null
-                workspace = null
-                opened = false
-                openedLoading = false
-                mutableState.value = ReportsState.Closed
-            }
         },
     )
 
@@ -183,11 +175,8 @@ class ReportsViewModel(
 
     private var loading: Job? = null
 
-    /** Opens the widget day report. */
-    fun openToday() {
-        // Weekly expands a one-day range to a week. Widget totals always describe one day.
-        mutableTab.value = ReportTab.SUMMARY
-        mutableFilters.value = ReportFilters()
+    /** Opens the widget day report, which [ReportChoices.openToday] asked for with its tab and filters. */
+    private fun openToday() {
         opened = true
         openedLoading = true
         select(RangePreset.TODAY)
@@ -365,6 +354,13 @@ class ReportsViewModel(
     }
 
     private fun failureOf(error: ApiError): ReportFailure = reportFailureOf(error)
+
+    init {
+        // A widget's day tap, from before the page opened or while it shows.
+        viewModelScope.launch {
+            choices.todayAsked.collect { asked -> if (asked && choices.takeToday()) openToday() }
+        }
+    }
 
     /** What [page] starts with, from the flows as they are now. */
     private fun pageNow() = ReportsPageState(

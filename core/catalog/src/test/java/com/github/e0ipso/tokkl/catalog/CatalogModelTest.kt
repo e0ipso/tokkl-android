@@ -69,9 +69,22 @@ class CatalogModelTest {
     }
 
     @Test
-    fun aPageThatLeftLoadsNothingAndForgetsItsList() {
+    fun showingAgainLoadsAndKeepsTheForm() {
         model.shown()
-        model.left()
+        model.show("the form")
+        server = listOf("Web site")
+
+        model.shown()
+
+        assertEquals(2, loads)
+        assertEquals(listOf("Web site"), model.state.value.data)
+        assertEquals("the form stays open", "the form", model.state.value.overlay)
+    }
+
+    @Test
+    fun aClosedListLoadsNothingAndForgetsItsList() {
+        model.shown()
+        model.close()
         model.retry()
         model.reconnected()
 

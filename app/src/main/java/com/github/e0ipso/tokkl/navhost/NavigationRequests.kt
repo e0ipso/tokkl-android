@@ -16,8 +16,8 @@ import com.github.e0ipso.tokkl.navigation.Navigator
 import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.pomodoro.PomodoroNotificationTap
 import com.github.e0ipso.tokkl.pomodoro.PomodoroRoute
+import com.github.e0ipso.tokkl.reports.ReportChoices
 import com.github.e0ipso.tokkl.reports.ReportsRoute
-import com.github.e0ipso.tokkl.reports.ReportsViewModel
 import com.github.e0ipso.tokkl.signin.SignInRoute
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.widget.WidgetPage
@@ -112,7 +112,7 @@ internal fun NavigationRequestEffects(
             when (request) {
                 is NavigationRequest.Widget -> {
                     val reports = if (request.page == WidgetPage.TODAY) {
-                        koinViewModel<ReportsViewModel>(viewModelStoreOwner = LocalSignedInSession.current)
+                        koinViewModel<ReportChoices>(viewModelStoreOwner = LocalSignedInSession.current)
                     } else {
                         null
                     }

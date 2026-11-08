@@ -50,7 +50,8 @@ class AppSummaryViewModelTest {
     private val requests = CopyOnWriteArrayList<JsonObject>()
     private val paths = CopyOnWriteArrayList<String>()
     private val io = QueuedDispatcher()
-    private lateinit var model: ReportsViewModel
+    private lateinit var route: TestReportsRoute
+    private val model get() = route.model
     private lateinit var screen: TestScreen
     private val scheduler = TestCoroutineScheduler()
     private val scope = CoroutineScope(UnconfinedTestDispatcher(scheduler))
@@ -90,16 +91,19 @@ class AppSummaryViewModelTest {
         val url = ServerUrl.parse(http.url("/").toString())!!
         testApi.stored = url
         testApi.trust = InMemoryServerTrust(url)
-        model = reportsViewModel(
-            accountSettings = MutableStateFlow(
-                AccountSettings("Pacific/Kiritimati", DayOfWeek.WEDNESDAY, timeResolutionMinutes = null),
-            ),
-            repository = ReportsRepository { testApi.api(url, ApiCredentials.ApiToken("test-token")) },
-            scope = scope,
-            io = io,
-            clock = Clock.fixed(Instant.parse("2026-10-20T11:00:00Z"), ZoneOffset.UTC),
-            app = app.app,
-        )
+        route = TestReportsRoute(scope) { choices, own ->
+            reportsViewModel(
+                accountSettings = MutableStateFlow(
+                    AccountSettings("Pacific/Kiritimati", DayOfWeek.WEDNESDAY, timeResolutionMinutes = null),
+                ),
+                repository = ReportsRepository { testApi.api(url, ApiCredentials.ApiToken("test-token")) },
+                scope = own,
+                io = io,
+                clock = Clock.fixed(Instant.parse("2026-10-20T11:00:00Z"), ZoneOffset.UTC),
+                app = app.app,
+                choices = choices,
+            )
+        }
         screen = TestScreen(model.page, scope, scheduler)
     }
 
@@ -155,14 +159,14 @@ class AppSummaryViewModelTest {
     @Test
     fun closeCancelsPendingLoadsAndReopenReadsTheAccountAgain() {
         screen.show()
-        screen.leave()
+        reopen()
         io.runAll()
         assertEquals(ReportsState.Closed, model.state.value)
         assertTrue(requests.isEmpty())
         screen.show()
         io.runAll()
         assertEquals(7317L, report().totals.seconds)
-        screen.leave()
+        reopen()
         screen.show()
         io.runAll()
         assertEquals(2, paths.count { it == "/api/v9/me" })
@@ -178,27 +182,31 @@ class AppSummaryViewModelTest {
         }
         val liveScope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(scheduler))
         val url = ServerUrl.parse(http.url("/").toString())!!
-        val live = reportsViewModel(
-            accountSettings = MutableStateFlow(
-                AccountSettings("Pacific/Kiritimati", DayOfWeek.WEDNESDAY, timeResolutionMinutes = null),
-            ),
-            repository = ReportsRepository { testApi.api(url, ApiCredentials.ApiToken("test-token")) },
-            scope = liveScope,
-            io = Dispatchers.IO,
-            app = app.app,
-        )
+        val liveRoute = TestReportsRoute(liveScope) { choices, own ->
+            reportsViewModel(
+                accountSettings = MutableStateFlow(
+                    AccountSettings("Pacific/Kiritimati", DayOfWeek.WEDNESDAY, timeResolutionMinutes = null),
+                ),
+                repository = ReportsRepository { testApi.api(url, ApiCredentials.ApiToken("test-token")) },
+                scope = own,
+                io = Dispatchers.IO,
+                app = app.app,
+                choices = choices,
+            )
+        }
+        val live = liveRoute.model
         val liveScreen = TestScreen(live.page, liveScope, scheduler)
         try {
             liveScreen.show()
             assertTrue(withContext(Dispatchers.IO) { entered.await(5, TimeUnit.SECONDS) })
-            liveScreen.leave()
-            assertEquals(ReportsState.Closed, live.state.value)
-            // The load the screen's leaving cancelled, unless it already ended; the job that shares
-            // the page state stays.
-            val loading = liveScope.coroutineContext[Job]!!.children.filter { it.isCancelled }.toList()
+            val loading = live.state.value
+            assertTrue("loading: $loading", loading is ReportsState.Loading)
+            // The route leaves the back stack, which cancels the view model's scope and its load.
+            liveRoute.leave()
+            val cancelled = liveScope.coroutineContext[Job]!!.children.filter { it.isCancelled }.toList()
             release.countDown()
-            withTimeout(5_000) { loading.forEach { it.join() } }
-            assertEquals(ReportsState.Closed, live.state.value)
+            withTimeout(5_000) { cancelled.forEach { it.join() } }
+            assertSame("the late summary does not show", loading, live.state.value)
             assertEquals(1, requests.size)
         } finally {
             release.countDown()
@@ -260,6 +268,13 @@ class AppSummaryViewModelTest {
     }
 
     private fun report() = (model.state.value as ReportsState.Loaded).report as SummaryReport
+
+    /** The route leaves the back stack and comes back, with a screen that has not shown yet. */
+    private fun reopen() {
+        screen.leave()
+        route.reopen()
+        screen = TestScreen(model.page, scope, scheduler)
+    }
     private fun json(body: String) = MockResponse.Builder().code(200).body(body).build()
     private class QueuedDispatcher : CoroutineDispatcher() {
         private val queue = ArrayDeque<Runnable>()
