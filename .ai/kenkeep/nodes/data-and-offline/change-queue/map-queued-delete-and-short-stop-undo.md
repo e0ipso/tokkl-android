@@ -16,7 +16,7 @@ kk_relates_to:
 kk_depends_on: []
 kk_confidence: high
 ---
-`ChangeSender.undoDelete` takes a delete back (H3). A delete still in the queue leaves it with no request. One the server has, or may have, comes back through `POST /api/app/time_entries/{id}/restore`, so call it only when `Capabilities.restore` is true. Deletes go out holding the lock that `undoDelete` holds, so Undo never decides while a delete is on its way.
+`cache/DeleteUndoer.undoDelete` takes a delete back (H3); screens take it as the `DeleteUndo` interface and read an `UndoOutcome`. A delete still in the queue leaves it with no request. One the server has, or may have, comes back through `POST /api/app/time_entries/{id}/restore`, so call it only when `Capabilities.restore` is true. The sender sends each delete inside `DeleteUndoer.sendingDelete`, which holds the Mutex that `undoDelete` holds, so Undo never decides while a delete is on its way, and a delete Undo took back never goes out. After a restore it asks for `refreshAfterChange`.
 
 `ChangeQueue.undoShortStop` queues `ChangeKind.RESTORE` behind the captured Stop and shows its stopped zero-length row immediately, including offline. `short_stop_undo` persists the offer after the Stop leaves the queue and across process restarts. Dismissing the offer leaves the queued Stop and server Trash intact.
 
