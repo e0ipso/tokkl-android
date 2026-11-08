@@ -10,23 +10,22 @@ import java.io.IOException
  * choice before the refresh answers, and offline. It stays on the phone, because the backup and
  * data extraction rules leave out every domain.
  *
- * The first call loads the preferences file, so it reads the disk.
+ * Each call reads or writes the file on the I/O dispatcher.
  */
 class TimerViewStore(context: Context) : ClearableStore<StoredTimerView> {
 
     private val file = PreferencesFile(context, FILE_NAME)
-    private val preferences get() = file.preferences
 
     /** The stored view, or null when none is stored or it names a view this version lacks. */
-    override fun load(): StoredTimerView? {
-        val name = preferences.getString(KEY_VIEW, null) ?: return null
-        val view = TimerView.entries.firstOrNull { it.name == name } ?: return null
-        return StoredTimerView(view, unsent = preferences.getBoolean(KEY_UNSENT, false))
+    override suspend fun load(): StoredTimerView? = file.read {
+        val name = getString(KEY_VIEW, null) ?: return@read null
+        val view = TimerView.entries.firstOrNull { it.name == name } ?: return@read null
+        StoredTimerView(view, unsent = getBoolean(KEY_UNSENT, false))
     }
 
     /** Replaces the stored view in one write. */
     @Throws(IOException::class)
-    override fun save(value: StoredTimerView) {
+    override suspend fun save(value: StoredTimerView) {
         file.commit {
             putString(KEY_VIEW, value.value.name)
             putBoolean(KEY_UNSENT, value.unsent)
@@ -34,7 +33,7 @@ class TimerViewStore(context: Context) : ClearableStore<StoredTimerView> {
     }
 
     @Throws(IOException::class)
-    override fun clear() {
+    override suspend fun clear() {
         file.commit { clear() }
     }
 

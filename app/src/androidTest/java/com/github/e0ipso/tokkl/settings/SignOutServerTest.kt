@@ -147,10 +147,10 @@ class SignOutServerTest {
             "the refresh cached the project",
             runBlocking { app.cache.projects.first() }.any { it.name == PROJECT },
         )
-        assertNotNull(AccountSettingsStore(context).load())
-        assertNotNull(CapabilitiesStore(context).load())
-        assertNotNull(TimerViewStore(context).load())
-        assertNotNull(PomodoroDefaultsStore(context).load())
+        runBlocking { assertNotNull(AccountSettingsStore(context).load()) }
+        runBlocking { assertNotNull(CapabilitiesStore(context).load()) }
+        runBlocking { assertNotNull(TimerViewStore(context).load()) }
+        runBlocking { assertNotNull(PomodoroDefaultsStore(context).load()) }
         queueTwoUnsentChanges()
         changeThePomodoroDefaults()
 
@@ -218,7 +218,7 @@ class SignOutServerTest {
         // server is stored would leave it unconfirmed, and a background request from the refresh
         // above would open the http warning beside the sign-out dialog. With no server stored, such
         // a request is refused without a prompt.
-        ServerConfigStore(context).clear()
+        runBlocking { ServerConfigStore(context).clear() }
         ServerTrustStore(context).confirmCleartext(DEAD_SERVER)
         Session(context).save(DEAD_SERVER, account.apiToken)
         assertEquals("no trust prompt waits", SessionTrust.State(), app.sessionTrust.state.value)
@@ -239,7 +239,7 @@ class SignOutServerTest {
         val unsent = StoredPomodoroDefaults(PomodoroDefaults(40, 8, 20, 5), unsent = true)
         // No activity runs yet, so this waits without the compose rule.
         val deadline = System.nanoTime() + TIMEOUT_MS * 1_000_000
-        while (PomodoroDefaultsStore(context).load() != unsent) {
+        while (runBlocking { PomodoroDefaultsStore(context).load() } != unsent) {
             if (System.nanoTime() > deadline) throw AssertionError("timed out: the phone keeps the change unsent")
             Thread.sleep(100)
         }
@@ -247,18 +247,18 @@ class SignOutServerTest {
 
     private fun assertNothingOfTheAccountStays() {
         assertFalse(Session(context).isSignedIn())
-        assertNull("the server", ServerConfigStore(context).load())
-        assertNull("the token", ApiTokenStore(context).load())
+        runBlocking { assertNull("the server", ServerConfigStore(context).load()) }
+        runBlocking { assertNull("the token", ApiTokenStore(context).load()) }
         val keyStore = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
         // ApiTokenStore's key alias, which a token stored by an earlier version still uses.
         assertFalse("the token's Keystore key", keyStore.containsAlias("api_token"))
-        assertNull("the stored settings", AccountSettingsStore(context).load())
+        runBlocking { assertNull("the stored settings", AccountSettingsStore(context).load()) }
         assertNull("the settings in memory", app.accountSettings.state.value)
-        assertNull("the stored capabilities", CapabilitiesStore(context).load())
+        runBlocking { assertNull("the stored capabilities", CapabilitiesStore(context).load()) }
         assertEquals("the capabilities in memory", Capabilities.NONE, app.capabilities.state.value)
-        assertNull("the stored Timer view", TimerViewStore(context).load())
+        runBlocking { assertNull("the stored Timer view", TimerViewStore(context).load()) }
         assertEquals("the Timer view in memory", TimerView.LIST, app.timerView.view.value)
-        assertNull("the stored Pomodoro defaults", PomodoroDefaultsStore(context).load())
+        runBlocking { assertNull("the stored Pomodoro defaults", PomodoroDefaultsStore(context).load()) }
         assertEquals("the Pomodoro defaults in memory", PomodoroDefaults.DEFAULT, app.pomodoroDefaults.defaults.value)
         assertFalse("the http confirmation", ServerTrustStore(context).isCleartextConfirmed(DEAD_SERVER))
         assertNull("the pinned certificate", ServerTrustStore(context).pinnedSha256(PINNED.host, PINNED.port))

@@ -35,7 +35,7 @@ class ServerSmokeTest {
     /** The shared client sends requests only to the stored server, and to a plain http one only once confirmed. */
     @Before
     fun configureTheServer() {
-        servers.save(TokklTestServer.url)
+        runBlocking { servers.save(TokklTestServer.url) }
         trust.confirmCleartext(TokklTestServer.url)
     }
 
@@ -51,11 +51,11 @@ class ServerSmokeTest {
 
     /** AppStartup points the host guard at the stored server, so with none stored nothing goes out. */
     @Test
-    fun withNoStoredServerTheGuardRefusesTheRequest() {
+    fun withNoStoredServerTheGuardRefusesTheRequest() = runBlocking<Unit> {
         servers.clear()
         val me = client.server.api("me")
 
-        val result = runBlocking { client.get(me, JsonObject.serializer()) }
+        val result = client.get(me, JsonObject.serializer())
 
         assertEquals(
             ApiError.HostNotAllowed("${me.scheme}://${me.host}:${me.port}"),

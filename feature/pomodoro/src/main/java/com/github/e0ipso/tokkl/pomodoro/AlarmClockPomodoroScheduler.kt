@@ -17,6 +17,8 @@ import com.github.e0ipso.tokkl.timersync.TimerSyncWatcher
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
 import org.koin.core.component.inject
@@ -45,7 +47,7 @@ import java.time.Instant
  */
 class AlarmClockPomodoroScheduler(
     private val context: Context,
-    private val timerSyncStarts: () -> Boolean,
+    private val timerSyncStarts: suspend () -> Boolean,
     private val exactAlarms: () -> Boolean,
 ) : PomodoroAlarmScheduler,
     TimerSyncWatcher {
@@ -86,14 +88,14 @@ class AlarmClockPomodoroScheduler(
         operation(create = false, redraw = true)?.let(manager::cancel)
     }
 
-    /** Applies a change of [timerSyncStarts] to the receiver. */
-    override fun watchTimerSync() {
-        // A JVM lock, not a Mutex: the timer sync follower and the sign-out call this without
-        // suspending.
-        synchronized(this) { applyRearmReceiver() }
+    /** Applies a change of [timerSyncStarts] to the receiver, one change at a time. */
+    override suspend fun watchTimerSync() {
+        watching.withLock { applyRearmReceiver() }
     }
 
-    private fun applyRearmReceiver() {
+    private val watching = Mutex()
+
+    private suspend fun applyRearmReceiver() {
         val state = if (timerSyncStarts()) {
             PackageManager.COMPONENT_ENABLED_STATE_ENABLED
         } else {

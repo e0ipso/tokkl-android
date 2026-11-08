@@ -292,6 +292,8 @@ class ChangeQueue(
      * not run, leaves an empty queue alone.
      */
     private suspend fun <T> queue(change: () -> T): T {
+        // A Stop at process start, as from the notification, snaps to the account's grid.
+        spans.ready()
         val (result, holdsChanges) = withContext(io) {
             store.transaction { change() to (dao.first() != null) }
         }

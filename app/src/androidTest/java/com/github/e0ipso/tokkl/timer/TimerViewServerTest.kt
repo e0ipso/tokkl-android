@@ -74,13 +74,13 @@ class TimerViewServerTest {
     @Test
     fun aColdStartOpensTheServersCalendar() {
         setOnTheServer("calendar")
-        assertNull("nothing stored on the phone", TimerViewStore(context).load())
+        assertNull("nothing stored on the phone", storedView())
 
         launch {
             awaitSelected(R.string.timer_view_calendar)
             awaitCalendar()
             composeRule.waitUntil("the phone keeps it", TIMEOUT_MS) {
-                TimerViewStore(context).load() == StoredTimerView(TimerView.CALENDAR, unsent = false)
+                storedView() == StoredTimerView(TimerView.CALENDAR, unsent = false)
             }
         }
     }
@@ -109,14 +109,14 @@ class TimerViewServerTest {
      */
     @Test
     fun aViewMissingOnTheServerOpensListOverTheStoredOne() {
-        TimerViewStore(context).save(StoredTimerView(TimerView.CALENDAR, unsent = false))
+        runBlocking { TimerViewStore(context).save(StoredTimerView(TimerView.CALENDAR, unsent = false)) }
 
         launch {
             refresh()
 
             awaitSelected(R.string.timer_view_list)
             composeRule.waitUntil("the phone keeps List", TIMEOUT_MS) {
-                TimerViewStore(context).load() == StoredTimerView(TimerView.LIST, unsent = false)
+                storedView() == StoredTimerView(TimerView.LIST, unsent = false)
             }
         }
     }
@@ -136,7 +136,7 @@ class TimerViewServerTest {
             segment(R.string.timer_view_calendar).performSemanticsAction(SemanticsActions.OnClick)
             awaitSelected(R.string.timer_view_calendar)
             composeRule.waitUntil("the phone keeps it unsent", TIMEOUT_MS) {
-                TimerViewStore(context).load() == StoredTimerView(TimerView.CALENDAR, unsent = true)
+                storedView() == StoredTimerView(TimerView.CALENDAR, unsent = true)
             }
 
             scenario.moveToState(Lifecycle.State.CREATED)
@@ -145,17 +145,20 @@ class TimerViewServerTest {
             assertEquals(
                 "the phone still keeps it unsent",
                 StoredTimerView(TimerView.CALENDAR, unsent = true),
-                TimerViewStore(context).load(),
+                storedView(),
             )
 
             scenario.moveToState(Lifecycle.State.RESUMED)
             composeRule.waitUntil("the server has calendar", TIMEOUT_MS) { serverView() == "calendar" }
             composeRule.waitUntil("the phone marks it sent", TIMEOUT_MS) {
-                TimerViewStore(context).load() == StoredTimerView(TimerView.CALENDAR, unsent = false)
+                storedView() == StoredTimerView(TimerView.CALENDAR, unsent = false)
             }
             awaitSelected(R.string.timer_view_calendar)
         }
     }
+
+    /** What the phone keeps of the view, read as the app reads it. */
+    private fun storedView() = runBlocking { TimerViewStore(context).load() }
 
     private fun launch(steps: (ActivityScenario<MainActivity>) -> Unit) {
         ActivityScenario.launch(MainActivity::class.java).use {

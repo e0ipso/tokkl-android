@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl
 import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
+import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -17,6 +18,7 @@ import androidx.core.graphics.drawable.toDrawable
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.createSavedStateHandle
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
@@ -30,11 +32,14 @@ import com.github.e0ipso.tokkl.navigation.LocalSignedInSession
 import com.github.e0ipso.tokkl.navigation.TopLevelPages
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
 import com.github.e0ipso.tokkl.platform.IoDispatcher
+import com.github.e0ipso.tokkl.platform.holdDrawingUntil
 import com.github.e0ipso.tokkl.session.AccountLifetime
+import com.github.e0ipso.tokkl.storage.StartupLoads
 import com.github.e0ipso.tokkl.timer.TimerViewModel
 import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsRepository
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -48,20 +53,37 @@ class MainActivity : ComponentActivity() {
     private val lifetime: AccountLifetime by inject()
     private val capabilities: CapabilitiesSource by inject()
     private val session: NavigationSession by inject()
+    private val loads: StartupLoads by inject()
 
     /** The pages that taps outside the app asked to open, until the navigation opens them. */
     private val requests: NavigationRequests by viewModels {
         viewModelFactory { initializer { NavigationRequests(createSavedStateHandle()) } }
     }
 
+    /** Whether the screens are composed, which they are once every store has loaded. */
+    private var composed = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Keeps the splash screen up, and draws no frame, until the screens are composed.
+        findViewById<View>(android.R.id.content).holdDrawingUntil { composed }
         drawEdgeToEdge()
         intent?.takeDeepLinks()?.forEach(requests::request)
         lifecycle.addObserver(foreground)
-        // Reading the theme setting loads it, so the first frame already has the chosen theme's icons.
+        // The screens compose once every store has loaded off the main thread, so they show the
+        // stored theme, account settings and capabilities from their first composition. At once
+        // when the loads have ended, as in a process that runs already.
+        lifecycleScope.launch {
+            loads.ready()
+            showScreens()
+            composed = true
+        }
+    }
+
+    private fun showScreens() {
         val systemIsDark =
             (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+        // The first frame already has the chosen theme's icons.
         showSystemBarIconsFor(darkTheme = themeSettings.state.value.mode.isDark(systemIsDark))
         setContent {
             val settings by themeSettings.state.collectAsStateWithLifecycle()

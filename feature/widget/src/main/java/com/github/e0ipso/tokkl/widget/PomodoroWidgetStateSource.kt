@@ -10,8 +10,6 @@ import com.github.e0ipso.tokkl.timerstate.PomodoroRingingPhase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import java.time.Clock
@@ -56,9 +54,9 @@ class PomodoroWidgetStateSource(
         }
         combine(
             timerStates.held,
-            flow { emitAll(capabilities.state) },
-            flow { emitAll(accountSettings.state) },
-            flow { emitAll(pomodoroDefaults.defaults) },
+            capabilities.loaded,
+            accountSettings.loaded,
+            pomodoroDefaults.loadedDefaults,
             catalog,
         ) { _, flags, settings, defaults, (projects, tasks, ringing) ->
             val owner = timerStates.current()

@@ -11,21 +11,20 @@ import java.io.IOException
  * preferences file. The key is a hash, so the file holds no description or name. It stays on the
  * phone, because the backup and data extraction rules leave out every domain.
  *
- * The first call loads the preferences file, so it reads the disk.
+ * Each call reads or writes the file on the I/O dispatcher.
  */
 class RunningNotificationStore(context: Context) : ValueStore<FollowedEntry?> {
 
     private val file = PreferencesFile(context, FILE_NAME)
-    private val preferences get() = file.preferences
 
-    override fun load(): FollowedEntry? {
-        val key = preferences.getString(KEY_SHOWN, null) ?: return null
-        val entryId = if (preferences.contains(KEY_SHOWN_ENTRY)) preferences.getLong(KEY_SHOWN_ENTRY, 0) else null
-        return FollowedEntry(key, entryId?.let(::EntryId))
+    override suspend fun load(): FollowedEntry? = file.read {
+        val key = getString(KEY_SHOWN, null) ?: return@read null
+        val entryId = if (contains(KEY_SHOWN_ENTRY)) getLong(KEY_SHOWN_ENTRY, 0) else null
+        FollowedEntry(key, entryId?.let(::EntryId))
     }
 
     @Throws(IOException::class)
-    override fun save(value: FollowedEntry?) {
+    override suspend fun save(value: FollowedEntry?) {
         file.commit {
             if (value == null) remove(KEY_SHOWN) else putString(KEY_SHOWN, value.key)
             if (value?.entryId == null) remove(KEY_SHOWN_ENTRY) else putLong(KEY_SHOWN_ENTRY, value.entryId.value)

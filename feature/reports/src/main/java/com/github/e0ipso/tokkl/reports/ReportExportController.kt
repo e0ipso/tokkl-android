@@ -35,7 +35,7 @@ class ReportExportController(
     private val client: ApiClientProvider,
     private val files: ReportExportFiles,
     private val account: ExportAccount,
-    private val csvMissing: (ReportCsvKind) -> Unit,
+    private val csvMissing: suspend (ReportCsvKind) -> Unit,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
 ) {
@@ -115,7 +115,8 @@ class ReportExportController(
         }
         return when (answer) {
             is ApiResult.Failure -> {
-                if (answer.error.csvEndpointAbsent()) lease.current { csvMissing(request.kind) }
+                // Only for the account the export began with: sign-out forgets the flags after it ends the lease.
+                if (answer.error.csvEndpointAbsent() && lease.current { true } == true) csvMissing(request.kind)
                 ReportExportState.Failed(answer.error)
             }
 

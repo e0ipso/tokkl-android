@@ -77,7 +77,7 @@ internal val coreModule = module {
     single { SharedHttpClient(server = get(), trust = get<ServerTrust>()) }
 
     // Reports trust refusals to the [SessionTrust], and answers to the [LastAnswer], which
-    // loads on the first answer, off the main thread.
+    // loads at process start, off the main thread.
     single {
         Session(
             servers = get<ServerConfigStore>(),

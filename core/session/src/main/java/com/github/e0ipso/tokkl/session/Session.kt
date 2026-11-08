@@ -129,7 +129,7 @@ class Session(
     }
 
     /** Runs [write] on [io] with the kept read dropped before and after it. */
-    private suspend fun change(write: () -> Unit) = stores.withLock {
+    private suspend fun change(write: suspend () -> Unit) = stores.withLock {
         kept.value = null
         try {
             withContext(io) { write() }

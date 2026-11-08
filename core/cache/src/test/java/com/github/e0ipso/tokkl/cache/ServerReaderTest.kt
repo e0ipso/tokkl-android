@@ -177,6 +177,7 @@ class ServerReaderTest {
 
         val capabilities = CapabilitiesSource(
             InMemoryValueStore(Capabilities.NONE.copy(favorites = true, allDay = true)),
+            CoroutineScope(Dispatchers.Unconfined),
         )
         answers["/api/v9/me/time_entries"] = json(old)
         runBlocking {
@@ -301,7 +302,7 @@ class ServerReaderTest {
             """{"duration_format":"decimal","favorites":[{"description":"Standup","billable":true}]}""",
         )
         var snapshot: ServerSnapshot? = null
-        val settings = AccountSettingsSource(InMemoryValueStore(null))
+        val settings = AccountSettingsSource(InMemoryValueStore(null), CoroutineScope(Dispatchers.Unconfined))
         val refresh = AccountRefresh(
             client = { client },
             settings = settings,

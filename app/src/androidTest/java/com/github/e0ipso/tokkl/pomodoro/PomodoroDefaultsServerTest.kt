@@ -129,7 +129,7 @@ class PomodoroDefaultsServerTest {
             }
             val expected = PomodoroDefaults(40, 8, 20, 5)
             compose.waitUntil("Tokkl accepts the four Settings defaults", TIMEOUT_MS) {
-                PomodoroDefaultsStore(context).load() == StoredPomodoroDefaults(expected, unsent = false)
+                storedDefaults() == StoredPomodoroDefaults(expected, unsent = false)
             }
             val saved = preferences()
             assertEquals(expected, saved.pomodoroDefaults())
@@ -179,16 +179,14 @@ class PomodoroDefaultsServerTest {
             assertEquals(PomodoroDefaults(50, 10, 30, 3), app.pomodoroDefaults.defaults.value)
             assertEquals(
                 StoredPomodoroDefaults(PomodoroDefaults(50, 10, 30, 3), unsent = false),
-                PomodoroDefaultsStore(context).load(),
+                storedDefaults(),
             )
 
             // The guard lets the app reach only the relay now, so the phone's sent mark, which
             // only a 200 sets, shows that the server took each change.
             change(PomodoroDefaults(40, 8, 20, 5))
             waitUntil("the server takes the change") {
-                PomodoroDefaultsStore(
-                    context,
-                ).load() == StoredPomodoroDefaults(PomodoroDefaults(40, 8, 20, 5), unsent = false)
+                storedDefaults() == StoredPomodoroDefaults(PomodoroDefaults(40, 8, 20, 5), unsent = false)
             }
 
             change(PomodoroDefaults(0, 61, 100, 13))
@@ -198,9 +196,7 @@ class PomodoroDefaultsServerTest {
                 app.pomodoroDefaults.defaults.value,
             )
             waitUntil("the server takes the clamped change") {
-                PomodoroDefaultsStore(
-                    context,
-                ).load() == StoredPomodoroDefaults(PomodoroDefaults(1, 60, 60, 12), unsent = false)
+                storedDefaults() == StoredPomodoroDefaults(PomodoroDefaults(1, 60, 60, 12), unsent = false)
             }
 
             assertEquals(emptyList<String>(), relay.failures)
@@ -237,9 +233,7 @@ class PomodoroDefaultsServerTest {
 
         change(PomodoroDefaults(40, 8, 20, 5))
         waitUntil("the phone keeps it unsent") {
-            PomodoroDefaultsStore(
-                context,
-            ).load() == StoredPomodoroDefaults(PomodoroDefaults(40, 8, 20, 5), unsent = true)
+            storedDefaults() == StoredPomodoroDefaults(PomodoroDefaults(40, 8, 20, 5), unsent = true)
         }
 
         signIn(TokklTestServer.url)
@@ -247,18 +241,19 @@ class PomodoroDefaultsServerTest {
         assertEquals(
             "the phone still keeps it unsent",
             StoredPomodoroDefaults(PomodoroDefaults(40, 8, 20, 5), unsent = true),
-            PomodoroDefaultsStore(context).load(),
+            storedDefaults(),
         )
 
         refresh()
         waitUntil("the server has the change") { serverDefaults() == PomodoroDefaults(40, 8, 20, 5) }
         waitUntil("the phone marks it sent") {
-            PomodoroDefaultsStore(
-                context,
-            ).load() == StoredPomodoroDefaults(PomodoroDefaults(40, 8, 20, 5), unsent = false)
+            storedDefaults() == StoredPomodoroDefaults(PomodoroDefaults(40, 8, 20, 5), unsent = false)
         }
         assertEquals(PomodoroDefaults(40, 8, 20, 5), app.pomodoroDefaults.defaults.value)
     }
+
+    /** What the phone keeps of the defaults, read as the app reads them. */
+    private fun storedDefaults() = runBlocking { PomodoroDefaultsStore(context).load() }
 
     private fun signIn(server: ServerUrl) {
         ServerTrustStore(context).confirmCleartext(server)

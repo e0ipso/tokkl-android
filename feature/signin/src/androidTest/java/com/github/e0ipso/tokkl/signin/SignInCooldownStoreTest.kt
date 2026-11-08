@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.signin
 
 import android.content.Context
 import androidx.test.platform.app.InstrumentationRegistry
+import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -16,11 +17,11 @@ class SignInCooldownStoreTest {
     @Before
     @After
     fun forgetEverything() {
-        store.load().keys.forEach(store::clear)
+        runBlocking { store.load().keys.forEach { store.clear(it) } }
     }
 
     @Test
-    fun keepsOneDeadlinePerOriginUntilCleared() {
+    fun keepsOneDeadlinePerOriginUntilCleared() = runBlocking<Unit> {
         store.save("https://tokkl.example:443", 1_000L)
         store.save("http://10.0.2.2:8080", 2_000L)
         store.save("https://tokkl.example:443", 3_000L)

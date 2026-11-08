@@ -11,36 +11,35 @@ import java.io.IOException
  * before the first refresh after a restart, and offline. The file holds no credential. It stays on
  * the phone, because the backup and data extraction rules leave out every domain.
  *
- * The first call loads the preferences file, so make calls off the main thread.
+ * Each call reads or writes the file on the I/O dispatcher.
  */
 class CapabilitiesStore(context: Context) : ValueStore<Capabilities> {
 
     private val file = PreferencesFile(context, FILE_NAME)
-    private val preferences get() = file.preferences
 
     /** The stored capabilities, or null when none are stored. */
-    override fun load(): Capabilities? {
-        if (!preferences.contains(KEY_TRASH)) return null
-        return Capabilities(
-            trash = preferences.getBoolean(KEY_TRASH, false),
-            restore = preferences.getBoolean(KEY_RESTORE, false),
-            favorites = preferences.getBoolean(KEY_FAVORITES, false),
-            timeResolution = preferences.getBoolean(KEY_TIME_RESOLUTION, false),
-            negatedFilters = preferences.getBoolean(KEY_NEGATED_FILTERS, false),
+    override suspend fun load(): Capabilities? = file.read {
+        if (!contains(KEY_TRASH)) return@read null
+        Capabilities(
+            trash = getBoolean(KEY_TRASH, false),
+            restore = getBoolean(KEY_RESTORE, false),
+            favorites = getBoolean(KEY_FAVORITES, false),
+            timeResolution = getBoolean(KEY_TIME_RESOLUTION, false),
+            negatedFilters = getBoolean(KEY_NEGATED_FILTERS, false),
             summaryCsv = readOptional(KEY_SUMMARY_CSV),
             detailedCsv = readOptional(KEY_DETAILED_CSV),
-            timerState = preferences.getBoolean(KEY_TIMER_STATE, false),
+            timerState = getBoolean(KEY_TIMER_STATE, false),
             allDay = readOptional(KEY_ALL_DAY),
         )
     }
 
     /** Missing keys are not known yet, so an older file does not count as absence. */
-    private fun readOptional(key: String): Boolean? =
-        if (preferences.contains(key)) preferences.getBoolean(key, false) else null
+    private fun SharedPreferences.readOptional(key: String): Boolean? =
+        if (contains(key)) getBoolean(key, false) else null
 
     /** Replaces the stored capabilities in one write. */
     @Throws(IOException::class)
-    override fun save(value: Capabilities) {
+    override suspend fun save(value: Capabilities) {
         file.commit {
             putBoolean(KEY_TRASH, value.trash)
             putBoolean(KEY_RESTORE, value.restore)
@@ -55,7 +54,7 @@ class CapabilitiesStore(context: Context) : ValueStore<Capabilities> {
     }
 
     @Throws(IOException::class)
-    fun clear() {
+    suspend fun clear() {
         file.commit { clear() }
     }
 

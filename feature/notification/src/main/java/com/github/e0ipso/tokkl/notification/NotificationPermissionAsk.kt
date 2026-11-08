@@ -32,17 +32,17 @@ class NotificationPermissionAsk(
      * Called for each timer start made in the app, after the start. True when this start asks for
      * the permission. [requested] records a launched request, before its answer. Merely checking
      * does not consume the question if the screen goes away before it can launch. Notifications
-     * already allowed count as handled too. Reads and writes the disk.
+     * already allowed count as handled too.
      */
-    fun atStartInApp(): Boolean {
+    suspend fun atStartInApp(): Boolean {
         if (sdkInt < Build.VERSION_CODES.TIRAMISU || record.asked()) return false
         if (!granted()) return true
         record.markAsked()
         return false
     }
 
-    /** Records that the platform request launched, whatever the eventual answer. Writes the disk. */
-    fun requested() = record.markAsked()
+    /** Records that the platform request launched, whatever the eventual answer. */
+    suspend fun requested() = record.markAsked()
 
     /** [atStartInApp] on [io]. */
     suspend fun askAtStart(): Boolean = withContext(io) { atStartInApp() }
@@ -52,9 +52,9 @@ class NotificationPermissionAsk(
 
     /** Whether the app has asked for the notification permission. */
     interface AskRecord {
-        fun asked(): Boolean
+        suspend fun asked(): Boolean
 
-        fun markAsked()
+        suspend fun markAsked()
     }
 
     companion object {
@@ -74,15 +74,15 @@ class NotificationPermissionAsk(
  * permission. It belongs to the phone, not the account, so a sign-out keeps it, and it stays on
  * the phone, because the backup and data extraction rules leave out every domain.
  *
- * The first call loads the preferences file, so it reads the disk.
+ * Each call reads or writes the file on the I/O dispatcher.
  */
 class NotificationPermissionStore(context: Context) : NotificationPermissionAsk.AskRecord {
 
     private val file = PreferencesFile(context, FILE_NAME)
 
-    override fun asked(): Boolean = file.preferences.getBoolean(KEY_ASKED, false)
+    override suspend fun asked(): Boolean = file.read { getBoolean(KEY_ASKED, false) }
 
-    override fun markAsked() {
+    override suspend fun markAsked() {
         file.commit("Could not record the notification permission request") { putBoolean(KEY_ASKED, true) }
     }
 

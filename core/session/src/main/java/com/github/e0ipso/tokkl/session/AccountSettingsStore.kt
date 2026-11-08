@@ -12,7 +12,7 @@ import java.io.IOException
  * after a restart. The file holds no credential. It stays on the phone, because the backup and
  * data extraction rules leave out every domain.
  *
- * The first call loads the preferences file, so make calls off the main thread.
+ * Each call reads or writes the file on the I/O dispatcher.
  */
 class AccountSettingsStore(context: Context) :
     ValueStore<AccountSettings>,
@@ -23,26 +23,23 @@ class AccountSettingsStore(context: Context) :
     override suspend fun forgetAccount() = clear()
 
     private val file = PreferencesFile(context, FILE_NAME)
-    private val preferences get() = file.preferences
 
     /** The stored settings, or null when none are stored. */
-    override fun load(): AccountSettings? {
-        val timeZone = preferences.getString(KEY_TIME_ZONE, null) ?: return null
-        val beginningOfWeek = dayOfWeek(preferences.getInt(KEY_BEGINNING_OF_WEEK, -1)) ?: return null
-        val timeResolution = preferences.getString(KEY_TIME_RESOLUTION_MINUTES, null)?.toDoubleOrNull()
+    override suspend fun load(): AccountSettings? = file.read {
+        val timeZone = getString(KEY_TIME_ZONE, null) ?: return@read null
+        val beginningOfWeek = dayOfWeek(getInt(KEY_BEGINNING_OF_WEEK, -1)) ?: return@read null
+        val timeResolution = getString(KEY_TIME_RESOLUTION_MINUTES, null)?.toDoubleOrNull()
         // Settings stored before the app read the duration format have none, which means improved.
-        val durationFormat = DurationFormat.fromTogglName(preferences.getString(KEY_DURATION_FORMAT, null))
+        val durationFormat = DurationFormat.fromTogglName(getString(KEY_DURATION_FORMAT, null))
         // Settings stored before the app kept the default workspace have none until the next refresh.
-        val defaultWorkspaceId = KEY_DEFAULT_WORKSPACE_ID.takeIf(
-            preferences::contains,
-        )?.let { WorkspaceId(preferences.getLong(it, 0)) }
+        val defaultWorkspaceId = KEY_DEFAULT_WORKSPACE_ID.takeIf(this::contains)?.let { WorkspaceId(getLong(it, 0)) }
         // Settings stored before the app read the clock format have none, which means 24-hour.
-        val twelveHour = preferences.getBoolean(KEY_TWELVE_HOUR, false)
+        val twelveHour = getBoolean(KEY_TWELVE_HOUR, false)
         // Settings stored before the app read the grouping preference have none, which means grouped.
-        val collapseSimilar = preferences.getBoolean(KEY_COLLAPSE_SIMILAR, true)
+        val collapseSimilar = getBoolean(KEY_COLLAPSE_SIMILAR, true)
         // Settings stored before the app kept the account's id have none until the next refresh.
-        val userId = KEY_USER_ID.takeIf(preferences::contains)?.let { preferences.getLong(it, 0) }
-        return AccountSettings(
+        val userId = KEY_USER_ID.takeIf(this::contains)?.let { getLong(it, 0) }
+        AccountSettings(
             timeZone,
             beginningOfWeek,
             timeResolution,
@@ -56,7 +53,7 @@ class AccountSettingsStore(context: Context) :
 
     /** Replaces the stored settings in one write. */
     @Throws(IOException::class)
-    override fun save(value: AccountSettings) {
+    override suspend fun save(value: AccountSettings) {
         file.commit {
             putString(KEY_TIME_ZONE, value.timeZone)
             putInt(KEY_BEGINNING_OF_WEEK, value.beginningOfWeek.togglNumber)
@@ -84,7 +81,7 @@ class AccountSettingsStore(context: Context) :
     }
 
     @Throws(IOException::class)
-    fun clear() {
+    suspend fun clear() {
         file.commit { clear() }
     }
 

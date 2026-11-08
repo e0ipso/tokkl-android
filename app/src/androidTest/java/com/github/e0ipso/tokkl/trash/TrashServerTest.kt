@@ -172,7 +172,7 @@ class TrashServerTest {
     fun withoutTheCapabilityThePageAndItsEntryPointHide() {
         signInToNewAccount()
         launchOnTrash {
-            app.capabilities.trashMissing()
+            runBlocking { app.capabilities.trashMissing() }
 
             composeRule.awaitTimerPage(TIMEOUT_MS)
             composeRule.onNode(bottomBarItem(R.string.nav_more)).performClick()

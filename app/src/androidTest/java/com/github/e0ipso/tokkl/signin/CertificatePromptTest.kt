@@ -27,6 +27,7 @@ import com.github.e0ipso.tokkl.core.trust.R
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -64,7 +65,7 @@ class CertificatePromptTest {
     }
 
     @Test
-    fun untrustedCertificateShowsItsFingerprintAndSignsInOnceTrusted() {
+    fun untrustedCertificateShowsItsFingerprintAndSignsInOnceTrusted() = runBlocking<Unit> {
         signIn()
 
         awaitPrompt(R.string.sign_in_certificate_title)
@@ -101,7 +102,7 @@ class CertificatePromptTest {
             "the prompt closes",
         ) { !exists(hasText(string(R.string.sign_in_certificate_changed_title))) }
         assertEquals(old, ServerTrustStore(context).pinnedSha256(endpoint.host, endpoint.port))
-        assertNull(ServerConfigStore(context).load())
+        runBlocking { assertNull(ServerConfigStore(context).load()) }
     }
 
     @Test

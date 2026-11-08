@@ -1953,7 +1953,7 @@ private fun changeSender(
     onDiscarded: (Int) -> Unit = {},
     clock: Clock = Clock.systemUTC(),
     spans: ServerSpans = ServerSpans.Unsnapped,
-    allDay: () -> Boolean = { false },
+    allDay: suspend () -> Boolean = { false },
     undo: DeleteUndoer = DeleteUndoer(store, client, io, restored = {}),
 ) = ChangeSender(
     store,

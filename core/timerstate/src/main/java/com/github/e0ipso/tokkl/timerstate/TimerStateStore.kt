@@ -44,7 +44,9 @@ data class StoredTimerState(
  * holds no credential and stays on the phone, because the backup and data extraction rules leave
  * out every domain. Sign-out clears it.
  *
- * The first call loads the preferences file, so make calls off the main thread.
+ * Every call reads or writes the file on the calling thread, because the timer state's holder
+ * writes it under its acceptance lock, on the OkHttp and I/O threads that answers and events
+ * arrive on, without suspending. Never call it on the main thread.
  */
 class TimerStateStore(context: Context) : AccountDataOwner {
 
@@ -61,7 +63,7 @@ class TimerStateStore(context: Context) : AccountDataOwner {
     /** Replaces the stored state in one write. */
     @Throws(IOException::class)
     fun save(stored: StoredTimerState) {
-        file.commit { putString(KEY_STATE, encodeStoredTimerState(stored)) }
+        file.commitHere { putString(KEY_STATE, encodeStoredTimerState(stored)) }
     }
 
     /**
@@ -75,7 +77,7 @@ class TimerStateStore(context: Context) : AccountDataOwner {
         preferences.getString(KEY_ACCOUNT, null)?.let { return it }
         val made = UUID.randomUUID().toString()
         try {
-            file.commit { putString(KEY_ACCOUNT, made) }
+            file.commitHere { putString(KEY_ACCOUNT, made) }
         } catch (_: IOException) {
             // Kept in memory: see above.
         }
@@ -84,7 +86,7 @@ class TimerStateStore(context: Context) : AccountDataOwner {
 
     @Throws(IOException::class)
     fun clear() {
-        file.commit { clear() }
+        file.commitHere { clear() }
     }
 
     internal companion object {

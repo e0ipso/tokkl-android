@@ -40,7 +40,7 @@ class StartTimerAction :
 
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         // Signed out since the widget was drawn: nothing to start in.
-        val workspaceId = get<AccountSettingsSource>().state.value?.defaultWorkspaceId ?: return
+        val workspaceId = get<AccountSettingsSource>().current()?.defaultWorkspaceId ?: return
         try {
             get<ChangeQueue>().start(workspaceId, parameters.fields())
         } catch (_: SQLiteException) {

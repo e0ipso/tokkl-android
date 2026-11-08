@@ -64,7 +64,7 @@ class UserCaCertificateTest {
         assertFalse("a certificate prompt shows", exists(TrustR.string.sign_in_certificate_title))
         assertFalse("a certificate prompt shows", exists(TrustR.string.sign_in_certificate_changed_title))
         assertNull("a pin for the server", ServerTrustStore(context).pinnedSha256(endpoint.host, endpoint.port))
-        assertEquals(TokklTestServer.userCaTlsUrl, ServerConfigStore(context).load())
+        runBlocking { assertEquals(TokklTestServer.userCaTlsUrl, ServerConfigStore(context).load()) }
         val client = Session(context).client() ?: throw AssertionError("no stored session")
         val body = (runBlocking { client.get(endpoint, JsonObject.serializer()) } as? ApiResult.Success)?.value
             ?: throw AssertionError("GET /api/v9/me failed without a pin")

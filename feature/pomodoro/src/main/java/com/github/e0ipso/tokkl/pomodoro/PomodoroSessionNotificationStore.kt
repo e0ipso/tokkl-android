@@ -10,14 +10,11 @@ data class PomodoroNotificationDisplay(val account: String, val shown: String? =
 class PomodoroSessionNotificationStore(context: Context) : PomodoroNotificationMemory {
     private val file = PreferencesFile(context, "pomodoro_notification")
 
-    // Opens the file as the store is made, which starts loading it from disk.
-    private val prefs = file.preferences
-
-    override fun load(): PomodoroNotificationDisplay? = prefs.getString("account", null)?.let {
-        PomodoroNotificationDisplay(it, prefs.getString("shown", null))
+    override suspend fun load(): PomodoroNotificationDisplay? = file.read {
+        getString("account", null)?.let { PomodoroNotificationDisplay(it, getString("shown", null)) }
     }
 
-    override fun save(display: PomodoroNotificationDisplay?) {
+    override suspend fun save(display: PomodoroNotificationDisplay?) {
         file.commit("Could not save the Pomodoro notification state.") {
             clear()
             if (display != null) putString("account", display.account).putString("shown", display.shown)

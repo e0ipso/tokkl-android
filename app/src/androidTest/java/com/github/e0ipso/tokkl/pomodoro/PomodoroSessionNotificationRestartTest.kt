@@ -47,7 +47,7 @@ class PomodoroSessionNotificationRestartTest {
     private val manager = context.getSystemService(NotificationManager::class.java)
     private val handover = File(context.cacheDir, "PomodoroSessionNotificationRestartTest.properties")
 
-    @Test fun step1PostsAHeldSessionAndLeavesItsImmutableTapForTheNextProcess() {
+    @Test fun step1PostsAHeldSessionAndLeavesItsImmutableTapForTheNextProcess() = runBlocking<Unit> {
         SessionRule.signOut()
         ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
         Session(context).save(TokklTestServer.url, TokklTestServer.apiToken)
@@ -59,7 +59,7 @@ class PomodoroSessionNotificationRestartTest {
             overtime = Duration.ofHours(-2),
             length = Duration.ofHours(3),
         )
-        runBlocking { app.pomodoroSessionNotification.refresh(force = true) }
+        app.pomodoroSessionNotification.refresh(force = true)
         val posted = manager.activeNotifications.single { it.id == PomodoroSessionNotifier.NOTIFICATION_ID }
         val identity = checkNotNull(PomodoroSessionNotificationStore(context).load()).account
         Properties().apply {
@@ -97,7 +97,7 @@ class PomodoroSessionNotificationRestartTest {
                     .filterIsInstance<MainActivity>().forEach { it.finish() }
             }
             runBlocking { app.signOut.run() }
-            assertNull(PomodoroSessionNotificationStore(context).load())
+            runBlocking { assertNull(PomodoroSessionNotificationStore(context).load()) }
             assertNull(TimerStateStore(context).load())
             assertNull(app.timerState.state.value)
             assertFalse(manager.activeNotifications.any { it.id == PomodoroSessionNotifier.NOTIFICATION_ID })

@@ -84,7 +84,7 @@ class ChangeSender(
     private val events: ChangeSenderEvents,
     private val clock: Clock,
     private val spans: ServerSpans,
-    private val allDay: () -> Boolean,
+    private val allDay: suspend () -> Boolean,
     private val undo: DeleteUndoer,
 ) : AccountDataOwner {
 

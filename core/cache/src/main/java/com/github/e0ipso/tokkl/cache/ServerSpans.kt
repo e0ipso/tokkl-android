@@ -11,6 +11,9 @@ import java.time.Instant
  */
 interface ServerSpans {
 
+    /** Waits until the spans know the grid they snap to, as once the account settings have loaded. */
+    suspend fun ready() {}
+
     /** Where the server puts [start] once the entry is stopped. Finds the entry a lost create made. */
     fun start(start: Instant): Instant = start
 
@@ -34,6 +37,8 @@ interface ServerSpans {
 
 /** [ServerSpans] on the grid of the signed-in account's settings, or unsnapped while there are none. */
 class AccountServerSpans(private val settings: AccountSettingsSource) : ServerSpans {
+
+    override suspend fun ready() = settings.ready()
 
     private fun time(): AccountTime? = settings.state.value?.time()
 

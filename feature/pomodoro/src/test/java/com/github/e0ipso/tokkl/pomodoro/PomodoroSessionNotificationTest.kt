@@ -332,9 +332,9 @@ class PomodoroSessionNotificationTest {
         fun newSync() = PomodoroSessionNotificationSync(
             alarm.alarm, server, changes, { signedIn }, { serviceRunning },
             object : PomodoroNotificationMemory {
-                override fun load() = saved
+                override suspend fun load() = saved
 
-                override fun save(display: PomodoroNotificationDisplay?) {
+                override suspend fun save(display: PomodoroNotificationDisplay?) {
                     if (writeFailure) throw IOException("fixture write failed")
                     saved = display
                 }

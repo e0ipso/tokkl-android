@@ -7,6 +7,7 @@ import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
 import com.github.e0ipso.tokkl.notification.NotificationPermissionStore
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -34,7 +35,7 @@ class PomodoroPermissionPersistenceTest {
         assertTrue(editor.commit())
     }
 
-    @Test fun diskRecordSurvivesFreshStoreAndCoordinatorInstances() {
+    @Test fun diskRecordSurvivesFreshStoreAndCoordinatorInstances() = runBlocking<Unit> {
         // Explicit API value exercises durable request history even on the API 31 test device.
         val first = ask(NotificationPermissionStore(context))
         assertTrue(first.atStartInApp())
@@ -45,7 +46,7 @@ class PomodoroPermissionPersistenceTest {
         assertTrue(NotificationPermissionStore(recreatedContext).asked())
     }
 
-    @Test fun signOutKeepsTheDevicePermissionHistoryForTheNextAccount() {
+    @Test fun signOutKeepsTheDevicePermissionHistoryForTheNextAccount() = runBlocking<Unit> {
         NotificationPermissionStore(context).markAsked()
         SessionRule.signOut()
         assertTrue(NotificationPermissionStore(context).asked())

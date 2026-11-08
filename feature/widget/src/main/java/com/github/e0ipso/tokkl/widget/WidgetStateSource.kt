@@ -74,8 +74,8 @@ class WidgetStateSource(
             history,
         ) { projects, tasks, history -> Triple(projects, tasks, history) }
         combine(
-            accountSettings.state,
-            capabilities.state,
+            accountSettings.loaded,
+            capabilities.loaded,
             timerControls.controls,
             cache.favorites,
             catalog,

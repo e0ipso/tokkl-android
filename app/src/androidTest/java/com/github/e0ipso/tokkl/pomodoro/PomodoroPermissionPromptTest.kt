@@ -77,8 +77,8 @@ class PomodoroPermissionPromptTest {
         }
     }
     private val record = object : NotificationPermissionAsk.AskRecord {
-        override fun asked() = asked
-        override fun markAsked() {
+        override suspend fun asked() = asked
+        override suspend fun markAsked() {
             asked = true
         }
     }

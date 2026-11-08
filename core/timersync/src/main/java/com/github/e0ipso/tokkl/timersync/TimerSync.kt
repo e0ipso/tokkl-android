@@ -83,7 +83,7 @@ class TimerSync<A : Any>(
      * before this one. A service startup delayed by account I/O cannot reopen or replace a stream
      * after its service has stopped.
      */
-    fun run(account: A, canRun: () -> Boolean = { true }) {
+    fun run(account: A, canRun: suspend () -> Boolean = { true }) {
         scope.launch {
             if (!canRun()) return@launch
             if (account == this@TimerSync.account || account == refused) return@launch

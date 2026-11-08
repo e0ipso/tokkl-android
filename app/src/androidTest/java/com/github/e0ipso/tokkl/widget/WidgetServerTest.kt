@@ -129,22 +129,22 @@ class WidgetServerTest {
     }
 
     @Test
-    fun startAndStopWorkOfflineThroughTheNativeControls() {
+    fun startAndStopWorkOfflineThroughTheNativeControls() = runBlocking<Unit> {
         signIn(NO_ROUTE, account.apiToken)
         val queued = unsentCount()
         native.click(context.getString(R.string.widget_start_description))
-        val entry = runBlocking { withTimeout(1_000) { app.cache.running.filterNotNull().first().entry } }
+        val entry = withTimeout(1_000) { app.cache.running.filterNotNull().first().entry }
         native.awaitDescription(context.getString(R.string.widget_stop_description), 1_000)
         assertEquals("the app's default workspace", workspace, entry.workspaceId.value)
         assertEquals("a blank Start has the app's empty fields", "", entry.description)
         assertEquals(queued + 1, unsentCount())
 
         native.click(context.getString(R.string.widget_stop_description))
-        runBlocking { withTimeout(1_000) { app.cache.running.first { it == null } } }
+        withTimeout(1_000) { app.cache.running.first { it == null } }
         native.awaitDescription(context.getString(R.string.widget_start_description), 1_000)
         assertEquals(queued + 2, unsentCount())
-        val kept = runBlocking { app.cache.timeEntries.first() }.singleOrNull { it.id == entry.id }
-        val undo = runBlocking { app.changes.shortStopUndo.first() }
+        val kept = app.cache.timeEntries.first().singleOrNull { it.id == entry.id }
+        val undo = app.changes.shortStopUndo.first()
         if (undo == null) {
             assertNotNull("a full-span Stop keeps the local entry", kept)
             assertNotNull("the local entry was stopped", kept!!.stop)
@@ -283,7 +283,7 @@ class WidgetServerTest {
             assertTrue("the favorite uses the offline queue", unsentCount() > queued)
         }
         native.awaitDescription(pauseLabel)
-        app.capabilities.forget()
+        runBlocking { app.capabilities.forget() }
         native.await(
             "a server without favorites hides every favorite",
         ) { (1..3).none { native.hasDescription("Start Favorite $it, Widget project · Widget task") } }
@@ -314,7 +314,7 @@ class WidgetServerTest {
         // queued its own redraw. Finish those one-off setup updates before measuring ticks.
         val expected = runBlocking { app.widgetState.first() }.key()
         val store = WidgetStore(context)
-        native.await("WidgetSync has queued the running state") { store.load() == expected }
+        native.await("WidgetSync has queued the running state") { runBlocking { store.load() } == expected }
         native.awaitUpdatesSettled()
         native.assertClockTicksWithoutUpdates()
         native.assertClockTicksWithoutUpdates(clockIndex = 1)

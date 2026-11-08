@@ -123,7 +123,7 @@ class SignIn(
     private val httpClient: OkHttpClient,
     private val configured: ConfiguredServer,
     private val io: CoroutineContext,
-    private val signedInAccount: () -> SignInAgain?,
+    private val signedInAccount: suspend () -> SignInAgain?,
 ) {
 
     /**
@@ -179,13 +179,14 @@ private fun ApiError.toSignInResult(): SignInResult = when (this) {
 /**
  * The account a sign-in would replace, read from the stores on each call: the stored server and
  * the stored settings' user. Sign-in rechecks it on every submit, including a form restored after
- * the process died, whose in-memory reauthentication marker may be gone. Reads the disk.
+ * the process died, whose in-memory reauthentication marker may be gone. The stores read the
+ * disk on the I/O dispatcher.
  */
 internal class StoredSignInAccount(
     private val servers: ServerConfigStore,
     private val accountSettings: AccountSettingsStore,
 ) {
-    fun current(): SignInAgain? = servers.load()?.let { server ->
+    suspend fun current(): SignInAgain? = servers.load()?.let { server ->
         SignInAgain(
             server,
             accountSettings.load()?.userId,

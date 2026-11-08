@@ -138,7 +138,7 @@ class AccountCacheServerTest {
             runBlocking { cache.favorites.first() },
         )
 
-        val settings = AccountSettingsStore(context).load()
+        val settings = runBlocking { AccountSettingsStore(context).load() }
         assertNotNull("the account settings are stored", settings)
         assertEquals(ZONE, settings!!.timeZone)
         assertEquals(settings, app.accountSettings.state.value)

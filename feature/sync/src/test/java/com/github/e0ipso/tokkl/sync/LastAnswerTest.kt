@@ -1,6 +1,9 @@
 package com.github.e0ipso.tokkl.sync
 
 import com.github.e0ipso.tokkl.storage.InMemoryValueStore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -24,6 +27,7 @@ class LastAnswerTest {
         val answer = LastAnswer(
             InMemoryValueStore(Instant.parse("2026-10-15T20:00:00Z")) { saved += it },
             clock = clock,
+            scope = CoroutineScope(Dispatchers.Unconfined),
         )
         assertEquals(Instant.parse("2026-10-15T20:00:00Z"), answer.state.value)
 
@@ -40,6 +44,7 @@ class LastAnswerTest {
         val answer = LastAnswer(
             InMemoryValueStore(Instant.parse("2026-10-16T09:00:00Z")) { saved += it },
             clock = clock,
+            scope = CoroutineScope(Dispatchers.Unconfined),
         )
 
         answer.succeeded()
@@ -49,10 +54,11 @@ class LastAnswerTest {
     }
 
     @Test
-    fun forgetClearsTheTimeAndTheFile() {
+    fun forgetClearsTheTimeAndTheFile() = runTest {
         val answer = LastAnswer(
             InMemoryValueStore(Instant.parse("2026-10-15T20:00:00Z")) { saved += it },
             clock = clock,
+            scope = CoroutineScope(Dispatchers.Unconfined),
         )
 
         answer.forget()

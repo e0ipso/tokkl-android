@@ -97,18 +97,18 @@ class SessionTest {
         var loads = 0
         var failing = false
 
-        override fun load(): String? {
+        override suspend fun load(): String? {
             loads++
             if (failing) throw GeneralSecurityException("Keystore")
             return token
         }
 
-        override fun save(value: String) {
+        override suspend fun save(value: String) {
             if (failing) throw IOException("disk full")
             token = value
         }
 
-        override fun clear() {
+        override suspend fun clear() {
             token = null
         }
     }

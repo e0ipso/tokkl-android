@@ -16,7 +16,9 @@ import java.io.IOException
  * asks again. The file holds no credential and no private key, and the backup
  * rules exclude it with every other file. Sign-out removes it with [clear].
  *
- * The first call loads the preferences file, so make calls off the main thread.
+ * Every call reads or writes the file on the calling thread, since [ServerTrust] does not suspend:
+ * OkHttp's trust checks read it on OkHttp's threads, and the decisions are written on the I/O
+ * dispatcher. Never call it on the main thread.
  */
 class ServerTrustStore(context: Context) :
     ServerTrust,
@@ -34,7 +36,7 @@ class ServerTrustStore(context: Context) :
 
     @Throws(IOException::class)
     override fun confirmCleartext(server: ServerUrl) {
-        file.commit { putString(KEY_CLEARTEXT_URL, server.toString()) }
+        file.commitHere { putString(KEY_CLEARTEXT_URL, server.toString()) }
     }
 
     override fun pinnedSha256(host: String, port: Int): String? =
@@ -43,7 +45,7 @@ class ServerTrustStore(context: Context) :
 
     @Throws(IOException::class)
     override fun pinCertificate(certificate: ServerCertificate) {
-        file.commit {
+        file.commitHere {
             putString(KEY_PIN_HOST, certificate.host)
             putInt(KEY_PIN_PORT, certificate.port)
             putString(KEY_PIN_SHA256, certificate.sha256)
@@ -53,7 +55,7 @@ class ServerTrustStore(context: Context) :
     /** Forgets every decision, so each server asks again. */
     @Throws(IOException::class)
     fun clear() {
-        file.commit { clear() }
+        file.commitHere { clear() }
     }
 
     internal companion object {

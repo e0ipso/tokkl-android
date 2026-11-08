@@ -161,7 +161,7 @@ class FavoriteShortcutsServerTest {
         awaitShortcuts("the favorite", listOf("Write the report"))
         val shortcut = published().single()
 
-        app.capabilities.forget()
+        runBlocking { app.capabilities.forget() }
 
         awaitShortcuts("favorites unavailable", emptyList())
         assertEquals("only the capability changed", 1, runBlocking { app.cache.favorites.first() }.size)

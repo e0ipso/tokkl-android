@@ -16,6 +16,7 @@ import com.github.e0ipso.tokkl.feature.settings.R
 import com.github.e0ipso.tokkl.ui.theme.ThemeMode
 import com.github.e0ipso.tokkl.ui.theme.TokklDarkColorScheme
 import com.github.e0ipso.tokkl.ui.theme.TokklLightColorScheme
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
@@ -46,7 +47,7 @@ class ThemeSettingsRestartTest {
 
     @Test
     fun step1ChoosesLight() {
-        ThemeSettingsStore(context).clear()
+        runBlocking { ThemeSettingsStore(context).clear() }
         previousStep.delete()
         launch { activity ->
             choose(ThemeMode.LIGHT)
@@ -89,7 +90,7 @@ class ThemeSettingsRestartTest {
                 mode(ThemeMode.SYSTEM).assertIsSelected()
             }
         } finally {
-            ThemeSettingsStore(context).clear()
+            runBlocking { ThemeSettingsStore(context).clear() }
             followTheSystemNightMode()
             previousStep.delete()
         }

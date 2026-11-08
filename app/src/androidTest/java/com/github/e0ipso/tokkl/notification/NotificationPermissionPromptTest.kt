@@ -70,9 +70,9 @@ class NotificationPermissionPromptTest {
         @Volatile
         var asked = false
 
-        override fun asked(): Boolean = asked
+        override suspend fun asked(): Boolean = asked
 
-        override fun markAsked() {
+        override suspend fun markAsked() {
             asked = true
         }
     }

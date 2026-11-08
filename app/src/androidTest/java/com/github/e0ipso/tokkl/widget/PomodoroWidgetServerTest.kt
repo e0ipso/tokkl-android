@@ -316,8 +316,8 @@ class PomodoroWidgetServerTest {
             timer.awaitDescription(context.getString(WidgetR.string.widget_start_description))
             host.awaitUpdatesSettled()
             timer.awaitUpdatesSettled()
-            val timerKey = WidgetStore(context).load()
-            val oldPomodoroKey = WidgetStore(context, WidgetStore.POMODORO_KEY).load()
+            val timerKey = runBlocking { WidgetStore(context).load() }
+            val oldPomodoroKey = runBlocking { WidgetStore(context, WidgetStore.POMODORO_KEY).load() }
             runBlocking {
                 fixture.account.otherDevice.sendNoContent(
                     HttpMethod.POST,
@@ -332,9 +332,9 @@ class PomodoroWidgetServerTest {
             }.orFail("change defaults")
             fixture.refresh()
             host.await("Pomodoro independently persists its changed key") {
-                WidgetStore(context, WidgetStore.POMODORO_KEY).load() != oldPomodoroKey
+                runBlocking { WidgetStore(context, WidgetStore.POMODORO_KEY).load() != oldPomodoroKey }
             }
-            assertEquals(timerKey, WidgetStore(context).load())
+            runBlocking { assertEquals(timerKey, WidgetStore(context).load()) }
             assertEquals(
                 42,
                 (runBlocking { app.pomodoroWidgetState.first() } as PomodoroWidgetState.Idle).defaults.workMinutes,

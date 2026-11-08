@@ -17,6 +17,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.feature.settings.R
 import com.github.e0ipso.tokkl.ui.theme.ThemeMode
+import kotlinx.coroutines.runBlocking
 import org.junit.rules.ExternalResource
 import java.io.File
 
@@ -34,7 +35,7 @@ class DefaultThemeSettings : ExternalResource() {
     override fun after() = reset()
 
     private fun reset() {
-        ThemeSettingsStore(targetContext).clear()
+        runBlocking { ThemeSettingsStore(targetContext).clear() }
         followTheSystemNightMode()
     }
 }

@@ -37,7 +37,7 @@ internal fun accountReminderSync(
     }
 
     return ReminderSync(
-        inputs = { ReminderInput(cache.running.first()?.entry?.takeIf { session.isSignedIn() }, settings.state.value) },
+        inputs = { ReminderInput(cache.running.first()?.entry?.takeIf { session.isSignedIn() }, settings.current()) },
         ids = changes,
         timers = store.timers,
         delays = work,

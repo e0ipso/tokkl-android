@@ -34,7 +34,7 @@ suspend fun readServerSnapshot(
     preferences: MePreferences?,
     clock: Clock,
     favorites: Boolean,
-    onAllDayMissing: () -> Unit = {},
+    onAllDayMissing: suspend () -> Unit = {},
 ): ServerSnapshot {
     val history = me.accountSettings()?.time(clock)?.let(HistoryWindow::endingToday)
     return ServerSnapshot(
@@ -57,7 +57,7 @@ private suspend fun readTimeEntries(
     api: TokklApi,
     history: HistoryWindow,
     tokkl: Boolean,
-    onAllDayMissing: () -> Unit,
+    onAllDayMissing: suspend () -> Unit,
 ): List<CachedTimeEntry>? {
     val read = api.entries.list(history.start, history.end)
     val entries = (read as? ApiResult.Success)?.value ?: return null

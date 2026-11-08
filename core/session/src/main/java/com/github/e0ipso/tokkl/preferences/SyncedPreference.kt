@@ -5,17 +5,18 @@ import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.PreferencesChange
 import com.github.e0ipso.tokkl.session.MePreferences
 import com.github.e0ipso.tokkl.storage.ClearableStore
+import com.github.e0ipso.tokkl.storage.LoadedState
+import com.github.e0ipso.tokkl.storage.StartupLoad
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.JsonObject
 import java.io.IOException
-import kotlin.coroutines.CoroutineContext
 
 /** A preference's value as the phone keeps it, and whether the server still has to get it. */
 data class StoredPreference<out T>(val value: T, val unsent: Boolean)
@@ -45,8 +46,8 @@ interface PreferenceCodec<T : Any> {
  * server without Tokkl's preferences, such as Toggl Track, gets nothing: the value stays on the
  * phone.
  *
- * @param store keeps the value on the phone. The first read loads it, on the reading thread.
- * @param client the signed-in account's API client, or null when signed out. Runs on [io].
+ * @param store keeps the value on the phone. It loads from it as this is made, off the main thread.
+ * @param client the signed-in account's API client, or null when signed out.
  * @param scope outlives every screen, so leaving the app does not cancel a write.
  * @param default the value before one is stored, and after [forget].
  * @param codec how the value reads from the server's preferences and posts back.
@@ -55,52 +56,69 @@ class SyncedPreference<T : Any>(
     private val store: ClearableStore<StoredPreference<T>>,
     private val client: ApiClientProvider,
     private val scope: CoroutineScope,
-    private val io: CoroutineContext,
     private val default: T,
     private val codec: PreferenceCodec<T>,
-) {
+) : StartupLoad {
 
-    private val state by lazy { Loaded(store.load()) }
+    /** The server has not received the value on show. Guarded by [memory]. */
+    private var unsent = false
 
-    /** What the store held, and what changed since. Guarded by [lock], apart from [value]'s reads. */
-    private inner class Loaded(stored: StoredPreference<T>?) {
-        val value = MutableStateFlow(stored?.value?.let(codec::loaded) ?: default)
+    /** A change came after the last refresh, whose preferences may predate it. Guarded by [memory]. */
+    private var changedSinceRefresh = false
 
-        /** The server has not received the value on show. */
-        var unsent = stored?.unsent ?: false
+    /**
+     * Counts the sign-outs, so a change or write from before one shows and stores nothing after
+     * it. Written under [memory]; [change] reads it as it is called, on the main thread.
+     */
+    @Volatile
+    private var generation = 0L
+
+    private val held = LoadedState(scope, default) {
+        store.load()?.let { stored ->
+            unsent = stored.unsent
+            codec.loaded(stored.value)
+        } ?: default
     }
 
     /** The value on show. */
-    val value: StateFlow<T> by lazy { state.value.asStateFlow() }
+    val value: StateFlow<T> = held.state
 
-    /**
-     * Guards [Loaded.unsent], [changedSinceRefresh] and each change of [value] with them. A JVM
-     * lock, not a Mutex, because change() runs on the main thread and refreshed() on the IO
-     * dispatcher, neither suspending.
-     */
-    private val lock = Any()
+    /** [value] once loaded, for readers that may run before the load ends. */
+    val loaded: Flow<T> = held.loaded
 
-    /** A change came after the last refresh, whose preferences may predate it. */
-    private var changedSinceRefresh = false
+    override val isReady: Boolean get() = held.isReady
+
+    override suspend fun ready() = held.ready()
+
+    /** Guards the value with the flags beside it. Held for memory work only, never across a write or a request. */
+    private val memory = Mutex()
 
     /** Writes go one at a time, so the last change reaches the server last. */
     private val sending = Mutex()
 
-    /** Orders the writes to disk, so the last one holds the latest value. */
-    private val storing = Any()
+    /** Orders the writes to disk, so the last one holds the latest value and sign-out's delete comes after them. */
+    private val storing = Mutex()
 
     /**
-     * Shows [value] at once, marked [unsent], keeps it on the phone and then, in the background,
-     * sends it to the server when [sendIf] says so. Call it on the main thread.
+     * Shows [value] at once, marked unsent when [unsent] says so, keeps it on the phone and then,
+     * in the background, sends it to the server when [sendIf] says so. Call it on the main thread:
+     * once the value has loaded, as it has for every screen, it shows before this returns.
      */
-    fun change(value: T, unsent: Boolean, sendIf: () -> Boolean): Job {
-        synchronized(lock) {
-            state.value.value = value
-            state.unsent = unsent
-            changedSinceRefresh = true
-        }
-        return scope.launch(io) {
-            persist()
+    fun change(value: T, unsent: suspend () -> Boolean, sendIf: suspend () -> Boolean): Job {
+        val expected = generation
+        return scope.launch(start = CoroutineStart.UNDISPATCHED) {
+            ready()
+            val markUnsent = unsent()
+            val current = memory.withLock {
+                // A sign-out came first: the change belonged to the account before.
+                if (generation != expected) return@withLock false
+                held.value = value
+                this@SyncedPreference.unsent = markUnsent
+                changedSinceRefresh = true
+                true
+            }
+            if (!current) return@launch
+            persist(expected)
             if (sendIf()) send()
         }
     }
@@ -108,74 +126,80 @@ class SyncedPreference<T : Any>(
     /**
      * Takes the refresh's `GET /api/v9/me/preferences`, null when it failed, from a server that
      * keeps Tokkl's preferences when [keepsPreferences]. Sends an unsent value instead of reading
-     * the server's. Blocks on disk I/O, so call it off the main thread.
+     * the server's.
      */
-    fun refreshed(preferences: MePreferences?, keepsPreferences: Boolean) {
-        val sendNow = synchronized(lock) {
+    suspend fun refreshed(preferences: MePreferences?, keepsPreferences: Boolean) {
+        ready()
+        val (sendNow, expected) = memory.withLock {
             val changed = changedSinceRefresh
             changedSinceRefresh = false
-            when {
+            val sendNow = when {
                 // The value stays on the phone.
                 !keepsPreferences -> {
-                    state.unsent = false
+                    unsent = false
                     false
                 }
 
-                state.unsent -> true
+                unsent -> true
 
                 changed || preferences == null -> false
 
                 else -> {
-                    state.value.value = codec.fromServer(preferences)
+                    held.value = codec.fromServer(preferences)
                     false
                 }
             }
+            sendNow to generation
         }
-        persist()
-        if (sendNow) scope.launch(io) { send() }
+        persist(expected)
+        if (sendNow) scope.launch { send() }
     }
 
     /**
-     * Goes back to [default] with nothing unsent. Signing out calls this once the client is gone,
-     * so no send can succeed, and then deletes the stored value with [clear].
+     * Goes back to [default] with nothing unsent, once a write on its way has landed, and keeps
+     * every later write of the account's value off the disk. Signing out calls this once the
+     * client is gone, so no send can succeed, and then deletes the stored value with [clear].
      */
-    fun forget() {
-        synchronized(storing) {
-            synchronized(lock) {
-                state.value.value = default
-                state.unsent = false
+    suspend fun forget() {
+        ready()
+        storing.withLock {
+            memory.withLock {
+                held.value = default
+                unsent = false
                 changedSinceRefresh = false
+                generation++
             }
         }
     }
 
-    /** Deletes the stored value. Does disk I/O. */
+    /** Deletes the stored value. */
     @Throws(IOException::class)
-    fun clear() {
+    suspend fun clear() {
         store.clear()
     }
 
     /** Posts the value on show while it is unsent. A failure leaves it unsent for the next refresh. */
     private suspend fun send() = sending.withLock {
-        val value = synchronized(lock) { state.value.value.takeIf { state.unsent } } ?: return@withLock
+        val (value, expected) = memory.withLock { held.value.takeIf { unsent } to generation }
+        if (value == null) return@withLock
         val api = client() ?: return@withLock
         val answer = api.account.savePreferences(codec.body(value), JsonObject.serializer())
         if (answer !is ApiResult.Success) return@withLock
-        synchronized(lock) {
+        memory.withLock {
             // A change while the request ran has its own write queued.
-            if (state.value.value == value) state.unsent = false
+            if (generation == expected && held.value == value) unsent = false
         }
-        persist()
+        persist(expected)
     }
 
-    private fun persist() {
-        synchronized(storing) {
-            val stored = synchronized(lock) { StoredPreference(state.value.value, state.unsent) }
-            try {
-                store.save(stored)
-            } catch (_: IOException) {
-                // The next change writes it again.
-            }
+    /** Writes the value on show, unless a sign-out came after [expected]. */
+    private suspend fun persist(expected: Long) = storing.withLock {
+        val stored = memory.withLock { StoredPreference(held.value, unsent).takeIf { generation == expected } }
+            ?: return@withLock
+        try {
+            store.save(stored)
+        } catch (_: IOException) {
+            // The next change writes it again.
         }
     }
 }

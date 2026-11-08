@@ -16,27 +16,26 @@ import kotlin.coroutines.CoroutineContext
  * [com.github.e0ipso.tokkl.session.ServerConfigStore]. They stay on the phone: the backup and
  * data extraction rules leave out every domain.
  *
- * The first call loads the preferences file from disk.
+ * Each call reads or writes the file on the I/O dispatcher.
  */
 class ThemeSettingsStore(context: Context) {
 
     private val file = PreferencesFile(context, FILE_NAME)
 
     /** The stored settings, with the defaults for anything missing or unknown. */
-    fun load(): ThemeSettings {
+    suspend fun load(): ThemeSettings = file.read {
         val defaults = ThemeSettings()
-        val preferences = file.preferences
-        val mode = preferences.getString(KEY_MODE, null)
+        val mode = getString(KEY_MODE, null)
             ?.let { name -> ThemeMode.entries.firstOrNull { it.name == name } }
             ?: defaults.mode
-        return ThemeSettings(
+        ThemeSettings(
             mode = mode,
-            dynamicColor = preferences.getBoolean(KEY_DYNAMIC_COLOR, defaults.dynamicColor),
+            dynamicColor = getBoolean(KEY_DYNAMIC_COLOR, defaults.dynamicColor),
         )
     }
 
     @Throws(IOException::class)
-    fun save(settings: ThemeSettings) {
+    suspend fun save(settings: ThemeSettings) {
         file.commit {
             putString(KEY_MODE, settings.mode.name)
             putBoolean(KEY_DYNAMIC_COLOR, settings.dynamicColor)
@@ -45,7 +44,7 @@ class ThemeSettingsStore(context: Context) {
 
     /** Goes back to the defaults. */
     @Throws(IOException::class)
-    fun clear() {
+    suspend fun clear() {
         file.commit { clear() }
     }
 
@@ -57,9 +56,10 @@ class ThemeSettingsStore(context: Context) {
 }
 
 /**
- * The theme settings, read from [store] now, with Android following their mode through
- * [syncApplicationNightMode]. The first frame has to know the theme, or launch would show the other
- * mode's colours first, and Android needs the mode for the starting window of the next launch.
+ * The theme settings, loaded from [store] at process start, with Android following their mode
+ * through [syncApplicationNightMode] once they have loaded. The first frame has to know the
+ * theme, or launch would show the other mode's colours first, so MainActivity waits for the load
+ * before it draws, and Android needs the mode for the starting window of the next launch.
  */
 fun themeSettingsWithNightMode(
     context: Context,
@@ -67,6 +67,6 @@ fun themeSettingsWithNightMode(
     scope: CoroutineScope,
     io: CoroutineContext,
 ): ThemeSettingsRepository =
-    ThemeSettingsRepository(initial = store.load(), store = store::save, scope = scope, io = io).also { themes ->
-        syncApplicationNightMode(context, themes.state.map { it.mode }, scope, io)
+    ThemeSettingsRepository(load = store::load, store = store::save, scope = scope).also { themes ->
+        syncApplicationNightMode(context, themes.loaded.map { it.mode }, scope, io)
     }

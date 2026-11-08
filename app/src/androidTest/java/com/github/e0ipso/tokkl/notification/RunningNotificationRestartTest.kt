@@ -64,7 +64,7 @@ class RunningNotificationRestartTest {
         // Dismiss this start only once its notification and restart record both reached it.
         RunningNotifications.awaitShown("the persisted start") {
             it.notification.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString() == content.description &&
-                store.load() == FollowedEntry(content.key, id)
+                runBlocking { store.load() == FollowedEntry(content.key, id) }
         }
         RunningNotifications.dismiss()
 

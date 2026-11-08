@@ -16,10 +16,10 @@ import kotlin.coroutines.CoroutineContext
 
 /** Keeps which account the session notification was last shown to, and what it showed. */
 interface PomodoroNotificationMemory {
-    fun load(): PomodoroNotificationDisplay?
+    suspend fun load(): PomodoroNotificationDisplay?
 
     @Throws(IOException::class)
-    fun save(display: PomodoroNotificationDisplay?)
+    suspend fun save(display: PomodoroNotificationDisplay?)
 }
 
 /** Posts the session notification for an account, or removes it. */
@@ -89,7 +89,7 @@ class PomodoroSessionNotificationSync internal constructor(
         start()
     }
 
-    private fun readDisplay(): PomodoroNotificationDisplay {
+    private suspend fun readDisplay(): PomodoroNotificationDisplay {
         if (!loaded) {
             display = memory.load()
             loaded = true
@@ -97,7 +97,7 @@ class PomodoroSessionNotificationSync internal constructor(
         return display ?: PomodoroNotificationDisplay(UUID.randomUUID().toString()).also { display = it }
     }
 
-    private fun remember(next: PomodoroNotificationDisplay) {
+    private suspend fun remember(next: PomodoroNotificationDisplay) {
         display = next
         try {
             memory.save(next)

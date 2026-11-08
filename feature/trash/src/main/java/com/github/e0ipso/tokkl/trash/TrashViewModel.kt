@@ -94,7 +94,7 @@ data class TrashPageState(
 class TrashViewModel(
     private val repository: TrashRepository,
     private val refreshCache: () -> Unit,
-    private val trashMissing: () -> Unit,
+    private val trashMissing: suspend () -> Unit,
     scope: CoroutineScope,
     private val io: CoroutineContext,
     settings: StateFlow<AccountSettings?>,

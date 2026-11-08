@@ -91,8 +91,8 @@ class ReminderServerTest {
         } finally {
             assertTrue("production sign-out succeeds", runBlocking { app.signOut.run() })
         }
-        assertNull(ReminderStore(context).load())
-        assertNull(ReminderStore(context).loadTimer())
+        runBlocking { assertNull(ReminderStore(context).load()) }
+        runBlocking { assertNull(ReminderStore(context).loadTimer()) }
         assertTrue(work.getWorkInfosForUniqueWork(ReminderWork.NAME).get().all { it.state.isFinished })
         assertNull(notification())
     }
@@ -267,7 +267,7 @@ class ReminderServerTest {
 
     @Test fun withoutTheTimerApiTheReminderOffersNoPause() {
         seed()
-        app.capabilities.forget()
+        runBlocking { app.capabilities.forget() }
         val reminder = fire()
         assertEquals(
             listOf(R.string.reminder_keep_running, R.string.notification_stop).map(context::getString),
@@ -276,7 +276,7 @@ class ReminderServerTest {
     }
 
     @Test fun preferenceRoundtripAndOfflineRetryPreserveOtherKeys() {
-        assertTrue(ReminderStore(context).load()!!.shared)
+        runBlocking { assertTrue(ReminderStore(context).load()!!.shared) }
         runBlocking {
             account.client.send(
                 HttpMethod.POST,
@@ -297,7 +297,7 @@ class ReminderServerTest {
         )
         signIn(NO_ROUTE)
         change(ReminderPreferences(true, 1))
-        assertTrue(ReminderStore(context).load()!!.unsent)
+        runBlocking { assertTrue(ReminderStore(context).load()!!.unsent) }
         signIn(TokklTestServer.url)
         refresh()
         // Join the retry path without changing the values again or polling a file.
@@ -307,7 +307,7 @@ class ReminderServerTest {
                 true,
             ).join()
         }
-        assertFalse(ReminderStore(context).load()!!.unsent)
+        runBlocking { assertFalse(ReminderStore(context).load()!!.unsent) }
         val result = preferences()
         assertEquals(
             ReminderPreferences(true, 1),
@@ -316,7 +316,7 @@ class ReminderServerTest {
         assertNotNull("Pomodoro preferences remain", result["pomodoro_focus_interval_in_minutes"])
     }
 
-    @Test fun preferenceStoreRoundtripClampsAndClearsAccountData() {
+    @Test fun preferenceStoreRoundtripClampsAndClearsAccountData() = runBlocking<Unit> {
         val store = ReminderStore(context)
         store.save(StoredReminderPreferences(ReminderPreferences(false, 999), true, false))
         assertEquals(StoredReminderPreferences(ReminderPreferences(false, 168), true, false), store.load())

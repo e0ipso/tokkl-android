@@ -5,6 +5,7 @@ import android.security.keystore.KeyInfo
 import android.security.keystore.KeyProperties
 import android.util.Base64
 import androidx.test.platform.app.InstrumentationRegistry
+import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
@@ -33,23 +34,23 @@ class ApiTokenStoreTest {
     @Before
     @After
     fun clearStore() {
-        store.clear()
+        runBlocking { store.clear() }
     }
 
     @Test
     fun loadsNullWhenNothingIsStored() {
-        assertNull(store.load())
+        runBlocking { assertNull(store.load()) }
     }
 
     @Test
-    fun savedTokenLoadsBack() {
+    fun savedTokenLoadsBack() = runBlocking<Unit> {
         store.save(token)
 
         assertEquals(token, ApiTokenStore(context).load())
     }
 
     @Test
-    fun savingReplacesTheStoredToken() {
+    fun savingReplacesTheStoredToken() = runBlocking<Unit> {
         store.save("first-$token")
         store.save(token)
 
@@ -58,7 +59,7 @@ class ApiTokenStoreTest {
 
     @Test
     fun storedBytesNeverContainThePlainToken() {
-        store.save(token)
+        runBlocking { store.save(token) }
         assertTrue("the store wrote no file", storedFile.length() > 0)
 
         val plain = token.toByteArray(Charsets.UTF_8)
@@ -83,7 +84,7 @@ class ApiTokenStoreTest {
 
     @Test
     fun keyIsANonExportableAesGcmKeyInTheKeystore() {
-        store.save(token)
+        runBlocking { store.save(token) }
 
         val key = keyStore().getKey(KEY_ALIAS, null) as SecretKey
         assertNull("the key material is readable", key.encoded)
@@ -95,7 +96,7 @@ class ApiTokenStoreTest {
     }
 
     @Test
-    fun clearDeletesTheKeyAndTheCiphertext() {
+    fun clearDeletesTheKeyAndTheCiphertext() = runBlocking<Unit> {
         store.save(token)
         assertTrue(storedFile.exists())
         assertTrue(keyStore().containsAlias(KEY_ALIAS))
@@ -108,7 +109,7 @@ class ApiTokenStoreTest {
     }
 
     @Test
-    fun changedCiphertextLoadsNull() {
+    fun changedCiphertextLoadsNull() = runBlocking<Unit> {
         store.save(token)
         val bytes = storedFile.readBytes()
         bytes[bytes.lastIndex] = (bytes.last().toInt() xor 1).toByte()
@@ -118,7 +119,7 @@ class ApiTokenStoreTest {
     }
 
     @Test
-    fun ciphertextWithoutItsKeyLoadsNull() {
+    fun ciphertextWithoutItsKeyLoadsNull() = runBlocking<Unit> {
         store.save(token)
         keyStore().deleteEntry(KEY_ALIAS)
 

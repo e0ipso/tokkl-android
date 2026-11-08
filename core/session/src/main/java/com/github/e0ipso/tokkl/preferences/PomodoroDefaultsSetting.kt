@@ -6,12 +6,13 @@ import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.MePreferences
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import com.github.e0ipso.tokkl.storage.ClearableStore
+import com.github.e0ipso.tokkl.storage.StartupLoad
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.doubleOrNull
-import kotlin.coroutines.CoroutineContext
 
 /**
  * The lengths a Pomodoro session starts with: [workMinutes] of work, [shortRestMinutes] of rest
@@ -57,18 +58,18 @@ typealias StoredPomodoroDefaults = StoredPreference<PomodoroDefaults>
  * `POST /api/v9/me/preferences` with only the four keys. A server without Tokkl's preferences, such
  * as Toggl Track, gets nothing: the values stay on the phone, from 25, 5, 15 and 4.
  *
- * @param store keeps the values on the phone. The first read loads them, on the reading thread.
- * @param client the signed-in account's API client, or null when signed out. Runs on [io].
+ * @param store keeps the values on the phone. They load from it as this is made, off the main thread.
+ * @param client the signed-in account's API client, or null when signed out.
  * @param keepsPreferences true when the server keeps Tokkl's preferences.
  * @param scope outlives every screen, so leaving the app does not cancel a write.
  */
 class PomodoroDefaultsSetting(
     store: ClearableStore<StoredPomodoroDefaults>,
     client: ApiClientProvider,
-    private val keepsPreferences: () -> Boolean,
+    private val keepsPreferences: suspend () -> Boolean,
     scope: CoroutineScope,
-    io: CoroutineContext,
-) : AccountDataOwner {
+) : AccountDataOwner,
+    StartupLoad {
 
     override val signOutPhase = SignOutPhase.CLEAR_DATA
 
@@ -81,7 +82,6 @@ class PomodoroDefaultsSetting(
         store,
         client,
         scope,
-        io,
         default = PomodoroDefaults.DEFAULT,
         codec = object : PreferenceCodec<PomodoroDefaults> {
             override fun loaded(value: PomodoroDefaults) = value.clamped()
@@ -95,21 +95,26 @@ class PomodoroDefaultsSetting(
     /** The values a new session starts with, always within their ranges. */
     val defaults: StateFlow<PomodoroDefaults> get() = preference.value
 
+    /** [defaults] once loaded, for readers that may run before the load ends. */
+    val loadedDefaults: Flow<PomodoroDefaults> get() = preference.loaded
+
+    override val isReady: Boolean get() = preference.isReady
+
+    override suspend fun ready() = preference.ready()
+
     /**
      * Clamps [defaults] to their ranges, shows them at once, keeps them on the phone and sends
      * them to the server in the background. Call it on the main thread.
      */
-    fun change(defaults: PomodoroDefaults): Job {
-        val keepsPreferences = keepsPreferences()
-        return preference.change(defaults.clamped(), unsent = keepsPreferences, sendIf = { keepsPreferences })
-    }
+    fun change(defaults: PomodoroDefaults): Job =
+        preference.change(defaults.clamped(), unsent = keepsPreferences, sendIf = keepsPreferences)
 
     /**
      * Takes the refresh's `GET /api/v9/me/preferences`, null when it failed, from a server that
      * keeps Tokkl's preferences when [keepsPreferences]. Sends unsent values instead of reading
-     * the server's. Blocks on disk I/O, so call it off the main thread.
+     * the server's.
      */
-    fun refreshed(preferences: MePreferences?, keepsPreferences: Boolean) {
+    suspend fun refreshed(preferences: MePreferences?, keepsPreferences: Boolean) {
         preference.refreshed(preferences, keepsPreferences)
     }
 
@@ -117,7 +122,7 @@ class PomodoroDefaultsSetting(
      * Goes back to Tokkl's defaults with nothing unsent. Signing out calls this once the client is
      * gone, so no send can succeed, and then deletes the stored values.
      */
-    fun forget() {
+    suspend fun forget() {
         preference.forget()
     }
 

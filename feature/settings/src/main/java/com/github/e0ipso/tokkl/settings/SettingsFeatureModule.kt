@@ -6,8 +6,11 @@ import com.github.e0ipso.tokkl.navigation.FeatureEntries
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
 import com.github.e0ipso.tokkl.session.SignOut
+import com.github.e0ipso.tokkl.storage.StartupLoad
+import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsRepository
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
+import org.koin.core.qualifier.named
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
@@ -15,9 +18,17 @@ import org.koin.dsl.module
 val settingsFeatureModule = module {
     single { ThemeSettingsStore(androidContext()) }
 
-    // Loaded on first use, which is MainActivity's onCreate, on the main thread, so the first frame
-    // knows the theme.
+    // Loaded at process start, off the main thread. MainActivity draws its first frame once they
+    // have loaded, so it knows the theme.
     single { themeSettingsWithNightMode(androidContext(), get(), get(), io()) }
+    single(named("load-theme-settings")) {
+        val themes = get<ThemeSettingsRepository>()
+        object : StartupLoad {
+            override val isReady: Boolean get() = themes.isReady
+
+            override suspend fun ready() = themes.ready()
+        }
+    } bind StartupLoad::class
 
     // The Settings page's sign-out button and its warning about unsent changes.
     single {

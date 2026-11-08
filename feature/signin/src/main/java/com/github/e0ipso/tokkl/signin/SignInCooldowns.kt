@@ -12,11 +12,11 @@ import java.io.IOException
 interface SignInCooldowns {
 
     /** Every stored deadline, by origin. */
-    fun load(): Map<String, Long>
+    suspend fun load(): Map<String, Long>
 
     @Throws(IOException::class)
-    fun save(origin: String, deadline: Long)
+    suspend fun save(origin: String, deadline: Long)
 
     @Throws(IOException::class)
-    fun clear(origin: String)
+    suspend fun clear(origin: String)
 }

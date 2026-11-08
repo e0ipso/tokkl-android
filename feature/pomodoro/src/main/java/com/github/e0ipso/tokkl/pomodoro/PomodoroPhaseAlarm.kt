@@ -32,13 +32,12 @@ import kotlin.coroutines.CoroutineContext
  *
  * @param held the account's held timer state now: after a process restart, the stored one.
  * @param available whether the account's server offers the timer API.
- * @param io where calls run: the first read of the held state and of the capabilities loads them
- *   from disk.
+ * @param io where calls run: the first read of the held state loads it from disk.
  * @param clock the phone's clock.
  */
 class PomodoroPhaseAlarm(
     private val held: () -> HeldTimerState?,
-    private val available: () -> Boolean,
+    private val available: suspend () -> Boolean,
     private val alarms: PomodoroAlarmScheduler,
     private val ringing: PomodoroRinging,
     private val io: CoroutineContext,
@@ -125,9 +124,9 @@ class PomodoroPhaseAlarm(
 
     private suspend fun <T> locked(block: suspend () -> T): T = withContext(io) { lock.withLock { block() } }
 
-    private fun heldLocked(): HeldTimerState? = held()?.takeIf { available() }
+    private suspend fun heldLocked(): HeldTimerState? = held()?.takeIf { available() }
 
-    private fun currentLocked(): PomodoroRing? = heldLocked()?.ring()
+    private suspend fun currentLocked(): PomodoroRing? = heldLocked()?.ring()
 
     /** Arms [ring]'s planned end. Returns false when no exact alarm can be set. */
     private fun arm(ring: PomodoroRing): Boolean {

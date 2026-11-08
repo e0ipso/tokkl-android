@@ -10,6 +10,7 @@ import com.github.e0ipso.tokkl.storage.InMemoryValueStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import mockwebserver3.Dispatcher
@@ -50,13 +51,12 @@ class ReminderSettingTest {
         InMemoryValueStore(initial) { saved += it },
         { client },
         CoroutineScope(Dispatchers.Unconfined),
-        Dispatchers.Unconfined,
     )
     private fun prefs(body: String = """{"long_timer_reminder_enabled":true,"long_timer_reminder_hours":12}""") =
         MePreferences(Json.parseToJsonElement(body).jsonObject)
     private fun answer(code: Int = 200) = server.enqueue(MockResponse.Builder().code(code).body("{}").build())
 
-    @Test fun readsBothExactKeysAndPostsOnlyThem() {
+    @Test fun readsBothExactKeysAndPostsOnlyThem() = runTest {
         val setting = setting()
         setting.refreshed(prefs(), true)
         assertEquals(ReminderPreferences(true, 12), setting.state.value)
@@ -73,7 +73,7 @@ class ReminderSettingTest {
         assertEquals(ReminderPreferences(true, 12), setting.state.value)
     }
 
-    @Test fun failedWriteSurvivesRestartAndRetriesOnRefresh() {
+    @Test fun failedWriteSurvivesRestartAndRetriesOnRefresh() = runTest {
         val setting = setting()
         setting.refreshed(prefs(), true)
         answer(503)
@@ -87,7 +87,7 @@ class ReminderSettingTest {
         assertEquals(2, server.requestCount)
     }
 
-    @Test fun oldTokklAndTogglKeepLocalDefaultsAndChanges() {
+    @Test fun oldTokklAndTogglKeepLocalDefaultsAndChanges() = runTest {
         for (tokkl in listOf(true, false)) {
             val setting = setting()
             setting.refreshed(prefs("{}"), tokkl)
@@ -101,7 +101,7 @@ class ReminderSettingTest {
         assertEquals(0, server.requestCount)
     }
 
-    @Test fun rangesRejectMalformedServerValuesAndClampLocalValues() {
+    @Test fun rangesRejectMalformedServerValuesAndClampLocalValues() = runTest {
         for (hours in listOf("0", "169", "1.5", "null", "true", "\"9\"", "{}")) {
             assertEquals(
                 ReminderPreferences(),
@@ -118,7 +118,7 @@ class ReminderSettingTest {
         assertEquals(0, server.requestCount)
     }
 
-    @Test fun discoveringTheKeysSendsALocalChangeMadeDuringTheFirstRefresh() {
+    @Test fun discoveringTheKeysSendsALocalChangeMadeDuringTheFirstRefresh() = runTest {
         val setting = setting()
         setting.change(ReminderPreferences(false, 6))
         answer()
@@ -128,7 +128,7 @@ class ReminderSettingTest {
         assertFalse(saved.last().unsent)
     }
 
-    @Test fun anInFlightPreferenceSendCannotPersistAfterSignOut() {
+    @Test fun anInFlightPreferenceSendCannotPersistAfterSignOut() = runTest {
         val release = CountDownLatch(1)
         server.dispatcher = object : Dispatcher() {
             override fun dispatch(request: RecordedRequest): MockResponse {
@@ -140,7 +140,6 @@ class ReminderSettingTest {
             InMemoryValueStore(null) { saved += it },
             { client },
             CoroutineScope(Dispatchers.IO),
-            Dispatchers.IO,
         )
         runBlocking { setting.refreshed(prefs(), true).join() }
         val job = setting.change(ReminderPreferences(false, 6))
@@ -157,7 +156,7 @@ class ReminderSettingTest {
         }
     }
 
-    @Test fun failedReadKeepsValuesAndSignOutClearsThem() {
+    @Test fun failedReadKeepsValuesAndSignOutClearsThem() = runTest {
         val setting = setting(StoredReminderPreferences(ReminderPreferences(false, 24), false, true))
         setting.refreshed(null, true)
         assertEquals(ReminderPreferences(false, 24), setting.state.value)

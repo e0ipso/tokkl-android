@@ -9,6 +9,7 @@ import com.github.e0ipso.tokkl.reports.reportsFeatureModule
 import com.github.e0ipso.tokkl.settings.settingsFeatureModule
 import com.github.e0ipso.tokkl.shortcuts.shortcutsFeatureModule
 import com.github.e0ipso.tokkl.signin.signInFeatureModule
+import com.github.e0ipso.tokkl.storage.StartupLoads
 import com.github.e0ipso.tokkl.sync.syncFeatureModule
 import com.github.e0ipso.tokkl.tags.tagsFeatureModule
 import com.github.e0ipso.tokkl.tile.tileFeatureModule
@@ -18,8 +19,12 @@ import com.github.e0ipso.tokkl.widget.widgetFeatureModule
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
-/** What [com.github.e0ipso.tokkl.TokklApplication] runs at process start. */
+/**
+ * What [com.github.e0ipso.tokkl.TokklApplication] makes and runs at process start: every store
+ * that loads then, which MainActivity's first frame waits for, and the hooks.
+ */
 internal val startupModule = module {
+    single { StartupLoads(getAll()) }
     single { AppStartup(hooks = getAll()) }
 }
 

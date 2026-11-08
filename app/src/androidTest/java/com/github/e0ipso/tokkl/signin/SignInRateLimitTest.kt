@@ -26,6 +26,7 @@ import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.feature.signin.R
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
+import kotlinx.coroutines.runBlocking
 import okhttp3.Credentials
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -74,7 +75,7 @@ class SignInRateLimitTest {
      */
     @After
     fun forgetCooldownAndDeleteAccount() {
-        SignInCooldownStore(context).clear(server.origin)
+        runBlocking { SignInCooldownStore(context).clear(server.origin) }
         if (!::account.isInitialized) return
         ServerTrustStore(context).confirmCleartext(server)
         Session(context).save(server, TokklTestServer.apiToken)

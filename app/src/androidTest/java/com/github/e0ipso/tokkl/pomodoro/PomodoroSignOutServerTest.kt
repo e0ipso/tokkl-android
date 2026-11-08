@@ -245,8 +245,8 @@ class PomodoroSignOutServerTest {
     private fun assertCleared() {
         awaitStopped()
         assertFalse(Session(context).isSignedIn())
-        assertNull(ServerConfigStore(context).load())
-        assertNull(ApiTokenStore(context).load())
+        runBlocking { assertNull(ServerConfigStore(context).load()) }
+        runBlocking { assertNull(ApiTokenStore(context).load()) }
         assertNull(TimerStateStore(context).load())
         assertNull(app.timerState.state.value)
         awaitNextAlarm(null)

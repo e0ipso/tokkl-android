@@ -40,7 +40,6 @@ class TimerPageViewModelTest {
         client = { null },
         keepsTimerView = { false },
         scope = scope,
-        io = Dispatchers.Unconfined,
     )
     private val entries = MutableStateFlow(listOf(entry(1, "Code review", WEBSITE.id)))
     private val picker = MutableStateFlow(PickerSource(projects = listOf(WEBSITE), clients = listOf(ACME)))

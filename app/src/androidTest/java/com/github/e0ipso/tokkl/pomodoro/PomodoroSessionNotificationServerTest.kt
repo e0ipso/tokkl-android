@@ -93,7 +93,7 @@ class PomodoroSessionNotificationServerTest {
                 app.signOut.run()
                 withTimeout(10_000) { app.pomodoroRinging.state.first { !it.serviceRunning } }
             }
-            assertNull(PomodoroSessionNotificationStore(context).load())
+            runBlocking { assertNull(PomodoroSessionNotificationStore(context).load()) }
             assertFalse(manager.activeNotifications.any { it.id == PomodoroSessionNotifier.NOTIFICATION_ID })
             assertNull(app.timerState.state.value)
         } finally {
@@ -108,7 +108,7 @@ class PomodoroSessionNotificationServerTest {
     @Test fun aColdNotificationLaunchOpensPomodoroAndRotationPreservesItsDestination() {
         val phase = startSession()
         awaitSessionNotification()
-        val identity = checkNotNull(PomodoroSessionNotificationStore(context).load()).account
+        val identity = runBlocking { checkNotNull(PomodoroSessionNotificationStore(context).load()).account }
         // ActivityScenario starts a new Activity with the same immutable intent the posted tap owns.
         ActivityScenario.launch<MainActivity>(pomodoroSessionOpenIntent(context, identity, phase)).use { scenario ->
             awaitHeading(UiR.string.pomodoro_title)
@@ -196,14 +196,14 @@ class PomodoroSessionNotificationServerTest {
         ) { manager.activeNotifications.none { it.id == PomodoroSessionNotifier.NOTIFICATION_ID } }
     }
 
-    @Test fun theRingingNotificationReplacesTheActiveOneAndNextRestoresOnlyOneActiveNotification() {
+    @Test fun theRingingNotificationReplacesTheActiveOneAndNextRestoresOnlyOneActiveNotification() = runBlocking<Unit> {
         val phase = startSession(
             SessionLengths(workMinutes = 1, shortRestMinutes = 60, longRestMinutes = 60, longRestEvery = 4),
         )
         val active = awaitSessionNotification()
         assertEquals(PomodoroSessionNotifier.CHANNEL_ID, active.channelId)
         // The server's one-minute work phase ends, and the phone rings from its planned end.
-        runBlocking { withTimeout(90_000) { app.pomodoroRinging.state.first { it.serviceRunning && it.playing } } }
+        withTimeout(90_000) { app.pomodoroRinging.state.first { it.serviceRunning && it.playing } }
         compose.waitUntil(10_000) {
             manager.activeNotifications.singleOrNull { it.id == PomodoroSessionNotifier.NOTIFICATION_ID }
                 ?.notification?.channelId == PomodoroRingingNotifier.CHANNEL_ID
@@ -213,19 +213,19 @@ class PomodoroSessionNotificationServerTest {
         PomodoroWorkWaits.ringingButtons(1, what = "Next phase on the ringing notification") {
             ring.actions[0].actionIntent.send()
         }
-        runBlocking { withTimeout(10_000) { app.pomodoroRinging.state.first { !it.serviceRunning } } }
+        withTimeout(10_000) { app.pomodoroRinging.state.first { !it.serviceRunning } }
         awaitSessionNotification(PhaseKind.SHORT_REST)
         assertEquals(1, manager.activeNotifications.count { it.id == PomodoroSessionNotifier.NOTIFICATION_ID })
         assertFalse(app.pomodoroRinging.state.value.playing)
         assertEquals(PhaseKind.SHORT_REST, serverTimer().pomodoro?.phase?.kind)
     }
 
-    @Test fun signOutRemovesDisplayStateAndOldButtonsAndTapCannotAffectTheLaterAccount() {
+    @Test fun signOutRemovesDisplayStateAndOldButtonsAndTapCannotAffectTheLaterAccount() = runBlocking<Unit> {
         val phase = startSession()
         val old = awaitSessionNotification()
         val oldIdentity = checkNotNull(PomodoroSessionNotificationStore(context).load()).account
         val settings = checkNotNull(app.accountSettings.state.value)
-        runBlocking { app.signOut.run() }
+        app.signOut.run()
         assertNull(PomodoroSessionNotificationStore(context).load())
         assertFalse(manager.activeNotifications.any { it.id == PomodoroSessionNotifier.NOTIFICATION_ID })
 

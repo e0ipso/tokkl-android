@@ -57,7 +57,8 @@ internal fun decodeRememberedPomodoroFields(text: String, account: String): Reme
  * write, so clearing this file afterwards cannot be undone by a late answer. The random account
  * name from TimerStateStore also prevents another account from reading an uncleared record.
  *
- * Calls read the disk. Like the held timer state, these private preferences are excluded from
+ * Calls read and write the disk on the calling thread, as the timer state's store does, so never
+ * call them on the main thread. Like the held timer state, these private preferences are excluded from
  * backup by the app's existing rules. No token or other credential is stored here.
  */
 class PomodoroWidgetFieldsStore(context: Context) :
@@ -80,12 +81,12 @@ class PomodoroWidgetFieldsStore(context: Context) :
         val fields = rememberedPomodoroFields(account, held) ?: return
         val encoded = encodeRememberedPomodoroFields(fields)
         if (preferences.getString(KEY_FIELDS, null) == encoded) return
-        file.commit { putString(KEY_FIELDS, encoded) }
+        file.commitHere { putString(KEY_FIELDS, encoded) }
     }
 
     @Throws(IOException::class)
     override fun clear() {
-        file.commit("Could not clear $FILE_NAME") { clear() }
+        file.commitHere("Could not clear $FILE_NAME") { clear() }
     }
 
     private companion object {

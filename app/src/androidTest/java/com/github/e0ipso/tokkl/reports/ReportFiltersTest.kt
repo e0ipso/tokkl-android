@@ -269,7 +269,7 @@ class ReportFiltersTest {
 
         // The refreshes as the app starts are over, so nothing turns the flag back on.
         Thread.sleep(SETTLE_MS)
-        app.capabilities.forget()
+        runBlocking { app.capabilities.forget() }
         assertFalse(app.capabilities.state.value.negatedFilters)
         openSheet()
         sheet().performScrollToNode(inSheet(hasText("Website") and isToggleable()))

@@ -56,7 +56,7 @@ class CapabilitiesServerTest {
         runBlocking { app.accountRefresh.refresh().join() }
 
         assertEquals(ALL, app.capabilities.state.value)
-        assertEquals("the stored flags", ALL, CapabilitiesStore(context).load())
+        runBlocking { assertEquals("the stored flags", ALL, CapabilitiesStore(context).load()) }
         previousStep.writeText(currentProcess())
     }
 

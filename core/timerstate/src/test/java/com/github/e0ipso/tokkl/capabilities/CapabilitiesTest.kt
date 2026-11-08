@@ -11,8 +11,14 @@ import com.github.e0ipso.tokkl.cache.RunningCheckStart
 import com.github.e0ipso.tokkl.cache.RunningCheckWrites
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.storage.InMemoryValueStore
+import com.github.e0ipso.tokkl.storage.ValueStore
 import com.github.e0ipso.tokkl.timerstate.TimerStateSource
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
@@ -64,7 +70,7 @@ class CapabilitiesTest {
     }
 
     @Test
-    fun timeResolutionIsFalseWhenMeLacksTimeResolutionMinutes() {
+    fun timeResolutionIsFalseWhenMeLacksTimeResolutionMinutes() = runTest {
         answers[TRASH] = json("[]")
 
         val capabilities = source().refresh(client, me(TOGGL_ME))
@@ -73,7 +79,7 @@ class CapabilitiesTest {
     }
 
     @Test
-    fun favoritesAreFalseWhenMeLacksRole() {
+    fun favoritesAreFalseWhenMeLacksRole() = runTest {
         answers[TRASH] = json("[]")
 
         val capabilities = source().refresh(
@@ -92,7 +98,7 @@ class CapabilitiesTest {
 
     /** No probe: Tokkl's `role` offers no-time entries before any entry has been read. */
     @Test
-    fun noTimeEntriesAreOfferedOnTokklWithoutAProbe() {
+    fun noTimeEntriesAreOfferedOnTokklWithoutAProbe() = runTest {
         answers[TRASH] = json("[]")
         answers[TIMER] = json(TIMER_STATE)
 
@@ -105,7 +111,7 @@ class CapabilitiesTest {
 
     /** A Tokkl before 1.11.0 sent an entry without `all_day`, so later refreshes keep it off. */
     @Test
-    fun aRecordedMissingAllDayStaysOffAcrossRefreshes() {
+    fun aRecordedMissingAllDayStaysOffAcrossRefreshes() = runTest {
         answers[TRASH] = json("[]")
         answers[TIMER] = json(TIMER_STATE)
         val source = source(initial = ALL.copy(allDay = false))
@@ -115,7 +121,7 @@ class CapabilitiesTest {
     }
 
     @Test
-    fun aMissingAllDayTurnsTheFlagOffAndStoresItOnce() {
+    fun aMissingAllDayTurnsTheFlagOffAndStoresItOnce() = runTest {
         val source = source(initial = ALL)
 
         source.allDayMissing()
@@ -128,7 +134,7 @@ class CapabilitiesTest {
 
     /** Before the first refresh, or after a sign-out, nothing is offered and nothing is written. */
     @Test
-    fun aMissingAllDayWritesNothingWhenTheFlagIsNotOn() {
+    fun aMissingAllDayWritesNothingWhenTheFlagIsNotOn() = runTest {
         val source = source()
 
         source.allDayMissing()
@@ -138,7 +144,7 @@ class CapabilitiesTest {
     }
 
     @Test
-    fun allFlagsAreTrueOnTokkl() {
+    fun allFlagsAreTrueOnTokkl() = runTest {
         answers[TRASH] = json("[]")
         answers[TIMER] = json(TIMER_STATE)
 
@@ -149,7 +155,7 @@ class CapabilitiesTest {
     }
 
     @Test
-    fun trashAndRestoreAreFalseWhenTheTrashAnswers404() {
+    fun trashAndRestoreAreFalseWhenTheTrashAnswers404() = runTest {
         val capabilities = source(initial = ALL).refresh(client, me(TOKKL_ME))
 
         assertFalse(capabilities.trash)
@@ -159,7 +165,7 @@ class CapabilitiesTest {
 
     /** Such as a proxy's HTML page in front of a server without the trash. */
     @Test
-    fun aTrashAnswerThatIsNotAListHidesTrashAndRestore() {
+    fun aTrashAnswerThatIsNotAListHidesTrashAndRestore() = runTest {
         answers[TRASH] = MockResponse.Builder().code(
             200,
         ).addHeader("Content-Type", "text/html").body("<html></html>").build()
@@ -171,7 +177,7 @@ class CapabilitiesTest {
     }
 
     @Test
-    fun aProbeWithoutAClearAnswerKeepsTheTrashFlags() {
+    fun aProbeWithoutAClearAnswerKeepsTheTrashFlags() = runTest {
         answers[TRASH] = MockResponse.Builder().code(503).build()
         answers[TIMER] = json(TIMER_STATE)
 
@@ -183,7 +189,7 @@ class CapabilitiesTest {
 
     /** The probe never makes up an entry id to try the restore endpoint. */
     @Test
-    fun theOnlyProbesAreOneGetOfTheTrashAndOneOfTheTimer() {
+    fun theOnlyProbesAreOneGetOfTheTrashAndOneOfTheTimer() = runTest {
         answers[TRASH] = json("[]")
         answers[TIMER] = json(TIMER_STATE)
 
@@ -196,7 +202,7 @@ class CapabilitiesTest {
     }
 
     @Test
-    fun aFailedWriteKeepsTheNewFlagsAndTheNextRefreshWritesAgain() {
+    fun aFailedWriteKeepsTheNewFlagsAndTheNextRefreshWritesAgain() = runTest {
         answers[TRASH] = json("[]")
         answers[TIMER] = json(TIMER_STATE)
         var failWrites = true
@@ -205,6 +211,7 @@ class CapabilitiesTest {
                 if (failWrites) throw IOException("disk full")
                 saved += it
             },
+            CoroutineScope(Dispatchers.Unconfined),
         )
 
         assertEquals(ALL, source.refresh(client, me(TOKKL_ME)))
@@ -217,7 +224,7 @@ class CapabilitiesTest {
 
     /** The trash page's own 404 hides the trash and restore, and stores that, as the probe would. */
     @Test
-    fun aMissingTrashTurnsTrashAndRestoreOffAndStoresThem() {
+    fun aMissingTrashTurnsTrashAndRestoreOffAndStoresThem() = runTest {
         val source = source(initial = ALL)
 
         source.trashMissing()
@@ -228,7 +235,7 @@ class CapabilitiesTest {
     }
 
     @Test
-    fun aMissingTrashWritesNothingWhenTheFlagsAlreadySaySo() {
+    fun aMissingTrashWritesNothingWhenTheFlagsAlreadySaySo() = runTest {
         val source = source()
 
         source.trashMissing()
@@ -238,7 +245,7 @@ class CapabilitiesTest {
     }
 
     @Test
-    fun aTimerStateMeansPresentAndSeedsTheHolderFromTheSameRequest() {
+    fun aTimerStateMeansPresentAndSeedsTheHolderFromTheSameRequest() = runTest {
         answers[TRASH] = json("[]")
         answers[TIMER] = json(TIMER_STATE)
 
@@ -250,7 +257,7 @@ class CapabilitiesTest {
     }
 
     @Test
-    fun aMissingTimerRouteMeansAbsentAndTurnsAPresentFlagOff() {
+    fun aMissingTimerRouteMeansAbsentAndTurnsAPresentFlagOff() = runTest {
         answers[TRASH] = json("[]")
 
         val capabilities = source(initial = ALL).refresh(client, me(TOKKL_ME))
@@ -262,7 +269,7 @@ class CapabilitiesTest {
 
     /** Such as a proxy's page in front of a server without the timer API. */
     @Test
-    fun aSuccessfulAnswerThatIsNotATimerStateMeansAbsent() {
+    fun aSuccessfulAnswerThatIsNotATimerStateMeansAbsent() = runTest {
         answers[TRASH] = json("[]")
         val bodies = listOf(
             """["x"]""",
@@ -282,7 +289,7 @@ class CapabilitiesTest {
     }
 
     @Test
-    fun anAnswerWithoutAClearVerdictKeepsTheFlagAndSeedsNothing() {
+    fun anAnswerWithoutAClearVerdictKeepsTheFlagAndSeedsNothing() = runTest {
         answers[TRASH] = json("[]")
         for (status in listOf(403, 429, 500, 503)) {
             answers[TIMER] = MockResponse.Builder().code(status).build()
@@ -294,7 +301,7 @@ class CapabilitiesTest {
     }
 
     @Test
-    fun anUnreachableServerKeepsAPresentFlagForAnOfflinePhone() {
+    fun anUnreachableServerKeepsAPresentFlagForAnOfflinePhone() = runTest {
         val unreachable = ServerUrl.parse("http://127.0.0.1:1/")!!
         testApi.trust = InMemoryServerTrust(unreachable)
         val offline = testApi.api(unreachable, ApiCredentials.ApiToken("tok-123"))
@@ -303,7 +310,7 @@ class CapabilitiesTest {
     }
 
     @Test
-    fun theFlagIsStoredWithTheOthersAndSurvivesARestart() {
+    fun theFlagIsStoredWithTheOthersAndSurvivesARestart() = runTest {
         answers[TRASH] = json("[]")
         answers[TIMER] = json(TIMER_STATE)
         source().refresh(client, me(TOKKL_ME))
@@ -317,7 +324,7 @@ class CapabilitiesTest {
     }
 
     @Test
-    fun signOutForgetsTheFlagAndALateRefreshOfTheOldAccountSeedsNothing() {
+    fun signOutForgetsTheFlagAndALateRefreshOfTheOldAccountSeedsNothing() = runTest {
         answers[TRASH] = json("[]")
         answers[TIMER] = json(TIMER_STATE)
         val capabilities = source(initial = ALL)
@@ -331,11 +338,34 @@ class CapabilitiesTest {
         assertNull("a retired holder takes no state", timerStates.state.value)
     }
 
+    /** A receiver at process start asks before the flags have loaded: it gets the stored ones. */
+    @Test
+    fun aReaderBeforeTheLoadEndsGetsTheStoredFlags() = runTest {
+        val disk = CompletableDeferred<Capabilities>()
+        val loading = CapabilitiesSource(
+            object : ValueStore<Capabilities> {
+                override suspend fun load(): Capabilities = disk.await()
+
+                override suspend fun save(value: Capabilities) = Unit
+            },
+            CoroutineScope(Dispatchers.Unconfined),
+        )
+        val timerApi = async(Dispatchers.Unconfined) { loading.offersTimerApi() }
+        assertFalse("still loading", timerApi.isCompleted)
+        assertEquals(Capabilities.NONE, loading.state.value)
+
+        disk.complete(ALL)
+
+        assertTrue(timerApi.await())
+        assertEquals(ALL, loading.state.value)
+    }
+
     private fun CapabilitiesSource.refresh(api: TokklApi, me: Me) = runBlocking { refresh(api, me, timerStates) }
 
     private fun MockWebServer.requests(): List<String> = List(requestCount) { takeRequest().url.encodedPath }
 
-    private fun source(initial: Capabilities? = null) = CapabilitiesSource(InMemoryValueStore(initial) { saved += it })
+    private fun source(initial: Capabilities? = null) =
+        CapabilitiesSource(InMemoryValueStore(initial) { saved += it }, CoroutineScope(Dispatchers.Unconfined))
 
     private fun me(body: String): Me = Json { ignoreUnknownKeys = true }.decodeFromString(Me.serializer(), body)
 

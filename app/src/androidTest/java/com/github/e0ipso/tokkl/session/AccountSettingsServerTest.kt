@@ -45,18 +45,18 @@ class AccountSettingsServerTest {
         try {
             putMe(timezone = "UTC", beginningOfWeek = 1)
         } finally {
-            AccountSettingsStore(context).clear()
+            runBlocking { AccountSettingsStore(context).clear() }
         }
     }
 
     @Test
-    fun refreshReadsTheSettingsFromTheServerAndKeepsThem() {
+    fun refreshReadsTheSettingsFromTheServerAndKeepsThem() = runBlocking<Unit> {
         // Tokkl 1.5.0 stores the name Intl resolves, which accepts it in any case.
         putMe(timezone = "america/sao_paulo", beginningOfWeek = 0)
         val app = context.applicationContext as TokklApplication
         val source = app.accountSettings
 
-        runBlocking { app.accountRefresh.refresh().join() }
+        app.accountRefresh.refresh().join()
 
         // Tokkl's instance time resolution is 5 minutes unless an admin changes it.
         val expected = AccountSettings(

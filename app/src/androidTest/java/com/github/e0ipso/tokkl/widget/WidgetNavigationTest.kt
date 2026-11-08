@@ -60,8 +60,8 @@ class WidgetNavigationTest {
         }
     }
 
-    @Test fun pomodoroPageRouteWorksOnColdAndRetainedActivityAndFallsBackWithoutCapability() {
-        runBlocking { app.accountRefresh.refresh().join() }
+    @Test fun pomodoroPageRouteWorksOnColdAndRetainedActivityAndFallsBackWithoutCapability() = runBlocking<Unit> {
+        app.accountRefresh.refresh().join()
         assertTrue("the pinned server supports Timer state", app.capabilities.state.value.timerState)
         ActivityScenario.launch<MainActivity>(
             WidgetNavigation.intent(context, WidgetNavigation.OPEN_POMODORO),

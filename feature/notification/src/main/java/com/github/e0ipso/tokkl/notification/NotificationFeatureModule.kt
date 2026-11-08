@@ -14,15 +14,15 @@ import com.github.e0ipso.tokkl.reminder.ReminderWorker
 import com.github.e0ipso.tokkl.reminder.accountReminderSync
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.storage.StartupLoad
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.flow
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.workmanager.dsl.worker
 import org.koin.core.qualifier.named
 import org.koin.dsl.bind
+import org.koin.dsl.binds
 import org.koin.dsl.module
 
 /** The running timer's notification and the reminder of a long-running timer, with its setting and its worker. */
@@ -57,8 +57,10 @@ val notificationFeatureModule = module {
 
     single { ReminderStore(androidContext()) }
 
-    // Shared reminder settings where both keys exist, account-local on older servers.
-    single { ReminderSetting(get<ReminderStore>(), get<Session>(), get(), io()) } bind AccountDataOwner::class
+    // Shared reminder settings where both keys exist, account-local on older servers. They load at
+    // process start.
+    single { ReminderSetting(get<ReminderStore>(), get<Session>(), get()) } binds
+        arrayOf(AccountDataOwner::class, StartupLoad::class)
 
     // The running entry's reminder, followed independently of any screen, with its delay in WorkManager.
     single { ReminderWork(get(), get()) } bind ReminderDelays::class
@@ -85,7 +87,7 @@ val notificationFeatureModule = module {
             AppHookOrder.REMINDER,
             processStart = {
                 reminder.value.follow(
-                    combine(cache.value.running, flow { emitAll(settings.value.state) }) { running, preferences ->
+                    combine(cache.value.running, settings.value.loaded) { running, preferences ->
                         running to preferences
                     },
                     scope,

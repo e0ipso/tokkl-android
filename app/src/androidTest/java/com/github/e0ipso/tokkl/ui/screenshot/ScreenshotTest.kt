@@ -130,6 +130,7 @@ import com.github.e0ipso.tokkl.ui.theme.ThemeSettings
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.applicationNightMode
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExternalResource
@@ -1161,12 +1162,12 @@ private class ThemeRule(private val dark: Boolean) : ExternalResource() {
 
     override fun before() {
         val mode = if (dark) ThemeMode.DARK else ThemeMode.LIGHT
-        ThemeSettingsStore(context).save(ThemeSettings(mode = mode))
+        runBlocking { ThemeSettingsStore(context).save(ThemeSettings(mode = mode)) }
         context.getSystemService(UiModeManager::class.java).setApplicationNightMode(mode.applicationNightMode)
     }
 
     override fun after() {
-        ThemeSettingsStore(context).clear()
+        runBlocking { ThemeSettingsStore(context).clear() }
         followTheSystemNightMode()
     }
 }

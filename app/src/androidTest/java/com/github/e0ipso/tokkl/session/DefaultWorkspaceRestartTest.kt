@@ -48,7 +48,7 @@ class DefaultWorkspaceRestartTest {
     private val client: TogglApiClient get() = checkNotNull(Session(context).client()) { "signed out" }
 
     @Test
-    fun step1OneRefreshStoresTheDefaultWorkspace() {
+    fun step1OneRefreshStoresTheDefaultWorkspace() = runBlocking<Unit> {
         SessionRule.signOut()
         state.delete()
         // The admin creates the account through the app's client, which sends only to the stored server.
@@ -58,7 +58,7 @@ class DefaultWorkspaceRestartTest {
         try {
             Session(context).save(TokklTestServer.url, account.apiToken)
 
-            runBlocking { app.accountRefresh.refresh().join() }
+            app.accountRefresh.refresh().join()
 
             assertEquals(account.workspaceId, app.accountSettings.state.value?.defaultWorkspaceId?.value)
             assertEquals(account.workspaceId, AccountSettingsStore(context).load()?.defaultWorkspaceId?.value)

@@ -256,7 +256,7 @@ class PomodoroAlarmActivityTest {
     @Test fun withoutTheTimerApiTheAlarmStopsAndItsIntentShowsNothing() {
         val due = seedDuePhase()
         awaitPlaying()
-        app.capabilities.forget()
+        runBlocking { app.capabilities.forget() }
         awaitStopped()
         context.startActivity(pomodoroAlarmIntent(context, HeldPhases.key(due)))
         instrumentation.waitForIdleSync()

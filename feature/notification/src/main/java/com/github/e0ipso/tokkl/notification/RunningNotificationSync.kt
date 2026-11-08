@@ -102,7 +102,7 @@ class RunningNotificationSync(
     }
 
     /** A failed write leaves the old entry, so the next emission makes the change again. */
-    private fun remember(followed: FollowedEntry?) {
+    private suspend fun remember(followed: FollowedEntry?) {
         try {
             shown.save(followed)
         } catch (_: IOException) {

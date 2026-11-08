@@ -9,8 +9,6 @@ import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.model.fields
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.flow
 import java.security.MessageDigest
 
 /**
@@ -88,7 +86,7 @@ private const val ID_PREFIX = "favorite-"
 
 /**
  * The launcher shortcuts of the cached favorites as they, the projects and the capabilities change.
- * The capabilities load on the first collection, on the collecting thread.
+ * The lists start once the capabilities have loaded.
  */
 internal fun favoriteShortcutLists(
     context: Context,
@@ -96,6 +94,6 @@ internal fun favoriteShortcutLists(
     capabilities: CapabilitiesSource,
     cache: AccountCache,
 ): Flow<List<FavoriteShortcut>> =
-    combine(flow { emitAll(capabilities.state) }, cache.favorites, cache.projects) { flags, favorites, projects ->
+    combine(capabilities.loaded, cache.favorites, cache.projects) { flags, favorites, projects ->
         favoriteShortcuts(flags.favorites, favorites, projects, launcher.limit, favoriteNames(context))
     }

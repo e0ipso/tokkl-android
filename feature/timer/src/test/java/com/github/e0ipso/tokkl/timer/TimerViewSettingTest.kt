@@ -9,6 +9,7 @@ import com.github.e0ipso.tokkl.session.MePreferences
 import com.github.e0ipso.tokkl.storage.InMemoryValueStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import mockwebserver3.MockResponse
@@ -49,7 +50,7 @@ class TimerViewSettingTest {
     }
 
     @Test
-    fun aColdStartOpensTheStoredViewBeforeAnyRefresh() {
+    fun aColdStartOpensTheStoredViewBeforeAnyRefresh() = runTest {
         assertEquals(TimerView.LIST, setting(initial = null).view.value)
         assertEquals(
             TimerView.CALENDAR,
@@ -60,7 +61,7 @@ class TimerViewSettingTest {
 
     /** As TimerPage.tsx reads timerView: calendar opens Calendar, and anything else List. */
     @Test
-    fun eachRefreshOpensTheServersViewAndListWhenItIsMissingOrUnknown() {
+    fun eachRefreshOpensTheServersViewAndListWhenItIsMissingOrUnknown() = runTest {
         val setting = setting()
         val cases = listOf(
             """{"timerView":"calendar"}""" to TimerView.CALENDAR,
@@ -86,7 +87,7 @@ class TimerViewSettingTest {
      * before the tap, so it keeps the tap; the one after it opens what the server has again.
      */
     @Test
-    fun aTapPostsTheViewAndTheRefreshRightAfterItKeepsTheTap() {
+    fun aTapPostsTheViewAndTheRefreshRightAfterItKeepsTheTap() = runTest {
         server.enqueue(ok())
         val setting = setting()
 
@@ -107,7 +108,7 @@ class TimerViewSettingTest {
 
     /** Offline, the choice stays on the phone, marked unsent, and the next refresh sends it. */
     @Test
-    fun anOfflineTapStaysUnsentAndTheNextRefreshSendsItInsteadOfReadingTheServers() {
+    fun anOfflineTapStaysUnsentAndTheNextRefreshSendsItInsteadOfReadingTheServers() = runTest {
         server.enqueue(MockResponse.Builder().onRequestStart(SocketEffect.CloseSocket()).build())
         val setting = setting()
 
@@ -126,7 +127,7 @@ class TimerViewSettingTest {
     }
 
     @Test
-    fun aStoredUnsentChoiceGoesWithTheFirstRefreshAfterAColdStart() {
+    fun aStoredUnsentChoiceGoesWithTheFirstRefreshAfterAColdStart() = runTest {
         server.enqueue(ok())
         val setting = setting(initial = StoredTimerView(TimerView.CALENDAR, unsent = true))
 
@@ -139,7 +140,7 @@ class TimerViewSettingTest {
 
     /** A server without Tokkl's preferences, such as Toggl Track, gets nothing. */
     @Test
-    fun withoutTokklsPreferencesTheChoiceStaysOnThePhone() {
+    fun withoutTokklsPreferencesTheChoiceStaysOnThePhone() = runTest {
         val setting = setting(keepsTimerView = false)
 
         setting.choose(TimerView.CALENDAR)
@@ -151,7 +152,7 @@ class TimerViewSettingTest {
     }
 
     @Test
-    fun aFailedPreferencesReadKeepsTheView() {
+    fun aFailedPreferencesReadKeepsTheView() = runTest {
         val setting = setting(initial = StoredTimerView(TimerView.CALENDAR, unsent = false))
 
         setting.refreshed(null, keepsTimerView = true)
@@ -165,7 +166,6 @@ class TimerViewSettingTest {
         client = { client },
         keepsTimerView = { keepsTimerView },
         scope = CoroutineScope(Dispatchers.Unconfined),
-        io = Dispatchers.Unconfined,
     )
 
     private fun preferences(body: String) = MePreferences(Json.parseToJsonElement(body).jsonObject)

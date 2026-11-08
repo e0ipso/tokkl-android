@@ -32,14 +32,14 @@ class PinnedCertificateTest {
 
     @Before
     fun configureTheServer() {
-        servers.save(server)
+        runBlocking { servers.save(server) }
         trust.clear()
     }
 
     @After
     fun forgetTheServer() {
         trust.clear()
-        servers.clear()
+        runBlocking { servers.clear() }
     }
 
     @Test

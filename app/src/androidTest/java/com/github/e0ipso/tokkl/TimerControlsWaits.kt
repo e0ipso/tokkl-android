@@ -49,7 +49,7 @@ fun TogglApiClient.timerState(): TimerState = runBlocking {
  * the stream first. The next account refresh learns the capability again. Blocks on disk I/O.
  */
 fun TokklApplication.followNoTimerEvents() {
-    capabilities.forget()
+    runBlocking { capabilities.forget() }
     followTimerSync()
     // A start still on its way decides for itself, against the forgotten capability, and stops.
     val deadline = System.nanoTime() + 10_000_000_000L

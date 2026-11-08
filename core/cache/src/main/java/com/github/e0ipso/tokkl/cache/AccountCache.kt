@@ -75,7 +75,7 @@ class AccountCache(private val database: CacheDatabase, private val clock: Clock
         me: Me,
         preferences: MePreferences?,
         capabilities: Capabilities,
-        onAllDayMissing: () -> Unit = {},
+        onAllDayMissing: suspend () -> Unit = {},
     ) {
         val changes = database.changes()
         val before = try {

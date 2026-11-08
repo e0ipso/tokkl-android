@@ -10,23 +10,22 @@ import java.io.IOException
  * time at which that server's 429 stops blocking sign-in. The file holds
  * nothing else, and the backup rules exclude it with every other file.
  *
- * The first call loads the preferences file, so make calls off the main thread.
+ * Each call reads or writes the file on the I/O dispatcher.
  */
 class SignInCooldownStore(context: Context) : SignInCooldowns {
 
     private val file = PreferencesFile(context, FILE_NAME)
-    private val preferences get() = file.preferences
 
-    override fun load(): Map<String, Long> =
-        preferences.all.mapNotNull { (origin, deadline) -> (deadline as? Long)?.let { origin to it } }.toMap()
+    override suspend fun load(): Map<String, Long> =
+        file.read { all }.mapNotNull { (origin, deadline) -> (deadline as? Long)?.let { origin to it } }.toMap()
 
     @Throws(IOException::class)
-    override fun save(origin: String, deadline: Long) {
+    override suspend fun save(origin: String, deadline: Long) {
         file.commit { putLong(origin, deadline) }
     }
 
     @Throws(IOException::class)
-    override fun clear(origin: String) {
+    override suspend fun clear(origin: String) {
         file.commit { remove(origin) }
     }
 

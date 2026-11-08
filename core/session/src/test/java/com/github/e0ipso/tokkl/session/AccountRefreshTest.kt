@@ -14,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -425,12 +426,13 @@ class AccountRefreshTest {
         io: CoroutineContext,
         onRefresh: AccountRefreshSteps = AccountRefreshSteps { _, _, _ -> },
     ) {
-        private val settings = AccountSettingsSource(InMemoryValueStore(initial, save))
+        private val settings = AccountSettingsSource(InMemoryValueStore(initial, save), scope)
         private val refresher = AccountRefresh(client, settings, scope, io, onRefresh)
 
         val state get() = settings.state
 
-        fun store(stored: AccountSettings) = settings.store(stored)
+        /** Stores as sign-in does, waiting for the write, from the thread of the server's answer. */
+        fun store(stored: AccountSettings) = runBlocking { settings.store(stored) }
 
         fun refresh() = refresher.refresh()
 

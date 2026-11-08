@@ -29,6 +29,7 @@ internal suspend fun earlierCopy(
         is ApiResult.Success -> result.value
         is ApiResult.Failure -> return result
     }
+    spans.ready()
     val starts = setOf(start, spans.start(start))
     return ApiResult.Success(
         entries.firstOrNull {

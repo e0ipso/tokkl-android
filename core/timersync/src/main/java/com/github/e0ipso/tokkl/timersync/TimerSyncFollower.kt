@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 /** Hears each decision on whether the timer sync runs, so it can follow whether the server has the timer API. */
 fun interface TimerSyncWatcher {
-    fun watchTimerSync()
+    suspend fun watchTimerSync()
 }
 
 /**
@@ -35,7 +35,7 @@ class TimerSyncFollower(
     private val signedIn: suspend () -> Boolean,
     private val source: () -> TimerStateSource,
     private val timerSync: TimerSync<TimerStateSource>,
-    private val timerApi: () -> Boolean,
+    private val timerApi: suspend () -> Boolean,
     private val signInNeeded: () -> Boolean,
     private val syncWatcher: TimerSyncWatcher,
 ) : AccountDataOwner {

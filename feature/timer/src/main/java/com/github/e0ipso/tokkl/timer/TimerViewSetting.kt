@@ -9,10 +9,10 @@ import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.MePreferences
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import com.github.e0ipso.tokkl.storage.ClearableStore
+import com.github.e0ipso.tokkl.storage.StartupLoad
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.json.JsonPrimitive
-import kotlin.coroutines.CoroutineContext
 
 /** The Timer page's view as the phone keeps it, and whether the server still has to get it. */
 typealias StoredTimerView = StoredPreference<TimerView>
@@ -27,18 +27,18 @@ typealias StoredTimerView = StoredPreference<TimerView>
  * A server without Tokkl's preferences, such as Toggl Track, gets nothing: the choice stays on the
  * phone.
  *
- * @param store keeps the view on the phone. The first read loads it, on the reading thread.
- * @param client the signed-in account's API client, or null when signed out. Runs on [io].
+ * @param store keeps the view on the phone. It loads from it as this is made, off the main thread.
+ * @param client the signed-in account's API client, or null when signed out.
  * @param keepsTimerView true when the server keeps Tokkl's preferences, read when a tap is sent.
  * @param scope outlives every screen, so leaving the app does not cancel a write.
  */
 class TimerViewSetting(
     store: ClearableStore<StoredTimerView>,
     client: ApiClientProvider,
-    private val keepsTimerView: () -> Boolean,
+    private val keepsTimerView: suspend () -> Boolean,
     scope: CoroutineScope,
-    io: CoroutineContext,
-) : AccountDataOwner {
+) : AccountDataOwner,
+    StartupLoad {
 
     override val signOutPhase = SignOutPhase.CLEAR_DATA
 
@@ -51,7 +51,6 @@ class TimerViewSetting(
         store,
         client,
         scope,
-        io,
         default = TimerView.LIST,
         codec = object : PreferenceCodec<TimerView> {
             override fun fromServer(preferences: MePreferences) = preferences.timerView()
@@ -63,17 +62,21 @@ class TimerViewSetting(
     /** The view the Timer page shows. */
     val view: StateFlow<TimerView> get() = preference.value
 
+    override val isReady: Boolean get() = preference.isReady
+
+    override suspend fun ready() = preference.ready()
+
     /** Shows [view] at once, keeps it on the phone and sends it to the server in the background. */
     fun choose(view: TimerView) {
-        preference.change(view, unsent = true, sendIf = keepsTimerView)
+        preference.change(view, unsent = { true }, sendIf = keepsTimerView)
     }
 
     /**
      * Takes the refresh's `GET /api/v9/me/preferences`, null when it failed, from a server that
      * keeps Tokkl's preferences when [keepsTimerView]. Sends an unsent choice instead of reading
-     * the server's. Blocks on disk I/O, so call it off the main thread.
+     * the server's.
      */
-    fun refreshed(preferences: MePreferences?, keepsTimerView: Boolean) {
+    suspend fun refreshed(preferences: MePreferences?, keepsTimerView: Boolean) {
         preference.refreshed(preferences, keepsTimerView)
     }
 
@@ -81,7 +84,7 @@ class TimerViewSetting(
      * Goes back to List with nothing unsent. Signing out calls this once the client is gone, so no
      * send can succeed, and then deletes the stored view.
      */
-    fun forget() {
+    suspend fun forget() {
         preference.forget()
     }
 

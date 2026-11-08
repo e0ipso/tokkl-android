@@ -5,6 +5,7 @@ import android.app.Application
 import com.github.e0ipso.tokkl.di.appModules
 import com.github.e0ipso.tokkl.lifecycle.AppStartup
 import com.github.e0ipso.tokkl.platform.MainActivityOwner
+import com.github.e0ipso.tokkl.storage.StartupLoads
 import org.koin.android.ext.android.get
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.workmanager.koin.workManagerFactory
@@ -12,7 +13,8 @@ import org.koin.core.context.startKoin
 import org.koin.core.module.Module
 
 /**
- * Starts Koin, which also sets up WorkManager with Koin's worker factory, then runs [AppStartup].
+ * Starts Koin, which also sets up WorkManager with Koin's worker factory, starts every store's
+ * load ([StartupLoads]), then runs [AppStartup].
  * The manifest leaves out WorkManager's own startup initializer, so WorkManager starts here, still
  * at process start. A subclass can add modules through [koinModules]. It names [MainActivity] for
  * the notifications, widgets and alarms that open it from below the app shell.
@@ -34,6 +36,8 @@ open class TokklApplication :
             // After the modules, so a worker WorkManager starts at once finds its definition.
             workManagerFactory()
         }
+        // Makes every store, which starts loading off the main thread as it is made.
+        get<StartupLoads>()
         get<AppStartup>().run()
     }
 }

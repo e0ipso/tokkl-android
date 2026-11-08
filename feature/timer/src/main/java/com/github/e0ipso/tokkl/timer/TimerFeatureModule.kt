@@ -24,6 +24,7 @@ import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.storage.StartupLoad
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.TimerActions
 import kotlinx.coroutines.flow.Flow
@@ -34,6 +35,7 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.parameter.ParametersHolder
 import org.koin.dsl.bind
+import org.koin.dsl.binds
 import org.koin.dsl.module
 
 /**
@@ -44,17 +46,16 @@ import org.koin.dsl.module
 val timerFeatureModule = module {
     single { TimerViewStore(androidContext()) }
 
-    // The Timer page's List or Calendar choice, kept in Tokkl's `timerView` preference. The first
-    // read loads it from a file of two values: the Timer page's first frame on the main thread.
+    // The Timer page's List or Calendar choice, kept in Tokkl's `timerView` preference. It loads
+    // at process start from a file of two values.
     single {
         TimerViewSetting(
             store = get<TimerViewStore>(),
             client = get<Session>(),
             keepsTimerView = get<CapabilitiesSource>()::keepsPreferences,
             scope = get(),
-            io = io(),
         )
-    } bind AccountDataOwner::class
+    } binds arrayOf(AccountDataOwner::class, StartupLoad::class)
 
     // The system trace of each Start and Stop tap on the Timer page.
     single { TapTrace.System }
@@ -82,7 +83,8 @@ val timerFeatureModule = module {
             entries = get<AccountCache>().entries,
             changes = get<ChangeQueue>(),
             undoDelete = get<DeleteUndoer>()::undoDelete,
-            canRestore = capabilities::offersRestore,
+            // A tap on a screen, which shows once the capabilities have loaded.
+            canRestore = { capabilities.state.value.restore },
             accountSettings = get<AccountSettingsSource>().state,
             scope = viewModelCoroutineScope(),
             clock = get(),
@@ -101,7 +103,7 @@ val timerFeatureModule = module {
             scope = viewModelCoroutineScope(),
             io = io(),
             clock = get(),
-            // The capabilities load from disk on first read, off the main thread.
+            // From the capabilities once they have loaded.
             allDayOffered = capabilities.allDayOffers(),
             overrides = params.overrides(),
             app = get(),

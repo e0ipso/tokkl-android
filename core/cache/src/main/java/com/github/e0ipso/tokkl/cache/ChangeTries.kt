@@ -23,7 +23,7 @@ internal class SentChange(val change: PendingChange, val serverId: Long, val ent
 internal class ChangeTries(
     private val store: ChangeStore,
     private val spans: ServerSpans,
-    private val allDay: () -> Boolean,
+    private val allDay: suspend () -> Boolean,
 ) {
 
     /** Sends an update, a legacy stop or a restore, as [sendOnce] does. */
@@ -157,6 +157,7 @@ internal class ChangeTries(
             is ApiResult.Failure -> return current
         }
         val later = running?.takeIf { it.stop == null && it.start.isAfter(start.start.truncatedTo(ChronoUnit.SECONDS)) }
+        spans.ready()
         return ApiResult.Success(if (later == null) start else store.endBefore(start, later, spans::switched))
     }
 }

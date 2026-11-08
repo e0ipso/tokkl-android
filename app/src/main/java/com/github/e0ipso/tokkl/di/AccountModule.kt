@@ -23,6 +23,7 @@ import com.github.e0ipso.tokkl.session.ForegroundRefresh
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.session.SignOut
+import com.github.e0ipso.tokkl.storage.StartupLoad
 import com.github.e0ipso.tokkl.timer.TimerViewSetting
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timersync.TimerSyncFollower
@@ -39,11 +40,11 @@ import org.koin.dsl.module
 internal val accountModule = module {
     single { AccountSettingsStore(androidContext()) } bind AccountDataOwner::class
     single { CapabilitiesStore(androidContext()) }
-    // The account settings. The first read loads them from a file of six short values.
-    single { AccountSettingsSource(get<AccountSettingsStore>()) }
+    // The account settings. They load at process start from a file of a few short values.
+    single { AccountSettingsSource(get<AccountSettingsStore>(), get()) } bind StartupLoad::class
 
-    // What the server offers. The first read loads it from a file of a few flags.
-    single { CapabilitiesSource(get<CapabilitiesStore>()) }
+    // What the server offers. It loads at process start from a file of a few flags.
+    single { CapabilitiesSource(get<CapabilitiesStore>(), get()) } bind StartupLoad::class
 
     single { AccountRefreshRequests() }
     single(named("hook-refresh-requests")) {

@@ -5,6 +5,7 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.preferences.StoredPomodoroDefaults
+import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -22,12 +23,12 @@ class PomodoroDefaultsStoreTest {
 
     @After
     fun cleanUp() {
-        store.clear()
-        assertNull(store.load())
+        runBlocking { store.clear() }
+        runBlocking { assertNull(store.load()) }
     }
 
     @Test
-    fun storedValuesAndTheUnsentFlagSurviveReloadAndClear() {
+    fun storedValuesAndTheUnsentFlagSurviveReloadAndClear() = runBlocking<Unit> {
         assertNull(store.load())
         val pending = StoredPomodoroDefaults(PomodoroDefaults(40, 8, 20, 5), unsent = true)
         store.save(pending)
@@ -39,7 +40,7 @@ class PomodoroDefaultsStoreTest {
     }
 
     @Test
-    fun everyStoreWriteClampsAllFourValues() {
+    fun everyStoreWriteClampsAllFourValues() = runBlocking<Unit> {
         store.save(StoredPomodoroDefaults(PomodoroDefaults(0, 61, -1, 13), unsent = true))
         assertEquals(StoredPomodoroDefaults(PomodoroDefaults(1, 60, 1, 12), unsent = true), store.load())
         store.save(StoredPomodoroDefaults(PomodoroDefaults(181, 0, 61, 0), unsent = false))

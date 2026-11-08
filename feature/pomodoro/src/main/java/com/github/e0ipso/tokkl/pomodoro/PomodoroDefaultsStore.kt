@@ -12,28 +12,27 @@ import java.io.IOException
  * values before the refresh answers, and offline. It stays on the phone, because the backup and
  * data extraction rules leave out every domain.
  *
- * The first call loads the preferences file, so it reads the disk.
+ * Each call reads or writes the file on the I/O dispatcher.
  */
 class PomodoroDefaultsStore(context: Context) : ClearableStore<StoredPomodoroDefaults> {
 
     private val file = PreferencesFile(context, FILE_NAME)
-    private val preferences get() = file.preferences
 
     /** The stored values, or null when none are stored or one of them is missing. */
-    override fun load(): StoredPomodoroDefaults? {
-        if (KEYS.any { !preferences.contains(it) }) return null
+    override suspend fun load(): StoredPomodoroDefaults? = file.read {
+        if (KEYS.any { !contains(it) }) return@read null
         val defaults = PomodoroDefaults(
-            workMinutes = preferences.getInt(KEY_WORK_MINUTES, 0),
-            shortRestMinutes = preferences.getInt(KEY_SHORT_REST_MINUTES, 0),
-            longRestMinutes = preferences.getInt(KEY_LONG_REST_MINUTES, 0),
-            longRestEvery = preferences.getInt(KEY_LONG_REST_EVERY, 0),
+            workMinutes = getInt(KEY_WORK_MINUTES, 0),
+            shortRestMinutes = getInt(KEY_SHORT_REST_MINUTES, 0),
+            longRestMinutes = getInt(KEY_LONG_REST_MINUTES, 0),
+            longRestEvery = getInt(KEY_LONG_REST_EVERY, 0),
         )
-        return StoredPomodoroDefaults(defaults.clamped(), unsent = preferences.getBoolean(KEY_UNSENT, false))
+        StoredPomodoroDefaults(defaults.clamped(), unsent = getBoolean(KEY_UNSENT, false))
     }
 
     /** Replaces the stored values in one write. */
     @Throws(IOException::class)
-    override fun save(value: StoredPomodoroDefaults) {
+    override suspend fun save(value: StoredPomodoroDefaults) {
         val defaults = value.value.clamped()
         file.commit {
             putInt(KEY_WORK_MINUTES, defaults.workMinutes)
@@ -45,7 +44,7 @@ class PomodoroDefaultsStore(context: Context) : ClearableStore<StoredPomodoroDef
     }
 
     @Throws(IOException::class)
-    override fun clear() {
+    override suspend fun clear() {
         file.commit { clear() }
     }
 

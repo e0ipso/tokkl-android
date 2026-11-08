@@ -9,6 +9,7 @@ import com.github.e0ipso.tokkl.session.MePreferences
 import com.github.e0ipso.tokkl.storage.InMemoryValueStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import mockwebserver3.MockResponse
@@ -49,7 +50,7 @@ class PomodoroDefaultsSettingTest {
     }
 
     @Test
-    fun aColdStartHasTheStoredValuesOrTokklsDefaultsBeforeAnyRefresh() {
+    fun aColdStartHasTheStoredValuesOrTokklsDefaultsBeforeAnyRefresh() = runTest {
         assertEquals(PomodoroDefaults(25, 5, 15, 4), setting(initial = null).defaults.value)
         val stored = PomodoroDefaults(50, 10, 30, 3)
         assertEquals(stored, setting(initial = StoredPomodoroDefaults(stored, unsent = false)).defaults.value)
@@ -61,7 +62,7 @@ class PomodoroDefaultsSettingTest {
     }
 
     @Test
-    fun eachRefreshTakesTheServersValues() {
+    fun eachRefreshTakesTheServersValues() = runTest {
         val setting = setting()
 
         setting.refreshed(preferences(SERVER_VALUES), keepsPreferences = true)
@@ -76,7 +77,7 @@ class PomodoroDefaultsSettingTest {
      * in its range reads as its default, and the other keys keep their own values.
      */
     @Test
-    fun aMalformedKeyFallsBackToItsOwnDefaultAlone() {
+    fun aMalformedKeyFallsBackToItsOwnDefaultAlone() = runTest {
         val setting = setting()
         val cases = listOf(
             """{"pomodoro_focus_interval_in_minutes":"50","pomodoro_break_interval_in_minutes":10,"pomodoro_long_break_interval_in_minutes":30,"pomodoro_long_break_every":3}"""
@@ -105,7 +106,7 @@ class PomodoroDefaultsSettingTest {
      * preferences before the change, so it keeps the change; the one after it takes the server's.
      */
     @Test
-    fun aChangePostsOnlyTheFourKeysAndTheRefreshRightAfterItKeepsTheChange() {
+    fun aChangePostsOnlyTheFourKeysAndTheRefreshRightAfterItKeepsTheChange() = runTest {
         server.enqueue(ok())
         val setting = setting()
 
@@ -130,7 +131,7 @@ class PomodoroDefaultsSettingTest {
 
     /** Tokkl answers 400 to a value outside its range, so the phone clamps each one before it posts. */
     @Test
-    fun outOfRangeValuesAreClampedBeforeSending() {
+    fun outOfRangeValuesAreClampedBeforeSending() = runTest {
         val cases = listOf(
             PomodoroDefaults(0, 0, 0, 0) to PomodoroDefaults(1, 1, 1, 1),
             PomodoroDefaults(-5, -1, Int.MIN_VALUE, -12) to PomodoroDefaults(1, 1, 1, 1),
@@ -161,7 +162,7 @@ class PomodoroDefaultsSettingTest {
 
     /** Offline, a change stays on the phone, marked unsent, and the next refresh sends it. */
     @Test
-    fun anOfflineChangeStaysUnsentAndTheNextRefreshSendsItInsteadOfReadingTheServers() {
+    fun anOfflineChangeStaysUnsentAndTheNextRefreshSendsItInsteadOfReadingTheServers() = runTest {
         server.enqueue(MockResponse.Builder().onRequestStart(SocketEffect.CloseSocket()).build())
         val setting = setting()
 
@@ -180,7 +181,7 @@ class PomodoroDefaultsSettingTest {
     }
 
     @Test
-    fun storedUnsentValuesGoWithTheFirstRefreshAfterAColdStart() {
+    fun storedUnsentValuesGoWithTheFirstRefreshAfterAColdStart() = runTest {
         server.enqueue(ok())
         val setting = setting(initial = StoredPomodoroDefaults(PomodoroDefaults(40, 8, 20, 5), unsent = true))
 
@@ -200,7 +201,7 @@ class PomodoroDefaultsSettingTest {
      * 4.
      */
     @Test
-    fun withoutTokklsPreferencesTheValuesStayOnThePhoneFromTokklsDefaults() {
+    fun withoutTokklsPreferencesTheValuesStayOnThePhoneFromTokklsDefaults() = runTest {
         val setting = setting(keepsPreferences = false)
 
         setting.refreshed(preferences(SERVER_VALUES), keepsPreferences = false)
@@ -217,7 +218,7 @@ class PomodoroDefaultsSettingTest {
     }
 
     @Test
-    fun aFailedPreferencesReadKeepsTheValues() {
+    fun aFailedPreferencesReadKeepsTheValues() = runTest {
         val stored = PomodoroDefaults(50, 10, 30, 3)
         val setting = setting(initial = StoredPomodoroDefaults(stored, unsent = false))
 
@@ -228,7 +229,7 @@ class PomodoroDefaultsSettingTest {
     }
 
     @Test
-    fun forgetGoesBackToTokklsDefaultsWithNothingUnsent() {
+    fun forgetGoesBackToTokklsDefaultsWithNothingUnsent() = runTest {
         val setting = setting(initial = StoredPomodoroDefaults(PomodoroDefaults(40, 8, 20, 5), unsent = true))
 
         setting.forget()
@@ -244,7 +245,6 @@ class PomodoroDefaultsSettingTest {
             client = { client },
             keepsPreferences = { keepsPreferences },
             scope = CoroutineScope(Dispatchers.Unconfined),
-            io = Dispatchers.Unconfined,
         )
 
     private fun preferences(body: String) = MePreferences(Json.parseToJsonElement(body).jsonObject)

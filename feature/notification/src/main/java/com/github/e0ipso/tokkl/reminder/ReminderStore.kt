@@ -11,26 +11,19 @@ import com.github.e0ipso.tokkl.storage.ValueStore
 class ReminderStore(context: Context) : ClearableStore<StoredReminderPreferences> {
     private val file = PreferencesFile(context, "long_timer_reminder")
 
-    // Opens the file as the store is made, which starts loading it from disk.
-    private val preferences = file.preferences
-
-    override fun load(): StoredReminderPreferences? = if (!preferences.contains(
-            "hours",
-        )
-    ) {
-        null
-    } else {
+    override suspend fun load(): StoredReminderPreferences? = file.read {
+        if (!contains("hours")) return@read null
         StoredReminderPreferences(
             ReminderPreferences(
-                preferences.getBoolean("enabled", true),
-                preferences.getInt("hours", ReminderPreferences().hours),
+                getBoolean("enabled", true),
+                getInt("hours", ReminderPreferences().hours),
             ).clamped(),
-            preferences.getBoolean("unsent", false),
-            preferences.getBoolean("shared", false),
+            getBoolean("unsent", false),
+            getBoolean("shared", false),
         )
     }
 
-    override fun save(value: StoredReminderPreferences) = file.commit {
+    override suspend fun save(value: StoredReminderPreferences) = file.commit {
         putBoolean("enabled", value.preferences.enabled)
         putInt("hours", value.preferences.clamped().hours)
         putBoolean("unsent", value.unsent)
@@ -39,23 +32,22 @@ class ReminderStore(context: Context) : ClearableStore<StoredReminderPreferences
 
     /** The reminder of the running timer, null for none. */
     val timers: ValueStore<ReminderTimer?> = object : ValueStore<ReminderTimer?> {
-        override fun load(): ReminderTimer? = loadTimer()
+        override suspend fun load(): ReminderTimer? = loadTimer()
 
-        override fun save(value: ReminderTimer?) = saveTimer(value)
+        override suspend fun save(value: ReminderTimer?) = saveTimer(value)
     }
 
-    fun loadTimer(): ReminderTimer? = if (!preferences.contains("timer_id")) {
-        null
-    } else {
+    suspend fun loadTimer(): ReminderTimer? = file.read {
+        if (!contains("timer_id")) return@read null
         ReminderTimer(
-            preferences.getLong("timer_id", 0),
-            preferences.getLong("timer_start", 0),
-            preferences.getLong("timer_due", 0),
-            preferences.getBoolean("timer_handled", false),
+            getLong("timer_id", 0),
+            getLong("timer_start", 0),
+            getLong("timer_due", 0),
+            getBoolean("timer_handled", false),
         )
     }
 
-    fun saveTimer(timer: ReminderTimer?) = file.commit {
+    suspend fun saveTimer(timer: ReminderTimer?) = file.commit {
         if (timer == null) {
             remove("timer_id")
             remove("timer_start")
@@ -69,5 +61,5 @@ class ReminderStore(context: Context) : ClearableStore<StoredReminderPreferences
         }
     }
 
-    override fun clear() = file.commit { clear() }
+    override suspend fun clear() = file.commit { clear() }
 }

@@ -4,6 +4,7 @@ import android.os.Process
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.components.accountSettings
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
@@ -30,7 +31,7 @@ class AccountSettingsRestartTest {
     private val previousStep = File(context.cacheDir, "AccountSettingsRestartTest.process")
 
     @Test
-    fun step1StoresSettingsWithATimeResolution() {
+    fun step1StoresSettingsWithATimeResolution() = runBlocking<Unit> {
         AccountSettingsStore(context).clear()
         source.store(WITH_RESOLUTION)
         previousStep.writeText(currentProcess())
@@ -40,7 +41,7 @@ class AccountSettingsRestartTest {
     fun step2KeepsThemAndStoresSettingsWithout() {
         assertNewProcess()
         assertEquals(WITH_RESOLUTION, source.state.value)
-        source.store(WITHOUT_RESOLUTION)
+        runBlocking { source.store(WITHOUT_RESOLUTION) }
         previousStep.writeText(currentProcess())
     }
 
@@ -50,7 +51,7 @@ class AccountSettingsRestartTest {
             assertNewProcess()
             assertEquals(WITHOUT_RESOLUTION, source.state.value)
         } finally {
-            AccountSettingsStore(context).clear()
+            runBlocking { AccountSettingsStore(context).clear() }
             previousStep.delete()
         }
     }

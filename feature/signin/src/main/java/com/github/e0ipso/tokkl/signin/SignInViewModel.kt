@@ -84,8 +84,7 @@ data class SignInState(
  *   reboot.
  * @param scope runs the view model's coroutines on one thread, the main thread in
  *   the app.
- * @param io where the blocking [SignIn.attempt] and the writes to [trust] and
- *   [cooldowns] run.
+ * @param io where the blocking [SignIn.attempt] and the writes to [trust] run.
  * @param onSignedIn runs once the server has accepted the credentials and the
  *   app has stored them.
  */
@@ -116,7 +115,7 @@ class SignInViewModel(
 
     /** Reads the stored deadlines and drops the ones that have passed. Submit waits for it. */
     private val restoring: Job = viewModelScope.launch {
-        val stored = withContext(io) { cooldowns.load() }
+        val stored = cooldowns.load()
         val now = clock.millis()
         for ((origin, deadline) in stored) {
             if (deadline > now) deadlines[origin] = deadline else forget(origin)
@@ -274,19 +273,17 @@ class SignInViewModel(
     }
 
     /**
-     * Writes to [cooldowns] off the main thread, one at a time and in call
-     * order: each call takes the lock before it first suspends. A failed
-     * write leaves the deadline in memory, so this process still waits.
+     * Writes to [cooldowns], which write off the main thread, one at a time
+     * and in call order: each call takes the lock before it first suspends. A
+     * failed write leaves the deadline in memory, so this process still waits.
      */
-    private fun writeCooldowns(write: SignInCooldowns.() -> Unit) {
+    private fun writeCooldowns(write: suspend SignInCooldowns.() -> Unit) {
         viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
             cooldownWrites.withLock {
-                withContext(io) {
-                    try {
-                        cooldowns.write()
-                    } catch (_: IOException) {
-                        // Nothing to show: the deadline still holds until the process ends.
-                    }
+                try {
+                    cooldowns.write()
+                } catch (_: IOException) {
+                    // Nothing to show: the deadline still holds until the process ends.
                 }
             }
         }

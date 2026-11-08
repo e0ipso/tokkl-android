@@ -95,7 +95,7 @@ class SignInScreenTest {
     }
 
     @Test
-    fun apiTokenSignInOpensTheAppAndStoresTheTokenOnlyInTheTokenStore() {
+    fun apiTokenSignInOpensTheAppAndStoresTheTokenOnlyInTheTokenStore() = runBlocking<Unit> {
         enterServerUrl()
         field(R.string.sign_in_api_token).performTextInput(TokklTestServer.apiToken)
 
@@ -129,18 +129,18 @@ class SignInScreenTest {
         confirmHttpWarning()
 
         awaitHome()
-        assertEquals(TokklTestServer.url, ServerConfigStore(context).load())
+        runBlocking { assertEquals(TokklTestServer.url, ServerConfigStore(context).load()) }
         // scripts/instrumented-tests.sh read tokklApiToken from GET /api/v9/me.
         assertTrue(
             "the stored token is the api_token from GET /api/v9/me",
-            ApiTokenStore(context).load() == TokklTestServer.apiToken,
+            runBlocking { ApiTokenStore(context).load() } == TokklTestServer.apiToken,
         )
         assertStoredNowhere(TokklTestServer.password, "the password")
         assertStoredNowhere(TokklTestServer.apiToken, "the API token in plain text")
     }
 
     @Test
-    fun wrongApiTokenShowsTheBadCredentialsMessageAndStoresNothing() {
+    fun wrongApiTokenShowsTheBadCredentialsMessageAndStoresNothing() = runBlocking<Unit> {
         enterServerUrl()
         field(R.string.sign_in_api_token).performTextInput("not-the-api-token")
 
@@ -316,8 +316,8 @@ class SignInScreenTest {
         composeRule.onNode(hasText(string(TrustR.string.sign_in_http_warning_continue)) and hasClickAction())
 
     private fun assertNothingStored() {
-        assertNull(ServerConfigStore(context).load())
-        assertNull(ApiTokenStore(context).load())
+        runBlocking { assertNull(ServerConfigStore(context).load()) }
+        runBlocking { assertNull(ApiTokenStore(context).load()) }
         assertFalse("no confirmation is stored", ServerTrustStore(context).isCleartextConfirmed(TokklTestServer.url))
     }
 

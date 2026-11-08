@@ -12,10 +12,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
@@ -106,7 +104,7 @@ class AccountTimerStates(
      * full-screen alarm shows.
      */
     val session: Flow<HeldTimerState?> =
-        combine(held, flow { emitAll(capabilities.state) }) { held, flags -> held.takeIf { flags.timerState } }
+        combine(held, capabilities.loaded) { held, flags -> held.takeIf { flags.timerState } }
             .flowOn(io)
 
     override val discardNotice: Flow<DiscardedPomodoro?> =
@@ -127,7 +125,7 @@ class AccountTimerStates(
     val controls: Flow<TimerControls> = combine(
         database.invalidationTracker.createFlow("time_entries", "pending_changes"),
         states.flatMapLatest { it.source.state },
-        flow { emitAll(capabilities.state) },
+        capabilities.loaded,
     ) { _, _, flags ->
         val account = current()
         account.source.withState { held ->

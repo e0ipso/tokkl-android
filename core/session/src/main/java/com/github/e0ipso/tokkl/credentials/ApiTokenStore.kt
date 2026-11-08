@@ -5,6 +5,10 @@ import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.AtomicFile
 import com.github.e0ipso.tokkl.storage.ClearableStore
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
@@ -14,6 +18,7 @@ import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Keeps the API token encrypted with an AES-GCM key in the Android Keystore
@@ -24,16 +29,16 @@ import javax.crypto.spec.GCMParameterSpec
  * of backup and device transfer, and another phone could not decrypt the file
  * anyway.
  *
- * Calls do disk and Keystore I/O, so make them off the main thread.
+ * Each call does its disk and Keystore work on [io].
  */
-class ApiTokenStore(context: Context) : ClearableStore<String> {
+class ApiTokenStore(context: Context, private val io: CoroutineContext = Dispatchers.IO) : ClearableStore<String> {
 
     private val file = AtomicFile(File(context.filesDir, FILE_NAME))
 
     /** Encrypts the token [value] and replaces the stored one. */
     @Throws(GeneralSecurityException::class, IOException::class)
-    override fun save(value: String) {
-        synchronized(LOCK) {
+    override suspend fun save(value: String) {
+        locked {
             val cipher = Cipher.getInstance(TRANSFORMATION)
             // The Keystore picks a random IV for every encryption.
             cipher.init(Cipher.ENCRYPT_MODE, key() ?: createKey())
@@ -49,39 +54,40 @@ class ApiTokenStore(context: Context) : ClearableStore<String> {
      * the user has to sign in again.
      */
     @Throws(GeneralSecurityException::class, IOException::class)
-    override fun load(): String? {
-        synchronized(LOCK) {
-            val bytes = try {
-                file.readFully()
-            } catch (_: FileNotFoundException) {
-                return null
-            }
-            if (bytes.size < HEADER_SIZE || bytes[0] != FORMAT_VERSION) return null
-            val ivEnd = HEADER_SIZE + (bytes[1].toInt() and 0xFF)
-            if (bytes.size < ivEnd + TAG_BITS / Byte.SIZE_BITS) return null
-            val key = key() ?: return null
-            return try {
-                val cipher = Cipher.getInstance(TRANSFORMATION)
-                cipher.init(
-                    Cipher.DECRYPT_MODE,
-                    key,
-                    GCMParameterSpec(TAG_BITS, bytes, HEADER_SIZE, ivEnd - HEADER_SIZE),
-                )
-                String(cipher.doFinal(bytes, ivEnd, bytes.size - ivEnd), Charsets.UTF_8)
-            } catch (_: GeneralSecurityException) {
-                null
-            }
+    override suspend fun load(): String? = locked {
+        val bytes = try {
+            file.readFully()
+        } catch (_: FileNotFoundException) {
+            return@locked null
+        }
+        if (bytes.size < HEADER_SIZE || bytes[0] != FORMAT_VERSION) return@locked null
+        val ivEnd = HEADER_SIZE + (bytes[1].toInt() and 0xFF)
+        if (bytes.size < ivEnd + TAG_BITS / Byte.SIZE_BITS) return@locked null
+        val key = key() ?: return@locked null
+        try {
+            val cipher = Cipher.getInstance(TRANSFORMATION)
+            cipher.init(
+                Cipher.DECRYPT_MODE,
+                key,
+                GCMParameterSpec(TAG_BITS, bytes, HEADER_SIZE, ivEnd - HEADER_SIZE),
+            )
+            String(cipher.doFinal(bytes, ivEnd, bytes.size - ivEnd), Charsets.UTF_8)
+        } catch (_: GeneralSecurityException) {
+            null
         }
     }
 
     /** Deletes the ciphertext and the Keystore key. Signing out calls this (TKA-0038). */
     @Throws(GeneralSecurityException::class)
-    override fun clear() {
-        synchronized(LOCK) {
+    override suspend fun clear() {
+        locked {
             file.delete()
             keyStore().deleteEntry(KEY_ALIAS)
         }
     }
+
+    /** Runs [block] on [io] while no other call of any instance runs. */
+    private suspend fun <T> locked(block: () -> T): T = LOCK.withLock { withContext(io) { block() } }
 
     private fun write(bytes: ByteArray) {
         val out = file.startWrite()
@@ -126,11 +132,7 @@ class ApiTokenStore(context: Context) : ClearableStore<String> {
         private const val FORMAT_VERSION: Byte = 1
         private const val HEADER_SIZE = 2
 
-        /**
-         * One lock for every instance, since they share the file and the key. A JVM lock, not a
-         * Mutex, because any thread may read or write the token, without suspending, and the
-         * Keystore and the file must change together.
-         */
-        private val LOCK = Any()
+        /** One lock for every instance, since they share the file and the key, which must change together. */
+        private val LOCK = Mutex()
     }
 }

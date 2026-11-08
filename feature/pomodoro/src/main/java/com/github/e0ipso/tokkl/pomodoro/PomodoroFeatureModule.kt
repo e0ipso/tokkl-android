@@ -19,6 +19,7 @@ import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.session.SignedInListener
+import com.github.e0ipso.tokkl.storage.StartupLoad
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.PomodoroAlarmScheduler
 import com.github.e0ipso.tokkl.timerstate.PomodoroRingingPhase
@@ -27,8 +28,6 @@ import com.github.e0ipso.tokkl.timersync.TimerSyncFollower
 import com.github.e0ipso.tokkl.timersync.TimerSyncWatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
@@ -42,7 +41,7 @@ val pomodoroFeatureModule = module {
     single { PomodoroDefaultsStore(androidContext()) }
 
     // The lengths a Pomodoro session starts with, kept in Tokkl's four `pomodoro_*` length
-    // preferences, or on the phone only where the server lacks them. The first read loads them
+    // preferences, or on the phone only where the server lacks them. They load at process start
     // from a file of five values.
     single {
         PomodoroDefaultsSetting(
@@ -50,9 +49,8 @@ val pomodoroFeatureModule = module {
             client = get<Session>(),
             keepsPreferences = get<CapabilitiesSource>()::keepsPreferences,
             scope = get(),
-            io = io(),
         )
-    } bind AccountDataOwner::class
+    } binds arrayOf(AccountDataOwner::class, StartupLoad::class)
 
     // The exact alarm at a running Pomodoro phase's planned end.
     // [PomodoroAlarmScheduler.permissionDenied] is what the Pomodoro page reads when that alarm
@@ -77,7 +75,7 @@ val pomodoroFeatureModule = module {
 
     // The exact alarm and the ring of the server's Pomodoro session, which follow the held timer
     // state while the server offers the timer API (docs/PRD.md W7). Loaded at process start; its
-    // first call loads the held state and the capabilities from disk.
+    // first call loads the held state from disk, and waits for the capabilities to load.
     single {
         PomodoroPhaseAlarm(
             held = get<AccountTimerStates>()::heldNow,
@@ -100,7 +98,7 @@ val pomodoroFeatureModule = module {
             // change, from the stored state at process start on, also with the app in the background.
             processStart = {
                 scope.launch(io) {
-                    combine(timerStates.value.held, flow { emitAll(capabilities.value.state) }) { _, _ -> Unit }
+                    combine(timerStates.value.held, capabilities.value.loaded) { _, _ -> Unit }
                         .collect { alarm.value.follow() }
                 }
             },
@@ -128,7 +126,7 @@ val pomodoroFeatureModule = module {
         PomodoroSessionNotificationSync(
             alarm = get(),
             actions = get<TimerActions>(),
-            changes = combine(held.held, flow { emitAll(capabilities.state) }, ringing.state) { _, _, _ -> Unit },
+            changes = combine(held.held, capabilities.loaded, ringing.state) { _, _, _ -> Unit },
             isSignedIn = session::isSignedIn,
             serviceRunning = { ringing.state.value.serviceRunning },
             memory = store,

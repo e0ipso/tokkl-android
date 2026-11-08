@@ -59,16 +59,16 @@ class WidgetSync(
  * so the file holds no description or name. It stays on the phone, because the backup and data
  * extraction rules leave out every domain.
  *
- * The first call loads the preferences file, so it reads the disk.
+ * Each call reads or writes the file on the I/O dispatcher.
  */
 class WidgetStore(context: Context, private val keyName: String = TIMER_KEY) : ValueStore<String> {
 
     private val file = PreferencesFile(context, FILE_NAME)
 
-    override fun load(): String? = file.preferences.getString(keyName, null)
+    override suspend fun load(): String? = file.read { getString(keyName, null) }
 
     @Throws(IOException::class)
-    override fun save(value: String) {
+    override suspend fun save(value: String) {
         file.commit { putString(keyName, value) }
     }
 

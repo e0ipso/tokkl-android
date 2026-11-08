@@ -153,20 +153,18 @@ class ReminderSync(
         }
         beforeRequest()
         val result = request.send()
-        if (result == TimerActionResult.Done) {
-            lock.withLock {
-                // The server's paused state may have ended the reminder already.
-                timers.load()?.takeIf {
-                    it.start == start && ids.currentId(
-                        EntryId(it.id),
-                    ) == ids.currentId(EntryId(id))
-                }?.let(::handled)
-            }
-        }
+        if (result == TimerActionResult.Done) lock.withLock { paused(id, start) }
         return result
     }
 
-    private fun handled(timer: ReminderTimer) {
+    /** The server has paused timer [id] from [start]: its reminder is handled, unless it ended already. */
+    private suspend fun paused(id: Long, start: Long) {
+        // The server's paused state may have ended the reminder already.
+        val timer = timers.load() ?: return
+        if (timer.start == start && ids.currentId(EntryId(timer.id)) == ids.currentId(EntryId(id))) handled(timer)
+    }
+
+    private suspend fun handled(timer: ReminderTimer) {
         timers.save(timer.copy(handled = true))
         delays.cancel()
         notice.remove()

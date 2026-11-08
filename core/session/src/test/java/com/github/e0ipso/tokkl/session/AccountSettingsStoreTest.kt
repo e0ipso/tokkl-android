@@ -4,6 +4,7 @@ import android.content.ContextWrapper
 import android.content.SharedPreferences
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.time.DurationFormat
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -28,7 +29,7 @@ class AccountSettingsStoreTest {
     )
 
     @Test
-    fun eachDurationFormatReadsBackAsSaved() {
+    fun eachDurationFormatReadsBackAsSaved() = runTest {
         for (format in DurationFormat.entries) {
             val settings = AccountSettings("Europe/Madrid", DayOfWeek.MONDAY, timeResolutionMinutes = 15.0, format)
 
@@ -40,7 +41,7 @@ class AccountSettingsStoreTest {
     }
 
     @Test
-    fun settingsStoredWithoutADurationFormatReadAsImproved() {
+    fun settingsStoredWithoutADurationFormatReadAsImproved() = runTest {
         // What an app version from before the duration format left in the file.
         file.edit().putString("timezone", "Europe/Madrid").putInt("beginning_of_week", 1).commit()
 
@@ -50,7 +51,7 @@ class AccountSettingsStoreTest {
 
     /** A workspace id above 2^53, which a JavaScript number could not hold, reads back whole. */
     @Test
-    fun theDefaultWorkspaceReadsBackAsSavedAndGoesWhenNull() {
+    fun theDefaultWorkspaceReadsBackAsSavedAndGoesWhenNull() = runTest {
         val big = 9_007_199_254_740_993L
         val settings = AccountSettings(
             "UTC",
@@ -71,7 +72,7 @@ class AccountSettingsStoreTest {
     }
 
     @Test
-    fun theAccountIdReadsBackAsSavedAndIsClearedWithTheAccount() {
+    fun theAccountIdReadsBackAsSavedAndIsClearedWithTheAccount() = runTest {
         val settings = AccountSettings("UTC", DayOfWeek.MONDAY, null, userId = 7)
         store.save(settings)
         assertEquals(7L, store.load()!!.userId)
@@ -81,7 +82,7 @@ class AccountSettingsStoreTest {
     }
 
     @Test
-    fun theClockFormatReadsBackAsSaved() {
+    fun theClockFormatReadsBackAsSaved() = runTest {
         for (twelveHour in listOf(true, false)) {
             val settings = AccountSettings(
                 "UTC",
@@ -97,7 +98,7 @@ class AccountSettingsStoreTest {
     }
 
     @Test
-    fun theGroupingReadsBackAsSavedAndSettingsWithoutItGroup() {
+    fun theGroupingReadsBackAsSavedAndSettingsWithoutItGroup() = runTest {
         for (collapse in listOf(false, true)) {
             val settings = AccountSettings(
                 "UTC",
@@ -118,7 +119,7 @@ class AccountSettingsStoreTest {
     }
 
     @Test
-    fun clearRemovesTheDurationFormat() {
+    fun clearRemovesTheDurationFormat() = runTest {
         store.save(AccountSettings("UTC", DayOfWeek.SUNDAY, null, DurationFormat.DECIMAL))
 
         store.clear()

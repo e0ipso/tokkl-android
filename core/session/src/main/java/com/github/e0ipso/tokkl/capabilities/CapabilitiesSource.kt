@@ -3,86 +3,83 @@ package com.github.e0ipso.tokkl.capabilities
 import com.github.e0ipso.tokkl.api.Me
 import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.api.TokklApi
+import com.github.e0ipso.tokkl.storage.LoadedState
+import com.github.e0ipso.tokkl.storage.StartupLoad
 import com.github.e0ipso.tokkl.storage.ValueStore
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.io.IOException
-import java.util.concurrent.Semaphore
 
 /**
  * The server's capabilities for the whole process, and the one place features read them from.
- * They refresh with each `GET /api/v9/me` of the account settings refresh, and persist. The first
- * read loads them from [store], a file of a few flags, on the reading thread.
+ * They refresh with each `GET /api/v9/me` of the account settings refresh, and persist. They load
+ * from [store], a file of a few flags, as this is made, in [scope], off the main thread. Code
+ * that may run before that load ends reads them through the suspending calls or [loaded].
  */
-class CapabilitiesSource(private val store: ValueStore<Capabilities>) {
+class CapabilitiesSource(private val store: ValueStore<Capabilities>, scope: CoroutineScope) : StartupLoad {
 
-    private val loaded by lazy { Loaded(store.load()) }
+    /** What the disk holds, so a refresh after a failed write writes again. Guarded by [changing]. */
+    private var stored: Capabilities? = null
+
+    private val held = LoadedState(scope, Capabilities.NONE) { store.load()?.also { stored = it } ?: Capabilities.NONE }
 
     /**
      * Lets one change of the flags run at a time, [refresh] included while its probes wait for the
-     * server, so a change asked for meanwhile waits for the refresh and lands after it. Unlike a
-     * monitor, a refresh may release it on another thread than the one that took it.
+     * server, so a change asked for meanwhile waits for the refresh and lands after it.
      */
-    private val changing = Semaphore(1)
+    private val changing = Mutex()
 
-    private class Loaded(initial: Capabilities?) {
-        val state = MutableStateFlow(initial ?: Capabilities.NONE)
+    /** The latest capabilities: the stored ones after a restart, [Capabilities.NONE] before any refresh or load. */
+    val state: StateFlow<Capabilities> = held.state
 
-        /** What the disk holds, so a refresh after a failed write writes again. */
-        var stored: Capabilities? = initial
-    }
+    /** [state] once loaded, for readers that may run before the load ends. */
+    val loaded: Flow<Capabilities> = held.loaded
 
-    /** The latest capabilities: the stored ones after a restart, [Capabilities.NONE] before any refresh. */
-    val state: StateFlow<Capabilities> by lazy { loaded.state.asStateFlow() }
+    override val isReady: Boolean get() = held.isReady
+
+    override suspend fun ready() = held.ready()
+
+    /** The capabilities, once loaded. */
+    suspend fun current(): Capabilities = held.current()
 
     /** Whether the server keeps Tokkl's preferences, which only Tokkl offers, as it does favorites. */
-    fun keepsPreferences(): Boolean = state.value.favorites
+    suspend fun keepsPreferences(): Boolean = current().favorites
 
     /** Whether the server offers Tokkl's timer API ([Capabilities.timerState]). */
-    fun offersTimerApi(): Boolean = state.value.timerState
+    suspend fun offersTimerApi(): Boolean = current().timerState
 
     /** Whether the server stores no-time entries ([Capabilities.allDay]). */
-    fun offersAllDay(): Boolean = state.value.allDay == true
+    suspend fun offersAllDay(): Boolean = current().allDay == true
 
     /** Whether the server restores deleted entries ([Capabilities.restore]). */
-    fun offersRestore(): Boolean = state.value.restore
+    suspend fun offersRestore(): Boolean = current().restore
 
-    /**
-     * [offersAllDay] as it changes. The first collection loads the capabilities, on the
-     * collecting thread.
-     */
-    fun allDayOffers(): Flow<Boolean> = flow { emitAll(state) }.map { it.allDay == true }.distinctUntilChanged()
+    /** [offersAllDay] as it changes, from the loaded capabilities. */
+    fun allDayOffers(): Flow<Boolean> = loaded.map { it.allDay == true }.distinctUntilChanged()
 
     /**
      * Sets the flags from [me], the refresh's `GET /api/v9/me`, one `GET /api/app/trash` and one
      * `GET /api/app/timer`, and stores them. A timer state the probe read goes to [timerState], so
      * the refresh sends no second request for it. A failed write keeps the new flags for this
-     * process. Blocks the thread while another change runs, and writes the disk, so call it on the
-     * IO dispatcher. Returns the new flags.
+     * process. Waits while another change runs. Returns the new flags.
      */
-    suspend fun <R> refresh(api: TokklApi, me: Me, timerState: ProbedTimerState<R>): Capabilities {
-        changing.acquire()
-        try {
-            val trash = probeTrash(api)
-            val read = timerState.begin()
-            val timer = probeTimerState(api)
-            val flags = update(loaded.state.value.updatedWith(me, trash, timer))
-            if (timer is TimerStateProbe.Present) timerState.accept(read, timer.state)
-            return flags
-        } finally {
-            changing.release()
-        }
+    suspend fun <R> refresh(api: TokklApi, me: Me, timerState: ProbedTimerState<R>): Capabilities = change {
+        val trash = probeTrash(api)
+        val read = timerState.begin()
+        val timer = probeTimerState(api)
+        val flags = update(held.value.updatedWith(me, trash, timer))
+        if (timer is TimerStateProbe.Present) timerState.accept(read, timer.state)
+        flags
     }
 
     /** A CSV request got definite endpoint absence. It affects only this export kind. */
-    fun csvMissing(kind: ReportCsvKind) = change {
-        val current = loaded.state.value
+    suspend fun csvMissing(kind: ReportCsvKind) = change<Unit> {
+        val current = held.value
         if (!current.supports(kind)) return@change
         update(
             when (kind) {
@@ -96,34 +93,33 @@ class CapabilitiesSource(private val store: ValueStore<Capabilities>) {
      * A trash call outside the probe got the probe's answer for a server without the trash, a 404
      * or a body that is not a list. Turns the trash and restore flags off and stores them, as the
      * probe would. Flags that already say so, as after a sign-out, stay as they are and unwritten.
-     * Writes to the disk, so call it off the main thread.
      */
-    fun trashMissing() = change {
-        val current = loaded.state.value
+    suspend fun trashMissing() = change<Unit> {
+        val current = held.value
         if (current.trash || current.restore) update(current.copy(trash = false, restore = false))
     }
 
     /**
      * A Tokkl time entry list lacked the `all_day` key, as Tokkl before 1.11.0 sends it. Turns
      * no-time entries off for good and stores that. A flag that is not on, false or not known yet
-     * as after a sign-out, stays as it is and unwritten. Writes to the disk, so call it off the
-     * main thread.
+     * as after a sign-out, stays as it is and unwritten.
      */
-    fun allDayMissing() = change {
-        val current = loaded.state.value
+    suspend fun allDayMissing() = change<Unit> {
+        val current = held.value
         if (current.allDay == true) update(current.copy(allDay = false))
     }
 
-    private fun update(next: Capabilities): Capabilities {
-        if (next != loaded.stored) {
+    /** Only inside [change]. */
+    private suspend fun update(next: Capabilities): Capabilities {
+        if (next != stored) {
             try {
                 store.save(next)
-                loaded.stored = next
+                stored = next
             } catch (_: IOException) {
                 // The next refresh writes them again.
             }
         }
-        loaded.state.value = next
+        held.value = next
         return next
     }
 
@@ -131,19 +127,15 @@ class CapabilitiesSource(private val store: ValueStore<Capabilities>) {
      * Goes back to [Capabilities.NONE], after a refresh that is running. Signing out calls this,
      * then deletes the stored flags.
      */
-    fun forget() = change {
-        loaded.state.value = Capabilities.NONE
-        loaded.stored = null
+    suspend fun forget() = change<Unit> {
+        held.value = Capabilities.NONE
+        stored = null
     }
 
-    /** Runs [block] once no other change of the flags runs, waiting for it on this thread. */
-    private fun change(block: () -> Unit) {
-        changing.acquire()
-        try {
-            block()
-        } finally {
-            changing.release()
-        }
+    /** Runs [block] once the flags have loaded and no other change of them runs. */
+    private suspend fun <T> change(block: suspend () -> T): T {
+        ready()
+        return changing.withLock { block() }
     }
 }
 

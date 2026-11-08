@@ -43,7 +43,7 @@ class SessionRule : TestRule {
             signOut()
             // A timer start in a test never brings up the system's permission dialog over
             // the app. NotificationPermissionPromptTest asks with a record of its own.
-            NotificationPermissionStore(context).markAsked()
+            runBlocking { NotificationPermissionStore(context).markAsked() }
             if (!signedOut) {
                 ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
                 Session(context).save(TokklTestServer.url, TokklTestServer.apiToken)
@@ -76,18 +76,18 @@ class SessionRule : TestRule {
             // Process-start widget and shortcut observers can load these before this rule.
             // Forget the loaded account too, waiting out a refresh before clearing its stores.
             runBlocking { app.accountRefresh.forget() }
-            AccountSettingsStore(context).clear()
-            app.capabilities.forget()
-            CapabilitiesStore(context).clear()
+            runBlocking { AccountSettingsStore(context).clear() }
+            runBlocking { app.capabilities.forget() }
+            runBlocking { CapabilitiesStore(context).clear() }
             // The timer state of the account the last test signed in as. Its revision is higher
             // than a new account's, so the holder would drop the new account's states.
             app.renewTimerState()
             app.cache.clear()
-            TimerViewStore(context).clear()
-            PomodoroDefaultsStore(context).clear()
+            runBlocking { TimerViewStore(context).clear() }
+            runBlocking { PomodoroDefaultsStore(context).clear() }
             ServerTrustStore(context).clear()
-            SignInCooldownStore(context).run { load().keys.forEach(::clear) }
-            LastAnswerStore(context).save(null)
+            runBlocking { SignInCooldownStore(context).run { load().keys.forEach { clear(it) } } }
+            runBlocking { LastAnswerStore(context).save(null) }
         }
     }
 }

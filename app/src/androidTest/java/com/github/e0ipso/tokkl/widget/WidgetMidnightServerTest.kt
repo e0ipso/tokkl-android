@@ -126,7 +126,9 @@ class WidgetMidnightServerTest {
             val driver = WorkManagerTestInitHelper.getTestDriver(fixture.context)!!
             driver.setInitialDelayMet(check.id)
             driver.setAllConstraintsMet(check.id)
-            host.await("running check redraws a new account day") { WidgetStore(fixture.context).load() != oldKey }
+            host.await("running check redraws a new account day") {
+                runBlocking { WidgetStore(fixture.context).load() } != oldKey
+            }
             val after = ready()
             val afterDay = after.day!!
             assertEquals(day.plusDays(1), afterDay.date)

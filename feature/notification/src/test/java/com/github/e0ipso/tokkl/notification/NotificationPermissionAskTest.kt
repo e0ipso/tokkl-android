@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.notification
 
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -13,9 +14,9 @@ class NotificationPermissionAskTest {
         var asked = false
         var writes = 0
 
-        override fun asked(): Boolean = asked
+        override suspend fun asked(): Boolean = asked
 
-        override fun markAsked() {
+        override suspend fun markAsked() {
             asked = true
             writes++
         }
@@ -26,7 +27,7 @@ class NotificationPermissionAskTest {
     private fun ask(sdkInt: Int) = NotificationPermissionAsk(sdkInt, record, EmptyCoroutineContext) { granted }
 
     @Test
-    fun theFirstStartOnAndroid13AndLaterAsksAndLaterStartsDoNot() {
+    fun theFirstStartOnAndroid13AndLaterAsksAndLaterStartsDoNot() = runTest {
         for (sdkInt in listOf(TIRAMISU, 34, 36)) {
             record.asked = false
             val ask = ask(sdkInt)
@@ -39,7 +40,7 @@ class NotificationPermissionAskTest {
     }
 
     @Test
-    fun theRecordOutlivesTheModel() {
+    fun theRecordOutlivesTheModel() = runTest {
         val first = ask(TIRAMISU)
         assertTrue(first.atStartInApp())
         first.requested()
@@ -49,7 +50,7 @@ class NotificationPermissionAskTest {
     }
 
     @Test
-    fun aQuestionThatHasNotLaunchedCanStillAskAfterTheScreenReturns() {
+    fun aQuestionThatHasNotLaunchedCanStillAskAfterTheScreenReturns() = runTest {
         assertTrue(ask(TIRAMISU).atStartInApp())
         assertFalse(record.asked)
         val returned = ask(TIRAMISU)
@@ -60,7 +61,7 @@ class NotificationPermissionAskTest {
     }
 
     @Test
-    fun belowAndroid13NothingIsAskedOrRecorded() {
+    fun belowAndroid13NothingIsAskedOrRecorded() = runTest {
         for (sdkInt in listOf(31, 32)) {
             repeat(2) { assertFalse("API $sdkInt asks nothing", ask(sdkInt).atStartInApp()) }
         }
@@ -69,7 +70,7 @@ class NotificationPermissionAskTest {
     }
 
     @Test
-    fun notificationsAlreadyAllowedAskNothingAndCountAsTheQuestion() {
+    fun notificationsAlreadyAllowedAskNothingAndCountAsTheQuestion() = runTest {
         granted = true
 
         assertFalse(ask(TIRAMISU).atStartInApp())

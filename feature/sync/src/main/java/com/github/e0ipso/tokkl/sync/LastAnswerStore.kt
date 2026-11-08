@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.sync
 
 import android.content.Context
-import androidx.core.content.edit
 import com.github.e0ipso.tokkl.storage.PreferencesFile
 import com.github.e0ipso.tokkl.storage.ValueStore
 import java.io.IOException
@@ -11,15 +10,14 @@ import java.time.Instant
  * [LastAnswer]'s time, in its own private preferences file. It stays on the phone, because the
  * backup and data extraction rules leave out every domain.
  *
- * The first call loads the preferences file, so it reads the disk.
+ * Each call reads or writes the file on the I/O dispatcher.
  */
 class LastAnswerStore(context: Context) : ValueStore<Instant?> {
 
     private val file = PreferencesFile(context, FILE_NAME)
-    private val preferences get() = file.preferences
 
-    override fun load(): Instant? =
-        preferences.getLong(KEY_ANSWERED, NONE).takeIf { it != NONE }?.let(Instant::ofEpochMilli)
+    override suspend fun load(): Instant? =
+        file.read { getLong(KEY_ANSWERED, NONE) }.takeIf { it != NONE }?.let(Instant::ofEpochMilli)
 
     /**
      * Keeps [value], or forgets the time when it is null. A time is written in the background,
@@ -27,9 +25,9 @@ class LastAnswerStore(context: Context) : ValueStore<Instant?> {
      * written at once, for a sign-out.
      */
     @Throws(IOException::class)
-    override fun save(value: Instant?) {
+    override suspend fun save(value: Instant?) {
         if (value != null) {
-            preferences.edit { putLong(KEY_ANSWERED, value.toEpochMilli()) }
+            file.write { putLong(KEY_ANSWERED, value.toEpochMilli()) }
         } else {
             file.commit { remove(KEY_ANSWERED) }
         }

@@ -12,10 +12,9 @@ class ThemeSettingsRepositoryTest {
     private var failSaves = false
 
     private fun model(initial: ThemeSettings = ThemeSettings()) = ThemeSettingsRepository(
-        initial = initial,
+        load = { initial },
         store = { if (failSaves) throw IOException("disk full") else saved += it },
         scope = CoroutineScope(Dispatchers.Unconfined),
-        io = Dispatchers.Unconfined,
     )
 
     @Test

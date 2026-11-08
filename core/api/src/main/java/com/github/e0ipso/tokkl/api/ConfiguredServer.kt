@@ -3,10 +3,10 @@ package com.github.e0ipso.tokkl.api
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-/** Where [ConfiguredServer] reads the stored server from, on every request. */
+/** Where [ConfiguredServer] reads the stored server from, on every request, on OkHttp's thread. */
 fun interface StoredServer {
-    /** The stored server, or null when there is none. May read the disk. */
-    fun load(): ServerUrl?
+    /** The stored server, or null when there is none. May read the disk on the calling thread. */
+    fun storedNow(): ServerUrl?
 }
 
 /**
@@ -28,7 +28,7 @@ class ConfiguredServer(private val stored: StoredServer) {
      * when there is neither, which refuses every request.
      */
     val current: ServerUrl?
-        get() = signInCandidate ?: stored.load()
+        get() = signInCandidate ?: stored.storedNow()
 
     /**
      * Runs [attempt] with [candidate] as the configured server, since sign-in

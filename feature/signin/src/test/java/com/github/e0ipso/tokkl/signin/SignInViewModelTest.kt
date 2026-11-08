@@ -98,13 +98,13 @@ class SignInViewModelTest {
     private class InMemoryCooldowns : SignInCooldowns {
         val stored = mutableMapOf<String, Long>()
 
-        override fun load(): Map<String, Long> = stored.toMap()
+        override suspend fun load(): Map<String, Long> = stored.toMap()
 
-        override fun save(origin: String, deadline: Long) {
+        override suspend fun save(origin: String, deadline: Long) {
             stored[origin] = deadline
         }
 
-        override fun clear(origin: String) {
+        override suspend fun clear(origin: String) {
             stored.remove(origin)
         }
     }

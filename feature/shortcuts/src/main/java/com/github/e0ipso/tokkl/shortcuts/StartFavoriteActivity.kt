@@ -58,10 +58,10 @@ class StartFavoriteActivity : Activity() {
                 val started = withContext(io) {
                     startFavoriteShortcut(
                         id = id,
-                        available = capabilities.state.value.favorites,
+                        available = capabilities.current().favorites,
                         favorites = cache.favorites.first(),
                         projects = cache.projects.first(),
-                        workspaceId = accountSettings.state.value?.defaultWorkspaceId,
+                        workspaceId = accountSettings.current()?.defaultWorkspaceId,
                         names = names,
                         start = changes::start,
                     )

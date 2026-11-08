@@ -14,6 +14,7 @@ import com.github.e0ipso.tokkl.navhost.NavigationRequest
 import com.github.e0ipso.tokkl.navhost.takeDeepLinks
 import com.github.e0ipso.tokkl.notification.RunningNotifier
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -94,7 +95,7 @@ class PomodoroSessionNotifierTest {
         assertTrue(Intent("com.github.e0ipso.tokkl.action.SHOW_POMODORO_SESSION").takeDeepLinks().isEmpty())
     }
 
-    @Test fun shownIdentitySurvivesReopenAndForgetErasesAllPersistedDisplayData() {
+    @Test fun shownIdentitySurvivesReopenAndForgetErasesAllPersistedDisplayData() = runBlocking<Unit> {
         val file = "notification-fixture-${UUID.randomUUID()}"
         val fixture = object : ContextWrapper(context) {
             override fun getSharedPreferences(name: String, mode: Int) = super.getSharedPreferences(file, mode)
