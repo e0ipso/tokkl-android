@@ -547,7 +547,7 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
      * Nothing else accepts a state between the stop and the stream's first event.
      */
     private fun holdTimerEventsOnTheServerItself() {
-        app.timerSync.stop()
+        runBlocking { app.timerSync.stop().join() }
         val stopped = Instant.now()
         app.timerSync.run(app.timerState)
         val first = runBlocking {

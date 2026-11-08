@@ -209,7 +209,7 @@ class PomodoroWidgetServerTest {
         host.awaitDescription(nextLabel)
         // Hold back SSE so the launcher still shows the old revision when another device edits.
         // Keeping a View alone cannot freeze the extras of a reused native PendingIntent.
-        app.timerSync.stop()
+        runBlocking { app.timerSync.stop().join() }
         host.awaitUpdatesSettled()
         val shown = active()
         val oldNext = host.captureTap(nextLabel)

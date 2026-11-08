@@ -1,19 +1,10 @@
 package com.github.e0ipso.tokkl.timerstate
 
 import com.github.e0ipso.tokkl.api.ApiCallCancellation
-
-/**
- * The time and the delayed work of [TimerSync], so its watchdog and backoff can be checked without
- * real waits.
- */
-interface TimerSyncClock {
-
-    /** Milliseconds on a clock that never goes back. */
-    fun now(): Long
-
-    /** Runs [task] once, [delayMillis] from now, unless the returned function cancels it first. */
-    fun schedule(delayMillis: Long, task: () -> Unit): () -> Unit
-}
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /** How [TimerSync] holds each account's stream, such as [TimerEventConnections]. */
 interface TimerSyncConnections<A : Any> {
@@ -45,17 +36,24 @@ interface TimerSyncConnections<A : Any> {
  *   names another account.
  *
  * Callbacks of a stream this owner has cancelled or replaced change nothing, so a late answer of
- * a signed-out or replaced account cannot restart, stop or prompt for the current one. Every
- * method may be called from any thread.
+ * a signed-out or replaced account cannot restart, stop or prompt for the current one.
+ *
+ * Every method may be called from any thread and returns at once: it hands its work to [scope],
+ * whose dispatcher runs one task at a time, in the order the calls came. That dispatcher alone
+ * reads and changes the stream's state, so it needs no lock. The watchdog and the reconnects are
+ * delays in [scope].
  *
  * @param A what tells accounts apart. The app uses the account's [TimerStateSource].
+ * @param scope runs every change of the stream's state, one at a time, such as a scope on
+ *   `Dispatchers.Default.limitedParallelism(1)`.
+ * @param now milliseconds on a clock that never goes back, for the watchdog and the backoff.
  * @param connections open each stream and hear the ends no reconnect can fix.
  */
-class TimerSync<A : Any>(private val clock: TimerSyncClock, private val connections: TimerSyncConnections<A>) {
-
-    // A JVM lock, not a Mutex: OkHttp's stream threads and the timer clock call back without
-    // suspending.
-    private val lock = Any()
+class TimerSync<A : Any>(
+    private val scope: CoroutineScope,
+    private val now: () -> Long,
+    private val connections: TimerSyncConnections<A>,
+) {
 
     /** The account the stream is held for, or null while stopped. */
     private var account: A? = null
@@ -66,11 +64,10 @@ class TimerSync<A : Any>(private val clock: TimerSyncClock, private val connecti
     /** The open or opening call, or null while none is. */
     private var link: TimerSyncLink? = null
 
-    private var cancelWatchdog: (() -> Unit)? = null
+    private var watchdog: Job? = null
 
-    /** The scheduled reconnect, which is current only while it is this object. */
-    private var reconnect: Any? = null
-    private var cancelReconnect: (() -> Unit)? = null
+    /** The scheduled reconnect. */
+    private var reconnect: Job? = null
 
     /** Failures since the last healthy stream, which set the next delay. */
     private var failures = 0
@@ -81,32 +78,31 @@ class TimerSync<A : Any>(private val clock: TimerSyncClock, private val connecti
      * Holds the stream for [account]. A stream held for another account is cancelled first. While
      * it already holds or waits to reconnect the stream for [account], or the server refused
      * [account]'s credential, it does nothing, so a repeated start never opens a second call.
-     * [canRun] checks the caller's ownership under the stream lock. A service startup delayed
-     * by account I/O cannot reopen or replace a stream after its service has stopped.
+     * [canRun] checks the caller's ownership when the stream's turn comes, after every call made
+     * before this one. A service startup delayed by account I/O cannot reopen or replace a stream
+     * after its service has stopped.
      */
     fun run(account: A, canRun: () -> Boolean = { true }) {
-        val opened = synchronized(lock) {
-            if (!canRun()) return
-            if (account == this.account || account == refused) return
-            dropLocked()
-            this.account = account
+        scope.launch {
+            if (!canRun()) return@launch
+            if (account == this@TimerSync.account || account == refused) return@launch
+            drop()
+            this@TimerSync.account = account
             refused = null
             failures = 0
-            connectLocked()
+            connections.open(account, connect())
         }
-        connections.open(account, opened)
     }
 
     /**
      * Cancels the stream and every reconnect, and forgets the account. Sign-out, losing the
-     * timer state capability and the end of the service call it.
+     * timer state capability and the end of the service call it. Returns the job that does it,
+     * for a caller that waits.
      */
-    fun stop() {
-        synchronized(lock) {
-            dropLocked()
-            account = null
-            refused = null
-        }
+    fun stop(): Job = scope.launch {
+        drop()
+        account = null
+        refused = null
     }
 
     /**
@@ -114,112 +110,99 @@ class TimerSync<A : Any>(private val clock: TimerSyncClock, private val connecti
      * the delays started over. While a call is open or opening, it does nothing.
      */
     fun networkAvailable() {
-        val (account, opened) = synchronized(lock) {
-            val account = account ?: return
-            if (link != null) return
-            dropLocked()
+        scope.launch {
+            val account = account ?: return@launch
+            if (link != null) return@launch
+            drop()
             failures = 0
-            account to connectLocked()
+            connections.open(account, connect())
         }
-        connections.open(account, opened)
     }
 
     /** The phone lost its default network, and an open call with it. Closes the call to reconnect later. */
     fun networkLost() {
-        synchronized(lock) {
-            if (link != null) retryLocked()
+        scope.launch {
+            if (link != null) retry()
         }
     }
 
     private fun connected(link: TimerSyncLink) {
-        synchronized(lock) {
-            if (link !== this.link) return
-            connectedAt = clock.now()
-            heardAt = clock.now()
+        scope.launch {
+            if (link !== this@TimerSync.link) return@launch
+            connectedAt = now()
+            heardAt = now()
         }
     }
 
     private fun alive(link: TimerSyncLink) {
-        synchronized(lock) {
-            if (link === this.link) heardAt = clock.now()
+        scope.launch {
+            if (link === this@TimerSync.link) heardAt = now()
         }
     }
 
     private fun ended(link: TimerSyncLink, end: StreamEnd) {
-        val gone = synchronized(lock) {
-            if (link !== this.link) return
+        scope.launch {
+            if (link !== this@TimerSync.link) return@launch
             when (end) {
-                StreamEnd.Ended, is StreamEnd.Failed -> {
-                    retryLocked()
-                    return
-                }
+                StreamEnd.Ended, is StreamEnd.Failed -> retry()
 
                 StreamEnd.Refused, StreamEnd.SignedOut -> {
-                    val account = this.account
-                    dropLocked()
-                    this.account = null
-                    if (end == StreamEnd.Refused) refused = account
-                    account
+                    val gone = account
+                    drop()
+                    account = null
+                    if (end == StreamEnd.Refused) refused = gone
+                    if (gone != null) connections.stopped(gone, end)
                 }
             }
         }
-        if (gone != null) connections.stopped(gone, end)
     }
 
-    /** A new link for [account], watched for silence from now. Call it holding [lock]. */
-    private fun connectLocked(): TimerSyncLink {
+    /** A new link, watched for silence from now. */
+    private fun connect(): TimerSyncLink {
         val next = TimerSyncLink(::connected, ::alive, ::ended)
         link = next
-        heardAt = clock.now()
+        heardAt = now()
         connectedAt = null
-        watchLocked(next, SILENCE_MILLIS)
+        watch(next, SILENCE_MILLIS)
         return next
     }
 
-    private fun watchLocked(watched: TimerSyncLink, delayMillis: Long) {
-        cancelWatchdog = clock.schedule(delayMillis) { checkSilence(watched) }
+    private fun watch(watched: TimerSyncLink, delayMillis: Long) {
+        watchdog = scope.launch {
+            delay(delayMillis)
+            checkSilence(watched)
+        }
     }
 
     private fun checkSilence(watched: TimerSyncLink) {
-        synchronized(lock) {
-            if (watched !== link) return
-            val silent = clock.now() - heardAt
-            if (silent >= SILENCE_MILLIS) retryLocked() else watchLocked(watched, SILENCE_MILLIS - silent)
-        }
+        if (watched !== link) return
+        val silent = now() - heardAt
+        if (silent >= SILENCE_MILLIS) retry() else watch(watched, SILENCE_MILLIS - silent)
     }
 
-    /** Closes the call, if any, and schedules the next connection. Call it holding [lock]. */
-    private fun retryLocked() {
-        val healthy = connectedAt?.let { clock.now() - it >= HEALTHY_MILLIS } == true
-        dropLocked()
+    /** Closes the call, if any, and schedules the next connection. */
+    private fun retry() {
+        val healthy = connectedAt?.let { now() - it >= HEALTHY_MILLIS } == true
+        drop()
         if (healthy) failures = 0
         val delay = delayAfter(failures)
         failures++
-        val ticket = Any()
-        reconnect = ticket
-        cancelReconnect = clock.schedule(delay) { reconnect(ticket) }
-    }
-
-    private fun reconnect(ticket: Any) {
-        val (account, opened) = synchronized(lock) {
-            if (reconnect !== ticket) return
+        reconnect = scope.launch {
+            delay(delay)
             reconnect = null
-            cancelReconnect = null
-            val account = account ?: return
-            account to connectLocked()
+            val account = account ?: return@launch
+            connections.open(account, connect())
         }
-        connections.open(account, opened)
     }
 
-    /** Cancels the call, its watchdog and the scheduled reconnect. Call it holding [lock]. */
-    private fun dropLocked() {
+    /** Cancels the call, its watchdog and the scheduled reconnect. */
+    private fun drop() {
         link?.cancel()
         link = null
         connectedAt = null
-        cancelWatchdog?.invoke()
-        cancelWatchdog = null
-        cancelReconnect?.invoke()
-        cancelReconnect = null
+        watchdog?.cancel()
+        watchdog = null
+        reconnect?.cancel()
         reconnect = null
     }
 

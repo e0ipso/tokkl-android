@@ -28,7 +28,7 @@ class TimerSyncFollower(
     override val signOutPhase = SignOutPhase.STOP_WORK
 
     override suspend fun forgetAccount() {
-        timerSync.stop()
+        timerSync.stop().join()
         stopService()
     }
 

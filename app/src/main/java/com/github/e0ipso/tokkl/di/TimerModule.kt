@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.di
 
+import android.os.SystemClock
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.cache.ChangeSender
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
@@ -11,7 +12,6 @@ import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.CurrentHeldState
 import com.github.e0ipso.tokkl.timerstate.CurrentTimerControls
 import com.github.e0ipso.tokkl.timerstate.DiscardNotices
-import com.github.e0ipso.tokkl.timerstate.ElapsedTimerSyncClock
 import com.github.e0ipso.tokkl.timerstate.HeldTimerFlows
 import com.github.e0ipso.tokkl.timerstate.PauseActions
 import com.github.e0ipso.tokkl.timerstate.SessionActions
@@ -87,19 +87,22 @@ internal val timerModule = module {
     // The one owner of the timer event stream, which [TimerSyncService] runs for the account's
     // timer state, with its calls from [TimerEventConnections].
     //
-    // It keeps a scope of its own on [DefaultDispatcher], not the application scope on the main
-    // thread, for its reconnect delays.
+    // Its state changes one at a time on a view of [DefaultDispatcher] that runs one task at a
+    // time, not on the main thread, with its reconnect delays. Its clock is elapsedRealtime,
+    // which counts deep sleep too, so a stream that went quiet while the phone slept counts as
+    // silent for all of it once the phone wakes.
     single {
-        val scope = CoroutineScope(SupervisorJob() + get<CoroutineDispatcher>(DefaultDispatcher))
+        val default = get<CoroutineDispatcher>(DefaultDispatcher)
         val connections = TimerEventConnections(
             session = get(),
             timerStates = get(),
             sender = get(),
             service = get(),
-            scope = scope,
+            scope = CoroutineScope(SupervisorJob() + default),
             io = io(),
         )
-        TimerSync(ElapsedTimerSyncClock(scope), connections)
+        val oneAtATime = CoroutineScope(SupervisorJob() + default.limitedParallelism(1))
+        TimerSync(oneAtATime, SystemClock::elapsedRealtime, connections)
     }
 
     single {

@@ -11,7 +11,6 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
-import android.os.SystemClock
 import com.github.e0ipso.tokkl.core.timerstate.R
 import com.github.e0ipso.tokkl.platform.DefaultNetwork
 import com.github.e0ipso.tokkl.platform.IoDispatcher
@@ -23,7 +22,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.android.ext.android.inject
@@ -197,23 +195,5 @@ internal object TimerSyncNotification {
             intent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
-    }
-}
-
-/**
- * [TimerSync]'s clock on the phone: [SystemClock.elapsedRealtime], which counts deep sleep too, so
- * a stream that went quiet while the phone slept counts as silent for all of it once the phone
- * wakes. Delays run in [scope].
- */
-class ElapsedTimerSyncClock(private val scope: CoroutineScope) : TimerSyncClock {
-
-    override fun now(): Long = SystemClock.elapsedRealtime()
-
-    override fun schedule(delayMillis: Long, task: () -> Unit): () -> Unit {
-        val job = scope.launch {
-            delay(delayMillis)
-            task()
-        }
-        return { job.cancel() }
     }
 }

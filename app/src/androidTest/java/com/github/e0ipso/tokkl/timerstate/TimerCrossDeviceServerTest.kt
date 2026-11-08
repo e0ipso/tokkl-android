@@ -296,7 +296,7 @@ class TimerCrossDeviceServerTest {
             ).actions.single { it.title.toString() == context.getString(R.string.pomodoro_session_next) }
 
             // The stream has not brought the other device's change yet, as on a slow network.
-            app.timerSync.stop()
+            runBlocking { app.timerSync.stop().join() }
             val current = other.timerState().revision
             assertEquals("the ring shows the server's revision", current, drawn.revision)
             val moved = postTimer("pomodoro", "next", revision = current)

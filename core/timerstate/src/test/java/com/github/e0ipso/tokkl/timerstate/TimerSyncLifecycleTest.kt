@@ -1,6 +1,10 @@
 package com.github.e0ipso.tokkl.timerstate
 
 import com.github.e0ipso.tokkl.api.ApiError
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.TestCoroutineScheduler
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -10,17 +14,18 @@ import java.io.IOException
 /**
  * When [TimerSync] opens, closes and reopens the timer event stream: the watchdog on a silent
  * stream, the capped backoff, the network's return, a refused credential, sign-out, capability
- * loss and a new account. A hand-driven clock stands in for real waits.
+ * loss and a new account. Virtual time stands in for real waits.
  */
 class TimerSyncLifecycleTest {
 
-    private val clock = ManualClock()
+    private val clock = VirtualClock()
 
     /** Every call opened, in order, with its account and the time it opened. */
     private val opens = mutableListOf<Opened>()
     private val stops = mutableListOf<Pair<String, StreamEnd>>()
     private val sync = TimerSync(
-        clock = clock,
+        scope = clock.scope,
+        now = { clock.time },
         connections = object : TimerSyncConnections<String> {
             override fun open(account: String, link: TimerSyncLink) {
                 opens += Opened(account, link, clock.time)
@@ -255,35 +260,20 @@ class TimerSyncLifecycleTest {
 
     private data class Opened(val account: String, val link: TimerSyncLink, val at: Long)
 
-    /** Runs scheduled tasks in time order, only as far as the test advances it. */
-    private class ManualClock : TimerSyncClock {
-        var time = 0L
-            private set
-        private var sequence = 0L
-        private val tasks = mutableListOf<Task>()
-
-        override fun now(): Long = time
-
-        override fun schedule(delayMillis: Long, task: () -> Unit): () -> Unit {
-            val scheduled = Task(time + delayMillis, sequence++, task)
-            tasks += scheduled
-            return { tasks.remove(scheduled) }
-        }
+    /**
+     * Virtual time. The stream's scope runs on it unconfined, so each call takes effect before it
+     * returns, and its delays run only as far as the test advances it.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private class VirtualClock {
+        private val scheduler = TestCoroutineScheduler()
+        val scope = CoroutineScope(UnconfinedTestDispatcher(scheduler))
+        val time: Long get() = scheduler.currentTime
 
         fun advanceBy(millis: Long) {
-            val until = time + millis
-            while (true) {
-                val next = tasks.filter { it.at <= until }.minWithOrNull(
-                    compareBy<Task>({ it.at }, { it.sequence }),
-                ) ?: break
-                tasks.remove(next)
-                time = next.at
-                next.run()
-            }
-            time = until
+            scheduler.advanceTimeBy(millis)
+            scheduler.runCurrent()
         }
-
-        private class Task(val at: Long, val sequence: Long, val run: () -> Unit)
     }
 
     private companion object {

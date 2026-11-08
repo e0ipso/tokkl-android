@@ -28,7 +28,6 @@ import com.github.e0ipso.tokkl.shortcuts.PublishedShortcuts
 import com.github.e0ipso.tokkl.signin.SignIn
 import com.github.e0ipso.tokkl.storage.ClearableStore
 import com.github.e0ipso.tokkl.storage.ValueStore
-import com.github.e0ipso.tokkl.timerstate.TimerSyncClock
 import com.github.e0ipso.tokkl.timerstate.TimerSyncConnections
 import com.github.e0ipso.tokkl.ui.theme.SectionHue
 import com.github.e0ipso.tokkl.widget.WidgetRedraw
@@ -78,7 +77,6 @@ class AppModulesTest {
                 ClearableStore::class,
                 SignOutPhase::class,
                 AccountRefreshListener::class,
-                TimerSyncClock::class,
                 SignIn::class,
                 ReportExportController::class,
                 Route::class,
