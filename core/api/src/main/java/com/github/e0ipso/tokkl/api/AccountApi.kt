@@ -6,32 +6,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 
-/** The signed-in user, their preferences and their workspaces. */
-interface AccountApi {
-
-    /**
-     * `GET /api/v9/me`, read as [deserializer]: sign-in reads a whole [Me], while the catalog pages
-     * and the reports read only the default workspace, so a body that lacks the rest still serves
-     * them.
-     */
-    suspend fun <T> me(deserializer: DeserializationStrategy<T>): ApiResult<T>
-
-    /** `GET /api/v9/me?with_related_data=true`, with the clients, projects, tags and tasks. */
-    suspend fun meWithRelatedData(): ApiResult<Me>
-
-    /** `GET /api/v9/me/preferences`. */
-    suspend fun preferences(): ApiResult<JsonObject>
-
-    /**
-     * `POST /api/v9/me/preferences` with the keys of [change] alone. Tokkl merges them into the
-     * stored preferences, so every other key stays. The answer reads as [deserializer].
-     */
-    suspend fun <T> savePreferences(change: PreferencesChange, deserializer: DeserializationStrategy<T>): ApiResult<T>
-
-    /** `GET /api/v9/workspaces/{workspaceId}`, read as [deserializer]. */
-    suspend fun <T> workspace(workspaceId: Long, deserializer: DeserializationStrategy<T>): ApiResult<T>
-}
-
 /** A body of `POST /api/v9/me/preferences`: the keys of one setting, and nothing else. */
 sealed interface PreferencesChange
 
@@ -89,26 +63,38 @@ data class FavoriteBody(
     val billable: Boolean,
 )
 
-/** [AccountApi] over [client]. */
-internal class HttpAccountApi(private val client: TogglApiClient) : AccountApi {
+/** The signed-in user, their preferences and their workspaces. */
+class AccountApi internal constructor(private val client: TogglApiClient) {
 
-    override suspend fun <T> me(deserializer: DeserializationStrategy<T>): ApiResult<T> =
+    /**
+     * `GET /api/v9/me`, read as [deserializer]: sign-in reads a whole [Me], while the catalog pages
+     * and the reports read only the default workspace, so a body that lacks the rest still serves
+     * them.
+     */
+    suspend fun <T> me(deserializer: DeserializationStrategy<T>): ApiResult<T> =
         client.get(client.server.api("me"), deserializer)
 
-    override suspend fun meWithRelatedData(): ApiResult<Me> = client.get(
+    /** `GET /api/v9/me?with_related_data=true`, with the clients, projects, tags and tasks. */
+    suspend fun meWithRelatedData(): ApiResult<Me> = client.get(
         client.server.api("me").newBuilder().addQueryParameter("with_related_data", "true").build(),
         Me.serializer(),
     )
 
-    override suspend fun preferences(): ApiResult<JsonObject> =
+    /** `GET /api/v9/me/preferences`. */
+    suspend fun preferences(): ApiResult<JsonObject> =
         client.get(client.server.api("me", "preferences"), JsonObject.serializer())
 
-    override suspend fun <T> savePreferences(
+    /**
+     * `POST /api/v9/me/preferences` with the keys of [change] alone. Tokkl merges them into the
+     * stored preferences, so every other key stays. The answer reads as [deserializer].
+     */
+    suspend fun <T> savePreferences(
         change: PreferencesChange,
         deserializer: DeserializationStrategy<T>,
     ): ApiResult<T> = client.send(HttpMethod.POST, client.server.api("me", "preferences"), change.json(), deserializer)
 
-    override suspend fun <T> workspace(workspaceId: Long, deserializer: DeserializationStrategy<T>): ApiResult<T> =
+    /** `GET /api/v9/workspaces/{workspaceId}`, read as [deserializer]. */
+    suspend fun <T> workspace(workspaceId: Long, deserializer: DeserializationStrategy<T>): ApiResult<T> =
         client.get(client.server.api("workspaces", workspaceId.toString()), deserializer)
 
     private fun PreferencesChange.json(): JsonElement = when (this) {

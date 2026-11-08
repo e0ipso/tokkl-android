@@ -5,65 +5,6 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * A workspace's projects and their tasks. The answers read as the caller's [DeserializationStrategy],
- * since the pages that send them own the shapes they read.
- */
-interface ProjectsApi {
-
-    /**
-     * `GET /api/v9/workspaces/{workspaceId}/projects`, archived projects included. With
-     * [activeBoth] it adds `active=both`, as the clients page asks.
-     */
-    suspend fun <T> list(
-        workspaceId: Long,
-        deserializer: DeserializationStrategy<T>,
-        activeBoth: Boolean = false,
-    ): ApiResult<T>
-
-    /** `POST /api/v9/workspaces/{workspaceId}/projects`, sent once. */
-    suspend fun <T> create(workspaceId: Long, body: ProjectBody, deserializer: DeserializationStrategy<T>): ApiResult<T>
-
-    /** `PUT /api/v9/workspaces/{workspaceId}/projects/{id}` with every field the form shows. */
-    suspend fun <T> update(
-        workspaceId: Long,
-        id: Long,
-        body: ProjectBody,
-        deserializer: DeserializationStrategy<T>,
-    ): ApiResult<T>
-
-    /** `PUT /api/v9/workspaces/{workspaceId}/projects/{id}` with `active` alone: false archives it. */
-    suspend fun <T> setActive(
-        workspaceId: Long,
-        id: Long,
-        active: Boolean,
-        deserializer: DeserializationStrategy<T>,
-    ): ApiResult<T>
-
-    /** `GET /api/v9/workspaces/{workspaceId}/projects/{projectId}/tasks`, done tasks included. */
-    suspend fun <T> tasks(workspaceId: Long, projectId: Long, deserializer: DeserializationStrategy<T>): ApiResult<T>
-
-    /** `POST /api/v9/workspaces/{workspaceId}/projects/{projectId}/tasks` with [name], sent once. */
-    suspend fun <T> createTask(
-        workspaceId: Long,
-        projectId: Long,
-        name: String,
-        deserializer: DeserializationStrategy<T>,
-    ): ApiResult<T>
-
-    /** `PUT .../projects/{projectId}/tasks/{id}` with [body]. */
-    suspend fun <T> updateTask(
-        workspaceId: Long,
-        projectId: Long,
-        id: Long,
-        body: TaskBody,
-        deserializer: DeserializationStrategy<T>,
-    ): ApiResult<T>
-
-    /** `DELETE .../projects/{projectId}/tasks/{id}`. Tokkl answers with no body. */
-    suspend fun deleteTask(workspaceId: Long, projectId: Long, id: Long): ApiResult<Unit>
-}
-
-/**
  * What the project form sends, as the web app's ProjectBody: every field, so a save writes what
  * the form shows. No client goes as 0, as the web app sends it; Tokkl reads 0 and null alike.
  * A null [rate], [currency] or [estimatedHours] goes as null.
@@ -89,13 +30,20 @@ data class TaskBody(val name: String, val active: Boolean)
 @Serializable
 private class NewTaskBody(val name: String)
 
-/** [ProjectsApi] over [client]. */
-internal class HttpProjectsApi(private val client: TogglApiClient) : ProjectsApi {
+/**
+ * A workspace's projects and their tasks. The answers read as the caller's [DeserializationStrategy],
+ * since the pages that send them own the shapes they read.
+ */
+class ProjectsApi internal constructor(private val client: TogglApiClient) {
 
-    override suspend fun <T> list(
+    /**
+     * `GET /api/v9/workspaces/{workspaceId}/projects`, archived projects included. With
+     * [activeBoth] it adds `active=both`, as the clients page asks.
+     */
+    suspend fun <T> list(
         workspaceId: Long,
         deserializer: DeserializationStrategy<T>,
-        activeBoth: Boolean,
+        activeBoth: Boolean = false,
     ): ApiResult<T> {
         val url = projects(workspaceId).let {
             if (activeBoth) it.newBuilder().addQueryParameter("active", "both").build() else it
@@ -103,7 +51,8 @@ internal class HttpProjectsApi(private val client: TogglApiClient) : ProjectsApi
         return client.get(url, deserializer)
     }
 
-    override suspend fun <T> create(
+    /** `POST /api/v9/workspaces/{workspaceId}/projects`, sent once. */
+    suspend fun <T> create(
         workspaceId: Long,
         body: ProjectBody,
         deserializer: DeserializationStrategy<T>,
@@ -115,7 +64,8 @@ internal class HttpProjectsApi(private val client: TogglApiClient) : ProjectsApi
         resend = false,
     )
 
-    override suspend fun <T> update(
+    /** `PUT /api/v9/workspaces/{workspaceId}/projects/{id}` with every field the form shows. */
+    suspend fun <T> update(
         workspaceId: Long,
         id: Long,
         body: ProjectBody,
@@ -127,7 +77,8 @@ internal class HttpProjectsApi(private val client: TogglApiClient) : ProjectsApi
         deserializer,
     )
 
-    override suspend fun <T> setActive(
+    /** `PUT /api/v9/workspaces/{workspaceId}/projects/{id}` with `active` alone: false archives it. */
+    suspend fun <T> setActive(
         workspaceId: Long,
         id: Long,
         active: Boolean,
@@ -139,13 +90,12 @@ internal class HttpProjectsApi(private val client: TogglApiClient) : ProjectsApi
         deserializer,
     )
 
-    override suspend fun <T> tasks(
-        workspaceId: Long,
-        projectId: Long,
-        deserializer: DeserializationStrategy<T>,
-    ): ApiResult<T> = client.get(tasks(workspaceId, projectId), deserializer)
+    /** `GET /api/v9/workspaces/{workspaceId}/projects/{projectId}/tasks`, done tasks included. */
+    suspend fun <T> tasks(workspaceId: Long, projectId: Long, deserializer: DeserializationStrategy<T>): ApiResult<T> =
+        client.get(tasks(workspaceId, projectId), deserializer)
 
-    override suspend fun <T> createTask(
+    /** `POST /api/v9/workspaces/{workspaceId}/projects/{projectId}/tasks` with [name], sent once. */
+    suspend fun <T> createTask(
         workspaceId: Long,
         projectId: Long,
         name: String,
@@ -158,7 +108,8 @@ internal class HttpProjectsApi(private val client: TogglApiClient) : ProjectsApi
         resend = false,
     )
 
-    override suspend fun <T> updateTask(
+    /** `PUT .../projects/{projectId}/tasks/{id}` with [body]. */
+    suspend fun <T> updateTask(
         workspaceId: Long,
         projectId: Long,
         id: Long,
@@ -171,7 +122,8 @@ internal class HttpProjectsApi(private val client: TogglApiClient) : ProjectsApi
         deserializer,
     )
 
-    override suspend fun deleteTask(workspaceId: Long, projectId: Long, id: Long): ApiResult<Unit> =
+    /** `DELETE .../projects/{projectId}/tasks/{id}`. Tokkl answers with no body. */
+    suspend fun deleteTask(workspaceId: Long, projectId: Long, id: Long): ApiResult<Unit> =
         client.sendNoContent(HttpMethod.DELETE, tasks(workspaceId, projectId, id.toString()))
 
     private fun projects(workspaceId: Long, vararg path: String) =

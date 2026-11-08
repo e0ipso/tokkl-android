@@ -2,7 +2,6 @@ package com.github.e0ipso.tokkl
 
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ConfiguredServer
-import com.github.e0ipso.tokkl.api.HttpTokklApi
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.api.TogglApiClient
@@ -20,4 +19,4 @@ fun appApiClient(server: ServerUrl, credentials: ApiCredentials): TogglApiClient
     TogglApiClient(server, credentials, appHttp.instance)
 
 /** The app's [TokklApi] over this client, for the app's code that a test calls directly. */
-fun TogglApiClient.tokklApi(): TokklApi = HttpTokklApi(this)
+fun TogglApiClient.tokklApi(): TokklApi = TokklApi(this)

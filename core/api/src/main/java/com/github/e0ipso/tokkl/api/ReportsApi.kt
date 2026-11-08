@@ -11,46 +11,6 @@ import kotlinx.serialization.json.putJsonArray
 import java.io.OutputStream
 import java.time.LocalDate
 
-/**
- * The Reports API v3 and Tokkl's own report routes. Dates are the account's inclusive dates. The
- * report rows read as the caller's [DeserializationStrategy], since the Reports page owns them.
- */
-interface ReportsApi {
-
-    /** `POST /api/app/report`, the summary as Tokkl's web app asks for it. */
-    suspend fun appSummary(body: AppSummaryBody): ApiResult<JsonObject>
-
-    /**
-     * `POST /api/app/report/{report}.csv`, where [report] is `summary` or `detailed`, streamed
-     * into [output] as [TogglApiClient.downloadCsv] describes: at most [maxBytes], cancelled
-     * through [cancellation]. Answers with the number of bytes written.
-     */
-    suspend fun exportCsv(
-        report: String,
-        body: ReportCsvBody,
-        output: OutputStream,
-        maxBytes: Long,
-        cancellation: ApiCallCancellation,
-    ): ApiResult<Long>
-
-    /**
-     * `POST /reports/api/v3/workspace/{workspaceId}/search/time_entries`, one page of the
-     * detailed report, with the answer's headers, which name the next page's first row.
-     */
-    suspend fun <T> search(
-        workspaceId: Long,
-        body: DetailedSearchBody,
-        deserializer: DeserializationStrategy<T>,
-    ): ApiResult<WithHeaders<T>>
-
-    /** `POST /reports/api/v3/workspace/{workspaceId}/weekly/time_entries`. */
-    suspend fun <T> weekly(
-        workspaceId: Long,
-        body: WeeklyReportBody,
-        deserializer: DeserializationStrategy<T>,
-    ): ApiResult<T>
-}
-
 // The filter's fields sit among a report body's other fields at a place that differs by report,
 // as the web app sends them, so the report bodies are written here field by field.
 
@@ -118,13 +78,22 @@ data class ReportCsvBody(
     val dir: String? = null,
 )
 
-/** [ReportsApi] over [client]. */
-internal class HttpReportsApi(private val client: TogglApiClient) : ReportsApi {
+/**
+ * The Reports API v3 and Tokkl's own report routes. Dates are the account's inclusive dates. The
+ * report rows read as the caller's [DeserializationStrategy], since the Reports page owns them.
+ */
+class ReportsApi internal constructor(private val client: TogglApiClient) {
 
-    override suspend fun appSummary(body: AppSummaryBody): ApiResult<JsonObject> =
+    /** `POST /api/app/report`, the summary as Tokkl's web app asks for it. */
+    suspend fun appSummary(body: AppSummaryBody): ApiResult<JsonObject> =
         client.send(HttpMethod.POST, client.server.app("report"), body.json(), JsonObject.serializer())
 
-    override suspend fun exportCsv(
+    /**
+     * `POST /api/app/report/{report}.csv`, where [report] is `summary` or `detailed`, streamed
+     * into [output] as [TogglApiClient.downloadCsv] describes: at most [maxBytes], cancelled
+     * through [cancellation]. Answers with the number of bytes written.
+     */
+    suspend fun exportCsv(
         report: String,
         body: ReportCsvBody,
         output: OutputStream,
@@ -133,14 +102,19 @@ internal class HttpReportsApi(private val client: TogglApiClient) : ReportsApi {
     ): ApiResult<Long> =
         client.downloadCsv(client.server.app("report", "$report.csv"), body.json(), output, maxBytes, cancellation)
 
-    override suspend fun <T> search(
+    /**
+     * `POST /reports/api/v3/workspace/{workspaceId}/search/time_entries`, one page of the
+     * detailed report, with the answer's headers, which name the next page's first row.
+     */
+    suspend fun <T> search(
         workspaceId: Long,
         body: DetailedSearchBody,
         deserializer: DeserializationStrategy<T>,
     ): ApiResult<WithHeaders<T>> =
         client.sendWithHeaders(HttpMethod.POST, timeEntries(workspaceId, "search"), body.json(), deserializer)
 
-    override suspend fun <T> weekly(
+    /** `POST /reports/api/v3/workspace/{workspaceId}/weekly/time_entries`. */
+    suspend fun <T> weekly(
         workspaceId: Long,
         body: WeeklyReportBody,
         deserializer: DeserializationStrategy<T>,

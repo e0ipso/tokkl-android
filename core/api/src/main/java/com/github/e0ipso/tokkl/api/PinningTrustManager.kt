@@ -104,8 +104,10 @@ private const val MAX_CAUSES = 8
  * one calls the platform's first and adds only the exact pinned leaf.
  */
 @Suppress("CustomX509TrustManager")
-internal class PinningTrustManager(private val platform: X509TrustManager, private val pins: CertificatePins) :
-    X509ExtendedTrustManager() {
+internal class PinningTrustManager(
+    private val platform: X509TrustManager,
+    private val pins: (host: String, port: Int) -> String?,
+) : X509ExtendedTrustManager() {
 
     override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String, socket: Socket?) {
         val session = (socket as? SSLSocket)?.handshakeSession
@@ -158,7 +160,7 @@ internal class PinningTrustManager(private val platform: X509TrustManager, priva
         val leaf = chain.firstOrNull()
         if (leaf == null || host == null || port !in 1..MAX_PORT) throw refusal
         val seen = ServerCertificate.of(leaf, host, port)
-        val pin = pins.pinnedSha256(host, port)
+        val pin = pins(host, port)
         if (pin != null && MessageDigest.isEqual(pin.toByteArray(), seen.sha256.toByteArray())) return
         // The same check OkHttp makes after the handshake. It only decides what to say; it never accepts.
         if (!OkHostnameVerifier.verify(host, leaf)) throw CertificateHostMismatchException(host, cause = refusal)

@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.session
 
-import com.github.e0ipso.tokkl.api.HttpTokklApi
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.storage.ClearableStore
@@ -47,7 +46,7 @@ class SessionTest {
         session.save(OTHER, "tok-456")
 
         val after = session.api()
-        assertEquals(OTHER, (after as HttpTokklApi).client.server)
+        assertEquals(OTHER, after?.client?.server)
         assertTrue(before !== after)
         assertEquals(2, tokens.loads)
     }

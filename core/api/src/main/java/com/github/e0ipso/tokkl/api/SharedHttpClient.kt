@@ -53,7 +53,7 @@ class SharedHttpClient(private val server: ConfiguredServer, private val trust: 
     }
 
     private fun build(): OkHttpClient {
-        val trustManager = PinningTrustManager(platformTrustManager(), trust)
+        val trustManager = PinningTrustManager(platformTrustManager(), trust::pinnedSha256)
         val tls = SSLContext.getInstance("TLS").apply { init(null, arrayOf(trustManager), null) }
         return OkHttpClient.Builder()
             .connectionPool(ConnectionPool(MAX_IDLE_CONNECTIONS, IDLE_CONNECTION_SECONDS, TimeUnit.SECONDS))

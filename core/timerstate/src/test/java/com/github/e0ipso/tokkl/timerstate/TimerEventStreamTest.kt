@@ -4,12 +4,12 @@ import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiJson
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.api.HttpTokklApi
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.api.TimerState
+import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.cache.CurrentEntryCache
 import com.github.e0ipso.tokkl.cache.RunningCheckStart
 import com.github.e0ipso.tokkl.cache.RunningCheckWrites
@@ -224,7 +224,7 @@ class TimerEventStreamTest {
         // The same delay times out a plain request on that client.
         server.enqueue(eventStream("{}").bodyDelay(600, TimeUnit.MILLISECONDS).build())
 
-        val end = run { holdTimerEvents(HttpTokklApi(client), holder, link.link) }
+        val end = run { holdTimerEvents(TokklApi(client), holder, link.link) }
 
         assertEquals(StreamEnd.Ended, end)
         assertEquals(12L, holder.state.value?.state?.revision)

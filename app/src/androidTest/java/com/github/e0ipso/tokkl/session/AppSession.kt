@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.session
 
 import android.content.Context
-import com.github.e0ipso.tokkl.api.HttpTokklApi
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import org.koin.core.context.GlobalContext
 
@@ -17,4 +16,4 @@ fun Session(context: Context): Session = GlobalContext.get().get()
  * The transport under the signed-in account's API, or null when signed out, for tests that send a
  * request the app does not send itself.
  */
-fun Session.client(): TogglApiClient? = (api() as HttpTokklApi?)?.client
+fun Session.client(): TogglApiClient? = api()?.client

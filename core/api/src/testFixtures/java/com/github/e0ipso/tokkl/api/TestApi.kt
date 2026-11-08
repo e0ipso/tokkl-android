@@ -44,7 +44,7 @@ class TestApi(stored: ServerUrl?, trust: ServerTrust = InMemoryServerTrust(*list
         trustListener: TrustListener? = null,
         successListener: SuccessListener? = null,
         io: CoroutineContext = Dispatchers.Unconfined,
-    ): TokklApi = HttpTokklApi(client(server, credentials, httpClient, trustListener, successListener, io))
+    ): TokklApi = TokklApi(client(server, credentials, httpClient, trustListener, successListener, io))
 
     /** [trust] as it is at each call. */
     private inner class CurrentTrust : ServerTrust {

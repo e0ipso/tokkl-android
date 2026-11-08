@@ -4,11 +4,11 @@ import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ConfiguredServer
-import com.github.e0ipso.tokkl.api.HttpTokklApi
 import com.github.e0ipso.tokkl.api.Me
 import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.navigation.SignInAgain
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
@@ -139,7 +139,7 @@ class SignIn(
     suspend fun attempt(server: ServerUrl, credentials: SignInCredentials, again: SignInAgain? = null): SignInResult {
         val account = signedInAccount.current() ?: again
         if (account != null && server != account.server) return SignInResult.OtherAccount
-        val api = HttpTokklApi(TogglApiClient(server, credentials.toApiCredentials(), httpClient, io = io))
+        val api = TokklApi(TogglApiClient(server, credentials.toApiCredentials(), httpClient, io = io))
         // Until the server is stored, the URL being tried is the configured server.
         val result = configured.signingIn(server) { api.account.me(Me.serializer()) }
         val me = when (result) {
