@@ -5,6 +5,7 @@ import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -13,29 +14,26 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.drawable.toDrawable
-import androidx.core.os.BundleCompat
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.createSavedStateHandle
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.di.FeatureScreens
 import com.github.e0ipso.tokkl.lifecycle.MainActivityForeground
-import com.github.e0ipso.tokkl.navhost.NavigationRequest
 import com.github.e0ipso.tokkl.navhost.NavigationRequests
 import com.github.e0ipso.tokkl.navhost.NavigationSession
+import com.github.e0ipso.tokkl.navhost.takeDeepLinks
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
 import com.github.e0ipso.tokkl.navigation.LocalSignedInSession
 import com.github.e0ipso.tokkl.navigation.TopLevelPages
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
 import com.github.e0ipso.tokkl.platform.IoDispatcher
-import com.github.e0ipso.tokkl.pomodoro.pomodoroSessionOpenIntent
-import com.github.e0ipso.tokkl.pomodoro.takePomodoroNotificationTap
-import com.github.e0ipso.tokkl.reminder.ReminderNotifier
 import com.github.e0ipso.tokkl.session.AccountLifetime
 import com.github.e0ipso.tokkl.timer.TimerViewModel
 import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsRepository
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import com.github.e0ipso.tokkl.widget.WidgetPage
-import com.github.e0ipso.tokkl.widget.takeWidgetPage
 import kotlinx.coroutines.CoroutineDispatcher
 import org.koin.android.ext.android.inject
 import org.koin.compose.viewmodel.koinViewModel
@@ -52,20 +50,14 @@ class MainActivity : ComponentActivity() {
     private val session: NavigationSession by inject()
 
     /** The pages that taps outside the app asked to open, until the navigation opens them. */
-    private val requests = NavigationRequests()
+    private val requests: NavigationRequests by viewModels {
+        viewModelFactory { initializer { NavigationRequests(createSavedStateHandle()) } }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         drawEdgeToEdge()
-        val pendingPomodoro =
-            savedInstanceState?.let { BundleCompat.getParcelable(it, PENDING_POMODORO, Intent::class.java) }
-        (pendingPomodoro?.takePomodoroNotificationTap() ?: intent?.takePomodoroNotificationTap())
-            ?.let { requests.request(NavigationRequest.Pomodoro(it)) }
-        intent?.takeReminderTap()
-        val pendingWidget = savedInstanceState?.getString(PENDING_WIDGET_PAGE)?.let { name ->
-            WidgetPage.entries.firstOrNull { it.name == name }
-        }
-        (pendingWidget ?: intent?.takeWidgetPage())?.let { requests.request(NavigationRequest.Widget(it)) }
+        intent?.takeDeepLinks()?.forEach(requests::request)
         lifecycle.addObserver(foreground)
         // Reading the theme setting loads it, so the first frame already has the chosen theme's icons.
         val systemIsDark =
@@ -91,39 +83,14 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    override fun onSaveInstanceState(outState: Bundle) {
-        for (request in requests.pending) {
-            when (request) {
-                is NavigationRequest.Pomodoro -> outState.putParcelable(
-                    PENDING_POMODORO,
-                    pomodoroSessionOpenIntent(this, request.tap.account, request.tap.phase),
-                )
-
-                is NavigationRequest.Widget -> outState.putString(PENDING_WIDGET_PAGE, request.page.name)
-
-                NavigationRequest.ReminderTimer -> Unit
-            }
-        }
-        super.onSaveInstanceState(outState)
-    }
-
     /**
-     * Takes a tap's route from [intent] and leaves the activity's own intent as it was started.
-     * Nothing reads the intent after onCreate, and a pending route outlives rotation in the saved
-     * state.
+     * Takes a tap's pages from [intent] and leaves the activity's own intent as it was started.
+     * Nothing reads the intent after onCreate, and a page still waiting outlives rotation in the
+     * requests' saved state.
      */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        intent.takeWidgetPage()?.let { requests.request(NavigationRequest.Widget(it)) }
-        intent.takePomodoroNotificationTap()?.let { requests.request(NavigationRequest.Pomodoro(it)) }
-        intent.takeReminderTap()
-    }
-
-    /** Asks for Timer when this is a reminder's tap, and removes the tap so it opens nothing again. */
-    private fun Intent.takeReminderTap() {
-        if (!getBooleanExtra(ReminderNotifier.OPEN_TIMER, false)) return
-        requests.request(NavigationRequest.ReminderTimer)
-        removeExtra(ReminderNotifier.OPEN_TIMER)
+        intent.takeDeepLinks().forEach(requests::request)
     }
 
     /**
@@ -163,10 +130,5 @@ class MainActivity : ComponentActivity() {
             isAppearanceLightStatusBars = !darkTheme
             isAppearanceLightNavigationBars = !darkTheme
         }
-    }
-
-    private companion object {
-        const val PENDING_POMODORO = "pending-pomodoro-notification"
-        const val PENDING_WIDGET_PAGE = "pending-widget-page"
     }
 }

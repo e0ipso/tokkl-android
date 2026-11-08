@@ -4,7 +4,10 @@ import android.content.Context
 import android.content.Intent
 import com.github.e0ipso.tokkl.platform.mainActivityIntent
 
-/** Page-only widget routes. Session notification taps keep their separate account/phase guard. */
+/**
+ * Page-only widget routes: each extra names the page a widget's tap opens. Session notification
+ * taps keep their separate account and phase guard.
+ */
 object WidgetNavigation {
     const val OPEN_POMODORO = "open_pomodoro_widget"
     const val OPEN_TODAY = "open_today_widget"
@@ -16,17 +19,3 @@ object WidgetNavigation {
 }
 
 enum class WidgetPage { TIMER, TODAY, POMODORO }
-
-/** Remove consumed extras, so rotation cannot replay an already handled tap. */
-fun Intent.takeWidgetPage(): WidgetPage? {
-    val page = when {
-        getBooleanExtra(WidgetNavigation.OPEN_POMODORO, false) -> WidgetPage.POMODORO
-        getBooleanExtra(WidgetNavigation.OPEN_TODAY, false) -> WidgetPage.TODAY
-        getBooleanExtra(WidgetNavigation.OPEN_TIMER, false) -> WidgetPage.TIMER
-        else -> null
-    }
-    removeExtra(WidgetNavigation.OPEN_POMODORO)
-    removeExtra(WidgetNavigation.OPEN_TODAY)
-    removeExtra(WidgetNavigation.OPEN_TIMER)
-    return page
-}

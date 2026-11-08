@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.navhost
 
+import androidx.lifecycle.SavedStateHandle
 import com.github.e0ipso.tokkl.widget.WidgetPage
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -8,7 +9,7 @@ import org.junit.Test
 class NavigationRequestsTest {
     @Test
     fun aLaterTapOfTheSameKindReplacesTheWaitingOne() {
-        val requests = NavigationRequests()
+        val requests = NavigationRequests(SavedStateHandle())
         requests.request(NavigationRequest.Widget(WidgetPage.TIMER))
         requests.request(NavigationRequest.ReminderTimer)
         requests.request(NavigationRequest.Widget(WidgetPage.TODAY))

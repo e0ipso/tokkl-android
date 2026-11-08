@@ -10,6 +10,8 @@ import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.api.PhaseKind
 import com.github.e0ipso.tokkl.feature.pomodoro.R
+import com.github.e0ipso.tokkl.navhost.NavigationRequest
+import com.github.e0ipso.tokkl.navhost.takeDeepLinks
 import com.github.e0ipso.tokkl.notification.RunningNotifier
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import org.junit.Assert.assertEquals
@@ -80,13 +82,16 @@ class PomodoroSessionNotifierTest {
         val tap = pomodoroSessionOpenIntent(context, "tap-account", key)
         assertTrue(tap.flags and Intent.FLAG_ACTIVITY_SINGLE_TOP != 0)
         assertTrue(tap.flags and Intent.FLAG_ACTIVITY_CLEAR_TOP != 0)
-        assertEquals(PomodoroNotificationTap("tap-account", key), tap.takePomodoroNotificationTap())
-        assertNull(tap.takePomodoroNotificationTap())
+        assertEquals(
+            PomodoroNotificationTap("tap-account", key),
+            (tap.takeDeepLinks().single() as NavigationRequest.Pomodoro).tap,
+        )
+        assertTrue(tap.takeDeepLinks().isEmpty())
         val launcher = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
-        assertNull(launcher.takePomodoroNotificationTap())
+        assertTrue(launcher.takeDeepLinks().isEmpty())
         assertEquals(Intent.ACTION_MAIN, launcher.action)
         assertTrue(launcher.hasCategory(Intent.CATEGORY_LAUNCHER))
-        assertNull(Intent("com.github.e0ipso.tokkl.action.SHOW_POMODORO_SESSION").takePomodoroNotificationTap())
+        assertTrue(Intent("com.github.e0ipso.tokkl.action.SHOW_POMODORO_SESSION").takeDeepLinks().isEmpty())
     }
 
     @Test fun shownIdentitySurvivesReopenAndForgetErasesAllPersistedDisplayData() {

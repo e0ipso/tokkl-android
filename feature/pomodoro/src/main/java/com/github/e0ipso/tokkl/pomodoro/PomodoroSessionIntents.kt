@@ -5,8 +5,11 @@ import android.content.Intent
 import com.github.e0ipso.tokkl.platform.mainActivityIntent
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 
-internal const val SHOW_POMODORO = "com.github.e0ipso.tokkl.action.SHOW_POMODORO_SESSION"
-internal const val POMODORO_NOTIFICATION_ACCOUNT = "pomodoro_notification_account"
+/** The action of a session notification's tap, which opens MainActivity on the Pomodoro page. */
+const val SHOW_POMODORO = "com.github.e0ipso.tokkl.action.SHOW_POMODORO_SESSION"
+
+/** The extra that holds the account a session notification was shown for. */
+const val POMODORO_NOTIFICATION_ACCOUNT = "pomodoro_notification_account"
 
 /**
  * Include the account in PendingIntent identity as well as in the receiver's validation. A button
@@ -24,17 +27,3 @@ fun pomodoroSessionOpenIntent(context: Context, account: String, phase: Pomodoro
         .putNotificationIdentity(account, phase)
 
 data class PomodoroNotificationTap(val account: String, val phase: PomodoroPhaseKey)
-
-/**
- * Consuming the intent prevents rotation or later sign-in from replaying an old route. Only the
- * extras go, as with the reminder's tap: the action and data stay, so the activity keeps the
- * identity it was started with.
- */
-fun Intent.takePomodoroNotificationTap(): PomodoroNotificationTap? {
-    if (action != SHOW_POMODORO) return null
-    val account = getStringExtra(POMODORO_NOTIFICATION_ACCOUNT)
-    val phase = phaseKey()
-    removeExtra(POMODORO_NOTIFICATION_ACCOUNT)
-    removePhase()
-    return if (account != null && phase != null) PomodoroNotificationTap(account, phase) else null
-}

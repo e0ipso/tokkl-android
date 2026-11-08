@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.lifecycle.SavedStateHandle
 import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.di.FeatureScreens
@@ -23,7 +24,7 @@ internal fun AppNavHost(
 ) {
     val koin = remember { GlobalContext.get() }
     TokklNavHost(
-        requests = remember { NavigationRequests() },
+        requests = remember { NavigationRequests(SavedStateHandle()) },
         features = remember { koin.get(FeatureScreens) },
         pages = remember { koin.get() },
         signOuts = remember { koin.get<AccountLifetime>().signOuts },

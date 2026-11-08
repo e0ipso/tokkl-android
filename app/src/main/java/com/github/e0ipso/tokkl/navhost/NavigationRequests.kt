@@ -6,6 +6,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import androidx.savedstate.SavedState
+import androidx.savedstate.serialization.decodeFromSavedState
+import androidx.savedstate.serialization.encodeToSavedState
 import com.github.e0ipso.tokkl.navigation.LocalSignedInSession
 import com.github.e0ipso.tokkl.navigation.Navigator
 import com.github.e0ipso.tokkl.navigation.Route
@@ -14,28 +19,48 @@ import com.github.e0ipso.tokkl.pomodoro.PomodoroRoute
 import com.github.e0ipso.tokkl.reports.ReportsRoute
 import com.github.e0ipso.tokkl.reports.ReportsViewModel
 import com.github.e0ipso.tokkl.signin.SignInRoute
+import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.widget.WidgetPage
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ListSerializer
 import org.koin.compose.viewmodel.koinViewModel
+import java.time.Instant
 
 /** A page that a tap outside the app asks MainActivity to open. */
+@Serializable
 sealed interface NavigationRequest {
     /** A home screen widget's tap. */
+    @Serializable
     data class Widget(val page: WidgetPage) : NavigationRequest
 
-    /** A Pomodoro session notification's tap. */
-    data class Pomodoro(val tap: PomodoroNotificationTap) : NavigationRequest
+    /**
+     * A Pomodoro session notification's tap, for [account]'s phase that started at [phaseStart], in
+     * epoch milliseconds.
+     */
+    @Serializable
+    data class Pomodoro(val account: String, val phaseStart: Long) : NavigationRequest {
+        val tap: PomodoroNotificationTap
+            get() = PomodoroNotificationTap(account, PomodoroPhaseKey(Instant.ofEpochMilli(phaseStart)))
+    }
 
     /** A reminder notification's tap, which opens Timer. */
+    @Serializable
     data object ReminderTimer : NavigationRequest
 }
 
 /**
  * The pages that taps outside the app asked to open, until the navigation host opens them.
- * MainActivity fills it from its intents and its saved state, and saves what still waits. One
+ * MainActivity fills it from its intents ([takeDeepLinks]). It is MainActivity's view model, and
+ * what still waits is kept in [saved], so it outlives a configuration change and the process. One
  * request of each kind waits at a time: a later tap of the same kind replaces the earlier one.
  */
-class NavigationRequests {
+class NavigationRequests(saved: SavedStateHandle) : ViewModel() {
     private val waiting = mutableStateListOf<NavigationRequest>()
+
+    init {
+        saved.get<SavedState>(PENDING)?.let { waiting += decodeFromSavedState(serializer, it) }
+        saved.setSavedStateProvider(PENDING) { encodeToSavedState(serializer, waiting.toList()) }
+    }
 
     val pending: List<NavigationRequest> get() = waiting
 
@@ -50,6 +75,11 @@ class NavigationRequests {
     }
 
     fun clear() = waiting.clear()
+
+    private companion object {
+        const val PENDING = "pending-navigation-requests"
+        val serializer = ListSerializer(NavigationRequest.serializer())
+    }
 }
 
 /**

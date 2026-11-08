@@ -5,8 +5,11 @@ import android.net.Uri
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import java.time.Instant
 
-private const val EXTRA_PHASE_START = "pomodoro_phase_start"
-private const val EXTRA_REVISION = "pomodoro_revision"
+/** The extra that holds the start of the phase an intent is about, in epoch milliseconds. */
+const val EXTRA_PHASE_START = "pomodoro_phase_start"
+
+/** The extra that holds the revision a button was shown at. */
+const val EXTRA_REVISION = "pomodoro_revision"
 
 /**
  * Puts [phase], and the [revision] a button was shown at, on this intent. With [unique], they also
@@ -40,9 +43,3 @@ fun Intent.phaseKey(): PomodoroPhaseKey? = if (hasExtra(
 /** The revision this intent's button was shown at, or null without one. */
 internal fun Intent.shownRevision(): Long? =
     if (hasExtra(EXTRA_REVISION)) getLongExtra(EXTRA_REVISION, 0).takeIf { it >= 0 } else null
-
-/** Removes what [putPhase] added to the extras. The action and data stay. */
-internal fun Intent.removePhase() {
-    removeExtra(EXTRA_PHASE_START)
-    removeExtra(EXTRA_REVISION)
-}
