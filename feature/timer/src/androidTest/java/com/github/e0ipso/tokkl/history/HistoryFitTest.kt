@@ -64,6 +64,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 import com.github.e0ipso.tokkl.core.catalog.R as CatalogR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * The history's entry actions and grouped rows at Android's largest font scale, 200%, at the Timer page's width: the
@@ -242,17 +243,17 @@ class HistoryFitTest {
         val buttons = composeRule.onAllNodes(hasClickAction() and hasAnyAncestor(snackbar)).fetchSemanticsNodes()
         assertEquals("Undo and the button that dismisses the message", 2, buttons.size)
         val undo = "Undo button" to composeRule.onNode(
-            hasText(string(R.string.history_undo)) and hasClickAction() and hasAnyAncestor(snackbar),
+            hasText(string(UiR.string.history_undo)) and hasClickAction() and hasAnyAncestor(snackbar),
         )
         val dismiss = "dismiss button" to composeRule.onNode(
-            hasClickAction() and hasAnyAncestor(snackbar) and hasText(string(R.string.history_undo)).not(),
+            hasClickAction() and hasAnyAncestor(snackbar) and hasText(string(UiR.string.history_undo)).not(),
         )
         val message = "message" to composeRule.onNode(
             hasText(string(text)) and hasAnyAncestor(snackbar),
             useUnmergedTree = true,
         )
         val undoLabel = "Undo label" to composeRule.onNode(
-            hasText(string(R.string.history_undo)) and hasAnyAncestor(hasClickAction() and hasAnyAncestor(snackbar)),
+            hasText(string(UiR.string.history_undo)) and hasAnyAncestor(hasClickAction() and hasAnyAncestor(snackbar)),
             useUnmergedTree = true,
         )
 

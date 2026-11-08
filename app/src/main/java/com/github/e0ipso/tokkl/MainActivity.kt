@@ -24,12 +24,14 @@ import com.github.e0ipso.tokkl.navhost.NavigationRequests
 import com.github.e0ipso.tokkl.navhost.NavigationSession
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
 import com.github.e0ipso.tokkl.navigation.TopLevelPages
+import com.github.e0ipso.tokkl.navigation.sessionViewModel
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
 import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.pomodoro.pomodoroSessionOpenIntent
 import com.github.e0ipso.tokkl.pomodoro.takePomodoroNotificationTap
 import com.github.e0ipso.tokkl.reminder.ReminderNotifier
 import com.github.e0ipso.tokkl.session.AccountLifetime
+import com.github.e0ipso.tokkl.timer.TimerViewModel
 import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsRepository
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.widget.WidgetPage
@@ -80,6 +82,7 @@ class MainActivity : ComponentActivity() {
                     signOuts = lifetime.signOuts,
                     capabilities = capabilities.state,
                     session = session,
+                    timerFrame = { sessionViewModel<TimerViewModel>() },
                     notificationPermission = remember { NotificationPermissionAsk.forApp(this, io) },
                     onNotificationsAllow = foreground::notificationsGranted,
                 )

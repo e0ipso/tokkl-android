@@ -56,7 +56,6 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.navigationBarLabelWeight
 import kotlinx.coroutines.launch
 import com.github.e0ipso.tokkl.core.ui.R as UiR
-import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 
 /**
  * The bottom bar of a signed-in screen on a compact window: the [pages] outside More, which are
@@ -189,7 +188,7 @@ private fun navigationItems(pages: TopLevelPages, hidden: Set<Route>): List<Navi
                 if (it.route == Route.Pomodoro) pomodoroRunning else running,
             )
         }
-    return items + NavigationItem(null, stringResource(R.string.nav_more), TimerR.drawable.ic_nav_more, running)
+    return items + NavigationItem(null, stringResource(R.string.nav_more), UiR.drawable.ic_nav_more, running)
 }
 
 /** The [item]'s icon, with its own running dot for Timer or Pomodoro. */

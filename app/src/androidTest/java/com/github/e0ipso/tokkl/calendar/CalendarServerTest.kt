@@ -181,7 +181,7 @@ class CalendarServerTest {
             }
 
             deleteFromEditor()
-            composeRule.onNode(hasText(string(R.string.history_undo)) and hasClickAction())
+            composeRule.onNode(hasText(string(UiR.string.history_undo)) and hasClickAction())
                 .performSemanticsAction(SemanticsActions.OnClick)
             awaitBlock(label)
             assertEquals("Undo cancels the offline delete", 0, runBlocking { app.changes.unsentCount.first() })

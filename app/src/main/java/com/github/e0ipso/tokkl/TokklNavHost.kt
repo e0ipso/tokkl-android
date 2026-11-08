@@ -37,6 +37,7 @@ import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.TopLevelPages
 import com.github.e0ipso.tokkl.navigation.contentKey
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
+import com.github.e0ipso.tokkl.timernotice.TimerFrame
 import kotlinx.coroutines.flow.StateFlow
 
 /**
@@ -60,8 +61,8 @@ import kotlinx.coroutines.flow.StateFlow
  * the bar, the rail and the More sheet show in order ([TopLevelPages]). Each route's screen takes its
  * own view models, which go when the route leaves the stack. The ones that several screens share
  * live in the signed-in session's store ([NavigationStores]). MainActivity hands over what the
- * app's Koin graph holds: [signOuts] counts the sign-outs that finished, and [session] reads the
- * stored session off the main thread.
+ * app's Koin graph holds: [signOuts] counts the sign-outs that finished, [session] reads the
+ * stored session off the main thread, and [timerFrame] gives what the frame reads of the timer.
  */
 @Composable
 internal fun TokklNavHost(
@@ -71,6 +72,7 @@ internal fun TokklNavHost(
     signOuts: StateFlow<Int>,
     capabilities: StateFlow<Capabilities>,
     session: NavigationSession,
+    timerFrame: @Composable () -> TimerFrame,
     notificationPermission: NotificationPermissionAsk? = null,
     onNotificationsAllow: () -> Unit = {},
     stores: NavigationStores = viewModel { NavigationStores() },
@@ -93,6 +95,7 @@ internal fun TokklNavHost(
                 features = features,
                 pages = pages,
                 session = session,
+                timerFrame = timerFrame,
                 notificationPermission = notificationPermission,
                 onNotificationsAllow = onNotificationsAllow,
             )
@@ -108,6 +111,7 @@ private fun Navigation(
     features: List<FeatureEntries>,
     pages: TopLevelPages,
     session: NavigationSession,
+    timerFrame: @Composable () -> TimerFrame,
     notificationPermission: NotificationPermissionAsk?,
     onNotificationsAllow: () -> Unit,
 ) {
@@ -168,5 +172,6 @@ private fun Navigation(
         prompts = prompts,
         notificationPermission = notificationPermission,
         onNotificationsAllow = onNotificationsAllow,
+        timerFrame = timerFrame,
     )
 }

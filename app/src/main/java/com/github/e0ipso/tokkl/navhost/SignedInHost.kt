@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavEntry
@@ -25,14 +26,14 @@ import com.github.e0ipso.tokkl.navigation.sessionViewModel
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
 import com.github.e0ipso.tokkl.notification.NotificationPermissionPrompt
 import com.github.e0ipso.tokkl.sync.DiscardNotice
-import com.github.e0ipso.tokkl.timer.TimerNotices
-import com.github.e0ipso.tokkl.timer.TimerState
-import com.github.e0ipso.tokkl.timer.TimerViewModel
+import com.github.e0ipso.tokkl.timernotice.TimerFrame
+import com.github.e0ipso.tokkl.timernotice.timerNoticeText
 import com.github.e0ipso.tokkl.ui.windowWidth
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import com.github.e0ipso.tokkl.feature.timer.R as TimerR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * A signed-in back stack, [stack], with [top] on screen, in the [SignedInFrame]. The bar or the
@@ -52,7 +53,8 @@ import com.github.e0ipso.tokkl.feature.timer.R as TimerR
  * screen, a notice says how many changes were discarded, until dismissed. On the pages that show
  * the timer, the short Stop's Undo and the timer's notices share one snackbar host, so they
  * queue, never overlap. With [notificationPermission], a timer start or a Pomodoro start may ask
- * for the notification permission, and [onNotificationsAllow] hears the grant.
+ * for the notification permission, and [onNotificationsAllow] hears the grant. [timerFrame] gives
+ * what the frame reads of the timer, from the signed-in session's store.
  */
 @Composable
 internal fun SignedInHost(
@@ -65,9 +67,10 @@ internal fun SignedInHost(
     prompts: NotificationPrompts,
     notificationPermission: NotificationPermissionAsk?,
     onNotificationsAllow: () -> Unit,
+    timerFrame: @Composable () -> TimerFrame,
 ) {
     val model = sessionViewModel<SignedInViewModel>()
-    val timer = sessionViewModel<TimerViewModel>()
+    val timer = timerFrame()
     val state by model.state.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     LaunchedEffect(unavailable) {
@@ -77,12 +80,10 @@ internal fun SignedInHost(
     val focused = navigator.focused
     // Collected while stopped too, so a timer stopped outside the app has closed these screens by
     // the first frame back.
-    val timerState by timer.state.collectAsState()
-    LaunchedEffect(focused, timerState) {
+    val settledIdle by remember(timer) { timer.settledIdle }.collectAsState(initial = false)
+    LaunchedEffect(focused, settledIdle) {
         // A notification may have opened Pomodoro before this old focused effect runs.
-        if (focused && (timerState as? TimerState.Idle)?.authoritative == true &&
-            navigator.focused
-        ) {
+        if (focused && settledIdle && navigator.focused) {
             navigator.downToTimer()
         }
     }
@@ -90,7 +91,7 @@ internal fun SignedInHost(
     // The short Stop's Undo and the timer's notices share one host, so they queue, never overlap.
     val shortHost = remember { SnackbarHostState() }
     val shortMessage = stringResource(R.string.timer_short_stop_trashed)
-    val undoLabel = stringResource(TimerR.string.history_undo)
+    val undoLabel = stringResource(UiR.string.history_undo)
     LaunchedEffect(top, shortUndo?.entryId, shortUndo?.capturedAt) {
         val pending = shortUndo ?: return@LaunchedEffect
         if (top != Route.Timer) return@LaunchedEffect
@@ -162,6 +163,27 @@ internal fun SignedInHost(
                 retries = permissionRetries,
                 onResult = { prompts.answers++ },
             )
+        }
+    }
+}
+
+/**
+ * Shows the timer's notices in [host], one after another, while it is in the composition: a Pause,
+ * Resume or Stop while paused that did not happen, and a pomodoro the server discarded as too
+ * short. The frame puts it on each of the timer's pages, so every notice has one path to the
+ * screen and a too-short pomodoro shows once, whichever page shows it.
+ */
+@Composable
+private fun TimerNotices(notices: TimerFrame, host: SnackbarHostState) {
+    val resources = LocalResources.current
+    LaunchedEffect(notices, host, resources) {
+        notices.notice.filterNotNull().collect { notice ->
+            val claimed = notices.claim(notice) ?: return@collect
+            try {
+                host.showSnackbar(timerNoticeText(resources, claimed))
+            } finally {
+                notices.noticeShown(claimed)
+            }
         }
     }
 }

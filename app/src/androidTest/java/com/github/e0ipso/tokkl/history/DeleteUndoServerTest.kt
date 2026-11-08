@@ -55,6 +55,7 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * Delete with Undo against the real Tokkl container (docs/PRD.md H3). A delete the server has gets
@@ -268,7 +269,7 @@ class DeleteUndoServerTest {
                 .performSemanticsAction(SemanticsActions.OnClick)
 
             composeRule.waitUntil("the entry goes", LOAD_TIMEOUT_MS) { !inList("Menu entry") }
-            val undo = hasText(context.getString(R.string.history_undo)) and hasClickAction()
+            val undo = hasText(context.getString(UiR.string.history_undo)) and hasClickAction()
             val message = SemanticsMatcher.keyIsDefined(SemanticsProperties.LiveRegion) and
                 hasAnyDescendant(hasText(context.getString(R.string.history_deleted))) and hasAnyDescendant(undo)
             composeRule.waitUntil("the message and its Undo show in a live region", LOAD_TIMEOUT_MS) {

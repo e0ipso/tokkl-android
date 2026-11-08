@@ -18,6 +18,7 @@ import com.github.e0ipso.tokkl.favorites.MAX_FAVORITES
 import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * The messages, the question and the dialog of the history's entry actions: a snackbar for
@@ -45,7 +46,7 @@ internal fun EntryActionsHost(
     val host = remember { SnackbarHostState() }
     val notice = state.notice
     val message = notice?.let { noticeText(it) }
-    val undoLabel = stringResource(R.string.history_undo)
+    val undoLabel = stringResource(UiR.string.history_undo)
     val undo by rememberUpdatedState(onUndo)
     val done by rememberUpdatedState(onNoticeEnd)
     LaunchedEffect(notice) {

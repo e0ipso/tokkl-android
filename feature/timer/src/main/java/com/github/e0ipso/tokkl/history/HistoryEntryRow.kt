@@ -173,7 +173,7 @@ private fun EntryMenu(entry: HistoryEntry, callbacks: EntryCallbacks, firstLineM
     Box(Modifier.padding(top = buttonTop(firstLineMiddle))) {
         IconButton(onClick = { open = true }) {
             Icon(
-                painter = painterResource(R.drawable.ic_nav_more),
+                painter = painterResource(UiR.drawable.ic_nav_more),
                 contentDescription = stringResource(R.string.history_more_actions, name),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )

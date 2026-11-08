@@ -13,6 +13,7 @@ import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.model.fields
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.timernotice.TimerFrame
 import com.github.e0ipso.tokkl.timernotice.TimerNotice
 import com.github.e0ipso.tokkl.timerstate.DiscardNotices
 import com.github.e0ipso.tokkl.timerstate.PauseActions
@@ -85,7 +86,8 @@ class TimerViewModel(
     private val sendQueued: suspend () -> Unit,
     discards: DiscardNotices,
     timerApi: Flow<Boolean>,
-) : ViewModel(scope) {
+) : ViewModel(scope),
+    TimerFrame {
 
     private val local = MutableStateFlow(TimerTaps())
 
@@ -107,7 +109,7 @@ class TimerViewModel(
      * The start never waits for a collector. The latest start waits for a screen collector after
      * a configuration change.
      */
-    val starts: SharedFlow<Unit> = queuedStarts.asSharedFlow()
+    override val starts: SharedFlow<Unit> = queuedStarts.asSharedFlow()
 
     private val pauseOffered: StateFlow<Boolean> = timerApi.stateIn(
         viewModelScope,
@@ -125,6 +127,9 @@ class TimerViewModel(
         timerState(running, settings?.defaultWorkspaceId, taps, offered).labelled(names.projects, names.tasks)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), TimerState.Loading)
 
+    /** Whether [state] shows the timer idle by the cache's word, with no tap of its own on the way. */
+    override val settledIdle: Flow<Boolean> = state.map { (it as? TimerState.Idle)?.authoritative == true }
+
     private val fieldEdits = RunningFieldEdits(local, cached, changes, viewModelScope, ::snapshot) {
         catalog.value.projects
     }
@@ -140,7 +145,7 @@ class TimerViewModel(
      * screen [claim]s a notice before it shows it and calls [noticeShown] after, so each notice
      * shows on one screen.
      */
-    val notice: StateFlow<TimerNotice?> = notices.notices(discards.discardNotice)
+    override val notice: StateFlow<TimerNotice?> = notices.notices(discards.discardNotice)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
 
     /**
@@ -148,10 +153,10 @@ class TimerViewModel(
      * there is nothing left to show. A too-short pomodoro is recorded as shown here, once, so a
      * replay of its state or a restart does not show it again.
      */
-    suspend fun claim(notice: TimerNotice): TimerNotice? = notices.claim(notice)
+    override suspend fun claim(notice: TimerNotice): TimerNotice? = notices.claim(notice)
 
     /** The screen has shown [notice], or stopped showing it. */
-    fun noticeShown(notice: TimerNotice) = notices.shown(notice)
+    override fun noticeShown(notice: TimerNotice) = notices.shown(notice)
 
     /** Starts a timer with the idle timer's fields, unless one runs or no workspace is known yet. */
     fun start() {

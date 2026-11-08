@@ -53,6 +53,7 @@ import java.time.LocalDate
 import java.time.ZoneOffset
 import java.util.concurrent.CopyOnWriteArrayList
 import com.github.e0ipso.tokkl.core.catalog.R as CatalogR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * The history's entry actions on screen, against a change queue and an Undo that record what they
@@ -103,7 +104,7 @@ class EntryActionsUiTest {
         assertEquals("no question first", 0, composeRule.onAllNodes(isDialog()).fetchSemanticsNodes().size)
         val undo = composeRule.onNode(
             hasText(
-                string(R.string.history_undo),
+                string(UiR.string.history_undo),
             ) and hasClickAction() and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button),
         )
         undo.performSemanticsAction(SemanticsActions.OnClick)
@@ -132,7 +133,7 @@ class EntryActionsUiTest {
             "the message shows",
             TIMEOUT_MS,
         ) { composeRule.onAllNodes(liveMessage(R.string.history_deleted)).fetchSemanticsNodes().isNotEmpty() }
-        composeRule.onAllNodes(hasText(string(R.string.history_undo))).assertCountEquals(0)
+        composeRule.onAllNodes(hasText(string(UiR.string.history_undo))).assertCountEquals(0)
         assertEquals(listOf("delete $ENTRY"), calls)
     }
 
@@ -160,14 +161,14 @@ class EntryActionsUiTest {
             TIMEOUT_MS,
         ) { composeRule.onAllNodes(liveMessage(R.string.history_deleted)).fetchSemanticsNodes().isNotEmpty() }
         composeRule.onNode(
-            hasText(string(R.string.history_undo)) and hasClickAction(),
+            hasText(string(UiR.string.history_undo)) and hasClickAction(),
         ).performSemanticsAction(SemanticsActions.OnClick)
 
         composeRule.waitUntil("the server is needed", TIMEOUT_MS) {
             composeRule.onAllNodes(liveMessage(R.string.history_undo_needs_server)).fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNode(
-            hasText(string(R.string.history_undo)) and hasClickAction(),
+            hasText(string(UiR.string.history_undo)) and hasClickAction(),
         ).performSemanticsAction(SemanticsActions.OnClick)
         composeRule.waitUntil("Undo ran again", TIMEOUT_MS) { calls.size == 3 }
         assertEquals(listOf("delete $ENTRY", "undo $ENTRY", "undo $ENTRY"), calls)
@@ -190,7 +191,7 @@ class EntryActionsUiTest {
             "the message shows",
             TIMEOUT_MS,
         ) { composeRule.onAllNodes(liveMessage(R.string.history_duplicated)).fetchSemanticsNodes().isNotEmpty() }
-        composeRule.onAllNodes(hasText(string(R.string.history_undo))).assertCountEquals(0)
+        composeRule.onAllNodes(hasText(string(UiR.string.history_undo))).assertCountEquals(0)
         assertEquals(listOf("create 10 ${CACHED.start} ${CACHED.stop}"), calls)
     }
 
@@ -250,7 +251,7 @@ class EntryActionsUiTest {
             "the message shows",
             TIMEOUT_MS,
         ) { composeRule.onAllNodes(liveMessage(R.string.history_pinned)).fetchSemanticsNodes().isNotEmpty() }
-        composeRule.onAllNodes(hasText(string(R.string.history_undo))).assertCountEquals(0)
+        composeRule.onAllNodes(hasText(string(UiR.string.history_undo))).assertCountEquals(0)
         assertEquals(listOf(listOf(EntryFields(description = DESCRIPTION))), saves)
         assertEquals("nothing goes to the queue", emptyList<String>(), calls)
     }

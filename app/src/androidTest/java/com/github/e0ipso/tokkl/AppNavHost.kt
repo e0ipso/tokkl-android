@@ -6,7 +6,9 @@ import com.github.e0ipso.tokkl.capabilities.Capabilities
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.di.FeatureScreens
 import com.github.e0ipso.tokkl.navhost.NavigationRequests
+import com.github.e0ipso.tokkl.navigation.sessionViewModel
 import com.github.e0ipso.tokkl.session.AccountLifetime
+import com.github.e0ipso.tokkl.timer.TimerViewModel
 import kotlinx.coroutines.flow.StateFlow
 import org.koin.core.context.GlobalContext
 
@@ -26,5 +28,6 @@ internal fun AppNavHost(
         signOuts = remember { koin.get<AccountLifetime>().signOuts },
         capabilities = capabilities,
         session = remember { koin.get() },
+        timerFrame = { sessionViewModel<TimerViewModel>() },
     )
 }

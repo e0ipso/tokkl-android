@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The app's name, the top bar's back button, and the dates and durations that ui/DateWords.kt writes and speaks. -->
+<!-- The app's name, the top bar's back button, the snackbars' Undo, and the dates and durations that ui/DateWords.kt writes and speaks. -->
 <resources>
     <string name="app_name">Tokkl</string>
     <string name="back">Back</string>
+    <!-- The action of the snackbars that take back a delete or a short Stop. -->
+    <string name="history_undo">Undo</string>
     <!-- 13 Oct: the day of the month and the month's short name. -->
     <string name="reports_date">%1$d %2$s</string>
     <!-- 13 Oct 2026 -->
