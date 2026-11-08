@@ -17,7 +17,6 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.feature.settings.R
 import com.github.e0ipso.tokkl.ui.theme.ThemeMode
-import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsStore
 import org.junit.rules.ExternalResource
 import java.io.File
 

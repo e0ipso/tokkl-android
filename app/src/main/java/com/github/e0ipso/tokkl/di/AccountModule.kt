@@ -28,8 +28,6 @@ import com.github.e0ipso.tokkl.timer.TimerViewSetting
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timersync.TimerSyncFollower
 import com.github.e0ipso.tokkl.trust.SessionTrust
-import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsStore
-import com.github.e0ipso.tokkl.ui.theme.themeSettingsWithNightMode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.koin.android.ext.koin.androidContext
@@ -38,16 +36,10 @@ import org.koin.dsl.bind
 import org.koin.dsl.binds
 import org.koin.dsl.module
 
-/** The account's settings, its refresh and capabilities, the theme, trust and sign-out. */
+/** The account's settings, its refresh and capabilities, trust and sign-out. */
 internal val accountModule = module {
     single { AccountSettingsStore(androidContext()) } bind AccountDataOwner::class
     single { CapabilitiesStore(androidContext()) }
-    single { ThemeSettingsStore(androidContext()) }
-
-    // Loaded on first use, which is MainActivity's onCreate, on the main thread, so the first frame
-    // knows the theme.
-    single { themeSettingsWithNightMode(androidContext(), get(), get(), io()) }
-
     // The account settings. The first read loads them from a file of six short values.
     single { AccountSettingsSource(get<AccountSettingsStore>()) }
 

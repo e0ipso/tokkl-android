@@ -14,6 +14,7 @@ import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.settings.DefaultThemeSettings
+import com.github.e0ipso.tokkl.settings.ThemeSettingsStore
 import com.github.e0ipso.tokkl.settings.systemIsDark
 import org.junit.Assert.assertEquals
 import org.junit.Rule

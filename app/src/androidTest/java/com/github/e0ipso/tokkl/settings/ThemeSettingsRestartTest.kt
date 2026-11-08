@@ -14,7 +14,6 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.feature.settings.R
 import com.github.e0ipso.tokkl.ui.theme.ThemeMode
-import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsStore
 import com.github.e0ipso.tokkl.ui.theme.TokklDarkColorScheme
 import com.github.e0ipso.tokkl.ui.theme.TokklLightColorScheme
 import org.junit.Assert.assertEquals

@@ -4,14 +4,22 @@ import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
 import com.github.e0ipso.tokkl.navigation.topLevelDestination
+import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
 import com.github.e0ipso.tokkl.session.SignOut
+import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
-/** Settings and Licences: the sign-out confirmation and the Settings page's view model. */
+/** Settings and Licences: the theme settings, the sign-out confirmation and the Settings page's view model. */
 val settingsFeatureModule = module {
+    single { ThemeSettingsStore(androidContext()) }
+
+    // Loaded on first use, which is MainActivity's onCreate, on the main thread, so the first frame
+    // knows the theme.
+    single { themeSettingsWithNightMode(androidContext(), get(), get(), io()) }
+
     // The Settings page's sign-out button and its warning about unsent changes.
     single {
         SignOutConfirmation(

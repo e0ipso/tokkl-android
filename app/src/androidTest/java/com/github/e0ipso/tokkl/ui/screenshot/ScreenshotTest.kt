@@ -106,6 +106,7 @@ import com.github.e0ipso.tokkl.reports.SummaryReport
 import com.github.e0ipso.tokkl.reports.WeeklyReport
 import com.github.e0ipso.tokkl.reports.WeeklyRow
 import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.settings.ThemeSettingsStore
 import com.github.e0ipso.tokkl.settings.followTheSystemNightMode
 import com.github.e0ipso.tokkl.settings.systemIsDark
 import com.github.e0ipso.tokkl.sync.SyncStatus
@@ -121,7 +122,6 @@ import com.github.e0ipso.tokkl.trust.CleartextWarning
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.ThemeMode
 import com.github.e0ipso.tokkl.ui.theme.ThemeSettings
-import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsStore
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.applicationNightMode
 import kotlinx.coroutines.flow.MutableStateFlow
