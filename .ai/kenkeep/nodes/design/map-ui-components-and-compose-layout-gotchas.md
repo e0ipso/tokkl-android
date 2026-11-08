@@ -36,7 +36,7 @@ A Compose `Dialog` with `usePlatformDefaultWidth = false` keeps its window at WR
 
 `ModalBottomSheet` opens in a window of its own, and that window keeps Android's navigation bar contrast enforcement, which paints a translucent band over a three-button navigation bar. `SheetWindowEdgeToEdge()` in `navhost/AppNavigation.kt` turns it off for the More sheet, so the sheet's own colour shows behind the navigation bar, as every screen's does. Any other sheet needs the same.
 
-The bottom bar's labels share one font size through `SharedLabelSize` in `ui/theme/NavigationBar.kt`. `TextAutoSizeLayoutScope` lays out only the item's own text, so `SharedLabelSize` measures the other labels with a `TextMeasurer`.
+The bottom bar's labels share one font size through `SharedLabelSize` in the app's `navhost/NavigationBarItems.kt`, the bar's only user. `TextAutoSizeLayoutScope` lays out only the item's own text, so `SharedLabelSize` measures the other labels with a `TextMeasurer`.
 
 <!-- kk:related:start -->
 # Related
