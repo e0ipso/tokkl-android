@@ -237,6 +237,8 @@ class PackageLayersTest {
 
         /** The imports allowed between packages of one layer. */
         val SAME_LAYER: Map<String, Set<String>> = mapOf(
+            // The API's calls take the model's typed ids.
+            "api" to setOf("model"),
             // Core data, in the order it builds up: the session reads the capabilities, the shared
             // preferences and the cache the capabilities and the session, and the timer state the
             // cache.

@@ -17,7 +17,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.doubleOrNull
@@ -155,7 +154,7 @@ class ReminderSetting(
             held.value.takeIf { expected == generation && unsent && shared }
         } ?: return@withLock
         val api = client() ?: return@withLock
-        val result = api.account.savePreferences(values.body(), JsonObject.serializer())
+        val result = api.account.savePreferences(values.body())
         if (result is ApiResult.Success) {
             lock.withLock {
                 if (expected == generation && held.value == values) unsent = false

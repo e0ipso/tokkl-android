@@ -1,5 +1,7 @@
 package com.github.e0ipso.tokkl.api
 
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
@@ -81,19 +83,19 @@ class TimeEntriesApi internal constructor(private val client: TogglApiClient) {
         client.get(client.server.api("me", "time_entries", "current"), ServerTimeEntry.serializer().nullable)
 
     /** `GET /api/v9/me/time_entries/{id}`. */
-    suspend fun get(id: Long): ApiResult<ServerTimeEntry> =
+    suspend fun get(id: EntryId): ApiResult<ServerTimeEntry> =
         client.get(client.server.api("me", "time_entries", id.toString()), ServerTimeEntry.serializer())
 
     /** `POST /api/v9/workspaces/{workspaceId}/time_entries`, sent once. */
-    suspend fun create(workspaceId: Long, body: TimeEntryBody): ApiResult<ServerTimeEntry> =
+    suspend fun create(workspaceId: WorkspaceId, body: TimeEntryBody): ApiResult<ServerTimeEntry> =
         client.send(HttpMethod.POST, entries(workspaceId), body.json(), ServerTimeEntry.serializer(), resend = false)
 
     /** `PUT /api/v9/workspaces/{workspaceId}/time_entries/{id}` with every field, sent once. */
-    suspend fun update(workspaceId: Long, id: Long, body: TimeEntryBody): ApiResult<ServerTimeEntry> =
+    suspend fun update(workspaceId: WorkspaceId, id: EntryId, body: TimeEntryBody): ApiResult<ServerTimeEntry> =
         client.send(HttpMethod.PUT, entries(workspaceId, id), body.json(), ServerTimeEntry.serializer(), resend = false)
 
     /** `PATCH /api/v9/workspaces/{workspaceId}/time_entries/{id}/stop` at [stop], sent once. */
-    suspend fun stop(workspaceId: Long, id: Long, stop: Instant): ApiResult<ServerTimeEntry> = client.send(
+    suspend fun stop(workspaceId: WorkspaceId, id: EntryId, stop: Instant): ApiResult<ServerTimeEntry> = client.send(
         HttpMethod.PATCH,
         entries(workspaceId, id.toString(), "stop"),
         json(StopBody.serializer(), StopBody(stop.toString())),
@@ -102,14 +104,14 @@ class TimeEntriesApi internal constructor(private val client: TogglApiClient) {
     )
 
     /** `DELETE /api/v9/workspaces/{workspaceId}/time_entries/{id}`, sent once. Tokkl answers with no body. */
-    suspend fun delete(workspaceId: Long, id: Long): ApiResult<Unit> =
+    suspend fun delete(workspaceId: WorkspaceId, id: EntryId): ApiResult<Unit> =
         client.sendNoContent(HttpMethod.DELETE, entries(workspaceId, id), body = null, resend = false)
 
     /**
      * `POST /api/app/time_entries/{id}/restore`, Tokkl's Undo of a delete, which answers with the
      * entry. With [resend] false it goes out once, as [TogglApiClient.send] describes.
      */
-    suspend fun restore(id: Long, resend: Boolean): ApiResult<ServerTimeEntry> = client.send(
+    suspend fun restore(id: EntryId, resend: Boolean): ApiResult<ServerTimeEntry> = client.send(
         HttpMethod.POST,
         client.server.app("time_entries", id.toString(), "restore"),
         EMPTY_BODY,
@@ -120,10 +122,10 @@ class TimeEntriesApi internal constructor(private val client: TogglApiClient) {
     /** `GET /api/app/bounds`, Tokkl's first and last day with an entry in the account's timezone. */
     suspend fun bounds(): ApiResult<JsonObject> = client.get(client.server.app("bounds"), JsonObject.serializer())
 
-    private fun entries(workspaceId: Long, vararg path: String) =
+    private fun entries(workspaceId: WorkspaceId, vararg path: String) =
         client.server.api("workspaces", workspaceId.toString(), "time_entries", *path)
 
-    private fun entries(workspaceId: Long, id: Long) = entries(workspaceId, id.toString())
+    private fun entries(workspaceId: WorkspaceId, id: EntryId) = entries(workspaceId, id.toString())
 
     private fun TimeEntryBody.json(): JsonElement = when (this) {
         is TimedEntryBody -> json(TimedEntryBody.serializer(), this)

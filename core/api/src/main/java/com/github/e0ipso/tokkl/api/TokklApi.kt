@@ -8,9 +8,8 @@ import kotlinx.serialization.json.JsonObject
  * Every request the app sends to Tokkl or Toggl Track, one method per request, grouped by
  * resource: the Toggl API v9, the Reports API v3 and Tokkl's own `/api/app` routes that section 6
  * of Tokkl's docs/PRD.md lists. Each method fixes its request's method, path, query, body and
- * whether OkHttp may send it twice; callers pass typed values and never build a URL or a JSON
- * body. Where the app reads one answer in more than one shape, or into a type its feature owns,
- * the method takes the caller's deserializer.
+ * whether OkHttp may send it twice, and the type its answer reads as; callers pass typed values,
+ * ids among them, and never build a URL or a JSON body.
  *
  * [client] holds the server, the credentials and the shared HTTP client: the signed-in account's,
  * or the one sign-in tries.

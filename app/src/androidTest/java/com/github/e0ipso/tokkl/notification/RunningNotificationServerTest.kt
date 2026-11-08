@@ -29,7 +29,6 @@ import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.components.timerControls
 import com.github.e0ipso.tokkl.feature.notification.R
 import com.github.e0ipso.tokkl.model.EntryFields
-import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.model.RunningEntryIdentity
 import com.github.e0ipso.tokkl.model.WorkspaceId
@@ -291,7 +290,7 @@ class RunningNotificationServerTest {
                 TrashServer(
                     web.tokklApi(),
                 ).list()
-            }.orFail("GET /api/app/trash").single { EntryId(it.id) == serverId }
+            }.orFail("GET /api/app/trash").single { it.id == serverId }
             assertEquals("Stopped from the notification", trashed.description)
             assertEquals("the notification's short Stop reached Trash", trashed.start, trashed.stop)
             assertEquals(0L, trashed.duration)
@@ -499,8 +498,8 @@ class RunningNotificationServerTest {
             firstServerId.value > 0 && secondServerId.value > 0 && firstServerId != secondServerId,
         )
         val trashed = runBlocking { TrashServer(web.tokklApi()).list() }.orFail("GET /api/app/trash")
-        assertTrue("the first start was also short", trashed.any { EntryId(it.id) == firstServerId })
-        val secondTrash = trashed.single { EntryId(it.id) == secondServerId }
+        assertTrue("the first start was also short", trashed.any { it.id == firstServerId })
+        val secondTrash = trashed.single { it.id == secondServerId }
         assertEquals(
             "the notification stopped the newer entry",
             stopped.start.epochSecond,
@@ -519,8 +518,8 @@ class RunningNotificationServerTest {
         runBlocking { app.sender.sendAndWait() }
         assertEquals("Undo reached the server", 0, unsentCount())
         val remainingTrash = runBlocking { TrashServer(web.tokklApi()).list() }.orFail("GET /api/app/trash")
-        assertTrue("Undo left the older entry in Trash", remainingTrash.any { EntryId(it.id) == firstServerId })
-        assertTrue("Undo restored only the newer entry", remainingTrash.none { EntryId(it.id) == secondServerId })
+        assertTrue("Undo left the older entry in Trash", remainingTrash.any { it.id == firstServerId })
+        assertTrue("Undo restored only the newer entry", remainingTrash.none { it.id == secondServerId })
         val restoredOnServer = runBlocking {
             web.get(
                 web.server.api("me", "time_entries", secondServerId.toString()),

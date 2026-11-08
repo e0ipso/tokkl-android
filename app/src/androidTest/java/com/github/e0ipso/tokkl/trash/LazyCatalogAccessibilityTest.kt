@@ -18,6 +18,7 @@ import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
 import com.github.e0ipso.tokkl.api.TrashEntry
 import com.github.e0ipso.tokkl.feature.trash.R
+import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.Tag
 import com.github.e0ipso.tokkl.model.TagId
 import com.github.e0ipso.tokkl.model.WorkspaceId
@@ -54,7 +55,7 @@ class LazyCatalogAccessibilityTest {
     fun trashKeepsItsVisibleEntryAndReadingOrderAfterRemovingAnEarlierEntry() {
         val entries = mutableStateOf(
             List(1000) { index ->
-                TrashEntry(index.toLong(), "Trash $index", "2026-10-19T08:00:00Z", "2026-10-19T08:01:00Z", 60)
+                TrashEntry(EntryId(index.toLong()), "Trash $index", "2026-10-19T08:00:00Z", "2026-10-19T08:01:00Z", 60)
             },
         )
         compose.activityRule.scenario.onActivity { WindowCompat.enableEdgeToEdge(it.window) }

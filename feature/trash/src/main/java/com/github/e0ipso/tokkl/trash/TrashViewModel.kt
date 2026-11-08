@@ -7,6 +7,7 @@ import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.HttpStatus
 import com.github.e0ipso.tokkl.api.TrashEntry
+import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.platform.AppForeground
 import com.github.e0ipso.tokkl.platform.PageLoads
 import com.github.e0ipso.tokkl.platform.stateInPage
@@ -155,7 +156,7 @@ class TrashViewModel(
     }
 
     /** Puts entry [id] back among the time entries. */
-    fun restore(id: Long) {
+    fun restore(id: EntryId) {
         send(
             request = { it.restore(id) },
             apply = { entries, _ -> entries.filterNot { it.id == id } },
@@ -165,7 +166,7 @@ class TrashViewModel(
     }
 
     /** Deletes entry [id] for good, with no question, as the web app does. */
-    fun purge(id: Long) {
+    fun purge(id: EntryId) {
         send(
             request = { it.purge(id) },
             apply = { entries, _ -> entries.filterNot { it.id == id } },
@@ -179,7 +180,7 @@ class TrashViewModel(
         send(
             request = { it.purgeAll() },
             apply = { _, _ -> emptyList() },
-            done = { TrashChange.Emptied(it.deleted) },
+            done = { TrashChange.Emptied(it) },
         )
     }
 

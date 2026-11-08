@@ -547,7 +547,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
         val TRASH = TrashState(
             entries = listOf(
                 TrashEntry(
-                    id = 1,
+                    id = EntryId(1),
                     description = "Review the quarterly report with the whole team",
                     start = "2026-10-12T07:00:00+00:00",
                     stop = "2026-10-12T08:30:00+00:00",

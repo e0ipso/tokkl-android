@@ -1,7 +1,12 @@
 package com.github.e0ipso.tokkl.api
 
+import com.github.e0ipso.tokkl.model.ClientId
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.TagId
+import com.github.e0ipso.tokkl.model.TaskId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import kotlinx.coroutines.test.runTest
-import kotlinx.serialization.json.JsonElement
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -55,13 +60,14 @@ class TokklApiTest {
 
     @Test
     fun accountRequests() = runTest {
-        api.account.me(JsonElement.serializer())
+        api.account.me()
+        api.account.defaultWorkspace()
         api.account.meWithRelatedData()
         api.account.preferences()
-        api.account.workspace(7, JsonElement.serializer())
-        api.account.savePreferences(PomodoroDefaultsChange(40, 8, 20, 5), JsonElement.serializer())
-        api.account.savePreferences(ReminderChange(enabled = false, hours = 4), JsonElement.serializer())
-        api.account.savePreferences(TimerViewChange("calendar"), JsonElement.serializer())
+        api.account.workspace(WorkspaceId(7))
+        api.account.savePreferences(PomodoroDefaultsChange(40, 8, 20, 5))
+        api.account.savePreferences(ReminderChange(enabled = false, hours = 4))
+        api.account.savePreferences(TimerViewChange("calendar"))
         api.account.savePreferences(
             FavoritesChange(
                 listOf(
@@ -69,11 +75,11 @@ class TokklApiTest {
                     FavoriteBody("Website", null, null, emptyList(), billable = false),
                 ),
             ),
-            JsonElement.serializer(),
         )
 
         assertEquals(
             listOf(
+                "GET /tokkl/api/v9/me",
                 "GET /tokkl/api/v9/me",
                 "GET /tokkl/api/v9/me?with_related_data=true",
                 "GET /tokkl/api/v9/me/preferences",
@@ -99,23 +105,26 @@ class TokklApiTest {
         val stop = Instant.parse("2026-10-19T09:30:00Z")
         api.entries.list(start, stop)
         api.entries.current()
-        api.entries.get(55)
+        api.entries.get(EntryId(55))
         api.entries.bounds()
         api.entries.create(
-            7,
+            WorkspaceId(7),
             TimedEntryBody(7, "Tokkl for Android", "Report", null, null, listOf("call"), false, "$start", null, -1),
         )
         api.entries.update(
-            7,
-            55,
+            WorkspaceId(7),
+            EntryId(55),
             TimedEntryBody(7, null, "Report", 3, 4, emptyList(), true, "$start", "$stop", 5400, allDay = false),
         )
         val leave = NoTimeEntryBody(7, null, "Leave", null, null, emptyList(), false, true, duration = 3600)
-        api.entries.update(7, 56, leave.copy(startDate = "2026-10-19"))
-        api.entries.create(7, leave.copy(createdWith = "Tokkl for Android", start = "$start", duration = 60))
-        api.entries.stop(7, 55, stop)
-        api.entries.delete(7, 55)
-        api.entries.restore(55, resend = true)
+        api.entries.update(WorkspaceId(7), EntryId(56), leave.copy(startDate = "2026-10-19"))
+        api.entries.create(
+            WorkspaceId(7),
+            leave.copy(createdWith = "Tokkl for Android", start = "$start", duration = 60),
+        )
+        api.entries.stop(WorkspaceId(7), EntryId(55), stop)
+        api.entries.delete(WorkspaceId(7), EntryId(55))
+        api.entries.restore(EntryId(55), resend = true)
 
         assertEquals(
             listOf(
@@ -148,13 +157,15 @@ class TokklApiTest {
 
     @Test
     fun trashRequests() = runTest {
-        api.trash.list(JsonElement.serializer())
-        api.trash.restore(55)
-        api.trash.purge(55, JsonElement.serializer())
-        api.trash.purgeAll(JsonElement.serializer())
+        api.trash.list()
+        api.trash.probe()
+        api.trash.restore(EntryId(55))
+        api.trash.purge(EntryId(55))
+        api.trash.purgeAll()
 
         assertEquals(
             listOf(
+                "GET /tokkl/api/app/trash",
                 "GET /tokkl/api/app/trash",
                 "POST /tokkl/api/app/time_entries/55/restore {}",
                 "DELETE /tokkl/api/app/trash/55",
@@ -166,25 +177,26 @@ class TokklApiTest {
 
     @Test
     fun catalogRequests() = runTest {
-        val any = JsonElement.serializer()
-        api.projects.list(7, any)
-        api.projects.list(7, any, activeBoth = true)
-        api.projects.create(7, ProjectBody("Shop", "#2da608", 0, false, null, null, null), any)
-        api.projects.update(7, 5, ProjectBody("Website", "#0b83d9", 9, true, 12.5, "USD", 40.0), any)
-        api.projects.setActive(7, 5, active = false, any)
-        api.projects.tasks(7, 5, any)
-        api.projects.createTask(7, 5, "Copy", any)
-        api.projects.updateTask(7, 5, 1, TaskBody("Wireframes", active = false), any)
-        api.projects.deleteTask(7, 5, 1)
-        api.clients.list(7, any)
-        api.clients.create(7, ClientBody("Surf school", null), any)
-        api.clients.update(7, 1, ClientBody("Acme", "Pays late"), any)
-        api.clients.archive(7, 1)
-        api.clients.restore(7, 1, any)
-        api.tags.list(7, any)
-        api.tags.create(7, "Deep work", any)
-        api.tags.rename(7, 3, "Focus", any)
-        api.tags.delete(7, 3)
+        val workspace = WorkspaceId(7)
+        val project = ProjectId(5)
+        api.projects.list(workspace)
+        api.projects.clients(workspace)
+        api.projects.create(workspace, ProjectBody("Shop", "#2da608", 0, false, null, null, null))
+        api.projects.update(workspace, project, ProjectBody("Website", "#0b83d9", 9, true, 12.5, "USD", 40.0))
+        api.projects.setActive(workspace, project, active = false)
+        api.projects.tasks(workspace, project)
+        api.projects.createTask(workspace, project, "Copy")
+        api.projects.updateTask(workspace, project, TaskId(1), TaskBody("Wireframes", active = false))
+        api.projects.deleteTask(workspace, project, TaskId(1))
+        api.clients.list(workspace)
+        api.clients.create(workspace, ClientBody("Surf school", null))
+        api.clients.update(workspace, ClientId(1), ClientBody("Acme", "Pays late"))
+        api.clients.archive(workspace, ClientId(1))
+        api.clients.restore(workspace, ClientId(1))
+        api.tags.list(workspace)
+        api.tags.create(workspace, "Deep work")
+        api.tags.rename(workspace, TagId(3), "Focus")
+        api.tags.delete(workspace, TagId(3))
 
         assertEquals(
             listOf(
@@ -226,9 +238,9 @@ class TokklApiTest {
             billable = true,
         )
         api.reports.appSummary(AppSummaryBody(from, to, "projects", "projects", filter))
-        api.reports.search(7, DetailedSearchBody(from, to, 1, 15, "date", "DESC", 50, 1, ReportFilter()), JSON)
+        api.reports.search(WorkspaceId(7), DetailedSearchBody(from, to, 1, 15, "date", "DESC", 50, 1, ReportFilter()))
         val clients = ReportFilter(clientIds = listOf(5), billable = false)
-        api.reports.weekly(7, WeeklyReportBody(from, to, 0, 0, clients), JSON)
+        api.reports.weekly(WorkspaceId(7), WeeklyReportBody(from, to, 0, 0, clients))
         val csv = ReportCsvBody(from, to, filter, 1, 15, "classic", grouping = "projects", subGrouping = "projects")
         api.reports.exportCsv("summary", csv, ByteArrayOutputStream(), MAX_BYTES, ApiCallCancellation())
         val detailed =
@@ -261,13 +273,12 @@ class TokklApiTest {
         val from = LocalDate.parse("2026-10-21")
         val week = { filter: ReportFilter -> WeeklyReportBody(from, from.plusDays(6), 0, 0, filter) }
         val nothingPicked = ReportFilter(excludeProjects = true, excludeClients = true, excludeTags = true)
-        api.reports.weekly(7, week(nothingPicked), JSON)
+        api.reports.weekly(WorkspaceId(7), week(nothingPicked))
         val picked = ReportFilter(projectIds = listOf(null, 9), tagIds = listOf(4, 2), billable = false)
-        api.reports.weekly(7, week(picked), JSON)
+        api.reports.weekly(WorkspaceId(7), week(picked))
         api.reports.weekly(
-            7,
+            WorkspaceId(7),
             week(ReportFilter(listOf(9), excludeProjects = true, listOf(null, 5), excludeClients = true, listOf(4))),
-            JSON,
         )
 
         val head = """POST /tokkl/reports/api/v3/workspace/7/weekly/time_entries {"start_date":"2026-10-21",""" +
@@ -313,8 +324,6 @@ class TokklApiTest {
     }
 
     private companion object {
-        val JSON = JsonElement.serializer()
-
         const val MAX_BYTES = 1_000L
     }
 }

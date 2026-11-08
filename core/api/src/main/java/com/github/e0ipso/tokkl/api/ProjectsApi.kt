@@ -1,8 +1,11 @@
 package com.github.e0ipso.tokkl.api
 
-import kotlinx.serialization.DeserializationStrategy
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.TaskId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ListSerializer
 
 /**
  * What the project form sends, as the web app's ProjectBody: every field, so a save writes what
@@ -30,105 +33,83 @@ data class TaskBody(val name: String, val active: Boolean)
 @Serializable
 private class NewTaskBody(val name: String)
 
-/**
- * A workspace's projects and their tasks. The answers read as the caller's [DeserializationStrategy],
- * since the pages that send them own the shapes they read.
- */
+/** A workspace's projects and their tasks. */
 class ProjectsApi internal constructor(private val client: TogglApiClient) {
 
+    /** `GET /api/v9/workspaces/{workspaceId}/projects`, archived projects included. */
+    suspend fun list(workspaceId: WorkspaceId): ApiResult<List<WorkspaceProject>> =
+        client.get(projects(workspaceId), ListSerializer(WorkspaceProject.serializer()))
+
     /**
-     * `GET /api/v9/workspaces/{workspaceId}/projects`, archived projects included. With
-     * [activeBoth] it adds `active=both`, as the clients page asks.
+     * `GET /api/v9/workspaces/{workspaceId}/projects?active=both`, as the clients page asks, with
+     * each project's client.
      */
-    suspend fun <T> list(
-        workspaceId: Long,
-        deserializer: DeserializationStrategy<T>,
-        activeBoth: Boolean = false,
-    ): ApiResult<T> {
-        val url = projects(workspaceId).let {
-            if (activeBoth) it.newBuilder().addQueryParameter("active", "both").build() else it
-        }
-        return client.get(url, deserializer)
-    }
+    suspend fun clients(workspaceId: WorkspaceId): ApiResult<List<ProjectClient>> = client.get(
+        projects(workspaceId).newBuilder().addQueryParameter("active", "both").build(),
+        ListSerializer(ProjectClient.serializer()),
+    )
 
     /** `POST /api/v9/workspaces/{workspaceId}/projects`, sent once. */
-    suspend fun <T> create(
-        workspaceId: Long,
-        body: ProjectBody,
-        deserializer: DeserializationStrategy<T>,
-    ): ApiResult<T> = client.send(
+    suspend fun create(workspaceId: WorkspaceId, body: ProjectBody): ApiResult<WorkspaceProject> = client.send(
         HttpMethod.POST,
         projects(workspaceId),
         json(ProjectBody.serializer(), body),
-        deserializer,
+        WorkspaceProject.serializer(),
         resend = false,
     )
 
     /** `PUT /api/v9/workspaces/{workspaceId}/projects/{id}` with every field the form shows. */
-    suspend fun <T> update(
-        workspaceId: Long,
-        id: Long,
-        body: ProjectBody,
-        deserializer: DeserializationStrategy<T>,
-    ): ApiResult<T> = client.send(
-        HttpMethod.PUT,
-        projects(workspaceId, id.toString()),
-        json(ProjectBody.serializer(), body),
-        deserializer,
-    )
+    suspend fun update(workspaceId: WorkspaceId, id: ProjectId, body: ProjectBody): ApiResult<WorkspaceProject> =
+        client.send(
+            HttpMethod.PUT,
+            projects(workspaceId, id.toString()),
+            json(ProjectBody.serializer(), body),
+            WorkspaceProject.serializer(),
+        )
 
     /** `PUT /api/v9/workspaces/{workspaceId}/projects/{id}` with `active` alone: false archives it. */
-    suspend fun <T> setActive(
-        workspaceId: Long,
-        id: Long,
-        active: Boolean,
-        deserializer: DeserializationStrategy<T>,
-    ): ApiResult<T> = client.send(
-        HttpMethod.PUT,
-        projects(workspaceId, id.toString()),
-        json(ActiveBody.serializer(), ActiveBody(active)),
-        deserializer,
-    )
+    suspend fun setActive(workspaceId: WorkspaceId, id: ProjectId, active: Boolean): ApiResult<WorkspaceProject> =
+        client.send(
+            HttpMethod.PUT,
+            projects(workspaceId, id.toString()),
+            json(ActiveBody.serializer(), ActiveBody(active)),
+            WorkspaceProject.serializer(),
+        )
 
     /** `GET /api/v9/workspaces/{workspaceId}/projects/{projectId}/tasks`, done tasks included. */
-    suspend fun <T> tasks(workspaceId: Long, projectId: Long, deserializer: DeserializationStrategy<T>): ApiResult<T> =
-        client.get(tasks(workspaceId, projectId), deserializer)
+    suspend fun tasks(workspaceId: WorkspaceId, projectId: ProjectId): ApiResult<List<ProjectTask>> =
+        client.get(taskUrl(workspaceId, projectId), ListSerializer(ProjectTask.serializer()))
 
     /** `POST /api/v9/workspaces/{workspaceId}/projects/{projectId}/tasks` with [name], sent once. */
-    suspend fun <T> createTask(
-        workspaceId: Long,
-        projectId: Long,
-        name: String,
-        deserializer: DeserializationStrategy<T>,
-    ): ApiResult<T> = client.send(
-        HttpMethod.POST,
-        tasks(workspaceId, projectId),
-        json(NewTaskBody.serializer(), NewTaskBody(name)),
-        deserializer,
-        resend = false,
-    )
+    suspend fun createTask(workspaceId: WorkspaceId, projectId: ProjectId, name: String): ApiResult<ProjectTask> =
+        client.send(
+            HttpMethod.POST,
+            taskUrl(workspaceId, projectId),
+            json(NewTaskBody.serializer(), NewTaskBody(name)),
+            ProjectTask.serializer(),
+            resend = false,
+        )
 
     /** `PUT .../projects/{projectId}/tasks/{id}` with [body]. */
-    suspend fun <T> updateTask(
-        workspaceId: Long,
-        projectId: Long,
-        id: Long,
+    suspend fun updateTask(
+        workspaceId: WorkspaceId,
+        projectId: ProjectId,
+        id: TaskId,
         body: TaskBody,
-        deserializer: DeserializationStrategy<T>,
-    ): ApiResult<T> = client.send(
+    ): ApiResult<ProjectTask> = client.send(
         HttpMethod.PUT,
-        tasks(workspaceId, projectId, id.toString()),
+        taskUrl(workspaceId, projectId, id.toString()),
         json(TaskBody.serializer(), body),
-        deserializer,
+        ProjectTask.serializer(),
     )
 
     /** `DELETE .../projects/{projectId}/tasks/{id}`. Tokkl answers with no body. */
-    suspend fun deleteTask(workspaceId: Long, projectId: Long, id: Long): ApiResult<Unit> =
-        client.sendNoContent(HttpMethod.DELETE, tasks(workspaceId, projectId, id.toString()))
+    suspend fun deleteTask(workspaceId: WorkspaceId, projectId: ProjectId, id: TaskId): ApiResult<Unit> =
+        client.sendNoContent(HttpMethod.DELETE, taskUrl(workspaceId, projectId, id.toString()))
 
-    private fun projects(workspaceId: Long, vararg path: String) =
+    private fun projects(workspaceId: WorkspaceId, vararg path: String) =
         client.server.api("workspaces", workspaceId.toString(), "projects", *path)
 
-    private fun tasks(workspaceId: Long, projectId: Long, vararg path: String) =
+    private fun taskUrl(workspaceId: WorkspaceId, projectId: ProjectId, vararg path: String) =
         projects(workspaceId, projectId.toString(), "tasks", *path)
 }

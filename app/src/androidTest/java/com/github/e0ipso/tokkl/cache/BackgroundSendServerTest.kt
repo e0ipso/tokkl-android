@@ -151,7 +151,7 @@ class BackgroundSendServerTest {
                 TrashServer(
                     web.tokklApi(),
                 ).list()
-            }.orFail("GET /api/app/trash").single { it.id == sentId }
+            }.orFail("GET /api/app/trash").single { it.id.value == sentId }
             assertEquals("Queued offline", trashed.description)
             assertEquals("the short Stop reached Trash", trashed.start, trashed.stop)
             assertEquals("the short Stop has zero duration", 0L, trashed.duration)

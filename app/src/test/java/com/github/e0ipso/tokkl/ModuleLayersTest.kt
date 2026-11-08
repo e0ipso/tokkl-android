@@ -180,6 +180,8 @@ class ModuleLayersTest {
     private companion object {
         /** The modules each module exposes with `api`, because its public signatures carry their types. */
         val EXPOSED: Map<String, Set<String>> = mapOf(
+            // The API's calls take the model's ids, and its answers carry them.
+            ":core:api" to setOf(":core:model"),
             // The session's stores, refresh and sign-out take and give the API's, the model's, the
             // account time's and the disk stores' types.
             ":core:session" to setOf(":core:api", ":core:model", ":core:time", ":core:platform"),
@@ -201,15 +203,17 @@ class ModuleLayersTest {
         )
 
         /**
-         * The core modules in layers, lowest first. The bottom layer needs no other core module:
-         * the model, the API client, the time helpers, the design system and the Android
-         * plumbing. Above it sit the session, the cache that reads it, and the timer state that
-         * reads the cache, with what the timer's surfaces say about it.
+         * The core modules in layers, lowest first. The model needs no other core module. The
+         * layer above needs only the model: the API client, whose calls take the model's ids, the
+         * time helpers, the design system and the Android plumbing. Above it sit the session, the
+         * cache that reads it, and the timer state that reads the cache, with what the timer's
+         * surfaces say about it.
          * Then the timer state's event stream and its service, the parts several features show,
          * and the routes.
          */
         val CORE_LAYERS: List<Set<String>> = listOf(
-            setOf(":core:model", ":core:api", ":core:time", ":core:ui", ":core:platform"),
+            setOf(":core:model"),
+            setOf(":core:api", ":core:time", ":core:ui", ":core:platform"),
             setOf(":core:session"),
             setOf(":core:cache"),
             setOf(":core:timerstate"),

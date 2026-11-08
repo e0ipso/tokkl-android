@@ -1,6 +1,8 @@
 package com.github.e0ipso.tokkl.api
 
-import kotlinx.serialization.DeserializationStrategy
+import com.github.e0ipso.tokkl.model.EntryId
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.JsonArray
 
 /**
  * Tokkl's trash, outside the Toggl API. It belongs to the user, not to a workspace. Toggl Track
@@ -8,25 +10,28 @@ import kotlinx.serialization.DeserializationStrategy
  */
 class TrashApi internal constructor(private val client: TogglApiClient) {
 
+    /** `GET /api/app/trash`: the deleted entries, the most recently deleted first. */
+    suspend fun list(): ApiResult<List<TrashEntry>> =
+        client.get(client.server.app("trash"), ListSerializer(TrashEntry.serializer()))
+
     /**
-     * `GET /api/app/trash`, the most recently deleted first, read as [deserializer]: the trash
-     * page reads [TrashEntry] rows, while the capability probe only asks whether it is a list.
+     * `GET /api/app/trash` for the capability probe, which asks only whether the answer is a list,
+     * whatever its rows hold.
      */
-    suspend fun <T> list(deserializer: DeserializationStrategy<T>): ApiResult<T> =
-        client.get(client.server.app("trash"), deserializer)
+    suspend fun probe(): ApiResult<JsonArray> = client.get(client.server.app("trash"), JsonArray.serializer())
 
     /**
      * `POST /api/app/time_entries/{id}/restore` from the trash page. Tokkl answers with the
      * entry, which this call does not read, so any 2xx is a success.
      */
-    suspend fun restore(id: Long): ApiResult<Unit> =
+    suspend fun restore(id: EntryId): ApiResult<Unit> =
         client.sendNoContent(HttpMethod.POST, client.server.app("time_entries", id.toString(), "restore"), EMPTY_BODY)
 
-    /** `DELETE /api/app/trash/{id}`, which deletes the entry for good, read as [deserializer]. */
-    suspend fun <T> purge(id: Long, deserializer: DeserializationStrategy<T>): ApiResult<T> =
-        client.send(HttpMethod.DELETE, client.server.app("trash", id.toString()), null, deserializer)
+    /** `DELETE /api/app/trash/{id}`, which deletes the entry for good. */
+    suspend fun purge(id: EntryId): ApiResult<PurgedEntries> =
+        client.send(HttpMethod.DELETE, client.server.app("trash", id.toString()), null, PurgedEntries.serializer())
 
-    /** `DELETE /api/app/trash`, which deletes every entry in the trash for good, read as [deserializer]. */
-    suspend fun <T> purgeAll(deserializer: DeserializationStrategy<T>): ApiResult<T> =
-        client.send(HttpMethod.DELETE, client.server.app("trash"), null, deserializer)
+    /** `DELETE /api/app/trash`, which deletes every entry in the trash for good. */
+    suspend fun purgeAll(): ApiResult<PurgedEntries> =
+        client.send(HttpMethod.DELETE, client.server.app("trash"), null, PurgedEntries.serializer())
 }

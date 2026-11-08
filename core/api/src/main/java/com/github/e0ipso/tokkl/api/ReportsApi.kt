@@ -1,6 +1,9 @@
 package com.github.e0ipso.tokkl.api
 
-import kotlinx.serialization.DeserializationStrategy
+import com.github.e0ipso.tokkl.model.WorkspaceId
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonObjectBuilder
@@ -79,9 +82,40 @@ data class ReportCsvBody(
 )
 
 /**
- * The Reports API v3 and Tokkl's own report routes. Dates are the account's inclusive dates. The
- * report rows read as the caller's [DeserializationStrategy], since the Reports page owns them.
+ * One row of a detailed search. Tokkl sends one time entry per row; Toggl's grouped rows hold
+ * several.
  */
+@Serializable
+class ReportSearchRow(
+    val description: String? = null,
+    val billable: Boolean = false,
+    @SerialName("project_id") val projectId: Long? = null,
+    @SerialName("project_name") val projectName: String? = null,
+    @SerialName("project_color") val projectColor: String? = null,
+    @SerialName("task_name") val taskName: String? = null,
+    @SerialName("billable_amount_in_cents") val billableAmountInCents: Long? = null,
+    val currency: String? = null,
+    @SerialName("time_entries") val timeEntries: List<ReportSearchEntry> = emptyList(),
+)
+
+/**
+ * A time entry of a [ReportSearchRow]. [start] and [stop] are RFC 3339 with an offset, such as
+ * `2026-10-18T09:30:00+00:00`. [seconds] is after rounding.
+ */
+@Serializable
+class ReportSearchEntry(val id: Long? = null, val seconds: Long, val start: String, val stop: String? = null)
+
+/** One row of the weekly report: a project's seconds on each of the seven days, after rounding. */
+@Serializable
+class WeeklyReportRow(
+    @SerialName("project_id") val projectId: Long? = null,
+    @SerialName("project_name") val projectName: String? = null,
+    @SerialName("project_color") val projectColor: String? = null,
+    @SerialName("project_hex_color") val projectHexColor: String? = null,
+    val seconds: List<Long?> = emptyList(),
+)
+
+/** The Reports API v3 and Tokkl's own report routes. Dates are the account's inclusive dates. */
 class ReportsApi internal constructor(private val client: TogglApiClient) {
 
     /** `POST /api/app/report`, the summary as Tokkl's web app asks for it. */
@@ -106,22 +140,23 @@ class ReportsApi internal constructor(private val client: TogglApiClient) {
      * `POST /reports/api/v3/workspace/{workspaceId}/search/time_entries`, one page of the
      * detailed report, with the answer's headers, which name the next page's first row.
      */
-    suspend fun <T> search(
-        workspaceId: Long,
+    suspend fun search(
+        workspaceId: WorkspaceId,
         body: DetailedSearchBody,
-        deserializer: DeserializationStrategy<T>,
-    ): ApiResult<WithHeaders<T>> =
-        client.sendWithHeaders(HttpMethod.POST, timeEntries(workspaceId, "search"), body.json(), deserializer)
+    ): ApiResult<WithHeaders<List<ReportSearchRow>>> =
+        client.sendWithHeaders(HttpMethod.POST, timeEntries(workspaceId, "search"), body.json(), SEARCH_ROWS)
 
     /** `POST /reports/api/v3/workspace/{workspaceId}/weekly/time_entries`. */
-    suspend fun <T> weekly(
-        workspaceId: Long,
-        body: WeeklyReportBody,
-        deserializer: DeserializationStrategy<T>,
-    ): ApiResult<T> = client.send(HttpMethod.POST, timeEntries(workspaceId, "weekly"), body.json(), deserializer)
+    suspend fun weekly(workspaceId: WorkspaceId, body: WeeklyReportBody): ApiResult<List<WeeklyReportRow>> =
+        client.send(HttpMethod.POST, timeEntries(workspaceId, "weekly"), body.json(), WEEKLY_ROWS)
 
-    private fun timeEntries(workspaceId: Long, report: String) =
+    private fun timeEntries(workspaceId: WorkspaceId, report: String) =
         client.server.reports("workspace", workspaceId.toString(), report, "time_entries")
+
+    private companion object {
+        val SEARCH_ROWS = ListSerializer(ReportSearchRow.serializer())
+        val WEEKLY_ROWS = ListSerializer(WeeklyReportRow.serializer())
+    }
 }
 
 private fun AppSummaryBody.json(): JsonObject = buildJsonObject {

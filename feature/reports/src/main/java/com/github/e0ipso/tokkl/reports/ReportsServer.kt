@@ -5,15 +5,14 @@ import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.AppSummaryBody
 import com.github.e0ipso.tokkl.api.DetailedSearchBody
 import com.github.e0ipso.tokkl.api.HttpStatus
+import com.github.e0ipso.tokkl.api.ReportSearchRow
 import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.api.WeeklyReportBody
 import com.github.e0ipso.tokkl.api.WithHeaders
 import com.github.e0ipso.tokkl.api.flatMap
 import com.github.e0ipso.tokkl.api.getOrElse
 import com.github.e0ipso.tokkl.api.map
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.ListSerializer
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.OffsetDateTime
@@ -26,7 +25,7 @@ import java.time.format.DateTimeParseException
  * [roundingMinutes], with 0 minutes for no rounding.
  */
 data class ReportWorkspace(
-    val id: Long,
+    val id: WorkspaceId,
     val rounding: Int,
     val roundingMinutes: Int,
     /** A Tokkl role makes the app report worth trying; only its POST establishes support. */
@@ -41,11 +40,11 @@ class ReportsServer(private val api: TokklApi) {
 
     /** The account's default workspace from `GET /api/v9/me`, with its rounding from `GET /api/v9/workspaces/{id}`. */
     suspend fun workspace(): ApiResult<ReportWorkspace> {
-        val user = api.account.me(ReportUser.serializer()).getOrElse { return it }
-        val id = user.defaultWorkspaceId
-        return api.account.workspace(id, WorkspaceRounding.serializer()).map {
-            ReportWorkspace(id, it.rounding, it.roundingMinutes, user.role != null)
-        }
+        val user = api.account.defaultWorkspace().getOrElse { return it }
+        val id = user.defaultWorkspaceId ?: return ApiResult.Failure(
+            ApiError.InvalidResponse(IllegalArgumentException("/me has no default_workspace_id")),
+        )
+        return api.account.workspace(id).map { ReportWorkspace(id, it.rounding, it.roundingMinutes, user.role != null) }
     }
 
     /**
@@ -146,7 +145,7 @@ class ReportsServer(private val api: TokklApi) {
             roundingMinutes = workspace.roundingMinutes,
             filter = filters.apiFilter(),
         )
-        val rows = api.reports.weekly(workspace.id, body, WEEKLY_ROWS).getOrElse { return it }
+        val rows = api.reports.weekly(workspace.id, body).getOrElse { return it }
         if (rows.any { it.seconds.size != DAYS_IN_WEEK }) {
             return ApiResult.Failure(
                 ApiError.InvalidResponse(IllegalArgumentException("a weekly row does not hold $DAYS_IN_WEEK days")),
@@ -175,7 +174,7 @@ class ReportsServer(private val api: TokklApi) {
         direction: String,
         pageSize: Int,
         firstRow: Int,
-    ): ApiResult<WithHeaders<List<DetailedRow>>> {
+    ): ApiResult<WithHeaders<List<ReportSearchRow>>> {
         val body = DetailedSearchBody(
             startDate = range.from,
             endDate = range.to,
@@ -187,7 +186,7 @@ class ReportsServer(private val api: TokklApi) {
             firstRowNumber = firstRow,
             filter = filters.apiFilter(),
         )
-        return api.reports.search(workspace.id, body, ROWS)
+        return api.reports.search(workspace.id, body)
     }
 
     /**
@@ -219,78 +218,37 @@ class ReportsServer(private val api: TokklApi) {
         const val MAX_PAGES = 100
 
         const val NEXT_ROW_HEADER = "X-Next-Row-Number"
-
-        val ROWS = ListSerializer(DetailedRow.serializer())
-
-        val WEEKLY_ROWS = ListSerializer(WeeklyServerRow.serializer())
-    }
-}
-
-@Serializable
-private class ReportUser(@SerialName("default_workspace_id") val defaultWorkspaceId: Long, val role: String? = null)
-
-/** Toggl and Tokkl send a workspace's rounding as whole numbers. */
-@Serializable
-private class WorkspaceRounding(val rounding: Int = 0, @SerialName("rounding_minutes") val roundingMinutes: Int = 0)
-
-/**
- * One row of a detailed search. Tokkl sends one time entry per row. A row that holds several, as
- * Toggl's grouped rows do, counts its amount once, on its first entry.
- */
-@Serializable
-private class DetailedRow(
-    val description: String? = null,
-    val billable: Boolean = false,
-    @SerialName("project_id") val projectId: Long? = null,
-    @SerialName("project_name") val projectName: String? = null,
-    @SerialName("project_color") val projectColor: String? = null,
-    @SerialName("task_name") val taskName: String? = null,
-    @SerialName("billable_amount_in_cents") val billableAmountInCents: Long? = null,
-    val currency: String? = null,
-    @SerialName("time_entries") val timeEntries: List<DetailedTimeEntry> = emptyList(),
-) {
-    /** Throws [DateTimeParseException] for a start that is not an RFC 3339 date and time. */
-    fun entries(zone: ZoneId): List<ReportEntry> = timeEntries.mapIndexed { index, entry ->
-        ReportEntry(
-            seconds = entry.seconds,
-            billable = billable,
-            amountCents = if (index == 0) billableAmountInCents else billableAmountInCents?.let { 0L },
-            currency = currency ?: "",
-            projectId = projectId,
-            projectName = projectName,
-            projectColor = projectColor,
-            date = OffsetDateTime.parse(entry.start).atZoneSameInstant(zone).toLocalDate(),
-        )
-    }
-
-    /** Throws [DateTimeParseException] for a start or stop that is not an RFC 3339 date and time. */
-    fun detailed(zone: ZoneId): List<DetailedEntry> = timeEntries.map { entry ->
-        DetailedEntry(
-            id = entry.id,
-            description = description ?: "",
-            projectName = projectName,
-            projectColor = projectColor,
-            taskName = taskName,
-            start = OffsetDateTime.parse(entry.start).atZoneSameInstant(zone),
-            stop = entry.stop?.let { OffsetDateTime.parse(it).atZoneSameInstant(zone) },
-            seconds = entry.seconds,
-        )
     }
 }
 
 /**
- * [start] and [stop] are RFC 3339 with an offset, such as `2026-10-18T09:30:00+00:00`. [seconds]
- * is after rounding.
+ * The row's entries, each on its day in [zone]. A row that holds several entries, as Toggl's
+ * grouped rows do, counts its amount once, on its first entry. Throws [DateTimeParseException] for
+ * a start that is not an RFC 3339 date and time.
  */
-@Serializable
-private class DetailedTimeEntry(val id: Long? = null, val seconds: Long, val start: String, val stop: String? = null)
+private fun ReportSearchRow.entries(zone: ZoneId): List<ReportEntry> = timeEntries.mapIndexed { index, entry ->
+    ReportEntry(
+        seconds = entry.seconds,
+        billable = billable,
+        amountCents = if (index == 0) billableAmountInCents else billableAmountInCents?.let { 0L },
+        currency = currency ?: "",
+        projectId = projectId,
+        projectName = projectName,
+        projectColor = projectColor,
+        date = OffsetDateTime.parse(entry.start).atZoneSameInstant(zone).toLocalDate(),
+    )
+}
 
-/** One row of the weekly report: a project's seconds on each of the seven days, after rounding. */
-@Serializable
-private class WeeklyServerRow(
-    @SerialName("project_id") val projectId: Long? = null,
-    @SerialName("project_name") val projectName: String? = null,
-    @SerialName("project_color") val projectColor: String? = null,
-    @SerialName("project_hex_color") val projectHexColor: String? = null,
-    val seconds: List<Long?> = emptyList(),
-)
+/** Throws [DateTimeParseException] for a start or stop that is not an RFC 3339 date and time. */
+private fun ReportSearchRow.detailed(zone: ZoneId): List<DetailedEntry> = timeEntries.map { entry ->
+    DetailedEntry(
+        id = entry.id,
+        description = description ?: "",
+        projectName = projectName,
+        projectColor = projectColor,
+        taskName = taskName,
+        start = OffsetDateTime.parse(entry.start).atZoneSameInstant(zone),
+        stop = entry.stop?.let { OffsetDateTime.parse(it).atZoneSameInstant(zone) },
+        seconds = entry.seconds,
+    )
+}

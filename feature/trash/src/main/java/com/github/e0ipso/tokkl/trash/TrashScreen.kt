@@ -26,6 +26,7 @@ import com.github.e0ipso.tokkl.catalog.CatalogPage
 import com.github.e0ipso.tokkl.catalog.ConfirmDialog
 import com.github.e0ipso.tokkl.catalog.DetailLine
 import com.github.e0ipso.tokkl.feature.trash.R
+import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.ServerProblem
 import com.github.e0ipso.tokkl.time.AccountTime
@@ -109,7 +110,7 @@ fun TrashScreen(
                 }
             }
             if (!entries.isNullOrEmpty()) {
-                itemsIndexed(entries, key = { _, entry -> entry.id }) { index, entry ->
+                itemsIndexed(entries, key = { _, entry -> entry.id.value }) { index, entry ->
                     Column {
                         if (index > 0) HorizontalDivider()
                         TrashRow(
@@ -159,8 +160,8 @@ fun TrashScreen(
 /** What the page's controls do. */
 class TrashActions(
     val onRetry: () -> Unit = {},
-    val onRestore: (Long) -> Unit = {},
-    val onPurge: (Long) -> Unit = {},
+    val onRestore: (EntryId) -> Unit = {},
+    val onPurge: (EntryId) -> Unit = {},
     val onAskToEmpty: () -> Unit = {},
     val onEmpty: () -> Unit = {},
     val onDismiss: () -> Unit = {},

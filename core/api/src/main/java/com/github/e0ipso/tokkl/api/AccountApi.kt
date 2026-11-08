@@ -1,6 +1,6 @@
 package com.github.e0ipso.tokkl.api
 
-import kotlinx.serialization.DeserializationStrategy
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
@@ -66,13 +66,15 @@ data class FavoriteBody(
 /** The signed-in user, their preferences and their workspaces. */
 class AccountApi internal constructor(private val client: TogglApiClient) {
 
+    /** `GET /api/v9/me`, the whole [Me] that sign-in reads. */
+    suspend fun me(): ApiResult<Me> = client.get(client.server.api("me"), Me.serializer())
+
     /**
-     * `GET /api/v9/me`, read as [deserializer]: sign-in reads a whole [Me], while the catalog pages
-     * and the reports read only the default workspace, so a body that lacks the rest still serves
-     * them.
+     * `GET /api/v9/me` read for its default workspace and role alone, as the catalog pages and the
+     * reports read it, so a body that lacks the rest of a [Me] still serves them.
      */
-    suspend fun <T> me(deserializer: DeserializationStrategy<T>): ApiResult<T> =
-        client.get(client.server.api("me"), deserializer)
+    suspend fun defaultWorkspace(): ApiResult<MeWorkspace> =
+        client.get(client.server.api("me"), MeWorkspace.serializer())
 
     /** `GET /api/v9/me?with_related_data=true`, with the clients, projects, tags and tasks. */
     suspend fun meWithRelatedData(): ApiResult<Me> = client.get(
@@ -86,16 +88,18 @@ class AccountApi internal constructor(private val client: TogglApiClient) {
 
     /**
      * `POST /api/v9/me/preferences` with the keys of [change] alone. Tokkl merges them into the
-     * stored preferences, so every other key stays. The answer reads as [deserializer].
+     * stored preferences, so every other key stays, and answers with the stored preferences.
      */
-    suspend fun <T> savePreferences(
-        change: PreferencesChange,
-        deserializer: DeserializationStrategy<T>,
-    ): ApiResult<T> = client.send(HttpMethod.POST, client.server.api("me", "preferences"), change.json(), deserializer)
+    suspend fun savePreferences(change: PreferencesChange): ApiResult<JsonObject> = client.send(
+        HttpMethod.POST,
+        client.server.api("me", "preferences"),
+        change.json(),
+        JsonObject.serializer(),
+    )
 
-    /** `GET /api/v9/workspaces/{workspaceId}`, read as [deserializer]. */
-    suspend fun <T> workspace(workspaceId: Long, deserializer: DeserializationStrategy<T>): ApiResult<T> =
-        client.get(client.server.api("workspaces", workspaceId.toString()), deserializer)
+    /** `GET /api/v9/workspaces/{workspaceId}`. */
+    suspend fun workspace(workspaceId: WorkspaceId): ApiResult<WorkspaceSettings> =
+        client.get(client.server.api("workspaces", workspaceId.toString()), WorkspaceSettings.serializer())
 
     private fun PreferencesChange.json(): JsonElement = when (this) {
         is PomodoroDefaultsChange -> json(PomodoroDefaultsChange.serializer(), this)

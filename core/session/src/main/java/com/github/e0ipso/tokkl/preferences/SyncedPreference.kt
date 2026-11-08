@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.serialization.json.JsonObject
 import java.io.IOException
 
 /** A preference's value as the phone keeps it, and whether the server still has to get it. */
@@ -183,7 +182,7 @@ class SyncedPreference<T : Any>(
         val (value, expected) = memory.withLock { held.value.takeIf { unsent } to generation }
         if (value == null) return@withLock
         val api = client() ?: return@withLock
-        val answer = api.account.savePreferences(codec.body(value), JsonObject.serializer())
+        val answer = api.account.savePreferences(codec.body(value))
         if (answer !is ApiResult.Success) return@withLock
         memory.withLock {
             // A change while the request ran has its own write queued.

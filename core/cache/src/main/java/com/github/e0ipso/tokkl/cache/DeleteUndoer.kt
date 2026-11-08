@@ -78,7 +78,7 @@ class DeleteUndoer(
     /** Asks the server to restore its entry [serverId], and records the answer. */
     private suspend fun restore(serverId: Long): UndoOutcome {
         val api = client() ?: return UndoOutcome.NeedsServer
-        return when (val result = api.entries.restore(serverId, resend = true)) {
+        return when (val result = api.entries.restore(EntryId(serverId), resend = true)) {
             is ApiResult.Success -> {
                 store.restored(serverId, result.value.toCached())
                 UndoOutcome.Restored

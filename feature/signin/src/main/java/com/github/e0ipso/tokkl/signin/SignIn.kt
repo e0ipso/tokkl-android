@@ -3,7 +3,6 @@ package com.github.e0ipso.tokkl.signin
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ConfiguredServer
-import com.github.e0ipso.tokkl.api.Me
 import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
@@ -135,7 +134,7 @@ class SignIn(
         if (account != null && server != account.server) return SignInResult.OtherAccount
         val api = TokklApi(TogglApiClient(server, credentials.toApiCredentials(), httpClient, io = io))
         // Until the server is stored, the URL being tried is the configured server.
-        val me = configured.signingIn(server) { api.account.me(Me.serializer()) }
+        val me = configured.signingIn(server) { api.account.me() }
             .getOrElse { return it.error.toSignInResult() }
         val settings = me.accountSettings() ?: return SignInResult.NotTokkl
         if (account?.userId != null && me.id != account.userId) return SignInResult.OtherAccount

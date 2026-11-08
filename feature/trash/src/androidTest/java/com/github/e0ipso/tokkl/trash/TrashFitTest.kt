@@ -22,6 +22,7 @@ import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
 import com.github.e0ipso.tokkl.api.TrashEntry
 import com.github.e0ipso.tokkl.feature.trash.R
+import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.ServerProblem
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
@@ -143,7 +144,7 @@ class TrashFitTest {
         )
         val ENTRIES = listOf(
             TrashEntry(
-                id = 1,
+                id = EntryId(1),
                 description = "Review the quarterly report with the whole team",
                 start = "2026-10-19T07:00:00+00:00",
                 stop = "2026-10-19T08:30:00+00:00",
@@ -153,7 +154,7 @@ class TrashFitTest {
                 deletedAt = "2026-10-20T08:00:00+00:00",
             ),
             TrashEntry(
-                id = 2,
+                id = EntryId(2),
                 description = null,
                 start = "2025-12-30T16:00:00+00:00",
                 duration = -1767110400,

@@ -4,6 +4,7 @@ import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.HttpStatus
 import com.github.e0ipso.tokkl.api.TokklApi
+import com.github.e0ipso.tokkl.model.EntryId
 
 /** What the drain does with a refused change. */
 internal sealed interface Refusal {
@@ -92,7 +93,7 @@ private suspend fun missingEntryRefusal(
  * 2xx the phone cannot read as an entry still means the server has it.
  */
 private suspend fun entryOnServer(api: TokklApi, id: Long): ApiResult<Boolean> =
-    when (val result = api.entries.get(id)) {
+    when (val result = api.entries.get(EntryId(id))) {
         is ApiResult.Success -> ApiResult.Success(true)
 
         is ApiResult.Failure -> when {

@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.api
 
+import com.github.e0ipso.tokkl.model.EntryId
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -11,7 +12,7 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class TrashEntry(
-    val id: Long,
+    val id: EntryId,
     val description: String? = null,
     val start: String,
     val stop: String? = null,

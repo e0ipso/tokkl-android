@@ -8,6 +8,7 @@ import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.capabilities.ReportCsvKind
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.time.DurationFormat
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
@@ -34,7 +35,7 @@ class AppSummaryServerTest {
     private val http = MockWebServer()
     private lateinit var server: ReportsServer
     private val range = ReportRange(LocalDate.parse("2026-10-21"), LocalDate.parse("2026-10-27"))
-    private val workspace = ReportWorkspace(7, 1, 15, appSummaryCandidate = true)
+    private val workspace = ReportWorkspace(WorkspaceId(7), 1, 15, appSummaryCandidate = true)
     private val zone = ZoneId.of("Pacific/Kiritimati")
     private val filters = ReportFilters(
         projects = listOf(null, 8),

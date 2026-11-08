@@ -21,7 +21,7 @@ class ClientsRepository(client: ApiClientProvider) : CatalogRepository<ClientsDa
         val server = ClientsServer(client, workspace)
         val clients = server.list().getOrElse { return@call it }.filter { it.workspaceId == workspace }.sortedForList()
         server.projects().map { projects ->
-            ClientsData(clients, projects.mapNotNull { it.clientId?.let(::ClientId) }.groupingBy { it }.eachCount())
+            ClientsData(clients, projects.mapNotNull { it.clientId }.groupingBy { it }.eachCount())
         }
     }
 

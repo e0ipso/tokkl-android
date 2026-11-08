@@ -7,7 +7,6 @@ import com.github.e0ipso.tokkl.api.Me
 import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.model.Capabilities
-import kotlinx.serialization.json.JsonArray
 
 /** Whether the server offers the CSV of [kind] ([Capabilities.summaryCsv], [Capabilities.detailedCsv]). */
 fun Capabilities.supports(kind: ReportCsvKind): Boolean = when (kind) {
@@ -72,7 +71,7 @@ enum class TrashProbe {
 }
 
 /** Sends `GET /api/app/trash` once. */
-suspend fun probeTrash(api: TokklApi): TrashProbe = when (val result = api.trash.list(JsonArray.serializer())) {
+suspend fun probeTrash(api: TokklApi): TrashProbe = when (val result = api.trash.probe()) {
     is ApiResult.Success -> TrashProbe.PRESENT
 
     is ApiResult.Failure -> when (val error = result.error) {

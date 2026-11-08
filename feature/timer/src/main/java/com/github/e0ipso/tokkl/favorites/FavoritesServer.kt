@@ -9,7 +9,6 @@ import com.github.e0ipso.tokkl.api.map
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.Favorite
-import kotlinx.serialization.json.JsonElement
 
 /** The most favorites Tokkl keeps: `MAX_FAVORITES` in ../tokkl/packages/api/src/models/users.ts. */
 const val MAX_FAVORITES = 9
@@ -28,7 +27,7 @@ class FavoritesServer(private val client: ApiClientProvider, private val cache: 
      */
     suspend fun save(favorites: List<EntryFields>): ApiResult<Unit> {
         val api = client() ?: return ApiResult.Failure(ApiError.AuthFailed)
-        return api.account.savePreferences(favoritesBody(favorites), JsonElement.serializer()).map {
+        return api.account.savePreferences(favoritesBody(favorites)).map {
             cache.replaceFavorites(favorites.mapIndexed { position, fields -> fields.toFavorite(position) })
         }
     }

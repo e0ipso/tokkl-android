@@ -3,12 +3,8 @@ package com.github.e0ipso.tokkl.trash
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.api.TrashEntry
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.ListSerializer
-
-/** How many entries a purge removed for good. */
-@Serializable
-data class Purged(val deleted: Int = 0)
+import com.github.e0ipso.tokkl.api.map
+import com.github.e0ipso.tokkl.model.EntryId
 
 /**
  * Tokkl's trash calls on the configured server, outside the Toggl API (docs/PRD.md section 6).
@@ -17,16 +13,16 @@ data class Purged(val deleted: Int = 0)
 class TrashServer(private val api: TokklApi) {
 
     /** The deleted entries, the most recently deleted first, at most [LIST_LIMIT] of them. */
-    suspend fun list(): ApiResult<List<TrashEntry>> = api.trash.list(ListSerializer(TrashEntry.serializer()))
+    suspend fun list(): ApiResult<List<TrashEntry>> = api.trash.list()
 
     /** Puts entry [id] back among the time entries. Tokkl answers with the entry. */
-    suspend fun restore(id: Long): ApiResult<Unit> = api.trash.restore(id)
+    suspend fun restore(id: EntryId): ApiResult<Unit> = api.trash.restore(id)
 
-    /** Deletes entry [id] for good. A 404 means it is no longer in the trash. */
-    suspend fun purge(id: Long): ApiResult<Purged> = api.trash.purge(id, Purged.serializer())
+    /** Deletes entry [id] for good, with the number of entries removed. A 404: it is no longer in the trash. */
+    suspend fun purge(id: EntryId): ApiResult<Int> = api.trash.purge(id).map { it.deleted }
 
-    /** Deletes every entry in the trash for good. */
-    suspend fun purgeAll(): ApiResult<Purged> = api.trash.purgeAll(Purged.serializer())
+    /** Deletes every entry in the trash for good, with the number of entries it removed. */
+    suspend fun purgeAll(): ApiResult<Int> = api.trash.purgeAll().map { it.deleted }
 
     companion object {
         /** Tokkl lists no more than this many deleted entries. */

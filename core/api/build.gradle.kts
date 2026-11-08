@@ -7,6 +7,8 @@ plugins {
 }
 
 dependencies {
+    // The API's calls take the model's typed ids, and its answers carry them.
+    api(project(":core:model"))
     // The API's types and calls use OkHttp's and kotlinx.serialization's types, and its calls suspend.
     api(libs.okhttp)
     api(libs.kotlinx.serialization.json)

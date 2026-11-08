@@ -6,7 +6,7 @@ import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.api.TrashEntry
 import com.github.e0ipso.tokkl.api.flatMap
-import kotlinx.serialization.builtins.ListSerializer
+import com.github.e0ipso.tokkl.model.EntryId
 import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 
@@ -15,7 +15,7 @@ import java.time.temporal.ChronoUnit
  * after reading the exact stopped row, including a short row hidden in Trash.
  */
 internal suspend fun stoppedOnServer(api: TokklApi, change: PendingChange): ApiResult<Boolean> =
-    when (val result = api.entries.get(change.entryId)) {
+    when (val result = api.entries.get(EntryId(change.entryId))) {
         is ApiResult.Success -> when {
             result.value.stop == null -> ApiResult.Success(false)
             result.value.matchesStop(change) -> ApiResult.Success(true)
@@ -23,7 +23,7 @@ internal suspend fun stoppedOnServer(api: TokklApi, change: PendingChange): ApiR
         }
 
         is ApiResult.Failure -> if (change.shortStop && (result.error as? ApiError.Http)?.status == NOT_FOUND) {
-            api.trash.list(ListSerializer(TrashEntry.serializer())).flatMap { trash ->
+            api.trash.list().flatMap { trash ->
                 if (trash.any { it.matchesStop(change) }) {
                     ApiResult.Success(true)
                 } else {
@@ -52,7 +52,7 @@ internal fun ServerTimeEntry.matchesStop(change: PendingChange): Boolean =
         } == change.stop?.truncatedTo(ChronoUnit.SECONDS) &&
         (serverDeletedAt != null) == change.shortStop
 
-private fun TrashEntry.matchesStop(change: PendingChange): Boolean = id == change.entryId && deletedAt != null &&
+private fun TrashEntry.matchesStop(change: PendingChange): Boolean = id.value == change.entryId && deletedAt != null &&
     runCatching {
         OffsetDateTime.parse(
             start,

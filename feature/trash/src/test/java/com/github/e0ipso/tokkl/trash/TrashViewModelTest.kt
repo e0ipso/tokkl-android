@@ -6,6 +6,7 @@ import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.api.TrashEntry
+import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.platform.TestApp
 import com.github.e0ipso.tokkl.platform.TestScreen
 import com.github.e0ipso.tokkl.session.ServerProblem
@@ -84,7 +85,7 @@ class TrashViewModelTest {
 
         screen.show()
 
-        assertEquals(listOf(1L, 2L), model.state.value.entries?.map { it.id })
+        assertEquals(listOf(1L, 2L), model.state.value.entries?.map { it.id.value })
         assertEquals("Write", model.state.value.entries?.first()?.description)
         assertEquals("Website", model.state.value.entries?.first()?.projectName)
         assertTrue(model.state.value.canChange)
@@ -127,9 +128,9 @@ class TrashViewModelTest {
         answers["POST /api/app/time_entries/1/restore"] = json(entry(1, "Write"))
         screen.show()
 
-        model.restore(1)
+        model.restore(EntryId(1))
 
-        assertEquals(listOf(2L), model.state.value.entries?.map { it.id })
+        assertEquals(listOf(2L), model.state.value.entries?.map { it.id.value })
         assertEquals(TrashChange.Restored, model.state.value.done)
         assertEquals(1, cacheRefreshes)
     }
@@ -140,9 +141,9 @@ class TrashViewModelTest {
         answers["DELETE /api/app/trash/2"] = json("""{"deleted":1}""")
         screen.show()
 
-        model.purge(2)
+        model.purge(EntryId(2))
 
-        assertEquals(listOf(1L), model.state.value.entries?.map { it.id })
+        assertEquals(listOf(1L), model.state.value.entries?.map { it.id.value })
         assertEquals(TrashChange.Purged, model.state.value.done)
         assertEquals("a purge leaves the cache alone", 0, cacheRefreshes)
     }
@@ -156,7 +157,7 @@ class TrashViewModelTest {
         screen.show()
         answers[LIST] = json("[]")
 
-        model.purge(1)
+        model.purge(EntryId(1))
 
         assertEquals(ServerProblem.Refused("Time entry not found in trash"), model.state.value.changeProblem)
         assertEquals(emptyList<TrashEntry>(), model.state.value.entries)
@@ -202,7 +203,7 @@ class TrashViewModelTest {
         model.empty()
 
         assertFalse("DELETE /api/app/trash" in requests)
-        assertEquals(listOf(1L), model.state.value.entries?.map { it.id })
+        assertEquals(listOf(1L), model.state.value.entries?.map { it.id.value })
     }
 
     /**
@@ -219,7 +220,7 @@ class TrashViewModelTest {
         screen.show()
 
         assertTrue(model.state.value.confirmingEmpty)
-        assertEquals(listOf(1L), model.state.value.entries?.map { it.id })
+        assertEquals(listOf(1L), model.state.value.entries?.map { it.id.value })
         assertEquals(2, requests.count { it == LIST })
     }
 
