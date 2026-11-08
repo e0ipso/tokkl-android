@@ -142,7 +142,7 @@ class NativeNotificationPermissionTest {
             println(
                 "Native permission start: lifecycle=${activity.lifecycle.currentState}, events=$starts, permission=${activity.checkSelfPermission(
                     Manifest.permission.POST_NOTIFICATIONS,
-                )}, asked=${NotificationPermissionStore(activity.applicationContext).asked()}",
+                )}, asked=${runBlocking { NotificationPermissionStore(activity.applicationContext).asked() }}",
             )
         }
         var nativeButton: UiObject2? = null
@@ -152,7 +152,7 @@ class NativeNotificationPermissionTest {
             nativeButton = device.findObject(By.res(PERMISSION_CONTROLLER, button))
             nativeButton != null
         }
-        assertTrue("the launched request was persisted", NotificationPermissionStore(context).asked())
+        assertTrue("the launched request was persisted", runBlocking { NotificationPermissionStore(context).asked() })
         println("Native notification permission dialog: timer running before $button on API ${Build.VERSION.SDK_INT}")
         return checkNotNull(nativeButton)
     }

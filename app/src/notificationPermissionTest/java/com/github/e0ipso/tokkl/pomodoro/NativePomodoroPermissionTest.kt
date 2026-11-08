@@ -110,7 +110,7 @@ class NativePomodoroPermissionTest {
             tap(UiR.string.pomodoro_start)
             compose.waitUntil(15_000) { session() != null }
             assertNull(device.findObject(By.res(CONTROLLER, "permission_allow_button")))
-            assertTrue(NotificationPermissionStore(context).asked())
+            assertTrue(runBlocking { NotificationPermissionStore(context).asked() })
             tap(PomodoroR.string.pomodoro_notifications_settings)
             compose.waitUntil(15_000) { device.currentPackageName == "com.android.settings" }
             assertNotNull("settings never ends the running session", session())
@@ -126,7 +126,7 @@ class NativePomodoroPermissionTest {
         compose.waitUntil(15_000) { device.findObject(By.res(CONTROLLER, "permission_allow_button")) != null }
         // The native dialog is deliberately unanswered while the server's session arrives.
         compose.waitUntil(15_000) { session() != null }
-        compose.waitUntil(15_000) { NotificationPermissionStore(context).asked() }
+        compose.waitUntil(15_000) { runBlocking { NotificationPermissionStore(context).asked() } }
     }
 
     /** The server's session as the phone holds it, or null without one. */
