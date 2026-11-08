@@ -84,7 +84,7 @@ class ChangeQueueRestartTest {
             },
         )
         assertTrue(runBlocking { app.changes.stop(id) })
-        runBlocking { app.sender.send().join() }
+        runBlocking { app.sender.sendAndWait() }
 
         assertEquals("the drain failed and kept every change", 3, runBlocking { app.changes.unsentCount.first() })
         assertTrue(
@@ -122,7 +122,7 @@ class ChangeQueueRestartTest {
                 // observation for the loop guard and its strict progress assertion.
                 val before = runBlocking { app.changes.unsentCount.first() }
                 if (before == 0) break
-                runBlocking { app.sender.send().join() }
+                runBlocking { app.sender.sendAndWait() }
                 assertTrue("the drain sent nothing", runBlocking { app.changes.unsentCount.first() } < before)
             }
 

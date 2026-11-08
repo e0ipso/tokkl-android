@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.timer
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.cache.ChangeSender
+import com.github.e0ipso.tokkl.cache.DeleteUndo
 import com.github.e0ipso.tokkl.calendar.CalendarViewModel
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.entry.EntryFormViewModel
@@ -84,7 +85,7 @@ val timerFeatureModule = module {
         EntryActionsViewModel(
             entries = get<AccountCache>().entries,
             changes = get<ChangeQueue>(),
-            undo = get<ChangeSender>(),
+            undo = get<DeleteUndo>(),
             canRestore = capabilities::offersRestore,
             accountSettings = get<AccountSettingsSource>().state,
             scope = viewModelCoroutineScope(),

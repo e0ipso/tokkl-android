@@ -603,7 +603,7 @@ class ChangeQueueServerTest {
         }
         // The relay drops the create on a connection it cut, or holds it on a new one until the
         // read times out. Either way the phone cannot tell whether the server stored it.
-        runBlocking { app.sender.send().join() }
+        runBlocking { app.sender.sendAndWait() }
         assertEquals("the create stays queued", 1, unsentCount())
         relay.release()
         drainUntilEmpty()
@@ -629,7 +629,7 @@ class ChangeQueueServerTest {
         }
         // The relay drops the create on a connection it cut, or holds it on a new one until the
         // read times out. Either way the phone cannot tell whether the server stored it.
-        runBlocking { app.sender.send().join() }
+        runBlocking { app.sender.sendAndWait() }
         assertEquals("the create stays queued", 1, unsentCount())
         relay.release()
         drainUntilEmpty()
@@ -673,7 +673,7 @@ class ChangeQueueServerTest {
                 stop,
             )
         }
-        runBlocking { app.sender.send().join() }
+        runBlocking { app.sender.sendAndWait() }
         assertEquals("the copy stays queued", 1, unsentCount())
         relay.release()
         drainUntilEmpty()
@@ -703,7 +703,7 @@ class ChangeQueueServerTest {
                 noTimeDay = day,
             )
         }
-        runBlocking { app.sender.send().join() }
+        runBlocking { app.sender.sendAndWait() }
         assertEquals("the create stays queued", 1, unsentCount())
         relay.release()
         drainUntilEmpty()
@@ -723,7 +723,7 @@ class ChangeQueueServerTest {
     private fun <T> queueWithNoRoute(change: suspend () -> T): T {
         signIn(NO_ROUTE, account.apiToken)
         val result = runBlocking { change() }
-        runBlocking { app.sender.send().join() }
+        runBlocking { app.sender.sendAndWait() }
         assertTrue("the change stays queued", unsentCount() > 0)
         return result
     }
@@ -909,7 +909,7 @@ class ChangeQueueServerTest {
         val deadline = System.nanoTime() + DRAIN_TIMEOUT.toNanos()
         while (unsentCount() > 0) {
             if (System.nanoTime() > deadline) throw AssertionError("the queue still holds ${unsentCount()} changes")
-            runBlocking { app.sender.send().join() }
+            runBlocking { app.sender.sendAndWait() }
         }
         // The drain's own refresh, so the cache shows the server's rows.
         runBlocking { app.accountRefresh.refresh().join() }

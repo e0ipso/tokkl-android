@@ -209,7 +209,7 @@ class SyncStatusServerTest {
     fun openingTheAppWithAnExpiredTokenAndSavedChangesAsksForSignIn() {
         runBlocking {
             app.accountRefresh.refresh().join()
-            app.sender.send().join()
+            app.sender.sendAndWait()
         }
         // The server ends the timer event stream when the token is reset. The stream's refused
         // reconnect would then ask for sign-in before the app opens, as TimerSyncLifecycleTest

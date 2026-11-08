@@ -20,6 +20,7 @@ import com.github.e0ipso.tokkl.cache.BackgroundSendRuns
 import com.github.e0ipso.tokkl.cache.CacheDatabase
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.cache.ChangeSender
+import com.github.e0ipso.tokkl.cache.DeleteUndoer
 import com.github.e0ipso.tokkl.cache.RunningCheck
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.navhost.NavigationStores
@@ -76,6 +77,7 @@ val TokklApplication.cache: AccountCache get() = component()
 val TokklApplication.cacheDatabase: CacheDatabase get() = component()
 val TokklApplication.changes: ChangeQueue get() = component()
 val TokklApplication.sender: ChangeSender get() = component()
+val TokklApplication.deleteUndo: DeleteUndoer get() = component()
 val TokklApplication.accountSettings: AccountSettingsSource get() = component()
 val TokklApplication.accountRefresh: AccountRefresh get() = component()
 val TokklApplication.capabilities: CapabilitiesSource get() = component()

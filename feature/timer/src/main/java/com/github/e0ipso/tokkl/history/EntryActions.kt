@@ -3,9 +3,9 @@ package com.github.e0ipso.tokkl.history
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.github.e0ipso.tokkl.cache.ChangeSender.UndoOutcome
 import com.github.e0ipso.tokkl.cache.DeleteUndo
 import com.github.e0ipso.tokkl.cache.EntryChanges
+import com.github.e0ipso.tokkl.cache.UndoOutcome
 import com.github.e0ipso.tokkl.capabilities.CapabilityCheck
 import com.github.e0ipso.tokkl.catalog.ServerProblem
 import com.github.e0ipso.tokkl.entryfields.SplitHalves
@@ -116,7 +116,7 @@ data class EntryActionsState(
  *   and Split cuts.
  * @param accountSettings the account's timezone, time resolution and clock format, which Split
  *   reads the time with.
- * @param undo takes back the delete of an entry, as `ChangeSender.undoDelete` does.
+ * @param undo takes back the delete of an entry, as `DeleteUndoer.undoDelete` does.
  * @param canRestore whether the server restores deleted entries, `Capabilities.restore`.
  */
 class EntryActionsViewModel(

@@ -35,13 +35,15 @@ class TimerActionsRouteTest {
             "$PACKAGE/timerstate/SessionLengths",
         )
 
-        /** The change queue, its store and its sender. */
+        /** The change queue, its store, its sender and its Undo. */
         val FORBIDDEN = listOf(
             "cache/ChangeQueue",
             "cache/ChangeStore",
             "cache/RoomChangeStore",
             "cache/ChangeDao",
             "cache/ChangeSender",
+            "cache/DeleteUndoer",
+            "cache/RetryAfter",
             "cache/PendingChange",
             "cache/BackgroundSend",
             "cache/EntryChanges",

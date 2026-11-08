@@ -27,10 +27,12 @@ import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.cache.ChangeSender
+import com.github.e0ipso.tokkl.cache.UndoOutcome
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.capabilities
 import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.deleteUndo
 import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.model.EntryId
@@ -104,13 +106,13 @@ class DeleteUndoServerTest {
 
         val outcome = RequestCounter(TokklTestServer.url, "/api/app/time_entries/$id/restore HTTP/1.1").use { counter ->
             signIn(counter.url)
-            runBlocking { app.sender.undoDelete(EntryId(id)) }.also {
+            runBlocking { app.deleteUndo.undoDelete(EntryId(id)) }.also {
                 assertEquals("one restore request", 1, counter.count)
                 assertEquals(emptyList<String>(), counter.failures)
             }
         }
 
-        assertEquals(ChangeSender.UndoOutcome.Restored, outcome)
+        assertEquals(UndoOutcome.Restored, outcome)
         val restored = (serverEntry(id) as ApiResult.Success).value
         assertEquals("Deleted by mistake", restored.getValue("description").jsonPrimitive.content)
         assertEquals("out of the trash", emptyList<Long>(), trash())
@@ -129,19 +131,19 @@ class DeleteUndoServerTest {
         // Nothing listens there, so the sender's try fails before any request reaches a server.
         signIn(NO_ROUTE)
         assertTrue(runBlocking { app.changes.delete(EntryId(id)) })
-        runBlocking { app.sender.send().join() }
+        runBlocking { app.sender.sendAndWait() }
         assertEquals("the delete waits in the queue", 1, unsentCount())
         assertTrue("gone from the phone", runBlocking { app.cache.entries.first() }.none { it.entry.id.value == id })
 
         val outcome = RequestCounter(TokklTestServer.url, " HTTP/1.1").use { counter ->
             signIn(counter.url)
-            runBlocking { app.sender.undoDelete(EntryId(id)) }.also {
+            runBlocking { app.deleteUndo.undoDelete(EntryId(id)) }.also {
                 assertEquals("no request", 0, counter.count)
                 assertEquals(emptyList<String>(), counter.failures)
             }
         }
 
-        assertEquals(ChangeSender.UndoOutcome.Cancelled, outcome)
+        assertEquals(UndoOutcome.Cancelled, outcome)
         assertEquals("the queue is empty", 0, unsentCount())
         val cached = runBlocking { app.cache.entries.first() }.single { it.entry.id.value == id }
         assertEquals(
@@ -186,13 +188,13 @@ class DeleteUndoServerTest {
 
         val outcome = RequestCounter(TokklTestServer.url, "/api/app/time_entries/$id/restore HTTP/1.1").use { counter ->
             signIn(counter.url)
-            runBlocking { app.sender.undoDelete(EntryId(id)) }.also {
+            runBlocking { app.deleteUndo.undoDelete(EntryId(id)) }.also {
                 assertEquals("one restore request", 1, counter.count)
                 assertEquals(emptyList<String>(), counter.failures)
             }
         }
 
-        assertEquals(ChangeSender.UndoOutcome.Restored, outcome)
+        assertEquals(UndoOutcome.Restored, outcome)
         signIn(TokklTestServer.url)
         val restored = serverEntry(id)
         assertTrue("the server has it again: $restored", restored is ApiResult.Success)
@@ -236,7 +238,7 @@ class DeleteUndoServerTest {
         signIn(TokklTestServer.url)
         assertEquals("the server put it in the trash", listOf(id), trash())
 
-        assertEquals(ChangeSender.UndoOutcome.Restored, runBlocking { app.sender.undoDelete(EntryId(id)) })
+        assertEquals(UndoOutcome.Restored, runBlocking { app.deleteUndo.undoDelete(EntryId(id)) })
         val restored = serverEntry(id)
         assertTrue("the server has it again: $restored", restored is ApiResult.Success)
         assertEquals(
@@ -309,7 +311,7 @@ class DeleteUndoServerTest {
         val deadline = System.nanoTime() + LOAD_TIMEOUT_MS * 1_000_000
         while (unsentCount() > 0) {
             check(System.nanoTime() < deadline) { "the queue did not empty" }
-            runBlocking { app.sender.send().join() }
+            runBlocking { app.sender.sendAndWait() }
         }
     }
 

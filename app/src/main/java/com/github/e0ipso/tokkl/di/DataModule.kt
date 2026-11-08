@@ -12,6 +12,7 @@ import com.github.e0ipso.tokkl.cache.ChangeSenderEvents
 import com.github.e0ipso.tokkl.cache.ChangeStore
 import com.github.e0ipso.tokkl.cache.CurrentEntryIds
 import com.github.e0ipso.tokkl.cache.DeleteUndo
+import com.github.e0ipso.tokkl.cache.DeleteUndoer
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.HeldChanges
 import com.github.e0ipso.tokkl.cache.QueueSender
@@ -73,6 +74,17 @@ internal val dataModule = module {
     // check's answer from landing after sign-out.
     single { RunningCheckResults() }
     single { RunningCheck(get(), get()) } bind AccountDataOwner::class
+    // Takes a delete back, and refreshes once the server restored the entry. The sender sends each
+    // delete through it, so an Undo never decides while a delete is on its way.
+    single {
+        DeleteUndoer(
+            get(),
+            client = get<Session>(),
+            io = io(),
+            restored = get<AccountRefreshRequests>()::refreshAfterChange,
+        )
+    } bind DeleteUndo::class
+
     single {
         val refreshes = get<AccountRefreshRequests>()
         val waitingSend = get<CancelWaitingSend>()
@@ -92,6 +104,7 @@ internal val dataModule = module {
             clock = get(),
             spans = get<AccountServerSpans>(),
             allDay = get<CapabilitiesSource>()::offersAllDay,
+            undo = get(),
         )
-    } binds arrayOf(QueueSender::class, DeleteUndo::class, AccountDataOwner::class)
+    } binds arrayOf(QueueSender::class, AccountDataOwner::class)
 }

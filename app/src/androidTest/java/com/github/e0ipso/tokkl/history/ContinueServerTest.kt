@@ -332,7 +332,7 @@ class ContinueServerTest {
         val deadline = System.nanoTime() + LOAD_TIMEOUT_MS * 1_000_000
         while (runBlocking { app.changes.unsentCount.first() } > 0) {
             check(System.nanoTime() < deadline) { "the queue did not empty" }
-            runBlocking { app.sender.send().join() }
+            runBlocking { app.sender.sendAndWait() }
         }
     }
 

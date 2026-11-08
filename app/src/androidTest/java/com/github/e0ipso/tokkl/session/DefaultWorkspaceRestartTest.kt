@@ -91,7 +91,7 @@ class DefaultWorkspaceRestartTest {
 
             val stored = checkNotNull(app.accountSettings.state.value?.defaultWorkspaceId)
             val id = runBlocking { app.changes.start(stored, EntryFields(description = "Started offline")) }
-            runBlocking { app.sender.send().join() }
+            runBlocking { app.sender.sendAndWait() }
 
             assertEquals("the start waits in the queue", 1, runBlocking { app.changes.unsentCount.first() })
             state.writeText(listOf(currentProcess(), accountId, email, workspace, id).joinToString("\n"))
@@ -117,7 +117,7 @@ class DefaultWorkspaceRestartTest {
             val deadline = System.nanoTime() + SEND_TIMEOUT_NANOS
             while (runBlocking { app.changes.unsentCount.first() } > 0) {
                 check(System.nanoTime() < deadline) { "the queue did not empty" }
-                runBlocking { app.sender.send().join() }
+                runBlocking { app.sender.sendAndWait() }
             }
 
             val serverId = runBlocking { app.changes.currentId(EntryId(lines[4].toLong())) }

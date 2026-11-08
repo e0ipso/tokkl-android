@@ -706,7 +706,7 @@ class CalendarServerTest {
         val deadline = SystemClock.uptimeMillis() + LOAD_TIMEOUT_MS
         while (runBlocking { app.changes.unsentCount.first() } > 0) {
             check(SystemClock.uptimeMillis() < deadline) { "the queue did not empty" }
-            runBlocking { app.sender.send().join() }
+            runBlocking { app.sender.sendAndWait() }
         }
     }
 

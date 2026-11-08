@@ -6,6 +6,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.appApiClient
 import com.github.e0ipso.tokkl.model.EntryFields
@@ -481,11 +482,13 @@ class CacheDatabaseMigrationTest {
                     runBlocking { changes.latestShortStop().first() },
                 )
 
+                val store = RoomChangeStore(database)
+                val client = ApiClientProvider {
+                    appApiClient(TokklTestServer.url, ApiCredentials.ApiToken(account.apiToken)).tokklApi()
+                }
                 val sender = ChangeSender(
-                    RoomChangeStore(database),
-                    client = {
-                        appApiClient(TokklTestServer.url, ApiCredentials.ApiToken(account.apiToken)).tokklApi()
-                    },
+                    store,
+                    client = client,
                     scope = scope,
                     io = Dispatchers.IO,
                     events = object : ChangeSenderEvents {
@@ -498,6 +501,7 @@ class CacheDatabaseMigrationTest {
                     clock = Clock.systemUTC(),
                     spans = ServerSpans.Unsnapped,
                     allDay = { false },
+                    undo = DeleteUndoer(store, client, Dispatchers.IO, restored = {}),
                 )
                 val outcome = runBlocking { sender.sendAndWait() }
                 assertTrue(

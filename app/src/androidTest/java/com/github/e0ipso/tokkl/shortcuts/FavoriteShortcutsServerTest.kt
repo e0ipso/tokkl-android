@@ -405,7 +405,7 @@ class FavoriteShortcutsServerTest {
         val deadline = System.nanoTime() + NETWORK_TIMEOUT.toNanos()
         while (runBlocking { app.changes.unsentCount.first() } > 0) {
             if (System.nanoTime() > deadline) throw AssertionError("the queue is not empty")
-            runBlocking { app.sender.send().join() }
+            runBlocking { app.sender.sendAndWait() }
         }
     }
 

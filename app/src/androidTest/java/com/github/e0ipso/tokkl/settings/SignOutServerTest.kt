@@ -224,7 +224,7 @@ class SignOutServerTest {
         assertEquals("no trust prompt waits", SessionTrust.State(), app.sessionTrust.state.value)
         val id = runBlocking { app.changes.start(workspace, EntryFields(description = "Never sent")) }
         assertTrue(runBlocking { app.changes.stop(id) })
-        runBlocking { app.sender.send().join() }
+        runBlocking { app.sender.sendAndWait() }
         assertEquals(2, unsentCount())
         assertEquals(WorkInfo.State.ENQUEUED, queueWork().single().state)
     }

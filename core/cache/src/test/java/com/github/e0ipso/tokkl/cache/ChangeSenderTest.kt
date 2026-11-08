@@ -17,12 +17,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
@@ -38,7 +38,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -62,6 +61,7 @@ class ChangeSenderTest {
     private lateinit var url: ServerUrl
     private var signedIn = true
     private lateinit var sender: ChangeSender
+    private lateinit var undo: DeleteUndoer
 
     @Before
     fun setUp() {
@@ -69,13 +69,9 @@ class ChangeSenderTest {
         url = ServerUrl.parse(server.url("/").toString())!!
         testApi.stored = url
         testApi.trust = InMemoryServerTrust(url)
-        sender = changeSender(
-            store,
-            client = { if (signedIn) testApi.api(url, ApiCredentials.ApiToken("tok-123")) else null },
-            scope = scope,
-            io = Dispatchers.IO,
-            clock = clock,
-        )
+        val client = ApiClientProvider { if (signedIn) testApi.api(url, ApiCredentials.ApiToken("tok-123")) else null }
+        undo = DeleteUndoer(store, client, Dispatchers.IO, restored = {})
+        sender = changeSender(store, client, scope = scope, io = Dispatchers.IO, clock = clock, undo = undo)
     }
 
     @After
@@ -678,7 +674,8 @@ class ChangeSenderTest {
 
         server.enqueue(entry(55, "First", stop = "2026-10-19T08:01:00Z"))
         server.enqueue(entry(56, "Second", stop = "2026-10-19T08:01:00Z"))
-        run { sender.resume().join() }
+        sender.resume()
+        run { sender.sendAndWait() }
         assertFalse(sender.signInNeeded.value)
         assertTrue(store.changes.isEmpty())
     }
@@ -726,7 +723,7 @@ class ChangeSenderTest {
         server.enqueue(MockResponse.Builder().code(429).build())
 
         assertEquals(
-            ChangeSender.Outcome.Waiting(sent = 0, until = TAP.plus(ChangeSender.DEFAULT_RETRY_AFTER)),
+            ChangeSender.Outcome.Waiting(sent = 0, until = TAP.plus(RetryAfter.DEFAULT)),
             run { sender.drain() },
         )
     }
@@ -781,7 +778,7 @@ class ChangeSenderTest {
     }
 
     /**
-     * A send() call during a drain joins it and makes it drain once more. Here the first pass sends
+     * A send() call during a drain makes it drain once more before it ends. Here the first pass sends
      * one change and stops at a 503, and the second pass sends the rest, so the job takes two
      * passes. onSent runs once for the job, after the second pass has sent its change.
      */
@@ -810,13 +807,10 @@ class ChangeSenderTest {
         server.enqueue(entries())
         server.enqueue(nothingRuns())
         server.enqueue(entry(102, "Second", stop = null))
-        var joined: Job? = null
-        store.onFirstSent = { joined = withOnSent.send() }
+        store.onFirstSent = { withOnSent.send() }
 
-        val job = withOnSent.send()
-        run { job.join() }
+        run { withOnSent.sendAndWait() }
 
-        assertSame("the call during the drain joined it", job, joined)
         assertEquals(listOf("onSent after 7 requests, 0 queued"), synchronized(calls) { calls.toList() })
         assertTrue(store.changes.isEmpty())
     }
@@ -836,7 +830,7 @@ class ChangeSenderTest {
         server.enqueue(nothingRuns())
         server.enqueue(MockResponse.Builder().code(503).build())
 
-        run { withOnSent.send().join() }
+        run { withOnSent.sendAndWait() }
 
         assertEquals(0, calls)
         assertEquals(1, store.changes.size)
@@ -866,16 +860,16 @@ class ChangeSenderTest {
         server.enqueue(nothingRuns())
         server.enqueue(MockResponse.Builder().code(503).build())
 
-        run { withOnEmptied.send().join() }
+        run { withOnEmptied.sendAndWait() }
         assertEquals("a drain that stops at a failure", listOf("onSent"), synchronized(calls) { calls.toList() })
 
         server.enqueue(entries())
         server.enqueue(nothingRuns())
         server.enqueue(entry(102, "Second", stop = null))
-        run { withOnEmptied.send().join() }
+        run { withOnEmptied.sendAndWait() }
         assertEquals(listOf("onSent", "onEmptied with 0 queued", "onSent"), synchronized(calls) { calls.toList() })
 
-        run { withOnEmptied.send().join() }
+        run { withOnEmptied.sendAndWait() }
         assertEquals("a drain of an empty queue sends nothing", 3, synchronized(calls) { calls.size })
     }
 
@@ -897,16 +891,16 @@ class ChangeSenderTest {
         store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = TAP.plusSeconds(60), description = "First")
         server.enqueue(entry(101, "First", stop = "2026-10-19T08:01:00+00:00"))
 
-        val draining = withCleanup.send()
+        val draining = scope.async { withCleanup.sendAndWait() }
         try {
             assertTrue("the queue emptied and cleanup started", cleaning.await(10, TimeUnit.SECONDS))
             store.queue(ChangeKind.UPDATE, 101, TAP, stop = TAP.plusSeconds(60), description = "Edited during cleanup")
             server.enqueue(entry(101, "Edited during cleanup", stop = "2026-10-19T08:01:00+00:00"))
-            assertSame("a send must join the pending background-work cancellation", draining, withCleanup.send())
+            withCleanup.send()
             assertFalse("the drain includes its cleanup", draining.isCompleted)
         } finally {
             finishCleanup.countDown()
-            run { draining.join() }
+            run { draining.await() }
         }
         assertTrue("the joined drain also sends changes queued during cleanup", store.changes.isEmpty())
         assertEquals("the create and the later edit each reach the server", 2, server.requestCount)
@@ -949,7 +943,7 @@ class ChangeSenderTest {
         var joined: Deferred<ChangeSender.Outcome?>? = null
         store.onFirstSent = { joined = scope.async(start = CoroutineStart.UNDISPATCHED) { sender.sendAndWait() } }
 
-        run { sender.send().join() }
+        run { sender.sendAndWait() }
 
         assertEquals(ChangeSender.Outcome.Empty(sent = 1), run { checkNotNull(joined).await() })
         assertEquals(4, server.requestCount)
@@ -963,6 +957,57 @@ class ChangeSenderTest {
 
         assertEquals(ChangeSender.Outcome.SignedOut(sent = 0), run { sender.sendAndWait() })
         assertEquals(0, server.requestCount)
+    }
+
+    /**
+     * Sign-out's stop waits for the drain that runs, so nothing that drain writes lands after the
+     * cache is cleared. The drain here is held after its first change until stop has had time to
+     * return.
+     */
+    @Test
+    fun stopWaitsForTheRunningDrainToEnd() {
+        val sending = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = TAP.plusSeconds(60), description = "First")
+        store.queue(ChangeKind.CREATE, -2, TAP, stop = TAP.plusSeconds(60), description = "Second")
+        server.enqueue(entry(101, "First", stop = "2026-10-19T08:01:00+00:00"))
+        server.enqueue(entry(102, "Second", stop = "2026-10-19T08:01:00+00:00"))
+        store.onFirstSent = {
+            sending.countDown()
+            assertTrue("the drain was released", release.await(10, TimeUnit.SECONDS))
+        }
+
+        sender.send()
+        assertTrue("the drain sent its first change", sending.await(10, TimeUnit.SECONDS))
+        val stopping = scope.async { sender.stop() }
+        try {
+            // A real thread holds the drain, so this waits in real time.
+            val early = runBlocking { withTimeoutOrNull(300) { stopping.await() } }
+            assertNull("stop returned while the drain still ran", early)
+        } finally {
+            release.countDown()
+        }
+        runBlocking { stopping.await() }
+
+        assertTrue("the drain had ended when stop returned", store.changes.isEmpty())
+    }
+
+    /** Stop forgets the wait after a 429 and the paused sign-in, so the next account sends at once. */
+    @Test
+    fun stopForgetsTheWaitAfterA429AndThePausedSignIn() = runTest {
+        store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = TAP.plusSeconds(60), description = "First")
+        server.enqueue(MockResponse.Builder().code(429).addHeader("Retry-After", "30").build())
+        assertEquals(
+            ChangeSender.Outcome.Waiting(sent = 0, until = TAP.plusSeconds(30)),
+            run { sender.sendAndWait() },
+        )
+        sender.signInRefused()
+
+        run { sender.stop() }
+
+        assertFalse(sender.signInNeeded.value)
+        server.enqueue(entry(101, "First", stop = "2026-10-19T08:01:00+00:00"))
+        assertEquals(ChangeSender.Outcome.Empty(sent = 1), run { sender.drain() })
     }
 
     @Test
@@ -1465,7 +1510,7 @@ class ChangeSenderTest {
         store.queue(ChangeKind.UPDATE, 54, TAP, stop = TAP.plusSeconds(60), description = "Other")
         store.queue(ChangeKind.DELETE, 55, TAP, stop = TAP.plusSeconds(90), description = "Deleted")
 
-        assertEquals(ChangeSender.UndoOutcome.Cancelled, run { sender.undoDelete(EntryId(55)) })
+        assertEquals(UndoOutcome.Cancelled, run { undo.undoDelete(EntryId(55)) })
 
         assertEquals("no request", 0, server.requestCount)
         assertEquals("the other change stays queued", listOf(54L), store.changes.map { it.entryId })
@@ -1481,7 +1526,7 @@ class ChangeSenderTest {
         store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = TAP.plusSeconds(60), description = "Made offline")
         store.queue(ChangeKind.DELETE, LOCAL, TAP, stop = TAP.plusSeconds(60), description = "Made offline")
 
-        assertEquals(ChangeSender.UndoOutcome.Cancelled, run { sender.undoDelete(EntryId(LOCAL)) })
+        assertEquals(UndoOutcome.Cancelled, run { undo.undoDelete(EntryId(LOCAL)) })
 
         assertEquals(0, server.requestCount)
         assertEquals(listOf(ChangeKind.CREATE), store.changes.map { it.kind })
@@ -1495,7 +1540,7 @@ class ChangeSenderTest {
         assertEquals(ChangeSender.Outcome.Empty(sent = 1), run { sender.drain() })
         server.enqueue(entry(55, "Deleted", stop = "2026-10-19T08:01:30+00:00"))
 
-        assertEquals(ChangeSender.UndoOutcome.Restored, run { sender.undoDelete(EntryId(55)) })
+        assertEquals(UndoOutcome.Restored, run { undo.undoDelete(EntryId(55)) })
 
         val (delete, restore) = List(2) { server.takeRequest() }
         assertEquals("DELETE /api/v9/workspaces/7/time_entries/55", "${delete.method} ${delete.url.encodedPath}")
@@ -1518,7 +1563,7 @@ class ChangeSenderTest {
         assertEquals(ChangeSender.Outcome.Empty(sent = 2), run { sender.drain() })
         server.enqueue(entry(101, "Made offline", stop = "2026-10-19T08:01:00+00:00"))
 
-        assertEquals(ChangeSender.UndoOutcome.Restored, run { sender.undoDelete(EntryId(LOCAL)) })
+        assertEquals(UndoOutcome.Restored, run { undo.undoDelete(EntryId(LOCAL)) })
 
         val restore = remainingRequests().last()
         assertEquals("POST /api/app/time_entries/101/restore", "${restore.method} ${restore.url.encodedPath}")
@@ -1535,7 +1580,7 @@ class ChangeSenderTest {
         assertTrue("the server may have deleted it", store.changes.single().maybeSent)
         server.enqueue(entry(55, "Deleted", stop = "2026-10-19T08:01:30+00:00"))
 
-        assertEquals(ChangeSender.UndoOutcome.Restored, run { sender.undoDelete(EntryId(55)) })
+        assertEquals(UndoOutcome.Restored, run { undo.undoDelete(EntryId(55)) })
 
         val restore = remainingRequests().last()
         assertEquals("POST /api/app/time_entries/55/restore", "${restore.method} ${restore.url.encodedPath}")
@@ -1550,7 +1595,7 @@ class ChangeSenderTest {
         assertEquals(ChangeSender.Outcome.Empty(sent = 0), run { sender.drain() })
         assertFalse("a 4xx deleted nothing", store.changes.single().maybeSent)
 
-        assertEquals(ChangeSender.UndoOutcome.Cancelled, run { sender.undoDelete(EntryId(55)) })
+        assertEquals(UndoOutcome.Cancelled, run { undo.undoDelete(EntryId(55)) })
 
         assertEquals("only the refused delete", 1, server.requestCount)
     }
@@ -1563,8 +1608,8 @@ class ChangeSenderTest {
         store.afterFirst = {
             runBlocking {
                 assertEquals(
-                    ChangeSender.UndoOutcome.Cancelled,
-                    sender.undoDelete(EntryId(it.entryId)),
+                    UndoOutcome.Cancelled,
+                    undo.undoDelete(EntryId(it.entryId)),
                 )
             }
         }
@@ -1586,15 +1631,15 @@ class ChangeSenderTest {
         server.enqueue(MockResponse.Builder().code(503).build())
         server.enqueue(MockResponse.Builder().code(429).build())
 
-        assertEquals("no network", ChangeSender.UndoOutcome.NeedsServer, run { sender.undoDelete(EntryId(55)) })
+        assertEquals("no network", UndoOutcome.NeedsServer, run { undo.undoDelete(EntryId(55)) })
         assertEquals(
             "a proxy whose server is down",
-            ChangeSender.UndoOutcome.NeedsServer,
-            run { sender.undoDelete(EntryId(55)) },
+            UndoOutcome.NeedsServer,
+            run { undo.undoDelete(EntryId(55)) },
         )
-        assertEquals("too many requests", ChangeSender.UndoOutcome.NeedsServer, run { sender.undoDelete(EntryId(55)) })
+        assertEquals("too many requests", UndoOutcome.NeedsServer, run { undo.undoDelete(EntryId(55)) })
         signedIn = false
-        assertEquals("signed out", ChangeSender.UndoOutcome.NeedsServer, run { sender.undoDelete(EntryId(55)) })
+        assertEquals("signed out", UndoOutcome.NeedsServer, run { undo.undoDelete(EntryId(55)) })
 
         assertTrue(store.restores.isEmpty())
     }
@@ -1611,8 +1656,8 @@ class ChangeSenderTest {
         )
         server.enqueue(MockResponse.Builder().code(403).build())
 
-        assertEquals(ChangeSender.UndoOutcome.Failed(404), run { sender.undoDelete(EntryId(55)) })
-        assertEquals(ChangeSender.UndoOutcome.Failed(403), run { sender.undoDelete(EntryId(55)) })
+        assertEquals(UndoOutcome.Failed(404), run { undo.undoDelete(EntryId(55)) })
+        assertEquals(UndoOutcome.Failed(403), run { undo.undoDelete(EntryId(55)) })
         assertTrue(store.restores.isEmpty())
     }
 
@@ -1622,7 +1667,7 @@ class ChangeSenderTest {
             MockResponse.Builder().code(200).addHeader("Content-Type", "application/json").body("[]").build(),
         )
 
-        assertEquals(ChangeSender.UndoOutcome.Restored, run { sender.undoDelete(EntryId(55)) })
+        assertEquals(UndoOutcome.Restored, run { undo.undoDelete(EntryId(55)) })
 
         assertEquals(listOf(55L to null), store.restores)
     }
@@ -1630,26 +1675,24 @@ class ChangeSenderTest {
     @Test
     fun aRestoreRefreshesTheAccountOnceAndACancelledDeleteDoesNot() = runTest {
         val refreshes = java.util.concurrent.atomic.AtomicInteger()
-        val refreshing = changeSender(
+        val refreshing = DeleteUndoer(
             store,
             client = { testApi.api(url, ApiCredentials.ApiToken("tok-123")) },
-            scope = scope,
             io = Dispatchers.IO,
-            onSent = { refreshes.incrementAndGet() },
-            clock = clock,
+            restored = { refreshes.incrementAndGet() },
         )
         store.queue(ChangeKind.DELETE, 54, TAP, stop = TAP.plusSeconds(60), description = "Unsent")
-        assertEquals(ChangeSender.UndoOutcome.Cancelled, run { refreshing.undoDelete(EntryId(54)) })
+        assertEquals(UndoOutcome.Cancelled, run { refreshing.undoDelete(EntryId(54)) })
         assertEquals(0, refreshes.get())
 
         server.enqueue(entry(55, "Deleted", stop = "2026-10-19T08:01:30+00:00"))
-        assertEquals(ChangeSender.UndoOutcome.Restored, run { refreshing.undoDelete(EntryId(55)) })
+        assertEquals(UndoOutcome.Restored, run { refreshing.undoDelete(EntryId(55)) })
         assertEquals(1, refreshes.get())
     }
 
     @Test
     fun undoOfAnEntryMadeOnThePhoneThatNeitherQueueNorServerHasFails() = runTest {
-        assertEquals(ChangeSender.UndoOutcome.Failed(status = null), run { sender.undoDelete(EntryId(LOCAL)) })
+        assertEquals(UndoOutcome.Failed(status = null), run { undo.undoDelete(EntryId(LOCAL)) })
         assertEquals(0, server.requestCount)
     }
 
@@ -1912,6 +1955,7 @@ private fun changeSender(
     clock: Clock = Clock.systemUTC(),
     spans: ServerSpans = ServerSpans.Unsnapped,
     allDay: CapabilityCheck = CapabilityCheck { false },
+    undo: DeleteUndoer = DeleteUndoer(store, client, io, restored = {}),
 ) = ChangeSender(
     store,
     client,
@@ -1927,4 +1971,5 @@ private fun changeSender(
     clock,
     spans,
     allDay,
+    undo,
 )

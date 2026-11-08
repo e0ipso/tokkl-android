@@ -5,6 +5,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.HttpMethod
@@ -221,7 +222,8 @@ class ChangeRejectionServerTest {
                 )
             },
         )
-        runBlocking { sender.resume().join() }
+        sender.resume()
+        runBlocking { sender.sendAndWait() }
         assertFalse(sender.signInNeeded.value)
         assertEquals(0, count())
         assertEquals(0, discarded)
@@ -238,15 +240,21 @@ class ChangeRejectionServerTest {
         )
     }
 
-    private fun sender(http: OkHttpClient? = null): ChangeSender = ChangeSender(
-        RoomChangeStore(database),
-        client = {
+    private fun sender(http: OkHttpClient? = null): ChangeSender {
+        val store = RoomChangeStore(database)
+        val client = ApiClientProvider {
             if (http == null) {
                 appApiClient(TokklTestServer.url, ApiCredentials.ApiToken(token)).tokklApi()
             } else {
                 TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(token), httpClient = http).tokklApi()
             }
-        },
+        }
+        return sender(store, client)
+    }
+
+    private fun sender(store: ChangeStore, client: ApiClientProvider): ChangeSender = ChangeSender(
+        store,
+        client = client,
         scope = scope,
         io = Dispatchers.IO,
         events = object : ChangeSenderEvents {
@@ -261,6 +269,7 @@ class ChangeRejectionServerTest {
         clock = Clock.systemUTC(),
         spans = ServerSpans.Unsnapped,
         allDay = { false },
+        undo = DeleteUndoer(store, client, Dispatchers.IO, restored = {}),
     )
 
     private fun cachedEntry(description: String): Long {

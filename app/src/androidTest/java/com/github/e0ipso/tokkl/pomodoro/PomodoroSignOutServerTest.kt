@@ -231,7 +231,7 @@ class PomodoroSignOutServerTest {
     private fun goOffline() {
         ServerTrustStore(context).confirmCleartext(DEAD_SERVER)
         Session(context).save(DEAD_SERVER, account.apiToken)
-        runBlocking { app.sender.send().join() }
+        runBlocking { app.sender.sendAndWait() }
     }
 
     private fun sendOldButtons(notification: Notification) {

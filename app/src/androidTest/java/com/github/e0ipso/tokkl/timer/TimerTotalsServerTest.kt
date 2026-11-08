@@ -30,7 +30,7 @@ import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.changes
-import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.components.deleteUndo
 import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
@@ -161,7 +161,7 @@ class TimerTotalsServerTest {
                         assertTrue(runBlocking { app.changes.delete(stopped.id) })
                         assertTrue(fixture.rows().isEmpty())
                         assertStoppedTotals()
-                        runBlocking { app.sender.undoDelete(EntryId(stopped.id.value)) }
+                        runBlocking { app.deleteUndo.undoDelete(EntryId(stopped.id.value)) }
                         assertEquals(stopped.id, fixture.rows().single().id)
                         assertStoppedTotals()
                         fixture.start("Second offline timer")

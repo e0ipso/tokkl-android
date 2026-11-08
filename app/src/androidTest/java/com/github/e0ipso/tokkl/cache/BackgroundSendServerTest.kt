@@ -119,7 +119,7 @@ class BackgroundSendServerTest {
             assertEquals("the offline Undo targets this entry", id, it.entryId)
         } != null
         // The app's own send of both changes, which fails for want of a network.
-        runBlocking { app.sender.send().join() }
+        runBlocking { app.sender.sendAndWait() }
         assertEquals(2, unsentCount())
         val work = queueWork().single()
         // Start also scheduled the running check and reminder; Stop must cancel the reminder.
@@ -205,7 +205,7 @@ class BackgroundSendServerTest {
                 stop,
             )
         }
-        runBlocking { app.sender.send().join() }
+        runBlocking { app.sender.sendAndWait() }
         val work = queueWork().single()
 
         val ran = System.currentTimeMillis()
@@ -246,13 +246,13 @@ class BackgroundSendServerTest {
                 stop,
             )
         }
-        runBlocking { app.sender.send().join() }
+        runBlocking { app.sender.sendAndWait() }
         val work = queueWork().single()
         driver.setAllConstraintsMet(work.id)
         awaitWork(work.id) { it.runAttemptCount == 1 && it.state == WorkInfo.State.ENQUEUED }
 
         signIn(TokklTestServer.url, account.apiToken)
-        runBlocking { app.sender.send().join() }
+        runBlocking { app.sender.sendAndWait() }
 
         assertEquals(0, unsentCount())
         assertEquals("Sent by the app", serverEntry(serverId(id.value)).string("description"))

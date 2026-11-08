@@ -248,7 +248,7 @@ class RunningNotificationServerTest {
                 EntryFields(description = "Stopped from the notification"),
             )
         }
-        runBlocking { app.sender.send().join() }
+        runBlocking { app.sender.sendAndWait() }
         assertEquals("the start reached the server", 0, unsentCount())
         val serverId = runBlocking { app.changes.currentId(id) }
         val shown = RunningNotifications.awaitShown("the start")

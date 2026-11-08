@@ -6,24 +6,19 @@ import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.capabilities.CapabilityCheck
-import com.github.e0ipso.tokkl.model.EntryId
-import com.github.e0ipso.tokkl.platform.SingleFlight
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountRefreshListener
 import com.github.e0ipso.tokkl.session.AccountRefreshed
 import com.github.e0ipso.tokkl.session.SignOutPhase
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
@@ -33,15 +28,14 @@ import kotlin.coroutines.CoroutineContext
 interface ChangeSenderEvents {
 
     /**
-     * A quiet drain sent at least one change, or an Undo restored an entry, so the app can refresh:
-     * after a quiet drain, not after each change or pass. A change queued meanwhile drains before
-     * the drain's job ends.
+     * A quiet drain sent at least one change, so the app can refresh: after a quiet drain, not
+     * after each change or pass. A change queued meanwhile drains before the drain ends.
      */
     fun sent()
 
     /**
-     * A quiet drain that sent at least one change left nothing to send. It comes inside the drain's
-     * job and before [sent], so the app can cancel a background retry that would find nothing.
+     * A quiet drain that sent at least one change left nothing to send. It comes inside the drain,
+     * before [sent], so the app can cancel a background retry that would find nothing.
      */
     fun emptied()
 
@@ -54,17 +48,11 @@ fun interface QueueSender {
     suspend fun sendQueued()
 }
 
-/** Takes back the delete of an entry, such as [ChangeSender.undoDelete]. */
-fun interface DeleteUndo {
-    suspend fun undoDelete(entryId: EntryId): ChangeSender.UndoOutcome
-}
-
 /**
  * Sends the queue to the configured server, oldest change first (docs/PRD.md O1). A failure the
  * phone can wait out stops the drain and keeps the change queued, so the order holds and nothing
- * is lost: no network, a 5xx, a 408 or a 429. After a 429 the next try waits for `Retry-After`,
- * or [DEFAULT_RETRY_AFTER] when the header is missing. The wait is kept in memory, and the queue
- * itself on disk.
+ * is lost: no network, a 5xx, a 408 or a 429. After a 429 the next try waits as [RetryAfter]
+ * says.
  *
  * Each other refusal has its own outcome, as [refusal] describes (docs/PRD.md O6). An entry the
  * server no longer has takes every queued change to it out of the queue and the entry out of the
@@ -81,16 +69,11 @@ fun interface DeleteUndo {
  * pooled connection the server had closed while it sat idle, the drain tries that change once
  * more at once, on a new connection, before it stops. The sender's reads may still go out again.
  *
- * [send] runs when a change is queued and after each refresh, and once more when a 429's wait
- * ends. When the network returns, [BackgroundSend]'s worker calls [sendAndWait], also with the
- * app closed.
- *
- * [undoDelete] takes a delete back (docs/PRD.md H3). A delete still in the queue leaves it with no
- * request. One the server has, or may have, comes back through Tokkl's
- * `POST /api/app/time_entries/{id}/restore`, which needs the server. The sender marks a delete
- * [PendingChange.maybeSent] before sending it, and sends it holding the lock that [undoDelete]
- * holds, so Undo never decides while a delete is on its way, and a delete that Undo took back
- * never goes out.
+ * One coroutine owns the drains and the 429 wait: it takes the requests from a channel, drains,
+ * and drains again while more requests came meanwhile. [send] runs when a change is queued and
+ * after each refresh, and once more when a 429's wait ends. When the network returns,
+ * [BackgroundSend]'s worker calls [sendAndWait], also with the app closed. Each delete goes out
+ * through [undo], so an Undo never decides while a delete is on its way.
  *
  * @param client the signed-in account's client, or null when signed out. Runs on [io].
  * @param scope outlives every screen, so leaving the app does not cancel a drain.
@@ -99,6 +82,7 @@ fun interface DeleteUndo {
  *   lost create made, and the span of a queued start ended before a later timer.
  * @param allDay whether the server stores no-time entries (`Capabilities.allDay`), read for each
  *   request. While it is false no request carries `all_day`, as Toggl Track needs.
+ * @param undo takes deletes back; the sender sends each delete through it.
  */
 class ChangeSender(
     private val store: ChangeStore,
@@ -109,8 +93,8 @@ class ChangeSender(
     private val clock: Clock,
     private val spans: ServerSpans,
     private val allDay: CapabilityCheck,
+    private val undo: DeleteUndoer,
 ) : QueueSender,
-    DeleteUndo,
     AccountRefreshListener,
     AccountDataOwner {
 
@@ -144,50 +128,23 @@ class ChangeSender(
         data class SignedOut(override val sent: Int) : Outcome
     }
 
-    /** What [undoDelete] did. */
-    sealed interface UndoOutcome {
-        /** The delete had not gone out. It left the queue and the entry is back, with no request. */
-        data object Cancelled : UndoOutcome
+    /** What the drain coroutine is asked to do. */
+    private sealed interface Request {
+        /** Drain until quiet. [done] hears how the last pass ended, or null when it failed on the disk. */
+        class Drain(val done: CompletableDeferred<Outcome?>?) : Request
 
-        /** The server restored the entry. */
-        data object Restored : UndoOutcome
-
-        /**
-         * The delete reached the server, or may have, and the server cannot be reached: no
-         * network, a proxy whose server is down, a 429, a refused trust check or no session.
-         * The delete stays as it was, so Undo can be tried again.
-         */
-        data object NeedsServer : UndoOutcome
-
-        /** The server did not restore the entry. [status] is its HTTP status, or null without one. */
-        data class Failed(val status: Int?) : UndoOutcome
+        /** Forget the 429 wait and the paused sign-in, once the drains before have ended. */
+        class Stop(val done: CompletableDeferred<Unit>) : Request
     }
 
-    /**
-     * Guards [sending] and [again], and [retry]'s cancellation with them. A JVM lock, not a Mutex,
-     * because send() is called without suspending from the main thread, the IO dispatcher and
-     * WorkManager.
-     */
-    private val lock = Any()
+    /** Callers on any thread hand requests in without blocking; the drain coroutine takes them in order. */
+    private val requests = Channel<Request>(Channel.UNLIMITED)
 
-    /** Held while a delete goes out and while [undoDelete] takes one back, so the two never overlap. */
-    private val deletes = Mutex()
+    /** The 429 wait. Only the drain coroutine reads and changes it. */
+    private val retryAfter = RetryAfter(clock)
 
-    private var sending: Job? = null
-
-    /** A [send] call came while a drain ran, which may have looked at the queue before it. */
-    private var again = false
-
-    /** The wait after a 429, one at a time. */
-    private val retry = SingleFlight(scope)
-
-    /** No request before this instant, after a 429. */
-    @Volatile
-    private var retryAt: Instant? = null
-
-    /** How the latest pass of a drain ended, or null when it failed on the disk. */
-    @Volatile
-    private var lastOutcome: Outcome? = null
+    /** The drain that starts when a 429's wait ends. Only the drain coroutine reads and changes it. */
+    private var retry: Job? = null
 
     private val mutableSignInNeeded = MutableStateFlow(false)
 
@@ -196,6 +153,10 @@ class ChangeSender(
      * queue then sends nothing and discards nothing until [resume].
      */
     val signInNeeded: StateFlow<Boolean> = mutableSignInNeeded.asStateFlow()
+
+    init {
+        scope.launch(io) { serveRequests() }
+    }
 
     /**
      * The server refused the session's token on another request, as the timer event stream's 401
@@ -212,32 +173,28 @@ class ChangeSender(
     }
 
     /** Lifts the pause after a refused token, once the user has signed in again, and drains the queue. */
-    fun resume(): Job {
+    fun resume() {
         mutableSignInNeeded.value = false
-        return send()
+        send()
     }
 
     /**
-     * Drains the queue in the background. While a drain runs, another call returns that one, which
-     * then drains once more, so a change queued meanwhile does not wait for the next event.
+     * Drains the queue in the background. A call while a drain runs makes that drain go once
+     * more, so a change queued meanwhile does not wait for the next event. Returns at once.
      */
-    fun send(): Job {
-        val job = synchronized(lock) {
-            sending?.also { again = true }
-                ?: scope.launch(io, start = CoroutineStart.LAZY) { drainUntilQuiet() }.also { sending = it }
-        }
-        job.start()
-        return job
+    fun send() {
+        requests.trySend(Request.Drain(done = null))
     }
 
     /**
-     * Drains the queue as [send] does and waits for the drain to end. Returns how its last pass
-     * ended, or null when that pass failed on the disk. Cancelling the caller leaves the drain
-     * running.
+     * Drains the queue as [send] does and waits for the drain to end, including the passes that
+     * calls during it asked for. Returns how its last pass ended, or null when that pass failed on
+     * the disk. Cancelling the caller leaves the drain running.
      */
     suspend fun sendAndWait(): Outcome? {
-        send().join()
-        return lastOutcome
+        val done = CompletableDeferred<Outcome?>()
+        requests.send(Request.Drain(done))
+        return done.await()
     }
 
     /** Drains the queue as [sendAndWait] does, for a caller that needs no outcome. */
@@ -246,60 +203,102 @@ class ChangeSender(
     }
 
     /**
-     * Cancels the wait after a 429 and forgets it, then waits for a running drain to end. Signing
-     * out calls this once [client] returns null, so the drain ends at its next change and nothing
-     * it writes lands after the cache is cleared.
+     * Waits for the drains asked for before this call to end, then cancels the wait after a 429
+     * and forgets it with the paused sign-in. Signing out calls this once [client] returns null,
+     * so the drain ends at its next change and nothing it writes lands after the cache is cleared.
      */
     suspend fun stop() {
-        val running = synchronized(lock) {
-            retry.cancel()
-            sending
-        }
-        running?.join()
-        retryAt = null
-        lastOutcome = null
-        mutableSignInNeeded.value = false
+        val done = CompletableDeferred<Unit>()
+        requests.send(Request.Stop(done))
+        done.await()
     }
 
-    private suspend fun drainUntilQuiet() {
-        var drainAgain = true
-        var sent = 0
-        try {
-            while (drainAgain) {
-                val outcome = try {
-                    drain()
-                } catch (_: SQLiteException) {
-                    // The queue stays on disk for the next try.
+    /** The drain coroutine: serves each request in turn, for as long as [scope] lives. */
+    private suspend fun serveRequests() {
+        var next: Request? = null
+        while (true) {
+            next = when (val request = next ?: requests.receive()) {
+                is Request.Stop -> {
+                    retry?.cancel()
+                    retry = null
+                    retryAfter.forget()
+                    mutableSignInNeeded.value = false
+                    request.done.complete(Unit)
                     null
                 }
-                lastOutcome = outcome
+
+                is Request.Drain -> drainUntilQuiet(request)
+            }
+        }
+    }
+
+    /** The callers of one drain, and a stop request that came during it, which waits for the drain. */
+    private class Batch(first: Request.Drain) {
+        val waiting = mutableListOf(first)
+        var stop: Request.Stop? = null
+    }
+
+    /**
+     * Drains for [first] and for every drain request that comes before the queue is quiet, then
+     * tells their callers how the last pass ended. The events go out after the last pass that
+     * sent something, while a request that comes during them still gets another pass. Returns a
+     * stop request it met, which waits for this drain and is served next.
+     */
+    private suspend fun drainUntilQuiet(first: Request.Drain): Request.Stop? {
+        val batch = Batch(first)
+        var outcome: Outcome? = null
+        try {
+            var sent = 0
+            var quiet = false
+            while (!quiet) {
+                outcome = drainPass()
                 sent += outcome?.sent ?: 0
-                if (outcome is Outcome.Waiting) retryAfterWait(outcome.until)
-                if (!synchronized(lock) { again }) {
-                    // Keep this job published while cancelling background work and refreshing.
-                    // A caller during cleanup must join it, and any new change gets another pass.
-                    if (sent > 0 && lastOutcome is Outcome.Empty) events.emptied()
+                if (!tookMore(batch)) {
+                    if (sent > 0 && outcome is Outcome.Empty) events.emptied()
                     if (sent > 0) events.sent()
                     sent = 0
-                }
-                drainAgain = synchronized(lock) {
-                    again.also {
-                        again = false
-                        if (!it) sending = null
-                    }
+                    quiet = !tookMore(batch)
                 }
             }
         } finally {
-            // A cancelled or failed drain lets the next call start another.
-            if (drainAgain) synchronized(lock) { sending = null }
+            batch.waiting.forEach { it.done?.complete(outcome) }
         }
+        return batch.stop
+    }
+
+    /** Takes the requests that came meanwhile into [batch]. True when a drain request was among them. */
+    private fun tookMore(batch: Batch): Boolean {
+        var more = false
+        while (batch.stop == null) {
+            when (val request = requests.tryReceive().getOrNull() ?: break) {
+                is Request.Drain -> {
+                    batch.waiting += request
+                    more = true
+                }
+
+                is Request.Stop -> batch.stop = request
+            }
+        }
+        return more
+    }
+
+    /** One [drain], or null when it failed on the disk, with the retry after a 429 it met. */
+    private suspend fun drainPass(): Outcome? {
+        val outcome = try {
+            drain()
+        } catch (_: SQLiteException) {
+            // The queue stays on disk for the next try.
+            null
+        }
+        if (outcome is Outcome.Waiting) retryAfterWait(outcome.until)
+        return outcome
     }
 
     /**
      * Sends the queued changes in order until nothing is left to send or one fails in a way the
      * phone can wait out. Each sent change leaves the queue as [ChangeStore.sent] describes, and
      * each refused one as [ChangeSender] describes. Blocks on the disk, so call it on the IO
-     * dispatcher, and from one coroutine at a time.
+     * dispatcher, and from one coroutine at a time, such as the drain coroutine.
      */
     suspend fun drain(): Outcome {
         var sent = 0
@@ -307,11 +306,7 @@ class ChangeSender(
         var triedAgain: Long? = null
         while (true) {
             if (mutableSignInNeeded.value) return Outcome.Stopped(sent, ApiError.AuthFailed)
-            val wait = retryAt
-            if (wait != null) {
-                if (clock.instant().isBefore(wait)) return Outcome.Waiting(sent, wait)
-                retryAt = null
-            }
+            retryAfter.pending()?.let { return Outcome.Waiting(sent, it) }
             val queued = store.first() ?: return Outcome.Empty(sent)
             val api = client() ?: return Outcome.SignedOut(sent)
             when (val result = send(api, queued)) {
@@ -381,15 +376,13 @@ class ChangeSender(
         }
 
     /** Waits out the server's rate limit [error] before the next send. */
-    private fun waitOut(sent: Int, error: ApiError.RateLimited): Outcome {
-        val until = clock.instant().plusSeconds(error.retryAfterSeconds ?: DEFAULT_RETRY_AFTER.seconds)
-        retryAt = until
-        return Outcome.Waiting(sent, until)
-    }
+    private fun waitOut(sent: Int, error: ApiError.RateLimited): Outcome =
+        Outcome.Waiting(sent, retryAfter.start(error))
 
     /** Drains again once [until] has passed. One wait at a time. */
     private fun retryAfterWait(until: Instant) {
-        retry.launch {
+        if (retry?.isActive == true) return
+        retry = scope.launch(io) {
             delay(Duration.between(clock.instant(), until).toMillis().coerceAtLeast(0) + 1)
             send()
         }
@@ -398,75 +391,13 @@ class ChangeSender(
     /** Sends [change], or returns null when it left the queue before it went out. */
     private suspend fun send(api: TokklApi, change: PendingChange): ApiResult<SentChange>? {
         if (change.kind == ChangeKind.CREATE) return tries.create(api, change)
-        if (change.kind == ChangeKind.DELETE) return deletes.withLock { tries.delete(api, change) }
+        if (change.kind == ChangeKind.DELETE) return undo.sendingDelete { tries.delete(api, change) }
         if (change.kind == ChangeKind.STOP && change.capturedStop != null) return tries.capturedStop(api, change)
         return tries.update(api, change)
     }
 
-    /**
-     * Takes back the delete of the entry [entryId], the id the phone deleted it under. A delete
-     * the sender has not sent leaves the queue, with no request. Otherwise the server restores the
-     * entry with `POST /api/app/time_entries/{id}/restore`, a Tokkl-only endpoint, so call this
-     * only when `Capabilities.restore` is true. Blocks the sender's deletes meanwhile. Once
-     * started, the Undo reaches the server and the queue also when the caller is cancelled.
-     */
-    override suspend fun undoDelete(entryId: EntryId): UndoOutcome {
-        val outcome = withContext(io + NonCancellable) {
-            deletes.withLock {
-                when (val found = store.takeBackDelete(entryId)) {
-                    TakenBack.Unsent -> UndoOutcome.Cancelled
-                    is TakenBack.OnServer -> restore(found.serverId)
-                    TakenBack.Unknown -> UndoOutcome.Failed(status = null)
-                }
-            }
-        }
-        if (outcome == UndoOutcome.Restored) withContext(io) { events.sent() }
-        return outcome
-    }
-
-    /** Asks the server to restore its entry [serverId], and records the answer. */
-    private suspend fun restore(serverId: Long): UndoOutcome {
-        val api = client() ?: return UndoOutcome.NeedsServer
-        return when (val result = api.entries.restore(serverId, resend = true)) {
-            is ApiResult.Success -> {
-                store.restored(serverId, result.value.toCached())
-                UndoOutcome.Restored
-            }
-
-            is ApiResult.Failure -> when (val error = result.error) {
-                // A 2xx: the server restored it, in an answer the phone cannot read.
-                is ApiError.InvalidResponse -> {
-                    store.restored(serverId, answer = null)
-                    UndoOutcome.Restored
-                }
-
-                is ApiError.Network, is ApiError.RateLimited, is ApiError.TrustRefused -> UndoOutcome.NeedsServer
-
-                is ApiError.UnexpectedStatus -> if (error.status in
-                    PROXY_UNREACHABLE
-                ) {
-                    UndoOutcome.NeedsServer
-                } else {
-                    UndoOutcome.Failed(
-                        error.status,
-                    )
-                }
-
-                ApiError.AuthFailed -> UndoOutcome.Failed(ApiError.AuthFailed.status)
-
-                is ApiError.HostNotAllowed -> UndoOutcome.Failed(status = null)
-            }
-        }
-    }
-
     companion object {
-        /** How long to wait after a 429 that names no whole number of seconds. */
-        val DEFAULT_RETRY_AFTER: Duration = Duration.ofSeconds(60)
-
         /** Twice the farthest a snap moves a start: half of Tokkl's coarsest time resolution, an hour. */
         val LOOKUP_MARGIN: Duration = Duration.ofHours(1)
-
-        /** Bad gateway, service unavailable and gateway timeout, which a proxy answers while its server is down. */
-        private val PROXY_UNREACHABLE = setOf(502, 503, 504)
     }
 }

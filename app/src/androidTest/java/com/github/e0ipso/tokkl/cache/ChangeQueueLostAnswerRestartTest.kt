@@ -109,7 +109,7 @@ class ChangeQueueLostAnswerRestartTest {
             val deadline = System.nanoTime() + Duration.ofSeconds(60).toNanos()
             while (runBlocking { app.changes.unsentCount.first() } > 0) {
                 check(System.nanoTime() < deadline) { "the queue was not sent" }
-                runBlocking { app.sender.send().join() }
+                runBlocking { app.sender.sendAndWait() }
             }
 
             val start = Instant.parse(saved.getProperty("start"))
