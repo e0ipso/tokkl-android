@@ -5,7 +5,7 @@ import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.preferences.ReminderSetting
-import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.session.SignedInCheck
 import com.github.e0ipso.tokkl.timerstate.SurfaceTap
 import com.github.e0ipso.tokkl.timerstate.TimerControls
 import com.github.e0ipso.tokkl.timerstate.TimerControlsSource
@@ -21,7 +21,7 @@ import kotlinx.coroutines.flow.first
 internal fun accountReminderSync(
     context: Context,
     store: ReminderStore,
-    session: Session,
+    session: SignedInCheck,
     changes: ChangeQueue,
     cache: AccountCache,
     settings: ReminderSetting,

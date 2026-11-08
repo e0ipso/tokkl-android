@@ -2,12 +2,12 @@ package com.github.e0ipso.tokkl.timerstate
 
 import android.content.Context
 import com.github.e0ipso.tokkl.cache.ChangeSender
-import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
+import com.github.e0ipso.tokkl.capabilities.CapabilityCheck
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountRefreshListener
 import com.github.e0ipso.tokkl.session.AccountRefreshed
-import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.session.SignOutPhase
+import com.github.e0ipso.tokkl.session.SignedInCheck
 
 /**
  * Decides whether the timer event stream and [TimerSyncService] run, and starts, points or stops
@@ -15,10 +15,10 @@ import com.github.e0ipso.tokkl.session.SignOutPhase
  */
 class TimerSyncFollower(
     private val context: Context,
-    private val session: Session,
-    private val timerStates: AccountTimerStates,
+    private val session: SignedInCheck,
+    private val timerStates: SignedInTimerState,
     private val timerSync: TimerSync<TimerStateSource>,
-    private val capabilities: CapabilitiesSource,
+    private val timerApi: CapabilityCheck,
     private val sender: ChangeSender,
     private val syncWatcher: TimerSyncWatcher,
     private val slot: TimerSyncServiceSlot,
@@ -36,8 +36,7 @@ class TimerSyncFollower(
      * Whether the timer event stream should run: signed in to a server with the timer API, whose
      * token the server has not refused. Reads the disk.
      */
-    internal fun wanted(): Boolean =
-        capabilities.state.value.timerState && !sender.signInNeeded.value && session.isSignedIn()
+    internal fun wanted(): Boolean = timerApi.offered() && !sender.signInNeeded.value && session.isSignedIn()
 
     /** The first refresh after sign-in learns the capability, and any refresh can lose it. */
     override fun refreshed(refresh: AccountRefreshed) {
@@ -69,8 +68,8 @@ class TimerSyncFollower(
      * the stream is still wanted.
      */
     internal fun run(running: TimerSyncService) {
-        timerSync.run(timerStates.source) {
-            slot.service === running && capabilities.state.value.timerState && !sender.signInNeeded.value
+        timerSync.run(timerStates.timerState()) {
+            slot.service === running && timerApi.offered() && !sender.signInNeeded.value
         }
     }
 

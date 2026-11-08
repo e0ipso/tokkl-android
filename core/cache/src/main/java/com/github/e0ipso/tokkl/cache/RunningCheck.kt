@@ -7,12 +7,12 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkerParameters
+import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.platform.CurrentWorkManager
 import com.github.e0ipso.tokkl.session.AccountDataOwner
-import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -95,15 +95,15 @@ class RunningCheck(private val workManager: CurrentWorkManager, private val resu
 class RunningCheckWorker(
     context: Context,
     params: WorkerParameters,
-    private val cache: AccountCache,
-    private val session: Session,
+    private val cache: CurrentEntryCache,
+    private val session: ApiClientProvider,
     private val results: RunningCheckResults,
     private val io: CoroutineContext,
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result = withContext(io) {
         val generation = results.generation()
-        val api = session.api() ?: return@withContext Result.success()
+        val api = session() ?: return@withContext Result.success()
         val before = cache.runningCheckStart()
         val current = api.entries.current()
         if (current is ApiResult.Success) {

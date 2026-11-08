@@ -8,7 +8,7 @@ import com.github.e0ipso.tokkl.session.AccountRefreshListener
 import com.github.e0ipso.tokkl.session.AccountRefreshSteps
 import com.github.e0ipso.tokkl.session.AccountRefreshed
 import com.github.e0ipso.tokkl.session.MePreferences
-import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
+import com.github.e0ipso.tokkl.timerstate.SignedInTimerState
 
 /**
  * The steps of each account refresh, in order. The capabilities refresh first, from the same
@@ -20,13 +20,13 @@ import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
  */
 class AccountRefreshPipeline(
     private val capabilities: CapabilitiesSource,
-    private val timerStates: AccountTimerStates,
+    private val timerStates: SignedInTimerState,
     private val cache: AccountCache,
     private val listener: AccountRefreshListener,
 ) : AccountRefreshSteps {
 
     override suspend fun afterAnswer(api: TokklApi, me: Me, preferences: MePreferences?) {
-        val flags = capabilities.refresh(api, me, timerStates.source)
+        val flags = capabilities.refresh(api, me, timerStates.timerState())
         cache.refresh(api, me, preferences, flags, onAllDayMissing = capabilities::allDayMissing)
         listener.refreshed(AccountRefreshed(preferences, flags))
     }

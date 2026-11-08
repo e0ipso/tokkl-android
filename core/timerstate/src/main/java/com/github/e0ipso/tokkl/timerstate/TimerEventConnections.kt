@@ -1,7 +1,7 @@
 package com.github.e0ipso.tokkl.timerstate
 
+import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.cache.ChangeSender
-import com.github.e0ipso.tokkl.session.Session
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
@@ -16,8 +16,8 @@ import kotlin.coroutines.CoroutineContext
  * @param scope where the calls run, on [io].
  */
 class TimerEventConnections(
-    private val session: Session,
-    private val timerStates: AccountTimerStates,
+    private val session: ApiClientProvider,
+    private val timerStates: SignedInTimerState,
     private val sender: ChangeSender,
     private val service: TimerSyncServiceSlot,
     private val scope: CoroutineScope,
@@ -25,11 +25,11 @@ class TimerEventConnections(
 ) : TimerSyncConnections<TimerStateSource> {
 
     override fun open(account: TimerStateSource, link: TimerSyncLink) {
-        scope.launch(io) { link.ended(holdTimerEvents(session.api(), account, link)) }
+        scope.launch(io) { link.ended(holdTimerEvents(session(), account, link)) }
     }
 
     override fun stopped(account: TimerStateSource, end: StreamEnd) {
-        if (end == StreamEnd.Refused && account === timerStates.source) sender.signInRefused()
+        if (end == StreamEnd.Refused && account === timerStates.timerState()) sender.signInRefused()
         service.stop()
     }
 }

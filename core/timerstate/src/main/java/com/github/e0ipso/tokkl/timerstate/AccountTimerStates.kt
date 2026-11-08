@@ -1,6 +1,6 @@
 package com.github.e0ipso.tokkl.timerstate
 
-import com.github.e0ipso.tokkl.cache.AccountCache
+import com.github.e0ipso.tokkl.cache.CurrentEntryCache
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountLifetime
 import com.github.e0ipso.tokkl.session.AccountRefreshRequests
@@ -33,7 +33,7 @@ class AccountTimerState(val source: TimerStateSource, val account: String)
 class AccountTimerStates(
     private val store: TimerStateStore,
     private val lastFields: HeldFieldsMemory,
-    private val cache: AccountCache,
+    private val cache: CurrentEntryCache,
     private val refreshes: AccountRefreshRequests,
     private val lifetime: AccountLifetime,
     private val clock: Clock,

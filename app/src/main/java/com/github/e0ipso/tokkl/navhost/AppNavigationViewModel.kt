@@ -6,7 +6,7 @@ import com.github.e0ipso.tokkl.navigation.FeatureEntries
 import com.github.e0ipso.tokkl.navigation.TopLevelPages
 import com.github.e0ipso.tokkl.pomodoro.PomodoroNotificationTap
 import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationSync
-import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.session.SignedInCheck
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
@@ -24,7 +24,7 @@ internal class AppNavigationViewModel(
     val pages: TopLevelPages,
     val signOuts: StateFlow<Int>,
     val capabilities: StateFlow<Capabilities>,
-    private val session: Session,
+    private val session: SignedInCheck,
     private val pomodoroNotification: PomodoroSessionNotificationSync,
     private val io: CoroutineContext,
     scope: CoroutineScope,

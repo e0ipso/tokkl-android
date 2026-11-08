@@ -2,12 +2,12 @@ package com.github.e0ipso.tokkl.tile
 
 import android.database.sqlite.SQLiteException
 import android.os.SystemClock
+import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.cache.AccountCache
+import com.github.e0ipso.tokkl.cache.CurrentEntryCache
 import com.github.e0ipso.tokkl.cache.RunningCheckResults
 import com.github.e0ipso.tokkl.cache.toTimeEntry
 import com.github.e0ipso.tokkl.platform.DefaultNetwork
-import com.github.e0ipso.tokkl.session.Session
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
@@ -20,8 +20,8 @@ import kotlin.coroutines.CoroutineContext
  */
 internal class TileRefresh(
     private val network: DefaultNetwork,
-    private val session: Session,
-    private val cache: AccountCache,
+    private val session: ApiClientProvider,
+    private val cache: CurrentEntryCache,
     private val results: RunningCheckResults,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
@@ -33,7 +33,7 @@ internal class TileRefresh(
             val generation = results.generation()
             val online = network.reachesInternet()
             if (!online) return@launch
-            val api = session.api() ?: return@launch
+            val api = session() ?: return@launch
             if (!throttle.tryStart(generation, online, SystemClock.elapsedRealtime())) return@launch
             var succeeded = false
             try {

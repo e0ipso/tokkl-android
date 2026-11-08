@@ -5,7 +5,7 @@ import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaultsSetting
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
-import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.session.SignedInCheck
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.HeldTimerFlows
 import com.github.e0ipso.tokkl.timerstate.PomodoroRingingPhase
@@ -37,7 +37,7 @@ class PomodoroWidgetStateSource(
     capabilities: CapabilitiesSource,
     accountSettings: AccountSettingsSource,
     pomodoroDefaults: PomodoroDefaultsSetting,
-    session: Session,
+    session: SignedInCheck,
     clock: Clock,
     io: CoroutineContext,
 ) {

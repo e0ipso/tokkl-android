@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.di
 
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.cache.ChangeSender
+import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.platform.DefaultDispatcher
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.session.AccountDataOwner
@@ -107,7 +108,7 @@ internal val timerModule = module {
             session = get(),
             timerStates = get(),
             timerSync = get(),
-            capabilities = get(),
+            timerApi = get<CapabilitiesSource>()::offersTimerApi,
             sender = get(),
             syncWatcher = get(),
             slot = get(),

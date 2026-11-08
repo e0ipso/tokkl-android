@@ -10,6 +10,7 @@ import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.cache.ChangeSender
 import com.github.e0ipso.tokkl.cache.ChangeSenderEvents
 import com.github.e0ipso.tokkl.cache.ChangeStore
+import com.github.e0ipso.tokkl.cache.CurrentEntryCache
 import com.github.e0ipso.tokkl.cache.CurrentEntryIds
 import com.github.e0ipso.tokkl.cache.DeleteUndo
 import com.github.e0ipso.tokkl.cache.DeleteUndoer
@@ -41,7 +42,7 @@ internal val dataModule = module {
     single { CacheDatabase.open(androidContext()) }
 
     // The offline cache.
-    single { AccountCache(get(), get()) } bind AccountDataOwner::class
+    single { AccountCache(get(), get()) } binds arrayOf(AccountDataOwner::class, CurrentEntryCache::class)
 
     // The queue's tables, which the queue writes and the sender reads.
     single { RoomChangeStore(get()) } bind ChangeStore::class
