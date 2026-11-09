@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.cache
 
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.time.SnappedSpan
+import kotlinx.coroutines.flow.Flow
 import java.time.Instant
 
 /** The queue as [ChangeSender] sees it: the next change, and the record of a sent one. */
@@ -94,19 +95,24 @@ sealed interface TakenBack {
 
 /**
  * The queue in [database], and the one way into its tables: [ChangeSender] reads and records
- * through [ChangeStore], and [ChangeQueue] writes its changes through [transaction] with the
- * same DAO.
+ * through [ChangeStore], and [ChangeQueue] applies its [QueueEdits] through [QueueStorage], each
+ * change in one transaction over the same DAO.
  */
-class RoomChangeStore(private val database: CacheDatabase) : ChangeStore {
+class RoomChangeStore(private val database: CacheDatabase) :
+    ChangeStore,
+    QueueStorage {
 
-    /** The queue's reads and writes, for [ChangeQueue]'s flows and transactions. */
-    internal val dao = database.changes()
+    private val dao = database.changes()
 
-    /** Runs [block] in one transaction. Blocks on disk I/O. */
-    internal fun <T> transaction(block: () -> T): T = database.runInTransaction<T>(block)
+    override val unsentCount: Flow<Int> = dao.count()
 
-    /** The id the cache holds [entryId] under: the server's once it answered the local create, or [entryId]. */
-    internal fun resolve(entryId: EntryId): Long = entryId.local?.let { dao.serverId(it.value) } ?: entryId.value
+    override val heldChanges: Flow<List<PendingChange>> = dao.held()
+
+    override val heldCount: Flow<Int> = dao.heldCount()
+
+    override val latestShortStop: Flow<ShortStopUndo?> = dao.latestShortStop()
+
+    override fun <T> transaction(edit: QueueTables.() -> T): T = database.runInTransaction<T> { dao.edit() }
 
     override fun first(): PendingChange? = dao.first()
 
@@ -166,7 +172,7 @@ class RoomChangeStore(private val database: CacheDatabase) : ChangeStore {
     }
 
     override fun takeBackDelete(entryId: EntryId): TakenBack = database.runInTransaction<TakenBack> {
-        val id = resolve(entryId)
+        val id = dao.resolve(entryId)
         val delete = dao.queuedDelete(id)
         when {
             delete != null && !delete.maybeSent -> {

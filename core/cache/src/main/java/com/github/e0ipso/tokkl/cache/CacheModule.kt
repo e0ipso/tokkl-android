@@ -26,7 +26,7 @@ val cacheModule = module {
     single { ServerCacheRefresh(get(), get(), get()) }
 
     // The queue's tables, which the queue writes and the sender reads.
-    single { RoomChangeStore(get()) } bind ChangeStore::class
+    single { RoomChangeStore(get()) } binds arrayOf(ChangeStore::class, QueueStorage::class)
 
     single { AccountServerSpans(get()) } bind ServerSpans::class
 
@@ -38,7 +38,7 @@ val cacheModule = module {
     single { SendOnQueue(get(), get()) } bind QueuedListener::class
     single {
         ChangeQueue(
-            get(),
+            get<QueueStorage>(),
             io(),
             onQueued = get(),
             clock = get(),
