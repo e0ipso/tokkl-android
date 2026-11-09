@@ -61,7 +61,7 @@ internal fun reportsViewModel(
  * The Reports route on the back stack in a test, as the navigation host keeps it: the route's own
  * store holds [model], which [make] builds in a scope of its own under [scope] with the route's
  * saved state, and the session's [choices] outlive it. [reopen] takes the route off the stack,
- * which clears the model, and opens it again with a new one. [restart] is a new process that
+ * which clears the model and its saved state, and opens it again with a new one. [restart] is a new process that
  * restores the route: new choices, and a new model over what the route's saved state kept.
  */
 internal class TestReportsRoute(
@@ -76,9 +76,13 @@ internal class TestReportsRoute(
     var model: ReportsViewModel = open()
         private set
 
-    /** The route leaves the back stack and comes back: the model is a new one, the choices the same. */
+    /**
+     * The route leaves the back stack and comes back: the model is a new one over a new saved
+     * state, as the route's saved state goes with it, and the choices are the same.
+     */
     fun reopen(): ReportsViewModel {
         store.clear()
+        saved = SavedStateHandle()
         model = open()
         return model
     }

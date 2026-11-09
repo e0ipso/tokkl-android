@@ -19,6 +19,7 @@ import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.SavedStateHandle
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.entries.OlderPages
@@ -276,6 +277,7 @@ class CalendarGesturesTest {
             computation = Dispatchers.Default,
             clock = CLOCK,
             allDayOffered = flowOf(allDayOffered),
+            saved = SavedStateHandle(),
         )
         composeRule.setContent {
             TokklTheme(darkTheme = false) {

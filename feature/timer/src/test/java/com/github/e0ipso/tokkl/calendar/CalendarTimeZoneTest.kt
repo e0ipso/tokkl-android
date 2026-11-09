@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.calendar
 
+import androidx.lifecycle.SavedStateHandle
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.entries.WeekSource
 import com.github.e0ipso.tokkl.entries.sessionEntries
@@ -140,6 +141,7 @@ class CalendarTimeZoneTest {
             computation = Dispatchers.Unconfined,
             clock = NOW,
             allDayOffered = flowOf(false),
+            saved = SavedStateHandle(),
         )
     }
 

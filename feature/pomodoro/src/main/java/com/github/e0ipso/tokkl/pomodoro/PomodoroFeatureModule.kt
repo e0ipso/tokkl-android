@@ -142,6 +142,7 @@ val pomodoroFeatureModule = module {
             exactAlarms = get(),
             picker = pickerSource(cache.projects, cache.clients, cache.tasks, cache.tags),
             offline = get<DefaultNetwork>().offlineIn(scope),
+            saved = get(),
         )
     }
     viewModel {

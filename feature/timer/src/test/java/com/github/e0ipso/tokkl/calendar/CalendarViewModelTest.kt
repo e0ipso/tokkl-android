@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.calendar
 
+import androidx.lifecycle.SavedStateHandle
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
@@ -360,6 +361,28 @@ class CalendarViewModelTest {
         assertEquals(listOf(EntryId(LOCAL_ID)), created)
     }
 
+    /**
+     * The process died with the calendar on another week: the page it restores shows the day that
+     * was chosen and loads its week. A calendar that followed today keeps following it.
+     */
+    @Test
+    fun theChosenDayComesBackWhenANewProcessRestoresThePage() {
+        val saved = SavedStateHandle()
+        val model = model(cached = emptyList(), saved = saved)
+        model.step(-27)
+        assertEquals(SEPTEMBER_28, shown(model) { true }.weekStart)
+
+        val restored = model(cached = emptyList(), saved = afterProcessDeath(saved))
+        val week = shown(restored) { true }
+        assertEquals(OCTOBER_25.minusDays(27), week.selected)
+        restored.loadWeek(week.weekStart)
+        shown(restored) { it.weekStart == SEPTEMBER_28 && it.week == WeekSource.Loaded }
+
+        model.showToday()
+        val following = model(cached = emptyList(), saved = afterProcessDeath(saved))
+        assertEquals(OCTOBER_25, shown(following) { true }.selected)
+    }
+
     /** A create drag the phone's storage refuses makes nothing and opens no form, as a refused entry form save. */
     @Test
     fun aCreateDragTheStorageRefusesMakesNothing() {
@@ -625,6 +648,7 @@ class CalendarViewModelTest {
         cache: Flow<List<EntryWithSendState>> = flowOf(cached.map { EntryWithSendState(it, unsent = false) }),
         io: CoroutineContext = Dispatchers.Unconfined,
         allDayOffered: Boolean = false,
+        saved: SavedStateHandle = SavedStateHandle(),
     ): CalendarViewModel {
         val accountSettings = MutableStateFlow<AccountSettings?>(settings)
         val scope = CoroutineScope(
@@ -649,8 +673,13 @@ class CalendarViewModelTest {
             computation = Dispatchers.Unconfined,
             clock = CLOCK,
             allDayOffered = flowOf(allDayOffered),
+            saved = saved,
         )
     }
+
+    /** What a new process gets back of [saved]: only what it holds. */
+    private fun afterProcessDeath(saved: SavedStateHandle) =
+        SavedStateHandle(saved.keys().associateWith { saved.get<Any?>(it) })
 
     private fun shown(model: CalendarViewModel, condition: (CalendarState.Shown) -> Boolean): CalendarState.Shown =
         runBlocking {

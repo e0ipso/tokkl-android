@@ -21,6 +21,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -34,7 +36,8 @@ import kotlin.coroutines.CoroutineContext
  * next page when the list nears its end, and the weekly tab always shows one whole week from the
  * account's week start. It is the Reports route's own view model: the range and the reports live
  * in memory while the route is on the back stack, and go with it, while the tab and the filters
- * stay in [choices] for the next visit. Explicit CSV sharing uses a separate bounded private
+ * stay in [choices] for the next visit. The route's saved state keeps the range too, so a new
+ * process that restores the page asks for the range it showed. Explicit CSV sharing uses a separate bounded private
  * export area. When a request fails, the screen shows why and no numbers or entries, even those of
  * pages that loaded before. The screen reads one state, [page]; [state], [tab] and [filters] are
  * its parts, which the module's tests read too.
@@ -50,8 +53,8 @@ import kotlin.coroutines.CoroutineContext
  * @param app the app's trips to the background, which ask again for the range on screen, and the
  *   network's returns, which ask again for a report that could not reach the server, while the
  *   screen shows ([stateInPage]).
- * @param saved the route's saved state, which keeps the tab and the filters for a new process that
- *   restores the page ([ReportChoices.restore]).
+ * @param saved the route's saved state, which keeps the tab and the filters ([ReportChoices.restore])
+ *   and the range ([SavedRange]) for a new process that restores the page.
  */
 class ReportsViewModel(
     private val choices: ReportChoices,
@@ -112,6 +115,9 @@ class ReportsViewModel(
     /** Whether the screen has opened: from its first show, or a widget's day tap. */
     private var opened = false
 
+    /** The range the route's saved state kept, which the first show asks for in place of this week. */
+    private var restoredRange: RangeSelection? = saved.get<String>(SAVED_RANGE)?.let(SavedRange::decode)
+
     /** A widget's day tap asked for the report the screen is about to show, so that show asks nothing. */
     private var openedLoading = false
 
@@ -139,8 +145,9 @@ class ReportsViewModel(
         app,
         object : PageLoads {
             /**
-             * Opens the screen on this week. A screen that shows again, after a trip to the
-             * background or with another activity over it, asks again for the range on screen.
+             * Opens the screen on this week, or on the range a new process restored. A screen that
+             * shows again, after a trip to the background or with another activity over it, asks
+             * again for the range on screen.
              */
             override fun shown() {
                 when {
@@ -150,7 +157,9 @@ class ReportsViewModel(
 
                     else -> {
                         opened = true
-                        select(RangePreset.THIS_WEEK)
+                        val range = restoredRange
+                        restoredRange = null
+                        if (range != null) load(range) else select(RangePreset.THIS_WEEK)
                     }
                 }
             }
@@ -323,6 +332,11 @@ class ReportsViewModel(
         // A new process that restored the page brings back what the page kept, and keeps it from then on.
         saved.get<String>(SAVED_CHOICES)?.let(choices::restore)
         viewModelScope.launch { chosen.collect { saved[SAVED_CHOICES] = choices.saved() } }
+        viewModelScope.launch {
+            state.mapNotNull { it.selection() }.distinctUntilChanged().collect {
+                saved[SAVED_RANGE] = SavedRange.of(it).encode()
+            }
+        }
         // A widget's day tap, from before the page opened or while it shows.
         viewModelScope.launch {
             choices.todayAsked.collect { asked -> if (asked && choices.takeToday()) openToday() }
@@ -344,6 +358,9 @@ class ReportsViewModel(
     private companion object {
         /** The key of the tab and the filters in the route's saved state. */
         const val SAVED_CHOICES = "report-choices"
+
+        /** The key of the range's [SavedRange] in the route's saved state. */
+        const val SAVED_RANGE = "report-range"
     }
 }
 

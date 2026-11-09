@@ -107,8 +107,8 @@ data class ClientsPageState(
  * @param offline whether the phone is offline, when nothing can change.
  * @param app the app's trips to the background and the network's returns, which load the page again
  *   while it shows ([stateInPage]).
- * @param saved the route's saved state, which keeps the open form and what it holds for a new
- *   process that restores the page.
+ * @param saved the route's saved state, which keeps the open form and what it holds, or the open
+ *   question, for a new process that restores the page.
  */
 class ClientsViewModel(
     private val repository: ClientsRepository,
@@ -128,7 +128,7 @@ class ClientsViewModel(
         changes,
         viewModelScope,
         io,
-        restored = saved.get<String>(SAVED_FORM)?.let(SavedClientForm::decode)?.form(),
+        restored = saved.get<String>(SAVED_OVERLAY)?.let(SavedClientsOverlay::decode)?.overlay(),
     )
 
     /** The list and what is open over it, before the cache and the network join them in [page]. */
@@ -145,10 +145,10 @@ class ClientsViewModel(
     }.stateInPage(viewModelScope, ClientsPageState(state.value, offline.value), app, catalog)
 
     init {
-        // A new process that restores the page opens the form again as it was.
+        // A new process that restores the page opens the form or the question again as it was.
         viewModelScope.launch {
-            state.map { it.overlay as? ClientsOverlay.Form }.distinctUntilChanged().collect { form ->
-                saved[SAVED_FORM] = form?.let(SavedClientForm::of)?.encode()
+            state.map { it.overlay }.distinctUntilChanged().collect { overlay ->
+                saved[SAVED_OVERLAY] = overlay?.let(SavedClientsOverlay::of)?.encode()
             }
         }
     }
@@ -223,8 +223,8 @@ class ClientsViewModel(
     }
 
     private companion object {
-        /** The key of the open form's [SavedClientForm] in the route's saved state. */
-        const val SAVED_FORM = "client-form"
+        /** The key of the open form's or question's [SavedClientsOverlay] in the route's saved state. */
+        const val SAVED_OVERLAY = "client-form"
     }
 }
 

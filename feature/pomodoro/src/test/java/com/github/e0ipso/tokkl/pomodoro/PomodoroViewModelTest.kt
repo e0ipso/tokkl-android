@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.pomodoro
 
+import androidx.lifecycle.SavedStateHandle
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
@@ -36,6 +37,10 @@ class PomodoroViewModelTest {
         cachedEntry(description),
     ).also { fixtures += it }
 
+    /** What a new process gets back of [saved]: only what it holds. */
+    private fun afterProcessDeath(saved: SavedStateHandle) =
+        SavedStateHandle(saved.keys().associateWith { saved.get<Any?>(it) })
+
     @After
     fun stop() = fixtures.forEach { it.close() }
 
@@ -70,6 +75,25 @@ class PomodoroViewModelTest {
         )
         assertEquals(EntryLabels(project = "Ops", projectColor = "#d94182", task = "Triage"), f.page.page.value.labels)
         drawn.cancel()
+    }
+
+    /**
+     * The process died with the start form typed in: the page it restores shows the fields and the
+     * lengths as they were typed, and lengths left alone follow the defaults again.
+     */
+    @Test
+    fun theStartFormComesBackAsTypedWhenANewProcessRestoresThePage() {
+        val f = idle()
+        f.page.editFields(EntryFields(description = "Plan", tags = listOf("deep")), entryId = null)
+        f.page.editLengths(PomodoroLengths("30", "5", "12", "2"))
+
+        val restored = PageFixture(saved = afterProcessDeath(f.saved)).also { fixtures += it }
+
+        assertEquals(EntryFields(description = "Plan", tags = listOf("deep")), restored.page.state.value.fields)
+        assertEquals(PomodoroLengths("30", "5", "12", "2"), restored.page.state.value.lengths)
+        val untouched = PageFixture(saved = afterProcessDeath(idle().saved)).also { fixtures += it }
+        untouched.defaults.value = PomodoroDefaults(45, 9, 20, 3)
+        assertEquals(PomodoroLengths("45", "9", "20", "3"), untouched.page.state.value.lengths)
     }
 
     @Test
@@ -171,6 +195,7 @@ class PomodoroViewModelTest {
             emptyFlow(), emptyFlow(), PomodoroSessionEdits(emptyFlow(), f.server, f.changes, sender = {}), f.defaults,
             f.settings, f.unsent, f.refused, f.scope,
             exactAlarms = { false }, picker = flowOf(PickerSource()), offline = MutableStateFlow(false),
+            saved = SavedStateHandle(),
         )
         assertTrue(unread.state.value.loading)
         assertFalse(unread.state.value.canStart)

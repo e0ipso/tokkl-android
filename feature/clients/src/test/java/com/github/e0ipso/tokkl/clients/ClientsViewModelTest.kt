@@ -148,6 +148,21 @@ class ClientsViewModelTest {
         assertNull(clientsModelAfterProcessDeath().state.value.overlay)
     }
 
+    /** The question whether to archive a client comes back after process death, and archives it. */
+    @Test
+    fun aNewProcessAsksAgainWhetherToArchiveTheClient() {
+        screen.show()
+        val acme = model.state.value.data!!.clients.single()
+        model.askToArchive(acme)
+
+        val restored = clientsModelAfterProcessDeath()
+
+        assertEquals(ClientsOverlay.ConfirmArchive(acme), restored.state.value.overlay)
+        TestScreen(restored.page, scope, scheduler).show()
+        restored.archive()
+        assertEquals(listOf("archive 1 in 7"), repository.changes)
+    }
+
     /** Archiving asks first, since it archives the client's projects too. */
     @Test
     fun archivingAsksFirstThenArchivesTheClientAndRefreshesTheCache() {

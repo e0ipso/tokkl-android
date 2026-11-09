@@ -78,8 +78,8 @@ data class CatalogState<D, O>(
  * @param settings the account's default workspace from the stored settings, or null when they
  *   do not have it.
  * @param changes sends each change in the application's scope and refreshes the cache after it.
- * @param restored the form a page kept in its saved state, open over the list from the start, as
- *   after a new process restored the page.
+ * @param restored the form or question a page kept in its saved state, open over the list from the
+ *   start, as after a new process restored the page.
  */
 class CatalogModel<D, O>(
     private val repository: CatalogRepository<D>,

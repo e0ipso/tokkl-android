@@ -143,6 +143,7 @@ val timerFeatureModule = module {
             clock = get(),
             // From the capabilities once they have loaded.
             allDayOffered = capabilities.allDayOffers(),
+            saved = get(),
         )
     }
     viewModel {

@@ -249,6 +249,49 @@ class ReportTabsViewModelTest {
         assertEquals(filters, repository.weeklies.last().filters)
     }
 
+    /**
+     * The process died with Reports on the back stack: the page it restores opens on the range it
+     * showed, with the preset it came from, and asks for it.
+     */
+    @Test
+    fun theRangeComesBackWhenANewProcessRestoresThePage() {
+        screen.show()
+        io.runAll()
+        model.shift(-1)
+        io.runAll()
+        val before = RangeSelection(week("2026-10-14"), preset = null)
+        assertEquals(before, model.state.value.selection())
+        model.select(RangePreset.LAST_MONTH)
+        io.runAll()
+        val shown = model.state.value.selection()!!
+        screen.leave()
+
+        route.restart()
+        screen = TestScreen(model.page, scope, scheduler)
+        screen.show()
+        io.runAll()
+
+        assertEquals(shown, model.state.value.selection())
+        assertEquals(shown.range, repository.summaries.last().range)
+    }
+
+    /** A widget's day tap that waits when the new process restores the page shows today, not the saved range. */
+    @Test
+    fun aDayTapWaitingAtTheRestoreWinsOverTheSavedRange() {
+        screen.show()
+        io.runAll()
+        model.shift(-1)
+        io.runAll()
+        screen.leave()
+
+        route.restart(before = ReportChoices::openToday)
+        screen = TestScreen(model.page, scope, scheduler)
+        screen.show()
+        io.runAll()
+
+        assertEquals(RangePreset.TODAY, model.state.value.selection()?.preset)
+    }
+
     /** A widget's day tap that waits when the new process restores the page wins over what it saved. */
     @Test
     fun aDayTapWaitingAtTheRestoreWinsOverTheSavedFilters() {

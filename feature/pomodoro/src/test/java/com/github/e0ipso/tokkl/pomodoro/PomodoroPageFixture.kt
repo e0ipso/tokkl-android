@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.pomodoro
 
+import androidx.lifecycle.SavedStateHandle
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.TimerPomodoro
 import com.github.e0ipso.tokkl.api.TimerPomodoroPhase
@@ -198,6 +199,7 @@ internal class PageFixture(
     initial: HeldTimerState? = null,
     entry: TimeEntry? = null,
     val defaults: MutableStateFlow<PomodoroDefaults> = MutableStateFlow(PomodoroDefaults(40, 8, 20, 3)),
+    val saved: SavedStateHandle = SavedStateHandle(),
 ) {
     /** What escaped the page's coroutines, which on the phone would reach the thread and end the app. */
     val escaped = CopyOnWriteArrayList<Throwable>()
@@ -222,6 +224,7 @@ internal class PageFixture(
         exactAlarms = { alarmsDenied },
         picker = picker,
         offline = MutableStateFlow(false),
+        saved = saved,
     )
 
     fun close() = scope.cancel()

@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.pomodoro
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.cache.HeldChange
@@ -45,7 +46,9 @@ import kotlinx.coroutines.withTimeoutOrNull
  * says so.
  *
  * All public methods are called on the main thread, as for the other screens' view models. The
- * start form's draft and the typed fields outlive a rotation, until the account signs out.
+ * start form's draft and the typed fields outlive a rotation, until the account signs out, and the
+ * route's saved state keeps the start form's fields and typed lengths for a new process that
+ * restores the page.
  *
  * @param held the account's held timer state, null before the first one.
  * @param controls what the shared timer controls show: the cache's running entry, with queued edits.
@@ -54,6 +57,7 @@ import kotlinx.coroutines.withTimeoutOrNull
  * @param picker the cached projects, clients, tasks and tags, which the page's picker offers and
  *   its project and task are named from.
  * @param offline whether the phone is offline, which the picker says.
+ * @param saved the route's saved state, which keeps the start form ([SavedPomodoroForm]).
  */
 class PomodoroViewModel(
     held: Flow<HeldTimerState?>,
@@ -67,12 +71,19 @@ class PomodoroViewModel(
     private val exactAlarms: ExactAlarmAccess,
     picker: Flow<PickerSource>,
     private val offline: StateFlow<Boolean>,
+    private val saved: SavedStateHandle,
 ) : ViewModel(scope) {
     private val modelScope = CoroutineScope(
         viewModelScope.coroutineContext + SupervisorJob(viewModelScope.coroutineContext[Job]),
     )
+    /** The start form a new process restored from the route's saved state, if any. */
+    private val restored = saved.get<String>(SAVED_FORM)?.let(SavedPomodoroForm::decode)
+
     private val mutableState = MutableStateFlow(
-        PomodoroPageState(lengths = PomodoroLengths.from(defaults.value), account = settings.value),
+        PomodoroPageState(
+            lengths = restored?.lengths() ?: PomodoroLengths.from(defaults.value),
+            account = settings.value,
+        ),
     )
 
     /** What the page's picker offers, while the page reads it. */
@@ -95,7 +106,7 @@ class PomodoroViewModel(
 
     /** Commands to the server run one at a time, in tap order. */
     private val commands = Mutex()
-    private var lengthsEdited = false
+    private var lengthsEdited = restored?.lengths() != null
     private var exactAlarmAllowed: Boolean? = null
 
     private var heldNow: HeldTimerState? = null
@@ -106,7 +117,7 @@ class PomodoroViewModel(
     private val cached = MutableStateFlow<TimeEntry?>(null)
 
     /** The start form's fields. They follow the open pomodoro, so the form keeps them after End. */
-    private var draft = EntryFields()
+    private var draft = restored?.fields() ?: EntryFields()
     private var edit: Edit? = null
 
     init {
@@ -175,6 +186,13 @@ class PomodoroViewModel(
                 alarmDenied = if (it.loading && !loading) alarmDenied() else it.alarmDenied,
             )
         }
+        keepForm()
+    }
+
+    /** Keeps the start form's fields and typed lengths in the route's saved state. */
+    private fun keepForm() {
+        val lengths = state.value.lengths.takeIf { lengthsEdited }
+        saved[SAVED_FORM] = SavedPomodoroForm.of(draft, lengths).encode()
     }
 
     /** The open pomodoro's fields: a typed edit, else the cache's running entry, else the server's. */
@@ -191,6 +209,7 @@ class PomodoroViewModel(
         if (state.value.loading || state.value.busy || state.value.pomodoro != null) return
         lengthsEdited = true
         mutableState.update { it.copy(lengths = lengths) }
+        keepForm()
     }
 
     /**
@@ -341,5 +360,8 @@ class PomodoroViewModel(
     private companion object {
         /** How long typed fields stay on screen waiting for the cache to show them. */
         const val SETTLE_MS = 5_000L
+
+        /** The key of the start form's [SavedPomodoroForm] in the route's saved state. */
+        const val SAVED_FORM = "pomodoro-form"
     }
 }

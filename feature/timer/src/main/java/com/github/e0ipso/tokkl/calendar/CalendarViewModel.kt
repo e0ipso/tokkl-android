@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.calendar
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.cache.EntryChanges
@@ -65,6 +66,8 @@ import kotlin.coroutines.CoroutineContext
  * @param clock where today comes from, in the account's timezone.
  * @param allDayOffered whether the server stores no-time entries (`Capabilities.allDay == true`),
  *   which [CalendarState.Shown.allDayOffered] reports for the All day row.
+ * @param saved the route's saved state, which keeps the chosen day for a new process that
+ *   restores the page.
  */
 class CalendarViewModel(
     private val entries: CalendarWeeks,
@@ -76,10 +79,14 @@ class CalendarViewModel(
     computation: CoroutineContext,
     private val clock: Clock,
     allDayOffered: Flow<Boolean>,
+    private val saved: SavedStateHandle,
 ) : ViewModel(scope) {
 
-    /** The chosen day, or null to follow today. */
-    private val selected = MutableStateFlow<LocalDate?>(null)
+    /**
+     * The chosen day, or null to follow today. The route's saved state keeps it, so a new process
+     * that restores the page shows the week it showed, and loads it when it shows.
+     */
+    private val selected = MutableStateFlow(saved.get<Long>(SAVED_DAY)?.let(LocalDate::ofEpochDay))
 
     /**
      * How many times the app came back to the foreground or the network came back; the calendar
@@ -116,17 +123,18 @@ class CalendarViewModel(
     /** Shows the day [days] days from the chosen one: 7 or -7 for a week, 1 or -1 for a day. */
     fun step(days: Long) {
         val time = accountSettings.value?.time(clock) ?: return
-        selected.value = (selected.value ?: time.today()).plusDays(days)
+        choose((selected.value ?: time.today()).plusDays(days))
     }
 
     /** Shows [day], as a tap on it in the week's strip does. */
-    fun select(day: LocalDate) {
-        selected.value = day
-    }
+    fun select(day: LocalDate) = choose(day)
 
     /** Shows today, and follows it from then on. */
-    fun showToday() {
-        selected.value = null
+    fun showToday() = choose(null)
+
+    private fun choose(day: LocalDate?) {
+        selected.value = day
+        saved[SAVED_DAY] = day?.toEpochDay()
     }
 
     /**
@@ -196,5 +204,8 @@ class CalendarViewModel(
     companion object {
         /** How long the state keeps following the cache after the last screen stops reading it. */
         private const val STOP_TIMEOUT_MS = 5_000L
+
+        /** The key of the chosen day, as its epoch day, in the route's saved state. */
+        private const val SAVED_DAY = "calendar-day"
     }
 }
