@@ -105,6 +105,13 @@ class CatalogModel<D, O>(
      */
     private var opening = 0
 
+    /**
+     * Counts the changes the server accepted while the list was open. A load that started before
+     * one of them may have read the list from before it, so [load] drops such an answer and reads
+     * the list again.
+     */
+    private var accepted = 0
+
     /** The workspace the data came from, once a load found it. */
     private var workspace: WorkspaceId? = null
 
@@ -197,6 +204,7 @@ class CatalogModel<D, O>(
             if (!opened || opening != sentFrom) return@launch
             when (answer) {
                 is ApiResult.Success -> {
+                    accepted++
                     mutableState.update { current ->
                         current.copy(
                             data = current.data?.let { apply(it, answer.value) },
@@ -225,9 +233,16 @@ class CatalogModel<D, O>(
         loading?.cancel()
         mutableState.update { it.copy(loading = true) }
         val stored = settings.defaultWorkspaceId()
+        val acceptedBefore = accepted
         loading = scope.launch {
             // A cancelled load cancels its requests and drops its answer.
             val answer = withContext(io) { read(stored) }
+            if (accepted != acceptedBefore) {
+                // The server accepted a change while this load ran: its answer may predate it.
+                loading = null
+                load()
+                return@launch
+            }
             when (answer) {
                 is Loaded -> {
                     workspace = answer.workspace

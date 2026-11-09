@@ -7,6 +7,7 @@ import com.github.e0ipso.tokkl.session.CountingRefresh
 import com.github.e0ipso.tokkl.session.ServerChanges
 import com.github.e0ipso.tokkl.session.ServerProblem
 import com.github.e0ipso.tokkl.session.accountSettingsIn
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.junit.Assert.assertEquals
@@ -25,6 +26,9 @@ class CatalogModelTest {
     private var server: List<String>? = listOf("Website")
     private var loads = 0
 
+    /** When set, the next load waits for this answer instead of reading [server]. */
+    private var held: CompletableDeferred<ApiResult<List<String>>>? = null
+
     private val repository = object : CatalogRepository<List<String>> {
         override suspend fun workspace(stored: WorkspaceId?): ApiResult<WorkspaceId> = ApiResult.Success(
             checkNotNull(stored),
@@ -33,6 +37,10 @@ class CatalogModelTest {
         override suspend fun load(workspace: WorkspaceId): ApiResult<List<String>> {
             assertEquals(WorkspaceId(7), workspace)
             loads++
+            held?.let { answer ->
+                held = null
+                return answer.await()
+            }
             return server?.let {
                 ApiResult.Success(
                     it,
@@ -112,5 +120,31 @@ class CatalogModelTest {
         model.reconnected()
         assertEquals(listOf("Website", "Intranet"), model.state.value.data)
         assertEquals(true, model.state.value.canChange)
+    }
+
+    /**
+     * A reload that read the list before a change the server then accepted answers after that
+     * change: the list keeps the change, and the page reads the list again.
+     */
+    @Test
+    fun aReloadThatReadTheListBeforeAnAcceptedChangeKeepsTheChange() {
+        model.shown()
+        val stale = CompletableDeferred<ApiResult<List<String>>>()
+        held = stale
+        model.returned()
+
+        model.send(
+            request = { ApiResult.Success("Intranet") },
+            apply = { list, created -> list + created },
+            done = { CatalogChange.Created(it) },
+        )
+        assertEquals(listOf("Website", "Intranet"), model.state.value.data)
+
+        server = listOf("Website", "Intranet")
+        stale.complete(ApiResult.Success(listOf("Website")))
+
+        assertEquals("the change stays", listOf("Website", "Intranet"), model.state.value.data)
+        assertEquals("the page read the list again", 3, loads)
+        assertEquals(false, model.state.value.loading)
     }
 }
