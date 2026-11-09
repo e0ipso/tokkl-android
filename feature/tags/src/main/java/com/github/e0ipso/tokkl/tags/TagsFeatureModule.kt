@@ -28,6 +28,7 @@ val tagsFeatureModule = module {
             cachedTags = get<AccountCache>().tags,
             offline = get<DefaultNetwork>().offlineIn(scope),
             app = get(),
+            saved = get(),
         )
     }
 

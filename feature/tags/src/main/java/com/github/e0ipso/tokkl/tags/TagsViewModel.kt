@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.tags
 
 import androidx.compose.runtime.Immutable
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.catalog.CatalogChange
@@ -18,7 +19,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 
 /** What the tags page opens over its list. */
@@ -80,6 +84,8 @@ data class TagsPageState(
  * @param offline whether the phone is offline, when nothing can change.
  * @param app the app's trips to the background and the network's returns, which load the page again
  *   while it shows ([stateInPage]).
+ * @param saved the route's saved state, which keeps the open rename form or delete question for a
+ *   new process that restores the page.
  */
 class TagsViewModel(
     private val repository: TagsRepository,
@@ -90,6 +96,7 @@ class TagsViewModel(
     cachedTags: Flow<List<Tag>>,
     private val offline: StateFlow<Boolean>,
     app: AppForeground,
+    saved: SavedStateHandle,
 ) : ViewModel(scope) {
 
     private val catalog = CatalogModel<TagsData, TagsOverlay>(
@@ -98,6 +105,7 @@ class TagsViewModel(
         changes,
         viewModelScope,
         io,
+        restored = saved.get<String>(SAVED_OVERLAY)?.let(SavedTagsOverlay::decode)?.overlay(),
     )
 
     /** The list and what is open over it, before the cache and the network join them in [page]. */
@@ -112,6 +120,15 @@ class TagsViewModel(
         val workspace = workspace()
         TagsPageState(shown, isOffline, cached.filter { workspace == null || it.workspaceId == workspace })
     }.stateInPage(viewModelScope, TagsPageState(state.value, offline.value), app, catalog)
+
+    init {
+        // A new process that restores the page opens the form or the question again as it was.
+        viewModelScope.launch {
+            state.map { it.overlay }.distinctUntilChanged().collect { overlay ->
+                saved[SAVED_OVERLAY] = overlay?.let(SavedTagsOverlay::of)?.encode()
+            }
+        }
+    }
 
     fun workspace(): WorkspaceId? = catalog.workspace()
 
@@ -156,6 +173,11 @@ class TagsViewModel(
             apply = { data, _ -> data.without(tag.id) },
             done = { CatalogChange.Deleted(tag.name) },
         )
+    }
+
+    private companion object {
+        /** The key of the open form's or question's [SavedTagsOverlay] in the route's saved state. */
+        const val SAVED_OVERLAY = "tag-overlay"
     }
 }
 
