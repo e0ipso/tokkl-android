@@ -11,6 +11,7 @@ import androidx.lifecycle.lifecycleScope
 import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.platform.AppHook
 import com.github.e0ipso.tokkl.platform.DefaultNetwork
+import com.github.e0ipso.tokkl.platform.inStartupOrder
 import com.github.e0ipso.tokkl.session.ForegroundRefresh
 import com.github.e0ipso.tokkl.session.NetworkWatch
 import kotlinx.coroutines.CoroutineDispatcher
@@ -39,7 +40,7 @@ internal class MainActivityForeground(
     private val io: CoroutineDispatcher,
 ) : DefaultLifecycleObserver {
 
-    private val hooks = hooks.sortedBy { it.order }
+    private val hooks = hooks.inStartupOrder()
     private val network = NetworkWatch(defaultNetwork, scope, main, listener = ::networkChanged)
     private var notificationsAllowed = allowsNotifications()
 

@@ -5,6 +5,7 @@ import android.database.sqlite.SQLiteException
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.updateAll
 import com.github.e0ipso.tokkl.platform.AppHook
+import com.github.e0ipso.tokkl.platform.StartupPhase
 import com.github.e0ipso.tokkl.storage.PreferencesFile
 import com.github.e0ipso.tokkl.storage.ValueStore
 import kotlinx.coroutines.CoroutineScope
@@ -129,7 +130,7 @@ class TimerWidgetHook(
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
 ) : AppHook {
-    override val order = 60
+    override val phase = StartupPhase.TIMER_WIDGET
 
     override fun processStart() {
         val keys = flow { emitAll(source.value.state.map { it.key() }) }
@@ -145,7 +146,7 @@ class PomodoroWidgetHook(
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
 ) : AppHook {
-    override val order = 70
+    override val phase = StartupPhase.POMODORO_WIDGET
 
     override fun processStart() {
         val keys = flow { emitAll(source.value.state.map { it.key() }) }

@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.notification
 
 import com.github.e0ipso.tokkl.cache.CurrentEntryIds
 import com.github.e0ipso.tokkl.platform.AppHook
+import com.github.e0ipso.tokkl.platform.StartupPhase
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import com.github.e0ipso.tokkl.storage.ValueStore
@@ -114,7 +115,7 @@ class RunningNotificationSync(
 
 /** Right after the refresh requests, since later hooks may change the running notification. */
 class RunningNotificationHook(private val sync: Lazy<RunningNotificationSync>) : AppHook {
-    override val order = 20
+    override val phase = StartupPhase.TIMER_NOTIFICATION
 
     /**
      * Reads the cache off the main thread, and posts or removes nothing for the entry the

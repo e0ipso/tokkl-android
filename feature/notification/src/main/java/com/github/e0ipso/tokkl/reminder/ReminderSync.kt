@@ -5,6 +5,7 @@ import com.github.e0ipso.tokkl.cache.CurrentEntryIds
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.platform.AppHook
+import com.github.e0ipso.tokkl.platform.StartupPhase
 import com.github.e0ipso.tokkl.preferences.ReminderPreferences
 import com.github.e0ipso.tokkl.preferences.ReminderSetting
 import com.github.e0ipso.tokkl.session.AccountDataOwner
@@ -204,7 +205,7 @@ class ReminderHook(
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
 ) : AppHook {
-    override val order = 50
+    override val phase = StartupPhase.REMINDER
 
     override fun processStart() {
         reminder.value.follow(

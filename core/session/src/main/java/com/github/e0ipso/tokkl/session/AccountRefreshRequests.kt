@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.session
 
 import com.github.e0ipso.tokkl.platform.AppHook
+import com.github.e0ipso.tokkl.platform.StartupPhase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
@@ -50,7 +51,7 @@ class RefreshRequestsHook(
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
 ) : AppHook {
-    override val order = 10
+    override val phase = StartupPhase.FORWARD_REFRESHES
 
     override fun processStart() {
         scope.launch(io) { requests.forward(refresh) }

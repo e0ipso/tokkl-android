@@ -13,6 +13,7 @@ import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.platform.AppHook
 import com.github.e0ipso.tokkl.platform.CurrentWorkManager
+import com.github.e0ipso.tokkl.platform.StartupPhase
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import kotlinx.coroutines.CoroutineScope
@@ -197,7 +198,7 @@ class RunningCheckHook(
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
 ) : AppHook {
-    override val order = 90
+    override val phase = StartupPhase.RUNNING_CHECK
 
     override fun processStart() {
         check.value.follow(cache.value.running.map { it != null }, scope, io)
