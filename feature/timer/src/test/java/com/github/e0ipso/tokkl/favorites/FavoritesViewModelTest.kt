@@ -43,7 +43,6 @@ class FavoritesViewModelTest {
 
     @get:Rule
     val main = MainDispatcherRule()
-    private val mainDispatcher = main.dispatcher
     private val scope = main.scope
     private val cached = MutableStateFlow(listOf(REPORT, WEBSITE))
     private val available = MutableStateFlow(true)
@@ -73,7 +72,6 @@ class FavoritesViewModelTest {
                 }
             },
             scope = scope,
-            io = mainDispatcher,
             picker = flowOf(PickerSource()),
             offline = MutableStateFlow(false),
             workspaceId = flowOf(null),

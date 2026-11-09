@@ -11,8 +11,8 @@ import com.github.e0ipso.tokkl.platform.CurrentWorkManager
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timernotice.TimerFailureNotice
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
-import com.github.e0ipso.tokkl.timerstate.CurrentTimerState
 import com.github.e0ipso.tokkl.timerstate.TimerActions
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
@@ -45,6 +45,7 @@ class PomodoroWidgetActionWorker(
     private val session: Session,
     private val widgetStates: PomodoroWidgetStateSource,
     private val failures: TimerFailureNotice,
+    private val scope: CoroutineScope,
     private val io: CoroutineContext,
 ) : CoroutineWorker(context, parameters) {
 
@@ -54,17 +55,16 @@ class PomodoroWidgetActionWorker(
     }
 
     private suspend fun send(tap: PomodoroWidgetTap) {
-        val source = timerStates.source
+        val intake = timerStates.intake()
         val current = widgetStates.state.first()
-        if (timerStates.source !== source || !session.isSignedIn()) return
+        if (timerStates.intake() !== intake || !session.isSignedIn()) return
         val api = session.api()
         // Keep the captured holder and credential together across sign-out/account replacement.
         val actions = TimerActions(
-            client = { api.takeIf { timerStates.source === source && session.isSignedIn() } },
+            client = { api.takeIf { timerStates.intake() === intake && session.isSignedIn() } },
             // The captured holder, whichever account signs in meanwhile.
-            states = object : CurrentTimerState by timerStates {
-                override val source = source
-            },
+            states = { intake },
+            scope = scope,
             io = io,
         )
         sendPomodoroWidgetAction(tap, current, actions)?.let { failures.show(it) }

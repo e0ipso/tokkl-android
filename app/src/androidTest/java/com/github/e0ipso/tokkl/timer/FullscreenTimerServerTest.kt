@@ -51,9 +51,11 @@ import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.heldTimerState
 import com.github.e0ipso.tokkl.components.sessionViewModels
 import com.github.e0ipso.tokkl.components.timerPageViewModels
-import com.github.e0ipso.tokkl.components.timerState
+import com.github.e0ipso.tokkl.components.timerStateIntake
+import com.github.e0ipso.tokkl.components.timerStates
 import com.github.e0ipso.tokkl.components.timerSync
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.orFail
@@ -228,7 +230,7 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
                 hasSetTextAction() and hasAnyAncestor(hasTestTag("fullscreen_timer")),
             ).assertCountEquals(0)
             val frozen = paused.seconds
-            assertEquals(frozen, app.timerState.state.value!!.pause!!.seconds)
+            assertEquals(frozen, app.heldTimerState!!.pause!!.seconds)
             assertEquals(frozen, parseDuration(elapsedText()))
             assertEquals(0, runBlocking { app.changes.unsentCount.first() })
             scenario.recreate()
@@ -319,7 +321,7 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             awaitIdle()
             compose.awaitTimerPage()
             compose.onNodeWithTag("fullscreen_timer").assertDoesNotExist()
-            assertNull(app.timerState.state.value!!.pause)
+            assertNull(app.heldTimerState!!.pause)
             assertEquals(0, runBlocking { app.changes.unsentCount.first() })
         }
     }
@@ -464,7 +466,7 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
                 val linesBeforePause = requests.lines.size
                 focusedButton(UiR.string.timer_pause).performScrollTo().performClick()
                 val paused = awaitPaused()
-                val held = app.timerState.state.value!!
+                val held = app.heldTimerState!!
                 val pause = held.pause!!
                 assertTrue(pause.paused)
                 assertEquals(pause.seconds, paused.seconds)
@@ -553,9 +555,9 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
     private fun holdTimerEventsOnTheServerItself() {
         runBlocking { app.timerSync.stop().join() }
         val stopped = Instant.now()
-        app.timerSync.run(app.timerState)
+        app.timerSync.run(app.timerStateIntake)
         val first = runBlocking {
-            withTimeoutOrNull(15_000) { app.timerState.state.first { it?.receivedAt?.isAfter(stopped) == true } }
+            withTimeoutOrNull(15_000) { app.timerStates.held.first { it?.receivedAt?.isAfter(stopped) == true } }
         }
         assertNotNull("the timer event stream sent its first state", first)
     }

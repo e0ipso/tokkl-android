@@ -18,7 +18,7 @@ import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.platform.MainDispatcher
 import com.github.e0ipso.tokkl.platform.NetworkReport
 import com.github.e0ipso.tokkl.platform.mainActivityIntent
-import com.github.e0ipso.tokkl.timerstate.TimerStateSource
+import com.github.e0ipso.tokkl.timerstate.TimerStateIntake
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -53,7 +53,7 @@ class TimerSyncService : Service() {
     private val main: CoroutineDispatcher by inject(MainDispatcher)
     private val scope by lazy { CoroutineScope(SupervisorJob() + main) }
     private val follower: TimerSyncFollower by inject()
-    private val timerSync: TimerSync<TimerStateSource> by inject()
+    private val timerSync: TimerSync<TimerStateIntake> by inject()
     private val io: CoroutineDispatcher by inject(IoDispatcher)
     private val defaultNetwork: DefaultNetwork by inject()
     private var network: Job? = null

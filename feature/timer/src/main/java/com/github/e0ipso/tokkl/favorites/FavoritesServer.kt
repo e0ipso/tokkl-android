@@ -9,6 +9,9 @@ import com.github.e0ipso.tokkl.api.map
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.Favorite
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
+import kotlin.coroutines.CoroutineContext
 
 /** The most favorites Tokkl keeps: `MAX_FAVORITES` in ../tokkl/packages/api/src/models/users.ts. */
 const val MAX_FAVORITES = 9
@@ -18,19 +21,26 @@ const val MAX_FAVORITES = 9
  * server: nothing is queued, and a failure leaves the server and the cache as they were.
  *
  * @param client the signed-in account's API client, or null when signed out.
+ * @param scope the application's scope, where each save runs on [io].
  */
-class FavoritesServer(private val client: ApiClientProvider, private val cache: AccountCache) : FavoritesStore {
+class FavoritesServer(
+    private val client: ApiClientProvider,
+    private val cache: AccountCache,
+    private val scope: CoroutineScope,
+    private val io: CoroutineContext,
+) : FavoritesStore {
 
     /**
      * Posts [favorites], in order, to `POST /api/v9/me/preferences`, and once the server has
-     * stored them, puts them in the cache. Blocks on the disk, so call it on the IO dispatcher.
+     * stored them, puts them in the cache. The save runs in the application's scope, so it reaches
+     * the server and the cache also when its caller goes meanwhile.
      */
-    override suspend fun save(favorites: List<EntryFields>): ApiResult<Unit> {
-        val api = client() ?: return ApiResult.Failure(ApiError.AuthFailed)
-        return api.account.savePreferences(favoritesBody(favorites)).map {
+    override suspend fun save(favorites: List<EntryFields>): ApiResult<Unit> = scope.async(io) {
+        val api = client() ?: return@async ApiResult.Failure(ApiError.AuthFailed)
+        api.account.savePreferences(favoritesBody(favorites)).map {
             cache.replaceFavorites(favorites.mapIndexed { position, fields -> fields.toFavorite(position) })
         }
-    }
+    }.await()
 }
 
 /**

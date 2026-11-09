@@ -12,6 +12,8 @@ import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.accountSettings
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
 import okhttp3.OkHttpClient
 import java.io.IOException
 import java.security.GeneralSecurityException
@@ -111,25 +113,32 @@ fun interface SessionWriter {
  * email and password, the token kept is the `api_token` from that response;
  * the password is used for this one request and never written anywhere.
  *
- * The call blocks on the disk, so make it on the IO dispatcher.
+ * An attempt runs in [scope], the application's, on [io]: once sent, a sign-in the server accepts
+ * is stored also when the form that sent it goes meanwhile.
  *
  * @param httpClient the shared HTTP client, whose guard lets the request through to [configured]'s
  *   sign-in candidate.
- * @param io where the request runs.
+ * @param scope the application's scope, where each attempt runs.
+ * @param io where the request and the stores' disk work run.
  */
 class SignIn(
     private val session: SessionWriter,
     private val httpClient: OkHttpClient,
     private val configured: ConfiguredServer,
+    private val scope: CoroutineScope,
     private val io: CoroutineContext,
     private val signedInAccount: SignedInAccount,
 ) {
 
     /**
      * With [again], a server other than the signed-in one gets no request, and an account other
-     * than the signed-in one is not stored: both end in [SignInResult.OtherAccount].
+     * than the signed-in one is not stored: both end in [SignInResult.OtherAccount]. A caller that
+     * stops waiting does not stop the attempt.
      */
-    suspend fun attempt(server: ServerUrl, credentials: SignInCredentials, again: SignInAgain? = null): SignInResult {
+    suspend fun attempt(server: ServerUrl, credentials: SignInCredentials, again: SignInAgain? = null): SignInResult =
+        scope.async(io) { signIn(server, credentials, again) }.await()
+
+    private suspend fun signIn(server: ServerUrl, credentials: SignInCredentials, again: SignInAgain?): SignInResult {
         val account = signedInAccount.current() ?: again
         if (account != null && server != account.server) return SignInResult.OtherAccount
         val api = TokklApi(TogglApiClient(server, credentials.toApiCredentials(), httpClient, io = io))

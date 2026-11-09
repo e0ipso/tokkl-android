@@ -24,7 +24,12 @@ val timerStateModule = module {
             clock = get(),
             io = io(),
         )
-    } binds arrayOf(AccountDataOwner::class, DiscardNotices::class, CurrentTimerState::class)
+    } binds arrayOf(
+        AccountDataOwner::class,
+        DiscardNotices::class,
+        CurrentTimerState::class,
+        TimerStateIntakes::class,
+    )
 
     // Pause, Resume and Discard, and a Pomodoro session's Start, Next phase and End, sent to the
     // server at once and never queued. Each answer, refusals included, goes to the account's
@@ -33,6 +38,7 @@ val timerStateModule = module {
         TimerActions(
             client = get<Session>(),
             states = get(),
+            scope = get(),
             io = io(),
         )
     } binds arrayOf(PauseActions::class, SessionActions::class)

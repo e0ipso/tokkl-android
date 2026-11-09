@@ -25,11 +25,11 @@ import com.github.e0ipso.tokkl.awaitControls
 import com.github.e0ipso.tokkl.awaitPomodoroOffered
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.heldTimerState
 import com.github.e0ipso.tokkl.components.pomodoroRinging
 import com.github.e0ipso.tokkl.components.sessionViewModels
 import com.github.e0ipso.tokkl.components.timerActions
 import com.github.e0ipso.tokkl.components.timerControls
-import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.core.ui.R
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.notification.RunningNotifications
@@ -345,7 +345,7 @@ class TimerActionsOfflineServerTest {
 
     private fun HeldTimerState.withoutClock() = copy(serverTime = Instant.EPOCH, receivedAt = Instant.EPOCH)
 
-    private fun held(): HeldTimerState? = app.timerState.state.value
+    private fun held(): HeldTimerState? = app.heldTimerState
 
     private fun shown(): TimerControls = runBlocking { app.timerControls.first() }
 

@@ -37,6 +37,7 @@ val signInFeatureModule = module {
                 session = get<SessionWriter>(),
                 httpClient = get<SharedHttpClient>().instance,
                 configured = get(),
+                scope = get(),
                 io = io(),
                 signedInAccount = StoredSignInAccount(get(), get()),
             ),

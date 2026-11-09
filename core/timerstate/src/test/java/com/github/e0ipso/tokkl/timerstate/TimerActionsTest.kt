@@ -19,8 +19,16 @@ import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.JsonElement
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -28,6 +36,7 @@ import mockwebserver3.RecordedRequest
 import mockwebserver3.SocketEffect
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -51,6 +60,13 @@ class TimerActionsTest {
     private lateinit var url: ServerUrl
     private lateinit var holder: TimerStateSource
     private var signedIn = true
+
+    /** The application's scope, where the actions run. */
+    private val app = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    /** Completes once a call asked for the API client, which waits for [gate]. */
+    private val entered = CompletableDeferred<Unit>()
+    private var gate = CompletableDeferred(Unit)
     private var trustListener: TrustListener? = null
     private lateinit var actions: TimerActions
 
@@ -70,15 +86,50 @@ class TimerActionsTest {
             runningEnded = {},
         )
         actions = TimerActions(
-            client = { if (signedIn) testApi.api(url, credentials, trustListener = trustListener) else null },
-            states = FixedTimerState(sourceOf = { holder }),
+            client = {
+                entered.complete(Unit)
+                gate.await()
+                if (signedIn) testApi.api(url, credentials, trustListener = trustListener) else null
+            },
+            states = { holder },
+            scope = app,
             io = Dispatchers.IO,
         )
     }
 
     @After
     fun tearDown() {
+        app.cancel()
         server.close()
+    }
+
+    @Test
+    fun anActionStillReachesTheHolderOnceItsCallerGoes() = runBlocking {
+        gate = CompletableDeferred()
+        server.enqueue(answer(200, state(revision = 3)))
+        val caller = launch(Dispatchers.IO) { actions.pause() }
+        entered.await()
+
+        caller.cancel()
+        withTimeout(WAIT_MS) { caller.join() }
+        gate.complete(Unit)
+
+        withTimeout(WAIT_MS) { holder.state.first { it?.revision == 3L } }
+        assertEquals("/tokkl/api/app/timer/pause", server.takeRequest().url.encodedPath)
+    }
+
+    @Test
+    fun aReadStopsWithItsCaller() = runBlocking {
+        gate = CompletableDeferred()
+        val caller = launch(Dispatchers.IO) { actions.read() }
+        entered.await()
+
+        caller.cancel()
+        withTimeout(WAIT_MS) { caller.join() }
+        gate.complete(Unit)
+
+        assertEquals("the read sent nothing", 0, server.requestCount)
+        assertNull(holder.state.value)
     }
 
     @Test
@@ -338,5 +389,8 @@ class TimerActionsTest {
 
     private companion object {
         val SERVER_TIME: Instant = Instant.parse("2026-10-28T09:00:00Z")
+
+        /** How long a check waits for another thread. */
+        const val WAIT_MS = 5_000L
     }
 }

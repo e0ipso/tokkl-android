@@ -33,8 +33,8 @@ import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.clients.ClientsRoute
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.capabilities
+import com.github.e0ipso.tokkl.components.heldTimerState
 import com.github.e0ipso.tokkl.components.timerActions
-import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.openMorePage
@@ -327,7 +327,7 @@ class BottomBarTest {
         }
     }
 
-    private fun heldRevision(): Long = app.timerState.state.value!!.revision
+    private fun heldRevision(): Long = app.heldTimerState!!.revision
 
     /** Signs in to a new account of the test server, which the test deletes at its end. */
     private fun signInToNewAccount(): TestAccounts.Account {

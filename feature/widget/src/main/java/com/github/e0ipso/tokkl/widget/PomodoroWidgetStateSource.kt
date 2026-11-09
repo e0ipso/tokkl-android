@@ -60,16 +60,15 @@ class PomodoroWidgetStateSource(
             pomodoroDefaults.loadedDefaults,
             catalog,
         ) { _, flags, settings, defaults, (projects, tasks, ringing) ->
-            val owner = timerStates.current()
-            val account = owner.account.takeIf { signedIn.isSignedIn() }
-            owner.source.withState { held ->
+            val isSignedIn = signedIn.isSignedIn()
+            timerStates.withHeld { owner, held ->
                 pomodoroWidgetState(
                     workspaceId = settings?.defaultWorkspaceId,
-                    account = account,
+                    account = owner.takeIf { isSignedIn },
                     available = flags.timerState,
                     held = held,
                     defaults = defaults,
-                    remembered = fields.load(owner.account),
+                    remembered = fields.load(owner),
                     projects = projects,
                     tasks = tasks,
                     deviceNow = clock.instant(),

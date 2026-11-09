@@ -17,8 +17,8 @@ import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.TimerPomodoro
 import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.components.heldTimerState
 import com.github.e0ipso.tokkl.components.signOut
-import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.components.timerSyncServiceRuns
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.orFail
@@ -91,7 +91,7 @@ class TimerSyncServiceLifecycleTest {
         runBlocking { app.signOut.run() }
 
         awaitEverythingStopped("sign-out")
-        assertNull("sign-out clears the held state", app.timerState.state.value)
+        assertNull("sign-out clears the held state", app.heldTimerState)
         assertNull("sign-out clears the stored state", TimerStateStore(context, Dispatchers.IO).load())
         val kept = other.timerState().pomodoro
         assertEquals("the other devices keep the server's session", session.phase.start, kept?.phase?.start)
@@ -101,7 +101,7 @@ class TimerSyncServiceLifecycleTest {
         assertNotNull(next.pomodoro)
         SystemClock.sleep(AT_ONCE_MS)
         assertFalse(app.timerSyncServiceRuns)
-        assertNull(app.timerState.state.value)
+        assertNull(app.heldTimerState)
         assertFalse(notifications.activeNotifications.any { it.id == PomodoroSessionNotifier.NOTIFICATION_ID })
         assertNull(alarms.nextAlarmClock)
     }
@@ -132,18 +132,18 @@ class TimerSyncServiceLifecycleTest {
             // Wait out the stream's connection with a running entry only the stream can bring.
             val entry = postEntry()
             await("the stream brings the other device's entry", STREAM_CONNECT_MS) {
-                app.timerState.state.value?.runningEntry?.id?.takeIf { it.value == entry }
+                app.heldTimerState?.runningEntry?.id?.takeIf { it.value == entry }
             }
             val session = checkNotNull(postTimer("pomodoro", body = sessionBody()).pomodoro)
             await("the backgrounded phone holds the session", AT_ONCE_MS) {
-                app.timerState.state.value?.takeIf { it.pomodoro?.phase?.start == session.phase.start }
+                app.heldTimerState?.takeIf { it.pomodoro?.phase?.start == session.phase.start }
             }
             await("the session notification", AT_ONCE_MS) {
                 notifications.activeNotifications.singleOrNull { it.id == PomodoroSessionNotifier.NOTIFICATION_ID }
             }
             // A later delivery of this phase can refresh its clock offset and rearm the alarm.
             await("the phase alarm at the corrected planned end", AT_ONCE_MS) {
-                val latest = app.timerState.state.value
+                val latest = app.heldTimerState
                     ?.takeIf { it.pomodoro?.phase?.start == session.phase.start }
                     ?: return@await null
                 val end = session.phase.plannedEnd.minus(latest.clockOffset).toEpochMilli()

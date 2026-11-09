@@ -212,6 +212,7 @@ class ChangeRejectionServerTest {
             session = { _, accepted, _ -> token = accepted },
             httpClient = appHttp.instance,
             configured = appConfiguredServer,
+            scope = scope,
             io = Dispatchers.IO,
             signedInAccount = { null },
         )
@@ -277,7 +278,7 @@ class ChangeRejectionServerTest {
         clock = Clock.systemUTC(),
         spans = ServerSpans.Unsnapped,
         capabilities = capabilitiesOf(Capabilities.NONE),
-        undo = DeleteUndoer(store, client, Dispatchers.IO, refreshes = AccountRefreshRequests()),
+        undo = DeleteUndoer(store, client, Dispatchers.IO, AccountRefreshRequests(), scope),
     )
 
     private fun cachedEntry(description: String): Long {

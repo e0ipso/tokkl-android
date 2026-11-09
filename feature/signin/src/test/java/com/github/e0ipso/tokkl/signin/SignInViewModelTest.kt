@@ -74,6 +74,7 @@ class SignInViewModelTest {
             },
             httpClient = httpClient,
             configured = testApi.configured,
+            scope = CoroutineScope(Dispatchers.Unconfined),
             io = Dispatchers.Unconfined,
             signedInAccount = { null },
         )
@@ -212,6 +213,7 @@ class SignInViewModelTest {
             session = { _, _, _ -> error("must not replace the existing account") },
             httpClient = testApi.http.instance,
             configured = testApi.configured,
+            scope = CoroutineScope(Dispatchers.Unconfined),
             io = Dispatchers.Unconfined,
             signedInAccount = { SignInAgain(url, 7) },
         )
@@ -228,6 +230,7 @@ class SignInViewModelTest {
             session = { _, _, _ -> error("must not replace the existing account") },
             httpClient = testApi.http.instance,
             configured = testApi.configured,
+            scope = CoroutineScope(Dispatchers.Unconfined),
             io = Dispatchers.Unconfined,
             signedInAccount = { SignInAgain(ServerUrl.parse(baseUrl("/"))!!, 7) },
         )

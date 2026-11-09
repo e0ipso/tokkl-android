@@ -296,7 +296,6 @@ class EntryActionsUiTest {
             ApiResult.Success(Unit)
         },
         scope = scope,
-        io = Dispatchers.IO,
         picker = flowOf(PickerSource()),
         offline = MutableStateFlow(false),
         workspaceId = flowOf(null),

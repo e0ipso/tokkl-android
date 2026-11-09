@@ -9,7 +9,6 @@ import com.github.e0ipso.tokkl.session.CacheRefresh
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -85,7 +84,7 @@ data class SignInState(
  *   reboot.
  * @param scope runs the view model's coroutines on one thread, the main thread in
  *   the app.
- * @param io where the blocking [SignIn.attempt] and the writes to [trust] run.
+ * @param io where the writes to [trust] run.
  * @param refreshes loads the account settings and the cache once the server
  *   has accepted the credentials and the app has stored them, as coming to the
  *   foreground does.
@@ -165,8 +164,9 @@ class SignInViewModel(
                 return@launch
             }
             if (stored != null) forget(server.origin)
-            // A sign-in the server accepted is stored also when the form goes meanwhile.
-            val result = withContext(io + NonCancellable) { signIn.attempt(server, credentials, current.again) }
+            // The attempt runs in the application's scope: a sign-in the server accepted is stored
+            // also when the form goes meanwhile.
+            val result = signIn.attempt(server, credentials, current.again)
             val retryAt = when (result) {
                 is SignInResult.RateLimited ->
                     (clock.millis() + (result.retryAfterSeconds ?: DEFAULT_RETRY_AFTER_SECONDS) * MILLIS_PER_SECOND)

@@ -7,8 +7,9 @@ import com.github.e0ipso.tokkl.api.TimerPomodoroPhase
 import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.capabilities
+import com.github.e0ipso.tokkl.components.heldTimerState
 import com.github.e0ipso.tokkl.components.pomodoroRinging
-import com.github.e0ipso.tokkl.components.timerState
+import com.github.e0ipso.tokkl.components.timerStateIntake
 import com.github.e0ipso.tokkl.model.PhaseKind
 import com.github.e0ipso.tokkl.model.PhaseTransition
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
@@ -102,9 +103,9 @@ internal object HeldPhases {
 
     /** Holds [state] as if the server had just sent it. */
     fun hold(state: TimerState): HeldTimerState {
-        val source = app.timerState
-        assertTrue("the holder took the state", source.accept(source.begin(), state))
-        return checkNotNull(source.state.value)
+        val intake = app.timerStateIntake
+        assertTrue("the holder took the state", intake.accept(intake.begin(), state))
+        return checkNotNull(app.heldTimerState)
     }
 
     /** The phase key of [held]. */
@@ -124,7 +125,7 @@ internal object HeldPhases {
         ) { app.pomodoroRinging.state.first { !it.serviceRunning && !it.playing && !it.vibrationRequested } }
     }
 
-    private fun nextRevision(): Long = maxOf(FIRST_REVISION, (app.timerState.state.value?.revision ?: 0) + 1)
+    private fun nextRevision(): Long = maxOf(FIRST_REVISION, (app.heldTimerState?.revision ?: 0) + 1)
 
     private const val ENTRY = 9_000_001L
 }

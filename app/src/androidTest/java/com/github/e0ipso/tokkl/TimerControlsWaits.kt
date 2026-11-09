@@ -4,8 +4,8 @@ import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.components.capabilities
 import com.github.e0ipso.tokkl.components.followTimerSync
+import com.github.e0ipso.tokkl.components.heldTimerState
 import com.github.e0ipso.tokkl.components.timerControls
-import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.components.timerSyncServiceRuns
 import com.github.e0ipso.tokkl.timerstate.TimerControls
 import kotlinx.coroutines.flow.first
@@ -31,7 +31,7 @@ inline fun <reified T : TimerControls> TokklApplication.awaitControls(
             }
         }
     }
-    return reached as? T ?: throw AssertionError("$what: last controls $last; held ${timerState.state.value}")
+    return reached as? T ?: throw AssertionError("$what: last controls $last; held $heldTimerState")
 }
 
 /** The server's timer state, read with [client]'s own token, past the app. */

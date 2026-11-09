@@ -8,10 +8,10 @@ import android.os.Handler
 import android.os.Looper
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.SessionRule
+import com.github.e0ipso.tokkl.components.heldTimerState
 import com.github.e0ipso.tokkl.components.pomodoroAlarm
 import com.github.e0ipso.tokkl.components.pomodoroAlarms
 import com.github.e0ipso.tokkl.components.pomodoroRinging
-import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.core.ui.R
 import com.github.e0ipso.tokkl.pomodoro.HeldPhases
 import com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseAlarmReceiver
@@ -75,7 +75,7 @@ class PomodoroWidgetRedrawTest {
             assertEquals("stale phase cannot redraw", before, host.updates.get())
             deliver(HeldPhases.key(held))
             host.await("matching phase redraws its native widget") { host.updates.get() > before }
-            assertEquals("redraw cannot advance or end a session", held, app.timerState.state.value)
+            assertEquals("redraw cannot advance or end a session", held, app.heldTimerState)
             assertFalse("redraw never starts ringing", app.pomodoroRinging.state.value.serviceRunning)
         }
     }

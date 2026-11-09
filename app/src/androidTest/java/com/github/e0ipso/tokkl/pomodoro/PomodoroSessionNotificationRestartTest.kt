@@ -12,10 +12,10 @@ import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.components.heldTimerState
 import com.github.e0ipso.tokkl.components.initializeTestWorkManager
 import com.github.e0ipso.tokkl.components.pomodoroSessionNotification
 import com.github.e0ipso.tokkl.components.signOut
-import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.model.PhaseTransition
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.session.ServerTrustStore
@@ -80,7 +80,7 @@ class PomodoroSessionNotificationRestartTest {
         try {
             assertNotEquals(saved.getProperty("process"), processIdentity())
             // The new process holds the stored state, with no request for it.
-            val held = checkNotNull(app.timerState.state.value)
+            val held = checkNotNull(app.heldTimerState)
             assertEquals(saved.getProperty("revision").toLong(), held.revision)
             val phase = HeldPhases.key(held)
             assertEquals(saved.getProperty("phase").toLong(), phase.start.toEpochMilli())
@@ -100,7 +100,7 @@ class PomodoroSessionNotificationRestartTest {
             runBlocking { app.signOut.run() }
             runBlocking { assertNull(PomodoroSessionNotificationStore(context, Dispatchers.IO).load()) }
             assertNull(TimerStateStore(context, Dispatchers.IO).load())
-            assertNull(app.timerState.state.value)
+            assertNull(app.heldTimerState)
             assertFalse(manager.activeNotifications.any { it.id == PomodoroSessionNotifier.NOTIFICATION_ID })
             assertTrue(handover.delete())
             assertFalse(handover.exists())

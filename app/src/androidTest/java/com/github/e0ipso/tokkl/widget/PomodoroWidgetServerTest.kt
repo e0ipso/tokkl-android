@@ -13,13 +13,13 @@ import com.github.e0ipso.tokkl.appConfiguredServer
 import com.github.e0ipso.tokkl.appHttp
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.heldTimerState
 import com.github.e0ipso.tokkl.components.pomodoroAlarm
 import com.github.e0ipso.tokkl.components.pomodoroAlarms
 import com.github.e0ipso.tokkl.components.pomodoroRinging
 import com.github.e0ipso.tokkl.components.pomodoroWidgetState
 import com.github.e0ipso.tokkl.components.signOut
 import com.github.e0ipso.tokkl.components.storeSignIn
-import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.components.timerSync
 import com.github.e0ipso.tokkl.core.ui.R
 import com.github.e0ipso.tokkl.model.PhaseKind
@@ -32,6 +32,7 @@ import com.github.e0ipso.tokkl.signin.SignInCredentials
 import com.github.e0ipso.tokkl.signin.SignInResult
 import com.github.e0ipso.tokkl.timer.TimerAcceptanceFixture
 import com.github.e0ipso.tokkl.timerState
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -129,7 +130,7 @@ class PomodoroWidgetServerTest {
         host.awaitText(context.getString(R.string.pomodoro_number, 1, 4))
         host.awaitDescription(context.getString(R.string.pomodoro_remaining))
         val active = active()
-        val end = remote.pomodoro!!.phase.plannedEnd.minus(app.timerState.state.value!!.clockOffset)
+        val end = remote.pomodoro!!.phase.plannedEnd.minus(app.heldTimerState!!.clockOffset)
         assertEquals(end, active.end)
         val expected = SystemClock.elapsedRealtime() + Duration.between(Instant.now(), end).toMillis()
         assertEquals(
@@ -180,9 +181,9 @@ class PomodoroWidgetServerTest {
     @Test fun offlineStartNextAndEndShowToastsAndLeaveStateAndQueueUntouched() {
         AirplaneMode.set(true, fixture.account.client)
         try {
-            val before = app.timerState.state.value
+            val before = app.heldTimerState
             TimerActionToasts.await(TimerActionToasts.offline) { host.click(startLabel) }
-            assertEquals(before, app.timerState.state.value)
+            assertEquals(before, app.heldTimerState)
             host.awaitDescription(startLabel)
             assertEquals(0, runBlocking { app.changes.unsentCount.first() })
         } finally {
@@ -190,12 +191,12 @@ class PomodoroWidgetServerTest {
         }
         remoteStart()
         host.awaitDescription(nextLabel)
-        val before = app.timerState.state.value
+        val before = app.heldTimerState
         AirplaneMode.set(true, fixture.account.client)
         try {
             for (label in listOf(nextLabel, endLabel)) {
                 TimerActionToasts.await(TimerActionToasts.offline) { host.click(label) }
-                assertEquals("failed $label preserves the held state", before, app.timerState.state.value)
+                assertEquals("failed $label preserves the held state", before, app.heldTimerState)
                 assertEquals(0, runBlocking { app.changes.unsentCount.first() })
             }
         } finally {
@@ -260,6 +261,7 @@ class PomodoroWidgetServerTest {
                         SessionWriter(app::storeSignIn),
                         appHttp.instance,
                         appConfiguredServer,
+                        CoroutineScope(Dispatchers.IO),
                         Dispatchers.IO,
                         signedInAccount = { null },
                     ).attempt(
@@ -306,7 +308,7 @@ class PomodoroWidgetServerTest {
         assertFalse("redraw is not early", Instant.now().isBefore(boundary))
         assertTrue(host.updates.get() > before)
         assertFalse(app.pomodoroRinging.state.value.serviceRunning)
-        assertEquals(held, app.timerState.state.value)
+        assertEquals(held, app.heldTimerState)
         host.awaitUpdatesSettled()
         host.assertClockTicksWithoutUpdates()
     }

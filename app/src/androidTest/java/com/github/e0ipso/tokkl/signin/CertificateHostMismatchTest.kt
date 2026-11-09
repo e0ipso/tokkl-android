@@ -68,6 +68,7 @@ class CertificateHostMismatchTest {
                 session = { _, _, _ -> saved = true },
                 httpClient = client,
                 configured = appConfiguredServer,
+                scope = scope,
                 io = Dispatchers.IO,
                 signedInAccount = { null },
             ),

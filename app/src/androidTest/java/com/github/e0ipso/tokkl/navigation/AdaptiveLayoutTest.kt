@@ -411,6 +411,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
                     session = { _, _, _ -> },
                     httpClient = appHttp.instance,
                     configured = appConfiguredServer,
+                    scope = scope,
                     io = Dispatchers.IO,
                     signedInAccount = { null },
                 ),

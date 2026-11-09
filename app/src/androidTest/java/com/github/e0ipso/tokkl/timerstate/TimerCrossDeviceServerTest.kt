@@ -27,11 +27,11 @@ import com.github.e0ipso.tokkl.awaitPomodoroOffered
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.followTimerSync
+import com.github.e0ipso.tokkl.components.heldTimerState
 import com.github.e0ipso.tokkl.components.pomodoroRinging
 import com.github.e0ipso.tokkl.components.sessionViewModels
 import com.github.e0ipso.tokkl.components.timerActions
 import com.github.e0ipso.tokkl.components.timerControls
-import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.components.timerSync
 import com.github.e0ipso.tokkl.components.timerSyncServiceRuns
 import com.github.e0ipso.tokkl.feature.pomodoro.R
@@ -159,7 +159,7 @@ class TimerCrossDeviceServerTest {
                             true
                     },
                 "notification" to {
-                    val snapshot = app.timerState.state.value
+                    val snapshot = app.heldTimerState
                     val shown = TimerSurfaces.sessionNotification()
                     if (snapshot == null || shown == null) {
                         false
@@ -410,7 +410,7 @@ class TimerCrossDeviceServerTest {
     }
 
     /** The signed-in account's held timer state, or null. */
-    private fun held(): HeldTimerState? = app.timerState.state.value
+    private fun held(): HeldTimerState? = app.heldTimerState
 
     /** This answer of the server as the phone holds it, its arrival aside. */
     private fun TimerState.model(): HeldTimerState = held(Instant.EPOCH)
@@ -498,7 +498,7 @@ class TimerCrossDeviceServerTest {
         assertEquals(
             "the ring is the server's phase",
             session.phase.plannedEnd,
-            ring.end.plus(checkNotNull(app.timerState.state.value).clockOffset),
+            ring.end.plus(checkNotNull(app.heldTimerState).clockOffset),
         )
         return ring
     }
@@ -587,7 +587,7 @@ class TimerCrossDeviceServerTest {
         val middle = before.plusMillis(Duration.between(before, after).toMillis() / 2)
         val shown = runBlocking { app.timerControls.first() } as TimerControls.Running
         val phoneTotal = shown.seconds(middle)
-        val heldTotal = checkNotNull(app.timerState.state.value).chainTotal(middle)!!.seconds
+        val heldTotal = checkNotNull(app.heldTimerState).chainTotal(middle)!!.seconds
         Log.i(TAG, "chain total: server $serverTotal s at ${sample.serverTime}, phone $phoneTotal s, held $heldTotal s")
         assertTrue(
             "the phone shows $phoneTotal s, the server $serverTotal s",

@@ -19,9 +19,9 @@ import com.github.e0ipso.tokkl.DeviceShell
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.components.heldTimerState
 import com.github.e0ipso.tokkl.components.pomodoroAlarm
 import com.github.e0ipso.tokkl.components.pomodoroRinging
-import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.feature.pomodoro.R
 import com.github.e0ipso.tokkl.model.PhaseTransition
 import com.github.e0ipso.tokkl.notification.RunningNotifications
@@ -122,7 +122,7 @@ class PomodoroRingingServiceTest {
         assertAlarmOutput(state)
         assertEquals(HeldPhases.key(original), state.ring?.phase)
         // The phase stays where it was until Next phase or End session.
-        assertEquals(original, app.timerState.state.value)
+        assertEquals(original, app.heldTimerState)
         onMain {
             val service = checkNotNull(app.pomodoroRinging.service)
             assertTrue(service.output.playing)
@@ -191,7 +191,7 @@ class PomodoroRingingServiceTest {
             val state = awaitPlaying()
             assertEquals(sound, state.ring?.sound)
             assertAlarmOutput(state)
-            assertEquals(original, app.timerState.state.value)
+            assertEquals(original, app.heldTimerState)
             HeldPhases.holdNoSession()
             awaitStopped()
         }
@@ -209,7 +209,7 @@ class PomodoroRingingServiceTest {
             notification.actions[1].actionIntent.send()
         }
         // Neither reached the server, so the phase and its ring stay as they were.
-        assertEquals(held, app.timerState.state.value)
+        assertEquals(held, app.heldTimerState)
         val after = app.pomodoroRinging.state.value
         assertAlarmOutput(after)
         assertEquals(original.audioSessionId, after.audioSessionId)
@@ -278,7 +278,7 @@ class PomodoroRingingServiceTest {
             old.actions[1].actionIntent.send()
             old.deleteIntent.send()
         }
-        assertEquals(current, app.timerState.state.value)
+        assertEquals(current, app.heldTimerState)
         assertFalse(app.pomodoroRinging.state.value.serviceRunning)
         assertFalse(app.pomodoroRinging.state.value.playing)
     }

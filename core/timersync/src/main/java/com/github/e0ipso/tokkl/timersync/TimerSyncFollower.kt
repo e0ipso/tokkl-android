@@ -5,8 +5,8 @@ import com.github.e0ipso.tokkl.platform.AppHook
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.SignInStatus
 import com.github.e0ipso.tokkl.session.SignOutPhase
-import com.github.e0ipso.tokkl.timerstate.CurrentTimerState
-import com.github.e0ipso.tokkl.timerstate.TimerStateSource
+import com.github.e0ipso.tokkl.timerstate.TimerStateIntake
+import com.github.e0ipso.tokkl.timerstate.TimerStateIntakes
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,15 +35,15 @@ fun interface TimerSyncWatcher {
  * @param startService starts [TimerSyncService] in the foreground, and returns false when the
  *   platform refuses, as it does for an app in the background.
  * @param signedIn whether an account is signed in, read from the session.
- * @param timerState the signed-in account's timer state.
+ * @param timerState where the signed-in account's timer state takes the stream's events.
  * @param timerApi whether the server offers the timer API.
  * @param signInNeeded whether the server refused the account's credential.
  */
 class TimerSyncFollower(
     private val startService: ServiceStart,
     private val signedIn: SignInStatus,
-    private val timerState: CurrentTimerState,
-    private val timerSync: TimerSync<TimerStateSource>,
+    private val timerState: TimerStateIntakes,
+    private val timerSync: TimerSync<TimerStateIntake>,
     private val timerApi: TimerApiOffer,
     private val signInNeeded: StateFlow<Boolean>,
     private val syncWatcher: TimerSyncWatcher,
@@ -104,7 +104,7 @@ class TimerSyncFollower(
      * one that runs and the stream is still wanted.
      */
     internal fun run(instance: Int) {
-        timerSync.run(timerState.source) {
+        timerSync.run(timerState.intake()) {
             running.value == instance && timerApi.offersTimerApi() && !signInNeeded.value
         }
     }

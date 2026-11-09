@@ -47,10 +47,11 @@ import com.github.e0ipso.tokkl.sync.DiscardedChanges
 import com.github.e0ipso.tokkl.sync.LastAnswer
 import com.github.e0ipso.tokkl.timer.TimerViewSetting
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
+import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.PomodoroAlarmScheduler
 import com.github.e0ipso.tokkl.timerstate.TimerActions
 import com.github.e0ipso.tokkl.timerstate.TimerControls
-import com.github.e0ipso.tokkl.timerstate.TimerStateSource
+import com.github.e0ipso.tokkl.timerstate.TimerStateIntake
 import com.github.e0ipso.tokkl.timersync.TimerSync
 import com.github.e0ipso.tokkl.timersync.TimerSyncFollower
 import com.github.e0ipso.tokkl.trust.SessionTrust
@@ -95,14 +96,19 @@ val TokklApplication.signOut: SignOut get() = component()
 val TokklApplication.signOutConfirmation: SignOutConfirmation get() = component()
 val TokklApplication.timerActions: TimerActions get() = component()
 val TokklApplication.defaultNetwork: DefaultNetwork get() = component()
-val TokklApplication.timerSync: TimerSync<TimerStateSource> get() = component()
+val TokklApplication.timerSync: TimerSync<TimerStateIntake> get() = component()
 val TokklApplication.pomodoroAlarms: PomodoroAlarmScheduler get() = component()
 internal val TokklApplication.pomodoroAlarm: PomodoroPhaseAlarm get() = component()
 internal val TokklApplication.pomodoroAlarmRearm: PomodoroAlarmRearm get() = component()
 internal val TokklApplication.pomodoroRinging: ServicePomodoroRinging get() = component()
 
-/** The signed-in account's timer state source, taken anew on each read as the app does. */
-val TokklApplication.timerState: TimerStateSource get() = component<AccountTimerStates>().source
+val TokklApplication.timerStates: AccountTimerStates get() = component()
+
+/** The signed-in account's held timer state now, read anew on each read as the app does. */
+val TokklApplication.heldTimerState: HeldTimerState? get() = timerStates.heldNow()
+
+/** Where the signed-in account's timer state takes answers, taken anew on each read as the app does. */
+val TokklApplication.timerStateIntake: TimerStateIntake get() = timerStates.intake()
 
 val TokklApplication.timerControls: Flow<TimerControls> get() = component<AccountTimerStates>().controls
 val TokklApplication.widgetState: Flow<WidgetState> get() = component<WidgetStateSource>().state

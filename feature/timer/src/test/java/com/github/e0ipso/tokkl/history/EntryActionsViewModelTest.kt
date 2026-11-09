@@ -56,7 +56,6 @@ class EntryActionsViewModelTest {
 
     @get:Rule
     val main = MainDispatcherRule()
-    private val mainDispatcher = main.dispatcher
     private val scope = main.scope
     private val calls = CopyOnWriteArrayList<String>()
 
@@ -483,7 +482,6 @@ class EntryActionsViewModelTest {
                 }
             },
             scope = scope,
-            io = mainDispatcher,
             picker = flowOf(PickerSource()),
             offline = MutableStateFlow(false),
             workspaceId = flowOf(null),

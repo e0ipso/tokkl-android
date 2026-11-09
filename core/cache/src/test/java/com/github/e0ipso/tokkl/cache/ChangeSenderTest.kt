@@ -76,7 +76,7 @@ class ChangeSenderTest {
         testApi.stored = url
         testApi.trust = InMemoryServerTrust(url)
         val client = ApiClientProvider { if (signedIn) testApi.api(url, ApiCredentials.ApiToken("tok-123")) else null }
-        undo = DeleteUndoer(store, client, Dispatchers.IO, refreshes = AccountRefreshRequests())
+        undo = DeleteUndoer(store, client, Dispatchers.IO, refreshes = AccountRefreshRequests(), scope = scope)
         sender = changeSender(store, client, scope = scope, io = Dispatchers.IO, clock = clock, undo = undo)
     }
 
@@ -1693,6 +1693,7 @@ class ChangeSenderTest {
             client = { testApi.api(url, ApiCredentials.ApiToken("tok-123")) },
             io = Dispatchers.IO,
             refreshes = requests,
+            scope = scope,
         )
         store.queue(ChangeKind.DELETE, 54, TAP, stop = TAP.plusSeconds(60), description = "Unsent")
         assertEquals(UndoOutcome.Cancelled, run { refreshing.undoDelete(EntryId(54)) })
@@ -1969,7 +1970,7 @@ private fun changeSender(
     clock: Clock = Clock.systemUTC(),
     spans: ServerSpans = ServerSpans.Unsnapped,
     allDay: Boolean = false,
-    undo: DeleteUndoer = DeleteUndoer(store, client, io, refreshes = AccountRefreshRequests()),
+    undo: DeleteUndoer = DeleteUndoer(store, client, io, refreshes = AccountRefreshRequests(), scope = scope),
 ) = ChangeSender(
     store,
     client,

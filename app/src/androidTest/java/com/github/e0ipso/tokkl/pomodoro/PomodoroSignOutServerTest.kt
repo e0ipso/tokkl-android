@@ -27,13 +27,13 @@ import com.github.e0ipso.tokkl.cache.BackgroundSend
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.heldTimerState
 import com.github.e0ipso.tokkl.components.pomodoroAlarm
 import com.github.e0ipso.tokkl.components.pomodoroRinging
 import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.components.signOut
 import com.github.e0ipso.tokkl.components.signOutConfirmation
 import com.github.e0ipso.tokkl.components.storeSignIn
-import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
 import com.github.e0ipso.tokkl.feature.settings.R
 import com.github.e0ipso.tokkl.finishWithin
@@ -143,7 +143,7 @@ class PomodoroSignOutServerTest {
             hasText(context.getString(CatalogR.string.catalog_cancel)) and hasClickAction() and inDialog,
         ).performClick()
         compose.waitUntil("warning dismissed", 10_000) { app.signOutConfirmation.state.value.unsentToConfirm == null }
-        assertEquals("Cancel keeps the server's session as held", session, app.timerState.state.value)
+        assertEquals("Cancel keeps the server's session as held", session, app.heldTimerState)
         assertEquals(1, queueCount())
         assertTrue(Session(context).isSignedIn())
         compose.onNode(signOutRow).performScrollTo().performClick()
@@ -210,7 +210,7 @@ class PomodoroSignOutServerTest {
             assertFalse(app.pomodoroAlarm.withRingingPhase(HeldPhases.key(old)) { error("old service intent") })
             assertFalse(app.pomodoroAlarm.withRingingPhase(null) { error("the next account's phase has not ended") })
         }
-        assertEquals(current, app.timerState.state.value)
+        assertEquals(current, app.heldTimerState)
         assertEquals(nextAlarm, alarms.nextAlarmClock?.triggerTime)
         assertFalse(app.pomodoroRinging.state.value.playing)
         assertFalse(app.pomodoroRinging.state.value.vibrationRequested)
@@ -249,7 +249,7 @@ class PomodoroSignOutServerTest {
         runBlocking { assertNull(ServerConfigStore(context, Dispatchers.IO).load()) }
         runBlocking { assertNull(ApiTokenStore(context, io = Dispatchers.IO).load()) }
         assertNull(TimerStateStore(context, Dispatchers.IO).load())
-        assertNull(app.timerState.state.value)
+        assertNull(app.heldTimerState)
         awaitNextAlarm(null)
         assertEquals(
             PackageManager.COMPONENT_ENABLED_STATE_DISABLED,

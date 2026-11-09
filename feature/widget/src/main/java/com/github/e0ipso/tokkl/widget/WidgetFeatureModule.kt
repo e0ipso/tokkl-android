@@ -57,6 +57,6 @@ val widgetFeatureModule = module {
     // The Pomodoro widget's Start, Next phase and End session, as expedited work that outlives
     // the widget's broadcast.
     worker { params ->
-        PomodoroWidgetActionWorker(androidContext(), params.get(), get(), get(), get(), get(), io())
+        PomodoroWidgetActionWorker(androidContext(), params.get(), get(), get(), get(), get(), get(), io())
     }
 }

@@ -7,9 +7,9 @@ import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.components.heldTimerState
 import com.github.e0ipso.tokkl.components.pomodoroAlarmRearm
 import com.github.e0ipso.tokkl.components.pomodoroAlarms
-import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.model.PhaseTransition
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -50,7 +50,7 @@ class PomodoroPhaseAlarmRearmTest {
 
             val next = checkNotNull(alarms.nextAlarmClock) { "boot did not schedule the phase alarm" }
             assertEquals(end.toEpochMilli(), next.triggerTime)
-            assertEquals(held, app.timerState.state.value)
+            assertEquals(held, app.heldTimerState)
         } finally {
             try {
                 AirplaneMode.set(false, TokklTestServer.url)

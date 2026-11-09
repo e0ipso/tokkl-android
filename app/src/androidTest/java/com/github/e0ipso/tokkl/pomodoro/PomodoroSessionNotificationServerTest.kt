@@ -24,12 +24,12 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.heldTimerState
 import com.github.e0ipso.tokkl.components.pomodoroRinging
 import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.components.signOut
 import com.github.e0ipso.tokkl.components.storeSignIn
 import com.github.e0ipso.tokkl.components.timerActions
-import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.PhaseKind
@@ -96,7 +96,7 @@ class PomodoroSessionNotificationServerTest {
             }
             runBlocking { assertNull(PomodoroSessionNotificationStore(context, Dispatchers.IO).load()) }
             assertFalse(manager.activeNotifications.any { it.id == PomodoroSessionNotifier.NOTIFICATION_ID })
-            assertNull(app.timerState.state.value)
+            assertNull(app.heldTimerState)
         } finally {
             try {
                 if (::account.isInitialized) TestAccounts.delete(account) else AirplaneMode.off()
@@ -174,8 +174,8 @@ class PomodoroSessionNotificationServerTest {
             work.actions[1].actionIntent.send()
         }
         // Neither reached the server: the phone holds the same state and shows the same phase.
-        assertEquals(shown.revision, app.timerState.state.value?.revision)
-        assertEquals(PhaseKind.WORK, app.timerState.state.value?.pomodoro?.phase?.kind)
+        assertEquals(shown.revision, app.heldTimerState?.revision)
+        assertEquals(PhaseKind.WORK, app.heldTimerState?.pomodoro?.phase?.kind)
         assertEquals(
             work.extras.getCharSequence(Notification.EXTRA_TITLE).toString(),
             awaitSessionNotification().extras.getCharSequence(Notification.EXTRA_TITLE).toString(),
@@ -262,13 +262,13 @@ class PomodoroSessionNotificationServerTest {
                 app.timerActions.startSession(WorkspaceId(workspace), EntryFields("Notification acceptance"), lengths)
             },
         )
-        return HeldPhases.key(checkNotNull(app.timerState.state.value))
+        return HeldPhases.key(checkNotNull(app.heldTimerState))
     }
 
     /** The server's timer now, which the phone also holds. */
     private fun serverTimer(): HeldTimerState = runBlocking {
         assertEquals(TimerActionResult.Done, app.timerActions.read())
-        checkNotNull(app.timerState.state.value)
+        checkNotNull(app.heldTimerState)
     }
 
     private fun sendActions(count: Int, block: () -> Unit) = PomodoroWorkWaits.sessionButtons(count, send = block)

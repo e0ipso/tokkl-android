@@ -12,7 +12,8 @@ import com.github.e0ipso.tokkl.api.map
 import com.github.e0ipso.tokkl.cache.CREATED_WITH
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.WorkspaceId
-import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
 
@@ -25,40 +26,45 @@ import kotlin.coroutines.CoroutineContext
  * entry stay with the change queue, and no phase rule runs here: the server applies them all.
  *
  * Each action goes out once. A request whose answer was lost may have reached the server, so it
- * is not sent again; the next read or timer event shows what it did.
+ * is not sent again; the next read or timer event shows what it did. An action runs in [scope],
+ * the application's, so it reaches the server and its answer reaches the holder also when its
+ * caller goes meanwhile, as a screen does. The read runs in the caller's coroutine and stops
+ * with it.
  *
  * Resume, Discard, Next phase and End take the revision of the state the surface showed, not the
  * holder's latest, so a tap on an older notification or widget gets a refusal instead of acting
  * on a phase the user never saw.
  *
  * @param client the signed-in account's API client, or null when signed out.
- * @param states the account's timer state. Each call takes its source once and gives the answer to
- *   that source, so an answer for an account that signed out meanwhile changes nothing.
+ * @param states where the account's timer state takes answers. Each call takes the intake once and
+ *   gives the answer to it, so an answer for an account that signed out meanwhile changes nothing.
+ * @param scope the application's scope, where the actions run.
  * @param io where requests run, off the main thread.
  */
 class TimerActions(
     private val client: ApiClientProvider,
-    private val states: CurrentTimerState,
+    private val states: TimerStateIntakes,
+    private val scope: CoroutineScope,
     private val io: CoroutineContext,
 ) : PauseActions,
     SessionActions {
 
     /** Reads the state with `GET /api/app/timer`. */
-    override suspend fun read(): TimerActionResult = call { api ->
-        api.timer.state().map { Refusable(it, refused = false) }
+    override suspend fun read(): TimerActionResult = withContext(io) {
+        exchange { api -> api.timer.state().map { Refusable(it, refused = false) } }
     }
 
     /**
      * Pauses the running entry. The server refuses it during a session and while nothing runs.
      * Pause reads no field, so it sends an empty object.
      */
-    override suspend fun pause(): TimerActionResult = call { it.timer.pause() }
+    override suspend fun pause(): TimerActionResult = send { it.timer.pause() }
 
     /** Resumes the paused chain shown at [revision], with a clone of its fields. */
-    override suspend fun resume(revision: Long): TimerActionResult = call { it.timer.resume(revision) }
+    override suspend fun resume(revision: Long): TimerActionResult = send { it.timer.resume(revision) }
 
     /** Ends the paused chain shown at [revision], which is Stop while paused. */
-    override suspend fun discard(revision: Long): TimerActionResult = call { it.timer.discard(revision) }
+    override suspend fun discard(revision: Long): TimerActionResult = send { it.timer.discard(revision) }
 
     /**
      * Starts a session in [workspaceId] whose first pomodoro has [fields], with [lengths] in place
@@ -69,30 +75,33 @@ class TimerActions(
         workspaceId: WorkspaceId,
         fields: EntryFields,
         lengths: SessionLengths,
-    ): TimerActionResult = call { it.timer.startSession(sessionStart(workspaceId, fields, lengths)) }
+    ): TimerActionResult = send { it.timer.startSession(sessionStart(workspaceId, fields, lengths)) }
 
     /** Confirms the phase shown at [revision] and starts the next one. */
-    override suspend fun nextPhase(revision: Long): TimerActionResult = call { it.timer.nextPhase(revision) }
+    override suspend fun nextPhase(revision: Long): TimerActionResult = send { it.timer.nextPhase(revision) }
 
     /** Ends the session shown at [revision]. */
-    override suspend fun endSession(revision: Long): TimerActionResult = call { it.timer.endSession(revision) }
+    override suspend fun endSession(revision: Long): TimerActionResult = send { it.timer.endSession(revision) }
 
     // A tap's action reaches the server and its answer reaches the holder also when the caller is
-    // cancelled meanwhile, as when the screen that sent it goes.
-    private suspend fun call(request: suspend (TokklApi) -> ApiResult<Refusable<TimerState>>): TimerActionResult =
-        withContext(io + NonCancellable) {
-            val api = client() ?: return@withContext TimerActionResult.Failed(ApiError.AuthFailed)
-            val holder = states.source
-            // Before the request, so its answer cannot undo a change the phone makes meanwhile.
-            val read = holder.begin()
-            request(api).fold(
-                onSuccess = { answer ->
-                    holder.accept(read, answer.value)
-                    if (answer.refused) TimerActionResult.Refused else TimerActionResult.Done
-                },
-                onFailure = { if (it is ApiError.Network) TimerActionResult.Offline else TimerActionResult.Failed(it) },
-            )
-        }
+    // cancelled meanwhile, as when the screen that sent it goes: the application's scope owns it.
+    private suspend fun send(request: suspend (TokklApi) -> ApiResult<Refusable<TimerState>>): TimerActionResult =
+        scope.async(io) { exchange(request) }.await()
+
+    /** Sends [request] and gives its answer to the account's timer state. Blocks on disk I/O. */
+    private suspend fun exchange(request: suspend (TokklApi) -> ApiResult<Refusable<TimerState>>): TimerActionResult {
+        val api = client() ?: return TimerActionResult.Failed(ApiError.AuthFailed)
+        val holder = states.intake()
+        // Before the request, so its answer cannot undo a change the phone makes meanwhile.
+        val read = holder.begin()
+        return request(api).fold(
+            onSuccess = { answer ->
+                holder.accept(read, answer.value)
+                if (answer.refused) TimerActionResult.Refused else TimerActionResult.Done
+            },
+            onFailure = { if (it is ApiError.Network) TimerActionResult.Offline else TimerActionResult.Failed(it) },
+        )
+    }
 }
 
 /**

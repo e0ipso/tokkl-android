@@ -77,6 +77,7 @@ val cacheModule = module {
             client = get<Session>(),
             io = io(),
             refreshes = get(),
+            scope = get(),
         )
     } bind DeleteUndo::class
 

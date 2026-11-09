@@ -31,7 +31,7 @@ interface DiscardNotices {
 }
 
 /** The account's [TimerStateSource], and the name its timer controls carry in their targets. */
-class AccountTimerState(val source: TimerStateSource, val account: String)
+private class AccountTimerState(val source: TimerStateSource, val account: String)
 
 /**
  * The account's timer state from a Tokkl server with the timer API, which every timer request,
@@ -40,6 +40,11 @@ class AccountTimerState(val source: TimerStateSource, val account: String)
  * a small file, and each one after a sign-in from nothing. Sign-out retires it. Take it once per
  * request or stream and give its answer to the same source: an answer kept for a retired source
  * changes nothing.
+ *
+ * It is the one owner of the account's [TimerStateSource]: readers see the state as
+ * [CurrentTimerState] and the flows here, the timer actions, the event stream and the account
+ * refresh feed it through [TimerStateIntakes], and only this class retires a source, at sign-out
+ * and before a sign-in.
  *
  * The flows follow the signed-in account across sign-ins and load the stored state off the main
  * thread, on [io].
@@ -56,11 +61,12 @@ class AccountTimerStates(
     private val io: CoroutineContext,
 ) : AccountDataOwner,
     DiscardNotices,
-    CurrentTimerState {
+    CurrentTimerState,
+    TimerStateIntakes {
 
     override val signOutPhase = SignOutPhase.RETIRE_STATE
 
-    override suspend fun forgetAccount() = source.retire()
+    override suspend fun forgetAccount() = current().source.retire()
 
     /** The timer state of one account of the [lifetime], made on first use. */
     private class ForAccount(val account: Int, val state: Lazy<AccountTimerState>)
@@ -69,13 +75,25 @@ class AccountTimerStates(
     private val lock = Any()
     private var forAccount = ForAccount(lifetime.accounts.value, lazy { newTimerState(restore = true) })
 
-    override val source: TimerStateSource
-        get() = current().source
+    override fun intake(): TimerStateIntake = current().source
+
+    override fun heldNow(): HeldTimerState? = current().source.state.value
 
     override fun account(): String = current().account
 
+    /**
+     * Calls [read] with the signed-in account's name and its held state, while no accepted state
+     * is between publishing and writing its running entry to the cache, as
+     * [TimerStateSource.withState] does. Keep [read] short. Blocks on disk I/O when [read] reads
+     * the cache.
+     */
+    fun <T> withHeld(read: (account: String, held: HeldTimerState?) -> T): T {
+        val owner = current()
+        return owner.source.withState { held -> read(owner.account, held) }
+    }
+
     /** The source and the account name of the account signed in now, read together. */
-    fun current(): AccountTimerState {
+    private fun current(): AccountTimerState {
         val account = lifetime.accounts.value
         val state = synchronized(lock) {
             if (forAccount.account != account) forAccount = ForAccount(account, lazy { newTimerState(restore = false) })
@@ -88,7 +106,7 @@ class AccountTimerStates(
      * The signed-in account's timer state, and a new one after each sign-in. The first value
      * loads the stored state, so collect it off the main thread.
      */
-    val states: Flow<AccountTimerState> = lifetime.accounts.map { current() }
+    private val states: Flow<AccountTimerState> = lifetime.accounts.map { current() }
 
     /** The signed-in account's held timer state, or null without one. */
     val held: Flow<HeldTimerState?> = states.flatMapLatest { it.source.state }.flowOn(io)
@@ -105,7 +123,8 @@ class AccountTimerStates(
         states.flatMapLatest { it.source.discardNotice }.flowOn(io)
 
     /** Records the notice as shown in the account's timer state store, on [io]. */
-    override suspend fun takeDiscardNotice(): DiscardedPomodoro? = withContext(io) { source.takeDiscardNotice() }
+    override suspend fun takeDiscardNotice(): DiscardedPomodoro? =
+        withContext(io) { current().source.takeDiscardNotice() }
 
     /**
      * What every timer surface shows and acts on (docs/PRD.md T1, N1, N3, N4, N7): the Timer page,
@@ -137,7 +156,7 @@ class AccountTimerStates(
      */
     @Throws(IOException::class)
     fun clearForSignIn() {
-        source.retire()
+        current().source.retire()
         lastFields.clear()
         store.clear()
     }

@@ -5,7 +5,8 @@ import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.session.AccountRefreshRequests
-import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -42,12 +43,14 @@ sealed interface UndoOutcome {
  *
  * @param client the signed-in account's client, or null when signed out. Runs on [io].
  * @param refreshes asked for a refresh after the server restored an entry.
+ * @param scope the application's scope, where each Undo runs on [io].
  */
 class DeleteUndoer(
     private val store: ChangeStore,
     private val client: ApiClientProvider,
     private val io: CoroutineContext,
     private val refreshes: AccountRefreshRequests,
+    private val scope: CoroutineScope,
 ) : DeleteUndo {
 
     /** Held while a delete goes out and while [undoDelete] takes one back, so the two never overlap. */
@@ -60,10 +63,10 @@ class DeleteUndoer(
      * Takes back the delete of the entry [entryId], the id the phone deleted it under. A delete
      * the sender has not sent leaves the queue, with no request. Otherwise the server restores the
      * entry. Blocks the sender's deletes meanwhile. Once started, the Undo reaches the server and
-     * the queue also when the caller is cancelled.
+     * the queue also when the caller is cancelled: it runs in the application's scope.
      */
     override suspend fun undoDelete(entryId: EntryId): UndoOutcome {
-        val outcome = withContext(io + NonCancellable) {
+        val outcome = scope.async(io) {
             deletes.withLock {
                 when (val found = store.takeBackDelete(entryId)) {
                     TakenBack.Unsent -> UndoOutcome.Cancelled
@@ -71,7 +74,7 @@ class DeleteUndoer(
                     TakenBack.Unknown -> UndoOutcome.Failed(status = null)
                 }
             }
-        }
+        }.await()
         if (outcome == UndoOutcome.Restored) withContext(io) { refreshes.refreshAfterChange() }
         return outcome
     }

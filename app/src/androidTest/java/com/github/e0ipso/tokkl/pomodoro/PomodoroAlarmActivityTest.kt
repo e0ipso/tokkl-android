@@ -19,9 +19,9 @@ import com.github.e0ipso.tokkl.DeviceShell
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.components.capabilities
+import com.github.e0ipso.tokkl.components.heldTimerState
 import com.github.e0ipso.tokkl.components.pomodoroRinging
 import com.github.e0ipso.tokkl.components.timerActions
-import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.PhaseKind
 import com.github.e0ipso.tokkl.model.PhaseTransition
@@ -212,7 +212,7 @@ class PomodoroAlarmActivityTest {
             assertTrue(device.wait(Until.gone(By.text("Work done: start short rest")), 10_000))
             val rest = checkNotNull(serverTimer().pomodoro)
             assertEquals(PhaseKind.SHORT_REST, rest.phase.kind)
-            assertEquals(rest.phase.start, app.timerState.state.value?.pomodoro?.phase?.start)
+            assertEquals(rest.phase.start, app.heldTimerState?.pomodoro?.phase?.start)
 
             val restRing = awaitPlaying(timeoutMillis = 90_000).ring!!
             assertEquals(PomodoroPhaseKey(rest.phase.start), restRing.phase)
@@ -248,7 +248,7 @@ class PomodoroAlarmActivityTest {
         context.startActivity(pomodoroAlarmIntent(context, HeldPhases.key(due)))
         instrumentation.waitForIdleSync()
         assertTrue(device.wait(Until.gone(By.text("Next phase")), 10_000))
-        assertEquals(rest, app.timerState.state.value)
+        assertEquals(rest, app.heldTimerState)
         assertFalse(app.pomodoroRinging.state.value.playing)
     }
 
@@ -344,7 +344,7 @@ class PomodoroAlarmActivityTest {
 
     private fun serverTimer(): HeldTimerState = runBlocking {
         assertEquals(TimerActionResult.Done, app.timerActions.read())
-        checkNotNull(app.timerState.state.value)
+        checkNotNull(app.heldTimerState)
     }
 
     private fun openAlarm(phase: PomodoroPhaseKey) {
@@ -369,7 +369,7 @@ class PomodoroAlarmActivityTest {
         assertTrue(after.vibrationRequested)
         assertEquals(before.audioSessionId, after.audioSessionId)
         assertEquals(HeldPhases.key(due), after.ring?.phase)
-        assertEquals(due, app.timerState.state.value)
+        assertEquals(due, app.heldTimerState)
     }
     private fun awaitPlaying(timeoutMillis: Long = 10_000): PomodoroRingingState = runBlocking {
         withTimeout(

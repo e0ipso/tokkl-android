@@ -17,7 +17,6 @@ import com.github.e0ipso.tokkl.platform.whileShown
 import com.github.e0ipso.tokkl.session.ServerProblem
 import com.github.e0ipso.tokkl.session.toServerProblem
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -26,8 +25,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import kotlin.coroutines.CoroutineContext
 
 /** One favorite as the Timer page shows it: what a tap starts, and its project's and task's names. */
 @Immutable
@@ -85,8 +82,8 @@ data class FavoritesState(
  * Starting a template is the timer's: TimerViewModel.startFrom.
  *
  * @param available whether the server keeps Tokkl's favorites, from the capabilities.
- * @param store posts the list and caches it. It runs on [io], and the save reaches the server and
- *   the cache also when the view model is cleared meanwhile.
+ * @param store posts the list and caches it. The save reaches the server and the cache also when
+ *   the view model is cleared meanwhile.
  * @param picker the cached projects, clients, tasks and tags, which the templates page's picker offers.
  * @param offline whether the phone is offline, when no change can reach the server.
  * @param workspaceId the account's default workspace, whose projects the templates page offers.
@@ -98,7 +95,6 @@ class FavoritesViewModel(
     available: Flow<Boolean>,
     private val store: FavoritesStore,
     scope: CoroutineScope,
-    private val io: CoroutineContext,
     picker: Flow<PickerSource>,
     offline: StateFlow<Boolean>,
     workspaceId: Flow<WorkspaceId?>,
@@ -185,7 +181,7 @@ class FavoritesViewModel(
         }
         local.value = Local(saving = true)
         viewModelScope.launch {
-            val result = withContext(io + NonCancellable) { store.save(next) }
+            val result = store.save(next)
             val problem = (result as? ApiResult.Failure)?.let { FavoritesProblem.Server(it.error.toServerProblem()) }
             local.value = Local(problem = problem)
             onDone(problem)

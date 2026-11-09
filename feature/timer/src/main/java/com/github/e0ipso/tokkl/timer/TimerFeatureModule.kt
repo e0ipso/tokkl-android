@@ -69,7 +69,7 @@ val timerFeatureModule = module {
     // The system trace of each Start and Stop tap on the Timer page.
     single { TapTrace.System }
 
-    single<FavoritesStore> { FavoritesServer(client = get<Session>(), cache = get()) }
+    single<FavoritesStore> { FavoritesServer(client = get<Session>(), cache = get(), scope = get(), io = io()) }
 
     // The history's and the calendar's days outside the cache, from the server.
     single { OlderPages(get<Session>()) }
@@ -164,7 +164,6 @@ val timerFeatureModule = module {
             available = get<CapabilitiesSource>().state.map { it.favorites },
             store = get(),
             scope = scope,
-            io = io(),
             picker = pickerSource(cache.projects, cache.clients, cache.tasks, cache.tags),
             offline = get<DefaultNetwork>().offlineIn(scope),
             workspaceId = get<AccountSettingsSource>().state.map { it?.defaultWorkspaceId },

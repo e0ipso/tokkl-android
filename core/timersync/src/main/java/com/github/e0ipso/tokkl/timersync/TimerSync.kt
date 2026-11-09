@@ -1,7 +1,7 @@
 package com.github.e0ipso.tokkl.timersync
 
 import com.github.e0ipso.tokkl.api.ApiCallCancellation
-import com.github.e0ipso.tokkl.timerstate.TimerStateSource
+import com.github.e0ipso.tokkl.timerstate.TimerStateIntake
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -44,7 +44,7 @@ interface TimerSyncConnections<A : Any> {
  * reads and changes the stream's state, so it needs no lock. The watchdog and the reconnects are
  * delays in [scope].
  *
- * @param A what tells accounts apart. The app uses the account's [TimerStateSource].
+ * @param A what tells accounts apart. The app uses the account's [TimerStateIntake].
  * @param scope runs every change of the stream's state, one at a time, such as a scope on
  *   `Dispatchers.Default.limitedParallelism(1)`.
  * @param now milliseconds on a clock that never goes back, for the watchdog and the backoff.

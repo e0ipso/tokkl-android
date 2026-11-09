@@ -8,9 +8,11 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.awaitTimerPage
-import com.github.e0ipso.tokkl.components.timerState
+import com.github.e0ipso.tokkl.components.heldTimerState
+import com.github.e0ipso.tokkl.components.timerStates
 import com.github.e0ipso.tokkl.core.timerstate.R
 import com.github.e0ipso.tokkl.orFail
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -64,7 +66,7 @@ class TimerNoticeServerTest {
         val discarded = ended.discardedPomodoro
         assertNotNull("the server discarded the pomodoro", discarded)
         fixture.refresh()
-        assertEquals(discarded, app.timerState.discardNotice.value)
+        assertEquals(discarded, runBlocking { app.timerStates.discardNotice.first() })
 
         val text = context.getString(R.string.timer_pomodoro_too_short)
         ActivityScenario.launch(MainActivity::class.java).use {
@@ -73,7 +75,7 @@ class TimerNoticeServerTest {
                 "the notice shows",
                 10_000,
             ) { compose.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
-            assertNull("the holder recorded it as shown", app.timerState.discardNotice.value)
+            assertNull("the holder recorded it as shown", runBlocking { app.timerStates.discardNotice.first() })
             compose.waitUntil(
                 "the notice goes",
                 15_000,
@@ -81,7 +83,7 @@ class TimerNoticeServerTest {
         }
         // A new activity and view model, and the state at that revision read again.
         fixture.refresh()
-        assertEquals("the server repeats it", discarded, app.timerState.state.value!!.discardedPomodoro)
+        assertEquals("the server repeats it", discarded, app.heldTimerState!!.discardedPomodoro)
         ActivityScenario.launch(MainActivity::class.java).use {
             compose.awaitTimerPage()
             compose.waitForIdle()
