@@ -151,14 +151,6 @@ class CalendarTimeZoneTest {
 
     /** The calendar only shows entries here. */
     private object NoChanges : EntryChanges {
-        override suspend fun start(workspaceId: WorkspaceId, fields: EntryFields): EntryId = throw AssertionError(
-            "nothing starts",
-        )
-
-        override suspend fun stop(entryId: EntryId, fields: EntryFields?): Boolean = throw AssertionError(
-            "nothing stops",
-        )
-
         override suspend fun create(
             workspaceId: WorkspaceId,
             fields: EntryFields,
@@ -176,5 +168,18 @@ class CalendarTimeZoneTest {
         ): Boolean = throw AssertionError("nothing is edited")
 
         override suspend fun delete(entryId: EntryId): Boolean = throw AssertionError("nothing is deleted")
+
+        override suspend fun updateOlder(
+            entryId: EntryId,
+            workspaceId: WorkspaceId,
+            fields: EntryFields,
+            start: Instant,
+            stop: Instant,
+            noTimeDay: LocalDate?,
+        ): Unit = throw AssertionError("unexpected updateOlder")
+
+        override suspend fun delete(entry: TimeEntry): TimeEntry? = throw AssertionError("unexpected delete")
+
+        override suspend fun currentId(entryId: EntryId): EntryId = entryId
     }
 }

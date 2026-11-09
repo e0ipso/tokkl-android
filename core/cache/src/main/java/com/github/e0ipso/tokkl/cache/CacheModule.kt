@@ -44,7 +44,13 @@ val cacheModule = module {
             clock = get(),
             spans = get<AccountServerSpans>(),
         )
-    } binds arrayOf(EntryChanges::class, CurrentEntryIds::class, HeldChanges::class, UnsentChanges::class)
+    } binds arrayOf(
+        EntryChanges::class,
+        RunningEntryChanges::class,
+        CurrentEntryIds::class,
+        HeldChanges::class,
+        UnsentChanges::class,
+    )
 
     // Sends the queued changes in order, and refreshes, cancels the background retry and counts
     // the discarded changes as its drains end ([QueueDrainEvents]).

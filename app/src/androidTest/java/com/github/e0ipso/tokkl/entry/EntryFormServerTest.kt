@@ -816,6 +816,7 @@ class EntryFormServerTest {
             app.cache.tasks,
             app.accountSettings.state,
             app.changes,
+            app.changes,
             scope,
             clock = Clock.systemUTC(),
             allDay = flowOf(false),

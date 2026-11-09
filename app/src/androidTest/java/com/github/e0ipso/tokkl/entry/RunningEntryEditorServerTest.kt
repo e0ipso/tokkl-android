@@ -65,7 +65,7 @@ import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.cache.CacheDatabase
 import com.github.e0ipso.tokkl.cache.ChangeKind
-import com.github.e0ipso.tokkl.cache.EntryChanges
+import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.cache.modelOf
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
@@ -557,7 +557,7 @@ class RunningEntryEditorServerTest {
      * Production navigation and view models in a size override, matching the existing adaptive fixture. With [changes],
      * the timer sends to it.
      */
-    private fun withHost(width: Int, changes: EntryChanges? = null, steps: () -> Unit) {
+    private fun withHost(width: Int, changes: RunningEntryChanges? = null, steps: () -> Unit) {
         val scenario = finishWithin(
             "launch sized navigation host",
         ) { ActivityScenario.launch(ComponentActivity::class.java) }
@@ -954,7 +954,7 @@ class RunningEntryEditorServerTest {
     private fun string(@StringRes id: Int, vararg args: Any): String = context.getString(id, *args)
 
     /** Gates only a local-write boundary, then executes the real queue and returns its real identity. */
-    private class WriteBarrier(private val real: EntryChanges) : EntryChanges by real {
+    private class WriteBarrier(private val real: RunningEntryChanges) : RunningEntryChanges by real {
         val startEntered = CompletableDeferred<Unit>()
         val startRelease = CompletableDeferred<Unit>()
         val updateEntered = CompletableDeferred<Unit>()

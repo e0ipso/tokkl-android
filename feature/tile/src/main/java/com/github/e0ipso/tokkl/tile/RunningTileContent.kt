@@ -1,6 +1,6 @@
 package com.github.e0ipso.tokkl.tile
 
-import com.github.e0ipso.tokkl.cache.EntryChanges
+import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.timerstate.SurfaceTap
 import com.github.e0ipso.tokkl.timerstate.TimerControls
@@ -53,16 +53,19 @@ fun runningTileContent(controls: TimerControls, entries: List<TimeEntry>): Runni
  * the request for the caller to send. A stop of an entry that no longer runs, or a Resume of a
  * timer no longer paused as shown, does nothing.
  */
-suspend fun tapTile(shown: RunningTileContent, surface: TimerSurfaceActions, changes: EntryChanges): SurfaceTap? =
-    when (shown) {
-        is RunningTileContent.Running -> surface.tap(TimerSurfaceAction.Stop, shown.target)
+suspend fun tapTile(
+    shown: RunningTileContent,
+    surface: TimerSurfaceActions,
+    changes: RunningEntryChanges,
+): SurfaceTap? = when (shown) {
+    is RunningTileContent.Running -> surface.tap(TimerSurfaceAction.Stop, shown.target)
 
-        is RunningTileContent.Paused -> surface.tap(TimerSurfaceAction.Resume, shown.target)
+    is RunningTileContent.Paused -> surface.tap(TimerSurfaceAction.Resume, shown.target)
 
-        is RunningTileContent.Continue -> {
-            changes.continueEntry(shown.last)
-            null
-        }
-
-        RunningTileContent.Nothing -> null
+    is RunningTileContent.Continue -> {
+        changes.continueEntry(shown.last)
+        null
     }
+
+    RunningTileContent.Nothing -> null
+}

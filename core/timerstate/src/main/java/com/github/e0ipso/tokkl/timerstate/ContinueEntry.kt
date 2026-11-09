@@ -1,6 +1,6 @@
 package com.github.e0ipso.tokkl.timerstate
 
-import com.github.e0ipso.tokkl.cache.EntryChanges
+import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.fields
@@ -27,17 +27,17 @@ private val stoppedEntryOrder = compareBy<TimeEntry> { it.start }
 
 /**
  * Starts a timer with [source]'s description, project, task, tags and billable, in [source]'s
- * workspace, where its project and tags are. It goes through [EntryChanges.start], so it is on the
+ * workspace, where its project and tags are. It goes through [RunningEntryChanges.start], so it is on the
  * phone at once, works offline, and stops a running entry at the new one's start. Returns the new
  * entry's local id.
  */
-suspend fun EntryChanges.continueEntry(source: TimeEntry): EntryId = start(source.workspaceId, source.fields())
+suspend fun RunningEntryChanges.continueEntry(source: TimeEntry): EntryId = start(source.workspaceId, source.fields())
 
 /**
  * Continues the entry [lastStopped] picks among [entries], such as the cache's entries, for a
  * surface without the history, such as the Quick Settings tile (docs/PRD.md N4). Returns the new
  * entry's local id, or null when no entry is stopped.
  */
-suspend fun EntryChanges.continueLast(entries: List<TimeEntry>): EntryId? = lastStopped(
+suspend fun RunningEntryChanges.continueLast(entries: List<TimeEntry>): EntryId? = lastStopped(
     entries,
 )?.let { continueEntry(it) }

@@ -1,6 +1,6 @@
 package com.github.e0ipso.tokkl.timer
 
-import com.github.e0ipso.tokkl.cache.EntryChanges
+import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
@@ -37,7 +37,6 @@ import org.junit.Test
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Instant
-import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.util.concurrent.CopyOnWriteArrayList
@@ -648,7 +647,7 @@ class TimerViewModelTest {
      * The change queue: each call reads the tap time first, then waits for [gate], then changes
      * the running entry the cache shows.
      */
-    private inner class FakeChanges : EntryChanges {
+    private inner class FakeChanges : RunningEntryChanges {
         val calls = CopyOnWriteArrayList<String>()
 
         @Volatile
@@ -691,13 +690,8 @@ class TimerViewModelTest {
             return true
         }
 
-        override suspend fun update(
-            entryId: EntryId,
-            fields: EntryFields,
-            start: Instant,
-            stop: Instant?,
-            noTimeDay: LocalDate?,
-        ): Boolean {
+        /** An edit of the running entry, as the queue's update of its row. */
+        private suspend fun update(entryId: EntryId, fields: EntryFields, start: Instant, stop: Instant?): Boolean {
             calls += "update $entryId $fields"
             gate.await()
             val current = running.value?.entry?.takeIf { it.id == entryId } ?: return false
@@ -722,15 +716,10 @@ class TimerViewModelTest {
             start: Instant,
         ): Boolean = update(identity.entryId, fields, start, stop = null)
 
-        override suspend fun create(
-            workspaceId: WorkspaceId,
-            fields: EntryFields,
-            start: Instant,
-            stop: Instant,
-            noTimeDay: LocalDate?,
-        ): EntryId = throw AssertionError("the timer creates no stopped entry")
+        override suspend fun runningEntry(identity: RunningEntryIdentity): TimeEntry? =
+            throw AssertionError("unexpected runningEntry")
 
-        override suspend fun delete(entryId: EntryId): Boolean = throw AssertionError("the timer deletes nothing")
+        override suspend fun currentId(entryId: EntryId): EntryId = entryId
     }
 
     private companion object {

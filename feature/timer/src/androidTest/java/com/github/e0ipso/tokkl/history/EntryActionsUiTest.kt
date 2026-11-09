@@ -373,14 +373,6 @@ class EntryActionsUiTest {
             return true
         }
 
-        override suspend fun start(workspaceId: WorkspaceId, fields: EntryFields): EntryId = throw AssertionError(
-            "no timer starts",
-        )
-
-        override suspend fun stop(entryId: EntryId, fields: EntryFields?): Boolean = throw AssertionError(
-            "no timer stops",
-        )
-
         override suspend fun create(
             workspaceId: WorkspaceId,
             fields: EntryFields,
@@ -402,6 +394,19 @@ class EntryActionsUiTest {
             calls += "update $entryId $start $stop"
             return true
         }
+
+        override suspend fun updateOlder(
+            entryId: EntryId,
+            workspaceId: WorkspaceId,
+            fields: EntryFields,
+            start: Instant,
+            stop: Instant,
+            noTimeDay: LocalDate?,
+        ): Unit = throw AssertionError("unexpected updateOlder")
+
+        override suspend fun delete(entry: TimeEntry): TimeEntry? = if (delete(entry.id)) entry else null
+
+        override suspend fun currentId(entryId: EntryId): EntryId = entryId
     }
 
     private companion object {

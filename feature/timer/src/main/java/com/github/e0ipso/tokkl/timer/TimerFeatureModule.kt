@@ -158,6 +158,7 @@ val timerFeatureModule = module {
             tasks = cache.tasks,
             accountSettings = get<AccountSettingsSource>().state,
             changes = get<ChangeQueue>(),
+            running = get<ChangeQueue>(),
             scope = scope,
             clock = get(),
             allDay = get<CapabilitiesSource>().state.map { it.allDay == true },

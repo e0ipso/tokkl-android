@@ -1,9 +1,10 @@
 package com.github.e0ipso.tokkl.timerstate
 
-import com.github.e0ipso.tokkl.cache.EntryChanges
+import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.RunningEntryIdentity
 import com.github.e0ipso.tokkl.model.TaskId
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
@@ -12,7 +13,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 import java.time.Instant
-import java.time.LocalDate
 
 /**
  * Continue-last, which the Quick Settings tile uses: the stopped entry that started last, as the
@@ -124,7 +124,7 @@ class ContinueEntryTest {
 
     private fun running(id: Long) = entry(id, "2026-10-19T12:00:00Z").copy(stop = null)
 
-    private inner class RecordingChanges : EntryChanges {
+    private inner class RecordingChanges : RunningEntryChanges {
         override suspend fun start(workspaceId: WorkspaceId, fields: EntryFields): EntryId {
             calls += "start $workspaceId $fields"
             return EntryId(LOCAL_ID)
@@ -134,23 +134,16 @@ class ContinueEntryTest {
             "nothing stops",
         )
 
-        override suspend fun create(
-            workspaceId: WorkspaceId,
+        override suspend fun runningEntry(identity: RunningEntryIdentity): TimeEntry? =
+            throw AssertionError("unexpected runningEntry")
+
+        override suspend fun updateRunning(
+            identity: RunningEntryIdentity,
             fields: EntryFields,
             start: Instant,
-            stop: Instant,
-            noTimeDay: LocalDate?,
-        ): EntryId = throw AssertionError("nothing is created")
+        ): Boolean = throw AssertionError("unexpected updateRunning")
 
-        override suspend fun update(
-            entryId: EntryId,
-            fields: EntryFields,
-            start: Instant,
-            stop: Instant?,
-            noTimeDay: LocalDate?,
-        ): Boolean = throw AssertionError("nothing is edited")
-
-        override suspend fun delete(entryId: EntryId): Boolean = throw AssertionError("nothing is deleted")
+        override suspend fun currentId(entryId: EntryId): EntryId = entryId
     }
 
     private companion object {

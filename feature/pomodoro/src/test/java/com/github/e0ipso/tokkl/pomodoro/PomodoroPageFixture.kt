@@ -6,8 +6,8 @@ import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.TimerPomodoro
 import com.github.e0ipso.tokkl.api.TimerPomodoroPhase
 import com.github.e0ipso.tokkl.api.TimerState
-import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.HeldChange
+import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.RunningEntryIdentity
@@ -30,7 +30,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import java.time.DayOfWeek
 import java.time.Duration
 import java.time.Instant
-import java.time.LocalDate
 import java.util.concurrent.CopyOnWriteArrayList
 
 internal val T0: Instant = Instant.parse("2026-10-28T08:00:00Z")
@@ -150,7 +149,7 @@ internal class FakeServer(val held: MutableStateFlow<HeldTimerState?>) : Session
 }
 
 /** The change queue and the cache: an edit of the running entry changes the cached row. */
-internal class FakeChanges(private val cache: MutableStateFlow<TimerControls>) : EntryChanges {
+internal class FakeChanges(private val cache: MutableStateFlow<TimerControls>) : RunningEntryChanges {
     val updates = CopyOnWriteArrayList<Pair<RunningEntryIdentity, EntryFields>>()
     var accepts = true
 
@@ -176,25 +175,11 @@ internal class FakeChanges(private val cache: MutableStateFlow<TimerControls>) :
     override suspend fun stop(entryId: EntryId, fields: EntryFields?): Boolean = error(
         "the page stops nothing on the phone",
     )
-    override suspend fun create(
-        workspaceId: WorkspaceId,
-        fields: EntryFields,
-        start: Instant,
-        stop: Instant,
-        noTimeDay: LocalDate?,
-    ): EntryId = error(
-        "no create",
-    )
-    override suspend fun update(
-        entryId: EntryId,
-        fields: EntryFields,
-        start: Instant,
-        stop: Instant?,
-        noTimeDay: LocalDate?,
-    ): Boolean = error(
-        "no update",
-    )
-    override suspend fun delete(entryId: EntryId): Boolean = error("no delete")
+
+    override suspend fun runningEntry(identity: RunningEntryIdentity): TimeEntry? =
+        throw AssertionError("unexpected runningEntry")
+
+    override suspend fun currentId(entryId: EntryId): EntryId = entryId
 }
 
 /** A page over a fake server, the cache and the account, running on the calling thread. */

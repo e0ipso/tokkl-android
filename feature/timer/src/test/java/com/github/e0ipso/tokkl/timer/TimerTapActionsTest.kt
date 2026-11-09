@@ -1,9 +1,10 @@
 package com.github.e0ipso.tokkl.timer
 
 import com.github.e0ipso.tokkl.api.DiscardedPomodoro
-import com.github.e0ipso.tokkl.cache.EntryChanges
+import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.RunningEntryIdentity
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.AccountSettings
@@ -27,7 +28,6 @@ import org.junit.Test
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Instant
-import java.time.LocalDate
 import java.time.ZoneOffset
 
 /**
@@ -115,7 +115,7 @@ class TimerTapActionsTest {
     )
 
     /** Records each start and stop; a start is queued unless refused, and nothing reaches the cache. */
-    private class QueueingChanges : EntryChanges {
+    private class QueueingChanges : RunningEntryChanges {
         val calls = mutableListOf<String>()
         var refuseStart = false
 
@@ -132,23 +132,16 @@ class TimerTapActionsTest {
             error("unreachable")
         }
 
-        override suspend fun create(
-            workspaceId: WorkspaceId,
+        override suspend fun runningEntry(identity: RunningEntryIdentity): TimeEntry? =
+            throw AssertionError("unexpected runningEntry")
+
+        override suspend fun updateRunning(
+            identity: RunningEntryIdentity,
             fields: EntryFields,
             start: Instant,
-            stop: Instant,
-            noTimeDay: LocalDate?,
-        ): EntryId = error("no create")
+        ): Boolean = throw AssertionError("unexpected updateRunning")
 
-        override suspend fun update(
-            entryId: EntryId,
-            fields: EntryFields,
-            start: Instant,
-            stop: Instant?,
-            noTimeDay: LocalDate?,
-        ): Boolean = error("no update")
-
-        override suspend fun delete(entryId: EntryId): Boolean = error("no delete")
+        override suspend fun currentId(entryId: EntryId): EntryId = entryId
     }
 
     private class AnsweringServer : PauseActions {

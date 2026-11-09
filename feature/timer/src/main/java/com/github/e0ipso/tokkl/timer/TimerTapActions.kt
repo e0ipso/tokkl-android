@@ -1,7 +1,7 @@
 package com.github.e0ipso.tokkl.timer
 
-import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.QueueSender
+import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.RunningEntryIdentity
 import com.github.e0ipso.tokkl.model.TimeEntry
@@ -59,7 +59,7 @@ internal class TimerTapActions(
     private val cached: StateFlow<CachedControls>,
     private val snapshot: TimerSnapshot,
     private val settings: StateFlow<AccountSettings?>,
-    private val changes: EntryChanges,
+    private val changes: RunningEntryChanges,
     private val pauseChain: PauseActions?,
     private val sender: QueueSender,
     private val fieldEdits: RunningFieldEdits,

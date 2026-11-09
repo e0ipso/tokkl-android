@@ -1,8 +1,9 @@
 package com.github.e0ipso.tokkl.timerstate
 
-import com.github.e0ipso.tokkl.cache.EntryChanges
+import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.RunningEntryIdentity
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import kotlinx.coroutines.CompletableDeferred
@@ -15,7 +16,6 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.Instant
-import java.time.LocalDate
 
 /**
  * The one policy behind the native timer controls: what a tap on the running notification, the
@@ -277,7 +277,7 @@ class TimerSurfaceActionsTest {
         override suspend fun discard(revision: Long): TimerActionResult = answer.also { calls += "discard $revision" }
     }
 
-    private inner class Queue : EntryChanges {
+    private inner class Queue : RunningEntryChanges {
         override suspend fun start(workspaceId: WorkspaceId, fields: EntryFields): EntryId = throw AssertionError(
             "nothing starts",
         )
@@ -289,23 +289,14 @@ class TimerSurfaceActionsTest {
 
         override suspend fun currentId(entryId: EntryId): EntryId = mappings[entryId] ?: entryId
 
-        override suspend fun create(
-            workspaceId: WorkspaceId,
+        override suspend fun runningEntry(identity: RunningEntryIdentity): TimeEntry? =
+            throw AssertionError("unexpected runningEntry")
+
+        override suspend fun updateRunning(
+            identity: RunningEntryIdentity,
             fields: EntryFields,
             start: Instant,
-            stop: Instant,
-            noTimeDay: LocalDate?,
-        ): EntryId = throw AssertionError("nothing is created")
-
-        override suspend fun update(
-            entryId: EntryId,
-            fields: EntryFields,
-            start: Instant,
-            stop: Instant?,
-            noTimeDay: LocalDate?,
-        ): Boolean = throw AssertionError("nothing is edited")
-
-        override suspend fun delete(entryId: EntryId): Boolean = throw AssertionError("nothing is deleted")
+        ): Boolean = throw AssertionError("unexpected updateRunning")
     }
 
     private companion object {

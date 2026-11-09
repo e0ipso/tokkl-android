@@ -680,15 +680,11 @@ class CalendarViewModelTest {
             calls += "updateOlder $entryId $workspaceId $fields $start $stop"
         }
 
-        override suspend fun start(workspaceId: WorkspaceId, fields: EntryFields): EntryId = throw AssertionError(
-            "the calendar starts no timer",
-        )
-
-        override suspend fun stop(entryId: EntryId, fields: EntryFields?): Boolean = throw AssertionError(
-            "the calendar stops no timer",
-        )
-
         override suspend fun delete(entryId: EntryId): Boolean = throw AssertionError("the calendar deletes nothing")
+
+        override suspend fun delete(entry: TimeEntry): TimeEntry? = throw AssertionError("unexpected delete")
+
+        override suspend fun currentId(entryId: EntryId): EntryId = entryId
     }
 
     private companion object {

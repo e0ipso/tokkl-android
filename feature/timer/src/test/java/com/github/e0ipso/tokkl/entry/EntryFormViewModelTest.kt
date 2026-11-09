@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.entry
 
 import com.github.e0ipso.tokkl.cache.EntryChanges
+import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
@@ -64,6 +65,7 @@ class EntryFormViewModelTest {
             tasks = MutableStateFlow(listOf(DESIGN)),
             accountSettings = settings,
             changes = changes,
+            running = changes,
             scope = scope,
             clock = Clock.fixed(NOW, ZoneOffset.UTC),
             allDay = allDay,
@@ -1025,7 +1027,9 @@ class EntryFormViewModelTest {
         main.runCurrent()
     }
 
-    private class FakeChanges : EntryChanges {
+    private class FakeChanges :
+        EntryChanges,
+        RunningEntryChanges {
         val calls = CopyOnWriteArrayList<String>()
 
         /** What update answers: false once the cache has dropped the entry. */
@@ -1086,6 +1090,16 @@ class EntryFormViewModelTest {
 
         /** A no-time change names its day, and a timed one names none. */
         private fun LocalDate?.onDay(): String = this?.let { " on $it" } ?: ""
+
+        override suspend fun delete(entry: TimeEntry): TimeEntry? = throw AssertionError("unexpected delete")
+
+        override suspend fun currentId(entryId: EntryId): EntryId = entryId
+
+        override suspend fun updateRunning(
+            identity: RunningEntryIdentity,
+            fields: EntryFields,
+            start: Instant,
+        ): Boolean = throw AssertionError("unexpected updateRunning")
     }
 
     private companion object {

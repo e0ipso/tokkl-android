@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.entry
 
 import com.github.e0ipso.tokkl.cache.EntryChanges
+import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.EntryWithSendState
@@ -72,6 +73,7 @@ class RunningEntryEditorTest {
         projects,
         tasks,
         settings,
+        changes,
         changes,
         scope,
         clock,
@@ -333,7 +335,9 @@ class RunningEntryEditorTest {
 
     private fun <T> onMain(block: suspend () -> T): T = runBlocking(dispatcher) { block() }
 
-    private inner class Changes : EntryChanges {
+    private inner class Changes :
+        EntryChanges,
+        RunningEntryChanges {
         val remap = mutableMapOf<EntryId, EntryId>()
         val updates = mutableListOf<TimeEntry>()
         var startGate = CompletableDeferred(Unit)
@@ -412,6 +416,8 @@ class RunningEntryEditorTest {
             "Unexpected stop",
         )
         override suspend fun delete(entryId: EntryId): Boolean = throw AssertionError("Unexpected delete")
+
+        override suspend fun delete(entry: TimeEntry): TimeEntry? = throw AssertionError("unexpected delete")
     }
 
     private companion object {

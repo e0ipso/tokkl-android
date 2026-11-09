@@ -3,9 +3,9 @@ package com.github.e0ipso.tokkl.pomodoro
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.api.TimerPomodoro
-import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.HeldChange
 import com.github.e0ipso.tokkl.cache.QueueSender
+import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.cache.toTimeEntry
 import com.github.e0ipso.tokkl.entryfields.entryLabels
 import com.github.e0ipso.tokkl.entryfields.withPicked
@@ -68,7 +68,7 @@ class PomodoroViewModel(
     held: Flow<HeldTimerState?>,
     controls: Flow<TimerControls>,
     private val actions: SessionActions,
-    private val changes: EntryChanges,
+    private val changes: RunningEntryChanges,
     private val defaults: StateFlow<PomodoroDefaults>,
     settings: StateFlow<AccountSettings?>,
     unsent: Flow<Int>,

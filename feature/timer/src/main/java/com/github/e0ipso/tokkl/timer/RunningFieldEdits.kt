@@ -1,6 +1,6 @@
 package com.github.e0ipso.tokkl.timer
 
-import com.github.e0ipso.tokkl.cache.EntryChanges
+import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.entryfields.withPicked
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.RunningEntryIdentity
@@ -33,7 +33,7 @@ import kotlinx.coroutines.launch
 internal class RunningFieldEdits(
     private val local: MutableStateFlow<TimerTaps>,
     private val cached: StateFlow<CachedControls>,
-    private val changes: EntryChanges,
+    private val changes: RunningEntryChanges,
     private val scope: CoroutineScope,
     private val snapshot: TimerSnapshot,
     private val catalog: StateFlow<Catalog>,

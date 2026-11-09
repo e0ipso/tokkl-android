@@ -1,8 +1,8 @@
 package com.github.e0ipso.tokkl.timerstate
 
 import androidx.annotation.VisibleForTesting
-import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.QueueSender
+import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.ConcurrentHashMap
@@ -61,7 +61,7 @@ sealed interface SurfaceTap {
  */
 class TimerSurfaceActions(
     private val state: CurrentTimerState,
-    private val changes: EntryChanges,
+    private val changes: RunningEntryChanges,
     private val server: PauseActions,
     private val sender: QueueSender,
 ) {

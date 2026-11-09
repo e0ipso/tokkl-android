@@ -79,6 +79,7 @@ class ChangeQueue(
     private val clock: Clock,
     private val spans: ServerSpans,
 ) : EntryChanges,
+    RunningEntryChanges,
     HeldChanges,
     UnsentChanges {
 

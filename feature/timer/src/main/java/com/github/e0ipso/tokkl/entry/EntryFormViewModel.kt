@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.HistoryWindow
+import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.entryfields.withPicked
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.EntryWithSendState
@@ -63,6 +64,8 @@ import java.time.LocalDate
  * queues the current stored entry and ignores unsaved fields.
  *
  * @param entries the cached entries with their send state, as AccountCache.entries gives them.
+ * @param changes the change queue, which a new or edited stopped entry goes to.
+ * @param running the change queue's edits of the running segment, which the form opens and saves.
  * @param clock where now comes from, which a start without AM or PM is guessed against.
  * @param allDay whether the server stores no-time entries, as `Capabilities.allDay` says, which
  *   decides whether the form offers the No times switch.
@@ -75,6 +78,7 @@ class EntryFormViewModel(
     tasks: Flow<List<Task>>,
     private val accountSettings: StateFlow<AccountSettings?>,
     private val changes: EntryChanges,
+    private val running: RunningEntryChanges,
     scope: CoroutineScope,
     private val clock: Clock,
     allDay: Flow<Boolean>,
@@ -232,7 +236,7 @@ class EntryFormViewModel(
                     true
                 }
 
-                is DraftTarget.Running -> changes.updateRunning(target.identity, form.fields, span.start)
+                is DraftTarget.Running -> running.updateRunning(target.identity, form.fields, span.start)
 
                 is DraftTarget.Edit -> when {
                     target.onPhone && changes.update(
@@ -324,7 +328,7 @@ class EntryFormViewModel(
                     is Opening.New -> Phase.Open(newForm(time, opening.date, opening.noTimes))
 
                     is Opening.Running -> {
-                        val entry = changes.runningEntry(opening.identity)
+                        val entry = running.runningEntry(opening.identity)
                         entry?.let { Phase.Open(runningForm(it, opening.identity, settings, time)) } ?: Phase.Missing
                     }
 

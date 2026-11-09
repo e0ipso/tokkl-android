@@ -47,6 +47,7 @@ class TimerActionsRouteTest {
             "cache/PendingChange",
             "cache/BackgroundSend",
             "cache/EntryChanges",
+            "cache/RunningEntryChanges",
         )
     }
 }

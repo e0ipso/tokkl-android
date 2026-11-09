@@ -2,8 +2,8 @@ package com.github.e0ipso.tokkl.timer
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.QueueSender
+import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.entryfields.withPicked
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.Project
@@ -63,7 +63,7 @@ class TimerViewModel(
     projects: Flow<List<Project>>,
     tasks: Flow<List<Task>>,
     val accountSettings: StateFlow<AccountSettings?>,
-    private val changes: EntryChanges,
+    private val changes: RunningEntryChanges,
     scope: CoroutineScope,
     clock: Clock,
     trace: TapTrace,

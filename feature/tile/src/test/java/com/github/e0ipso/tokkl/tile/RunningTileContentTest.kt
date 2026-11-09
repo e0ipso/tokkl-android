@@ -1,9 +1,10 @@
 package com.github.e0ipso.tokkl.tile
 
-import com.github.e0ipso.tokkl.cache.EntryChanges
+import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.RunningEntryIdentity
 import com.github.e0ipso.tokkl.model.TaskId
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
@@ -22,7 +23,6 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.Instant
-import java.time.LocalDate
 
 /**
  * What the Quick Settings tile shows for the cache and the server's timer state, and what a tap
@@ -222,7 +222,7 @@ class RunningTileContentTest {
         }
     }
 
-    private inner class RecordingChanges : EntryChanges {
+    private inner class RecordingChanges : RunningEntryChanges {
         override suspend fun start(workspaceId: WorkspaceId, fields: EntryFields): EntryId {
             calls += "start $workspaceId $fields"
             return EntryId(-1L)
@@ -233,22 +233,15 @@ class RunningTileContentTest {
             return true
         }
 
-        override suspend fun create(
-            workspaceId: WorkspaceId,
+        override suspend fun runningEntry(identity: RunningEntryIdentity): TimeEntry? =
+            throw AssertionError("unexpected runningEntry")
+
+        override suspend fun updateRunning(
+            identity: RunningEntryIdentity,
             fields: EntryFields,
             start: Instant,
-            stop: Instant,
-            noTimeDay: LocalDate?,
-        ): EntryId = throw AssertionError("nothing is created")
+        ): Boolean = throw AssertionError("unexpected updateRunning")
 
-        override suspend fun update(
-            entryId: EntryId,
-            fields: EntryFields,
-            start: Instant,
-            stop: Instant?,
-            noTimeDay: LocalDate?,
-        ): Boolean = throw AssertionError("nothing is edited")
-
-        override suspend fun delete(entryId: EntryId): Boolean = throw AssertionError("nothing is deleted")
+        override suspend fun currentId(entryId: EntryId): EntryId = entryId
     }
 }
