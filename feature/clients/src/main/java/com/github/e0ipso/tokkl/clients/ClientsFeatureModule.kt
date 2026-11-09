@@ -22,7 +22,7 @@ val clientsFeatureModule = module {
         ClientsViewModel(
             repository = get(),
             settings = accountSettings,
-            refreshes = get(),
+            changes = get(),
             scope = scope,
             io = io(),
             cachedClients = get<AccountCache>().clients,

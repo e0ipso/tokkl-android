@@ -7,6 +7,7 @@ import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.platform.TestApp
 import com.github.e0ipso.tokkl.platform.TestScreen
 import com.github.e0ipso.tokkl.session.CountingRefresh
+import com.github.e0ipso.tokkl.session.ServerChanges
 import com.github.e0ipso.tokkl.session.accountSettingsIn
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -59,7 +60,7 @@ class ProjectsViewModelTest {
             repository = ProjectsRepository { testApi.api(url) },
             tasksRepository = TasksRepository { testApi.api(url) },
             settings = accountSettingsIn(WorkspaceId(7)),
-            refreshes = CountingRefresh(),
+            changes = ServerChanges(scope, Dispatchers.Unconfined, CountingRefresh()),
             scope = scope,
             io = Dispatchers.Unconfined,
             cachedProjects = flowOf(emptyList()),

@@ -71,6 +71,9 @@ val sessionModule = module {
         )
     } binds arrayOf(AccountDataOwner::class, CacheRefresh::class)
 
+    // The changes the pages send at once, which outlive the page with the cache refresh after them.
+    single { ServerChanges(scope = get(), io = io(), refreshes = get()) }
+
     // Where each account begins and ends, which the timer state and the navigation follow.
     single { AccountLifetime() }
 

@@ -13,7 +13,7 @@ import com.github.e0ipso.tokkl.platform.AppForeground
 import com.github.e0ipso.tokkl.platform.PageLoads
 import com.github.e0ipso.tokkl.platform.stateInPage
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
-import com.github.e0ipso.tokkl.session.CacheRefresh
+import com.github.e0ipso.tokkl.session.ServerChanges
 import com.github.e0ipso.tokkl.session.ServerProblem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -88,7 +88,7 @@ class ProjectsViewModel(
     private val repository: ProjectsRepository,
     tasksRepository: TasksRepository,
     settings: AccountSettingsSource,
-    refreshes: CacheRefresh,
+    changes: ServerChanges,
     scope: CoroutineScope,
     io: CoroutineContext,
     cachedProjects: Flow<List<Project>>,
@@ -100,13 +100,13 @@ class ProjectsViewModel(
     private val catalog = CatalogModel<ProjectsData, ProjectForm>(
         repository,
         settings,
-        refreshes,
+        changes,
         viewModelScope,
         io,
     )
 
     /** The task list of the project the form edits. */
-    val tasks = TasksModel(tasksRepository, settings, refreshes, viewModelScope, io)
+    val tasks = TasksModel(tasksRepository, settings, changes, viewModelScope, io)
 
     /** The list and what is open over it, before the cache and the network join them in [page]. */
     internal val state: StateFlow<ProjectsState> = catalog.state

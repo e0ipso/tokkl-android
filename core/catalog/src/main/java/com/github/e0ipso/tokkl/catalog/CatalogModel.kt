@@ -7,12 +7,11 @@ import com.github.e0ipso.tokkl.api.getOrElse
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.platform.PageLoads
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
-import com.github.e0ipso.tokkl.session.CacheRefresh
+import com.github.e0ipso.tokkl.session.ServerChanges
 import com.github.e0ipso.tokkl.session.ServerProblem
 import com.github.e0ipso.tokkl.session.toServerProblem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -70,20 +69,20 @@ data class CatalogState<D, O>(
  * stateInPage tells it through [PageLoads], and sends each change at once. A load keeps the list
  * and the form or question open over it until the answer comes. They go with the view model, when
  * the page's route leaves the back stack. Nothing is queued: offline, or with the server out of
- * reach, nothing changes. After each change the server accepts, [refreshes] reloads the offline
- * cache, so the picker, the history and the reports show it.
+ * reach, nothing changes. Each change goes through [changes], which refreshes the offline cache after
+ * the server accepts it, so the picker, the history and the reports show it.
  *
  * Call every function on the main thread.
  *
  * @param repository finds the workspace and reads the page's data from it. Runs on [io].
  * @param settings the account's default workspace from the stored settings, or null when they
  *   do not have it.
- * @param refreshes starts a refresh of the cache that reads the server after the change.
+ * @param changes sends each change in the application's scope and refreshes the cache after it.
  */
 class CatalogModel<D, O>(
     private val repository: CatalogRepository<D>,
     private val settings: AccountSettingsSource,
-    private val refreshes: CacheRefresh,
+    private val changes: ServerChanges,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
 ) : PageLoads {
@@ -156,11 +155,11 @@ class CatalogModel<D, O>(
     }
 
     /**
-     * Sends [request] to the workspace, unless a change cannot go now. It runs on [io]. Once the server accepts it,
-     * [apply] puts the answer into the data, the overlay closes and [done] says what happened, and
-     * the cache refreshes. A refusal keeps the overlay open with the reason. An unreachable server
-     * turns every action off until a load gets through. Once sent, the change reaches the server
-     * also when the page's scope is cancelled meanwhile.
+     * Sends [request] to the workspace through [changes], unless a change cannot go now. Once the
+     * server accepts it, the cache refreshes, and while the list is open [apply] puts the answer
+     * into the data, the overlay closes and [done] says what happened. A refusal keeps the overlay
+     * open with the reason. An unreachable server turns every action off until a load gets through.
+     * Once sent, the change and the refresh after it outlive the page's scope.
      */
     fun <R> send(
         request: suspend (workspace: WorkspaceId) -> ApiResult<R>,
@@ -170,13 +169,11 @@ class CatalogModel<D, O>(
         val workspace = workspace ?: return
         if (!opened || !state.value.canChange) return
         mutableState.update { it.copy(sending = true, changeProblem = null) }
+        val sent = changes.send { request(workspace) }
         scope.launch {
-            val answer = withContext(io + NonCancellable) { request(workspace) }
+            val answer = sent.await()
             // The list closed while the request ran. What the server accepted still reaches the cache.
-            if (!opened) {
-                if (answer is ApiResult.Success) refreshes.refreshAfterChange()
-                return@launch
-            }
+            if (!opened) return@launch
             when (answer) {
                 is ApiResult.Success -> {
                     mutableState.update { current ->
@@ -187,7 +184,6 @@ class CatalogModel<D, O>(
                             done = done(answer.value),
                         )
                     }
-                    refreshes.refreshAfterChange()
                 }
 
                 is ApiResult.Failure -> {

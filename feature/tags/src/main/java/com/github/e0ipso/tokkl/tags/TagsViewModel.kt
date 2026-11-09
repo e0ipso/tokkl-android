@@ -12,7 +12,7 @@ import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.platform.AppForeground
 import com.github.e0ipso.tokkl.platform.stateInPage
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
-import com.github.e0ipso.tokkl.session.CacheRefresh
+import com.github.e0ipso.tokkl.session.ServerChanges
 import com.github.e0ipso.tokkl.session.ServerProblem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -84,7 +84,7 @@ data class TagsPageState(
 class TagsViewModel(
     private val repository: TagsRepository,
     settings: AccountSettingsSource,
-    refreshes: CacheRefresh,
+    changes: ServerChanges,
     scope: CoroutineScope,
     io: CoroutineContext,
     cachedTags: Flow<List<Tag>>,
@@ -95,7 +95,7 @@ class TagsViewModel(
     private val catalog = CatalogModel<TagsData, TagsOverlay>(
         repository,
         settings,
-        refreshes,
+        changes,
         viewModelScope,
         io,
     )

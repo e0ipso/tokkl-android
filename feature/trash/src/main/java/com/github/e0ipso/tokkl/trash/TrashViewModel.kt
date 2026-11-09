@@ -13,12 +13,11 @@ import com.github.e0ipso.tokkl.platform.AppForeground
 import com.github.e0ipso.tokkl.platform.PageLoads
 import com.github.e0ipso.tokkl.platform.stateInPage
 import com.github.e0ipso.tokkl.session.AccountSettings
-import com.github.e0ipso.tokkl.session.CacheRefresh
+import com.github.e0ipso.tokkl.session.ServerChanges
 import com.github.e0ipso.tokkl.session.ServerProblem
 import com.github.e0ipso.tokkl.session.toServerProblem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -94,7 +93,8 @@ data class TrashPageState(
  * page sends at once. A load keeps the list and the question open over it until the answer comes;
  * they go with the view model, when the page's route leaves the back stack. Nothing is queued, so
  * offline nothing changes, as on the catalog pages.
- * After a restore, [refreshes] reloads the offline cache, so the history shows the entry again.
+ * Each change goes through [changes], which after a restore reloads the offline cache, so the
+ * history shows the entry again.
  *
  * A server without the trash answers the list with a 404, or with something that is not a list.
  * Then the page tells the [capabilities], on [io], which hide the page, rather than the page
@@ -103,6 +103,7 @@ data class TrashPageState(
  * Call every function on the main thread.
  *
  * @param repository the account's trash on the server. Runs on [io].
+ * @param changes sends each change in the application's scope.
  * @param settings the account settings, for the times, dates and durations the page shows.
  * @param offline whether the phone is offline, when nothing can change.
  * @param app the app's trips to the background and the network's returns, which load the page again
@@ -110,7 +111,7 @@ data class TrashPageState(
  */
 class TrashViewModel(
     private val repository: TrashRepository,
-    private val refreshes: CacheRefresh,
+    private val changes: ServerChanges,
     private val capabilities: CapabilitiesSource,
     scope: CoroutineScope,
     private val io: CoroutineContext,
@@ -207,7 +208,7 @@ class TrashViewModel(
      * the list, the question closes and [done] says what happened. A refusal keeps the question
      * open with the reason, and a 404, an entry no longer in the trash, loads the list again. An
      * unreachable server turns every action off until a load gets through. Once sent, the change
-     * reaches the server also when the view model is cleared meanwhile.
+     * and the cache refresh after a restore outlive the view model.
      */
     private fun <R> send(
         request: suspend (TrashRepository) -> ApiResult<R>,
@@ -217,10 +218,9 @@ class TrashViewModel(
     ) {
         if (!opened || !state.value.canChange) return
         mutableState.update { it.copy(sending = true, changeProblem = null) }
+        val sent = changes.send(refresh = restored) { request(repository) }
         viewModelScope.launch {
-            val answer = withContext(io + NonCancellable) { request(repository) }
-            if (answer is ApiResult.Success && restored) refreshes.refreshAfterChange()
-            when (answer) {
+            when (val answer = sent.await()) {
                 is ApiResult.Success -> mutableState.update { current ->
                     current.copy(
                         entries = current.entries?.let { apply(it, answer.value) },

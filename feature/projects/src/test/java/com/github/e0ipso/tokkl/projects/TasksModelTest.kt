@@ -9,6 +9,7 @@ import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.model.Task
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.CountingRefresh
+import com.github.e0ipso.tokkl.session.ServerChanges
 import com.github.e0ipso.tokkl.session.ServerProblem
 import com.github.e0ipso.tokkl.session.accountSettingsIn
 import kotlinx.coroutines.CoroutineScope
@@ -85,7 +86,7 @@ class TasksModelTest {
         model = TasksModel(
             repository = TasksRepository { testApi.api(url, ApiCredentials.ApiToken("tok-123")) },
             settings = accountSettingsIn(WorkspaceId(7)),
-            refreshes = refresh,
+            changes = ServerChanges(CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, refresh),
             scope = CoroutineScope(Dispatchers.Unconfined),
             io = Dispatchers.Unconfined,
         )

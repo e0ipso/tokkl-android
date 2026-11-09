@@ -12,7 +12,7 @@ import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.platform.AppForeground
 import com.github.e0ipso.tokkl.platform.stateInPage
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
-import com.github.e0ipso.tokkl.session.CacheRefresh
+import com.github.e0ipso.tokkl.session.ServerChanges
 import com.github.e0ipso.tokkl.session.ServerProblem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -87,7 +87,7 @@ data class ClientsPageState(
 class ClientsViewModel(
     private val repository: ClientsRepository,
     settings: AccountSettingsSource,
-    refreshes: CacheRefresh,
+    changes: ServerChanges,
     scope: CoroutineScope,
     io: CoroutineContext,
     cachedClients: Flow<List<Client>>,
@@ -98,7 +98,7 @@ class ClientsViewModel(
     private val catalog = CatalogModel<ClientsData, ClientsOverlay>(
         repository,
         settings,
-        refreshes,
+        changes,
         viewModelScope,
         io,
     )

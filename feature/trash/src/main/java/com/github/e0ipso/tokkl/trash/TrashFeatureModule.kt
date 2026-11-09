@@ -20,7 +20,7 @@ val trashFeatureModule = module {
         val scope = viewModelCoroutineScope()
         TrashViewModel(
             repository = get(),
-            refreshes = get(),
+            changes = get(),
             capabilities = get(),
             scope = scope,
             io = io(),

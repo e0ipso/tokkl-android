@@ -46,6 +46,7 @@ import com.github.e0ipso.tokkl.model.Task
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.platform.AppForeground
 import com.github.e0ipso.tokkl.session.CacheRefresh
+import com.github.e0ipso.tokkl.session.ServerChanges
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -116,11 +117,15 @@ class ProjectsServerTest {
             repository = ProjectsRepository(Session(context).api),
             tasksRepository = TasksRepository(Session(context).api),
             settings = app.accountSettings,
-            refreshes = object : CacheRefresh {
-                override fun refresh() = app.accountRefresh.refresh().also { refreshes += it }
+            changes = ServerChanges(
+                scope = scope,
+                io = Dispatchers.IO,
+                refreshes = object : CacheRefresh {
+                    override fun refresh() = app.accountRefresh.refresh().also { refreshes += it }
 
-                override fun refreshAfterChange() = app.accountRefresh.refreshAfterChange().also { refreshes += it }
-            },
+                    override fun refreshAfterChange() = app.accountRefresh.refreshAfterChange().also { refreshes += it }
+                },
+            ),
             scope = scope,
             io = Dispatchers.IO,
             cachedProjects = app.cache.projects,

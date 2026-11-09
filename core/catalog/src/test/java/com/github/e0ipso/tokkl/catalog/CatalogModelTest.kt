@@ -4,6 +4,7 @@ import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.CountingRefresh
+import com.github.e0ipso.tokkl.session.ServerChanges
 import com.github.e0ipso.tokkl.session.ServerProblem
 import com.github.e0ipso.tokkl.session.accountSettingsIn
 import kotlinx.coroutines.CoroutineScope
@@ -43,7 +44,7 @@ class CatalogModelTest {
     private val model = CatalogModel<List<String>, String>(
         repository = repository,
         settings = accountSettingsIn(WorkspaceId(7)),
-        refreshes = CountingRefresh(),
+        changes = ServerChanges(CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, CountingRefresh()),
         scope = CoroutineScope(Dispatchers.Unconfined),
         io = Dispatchers.Unconfined,
     )

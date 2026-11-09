@@ -22,7 +22,7 @@ val tagsFeatureModule = module {
         TagsViewModel(
             repository = get(),
             settings = accountSettings,
-            refreshes = get(),
+            changes = get(),
             scope = scope,
             io = io(),
             cachedTags = get<AccountCache>().tags,

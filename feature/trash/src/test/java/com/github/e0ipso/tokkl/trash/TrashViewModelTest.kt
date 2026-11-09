@@ -8,6 +8,7 @@ import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.platform.TestApp
 import com.github.e0ipso.tokkl.platform.TestScreen
 import com.github.e0ipso.tokkl.session.CountingRefresh
+import com.github.e0ipso.tokkl.session.ServerChanges
 import com.github.e0ipso.tokkl.session.ServerProblem
 import com.github.e0ipso.tokkl.session.capabilitiesOf
 import kotlinx.coroutines.CoroutineScope
@@ -38,7 +39,7 @@ class TrashViewModelTest {
     private val model by lazy {
         TrashViewModel(
             repository = trash,
-            refreshes = refresh,
+            changes = ServerChanges(scope, Dispatchers.Unconfined, refresh),
             capabilities = capabilities,
             scope = scope,
             io = Dispatchers.Unconfined,
