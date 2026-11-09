@@ -37,10 +37,10 @@ import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * The timer's taps without a view model: what goes to the queue and the server, and what
- * [TimerController.taps] holds meanwhile. Unconfined runs each tap until it waits for the queue or
+ * [TimerCommands.taps] holds meanwhile. Unconfined runs each tap until it waits for the queue or
  * the server.
  */
-class TimerControllerTest {
+class TimerCommandsTest {
 
     private val controls = MutableStateFlow<TimerControls>(TimerControls.Idle)
     private val settings = MutableStateFlow<AccountSettings?>(
@@ -57,7 +57,7 @@ class TimerControllerTest {
         Dispatchers.Unconfined + SupervisorJob() + CoroutineExceptionHandler { _, thrown -> escaped += thrown },
     )
 
-    private val timer = TimerController(
+    private val timer = TimerCommands(
         controls = controls,
         projects = MutableStateFlow(emptyList()),
         tasks = MutableStateFlow(emptyList()),
@@ -75,7 +75,7 @@ class TimerControllerTest {
     init {
         // The screen collects the state while it shows.
         scope.launch { timer.state.collect {} }
-        timer.editDescription("Write")
+        timer.edits.editDescription("Write")
     }
 
     @After
@@ -137,7 +137,7 @@ class TimerControllerTest {
         controls.value = running()
         changes.storageRefusal = IOException("disk full")
 
-        timer.setBillable(true)
+        timer.edits.setBillable(true)
 
         val edit = timer.taps.value.edit
         assertEquals(EntryFields(description = "Write", billable = true), edit?.fields)

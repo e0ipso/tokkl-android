@@ -4,15 +4,12 @@ import com.github.e0ipso.tokkl.cache.LocalWrite
 import com.github.e0ipso.tokkl.cache.QueueSender
 import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.cache.localWrite
-import com.github.e0ipso.tokkl.entryfields.withPicked
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.Project
-import com.github.e0ipso.tokkl.model.RunningEntryIdentity
 import com.github.e0ipso.tokkl.model.Task
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.model.fields
-import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.timerstate.PauseActions
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
@@ -21,7 +18,6 @@ import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import com.github.e0ipso.tokkl.timerstate.target
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -32,22 +28,21 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import java.time.Clock
 import java.time.temporal.ChronoUnit
 
 /**
- * The timer's taps and field edits (docs/PRD.md T1, T2, T5), which [TimerViewModel] adapts for its
- * screens. It is the one owner of [taps], what the taps did that the cache or the server may not
- * show yet, and changes it only by [dispatch]ing a [TapEvent] through [reduce]. A tap decides from
- * [now], dispatches its event, and launches its effect, a queue write or a server action, which
- * dispatches the event that ends it. What the screens show, [state], is the projection
- * [timerState] of [taps] over the cached controls.
+ * The timer's commands (docs/PRD.md T1, T2, T5): Start, Continue, a favorite, Stop, Pause and
+ * Resume, in the order they may go, which [TimerViewModel] adapts for its screens. It is the one
+ * owner of [taps], what the taps did that the cache or the server may not show yet, and changes it
+ * only by dispatching a [TapEvent] through [reduce]. A tap decides from [now], dispatches its event,
+ * and launches its effect, a queue write or a server action, which dispatches the event that ends
+ * it. What the screens show, [state], is the projection [timerState] of [taps] over the cached
+ * controls. The field edits are [edits], which read and change the taps through the same events.
  *
  * Start, Stop of a running entry, Continue and favorites go to [changes], the change queue, so they
  * never wait for the network (docs/PRD.md principle 2). From such a tap until the cache shows it,
@@ -57,14 +52,9 @@ import java.time.temporal.ChronoUnit
  * timer was shown at, so a stale tap gets a refusal; until the server's state shows, the timer
  * keeps what it showed and ignores other taps. A refusal or no answer goes to [notices].
  *
- * A pick of project, task or tags, billable and a picked suggestion go to the queue at once. A
- * description goes once typing ends, so the queue does not get a change for every letter. Until
- * the cache has an edit, the timer shows it over the cache's entry. A paused timer's fields are
- * read-only.
- *
  * A queue write the phone's storage refuses ([LocalWrite.Failed]) gives the timer back as it was
- * before the tap, as the entry form gives its form back: Start brings its draft back, Stop leaves
- * the entry running, and an edit stays on the timer as typed, not sent, for the next send to take.
+ * before the tap, as the entry form gives its form back: Start brings its draft back and Stop
+ * leaves the entry running, with the edit it took.
  *
  * Call everything on the main thread.
  *
@@ -78,7 +68,7 @@ import java.time.temporal.ChronoUnit
  * @param clock the time a Start tap shows until the cache has the queue's own tap time.
  * @param scope the view model's scope.
  */
-internal class TimerController(
+internal class TimerCommands(
     controls: Flow<TimerControls>,
     projects: Flow<List<Project>>,
     tasks: Flow<List<Task>>,
@@ -132,9 +122,19 @@ internal class TimerController(
      */
     val starts: SharedFlow<Unit> = queuedStarts.asSharedFlow()
 
-    /** The running entry's field writes that have not ended. */
-    private val writes = mutableSetOf<Job>()
-    private var openingRunning = false
+    /** The taps as the field edits read and change them. */
+    private val ledger = object : TapLedger {
+        override val taps get() = this@TimerCommands.taps
+        override val cached get() = this@TimerCommands.cached
+        override val catalog get() = this@TimerCommands.catalog
+
+        override fun now() = this@TimerCommands.now()
+
+        override fun dispatch(event: TapEvent) = this@TimerCommands.dispatch(event)
+    }
+
+    /** The idle timer's draft and the running entry's fields, and the editor's opening. */
+    val edits = RunningFieldEdits(ledger, changes, scope)
 
     /** The timer state as of now, without labels, which the taps and the field edits act on. */
     fun now(): TimerState = timerState(cached.value, settings.value?.defaultWorkspaceId, taps.value, pauseOffered.value)
@@ -274,10 +274,10 @@ internal class TimerController(
         val running = cached.value.controls() as? TimerControls.Running ?: return
         if (!running.pausable || shown.entryId != running.entry.id) return
         val typed = taps.value.editFor(shown, cached.value)?.takeIf { !it.sent }
-        if (typed != null) send(shown, typed.fields)
+        if (typed != null) edits.send(shown, typed.fields)
         act(running.target, done = { it.target != running.target }) {
             if (typed != null) {
-                awaitWrites()
+                edits.awaitWrites()
                 sender.sendQueued()
             }
             actions.pause()
@@ -336,119 +336,6 @@ internal class TimerController(
 
     /** A focused control keeps the durable target that supplied its displayed context. */
     fun isShown(target: TimerTarget): Boolean = taps.value.pending == null && cached.value.controls()?.target == target
-
-    fun editDescription(description: String) = edit(send = false) { it.copy(description = description) }
-
-    /** Sends a description typed for the running entry when it differs from the cache's. */
-    fun descriptionDone() {
-        if (taps.value.pending != null) return
-        val shown = now() as? TimerState.Running ?: return
-        val edit = taps.value.editFor(shown, cached.value)?.takeIf { !it.sent } ?: return
-        if (edit.fields == cached.value.controls()?.runningEntry()?.fields()) {
-            dispatch(TapEvent.EditEnded(edit))
-        } else {
-            send(shown, edit.fields)
-        }
-    }
-
-    fun pick(picked: Picked) = edit(send = true) { it.withPicked(picked, catalog.value.projects) }
-
-    fun setBillable(billable: Boolean) = edit(send = true) { it.copy(billable = billable) }
-
-    fun fill(fields: EntryFields) = edit(send = true) { fields }
-
-    /** Waits until every field write queued here has ended, including ones that start meanwhile. */
-    private suspend fun awaitWrites() {
-        while (writes.isNotEmpty()) writes.toList().joinAll()
-    }
-
-    /** See [TimerViewModel.runningForEdit]. */
-    suspend fun runningForEdit(): RunningEntryIdentity? {
-        if (openingRunning) return null
-        val shown = now() as? TimerState.Running ?: return null
-        val pending = taps.value.pending
-        if (pending is PendingTap.Stopping || pending is PendingTap.Acting) return null
-        openingRunning = true
-        try {
-            val id = if (pending is PendingTap.Starting) {
-                val startedId = pending.entryId.await() ?: return null
-                taps.first { it.pending != pending }
-                startedId
-            } else {
-                shown.entryId ?: return null
-            }
-            descriptionDone()
-            awaitWrites()
-            val settled = now() as? TimerState.Running ?: return null
-            val identity = RunningEntryIdentity(
-                id,
-                shown.workspaceId,
-                if (pending is PendingTap.Starting) settled.start else shown.start,
-            )
-            return identity.takeIf { changes.runningEntry(it) != null }
-        } finally {
-            openingRunning = false
-        }
-    }
-
-    /**
-     * Changes the idle timer's draft or the running entry's fields. While a tap the cache or the
-     * server does not show yet is pending, the running entry's fields stay as they are: its id is
-     * not known yet, or it is stopping.
-     */
-    private fun edit(send: Boolean, change: (EntryFields) -> EntryFields) {
-        when (val shown = now()) {
-            TimerState.Loading, is TimerState.Paused -> Unit
-
-            is TimerState.Idle -> dispatch(TapEvent.Drafted(change(shown.fields)))
-
-            is TimerState.Running -> {
-                if (taps.value.pending != null || shown.entryId == null) return
-                val fields = change(shown.fields)
-                when {
-                    fields == shown.fields -> Unit
-
-                    send -> send(shown, fields)
-
-                    else -> dispatch(
-                        TapEvent.Edited(FieldEdit(shown.entryId, shown.workspaceId, shown.start, fields, sent = false)),
-                    )
-                }
-            }
-        }
-    }
-
-    /**
-     * Queues [fields] for the running entry, and shows them until the cache has them, or has
-     * anything newer than what it had before.
-     */
-    private fun send(shown: TimerState.Running, fields: EntryFields) {
-        val entryId = shown.entryId ?: return
-        val before = cached.value.controls()?.runningEntry()?.fields()
-        val edit = FieldEdit(entryId, shown.workspaceId, shown.start, fields, sent = true)
-        dispatch(TapEvent.Edited(edit))
-        val write = scope.launch(start = CoroutineStart.UNDISPATCHED) {
-            var refused = false
-            try {
-                val identity = RunningEntryIdentity(entryId, shown.workspaceId, shown.start)
-                when (val written = localWrite { changes.updateRunning(identity, fields, shown.start) }) {
-                    is LocalWrite.Written -> if (written.value) {
-                        cached.settle { controls ->
-                            val entry = controls.runningEntry()
-                            entry == null || entry.start != shown.start ||
-                                entry.fields().let { it == fields || it != before }
-                        }
-                    }
-
-                    is LocalWrite.Failed -> refused = true
-                }
-            } finally {
-                dispatch(if (refused) TapEvent.EditRefused(edit) else TapEvent.EditEnded(edit))
-            }
-        }
-        writes += write
-        write.invokeOnCompletion { writes -= write }
-    }
 
     private companion object {
         const val STOP_TIMEOUT_MS = 5_000L
