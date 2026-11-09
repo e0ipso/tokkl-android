@@ -19,6 +19,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,6 +27,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.text
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.github.e0ipso.tokkl.core.ui.R
@@ -142,3 +147,21 @@ private val BackButtonSize: Dp = 48.dp
 
 /** The room between the back button's edge and its 24dp icon. */
 private val BackIconInset: Dp = 12.dp
+
+/**
+ * A screen's title in the page-title role, 28sp Anybody 900 in capitals, as Tokkl's web sets
+ * them. The capitals are drawn, not read: TalkBack gets [text] as given, in sentence case, as a
+ * heading. Keep the string resource in sentence case.
+ */
+@Composable
+fun PageTitle(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text = text.uppercase(),
+        style = TokklTheme.pageTitleTextStyle,
+        // This modifier sits outside Text's own semantics, so its text replaces the capitals.
+        modifier = modifier.semantics {
+            this.text = AnnotatedString(text)
+            heading()
+        },
+    )
+}

@@ -4,6 +4,11 @@ import com.github.e0ipso.tokkl.api.ServerUrl
 import java.io.IOException
 import java.security.GeneralSecurityException
 
+/** Hears that an account has just signed in, once its session is saved. The app binds every one it has. */
+fun interface SignedInListener {
+    fun signedIn()
+}
+
 /**
  * Moves the phone to the account a sign-in got from the server: the configured server, its API
  * token and the account settings from the sign-in's own `GET /api/v9/me`. In this order: it stores the

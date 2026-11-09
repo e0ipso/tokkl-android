@@ -1,9 +1,11 @@
 package com.github.e0ipso.tokkl.api
 
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
+import okhttp3.Call
 import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.MediaType.Companion.toMediaType
@@ -13,6 +15,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import java.io.IOException
 import java.io.InputStream
+import java.io.InterruptedIOException
 import java.io.OutputStream
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.CoroutineContext
@@ -348,3 +351,77 @@ interface TrustListener {
 fun interface SuccessListener {
     fun succeeded()
 }
+
+/** The HTTP methods the Toggl and Tokkl APIs use, as [ApiTransport] sends them. */
+enum class HttpMethod {
+    GET,
+    POST,
+    PUT,
+    PATCH,
+    DELETE,
+}
+
+/** The HTTP status codes the app tells apart. */
+object HttpStatus {
+    const val OK = 200
+    const val FORBIDDEN = 403
+    const val NOT_FOUND = 404
+    const val GONE = 410
+    const val TOO_MANY_REQUESTS = 429
+    const val BAD_GATEWAY = 502
+    const val SERVICE_UNAVAILABLE = 503
+    const val GATEWAY_TIMEOUT = 504
+
+    /** The 4xx codes: the server refused the request as it was sent. */
+    val CLIENT_ERRORS = 400..499
+
+    /** The first 5xx code: the server failed. */
+    const val FIRST_SERVER_ERROR = 500
+}
+
+/** Cancels just this operation's calls, including a call registered after cancellation. */
+class ApiCallCancellation {
+    private var cancelled = false
+    private val calls = mutableSetOf<Call>()
+
+    // A JVM lock, not a Mutex: OkHttp's threads and the cancelling coroutine call these without
+    // suspending.
+    @Synchronized
+    internal fun attach(call: Call) {
+        if (cancelled) call.cancel() else calls.add(call)
+    }
+
+    @Synchronized
+    internal fun detach(call: Call) {
+        calls.remove(call)
+    }
+
+    @Synchronized
+    fun cancel() {
+        cancelled = true
+        calls.forEach { it.cancel() }
+        calls.clear()
+    }
+
+    @Synchronized
+    fun check() {
+        if (cancelled) throw InterruptedIOException("Export cancelled")
+    }
+}
+
+/**
+ * Runs this call on the calling thread, as [Call.execute] does, and hands the response to [read]
+ * before it closes. Cancelling the coroutine cancels the call, which then fails at once on that
+ * thread, and this function throws the cancellation. The thread blocks until the call ends, so run
+ * it on the IO dispatcher.
+ *
+ * The call runs on the calling thread rather than OkHttp's dispatcher, so the dispatcher's limit
+ * of five calls to one host never holds a request back behind an open event stream, and OkHttp's
+ * retry and failure rules stay those of [Call.execute].
+ */
+internal suspend fun <T> Call.executeCancellable(read: (Response) -> T): T =
+    suspendCancellableCoroutine { continuation ->
+        continuation.invokeOnCancellation { cancel() }
+        // After a cancellation the continuation ignores this result and throws the cancellation.
+        continuation.resumeWith(runCatching { execute().use(read) })
+    }

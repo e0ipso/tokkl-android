@@ -3,9 +3,11 @@ package com.github.e0ipso.tokkl.api
 import kotlinx.serialization.StringFormat
 import kotlinx.serialization.json.Json
 import okhttp3.ConnectionPool
+import okhttp3.Credentials
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
+import java.io.IOException
 import java.security.KeyStore
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLContext
@@ -160,3 +162,63 @@ val ApiJson: StringFormat get() = Wire
 
 /** [ApiJson] as JSON, for the trees this module builds and reads. */
 internal val Wire: Json = Json { ignoreUnknownKeys = true }
+
+/**
+ * HTTP Basic credentials for both APIs. Tokkl decodes the header as UTF-8 and
+ * splits it at the first colon, so a password may contain colons and an email
+ * may not. `toString` never prints a secret.
+ */
+sealed class ApiCredentials {
+
+    /** The value of the `Authorization` header. */
+    abstract val authorizationHeader: String
+
+    /** Sends `<api_token>:api_token`. */
+    class ApiToken(private val token: String) : ApiCredentials() {
+        override val authorizationHeader: String
+            get() = Credentials.basic(token, "api_token", Charsets.UTF_8)
+
+        override fun toString(): String = "ApiToken(***)"
+    }
+
+    /** Sends `<email>:<password>`. */
+    class EmailPassword(private val email: String, private val password: String) : ApiCredentials() {
+        init {
+            require(':' !in email) { "An email used for Basic auth cannot contain ':'" }
+        }
+
+        override val authorizationHeader: String
+            get() = Credentials.basic(email, password, Charsets.UTF_8)
+
+        override fun toString(): String = "EmailPassword(***)"
+    }
+}
+
+/**
+ * What the user has agreed to for a server: sending to a plain `http://` URL,
+ * and trusting a self-signed certificate by its fingerprint. [SharedHttpClient]
+ * checks it on every request and every TLS handshake, so no screen or
+ * background job can skip the question.
+ */
+interface ServerTrust {
+
+    /**
+     * The SHA-256 of the certificate the user trusted for the TLS server at [host] and [port], as
+     * lowercase hex, or null when there is none. [PinningTrustManager] reads it.
+     */
+    fun pinnedSha256(host: String, port: Int): String?
+
+    /**
+     * Whether the user confirmed that requests to [server], a plain `http://`
+     * URL, may carry the token or password unencrypted.
+     */
+    fun isCleartextConfirmed(server: ServerUrl): Boolean
+
+    /** Records the user's confirmation for [server]. Does disk I/O. */
+    @Throws(IOException::class)
+    fun confirmCleartext(server: ServerUrl)
+
+    /** Trusts [certificate], and no other, for its host and port. Does disk I/O. */
+    @Throws(IOException::class)
+    fun pinCertificate(certificate: ServerCertificate)
+}

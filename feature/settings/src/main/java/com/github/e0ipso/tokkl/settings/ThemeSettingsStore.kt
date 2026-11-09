@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.settings
 
 import android.content.Context
 import com.github.e0ipso.tokkl.storage.PreferencesFile
+import com.github.e0ipso.tokkl.storage.StartupLoad
 import com.github.e0ipso.tokkl.ui.theme.ThemeMode
 import com.github.e0ipso.tokkl.ui.theme.ThemeSettings
 import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsDisk
@@ -69,4 +70,11 @@ fun themeSettingsWithNightMode(
     io: CoroutineContext,
 ): ThemeSettingsRepository = ThemeSettingsRepository(store, scope, io).also { themes ->
     syncApplicationNightMode(context, themes.loaded.map { it.mode }, scope, io)
+}
+
+/** The theme settings' load at process start, which MainActivity's first frame waits for. */
+class ThemeSettingsLoad(private val themes: ThemeSettingsRepository) : StartupLoad {
+    override val isReady: Boolean get() = themes.isReady
+
+    override suspend fun ready() = themes.ready()
 }

@@ -108,3 +108,18 @@ class PomodoroRingingNotifier(private val context: Context) {
         const val CHANNEL_ID = "pomodoro_alarm"
     }
 }
+
+/** An immutable intent for one phase; re-posting cannot retarget an older alarm's actions. */
+fun pomodoroAlarmIntent(context: Context, phase: PomodoroPhaseKey): Intent =
+    Intent(context, PomodoroAlarmActivity::class.java)
+        .setAction("com.github.e0ipso.tokkl.action.SHOW_POMODORO_ALARM")
+        .putPhase(phase, unique = true)
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+
+/** The full-screen alarm of [phase] as a ringing notification opens it. */
+fun pomodoroAlarmPendingIntent(context: Context, phase: PomodoroPhaseKey): PendingIntent = PendingIntent.getActivity(
+    context,
+    0,
+    pomodoroAlarmIntent(context, phase),
+    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+)

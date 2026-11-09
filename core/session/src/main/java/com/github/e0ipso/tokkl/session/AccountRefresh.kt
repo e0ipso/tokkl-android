@@ -3,12 +3,24 @@ package com.github.e0ipso.tokkl.session
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.Me
 import com.github.e0ipso.tokkl.api.MePreferences
+import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.platform.SingleFlight
 import com.github.e0ipso.tokkl.time.DurationFormat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
+
+/**
+ * The server reads behind an account refresh, for the account signed in when the refresh opened
+ * them: `GET /api/v9/me` with its related data and `GET /api/v9/me/preferences`. [AccountRefresh]
+ * orders them. The steps after each refresh read the rest of the account with the same [api].
+ */
+class ServerAccountReads(val api: TokklApi) {
+    suspend fun meWithRelatedData(): ApiResult<Me> = api.account.meWithRelatedData()
+
+    suspend fun preferences(): ApiResult<MePreferences> = api.account.preferences()
+}
 
 /** What runs after each refresh whose `GET /api/v9/me` answered, with the reads it made. */
 fun interface AccountRefreshSteps {
@@ -18,6 +30,19 @@ fun interface AccountRefreshSteps {
      * `GET /api/v9/me/preferences`, null when that request failed.
      */
     suspend fun afterAnswer(reads: ServerAccountReads, me: Me, preferences: MePreferences?)
+}
+
+/**
+ * The account refreshes that a page or a step asks for. [AccountRefresh] reads the server; the
+ * unit tests of what asks count the refreshes without one.
+ */
+interface CacheRefresh {
+
+    /** Reads the account's data from the server again. */
+    fun refresh(): Job
+
+    /** Reads it again after a change the server has just accepted, so the cache ends up with that change. */
+    fun refreshAfterChange(): Job
 }
 
 /**

@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.navigation
 
+import android.content.Intent
 import androidx.compose.runtime.Composable
 import kotlinx.serialization.modules.PolymorphicModuleBuilder
 import kotlinx.serialization.modules.SerializersModule
@@ -88,4 +89,58 @@ class RequestOpening(
             navigator.startOver(signIns.signIn())
         }
     }
+}
+
+/**
+ * A tap outside the app that opens one page of MainActivity, such as a widget's or a reminder's,
+ * and the boolean extra its intent carries. The surface that makes the intent adds the tap with
+ * [into], and the feature that opens the page reads it with [isIn], so both read one name.
+ */
+enum class PageTap(val extra: String) {
+    /** A Timer widget's tap, which opens Timer. */
+    TIMER_WIDGET("open_timer_widget"),
+
+    /** The Timer widget's day report tap, which opens today's report. */
+    TODAY_REPORT("open_today_widget"),
+
+    /** The Pomodoro widget's tap, which opens Pomodoro. */
+    POMODORO_WIDGET("open_pomodoro_widget"),
+
+    /** A long-running timer reminder's tap, which opens Timer. */
+    REMINDER("com.github.e0ipso.tokkl.OPEN_TIMER_REMINDER"),
+    ;
+
+    /**
+     * [mainActivity], an intent that opens MainActivity, carrying this tap: in a new task, or in the
+     * one on show, brought back to MainActivity.
+     */
+    fun into(mainActivity: Intent): Intent = mainActivity
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        .putExtra(extra, true)
+
+    /** Whether [intent] carries this tap. */
+    fun isIn(intent: LinkIntent): Boolean = intent.flag(extra)
+}
+
+/**
+ * Whether somebody is signed in, and the sign-in screen's routes, which the sign-in feature binds
+ * in Koin. The host starts at sign-in while nobody is signed in and goes there after a sign-out,
+ * and the sync status opens it again for the account after the server refused its token.
+ */
+interface SignInRoutes {
+
+    /** Whether a server and its token are stored. Reads the stores off the main thread. */
+    suspend fun isSignedIn(): Boolean
+
+    /** Sign-in, with nothing filled in. */
+    fun signIn(): Route
+
+    /** Whether [route] is a sign-in screen, which shows without the bar. */
+    fun isSignIn(route: Route): Boolean
+
+    /**
+     * Sign-in filled in for the account signed in now, so the user signs in again to the same
+     * account, or null without a stored server. Reads the stores off the main thread.
+     */
+    suspend fun again(): Route?
 }

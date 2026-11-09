@@ -1,7 +1,10 @@
 package com.github.e0ipso.tokkl.reports
 
 import android.content.ActivityNotFoundException
+import android.content.ClipData
+import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
@@ -10,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.core.content.FileProvider
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -34,6 +38,7 @@ import kotlinx.serialization.modules.PolymorphicModuleBuilder
 import kotlinx.serialization.modules.subclass
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import java.io.File
 
 /**
  * Reports. Its view model is the route's own, and its tab and filters ([ReportChoices]) the
@@ -154,3 +159,19 @@ val reportsPage = TopLevelDestination(
 @Serializable
 @SerialName("com.github.e0ipso.tokkl.navigation.Route.Reports")
 data object ReportsRoute : Route
+
+/** Only explicit user-directed sharing grants a receiver access to this one completed file. */
+object ReportCsvShare {
+    fun intent(context: Context, file: File): Intent {
+        val uri = FileProvider.getUriForFile(context, "${context.packageName}.report-exports", file)
+        return Intent(Intent.ACTION_SEND).apply {
+            type = "text/csv"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            clipData = ClipData.newRawUri(file.name, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+    }
+
+    fun hasTarget(context: Context, intent: Intent): Boolean =
+        context.packageManager.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY).isNotEmpty()
+}

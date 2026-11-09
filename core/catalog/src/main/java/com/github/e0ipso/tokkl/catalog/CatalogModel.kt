@@ -1,7 +1,11 @@
 package com.github.e0ipso.tokkl.catalog
 
 import androidx.compose.runtime.Immutable
+import com.github.e0ipso.tokkl.api.ApiClientProvider
+import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.TokklApi
+import com.github.e0ipso.tokkl.api.flatMap
 import com.github.e0ipso.tokkl.api.fold
 import com.github.e0ipso.tokkl.api.getOrElse
 import com.github.e0ipso.tokkl.model.WorkspaceId
@@ -9,6 +13,7 @@ import com.github.e0ipso.tokkl.platform.PageLoads
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.ServerChanges
 import com.github.e0ipso.tokkl.session.ServerProblem
+import com.github.e0ipso.tokkl.session.signedIn
 import com.github.e0ipso.tokkl.session.toServerProblem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -19,6 +24,19 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
+
+/**
+ * The server behind a page that manages one kind of the account's items: which workspace the page
+ * manages, and what it lists there. Each feature's repository adds the changes its page sends.
+ */
+interface CatalogRepository<D> {
+
+    /** The workspace the page manages: [stored] from the account settings, or the server's default. */
+    suspend fun workspace(stored: WorkspaceId?): ApiResult<WorkspaceId>
+
+    /** What the page lists in [workspace]. */
+    suspend fun load(workspace: WorkspaceId): ApiResult<D>
+}
 
 /** A change the server accepted, for the message that confirms it. [name] is the item's name after the change. */
 sealed interface CatalogChange {
@@ -265,3 +283,20 @@ class CatalogModel<D, O>(
         return repository.load(workspace).fold({ Loaded(workspace, it) }, { NotLoaded(it.toServerProblem()) })
     }
 }
+
+/**
+ * The workspace whose projects, clients and tags the pages manage: the account's default
+ * workspace, [stored] with the account settings, or from `GET /api/v9/me` when the stored
+ * settings predate it.
+ */
+suspend fun managedWorkspace(api: TokklApi, stored: WorkspaceId?): ApiResult<WorkspaceId> {
+    if (stored != null) return ApiResult.Success(stored)
+    return api.account.defaultWorkspace().flatMap { me ->
+        me.defaultWorkspaceId?.let { ApiResult.Success(it) }
+            ?: ApiResult.Failure(ApiError.InvalidResponse(IllegalArgumentException("/me has no default_workspace_id")))
+    }
+}
+
+/** The workspace the catalog pages manage, as [managedWorkspace] finds it with the signed-in account's API. */
+suspend fun ApiClientProvider.managedWorkspace(stored: WorkspaceId?): ApiResult<WorkspaceId> =
+    signedIn { managedWorkspace(it, stored) }

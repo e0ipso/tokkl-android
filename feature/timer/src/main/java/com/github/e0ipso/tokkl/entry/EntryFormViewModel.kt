@@ -17,6 +17,8 @@ import com.github.e0ipso.tokkl.model.RunningEntryIdentity
 import com.github.e0ipso.tokkl.model.Task
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
+import com.github.e0ipso.tokkl.navigation.EntryFormRequest
+import com.github.e0ipso.tokkl.navigation.EntryOpening
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.platform.whileShown
@@ -477,5 +479,19 @@ class EntryFormViewModel(
 
         /** The key of the form's [SavedEntryForm] in its saved state. */
         const val SAVED_FORM = "entry-form"
+    }
+}
+
+/** Opens [form] on what this request asks for. */
+internal fun EntryFormRequest.openIn(form: EntryFormViewModel) {
+    when (val opening = opening) {
+        is EntryOpening.Edit -> form.edit(opening.entryId, older)
+
+        is EntryOpening.Running -> form.editRunning(opening.identity)
+
+        is EntryOpening.New -> {
+            val day = opening.day
+            if (opening.noTimes && day != null) form.newAllDay(day) else form.new(day)
+        }
     }
 }

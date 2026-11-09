@@ -1,7 +1,14 @@
 package com.github.e0ipso.tokkl.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.Modifier
+import androidx.lifecycle.ViewModelStoreOwner
 import androidx.navigation3.runtime.EntryProviderScope
+import kotlinx.coroutines.channels.Channel
 import kotlinx.serialization.modules.PolymorphicModuleBuilder
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
@@ -54,4 +61,57 @@ fun <R : Route> EntryProviderScope<Route>.route(route: R, content: @Composable (
 /** The entries of every route of class [R], each under its own [contentKey]. */
 inline fun <reified R : Route> EntryProviderScope<Route>.routes(noinline content: @Composable (R) -> Unit) {
     entry<R>(clazzContentKey = { it.contentKey }, content = content)
+}
+
+/**
+ * What a screen shares with the signed-in frame's notification permission prompt: the [starts]
+ * and [retries] it makes, which may ask for the permission, and a count of the prompt's
+ * [answers], which tells the screen to read the permission again. The Pomodoro page uses it; the
+ * Timer page's starts reach the prompt through its view model.
+ */
+class NotificationPrompts {
+    val starts = Channel<Unit>(Channel.UNLIMITED)
+    val retries = Channel<Unit>(Channel.UNLIMITED)
+    var answers by mutableIntStateOf(0)
+}
+
+/**
+ * What one feature shows in the signed-in frame around every page. Only a feature that shows
+ * something there binds one, such as the sync status band and the discarded changes' notice.
+ */
+interface FrameContributions {
+
+    /**
+     * The band this feature shows right above the bottom bar, or at the bottom of the screen beside
+     * the rail, or null while it shows none.
+     */
+    @Composable
+    fun frameBand(host: NavigationHost): (@Composable () -> Unit)?
+
+    /**
+     * What this feature shows over every signed-in page, with the modifier that places it at the
+     * bottom, below the timer's snackbars and the notification permission's prompt, or null while
+     * it shows nothing.
+     */
+    @Composable
+    fun frameNotice(host: NavigationHost): (@Composable (Modifier) -> Unit)?
+}
+
+/**
+ * What the features hand the navigation host, each part from the features that give it: the
+ * [routes] with their screens and pages, the [requests] of the taps from outside the app, and the
+ * [frame]'s bands and notices. MainActivity gathers them from Koin.
+ */
+class FeatureNavigation(
+    val routes: List<FeatureRoutes>,
+    val requests: List<FeatureRequests>,
+    val frame: List<FrameContributions>,
+)
+
+/**
+ * The signed-in session's view model store, which the navigation host provides. The view models
+ * that several screens share live there, and a sign-out drops them with the session.
+ */
+val LocalSignedInSession = staticCompositionLocalOf<ViewModelStoreOwner> {
+    error("No signed-in session store")
 }

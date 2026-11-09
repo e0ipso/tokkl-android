@@ -47,3 +47,12 @@ internal fun <T> json(serializer: SerializationStrategy<T>, body: T): JsonElemen
 
 /** The body of a POST that Tokkl reads nothing from. OkHttp sends no POST without one. */
 internal val EMPTY_BODY = JsonObject(emptyMap())
+
+/**
+ * The API of the signed-in account, or null when signed out. The first call after process start,
+ * sign-in or sign-out reads the stored session from the disk and the Keystore, on the IO
+ * dispatcher, so any thread may call it.
+ */
+fun interface ApiClientProvider {
+    suspend operator fun invoke(): TokklApi?
+}

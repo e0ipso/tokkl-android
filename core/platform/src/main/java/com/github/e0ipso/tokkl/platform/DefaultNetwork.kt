@@ -5,12 +5,16 @@ import android.net.Network
 import android.net.NetworkCapabilities
 import android.os.Handler
 import android.os.Looper
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.stateIn
 
 /** The default network as one report of its callback names it: its handle, and what it reaches. */
 data class NetworkState(val id: Long, val internet: Boolean, val validated: Boolean)
@@ -61,6 +65,15 @@ interface DefaultNetwork {
             }
         }
 }
+
+/**
+ * True while the phone has no network that reaches the internet, as in airplane mode, for a
+ * screen's view model in [scope]. It starts with the default network as it is now and follows it
+ * while the screen reads it ([whileShown]). A network that has no internet but reaches a Tokkl
+ * server on the local network counts as offline here, which only changes a hint.
+ */
+fun DefaultNetwork.offlineIn(scope: CoroutineScope): StateFlow<Boolean> =
+    online.map { !it }.stateIn(scope, whileShown, !reachesInternet())
 
 /** [DefaultNetwork] from [connectivity]'s default network callback. */
 class ConnectivityDefaultNetwork(private val connectivity: ConnectivityManager) : DefaultNetwork {

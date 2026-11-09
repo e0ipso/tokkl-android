@@ -108,7 +108,7 @@ class ThemeContrastTest {
     }
 
     /**
-     * The pairs of the stickers on each section's hue (SectionHue.kt): a day sticker's text in the
+     * The pairs of the stickers on each section's hue (SectionHue in Color.kt): a day sticker's text in the
      * hue's text colour, today's inverted badge on the week calendar, the hue's text colour on the
      * hue, and the sticker's edge against the surface it sits on. In light the sticker outline, the
      * ink, draws that edge, since sky and yellow fall under 3:1 on surface; in dark there is no

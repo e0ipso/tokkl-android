@@ -1,9 +1,13 @@
 package com.github.e0ipso.tokkl.pomodoro
 
+import android.content.Context
 import com.github.e0ipso.tokkl.platform.AppHook
 import com.github.e0ipso.tokkl.platform.SingleFlight
 import com.github.e0ipso.tokkl.platform.collectDurably
+import com.github.e0ipso.tokkl.session.AccountDataOwner
+import com.github.e0ipso.tokkl.session.SignOutPhase
 import com.github.e0ipso.tokkl.session.SignedInListener
+import com.github.e0ipso.tokkl.storage.PreferencesFile
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.timerstate.SessionActions
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
@@ -187,4 +191,53 @@ class PomodoroNotificationHook(private val sync: Lazy<PomodoroSessionNotificatio
     override fun processStart() = sync.value.start()
 
     override suspend fun notificationsAllowed() = sync.value.refresh(force = true)
+}
+
+/** What the session notification showed: the random identity of its [account] and the hash of what it [shown]. */
+data class PomodoroNotificationDisplay(val account: String, val shown: String? = null)
+
+/** Persists only a random account identity and a content hash, never entry fields. */
+class PomodoroSessionNotificationStore(context: Context, private val io: CoroutineContext) :
+    PomodoroNotificationMemory {
+    private val file = PreferencesFile(context, "pomodoro_notification", io)
+
+    override suspend fun load(): PomodoroNotificationDisplay? = file.read {
+        getString("account", null)?.let { PomodoroNotificationDisplay(it, getString("shown", null)) }
+    }
+
+    override suspend fun save(display: PomodoroNotificationDisplay?) {
+        file.commit("Could not save the Pomodoro notification state.") {
+            clear()
+            if (display != null) putString("account", display.account).putString("shown", display.shown)
+        }
+    }
+}
+
+/**
+ * The Pomodoro feature's part of sign-out, once the held timer state is retired: the phase alarm
+ * drops its alarm and ring, so nothing arms or rings the account's phase again, the session
+ * notification stops following the held state and erases what it showed, and notification ID 3
+ * goes. That ID is shared by the ring and the session notification, a non-ringing form included,
+ * so it is cancelled on its own too, through [sharedId]: a failed stop of the ring or the session
+ * notification still removes it. A part that fails does not stop the ones after it.
+ */
+internal class PomodoroSignOut(
+    private val alarm: PomodoroPhaseAlarm,
+    private val notification: PomodoroSessionNotificationSync,
+    private val sharedId: PomodoroSessionPoster,
+) : AccountDataOwner {
+
+    override val signOutPhase = SignOutPhase.STOP_WORK
+
+    override suspend fun forgetAccount() {
+        try {
+            alarm.release()
+        } finally {
+            try {
+                notification.forget()
+            } finally {
+                sharedId.remove()
+            }
+        }
+    }
 }

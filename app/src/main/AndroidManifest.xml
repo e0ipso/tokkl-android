@@ -87,7 +87,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Tokkl">
         <!--
-            The app gives Android its night mode (settings/ApplicationNightMode.kt), which
+            The app gives Android its night mode (syncApplicationNightMode in core/ui ThemeSettings.kt), which
             changes the activity's configuration. Compose redraws in place, so choosing a theme
             keeps the activity and the screen it shows instead of restarting it.
 

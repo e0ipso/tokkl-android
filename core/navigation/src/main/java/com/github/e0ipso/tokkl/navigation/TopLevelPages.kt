@@ -5,6 +5,7 @@ import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
 import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.ui.theme.SectionHue
+import kotlinx.coroutines.flow.Flow
 
 /**
  * A top-level page that a feature puts in the bottom bar, the navigation rail or, [inMore], on
@@ -50,3 +51,11 @@ class TopLevelPages(destinations: List<TopLevelDestination>) {
     /** The route of the page the screen on top of [stack] belongs to: itself, the nearest one below it, or Timer. */
     fun currentPage(stack: List<Route>): Route = stack.asReversed().firstOrNull { of(it) != null } ?: Route.Timer
 }
+
+/**
+ * The running dot that a feature puts on the item of its top-level page [route] in the bar and
+ * the rail while [shown] says so, such as Timer's while an entry runs. TalkBack reads [label] as
+ * the item's state, so the dot is not the only sign. Each feature declares its own subclass and
+ * binds it to this class in Koin, and the signed-in frame reads every one.
+ */
+open class PageBadge(val route: Route, @param:StringRes val label: Int, val shown: Flow<Boolean>)

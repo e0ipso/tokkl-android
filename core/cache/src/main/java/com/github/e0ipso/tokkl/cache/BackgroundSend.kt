@@ -17,6 +17,7 @@ import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import kotlinx.coroutines.withContext
 import java.time.Duration
+import java.util.UUID
 import java.util.concurrent.ExecutionException
 import kotlin.coroutines.CoroutineContext
 
@@ -164,4 +165,39 @@ internal fun ApiError.isTransient(): Boolean = when (this) {
     is ApiError.Network -> true
     is ApiError.Http -> this is ApiError.RateLimited || status >= HttpStatus.FIRST_SERVER_ERROR
     is ApiError.InvalidResponse, is ApiError.HostNotAllowed, is ApiError.TrustRefused -> false
+}
+
+/**
+ * Coordinates background workers joining the sender with cancellation of a waiting retry.
+ * The WorkManager state read can be stale, so registration and the completed cancellation share
+ * a lock. A worker cancelled before registration must fail [join]'s [canJoin] check too.
+ * Every callback may block on disk; call these methods off the main thread.
+ */
+class BackgroundSendRuns {
+    // A JVM lock, not a Mutex: WorkManager's threads call this without suspending.
+    private val lock = Any()
+    private val joined = mutableSetOf<UUID>()
+
+    fun join(id: UUID, canJoin: () -> Boolean): Boolean = synchronized(lock) {
+        if (canJoin()) joined.add(id) else false
+    }
+
+    fun leave(id: UUID) {
+        synchronized(lock) { joined.remove(id) }
+    }
+
+    fun hasJoined(id: UUID): Boolean = synchronized(lock) { id in joined }
+
+    fun cancelWaiting(waiting: () -> Boolean, cancel: () -> Unit, queueEmpty: () -> Boolean, schedule: () -> Unit) {
+        try {
+            if (!waiting()) return
+            synchronized(lock) {
+                if (joined.isEmpty()) cancel()
+            }
+        } catch (_: ExecutionException) {
+            // A failed WorkManager read or cancel may leave a retry waiting. The queue check
+            // still covers a cancellation that committed before WorkManager reported failure.
+        }
+        if (!queueEmpty()) schedule()
+    }
 }

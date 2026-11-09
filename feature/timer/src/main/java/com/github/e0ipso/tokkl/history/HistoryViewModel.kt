@@ -1,14 +1,17 @@
 package com.github.e0ipso.tokkl.history
 
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.entries.HistoryEntries
+import com.github.e0ipso.tokkl.entries.OlderDays
 import com.github.e0ipso.tokkl.entries.OlderPages
 import com.github.e0ipso.tokkl.entries.SessionEntries
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.model.Task
 import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.session.AccountSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -16,6 +19,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
+import java.time.LocalDate
+import java.time.ZoneId
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -78,4 +83,27 @@ class HistoryViewModel(
         /** How long the state keeps following the cache after the last screen stops reading it. */
         const val STOP_TIMEOUT_MS = 5_000L
     }
+}
+
+/** What the history shows. */
+@Immutable
+sealed interface HistoryState {
+
+    /** The cache or the account settings are not read yet. */
+    data object Loading : HistoryState
+
+    /** The phone cannot resolve the account's timezone, [timeZone], so it cannot tell the days apart. */
+    data class NoAccountTime(val timeZone: String) : HistoryState
+
+    /**
+     * The [days] with entries, newest first, as of [today] in the account's timezone [zone], and
+     * what comes after them.
+     */
+    data class Shown(
+        val days: List<HistoryDay>,
+        val today: LocalDate,
+        val zone: ZoneId,
+        val settings: AccountSettings,
+        val older: OlderDays,
+    ) : HistoryState
 }
