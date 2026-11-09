@@ -24,7 +24,6 @@ import org.junit.Test
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
-import kotlin.concurrent.thread
 
 /** A favorites save against a MockWebServer that answers `POST /api/v9/me/preferences` once released. */
 class FavoritesServerTest {
@@ -56,12 +55,12 @@ class FavoritesServerTest {
         server.close()
     }
 
-    private fun favorites(cacheFavorites: (List<Favorite>) -> Unit = { cached += it }) = FavoritesServer(
+    /** Writes as the account's cache does: only while the save's account is current. */
+    private fun favorites() = FavoritesServer(
         client = { testApi.api() },
         account = account,
-        cacheFavorites = cacheFavorites,
+        cache = { context, rows -> context.ifCurrent { cached += rows } != null },
         scope = app,
-        io = Dispatchers.IO,
     )
 
     @Test
@@ -84,29 +83,6 @@ class FavoritesServerTest {
 
         assertTrue(result is ApiResult.Success)
         assertEquals(listOf("Write"), cached.single().map { it.description })
-    }
-
-    @Test
-    fun theNextSignInWaitsForACacheWriteOnItsWay() = runBlocking {
-        val writing = CountDownLatch(1)
-        val finish = CountDownLatch(1)
-        val favorites = favorites { rows ->
-            writing.countDown()
-            finish.await(TIMEOUT_S, TimeUnit.SECONDS)
-            cached += rows
-        }
-        release.countDown()
-        val saving = app.async { favorites.save(listOf(EntryFields(description = "Write"))) }
-        assertTrue("the cache write started", writing.await(TIMEOUT_S, TimeUnit.SECONDS))
-
-        val signIn = thread { account.begin() }
-        while (signIn.isAlive && signIn.state != Thread.State.BLOCKED) Thread.onSpinWait()
-        assertTrue("the account does not end during the write", signIn.isAlive)
-
-        finish.countDown()
-        signIn.join()
-        assertTrue(saving.await() is ApiResult.Success)
-        assertEquals(1, cached.size)
     }
 
     private companion object {

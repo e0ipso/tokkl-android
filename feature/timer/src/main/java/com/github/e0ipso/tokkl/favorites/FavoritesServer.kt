@@ -6,13 +6,12 @@ import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.FavoriteBody
 import com.github.e0ipso.tokkl.api.FavoritesChange
 import com.github.e0ipso.tokkl.api.flatMap
+import com.github.e0ipso.tokkl.cache.FavoritesCache
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.Favorite
-import com.github.e0ipso.tokkl.session.AccountContext
 import com.github.e0ipso.tokkl.session.CurrentAccount
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
-import kotlin.coroutines.CoroutineContext
 
 /** The most favorites Tokkl keeps: `MAX_FAVORITES` in ../tokkl/packages/api/src/models/users.ts. */
 const val MAX_FAVORITES = 9
@@ -23,16 +22,14 @@ const val MAX_FAVORITES = 9
  *
  * @param client the signed-in account's API client, or null when signed out.
  * @param account the account each save belongs to: the one signed in when it starts.
- * @param cacheFavorites replaces the cached favorites, as `AccountCache.replaceFavorites` does. It
- *   blocks on the disk, and runs on [io].
- * @param scope the application's scope, where each save runs on [io].
+ * @param cache the cached favorites, which a save replaces while its account is current.
+ * @param scope the application's scope, where each save runs.
  */
 class FavoritesServer(
     private val client: ApiClientProvider,
     private val account: CurrentAccount,
-    private val cacheFavorites: (List<Favorite>) -> Unit,
+    private val cache: FavoritesCache,
     private val scope: CoroutineScope,
-    private val io: CoroutineContext,
 ) : FavoritesStore {
 
     /**
@@ -40,16 +37,16 @@ class FavoritesServer(
      * stored them, puts them in the cache. The save runs in the application's scope, so it reaches
      * the server and the cache also when its caller goes meanwhile. It belongs to the account
      * signed in when it starts: once that account has ended it sends nothing and writes nothing,
-     * and sign-out waits for a cache write on its way ([AccountContext.ifCurrent]). A save whose
-     * account ended fails as a signed-out one does.
+     * and sign-out waits for a cache write on its way ([FavoritesCache.replaceFavorites]). A save
+     * whose account ended fails as a signed-out one does.
      */
     override suspend fun save(favorites: List<EntryFields>): ApiResult<Unit> {
         val context = account.context.value
-        return scope.async(io) {
+        return scope.async {
             val api = client().takeIf { context.isCurrent } ?: return@async SIGNED_OUT
             api.account.savePreferences(favoritesBody(favorites)).flatMap {
                 val rows = favorites.mapIndexed { position, fields -> fields.toFavorite(position) }
-                context.ifCurrent { cacheFavorites(rows) }?.let { ApiResult.Success(Unit) } ?: SIGNED_OUT
+                if (cache.replaceFavorites(context, rows)) ApiResult.Success(Unit) else SIGNED_OUT
             }
         }.await()
     }

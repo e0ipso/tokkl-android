@@ -11,6 +11,7 @@ import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.model.Tag
 import com.github.e0ipso.tokkl.model.Task
 import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.session.AccountContext
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import kotlinx.coroutines.flow.Flow
@@ -29,7 +30,9 @@ import kotlin.coroutines.CoroutineContext
  * the suspending calls switch to [io] themselves. What must run under a caller's lock goes through
  * [CurrentEntryCache].
  */
-class AccountCache(private val database: CacheDatabase, private val io: CoroutineContext) : AccountDataOwner {
+class AccountCache(private val database: CacheDatabase, private val io: CoroutineContext) :
+    AccountDataOwner,
+    FavoritesCache {
 
     override val signOutPhase = SignOutPhase.CLEAR_CACHE
 
@@ -66,16 +69,15 @@ class AccountCache(private val database: CacheDatabase, private val io: Coroutin
     val entryIdsChanged: Flow<Unit> = database.invalidationTracker.createFlow("entry_ids").map { }
 
     /**
-     * Replaces the cached favorites with [favorites], in the user's order, once the server has
-     * stored them. Blocks on the disk, so a caller can hold sign-out back until it returns
-     * ([com.github.e0ipso.tokkl.session.AccountContext.ifCurrent]): call it off the main thread.
+     * Replaces the cached favorites with [favorites], in the user's order, on [io], while
+     * [account] is current: sign-out ends the account only once a write on its way has landed
+     * ([AccountContext.ifCurrent]). Returns false, and writes nothing, once the account has ended.
      */
-    @WorkerThread
-    fun replaceFavorites(favorites: List<Favorite>) {
-        dao.replaceFavorites(
-            favorites.mapIndexed { position, favorite -> favorite.copy(position = position).toCached() },
-        )
-    }
+    override suspend fun replaceFavorites(account: AccountContext, favorites: List<Favorite>): Boolean =
+        withContext(io) {
+            val rows = favorites.mapIndexed { position, favorite -> favorite.copy(position = position).toCached() }
+            account.ifCurrent { dao.replaceFavorites(rows) } != null
+        }
 
     /**
      * The server ids that replaced the local ids of [entries], for the entries the phone created
@@ -95,6 +97,16 @@ class AccountCache(private val database: CacheDatabase, private val io: Coroutin
     suspend fun clear() = withContext(io) {
         database.clearAllTables()
     }
+}
+
+/** The cached favorites, which a saved edit of the list replaces. [AccountCache] implements it. */
+fun interface FavoritesCache {
+
+    /**
+     * Replaces the cached favorites with [favorites] while [account] is current, off the main
+     * thread. Returns false, and writes nothing, once the account has ended.
+     */
+    suspend fun replaceFavorites(account: AccountContext, favorites: List<Favorite>): Boolean
 }
 
 /**
