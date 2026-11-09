@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.timerstate
 
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.ChangeQueue
+import com.github.e0ipso.tokkl.cache.ChangeSender
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.session.AccountDataOwner
@@ -31,9 +32,6 @@ val timerStateModule = module {
         AccountDataOwner::class,
         DiscardNotices::class,
         CurrentTimerState::class,
-        TimerStateIntakes::class,
-        TimerControlsSource::class,
-        HeldTimerStates::class,
     )
 
     // Pause, Resume and Discard, and a Pomodoro session's Start, Next phase and End, sent to the
@@ -42,7 +40,7 @@ val timerStateModule = module {
     single {
         TimerActions(
             client = get<Session>(),
-            states = get(),
+            states = get<AccountTimerStates>()::intake,
             scope = get(),
             io = io(),
         )
@@ -57,7 +55,7 @@ val timerStateModule = module {
             state = get(),
             changes = get<ChangeQueue>(),
             server = get<TimerActions>(),
-            sender = get(),
+            sender = get<ChangeSender>()::sendQueued,
         )
     }
 }

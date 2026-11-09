@@ -30,9 +30,7 @@ import kotlin.coroutines.CoroutineContext
  * the suspending calls switch to [io] themselves. What must run under a caller's lock goes through
  * [CurrentEntryCache].
  */
-class AccountCache(private val database: CacheDatabase, private val io: CoroutineContext) :
-    AccountDataOwner,
-    FavoritesCache {
+class AccountCache(private val database: CacheDatabase, private val io: CoroutineContext) : AccountDataOwner {
 
     override val signOutPhase = SignOutPhase.CLEAR_CACHE
 
@@ -73,11 +71,10 @@ class AccountCache(private val database: CacheDatabase, private val io: Coroutin
      * [account] is current: sign-out ends the account only once a write on its way has landed
      * ([AccountContext.ifCurrent]). Returns false, and writes nothing, once the account has ended.
      */
-    override suspend fun replaceFavorites(account: AccountContext, favorites: List<Favorite>): Boolean =
-        withContext(io) {
-            val rows = favorites.mapIndexed { position, favorite -> favorite.copy(position = position).toCached() }
-            account.ifCurrent { dao.replaceFavorites(rows) } != null
-        }
+    suspend fun replaceFavorites(account: AccountContext, favorites: List<Favorite>): Boolean = withContext(io) {
+        val rows = favorites.mapIndexed { position, favorite -> favorite.copy(position = position).toCached() }
+        account.ifCurrent { dao.replaceFavorites(rows) } != null
+    }
 
     /**
      * The server ids that replaced the local ids of [entries], for the entries the phone created
@@ -97,16 +94,6 @@ class AccountCache(private val database: CacheDatabase, private val io: Coroutin
     suspend fun clear() = withContext(io) {
         database.clearAllTables()
     }
-}
-
-/** The cached favorites, which a saved edit of the list replaces. [AccountCache] implements it. */
-fun interface FavoritesCache {
-
-    /**
-     * Replaces the cached favorites with [favorites] while [account] is current, off the main
-     * thread. Returns false, and writes nothing, once the account has ended.
-     */
-    suspend fun replaceFavorites(account: AccountContext, favorites: List<Favorite>): Boolean
 }
 
 /**

@@ -6,8 +6,8 @@ import com.github.e0ipso.tokkl.api.ApiJson
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.api.TokklApi
-import com.github.e0ipso.tokkl.timerstate.TimerStateIntake
 import com.github.e0ipso.tokkl.timerstate.TimerStateRead
+import com.github.e0ipso.tokkl.timerstate.TimerStateSource
 import java.io.IOException
 import java.io.InputStream
 
@@ -47,7 +47,7 @@ internal sealed interface StreamEnd {
  *
  * @param api the signed-in account's client, or null when signed out.
  */
-internal suspend fun holdTimerEvents(api: TokklApi?, source: TimerStateIntake, link: TimerSyncLink): StreamEnd {
+internal suspend fun holdTimerEvents(api: TokklApi?, source: TimerStateSource, link: TimerSyncLink): StreamEnd {
     api ?: return StreamEnd.SignedOut
     return try {
         // Before the request: the server builds the first event's state before it answers.
@@ -89,7 +89,7 @@ private fun ApiError.refusesCredential(): Boolean =
  */
 internal fun readTimerEvents(
     body: InputStream,
-    source: TimerStateIntake,
+    source: TimerStateSource,
     link: TimerSyncLink,
     first: TimerStateRead,
 ): StreamEnd {

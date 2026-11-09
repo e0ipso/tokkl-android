@@ -31,7 +31,7 @@ class TagsRequestsTest {
     /** Each request's method, target and body, in order. */
     private val requests = CopyOnWriteArrayList<String>()
 
-    private lateinit var repository: TagsRepository
+    private lateinit var repository: ServerTagsRepository
 
     @Before
     fun setUp() {

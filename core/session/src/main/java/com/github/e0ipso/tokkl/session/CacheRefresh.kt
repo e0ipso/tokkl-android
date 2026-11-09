@@ -14,13 +14,3 @@ interface CacheRefresh {
     /** Reads it again after a change the server has just accepted, so the cache ends up with that change. */
     fun refreshAfterChange(): Job
 }
-
-/**
- * What the foreground refresh reads, as [ForegroundRefresh] asks for it: on a trip back to the
- * foreground, and when the network comes back. core:cache sends the queue first.
- */
-interface ForegroundReads {
-    fun refresh()
-
-    fun refreshOnReconnect()
-}

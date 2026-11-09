@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.pomodoro
 
-import com.github.e0ipso.tokkl.cache.QueueSender
 import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.cache.RunningEntryEdits
 import com.github.e0ipso.tokkl.model.EntryFields
@@ -37,7 +36,7 @@ class PomodoroSessionEdits(
     private val held: Flow<HeldTimerState?>,
     private val actions: SessionActions,
     changes: RunningEntryChanges,
-    private val sender: QueueSender,
+    private val sender: suspend () -> Unit,
 ) {
 
     private val edits = RunningEntryEdits(changes)
@@ -73,7 +72,7 @@ class PomodoroSessionEdits(
      */
     private suspend fun revisionToSend(shown: PomodoroShown): Long? {
         if (!edits.awaitQueued()) return shown.revision
-        sender.sendQueued()
+        sender()
         actions.read()
         withTimeoutOrNull(REFRESH_MS) {
             held.first { state -> state?.shown().let { now -> now == null || now.revision > shown.revision } }

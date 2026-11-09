@@ -59,7 +59,7 @@ class FavoritesServerTest {
     private fun favorites() = FavoritesServer(
         client = { testApi.api() },
         account = account,
-        cache = { context, rows -> context.ifCurrent { cached += rows } != null },
+        replaceFavorites = { context, rows -> context.ifCurrent { cached += rows } != null },
         scope = app,
     )
 

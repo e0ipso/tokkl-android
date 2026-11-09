@@ -68,7 +68,7 @@ class CertificateHostMismatchTest {
             .build()
         val model = SignInViewModel(
             signIn = ServerSignIn(
-                session = { _, _, _ -> saved = true },
+                storeSignIn = { _, _, _ -> saved = true },
                 connector = apiConnector(client),
                 configured = appConfiguredServer,
                 scope = scope,

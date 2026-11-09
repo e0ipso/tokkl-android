@@ -8,19 +8,15 @@ import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import java.time.Instant
 
-/** Where the cache holds an entry now, such as [ChangeQueue.currentId]. */
-fun interface CurrentEntryIds {
-
-    /** The id the cache holds [entryId] under after a local create is answered, or [entryId]. */
-    suspend fun currentId(entryId: EntryId): EntryId
-}
-
 /**
  * The timer's changes, as [ChangeQueue] makes them: Start, Stop and the edits of the running
  * segment, on the phone at once, then queued for the server. A timer surface's model takes this,
  * so a JVM test can stand in for the database. See [ChangeQueue] for what each call does.
  */
-interface RunningEntryChanges : CurrentEntryIds {
+interface RunningEntryChanges {
+    /** The id the cache holds [entryId] under after a local create is answered, or [entryId]. */
+    suspend fun currentId(entryId: EntryId): EntryId
+
     suspend fun start(workspaceId: WorkspaceId, fields: EntryFields): EntryId
 
     suspend fun stop(entryId: EntryId, fields: EntryFields? = null): Boolean
@@ -43,7 +39,10 @@ interface RunningEntryChanges : CurrentEntryIds {
  * as core:entryfields' `AccountTime.noTimeEntry` makes one. Any other timing makes a timed entry,
  * also when the entry was a no-time one.
  */
-interface EntryChanges : CurrentEntryIds {
+interface EntryChanges {
+    /** The id the cache holds [entryId] under after a local create is answered, or [entryId]. */
+    suspend fun currentId(entryId: EntryId): EntryId
+
     suspend fun create(workspaceId: WorkspaceId, fields: EntryFields, timing: EntryTiming.Ended): EntryId
 
     suspend fun update(entryId: EntryId, fields: EntryFields, timing: EntryTiming): Boolean

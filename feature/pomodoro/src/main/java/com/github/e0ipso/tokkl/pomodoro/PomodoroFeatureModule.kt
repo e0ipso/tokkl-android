@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.pomodoro
 import android.app.AlarmManager
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.ChangeQueue
+import com.github.e0ipso.tokkl.cache.ChangeSender
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.navigation.FeatureRequests
 import com.github.e0ipso.tokkl.navigation.FeatureRoutes
@@ -21,7 +22,6 @@ import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.session.SignedInListener
 import com.github.e0ipso.tokkl.storage.StartupLoad
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
-import com.github.e0ipso.tokkl.timerstate.HeldTimerStates
 import com.github.e0ipso.tokkl.timerstate.TimerActions
 import com.github.e0ipso.tokkl.timersync.PomodoroAlarmScheduler
 import com.github.e0ipso.tokkl.timersync.PomodoroRingingPhase
@@ -60,8 +60,13 @@ val pomodoroFeatureModule = module {
     single<ExactAlarmAccess> {
         PlatformExactAlarms(androidContext().getSystemService(AlarmManager::class.java))
     }
-    single { AlarmClockPomodoroScheduler(androidContext(), timerSyncStarts = get(), exactAlarms = get()) } binds
-        arrayOf(PomodoroAlarmScheduler::class, TimerSyncWatcher::class)
+    single {
+        AlarmClockPomodoroScheduler(
+            androidContext(),
+            timerSyncStarts = get<CapabilitiesSource>()::offersTimerApi,
+            exactAlarms = get(),
+        )
+    } binds arrayOf(PomodoroAlarmScheduler::class, TimerSyncWatcher::class)
 
     // The ringing service at a Pomodoro phase's planned end, as [PomodoroPhaseAlarm] drives it and the Pomodoro widget
     // reads it.
@@ -70,7 +75,7 @@ val pomodoroFeatureModule = module {
             androidContext(),
             get<CoroutineDispatcher>(MainDispatcher),
         )
-    } binds arrayOf(PomodoroRinging::class, PomodoroRingingPhase::class, RingingServiceState::class)
+    } binds arrayOf(PomodoroRinging::class, PomodoroRingingPhase::class)
 
     // The exact alarm and the ring of the server's Pomodoro session, which follow the held timer
     // state while the server offers the timer API (docs/PRD.md W7). Loaded at process start; its
@@ -78,7 +83,7 @@ val pomodoroFeatureModule = module {
     single {
         PomodoroPhaseAlarm(
             timerStates = get(),
-            available = get(),
+            available = get<CapabilitiesSource>()::offersTimerApi,
             alarms = get<AlarmClockPomodoroScheduler>(),
             ringing = get<ServicePomodoroRinging>(),
             io = io(),
@@ -108,8 +113,8 @@ val pomodoroFeatureModule = module {
             alarm = get(),
             actions = get<TimerActions>(),
             changes = combine(held.held, capabilities.loaded, ringing.state) { _, _, _ -> Unit },
-            isSignedIn = get(),
-            serviceRunning = get(),
+            isSignedIn = get<Session>()::isSignedIn,
+            serviceRunning = ringing::running,
             memory = store,
             notifications = notifier,
             scope = get(),
@@ -134,7 +139,12 @@ val pomodoroFeatureModule = module {
         PomodoroViewModel(
             held = held,
             controls = get<AccountTimerStates>().controls,
-            session = PomodoroSessionEdits(held, actions = get<TimerActions>(), changes = changes, sender = get()),
+            session = PomodoroSessionEdits(
+                held,
+                actions = get<TimerActions>(),
+                changes = changes,
+                sender = get<ChangeSender>()::sendQueued,
+            ),
             defaults = get<PomodoroDefaultsSetting>().defaults,
             settings = get<AccountSettingsSource>().state,
             unsent = changes.unsentCount,
@@ -159,5 +169,5 @@ val pomodoroFeatureModule = module {
     single { PomodoroRequests(notification = inject(), io = io()) } bind FeatureRequests::class
 
     // The bar's running dot on Pomodoro while the server's session runs.
-    single { PomodoroBadge(get<HeldTimerStates>().held) } bind PageBadge::class
+    single { PomodoroBadge(get<AccountTimerStates>().held) } bind PageBadge::class
 }

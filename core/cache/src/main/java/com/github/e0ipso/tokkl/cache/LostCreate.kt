@@ -17,7 +17,7 @@ import java.time.temporal.ChronoUnit
  * start.
  */
 internal suspend fun earlierCopy(
-    server: EntrySends,
+    server: ServerEntrySends,
     create: PendingChange,
     spans: ServerSpans,
     store: ChangeStore,

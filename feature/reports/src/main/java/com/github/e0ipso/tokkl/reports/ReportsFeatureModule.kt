@@ -24,7 +24,7 @@ import java.io.File
  * and sign-out invalidates, the choices that outlive the page, the view model and the screen.
  */
 val reportsFeatureModule = module {
-    single<ReportsRepository> { ServerReportsRepository(get<Session>()) }
+    single { ServerReportsRepository(get<Session>()) }
     single {
         ReportExportFiles(
             File(androidContext().cacheDir, ReportExportFiles.DIRECTORY),

@@ -513,7 +513,7 @@ class EntryActionsViewModelTest {
         entries = entries,
         changes = FakeChanges(),
         removals = sessionEntries(entries, MutableStateFlow(SETTINGS), scope, Clock.systemUTC()),
-        undo = { entryId ->
+        undoDelete = { entryId ->
             calls += "undo $entryId"
             undoOutcome
         },

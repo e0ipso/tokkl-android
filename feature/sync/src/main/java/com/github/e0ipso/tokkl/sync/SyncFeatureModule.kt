@@ -3,7 +3,7 @@ package com.github.e0ipso.tokkl.sync
 import com.github.e0ipso.tokkl.api.SuccessListener
 import com.github.e0ipso.tokkl.cache.ChangeDiscards
 import com.github.e0ipso.tokkl.cache.ChangeQueue
-import com.github.e0ipso.tokkl.cache.SignInPause
+import com.github.e0ipso.tokkl.cache.ChangeSender
 import com.github.e0ipso.tokkl.navigation.FeatureRoutes
 import com.github.e0ipso.tokkl.navigation.FrameContributions
 import com.github.e0ipso.tokkl.platform.io
@@ -51,7 +51,7 @@ val syncFeatureModule = module {
         SyncStatusSource(
             unsent = changes.unsentCount,
             needsAttention = changes.heldCount,
-            signInNeeded = get<SignInPause>().signInNeeded,
+            signInNeeded = get<ChangeSender>().signInNeeded,
             lastAnswered = get<LastAnswer>().state,
             settings = get<AccountSettingsSource>().state,
             scope = get(),

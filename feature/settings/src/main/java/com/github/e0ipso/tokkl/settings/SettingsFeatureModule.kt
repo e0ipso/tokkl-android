@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.settings
 
+import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.navigation.FeatureRoutes
 import com.github.e0ipso.tokkl.platform.io
@@ -23,7 +24,7 @@ val settingsFeatureModule = module {
     // The Settings page's sign-out button and its warning about unsent changes.
     single {
         SignOutConfirmation(
-            unsent = get(),
+            unsentNow = get<ChangeQueue>()::unsentNow,
             signOut = get(),
             scope = get(),
         )

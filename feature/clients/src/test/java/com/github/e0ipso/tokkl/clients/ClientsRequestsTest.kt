@@ -31,7 +31,7 @@ class ClientsRequestsTest {
     /** Each request's method, target and body, in order. */
     private val requests = CopyOnWriteArrayList<String>()
 
-    private lateinit var repository: ClientsRepository
+    private lateinit var repository: ServerClientsRepository
 
     @Before
     fun setUp() {

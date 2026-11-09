@@ -410,7 +410,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
         private val signInModel by lazy {
             SignInViewModel(
                 signIn = ServerSignIn(
-                    session = { _, _, _ -> },
+                    storeSignIn = { _, _, _ -> },
                     connector = appHttp,
                     configured = appConfiguredServer,
                     scope = scope,

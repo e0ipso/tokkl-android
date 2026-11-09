@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.pomodoro
 
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
-import com.github.e0ipso.tokkl.capabilities.TimerApiOffer
 import com.github.e0ipso.tokkl.platform.AppHook
 import com.github.e0ipso.tokkl.platform.collectDurably
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
@@ -47,7 +46,7 @@ import kotlin.coroutines.CoroutineContext
  */
 class PomodoroPhaseAlarm(
     private val timerStates: CurrentTimerState,
-    private val available: TimerApiOffer,
+    private val available: suspend () -> Boolean,
     private val alarms: PomodoroAlarmScheduler,
     private val ringing: PomodoroRinging,
     private val io: CoroutineContext,
@@ -142,7 +141,7 @@ class PomodoroPhaseAlarm(
 
     private suspend fun <T> locked(block: suspend () -> T): T = withContext(io) { lock.withLock { block() } }
 
-    private suspend fun heldLocked(): HeldTimerState? = timerStates.heldNow()?.takeIf { available.offersTimerApi() }
+    private suspend fun heldLocked(): HeldTimerState? = timerStates.heldNow()?.takeIf { available() }
 
     private suspend fun currentLocked(): PomodoroRing? = heldLocked()?.ring()
 

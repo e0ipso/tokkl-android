@@ -108,7 +108,7 @@ data class TrashPageState(
  *   while it shows ([stateInPage]).
  */
 class TrashViewModel(
-    private val repository: TrashRepository,
+    private val repository: ServerTrashRepository,
     private val changes: ServerChanges,
     private val trashMissing: suspend () -> Unit,
     scope: CoroutineScope,
@@ -209,7 +209,7 @@ class TrashViewModel(
      * and the cache refresh after a restore outlive the view model.
      */
     private fun <R> send(
-        request: suspend (TrashRepository) -> ApiResult<R>,
+        request: suspend (ServerTrashRepository) -> ApiResult<R>,
         apply: (List<DeletedEntry>, R) -> List<DeletedEntry>,
         done: (R) -> TrashChange,
         restored: Boolean = false,

@@ -18,7 +18,7 @@ import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.storage.StartupLoad
 import com.github.e0ipso.tokkl.timernotice.TimerFailureNotice
-import com.github.e0ipso.tokkl.timerstate.TimerControlsSource
+import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import kotlinx.coroutines.CoroutineDispatcher
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.workmanager.dsl.worker
@@ -37,12 +37,12 @@ val notificationFeatureModule = module {
         val notifier = RunningNotifier(androidContext())
         RunningNotificationSync(
             running = runningNotificationContents(
-                get<TimerControlsSource>().controls,
+                get<AccountTimerStates>().controls,
                 get<AccountCache>().projects,
                 get<AccountCache>().tasks,
             ),
             shown = get<RunningNotificationStore>(),
-            ids = get<ChangeQueue>(),
+            currentId = get<ChangeQueue>()::currentId,
             notice = notifier,
             scope = get(),
             io = io(),

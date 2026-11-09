@@ -4,8 +4,8 @@ import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.platform.AppHook
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.session.AccountDataOwner
+import com.github.e0ipso.tokkl.session.AccountRefresh
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
-import com.github.e0ipso.tokkl.session.ForegroundReads
 import com.github.e0ipso.tokkl.session.ForegroundRefresh
 import com.github.e0ipso.tokkl.session.Session
 import org.koin.android.ext.koin.androidContext
@@ -42,22 +42,22 @@ val cacheModule = module {
     // the app closed.
     single { BackgroundSendRuns() }
     single { BackgroundSend(get(), get()) } bind AccountDataOwner::class
-    single { SendOnQueue(get(), get()) } bind QueuedListener::class
     single {
+        val background = get<BackgroundSend>()
+        val sender = get<ChangeSender>()
         ChangeQueue(
             get<QueueStorage>(),
             io(),
-            onQueued = get(),
+            // The background send first, so a fast drain cannot finish and cancel it before it is
+            // registered, then a send at once.
+            onQueued = {
+                background.schedule()
+                sender.send()
+            },
             clock = get(),
             spans = get<AccountServerSpans>(),
         )
-    } binds arrayOf(
-        EntryChanges::class,
-        RunningEntryChanges::class,
-        CurrentEntryIds::class,
-        HeldChanges::class,
-        UnsentChanges::class,
-    )
+    } binds arrayOf(EntryChanges::class, RunningEntryChanges::class, HeldChanges::class)
 
     // Sends the queued changes in order, and refreshes, cancels the background retry and counts
     // the discarded changes as its drains end ([QueueDrainEvents]).
@@ -75,7 +75,7 @@ val cacheModule = module {
             capabilities = get(),
             undo = get(),
         )
-    } binds arrayOf(AccountDataOwner::class, QueueSender::class, SignInPause::class)
+    } bind AccountDataOwner::class
 
     // Takes a delete back, and refreshes once the server restored the entry. The sender sends each
     // delete through it, so an Undo never decides while a delete is on its way.
@@ -88,7 +88,7 @@ val cacheModule = module {
             refreshes = get(),
             scope = get(),
         )
-    } bind DeleteUndo::class
+    }
 
     // The running entry's check every 15 minutes while a timer runs.
     single { RunningCheck(get()) } bind AccountDataOwner::class
@@ -96,9 +96,23 @@ val cacheModule = module {
 
     // Refreshes the account, and with it the running entry and the cache, each time the app comes
     // to the foreground and each time the network comes back while it is there. MainActivity
-    // reports its starts, stops and network changes. Nothing refreshes on a timer.
-    single { SendThenRefresh(get(), get()) } bind ForegroundReads::class
-    single { ForegroundRefresh(get()) }
+    // reports its starts, stops and network changes. Nothing refreshes on a timer. The queued
+    // changes go first, then the account refreshes. The send does not wait for the refresh, so an
+    // expired token still asks for sign-in when `/me` fails on opening the app with a saved queue.
+    single {
+        val sender = get<ChangeSender>()
+        val account = get<AccountRefresh>()
+        ForegroundRefresh(
+            refresh = {
+                sender.send()
+                account.refresh()
+            },
+            refreshOnReconnect = {
+                sender.send()
+                account.refreshOnReconnect()
+            },
+        )
+    }
 
     // The queue's WorkManager workers, which KoinWorkerFactory makes with their dependencies.
     worker { params ->

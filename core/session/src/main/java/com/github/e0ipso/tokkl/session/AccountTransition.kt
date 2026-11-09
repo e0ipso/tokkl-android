@@ -5,17 +5,8 @@ import java.io.IOException
 import java.security.GeneralSecurityException
 
 /**
- * Where a sign-in hands over what the server accepted: the configured server, its API token and
- * the account settings from the sign-in's own `GET /api/v9/me`. [AccountTransition] moves the
- * phone to that account.
- */
-fun interface SignInTransition {
-    @Throws(GeneralSecurityException::class, IOException::class)
-    suspend fun signIn(server: ServerUrl, token: String, settings: AccountSettings)
-}
-
-/**
- * Moves the phone to the account a sign-in got from the server, in this order: it stores the
+ * Moves the phone to the account a sign-in got from the server: the configured server, its API
+ * token and the account settings from the sign-in's own `GET /api/v9/me`. In this order: it stores the
  * account settings, clears the timer state and begins the account in [account], which ends every
  * piece of work the account before started and gives it a new, empty timer state, then stores the
  * server and its token and tells [signedIn]. If the session write fails, the app stays signed out
@@ -44,10 +35,10 @@ class AccountTransition(
     private val queuePaused: () -> Boolean,
     private val resumeQueue: () -> Unit,
     private val followTimerSync: suspend () -> Unit,
-) : SignInTransition {
+) {
 
     @Throws(GeneralSecurityException::class, IOException::class)
-    override suspend fun signIn(server: ServerUrl, token: String, settings: AccountSettings) {
+    suspend fun signIn(server: ServerUrl, token: String, settings: AccountSettings) {
         storeSettings(settings)
         clearTimerState()
         account.begin()

@@ -6,8 +6,8 @@ import com.github.e0ipso.tokkl.navigation.SignInRoutes
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
+import com.github.e0ipso.tokkl.session.AccountTransition
 import com.github.e0ipso.tokkl.session.ServerTrustStore
-import com.github.e0ipso.tokkl.session.SignInTransition
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
@@ -15,7 +15,7 @@ import org.koin.dsl.module
 
 /**
  * Sign-in: the cooldowns after failed sign-ins, the view model, which takes the account to sign in
- * again to and hands what the server accepted to the session's [SignInTransition], and the screen.
+ * again to and hands what the server accepted to the session's [AccountTransition], and the screen.
  */
 val signInFeatureModule = module {
     single { SignInCooldownStore(androidContext(), io()) } bind SignInCooldowns::class
@@ -24,7 +24,7 @@ val signInFeatureModule = module {
         SignInViewModel(
             // Runs on the IO thread, since the stores touch the disk.
             signIn = ServerSignIn(
-                session = get<SignInTransition>(),
+                storeSignIn = get<AccountTransition>()::signIn,
                 connector = get<SharedHttpClient>(),
                 configured = get(),
                 scope = get(),

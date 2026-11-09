@@ -13,7 +13,7 @@ import java.time.temporal.ChronoUnit
  * Whether the server stopped the entry of the captured Stop [change] as the phone asked. True only
  * after reading the exact stopped row, including a short row hidden in Trash.
  */
-internal suspend fun stoppedOnServer(server: EntrySends, change: PendingChange): ApiResult<Boolean> =
+internal suspend fun stoppedOnServer(server: ServerEntrySends, change: PendingChange): ApiResult<Boolean> =
     when (val result = server.get(EntryId(change.entryId))) {
         is ApiResult.Success -> when {
             result.value.stop == null -> ApiResult.Success(false)

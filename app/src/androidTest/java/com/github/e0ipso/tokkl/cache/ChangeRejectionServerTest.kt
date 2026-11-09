@@ -226,7 +226,7 @@ class ChangeRejectionServerTest {
         assertEquals(ChangeSender.Outcome.Stopped(0, ApiError.AuthFailed), runBlocking { sender.sendAndWait() })
         assertEquals(2, count())
         val signIn = ServerSignIn(
-            session = { _, accepted, _ -> token = accepted },
+            storeSignIn = { _, accepted, _ -> token = accepted },
             connector = appHttp,
             configured = appConfiguredServer,
             scope = scope,

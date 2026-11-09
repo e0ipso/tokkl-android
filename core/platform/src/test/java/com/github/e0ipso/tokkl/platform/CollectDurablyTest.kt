@@ -18,7 +18,7 @@ import java.io.IOException
 class CollectDurablyTest {
 
     private val reported = mutableListOf<Exception>()
-    private val failures = ObserverFailures { _, failure -> reported += failure }
+    private val failures: (String, Exception) -> Unit = { _, failure -> reported += failure }
 
     @Test
     fun aFailedReadWaitsThenCollectsAgainWithoutReportingIt() = runTest {

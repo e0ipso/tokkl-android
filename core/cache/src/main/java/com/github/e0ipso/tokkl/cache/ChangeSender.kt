@@ -3,7 +3,7 @@ package com.github.e0ipso.tokkl.cache
 import android.database.sqlite.SQLiteException
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.capabilities.AllDayOffer
+import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import kotlinx.coroutines.CompletableDeferred
@@ -78,17 +78,15 @@ interface ChangeSenderEvents {
  */
 class ChangeSender(
     private val store: ChangeStore,
-    private val entries: suspend () -> EntrySends?,
+    private val entries: suspend () -> ServerEntrySends?,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
     private val events: ChangeSenderEvents,
     private val clock: Clock,
     private val spans: ServerSpans,
-    private val capabilities: AllDayOffer,
+    private val capabilities: CapabilitiesSource,
     private val undo: DeleteUndoer,
-) : AccountDataOwner,
-    QueueSender,
-    SignInPause {
+) : AccountDataOwner {
 
     override val signOutPhase = SignOutPhase.FINISH_SENDING
 
@@ -144,7 +142,7 @@ class ChangeSender(
      * True once the server refused the session's token for a queued change (docs/PRD.md O6). The
      * queue then sends nothing and discards nothing until [resume].
      */
-    override val signInNeeded: StateFlow<Boolean> = mutableSignInNeeded.asStateFlow()
+    val signInNeeded: StateFlow<Boolean> = mutableSignInNeeded.asStateFlow()
 
     init {
         scope.launch(io) { serveRequests() }
@@ -155,12 +153,12 @@ class ChangeSender(
      * or 403. Pauses the queue as its own refusal would, so the status asks to sign in again, until
      * [resume].
      */
-    override fun signInRefused() {
+    fun signInRefused() {
         mutableSignInNeeded.value = true
     }
 
     /** Lifts the pause after a refused token, once the user has signed in again, and drains the queue. */
-    override fun resume() {
+    fun resume() {
         mutableSignInNeeded.value = false
         send()
     }
@@ -185,7 +183,7 @@ class ChangeSender(
     }
 
     /** Drains the queue as [sendAndWait] does, for a caller that needs no outcome. */
-    override suspend fun sendQueued() {
+    suspend fun sendQueued() {
         sendAndWait()
     }
 
@@ -333,7 +331,7 @@ class ChangeSender(
 
     /** Settles [queued], which the server refused with [error], after [sent] changes went out. */
     private suspend fun settleRefused(
-        server: EntrySends,
+        server: ServerEntrySends,
         queued: PendingChange,
         error: ApiError,
         sent: Int,
@@ -381,7 +379,7 @@ class ChangeSender(
     }
 
     /** Sends [change], or returns null when it left the queue before it went out. */
-    private suspend fun send(server: EntrySends, change: PendingChange): ApiResult<SentChange>? {
+    private suspend fun send(server: ServerEntrySends, change: PendingChange): ApiResult<SentChange>? {
         if (change.kind == ChangeKind.CREATE) return tries.create(server, change)
         if (change.kind == ChangeKind.DELETE) return undo.sendingDelete { tries.delete(server, change) }
         if (change.kind == ChangeKind.STOP && change.capturedStop != null) return tries.capturedStop(server, change)
@@ -392,29 +390,4 @@ class ChangeSender(
         /** Twice the farthest a snap moves a start: half of Tokkl's coarsest time resolution, an hour. */
         val LOOKUP_MARGIN: Duration = Duration.ofHours(1)
     }
-}
-
-/**
- * The queue's pause after the server refused the session's token (docs/PRD.md O6), as
- * [ChangeSender] keeps it, for the sign-in, the sync status and the timer event stream, which read
- * or change nothing else of the sender.
- */
-interface SignInPause {
-
-    /** True from a refused token until [resume]: the queue sends nothing meanwhile. */
-    val signInNeeded: StateFlow<Boolean>
-
-    /** Another request's token was refused: pauses the queue as its own refusal would. */
-    fun signInRefused()
-
-    /** Lifts the pause once the user has signed in again, and drains the queue. */
-    fun resume()
-}
-
-/**
- * Drains the queue and waits for it, as the timer's surfaces and pages ask before a server action.
- * [ChangeSender] sends over Room and the network; their unit tests stand in for it.
- */
-fun interface QueueSender {
-    suspend fun sendQueued()
 }

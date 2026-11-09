@@ -4,7 +4,7 @@ import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.SignInRoutes
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.ServerConfigStore
-import com.github.e0ipso.tokkl.session.SignInStatus
+import com.github.e0ipso.tokkl.session.Session
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
@@ -14,7 +14,7 @@ import kotlin.coroutines.CoroutineContext
  * fills in the stored [servers]' server and the account [settings]' user, read on [io].
  */
 internal class AccountSignInRoutes(
-    private val session: SignInStatus,
+    private val session: Session,
     private val servers: ServerConfigStore,
     private val settings: StateFlow<AccountSettings?>,
     private val io: CoroutineContext,

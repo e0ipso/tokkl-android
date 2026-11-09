@@ -466,7 +466,7 @@ class RunningNotificationTest {
                 load = { shown },
                 save = { followed -> if (failWrites) throw IOException("disk full") else shown = followed },
             ),
-            ids = { id -> serverIds[id] ?: id },
+            currentId = { id -> serverIds[id] ?: id },
             notice = object : RunningNotice {
                 override fun post(content: RunningNotificationContent) {
                     calls += "post ${content.description} ${content.entryId}"

@@ -112,7 +112,7 @@ fun TrashScreen(page: TrashPageState, actions: TrashActions, modifier: Modifier 
                         )
                     }
                 }
-                if (entries.size >= TrashRepository.LIST_LIMIT) {
+                if (entries.size >= ServerTrashRepository.LIST_LIMIT) {
                     item(key = "limit") {
                         Text(
                             text = stringResource(R.string.trash_limit),
@@ -130,7 +130,7 @@ fun TrashScreen(page: TrashPageState, actions: TrashActions, modifier: Modifier 
         ConfirmDialog(
             title = stringResource(R.string.trash_empty_confirm_title),
             paragraphs = listOf(
-                if (count >= TrashRepository.LIST_LIMIT) {
+                if (count >= ServerTrashRepository.LIST_LIMIT) {
                     stringResource(R.string.trash_empty_confirm_every)
                 } else {
                     pluralStringResource(R.plurals.trash_empty_confirm_message, count, count)

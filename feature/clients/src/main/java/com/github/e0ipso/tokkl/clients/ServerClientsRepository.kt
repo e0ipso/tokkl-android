@@ -16,31 +16,10 @@ import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.signedIn
 
 /**
- * The workspace's clients, for the clients page. [ServerClientsRepository] reads and changes them
- * on the server; the view model's unit tests stand in for it without a server.
- */
-interface ClientsRepository : CatalogRepository<ClientsData> {
-
-    /**
-     * Creates the client named [name] once. [known] are the ids of the clients the page lists,
-     * which the create cannot have made.
-     */
-    suspend fun create(workspace: WorkspaceId, name: String, notes: String?, known: Set<ClientId>): ApiResult<Client>
-
-    suspend fun update(workspace: WorkspaceId, id: ClientId, name: String, notes: String?): ApiResult<Client>
-
-    /** Archives the client and its projects. */
-    suspend fun archive(workspace: WorkspaceId, id: ClientId): ApiResult<Unit>
-
-    /** Restores the client and its projects. */
-    suspend fun restore(workspace: WorkspaceId, id: ClientId): ApiResult<Client>
-}
-
-/**
  * The workspace's clients on the signed-in account's server, from the API v9 client calls, read
  * as the model's [Client]. Each call suspends while its request runs.
  */
-class ServerClientsRepository(private val client: ApiClientProvider) : ClientsRepository {
+class ServerClientsRepository(private val client: ApiClientProvider) : CatalogRepository<ClientsData> {
 
     override suspend fun workspace(stored: WorkspaceId?): ApiResult<WorkspaceId> = client.managedWorkspace(stored)
 
@@ -56,11 +35,12 @@ class ServerClientsRepository(private val client: ApiClientProvider) : ClientsRe
     }
 
     /**
-     * Creates the client once, as [createOnce] does. When the answer was lost, the client named
-     * [name] whose id is not in [known] counts as the one it made. Blank [notes] go as null, as
-     * the web app sends them.
+     * Creates the client once, as [createOnce] does. [known] are the ids of the clients the page
+     * lists, which the create cannot have made. When the answer was lost, the client named [name]
+     * whose id is not in [known] counts as the one it made. Blank [notes] go as null, as the web
+     * app sends them.
      */
-    override suspend fun create(workspace: WorkspaceId, name: String, notes: String?, known: Set<ClientId>) =
+    suspend fun create(workspace: WorkspaceId, name: String, notes: String?, known: Set<ClientId>): ApiResult<Client> =
         client.signedIn { api ->
             createOnce(
                 create = { api.clients.create(workspace, ClientBody(name, notes)).map { it.toClient() } },
@@ -69,18 +49,18 @@ class ServerClientsRepository(private val client: ApiClientProvider) : ClientsRe
             )
         }
 
-    override suspend fun update(workspace: WorkspaceId, id: ClientId, name: String, notes: String?) =
+    suspend fun update(workspace: WorkspaceId, id: ClientId, name: String, notes: String?): ApiResult<Client> =
         client.signedIn { api -> api.clients.update(workspace, id, ClientBody(name, notes)).map { it.toClient() } }
 
     /**
      * Archives the client and, as in Toggl, its projects. Tokkl answers with the ids of the
      * projects it archived, which the page does not need.
      */
-    override suspend fun archive(workspace: WorkspaceId, id: ClientId) =
+    suspend fun archive(workspace: WorkspaceId, id: ClientId): ApiResult<Unit> =
         client.signedIn { it.clients.archive(workspace, id) }
 
     /** Restores the client and every one of its projects, as the web app asks. */
-    override suspend fun restore(workspace: WorkspaceId, id: ClientId) =
+    suspend fun restore(workspace: WorkspaceId, id: ClientId): ApiResult<Client> =
         client.signedIn { api -> api.clients.restore(workspace, id).map { it.toClient() } }
 }
 

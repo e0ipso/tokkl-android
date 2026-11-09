@@ -12,16 +12,9 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.retryWhen
 import java.io.IOException
 
-/** What a long-lived observer does with a failure it did not expect, before it starts over. */
-fun interface ObserverFailures {
-    fun unexpected(observer: String, failure: Exception)
-}
-
-/** Writes each unexpected failure to the phone's log, which stays on the phone. */
-object LogcatObserverFailures : ObserverFailures {
-    override fun unexpected(observer: String, failure: Exception) {
-        Log.e("Tokkl", "$observer failed and starts over", failure)
-    }
+/** Writes an observer's unexpected [failure] to the phone's log, which stays on the phone. */
+private fun logUnexpected(observer: String, failure: Exception) {
+    Log.e("Tokkl", "$observer failed and starts over", failure)
 }
 
 /**
@@ -42,7 +35,7 @@ object LogcatObserverFailures : ObserverFailures {
  */
 suspend fun <T> Flow<T>.collectDurably(
     observer: String,
-    failures: ObserverFailures = LogcatObserverFailures,
+    failures: (observer: String, failure: Exception) -> Unit = ::logUnexpected,
     latestOnly: Boolean = false,
     action: suspend (T) -> Unit,
 ) {
@@ -62,9 +55,14 @@ suspend fun <T> Flow<T>.collectDurably(
  * Whether to try again after [failure], the [failed]th in a row counted from 0, having waited as
  * [collectDurably] says: false for cancellation and for errors.
  */
-private suspend fun waitAfter(failure: Throwable, failed: Int, observer: String, failures: ObserverFailures): Boolean {
+private suspend fun waitAfter(
+    failure: Throwable,
+    failed: Int,
+    observer: String,
+    failures: (String, Exception) -> Unit,
+): Boolean {
     if (failure !is Exception || failure is CancellationException) return false
-    if (!failure.isStorageFailure()) failures.unexpected(observer, failure)
+    if (!failure.isStorageFailure()) failures(observer, failure)
     delay(observerRetryDelay(failed))
     return true
 }

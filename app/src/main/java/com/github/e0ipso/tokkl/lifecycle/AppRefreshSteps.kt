@@ -3,13 +3,13 @@ package com.github.e0ipso.tokkl.lifecycle
 import com.github.e0ipso.tokkl.api.Me
 import com.github.e0ipso.tokkl.api.MePreferences
 import com.github.e0ipso.tokkl.cache.ServerCacheRefresh
-import com.github.e0ipso.tokkl.capabilities.CapabilitiesRefresh
+import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaultsSetting
 import com.github.e0ipso.tokkl.preferences.ReminderSetting
 import com.github.e0ipso.tokkl.session.AccountRefreshSteps
 import com.github.e0ipso.tokkl.session.ServerAccountReads
 import com.github.e0ipso.tokkl.timer.TimerViewSetting
-import com.github.e0ipso.tokkl.timerstate.TimerStateIntakes
+import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timersync.TimerSyncFollower
 
 /**
@@ -22,15 +22,15 @@ import com.github.e0ipso.tokkl.timersync.TimerSyncFollower
  * the Timer feature.
  */
 internal class AppRefreshSteps(
-    private val capabilities: CapabilitiesRefresh,
-    private val timerStates: TimerStateIntakes,
+    private val capabilities: CapabilitiesSource,
+    private val timerStates: AccountTimerStates,
     private val cache: ServerCacheRefresh,
     private val timerView: TimerViewSetting,
     private val pomodoroDefaults: PomodoroDefaultsSetting,
     private val reminder: ReminderSetting,
     private val sendQueue: () -> Unit,
     private val timerSync: TimerSyncFollower,
-) : AccountRefreshSteps<ServerAccountReads> {
+) : AccountRefreshSteps {
 
     override suspend fun afterAnswer(reads: ServerAccountReads, me: Me, preferences: MePreferences?) {
         val api = reads.api

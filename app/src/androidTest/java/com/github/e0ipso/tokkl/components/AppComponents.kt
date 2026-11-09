@@ -39,8 +39,8 @@ import com.github.e0ipso.tokkl.reports.ReportsViewModel
 import com.github.e0ipso.tokkl.session.AccountRefresh
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
+import com.github.e0ipso.tokkl.session.AccountTransition
 import com.github.e0ipso.tokkl.session.CurrentAccount
-import com.github.e0ipso.tokkl.session.SignInTransition
 import com.github.e0ipso.tokkl.session.SignOut
 import com.github.e0ipso.tokkl.settings.SignOutConfirmation
 import com.github.e0ipso.tokkl.sync.DiscardedChanges
@@ -50,7 +50,7 @@ import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.TimerActions
 import com.github.e0ipso.tokkl.timerstate.TimerControls
-import com.github.e0ipso.tokkl.timerstate.TimerStateIntake
+import com.github.e0ipso.tokkl.timerstate.TimerStateSource
 import com.github.e0ipso.tokkl.timersync.PomodoroAlarmScheduler
 import com.github.e0ipso.tokkl.timersync.TimerSync
 import com.github.e0ipso.tokkl.timersync.TimerSyncFollower
@@ -80,7 +80,7 @@ val TokklApplication.changes: ChangeQueue get() = component()
 val TokklApplication.sender: ChangeSender get() = component()
 val TokklApplication.deleteUndo: DeleteUndoer get() = component()
 val TokklApplication.accountSettings: AccountSettingsSource get() = component()
-val TokklApplication.accountRefresh: AccountRefresh<*> get() = component()
+val TokklApplication.accountRefresh: AccountRefresh get() = component()
 val TokklApplication.capabilities: CapabilitiesSource get() = component()
 val TokklApplication.timerView: TimerViewSetting get() = component()
 val TokklApplication.themeSettings: ThemeSettingsRepository get() = component()
@@ -96,7 +96,7 @@ val TokklApplication.signOut: SignOut get() = component()
 val TokklApplication.signOutConfirmation: SignOutConfirmation get() = component()
 val TokklApplication.timerActions: TimerActions get() = component()
 val TokklApplication.defaultNetwork: DefaultNetwork get() = component()
-val TokklApplication.timerSync: TimerSync<TimerStateIntake> get() = component()
+val TokklApplication.timerSync: TimerSync<TimerStateSource> get() = component()
 val TokklApplication.pomodoroAlarms: PomodoroAlarmScheduler get() = component()
 internal val TokklApplication.pomodoroAlarm: PomodoroPhaseAlarm get() = component()
 internal val TokklApplication.pomodoroAlarmRearm: PomodoroAlarmRearm get() = component()
@@ -108,7 +108,7 @@ val TokklApplication.timerStates: AccountTimerStates get() = component()
 val TokklApplication.heldTimerState: HeldTimerState? get() = timerStates.heldNow()
 
 /** Where the signed-in account's timer state takes answers, taken anew on each read as the app does. */
-val TokklApplication.timerStateIntake: TimerStateIntake get() = timerStates.intake()
+val TokklApplication.timerStateIntake: TimerStateSource get() = timerStates.intake()
 
 val TokklApplication.timerControls: Flow<TimerControls> get() = component<AccountTimerStates>().controls
 val TokklApplication.widgetState: Flow<WidgetState> get() = component<WidgetStateSource>().state
@@ -131,7 +131,7 @@ fun TokklApplication.renewTimerState() {
 fun TokklApplication.followTimerSync() = runBlocking { component<TimerSyncFollower>().follow() }
 
 fun TokklApplication.storeSignIn(server: ServerUrl, token: String, settings: AccountSettings) =
-    runBlocking { component<SignInTransition>().signIn(server, token, settings) }
+    runBlocking { component<AccountTransition>().signIn(server, token, settings) }
 
 /**
  * Puts an empty test WorkManager in this process, as [WorkManagerTestInitHelper.initializeTestWorkManager]

@@ -25,13 +25,6 @@ class TimerStateRead internal constructor(
 )
 
 /**
- * The side of an account's timer state that the server feeds: [begin] before a timer request goes
- * out or a stream waits for its next event, and [accept] with what came back. The timer actions,
- * the event stream and the account refresh's probe take it, and nothing else of the state.
- */
-interface TimerStateIntake : ProbedTimerState<TimerStateRead>
-
-/**
  * The signed-in account's timer state from the Tokkl server, and the one place on the phone that
  * holds it. Answers to `GET /api/app/timer`, action answers, 409 bodies and timer events all go
  * through [accept], which coordinates the steps in order under one lock: the revision rule
@@ -44,7 +37,8 @@ interface TimerStateIntake : ProbedTimerState<TimerStateRead>
  * One source serves one account. Sign-out [retire]s it before clearing the cache and the store,
  * and sign-in makes a new one, so an answer that kept a retired source changes nothing. Only
  * [AccountTimerStates] holds a source: readers take [CurrentTimerState], and what feeds it takes
- * the source as a [TimerStateIntake].
+ * the source from [AccountTimerStates.intake]: [begin] before a timer request goes out or a stream
+ * waits for its next event, and [accept] with what came back.
  *
  * @param initial what the store held at process start, or null.
  * @param store writes each accepted state to disk, and may throw an [IOException].
@@ -60,7 +54,7 @@ class TimerStateSource(
     private val cache: CurrentEntryCache,
     private val clock: Clock,
     private val runningEnded: () -> Unit,
-) : TimerStateIntake {
+) : ProbedTimerState<TimerStateRead> {
 
     // A JVM lock, not a Mutex: answers and events arrive on OkHttp and IO threads, and flows read
     // the state, none of them suspending.

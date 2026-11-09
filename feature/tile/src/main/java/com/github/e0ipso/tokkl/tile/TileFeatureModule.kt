@@ -2,7 +2,7 @@ package com.github.e0ipso.tokkl.tile
 
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.platform.io
-import com.github.e0ipso.tokkl.timerstate.TimerControlsSource
+import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import kotlinx.coroutines.flow.map
 import org.koin.dsl.module
 
@@ -10,7 +10,7 @@ import org.koin.dsl.module
 val tileFeatureModule = module {
     single {
         RunningTileContents(
-            controls = get<TimerControlsSource>().controls,
+            controls = get<AccountTimerStates>().controls,
             entries = get<AccountCache>().entries.map { rows -> rows.map { it.entry } },
         )
     }

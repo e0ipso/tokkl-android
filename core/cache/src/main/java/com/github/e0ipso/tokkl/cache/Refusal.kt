@@ -35,7 +35,7 @@ internal sealed interface Refusal {
  * - A 400, and any other 4xx, is held for the user with the server's message.
  * - A 403, or a 401, pauses the whole queue and discards nothing.
  */
-internal suspend fun refusal(server: EntrySends, change: PendingChange, error: ApiError): Refusal {
+internal suspend fun refusal(server: ServerEntrySends, change: PendingChange, error: ApiError): Refusal {
     if (error == ApiError.AuthFailed) return Refusal.SignInAgain
     val refused = error as? ApiError.UnexpectedStatus ?: return Refusal.Wait(error)
     val status = refused.status
@@ -57,7 +57,7 @@ internal suspend fun refusal(server: EntrySends, change: PendingChange, error: A
 
 /** A captured Stop the server refused: done when the server holds that stop, held or waiting otherwise. */
 private suspend fun capturedStopRefusal(
-    server: EntrySends,
+    server: ServerEntrySends,
     change: PendingChange,
     refused: ApiError.UnexpectedStatus,
 ): Refusal = when (val found = stoppedOnServer(server, change)) {
@@ -72,7 +72,7 @@ private suspend fun capturedStopRefusal(
 
 /** A 404 for a change to an entry: gone when the server no longer has the entry. */
 private suspend fun missingEntryRefusal(
-    server: EntrySends,
+    server: ServerEntrySends,
     change: PendingChange,
     refused: ApiError.UnexpectedStatus,
 ): Refusal = when (val entry = entryOnServer(server, change.entryId)) {
@@ -91,7 +91,7 @@ private suspend fun missingEntryRefusal(
  * Whether the server has the entry [id], preserving a failed lookup's retry or sign-in outcome. A
  * 2xx the phone cannot read as an entry still means the server has it.
  */
-private suspend fun entryOnServer(server: EntrySends, id: Long): ApiResult<Boolean> =
+private suspend fun entryOnServer(server: ServerEntrySends, id: Long): ApiResult<Boolean> =
     when (val result = server.get(EntryId(id))) {
         is ApiResult.Success -> ApiResult.Success(true)
 

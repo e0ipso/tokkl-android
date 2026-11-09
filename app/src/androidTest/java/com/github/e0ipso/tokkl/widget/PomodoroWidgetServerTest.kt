@@ -28,7 +28,6 @@ import com.github.e0ipso.tokkl.model.PhaseKind
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.pomodoro.HeldPhases
 import com.github.e0ipso.tokkl.session.ServerTrustStore
-import com.github.e0ipso.tokkl.session.SignInTransition
 import com.github.e0ipso.tokkl.signin.ServerSignIn
 import com.github.e0ipso.tokkl.signin.SignInCredentials
 import com.github.e0ipso.tokkl.signin.SignInResult
@@ -260,7 +259,7 @@ class PomodoroWidgetServerTest {
                 SignInResult.SignedIn,
                 runBlocking {
                     ServerSignIn(
-                        SignInTransition(app::storeSignIn),
+                        app::storeSignIn,
                         appHttp,
                         appConfiguredServer,
                         CoroutineScope(Dispatchers.IO),

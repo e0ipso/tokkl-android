@@ -36,8 +36,7 @@ import kotlin.coroutines.CoroutineContext
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 class ServicePomodoroRinging(private val context: Context, private val main: CoroutineContext) :
     PomodoroRinging,
-    PomodoroRingingPhase,
-    RingingServiceState {
+    PomodoroRingingPhase {
     @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
     var service: PomodoroRingingService? = null
     private val observed = MutableStateFlow(PomodoroRingingState())
@@ -46,7 +45,7 @@ class ServicePomodoroRinging(private val context: Context, private val main: Cor
     val state = observed.asStateFlow()
     override val ringingPhase: Flow<PomodoroPhaseKey?> = state.map { it.ring?.phase }
 
-    override fun running(): Boolean = state.value.serviceRunning
+    fun running(): Boolean = state.value.serviceRunning
 
     internal fun update(value: PomodoroRingingState) {
         observed.value = value

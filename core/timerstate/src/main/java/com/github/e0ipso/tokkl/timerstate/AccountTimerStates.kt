@@ -43,8 +43,8 @@ private class AccountTimerState(val source: TimerStateSource, val account: Strin
  *
  * It is the one owner of the account's [TimerStateSource]: readers see the state as
  * [CurrentTimerState] and the flows here, the timer actions, the event stream and the account
- * refresh feed it through [TimerStateIntakes], and only this class retires a source, at sign-out
- * and before a sign-in.
+ * refresh feed it through [intake], and only this class retires a source, at sign-out and before
+ * a sign-in.
  *
  * The flows follow the signed-in account across sign-ins and load the stored state off the main
  * thread, on [io].
@@ -65,10 +65,7 @@ class AccountTimerStates(
     private val io: CoroutineContext,
 ) : AccountDataOwner,
     DiscardNotices,
-    CurrentTimerState,
-    TimerStateIntakes,
-    TimerControlsSource,
-    HeldTimerStates {
+    CurrentTimerState {
 
     override val signOutPhase = SignOutPhase.RETIRE_STATE
 
@@ -81,7 +78,12 @@ class AccountTimerStates(
     private val lock = Any()
     private var forAccount = ForAccount(account.context.value.number, lazy { newTimerState(restore = true) })
 
-    override fun intake(): TimerStateIntake = current().source
+    /**
+     * The intake of the account signed in now, where the timer actions, the event stream and the
+     * account refresh's probe give the server's answers. Take it once per request or stream and
+     * give the answer to that intake: once its account signs out, it takes nothing more.
+     */
+    fun intake(): TimerStateSource = current().source
 
     override fun heldNow(): HeldTimerState? = current().source.state.value
 
@@ -93,7 +95,7 @@ class AccountTimerStates(
      * [TimerStateSource.withState] does. Keep [read] short. Blocks on disk I/O when [read] reads
      * the cache.
      */
-    override fun <T> withHeld(read: (account: String, held: HeldTimerState?) -> T): T {
+    fun <T> withHeld(read: (account: String, held: HeldTimerState?) -> T): T {
         val owner = current()
         return owner.source.withState { held -> read(owner.account, held) }
     }
@@ -115,7 +117,7 @@ class AccountTimerStates(
     private val states: Flow<AccountTimerState> = account.context.map { current() }
 
     /** The signed-in account's held timer state, or null without one. */
-    override val held: Flow<HeldTimerState?> = states.flatMapLatest { it.source.state }.flowOn(io)
+    val held: Flow<HeldTimerState?> = states.flatMapLatest { it.source.state }.flowOn(io)
 
     /**
      * [held] while the account's server offers the timer API, and null otherwise: what the
@@ -141,7 +143,7 @@ class AccountTimerStates(
      * held state under the holder's lock, so a state never shows apart from the running entry it
      * wrote to the cache.
      */
-    override val controls: Flow<TimerControls> = combine(
+    val controls: Flow<TimerControls> = combine(
         entriesOrQueueChanged,
         states.flatMapLatest { it.source.state },
         capabilities,

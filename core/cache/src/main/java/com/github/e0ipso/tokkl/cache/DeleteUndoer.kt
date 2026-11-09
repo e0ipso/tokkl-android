@@ -47,11 +47,11 @@ sealed interface UndoOutcome {
  */
 class DeleteUndoer(
     private val store: ChangeStore,
-    private val entries: suspend () -> EntrySends?,
+    private val entries: suspend () -> ServerEntrySends?,
     private val io: CoroutineContext,
     private val refreshes: AccountRefreshRequests,
     private val scope: CoroutineScope,
-) : DeleteUndo {
+) {
 
     /** Held while a delete goes out and while [undoDelete] takes one back, so the two never overlap. */
     private val deletes = Mutex()
@@ -65,7 +65,7 @@ class DeleteUndoer(
      * entry. Blocks the sender's deletes meanwhile. Once started, the Undo reaches the server and
      * the queue also when the caller is cancelled: it runs in the application's scope.
      */
-    override suspend fun undoDelete(entryId: EntryId): UndoOutcome {
+    suspend fun undoDelete(entryId: EntryId): UndoOutcome {
         val outcome = scope.async(io) {
             deletes.withLock {
                 when (val found = store.takeBackDelete(entryId)) {
@@ -111,9 +111,4 @@ class DeleteUndoer(
         /** Bad gateway, service unavailable and gateway timeout, which a proxy answers while its server is down. */
         val PROXY_UNREACHABLE = setOf(502, 503, 504)
     }
-}
-
-/** Takes a delete back, as [DeleteUndoer] does over the queue and the server; a page's unit tests answer for it. */
-fun interface DeleteUndo {
-    suspend fun undoDelete(entryId: EntryId): UndoOutcome
 }

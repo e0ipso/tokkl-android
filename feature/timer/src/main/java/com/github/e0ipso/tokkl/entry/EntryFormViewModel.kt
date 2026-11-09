@@ -7,7 +7,7 @@ import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.LocalWrite
 import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.cache.localWrite
-import com.github.e0ipso.tokkl.entries.PastEntryEdits
+import com.github.e0ipso.tokkl.entries.SessionEntries
 import com.github.e0ipso.tokkl.entryfields.withPicked
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.EntryTiming
@@ -91,7 +91,7 @@ class EntryFormViewModel(
     private val accountSettings: StateFlow<AccountSettings?>,
     private val changes: EntryChanges,
     private val running: RunningEntryChanges,
-    private val pastEdits: PastEntryEdits,
+    private val pastEdits: SessionEntries,
     scope: CoroutineScope,
     private val clock: Clock,
     allDay: Flow<Boolean>,

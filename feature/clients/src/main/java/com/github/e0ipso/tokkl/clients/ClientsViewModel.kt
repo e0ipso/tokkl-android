@@ -12,7 +12,7 @@ import com.github.e0ipso.tokkl.model.ClientId
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.platform.AppForeground
 import com.github.e0ipso.tokkl.platform.stateInPage
-import com.github.e0ipso.tokkl.session.DefaultWorkspace
+import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.ServerChanges
 import com.github.e0ipso.tokkl.session.ServerProblem
 import kotlinx.coroutines.CoroutineScope
@@ -111,8 +111,8 @@ data class ClientsPageState(
  *   question, for a new process that restores the page.
  */
 class ClientsViewModel(
-    private val repository: ClientsRepository,
-    settings: DefaultWorkspace,
+    private val repository: ServerClientsRepository,
+    settings: AccountSettingsSource,
     changes: ServerChanges,
     scope: CoroutineScope,
     io: CoroutineContext,

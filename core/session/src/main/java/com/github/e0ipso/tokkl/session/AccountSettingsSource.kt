@@ -28,8 +28,7 @@ class AccountSettingsSource(
     private val disk: ValueStore<AccountSettings>,
     scope: CoroutineScope,
     io: CoroutineContext,
-) : StartupLoad,
-    DefaultWorkspace {
+) : StartupLoad {
 
     private val held = LoadedState<AccountSettings?>(scope, null, io) { disk.load() }
 
@@ -47,7 +46,7 @@ class AccountSettingsSource(
     suspend fun current(): AccountSettings? = held.current()
 
     /** The account's default workspace, for the screens, which show once the settings have loaded. */
-    override fun defaultWorkspaceId(): WorkspaceId? = state.value?.defaultWorkspaceId
+    fun defaultWorkspaceId(): WorkspaceId? = state.value?.defaultWorkspaceId
 
     /** Orders the writes and [writes] with them. */
     private val writing = Mutex()
@@ -111,13 +110,4 @@ class AccountSettingsSource(
         writes++
         held.set(settings)
     }
-}
-
-/**
- * The account's default workspace from the stored settings, or null when they do not have it or
- * have not loaded, as the pages that manage a workspace's projects, clients and tags read it.
- * [AccountSettingsSource] gives it.
- */
-fun interface DefaultWorkspace {
-    fun defaultWorkspaceId(): WorkspaceId?
 }

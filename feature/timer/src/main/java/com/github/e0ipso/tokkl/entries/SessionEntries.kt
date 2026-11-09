@@ -42,8 +42,8 @@ import kotlin.coroutines.CoroutineContext
  * written to the phone. It keeps the copies of those entries edited on the phone, which the cache
  * holds only until the send and the refresh after it, and the history's deletes and restores until
  * the cache shows them. The history and the calendar select and format what [history] and [week]
- * give, and the entry form saves an edit through [saveEdit]. Each reads it through its own
- * contract: [HistoryEntriesSource], [CalendarWeeks], [PastEntryEdits] and [EntryRemovals].
+ * give, the entry form saves an edit through [saveEdit], and the entry actions report deletes and
+ * restores through [deleted] and [restored].
  *
  * What it keeps beside the cache, a [Reconciliation], changes only through
  * [MutableStateFlow.update] in its commands: a read of the cache, a delete, a restore, a week that
@@ -77,11 +77,7 @@ class SessionEntries(
     scope: CoroutineScope,
     io: CoroutineContext,
     computation: CoroutineContext,
-) : HistoryEntriesSource,
-    CalendarWeeks,
-    PastEntryEdits,
-    EntryRemovals,
-    AccountDataOwner {
+) : AccountDataOwner {
 
     private val paging = OlderDaysPaging(olderPages, accountSettings, clock, scope, io)
     private val weeks = WeekLoading(serverWeeks, accountSettings, clock, scope, io)
@@ -93,37 +89,67 @@ class SessionEntries(
         state.collect { send(it) }
     }.flowOn(computation).shareIn(scope, SharingStarted.WhileSubscribed(), replay = 1)
 
-    override val history: StateFlow<HistoryEntries> = combine(followed, paging.state) { kept, older ->
+    /** The history's entries: the cache's, and the older days' that the cache does not hold. */
+    val history: StateFlow<HistoryEntries> = combine(followed, paging.state) { kept, older ->
         kept.history(older, resolveEntryOverrides(kept.overrides, changes), clock)
     }.flowOn(computation).stateIn(scope, SharingStarted.WhileSubscribed(), HistoryEntries.Loading)
 
-    override val foregrounds: StateFlow<Int> = weeks.foregrounds
+    /**
+     * How many times the app came back to the foreground or the network came back; the calendar
+     * on screen loads its week again on each when the week is due.
+     */
+    val foregrounds: StateFlow<Int> = weeks.foregrounds
 
     override val signOutPhase: SignOutPhase get() = SignOutPhase.CLEAR_DATA
 
-    override fun entry(entryId: EntryId): TimeEntry? = when (val shown = history.value) {
+    /**
+     * The entry [entryId] as the history last showed it: the cache's copy, or the older days' for
+     * an entry the phone does not hold. Null for an entry the history does not show.
+     */
+    fun entry(entryId: EntryId): TimeEntry? = when (val shown = history.value) {
         is HistoryEntries.Shown -> shown.current.firstOrNull { it.entry.id == entryId }?.entry
             ?: shown.older.firstOrNull { it.id == entryId }
 
         else -> null
     }
 
-    override fun loadOlder() = paging.loadOlder()
+    /**
+     * Loads the [OlderPages.PAGE_DAYS] days before the oldest day loaded, or before the cached two
+     * weeks at first. Does nothing while a page loads, once the server has no older entries, or
+     * without an account timezone. After a failure it tries the same days again. Call it on the
+     * main thread.
+     */
+    fun loadOlder() = paging.loadOlder()
 
-    override fun week(selected: Flow<LocalDate?>): Flow<WeekEntries> =
+    /** The calendar's entries for the week of the day [selected] picks, or of today while it is null. */
+    fun week(selected: Flow<LocalDate?>): Flow<WeekEntries> =
         combine(followed, weeks.state, selected) { kept, loaded, day ->
             kept.week(loaded, resolveEntryOverrides(kept.overrides, changes), day, clock)
         }
 
-    override fun loadWeek(weekStart: LocalDate, selected: StateFlow<LocalDate?>) {
+    /**
+     * Loads the server's part of the week from [weekStart], unless it is loading or has loaded
+     * since the app last came to the foreground: the whole week outside the cache, or the entries
+     * from before the cache for a cached week. A failure while an event that would load the week
+     * came in tries once more while [selected] still shows it. Call it on the main thread.
+     */
+    fun loadWeek(weekStart: LocalDate, selected: StateFlow<LocalDate?>) {
         // The server has every edit that the cache no longer holds, so this load's copies replace them.
         val sent = state.value.weekEdits.filterValues { !it.held }
         weeks.load(weekStart, selected) { week -> state.update { it.weekLoaded(week, sent) } }
     }
 
-    override fun weekEntry(id: EntryId): TimeEntry? = state.value.weekEntry(id, weeks.state.value, clock)
+    /**
+     * The entry [id] as the server sent it for a week the phone does not keep, or null. The entry
+     * form opens on this copy of an entry the cache lacks.
+     */
+    fun weekEntry(id: EntryId): TimeEntry? = state.value.weekEntry(id, weeks.state.value, clock)
 
-    override suspend fun moveWeekEntry(id: EntryId, start: Instant, stop: Instant) {
+    /**
+     * Queues the calendar's entry [id] from [start] to [stop], with every other field as the phone
+     * or the server has it: the cache's row, or the whole entry from a week the server sent.
+     */
+    suspend fun moveWeekEntry(id: EntryId, start: Instant, stop: Instant) {
         val held = cached.first().firstOrNull { it.entry.id == id }?.entry
         when {
             held != null -> changes.update(held.id, held.fields(), EntryTiming.Stopped(start, stop))
@@ -134,16 +160,27 @@ class SessionEntries(
         }
     }
 
-    override fun deleted(entry: TimeEntry) = state.update { it.deleted(entry) }
+    /** [entry] was deleted on the phone. The history and the calendar leave it out from now on. */
+    fun deleted(entry: TimeEntry) = state.update { it.deleted(entry) }
 
-    override suspend fun restored(entryId: EntryId) {
+    /**
+     * The delete of [entryId] was taken back. The history and the calendar show the cache's row
+     * again, or the copy that was deleted, under the id the cache holds it by now.
+     */
+    suspend fun restored(entryId: EntryId) {
         val id = changes.currentId(entryId)
         val restored = cached.first().firstOrNull { it.entry.id == id }?.entry
             ?: state.value.deleted[entryId]?.copy(id = id)
         state.update { it.overridden(entryId, restored) }
     }
 
-    override suspend fun saveEdit(
+    /**
+     * Queues every field of the stopped entry [entryId] in [workspaceId], which started at
+     * [opened] when the form opened on it, from the cache's copy when [onPhone]. An entry from the
+     * older days or a server week goes whole, also one whose copy the refresh after its send
+     * dropped. Returns false when the cache's entry has gone since.
+     */
+    suspend fun saveEdit(
         entryId: EntryId,
         workspaceId: WorkspaceId,
         opened: Instant,

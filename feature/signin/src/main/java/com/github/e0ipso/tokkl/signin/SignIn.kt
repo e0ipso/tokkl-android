@@ -7,9 +7,9 @@ import com.github.e0ipso.tokkl.api.ConfiguredServer
 import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.getOrElse
+import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.ServerConfigStore
-import com.github.e0ipso.tokkl.session.SignInTransition
 import com.github.e0ipso.tokkl.session.accountSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
@@ -111,7 +111,7 @@ interface SignIn {
 
 /**
  * One sign-in attempt: `GET /api/v9/me` with HTTP Basic auth, then the server,
- * the token and the account settings from that response go to [session]. With
+ * the token and the account settings from that response go to [storeSignIn]. With
  * email and password, the token kept is the `api_token` from that response;
  * the password is used for this one request and never written anywhere.
  *
@@ -124,7 +124,7 @@ interface SignIn {
  * @param io where the request and the stores' disk work run.
  */
 class ServerSignIn(
-    private val session: SignInTransition,
+    private val storeSignIn: suspend (server: ServerUrl, token: String, settings: AccountSettings) -> Unit,
     private val connector: ApiConnector,
     private val configured: ConfiguredServer,
     private val scope: CoroutineScope,
@@ -156,7 +156,7 @@ class ServerSignIn(
                 ?: return SignInResult.NoApiToken
         }
         return try {
-            session.signIn(server, token, settings)
+            storeSignIn(server, token, settings)
             SignInResult.SignedIn
         } catch (_: GeneralSecurityException) {
             SignInResult.StorageFailed

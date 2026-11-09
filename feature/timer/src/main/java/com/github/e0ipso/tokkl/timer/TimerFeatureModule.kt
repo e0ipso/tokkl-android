@@ -2,13 +2,11 @@ package com.github.e0ipso.tokkl.timer
 
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.ChangeQueue
+import com.github.e0ipso.tokkl.cache.ChangeSender
+import com.github.e0ipso.tokkl.cache.DeleteUndoer
 import com.github.e0ipso.tokkl.calendar.CalendarViewModel
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
-import com.github.e0ipso.tokkl.entries.CalendarWeeks
-import com.github.e0ipso.tokkl.entries.EntryRemovals
-import com.github.e0ipso.tokkl.entries.HistoryEntriesSource
 import com.github.e0ipso.tokkl.entries.OlderPages
-import com.github.e0ipso.tokkl.entries.PastEntryEdits
 import com.github.e0ipso.tokkl.entries.ServerWeeks
 import com.github.e0ipso.tokkl.entries.SessionEntries
 import com.github.e0ipso.tokkl.entry.EntryFormViewModel
@@ -49,8 +47,8 @@ import org.koin.dsl.module
 /**
  * The Timer page with its history and calendar, the entry form and the timer templates: the Timer
  * view setting, the session's entries, the view models and the screens. The history, the
- * calendar, the entry actions and the entry form each take the part of the session's
- * [SessionEntries] they use, and the entry form what its screen opens.
+ * calendar, the entry actions and the entry form share the session's [SessionEntries], and the
+ * entry form takes what its screen opens.
  */
 val timerFeatureModule = module {
     single { TimerViewStore(androidContext(), io()) }
@@ -75,7 +73,7 @@ val timerFeatureModule = module {
         FavoritesServer(
             client = get<Session>(),
             account = get(),
-            cache = get<AccountCache>(),
+            replaceFavorites = get<AccountCache>()::replaceFavorites,
             scope = get(),
         )
     }
@@ -85,7 +83,7 @@ val timerFeatureModule = module {
     single { ServerWeeks(get<Session>()) }
 
     // The session's one owner of the entries the history, the calendar and the entry form show.
-    // Sign-out forgets them, and each view model takes the part it uses.
+    // Sign-out forgets them.
     single {
         SessionEntries(
             cached = get<AccountCache>().entries,
@@ -100,13 +98,7 @@ val timerFeatureModule = module {
             io = io(),
             computation = computation(),
         )
-    } binds arrayOf(
-        HistoryEntriesSource::class,
-        CalendarWeeks::class,
-        PastEntryEdits::class,
-        EntryRemovals::class,
-        AccountDataOwner::class,
-    )
+    } bind AccountDataOwner::class
     viewModel {
         val cache = get<AccountCache>()
         HistoryViewModel(
@@ -122,7 +114,7 @@ val timerFeatureModule = module {
             entries = get<AccountCache>().entries,
             changes = get<ChangeQueue>(),
             removals = get(),
-            undo = get(),
+            undoDelete = get<DeleteUndoer>()::undoDelete,
             capabilities = get<CapabilitiesSource>().state,
             accountSettings = get<AccountSettingsSource>().state,
             scope = viewModelCoroutineScope(),
@@ -158,7 +150,7 @@ val timerFeatureModule = module {
             clock = get(),
             trace = get(),
             pauseChain = get<TimerActions>(),
-            sender = get(),
+            sender = get<ChangeSender>()::sendQueued,
             discards = get<AccountTimerStates>(),
             timerApi = get<CapabilitiesSource>().state.map { it.timerState },
             view = get<TimerViewSetting>().view,

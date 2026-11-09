@@ -1,7 +1,7 @@
 package com.github.e0ipso.tokkl.timersync
 
 import com.github.e0ipso.tokkl.api.ApiClientProvider
-import com.github.e0ipso.tokkl.timerstate.TimerStateIntake
+import com.github.e0ipso.tokkl.timerstate.TimerStateSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
@@ -18,9 +18,9 @@ internal class TimerEventConnections(
     private val session: ApiClientProvider,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
-) : TimerSyncConnections<TimerStateIntake> {
+) {
 
-    override fun open(account: TimerStateIntake, link: TimerSyncLink) {
+    fun open(account: TimerStateSource, link: TimerSyncLink) {
         scope.launch(io) { link.ended(holdTimerEvents(session(), account, link)) }
     }
 }

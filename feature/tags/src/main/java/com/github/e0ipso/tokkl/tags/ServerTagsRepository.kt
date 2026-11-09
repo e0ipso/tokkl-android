@@ -14,27 +14,10 @@ import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.signedIn
 
 /**
- * The workspace's tags, for the tags page. [ServerTagsRepository] reads and changes them on the
- * server; the view model's unit tests stand in for it without a server.
- */
-interface TagsRepository : CatalogRepository<TagsData> {
-
-    /**
-     * Creates the tag named [name] once. [known] are the ids of the tags the page lists, which the
-     * create cannot have made.
-     */
-    suspend fun create(workspace: WorkspaceId, name: String, known: Set<TagId>): ApiResult<Tag>
-
-    suspend fun rename(workspace: WorkspaceId, id: TagId, name: String): ApiResult<Tag>
-
-    suspend fun delete(workspace: WorkspaceId, id: TagId): ApiResult<Unit>
-}
-
-/**
  * The workspace's tags on the signed-in account's server, from the API v9 tag calls, read as the
  * model's [Tag]. Each call suspends while its request runs.
  */
-class ServerTagsRepository(private val client: ApiClientProvider) : TagsRepository {
+class ServerTagsRepository(private val client: ApiClientProvider) : CatalogRepository<TagsData> {
 
     override suspend fun workspace(stored: WorkspaceId?): ApiResult<WorkspaceId> = client.managedWorkspace(stored)
 
@@ -44,23 +27,26 @@ class ServerTagsRepository(private val client: ApiClientProvider) : TagsReposito
     }
 
     /**
-     * Creates the tag once, as [createOnce] does. When the answer was lost, the tag named [name]
-     * whose id is not in [known] counts as the one it made.
+     * Creates the tag once, as [createOnce] does. [known] are the ids of the tags the page lists,
+     * which the create cannot have made. When the answer was lost, the tag named [name] whose id
+     * is not in [known] counts as the one it made.
      */
-    override suspend fun create(workspace: WorkspaceId, name: String, known: Set<TagId>) = client.signedIn { api ->
-        createOnce(
-            create = { api.tags.create(workspace, name).map { it.toTag() } },
-            list = { api.tagsOf(workspace) },
-            made = { it.id !in known && it.workspaceId == workspace && it.name == name },
-        )
-    }
+    suspend fun create(workspace: WorkspaceId, name: String, known: Set<TagId>): ApiResult<Tag> =
+        client.signedIn { api ->
+            createOnce(
+                create = { api.tags.create(workspace, name).map { it.toTag() } },
+                list = { api.tagsOf(workspace) },
+                made = { it.id !in known && it.workspaceId == workspace && it.name == name },
+            )
+        }
 
     /** Renames the tag. The server renames it on every entry that has it. */
-    override suspend fun rename(workspace: WorkspaceId, id: TagId, name: String) =
+    suspend fun rename(workspace: WorkspaceId, id: TagId, name: String): ApiResult<Tag> =
         client.signedIn { api -> api.tags.rename(workspace, id, name).map { it.toTag() } }
 
     /** Deletes the tag, which comes off every entry that has it. Tokkl answers with an empty body. */
-    override suspend fun delete(workspace: WorkspaceId, id: TagId) = client.signedIn { it.tags.delete(workspace, id) }
+    suspend fun delete(workspace: WorkspaceId, id: TagId): ApiResult<Unit> =
+        client.signedIn { it.tags.delete(workspace, id) }
 }
 
 /** Every tag of [workspace]. */

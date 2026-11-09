@@ -1,27 +1,30 @@
 package com.github.e0ipso.tokkl.session
 
-import com.github.e0ipso.tokkl.api.ApiError
-import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.api.Me
-import com.github.e0ipso.tokkl.api.MePreferences
-import com.github.e0ipso.tokkl.api.WireJson
-import com.github.e0ipso.tokkl.api.mePreferences
+import com.github.e0ipso.tokkl.api.ApiCredentials
+import com.github.e0ipso.tokkl.api.InMemoryServerTrust
+import com.github.e0ipso.tokkl.api.ServerUrl
+import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.storage.InMemoryValueStore
 import com.github.e0ipso.tokkl.time.DurationFormat
 import com.github.e0ipso.tokkl.time.SnappedSpan
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import mockwebserver3.Dispatcher
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
+import mockwebserver3.RecordedRequest
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 import java.time.DayOfWeek
 import java.time.Instant
@@ -29,47 +32,44 @@ import java.time.ZoneId
 import java.util.concurrent.Executor
 import kotlin.coroutines.CoroutineContext
 
-/**
- * Refreshes with the server's reads held by the test: each `GET /api/v9/me` and
- * `GET /api/v9/me/preferences` takes the next answer queued for it, and [calls] records them in
- * order. ServerAccountReadsTest checks the requests themselves.
- */
+/** Refreshes against a MockWebServer that answers `GET /api/v9/me` and `GET /api/v9/me/preferences`. */
 class AccountRefreshTest {
 
+    private val testApi = TestApi(null)
+
+    private val server = MockWebServer()
     private val saved = mutableListOf<AccountSettings>()
-    private val calls = mutableListOf<String>()
-    private val meAnswers = ArrayDeque<() -> ApiResult<Me>>()
-    private val preferenceAnswers = ArrayDeque<() -> ApiResult<MePreferences>>()
+    private lateinit var reads: ServerAccountReads
 
-    private val reads = object : AccountReads {
-        override suspend fun meWithRelatedData(): ApiResult<Me> {
-            calls += "me"
-            return meAnswers.removeFirst()()
-        }
-
-        override suspend fun preferences(): ApiResult<MePreferences> {
-            calls += "preferences"
-            return preferenceAnswers.removeFirst()()
-        }
+    @Before
+    fun setUp() {
+        server.start()
+        val configured = ServerUrl.parse(server.url("/").toString())!!
+        // The shared client sends requests only to the configured server.
+        testApi.stored = configured
+        // The user has confirmed the MockWebServer's plain http URL.
+        testApi.trust = InMemoryServerTrust(configured)
+        reads = ServerAccountReads(testApi.api(configured, ApiCredentials.ApiToken("tok-123")))
     }
 
-    /** Queues one refresh's answers: [meBody] and, once `/me` answered, [preferencesBody]. */
-    private fun answer(meBody: String, preferencesBody: String) {
-        meAnswers += { me(meBody) }
-        preferenceAnswers += { preferences(preferencesBody) }
+    @After
+    fun tearDown() {
+        server.close()
     }
 
     /** `GET /api/v9/me` has no `time_resolution_minutes`, as on Toggl Track. */
     @Test
     fun meWithoutTimeResolutionRefreshesWithNoSnapping() {
-        answer(MADRID_MONDAY, IMPROVED)
+        server.enqueue(json(MADRID_MONDAY))
+        server.enqueue(json(IMPROVED))
         val stored = AccountSettings("UTC", DayOfWeek.SUNDAY, timeResolutionMinutes = 5.0)
         val source = source(initial = stored)
 
         val refresh = source.refresh()
 
         assertTrue("the refresh finished", refresh.isCompleted)
-        assertEquals(listOf("me", "preferences"), calls)
+        assertEquals("/api/v9/me", server.takeRequest().url.encodedPath)
+        assertEquals("/api/v9/me/preferences", server.takeRequest().url.encodedPath)
         assertEquals(MADRID_MONDAY_SETTINGS, source.state.value)
         assertEquals(listOf(MADRID_MONDAY_SETTINGS), saved)
         val start = Instant.parse("2026-10-18T10:10:07Z")
@@ -79,8 +79,10 @@ class AccountRefreshTest {
 
     @Test
     fun aRefreshWhileOneRunsJoinsItAndSendsNoSecondRequest() {
-        answer(MADRID_MONDAY, IMPROVED)
-        answer(MADRID_MONDAY, IMPROVED)
+        server.enqueue(json(MADRID_MONDAY))
+        server.enqueue(json(IMPROVED))
+        server.enqueue(json(MADRID_MONDAY))
+        server.enqueue(json(IMPROVED))
         // Holds each refresh until the test runs it.
         val queued = ArrayDeque<Runnable>()
         val source = source(initial = null, io = Executor { queued += it }.asCoroutineDispatcher())
@@ -92,7 +94,7 @@ class AccountRefreshTest {
         assertEquals("one refresh waits to run", 1, queued.size)
         queued.removeFirst().run()
         assertTrue("the refresh finished", first.isCompleted)
-        assertEquals("one /me and one /me/preferences", 2, calls.size)
+        assertEquals("one /me and one /me/preferences", 2, server.requestCount)
         assertEquals(MADRID_MONDAY_SETTINGS, source.state.value)
 
         val next = source.refresh()
@@ -100,14 +102,15 @@ class AccountRefreshTest {
         assertNotSame("a call after the refresh finished starts a new one", first, next)
         queued.removeFirst().run()
         assertTrue("the new refresh finished", next.isCompleted)
-        assertEquals(4, calls.size)
+        assertEquals(4, server.requestCount)
     }
 
     /** The app-open refresh's `/me` left offline, and the network returns before it fails. */
     @Test
     fun aReconnectDuringARefreshThatFailsRefreshesOnceMore() {
-        meAnswers += { unavailable() }
-        answer(MADRID_MONDAY, IMPROVED)
+        server.enqueue(MockResponse.Builder().code(503).build())
+        server.enqueue(json(MADRID_MONDAY))
+        server.enqueue(json(IMPROVED))
         val queued = ArrayDeque<Runnable>()
         val source = source(initial = null, io = Executor { queued += it }.asCoroutineDispatcher())
 
@@ -117,17 +120,18 @@ class AccountRefreshTest {
 
         assertTrue("the opening refresh failed and finished", opening.isCompleted)
         assertNull(source.state.value)
-        assertEquals(1, calls.size)
+        assertEquals(1, server.requestCount)
         while (queued.isNotEmpty()) queued.removeFirst().run()
         assertTrue(reconnect.isCompleted)
-        assertEquals("the failed /me, then one more /me and /me/preferences", 3, calls.size)
+        assertEquals("the failed /me, then one more /me and /me/preferences", 3, server.requestCount)
         assertEquals(MADRID_MONDAY_SETTINGS, source.state.value)
     }
 
     /** The network returns while the app-open refresh's `/me` is out, and it then answers. */
     @Test
     fun aReconnectDuringARefreshThatAnswersSendsNothingMore() {
-        answer(MADRID_MONDAY, IMPROVED)
+        server.enqueue(json(MADRID_MONDAY))
+        server.enqueue(json(IMPROVED))
         val queued = ArrayDeque<Runnable>()
         val source = source(initial = null, io = Executor { queued += it }.asCoroutineDispatcher())
 
@@ -136,19 +140,20 @@ class AccountRefreshTest {
         while (queued.isNotEmpty()) queued.removeFirst().run()
 
         assertTrue(reconnect.isCompleted)
-        assertEquals("one /me and one /me/preferences", 2, calls.size)
+        assertEquals("one /me and one /me/preferences", 2, server.requestCount)
         assertEquals(MADRID_MONDAY_SETTINGS, source.state.value)
     }
 
     @Test
     fun aReconnectWithNoRefreshRunningRefreshesOnce() {
-        answer(MADRID_MONDAY, IMPROVED)
+        server.enqueue(json(MADRID_MONDAY))
+        server.enqueue(json(IMPROVED))
         val source = source(initial = null)
 
         val reconnect = source.refreshOnReconnect()
 
         assertTrue(reconnect.isCompleted)
-        assertEquals(2, calls.size)
+        assertEquals(2, server.requestCount)
         assertEquals(MADRID_MONDAY_SETTINGS, source.state.value)
     }
 
@@ -156,18 +161,20 @@ class AccountRefreshTest {
     fun settingsStoredWhileARefreshRunsAreNotReplacedByItsOlderAnswer() {
         val signedIn = AccountSettings("America/Sao_Paulo", DayOfWeek.SUNDAY, timeResolutionMinutes = 5.0)
         lateinit var source: Account
-        meAnswers += {
-            // Sign-in stores the settings from its own /me after this request left.
-            source.store(signedIn)
-            me(MADRID_MONDAY)
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                if (request.url.encodedPath == "/api/v9/me/preferences") return json(CLASSIC)
+                // Sign-in stores the settings from its own /me after this request left.
+                source.store(signedIn)
+                return json(MADRID_MONDAY)
+            }
         }
-        preferenceAnswers += { preferences(CLASSIC) }
         source = source(initial = null)
 
         val refresh = source.refresh()
 
         assertTrue("the refresh finished", refresh.isCompleted)
-        assertEquals(2, calls.size)
+        assertEquals(2, server.requestCount)
         assertEquals(signedIn, source.state.value)
         assertEquals("only sign-in wrote", listOf(signedIn), saved)
     }
@@ -178,14 +185,13 @@ class AccountRefreshTest {
         var onRefreshRuns = 0
         lateinit var source: Account
         lateinit var forgetting: Job
-        meAnswers += {
-            // Undispatched, so it runs inside the request, as on the server's thread before.
-            forgetting = CoroutineScope(Dispatchers.Unconfined).launch(start = CoroutineStart.UNDISPATCHED) {
-                source.forget()
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                if (request.url.encodedPath == "/api/v9/me/preferences") return json(IMPROVED)
+                forgetting = CoroutineScope(Dispatchers.Unconfined).launch { source.forget() }
+                return json(MADRID_MONDAY)
             }
-            me(MADRID_MONDAY)
         }
-        preferenceAnswers += { preferences(IMPROVED) }
         source = Account(
             initial = MADRID_MONDAY_SETTINGS,
             save = { saved += it },
@@ -206,7 +212,8 @@ class AccountRefreshTest {
 
     @Test
     fun theDurationFormatComesFromThePreferences() {
-        answer(MADRID_MONDAY, CLASSIC)
+        server.enqueue(json(MADRID_MONDAY))
+        server.enqueue(json(CLASSIC))
         val source = source(initial = null)
 
         source.refresh()
@@ -228,7 +235,8 @@ class AccountRefreshTest {
             """{"favorites":[]}""",
         )
         for (body in bodies) {
-            answer(MADRID_MONDAY, body)
+            server.enqueue(json(MADRID_MONDAY))
+            server.enqueue(json(body))
             val source = source(initial = MADRID_MONDAY_SETTINGS.copy(durationFormat = DurationFormat.DECIMAL))
 
             source.refresh()
@@ -240,8 +248,8 @@ class AccountRefreshTest {
 
     @Test
     fun failedPreferencesKeepTheStoredDurationFormat() {
-        meAnswers += { me(MADRID_MONDAY) }
-        preferenceAnswers += { ApiResult.Failure(ApiError.UnexpectedStatus(500)) }
+        server.enqueue(json(MADRID_MONDAY))
+        server.enqueue(MockResponse.Builder().code(500).build())
         val stored = AccountSettings("UTC", DayOfWeek.SUNDAY, timeResolutionMinutes = null, DurationFormat.DECIMAL)
         val source = source(initial = stored)
 
@@ -255,9 +263,8 @@ class AccountRefreshTest {
 
     @Test
     fun failedPreferencesBeforeAnyAreStoredReadAsImproved() {
-        // An answer that is not an object fails, as ServerAccountReadsTest shows.
-        meAnswers += { me(MADRID_MONDAY) }
-        preferenceAnswers += { ApiResult.Failure(ApiError.InvalidResponse(IllegalArgumentException("[]"))) }
+        server.enqueue(json(MADRID_MONDAY))
+        server.enqueue(json("""[]"""))
         val source = source(initial = null)
 
         source.refresh()
@@ -267,7 +274,8 @@ class AccountRefreshTest {
 
     @Test
     fun aRefreshStoresTheDefaultWorkspace() {
-        answer(MADRID_MONDAY_IN_42, IMPROVED)
+        server.enqueue(json(MADRID_MONDAY_IN_42))
+        server.enqueue(json(IMPROVED))
         val source = source(initial = null)
 
         source.refresh()
@@ -287,7 +295,8 @@ class AccountRefreshTest {
         )
         for (me in listOf(MADRID_MONDAY, MADRID_MONDAY.replace("}", ""","default_workspace_id":null}"""))) {
             saved.clear()
-            answer(me, IMPROVED)
+            server.enqueue(json(me))
+            server.enqueue(json(IMPROVED))
             val source = source(initial = stored)
 
             source.refresh()
@@ -300,7 +309,8 @@ class AccountRefreshTest {
 
     @Test
     fun aNewDefaultWorkspaceReplacesTheStoredOne() {
-        answer(MADRID_MONDAY_IN_42.replace("42", "43"), IMPROVED)
+        server.enqueue(json(MADRID_MONDAY_IN_42.replace("42", "43")))
+        server.enqueue(json(IMPROVED))
         val source = source(initial = MADRID_MONDAY_SETTINGS.copy(defaultWorkspaceId = WorkspaceId(42)))
 
         source.refresh()
@@ -310,7 +320,7 @@ class AccountRefreshTest {
 
     @Test
     fun aFailedMeKeepsTheStoredDefaultWorkspace() {
-        meAnswers += { unavailable() }
+        server.enqueue(MockResponse.Builder().code(503).build())
         val stored = MADRID_MONDAY_SETTINGS.copy(defaultWorkspaceId = WorkspaceId(42))
         val source = source(initial = stored)
 
@@ -332,7 +342,8 @@ class AccountRefreshTest {
             """{}""" to false,
         )
         for ((preferences, twelveHour) in cases) {
-            answer(MADRID_MONDAY, preferences)
+            server.enqueue(json(MADRID_MONDAY))
+            server.enqueue(json(preferences))
             val source = source(initial = MADRID_MONDAY_SETTINGS.copy(twelveHour = !twelveHour))
 
             source.refresh()
@@ -362,7 +373,8 @@ class AccountRefreshTest {
             """{"collapseTimeEntries":[]}""" to true,
         )
         for ((preferences, collapse) in cases) {
-            answer(MADRID_MONDAY, preferences)
+            server.enqueue(json(MADRID_MONDAY))
+            server.enqueue(json(preferences))
             val source = source(initial = MADRID_MONDAY_SETTINGS.copy(collapseSimilar = !collapse))
 
             source.refresh()
@@ -373,8 +385,8 @@ class AccountRefreshTest {
 
     @Test
     fun failedPreferencesKeepTheStoredGrouping() {
-        meAnswers += { me(MADRID_MONDAY) }
-        preferenceAnswers += { ApiResult.Failure(ApiError.UnexpectedStatus(500)) }
+        server.enqueue(json(MADRID_MONDAY))
+        server.enqueue(MockResponse.Builder().code(500).build())
         val source = source(initial = MADRID_MONDAY_SETTINGS.copy(collapseSimilar = false))
 
         source.refresh()
@@ -384,8 +396,8 @@ class AccountRefreshTest {
 
     @Test
     fun failedPreferencesKeepTheStoredClockFormat() {
-        meAnswers += { me(MADRID_MONDAY) }
-        preferenceAnswers += { ApiResult.Failure(ApiError.UnexpectedStatus(500)) }
+        server.enqueue(json(MADRID_MONDAY))
+        server.enqueue(MockResponse.Builder().code(500).build())
         val source = source(
             initial = AccountSettings("UTC", DayOfWeek.SUNDAY, timeResolutionMinutes = null, twelveHour = true),
         )
@@ -408,17 +420,17 @@ class AccountRefreshTest {
     private class Account(
         initial: AccountSettings?,
         save: (AccountSettings) -> Unit,
-        reads: () -> AccountReads?,
+        reads: () -> ServerAccountReads?,
         scope: CoroutineScope,
         io: CoroutineContext,
-        onRefresh: AccountRefreshSteps<AccountReads> = AccountRefreshSteps { _, _, _ -> },
+        onRefresh: AccountRefreshSteps = AccountRefreshSteps { _, _, _ -> },
     ) {
         private val settings = AccountSettingsSource(InMemoryValueStore(initial, save), scope, Dispatchers.Unconfined)
         private val refresher = AccountRefresh(reads, settings, scope, io, onRefresh)
 
         val state get() = settings.state
 
-        /** Stores as sign-in does, waiting for the write, from inside the refresh's request. */
+        /** Stores as sign-in does, waiting for the write, from the thread of the server's answer. */
         fun store(stored: AccountSettings) = runBlocking { settings.store(stored) }
 
         fun refresh() = refresher.refresh()
@@ -428,12 +440,11 @@ class AccountRefreshTest {
         suspend fun forget() = refresher.forget()
     }
 
-    private fun me(body: String): ApiResult<Me> = ApiResult.Success(WireJson.decodeFromString(Me.serializer(), body))
-
-    private fun preferences(body: String): ApiResult<MePreferences> = ApiResult.Success(mePreferences(body))
-
-    /** What a 503 from a proxy in front of a stopped server comes to. */
-    private fun unavailable(): ApiResult<Me> = ApiResult.Failure(ApiError.UnexpectedStatus(503))
+    private fun json(body: String) = MockResponse.Builder()
+        .code(200)
+        .addHeader("Content-Type", "application/json")
+        .body(body)
+        .build()
 
     private companion object {
         const val MADRID_MONDAY = """{"id":7""" +

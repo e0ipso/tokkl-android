@@ -11,14 +11,13 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
-import android.os.SystemClock
 import com.github.e0ipso.tokkl.core.timersync.R
 import com.github.e0ipso.tokkl.platform.DefaultNetwork
 import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.platform.MainDispatcher
 import com.github.e0ipso.tokkl.platform.NetworkReport
 import com.github.e0ipso.tokkl.platform.mainActivityIntent
-import com.github.e0ipso.tokkl.timerstate.TimerStateIntake
+import com.github.e0ipso.tokkl.timerstate.TimerStateSource
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -53,7 +52,7 @@ class TimerSyncService : Service() {
     private val main: CoroutineDispatcher by inject(MainDispatcher)
     private val scope by lazy { CoroutineScope(SupervisorJob() + main) }
     private val follower: TimerSyncFollower by inject()
-    private val timerSync: TimerSync<TimerStateIntake> by inject()
+    private val timerSync: TimerSync<TimerStateSource> by inject()
     private val io: CoroutineDispatcher by inject(IoDispatcher)
     private val defaultNetwork: DefaultNetwork by inject()
     private var network: Job? = null
@@ -211,14 +210,4 @@ internal object TimerSyncNotification {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
     }
-}
-
-/** Starts [TimerSyncService] in the foreground from [context], as [TimerSyncService.start] does. */
-internal class TimerSyncServiceStart(private val context: Context) : ServiceStart {
-    override fun start(): Boolean = TimerSyncService.start(context)
-}
-
-/** The sleep-counting clock the timer sync's watchdog reads. */
-internal object ElapsedRealtimeClock : MonotonicClock {
-    override fun millis(): Long = SystemClock.elapsedRealtime()
 }

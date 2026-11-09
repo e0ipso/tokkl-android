@@ -1,7 +1,7 @@
 package com.github.e0ipso.tokkl.timersync
 
 import com.github.e0ipso.tokkl.api.ApiCallCancellation
-import com.github.e0ipso.tokkl.timerstate.TimerStateIntake
+import com.github.e0ipso.tokkl.timerstate.TimerStateSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -9,16 +9,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-
-/** How [TimerSync] holds each account's stream, such as [TimerEventConnections]. */
-internal fun interface TimerSyncConnections<A : Any> {
-
-    /**
-     * Starts holding the stream for [account] over [link], off the calling thread, and reports
-     * through the link's callbacks, ending with [TimerSyncLink.ended].
-     */
-    fun open(account: A, link: TimerSyncLink)
-}
 
 /** A stream of [account] ended in a way no reconnect can fix, [StreamEnd.Refused] or [StreamEnd.SignedOut]. */
 internal data class StreamTermination<A : Any>(val account: A, val end: StreamEnd)
@@ -44,16 +34,19 @@ internal data class StreamTermination<A : Any>(val account: A, val end: StreamEn
  * reads and changes the stream's state, so it needs no lock. The watchdog and the reconnects are
  * delays in [scope].
  *
- * @param A what tells accounts apart. The app uses the account's [TimerStateIntake].
+ * @param A what tells accounts apart. The app uses the account's [TimerStateSource].
  * @param scope runs every change of the stream's state, one at a time, such as a scope on
  *   `Dispatchers.Default.limitedParallelism(1)`.
- * @param now milliseconds on a clock that never goes back, for the watchdog and the backoff.
- * @param connections open each stream.
+ * @param now milliseconds on a clock that never goes back, such as `SystemClock.elapsedRealtime`,
+ *   for the watchdog and the backoff.
+ * @param connections starts holding the stream for an account over a link, such as
+ *   [TimerEventConnections.open] does: off the calling thread, reporting through the link's
+ *   callbacks and ending with [TimerSyncLink.ended].
  */
 class TimerSync<A : Any> internal constructor(
     private val scope: CoroutineScope,
-    private val now: MonotonicClock,
-    private val connections: TimerSyncConnections<A>,
+    private val now: () -> Long,
+    private val connections: (account: A, link: TimerSyncLink) -> Unit,
 ) {
 
     private val ended = Channel<StreamTermination<A>>(Channel.UNLIMITED)
@@ -100,7 +93,7 @@ class TimerSync<A : Any> internal constructor(
             this@TimerSync.account = account
             refused = null
             failures = 0
-            connections.open(account, connect())
+            connections(account, connect())
         }
     }
 
@@ -125,7 +118,7 @@ class TimerSync<A : Any> internal constructor(
             if (link != null) return@launch
             drop()
             failures = 0
-            connections.open(account, connect())
+            connections(account, connect())
         }
     }
 
@@ -139,14 +132,14 @@ class TimerSync<A : Any> internal constructor(
     private fun connected(link: TimerSyncLink) {
         scope.launch {
             if (link !== this@TimerSync.link) return@launch
-            connectedAt = now.millis()
-            heardAt = now.millis()
+            connectedAt = now()
+            heardAt = now()
         }
     }
 
     private fun alive(link: TimerSyncLink) {
         scope.launch {
-            if (link === this@TimerSync.link) heardAt = now.millis()
+            if (link === this@TimerSync.link) heardAt = now()
         }
     }
 
@@ -171,7 +164,7 @@ class TimerSync<A : Any> internal constructor(
     private fun connect(): TimerSyncLink {
         val next = TimerSyncLink(::connected, ::alive, ::ended)
         link = next
-        heardAt = now.millis()
+        heardAt = now()
         connectedAt = null
         watch(next, SILENCE_MILLIS)
         return next
@@ -186,13 +179,13 @@ class TimerSync<A : Any> internal constructor(
 
     private fun checkSilence(watched: TimerSyncLink) {
         if (watched !== link) return
-        val silent = now.millis() - heardAt
+        val silent = now() - heardAt
         if (silent >= SILENCE_MILLIS) retry() else watch(watched, SILENCE_MILLIS - silent)
     }
 
     /** Closes the call, if any, and schedules the next connection. */
     private fun retry() {
-        val healthy = connectedAt?.let { now.millis() - it >= HEALTHY_MILLIS } == true
+        val healthy = connectedAt?.let { now() - it >= HEALTHY_MILLIS } == true
         drop()
         if (healthy) failures = 0
         val delay = delayAfter(failures)
@@ -201,7 +194,7 @@ class TimerSync<A : Any> internal constructor(
             delay(delay)
             reconnect = null
             val account = account ?: return@launch
-            connections.open(account, connect())
+            connections(account, connect())
         }
     }
 
@@ -267,9 +260,4 @@ internal class TimerSyncLink(
         active = false
         cancellation.cancel()
     }
-}
-
-/** Milliseconds on a clock that never goes back, such as `SystemClock.elapsedRealtime`. */
-internal fun interface MonotonicClock {
-    fun millis(): Long
 }

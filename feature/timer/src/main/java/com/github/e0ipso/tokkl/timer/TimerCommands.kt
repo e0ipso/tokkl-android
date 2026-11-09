@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.timer
 
 import com.github.e0ipso.tokkl.cache.LocalWrite
-import com.github.e0ipso.tokkl.cache.QueueSender
 import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.cache.localWrite
 import com.github.e0ipso.tokkl.model.EntryFields
@@ -76,7 +75,7 @@ internal class TimerCommands(
     timerApi: Flow<Boolean>,
     private val changes: RunningEntryChanges,
     private val pauseChain: PauseActions?,
-    private val sender: QueueSender,
+    private val sender: suspend () -> Unit,
     private val notices: TimerNoticeBoard,
     private val sections: TapSections,
     private val clock: Clock,
@@ -88,14 +87,16 @@ internal class TimerCommands(
     /** What the taps did that the cache or the server may not show yet. */
     val taps: StateFlow<TimerTaps> = mutableTaps.asStateFlow()
 
-    private val cached: StateFlow<CachedControls> = controls
+    /** The timer controls as the cache gives them, with the id the cache holds an edit's entry under. */
+    val cached: StateFlow<CachedControls> = controls
         .map<TimerControls, CachedControls> { entry ->
             val editId = taps.value.edit?.target?.entryId
             CachedControls.Read(entry, editId, editId?.let { changes.currentId(it) })
         }
         .stateIn(scope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), CachedControls.Unread)
 
-    private val catalog: StateFlow<Catalog> = combine(projects, tasks, ::Catalog)
+    /** The cached projects and tasks. */
+    val catalog: StateFlow<Catalog> = combine(projects, tasks, ::Catalog)
         .stateIn(scope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), Catalog())
 
     private val pauseOffered: StateFlow<Boolean> =
@@ -122,24 +123,14 @@ internal class TimerCommands(
      */
     val starts: SharedFlow<Unit> = queuedStarts.asSharedFlow()
 
-    /** The taps as the field edits read and change them. */
-    private val ledger = object : TapLedger {
-        override val taps get() = this@TimerCommands.taps
-        override val cached get() = this@TimerCommands.cached
-        override val catalog get() = this@TimerCommands.catalog
-
-        override fun now() = this@TimerCommands.now()
-
-        override fun dispatch(event: TapEvent) = this@TimerCommands.dispatch(event)
-    }
-
     /** The idle timer's draft and the running entry's fields, and the editor's opening. */
-    val edits = RunningFieldEdits(ledger, changes, scope)
+    val edits = RunningFieldEdits(this, changes, scope)
 
     /** The timer state as of now, without labels, which the taps and the field edits act on. */
     fun now(): TimerState = timerState(cached.value, settings.value?.defaultWorkspaceId, taps.value, pauseOffered.value)
 
-    private fun dispatch(event: TapEvent) = mutableTaps.update { it.reduce(event) }
+    /** Runs [event] through [reduce]: the one way [taps] change, for the taps here and for [edits]. */
+    fun dispatch(event: TapEvent) = mutableTaps.update { it.reduce(event) }
 
     /** Starts a timer with the idle timer's fields, unless one runs or no workspace is known yet. */
     fun start() {
@@ -278,7 +269,7 @@ internal class TimerCommands(
         act(running.target, done = { it.target != running.target }) {
             if (typed != null) {
                 edits.awaitWrites()
-                sender.sendQueued()
+                sender()
             }
             actions.pause()
         }

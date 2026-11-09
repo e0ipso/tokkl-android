@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.di
 
 import com.github.e0ipso.tokkl.cache.ChangeSender
-import com.github.e0ipso.tokkl.cache.SignInPause
 import com.github.e0ipso.tokkl.lifecycle.AppRefreshSteps
 import com.github.e0ipso.tokkl.lifecycle.MainActivityForeground
 import com.github.e0ipso.tokkl.platform.MainDispatcher
@@ -10,7 +9,6 @@ import com.github.e0ipso.tokkl.session.AccountRefreshSteps
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.AccountTransition
 import com.github.e0ipso.tokkl.session.Session
-import com.github.e0ipso.tokkl.session.SignInTransition
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timersync.TimerSyncFollower
 import org.koin.android.ext.koin.androidContext
@@ -24,7 +22,7 @@ import org.koin.dsl.module
 internal val lifecycleModule = module {
     // A sign-in's account transition, in core:session, with the steps of the modules above it.
     single {
-        val queue = get<SignInPause>()
+        val queue = get<ChangeSender>()
         AccountTransition(
             storeSettings = get<AccountSettingsSource>()::store,
             clearTimerState = get<AccountTimerStates>()::clearForSignIn,
@@ -35,7 +33,7 @@ internal val lifecycleModule = module {
             resumeQueue = queue::resume,
             followTimerSync = get<TimerSyncFollower>()::follow,
         )
-    } bind SignInTransition::class
+    }
 
     single {
         AppRefreshSteps(

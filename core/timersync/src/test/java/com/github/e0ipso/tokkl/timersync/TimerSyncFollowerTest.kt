@@ -4,7 +4,6 @@ import com.github.e0ipso.tokkl.cache.CurrentEntryCache
 import com.github.e0ipso.tokkl.cache.RunningCheckStart
 import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.TimeEntry
-import com.github.e0ipso.tokkl.timerstate.TimerStateIntake
 import com.github.e0ipso.tokkl.timerstate.TimerStateSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -34,9 +33,9 @@ class TimerSyncFollowerTest {
     private val scope = CoroutineScope(UnconfinedTestDispatcher(scheduler))
 
     /** The account each stream opened for, in order, and the stream's link. */
-    private val opens = mutableListOf<TimerStateIntake>()
+    private val opens = mutableListOf<TimerStateSource>()
     private val links = mutableListOf<TimerSyncLink>()
-    private val sync = TimerSync<TimerStateIntake>(
+    private val sync = TimerSync<TimerStateSource>(
         scope = scope,
         now = { 0L },
         connections = { account, link ->

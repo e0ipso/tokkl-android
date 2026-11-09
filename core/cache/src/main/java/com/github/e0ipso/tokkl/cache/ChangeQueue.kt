@@ -77,19 +77,18 @@ data class ShortStopOffer(val entryId: EntryId, val capturedAt: Instant)
 class ChangeQueue(
     private val storage: QueueStorage,
     private val io: CoroutineContext,
-    private val onQueued: QueuedListener,
+    private val onQueued: () -> Unit,
     private val clock: Clock,
     private val spans: ServerSpans,
 ) : EntryChanges,
     RunningEntryChanges,
-    HeldChanges,
-    UnsentChanges {
+    HeldChanges {
 
     /** How many changes the server has not received (docs/PRD.md O5), held ones included. */
     val unsentCount: Flow<Int> = storage.unsentCount
 
     /** How many changes the server has not received, held ones included: [unsentCount] now. */
-    override suspend fun unsentNow(): Int = unsentCount.first()
+    suspend fun unsentNow(): Int = unsentCount.first()
 
     /** The changes the server refused, which wait for the user, oldest first (docs/PRD.md O6). */
     override val held: Flow<List<HeldChange>> = storage.heldChanges.map { changes -> changes.map { it.toHeld() } }
@@ -233,17 +232,7 @@ class ChangeQueue(
                 edits.change() to edits.holdsChanges()
             }
         }
-        if (holdsChanges) onQueued.queued()
+        if (holdsChanges) onQueued()
         return result
     }
-}
-
-/** Hears that a change went into the queue. [SendOnQueue] starts the sends; the queue's device tests hear nothing. */
-fun interface QueuedListener {
-    fun queued()
-}
-
-/** How many changes the server has not received, held ones included, as [ChangeQueue] counts them. */
-fun interface UnsentChanges {
-    suspend fun unsentNow(): Int
 }

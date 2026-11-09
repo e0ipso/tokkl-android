@@ -6,9 +6,9 @@ import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.FavoriteBody
 import com.github.e0ipso.tokkl.api.FavoritesChange
 import com.github.e0ipso.tokkl.api.flatMap
-import com.github.e0ipso.tokkl.cache.FavoritesCache
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.Favorite
+import com.github.e0ipso.tokkl.session.AccountContext
 import com.github.e0ipso.tokkl.session.CurrentAccount
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
@@ -22,13 +22,14 @@ const val MAX_FAVORITES = 9
  *
  * @param client the signed-in account's API client, or null when signed out.
  * @param account the account each save belongs to: the one signed in when it starts.
- * @param cache the cached favorites, which a save replaces while its account is current.
+ * @param replaceFavorites replaces the cached favorites while the save's account is current, as
+ *   `AccountCache.replaceFavorites` does, and returns false once that account has ended.
  * @param scope the application's scope, where each save runs.
  */
 class FavoritesServer(
     private val client: ApiClientProvider,
     private val account: CurrentAccount,
-    private val cache: FavoritesCache,
+    private val replaceFavorites: suspend (AccountContext, List<Favorite>) -> Boolean,
     private val scope: CoroutineScope,
 ) : FavoritesStore {
 
@@ -37,7 +38,7 @@ class FavoritesServer(
      * stored them, puts them in the cache. The save runs in the application's scope, so it reaches
      * the server and the cache also when its caller goes meanwhile. It belongs to the account
      * signed in when it starts: once that account has ended it sends nothing and writes nothing,
-     * and sign-out waits for a cache write on its way ([FavoritesCache.replaceFavorites]). A save
+     * and sign-out waits for a cache write on its way ([replaceFavorites]). A save
      * whose account ended fails as a signed-out one does.
      */
     override suspend fun save(favorites: List<EntryFields>): ApiResult<Unit> {
@@ -46,7 +47,7 @@ class FavoritesServer(
             val api = client().takeIf { context.isCurrent } ?: return@async SIGNED_OUT
             api.account.savePreferences(favoritesBody(favorites)).flatMap {
                 val rows = favorites.mapIndexed { position, fields -> fields.toFavorite(position) }
-                if (cache.replaceFavorites(context, rows)) ApiResult.Success(Unit) else SIGNED_OUT
+                if (replaceFavorites(context, rows)) ApiResult.Success(Unit) else SIGNED_OUT
             }
         }.await()
     }

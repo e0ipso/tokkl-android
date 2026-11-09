@@ -42,7 +42,7 @@ class ReminderSyncTest {
             },
             pause = { null },
         ),
-        ids = { mappings[it] ?: it },
+        currentId = { mappings[it] ?: it },
         timers = valueStore(load = { stored }, save = { stored = it }),
         delays = object : ReminderDelays {
             override fun schedule(timer: ReminderTimer) {
@@ -243,7 +243,7 @@ class ReminderSyncTest {
             },
             pause = pause,
         ),
-        ids = { mappings[it] ?: it },
+        currentId = { mappings[it] ?: it },
         timers = valueStore(
             load = { stored },
             save = { stored = it },

@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.reminder
 
 import com.github.e0ipso.tokkl.cache.AccountCache
-import com.github.e0ipso.tokkl.cache.CurrentEntryIds
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.platform.AppHook
@@ -75,7 +74,7 @@ interface ReminderAccount {
  */
 class ReminderSync(
     private val account: ReminderAccount,
-    private val ids: CurrentEntryIds,
+    private val currentId: suspend (EntryId) -> EntryId,
     private val timers: ValueStore<ReminderTimer?>,
     private val delays: ReminderDelays,
     private val notice: ReminderNotice,
@@ -106,7 +105,7 @@ class ReminderSync(
             return null
         }
         val previous = timers.load()
-        val same = previous != null && ids.currentId(
+        val same = previous != null && currentId(
             EntryId(previous.id),
         ) == entry.id && previous.start == entry.start.epochSecond
         val due = entry.start.epochSecond * 1000 + Duration.ofHours(
@@ -126,9 +125,9 @@ class ReminderSync(
     /** A worker may arrive late, after cancellation, a start correction, sign-out or a switch. */
     suspend fun fire(id: Long, start: Long, due: Long): Unit = lock.withLock {
         val timer = update(account.input()) ?: return@withLock
-        val same = timer.start == start && ids.currentId(
+        val same = timer.start == start && currentId(
             EntryId(id),
-        ) == ids.currentId(EntryId(timer.id)) && !timer.handled
+        ) == currentId(EntryId(timer.id)) && !timer.handled
         if (!same || timer.due != due) return@withLock
         // Persist first, so another process or a second delivery never posts it twice.
         timers.save(timer.copy(handled = true))
@@ -152,14 +151,14 @@ class ReminderSync(
         val request = lock.withLock {
             val input = account.input()
             val entry = input.running ?: return null
-            if (entry.stop != null || entry.start.epochSecond != start || ids.currentId(
+            if (entry.stop != null || entry.start.epochSecond != start || currentId(
                     EntryId(id),
                 ) != entry.id
             ) {
                 return null
             }
             val timer = timers.load() ?: return null
-            if (timer.start != start || ids.currentId(EntryId(timer.id)) != entry.id) return null
+            if (timer.start != start || currentId(EntryId(timer.id)) != entry.id) return null
             if (pauseTimer) {
                 account.pause(entry.id) ?: return null
             } else {
@@ -178,7 +177,7 @@ class ReminderSync(
     private suspend fun paused(id: Long, start: Long) {
         // The server's paused state may have ended the reminder already.
         val timer = timers.load() ?: return
-        if (timer.start == start && ids.currentId(EntryId(timer.id)) == ids.currentId(EntryId(id))) handled(timer)
+        if (timer.start == start && currentId(EntryId(timer.id)) == currentId(EntryId(id))) handled(timer)
     }
 
     private suspend fun handled(timer: ReminderTimer) {

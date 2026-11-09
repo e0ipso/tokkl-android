@@ -9,13 +9,13 @@ import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.platform.CurrentWorkManager
-import com.github.e0ipso.tokkl.session.SignInStatus
+import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timernotice.TimerFailureNotice
 import com.github.e0ipso.tokkl.timernotice.runSurfaceCommand
 import com.github.e0ipso.tokkl.timernotice.toWorkResult
+import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import com.github.e0ipso.tokkl.timerstate.TimerActions
-import com.github.e0ipso.tokkl.timerstate.TimerStateIntakes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -46,9 +46,9 @@ internal fun CurrentWorkManager.sendPomodoroWidgetTap(tap: PomodoroWidgetTap) {
 class PomodoroWidgetActionWorker(
     context: Context,
     parameters: WorkerParameters,
-    private val timerStates: TimerStateIntakes,
+    private val timerStates: AccountTimerStates,
     private val client: ApiClientProvider,
-    private val signIn: SignInStatus,
+    private val signIn: Session,
     private val widgetStates: PomodoroWidgetStateSource,
     private val failures: TimerFailureNotice,
     private val scope: CoroutineScope,

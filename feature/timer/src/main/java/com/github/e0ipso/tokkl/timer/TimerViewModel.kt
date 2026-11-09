@@ -2,7 +2,6 @@ package com.github.e0ipso.tokkl.timer
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.github.e0ipso.tokkl.cache.QueueSender
 import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.entryfields.withPicked
 import com.github.e0ipso.tokkl.model.EntryFields
@@ -64,7 +63,7 @@ class TimerViewModel(
     clock: Clock,
     trace: TapTrace,
     pauseChain: PauseActions?,
-    sender: QueueSender,
+    sender: suspend () -> Unit,
     discards: DiscardNotices,
     timerApi: Flow<Boolean>,
     view: StateFlow<TimerView>,

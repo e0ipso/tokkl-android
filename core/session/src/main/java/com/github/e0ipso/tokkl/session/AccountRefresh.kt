@@ -10,14 +10,14 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 
-/** What runs after each refresh whose `GET /api/v9/me` answered, with the reads [R] it made. */
-fun interface AccountRefreshSteps<in R : AccountReads> {
+/** What runs after each refresh whose `GET /api/v9/me` answered, with the reads it made. */
+fun interface AccountRefreshSteps {
 
     /**
      * Runs on the refresh's dispatcher, inside its job, with its [reads], its `/me` answer and its
      * `GET /api/v9/me/preferences`, null when that request failed.
      */
-    suspend fun afterAnswer(reads: R, me: Me, preferences: MePreferences?)
+    suspend fun afterAnswer(reads: ServerAccountReads, me: Me, preferences: MePreferences?)
 }
 
 /**
@@ -32,12 +32,12 @@ fun interface AccountRefreshSteps<in R : AccountReads> {
  *   so a [refresh] call while they run joins them. They do not run when sign-in stored newer
  *   settings while the requests ran.
  */
-class AccountRefresh<R : AccountReads>(
-    private val reads: suspend () -> R?,
+class AccountRefresh(
+    private val reads: suspend () -> ServerAccountReads?,
     private val settings: AccountSettingsSource,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
-    private val steps: AccountRefreshSteps<R>,
+    private val steps: AccountRefreshSteps,
 ) : AccountDataOwner,
     CacheRefresh {
 

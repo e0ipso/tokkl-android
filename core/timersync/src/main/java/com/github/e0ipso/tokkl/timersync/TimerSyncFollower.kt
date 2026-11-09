@@ -1,14 +1,10 @@
 package com.github.e0ipso.tokkl.timersync
 
-import com.github.e0ipso.tokkl.cache.SignInPause
-import com.github.e0ipso.tokkl.capabilities.TimerApiOffer
 import com.github.e0ipso.tokkl.platform.AppHook
 import com.github.e0ipso.tokkl.platform.collectDurably
 import com.github.e0ipso.tokkl.session.AccountDataOwner
-import com.github.e0ipso.tokkl.session.SignInStatus
 import com.github.e0ipso.tokkl.session.SignOutPhase
-import com.github.e0ipso.tokkl.timerstate.TimerStateIntake
-import com.github.e0ipso.tokkl.timerstate.TimerStateIntakes
+import com.github.e0ipso.tokkl.timerstate.TimerStateSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -19,24 +15,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicInteger
-
-/** Starts a foreground service, and returns false when the platform refuses, as for an app in the background. */
-internal fun interface ServiceStart {
-    fun start(): Boolean
-}
-
-/**
- * Hears that the server refused the account's credential on the timer event stream, as
- * [PauseQueueOnRefusal] does for the queue.
- */
-internal fun interface SignInRefusal {
-    fun refused()
-}
-
-/** Pauses the queue as its own refusal does, which shows the prompt to sign in again. */
-internal class PauseQueueOnRefusal(private val queue: SignInPause) : SignInRefusal {
-    override fun refused() = queue.signInRefused()
-}
 
 /** Hears each decision on whether the timer sync runs, so it can follow whether the server has the timer API. */
 fun interface TimerSyncWatcher {
@@ -52,22 +30,23 @@ fun interface TimerSyncWatcher {
  * @param startService starts [TimerSyncService] in the foreground, and returns false when the
  *   platform refuses, as it does for an app in the background.
  * @param signedIn whether an account is signed in, read from the session.
- * @param timerState where the signed-in account's timer state takes the stream's events.
+ * @param timerState gives where the signed-in account's timer state takes the stream's events.
  * @param timerApi whether the server offers the timer API.
  * @param signInNeeded whether the server refused the account's credential.
- * @param refusal hears a credential the stream's server refused.
+ * @param refusal hears a credential the stream's server refused. The app pauses the queue as its
+ *   own refusal does, which shows the prompt to sign in again.
  * @param scope where it follows the ends of [timerSync]'s streams that no reconnect fixes, for as
  *   long as the process lives.
  */
 class TimerSyncFollower internal constructor(
-    private val startService: ServiceStart,
-    private val signedIn: SignInStatus,
-    private val timerState: TimerStateIntakes,
-    private val timerSync: TimerSync<TimerStateIntake>,
-    private val timerApi: TimerApiOffer,
+    private val startService: () -> Boolean,
+    private val signedIn: suspend () -> Boolean,
+    private val timerState: () -> TimerStateSource,
+    private val timerSync: TimerSync<TimerStateSource>,
+    private val timerApi: suspend () -> Boolean,
     private val signInNeeded: StateFlow<Boolean>,
     private val syncWatcher: TimerSyncWatcher,
-    private val refusal: SignInRefusal,
+    private val refusal: () -> Unit,
     scope: CoroutineScope,
 ) : AccountDataOwner {
 
@@ -87,8 +66,8 @@ class TimerSyncFollower internal constructor(
      * pauses the queue, which asks to sign in again. Either way the service stops, as with no
      * account.
      */
-    private fun streamEnded(termination: StreamTermination<TimerStateIntake>) {
-        if (termination.end == StreamEnd.Refused && termination.account === timerState.intake()) refusal.refused()
+    private fun streamEnded(termination: StreamTermination<TimerStateSource>) {
+        if (termination.end == StreamEnd.Refused && termination.account === timerState()) refusal()
         stopService()
     }
 
@@ -113,7 +92,7 @@ class TimerSyncFollower internal constructor(
      * Whether the timer event stream should run: signed in to a server with the timer API, whose
      * token the server has not refused. Reads the disk.
      */
-    internal suspend fun wanted(): Boolean = timerApi.offersTimerApi() && !signInNeeded.value && signedIn.isSignedIn()
+    internal suspend fun wanted(): Boolean = timerApi() && !signInNeeded.value && signedIn()
 
     /**
      * Starts [TimerSyncService], or points the running one at the account signed in now, while
@@ -131,7 +110,7 @@ class TimerSyncFollower internal constructor(
         } else if (running != null) {
             run(running)
         } else {
-            startService.start()
+            startService()
         }
     }
 
@@ -140,8 +119,8 @@ class TimerSyncFollower internal constructor(
      * one that runs and the stream is still wanted.
      */
     internal fun run(instance: Int) {
-        timerSync.run(timerState.intake()) {
-            running.value == instance && timerApi.offersTimerApi() && !signInNeeded.value
+        timerSync.run(timerState()) {
+            running.value == instance && timerApi() && !signInNeeded.value
         }
     }
 

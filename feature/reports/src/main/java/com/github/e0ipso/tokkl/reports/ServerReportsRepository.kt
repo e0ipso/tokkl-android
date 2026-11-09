@@ -38,10 +38,10 @@ data class ReportWorkspace(
  * The Reports API v3 calls behind the reports, on the signed-in account's server. Each call
  * suspends while its request runs. Nothing here stores what the server sends.
  */
-class ServerReportsRepository(private val client: ApiClientProvider) : ReportsRepository {
+class ServerReportsRepository(private val client: ApiClientProvider) {
 
     /** The account's default workspace from `GET /api/v9/me`, with its rounding from `GET /api/v9/workspaces/{id}`. */
-    override suspend fun workspace(): ApiResult<ReportWorkspace> = client.signedIn { api ->
+    suspend fun workspace(): ApiResult<ReportWorkspace> = client.signedIn { api ->
         val user = api.account.defaultWorkspace().getOrElse { return@signedIn it }
         val id = user.defaultWorkspaceId ?: return@signedIn ApiResult.Failure(
             ApiError.InvalidResponse(IllegalArgumentException("/me has no default_workspace_id")),
@@ -55,7 +55,7 @@ class ServerReportsRepository(private val client: ApiClientProvider) : ReportsRe
      * The app endpoint selects the current default workspace, timezone and rounding itself;
      * sending cached rounding here would override a newer setting on the server.
      */
-    override suspend fun summary(
+    suspend fun summary(
         workspace: ReportWorkspace,
         range: ReportRange,
         zone: ZoneId,
@@ -121,7 +121,7 @@ class ServerReportsRepository(private val client: ApiClientProvider) : ReportsRe
      * 1 for the first page, then the row the server named for the next one. Times are in [zone].
      * The phone never works out a page itself.
      */
-    override suspend fun detailedPage(
+    suspend fun detailedPage(
         workspace: ReportWorkspace,
         range: ReportRange,
         zone: ZoneId,
@@ -143,7 +143,7 @@ class ServerReportsRepository(private val client: ApiClientProvider) : ReportsRe
      * [filters], from `POST /reports/api/v3/workspace/{id}/weekly/time_entries`: a row per project
      * with its seconds on each day. The request asks for the workspace's rounding, as [entries] does.
      */
-    override suspend fun weekly(
+    suspend fun weekly(
         workspace: ReportWorkspace,
         weekStart: LocalDate,
         filters: ReportFilters,

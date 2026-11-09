@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.timerstate
 
 import androidx.annotation.VisibleForTesting
-import com.github.e0ipso.tokkl.cache.QueueSender
 import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -63,7 +62,7 @@ class TimerSurfaceActions(
     private val state: CurrentTimerState,
     private val changes: RunningEntryChanges,
     private val server: PauseActions,
-    private val sender: QueueSender,
+    private val sender: suspend () -> Unit,
 ) {
 
     /**
@@ -96,7 +95,7 @@ class TimerSurfaceActions(
         val running = state.currentControls() as? TimerControls.Running ?: return null
         if (!running.pausable || changes.currentId(target.entryId) != running.entry.id) return null
         return request(running.target) {
-            if (running.unsent) sender.sendQueued()
+            if (running.unsent) sender()
             server.pause()
         }
     }

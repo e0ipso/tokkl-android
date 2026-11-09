@@ -1,12 +1,11 @@
 package com.github.e0ipso.tokkl.reminder
 
 import android.content.Context
-import com.github.e0ipso.tokkl.cache.CurrentEntryIds
 import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.preferences.ReminderSetting
-import com.github.e0ipso.tokkl.session.SignInStatus
+import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timerstate.CurrentTimerState
 import com.github.e0ipso.tokkl.timerstate.SurfaceTap
 import com.github.e0ipso.tokkl.timerstate.TimerControls
@@ -24,13 +23,13 @@ internal fun accountReminderSync(
     context: Context,
     store: ReminderStore,
     account: AccountReminder,
-    changes: CurrentEntryIds,
+    changes: RunningEntryChanges,
     work: ReminderWork,
 ): ReminderSync {
     val notifier = ReminderNotifier(context)
     return ReminderSync(
         account = account,
-        ids = changes,
+        currentId = changes::currentId,
         timers = store.timers,
         delays = work,
         notice = object : ReminderNotice {
@@ -51,7 +50,7 @@ internal fun accountReminderSync(
  * @param running the cache's running entry, or null while none runs.
  */
 internal class AccountReminder(
-    private val session: SignInStatus,
+    private val session: Session,
     private val running: Flow<EntryWithSendState?>,
     private val settings: ReminderSetting,
     private val changes: RunningEntryChanges,

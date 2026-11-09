@@ -7,7 +7,6 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import com.github.e0ipso.tokkl.capabilities.TimerApiOffer
 import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.platform.mainActivityIntent
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
@@ -48,7 +47,7 @@ import java.time.Instant
  */
 class AlarmClockPomodoroScheduler(
     private val context: Context,
-    private val timerSyncStarts: TimerApiOffer,
+    private val timerSyncStarts: suspend () -> Boolean,
     private val exactAlarms: ExactAlarmAccess,
 ) : PomodoroAlarmScheduler,
     TimerSyncWatcher {
@@ -97,7 +96,7 @@ class AlarmClockPomodoroScheduler(
     private val watching = Mutex()
 
     private suspend fun applyRearmReceiver() {
-        val state = if (timerSyncStarts.offersTimerApi()) {
+        val state = if (timerSyncStarts()) {
             PackageManager.COMPONENT_ENABLED_STATE_ENABLED
         } else {
             PackageManager.COMPONENT_ENABLED_STATE_DISABLED

@@ -2001,4 +2001,4 @@ private fun changeSender(
 )
 
 /** The entry calls over [this] client, as the app opens them. */
-private fun ApiClientProvider.entries(): suspend () -> EntrySends? = { this()?.let(::ServerEntrySends) }
+private fun ApiClientProvider.entries(): suspend () -> ServerEntrySends? = { this()?.let(::ServerEntrySends) }

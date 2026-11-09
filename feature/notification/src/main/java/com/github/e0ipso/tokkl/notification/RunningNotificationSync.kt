@@ -1,6 +1,6 @@
 package com.github.e0ipso.tokkl.notification
 
-import com.github.e0ipso.tokkl.cache.CurrentEntryIds
+import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.platform.AppHook
 import com.github.e0ipso.tokkl.platform.collectDurably
 import com.github.e0ipso.tokkl.session.AccountDataOwner
@@ -38,7 +38,7 @@ interface RunningNotice {
  *
  * @param running the notification for the running entry, null when none runs.
  * @param shown the entry last followed, null for none.
- * @param ids the id the cache holds an entry under now, given the id it was followed under:
+ * @param currentId the id the cache holds an entry under now, given the id it was followed under:
  *   the server's once the server has answered the phone's create (`ChangeQueue.currentId`).
  * @param notice shows, replaces and takes away the notification.
  * @param io where the store and the notification calls run.
@@ -46,7 +46,7 @@ interface RunningNotice {
 class RunningNotificationSync(
     private val running: Flow<RunningNotificationContent?>,
     private val shown: ValueStore<FollowedEntry?>,
-    private val ids: CurrentEntryIds,
+    private val currentId: suspend (EntryId) -> EntryId,
     private val notice: RunningNotice,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
@@ -75,7 +75,7 @@ class RunningNotificationSync(
         lock.withLock {
             latest = content
             val stored = shown.load()
-            val followed = stored?.let { it.copy(entryId = it.entryId?.let { id -> ids.currentId(id) }) }
+            val followed = stored?.let { it.copy(entryId = it.entryId?.let { id -> currentId(id) }) }
             when (val change = runningNotificationChange(followed, content)) {
                 null -> if (content == null || stored?.entryId == content.entryId) return
                 is RunningNotificationChange.Post -> notice.post(change.content)

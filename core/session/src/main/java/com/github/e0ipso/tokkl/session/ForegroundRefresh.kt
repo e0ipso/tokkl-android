@@ -13,11 +13,12 @@ package com.github.e0ipso.tokkl.session
  * It lives as long as the process, so it knows across a rotation that the activity only changed
  * its configuration.
  *
- * @param reads reads the running entry and the cached data again, and when the network comes
- *   back does the same, and once more after a refresh that was running then ends without an
- *   answer.
+ * @param refresh reads the running entry and the cached data again. core:cache sends the queue
+ *   first.
+ * @param refreshOnReconnect does the same when the network comes back, and once more after a
+ *   refresh that was running then ends without an answer.
  */
-class ForegroundRefresh(private val reads: ForegroundReads) {
+class ForegroundRefresh(private val refresh: () -> Unit, private val refreshOnReconnect: () -> Unit) {
 
     /** The activity stopped for a configuration change, so its next start is no trip back. */
     private var changingConfigurations = false
@@ -31,7 +32,7 @@ class ForegroundRefresh(private val reads: ForegroundReads) {
         if (changingConfigurations) {
             changingConfigurations = false
         } else {
-            reads.refresh()
+            refresh()
         }
     }
 
@@ -53,6 +54,6 @@ class ForegroundRefresh(private val reads: ForegroundReads) {
     fun networkChanged(online: Boolean) {
         val before = this.online ?: return
         this.online = online
-        if (online && !before) reads.refreshOnReconnect()
+        if (online && !before) refreshOnReconnect()
     }
 }

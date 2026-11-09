@@ -3,10 +3,9 @@ package com.github.e0ipso.tokkl.history
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.github.e0ipso.tokkl.cache.DeleteUndo
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.UndoOutcome
-import com.github.e0ipso.tokkl.entries.EntryRemovals
+import com.github.e0ipso.tokkl.entries.SessionEntries
 import com.github.e0ipso.tokkl.entryfields.SplitHalves
 import com.github.e0ipso.tokkl.entryfields.SplitProblem
 import com.github.e0ipso.tokkl.entryfields.SplitResult
@@ -118,15 +117,15 @@ data class EntryActionsState(
  * @param accountSettings the account's timezone, time resolution and clock format, which Split
  *   reads the time with.
  * @param removals the session's entries, which leave a deleted entry out and show a restored one again.
- * @param undo takes back the delete of an entry, as `DeleteUndoer` does.
+ * @param undoDelete takes back the delete of an entry, as `DeleteUndoer` does.
  * @param capabilities whether the server restores deleted entries, `Capabilities.restore`, read
  *   at a tap on a screen, which shows once the capabilities have loaded.
  */
 class EntryActionsViewModel(
     private val entries: Flow<List<EntryWithSendState>>,
     private val changes: EntryChanges,
-    private val removals: EntryRemovals,
-    private val undo: DeleteUndo,
+    private val removals: SessionEntries,
+    private val undoDelete: suspend (EntryId) -> UndoOutcome,
     private val capabilities: StateFlow<Capabilities>,
     private val accountSettings: StateFlow<AccountSettings?>,
     scope: CoroutineScope,
@@ -177,7 +176,7 @@ class EntryActionsViewModel(
         val offered = mutableState.value.notice
         viewModelScope.launch {
             try {
-                val notice = when (val outcome = undo.undoDelete(entryId)) {
+                val notice = when (val outcome = undoDelete(entryId)) {
                     UndoOutcome.Cancelled, UndoOutcome.Restored -> {
                         removals.restored(entryId)
                         null

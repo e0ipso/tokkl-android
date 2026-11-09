@@ -15,13 +15,10 @@ import java.time.temporal.ChronoUnit
  * them inside a transaction. [ChangeDao] keeps them in Room; the queue's JVM tests keep them in
  * memory. Every call blocks on disk I/O.
  */
-interface QueueTables :
-    QueuedChangeRows,
-    CachedEntryRows,
-    ShortStopRows
+@Suppress("TooManyFunctions") // One function per query, as the Room DAO that implements it has.
+interface QueueTables {
 
-/** The queued changes, and the server ids of the entries the phone created. */
-interface QueuedChangeRows {
+    // The queued changes, and the server ids of the entries the phone created.
 
     /** The oldest change that can go out, or null when none can: held ones wait (docs/PRD.md O6). */
     fun first(): PendingChange?
@@ -52,10 +49,8 @@ interface QueuedChangeRows {
 
     /** The server's id for the entry the phone created under [localId], once the server answered. */
     fun serverId(localId: Long): Long?
-}
 
-/** The cached time entries, and the cached tags a change names by id. */
-interface CachedEntryRows {
+    // The cached time entries, and the cached tags a change names by id.
 
     fun entry(id: Long): CachedTimeEntry?
 
@@ -69,10 +64,8 @@ interface CachedEntryRows {
     fun deleteEntry(id: Long)
 
     fun tags(workspaceId: Long): List<CachedTag>
-}
 
-/** The Undo offers of short Stops. */
-interface ShortStopRows {
+    // The Undo offers of short Stops.
 
     fun shortStop(entryId: Long): ShortStopUndo?
 

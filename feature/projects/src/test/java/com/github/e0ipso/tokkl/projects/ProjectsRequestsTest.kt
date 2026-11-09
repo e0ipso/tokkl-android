@@ -32,7 +32,7 @@ class ProjectsRequestsTest {
     /** Each request's method, target and body, in order. */
     private val requests = CopyOnWriteArrayList<String>()
 
-    private lateinit var repository: ProjectsRepository
+    private lateinit var repository: ServerProjectsRepository
 
     @Before
     fun setUp() {

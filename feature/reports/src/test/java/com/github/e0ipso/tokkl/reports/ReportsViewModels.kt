@@ -27,7 +27,7 @@ import kotlin.coroutines.CoroutineContext
  */
 internal fun reportsViewModel(
     accountSettings: StateFlow<AccountSettings?>,
-    repository: ReportsRepository,
+    repository: ServerReportsRepository,
     scope: CoroutineScope,
     io: CoroutineContext,
     clock: Clock = Clock.systemUTC(),

@@ -59,7 +59,7 @@ import kotlin.coroutines.CoroutineContext
 class ReportsViewModel(
     private val choices: ReportChoices,
     private val accountSettings: StateFlow<AccountSettings?>,
-    private val repository: ReportsRepository,
+    private val repository: ServerReportsRepository,
     scope: CoroutineScope,
     private val io: CoroutineContext,
     private val clock: Clock,

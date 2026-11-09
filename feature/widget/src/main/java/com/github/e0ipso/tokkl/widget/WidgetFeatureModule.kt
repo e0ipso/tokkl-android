@@ -6,9 +6,9 @@ import com.github.e0ipso.tokkl.platform.AppHook
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
+import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.CurrentTimerState
 import com.github.e0ipso.tokkl.timerstate.HeldFieldsMemory
-import com.github.e0ipso.tokkl.timerstate.TimerControlsSource
 import com.github.e0ipso.tokkl.timersync.PomodoroWidgetRedraw
 import org.koin.android.ext.koin.androidApplication
 import org.koin.android.ext.koin.androidContext
@@ -32,7 +32,7 @@ val widgetFeatureModule = module {
             cache = get(),
             accountSettings = get<AccountSettingsSource>().loaded,
             capabilities = get<CapabilitiesSource>().loaded,
-            timerControls = get<TimerControlsSource>().controls,
+            timerControls = get<AccountTimerStates>().controls,
             account = get<CurrentTimerState>()::account,
             workManager = get(),
             clock = get(),

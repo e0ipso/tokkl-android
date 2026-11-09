@@ -59,7 +59,7 @@ class ServerSignInTest {
         httpClient: OkHttpClient = testApi.http.instance,
         signedInAccount: SignedInAccount = SignedInAccount { null },
     ) = ServerSignIn(
-        session = { url, token, settings ->
+        storeSignIn = { url, token, settings ->
             saveFailure?.let { throw it }
             saved += url to token
             savedSettings += settings

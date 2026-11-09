@@ -36,14 +36,15 @@ import kotlin.coroutines.CoroutineContext
  * on a phase the user never saw.
  *
  * @param client the signed-in account's API client, or null when signed out.
- * @param states where the account's timer state takes answers. Each call takes the intake once and
- *   gives the answer to it, so an answer for an account that signed out meanwhile changes nothing.
+ * @param states gives the intake where the account's timer state takes answers. Each call takes
+ *   the intake once and gives the answer to it, so an answer for an account that signed out
+ *   meanwhile changes nothing.
  * @param scope the application's scope, where the actions run.
  * @param io where requests run, off the main thread.
  */
 class TimerActions(
     private val client: ApiClientProvider,
-    private val states: TimerStateIntakes,
+    private val states: () -> TimerStateSource,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
 ) : PauseActions,
@@ -91,7 +92,7 @@ class TimerActions(
     /** Sends [request] and gives its answer to the account's timer state. Blocks on disk I/O. */
     private suspend fun exchange(request: suspend (TokklApi) -> ApiResult<Refusable<TimerState>>): TimerActionResult {
         val api = client() ?: return TimerActionResult.Failed(ApiError.AuthFailed)
-        val holder = states.intake()
+        val holder = states()
         // Before the request, so its answer cannot undo a change the phone makes meanwhile.
         val read = holder.begin()
         return request(api).fold(

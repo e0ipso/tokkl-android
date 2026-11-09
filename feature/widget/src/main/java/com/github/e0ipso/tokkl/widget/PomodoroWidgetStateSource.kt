@@ -6,8 +6,8 @@ import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.model.Task
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaultsSetting
 import com.github.e0ipso.tokkl.session.AccountSettings
-import com.github.e0ipso.tokkl.session.SignInStatus
-import com.github.e0ipso.tokkl.timerstate.HeldTimerStates
+import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timersync.PomodoroRingingPhase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -28,14 +28,14 @@ import kotlin.coroutines.CoroutineContext
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 class PomodoroWidgetStateSource(
     fields: PomodoroWidgetFieldsStore,
-    timerStates: HeldTimerStates,
+    timerStates: AccountTimerStates,
     projects: Flow<List<Project>>,
     tasks: Flow<List<Task>>,
     ringing: PomodoroRingingPhase,
     capabilities: Flow<Capabilities>,
     accountSettings: Flow<AccountSettings?>,
     pomodoroDefaults: PomodoroDefaultsSetting,
-    signedIn: SignInStatus,
+    signedIn: Session,
     clock: Clock,
     io: CoroutineContext,
 ) {

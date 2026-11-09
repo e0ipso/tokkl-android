@@ -7,12 +7,8 @@ import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.api.StoredServer
 import com.github.e0ipso.tokkl.api.SuccessListener
 import com.github.e0ipso.tokkl.api.TrustListener
-import com.github.e0ipso.tokkl.capabilities.AllDayOffer
-import com.github.e0ipso.tokkl.capabilities.CapabilitiesRefresh
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesStore
-import com.github.e0ipso.tokkl.capabilities.PreferencesOffer
-import com.github.e0ipso.tokkl.capabilities.TimerApiOffer
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
 import com.github.e0ipso.tokkl.platform.AppHook
 import com.github.e0ipso.tokkl.platform.io
@@ -50,23 +46,15 @@ val sessionModule = module {
             trustListener = get<TrustListener>(),
             successListener = get<SuccessListener>(),
         )
-    } binds arrayOf(ApiClientProvider::class, SignInStatus::class, AccountDataOwner::class)
+    } binds arrayOf(ApiClientProvider::class, AccountDataOwner::class)
 
     single { AccountSettingsStore(androidContext(), io()) } bind AccountDataOwner::class
     single { CapabilitiesStore(androidContext(), io()) }
     // The account settings. They load at process start from a file of a few short values.
-    single { AccountSettingsSource(get<AccountSettingsStore>(), get(), io()) } binds
-        arrayOf(StartupLoad::class, DefaultWorkspace::class)
+    single { AccountSettingsSource(get<AccountSettingsStore>(), get(), io()) } bind StartupLoad::class
 
     // What the server offers. It loads at process start from a file of a few flags.
-    single { CapabilitiesSource(get<CapabilitiesStore>(), get(), io()) } binds
-        arrayOf(
-            StartupLoad::class,
-            TimerApiOffer::class,
-            AllDayOffer::class,
-            PreferencesOffer::class,
-            CapabilitiesRefresh::class,
-        )
+    single { CapabilitiesSource(get<CapabilitiesStore>(), get(), io()) } bind StartupLoad::class
 
     single { AccountRefreshRequests() }
     single { RefreshRequestsHook(get(), inject(), get(), io()) } bind AppHook::class
@@ -78,7 +66,7 @@ val sessionModule = module {
             settings = get(),
             scope = get(),
             io = io(),
-            steps = get<AccountRefreshSteps<ServerAccountReads>>(),
+            steps = get(),
         )
     } binds arrayOf(AccountDataOwner::class, CacheRefresh::class)
 

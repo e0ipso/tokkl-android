@@ -341,7 +341,7 @@ class EntryActionsUiTest {
                 Dispatchers.IO,
                 Dispatchers.Default,
             ),
-            undo = { entryId ->
+            undoDelete = { entryId ->
                 calls += "undo $entryId"
                 undo
             },
