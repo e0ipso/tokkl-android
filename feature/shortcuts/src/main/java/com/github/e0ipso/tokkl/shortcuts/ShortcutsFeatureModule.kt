@@ -20,7 +20,7 @@ val shortcutsFeatureModule = module {
             shortcuts = favoriteShortcutLists(
                 androidContext(),
                 launcher,
-                get(),
+                get<CapabilitiesSource>().loaded,
                 favorites = get<AccountCache>().favorites,
                 projects = get<AccountCache>().projects,
             ),

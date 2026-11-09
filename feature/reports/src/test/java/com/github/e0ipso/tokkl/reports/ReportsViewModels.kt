@@ -48,7 +48,7 @@ internal fun reportsViewModel(
             client = { null },
             files = files,
             account = CurrentAccount(scope),
-            capabilities = capabilitiesOf(Capabilities.NONE),
+            csvMissing = capabilitiesOf(Capabilities.NONE)::csvMissing,
             scope = scope,
             io = io,
         )

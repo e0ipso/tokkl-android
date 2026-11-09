@@ -23,7 +23,6 @@ import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.platform.MainDispatcherRule
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.ServerProblem
-import com.github.e0ipso.tokkl.session.capabilitiesOf
 import com.github.e0ipso.tokkl.time.SnappedSpan
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -518,7 +517,7 @@ class EntryActionsViewModelTest {
             calls += "undo $entryId"
             undoOutcome
         },
-        capabilities = capabilitiesOf(Capabilities.NONE.copy(restore = canRestore)),
+        capabilities = MutableStateFlow(Capabilities.NONE.copy(restore = canRestore)),
         accountSettings = MutableStateFlow(SETTINGS),
         scope = scope,
         clock = Clock.systemUTC(),

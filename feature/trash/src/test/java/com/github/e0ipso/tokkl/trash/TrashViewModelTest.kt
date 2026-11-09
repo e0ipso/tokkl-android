@@ -42,7 +42,7 @@ class TrashViewModelTest {
         TrashViewModel(
             repository = trash,
             changes = ServerChanges(scope, Dispatchers.Unconfined, refresh),
-            capabilities = capabilities,
+            trashMissing = capabilities::trashMissing,
             scope = scope,
             io = Dispatchers.Unconfined,
             settings = MutableStateFlow(null),

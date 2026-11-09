@@ -24,7 +24,10 @@ import java.io.IOException
  */
 class CapabilitiesSource(private val store: ValueStore<Capabilities>, scope: CoroutineScope) :
     StartupLoad,
-    TimerApiOffer {
+    TimerApiOffer,
+    AllDayOffer,
+    PreferencesOffer,
+    CapabilitiesRefresh {
 
     /** What the disk holds, so a refresh after a failed write writes again. Guarded by [changing]. */
     private var stored: Capabilities? = null
@@ -51,13 +54,13 @@ class CapabilitiesSource(private val store: ValueStore<Capabilities>, scope: Cor
     suspend fun current(): Capabilities = held.current()
 
     /** Whether the server keeps Tokkl's preferences, which only Tokkl offers, as it does favorites. */
-    suspend fun keepsPreferences(): Boolean = current().favorites
+    override suspend fun keepsPreferences(): Boolean = current().favorites
 
     /** Whether the server offers Tokkl's timer API ([Capabilities.timerState]). */
     override suspend fun offersTimerApi(): Boolean = current().timerState
 
     /** Whether the server stores no-time entries ([Capabilities.allDay]). */
-    suspend fun offersAllDay(): Boolean = current().allDay == true
+    override suspend fun offersAllDay(): Boolean = current().allDay == true
 
     /** Whether the server restores deleted entries ([Capabilities.restore]). */
     suspend fun offersRestore(): Boolean = current().restore
@@ -71,7 +74,7 @@ class CapabilitiesSource(private val store: ValueStore<Capabilities>, scope: Cor
      * the refresh sends no second request for it. A failed write keeps the new flags for this
      * process. Waits while another change runs. Returns the new flags.
      */
-    suspend fun <R> refresh(api: TokklApi, me: Me, timerState: ProbedTimerState<R>): Capabilities = change {
+    override suspend fun <R> refresh(api: TokklApi, me: Me, timerState: ProbedTimerState<R>): Capabilities = change {
         val trash = probeTrash(api)
         val read = timerState.begin()
         val timer = probeTimerState(api)
@@ -162,4 +165,22 @@ interface ProbedTimerState<R> {
  */
 fun interface TimerApiOffer {
     suspend fun offersTimerApi(): Boolean
+}
+
+/** Whether the server stores no-time entries, once the capabilities have loaded. */
+fun interface AllDayOffer {
+    suspend fun offersAllDay(): Boolean
+}
+
+/** Whether the server keeps Tokkl's preferences, once the capabilities have loaded. */
+fun interface PreferencesOffer {
+    suspend fun keepsPreferences(): Boolean
+}
+
+/**
+ * Sets the server's capabilities from the account refresh's answers, as [CapabilitiesSource.refresh]
+ * describes. Only the app's refresh steps call it.
+ */
+interface CapabilitiesRefresh {
+    suspend fun <R> refresh(api: TokklApi, me: Me, timerState: ProbedTimerState<R>): Capabilities
 }

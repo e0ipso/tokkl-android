@@ -2,9 +2,10 @@ package com.github.e0ipso.tokkl.signin
 
 import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.SignInRoutes
-import com.github.e0ipso.tokkl.session.AccountSettingsSource
+import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.ServerConfigStore
-import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.session.SignInStatus
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
 
@@ -13,9 +14,9 @@ import kotlin.coroutines.CoroutineContext
  * fills in the stored [servers]' server and the account [settings]' user, read on [io].
  */
 internal class AccountSignInRoutes(
-    private val session: Session,
+    private val session: SignInStatus,
     private val servers: ServerConfigStore,
-    private val settings: AccountSettingsSource,
+    private val settings: StateFlow<AccountSettings?>,
     private val io: CoroutineContext,
 ) : SignInRoutes {
 
@@ -26,6 +27,6 @@ internal class AccountSignInRoutes(
     override fun isSignIn(route: Route): Boolean = route is SignInRoute
 
     override suspend fun again(): Route? = withContext(io) {
-        servers.load()?.let { server -> SignInRoute.again(SignInAgain(server, settings.state.value?.userId)) }
+        servers.load()?.let { server -> SignInRoute.again(SignInAgain(server, settings.value?.userId)) }
     }
 }

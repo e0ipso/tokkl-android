@@ -13,7 +13,7 @@ import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.platform.AppForeground
 import com.github.e0ipso.tokkl.platform.PageLoads
 import com.github.e0ipso.tokkl.platform.stateInPage
-import com.github.e0ipso.tokkl.session.AccountSettingsSource
+import com.github.e0ipso.tokkl.session.DefaultWorkspace
 import com.github.e0ipso.tokkl.session.ServerChanges
 import com.github.e0ipso.tokkl.session.ServerProblem
 import kotlinx.coroutines.CoroutineScope
@@ -110,7 +110,7 @@ data class ProjectsPageState(
 class ProjectsViewModel(
     private val repository: ProjectsRepository,
     tasksRepository: TasksRepository,
-    settings: AccountSettingsSource,
+    settings: DefaultWorkspace,
     changes: ServerChanges,
     scope: CoroutineScope,
     io: CoroutineContext,

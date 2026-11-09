@@ -2,7 +2,7 @@ package com.github.e0ipso.tokkl.timer
 
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.TimerViewChange
-import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
+import com.github.e0ipso.tokkl.capabilities.PreferencesOffer
 import com.github.e0ipso.tokkl.preferences.PreferenceCodec
 import com.github.e0ipso.tokkl.preferences.StoredPreference
 import com.github.e0ipso.tokkl.preferences.SyncedPreference
@@ -38,7 +38,7 @@ typealias StoredTimerView = StoredPreference<TimerView>
 class TimerViewSetting(
     store: ClearableStore<StoredTimerView>,
     client: ApiClientProvider,
-    private val capabilities: CapabilitiesSource,
+    private val capabilities: PreferencesOffer,
     account: CurrentAccount,
     scope: CoroutineScope,
 ) : AccountDataOwner,

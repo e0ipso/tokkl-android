@@ -5,9 +5,9 @@ import android.app.Application
 import android.os.Bundle
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.RunningCheck
-import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
+import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.platform.CurrentWorkManager
-import com.github.e0ipso.tokkl.session.AccountSettingsSource
+import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.timerstate.TimerControls
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -32,8 +32,8 @@ import kotlin.coroutines.CoroutineContext
 class WidgetStateSource(
     application: Application,
     cache: AccountCache,
-    accountSettings: AccountSettingsSource,
-    capabilities: CapabilitiesSource,
+    accountSettings: Flow<AccountSettings?>,
+    capabilities: Flow<Capabilities>,
     timerControls: Flow<TimerControls>,
     workManager: CurrentWorkManager,
     clock: Clock,
@@ -72,8 +72,8 @@ class WidgetStateSource(
             history,
         ) { projects, tasks, history -> Triple(projects, tasks, history) }
         combine(
-            accountSettings.loaded,
-            capabilities.loaded,
+            accountSettings,
+            capabilities,
             timerControls,
             cache.favorites,
             catalog,

@@ -12,7 +12,7 @@ import com.github.e0ipso.tokkl.model.ClientId
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.platform.AppForeground
 import com.github.e0ipso.tokkl.platform.stateInPage
-import com.github.e0ipso.tokkl.session.AccountSettingsSource
+import com.github.e0ipso.tokkl.session.DefaultWorkspace
 import com.github.e0ipso.tokkl.session.ServerChanges
 import com.github.e0ipso.tokkl.session.ServerProblem
 import kotlinx.coroutines.CoroutineScope
@@ -112,7 +112,7 @@ data class ClientsPageState(
  */
 class ClientsViewModel(
     private val repository: ClientsRepository,
-    settings: AccountSettingsSource,
+    settings: DefaultWorkspace,
     changes: ServerChanges,
     scope: CoroutineScope,
     io: CoroutineContext,

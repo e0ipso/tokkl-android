@@ -1,8 +1,10 @@
 package com.github.e0ipso.tokkl.cache
 
-import com.github.e0ipso.tokkl.session.AccountSettingsSource
+import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.storage.StartupLoad
 import com.github.e0ipso.tokkl.time.AccountTime
 import com.github.e0ipso.tokkl.time.SnappedSpan
+import kotlinx.coroutines.flow.StateFlow
 import java.time.Instant
 
 /**
@@ -35,12 +37,18 @@ interface ServerSpans {
     object Unsnapped : ServerSpans
 }
 
-/** [ServerSpans] on the grid of the signed-in account's settings, or unsnapped while there are none. */
-internal class AccountServerSpans(private val settings: AccountSettingsSource) : ServerSpans {
+/**
+ * [ServerSpans] on the grid of the signed-in account's [settings], or unsnapped while there are
+ * none, once [load] has read them from the disk.
+ */
+internal class AccountServerSpans(
+    private val settings: StateFlow<AccountSettings?>,
+    private val load: StartupLoad,
+) : ServerSpans {
 
-    override suspend fun ready() = settings.ready()
+    override suspend fun ready() = load.ready()
 
-    private fun time(): AccountTime? = settings.state.value?.time()
+    private fun time(): AccountTime? = settings.value?.time()
 
     override fun start(start: Instant): Instant = time()?.snapInstant(start) ?: start
 

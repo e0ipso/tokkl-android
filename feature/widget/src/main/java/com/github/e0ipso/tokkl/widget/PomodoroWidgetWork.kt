@@ -7,8 +7,9 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.platform.CurrentWorkManager
-import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.session.SignInStatus
 import com.github.e0ipso.tokkl.timernotice.TimerFailureNotice
 import com.github.e0ipso.tokkl.timerstate.TimerActions
 import com.github.e0ipso.tokkl.timerstate.TimerStateIntakes
@@ -42,7 +43,8 @@ class PomodoroWidgetActionWorker(
     context: Context,
     parameters: WorkerParameters,
     private val timerStates: TimerStateIntakes,
-    private val session: Session,
+    private val client: ApiClientProvider,
+    private val signIn: SignInStatus,
     private val widgetStates: PomodoroWidgetStateSource,
     private val failures: TimerFailureNotice,
     private val scope: CoroutineScope,
@@ -57,11 +59,11 @@ class PomodoroWidgetActionWorker(
     private suspend fun send(tap: PomodoroWidgetTap) {
         val intake = timerStates.intake()
         val current = widgetStates.state.first()
-        if (timerStates.intake() !== intake || !session.isSignedIn()) return
-        val api = session.api()
+        if (timerStates.intake() !== intake || !signIn.isSignedIn()) return
+        val api = client()
         // Keep the captured holder and credential together across sign-out/account replacement.
         val actions = TimerActions(
-            client = { api.takeIf { timerStates.intake() === intake && session.isSignedIn() } },
+            client = { api.takeIf { timerStates.intake() === intake && signIn.isSignedIn() } },
             // The captured holder, whichever account signs in meanwhile.
             states = { intake },
             scope = scope,

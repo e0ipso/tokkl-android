@@ -25,6 +25,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.lifecycle.MainActivityForeground
+import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.navhost.DeepLinks
 import com.github.e0ipso.tokkl.navhost.NavigationRequests
 import com.github.e0ipso.tokkl.navhost.TokklNavHost
@@ -44,7 +45,9 @@ import com.github.e0ipso.tokkl.timer.TimerViewModel
 import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsRepository
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -56,7 +59,7 @@ class MainActivity : ComponentActivity() {
     private val features: FeatureNavigation by inject()
     private val pages: TopLevelPages by inject()
     private val account: CurrentAccount by inject()
-    private val capabilities: CapabilitiesSource by inject()
+    private val capabilities: StateFlow<Capabilities> by lazy { get<CapabilitiesSource>().state }
     private val signIns: SignInRoutes by inject()
     private val loads: StartupLoads by inject()
 
@@ -106,7 +109,7 @@ class MainActivity : ComponentActivity() {
                     features = features,
                     pages = pages,
                     signOuts = account.signOuts,
-                    capabilities = capabilities.state,
+                    capabilities = capabilities,
                     signIns = signIns,
                     timerFrame = {
                         koinViewModel<TimerViewModel>(viewModelStoreOwner = LocalSignedInSession.current).frame

@@ -8,7 +8,7 @@ import com.github.e0ipso.tokkl.api.flatMap
 import com.github.e0ipso.tokkl.api.getOrElse
 import com.github.e0ipso.tokkl.api.map
 import com.github.e0ipso.tokkl.api.onFailure
-import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
+import com.github.e0ipso.tokkl.capabilities.AllDayOffer
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import java.time.temporal.ChronoUnit
@@ -30,7 +30,7 @@ internal class SentChange(val change: PendingChange, val serverId: Long, val ent
 internal class ChangeTries(
     private val store: ChangeStore,
     private val spans: ServerSpans,
-    private val capabilities: CapabilitiesSource,
+    private val capabilities: AllDayOffer,
 ) {
 
     /** Sends an update, a legacy stop or a restore, as [sendOnce] does. */

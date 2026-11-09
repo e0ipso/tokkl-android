@@ -23,7 +23,9 @@ import java.io.IOException
  * @param disk keeps the settings on the phone. They load from it as this is made, in [scope], off
  *   the main thread.
  */
-class AccountSettingsSource(private val disk: ValueStore<AccountSettings>, scope: CoroutineScope) : StartupLoad {
+class AccountSettingsSource(private val disk: ValueStore<AccountSettings>, scope: CoroutineScope) :
+    StartupLoad,
+    DefaultWorkspace {
 
     private val held = LoadedState<AccountSettings?>(scope, null) { disk.load() }
 
@@ -41,7 +43,7 @@ class AccountSettingsSource(private val disk: ValueStore<AccountSettings>, scope
     suspend fun current(): AccountSettings? = held.current()
 
     /** The account's default workspace, for the screens, which show once the settings have loaded. */
-    fun defaultWorkspaceId(): WorkspaceId? = state.value?.defaultWorkspaceId
+    override fun defaultWorkspaceId(): WorkspaceId? = state.value?.defaultWorkspaceId
 
     /** Orders the writes and [writes] with them. */
     private val writing = Mutex()
@@ -105,4 +107,13 @@ class AccountSettingsSource(private val disk: ValueStore<AccountSettings>, scope
         writes++
         held.value = settings
     }
+}
+
+/**
+ * The account's default workspace from the stored settings, or null when they do not have it or
+ * have not loaded, as the pages that manage a workspace's projects, clients and tags read it.
+ * [AccountSettingsSource] gives it.
+ */
+fun interface DefaultWorkspace {
+    fun defaultWorkspaceId(): WorkspaceId?
 }

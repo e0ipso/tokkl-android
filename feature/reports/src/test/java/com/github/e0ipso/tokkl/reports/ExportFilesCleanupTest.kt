@@ -75,7 +75,7 @@ class ExportFilesCleanupTest {
                 client = { api },
                 files = ReportExportFiles(root, Clock.systemUTC()),
                 account = account,
-                capabilities = capabilitiesOf(Capabilities.NONE),
+                csvMissing = capabilitiesOf(Capabilities.NONE)::csvMissing,
                 scope = CoroutineScope(Dispatchers.Unconfined),
                 io = Dispatchers.IO,
             )

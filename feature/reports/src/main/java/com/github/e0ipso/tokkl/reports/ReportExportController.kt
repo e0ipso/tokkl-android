@@ -5,7 +5,7 @@ import com.github.e0ipso.tokkl.api.ApiCallCancellation
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
+import com.github.e0ipso.tokkl.capabilities.ReportCsvKind
 import com.github.e0ipso.tokkl.capabilities.csvEndpointAbsent
 import com.github.e0ipso.tokkl.session.AccountContext
 import com.github.e0ipso.tokkl.session.CurrentAccount
@@ -41,7 +41,7 @@ class ReportExportController(
     private val client: ApiClientProvider,
     private val files: ReportExportFiles,
     private val account: CurrentAccount,
-    private val capabilities: CapabilitiesSource,
+    private val csvMissing: suspend (ReportCsvKind) -> Unit,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
 ) {
@@ -143,7 +143,7 @@ class ReportExportController(
             is ApiResult.Failure -> {
                 // Only for the account the export began with: sign-out forgets the flags after it ends that account.
                 if (answer.error.csvEndpointAbsent() && lease.current { true } == true) {
-                    capabilities.csvMissing(request.kind)
+                    csvMissing(request.kind)
                 }
                 ReportExportState.Failed(answer.error)
             }

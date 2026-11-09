@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.timerstate
 
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.ChangeQueue
+import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.Session
@@ -20,7 +21,7 @@ val timerStateModule = module {
             lastFields = get(),
             entriesOrQueueChanged = get<AccountCache>().entriesOrQueueChanged,
             entries = get(),
-            capabilities = get(),
+            capabilities = get<CapabilitiesSource>().loaded,
             refreshes = get(),
             account = get(),
             clock = get(),

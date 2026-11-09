@@ -62,6 +62,7 @@ class AppModulesTest {
                 Function0::class,
                 Function1::class,
                 Function2::class,
+                Function3::class,
                 Instant::class,
                 File::class,
                 ValueStore::class,

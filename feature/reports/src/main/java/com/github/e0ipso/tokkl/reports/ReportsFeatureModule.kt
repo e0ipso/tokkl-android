@@ -56,7 +56,7 @@ val reportsFeatureModule = module {
                 client = session,
                 files = get(),
                 account = get(),
-                capabilities = capabilities,
+                csvMissing = capabilities::csvMissing,
                 scope = scope,
                 io = io(),
             ),

@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.trash
 
+import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.navigation.FeatureRoutes
 import com.github.e0ipso.tokkl.platform.DefaultNetwork
 import com.github.e0ipso.tokkl.platform.io
@@ -21,7 +22,7 @@ val trashFeatureModule = module {
         TrashViewModel(
             repository = get(),
             changes = get(),
-            capabilities = get(),
+            trashMissing = get<CapabilitiesSource>()::trashMissing,
             scope = scope,
             io = io(),
             settings = accountSettings.state,

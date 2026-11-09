@@ -10,7 +10,7 @@ import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.model.Task
 import com.github.e0ipso.tokkl.model.TaskId
 import com.github.e0ipso.tokkl.model.WorkspaceId
-import com.github.e0ipso.tokkl.session.AccountSettingsSource
+import com.github.e0ipso.tokkl.session.DefaultWorkspace
 import com.github.e0ipso.tokkl.session.ServerChanges
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
@@ -47,7 +47,7 @@ typealias TasksState = CatalogState<TasksData, TaskOverlay>
  */
 class TasksModel(
     private val repository: TasksRepository,
-    settings: AccountSettingsSource,
+    settings: DefaultWorkspace,
     changes: ServerChanges,
     scope: CoroutineScope,
     io: CoroutineContext,

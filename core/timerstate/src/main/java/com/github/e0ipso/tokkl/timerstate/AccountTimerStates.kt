@@ -1,7 +1,7 @@
 package com.github.e0ipso.tokkl.timerstate
 
 import com.github.e0ipso.tokkl.cache.CurrentEntryCache
-import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
+import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.model.DiscardedPomodoro
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountRefreshRequests
@@ -58,7 +58,7 @@ class AccountTimerStates(
     private val lastFields: HeldFieldsMemory,
     entriesOrQueueChanged: Flow<Unit>,
     private val entries: CurrentEntryCache,
-    private val capabilities: CapabilitiesSource,
+    private val capabilities: Flow<Capabilities>,
     private val refreshes: AccountRefreshRequests,
     private val account: CurrentAccount,
     private val clock: Clock,
@@ -122,7 +122,7 @@ class AccountTimerStates(
      * full-screen alarm shows.
      */
     val session: Flow<HeldTimerState?> =
-        combine(held, capabilities.loaded) { held, flags -> held.takeIf { flags.timerState } }
+        combine(held, capabilities) { held, flags -> held.takeIf { flags.timerState } }
             .flowOn(io)
 
     override val discardNotice: Flow<DiscardedPomodoro?> =
@@ -144,7 +144,7 @@ class AccountTimerStates(
     override val controls: Flow<TimerControls> = combine(
         entriesOrQueueChanged,
         states.flatMapLatest { it.source.state },
-        capabilities.loaded,
+        capabilities,
     ) { _, _, flags ->
         val account = current()
         account.source.withState { held ->

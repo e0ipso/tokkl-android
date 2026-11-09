@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.timersync
 
 import com.github.e0ipso.tokkl.cache.ChangeSender
+import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.platform.AppHook
 import com.github.e0ipso.tokkl.platform.DefaultDispatcher
 import com.github.e0ipso.tokkl.platform.io
@@ -64,5 +65,5 @@ val timerSyncModule = module {
     // run, since the app is on screen and the platform lets it start, also offline.
     single { TimerSyncHook(inject()) } bind AppHook::class
 
-    single { CapabilitiesSignOut(get(), get(), get()) } bind AccountDataOwner::class
+    single { CapabilitiesSignOut(get<CapabilitiesSource>()::forget, get(), get()) } bind AccountDataOwner::class
 }

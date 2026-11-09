@@ -6,7 +6,6 @@ import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.cache.DeleteUndo
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.UndoOutcome
-import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.entries.EntryRemovals
 import com.github.e0ipso.tokkl.entryfields.SplitHalves
 import com.github.e0ipso.tokkl.entryfields.SplitProblem
@@ -14,6 +13,7 @@ import com.github.e0ipso.tokkl.entryfields.SplitResult
 import com.github.e0ipso.tokkl.entryfields.splitTimes
 import com.github.e0ipso.tokkl.favorites.FavoritesProblem
 import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
+import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.EntryWithSendState
@@ -127,7 +127,7 @@ class EntryActionsViewModel(
     private val changes: EntryChanges,
     private val removals: EntryRemovals,
     private val undo: DeleteUndo,
-    private val capabilities: CapabilitiesSource,
+    private val capabilities: StateFlow<Capabilities>,
     private val accountSettings: StateFlow<AccountSettings?>,
     scope: CoroutineScope,
     private val clock: Clock,
@@ -138,7 +138,7 @@ class EntryActionsViewModel(
     private val deleting = mutableSetOf<EntryId>()
     private var undoing = false
 
-    fun canRestoreDelete(): Boolean = capabilities.state.value.restore
+    fun canRestoreDelete(): Boolean = capabilities.value.restore
 
     /** Called only after the editor's deletion transaction commits. The session's entries leave it out. */
     fun deleted(entry: TimeEntry, undo: Boolean) {

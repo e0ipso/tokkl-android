@@ -43,7 +43,6 @@ import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.platform.AppForeground
 import com.github.e0ipso.tokkl.session.AccountSettings
-import com.github.e0ipso.tokkl.session.capabilitiesOf
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
@@ -346,7 +345,7 @@ class EntryActionsUiTest {
                 calls += "undo $entryId"
                 undo
             },
-            capabilities = capabilitiesOf(Capabilities.NONE.copy(restore = canRestore)),
+            capabilities = MutableStateFlow(Capabilities.NONE.copy(restore = canRestore)),
             accountSettings = MutableStateFlow(HISTORY.settings),
             scope = scope,
             clock = Clock.systemUTC(),

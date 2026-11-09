@@ -2,7 +2,7 @@ package com.github.e0ipso.tokkl.preferences
 
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.PomodoroDefaultsChange
-import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
+import com.github.e0ipso.tokkl.capabilities.PreferencesOffer
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.CurrentAccount
 import com.github.e0ipso.tokkl.session.MePreferences
@@ -69,7 +69,7 @@ typealias StoredPomodoroDefaults = StoredPreference<PomodoroDefaults>
 class PomodoroDefaultsSetting(
     store: ClearableStore<StoredPomodoroDefaults>,
     client: ApiClientProvider,
-    private val capabilities: CapabilitiesSource,
+    private val capabilities: PreferencesOffer,
     account: CurrentAccount,
     scope: CoroutineScope,
 ) : AccountDataOwner,

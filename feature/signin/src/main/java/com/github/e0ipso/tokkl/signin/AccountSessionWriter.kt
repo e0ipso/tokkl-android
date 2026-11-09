@@ -3,9 +3,7 @@ package com.github.e0ipso.tokkl.signin
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.cache.SignInPause
 import com.github.e0ipso.tokkl.session.AccountSettings
-import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.CurrentAccount
-import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.session.SignedInListener
 import com.github.e0ipso.tokkl.timersync.TimerSyncFollower
 import java.io.IOException
@@ -20,14 +18,18 @@ import java.security.GeneralSecurityException
  * then lifts the queue's pause, and the changes that waited go out (docs/PRD.md O6). Blocks on
  * disk I/O.
  *
+ * @param storeSettings stores the account settings, as `AccountSettingsSource.store` does, and
+ *   throws [IOException] when it fails.
  * @param clearTimerState clears the timer state and the remembered Start fields, so the account
  *   signing in starts from nothing. Blocks on disk I/O and throws [IOException] when it fails.
+ * @param storeSession stores the server and its token, as `Session.save` does, and throws
+ *   [IOException] or [GeneralSecurityException] when it fails.
  */
 internal class AccountSessionWriter(
-    private val accountSettings: AccountSettingsSource,
+    private val storeSettings: suspend (AccountSettings) -> Unit,
     private val clearTimerState: () -> Unit,
     private val account: CurrentAccount,
-    private val session: Session,
+    private val storeSession: suspend (ServerUrl, String) -> Unit,
     private val signedIn: List<SignedInListener>,
     private val queue: SignInPause,
     private val timerSync: TimerSyncFollower,
@@ -35,10 +37,10 @@ internal class AccountSessionWriter(
 
     @Throws(GeneralSecurityException::class, IOException::class)
     override suspend fun save(server: ServerUrl, token: String, settings: AccountSettings) {
-        accountSettings.store(settings)
+        storeSettings(settings)
         clearTimerState()
         account.begin()
-        session.save(server, token)
+        storeSession(server, token)
         signedIn.forEach(SignedInListener::signedIn)
         if (queue.signInNeeded.value) queue.resume()
         // Signing in again over a refused token keeps the capability: the stream restarts for the

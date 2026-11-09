@@ -8,6 +8,7 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCallCancellation
+import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.capabilities.ReportCsvKind
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.Session
@@ -51,7 +52,7 @@ class ReportCsvServerTest {
             client = { fixture.account.client.tokklApi() },
             files = files,
             account = GlobalContext.get().get(),
-            capabilities = GlobalContext.get().get(),
+            csvMissing = GlobalContext.get().get<CapabilitiesSource>()::csvMissing,
             scope = scope,
             io = Dispatchers.IO,
         )

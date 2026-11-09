@@ -1,11 +1,11 @@
 package com.github.e0ipso.tokkl.widget
 
 import androidx.annotation.VisibleForTesting
-import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
+import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.model.Task
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaultsSetting
-import com.github.e0ipso.tokkl.session.AccountSettingsSource
+import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.SignInStatus
 import com.github.e0ipso.tokkl.timerstate.HeldTimerStates
 import com.github.e0ipso.tokkl.timerstate.PomodoroRingingPhase
@@ -32,8 +32,8 @@ class PomodoroWidgetStateSource(
     projects: Flow<List<Project>>,
     tasks: Flow<List<Task>>,
     ringing: PomodoroRingingPhase,
-    capabilities: CapabilitiesSource,
-    accountSettings: AccountSettingsSource,
+    capabilities: Flow<Capabilities>,
+    accountSettings: Flow<AccountSettings?>,
     pomodoroDefaults: PomodoroDefaultsSetting,
     signedIn: SignInStatus,
     clock: Clock,
@@ -57,8 +57,8 @@ class PomodoroWidgetStateSource(
         }
         combine(
             timerStates.held,
-            capabilities.loaded,
-            accountSettings.loaded,
+            capabilities,
+            accountSettings,
             pomodoroDefaults.loadedDefaults,
             catalog,
         ) { _, flags, settings, defaults, (cachedProjects, cachedTasks, ringing) ->

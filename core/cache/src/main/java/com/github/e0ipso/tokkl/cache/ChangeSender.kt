@@ -5,7 +5,7 @@ import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TokklApi
-import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
+import com.github.e0ipso.tokkl.capabilities.AllDayOffer
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import kotlinx.coroutines.CompletableDeferred
@@ -85,7 +85,7 @@ class ChangeSender(
     private val events: ChangeSenderEvents,
     private val clock: Clock,
     private val spans: ServerSpans,
-    private val capabilities: CapabilitiesSource,
+    private val capabilities: AllDayOffer,
     private val undo: DeleteUndoer,
 ) : AccountDataOwner,
     QueueSender,

@@ -3,7 +3,6 @@ package com.github.e0ipso.tokkl.cache
 import android.database.sqlite.SQLiteException
 import com.github.e0ipso.tokkl.api.Me
 import com.github.e0ipso.tokkl.api.TokklApi
-import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.session.MePreferences
 import java.time.Clock
@@ -12,11 +11,14 @@ import java.time.Clock
  * The refresh of the cache from the server: it reads the server's snapshot and writes it over the
  * rows [AccountCache] reads, with the queued changes on top. The account refresh runs it once per
  * answer.
+ *
+ * @param allDayMissing turns no-time entries off in the capabilities, as
+ *   `CapabilitiesSource.allDayMissing` does.
  */
 class ServerCacheRefresh(
     private val database: CacheDatabase,
     private val clock: Clock,
-    private val capabilitiesSource: CapabilitiesSource,
+    private val allDayMissing: suspend () -> Unit,
 ) {
 
     private val dao = database.cache()
@@ -29,8 +31,8 @@ class ServerCacheRefresh(
      * `GET /api/v9/me/preferences`, null when that failed, and [capabilities] the flags they set.
      * A server without favorites gets none cached. A failed request keeps its rows, and a failed
      * write keeps the whole cache as it was. When Tokkl lists an entry without `all_day`, as
-     * [readServerSnapshot] describes, the [capabilitiesSource] learns that the server stores no
-     * no-time entries. Blocks on the disk, so call it on the IO dispatcher.
+     * [readServerSnapshot] describes, [allDayMissing] tells the capabilities that the server
+     * stores no no-time entries. Blocks on the disk, so call it on the IO dispatcher.
      */
     suspend fun refresh(api: TokklApi, me: Me, preferences: MePreferences?, capabilities: Capabilities) {
         val changes = database.changes()
@@ -46,7 +48,7 @@ class ServerCacheRefresh(
             preferences,
             clock,
             favorites = capabilities.favorites,
-            onAllDayMissing = capabilitiesSource::allDayMissing,
+            onAllDayMissing = allDayMissing,
         )
         try {
             database.runInTransaction {

@@ -1,8 +1,10 @@
 package com.github.e0ipso.tokkl.cache
 
+import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.platform.AppHook
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.session.AccountDataOwner
+import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.ForegroundReads
 import com.github.e0ipso.tokkl.session.ForegroundRefresh
 import com.github.e0ipso.tokkl.session.Session
@@ -25,12 +27,15 @@ val cacheModule = module {
     single { AccountCache(get(), io()) } bind AccountDataOwner::class
     // The running entry, read and reconciled on a worker thread under the caller's lock.
     single<CurrentEntryCache> { RoomCurrentEntries(get()) }
-    single { ServerCacheRefresh(get(), get(), get()) }
+    single { ServerCacheRefresh(get(), get(), allDayMissing = get<CapabilitiesSource>()::allDayMissing) }
 
     // The queue's tables, which the queue writes and the sender reads.
     single { RoomChangeStore(get()) } binds arrayOf(ChangeStore::class, QueueStorage::class)
 
-    single { AccountServerSpans(get()) } bind ServerSpans::class
+    single {
+        val settings = get<AccountSettingsSource>()
+        AccountServerSpans(settings.state, settings)
+    } bind ServerSpans::class
 
     // Start, stop, create, edit and delete entries on the phone. The [ChangeSender] sends each
     // change at once, and [BackgroundSend] sends what is left when the network returns, also with

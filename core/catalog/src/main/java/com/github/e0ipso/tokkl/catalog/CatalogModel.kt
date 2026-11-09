@@ -6,7 +6,7 @@ import com.github.e0ipso.tokkl.api.fold
 import com.github.e0ipso.tokkl.api.getOrElse
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.platform.PageLoads
-import com.github.e0ipso.tokkl.session.AccountSettingsSource
+import com.github.e0ipso.tokkl.session.DefaultWorkspace
 import com.github.e0ipso.tokkl.session.ServerChanges
 import com.github.e0ipso.tokkl.session.ServerProblem
 import com.github.e0ipso.tokkl.session.toServerProblem
@@ -83,7 +83,7 @@ data class CatalogState<D, O>(
  */
 class CatalogModel<D, O>(
     private val repository: CatalogRepository<D>,
-    private val settings: AccountSettingsSource,
+    private val settings: DefaultWorkspace,
     private val changes: ServerChanges,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,

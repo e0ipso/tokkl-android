@@ -6,7 +6,6 @@ import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.HttpStatus
-import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.platform.AppForeground
 import com.github.e0ipso.tokkl.platform.PageLoads
@@ -111,7 +110,7 @@ data class TrashPageState(
 class TrashViewModel(
     private val repository: TrashRepository,
     private val changes: ServerChanges,
-    private val capabilities: CapabilitiesSource,
+    private val trashMissing: suspend () -> Unit,
     scope: CoroutineScope,
     private val io: CoroutineContext,
     settings: StateFlow<AccountSettings?>,
@@ -251,7 +250,7 @@ class TrashViewModel(
             // A cancelled load cancels its request and drops its answer.
             val answer = withContext(io) {
                 repository.list().also {
-                    if (it is ApiResult.Failure && it.error.meansNoTrash()) capabilities.trashMissing()
+                    if (it is ApiResult.Failure && it.error.meansNoTrash()) trashMissing()
                 }
             }
             when (answer) {

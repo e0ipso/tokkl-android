@@ -3,7 +3,7 @@ package com.github.e0ipso.tokkl.lifecycle
 import com.github.e0ipso.tokkl.api.Me
 import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.cache.ServerCacheRefresh
-import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
+import com.github.e0ipso.tokkl.capabilities.CapabilitiesRefresh
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaultsSetting
 import com.github.e0ipso.tokkl.preferences.ReminderSetting
 import com.github.e0ipso.tokkl.session.AccountRefreshSteps
@@ -22,7 +22,7 @@ import com.github.e0ipso.tokkl.timersync.TimerSyncFollower
  * the Timer feature.
  */
 internal class AppRefreshSteps(
-    private val capabilities: CapabilitiesSource,
+    private val capabilities: CapabilitiesRefresh,
     private val timerStates: TimerStateIntakes,
     private val cache: ServerCacheRefresh,
     private val timerView: TimerViewSetting,
