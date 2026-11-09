@@ -61,6 +61,4 @@ val notificationFeatureModule = module {
     worker { params -> ReminderWorker(androidContext(), params.get(), get(), io()) }
     // What a timer action sent from outside the screens says when it does not go through.
     single<TimerFailureNotice> { ToastTimerFailureNotice(androidContext(), get<CoroutineDispatcher>(MainDispatcher)) }
-
-    worker { params -> TimerActionWorker(androidContext(), params.get(), get(), get(), io()) }
 }

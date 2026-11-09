@@ -16,6 +16,7 @@ dependencies {
     implementation(libs.androidx.glance.material3)
     implementation(libs.androidx.glance.appwidget)
     implementation(libs.androidx.work.runtime)
+    implementation(libs.koin.androidx.workmanager)
 
     testImplementation(testFixtures(project(":core:platform")))
     testImplementation(testFixtures(project(":core:timerstate")))

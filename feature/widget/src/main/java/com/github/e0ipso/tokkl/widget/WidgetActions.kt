@@ -13,16 +13,12 @@ import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.model.TaskId
-import com.github.e0ipso.tokkl.platform.IoDispatcher
+import com.github.e0ipso.tokkl.platform.CurrentWorkManager
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
-import com.github.e0ipso.tokkl.timernotice.TimerFailureNotice
-import com.github.e0ipso.tokkl.timerstate.SurfaceTap
+import com.github.e0ipso.tokkl.timernotice.sendTimerAction
 import com.github.e0ipso.tokkl.timerstate.TimerSurfaceAction
 import com.github.e0ipso.tokkl.timerstate.TimerSurfaceActions
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
 
@@ -86,22 +82,22 @@ class ResumeTimerAction :
 }
 
 /**
- * Runs [action] for the target [parameters] carry through [TimerSurfaceActions].
- * A Stop of a running entry is queued before this returns. A server action goes out in a scope of
- * its own, so Glance's broadcast does not wait for the server, and one that fails, offline
+ * Runs [action] for the target [parameters] carry, as the notification's actions run. A Stop of a
+ * running entry is changed on the phone and queued before this returns, so it works offline. Pause,
+ * Resume and Stop while paused need the server, so they go to WorkManager ([sendTimerAction]),
+ * which checks them against the timer when it runs and sends each once; one that fails, offline
  * included, says why in a toast while the widget keeps showing what it showed.
  */
 private suspend fun KoinComponent.tapTimer(action: TimerSurfaceAction, parameters: ActionParameters) {
-    val tap = try {
-        get<TimerSurfaceActions>().tap(action, parameters.target())
-    } catch (_: SQLiteException) {
-        // The disk refused the change. The timer stays as it was, and the widget shows it.
-        null
+    val target = parameters.target()
+    if (action != TimerSurfaceAction.Stop || target.entryId == null) {
+        get<CurrentWorkManager>().sendTimerAction(action, target)
+        return
     }
-    if (tap is SurfaceTap.Request) {
-        get<CoroutineScope>().launch(
-            get<CoroutineDispatcher>(IoDispatcher),
-        ) { tap.send()?.let { get<TimerFailureNotice>().show(it) } }
+    try {
+        get<TimerSurfaceActions>().tap(action, target)
+    } catch (_: SQLiteException) {
+        // The disk refused the change. The timer keeps running, and the widget shows it.
     }
 }
 

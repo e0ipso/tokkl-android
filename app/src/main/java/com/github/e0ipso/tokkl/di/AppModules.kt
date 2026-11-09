@@ -17,6 +17,7 @@ import com.github.e0ipso.tokkl.sync.syncFeatureModule
 import com.github.e0ipso.tokkl.tags.tagsFeatureModule
 import com.github.e0ipso.tokkl.tile.tileFeatureModule
 import com.github.e0ipso.tokkl.timer.timerFeatureModule
+import com.github.e0ipso.tokkl.timernotice.timerNoticeModule
 import com.github.e0ipso.tokkl.timerstate.timerStateModule
 import com.github.e0ipso.tokkl.timersync.timerSyncModule
 import com.github.e0ipso.tokkl.trash.trashFeatureModule
@@ -44,6 +45,7 @@ internal val appModules: List<Module> = listOf(
     trustModule,
     cacheModule,
     timerStateModule,
+    timerNoticeModule,
     timerSyncModule,
     lifecycleModule,
     startupModule,

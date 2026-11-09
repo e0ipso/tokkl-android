@@ -1,4 +1,4 @@
-package com.github.e0ipso.tokkl.notification
+package com.github.e0ipso.tokkl.timernotice
 
 import android.content.Context
 import android.database.sqlite.SQLiteException
@@ -10,7 +10,6 @@ import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.platform.CurrentWorkManager
-import com.github.e0ipso.tokkl.timernotice.TimerFailureNotice
 import com.github.e0ipso.tokkl.timerstate.SurfaceTap
 import com.github.e0ipso.tokkl.timerstate.TimerSurfaceAction
 import com.github.e0ipso.tokkl.timerstate.TimerSurfaceActions
@@ -19,12 +18,12 @@ import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
 
 /**
- * Hands the notification's Pause, Resume and Stop while paused to WorkManager as expedited work,
- * which keeps the process alive while the server answers. Without a quota for expedited work it
- * runs as ordinary work. It has no network constraint: offline, the request fails at once and the
- * toast says so, as before.
+ * Hands Pause, Resume and Stop while paused, from the notification or the widget, to WorkManager
+ * as expedited work, which keeps the process alive while the server answers. Without a quota for
+ * expedited work it runs as ordinary work. It has no network constraint: offline, the request
+ * fails at once and [TimerFailureNotice] says so. It runs once, never again after a failure.
  */
-internal fun CurrentWorkManager.sendTimerAction(action: TimerSurfaceAction, target: TimerTarget) {
+fun CurrentWorkManager.sendTimerAction(action: TimerSurfaceAction, target: TimerTarget) {
     val request = OneTimeWorkRequestBuilder<TimerActionWorker>()
         .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
         .setInputData(
@@ -40,9 +39,9 @@ internal fun CurrentWorkManager.sendTimerAction(action: TimerSurfaceAction, targ
 }
 
 /**
- * Sends one of the notification's server actions: [TimerSurfaceActions] checks it against what the
- * phone holds now and sends it once. One that fails, offline included, changes nothing and says
- * why in a toast.
+ * Sends one server action of the notification or the widget: [TimerSurfaceActions] checks it,
+ * with the account and the revision or entry it was drawn for, against what the phone holds now
+ * and sends it once. One that fails, offline included, changes nothing and [failures] says why.
  */
 class TimerActionWorker(
     context: Context,

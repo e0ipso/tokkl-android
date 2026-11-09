@@ -41,6 +41,19 @@ class PomodoroWidgetActionsTest {
     private val start = PomodoroWidgetTap.Start(idle.account, idle.entry, idle.defaults)
     private val server = RecordingActions()
 
+    /** The work that sends a tap gets the account, fields, lengths, phase and revision the widget drew. */
+    @Test fun theWorkSendsTheTapTheWidgetDrew() {
+        val started = start.toData().pomodoroWidgetTap() as PomodoroWidgetTap.Start
+        assertEquals(start.account, started.account)
+        assertEquals(entry.workspaceId, started.entry.workspaceId)
+        assertEquals(entry.fields, started.entry.fields)
+        assertEquals(idle.defaults, started.defaults)
+
+        val end = next.copy(endSession = true)
+        assertEquals(next, next.toData().pomodoroWidgetTap())
+        assertEquals(end, end.toData().pomodoroWidgetTap())
+    }
+
     @Test fun correctedEndIsAFutureCountdownBaseWithoutClamping() {
         val clock = pomodoroWidgetClock(active, at, 200_000)
         assertEquals(1_580_000L, clock.base)
