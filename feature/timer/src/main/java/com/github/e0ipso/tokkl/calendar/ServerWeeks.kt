@@ -2,7 +2,7 @@ package com.github.e0ipso.tokkl.calendar
 
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
-import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.fold
 import com.github.e0ipso.tokkl.cache.HistoryWindow
 import com.github.e0ipso.tokkl.cache.toTimeEntry
 import com.github.e0ipso.tokkl.model.TimeEntry
@@ -35,20 +35,21 @@ internal fun spanOf(time: AccountTime, weekStart: LocalDate, today: LocalDate): 
     )
 }
 
-/**
- * The entries in [span], from [client]'s server. The server finds entries by their start, so this
- * asks from [CalendarViewModel.LONGEST_ENTRY] before it.
- */
-internal suspend fun fetchWeek(client: ApiClientProvider, span: WeekSpan): ServerWeek {
-    val api = client() ?: return ServerWeek(emptyList(), WeekSource.AuthFailed)
-    return when (val answer = api.entries.list(span.from - CalendarViewModel.LONGEST_ENTRY, span.to)) {
-        is ApiResult.Failure -> ServerWeek(emptyList(), statusOf(answer.error))
+/** The week calendar's entries that the cache does not hold, from the signed-in account's server. */
+class ServerWeeks(private val client: ApiClientProvider) {
 
-        is ApiResult.Success -> ServerWeek(
-            answer.value.mapNotNull {
-                it.toTimeEntry()
-            }.filter { entry -> entry.stop.let { it == null || it > span.from } },
-            WeekSource.Loaded,
+    /**
+     * The entries in [span]. The server finds entries by their start, so this asks from
+     * [CalendarViewModel.LONGEST_ENTRY] before it.
+     */
+    internal suspend fun week(span: WeekSpan): ServerWeek {
+        val api = client() ?: return ServerWeek(emptyList(), WeekSource.AuthFailed)
+        return api.entries.list(span.from - CalendarViewModel.LONGEST_ENTRY, span.to).fold(
+            onSuccess = { entries ->
+                val read = entries.mapNotNull { it.toTimeEntry() }
+                ServerWeek(read.filter { entry -> entry.stop.let { it == null || it > span.from } }, WeekSource.Loaded)
+            },
+            onFailure = { ServerWeek(emptyList(), statusOf(it)) },
         )
     }
 }

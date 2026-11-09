@@ -253,7 +253,7 @@ class CalendarGesturesTest {
             tasks = MutableStateFlow(emptyList()),
             accountSettings = MutableStateFlow(SETTINGS),
             changes = changes,
-            client = { null },
+            weeks = ServerWeeks { null },
             scope = scope,
             io = Dispatchers.IO,
             clock = CLOCK,

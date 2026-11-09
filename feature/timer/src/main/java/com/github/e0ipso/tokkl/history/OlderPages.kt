@@ -4,6 +4,7 @@ import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TokklApi
+import com.github.e0ipso.tokkl.api.fold
 import com.github.e0ipso.tokkl.cache.toTimeEntry
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.time.AccountTime
@@ -38,38 +39,37 @@ private sealed interface BoundsAnswer {
     data class Failed(val status: OlderDays) : BoundsAnswer
 }
 
-/**
- * The page of days before [before] from [client]'s server, and where the history starts, [known]
- * or read now.
- */
-internal suspend fun fetchOlderPage(
-    client: ApiClientProvider,
-    time: AccountTime,
-    before: LocalDate,
-    known: HistoryBounds?,
-): Pair<OlderPage, HistoryBounds?> {
-    val api = client() ?: return OlderPage.NotLoaded(OlderDays.AuthFailed) to known
-    val bounds = known ?: when (val answer = readBounds(api)) {
-        is BoundsAnswer.Read -> answer.bounds
-        is BoundsAnswer.Failed -> return OlderPage.NotLoaded(answer.status) to null
-    }
-    if (bounds.nothingBefore(before)) return OlderPage.NotLoaded(OlderDays.End) to bounds
-    val from = before.minusDays(HistoryViewModel.PAGE_DAYS)
-    val start = from.atStartOfDay(time.zone).toInstant()
-    val end = before.atStartOfDay(time.zone).toInstant()
-    val page = when (val answer = api.entries.list(start, end)) {
-        is ApiResult.Failure -> OlderPage.NotLoaded(statusOf(answer.error))
+/** The history's days before the cache, from the signed-in account's server. */
+class OlderPages(private val client: ApiClientProvider) {
 
-        is ApiResult.Success -> {
-            val entries = answer.value.mapNotNull { it.toTimeEntry() }.filter { it.start >= start && it.start < end }
-            val status = when {
-                bounds.nothingBefore(from) -> OlderDays.End
-                else -> OlderDays.More(auto = entries.isNotEmpty() || bounds is HistoryBounds.Known)
-            }
-            OlderPage.Loaded(from, entries, status)
+    /** The page of days before [before], and where the history starts, [known] or read now. */
+    internal suspend fun page(
+        time: AccountTime,
+        before: LocalDate,
+        known: HistoryBounds?,
+    ): Pair<OlderPage, HistoryBounds?> {
+        val api = client() ?: return OlderPage.NotLoaded(OlderDays.AuthFailed) to known
+        val bounds = known ?: when (val answer = readBounds(api)) {
+            is BoundsAnswer.Read -> answer.bounds
+            is BoundsAnswer.Failed -> return OlderPage.NotLoaded(answer.status) to null
         }
+        if (bounds.nothingBefore(before)) return OlderPage.NotLoaded(OlderDays.End) to bounds
+        val from = before.minusDays(HistoryViewModel.PAGE_DAYS)
+        val start = from.atStartOfDay(time.zone).toInstant()
+        val end = before.atStartOfDay(time.zone).toInstant()
+        val page = api.entries.list(start, end).fold(
+            onSuccess = { answer ->
+                val entries = answer.mapNotNull { it.toTimeEntry() }.filter { it.start >= start && it.start < end }
+                val status = when {
+                    bounds.nothingBefore(from) -> OlderDays.End
+                    else -> OlderDays.More(auto = entries.isNotEmpty() || bounds is HistoryBounds.Known)
+                }
+                OlderPage.Loaded(from, entries, status)
+            },
+            onFailure = { OlderPage.NotLoaded(statusOf(it)) },
+        )
+        return page to bounds
     }
-    return page to bounds
 }
 
 /** `GET /api/app/bounds`, Tokkl's first and last day with an entry in the account's timezone. */

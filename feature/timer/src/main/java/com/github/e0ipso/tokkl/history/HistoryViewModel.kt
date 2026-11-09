@@ -2,7 +2,6 @@ package com.github.e0ipso.tokkl.history
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.cache.CurrentEntryIds
 import com.github.e0ipso.tokkl.cache.HistoryWindow
 import com.github.e0ipso.tokkl.cache.reconcileEntryRows
@@ -52,7 +51,7 @@ import kotlin.coroutines.CoroutineContext
  * Call [loadOlder] on the main thread.
  *
  * @param entries the cached entries with their send state, as AccountCache.entries gives them.
- * @param client the signed-in account's API client, or null when signed out. Runs on [io].
+ * @param olderPages the days before the cache, from the server. Runs on [io].
  * @param clock where today comes from, in the account's timezone.
  * @param overrides the entry actions' deletes and restores, which [reconcile] applies.
  * @param app each return of the network while the app is in the foreground calls [reconnected].
@@ -62,7 +61,7 @@ class HistoryViewModel(
     projects: Flow<List<Project>>,
     tasks: Flow<List<Task>>,
     private val accountSettings: StateFlow<AccountSettings?>,
-    private val client: ApiClientProvider,
+    private val olderPages: OlderPages,
     scope: CoroutineScope,
     private val io: CoroutineContext,
     private val clock: Clock,
@@ -172,7 +171,7 @@ class HistoryViewModel(
         val known = bounds
         val reconnectsBefore = reconnects
         viewModelScope.launch {
-            val (page, read) = withContext(io) { fetchOlderPage(client, time, before, known) }
+            val (page, read) = withContext(io) { olderPages.page(time, before, known) }
             bounds = read
             val loaded = older.value
             older.value = when (page) {

@@ -5,6 +5,7 @@ import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.cache.ChangeSender
 import com.github.e0ipso.tokkl.cache.DeleteUndoer
 import com.github.e0ipso.tokkl.calendar.CalendarViewModel
+import com.github.e0ipso.tokkl.calendar.ServerWeeks
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.entry.EntryFormViewModel
 import com.github.e0ipso.tokkl.entry.openIn
@@ -13,6 +14,7 @@ import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
 import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.history.EntryActionsViewModel
 import com.github.e0ipso.tokkl.history.HistoryViewModel
+import com.github.e0ipso.tokkl.history.OlderPages
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.navigation.EntryFormRequest
@@ -64,6 +66,10 @@ val timerFeatureModule = module {
     // The system trace of each Start and Stop tap on the Timer page.
     single { TapTrace.System }
 
+    // The history's and the calendar's days outside the cache, from the server.
+    single { OlderPages(get<Session>()) }
+    single { ServerWeeks(get<Session>()) }
+
     viewModel { params ->
         val cache = get<AccountCache>()
         val changes = get<ChangeQueue>()
@@ -72,7 +78,7 @@ val timerFeatureModule = module {
             projects = cache.projects,
             tasks = cache.tasks,
             accountSettings = get<AccountSettingsSource>().state,
-            client = get<Session>(),
+            olderPages = get(),
             scope = viewModelCoroutineScope(),
             io = io(),
             clock = get(),
@@ -103,7 +109,7 @@ val timerFeatureModule = module {
             tasks = cache.tasks,
             accountSettings = get<AccountSettingsSource>().state,
             changes = get<ChangeQueue>(),
-            client = get<Session>(),
+            weeks = get(),
             scope = viewModelCoroutineScope(),
             io = io(),
             clock = get(),

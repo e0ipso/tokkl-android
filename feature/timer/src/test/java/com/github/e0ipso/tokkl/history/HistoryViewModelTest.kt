@@ -397,7 +397,7 @@ class HistoryViewModelTest {
         projects = MutableStateFlow(emptyList<Project>()),
         tasks = MutableStateFlow(emptyList<Task>()),
         accountSettings = MutableStateFlow(SETTINGS),
-        client = { client },
+        olderPages = OlderPages { client },
         scope = scope,
         io = Dispatchers.IO,
         clock = MovableClock(now),

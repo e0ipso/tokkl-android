@@ -15,7 +15,7 @@ import org.koin.dsl.module
 
 /** The Trash page: its repository, its view model and its screen. */
 val trashFeatureModule = module {
-    single { TrashRepository(get<Session>()) }
+    single<TrashRepository> { ServerTrashRepository(get<Session>()) }
 
     viewModel {
         val accountSettings = get<AccountSettingsSource>()

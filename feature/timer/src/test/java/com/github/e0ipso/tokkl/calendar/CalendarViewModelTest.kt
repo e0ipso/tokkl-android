@@ -587,7 +587,7 @@ class CalendarViewModelTest {
         tasks = flowOf(emptyList()),
         accountSettings = MutableStateFlow(settings),
         changes = changes,
-        client = { testApi.api(url, ApiCredentials.ApiToken("tok-123")) },
+        weeks = ServerWeeks { testApi.api(url, ApiCredentials.ApiToken("tok-123")) },
         scope = CoroutineScope(Dispatchers.Unconfined),
         io = io,
         clock = CLOCK,

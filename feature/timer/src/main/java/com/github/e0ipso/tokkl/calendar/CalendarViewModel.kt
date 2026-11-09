@@ -2,7 +2,6 @@ package com.github.e0ipso.tokkl.calendar
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.HistoryWindow
 import com.github.e0ipso.tokkl.cache.reconcileEntryRows
@@ -68,7 +67,7 @@ import kotlin.coroutines.CoroutineContext
  * Call [step], [showToday], [loadWeek], [create], [move] and [resize] on the main thread.
  *
  * @param entries the cached entries with their send state, as AccountCache.entries gives them.
- * @param client the signed-in account's API client, or null when signed out. Runs on [io].
+ * @param weeks the weeks outside the cache, from the server. Runs on [io].
  * @param clock where today comes from, in the account's timezone.
  * @param allDayOffered whether the server stores no-time entries (`Capabilities.allDay == true`),
  *   which [CalendarState.Shown.allDayOffered] reports for the All day row.
@@ -82,7 +81,7 @@ class CalendarViewModel(
     tasks: Flow<List<Task>>,
     private val accountSettings: StateFlow<AccountSettings?>,
     private val changes: EntryChanges,
-    private val client: ApiClientProvider,
+    private val weeks: ServerWeeks,
     scope: CoroutineScope,
     private val io: CoroutineContext,
     private val clock: Clock,
@@ -215,7 +214,7 @@ class CalendarViewModel(
         val sent = edited.value.filterValues { !it.held }
         val foregroundAtStart = foregroundCount.value
         viewModelScope.launch {
-            val week = withContext(io) { fetchWeek(client, span) }
+            val week = withContext(io) { weeks.week(span) }
             val kept = before?.takeIf { week.status == WeekSource.Unreachable }?.copy(stale = true)
             if (kept == null && week.status == WeekSource.Loaded) {
                 val ids = week.entries.mapTo(HashSet()) { it.id }

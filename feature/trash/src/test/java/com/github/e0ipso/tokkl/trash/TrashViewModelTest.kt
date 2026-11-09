@@ -1,10 +1,7 @@
 package com.github.e0ipso.tokkl.trash
 
-import com.github.e0ipso.tokkl.api.ApiCredentials
-import com.github.e0ipso.tokkl.api.InMemoryServerTrust
-import com.github.e0ipso.tokkl.api.ServerUrl
-import com.github.e0ipso.tokkl.api.TestApi
-import com.github.e0ipso.tokkl.api.TokklApi
+import com.github.e0ipso.tokkl.api.ApiError
+import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TrashEntry
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.platform.TestApp
@@ -15,30 +12,20 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import mockwebserver3.Dispatcher
-import mockwebserver3.MockResponse
-import mockwebserver3.MockWebServer
-import mockwebserver3.RecordedRequest
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import org.junit.Before
 import org.junit.Test
+import java.io.IOException
 
 /**
- * The trash page's model against a MockWebServer that answers by method and path. Unconfined runs
- * each request to its end inside the call.
+ * The trash page's model over a repository that answers each call as the test sets it, a 404
+ * for anything it does not. Unconfined runs each call to its end inside the call.
  */
 class TrashViewModelTest {
 
-    private val testApi = TestApi(null)
-
-    private val server = MockWebServer()
-    private lateinit var client: TokklApi
-    private val answers = mutableMapOf<String, MockResponse>()
-    private val requests = mutableListOf<String>()
+    private val trash = AnsweringTrash()
     private var cacheRefreshes = 0
     private var missing = 0
 
@@ -47,7 +34,7 @@ class TrashViewModelTest {
     private val screen by lazy { TestScreen(model.page, scope, scheduler) }
     private val model by lazy {
         TrashViewModel(
-            repository = TrashRepository { client },
+            repository = trash,
             refreshCache = { cacheRefreshes++ },
             trashMissing = { missing++ },
             scope = scope,
@@ -58,30 +45,9 @@ class TrashViewModelTest {
         )
     }
 
-    @Before
-    fun setUp() {
-        server.dispatcher = object : Dispatcher() {
-            override fun dispatch(request: RecordedRequest): MockResponse {
-                val key = "${request.method} ${request.url.encodedPath}"
-                synchronized(requests) { requests += key }
-                return answers[key] ?: MockResponse.Builder().code(404).body("\"Not found\"").build()
-            }
-        }
-        server.start()
-        val configured = ServerUrl.parse(server.url("/").toString())!!
-        testApi.stored = configured
-        testApi.trust = InMemoryServerTrust(configured)
-        client = testApi.api(configured, ApiCredentials.ApiToken("tok-123"))
-    }
-
-    @After
-    fun tearDown() {
-        server.close()
-    }
-
     @Test
     fun openingListsTheDeletedEntries() {
-        answers[LIST] = json("[${entry(1, "Write")},${entry(2, null)}]")
+        trash.list = ApiResult.Success(listOf(entry(1, "Write"), entry(2, null)))
 
         screen.show()
 
@@ -101,9 +67,7 @@ class TrashViewModelTest {
 
     @Test
     fun anAnswerThatIsNotAListHidesTheTrashToo() {
-        answers[LIST] = MockResponse.Builder().code(
-            200,
-        ).addHeader("Content-Type", "text/html").body("<html></html>").build()
+        trash.list = ApiResult.Failure(ApiError.InvalidResponse(IllegalArgumentException("not a list")))
 
         screen.show()
 
@@ -112,8 +76,7 @@ class TrashViewModelTest {
 
     @Test
     fun anUnreachableServerTurnsEveryActionOff() {
-        answers[LIST] = json("[${entry(1, "Write")}]")
-        server.close()
+        trash.list = ApiResult.Failure(ApiError.Network(IOException("no route")))
 
         screen.show()
 
@@ -124,8 +87,8 @@ class TrashViewModelTest {
 
     @Test
     fun restoreTakesTheEntryOutOfTheTrashAndRefreshesTheCache() {
-        answers[LIST] = json("[${entry(1, "Write")},${entry(2, "Read")}]")
-        answers["POST /api/app/time_entries/1/restore"] = json(entry(1, "Write"))
+        trash.list = ApiResult.Success(listOf(entry(1, "Write"), entry(2, "Read")))
+        trash.restored[EntryId(1)] = ApiResult.Success(Unit)
         screen.show()
 
         model.restore(EntryId(1))
@@ -137,8 +100,8 @@ class TrashViewModelTest {
 
     @Test
     fun purgeDeletesOneEntryAtOnce() {
-        answers[LIST] = json("[${entry(1, "Write")},${entry(2, "Read")}]")
-        answers["DELETE /api/app/trash/2"] = json("""{"deleted":1}""")
+        trash.list = ApiResult.Success(listOf(entry(1, "Write"), entry(2, "Read")))
+        trash.purged[EntryId(2)] = ApiResult.Success(1)
         screen.show()
 
         model.purge(EntryId(2))
@@ -150,12 +113,10 @@ class TrashViewModelTest {
 
     @Test
     fun aPurgeOfAnEntryNoLongerInTheTrashLoadsTheListAgain() {
-        answers[LIST] = json("[${entry(1, "Write")}]")
-        answers["DELETE /api/app/trash/1"] = MockResponse.Builder().code(
-            404,
-        ).body("\"Time entry not found in trash\"").build()
+        trash.list = ApiResult.Success(listOf(entry(1, "Write")))
+        trash.purged[EntryId(1)] = ApiResult.Failure(ApiError.UnexpectedStatus(404, "Time entry not found in trash"))
         screen.show()
-        answers[LIST] = json("[]")
+        trash.list = ApiResult.Success(emptyList())
 
         model.purge(EntryId(1))
 
@@ -166,18 +127,18 @@ class TrashViewModelTest {
 
     @Test
     fun emptyingSendsNothingUntilTheQuestionIsAnswered() {
-        answers[LIST] = json("[${entry(1, "Write")},${entry(2, "Read")}]")
-        answers["DELETE /api/app/trash"] = json("""{"deleted":2}""")
+        trash.list = ApiResult.Success(listOf(entry(1, "Write"), entry(2, "Read")))
+        trash.purgedAll = ApiResult.Success(2)
         screen.show()
 
         model.empty()
-        assertFalse("DELETE /api/app/trash" in requests)
+        assertFalse(PURGE_ALL in trash.calls)
 
         model.askToEmpty()
         assertTrue(model.state.value.confirmingEmpty)
         model.empty()
 
-        assertTrue("DELETE /api/app/trash" in requests)
+        assertTrue(PURGE_ALL in trash.calls)
         assertEquals(emptyList<TrashEntry>(), model.state.value.entries)
         assertFalse(model.state.value.confirmingEmpty)
         assertEquals(TrashChange.Emptied(2), model.state.value.done)
@@ -185,7 +146,7 @@ class TrashViewModelTest {
 
     @Test
     fun anEmptyTrashAsksNothing() {
-        answers[LIST] = json("[]")
+        trash.list = ApiResult.Success(emptyList())
         screen.show()
 
         model.askToEmpty()
@@ -195,14 +156,14 @@ class TrashViewModelTest {
 
     @Test
     fun cancellingTheQuestionKeepsTheTrash() {
-        answers[LIST] = json("[${entry(1, "Write")}]")
+        trash.list = ApiResult.Success(listOf(entry(1, "Write")))
         screen.show()
         model.askToEmpty()
 
         model.dismiss()
         model.empty()
 
-        assertFalse("DELETE /api/app/trash" in requests)
+        assertFalse(PURGE_ALL in trash.calls)
         assertEquals(listOf(1L), model.state.value.entries?.map { it.id.value })
     }
 
@@ -212,7 +173,7 @@ class TrashViewModelTest {
      */
     @Test
     fun theQuestionSurvivesTheScreenHiddenForLonger() {
-        answers[LIST] = json("[${entry(1, "Write")}]")
+        trash.list = ApiResult.Success(listOf(entry(1, "Write")))
         screen.show()
         model.askToEmpty()
 
@@ -221,25 +182,43 @@ class TrashViewModelTest {
 
         assertTrue(model.state.value.confirmingEmpty)
         assertEquals(listOf(1L), model.state.value.entries?.map { it.id.value })
-        assertEquals(2, requests.count { it == LIST })
+        assertEquals(2, trash.calls.count { it == LIST })
     }
 
-    private fun json(body: String) = MockResponse.Builder()
-        .code(200)
-        .addHeader("Content-Type", "application/json")
-        .body(body)
-        .build()
+    /** A deleted entry as Tokkl lists it. */
+    private fun entry(id: Long, description: String?) = TrashEntry(
+        id = EntryId(id),
+        description = description,
+        start = "2026-10-19T09:00:00+00:00",
+        stop = "2026-10-19T10:30:00+00:00",
+        duration = 5400,
+        projectId = 3,
+        projectName = "Website",
+        deletedAt = "2026-10-20T08:00:00+00:00",
+    )
 
-    /** A deleted entry as Tokkl 1.3 lists it, with its meta fields. */
-    private fun entry(id: Long, description: String?): String {
-        val text = description?.let { "\"$it\"" } ?: "null"
-        return """{"id":$id,"workspace_id":7,"project_id":3,"task_id":null,"billable":false,""" +
-            """"start":"2026-10-19T09:00:00+00:00","stop":"2026-10-19T10:30:00+00:00","duration":5400,""" +
-            """"description":$text,"tags":[],"tag_ids":[],"server_deleted_at":"2026-10-20T08:00:00+00:00",""" +
-            """"project_name":"Website","project_color":"#06aaf5","client_name":null}"""
+    /** Answers each call as set, and a 404 as a server without the trash does otherwise. */
+    private class AnsweringTrash : TrashRepository {
+        var list: ApiResult<List<TrashEntry>> = NOT_FOUND
+        val restored = mutableMapOf<EntryId, ApiResult<Unit>>()
+        val purged = mutableMapOf<EntryId, ApiResult<Int>>()
+        var purgedAll: ApiResult<Int> = NOT_FOUND
+        val calls = mutableListOf<String>()
+
+        override suspend fun list(): ApiResult<List<TrashEntry>> = list.also { calls += LIST }
+
+        override suspend fun restore(id: EntryId): ApiResult<Unit> =
+            (restored[id] ?: NOT_FOUND).also { calls += "restore $id" }
+
+        override suspend fun purge(id: EntryId): ApiResult<Int> =
+            (purged[id] ?: NOT_FOUND).also { calls += "purge $id" }
+
+        override suspend fun purgeAll() = purgedAll.also { calls += PURGE_ALL }
     }
 
     private companion object {
-        const val LIST = "GET /api/app/trash"
+        const val LIST = "list"
+        const val PURGE_ALL = "purgeAll"
+        val NOT_FOUND = ApiResult.Failure(ApiError.UnexpectedStatus(404, "Not found"))
     }
 }

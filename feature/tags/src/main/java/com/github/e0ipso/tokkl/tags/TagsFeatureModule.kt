@@ -15,7 +15,7 @@ import org.koin.dsl.module
 
 /** The Tags page: its repository, its view model and its screen. */
 val tagsFeatureModule = module {
-    single { TagsRepository(get<Session>()) }
+    single<TagsRepository> { ServerTagsRepository(get<Session>()) }
 
     viewModel {
         val accountSettings = get<AccountSettingsSource>()

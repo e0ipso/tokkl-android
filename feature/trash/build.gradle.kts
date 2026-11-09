@@ -13,7 +13,5 @@ dependencies {
     implementation(project(":core:catalog"))
     implementation(project(":core:navigation"))
 
-    testImplementation(libs.mockwebserver3)
-    testImplementation(testFixtures(project(":core:api")))
     testImplementation(testFixtures(project(":core:platform")))
 }

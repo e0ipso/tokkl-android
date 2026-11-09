@@ -54,7 +54,7 @@ class TagsRequestsTest {
         testApi.stored = url
         // The user has confirmed the MockWebServer's plain http URL.
         testApi.trust = InMemoryServerTrust(url)
-        repository = TagsRepository { testApi.api(url) }
+        repository = ServerTagsRepository { testApi.api(url) }
     }
 
     @After
