@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.projects
 import androidx.annotation.StringRes
 import com.github.e0ipso.tokkl.feature.projects.R
 import com.github.e0ipso.tokkl.model.ClientId
+import kotlinx.serialization.Serializable
 import java.math.BigDecimal
 import java.util.Locale
 
@@ -42,8 +43,10 @@ enum class ProjectField { NAME, COLOR, RATE, CURRENCY, ESTIMATE }
 
 /**
  * What the project form holds, as typed. [rate], [currency] and [estimate] are text, so a value
- * the user is still typing survives until Save checks it.
+ * the user is still typing survives until Save checks it. Serializable for the form's saved state
+ * ([SavedProjectForm]).
  */
+@Serializable
 data class ProjectDraft(
     val name: String,
     val color: String,

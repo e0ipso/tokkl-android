@@ -5,13 +5,15 @@ import com.github.e0ipso.tokkl.api.WorkspaceProject
 import com.github.e0ipso.tokkl.model.ClientId
 import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.model.WorkspaceId
+import kotlinx.serialization.Serializable
 
 /**
  * A project with the fields the projects page shows and edits, more than the cache's
  * [com.github.e0ipso.tokkl.model.Project] holds. [active] is false for an archived project.
  * [rate] and [currency] are null when the project takes the workspace's, and [estimatedHours]
- * when it has no estimate.
+ * when it has no estimate. Serializable for the form's saved state ([SavedProjectForm]).
  */
+@Serializable
 data class ProjectDetails(
     val id: ProjectId,
     val workspaceId: WorkspaceId,

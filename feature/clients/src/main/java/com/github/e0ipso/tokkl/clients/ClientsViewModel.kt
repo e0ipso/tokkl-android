@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.clients
 
 import androidx.compose.runtime.Immutable
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.catalog.CatalogChange
@@ -18,17 +19,40 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
+
+/** What the client form holds, as typed. */
+data class ClientDraft(val name: String = "", val notes: String = "") {
+    companion object {
+        /** The form for [client] as the server sent it. */
+        fun of(client: Client) = ClientDraft(client.name, client.notes.orEmpty())
+    }
+}
 
 /** What the clients page opens over its list. */
 sealed interface ClientsOverlay {
 
+    /** The form to add or edit a client, with what it holds. */
+    sealed interface Form : ClientsOverlay {
+        val draft: ClientDraft
+
+        /** This form, holding [draft] instead. */
+        fun holding(draft: ClientDraft): Form
+    }
+
     /** The form for a new client. */
-    data object New : ClientsOverlay
+    data class New(override val draft: ClientDraft = ClientDraft()) : Form {
+        override fun holding(draft: ClientDraft) = copy(draft = draft)
+    }
 
     /** The form for [client]. */
-    data class Edit(val client: Client) : ClientsOverlay
+    data class Edit(val client: Client, override val draft: ClientDraft = ClientDraft.of(client)) : Form {
+        override fun holding(draft: ClientDraft) = copy(draft = draft)
+    }
 
     /** The question whether to archive [client] and its projects. */
     data class ConfirmArchive(val client: Client) : ClientsOverlay
@@ -68,7 +92,7 @@ data class ClientsPageState(
     val canChange: Boolean get() = catalog.canChange && !offline
 
     /** Whether the form to add or edit a client is open. */
-    val formOpen: Boolean get() = catalog.overlay is ClientsOverlay.New || catalog.overlay is ClientsOverlay.Edit
+    val formOpen: Boolean get() = catalog.overlay is ClientsOverlay.Form
 }
 
 /**
@@ -83,6 +107,8 @@ data class ClientsPageState(
  * @param offline whether the phone is offline, when nothing can change.
  * @param app the app's trips to the background and the network's returns, which load the page again
  *   while it shows ([stateInPage]).
+ * @param saved the route's saved state, which keeps the open form and what it holds for a new
+ *   process that restores the page.
  */
 class ClientsViewModel(
     private val repository: ClientsRepository,
@@ -93,6 +119,7 @@ class ClientsViewModel(
     cachedClients: Flow<List<Client>>,
     private val offline: StateFlow<Boolean>,
     app: AppForeground,
+    private val saved: SavedStateHandle,
 ) : ViewModel(scope) {
 
     private val catalog = CatalogModel<ClientsData, ClientsOverlay>(
@@ -101,6 +128,7 @@ class ClientsViewModel(
         changes,
         viewModelScope,
         io,
+        restored = saved.get<String>(SAVED_FORM)?.let(SavedClientForm::decode)?.form(),
     )
 
     /** The list and what is open over it, before the cache and the network join them in [page]. */
@@ -116,18 +144,30 @@ class ClientsViewModel(
         ClientsPageState(shown, isOffline, cached.filter { workspace == null || it.workspaceId == workspace })
     }.stateInPage(viewModelScope, ClientsPageState(state.value, offline.value), app, catalog)
 
+    init {
+        // A new process that restores the page opens the form again as it was.
+        viewModelScope.launch {
+            state.map { it.overlay as? ClientsOverlay.Form }.distinctUntilChanged().collect { form ->
+                saved[SAVED_FORM] = form?.let(SavedClientForm::of)?.encode()
+            }
+        }
+    }
+
     fun workspace(): WorkspaceId? = catalog.workspace()
 
     fun retry() = catalog.retry()
 
     fun doneShown() = catalog.doneShown()
 
-    fun newClient() = catalog.show(ClientsOverlay.New)
+    fun newClient() = catalog.show(ClientsOverlay.New())
 
     fun edit(client: Client) = catalog.show(ClientsOverlay.Edit(client))
 
     /** Asks whether to archive [client], since that archives its projects too. */
     fun askToArchive(client: Client) = catalog.show(ClientsOverlay.ConfirmArchive(client))
+
+    /** The open form now holds [draft]. */
+    fun editDraft(draft: ClientDraft) = catalog.change { (it as? ClientsOverlay.Form)?.holding(draft) ?: it }
 
     /** Closes the form or the question. */
     fun dismiss() = catalog.dismiss()
@@ -135,7 +175,7 @@ class ClientsViewModel(
     /** Creates the client, or saves the one the form edits. Blank [notes] go as none. */
     fun save(name: String, notes: String) {
         val editing = when (val overlay = state.value.overlay) {
-            ClientsOverlay.New -> null
+            is ClientsOverlay.New -> null
             is ClientsOverlay.Edit -> overlay.client
             is ClientsOverlay.ConfirmArchive, null -> return
         }
@@ -151,13 +191,13 @@ class ClientsViewModel(
                 }
             },
             apply = ClientsData::with,
-            done = { saved ->
+            done = { client ->
                 if (editing == null) {
                     CatalogChange.Created(
-                        saved.name,
+                        client.name,
                     )
                 } else {
-                    CatalogChange.Saved(saved.name)
+                    CatalogChange.Saved(client.name)
                 }
             },
         )
@@ -178,8 +218,13 @@ class ClientsViewModel(
         catalog.send(
             request = { workspace -> repository.restore(workspace, client.id) },
             apply = ClientsData::with,
-            done = { saved -> CatalogChange.Restored(saved.name) },
+            done = { restored -> CatalogChange.Restored(restored.name) },
         )
+    }
+
+    private companion object {
+        /** The key of the open form's [SavedClientForm] in the route's saved state. */
+        const val SAVED_FORM = "client-form"
     }
 }
 

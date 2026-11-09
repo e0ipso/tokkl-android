@@ -33,13 +33,16 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.core.catalog.R as CatalogR
 
 /**
- * The client form, as the web app's ClientEditor: name and notes. Save with an empty name marks
- * the field with the web app's message and moves focus to it. While nothing can be changed, Save
- * is off and the form says why.
+ * The client form, as the web app's ClientEditor: name and notes, as [draft] holds them, which
+ * the page's view model keeps and [onDraftChange] changes. Save with an empty name marks the
+ * field with the web app's message and moves focus to it. While nothing can be changed, Save is
+ * off and the form says why.
  */
 @Composable
 internal fun ClientFormContent(
     client: Client?,
+    draft: ClientDraft,
+    onDraftChange: (ClientDraft) -> Unit,
     canSave: Boolean,
     sending: Boolean,
     problem: ServerProblem?,
@@ -48,9 +51,9 @@ internal fun ClientFormContent(
     onSave: (String, String) -> Unit,
     onCancel: () -> Unit,
 ) {
-    // A new form starts from its own values, not from the last one's.
+    // A new form starts with no mistake marked, not with the last one's.
     key(client?.id ?: NEW_FORM) {
-        FormFields(client, canSave, sending, problem, serverNeeded, onRetry, onSave, onCancel)
+        FormFields(client, draft, onDraftChange, canSave, sending, problem, serverNeeded, onRetry, onSave, onCancel)
     }
 }
 
@@ -58,6 +61,8 @@ internal fun ClientFormContent(
 @Composable
 private fun FormFields(
     client: Client?,
+    draft: ClientDraft,
+    onDraftChange: (ClientDraft) -> Unit,
     canSave: Boolean,
     sending: Boolean,
     problem: ServerProblem?,
@@ -66,16 +71,14 @@ private fun FormFields(
     onSave: (String, String) -> Unit,
     onCancel: () -> Unit,
 ) {
-    var name by rememberSaveable { mutableStateOf(client?.name.orEmpty()) }
-    var notes by rememberSaveable { mutableStateOf(client?.notes.orEmpty()) }
     var nameMissing by rememberSaveable { mutableStateOf(false) }
     val nameFocus = remember { FocusRequester() }
     val save: () -> Unit = {
-        if (name.isBlank()) {
+        if (draft.name.isBlank()) {
             nameMissing = true
             nameFocus.requestFocus()
         } else {
-            onSave(name, notes)
+            onSave(draft.name, draft.notes)
         }
     }
 
@@ -89,9 +92,9 @@ private fun FormFields(
         }
         problem?.let { ProblemBanner(it) }
         OutlinedTextField(
-            value = name,
+            value = draft.name,
             onValueChange = {
-                name = it.take(NAME_MAX)
+                onDraftChange(draft.copy(name = it.take(NAME_MAX)))
                 nameMissing = false
             },
             label = { Text(stringResource(R.string.client_name)) },
@@ -111,8 +114,8 @@ private fun FormFields(
                 .focusRequester(nameFocus),
         )
         OutlinedTextField(
-            value = notes,
-            onValueChange = { notes = it.take(NOTES_MAX) },
+            value = draft.notes,
+            onValueChange = { onDraftChange(draft.copy(notes = it.take(NOTES_MAX))) },
             label = { Text(stringResource(R.string.client_notes)) },
             minLines = NOTES_MIN_LINES,
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),

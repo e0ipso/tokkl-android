@@ -28,7 +28,6 @@ import com.github.e0ipso.tokkl.catalog.ProblemBanner
 import com.github.e0ipso.tokkl.catalog.ServerNeededNotice
 import com.github.e0ipso.tokkl.feature.projects.R
 import com.github.e0ipso.tokkl.model.Client
-import com.github.e0ipso.tokkl.model.ClientId
 import com.github.e0ipso.tokkl.session.ServerProblem
 import com.github.e0ipso.tokkl.ui.CheckboxOptionRow
 import com.github.e0ipso.tokkl.ui.TokklButton
@@ -39,7 +38,8 @@ import com.github.e0ipso.tokkl.core.catalog.R as CatalogR
 
 /**
  * The project form, as the web app's ProjectEditor: name, colour, client, hourly rate, currency,
- * estimated hours and billable by default. The client list comes from the clients on the phone;
+ * estimated hours and billable by default, as the [form]'s draft holds them, which the page's view
+ * model keeps and [onDraftChange] changes. The client list comes from the clients on the phone;
  * an archived client shows only when the project has it. Save checks the fields, marks each
  * mistake under its field with the web app's message and moves focus to the first one. While
  * nothing can be changed, Save is off and the form says why. Under the form of a project the
@@ -48,7 +48,7 @@ import com.github.e0ipso.tokkl.core.catalog.R as CatalogR
 @Composable
 internal fun ProjectFormContent(
     form: ProjectForm,
-    projectCount: Int,
+    onDraftChange: (ProjectDraft) -> Unit,
     clients: List<Client>,
     defaults: WorkspaceDefaults?,
     canSave: Boolean,
@@ -61,11 +61,12 @@ internal fun ProjectFormContent(
     tasks: @Composable (ProjectDetails) -> Unit = {},
 ) {
     val project = (form as? ProjectForm.Edit)?.project
-    // A new form starts from its own values, not from the last one's.
+    // A new form starts with no mistake marked and its own colour field, not with the last one's.
     key(project?.id ?: NEW_FORM) {
         FormFields(
             project,
-            projectCount,
+            form.draft,
+            onDraftChange,
             clients,
             defaults,
             canSave,
@@ -84,7 +85,8 @@ internal fun ProjectFormContent(
 @Composable
 private fun FormFields(
     project: ProjectDetails?,
-    projectCount: Int,
+    draft: ProjectDraft,
+    onDraftChange: (ProjectDraft) -> Unit,
     clients: List<Client>,
     defaults: WorkspaceDefaults?,
     canSave: Boolean,
@@ -96,21 +98,11 @@ private fun FormFields(
     onCancel: () -> Unit,
     tasks: @Composable (ProjectDetails) -> Unit,
 ) {
-    val initial = remember { ProjectDraft.of(project, ProjectPalette.forNewProject(projectCount)) }
-    var name by rememberSaveable { mutableStateOf(initial.name) }
-    var color by rememberSaveable { mutableStateOf(initial.color) }
-    var custom by rememberSaveable { mutableStateOf(ProjectPalette.of(initial.color) == null) }
-    // The saved state keeps the id's number: a Bundle cannot hold a ClientId.
-    var clientIdValue by rememberSaveable { mutableStateOf(initial.clientId?.value) }
-    val clientId = clientIdValue?.let(::ClientId)
-    var billable by rememberSaveable { mutableStateOf(initial.billable) }
-    var rate by rememberSaveable { mutableStateOf(initial.rate) }
-    var currency by rememberSaveable { mutableStateOf(initial.currency) }
-    var estimate by rememberSaveable { mutableStateOf(initial.estimate) }
+    var custom by rememberSaveable { mutableStateOf(ProjectPalette.of(draft.color) == null) }
     var mistakes by remember { mutableStateOf(emptyMap<ProjectField, Int>()) }
     val focus = remember { ProjectField.entries.associateWith { FocusRequester() } }
     val save: () -> Unit = {
-        when (val check = ProjectDraft(name, color, clientId, billable, rate, currency, estimate).check()) {
+        when (val check = draft.check()) {
             is DraftCheck.Valid -> {
                 mistakes = emptyMap()
                 onSave(check.fields)
@@ -133,9 +125,9 @@ private fun FormFields(
         }
         problem?.let { ProblemBanner(it) }
         FormTextField(
-            value = name,
+            value = draft.name,
             onValueChange = {
-                name = it.take(NAME_MAX)
+                onDraftChange(draft.copy(name = it.take(NAME_MAX)))
                 mistakes -= ProjectField.NAME
             },
             label = R.string.project_name,
@@ -147,30 +139,30 @@ private fun FormFields(
             ),
         )
         ColourField(
-            color = color,
+            color = draft.color,
             custom = custom,
             mistake = mistakes[ProjectField.COLOR],
             focus = focus.getValue(ProjectField.COLOR),
             onPalette = {
-                color = it.hex
+                onDraftChange(draft.copy(color = it.hex))
                 custom = false
                 mistakes -= ProjectField.COLOR
             },
             onCustom = { custom = true },
             onCustomChange = {
-                color = it.trim().take(HEX_LENGTH)
+                onDraftChange(draft.copy(color = it.trim().take(HEX_LENGTH)))
                 mistakes -= ProjectField.COLOR
             },
         )
         ClientField(
-            clients = clients.filter { !it.archived || it.id == clientId },
-            clientId = clientId,
-            onChoose = { clientIdValue = it?.value },
+            clients = clients.filter { !it.archived || it.id == draft.clientId },
+            clientId = draft.clientId,
+            onChoose = { onDraftChange(draft.copy(clientId = it)) },
         )
         FormTextField(
-            value = rate,
+            value = draft.rate,
             onValueChange = {
-                rate = it
+                onDraftChange(draft.copy(rate = it))
                 mistakes -= ProjectField.RATE
             },
             label = R.string.project_rate,
@@ -181,9 +173,9 @@ private fun FormFields(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Next),
         )
         FormTextField(
-            value = currency,
+            value = draft.currency,
             onValueChange = {
-                currency = it.uppercase(Locale.ROOT).take(CURRENCY_LENGTH)
+                onDraftChange(draft.copy(currency = it.uppercase(Locale.ROOT).take(CURRENCY_LENGTH)))
                 mistakes -= ProjectField.CURRENCY
             },
             label = R.string.project_currency,
@@ -197,9 +189,9 @@ private fun FormFields(
             ),
         )
         FormTextField(
-            value = estimate,
+            value = draft.estimate,
             onValueChange = {
-                estimate = it
+                onDraftChange(draft.copy(estimate = it))
                 mistakes -= ProjectField.ESTIMATE
             },
             label = R.string.project_estimate,
@@ -211,8 +203,8 @@ private fun FormFields(
         Column {
             CheckboxOptionRow(
                 label = stringResource(R.string.project_billable_default),
-                checked = billable,
-                onCheckedChange = { billable = it },
+                checked = draft.billable,
+                onCheckedChange = { onDraftChange(draft.copy(billable = it)) },
             )
             Text(
                 text = stringResource(R.string.project_defaults_hint),

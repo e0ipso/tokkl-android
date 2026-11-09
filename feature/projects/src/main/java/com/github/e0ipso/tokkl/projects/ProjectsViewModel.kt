@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.projects
 
 import androidx.compose.runtime.Immutable
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.catalog.CatalogChange
@@ -25,11 +26,31 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 
-/** The project form: a new project, or [Edit] of one the server sent. */
+/** The project form: a new project, or [Edit] of one the server sent, with what it holds. */
 sealed interface ProjectForm {
-    data object New : ProjectForm
+    val draft: ProjectDraft
 
-    data class Edit(val project: ProjectDetails) : ProjectForm
+    /** This form, holding [draft] instead. */
+    fun holding(draft: ProjectDraft): ProjectForm
+
+    data class New(override val draft: ProjectDraft) : ProjectForm {
+        override fun holding(draft: ProjectDraft) = copy(draft = draft)
+    }
+
+    data class Edit(val project: ProjectDetails, override val draft: ProjectDraft) : ProjectForm {
+        override fun holding(draft: ProjectDraft) = copy(draft = draft)
+    }
+
+    companion object {
+        /**
+         * The form for a new project, or for [project] as the server sent it, as it opens in a
+         * workspace with [projectCount] projects, which picks the colour the web app offers.
+         */
+        fun of(project: ProjectDetails?, projectCount: Int): ProjectForm {
+            val draft = ProjectDraft.of(project, ProjectPalette.forNewProject(projectCount))
+            return if (project == null) New(draft) else Edit(project, draft)
+        }
+    }
 }
 
 /**
@@ -83,6 +104,8 @@ data class ProjectsPageState(
  * @param offline whether the phone is offline, when nothing can change.
  * @param app the app's trips to the background and the network's returns, which load the page and
  *   the open form's tasks again while the page shows ([stateInPage]).
+ * @param saved the route's saved state, which keeps the open form and what it holds for a new
+ *   process that restores the page.
  */
 class ProjectsViewModel(
     private val repository: ProjectsRepository,
@@ -95,6 +118,7 @@ class ProjectsViewModel(
     cachedClients: Flow<List<Client>>,
     private val offline: StateFlow<Boolean>,
     app: AppForeground,
+    private val saved: SavedStateHandle,
 ) : ViewModel(scope) {
 
     private val catalog = CatalogModel<ProjectsData, ProjectForm>(
@@ -103,7 +127,11 @@ class ProjectsViewModel(
         changes,
         viewModelScope,
         io,
+        restored = saved.get<String>(SAVED_FORM)?.let(SavedProjectForm::decode)?.form(),
     )
+
+    /** Whether the page has shown, so a form's task list may load. */
+    private var pageShown = false
 
     /** The task list of the project the form edits. */
     val tasks = TasksModel(tasksRepository, settings, changes, viewModelScope, io)
@@ -132,10 +160,11 @@ class ProjectsViewModel(
         ProjectsPageState(state.value, offline.value, tasks = tasks.state.value),
         app,
         object : PageLoads {
-            /** The page shows: loads the projects, and again the tasks of a form left open. */
+            /** The page shows: loads the projects, and the tasks of a form left open or restored. */
             override fun shown() {
+                pageShown = true
                 catalog.shown()
-                tasks.returned()
+                tasks.shown()
             }
 
             override fun returned() {
@@ -151,10 +180,21 @@ class ProjectsViewModel(
     )
 
     init {
-        // The form of a project the server sent lists its tasks, while it is open.
+        // The form of a project the server sent lists its tasks, while it is open. A form restored
+        // before the page shows loads them when it does.
         viewModelScope.launch {
             state.map { (it.overlay as? ProjectForm.Edit)?.project?.id }.distinctUntilChanged().collect { project ->
-                if (project == null) tasks.close() else tasks.open(project)
+                when {
+                    project == null -> tasks.close()
+                    pageShown -> tasks.open(project)
+                    else -> tasks.select(project)
+                }
+            }
+        }
+        // A new process that restores the page opens the form again as it was.
+        viewModelScope.launch {
+            state.map { it.overlay }.distinctUntilChanged().collect { form ->
+                saved[SAVED_FORM] = form?.let(SavedProjectForm::of)?.encode()
             }
         }
     }
@@ -165,9 +205,12 @@ class ProjectsViewModel(
 
     fun doneShown() = catalog.doneShown()
 
-    fun newProject() = catalog.show(ProjectForm.New)
+    fun newProject() = catalog.show(ProjectForm.of(null, projectCount()))
 
-    fun edit(project: ProjectDetails) = catalog.show(ProjectForm.Edit(project))
+    fun edit(project: ProjectDetails) = catalog.show(ProjectForm.of(project, projectCount()))
+
+    /** The open form now holds [draft]. */
+    fun editDraft(draft: ProjectDraft) = catalog.change { it.holding(draft) }
 
     fun closeForm() = catalog.dismiss()
 
@@ -178,13 +221,13 @@ class ProjectsViewModel(
         catalog.send(
             request = { workspace ->
                 when (form) {
-                    ProjectForm.New -> repository.create(workspace, fields, known)
+                    is ProjectForm.New -> repository.create(workspace, fields, known)
                     is ProjectForm.Edit -> repository.update(workspace, form.project.id, fields)
                 }
             },
             apply = ProjectsData::with,
             done = { saved ->
-                if (form == ProjectForm.New) {
+                if (form is ProjectForm.New) {
                     CatalogChange.Created(
                         saved.name,
                     )
@@ -210,6 +253,14 @@ class ProjectsViewModel(
                 }
             },
         )
+    }
+
+    /** How many projects the workspace has, as the page loaded them, which picks a new project's colour. */
+    private fun projectCount(): Int = state.value.data?.projects?.size ?: 0
+
+    private companion object {
+        /** The key of the open form's [SavedProjectForm] in the route's saved state. */
+        const val SAVED_FORM = "project-form"
     }
 }
 

@@ -78,6 +78,8 @@ data class CatalogState<D, O>(
  * @param settings the account's default workspace from the stored settings, or null when they
  *   do not have it.
  * @param changes sends each change in the application's scope and refreshes the cache after it.
+ * @param restored the form a page kept in its saved state, open over the list from the start, as
+ *   after a new process restored the page.
  */
 class CatalogModel<D, O>(
     private val repository: CatalogRepository<D>,
@@ -85,9 +87,10 @@ class CatalogModel<D, O>(
     private val changes: ServerChanges,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
+    restored: O? = null,
 ) : PageLoads {
 
-    private val mutableState = MutableStateFlow(CatalogState<D, O>())
+    private val mutableState = MutableStateFlow(CatalogState<D, O>(overlay = restored))
     val state: StateFlow<CatalogState<D, O>> = mutableState.asStateFlow()
 
     /** Whether the list is open: from [shown] until [close], a configuration change included. */
@@ -149,6 +152,14 @@ class CatalogModel<D, O>(
         if (opened && workspace != null && state.value.canChange) {
             mutableState.update { it.copy(overlay = overlay, changeProblem = null) }
         }
+    }
+
+    /**
+     * Changes the form or question open over the list, such as what its fields hold, also while
+     * no change can go to the server. Does nothing while none is open.
+     */
+    fun change(edit: (O) -> O) {
+        mutableState.update { it.copy(overlay = it.overlay?.let(edit)) }
     }
 
     /** Closes the form or question over the list. */

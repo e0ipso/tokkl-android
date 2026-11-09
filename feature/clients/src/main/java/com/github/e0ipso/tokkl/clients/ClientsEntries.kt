@@ -40,7 +40,7 @@ fun ClientsPage(model: ClientsViewModel, modifier: Modifier = Modifier) {
     val page by model.page.collectAsStateWithLifecycle()
     val state = page.catalog
     BackHandler(
-        enabled = state.overlay is ClientsOverlay.New || state.overlay is ClientsOverlay.Edit,
+        enabled = state.overlay is ClientsOverlay.Form,
     ) { model.dismiss() }
     ClientsScreen(
         page = page,
@@ -52,6 +52,7 @@ fun ClientsPage(model: ClientsViewModel, modifier: Modifier = Modifier) {
             onArchive = model::archive,
             onRestore = model::restore,
             onSave = model::save,
+            onDraftChange = model::editDraft,
             onDismiss = model::dismiss,
             onDoneShow = model::doneShown,
         ),

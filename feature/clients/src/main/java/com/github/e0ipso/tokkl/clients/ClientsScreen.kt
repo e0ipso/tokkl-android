@@ -49,7 +49,7 @@ fun ClientsScreen(page: ClientsPageState, actions: ClientsActions, modifier: Mod
     val cachedClients = page.cachedClients
     val formOpen = page.formOpen
     val title = when (state.overlay) {
-        ClientsOverlay.New -> R.string.client_form_new
+        is ClientsOverlay.New -> R.string.client_form_new
         is ClientsOverlay.Edit -> R.string.client_form_edit
         is ClientsOverlay.ConfirmArchive, null -> R.string.nav_clients
     }
@@ -61,8 +61,10 @@ fun ClientsScreen(page: ClientsPageState, actions: ClientsActions, modifier: Mod
         onBack = if (formOpen) actions.onDismiss else null,
     ) {
         when (val overlay = state.overlay) {
-            ClientsOverlay.New, is ClientsOverlay.Edit -> ClientFormContent(
+            is ClientsOverlay.Form -> ClientFormContent(
                 client = (overlay as? ClientsOverlay.Edit)?.client,
+                draft = overlay.draft,
+                onDraftChange = actions.onDraftChange,
                 canSave = canChange,
                 sending = state.sending,
                 problem = state.changeProblem,
@@ -104,6 +106,7 @@ class ClientsActions(
     val onArchive: () -> Unit = {},
     val onRestore: (Client) -> Unit = {},
     val onSave: (String, String) -> Unit = { _, _ -> },
+    val onDraftChange: (ClientDraft) -> Unit = {},
     val onDismiss: () -> Unit = {},
     val onDoneShow: () -> Unit = {},
 )

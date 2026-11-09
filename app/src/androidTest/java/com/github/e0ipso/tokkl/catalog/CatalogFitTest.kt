@@ -95,7 +95,7 @@ abstract class CatalogFitTest(private val fontScale: Float) {
 
     @Test
     fun projectForm() {
-        val editing = PROJECTS_LOADED.copy(overlay = ProjectForm.Edit(PROJECTS.first()))
+        val editing = PROJECTS_LOADED.copy(overlay = ProjectForm.of(PROJECTS.first(), PROJECTS.size))
         show {
             ProjectsScreen(
                 ProjectsPageState(editing, false, emptyList(), CACHED_CLIENTS),
@@ -110,7 +110,7 @@ abstract class CatalogFitTest(private val fontScale: Float) {
 
     @Test
     fun newProjectFormWithMistakes() {
-        val creating = PROJECTS_LOADED.copy(overlay = ProjectForm.New)
+        val creating = PROJECTS_LOADED.copy(overlay = ProjectForm.of(null, PROJECTS.size))
         show {
             ProjectsScreen(
                 ProjectsPageState(creating, false, emptyList(), CACHED_CLIENTS),
@@ -127,7 +127,7 @@ abstract class CatalogFitTest(private val fontScale: Float) {
 
     @Test
     fun projectFormWithTasks() {
-        val editing = PROJECTS_LOADED.copy(overlay = ProjectForm.Edit(PROJECTS.first()))
+        val editing = PROJECTS_LOADED.copy(overlay = ProjectForm.of(PROJECTS.first(), PROJECTS.size))
         show {
             ProjectsScreen(
                 ProjectsPageState(editing, false, emptyList(), CACHED_CLIENTS, TASKS_LOADED),
@@ -143,7 +143,7 @@ abstract class CatalogFitTest(private val fontScale: Float) {
 
     @Test
     fun projectFormWithTasksOffline() {
-        val editing = PROJECTS_LOADED.copy(overlay = ProjectForm.Edit(PROJECTS.first()))
+        val editing = PROJECTS_LOADED.copy(overlay = ProjectForm.of(PROJECTS.first(), PROJECTS.size))
         show {
             ProjectsScreen(
                 ProjectsPageState(editing, true, emptyList(), CACHED_CLIENTS, TASKS_LOADED),
@@ -157,7 +157,7 @@ abstract class CatalogFitTest(private val fontScale: Float) {
 
     @Test
     fun taskForm() {
-        val editing = PROJECTS_LOADED.copy(overlay = ProjectForm.Edit(PROJECTS.first()))
+        val editing = PROJECTS_LOADED.copy(overlay = ProjectForm.of(PROJECTS.first(), PROJECTS.size))
         val tasks = TASKS_LOADED.copy(overlay = TaskOverlay.Edit(TASKS[1]))
         show {
             ProjectsScreen(
@@ -170,7 +170,7 @@ abstract class CatalogFitTest(private val fontScale: Float) {
 
     @Test
     fun taskDeleteQuestion() {
-        val editing = PROJECTS_LOADED.copy(overlay = ProjectForm.Edit(PROJECTS.first()))
+        val editing = PROJECTS_LOADED.copy(overlay = ProjectForm.of(PROJECTS.first(), PROJECTS.size))
         val tasks = TASKS_LOADED.copy(overlay = TaskOverlay.ConfirmDelete(TASKS[1]))
         show {
             ProjectsScreen(

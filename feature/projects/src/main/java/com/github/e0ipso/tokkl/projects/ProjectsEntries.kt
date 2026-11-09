@@ -49,6 +49,7 @@ fun ProjectsPage(model: ProjectsViewModel, modifier: Modifier = Modifier) {
             onEdit = model::edit,
             onSetActive = model::setActive,
             onSave = model::save,
+            onDraftChange = model::editDraft,
             onCloseForm = model::closeForm,
             onDoneShow = model::doneShown,
         ),

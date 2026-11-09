@@ -29,6 +29,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.core.view.WindowCompat
+import androidx.lifecycle.SavedStateHandle
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.HangingRelay
@@ -132,6 +133,7 @@ class ProjectsServerTest {
             cachedClients = app.cache.clients,
             offline = MutableStateFlow(false),
             app = AppForeground(MutableStateFlow(true), emptyFlow()),
+            saved = SavedStateHandle(),
         )
     }
 

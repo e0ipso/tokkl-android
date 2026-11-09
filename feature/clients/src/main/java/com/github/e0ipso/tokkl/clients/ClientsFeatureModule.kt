@@ -28,6 +28,7 @@ val clientsFeatureModule = module {
             cachedClients = get<AccountCache>().clients,
             offline = get<DefaultNetwork>().offlineIn(scope),
             app = get(),
+            saved = get(),
         )
     }
 

@@ -43,6 +43,7 @@ class ProjectsActions(
     val onEdit: (ProjectDetails) -> Unit = {},
     val onSetActive: (ProjectDetails, Boolean) -> Unit = { _, _ -> },
     val onSave: (ProjectFields) -> Unit = {},
+    val onDraftChange: (ProjectDraft) -> Unit = {},
     val onCloseForm: () -> Unit = {},
     val onDoneShow: () -> Unit = {},
 )
@@ -77,7 +78,7 @@ fun ProjectsScreen(
     val form = state.overlay
     val title = when (form) {
         null -> R.string.nav_projects
-        ProjectForm.New -> R.string.project_form_new
+        is ProjectForm.New -> R.string.project_form_new
         is ProjectForm.Edit -> R.string.project_form_edit
     }
     CatalogPage(
@@ -90,7 +91,7 @@ fun ProjectsScreen(
         if (form != null) {
             ProjectFormContent(
                 form = form,
-                projectCount = state.data?.projects?.size ?: 0,
+                onDraftChange = actions.onDraftChange,
                 clients = clients,
                 defaults = state.data?.defaults,
                 canSave = canChange,

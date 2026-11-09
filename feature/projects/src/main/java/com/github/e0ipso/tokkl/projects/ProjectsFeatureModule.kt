@@ -32,6 +32,7 @@ val projectsFeatureModule = module {
             cachedClients = cache.clients,
             offline = get<DefaultNetwork>().offlineIn(scope),
             app = get(),
+            saved = get(),
         )
     }
 

@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.clients
 
+import androidx.lifecycle.SavedStateHandle
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.catalog.CatalogChange
@@ -41,21 +42,29 @@ class ClientsViewModelTest {
     private val scheduler = TestCoroutineScheduler()
     private val scope = CoroutineScope(UnconfinedTestDispatcher(scheduler))
     private val app = TestApp(scheduler)
+    private val saved = SavedStateHandle()
 
     @Before
     fun setUp() {
-        model = ClientsViewModel(
-            repository = repository,
-            settings = accountSettingsIn(WorkspaceId(7)),
-            changes = ServerChanges(scope, Dispatchers.Unconfined, refresh),
-            scope = scope,
-            io = Dispatchers.Unconfined,
-            cachedClients = flowOf(emptyList()),
-            offline = offline,
-            app = app.app,
-        )
+        model = clientsModel(saved)
         screen = TestScreen(model.page, scope, scheduler)
     }
+
+    private fun clientsModel(saved: SavedStateHandle) = ClientsViewModel(
+        repository = repository,
+        settings = accountSettingsIn(WorkspaceId(7)),
+        changes = ServerChanges(scope, Dispatchers.Unconfined, refresh),
+        scope = scope,
+        io = Dispatchers.Unconfined,
+        cachedClients = flowOf(emptyList()),
+        offline = offline,
+        app = app.app,
+        saved = saved,
+    )
+
+    /** The page's model in a new process, which gets back only what the old one's saved state held. */
+    private fun clientsModelAfterProcessDeath(): ClientsViewModel =
+        clientsModel(SavedStateHandle(saved.keys().associateWith { saved.get<Any?>(it) }))
 
     /**
      * A page that could not load loads again when the network comes back. A rotation loads
@@ -103,6 +112,40 @@ class ClientsViewModelTest {
         assertEquals(ClientsOverlay.Edit(acme), model.state.value.overlay)
         assertEquals("Acme", model.state.value.data!!.clients.single().name)
         assertEquals(2, repository.loads)
+    }
+
+    /**
+     * The process dies with Acme's form open. The page that a new process restores opens that
+     * form again with what was typed, before the list loads, and Save sends it once it has.
+     */
+    @Test
+    fun aNewProcessOpensTheEditFormAsItWasTyped() {
+        screen.show()
+        val acme = model.state.value.data!!.clients.single()
+        model.edit(acme)
+        model.editDraft(ClientDraft("Acme Corp", "Pays late"))
+
+        val restored = clientsModelAfterProcessDeath()
+
+        val typed = ClientsOverlay.Edit(acme, ClientDraft("Acme Corp", "Pays late"))
+        assertEquals("open before the list loads", typed, restored.state.value.overlay)
+        TestScreen(restored.page, scope, scheduler).show()
+        assertEquals(typed, restored.state.value.overlay)
+        restored.save("Acme Corp", "Pays late")
+        assertEquals(listOf("update 1 to Acme Corp, notes Pays late in 7"), repository.changes)
+    }
+
+    /** A new client's form comes back with what was typed, and a closed form stays closed. */
+    @Test
+    fun aNewProcessOpensTheNewClientFormAsItWasTypedAndNoClosedOne() {
+        screen.show()
+        model.newClient()
+        model.editDraft(ClientDraft("Surf", ""))
+
+        assertEquals(ClientsOverlay.New(ClientDraft("Surf", "")), clientsModelAfterProcessDeath().state.value.overlay)
+
+        model.dismiss()
+        assertNull(clientsModelAfterProcessDeath().state.value.overlay)
     }
 
     /** Archiving asks first, since it archives the client's projects too. */
@@ -165,6 +208,7 @@ class ClientsViewModelTest {
             ),
             offline = offline,
             app = TestApp(testScheduler).app,
+            saved = SavedStateHandle(),
         )
         val reader = scope.launch { page.page.collect {} }
         offline.value = true
@@ -178,8 +222,8 @@ class ClientsViewModelTest {
 
     /**
      * Lists Acme, client 1 of workspace 7 with one project, or fails as an unreachable server
-     * while [unreachable]. Answers the archive and the restore of Acme and the create of Surf
-     * school, and records each change it is sent. Any other change fails the test.
+     * while [unreachable]. Answers the update, the archive and the restore of Acme and the create
+     * of Surf school, and records each change it is sent. Any other change fails the test.
      */
     private class AcmeRepository : ClientsRepository {
         var unreachable = false
@@ -201,7 +245,10 @@ class ClientsViewModelTest {
             }
 
         override suspend fun update(workspace: WorkspaceId, id: ClientId, name: String, notes: String?) =
-            unexpected("update $id")
+            answer("update ${id.value} to $name, notes $notes in ${workspace.value}") {
+                checkAcme(id)
+                Client(id, workspace, name, notes = notes)
+            }
 
         override suspend fun archive(workspace: WorkspaceId, id: ClientId) =
             answer("archive ${id.value} in ${workspace.value}") { checkAcme(id) }
@@ -220,8 +267,6 @@ class ClientsViewModelTest {
         private fun checkAcme(id: ClientId) = check(id == ClientId(1)) { "the test changes Acme only, not $id" }
 
         private fun acme(workspace: WorkspaceId) = Client(ClientId(1), workspace, "Acme", archived = false)
-
-        private fun unexpected(call: String): Nothing = throw AssertionError("the test sends no $call")
     }
 
     private companion object {

@@ -64,11 +64,24 @@ class TasksModel(
     /** Opens the list of [project]'s tasks and loads them. Does nothing while that list is open. */
     fun open(project: ProjectId) {
         if (this.project == project && catalog.opened) return
+        select(project)
+        catalog.shown()
+    }
+
+    /**
+     * Makes [project]'s the list to open, without loading it, as for a form a new process restored
+     * before the page shows. [shown] loads it.
+     */
+    fun select(project: ProjectId) {
         if (this.project != project) {
             catalog.close()
             this.project = project
         }
-        catalog.shown()
+    }
+
+    /** The page shows: the list of the project selected or open loads, again when it was open. */
+    fun shown() {
+        if (project != null) catalog.shown()
     }
 
     /** Closes the list, as its form closes. */
