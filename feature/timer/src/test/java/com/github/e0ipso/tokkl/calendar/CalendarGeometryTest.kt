@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.calendar
 
 import androidx.compose.ui.geometry.Offset
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -158,8 +159,7 @@ class CalendarGeometryTest {
         project = null,
         projectColor = null,
         task = null,
-        start = start,
-        stop = stop,
+        timing = EntryTiming.of(start, stop, allDay = false, day = null),
         unsent = false,
     )
 

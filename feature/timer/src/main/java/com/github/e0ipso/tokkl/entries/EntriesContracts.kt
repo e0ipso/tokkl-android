@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.entries
 
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
@@ -81,9 +82,7 @@ fun interface PastEntryEdits {
         opened: Instant,
         onPhone: Boolean,
         fields: EntryFields,
-        start: Instant,
-        stop: Instant?,
-        noTimeDay: LocalDate?,
+        timing: EntryTiming.Ended,
     ): Boolean
 }
 

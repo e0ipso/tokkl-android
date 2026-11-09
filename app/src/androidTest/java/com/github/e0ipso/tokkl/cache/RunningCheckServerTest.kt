@@ -24,6 +24,7 @@ import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.followNoTimerEvents
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.orFail
@@ -114,8 +115,7 @@ class RunningCheckServerTest {
             app.changes.update(
                 first,
                 EntryFields(description = "First"),
-                Instant.now().minus(4, ChronoUnit.HOURS).truncatedTo(ChronoUnit.HOURS),
-                stop = null,
+                EntryTiming.Running(Instant.now().minus(4, ChronoUnit.HOURS).truncatedTo(ChronoUnit.HOURS)),
             )
         }
         val check = awaitCheck("the start schedules a check") { it.state == WorkInfo.State.ENQUEUED }
@@ -129,8 +129,7 @@ class RunningCheckServerTest {
             app.changes.update(
                 second,
                 EntryFields(description = "Second"),
-                Instant.now().minus(2, ChronoUnit.HOURS).truncatedTo(ChronoUnit.HOURS),
-                stop = null,
+                EntryTiming.Running(Instant.now().minus(2, ChronoUnit.HOURS).truncatedTo(ChronoUnit.HOURS)),
             )
         }
         val initialDrain = runBlocking { app.sender.sendAndWait() }
@@ -218,8 +217,7 @@ class RunningCheckServerTest {
                 app.changes.update(
                     EntryId(id),
                     EntryFields(description = "Edited offline"),
-                    start,
-                    stop = null,
+                    EntryTiming.Running(start),
                 )
             },
         )

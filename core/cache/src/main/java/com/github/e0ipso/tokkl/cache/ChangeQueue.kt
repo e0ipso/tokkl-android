@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.cache
 
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.RunningEntryIdentity
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
@@ -11,7 +12,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import java.time.Clock
 import java.time.Instant
-import java.time.LocalDate
 import kotlin.coroutines.CoroutineContext
 
 /** The changes the server refused, which wait for the user, as [ChangeQueue] keeps them. */
@@ -53,9 +53,8 @@ data class ShortStopOffer(val entryId: EntryId, val capturedAt: Instant)
  * An entry created on the phone gets a negative local id. The calls take it, before and after the
  * server has answered the create with its own id.
  *
- * A no-time entry's change carries its flag and day ([TimeEntry.allDay] and
- * [TimeEntry.day]), and so does every cache row or queued change rebuilt from it. Running
- * entries are never no-time ones.
+ * A no-time entry's change carries its flag and day ([EntryTiming.AllDay]), and so does every
+ * cache row or queued change rebuilt from it.
  *
  * Pause, Resume and Pomodoro sessions belong to the server's timer state and never pass through
  * the queue (docs/PRD.md T1). A queued Stop of the server's resumed clone or of its open pomodoro
@@ -134,38 +133,24 @@ class ChangeQueue(
     }
 
     /**
-     * Creates a stopped entry in [workspaceId], as a manual entry does, or a no-time entry on
-     * [noTimeDay] (see [EntryChanges]). Returns its local id. Pass the account's
+     * Creates a stopped entry in [workspaceId], as a manual entry does, or a no-time entry (see
+     * [EntryChanges]). Returns its local id. Pass the account's
      * `AccountSettings.defaultWorkspaceId`, as for [start].
      */
-    override suspend fun create(
-        workspaceId: WorkspaceId,
-        fields: EntryFields,
-        start: Instant,
-        stop: Instant,
-        noTimeDay: LocalDate?,
-    ): EntryId {
-        require(!stop.isBefore(start)) { "The stop comes before the start." }
-        return queue { create(workspaceId, fields, start, stop, noTimeDay) }
+    override suspend fun create(workspaceId: WorkspaceId, fields: EntryFields, timing: EntryTiming.Ended): EntryId {
+        requireForward(timing)
+        return queue { create(workspaceId, fields, timing) }
     }
 
     /**
-     * Sets every field of the cached entry [entryId]. A null [stop] makes it run, and a stopped
-     * entry made to run stops the running one at its start first, as a Start would. With
-     * [noTimeDay] it is a no-time entry on that day (see [EntryChanges]), which never runs.
-     * Without it the entry is timed, so a null [noTimeDay] turns a no-time entry's times on, with
-     * the caller's real [start] and [stop]. Returns false when the entry is not cached.
+     * Sets every field of the cached entry [entryId]. A [EntryTiming.Running] timing makes it run,
+     * and a stopped entry made to run stops the running one at its start first, as a Start would.
+     * An [EntryTiming.AllDay] makes it a no-time entry (see [EntryChanges]); any other timing makes
+     * it timed, so it turns a no-time entry's times on. Returns false when the entry is not cached.
      */
-    override suspend fun update(
-        entryId: EntryId,
-        fields: EntryFields,
-        start: Instant,
-        stop: Instant?,
-        noTimeDay: LocalDate?,
-    ): Boolean {
-        require(stop == null || !stop.isBefore(start)) { "The stop comes before the start." }
-        require(noTimeDay == null || stop != null) { "A no-time entry never runs." }
-        return queue { update(entryId, fields, start, stop, noTimeDay) }
+    override suspend fun update(entryId: EntryId, fields: EntryFields, timing: EntryTiming): Boolean {
+        requireForward(timing)
+        return queue { update(entryId, fields, timing) }
     }
 
     override suspend fun runningEntry(identity: RunningEntryIdentity): TimeEntry? = withContext(io) {
@@ -181,18 +166,22 @@ class ChangeQueue(
      * goes to the queue with every field, so the sender's PUT sends it as it is, and the cache
      * holds the entry from now on, marked unsent until the server has it. A refresh drops it again
      * when it starts before the cache's window. The workspace of a cached entry wins over
-     * [workspaceId]. [noTimeDay] is as for [update].
+     * [workspaceId]. [timing] is as for [update].
      */
     override suspend fun updateOlder(
         entryId: EntryId,
         workspaceId: WorkspaceId,
         fields: EntryFields,
-        start: Instant,
-        stop: Instant,
-        noTimeDay: LocalDate?,
+        timing: EntryTiming.Ended,
     ) {
-        require(!stop.isBefore(start)) { "The stop comes before the start." }
-        queue { updateOlder(entryId, workspaceId, fields, start, stop, noTimeDay) }
+        requireForward(timing)
+        queue { updateOlder(entryId, workspaceId, fields, timing) }
+    }
+
+    private fun requireForward(timing: EntryTiming) {
+        require((timing as? EntryTiming.Ended)?.stop?.isBefore(timing.start) != true) {
+            "The stop comes before the start."
+        }
     }
 
     /**

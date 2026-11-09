@@ -52,6 +52,7 @@ import com.github.e0ipso.tokkl.components.timerPageViewModels
 import com.github.e0ipso.tokkl.entries.WeekSource
 import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.orFail
@@ -221,8 +222,7 @@ class CalendarServerTest {
             app.changes.create(
                 WorkspaceId(workspace),
                 EntryFields(description = "Logged offline"),
-                start.atZone(zone).toInstant(),
-                stop.atZone(zone).toInstant(),
+                EntryTiming.Stopped(start.atZone(zone).toInstant(), stop.atZone(zone).toInstant()),
             )
         }
 

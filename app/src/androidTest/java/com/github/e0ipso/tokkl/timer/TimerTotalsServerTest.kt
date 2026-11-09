@@ -34,6 +34,7 @@ import com.github.e0ipso.tokkl.components.deleteUndo
 import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.AccountSettings
@@ -79,8 +80,7 @@ class TimerTotalsServerTest {
             app.changes.create(
                 WorkspaceId(fixture.account.workspaceId),
                 EntryFields("Today"),
-                now.minusSeconds(600),
-                now,
+                EntryTiming.Stopped(now.minusSeconds(600), now),
             )
         }
         fixture.drain()
@@ -153,8 +153,12 @@ class TimerTotalsServerTest {
                                 app.changes.update(
                                     EntryId(stopped.id.value),
                                     EntryFields("Edited total"),
-                                    stopped.start.minusSeconds(600),
-                                    stopped.stop,
+                                    EntryTiming.of(
+                                        stopped.start.minusSeconds(600),
+                                        stopped.stop,
+                                        allDay = false,
+                                        day = null,
+                                    ),
                                 )
                             },
                         )
@@ -211,10 +215,12 @@ class TimerTotalsServerTest {
             listOf(
                 TimeEntry(
                     EntryId(1), WorkspaceId(20), null, null, "segment",
-                    start.minusSeconds(
-                        10,
+                    EntryTiming.Running(
+                        start.minusSeconds(
+                            10,
+                        ),
                     ),
-                    null, false, emptyList(), emptyList(),
+                    false, emptyList(), emptyList(),
                 ),
             ),
         )
@@ -230,7 +236,7 @@ class TimerTotalsServerTest {
                 val before = requests.count
                 clock.at = start.plusSeconds(1)
                 awaitTotal("timer_totals_today", "0:00:11")
-                rows.value = rows.value.map { it.copy(stop = start.plusSeconds(1)) }
+                rows.value = rows.value.map { it.copy(timing = EntryTiming.Stopped(it.start, start.plusSeconds(1))) }
                 compose.waitForIdle()
                 clock.at = start.plusSeconds(2)
                 awaitTotal("timer_totals_week", "0:00:00")

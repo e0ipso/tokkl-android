@@ -24,6 +24,7 @@ import com.github.e0ipso.tokkl.components.reminder
 import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.reminder.ReminderWork
@@ -176,7 +177,15 @@ class BackgroundSendServerTest {
         val now = Instant.now()
 
         assertFalse(runBlocking { app.changes.stop(EntryId(NOT_CACHED)) })
-        assertFalse(runBlocking { app.changes.update(EntryId(NOT_CACHED), fields, now.minusSeconds(60), now) })
+        assertFalse(
+            runBlocking {
+                app.changes.update(
+                    EntryId(NOT_CACHED),
+                    fields,
+                    EntryTiming.Stopped(now.minusSeconds(60), now),
+                )
+            },
+        )
         assertFalse(runBlocking { app.changes.delete(EntryId(NOT_CACHED)) })
 
         assertEquals(0, unsentCount())
@@ -204,8 +213,7 @@ class BackgroundSendServerTest {
             app.changes.create(
                 WorkspaceId(workspace),
                 EntryFields(description = "Sent by the retry"),
-                stop.minusSeconds(600),
-                stop,
+                EntryTiming.Stopped(stop.minusSeconds(600), stop),
             )
         }
         runBlocking { app.sender.sendAndWait() }
@@ -245,8 +253,7 @@ class BackgroundSendServerTest {
             app.changes.create(
                 WorkspaceId(workspace),
                 EntryFields(description = "Sent by the app"),
-                stop.minusSeconds(600),
-                stop,
+                EntryTiming.Stopped(stop.minusSeconds(600), stop),
             )
         }
         runBlocking { app.sender.sendAndWait() }
@@ -280,8 +287,7 @@ class BackgroundSendServerTest {
             app.changes.create(
                 WorkspaceId(workspace),
                 EntryFields(description = "Joined"),
-                stop.minusSeconds(600),
-                stop,
+                EntryTiming.Stopped(stop.minusSeconds(600), stop),
             )
         }
         awaitCondition("the server stored the entry and its answer is held") { relay.holdsAnswer }

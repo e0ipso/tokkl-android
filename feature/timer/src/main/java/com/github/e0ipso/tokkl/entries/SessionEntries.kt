@@ -5,6 +5,7 @@ import com.github.e0ipso.tokkl.cache.HistoryWindow
 import com.github.e0ipso.tokkl.cache.resolveEntryOverrides
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
@@ -125,8 +126,11 @@ class SessionEntries(
     override suspend fun moveWeekEntry(id: EntryId, start: Instant, stop: Instant) {
         val held = cached.first().firstOrNull { it.entry.id == id }?.entry
         when {
-            held != null -> changes.update(held.id, held.fields(), start, stop)
-            else -> weekEntry(id)?.let { changes.updateOlder(it.id, it.workspaceId, it.fields(), start, stop) }
+            held != null -> changes.update(held.id, held.fields(), EntryTiming.Stopped(start, stop))
+
+            else -> weekEntry(id)?.let {
+                changes.updateOlder(it.id, it.workspaceId, it.fields(), EntryTiming.Stopped(start, stop))
+            }
         }
     }
 
@@ -145,14 +149,12 @@ class SessionEntries(
         opened: Instant,
         onPhone: Boolean,
         fields: EntryFields,
-        start: Instant,
-        stop: Instant?,
-        noTimeDay: LocalDate?,
+        timing: EntryTiming.Ended,
     ): Boolean {
-        if (onPhone && changes.update(entryId, fields, start, stop, noTimeDay)) return true
+        if (onPhone && changes.update(entryId, fields, timing)) return true
         val time = accountSettings.value?.time(clock)
         if (onPhone && (time == null || opened >= HistoryWindow.endingToday(time).start)) return false
-        changes.updateOlder(entryId, workspaceId, fields, start, requireNotNull(stop), noTimeDay)
+        changes.updateOlder(entryId, workspaceId, fields, timing)
         return true
     }
 

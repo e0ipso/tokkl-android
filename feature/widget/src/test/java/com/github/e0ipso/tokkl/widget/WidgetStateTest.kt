@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.widget
 
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.Favorite
 import com.github.e0ipso.tokkl.model.LocalEntryId
 import com.github.e0ipso.tokkl.model.Project
@@ -60,8 +61,7 @@ class WidgetStateTest {
         projectId = ProjectId(7),
         taskId = TaskId(9),
         description = "Widget",
-        start = start,
-        stop = null,
+        timing = EntryTiming.Running(start),
         billable = false,
         tags = listOf("android"),
         tagIds = emptyList(),
@@ -167,7 +167,11 @@ class WidgetStateTest {
         assertEquals(
             "a stopped entry",
             null,
-            (state(entry = running.copy(stop = start.plusSeconds(60))) as WidgetState.Ready).running,
+            (
+                state(
+                    entry = running.copy(timing = EntryTiming.Stopped(start, start.plusSeconds(60))),
+                ) as WidgetState.Ready
+                ).running,
         )
     }
 
@@ -321,7 +325,10 @@ class WidgetStateTest {
 
         assertEquals("the same state", shown.key(), state().key())
         assertNotEquals(shown.key(), state(entry = running.copy(description = "Edited")).key())
-        assertNotEquals(shown.key(), state(entry = running.copy(start = start.plusMillis(1))).key())
+        assertNotEquals(
+            shown.key(),
+            state(entry = running.copy(timing = EntryTiming.Running(start.plusMillis(1)))).key(),
+        )
         assertNotEquals(shown.key(), state(entry = null).key())
         assertNotEquals(shown.key(), state(favoritesAvailable = false).key())
         assertNotEquals(shown.key(), state(workspaceId = null).key())
@@ -329,16 +336,24 @@ class WidgetStateTest {
 
     @Test
     fun dayReportMatchesTimerTotalsWithMappedRowsBillableTimeAndNoProject() {
-        val local = running.copy(id = EntryId(-4), stop = start.plusSeconds(600), billable = true)
-        val server = local.copy(id = EntryId(80), stop = start.plusSeconds(10))
+        val local = running.copy(
+            id = EntryId(-4),
+            timing = EntryTiming.Stopped(start, start.plusSeconds(600)),
+            billable = true,
+        )
+        val server = local.copy(id = EntryId(80), timing = EntryTiming.Stopped(start, start.plusSeconds(10)))
         val otherProject = project.copy(id = ProjectId(8), name = "Other", color = "#ff5500")
         val other = local.copy(
             id = EntryId(2),
             projectId = ProjectId(8),
-            stop = start.plusSeconds(1_200),
+            timing = EntryTiming.Stopped(start, start.plusSeconds(1_200)),
             billable = false,
         )
-        val unassigned = local.copy(id = EntryId(3), projectId = null, stop = start.plusSeconds(300))
+        val unassigned = local.copy(
+            id = EntryId(3),
+            projectId = null,
+            timing = EntryTiming.Stopped(start, start.plusSeconds(300)),
+        )
         val rows = listOf(server, local, local, other, unassigned)
         val mapping = mapOf(EntryId(-4).local!! to EntryId(80))
         val now = start.plusSeconds(1_800)
@@ -370,8 +385,7 @@ class WidgetStateTest {
     fun resumedDayCountsActualSegmentsWithoutAddingThePauseChainAgain() {
         val stopped = running.copy(
             id = EntryId(1),
-            start = start.minusSeconds(900),
-            stop = start.minusSeconds(300),
+            timing = EntryTiming.Stopped(start.minusSeconds(900), start.minusSeconds(300)),
             billable = true,
         )
         val current = running.copy(billable = true)
@@ -407,7 +421,7 @@ class WidgetStateTest {
     @Test
     fun aMappedRunningRowKeepsTheLocalContributionAndUnassignedRunningMarker() {
         val local = running.copy(projectId = null, billable = true)
-        val server = local.copy(id = EntryId(80), start = start.plusSeconds(50))
+        val server = local.copy(id = EntryId(80), timing = EntryTiming.Running(start.plusSeconds(50)))
         val now = start.plusSeconds(100)
         val rows = listOf(server, local)
         val mappings = mapOf(local.id.local!! to server.id)
@@ -425,12 +439,11 @@ class WidgetStateTest {
     fun dayRolloverUsesTheAccountStartDayWithoutSplittingOvernightEntries() {
         val before = Instant.parse("2026-10-20T14:59:00Z")
         val after = before.plusSeconds(120)
-        val current = running.copy(start = before.minusSeconds(60))
-        val stopped = running.copy(id = EntryId(8), start = before.minusSeconds(300), stop = after)
+        val current = running.copy(timing = EntryTiming.Running(before.minusSeconds(60)))
+        val stopped = running.copy(id = EntryId(8), timing = EntryTiming.Stopped(before.minusSeconds(300), after))
         val tomorrow = running.copy(
             id = EntryId(9),
-            start = after.plusSeconds(86_400),
-            stop = after.plusSeconds(86_500),
+            timing = EntryTiming.Stopped(after.plusSeconds(86_400), after.plusSeconds(86_500)),
         )
         val rows = listOf(current, stopped, tomorrow)
         val old = state(entry = current, entries = rows, now = before) as WidgetState.Ready
@@ -456,7 +469,7 @@ class WidgetStateTest {
             "2026-03-08T06:30:00Z" to "2026-03-08T07:30:00Z",
             "2026-11-01T05:30:00Z" to "2026-11-01T06:30:00Z",
         )) {
-            val row = running.copy(start = Instant.parse(first), stop = Instant.parse(last))
+            val row = running.copy(timing = EntryTiming.Stopped(Instant.parse(first), Instant.parse(last)))
             val now = row.stop!!.plusSeconds(60)
             val day = (
                 state(
@@ -481,7 +494,7 @@ class WidgetStateTest {
 
     @Test
     fun totalsAndProjectRowsUseTheAccountDurationFormat() {
-        val row = running.copy(stop = start.plusSeconds(3_661), billable = true)
+        val row = running.copy(timing = EntryTiming.Stopped(start, start.plusSeconds(3_661)), billable = true)
         val now = row.stop!!
         for (format in DurationFormat.entries) {
             val account = settings.copy(durationFormat = format)

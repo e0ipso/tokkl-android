@@ -1,7 +1,9 @@
 package com.github.e0ipso.tokkl.entry
 
+import com.github.e0ipso.tokkl.entryfields.noTimeEntry
 import com.github.e0ipso.tokkl.entryfields.resolveRange
 import com.github.e0ipso.tokkl.entryfields.snappedSeconds
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.AccountTime
 import com.github.e0ipso.tokkl.time.MAX_ALL_DAY_SECONDS
@@ -13,6 +15,7 @@ import com.github.e0ipso.tokkl.time.parseDuration
 import com.github.e0ipso.tokkl.time.parseTimeOfDay
 import java.time.Clock
 import java.time.DateTimeException
+import java.time.Duration
 import java.time.Instant
 
 /** The longest entry Tokkl and Toggl store: 999 hours, MAX_DURATION_SECONDS in ../tokkl/packages/common/duration.ts. */
@@ -27,7 +30,7 @@ internal fun check(form: EntryDraft, settings: AccountSettings, time: AccountTim
     if (form.noTimes) return checkNoTimes(form, settings, time)
     val unreadable = if (form.target == DraftTarget.New) TimeMistake.MANUAL_TIMES else TimeMistake.TIMES
     val start = form.startInstant(settings, time, clock) ?: return CheckedTimes.Invalid(TimeField.START, unreadable)
-    if (form.target is DraftTarget.Running) return CheckedTimes.Valid(start, stop = null)
+    if (form.target is DraftTarget.Running) return CheckedTimes.Valid(EntryTiming.Running(start))
     val durationChanged = form.durationChanged()
     val spanField = if (durationChanged) TimeField.DURATION else TimeField.END
     val stop = stopOf(form, start, durationChanged, settings, time, clock)
@@ -68,12 +71,12 @@ private fun checkSpan(
     return if (seconds > MAX_ENTRY_SECONDS) {
         CheckedTimes.Invalid(spanField, TimeMistake.TOO_LONG)
     } else {
-        CheckedTimes.Valid(start, stop)
+        CheckedTimes.Valid(EntryTiming.Stopped(start, stop))
     }
 }
 
 /**
- * The span a no-time [form] saves: midnight on its date in the account's timezone, and the
+ * The no-time entry [form] saves: midnight on its date in the account's timezone, and the
  * duration the server will store, as the web app's noTimeDuration.ts reads it. Only the
  * duration can be wrong.
  */
@@ -82,7 +85,9 @@ private fun checkNoTimes(form: EntryDraft, settings: AccountSettings, time: Acco
     // as the web app's noTimeEdit.ts does, so renaming one off the grid never rounds it.
     val target = form.target as? DraftTarget.Edit
     if (target != null && target.keepsNoTime(form)) {
-        return CheckedTimes.Valid(target.start, target.stop, noTimeDay = form.date)
+        return CheckedTimes.Valid(
+            EntryTiming.AllDay(form.date, target.start, Duration.between(target.start, target.stop)),
+        )
     }
     val read = noTimeDuration(form.duration, settings.timeResolutionMinutes)
     val seconds = read.seconds
@@ -92,8 +97,7 @@ private fun checkNoTimes(form: EntryDraft, settings: AccountSettings, time: Acco
             read.mistake(settings.timeResolutionMinutes),
         )
     }
-    val span = time.noTimeSpan(form.date, seconds)
-    return CheckedTimes.Valid(span.start, span.stop, noTimeDay = form.date)
+    return CheckedTimes.Valid(time.noTimeEntry(form.date, seconds))
 }
 
 /** The start [EntryDraft.start] means: the entry's own while the date and the start are as they opened. */
@@ -195,4 +199,4 @@ private fun NoTimeDuration.mistake(minutes: Double?): TimeMistake {
 
 /** True when [form] edits a no-time entry and leaves its day and duration as they were. */
 private fun DraftTarget.Edit.keepsNoTime(form: EntryDraft): Boolean =
-    snapshot.allDay && form.date == date && !form.durationChanged()
+    noTime && form.date == date && !form.durationChanged()

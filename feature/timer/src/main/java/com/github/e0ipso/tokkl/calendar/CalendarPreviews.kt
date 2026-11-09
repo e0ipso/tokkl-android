@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.github.e0ipso.tokkl.entries.WeekSource
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.DayOfWeek
@@ -53,8 +54,7 @@ private fun entry(id: Long, description: String, project: String?, color: String
         project = project,
         projectColor = color,
         task = null,
-        start = Instant.parse("$start:00Z"),
-        stop = stop?.let { Instant.parse("$it:00Z") },
+        timing = EntryTiming.of(Instant.parse("$start:00Z"), stop?.let { Instant.parse("$it:00Z") }, false, null),
         unsent = stop == null,
     )
 

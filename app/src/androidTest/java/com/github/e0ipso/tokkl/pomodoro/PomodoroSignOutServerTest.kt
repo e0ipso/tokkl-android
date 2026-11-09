@@ -38,6 +38,7 @@ import com.github.e0ipso.tokkl.credentials.ApiTokenStore
 import com.github.e0ipso.tokkl.feature.settings.R
 import com.github.e0ipso.tokkl.finishWithin
 import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.PhaseTransition
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.notification.RunningNotifications
@@ -126,8 +127,7 @@ class PomodoroSignOutServerTest {
             app.changes.create(
                 WorkspaceId(account.workspaceId),
                 EntryFields("Unsent manual"),
-                Instant.now().minusSeconds(7200),
-                Instant.now().minusSeconds(3600),
+                EntryTiming.Stopped(Instant.now().minusSeconds(7200), Instant.now().minusSeconds(3600)),
             )
         }
         assertEquals(1, queueCount())

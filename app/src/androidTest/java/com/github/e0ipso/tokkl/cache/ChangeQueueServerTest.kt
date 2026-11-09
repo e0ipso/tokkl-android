@@ -19,6 +19,7 @@ import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
@@ -205,8 +206,7 @@ class ChangeQueueServerTest {
                 app.changes.update(
                     timer,
                     EntryFields(description = "Edited offline"),
-                    app.cache.running.first()!!.entry.start,
-                    stop = null,
+                    EntryTiming.Running(app.cache.running.first()!!.entry.start),
                 )
             },
         )
@@ -217,8 +217,7 @@ class ChangeQueueServerTest {
             app.changes.create(
                 WorkspaceId(workspace),
                 EntryFields(description = "Made by hand", tags = listOf("typed offline"), billable = true),
-                start = manualStart,
-                stop = manualStart.plus(Duration.ofMinutes(30)),
+                EntryTiming.Stopped(manualStart, manualStart.plus(Duration.ofMinutes(30))),
             )
         }
         assertTrue(runBlocking { app.changes.delete(timer) })
@@ -286,7 +285,15 @@ class ChangeQueueServerTest {
 
         relay.hang()
         val phone = EntryFields(description = "From the phone")
-        assertTrue(runBlocking { app.changes.update(EntryId(entry), phone, start, start.plus(Duration.ofMinutes(30))) })
+        assertTrue(
+            runBlocking {
+                app.changes.update(
+                    EntryId(entry),
+                    phone,
+                    EntryTiming.Stopped(start, start.plus(Duration.ofMinutes(30))),
+                )
+            },
+        )
         editOnTheWeb(entry, "From the web", billable = true)
         relay.release()
         drainUntilEmpty()
@@ -529,15 +536,22 @@ class ChangeQueueServerTest {
             app.changes.create(
                 WorkspaceId(workspace),
                 EntryFields(description = "Answer lost"),
-                start,
-                start.plus(Duration.ofMinutes(30)),
+                EntryTiming.Stopped(start, start.plus(Duration.ofMinutes(30))),
             )
         }
         waitUntil("the server stored the entry and its answer is held") { relay.holdsAnswer }
         // The connection drops before the answer reaches the phone.
         relay.hang()
         val edited = EntryFields(description = "Edited after the lost answer")
-        assertTrue(runBlocking { app.changes.update(id, edited, start, start.plus(Duration.ofMinutes(45))) })
+        assertTrue(
+            runBlocking {
+                app.changes.update(
+                    id,
+                    edited,
+                    EntryTiming.Stopped(start, start.plus(Duration.ofMinutes(45))),
+                )
+            },
+        )
         waitUntil("the sender's next request hangs in the network") { relay.hungConnections > 0 }
         relay.releaseAnswer()
         relay.release()
@@ -567,8 +581,7 @@ class ChangeQueueServerTest {
             app.changes.create(
                 WorkspaceId(workspace),
                 EntryFields(description = "Tagged", tags = listOf("work")),
-                start,
-                start.plus(Duration.ofMinutes(30)),
+                EntryTiming.Stopped(start, start.plus(Duration.ofMinutes(30))),
             )
         }
         waitUntil("the server stored the entry and its answer is held") { relay.holdsAnswer }
@@ -603,8 +616,7 @@ class ChangeQueueServerTest {
             app.changes.create(
                 WorkspaceId(workspace),
                 EntryFields(description = "Tagged", tags = listOf("work")),
-                start,
-                stop,
+                EntryTiming.Stopped(start, stop),
             )
         }
         // The relay drops the create on a connection it cut, or holds it on a new one until the
@@ -629,8 +641,7 @@ class ChangeQueueServerTest {
             app.changes.create(
                 WorkspaceId(workspace),
                 EntryFields(description = "Never reached"),
-                start,
-                start.plus(Duration.ofMinutes(30)),
+                EntryTiming.Stopped(start, start.plus(Duration.ofMinutes(30))),
             )
         }
         // The relay drops the create on a connection it cut, or holds it on a new one until the
@@ -675,8 +686,7 @@ class ChangeQueueServerTest {
             app.changes.create(
                 WorkspaceId(workspace),
                 EntryFields(description = "Copied"),
-                start,
-                stop,
+                EntryTiming.Stopped(start, stop),
             )
         }
         runBlocking { app.sender.sendAndWait() }
@@ -704,9 +714,7 @@ class ChangeQueueServerTest {
             app.changes.create(
                 WorkspaceId(workspace),
                 EntryFields(description = "Logged offline, no times"),
-                span.start,
-                span.stop,
-                noTimeDay = day,
+                EntryTiming.AllDay(day, span.start, Duration.between(span.start, span.stop)),
             )
         }
         runBlocking { app.sender.sendAndWait() }

@@ -2,14 +2,14 @@ package com.github.e0ipso.tokkl.entries
 
 import com.github.e0ipso.tokkl.cache.HistoryWindow
 import com.github.e0ipso.tokkl.cache.reconcileEntryRows
+import com.github.e0ipso.tokkl.entryfields.noTimeEntry
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.TimeEntry
-import com.github.e0ipso.tokkl.model.noTimeDay
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.AccountTime
 import java.time.Clock
-import java.time.Duration
 import java.time.LocalDate
 
 /**
@@ -240,18 +240,16 @@ private fun WeeksState.entryIds(): Set<EntryId> =
 
 private fun Map<EntryId, TimeEntry?>.restoredIds(): Set<EntryId> = values.filterNotNull().idSet()
 
-/** The entry with the times the server stores once it gets it: a stopped entry's span snapped. */
-private fun TimeEntry.stored(time: AccountTime): TimeEntry {
-    if (allDay) {
-        val span = stop?.let {
-            time.noTimeSpan(
-                noTimeDay(time.zone),
-                Duration.between(start, it).seconds,
-            )
-        } ?: return this
-        return copy(start = span.start, stop = span.stop)
+/** The entry with the times the server stores once it gets it: an ended entry's span snapped. */
+private fun TimeEntry.stored(time: AccountTime): TimeEntry = when (val timing = timing) {
+    is EntryTiming.Running -> this
+
+    is EntryTiming.AllDay -> copy(
+        timing = time.noTimeEntry(timing.dayIn(time.zone), timing.duration.seconds, stored = timing.day),
+    )
+
+    is EntryTiming.Stopped -> {
+        val span = timing.stop.takeIf { !it.isBefore(timing.start) }?.let { time.snapUnsent(timing.start, it) }
+        if (span == null) this else copy(timing = EntryTiming.Stopped(span.start, span.stop))
     }
-    val stop = stop?.takeIf { !it.isBefore(start) } ?: return this
-    val span = time.snapUnsent(start, stop) ?: return this
-    return copy(start = span.start, stop = span.stop)
 }

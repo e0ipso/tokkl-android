@@ -1,14 +1,14 @@
 package com.github.e0ipso.tokkl.calendar
 
+import com.github.e0ipso.tokkl.entryfields.noTimeEntry
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.model.Task
 import com.github.e0ipso.tokkl.model.TaskId
 import com.github.e0ipso.tokkl.model.TimeEntry
-import com.github.e0ipso.tokkl.model.noTimeDay
 import com.github.e0ipso.tokkl.time.AccountTime
-import java.time.Duration
 import java.time.LocalDate
 
 /**
@@ -36,7 +36,12 @@ internal fun weekEntries(
         .map { (entry, unsent) -> entry.shown(unsent, time, projectsById, tasksById) }
         // A no-time entry belongs to its stored day, not to the instant of a midnight that a timezone change left
         // stale.
-        .filter { if (it.allDay) it.day in days else it.start < to && (it.stop == null || it.stop > from) }
+        .filter { shown ->
+            when (val timing = shown.timing) {
+                is EntryTiming.AllDay -> timing.day in days
+                else -> shown.start < to && shown.stop.let { it == null || it > from }
+            }
+        }
 }
 
 private fun TimeEntry.shown(
@@ -47,18 +52,18 @@ private fun TimeEntry.shown(
 ): CalendarEntry {
     // A no-time entry is on its stored day, from the midnight of the account's zone, with the
     // duration the server will store. The instant it was stored at may be stale after a timezone change.
-    val noTimeDay = noTimeDay(time.zone).takeIf { allDay }
     // The server keeps a running entry's start as sent, so only a stopped one is snapped.
     // A rejected pending span keeps its actual times and unsent state for correction.
-    val span = stop?.takeIf { unsent }?.let {
-        if (noTimeDay != null) {
-            time.noTimeSpan(
-                noTimeDay,
-                Duration.between(start, it).seconds,
-            )
-        } else {
-            time.snapUnsent(start, it)
+    val shown = when (val timing = timing) {
+        is EntryTiming.Running -> timing
+
+        is EntryTiming.AllDay -> {
+            val day = timing.dayIn(time.zone)
+            if (unsent) time.noTimeEntry(day, timing.duration.seconds) else timing.copy(day = day)
         }
+
+        is EntryTiming.Stopped -> timing.takeIf { unsent }?.let { time.snapUnsent(it.start, it.stop) }
+            ?.let { EntryTiming.Stopped(it.start, it.stop) } ?: timing
     }
     val project = projectId?.let(projects::get)
     return CalendarEntry(
@@ -67,10 +72,7 @@ private fun TimeEntry.shown(
         project = project?.name,
         projectColor = project?.color,
         task = taskId?.let(tasks::get)?.name,
-        start = span?.start ?: start,
-        stop = span?.stop ?: stop,
+        timing = shown,
         unsent = unsent,
-        allDay = allDay,
-        day = noTimeDay,
     )
 }

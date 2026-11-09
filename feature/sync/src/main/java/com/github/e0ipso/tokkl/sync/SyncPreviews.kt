@@ -7,6 +7,7 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.github.e0ipso.tokkl.cache.ChangeKind
 import com.github.e0ipso.tokkl.cache.HeldChange
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.AccountSettings
@@ -69,8 +70,7 @@ private val SAMPLE_CHANGE = HeldChange(
         projectId = null,
         taskId = null,
         description = "Sprint planning",
-        start = Instant.parse("2026-10-14T08:30:00Z"),
-        stop = Instant.parse("2026-10-14T12:00:00Z"),
+        timing = EntryTiming.Stopped(Instant.parse("2026-10-14T08:30:00Z"), Instant.parse("2026-10-14T12:00:00Z")),
         billable = false,
         tags = emptyList(),
         tagIds = emptyList(),

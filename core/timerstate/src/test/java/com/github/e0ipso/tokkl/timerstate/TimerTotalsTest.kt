@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.timerstate
 
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.AccountSettings
@@ -178,7 +179,10 @@ class TimerTotalsTest {
         val now = Instant.parse("2026-10-24T03:00:00Z")
         val time = tokyo(DayOfWeek.MONDAY)
         val local = entry(-4, "2026-10-24T01:00:00Z", "2026-10-24T01:00:40Z")
-        val server = local.copy(id = EntryId(80), stop = local.start.plusSeconds(10))
+        val server = local.copy(
+            id = EntryId(80),
+            timing = EntryTiming.Stopped(local.start, local.start.plusSeconds(10)),
+        )
         val map = mapOf(local.id.local!! to server.id)
 
         assertEquals(40L, timerPeriodTotals(listOf(local), time, now).todaySeconds)
@@ -186,7 +190,7 @@ class TimerTotalsTest {
         assertEquals(40L, timerPeriodTotals(listOf(server, local), time, now, map).todaySeconds)
         assertEquals(40L, timerPeriodTotals(listOf(local, server), time, now, map).weekSeconds)
 
-        val twin = local.copy(stop = local.start.plusSeconds(5))
+        val twin = local.copy(timing = EntryTiming.Stopped(local.start, local.start.plusSeconds(5)))
         assertEquals(40L, timerPeriodTotals(listOf(local, twin), time, now).todaySeconds)
         val otherLocal = entry(-5, "2026-10-24T02:00:00Z", "2026-10-24T02:00:15Z")
         val collapsed = timerPeriodTotals(
@@ -261,8 +265,7 @@ class TimerTotalsTest {
         projectId = null,
         taskId = null,
         description = "Entry $id",
-        start = Instant.parse(start),
-        stop = stop?.let(Instant::parse),
+        timing = EntryTiming.of(Instant.parse(start), stop?.let(Instant::parse), allDay = false, day = null),
         billable = false,
         tags = emptyList(),
         tagIds = emptyList(),

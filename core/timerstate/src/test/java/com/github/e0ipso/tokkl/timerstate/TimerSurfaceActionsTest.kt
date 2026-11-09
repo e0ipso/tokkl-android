@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.timerstate
 import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.RunningEntryIdentity
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
@@ -248,10 +249,12 @@ class TimerSurfaceActionsTest {
         TimerControls.Running(
             entry = TimeEntry(
                 EntryId(id), WorkspaceId(1), null, null, "Work",
-                Instant.parse(
-                    "2026-10-28T09:00:00Z",
+                EntryTiming.Running(
+                    Instant.parse(
+                        "2026-10-28T09:00:00Z",
+                    ),
                 ),
-                null, false, emptyList(), emptyList(),
+                false, emptyList(), emptyList(),
             ),
             unsent = unsent,
             accumulatedSeconds = accumulatedSeconds,

@@ -8,6 +8,7 @@ import com.github.e0ipso.tokkl.entries.WeekEntries
 import com.github.e0ipso.tokkl.entryfields.TimeRange
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.model.Task
 import com.github.e0ipso.tokkl.model.TimeEntry
@@ -151,7 +152,8 @@ class CalendarViewModel(
         val workspaceId = settings.defaultWorkspaceId ?: return
         val range = createdRange(day, fromMinute, toMinute, dragStep(settings.dragResolution), time) ?: return
         if (range.stop < range.start || time.snapUnsent(range.start, range.stop) == null) return
-        viewModelScope.launch { onCreated(changes.create(workspaceId, EntryFields(), range.start, range.stop)) }
+        val timing = EntryTiming.Stopped(range.start, range.stop)
+        viewModelScope.launch { onCreated(changes.create(workspaceId, EntryFields(), timing)) }
     }
 
     /**
@@ -175,9 +177,8 @@ class CalendarViewModel(
      * are the ones the server will store.
      */
     private fun change(entry: CalendarEntry, range: (stop: Instant, time: AccountTime, step: Int) -> TimeRange) {
-        // A no-time entry has no time to move or resize.
-        if (entry.allDay) return
-        val stop = entry.stop ?: return
+        // A no-time entry has no time to move or resize, and a running one no end.
+        val stop = (entry.timing as? EntryTiming.Stopped)?.stop ?: return
         val settings = accountSettings.value ?: return
         val time = settings.time(clock) ?: return
         val span = range(stop, time, dragStep(settings.dragResolution))

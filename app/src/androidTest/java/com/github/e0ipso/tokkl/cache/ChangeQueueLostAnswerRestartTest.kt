@@ -13,6 +13,7 @@ import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
@@ -66,8 +67,7 @@ class ChangeQueueLostAnswerRestartTest {
             app.changes.create(
                 WorkspaceId(workspace),
                 EntryFields(description = "Sent before the process died"),
-                start,
-                start.plus(Duration.ofMinutes(30)),
+                EntryTiming.Stopped(start, start.plus(Duration.ofMinutes(30))),
             )
         }
         val deadline = System.nanoTime() + Duration.ofSeconds(30).toNanos()

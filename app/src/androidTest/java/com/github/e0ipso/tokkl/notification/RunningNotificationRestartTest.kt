@@ -14,6 +14,7 @@ import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.initializeTestWorkManager
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -96,8 +97,7 @@ class RunningNotificationRestartTest {
                         app.changes.update(
                             EntryId(saved.getProperty("id").toLong()),
                             edited,
-                            start,
-                            stop = null,
+                            EntryTiming.Running(start),
                         )
                     },
                 )

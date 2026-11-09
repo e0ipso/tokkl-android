@@ -7,6 +7,7 @@ import com.github.e0ipso.tokkl.entries.sessionEntries
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.model.ProjectId
@@ -37,6 +38,7 @@ import org.junit.Test
 import java.io.IOException
 import java.time.Clock
 import java.time.DayOfWeek
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -341,8 +343,10 @@ class EntryFormViewModelTest {
     fun anUnsentEntryOpensWithTheTimesTheServerWillStore() {
         settings.value = SETTINGS.copy(timeResolutionMinutes = 15.0)
         val raw = ENTRY.copy(
-            start = Instant.parse("2026-10-14T07:07:31.500Z"),
-            stop = Instant.parse("2026-10-14T08:01:02.250Z"),
+            timing = EntryTiming.Stopped(
+                Instant.parse("2026-10-14T07:07:31.500Z"),
+                Instant.parse("2026-10-14T08:01:02.250Z"),
+            ),
         )
         entries.value = listOf(EntryWithSendState(raw, unsent = true))
 
@@ -377,7 +381,9 @@ class EntryFormViewModelTest {
         onMain { model.edit(EntryId(404)) }
         awaitState("an entry the cache lacks is missing") { it == EntryFormState.Missing }
 
-        entries.value = listOf(EntryWithSendState(ENTRY.copy(stop = null), unsent = false))
+        entries.value = listOf(
+            EntryWithSendState(ENTRY.copy(timing = EntryTiming.Running(ENTRY.start)), unsent = false),
+        )
         onMain { model.edit(EntryId(ENTRY_ID)) }
         awaitState("the running entry is the timer's") { it == EntryFormState.Missing }
     }
@@ -668,7 +674,7 @@ class EntryFormViewModelTest {
     @Test
     fun unchangedTimesOfALegacyZeroEntryCanBeEditedButMovingThemIsRejected() {
         settings.value = SETTINGS.copy(timeResolutionMinutes = 60.0)
-        val legacy = ENTRY.copy(stop = ENTRY.start)
+        val legacy = ENTRY.copy(timing = EntryTiming.Stopped(ENTRY.start, ENTRY.start))
         entries.value = listOf(EntryWithSendState(legacy, unsent = false))
         openEntry()
         onMain { model.setDescription("Keep the legacy times") }
@@ -860,7 +866,12 @@ class EntryFormViewModelTest {
     @Test
     fun aQueuedNoTimeEntryKeepsItsDayAfterTheTimezoneChanges() {
         settings.value = SETTINGS.copy(timeZone = "America/New_York")
-        entries.value = listOf(EntryWithSendState(ALL_DAY.copy(day = LocalDate.of(2026, 10, 14)), unsent = true))
+        entries.value = listOf(
+            EntryWithSendState(
+                ALL_DAY.copy(timing = ALL_DAY_TIMING.copy(day = LocalDate.of(2026, 10, 14))),
+                unsent = true,
+            ),
+        )
         assertEquals(LocalDate.of(2026, 10, 14), openEntry(ALL_DAY.id).date)
         onMain { model.setDuration("2h") }
 
@@ -876,9 +887,7 @@ class EntryFormViewModelTest {
     @Test
     fun aNoTimeEntryFromTheOlderDaysSavesWholeOnItsDay() {
         val older = OLDER.copy(
-            allDay = true,
-            start = Instant.parse("2026-09-01T22:00:00Z"),
-            stop = Instant.parse("2026-09-01T23:00:00Z"),
+            timing = EntryTiming.AllDay(null, Instant.parse("2026-09-01T22:00:00Z"), Duration.ofHours(1)),
         )
         onMain { model.edit(older.id, older = older) }
         val form = awaitOpen("the form opens on the older entry") { it.noTimes }
@@ -994,7 +1003,10 @@ class EntryFormViewModelTest {
     @Test
     fun aDayLongNoTimeEntryKeepsItsLengthWhenItGetsTimes() {
         entries.value = listOf(
-            EntryWithSendState(ALL_DAY.copy(stop = Instant.parse("2026-10-14T22:00:00Z")), unsent = false),
+            EntryWithSendState(
+                ALL_DAY.copy(timing = ALL_DAY_TIMING.copy(duration = Duration.ofDays(1))),
+                unsent = false,
+            ),
         )
         openEntry(ALL_DAY.id)
 
@@ -1022,7 +1034,7 @@ class EntryFormViewModelTest {
 
     @Test
     fun noTimesIsNeverOfferedForTheRunningEntry() {
-        val running = ENTRY.copy(stop = null)
+        val running = ENTRY.copy(timing = EntryTiming.Running(ENTRY.start))
         changes.running = running
         onMain { model.editRunning(RunningEntryIdentity(running.id, running.workspaceId, running.start)) }
         assertEquals(false, awaitOpen("the running entry opens") { it.running }.noTimesOffered)
@@ -1183,13 +1195,10 @@ class EntryFormViewModelTest {
         @Volatile
         var refusal: Exception? = null
 
-        override suspend fun update(
-            entryId: EntryId,
-            fields: EntryFields,
-            start: Instant,
-            stop: Instant?,
-            noTimeDay: LocalDate?,
-        ): Boolean {
+        override suspend fun update(entryId: EntryId, fields: EntryFields, timing: EntryTiming): Boolean {
+            val start = timing.start
+            val stop = (timing as? EntryTiming.Ended)?.stop
+            val noTimeDay = (timing as? EntryTiming.AllDay)?.day
             refusal?.let { throw it }
             calls += "update $entryId $fields $start $stop" + noTimeDay.onDay()
             return updates
@@ -1198,10 +1207,11 @@ class EntryFormViewModelTest {
         override suspend fun create(
             workspaceId: WorkspaceId,
             fields: EntryFields,
-            start: Instant,
-            stop: Instant,
-            noTimeDay: LocalDate?,
+            timing: EntryTiming.Ended,
         ): EntryId {
+            val start = timing.start
+            val stop = timing.stop
+            val noTimeDay = (timing as? EntryTiming.AllDay)?.day
             calls += "create $workspaceId $fields $start $stop" + noTimeDay.onDay()
             return EntryId(-1)
         }
@@ -1218,10 +1228,11 @@ class EntryFormViewModelTest {
             entryId: EntryId,
             workspaceId: WorkspaceId,
             fields: EntryFields,
-            start: Instant,
-            stop: Instant,
-            noTimeDay: LocalDate?,
+            timing: EntryTiming.Ended,
         ) {
+            val start = timing.start
+            val stop = timing.stop
+            val noTimeDay = (timing as? EntryTiming.AllDay)?.day
             calls += "updateOlder $entryId $workspaceId $fields $start $stop" + noTimeDay.onDay()
         }
 
@@ -1291,8 +1302,7 @@ class EntryFormViewModelTest {
             projectId = null,
             taskId = null,
             description = "Write the form",
-            start = Instant.parse("2026-10-14T07:00:20Z"),
-            stop = Instant.parse("2026-10-14T08:30:45Z"),
+            timing = EntryTiming.Stopped(Instant.parse("2026-10-14T07:00:20Z"), Instant.parse("2026-10-14T08:30:45Z")),
             billable = false,
             tags = emptyList(),
             tagIds = emptyList(),
@@ -1303,18 +1313,17 @@ class EntryFormViewModelTest {
          * A no-time entry of 1:37 on Wednesday 14 October 2026, as the server stores it: from
          * midnight in Madrid, with no day of its own.
          */
+        val ALL_DAY_TIMING = EntryTiming.AllDay(null, Instant.parse("2026-10-13T22:00:00Z"), Duration.ofMinutes(97))
         val ALL_DAY = TimeEntry(
             id = EntryId(8),
             workspaceId = WorkspaceId(WORKSPACE),
             projectId = null,
             taskId = null,
             description = "Read the spec",
-            start = Instant.parse("2026-10-13T22:00:00Z"),
-            stop = Instant.parse("2026-10-13T23:37:00Z"),
+            timing = ALL_DAY_TIMING,
             billable = false,
             tags = emptyList(),
             tagIds = emptyList(),
-            allDay = true,
         )
         val ALL_DAY_FIELDS = EntryFields(description = "Read the spec")
         const val OLDER_WORKSPACE = 20L
@@ -1326,8 +1335,7 @@ class EntryFormViewModelTest {
             projectId = APP.id,
             taskId = null,
             description = "Plan the sprint",
-            start = Instant.parse("2026-09-02T06:00:00Z"),
-            stop = Instant.parse("2026-09-02T07:15:00Z"),
+            timing = EntryTiming.Stopped(Instant.parse("2026-09-02T06:00:00Z"), Instant.parse("2026-09-02T07:15:00Z")),
             billable = false,
             tags = emptyList(),
             tagIds = emptyList(),

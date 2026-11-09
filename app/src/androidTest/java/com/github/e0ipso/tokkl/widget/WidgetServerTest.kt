@@ -41,6 +41,7 @@ import com.github.e0ipso.tokkl.feature.widget.R
 import com.github.e0ipso.tokkl.followNoTimerEvents
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.notification.stopAction
@@ -393,7 +394,7 @@ class WidgetServerTest {
             assertEquals(tileEntry, running.id)
             // Two hours spans even the server's coarsest allowed 60-minute grid.
             val agedStart = running.start.minusSeconds(7_200)
-            assertTrue(app.changes.update(tileEntry, fields, agedStart, null))
+            assertTrue(app.changes.update(tileEntry, fields, EntryTiming.Running(agedStart)))
             withTimeout(1_000) { app.cache.running.first { it?.entry?.start == agedStart } }
         }
         native.awaitText("Tile to widget")

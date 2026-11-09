@@ -11,6 +11,7 @@ import com.github.e0ipso.tokkl.favorites.MAX_FAVORITES
 import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.Favorite
 import com.github.e0ipso.tokkl.model.ProjectId
@@ -39,6 +40,7 @@ import org.junit.Test
 import java.io.IOException
 import java.time.Clock
 import java.time.DayOfWeek
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.util.concurrent.CopyOnWriteArrayList
@@ -232,9 +234,11 @@ class EntryActionsViewModelTest {
     fun duplicateOfANoTimeEntryStaysNoTimeOnItsStoredDay() {
         // The stored day is the 19th, though the start (22:00 UTC) is now midnight of the 20th in Madrid.
         val noTime = NO_TIME.copy(
-            day = LocalDate.of(2026, 10, 19),
-            start = Instant.parse("2026-10-19T22:00:00Z"),
-            stop = Instant.parse("2026-10-19T23:30:00Z"),
+            timing = EntryTiming.AllDay(
+                LocalDate.of(2026, 10, 19),
+                Instant.parse("2026-10-19T22:00:00Z"),
+                Duration.ofMinutes(90),
+            ),
         )
         entries.value = listOf(EntryWithSendState(noTime, unsent = false))
         val model = model(canRestore = true)
@@ -258,7 +262,7 @@ class EntryActionsViewModelTest {
     @Test
     fun duplicateOfANoTimeEntryWithoutAStoredDayTakesItsDayInTheAccountZone() {
         // Madrid midnight of the 19th, which is the 18th in UTC.
-        val noTime = NO_TIME.copy(day = null)
+        val noTime = NO_TIME.copy(timing = (NO_TIME.timing as EntryTiming.AllDay).copy(day = null))
         entries.value = listOf(EntryWithSendState(noTime, unsent = false))
         val model = model(canRestore = true)
 
@@ -554,21 +558,18 @@ class EntryActionsViewModelTest {
         override suspend fun create(
             workspaceId: WorkspaceId,
             fields: EntryFields,
-            start: Instant,
-            stop: Instant,
-            noTimeDay: LocalDate?,
+            timing: EntryTiming.Ended,
         ): EntryId {
+            val start = timing.start
+            val stop = timing.stop
+            val noTimeDay = (timing as? EntryTiming.AllDay)?.day
             calls += "create $workspaceId $fields $start $stop" + (noTimeDay?.let { " noTimeDay=$it" } ?: "")
             return EntryId(-1)
         }
 
-        override suspend fun update(
-            entryId: EntryId,
-            fields: EntryFields,
-            start: Instant,
-            stop: Instant?,
-            noTimeDay: LocalDate?,
-        ): Boolean {
+        override suspend fun update(entryId: EntryId, fields: EntryFields, timing: EntryTiming): Boolean {
+            val start = timing.start
+            val stop = (timing as? EntryTiming.Ended)?.stop
             calls += "update $entryId $fields $start $stop"
             return cached
         }
@@ -577,9 +578,7 @@ class EntryActionsViewModelTest {
             entryId: EntryId,
             workspaceId: WorkspaceId,
             fields: EntryFields,
-            start: Instant,
-            stop: Instant,
-            noTimeDay: LocalDate?,
+            timing: EntryTiming.Ended,
         ): Unit = throw AssertionError("unexpected updateOlder")
 
         override suspend fun delete(entry: TimeEntry): TimeEntry? = if (delete(entry.id)) entry else null
@@ -601,22 +600,25 @@ class EntryActionsViewModelTest {
             projectId = ProjectId(3),
             taskId = TaskId(4),
             description = "Code review",
-            start = Instant.parse("2026-10-19T08:00:12.250Z"),
-            stop = Instant.parse("2026-10-19T09:05:40.500Z"),
+            timing = EntryTiming.Stopped(
+                Instant.parse("2026-10-19T08:00:12.250Z"),
+                Instant.parse("2026-10-19T09:05:40.500Z"),
+            ),
             billable = true,
             tags = listOf("review", "remote"),
             tagIds = listOf(TagId(1), TagId(2)),
         )
 
-        val RUNNING = STOPPED.copy(id = EntryId(71), stop = null)
+        val RUNNING = STOPPED.copy(id = EntryId(71), timing = EntryTiming.Running(STOPPED.start))
 
         /** A no-time entry on 19 October in Madrid: its start is local midnight, 22:00 UTC the day before. */
         val NO_TIME = STOPPED.copy(
             id = EntryId(72),
-            start = Instant.parse("2026-10-18T22:00:00Z"),
-            stop = Instant.parse("2026-10-18T23:30:00Z"),
-            allDay = true,
-            day = LocalDate.of(2026, 10, 19),
+            timing = EntryTiming.AllDay(
+                LocalDate.of(2026, 10, 19),
+                Instant.parse("2026-10-18T22:00:00Z"),
+                Duration.ofMinutes(90),
+            ),
         )
 
         val PINNED = Favorite(

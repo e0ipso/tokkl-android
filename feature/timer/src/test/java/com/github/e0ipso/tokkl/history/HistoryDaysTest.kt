@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.history
 
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.model.ProjectId
@@ -15,6 +16,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.Clock
 import java.time.DayOfWeek
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -179,7 +181,7 @@ class HistoryDaysTest {
         assertEquals(LocalDate.of(2026, 10, 14), day.date)
         assertEquals(setOf(1L, 2L), day.entries.map { it.id.value }.toSet())
         assertEquals(1800L + 3600L, day.totalSeconds)
-        assertTrue(day.entries.all { it.allDay })
+        assertTrue(day.entries.all { it.timing is EntryTiming.AllDay })
         assertEquals("a sent entry shows the stored times", stale.start, day.entries.single { it.id.value == 1L }.start)
     }
 
@@ -214,7 +216,7 @@ class HistoryDaysTest {
         assertEquals("5600 seconds snap to 90 minutes", Instant.parse("2026-10-13T23:30:00Z"), shown.stop)
         assertEquals(5400L, shown.seconds)
         assertTrue(shown.unsent)
-        assertTrue(shown.allDay)
+        assertTrue(shown.timing is EntryTiming.AllDay)
     }
 
     @Test
@@ -229,7 +231,7 @@ class HistoryDaysTest {
     }
 
     private fun noTime(id: Long, start: String, seconds: Long, day: LocalDate?) =
-        entry(id, start, Instant.parse(start).plusSeconds(seconds).toString()).copy(allDay = true, day = day)
+        entry(id, start, null).copy(timing = EntryTiming.AllDay(day, Instant.parse(start), Duration.ofSeconds(seconds)))
 
     private fun time(resolution: Double?) = AccountTime(MADRID, DayOfWeek.MONDAY, resolution, CLOCK)
 
@@ -243,8 +245,7 @@ class HistoryDaysTest {
         projectId = project?.let(::ProjectId),
         taskId = task?.let(::TaskId),
         description = "Entry $id",
-        start = Instant.parse(start),
-        stop = stop?.let(Instant::parse),
+        timing = EntryTiming.of(Instant.parse(start), stop?.let(Instant::parse), allDay = false, day = null),
         billable = false,
         tags = emptyList(),
         tagIds = emptyList(),

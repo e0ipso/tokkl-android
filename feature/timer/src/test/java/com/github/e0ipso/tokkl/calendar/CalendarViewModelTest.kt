@@ -10,6 +10,7 @@ import com.github.e0ipso.tokkl.entries.WeekSource
 import com.github.e0ipso.tokkl.entries.sessionEntries
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
@@ -35,6 +36,7 @@ import org.junit.Before
 import org.junit.Test
 import java.time.Clock
 import java.time.DayOfWeek
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -511,7 +513,10 @@ class CalendarViewModelTest {
         val second = noTimeCalendarEntry(3, OCTOBER_20)
         val other = noTimeCalendarEntry(5, OCTOBER_25)
         val outside = noTimeCalendarEntry(7, OCTOBER_5)
-        val timed = noTimeCalendarEntry(8, OCTOBER_20).copy(allDay = false, day = null)
+        val timed = noTimeCalendarEntry(
+            8,
+            OCTOBER_20,
+        ).let { it.copy(timing = EntryTiming.Stopped(it.start, it.stop!!)) }
 
         val byDay = allDayEntries(
             listOf(first, other, outside, timed, second),
@@ -528,7 +533,7 @@ class CalendarViewModelTest {
     /** A queued no-time entry shows the duration the server will store, from midnight of its day. */
     @Test
     fun anUnsentNoTimeEntryShowsASnappedDurationAtMidnight() {
-        val queued = noTimeEntry(6, "2026-10-20T00:00:00Z", seconds = 4000).copy(day = OCTOBER_20)
+        val queued = noTimeEntry(6, "2026-10-20T00:00:00Z", seconds = 4000, day = OCTOBER_20)
         val model = model(
             cached = listOf(queued),
             settings = DRAG_SETTINGS,
@@ -541,7 +546,7 @@ class CalendarViewModelTest {
             Instant.parse("2026-10-20T00:00:00Z") to Instant.parse("2026-10-20T01:05:00Z"),
             shown.start to shown.stop,
         )
-        assertEquals(OCTOBER_20, shown.day)
+        assertEquals(OCTOBER_20, (shown.timing as EntryTiming.AllDay).day)
         assertEquals(true, shown.unsent)
     }
 
@@ -623,14 +628,16 @@ class CalendarViewModelTest {
         taskId = null,
         tagIds = emptyList(),
         billable = false,
-        start = Instant.parse(start),
-        stop = stop?.let(Instant::parse),
+        timing = EntryTiming.of(Instant.parse(start), stop?.let(Instant::parse), allDay = false, day = null),
         tags = emptyList(),
     )
 
-    /** A no-time entry as the server stores it: local midnight [start] and [seconds] long. */
-    private fun noTimeEntry(id: Long, start: String, seconds: Long) =
-        entry(id, start, null).copy(stop = Instant.parse(start).plusSeconds(seconds), allDay = true)
+    /**
+     * A no-time entry as the server stores it: local midnight [start] and [seconds] long, without
+     * a [day] unless a change on the phone made it.
+     */
+    private fun noTimeEntry(id: Long, start: String, seconds: Long, day: LocalDate? = null) =
+        entry(id, start, null).copy(timing = EntryTiming.AllDay(day, Instant.parse(start), Duration.ofSeconds(seconds)))
 
     private fun noTimeCalendarEntry(id: Long, day: LocalDate) = CalendarEntry(
         id = EntryId(id),
@@ -638,11 +645,8 @@ class CalendarViewModelTest {
         project = null,
         projectColor = null,
         task = null,
-        start = day.atStartOfDay(ZoneOffset.UTC).toInstant(),
-        stop = day.atStartOfDay(ZoneOffset.UTC).toInstant().plusSeconds(3600),
+        timing = EntryTiming.AllDay(day, day.atStartOfDay(ZoneOffset.UTC).toInstant(), Duration.ofHours(1)),
         unsent = false,
-        allDay = true,
-        day = day,
     )
 
     /** Stopped entries as `GET /api/v9/me/time_entries` lists them: id, start and stop. */
@@ -662,21 +666,17 @@ class CalendarViewModelTest {
         override suspend fun create(
             workspaceId: WorkspaceId,
             fields: EntryFields,
-            start: Instant,
-            stop: Instant,
-            noTimeDay: LocalDate?,
+            timing: EntryTiming.Ended,
         ): EntryId {
+            val start = timing.start
+            val stop = timing.stop
             calls += "create $workspaceId $fields $start $stop"
             return EntryId(LOCAL_ID)
         }
 
-        override suspend fun update(
-            entryId: EntryId,
-            fields: EntryFields,
-            start: Instant,
-            stop: Instant?,
-            noTimeDay: LocalDate?,
-        ): Boolean {
+        override suspend fun update(entryId: EntryId, fields: EntryFields, timing: EntryTiming): Boolean {
+            val start = timing.start
+            val stop = (timing as? EntryTiming.Ended)?.stop
             calls += "update $entryId $fields $start $stop"
             return true
         }
@@ -685,10 +685,10 @@ class CalendarViewModelTest {
             entryId: EntryId,
             workspaceId: WorkspaceId,
             fields: EntryFields,
-            start: Instant,
-            stop: Instant,
-            noTimeDay: LocalDate?,
+            timing: EntryTiming.Ended,
         ) {
+            val start = timing.start
+            val stop = timing.stop
             calls += "updateOlder $entryId $workspaceId $fields $start $stop"
         }
 

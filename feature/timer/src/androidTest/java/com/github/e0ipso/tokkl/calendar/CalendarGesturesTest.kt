@@ -27,6 +27,7 @@ import com.github.e0ipso.tokkl.entries.SessionEntries
 import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
@@ -48,6 +49,7 @@ import org.junit.Rule
 import org.junit.Test
 import java.time.Clock
 import java.time.DayOfWeek
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -348,21 +350,17 @@ class CalendarGesturesTest {
         override suspend fun create(
             workspaceId: WorkspaceId,
             fields: EntryFields,
-            start: Instant,
-            stop: Instant,
-            noTimeDay: LocalDate?,
+            timing: EntryTiming.Ended,
         ): EntryId {
+            val start = timing.start
+            val stop = timing.stop
             calls += "create $workspaceId $fields $start $stop"
             return EntryId(LOCAL_ID)
         }
 
-        override suspend fun update(
-            entryId: EntryId,
-            fields: EntryFields,
-            start: Instant,
-            stop: Instant?,
-            noTimeDay: LocalDate?,
-        ): Boolean {
+        override suspend fun update(entryId: EntryId, fields: EntryFields, timing: EntryTiming): Boolean {
+            val start = timing.start
+            val stop = (timing as? EntryTiming.Ended)?.stop
             calls += "update $entryId $fields $start $stop"
             return true
         }
@@ -373,9 +371,7 @@ class CalendarGesturesTest {
             entryId: EntryId,
             workspaceId: WorkspaceId,
             fields: EntryFields,
-            start: Instant,
-            stop: Instant,
-            noTimeDay: LocalDate?,
+            timing: EntryTiming.Ended,
         ): Unit = throw AssertionError("unexpected updateOlder")
 
         override suspend fun delete(entry: TimeEntry): TimeEntry? = throw AssertionError("unexpected delete")
@@ -417,8 +413,7 @@ class CalendarGesturesTest {
             taskId = null,
             tagIds = emptyList(),
             billable = false,
-            start = Instant.parse("2026-10-15T09:00:00Z"),
-            stop = Instant.parse("2026-10-15T10:00:00Z"),
+            timing = EntryTiming.Stopped(Instant.parse("2026-10-15T09:00:00Z"), Instant.parse("2026-10-15T10:00:00Z")),
             tags = emptyList(),
         )
         val FIELDS = EntryFields(description = "Review the plan")
@@ -432,11 +427,12 @@ class CalendarGesturesTest {
             taskId = null,
             tagIds = emptyList(),
             billable = false,
-            start = Instant.parse("2026-10-15T00:00:00Z"),
-            stop = Instant.parse("2026-10-15T03:00:00Z"),
+            timing = EntryTiming.AllDay(
+                THURSDAY,
+                Instant.parse("2026-10-15T00:00:00Z"),
+                Duration.ofHours(3),
+            ),
             tags = emptyList(),
-            allDay = true,
-            day = THURSDAY,
         )
     }
 }

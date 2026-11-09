@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.reminder
 
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.preferences.ReminderPreferences
@@ -24,10 +25,7 @@ class ReminderSyncTest {
     private val now = Instant.parse("2026-10-21T12:00:00Z")
     private val entry = TimeEntry(
         EntryId(1), WorkspaceId(1), null, null, "Work",
-        now.minusSeconds(
-            9 * 3600,
-        ),
-        null, false, emptyList(), emptyList(),
+        EntryTiming.Running(now.minusSeconds(9 * 3600)), false, emptyList(), emptyList(),
     )
     private var input = ReminderInput(entry, ReminderPreferences())
     private var stored: ReminderTimer? = null
@@ -100,7 +98,7 @@ class ReminderSyncTest {
         sync.fire(1, entry.start.epochSecond, entry.start.epochSecond * 1000 + input.preferences.hours * 3_600_000L)
         assertEquals(1, posted.size)
         assertTrue(stopped.isEmpty())
-        val corrected = entry.copy(start = entry.start.minusSeconds(3600))
+        val corrected = entry.copy(timing = EntryTiming.Running(entry.start.minusSeconds(3600)))
         input = input.copy(running = corrected)
         sync.fire(1, entry.start.epochSecond, entry.start.epochSecond * 1000 + input.preferences.hours * 3_600_000L)
         assertEquals("old worker cannot deliver corrected timer", 1, posted.size)
@@ -130,7 +128,7 @@ class ReminderSyncTest {
     @Test fun startCorrectionInvalidatesTheOldStopAction() = runTest {
         val sync = sync()
         sync.fire(1, entry.start.epochSecond, entry.start.epochSecond * 1000 + input.preferences.hours * 3_600_000L)
-        input = input.copy(running = entry.copy(start = entry.start.plusSeconds(3600)))
+        input = input.copy(running = entry.copy(timing = EntryTiming.Running(entry.start.plusSeconds(3600))))
         sync.act(1, entry.start.epochSecond, true)
         assertTrue(stopped.isEmpty())
     }
@@ -182,7 +180,7 @@ class ReminderSyncTest {
         input = input.copy(running = null)
         sync.reconcile()
         assertTrue("a paused timer has no reminder", waiting.isEmpty())
-        input = input.copy(running = entry.copy(id = EntryId(2), start = now))
+        input = input.copy(running = entry.copy(id = EntryId(2), timing = EntryTiming.Running(now)))
         sync.reconcile()
         assertEquals(2L, waiting.single().id)
         assertEquals(now.plusSeconds(8 * 3600).toEpochMilli(), waiting.single().due)
@@ -287,7 +285,7 @@ class ReminderSyncTest {
     }
 
     @Test fun futureTimerWaitsAndChangingHoursReplacesTheDelay() = runTest {
-        input = input.copy(running = entry.copy(start = now))
+        input = input.copy(running = entry.copy(timing = EntryTiming.Running(now)))
         val sync = sync()
         sync.reconcile()
         assertTrue(posted.isEmpty())

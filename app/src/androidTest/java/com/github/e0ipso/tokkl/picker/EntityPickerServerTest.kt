@@ -43,6 +43,7 @@ import com.github.e0ipso.tokkl.components.defaultNetwork
 import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.core.entryfields.R
 import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.model.TaskId
 import com.github.e0ipso.tokkl.model.WorkspaceId
@@ -183,8 +184,7 @@ class EntityPickerServerTest {
                     taskId = picked.taskId,
                     tags = picked.tags,
                 ),
-                start = start,
-                stop = start.plus(Duration.ofMinutes(30)),
+                EntryTiming.Stopped(start, start.plus(Duration.ofMinutes(30))),
             )
         }
         val row = runBlocking { app.cache.entries.first() }.single { it.entry.id == id }

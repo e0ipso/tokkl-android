@@ -37,6 +37,7 @@ import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.navhost.SignedInFrame
 import com.github.e0ipso.tokkl.navigation.Route
@@ -319,11 +320,13 @@ private fun entry(id: Long, description: String, start: String, stop: String, al
     project = "Tokkl for Android",
     projectColor = "#0b83d9",
     task = null,
-    start = Instant.parse(start),
-    stop = Instant.parse(stop),
+    timing = EntryTiming.of(
+        Instant.parse(start),
+        Instant.parse(stop),
+        allDay,
+        if (allDay) LocalDate.parse(start.substringBefore('T')) else null,
+    ),
     unsent = false,
-    allDay = allDay,
-    day = if (allDay) LocalDate.parse(start.substringBefore('T')) else null,
 )
 
 // Keep the real totals in every usual/large-font calendar positioning regression.

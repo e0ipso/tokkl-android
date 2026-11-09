@@ -4,6 +4,7 @@ import android.service.quicksettings.TileService
 import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.RunningEntryIdentity
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
@@ -157,8 +158,7 @@ class TileControlsTest {
         projectId = null,
         taskId = null,
         description = "Design review",
-        start = start,
-        stop = null,
+        timing = EntryTiming.Running(start),
         billable = false,
         tags = emptyList(),
         tagIds = emptyList(),

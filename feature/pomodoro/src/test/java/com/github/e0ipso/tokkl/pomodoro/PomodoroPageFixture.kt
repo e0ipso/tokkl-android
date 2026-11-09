@@ -8,6 +8,7 @@ import com.github.e0ipso.tokkl.cache.HeldChange
 import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.PhaseKind
 import com.github.e0ipso.tokkl.model.PhaseTransition
 import com.github.e0ipso.tokkl.model.RunningEntryIdentity
@@ -86,7 +87,7 @@ internal fun cachedEntry(description: String = "Focused work", id: Long = ENTRY,
     EntryId(
         id,
     ),
-    WorkspaceId(WORKSPACE), null, null, description, start, null, false, emptyList(), emptyList(),
+    WorkspaceId(WORKSPACE), null, null, description, EntryTiming.Running(start), false, emptyList(), emptyList(),
 )
 
 internal fun running(entry: TimeEntry) = TimerControls.Running(

@@ -45,6 +45,7 @@ import com.github.e0ipso.tokkl.entryfields.SplitHalves
 import com.github.e0ipso.tokkl.entryfields.SplitProblem
 import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.model.TaskId
 import com.github.e0ipso.tokkl.model.TimeEntry
@@ -500,8 +501,10 @@ class HistoryFitTest {
                 task = "Release",
                 tags = listOf("writing", "documentation"),
                 billable = true,
-                start = Instant.parse("2026-10-15T13:00:00Z"),
-                stop = Instant.parse("2026-10-15T14:30:00Z"),
+                timing = EntryTiming.Stopped(
+                    Instant.parse("2026-10-15T13:00:00Z"),
+                    Instant.parse("2026-10-15T14:30:00Z"),
+                ),
                 unsent = true,
                 projectId = ProjectId(7),
                 taskId = TaskId(70),
@@ -518,8 +521,7 @@ class HistoryFitTest {
             projectId = ProjectId(7),
             taskId = TaskId(70),
             description = SOLO_DESCRIPTION,
-            start = SOLO_START,
-            stop = SOLO_STOP,
+            timing = EntryTiming.Stopped(SOLO_START, SOLO_STOP),
             billable = true,
             tags = listOf("writing", "documentation"),
             tagIds = emptyList(),
@@ -538,8 +540,10 @@ class HistoryFitTest {
                 task = null,
                 tags = listOf(TAG),
                 billable = true,
-                start = Instant.parse("2026-10-15T$start:00Z"),
-                stop = Instant.parse("2026-10-15T$stop:00Z"),
+                timing = EntryTiming.Stopped(
+                    Instant.parse("2026-10-15T$start:00Z"),
+                    Instant.parse("2026-10-15T$stop:00Z"),
+                ),
                 unsent = false,
                 projectId = ProjectId(7),
             )

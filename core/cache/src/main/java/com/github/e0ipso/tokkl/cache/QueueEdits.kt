@@ -2,12 +2,12 @@ package com.github.e0ipso.tokkl.cache
 
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.RunningEntryIdentity
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import kotlinx.coroutines.flow.Flow
 import java.time.Instant
-import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
 /**
@@ -122,7 +122,7 @@ internal class QueueEdits(private val tables: QueueTables, private val spans: Se
     /** Stops every cached running entry at [at] and queues a start in [workspaceId]. Returns its local id. */
     fun start(workspaceId: WorkspaceId, fields: EntryFields, at: Instant): EntryId {
         tables.runningEntries().forEach { running -> stopAt(running, at) }
-        return EntryId(queueCreate(workspaceId.value, fields, at, stop = null))
+        return EntryId(queueCreate(workspaceId.value, fields, EntryTiming.Running(at)))
     }
 
     /**
@@ -134,7 +134,7 @@ internal class QueueEdits(private val tables: QueueTables, private val spans: Se
         val stopped = if (fields == null) {
             running
         } else {
-            entry(running.id, running.workspaceId, fields, running.start, stop = null)
+            entry(running.id, running.workspaceId, fields, EntryTiming.Running(running.start))
         }
         if (stopped != running) enqueue(ChangeKind.UPDATE, stopped)
         stopAt(stopped, at)
@@ -154,25 +154,27 @@ internal class QueueEdits(private val tables: QueueTables, private val spans: Se
     /** Drops the Undo offer of [entryId]; the queued Stop stays. */
     fun dismissShortStop(entryId: EntryId) = tables.deleteShortStop(tables.resolve(entryId))
 
-    /** Queues a stopped entry, or a no-time one on [noTimeDay]. Returns its local id. */
-    fun create(workspaceId: WorkspaceId, fields: EntryFields, start: Instant, stop: Instant, noTimeDay: LocalDate?) =
-        EntryId(queueCreate(workspaceId.value, fields, start, stop, noTimeDay))
+    /** Queues a stopped entry or a no-time one. Returns its local id. */
+    fun create(workspaceId: WorkspaceId, fields: EntryFields, timing: EntryTiming.Ended) =
+        EntryId(queueCreate(workspaceId.value, fields, timing))
 
     /**
-     * Sets every field of the cached entry [entryId], stopping the running one at [start] first
+     * Sets every field of the cached entry [entryId], stopping the running one at the start first
      * when a stopped entry is made to run. Returns false when the entry is not cached.
      */
-    fun update(entryId: EntryId, fields: EntryFields, start: Instant, stop: Instant?, noTimeDay: LocalDate?): Boolean {
+    fun update(entryId: EntryId, fields: EntryFields, timing: EntryTiming): Boolean {
         val current = tables.entry(tables.resolve(entryId)) ?: return false
-        if (current.stop != null && stop == null) tables.runningEntries().forEach { stopAt(it, start) }
-        enqueue(ChangeKind.UPDATE, entry(current.id, current.workspaceId, fields, start, stop, noTimeDay))
+        if (current.stop != null && timing is EntryTiming.Running) {
+            tables.runningEntries().forEach { stopAt(it, timing.start) }
+        }
+        enqueue(ChangeKind.UPDATE, entry(current.id, current.workspaceId, fields, timing))
         return true
     }
 
     /** Sets the running entry's fields and start, while it is still the one [identity] names. */
     fun updateRunning(identity: RunningEntryIdentity, fields: EntryFields, start: Instant): Boolean {
         val current = activeEntry(identity) ?: return false
-        enqueue(ChangeKind.UPDATE, entry(current.id, current.workspaceId, fields, start, stop = null))
+        enqueue(ChangeKind.UPDATE, entry(current.id, current.workspaceId, fields, EntryTiming.Running(start)))
         return true
     }
 
@@ -192,18 +194,11 @@ internal class QueueEdits(private val tables: QueueTables, private val spans: Se
         return current.takeIf { sameStart }
     }
 
-    /** Sets every field of the stopped entry [entryId], which the cache need not hold. */
-    fun updateOlder(
-        entryId: EntryId,
-        workspaceId: WorkspaceId,
-        fields: EntryFields,
-        start: Instant,
-        stop: Instant,
-        noTimeDay: LocalDate?,
-    ) {
+    /** Sets every field of the ended entry [entryId], which the cache need not hold. */
+    fun updateOlder(entryId: EntryId, workspaceId: WorkspaceId, fields: EntryFields, timing: EntryTiming.Ended) {
         val id = tables.resolve(entryId)
         val workspace = tables.entry(id)?.workspaceId ?: workspaceId.value
-        enqueue(ChangeKind.UPDATE, entry(id, workspace, fields, start, stop, noTimeDay))
+        enqueue(ChangeKind.UPDATE, entry(id, workspace, fields, timing))
     }
 
     /** Queues the delete of the cached entry [entryId]. False when it is missing or one is queued. */
@@ -259,18 +254,11 @@ internal class QueueEdits(private val tables: QueueTables, private val spans: Se
 
     /**
      * Queues a create, with the server's entries the phone holds around its start, which a lost
-     * post's lookup must not take for it (see [PendingChange.existingIds]). A no-time entry's
-     * start is local midnight of [noTimeDay].
+     * post's lookup must not take for it (see [PendingChange.existingIds]).
      */
-    private fun queueCreate(
-        workspaceId: Long,
-        fields: EntryFields,
-        start: Instant,
-        stop: Instant?,
-        noTimeDay: LocalDate? = null,
-    ): Long {
-        val existing = serverEntriesAround(start)
-        return enqueue(ChangeKind.CREATE, entry(id = 0, workspaceId, fields, start, stop, noTimeDay), existing)
+    private fun queueCreate(workspaceId: Long, fields: EntryFields, timing: EntryTiming): Long {
+        val existing = serverEntriesAround(timing.start)
+        return enqueue(ChangeKind.CREATE, entry(id = 0, workspaceId, fields, timing), existing)
     }
 
     /**
@@ -356,15 +344,8 @@ internal class QueueEdits(private val tables: QueueTables, private val spans: Se
         return tables.serverEntryIds(start.minus(margin), start.plus(margin))
     }
 
-    /** The entry with [fields], [start] and [stop]. It is a no-time one on [noTimeDay] when given, else timed. */
-    private fun entry(
-        id: Long,
-        workspaceId: Long,
-        fields: EntryFields,
-        start: Instant,
-        stop: Instant?,
-        noTimeDay: LocalDate? = null,
-    ): CachedTimeEntry {
+    /** The cache's row for the entry with [fields] and [timing], whose flat columns keep the timing. */
+    private fun entry(id: Long, workspaceId: Long, fields: EntryFields, timing: EntryTiming): CachedTimeEntry {
         val tags = fields.tags.distinct()
         val known = tables.tags(workspaceId).associate { it.name to it.id }
         return CachedTimeEntry(
@@ -373,13 +354,13 @@ internal class QueueEdits(private val tables: QueueTables, private val spans: Se
             projectId = fields.projectId?.value,
             taskId = fields.taskId?.value,
             description = fields.description,
-            start = start,
-            stop = stop,
+            start = timing.start,
+            stop = (timing as? EntryTiming.Ended)?.stop,
             billable = fields.billable,
             tags = tags,
             tagIds = tags.mapNotNull(known::get),
-            allDay = noTimeDay != null,
-            day = noTimeDay,
+            allDay = timing is EntryTiming.AllDay,
+            day = (timing as? EntryTiming.AllDay)?.day,
         )
     }
 }

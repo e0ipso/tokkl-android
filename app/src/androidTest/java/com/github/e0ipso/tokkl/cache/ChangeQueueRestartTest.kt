@@ -12,6 +12,7 @@ import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
@@ -79,8 +80,7 @@ class ChangeQueueRestartTest {
                 app.changes.update(
                     id,
                     EntryFields(description = "Edited before the restart"),
-                    start,
-                    stop = null,
+                    EntryTiming.Running(start),
                 )
             },
         )

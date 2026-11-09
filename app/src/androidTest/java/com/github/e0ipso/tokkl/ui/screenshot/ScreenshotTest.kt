@@ -72,6 +72,7 @@ import com.github.e0ipso.tokkl.history.HistoryEntry
 import com.github.e0ipso.tokkl.history.HistoryState
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
@@ -1008,14 +1009,14 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
         val HISTORY_ROWS = HISTORY.days.flatMap { it.entries }.map { entry ->
             TimeEntry(
                 entry.id, WorkspaceId(1), entry.projectId, entry.taskId, entry.description,
-                entry.start, entry.stop, entry.billable, entry.tags, emptyList(),
+                EntryTiming.Stopped(entry.start, entry.stop), entry.billable, entry.tags, emptyList(),
             )
         }
 
         val CALENDAR_ROWS = CALENDAR.entries.map { entry ->
             TimeEntry(
                 entry.id, WorkspaceId(1), null, null, entry.description,
-                entry.start, entry.stop, false, emptyList(), emptyList(), allDay = entry.allDay, day = entry.day,
+                entry.timing, false, emptyList(), emptyList(),
             )
         }
 
@@ -1088,8 +1089,10 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
             task = task,
             tags = tags,
             billable = billable,
-            start = Instant.parse("2026-10-${day}T$start:00Z"),
-            stop = Instant.parse("2026-10-${day}T$stop:00Z"),
+            timing = EntryTiming.Stopped(
+                Instant.parse("2026-10-${day}T$start:00Z"),
+                Instant.parse("2026-10-${day}T$stop:00Z"),
+            ),
             unsent = unsent,
         )
 
@@ -1109,11 +1112,13 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
             project = project?.name,
             projectColor = project?.colour,
             task = task,
-            start = Instant.parse("$start:00Z"),
-            stop = stop?.let { Instant.parse("$it:00Z") },
+            timing = EntryTiming.of(
+                Instant.parse("$start:00Z"),
+                stop?.let { Instant.parse("$it:00Z") },
+                allDay,
+                if (allDay) LocalDate.parse(start.substringBefore('T')) else null,
+            ),
             unsent = unsent,
-            allDay = allDay,
-            day = if (allDay) LocalDate.parse(start.substringBefore('T')) else null,
         )
 
         /** An entry of [DETAILED] from October [startDay] at [start] to [stopDay] at [stop], in UTC. */

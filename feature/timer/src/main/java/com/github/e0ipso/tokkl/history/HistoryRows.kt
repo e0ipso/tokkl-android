@@ -4,6 +4,7 @@ package com.github.e0ipso.tokkl.history
 // similarityKey and rowsForDay in ../tokkl/packages/web/src/components/EntryList.tsx, at tokkl
 // commit 0031de3. Plain Kotlin, so JVM tests cover it.
 
+import com.github.e0ipso.tokkl.model.EntryTiming
 import java.time.Instant
 
 /** The clock range a row spans, from [start] to [stop]. */
@@ -31,7 +32,7 @@ data class HistoryRow(val key: Long, val entries: List<HistoryEntry>) {
      * rangeLabel in EntryList.tsx spans them; null when every member is a no-time entry, whose
      * times mean nothing. A no-time member still counts in [seconds].
      */
-    val range: HistoryRange? get() = entries.filter { !it.allDay }.let { timed ->
+    val range: HistoryRange? get() = entries.filter { it.timing !is EntryTiming.AllDay }.let { timed ->
         if (timed.isEmpty()) null else HistoryRange(timed.minOf { it.start }, timed.maxOf { it.stop })
     }
 

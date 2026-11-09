@@ -4,6 +4,7 @@ import com.github.e0ipso.tokkl.model.Client
 import com.github.e0ipso.tokkl.model.ClientId
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.model.TaskId
@@ -91,10 +92,13 @@ class DescriptionSuggestionsTest {
         billable: Boolean = false,
     ) = TimeEntry(
         EntryId(id), WorkspaceId(WORKSPACE), projectId, taskId, description,
-        Instant.EPOCH.minusSeconds(
-            id,
+        EntryTiming.Stopped(
+            Instant.EPOCH.minusSeconds(
+                id,
+            ),
+            Instant.EPOCH,
         ),
-        Instant.EPOCH, billable, tags, emptyList(),
+        billable, tags, emptyList(),
     )
 
     private companion object {

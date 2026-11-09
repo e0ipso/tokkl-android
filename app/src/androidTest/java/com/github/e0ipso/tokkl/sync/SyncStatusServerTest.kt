@@ -34,6 +34,7 @@ import com.github.e0ipso.tokkl.feature.sync.R
 import com.github.e0ipso.tokkl.followNoTimerEvents
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
@@ -147,8 +148,7 @@ class SyncStatusServerTest {
                 app.changes.create(
                     WorkspaceId(account.workspaceId),
                     EntryFields(description = "Invalid draft"),
-                    start,
-                    start.plusSeconds(1000 * 3600),
+                    EntryTiming.Stopped(start, start.plusSeconds(1000 * 3600)),
                 )
             }
             val link = context.resources.getQuantityString(R.plurals.sync_needs_attention, 1, 1)
@@ -194,8 +194,7 @@ class SyncStatusServerTest {
                     app.changes.update(
                         EntryId(id),
                         EntryFields(description = "Offline edit"),
-                        start,
-                        start.plusSeconds(1800),
+                        EntryTiming.Stopped(start, start.plusSeconds(1800)),
                     )
                 },
             )
@@ -238,8 +237,7 @@ class SyncStatusServerTest {
                 quietQueue.create(
                     WorkspaceId(workspace),
                     EntryFields(description = "Saved before restart"),
-                    start,
-                    start.plusSeconds(1800),
+                    EntryTiming.Stopped(start, start.plusSeconds(1800)),
                 )
             }
         } finally {
@@ -284,8 +282,7 @@ class SyncStatusServerTest {
                 app.changes.create(
                     WorkspaceId(workspace),
                     EntryFields(description = "Waiting for sign-in"),
-                    start,
-                    start.plusSeconds(1800),
+                    EntryTiming.Stopped(start, start.plusSeconds(1800)),
                 )
             }
             awaitText(context.getString(R.string.sync_sign_in_needed))

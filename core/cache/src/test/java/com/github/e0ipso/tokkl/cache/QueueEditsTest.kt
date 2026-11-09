@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.cache
 
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.RunningEntryIdentity
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.time.SnappedSpan
@@ -82,13 +83,13 @@ class QueueEditsTest {
     @Test
     fun anEditOfAnEntryWithARefusedChangeFoldsIntoItAndLetsItGoAgain() {
         tables.upsertEntry(row(id = 20, start = T0, stop = T1))
-        edits.update(EntryId(20), EntryFields("Refused"), T0, T1, noTimeDay = null)
-        edits.update(EntryId(20), EntryFields("Behind it"), T0, T1, noTimeDay = null)
+        edits.update(EntryId(20), EntryFields("Refused"), EntryTiming.Stopped(T0, T1))
+        edits.update(EntryId(20), EntryFields("Behind it"), EntryTiming.Stopped(T0, T1))
         val refused = tables.changesInOrder().first()
         tables.update(refused.copy(held = true, refusal = "Too long"))
         assertNull("the change behind the refused one waits", tables.first())
 
-        edits.update(EntryId(20), EntryFields("Fixed"), T0, T1, noTimeDay = null)
+        edits.update(EntryId(20), EntryFields("Fixed"), EntryTiming.Stopped(T0, T1))
 
         val queued = tables.changesInOrder().single()
         assertEquals(refused.sequence, queued.sequence)
@@ -100,7 +101,7 @@ class QueueEditsTest {
 
     @Test
     fun deletingAnEntryWhoseRefusedCreateNeverReachedTheServerLeavesNothingToSend() {
-        val id = edits.create(WorkspaceId(WORKSPACE), EntryFields("Draft"), T0, T1, noTimeDay = null)
+        val id = edits.create(WorkspaceId(WORKSPACE), EntryFields("Draft"), EntryTiming.Stopped(T0, T1))
         tables.update(tables.changesInOrder().single().copy(held = true))
 
         assertTrue(edits.delete(id))
@@ -138,7 +139,7 @@ class QueueEditsTest {
         tables.upsertEntry(row(id = 55, start = T0, stop = T1))
         tables.map(localId = -1, serverId = 55)
 
-        assertTrue(edits.update(EntryId(-1), EntryFields("Renamed"), T0, T1, noTimeDay = null))
+        assertTrue(edits.update(EntryId(-1), EntryFields("Renamed"), EntryTiming.Stopped(T0, T1)))
 
         assertEquals(55L, tables.changesInOrder().single().entryId)
         assertEquals("Renamed", tables.entry(55)!!.description)
@@ -149,7 +150,7 @@ class QueueEditsTest {
         tables.upsertEntry(row(id = 10, start = T0, stop = null))
         val id = edits.start(WorkspaceId(WORKSPACE), EntryFields("Next"), T1)
         val create = tables.changesInOrder().last()
-        edits.update(id, EntryFields("Renamed"), T1, stop = null, noTimeDay = null)
+        edits.update(id, EntryFields("Renamed"), EntryTiming.Running(T1))
         tables.update(tables.change(create.sequence)!!.copy(held = true))
 
         assertTrue(edits.discard(create.sequence))

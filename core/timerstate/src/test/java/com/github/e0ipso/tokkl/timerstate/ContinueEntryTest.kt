@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.timerstate
 import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.model.RunningEntryIdentity
 import com.github.e0ipso.tokkl.model.TaskId
@@ -115,14 +116,16 @@ class ContinueEntryTest {
         projectId = ProjectId(id + 100),
         taskId = TaskId(id + 200),
         description = "Entry $id",
-        start = Instant.parse(start),
-        stop = Instant.parse(start).plusSeconds(1800),
+        timing = EntryTiming.Stopped(Instant.parse(start), Instant.parse(start).plusSeconds(1800)),
         billable = id % 2 == 0L,
         tags = listOf("tag $id"),
         tagIds = emptyList(),
     )
 
-    private fun running(id: Long) = entry(id, "2026-10-19T12:00:00Z").copy(stop = null)
+    private fun running(id: Long) = entry(
+        id,
+        "2026-10-19T12:00:00Z",
+    ).let { it.copy(timing = EntryTiming.Running(it.start)) }
 
     private inner class RecordingChanges : RunningEntryChanges {
         override suspend fun start(workspaceId: WorkspaceId, fields: EntryFields): EntryId {

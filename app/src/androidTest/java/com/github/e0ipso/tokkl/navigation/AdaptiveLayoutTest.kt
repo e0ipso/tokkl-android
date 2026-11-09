@@ -463,7 +463,9 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
             Framed(ProjectsRoute) {
                 ProjectsScreen(
                     ProjectsPageState(
-                        CatalogSamples.PROJECTS_LOADED.copy(overlay = ProjectForm.of(null, CatalogSamples.PROJECTS.size)),
+                        CatalogSamples.PROJECTS_LOADED.copy(
+                            overlay = ProjectForm.of(null, CatalogSamples.PROJECTS.size),
+                        ),
                         false,
                         emptyList(),
                         CatalogSamples.CACHED_CLIENTS,

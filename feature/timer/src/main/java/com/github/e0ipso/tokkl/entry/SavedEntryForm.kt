@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.entry
 
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.model.TagId
 import com.github.e0ipso.tokkl.model.TaskId
@@ -100,7 +101,10 @@ internal data class SavedFields(
     fun fields() = EntryFields(description, projectId, taskId, tags, billable)
 }
 
-/** A [TimeEntry] as the saved state keeps it, with its instants as ISO-8601 text. */
+/**
+ * A [TimeEntry] as the saved state keeps it, with its instants as ISO-8601 text and its timing
+ * flat, as the cache's rows keep it.
+ */
 @Serializable
 internal data class SavedEntry(
     val id: EntryId,
@@ -127,8 +131,8 @@ internal data class SavedEntry(
         entry.billable,
         entry.tags,
         entry.tagIds,
-        entry.allDay,
-        entry.day?.toEpochDay(),
+        entry.timing is EntryTiming.AllDay,
+        (entry.timing as? EntryTiming.AllDay)?.day?.toEpochDay(),
     )
 
     fun entry() = TimeEntry(
@@ -137,12 +141,14 @@ internal data class SavedEntry(
         projectId = projectId,
         taskId = taskId,
         description = description,
-        start = Instant.parse(start),
-        stop = stop?.let(Instant::parse),
+        timing = EntryTiming.of(
+            Instant.parse(start),
+            stop?.let(Instant::parse),
+            allDay,
+            epochDay?.let(LocalDate::ofEpochDay),
+        ),
         billable = billable,
         tags = tags,
         tagIds = tagIds,
-        allDay = allDay,
-        day = epochDay?.let(LocalDate::ofEpochDay),
     )
 }

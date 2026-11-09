@@ -4,6 +4,7 @@ import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.model.Client
 import com.github.e0ipso.tokkl.model.ClientId
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.Favorite
 import com.github.e0ipso.tokkl.model.Project
@@ -24,13 +25,10 @@ internal fun CachedTimeEntry.toModel() = TimeEntry(
     projectId = projectId?.let(::ProjectId),
     taskId = taskId?.let(::TaskId),
     description = description,
-    start = start,
-    stop = stop,
+    timing = EntryTiming.of(start, stop, allDay, day),
     billable = billable,
     tags = tags,
     tagIds = tagIds.map(::TagId),
-    allDay = allDay,
-    day = day,
 )
 
 internal fun TimeEntry.toCached() = CachedTimeEntry(
@@ -39,13 +37,13 @@ internal fun TimeEntry.toCached() = CachedTimeEntry(
     projectId = projectId?.value,
     taskId = taskId?.value,
     description = description,
-    start = start,
+    start = timing.start,
     stop = stop,
     billable = billable,
     tags = tags,
     tagIds = tagIds.map { it.value },
-    allDay = allDay,
-    day = day,
+    allDay = timing is EntryTiming.AllDay,
+    day = (timing as? EntryTiming.AllDay)?.day,
 )
 
 internal fun CachedEntryWithSendState.toModel() = EntryWithSendState(entry.toModel(), unsent)

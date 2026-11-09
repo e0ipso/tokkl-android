@@ -11,6 +11,7 @@ import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.model.DiscardedPomodoro
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.PhaseKind
 import com.github.e0ipso.tokkl.model.PhaseTransition
@@ -494,10 +495,12 @@ class TimerPauseTest {
     private fun running(id: Long = RUNNING_ID) = EntryWithSendState(
         TimeEntry(
             EntryId(id), WorkspaceId(WORKSPACE), FIELDS.projectId, FIELDS.taskId, FIELDS.description,
-            TAP.minusSeconds(
-                90,
+            EntryTiming.Running(
+                TAP.minusSeconds(
+                    90,
+                ),
             ),
-            null, FIELDS.billable, FIELDS.tags, emptyList(),
+            FIELDS.billable, FIELDS.tags, emptyList(),
         ),
         unsent = false,
     )
@@ -509,8 +512,7 @@ class TimerPauseTest {
             FIELDS.projectId,
             FIELDS.taskId,
             FIELDS.description,
-            CLONE_START,
-            null,
+            EntryTiming.Running(CLONE_START),
             FIELDS.billable,
             FIELDS.tags,
             emptyList(),
@@ -650,8 +652,7 @@ class TimerPauseTest {
                     fields.projectId,
                     fields.taskId,
                     fields.description,
-                    at,
-                    null,
+                    EntryTiming.Running(at),
                     fields.billable,
                     fields.tags,
                     emptyList(),
@@ -744,8 +745,7 @@ class TimerPauseTest {
             projectId = APP.id,
             taskId = null,
             description = "Review the mockups",
-            start = Instant.parse("2026-10-18T08:00:00Z"),
-            stop = Instant.parse("2026-10-18T09:30:00Z"),
+            timing = EntryTiming.Stopped(Instant.parse("2026-10-18T08:00:00Z"), Instant.parse("2026-10-18T09:30:00Z")),
             billable = true,
             tags = listOf("review"),
             tagIds = emptyList(),

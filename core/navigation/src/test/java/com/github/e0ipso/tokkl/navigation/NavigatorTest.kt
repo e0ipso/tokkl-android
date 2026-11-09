@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.navigation
 
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.RunningEntryIdentity
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
@@ -77,7 +78,15 @@ class NavigatorTest {
                 EntryId(
                     7,
                 ),
-                WorkspaceId(1), null, null, "older", Instant.EPOCH, Instant.EPOCH, false, emptyList(), emptyList(),
+                WorkspaceId(
+                    1,
+                ),
+                null, null, "older",
+                EntryTiming.Stopped(
+                    Instant.EPOCH,
+                    Instant.EPOCH,
+                ),
+                false, emptyList(), emptyList(),
             )
         navigator.openEntry(EntryOpening.Edit(EntryId(7)), older)
         val form = stack.last() as Route.Entry

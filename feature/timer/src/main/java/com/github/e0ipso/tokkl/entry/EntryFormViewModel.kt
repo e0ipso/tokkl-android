@@ -10,6 +10,7 @@ import com.github.e0ipso.tokkl.cache.localWrite
 import com.github.e0ipso.tokkl.entries.PastEntryEdits
 import com.github.e0ipso.tokkl.entryfields.withPicked
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.model.RunningEntryIdentity
@@ -206,7 +207,7 @@ class EntryFormViewModel(
                 shown.copy(noTimes = true, mistakes = unmarked)
             }
 
-            form.target is DraftTarget.Edit && form.target.snapshot.allDay -> form.timesFromMidnight(
+            form.target is DraftTarget.Edit && form.target.noTime -> form.timesFromMidnight(
                 settings,
                 time,
                 clock,
@@ -239,20 +240,20 @@ class EntryFormViewModel(
         val settings = accountSettings.value ?: return
         val time = settings.time(clock) ?: return
         val workspaceId = form.workspaceId(settings) ?: return
-        val span = when (val checked = check(form, settings, time, clock)) {
+        val timing = when (val checked = check(form, settings, time, clock)) {
             is CheckedTimes.Invalid -> {
                 phase.value = Phase.Open(form.copy(mistakes = checked.mistakes))
                 return
             }
 
-            is CheckedTimes.Valid -> checked
+            is CheckedTimes.Valid -> checked.timing
         }
         val saving = form.copy(mistakes = emptyMap(), saving = true)
         phase.value = Phase.Open(saving)
         viewModelScope.launch {
             var outcome: LocalWrite<Boolean>? = null
             try {
-                outcome = localWrite { write(form, span, workspaceId) }
+                outcome = localWrite { write(form, timing, workspaceId) }
             } finally {
                 // A write the storage refused, or one that threw, gives the form back to the user.
                 phase.update { current ->
@@ -268,17 +269,17 @@ class EntryFormViewModel(
     }
 
     /**
-     * Queues [form] with its checked [span]: a new entry in [workspaceId], the running segment, or
+     * Queues [form] with its checked [timing]: a new entry in [workspaceId], the running segment, or
      * an edit. Returns false when the entry it edits has gone.
      */
-    private suspend fun write(form: EntryDraft, span: CheckedTimes.Valid, workspaceId: WorkspaceId) =
+    private suspend fun write(form: EntryDraft, timing: EntryTiming, workspaceId: WorkspaceId) =
         when (val target = form.target) {
             DraftTarget.New -> {
-                changes.create(workspaceId, form.fields, span.start, requireNotNull(span.stop), span.noTimeDay)
+                changes.create(workspaceId, form.fields, timing.ended())
                 true
             }
 
-            is DraftTarget.Running -> running.updateRunning(target.identity, form.fields, span.start)
+            is DraftTarget.Running -> running.updateRunning(target.identity, form.fields, timing.start)
 
             is DraftTarget.Edit -> pastEdits.saveEdit(
                 target.entryId,
@@ -286,11 +287,13 @@ class EntryFormViewModel(
                 target.start,
                 target.onPhone,
                 form.fields,
-                span.start,
-                span.stop,
-                span.noTimeDay,
+                timing.ended(),
             )
         }
+
+    /** [check] gives a new entry's and an edit's timing an end: only the running segment's runs. */
+    private fun EntryTiming.ended(): EntryTiming.Ended =
+        checkNotNull(this as? EntryTiming.Ended) { "A new entry or an edit that runs" }
 
     /** Delete uses the entry as opened, never an unsaved field, and skips time validation. */
     fun delete(canRestore: Boolean, onDeleted: (TimeEntry, Boolean) -> Unit) {

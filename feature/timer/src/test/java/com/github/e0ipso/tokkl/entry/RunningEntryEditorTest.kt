@@ -6,6 +6,7 @@ import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.entries.sessionEntries
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.model.ProjectId
@@ -222,7 +223,12 @@ class RunningEntryEditorTest {
     fun stoppedSegmentCannotBeRevivedByStaleSave() {
         open()
         onMain {
-            rows.value = listOf(EntryWithSendState(ENTRY.copy(stop = clock.instant()), unsent = true))
+            rows.value = listOf(
+                EntryWithSendState(
+                    ENTRY.copy(timing = EntryTiming.Stopped(ENTRY.start, clock.instant())),
+                    unsent = true,
+                ),
+            )
             form.save()
         }
         state { it == EntryFormState.Missing }
@@ -273,7 +279,10 @@ class RunningEntryEditorTest {
             changes.remap[ENTRY.id] = EntryId(201)
             rows.value = listOf(
                 EntryWithSendState(
-                    ENTRY.copy(id = EntryId(201), start = ENTRY.start.truncatedTo(ChronoUnit.SECONDS)),
+                    ENTRY.copy(
+                        id = EntryId(201),
+                        timing = EntryTiming.Running(ENTRY.start.truncatedTo(ChronoUnit.SECONDS)),
+                    ),
                     unsent = false,
                 ),
             )
@@ -314,7 +323,14 @@ class RunningEntryEditorTest {
             scope.async(start = CoroutineStart.UNDISPATCHED) { timer.runningForEdit() }
         }
         runBlocking { withTimeout(TIMEOUT) { changes.updateEntered.await() } }
-        onMain { rows.value = listOf(EntryWithSendState(ENTRY.copy(stop = clock.instant()), unsent = true)) }
+        onMain {
+            rows.value = listOf(
+                EntryWithSendState(
+                    ENTRY.copy(timing = EntryTiming.Stopped(ENTRY.start, clock.instant())),
+                    unsent = true,
+                ),
+            )
+        }
         timerState { it is TimerState.Idle }
         gate.complete(Unit)
         assertNull(runBlocking { withTimeout(TIMEOUT) { opening.await() } })
@@ -352,7 +368,11 @@ class RunningEntryEditorTest {
             startGate.await()
             rows.value = listOf(
                 EntryWithSendState(
-                    ENTRY.copy(id = EntryId(-2), workspaceId = workspaceId, start = clock.instant()),
+                    ENTRY.copy(
+                        id = EntryId(-2),
+                        workspaceId = workspaceId,
+                        timing = EntryTiming.Running(clock.instant()),
+                    ),
                     unsent = true,
                 ),
             )
@@ -386,35 +406,25 @@ class RunningEntryEditorTest {
                 taskId = fields.taskId,
                 tags = fields.tags,
                 billable = fields.billable,
-                start = start,
-                stop = null,
+                timing = EntryTiming.Running(start),
             )
             updates += updated
             rows.value = listOf(EntryWithSendState(updated, unsent = true))
             return true
         }
 
-        override suspend fun update(
-            entryId: EntryId,
-            fields: EntryFields,
-            start: Instant,
-            stop: Instant?,
-            noTimeDay: LocalDate?,
-        ): Boolean = throw AssertionError("A running editor must use the guarded update")
+        override suspend fun update(entryId: EntryId, fields: EntryFields, timing: EntryTiming): Boolean =
+            throw AssertionError("A running editor must use the guarded update")
         override suspend fun updateOlder(
             entryId: EntryId,
             workspaceId: WorkspaceId,
             fields: EntryFields,
-            start: Instant,
-            stop: Instant,
-            noTimeDay: LocalDate?,
+            timing: EntryTiming.Ended,
         ) = throw AssertionError("A running editor cannot fall back to an older-entry PUT")
         override suspend fun create(
             workspaceId: WorkspaceId,
             fields: EntryFields,
-            start: Instant,
-            stop: Instant,
-            noTimeDay: LocalDate?,
+            timing: EntryTiming.Ended,
         ): EntryId = throw AssertionError("A running editor cannot create an entry")
         override suspend fun stop(entryId: EntryId, fields: EntryFields?): Boolean = throw AssertionError(
             "Unexpected stop",
@@ -428,10 +438,7 @@ class RunningEntryEditorTest {
         const val TIMEOUT = 5_000L
         val ENTRY = TimeEntry(
             EntryId(-1), WorkspaceId(20), null, null, "Running",
-            Instant.parse(
-                "2026-10-22T22:03:41.123Z",
-            ),
-            null, false, emptyList(), emptyList(),
+            EntryTiming.Running(Instant.parse("2026-10-22T22:03:41.123Z")), false, emptyList(), emptyList(),
         )
     }
 }

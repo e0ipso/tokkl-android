@@ -12,6 +12,7 @@ import com.github.e0ipso.tokkl.appApiClient
 import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.AccountRefreshRequests
 import com.github.e0ipso.tokkl.session.capabilitiesOf
@@ -199,8 +200,7 @@ class CacheDatabaseMigrationTest {
                 queue.create(
                     WorkspaceId(7),
                     EntryFields(description = "From the server"),
-                    START,
-                    START.plusSeconds(1800),
+                    EntryTiming.Stopped(START, START.plusSeconds(1800)),
                 )
             }
             assertEquals(

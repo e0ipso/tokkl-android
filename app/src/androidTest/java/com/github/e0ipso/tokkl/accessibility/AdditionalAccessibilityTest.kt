@@ -27,6 +27,7 @@ import com.github.e0ipso.tokkl.cache.HeldChange
 import com.github.e0ipso.tokkl.cache.HeldChanges
 import com.github.e0ipso.tokkl.clients.ClientsRoute
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.navhost.SignedInFrame
@@ -175,7 +176,7 @@ abstract class AdditionalAccessibilityTest(private val dark: Boolean) {
                 entry = TimeEntry(
                     id = EntryId(42), workspaceId = WorkspaceId(7),
                     projectId = null, taskId = null, description = "A refused change with a long description",
-                    start = Instant.parse("2026-10-19T07:00:00Z"), stop = null, billable = true,
+                    timing = EntryTiming.Running(Instant.parse("2026-10-19T07:00:00Z")), billable = true,
                     tags = emptyList(), tagIds = emptyList(),
                 ),
                 refusal = "Time entries can not be longer than 999 hours",

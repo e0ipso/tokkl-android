@@ -7,6 +7,7 @@ import com.github.e0ipso.tokkl.api.TimerPomodoroPhase
 import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.PhaseKind
 import com.github.e0ipso.tokkl.model.PhaseTransition
@@ -224,8 +225,7 @@ class TimerControlsTest {
         projectId = kept.projectId,
         taskId = kept.taskId,
         description = kept.description,
-        start = start,
-        stop = null,
+        timing = EntryTiming.Running(start),
         billable = kept.billable,
         tags = kept.tags,
         tagIds = emptyList(),

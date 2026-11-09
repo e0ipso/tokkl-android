@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.notification
 
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.model.Task
@@ -58,8 +59,7 @@ class RunningNotificationTest {
         projectId = ProjectId(7),
         taskId = TaskId(9),
         description = "Notification",
-        start = start,
-        stop = null,
+        timing = EntryTiming.Running(start),
         billable = false,
         tags = listOf("android"),
         tagIds = emptyList(),
@@ -87,7 +87,10 @@ class RunningNotificationTest {
     @Test
     fun noRunningEntryShowsNothing() {
         assertNull(content(entry = null))
-        assertNull("a stopped entry", content(entry = running.copy(stop = start.plusSeconds(60))))
+        assertNull(
+            "a stopped entry",
+            content(entry = running.copy(timing = EntryTiming.Stopped(start, start.plusSeconds(60)))),
+        )
     }
 
     @Test
@@ -103,7 +106,7 @@ class RunningNotificationTest {
     fun theKeyChangesWithEveryFieldAStartOrEditSets() {
         val key = content()!!.key
         val edits = listOf(
-            running.copy(start = start.plusSeconds(1)),
+            running.copy(timing = EntryTiming.Running(start.plusSeconds(1))),
             running.copy(description = "Edited"),
             running.copy(projectId = null, taskId = null),
             running.copy(taskId = null),
@@ -127,7 +130,7 @@ class RunningNotificationTest {
     fun theKeyStaysWhenTheServerStoresTheEntryAsItDoes() {
         val key = content(entry = running.copy(description = " Notification ", tags = listOf("Android", "work")))!!.key
         val stored = running.copy(
-            start = start.truncatedTo(ChronoUnit.SECONDS),
+            timing = EntryTiming.Running(start.truncatedTo(ChronoUnit.SECONDS)),
             description = "Notification",
             tags = listOf("Work", "android"),
         )
@@ -189,7 +192,9 @@ class RunningNotificationTest {
     fun twoStartsWithinOneSecondPostTheSecondForItsStop() = runTest {
         val fake = FakeNotification()
         val first = content()!!
-        val second = content(entry = running.copy(id = EntryId(-4), start = start.plusMillis(400)))!!
+        val second = content(
+            entry = running.copy(id = EntryId(-4), timing = EntryTiming.Running(start.plusMillis(400))),
+        )!!
 
         run { fake.sync(flowOf(first, second)).follow() }
 
@@ -201,7 +206,10 @@ class RunningNotificationTest {
     fun theServersIdForTheFollowedEntryPostsNothingAndIsKept() = runTest {
         val first = content()!!
         val answered = content(
-            entry = running.copy(id = EntryId(4_200), start = start.truncatedTo(ChronoUnit.SECONDS)),
+            entry = running.copy(
+                id = EntryId(4_200),
+                timing = EntryTiming.Running(start.truncatedTo(ChronoUnit.SECONDS)),
+            ),
         )!!
         val fake = FakeNotification(shown = first.followed(), serverIds = mapOf(EntryId(-3) to EntryId(4_200)))
 
@@ -390,7 +398,7 @@ class RunningNotificationTest {
     @Test
     fun eachPauseAndResumePostsTheNotificationAgain() = runTest {
         val fake = FakeNotification()
-        val clone = running.copy(id = EntryId(55), start = start.plusSeconds(900))
+        val clone = running.copy(id = EntryId(55), timing = EntryTiming.Running(start.plusSeconds(900)))
         val resumed = runningNotificationContent(
             ServerTimerStates.controls(
                 clone,

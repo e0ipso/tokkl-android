@@ -42,6 +42,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import com.github.e0ipso.tokkl.feature.timer.R
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.UnsentIcon
 import com.github.e0ipso.tokkl.ui.projectMark
@@ -188,7 +189,7 @@ private fun EntryMenu(entry: HistoryEntry, callbacks: EntryCallbacks, firstLineM
                 },
             )
             // A no-time entry has no time to cut at, as in the web app's editor.
-            if (!entry.allDay) {
+            if (entry.timing !is EntryTiming.AllDay) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.history_split)) },
                     leadingIcon = { Icon(painterResource(R.drawable.ic_split), contentDescription = null) },
@@ -240,7 +241,7 @@ private class RowLine(
         entry,
         null,
         entry.seconds,
-        HistoryRange(entry.start, entry.stop).takeIf { !entry.allDay },
+        HistoryRange(entry.start, entry.stop).takeIf { entry.timing !is EntryTiming.AllDay },
         entry.unsent,
     )
 

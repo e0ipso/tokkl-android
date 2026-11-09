@@ -5,6 +5,7 @@ import com.github.e0ipso.tokkl.entries.WeekSource
 import com.github.e0ipso.tokkl.entries.sessionEntries
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
@@ -22,6 +23,7 @@ import org.junit.Before
 import org.junit.Test
 import java.time.Clock
 import java.time.DayOfWeek
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -80,10 +82,11 @@ class CalendarTimeZoneTest {
         // 10:00 UTC on the 10th is 19:00 on the 10th in Tokyo, a day before the entry's day.
         val stale = LATE_CALL.copy(
             id = EntryId(2),
-            start = Instant.parse("2026-10-10T10:00:00Z"),
-            stop = Instant.parse("2026-10-10T11:30:00Z"),
-            allDay = true,
-            day = LocalDate.of(2026, 10, 11),
+            timing = EntryTiming.AllDay(
+                LocalDate.of(2026, 10, 11),
+                Instant.parse("2026-10-10T10:00:00Z"),
+                Duration.ofMinutes(90),
+            ),
         )
         val model = model(flowOf(listOf(EntryWithSendState(stale, unsent = true))))
 
@@ -116,8 +119,7 @@ class CalendarTimeZoneTest {
             projectId = null,
             taskId = null,
             description = "Late call",
-            start = Instant.parse("2026-10-13T14:30:00Z"),
-            stop = Instant.parse("2026-10-13T16:00:00Z"),
+            timing = EntryTiming.Stopped(Instant.parse("2026-10-13T14:30:00Z"), Instant.parse("2026-10-13T16:00:00Z")),
             billable = false,
             tags = emptyList(),
             tagIds = emptyList(),
@@ -146,18 +148,11 @@ class CalendarTimeZoneTest {
         override suspend fun create(
             workspaceId: WorkspaceId,
             fields: EntryFields,
-            start: Instant,
-            stop: Instant,
-            noTimeDay: LocalDate?,
+            timing: EntryTiming.Ended,
         ): EntryId = throw AssertionError("nothing is created")
 
-        override suspend fun update(
-            entryId: EntryId,
-            fields: EntryFields,
-            start: Instant,
-            stop: Instant?,
-            noTimeDay: LocalDate?,
-        ): Boolean = throw AssertionError("nothing is edited")
+        override suspend fun update(entryId: EntryId, fields: EntryFields, timing: EntryTiming): Boolean =
+            throw AssertionError("nothing is edited")
 
         override suspend fun delete(entryId: EntryId): Boolean = throw AssertionError("nothing is deleted")
 
@@ -165,9 +160,7 @@ class CalendarTimeZoneTest {
             entryId: EntryId,
             workspaceId: WorkspaceId,
             fields: EntryFields,
-            start: Instant,
-            stop: Instant,
-            noTimeDay: LocalDate?,
+            timing: EntryTiming.Ended,
         ): Unit = throw AssertionError("unexpected updateOlder")
 
         override suspend fun delete(entry: TimeEntry): TimeEntry? = throw AssertionError("unexpected delete")

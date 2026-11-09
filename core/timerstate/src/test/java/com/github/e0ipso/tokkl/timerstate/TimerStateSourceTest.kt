@@ -12,6 +12,7 @@ import com.github.e0ipso.tokkl.cache.RunningCheckWrites
 import com.github.e0ipso.tokkl.cache.runningCheckWrites
 import com.github.e0ipso.tokkl.model.DiscardedPomodoro
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.PhaseKind
 import com.github.e0ipso.tokkl.model.PhaseTransition
@@ -337,7 +338,10 @@ class TimerStateSourceTest {
         EntryId(
             id,
         ),
-        WorkspaceId(WORKSPACE), null, null, description, ENTRY_START, null, false, emptyList(), emptyList(),
+        WorkspaceId(
+            WORKSPACE,
+        ),
+        null, null, description, EntryTiming.Running(ENTRY_START), false, emptyList(), emptyList(),
     )
 
     private fun pomodoro(plannedEnd: Instant) = TimerPomodoro(

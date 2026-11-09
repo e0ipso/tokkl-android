@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.history
 
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.model.TaskId
@@ -14,6 +15,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.Clock
 import java.time.DayOfWeek
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -87,7 +89,7 @@ class HistoryRowsTest {
             2,
             "Work",
             project = "Renamed",
-        ).copy(start = first.start.plusSeconds(7200), stop = first.stop.plusSeconds(9000))
+        ).copy(timing = EntryTiming.Stopped(first.start.plusSeconds(7200), first.stop.plusSeconds(9000)))
 
         assertEquals(1, rowsForDay(listOf(second, first), collapse = true).size)
     }
@@ -145,9 +147,9 @@ class HistoryRowsTest {
         val midnight = at(day, 0)
         val rows = rowsForDay(
             listOf(
-                entry(1, "Work").copy(start = at(day, 9), stop = at(day, 10)),
-                entry(2, "Work").copy(start = at(day, 11), stop = at(day, 12)),
-                entry(3, "Work").copy(start = midnight, stop = midnight.plusSeconds(7200), allDay = true),
+                entry(1, "Work").copy(timing = EntryTiming.Stopped(at(day, 9), at(day, 10))),
+                entry(2, "Work").copy(timing = EntryTiming.Stopped(at(day, 11), at(day, 12))),
+                entry(3, "Work").copy(timing = EntryTiming.AllDay(null, midnight, Duration.ofHours(2))),
             ).sortedByDescending { it.start },
             collapse = true,
         )
@@ -163,8 +165,8 @@ class HistoryRowsTest {
         val day = LocalDate.of(2026, 10, 18)
         val group = rowsForDay(
             listOf(
-                entry(1, "Work").copy(start = at(day, 12), stop = at(day, 13)),
-                entry(2, "Work").copy(start = at(day, 9), stop = at(day, 15)),
+                entry(1, "Work").copy(timing = EntryTiming.Stopped(at(day, 12), at(day, 13))),
+                entry(2, "Work").copy(timing = EntryTiming.Stopped(at(day, 9), at(day, 15))),
             ),
             collapse = true,
         ).single()
@@ -176,7 +178,7 @@ class HistoryRowsTest {
     fun aRowOfOnlyNoTimeMembersHasNoRange() {
         val day = LocalDate.of(2026, 10, 18)
         val midnight = at(day, 0)
-        val noTime = entry(1, "Work").copy(start = midnight, stop = midnight.plusSeconds(1800), allDay = true)
+        val noTime = entry(1, "Work").copy(timing = EntryTiming.AllDay(null, midnight, Duration.ofMinutes(30)))
 
         assertNull(rowsForDay(listOf(noTime), collapse = false).single().range)
         assertNull(rowsForDay(listOf(noTime, noTime.copy(id = EntryId(2))), collapse = true).single().range)
@@ -196,8 +198,12 @@ class HistoryRowsTest {
 
     private fun at(day: LocalDate, hour: Int): Instant = day.atTime(hour, 0).toInstant(ZoneOffset.UTC)
 
-    private fun cached(id: Long, description: String, start: Instant, stop: Instant) =
-        TimeEntry(EntryId(id), WorkspaceId(7), null, null, description, start, stop, false, emptyList(), emptyList())
+    private fun cached(id: Long, description: String, start: Instant, stop: Instant) = TimeEntry(
+        EntryId(
+            id,
+        ),
+        WorkspaceId(7), null, null, description, EntryTiming.Stopped(start, stop), false, emptyList(), emptyList(),
+    )
 
     private fun entry(id: Long, description: String, project: String? = null) = HistoryEntry(
         id = EntryId(id),
@@ -207,8 +213,7 @@ class HistoryRowsTest {
         task = null,
         tags = emptyList(),
         billable = false,
-        start = Instant.parse("2026-10-18T09:00:00Z"),
-        stop = Instant.parse("2026-10-18T10:00:00Z"),
+        timing = EntryTiming.Stopped(Instant.parse("2026-10-18T09:00:00Z"), Instant.parse("2026-10-18T10:00:00Z")),
         unsent = false,
     )
 

@@ -10,6 +10,7 @@ import com.github.e0ipso.tokkl.entries.OlderPages
 import com.github.e0ipso.tokkl.entries.SessionEntries
 import com.github.e0ipso.tokkl.entries.sessionEntries
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.model.Task
@@ -539,8 +540,7 @@ class HistoryViewModelTest {
                 projectId = null,
                 taskId = null,
                 description = "Worked on $day",
-                start = start,
-                stop = start.plusSeconds(3600),
+                timing = EntryTiming.Stopped(start, start.plusSeconds(3600)),
                 billable = false,
                 tags = emptyList(),
                 tagIds = emptyList(),

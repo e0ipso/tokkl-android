@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.entries
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.AccountSettings
@@ -19,7 +20,6 @@ import org.junit.Test
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Instant
-import java.time.LocalDate
 import java.time.ZoneOffset
 
 /**
@@ -84,9 +84,7 @@ class SessionEntriesTest {
             opened,
             onPhone,
             EntryFields(description = "Write"),
-            opened,
-            opened.plusSeconds(HOUR),
-            noTimeDay = null,
+            EntryTiming.Stopped(opened, opened.plusSeconds(HOUR)),
         )
     }
 
@@ -97,13 +95,7 @@ class SessionEntriesTest {
 
         override suspend fun currentId(entryId: EntryId): EntryId = entryId
 
-        override suspend fun update(
-            entryId: EntryId,
-            fields: EntryFields,
-            start: Instant,
-            stop: Instant?,
-            noTimeDay: LocalDate?,
-        ): Boolean {
+        override suspend fun update(entryId: EntryId, fields: EntryFields, timing: EntryTiming): Boolean {
             calls += "update $entryId"
             return updates
         }
@@ -112,9 +104,7 @@ class SessionEntriesTest {
             entryId: EntryId,
             workspaceId: WorkspaceId,
             fields: EntryFields,
-            start: Instant,
-            stop: Instant,
-            noTimeDay: LocalDate?,
+            timing: EntryTiming.Ended,
         ) {
             calls += "updateOlder $entryId $workspaceId"
         }
@@ -122,9 +112,7 @@ class SessionEntriesTest {
         override suspend fun create(
             workspaceId: WorkspaceId,
             fields: EntryFields,
-            start: Instant,
-            stop: Instant,
-            noTimeDay: LocalDate?,
+            timing: EntryTiming.Ended,
         ): EntryId = throw AssertionError("unexpected create")
 
         override suspend fun delete(entryId: EntryId): Boolean = throw AssertionError("unexpected delete")

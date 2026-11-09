@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.entries
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
@@ -15,8 +16,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import java.time.Clock
-import java.time.Instant
-import java.time.LocalDate
 import kotlin.coroutines.CoroutineContext
 
 /** The session's entries over [cached], for a view model test, with no server unless one is given. */
@@ -38,29 +37,17 @@ internal fun sessionEntries(
 internal object NoEntryChanges : EntryChanges {
     override suspend fun currentId(entryId: EntryId): EntryId = entryId
 
-    override suspend fun create(
-        workspaceId: WorkspaceId,
-        fields: EntryFields,
-        start: Instant,
-        stop: Instant,
-        noTimeDay: LocalDate?,
-    ): EntryId = throw AssertionError("unexpected create")
+    override suspend fun create(workspaceId: WorkspaceId, fields: EntryFields, timing: EntryTiming.Ended): EntryId =
+        throw AssertionError("unexpected create")
 
-    override suspend fun update(
-        entryId: EntryId,
-        fields: EntryFields,
-        start: Instant,
-        stop: Instant?,
-        noTimeDay: LocalDate?,
-    ): Boolean = throw AssertionError("unexpected update")
+    override suspend fun update(entryId: EntryId, fields: EntryFields, timing: EntryTiming): Boolean =
+        throw AssertionError("unexpected update")
 
     override suspend fun updateOlder(
         entryId: EntryId,
         workspaceId: WorkspaceId,
         fields: EntryFields,
-        start: Instant,
-        stop: Instant,
-        noTimeDay: LocalDate?,
+        timing: EntryTiming.Ended,
     ): Unit = throw AssertionError("unexpected updateOlder")
 
     override suspend fun delete(entryId: EntryId): Boolean = throw AssertionError("unexpected delete")

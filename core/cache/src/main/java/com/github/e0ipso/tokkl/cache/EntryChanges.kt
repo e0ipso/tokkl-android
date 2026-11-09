@@ -2,11 +2,11 @@ package com.github.e0ipso.tokkl.cache
 
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.RunningEntryIdentity
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import java.time.Instant
-import java.time.LocalDate
 
 /** Where the cache holds an entry now, such as [ChangeQueue.currentId]. */
 fun interface CurrentEntryIds {
@@ -38,40 +38,21 @@ interface RunningEntryChanges : CurrentEntryIds {
  * screen's model takes this, so a JVM test can stand in for the database. See [ChangeQueue] for
  * what each call does.
  *
- * A non-null `noTimeDay` on [create], [update] and [updateOlder] makes a no-time entry on that
- * day. The caller passes the day's local midnight in the account's zone as the start
- * (`AccountTime.instantAt(day, 0)`) and the start plus the snapped duration as the stop. A null
- * one makes a timed entry, also when the entry was a no-time one.
+ * Each call takes the entry's [EntryTiming]: an [EntryTiming.AllDay] makes a no-time entry on its
+ * day, with the day's local midnight in the account's zone as its start and the snapped duration,
+ * as core:entryfields' `AccountTime.noTimeEntry` makes one. Any other timing makes a timed entry,
+ * also when the entry was a no-time one.
  */
 interface EntryChanges : CurrentEntryIds {
-    suspend fun create(
-        workspaceId: WorkspaceId,
-        fields: EntryFields,
-        start: Instant,
-        stop: Instant,
-        noTimeDay: LocalDate? = null,
-    ): EntryId
+    suspend fun create(workspaceId: WorkspaceId, fields: EntryFields, timing: EntryTiming.Ended): EntryId
 
-    suspend fun update(
-        entryId: EntryId,
-        fields: EntryFields,
-        start: Instant,
-        stop: Instant?,
-        noTimeDay: LocalDate? = null,
-    ): Boolean
+    suspend fun update(entryId: EntryId, fields: EntryFields, timing: EntryTiming): Boolean
 
     /**
-     * Sets every field of the stopped entry [entryId] in [workspaceId], whether the phone holds it
+     * Sets every field of the ended entry [entryId] in [workspaceId], whether the phone holds it
      * or not, such as an entry from the older days the history pages from the server.
      */
-    suspend fun updateOlder(
-        entryId: EntryId,
-        workspaceId: WorkspaceId,
-        fields: EntryFields,
-        start: Instant,
-        stop: Instant,
-        noTimeDay: LocalDate? = null,
-    )
+    suspend fun updateOlder(entryId: EntryId, workspaceId: WorkspaceId, fields: EntryFields, timing: EntryTiming.Ended)
 
     suspend fun delete(entryId: EntryId): Boolean
 

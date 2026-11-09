@@ -4,6 +4,7 @@ import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.model.DiscardedPomodoro
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.RunningEntryIdentity
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
@@ -193,7 +194,12 @@ class TimerCommandsTest {
     }
 
     private fun running() = TimerControls.Running(
-        entry = TimeEntry(EntryId(42), WorkspaceId(7), null, null, "Write", TAP, null, false, emptyList(), emptyList()),
+        entry = TimeEntry(
+            EntryId(
+                42,
+            ),
+            WorkspaceId(7), null, null, "Write", EntryTiming.Running(TAP), false, emptyList(), emptyList(),
+        ),
         unsent = false,
         accumulatedSeconds = 0,
         target = TimerTarget(entryId = EntryId(42)),

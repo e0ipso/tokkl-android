@@ -36,6 +36,7 @@ import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
@@ -397,21 +398,17 @@ class EntryActionsUiTest {
         override suspend fun create(
             workspaceId: WorkspaceId,
             fields: EntryFields,
-            start: Instant,
-            stop: Instant,
-            noTimeDay: LocalDate?,
+            timing: EntryTiming.Ended,
         ): EntryId {
+            val start = timing.start
+            val stop = timing.stop
             calls += "create $workspaceId $start $stop"
             return EntryId(-1)
         }
 
-        override suspend fun update(
-            entryId: EntryId,
-            fields: EntryFields,
-            start: Instant,
-            stop: Instant?,
-            noTimeDay: LocalDate?,
-        ): Boolean {
+        override suspend fun update(entryId: EntryId, fields: EntryFields, timing: EntryTiming): Boolean {
+            val start = timing.start
+            val stop = (timing as? EntryTiming.Ended)?.stop
             calls += "update $entryId $start $stop"
             return true
         }
@@ -420,9 +417,7 @@ class EntryActionsUiTest {
             entryId: EntryId,
             workspaceId: WorkspaceId,
             fields: EntryFields,
-            start: Instant,
-            stop: Instant,
-            noTimeDay: LocalDate?,
+            timing: EntryTiming.Ended,
         ): Unit = throw AssertionError("unexpected updateOlder")
 
         override suspend fun delete(entry: TimeEntry): TimeEntry? = if (delete(entry.id)) entry else null
@@ -462,8 +457,7 @@ class EntryActionsUiTest {
             projectId = null,
             taskId = null,
             description = DESCRIPTION,
-            start = Instant.parse("2026-10-15T10:45:00Z"),
-            stop = Instant.parse("2026-10-15T11:50:00Z"),
+            timing = EntryTiming.Stopped(Instant.parse("2026-10-15T10:45:00Z"), Instant.parse("2026-10-15T11:50:00Z")),
             billable = false,
             tags = emptyList(),
             tagIds = emptyList(),
@@ -477,8 +471,7 @@ class EntryActionsUiTest {
             task = null,
             tags = emptyList(),
             billable = false,
-            start = Instant.parse("2026-10-15T$start:00Z"),
-            stop = Instant.parse("2026-10-15T$stop:00Z"),
+            timing = EntryTiming.Stopped(Instant.parse("2026-10-15T$start:00Z"), Instant.parse("2026-10-15T$stop:00Z")),
             unsent = false,
         )
     }

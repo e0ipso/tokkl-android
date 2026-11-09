@@ -1,14 +1,15 @@
 package com.github.e0ipso.tokkl.history
 
 import androidx.compose.runtime.Immutable
+import com.github.e0ipso.tokkl.entryfields.noTimeEntry
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.model.Task
 import com.github.e0ipso.tokkl.model.TaskId
 import com.github.e0ipso.tokkl.model.TimeEntry
-import com.github.e0ipso.tokkl.model.noTimeDay
 import com.github.e0ipso.tokkl.time.AccountTime
 import java.time.Instant
 import java.time.LocalDate
@@ -16,9 +17,9 @@ import java.time.LocalDate
 /**
  * A stopped entry as the history shows it.
  *
- * @property start the server's start for an entry the server has, or for one with a change it
- *   has not received, the start the server will store, snapped on the phone.
- * @property stop as [start].
+ * @property timing the server's times for an entry the server has, or for one with a change it
+ *   has not received, the times the server will store, snapped on the phone. A no-time entry's
+ *   [EntryTiming.AllDay] carries only its duration, so the history shows no clock times for it.
  * @property unsent the queue holds a change to the entry that the server has not received.
  * @property cached the phone holds the entry in its two weeks, so the menu's actions can change
  *   it. The older days that the server sent, and the days the cache dropped since, are not on the
@@ -26,8 +27,6 @@ import java.time.LocalDate
  *   counts as theirs. The entry form edits both kinds.
  * @property projectId the project's id, which the grouping of similar entries compares.
  * @property taskId the task's id, as [projectId].
- * @property allDay the entry is a no-time entry: it has a duration and a day, and its [start] and
- *   [stop] only carry the duration, so the history shows no clock times for it.
  */
 @Immutable
 data class HistoryEntry(
@@ -38,14 +37,16 @@ data class HistoryEntry(
     val task: String?,
     val tags: List<String>,
     val billable: Boolean,
-    val start: Instant,
-    val stop: Instant,
+    val timing: EntryTiming.Ended,
     val unsent: Boolean,
     val cached: Boolean = true,
     val projectId: ProjectId? = null,
     val taskId: TaskId? = null,
-    val allDay: Boolean = false,
 ) {
+    val start: Instant get() = timing.start
+
+    val stop: Instant get() = timing.stop
+
     /** Whole seconds from [start] to [stop], as entrySeconds in the web app's lib/settings.ts. */
     val seconds: Long get() = maxOf(0L, Math.floorDiv(stop.toEpochMilli() - start.toEpochMilli(), 1000L))
 }
@@ -76,7 +77,7 @@ data class HistoryDay(
  * server has not received shows [AccountTime.snapUnsent] of its times instead, the times the
  * server will store, so they do not change when it answers. That snapped start decides its day.
  *
- * A no-time entry goes under its stored day ([noTimeDay]), never the day of its start, which a
+ * A no-time entry goes under its stored day ([EntryTiming.AllDay.dayIn]), never the day of its start, which a
  * timezone change leaves stale. Unsent, it shows [AccountTime.noTimeSpan] of its duration, midnight
  * plus the snapped duration, and never [AccountTime.snapUnsent], which would snap its midnight
  * start to a grid point.
@@ -118,15 +119,13 @@ fun historyDays(
                 projectsById,
                 tasksById,
             )?.let { shown ->
-                (
-                    if (row.entry.allDay) {
-                        row.entry.dayIn(
-                            time,
-                        )
-                    } else {
-                        time.local(shown.start).toLocalDate()
-                    }
-                    ) to shown
+                val timing = row.entry.timing
+                val date = if (timing is EntryTiming.AllDay) {
+                    timing.dayIn(time.zone)
+                } else {
+                    time.local(shown.start).toLocalDate()
+                }
+                date to shown
             }
         }
         .groupBy({ it.first }, { it.second })
@@ -142,8 +141,10 @@ fun historyDays(
 private class Row(val entry: TimeEntry, val unsent: Boolean, val cached: Boolean)
 
 /** The day of an entry as the cache holds it: a no-time entry's stored day, else the day of its start. */
-private fun TimeEntry.dayIn(time: AccountTime): LocalDate =
-    if (allDay) noTimeDay(time.zone) else time.local(start).toLocalDate()
+private fun TimeEntry.dayIn(time: AccountTime): LocalDate = when (val timing = timing) {
+    is EntryTiming.AllDay -> timing.dayIn(time.zone)
+    else -> time.local(start).toLocalDate()
+}
 
 /** The entry as the history shows it, or null while it runs. */
 private fun TimeEntry.shown(
@@ -153,18 +154,19 @@ private fun TimeEntry.shown(
     projects: Map<ProjectId, Project>,
     tasks: Map<TaskId, Task>,
 ): HistoryEntry? {
-    val stop = stop ?: return null
+    val ended = timing as? EntryTiming.Ended ?: return null
     // A no-time entry never goes through snapUnsent: its span is its day's midnight plus the snapped duration.
-    val span = when {
-        !unsent -> null
+    val shown = when {
+        !unsent -> ended
 
-        allDay -> time.noTimeSpan(
-            noTimeDay(time.zone),
-            maxOf(0L, Math.floorDiv(stop.toEpochMilli() - start.toEpochMilli(), 1000L)),
+        ended is EntryTiming.AllDay -> time.noTimeEntry(
+            ended.dayIn(time.zone),
+            maxOf(0L, Math.floorDiv(ended.stop.toEpochMilli() - ended.start.toEpochMilli(), 1000L)),
+            stored = ended.day,
         )
 
         // A rejected pending span keeps its actual times and unsent state for correction.
-        else -> time.snapUnsent(start, stop)
+        else -> time.snapUnsent(ended.start, ended.stop)?.let { EntryTiming.Stopped(it.start, it.stop) } ?: ended
     }
     val project = projectId?.let(projects::get)
     return HistoryEntry(
@@ -175,13 +177,11 @@ private fun TimeEntry.shown(
         task = taskId?.let(tasks::get)?.name,
         tags = tags,
         billable = billable,
-        start = span?.start ?: start,
-        stop = span?.stop ?: stop,
+        timing = shown,
         unsent = unsent,
         cached = cached,
         projectId = projectId,
         taskId = taskId,
-        allDay = allDay,
     )
 }
 

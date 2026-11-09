@@ -4,6 +4,7 @@ import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.model.ProjectId
@@ -549,7 +550,12 @@ class TimerViewModelTest {
     @Test
     fun aStartMadeElsewhereDoesNotAnnounceAnInAppStart() {
         awaitIdle()
-        onMain { running.value = EntryWithSendState(PAST.copy(stop = null), unsent = false) }
+        onMain {
+            running.value = EntryWithSendState(
+                PAST.copy(timing = EntryTiming.Running(PAST.start)),
+                unsent = false,
+            )
+        }
         awaitState("the external running entry") { it is TimerState.Running }
         assertEquals(emptyList<Unit>(), (model.frame.starts as SharedFlow<Unit>).replayCache)
     }
@@ -632,8 +638,7 @@ class TimerViewModelTest {
             projectId = projectId,
             taskId = null,
             description = description,
-            start = Instant.parse("2026-10-19T09:00:00Z"),
-            stop = null,
+            timing = EntryTiming.Running(Instant.parse("2026-10-19T09:00:00Z")),
             billable = billable,
             tags = tags,
             tagIds = emptyList(),
@@ -671,8 +676,7 @@ class TimerViewModelTest {
                     fields.projectId,
                     fields.taskId,
                     fields.description,
-                    at,
-                    null,
+                    EntryTiming.Running(at),
                     fields.billable,
                     fields.tags,
                     emptyList(),
@@ -702,8 +706,7 @@ class TimerViewModelTest {
                     taskId = fields.taskId,
                     tags = fields.tags,
                     billable = fields.billable,
-                    start = start,
-                    stop = stop,
+                    timing = EntryTiming.of(start, stop, allDay = false, day = null),
                 ),
                 unsent = true,
             )
@@ -765,8 +768,7 @@ class TimerViewModelTest {
             projectId = CLIENT_WORK.id,
             taskId = DESIGN.id,
             description = "Review the mockups",
-            start = Instant.parse("2026-10-18T08:00:00Z"),
-            stop = Instant.parse("2026-10-18T09:30:00Z"),
+            timing = EntryTiming.Stopped(Instant.parse("2026-10-18T08:00:00Z"), Instant.parse("2026-10-18T09:30:00Z")),
             billable = true,
             tags = listOf("review", "remote"),
             tagIds = emptyList(),

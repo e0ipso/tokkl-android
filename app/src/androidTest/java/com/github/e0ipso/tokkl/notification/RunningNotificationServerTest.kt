@@ -29,6 +29,7 @@ import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.components.timerControls
 import com.github.e0ipso.tokkl.feature.notification.R
 import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.model.RunningEntryIdentity
 import com.github.e0ipso.tokkl.model.WorkspaceId
@@ -448,7 +449,9 @@ class RunningNotificationServerTest {
         ActivityScenario.launch(MainActivity::class.java).use {
             RunningNotifications.assertStaysGone("the app opened")
 
-            assertTrue(runBlocking { app.changes.update(id, EntryFields(description = "Edited"), start, stop = null) })
+            assertTrue(
+                runBlocking { app.changes.update(id, EntryFields(description = "Edited"), EntryTiming.Running(start)) },
+            )
             RunningNotifications.awaitShown("the edit") { it.title() == "Edited" }
 
             RunningNotifications.dismiss()

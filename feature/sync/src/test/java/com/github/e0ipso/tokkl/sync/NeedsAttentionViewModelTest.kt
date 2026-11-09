@@ -4,6 +4,7 @@ import com.github.e0ipso.tokkl.cache.ChangeKind
 import com.github.e0ipso.tokkl.cache.HeldChange
 import com.github.e0ipso.tokkl.cache.HeldChanges
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.AccountSettings
@@ -74,8 +75,7 @@ class NeedsAttentionViewModelTest {
                 projectId = null,
                 taskId = null,
                 description = "Refused",
-                start = Instant.parse("2026-10-19T07:00:00Z"),
-                stop = null,
+                timing = EntryTiming.Running(Instant.parse("2026-10-19T07:00:00Z")),
                 billable = false,
                 tags = emptyList(),
                 tagIds = emptyList(),

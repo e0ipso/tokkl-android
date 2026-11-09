@@ -17,6 +17,7 @@ import com.github.e0ipso.tokkl.accessibility.createComposeRule
 import com.github.e0ipso.tokkl.entries.OlderDays
 import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -179,8 +180,10 @@ class HistoryGroupUiTest {
             task = null,
             tags = emptyList(),
             billable = false,
-            start = Instant.parse("2026-10-15T%02d:00:00Z".format(startHour)),
-            stop = Instant.parse("2026-10-15T%02d:00:00Z".format(stopHour)),
+            timing = EntryTiming.Stopped(
+                Instant.parse("2026-10-15T%02d:00:00Z".format(startHour)),
+                Instant.parse("2026-10-15T%02d:00:00Z".format(stopHour)),
+            ),
             unsent = false,
         )
     }

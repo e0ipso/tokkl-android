@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.calendar
 
 import androidx.compose.runtime.Immutable
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.time.MILLIS_PER_SECOND
 import com.github.e0ipso.tokkl.time.MINUTES_PER_HOUR
 import com.github.e0ipso.tokkl.time.SECONDS_PER_MINUTE
@@ -12,13 +13,11 @@ import java.time.ZoneId
 /**
  * A time entry as the calendar shows it.
  *
- * @property start the server's start, or for a stopped entry with a change the server has not
- *   received, the start the server will store, snapped on the phone, as the history shows it.
- * @property stop as [start], or null while the entry runs.
+ * @property timing the server's times, or for a stopped entry with a change the server has not
+ *   received, the times the server will store, snapped on the phone, as the history shows them. A
+ *   no-time entry, an [EntryTiming.AllDay] with its day, sits in the All day row, never in the
+ *   hour grid.
  * @property unsent the queue holds a change to the entry that the server has not received.
- * @property allDay a no-time entry: a day and a duration. It sits in the All day row, never in the
- *   hour grid. [start] is local midnight of its day and [stop] is [start] plus the duration.
- * @property day the no-time entry's day in the account's timezone, null for a timed entry.
  */
 @Immutable
 data class CalendarEntry(
@@ -27,13 +26,15 @@ data class CalendarEntry(
     val project: String?,
     val projectColor: String?,
     val task: String?,
-    val start: Instant,
-    val stop: Instant?,
+    val timing: EntryTiming,
     val unsent: Boolean,
-    val allDay: Boolean = false,
-    val day: LocalDate? = null,
 ) {
-    val running: Boolean get() = stop == null
+    val start: Instant get() = timing.start
+
+    /** Where the entry ends, or null while it runs. */
+    val stop: Instant? get() = (timing as? EntryTiming.Ended)?.stop
+
+    val running: Boolean get() = timing is EntryTiming.Running
 
     /**
      * Whole seconds from [start] to [stop], or to [now] while it runs, as entrySeconds in the web app's
@@ -98,7 +99,7 @@ fun calendarBlocks(
     zone: ZoneId,
     now: Instant,
 ): List<CalendarBlock> {
-    val ordered = entries.filter { !it.allDay }.sortedWith(entryOrder)
+    val ordered = entries.filter { it.timing !is EntryTiming.AllDay }.sortedWith(entryOrder)
     return days.flatMap { day ->
         val onDay = ordered
             .mapNotNull { entry ->
@@ -115,8 +116,11 @@ fun calendarBlocks(
 
 private val entryOrder = compareBy<CalendarEntry> { it.start }.thenBy { it.id.value }
 
-/** The day of a no-time [CalendarEntry]: its stored [CalendarEntry.day], or the date of its start in [zone]. */
-private fun CalendarEntry.noTimeDayIn(zone: ZoneId): LocalDate = day ?: start.atZone(zone).toLocalDate()
+/** The day of [CalendarEntry] in [zone]: a no-time entry's stored day, or the date of its start. */
+private fun CalendarEntry.dayIn(zone: ZoneId): LocalDate = when (val timing = timing) {
+    is EntryTiming.AllDay -> timing.dayIn(zone)
+    else -> start.atZone(zone).toLocalDate()
+}
 
 /**
  * Each of [days] that has no-time entries, with those entries by their stored day, as the web
@@ -130,9 +134,9 @@ fun allDayEntries(
 ): Map<LocalDate, List<CalendarEntry>> {
     val shown = days.toSet()
     return entries
-        .filter { it.allDay }
+        .filter { it.timing is EntryTiming.AllDay }
         .sortedWith(entryOrder)
-        .groupBy { it.noTimeDayIn(zone) }
+        .groupBy { it.dayIn(zone) }
         .filterKeys { it in shown }
 }
 
@@ -172,14 +176,5 @@ private fun lanesOf(blocks: List<Placed>): List<Triple<Placed, Int, Int>> {
  * web app's dayTotal. An entry across midnight counts on the day it starts. A no-time entry counts
  * its whole duration on its stored day.
  */
-fun dayTotalSeconds(entries: List<CalendarEntry>, day: LocalDate, zone: ZoneId, now: Instant): Long = entries.filter {
-    (
-        if (it.allDay) {
-            it.noTimeDayIn(
-                zone,
-            )
-        } else {
-            it.start.atZone(zone).toLocalDate()
-        }
-        ) == day
-}.sumOf { it.seconds(now) }
+fun dayTotalSeconds(entries: List<CalendarEntry>, day: LocalDate, zone: ZoneId, now: Instant): Long =
+    entries.filter { it.dayIn(zone) == day }.sumOf { it.seconds(now) }

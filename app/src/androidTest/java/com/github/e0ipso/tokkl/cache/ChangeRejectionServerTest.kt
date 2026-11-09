@@ -17,6 +17,7 @@ import com.github.e0ipso.tokkl.appHttp
 import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.AccountRefreshRequests
@@ -92,8 +93,8 @@ class ChangeRejectionServerTest {
     @Test fun a404DropsChangesToTheDeletedEntryAndAggregatesTheNotice() {
         val id = cachedEntry("Deleted elsewhere")
         runBlocking {
-            queue.update(EntryId(id), EntryFields(description = "First edit"), start, stop)
-            queue.update(EntryId(id), EntryFields(description = "Second edit"), start, stop)
+            queue.update(EntryId(id), EntryFields(description = "First edit"), EntryTiming.Stopped(start, stop))
+            queue.update(EntryId(id), EntryFields(description = "Second edit"), EntryTiming.Stopped(start, stop))
         }
         account.deleteEntry(id)
         assertEquals(ChangeSender.Outcome.Empty(2), runBlocking { sender.drain() })
@@ -108,13 +109,16 @@ class ChangeRejectionServerTest {
             queue.create(
                 WorkspaceId(account.workspaceId),
                 EntryFields(description = "Invalid span"),
-                start,
-                tooLong,
+                EntryTiming.Stopped(start, tooLong),
             )
         }
         runBlocking {
-            queue.update(id, EntryFields(description = "Later change"), start, tooLong)
-            queue.create(WorkspaceId(account.workspaceId), EntryFields(description = "Unrelated"), start, stop)
+            queue.update(id, EntryFields(description = "Later change"), EntryTiming.Stopped(start, tooLong))
+            queue.create(
+                WorkspaceId(account.workspaceId),
+                EntryFields(description = "Unrelated"),
+                EntryTiming.Stopped(start, stop),
+            )
         }
         assertEquals(ChangeSender.Outcome.Empty(1), runBlocking { sender.drain() })
         val held = runBlocking { queue.held.first() }.single()
@@ -124,7 +128,9 @@ class ChangeRejectionServerTest {
 
         // The entry form uses the same update operation. It replaces the refused draft and
         // its dependent changes with the edited draft, keeping a local create a create.
-        assertTrue(runBlocking { queue.update(id, EntryFields(description = "Fixed"), start, stop) })
+        assertTrue(
+            runBlocking { queue.update(id, EntryFields(description = "Fixed"), EntryTiming.Stopped(start, stop)) },
+        )
         assertEquals(ChangeSender.Outcome.Empty(1), runBlocking { sender.drain() })
         assertEquals(0, count())
         val serverId = runBlocking { queue.currentId(id) }
@@ -151,12 +157,19 @@ class ChangeRejectionServerTest {
             queue.create(
                 WorkspaceId(account.workspaceId),
                 EntryFields(description = "Invalid"),
-                start,
-                start.plus(Duration.ofHours(1000)),
+                EntryTiming.Stopped(start, start.plus(Duration.ofHours(1000))),
             )
         }
         assertEquals(ChangeSender.Outcome.Empty(0), runBlocking { sender.drain() })
-        assertTrue(runBlocking { queue.update(local, EntryFields(description = "Fixed"), fixedStart, fixedStop) })
+        assertTrue(
+            runBlocking {
+                queue.update(
+                    local,
+                    EntryFields(description = "Fixed"),
+                    EntryTiming.Stopped(fixedStart, fixedStop),
+                )
+            },
+        )
         // A request that never reached the server can still lose its answer. Before retrying,
         // its lookup must exclude the entry that existed before this edit moved the start.
         val store = RoomChangeStore(database)
@@ -171,8 +184,7 @@ class ChangeRejectionServerTest {
             queue.create(
                 WorkspaceId(account.workspaceId),
                 EntryFields(description = "Discard me"),
-                start,
-                start.plus(Duration.ofHours(1000)),
+                EntryTiming.Stopped(start, start.plus(Duration.ofHours(1000))),
             )
         }
         assertEquals(ChangeSender.Outcome.Empty(0), runBlocking { sender.drain() })
@@ -189,8 +201,12 @@ class ChangeRejectionServerTest {
     @Test fun resetToken403PausesEverythingUntilTheSameAccountSignsInAgain() {
         val id = cachedEntry("Before reset")
         runBlocking {
-            queue.update(EntryId(id), EntryFields(description = "After reset"), start, stop)
-            queue.create(WorkspaceId(account.workspaceId), EntryFields(description = "Waiting create"), start, stop)
+            queue.update(EntryId(id), EntryFields(description = "After reset"), EntryTiming.Stopped(start, stop))
+            queue.create(
+                WorkspaceId(account.workspaceId),
+                EntryFields(description = "Waiting create"),
+                EntryTiming.Stopped(start, stop),
+            )
         }
         val newToken = runBlocking {
             web.send(

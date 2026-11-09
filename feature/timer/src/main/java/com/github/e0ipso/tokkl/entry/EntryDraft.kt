@@ -5,6 +5,7 @@ import com.github.e0ipso.tokkl.entryfields.picked
 import com.github.e0ipso.tokkl.entryfields.snappedSeconds
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.model.RunningEntryIdentity
@@ -12,7 +13,6 @@ import com.github.e0ipso.tokkl.model.Task
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.model.fields
-import com.github.e0ipso.tokkl.model.noTimeDay
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.AccountTime
@@ -90,13 +90,15 @@ internal sealed interface DraftTarget {
         val original: Picked,
         val onPhone: Boolean,
         val snapshot: TimeEntry,
-    ) : DraftTarget
+    ) : DraftTarget {
+        /** Whether the entry opened as a no-time entry. */
+        val noTime: Boolean get() = snapshot.timing is EntryTiming.AllDay
+    }
 }
 
-/** The span a draft saves, or the mistakes that keep it from saving. */
+/** The timing a draft saves, or the mistakes that keep it from saving. */
 internal sealed interface CheckedTimes {
-    /** [noTimeDay] is the day of a no-time entry, and null for a timed one. */
-    data class Valid(val start: Instant, val stop: Instant?, val noTimeDay: LocalDate? = null) : CheckedTimes
+    data class Valid(val timing: EntryTiming) : CheckedTimes
 
     data class Invalid(val mistakes: Map<TimeField, TimeMistake>) : CheckedTimes {
         constructor(field: TimeField, mistake: TimeMistake) : this(mapOf(field to mistake))
@@ -141,8 +143,11 @@ internal fun editForm(
     onPhone: Boolean,
 ): EntryDraft? {
     val entry = cached.entry
-    val stop = entry.stop ?: return null
-    if (entry.allDay) return noTimeForm(entry, stop, time, onPhone)
+    val stop = when (val timing = entry.timing) {
+        is EntryTiming.Running -> return null
+        is EntryTiming.AllDay -> return noTimeForm(entry, timing, time, onPhone)
+        is EntryTiming.Stopped -> timing.stop
+    }
     // Keep rejected/legacy entries editable at their actual times, still marked unsent by the
     // history. A null prediction is never a replacement stored span.
     val predicted = if (cached.unsent && !stop.isBefore(entry.start)) time.snapUnsent(entry.start, stop) else null
@@ -172,8 +177,9 @@ internal fun editForm(
  * the server rounds it. The server keeps its start at midnight, so it has no times to show and
  * no span to predict. Its times open as empty texts, so times the user gives it count as typed.
  */
-internal fun noTimeForm(entry: TimeEntry, stop: Instant, time: AccountTime, onPhone: Boolean): EntryDraft {
-    val date = entry.noTimeDay(time.zone)
+internal fun noTimeForm(entry: TimeEntry, timing: EntryTiming.AllDay, time: AccountTime, onPhone: Boolean): EntryDraft {
+    val date = timing.dayIn(time.zone)
+    val stop = timing.stop
     val duration = formatDuration(time.snapDuration(stop.epochSecond - entry.start.epochSecond))
     val fields = entry.fields()
     val target = DraftTarget.Edit(
@@ -203,7 +209,8 @@ internal fun EntryDraft.shown(
     allDay: Boolean,
     clock: Clock,
 ): EntryFormState.Open {
-    val stop = if (noTimes) null else (check(this, settings, time, clock) as? CheckedTimes.Valid)?.stop
+    val checked = if (noTimes) null else (check(this, settings, time, clock) as? CheckedTimes.Valid)?.timing
+    val stop = (checked as? EntryTiming.Ended)?.stop
     val endsOn = stop?.let { time.local(it).toLocalDate() }?.takeIf { it != date }
     return EntryFormState.Open(
         editing = target != DraftTarget.New,

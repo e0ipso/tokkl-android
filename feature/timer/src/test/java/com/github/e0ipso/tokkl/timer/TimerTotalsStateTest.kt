@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.timer
 
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.AccountSettings
@@ -95,8 +96,7 @@ class TimerTotalsStateTest {
         projectId = null,
         taskId = null,
         description = "",
-        start = Instant.parse(start),
-        stop = stop?.let(Instant::parse),
+        timing = EntryTiming.of(Instant.parse(start), stop?.let(Instant::parse), allDay = false, day = null),
         billable = false,
         tags = emptyList(),
         tagIds = emptyList(),

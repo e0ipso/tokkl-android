@@ -34,6 +34,7 @@ import com.github.e0ipso.tokkl.feature.tile.R
 import com.github.e0ipso.tokkl.followNoTimerEvents
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.notification.RunningNotifications
@@ -308,8 +309,7 @@ class RunningTileServerTest {
             app.changes.create(
                 WorkspaceId(workspace),
                 EntryFields(description = "Earlier entry"),
-                start,
-                stop,
+                EntryTiming.Stopped(start, stop),
             )
         }
         val last = runBlocking {
@@ -320,8 +320,7 @@ class RunningTileServerTest {
                     projectId = ProjectId(project),
                     tags = listOf("tile"),
                 ),
-                start,
-                stop,
+                EntryTiming.Stopped(start, stop),
             )
         }
         QuickSettingsTile.expand()
@@ -520,7 +519,9 @@ class RunningTileServerTest {
             context,
         )
         val stopped = runningTileLook(
-            RunningTileContent.Continue(entry.copy(stop = entry.start.plusSeconds(60))),
+            RunningTileContent.Continue(
+                entry.copy(timing = EntryTiming.Stopped(entry.start, entry.start.plusSeconds(60))),
+            ),
             context,
         )
         val nothing = runningTileLook(RunningTileContent.Nothing, context)
@@ -598,7 +599,10 @@ class RunningTileServerTest {
             assertEquals("the fixture still targets the running entry", id, running.id.value)
             // Two hours spans even the server's coarsest allowed 60-minute grid.
             val agedStart = running.start.minusSeconds(7_200)
-            assertTrue("the Continue fixture has a full span", app.changes.update(EntryId(id), fields, agedStart, null))
+            assertTrue(
+                "the Continue fixture has a full span",
+                app.changes.update(EntryId(id), fields, EntryTiming.Running(agedStart)),
+            )
             withTimeout(TIMEOUT_MS) { app.cache.running.first { it?.entry?.start == agedStart } }
         }
     }

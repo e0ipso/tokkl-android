@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.cache
 
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import kotlinx.coroutines.awaitCancellation
@@ -211,8 +212,7 @@ class RunningCheckTest {
         projectId = null,
         taskId = null,
         description = description,
-        start = START,
-        stop = stop,
+        timing = EntryTiming.of(START, stop, allDay = false, day = null),
         billable = false,
         tags = emptyList(),
         tagIds = emptyList(),

@@ -15,10 +15,10 @@ import com.github.e0ipso.tokkl.entryfields.splitTimes
 import com.github.e0ipso.tokkl.favorites.FavoritesProblem
 import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.fields
-import com.github.e0ipso.tokkl.model.noTimeDay
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.ServerProblem
 import com.github.e0ipso.tokkl.time.SnappedSpan
@@ -206,13 +206,16 @@ class EntryActionsViewModel(
     fun duplicate(entryId: EntryId) {
         viewModelScope.launch {
             val source = entries.first().firstOrNull { it.entry.id == entryId }?.entry ?: return@launch
-            val stop = source.stop ?: return@launch
-            val noTimeDay = if (source.allDay) {
-                source.day ?: accountSettings.value?.time(clock)?.zone?.let(source::noTimeDay) ?: return@launch
-            } else {
-                null
+            val timing = when (val kept = source.timing) {
+                is EntryTiming.Running -> return@launch
+
+                is EntryTiming.Stopped -> kept
+
+                is EntryTiming.AllDay -> kept.copy(
+                    day = kept.day ?: accountSettings.value?.time(clock)?.zone?.let(kept::dayIn) ?: return@launch,
+                )
             }
-            changes.create(source.workspaceId, source.fields(), source.start, stop, noTimeDay)
+            changes.create(source.workspaceId, source.fields(), timing)
             mutableState.update { it.copy(notice = EntryNotice.Duplicated(++serial)) }
         }
     }
@@ -225,8 +228,8 @@ class EntryActionsViewModel(
     fun split(entryId: EntryId) {
         viewModelScope.launch {
             val source = entries.first().firstOrNull { it.entry.id == entryId }?.entry ?: return@launch
-            if (source.allDay) return@launch
-            val stop = source.stop?.takeIf { !it.isBefore(source.start) } ?: return@launch
+            val timed = source.timing as? EntryTiming.Stopped ?: return@launch
+            val stop = timed.stop.takeIf { !it.isBefore(timed.start) } ?: return@launch
             val time = accountSettings.value?.time(clock) ?: return@launch
             val span = time.snapUnsent(source.start, stop) ?: return@launch
             mutableState.update { it.copy(split = SplitDialog(source, span, time.zone)) }
@@ -308,8 +311,14 @@ class EntryActionsViewModel(
                 return@launch
             }
             mutableState.update { if (it.split == dialog) it.copy(split = null) else it }
-            val created = changes.create(source.workspaceId, source.fields(), result.second.start, result.second.stop)
-            if (changes.update(source.id, source.fields(), result.first.start, result.first.stop)) {
+            val second = EntryTiming.Stopped(result.second.start, result.second.stop)
+            val created = changes.create(source.workspaceId, source.fields(), second)
+            if (changes.update(
+                    source.id,
+                    source.fields(),
+                    EntryTiming.Stopped(result.first.start, result.first.stop),
+                )
+            ) {
                 mutableState.update { it.copy(notice = EntryNotice.Split(++serial)) }
             } else {
                 // The original left the cache meanwhile, so the second half goes too.

@@ -38,6 +38,7 @@ import com.github.e0ipso.tokkl.accessibility.createComposeRule
 import com.github.e0ipso.tokkl.entries.WeekSource
 import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.spokenDuration
 import com.github.e0ipso.tokkl.ui.theme.LocalSectionHue
@@ -342,8 +343,7 @@ class DayCalendarTest {
             project = null,
             projectColor = null,
             task = null,
-            start = Instant.parse(start),
-            stop = Instant.parse(stop),
+            timing = EntryTiming.Stopped(Instant.parse(start), Instant.parse(stop)),
             unsent = false,
         )
 

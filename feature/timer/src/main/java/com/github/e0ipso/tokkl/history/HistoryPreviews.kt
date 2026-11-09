@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.github.e0ipso.tokkl.entries.OlderDays
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.DayOfWeek
@@ -43,8 +44,7 @@ private fun entry(
     task = null,
     tags = if (project == null) emptyList() else listOf("review"),
     billable = project != null,
-    start = Instant.parse("2026-10-${day}T$start:00Z"),
-    stop = Instant.parse("2026-10-${day}T$stop:00Z"),
+    timing = EntryTiming.Stopped(Instant.parse("2026-10-${day}T$start:00Z"), Instant.parse("2026-10-${day}T$stop:00Z")),
     unsent = unsent,
 )
 

@@ -4,6 +4,7 @@ import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.model.Client
 import com.github.e0ipso.tokkl.model.ClientId
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.model.TimeEntry
@@ -111,8 +112,7 @@ class TimerPageViewModelTest {
         projectId = projectId,
         taskId = null,
         description = description,
-        start = Instant.parse("2026-10-15T09:00:00Z"),
-        stop = Instant.parse("2026-10-15T10:00:00Z"),
+        timing = EntryTiming.Stopped(Instant.parse("2026-10-15T09:00:00Z"), Instant.parse("2026-10-15T10:00:00Z")),
         billable = false,
         tags = emptyList(),
         tagIds = emptyList(),
