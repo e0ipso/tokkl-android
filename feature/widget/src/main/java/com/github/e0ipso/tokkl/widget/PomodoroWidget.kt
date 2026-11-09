@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.widget
 
 import android.content.Context
-import android.content.Intent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -33,6 +32,7 @@ import androidx.glance.layout.width
 import androidx.glance.material3.ColorProviders
 import com.github.e0ipso.tokkl.feature.widget.R
 import com.github.e0ipso.tokkl.model.PhaseKind
+import com.github.e0ipso.tokkl.navigation.PageTap
 import com.github.e0ipso.tokkl.platform.mainActivityIntent
 import com.github.e0ipso.tokkl.ui.theme.TokklDarkColorScheme
 import com.github.e0ipso.tokkl.ui.theme.TokklLightColorScheme
@@ -126,11 +126,8 @@ fun PomodoroWidgetContent(
     }
 }
 
-internal fun openPomodoro(context: Context): Action = actionStartActivity(
-    mainActivityIntent(context)
-        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-        .putExtra(WidgetNavigation.OPEN_POMODORO, true),
-)
+internal fun openPomodoro(context: Context): Action =
+    actionStartActivity(PageTap.POMODORO_WIDGET.into(mainActivityIntent(context)))
 
 @Composable
 private fun Message(message: String, tiny: Boolean) {

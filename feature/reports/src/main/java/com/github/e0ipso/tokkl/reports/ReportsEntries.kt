@@ -22,6 +22,7 @@ import com.github.e0ipso.tokkl.navigation.LinkIntent
 import com.github.e0ipso.tokkl.navigation.LocalSignedInSession
 import com.github.e0ipso.tokkl.navigation.NavigationHost
 import com.github.e0ipso.tokkl.navigation.NavigationRequest
+import com.github.e0ipso.tokkl.navigation.PageTap
 import com.github.e0ipso.tokkl.navigation.RequestOpening
 import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.TopLevelDestination
@@ -55,10 +56,10 @@ internal object ReportsEntries : FeatureRoutes {
 
 /** The Timer widget's day report, which opens Reports on today's summary. */
 internal object ReportsRequests : FeatureRequests {
-    override val linkExtras get() = listOf(TODAY_REPORT_TAP)
+    override val linkExtras get() = listOf(PageTap.TODAY_REPORT.extra)
 
     override fun readLinks(intent: LinkIntent): List<NavigationRequest> =
-        listOfNotNull(TodayReportTap.takeIf { intent.flag(TODAY_REPORT_TAP) })
+        listOfNotNull(TodayReportTap.takeIf { PageTap.TODAY_REPORT.isIn(intent) })
 
     override fun PolymorphicModuleBuilder<NavigationRequest>.registerRequests() {
         subclass(TodayReportTap::class)
@@ -78,13 +79,6 @@ internal object ReportsRequests : FeatureRequests {
         }
     }
 }
-
-/**
- * The extra of the Timer widget's day report tap, which the widget puts in its intent
- * (`WidgetNavigation.OPEN_TODAY` in the widget feature). The app's DeepLinksTest checks that the
- * two agree.
- */
-internal const val TODAY_REPORT_TAP = "open_today_widget"
 
 /** The Timer widget's day report tap. */
 @Serializable

@@ -14,6 +14,7 @@ dependencies {
     implementation(project(":core:cache"))
     implementation(project(":core:timerstate"))
     implementation(project(":core:entryfields"))
+    implementation(project(":core:navigation"))
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.glance.material3)
     implementation(libs.androidx.glance.appwidget)

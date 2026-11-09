@@ -16,6 +16,8 @@ import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.capabilities
 import com.github.e0ipso.tokkl.components.reportsViewModel
+import com.github.e0ipso.tokkl.navigation.PageTap
+import com.github.e0ipso.tokkl.platform.mainActivityIntent
 import com.github.e0ipso.tokkl.reports.RangePreset
 import com.github.e0ipso.tokkl.reports.ReportTab
 import com.github.e0ipso.tokkl.reports.ReportsState
@@ -39,7 +41,7 @@ class WidgetNavigationTest {
     @Test fun todayOpensOnColdStartAndReplacesRetainedWeeklySelection() {
         runBlocking { app.accountRefresh.refresh().join() }
         ActivityScenario.launch<MainActivity>(
-            WidgetNavigation.intent(context, WidgetNavigation.OPEN_TODAY),
+            PageTap.TODAY_REPORT.into(mainActivityIntent(context)),
         ).use { scenario ->
             assertToday(scenario)
             lateinit var model: ReportsViewModel
@@ -48,12 +50,12 @@ class WidgetNavigationTest {
                 model.selectTab(ReportTab.WEEKLY)
                 model.select(RangePreset.LAST_WEEK)
             }
-            context.startActivity(WidgetNavigation.intent(context, WidgetNavigation.OPEN_TODAY))
+            context.startActivity(PageTap.TODAY_REPORT.into(mainActivityIntent(context)))
             assertToday(scenario)
             scenario.recreate()
             assertToday(scenario)
             // Consumed extras must not reopen Today after the user leaves Reports.
-            context.startActivity(WidgetNavigation.intent(context, WidgetNavigation.OPEN_TIMER))
+            context.startActivity(PageTap.TIMER_WIDGET.into(mainActivityIntent(context)))
             compose.awaitTimerPage()
             scenario.recreate()
             compose.awaitTimerPage()
@@ -64,28 +66,28 @@ class WidgetNavigationTest {
         app.accountRefresh.refresh().join()
         assertTrue("the pinned server supports Timer state", app.capabilities.state.value.timerState)
         ActivityScenario.launch<MainActivity>(
-            WidgetNavigation.intent(context, WidgetNavigation.OPEN_POMODORO),
+            PageTap.POMODORO_WIDGET.into(mainActivityIntent(context)),
         ).use { scenario ->
             awaitPomodoroPage()
-            context.startActivity(WidgetNavigation.intent(context, WidgetNavigation.OPEN_TIMER))
+            context.startActivity(PageTap.TIMER_WIDGET.into(mainActivityIntent(context)))
             compose.awaitTimerPage()
-            context.startActivity(WidgetNavigation.intent(context, WidgetNavigation.OPEN_POMODORO))
+            context.startActivity(PageTap.POMODORO_WIDGET.into(mainActivityIntent(context)))
             awaitPomodoroPage()
             scenario.recreate()
             awaitPomodoroPage()
             app.capabilities.forget()
-            context.startActivity(WidgetNavigation.intent(context, WidgetNavigation.OPEN_POMODORO))
+            context.startActivity(PageTap.POMODORO_WIDGET.into(mainActivityIntent(context)))
             compose.awaitTimerPage()
         }
     }
 
     @SignedOut
     @Test fun widgetRoutesWithoutAnAccountOpenSignInAndConsumeTheExtras() {
-        for (page in listOf(WidgetNavigation.OPEN_TODAY, WidgetNavigation.OPEN_POMODORO, WidgetNavigation.OPEN_TIMER)) {
-            val intent = WidgetNavigation.intent(context, page)
+        for (page in listOf(PageTap.TODAY_REPORT, PageTap.POMODORO_WIDGET, PageTap.TIMER_WIDGET)) {
+            val intent = page.into(mainActivityIntent(context))
             ActivityScenario.launch<MainActivity>(intent).use { scenario ->
                 compose.awaitText("Sign in")
-                scenario.onActivity { assertFalse(it.intent.hasExtra(page)) }
+                scenario.onActivity { assertFalse(it.intent.hasExtra(page.extra)) }
                 scenario.recreate()
                 compose.awaitText("Sign in")
             }

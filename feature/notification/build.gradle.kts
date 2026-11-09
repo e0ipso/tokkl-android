@@ -13,6 +13,7 @@ dependencies {
     implementation(project(":core:cache"))
     implementation(project(":core:timerstate"))
     implementation(project(":core:entryfields"))
+    implementation(project(":core:navigation"))
     implementation(libs.androidx.work.runtime)
     implementation(libs.koin.androidx.workmanager)
     implementation(libs.androidx.activity.compose)

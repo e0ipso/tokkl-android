@@ -10,6 +10,7 @@ import android.content.Intent
 import android.database.sqlite.SQLiteException
 import androidx.core.net.toUri
 import com.github.e0ipso.tokkl.feature.notification.R
+import com.github.e0ipso.tokkl.navigation.PageTap
 import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.platform.finishOnce
 import com.github.e0ipso.tokkl.platform.mainActivityIntent
@@ -51,12 +52,9 @@ class ReminderNotifier(private val context: Context) {
             PendingIntent.getActivity(
                 context,
                 ID,
-                mainActivityIntent(context).setAction(Intent.ACTION_MAIN)
-                    .addCategory(Intent.CATEGORY_LAUNCHER).putExtra(OPEN_TIMER, true)
-                    .addFlags(
-                        Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or
-                            Intent.FLAG_ACTIVITY_SINGLE_TOP,
-                    ),
+                PageTap.REMINDER.into(
+                    mainActivityIntent(context).setAction(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER),
+                ),
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
             ),
         )
@@ -102,9 +100,6 @@ class ReminderNotifier(private val context: Context) {
     companion object {
         const val ID = 2
         const val CHANNEL = "long_timer_reminder"
-
-        /** A consumed boolean extra on the normal launcher intent. */
-        const val OPEN_TIMER = "com.github.e0ipso.tokkl.OPEN_TIMER_REMINDER"
 
         /** The actions' boolean extras, and the last part of their data URI. */
         internal const val STOP = "stop"

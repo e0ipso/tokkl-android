@@ -29,6 +29,7 @@ import com.github.e0ipso.tokkl.navigation.NavigationHost
 import com.github.e0ipso.tokkl.navigation.NavigationRequest
 import com.github.e0ipso.tokkl.navigation.Navigator
 import com.github.e0ipso.tokkl.navigation.PageBadge
+import com.github.e0ipso.tokkl.navigation.PageTap
 import com.github.e0ipso.tokkl.navigation.RequestOpening
 import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.TopLevelDestination
@@ -73,11 +74,11 @@ internal object TimerEntries : FeatureRoutes {
 
 /** The taps outside the app that open Timer: a Timer widget's and a reminder's. */
 internal object TimerRequests : FeatureRequests {
-    override val linkExtras get() = listOf(TIMER_WIDGET_TAP, REMINDER_TAP)
+    override val linkExtras get() = listOf(PageTap.TIMER_WIDGET.extra, PageTap.REMINDER.extra)
 
     override fun readLinks(intent: LinkIntent): List<NavigationRequest> = listOfNotNull(
-        ReminderTap.takeIf { intent.flag(REMINDER_TAP) },
-        TimerWidgetTap.takeIf { intent.flag(TIMER_WIDGET_TAP) },
+        ReminderTap.takeIf { PageTap.REMINDER.isIn(intent) },
+        TimerWidgetTap.takeIf { PageTap.TIMER_WIDGET.isIn(intent) },
     )
 
     override fun PolymorphicModuleBuilder<NavigationRequest>.registerRequests() {
@@ -273,18 +274,6 @@ val templatesPage = TopLevelDestination(
     inMore = true,
     isAvailable = { it.favorites },
 )
-
-/**
- * The extra of a Timer widget's tap, which the widget puts in its intent (`WidgetNavigation.OPEN_TIMER`
- * in the widget feature). The app's DeepLinksTest checks that the two agree.
- */
-internal const val TIMER_WIDGET_TAP = "open_timer_widget"
-
-/**
- * The extra of a reminder notification's tap, which the reminder puts in its intent
- * (`ReminderNotifier.OPEN_TIMER` in the notification feature).
- */
-internal const val REMINDER_TAP = "com.github.e0ipso.tokkl.OPEN_TIMER_REMINDER"
 
 /** A Timer widget's tap. */
 @Serializable

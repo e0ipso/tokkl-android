@@ -36,6 +36,7 @@ import androidx.glance.semantics.contentDescription
 import androidx.glance.semantics.semantics
 import androidx.glance.unit.ColorProvider
 import com.github.e0ipso.tokkl.feature.widget.R
+import com.github.e0ipso.tokkl.navigation.PageTap
 import com.github.e0ipso.tokkl.platform.mainActivityIntent
 import com.github.e0ipso.tokkl.time.formatDuration
 import com.github.e0ipso.tokkl.ui.theme.TokklDarkColorScheme
@@ -88,7 +89,7 @@ fun TimerWidgetContent(state: WidgetState, modifier: GlanceModifier = GlanceModi
     Column(
         modifier = modifier.fillMaxSize().appWidgetBackground()
             .background(GlanceTheme.colors.surface).cornerRadius(16.dp).padding(padding.dp)
-            .clickable(actionStartActivity(WidgetNavigation.intent(context, WidgetNavigation.OPEN_TIMER))),
+            .clickable(actionStartActivity(PageTap.TIMER_WIDGET.into(mainActivityIntent(context)))),
         verticalAlignment = if (kind == TimerWidgetSize.STRIP) Alignment.CenterVertically else Alignment.Top,
     ) {
         when (state) {
@@ -248,7 +249,7 @@ private fun ColumnScope.TimerCard(context: Context, state: WidgetState.Ready, ki
     Box(GlanceModifier.fillMaxWidth().height(1.dp).background(GlanceTheme.colors.outline)) {}
     Spacer(GlanceModifier.height(5.dp))
     val day = state.day
-    val reportAction = actionStartActivity(WidgetNavigation.intent(context, WidgetNavigation.OPEN_TODAY))
+    val reportAction = actionStartActivity(PageTap.TODAY_REPORT.into(mainActivityIntent(context)))
     val templates = large && state.favorites.isNotEmpty()
     val count = timerWidgetProjectRows(
         LocalSize.current.height.value,

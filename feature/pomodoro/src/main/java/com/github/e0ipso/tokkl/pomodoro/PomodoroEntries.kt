@@ -11,6 +11,7 @@ import com.github.e0ipso.tokkl.navigation.LocalSignedInSession
 import com.github.e0ipso.tokkl.navigation.NavigationHost
 import com.github.e0ipso.tokkl.navigation.NavigationRequest
 import com.github.e0ipso.tokkl.navigation.PageBadge
+import com.github.e0ipso.tokkl.navigation.PageTap
 import com.github.e0ipso.tokkl.navigation.RequestOpening
 import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.TopLevelDestination
@@ -63,11 +64,11 @@ internal class PomodoroRequests(
     private val io: CoroutineContext,
 ) : FeatureRequests {
     override val linkExtras
-        get() = listOf(POMODORO_WIDGET_TAP, POMODORO_NOTIFICATION_ACCOUNT, EXTRA_PHASE_START, EXTRA_REVISION)
+        get() = listOf(PageTap.POMODORO_WIDGET.extra, POMODORO_NOTIFICATION_ACCOUNT, EXTRA_PHASE_START, EXTRA_REVISION)
 
     override fun readLinks(intent: LinkIntent): List<NavigationRequest> = listOfNotNull(
         sessionTap(intent),
-        PomodoroWidgetTap.takeIf { intent.flag(POMODORO_WIDGET_TAP) },
+        PomodoroWidgetTap.takeIf { PageTap.POMODORO_WIDGET.isIn(intent) },
     )
 
     /** A session notification's tap, when it names both its account and its phase. */
@@ -106,13 +107,6 @@ internal class PomodoroRequests(
         }
     }
 }
-
-/**
- * The extra of the Pomodoro widget's tap, which the widget puts in its intent
- * (`WidgetNavigation.OPEN_POMODORO` in the widget feature). The app's DeepLinksTest checks that
- * the two agree.
- */
-internal const val POMODORO_WIDGET_TAP = "open_pomodoro_widget"
 
 /** The Pomodoro widget's tap. */
 @Serializable
