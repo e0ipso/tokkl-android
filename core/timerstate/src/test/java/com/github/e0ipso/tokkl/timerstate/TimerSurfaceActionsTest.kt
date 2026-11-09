@@ -33,11 +33,10 @@ class TimerSurfaceActionsTest {
     private var held: CompletableDeferred<Unit>? = null
 
     private val actions = TimerSurfaceActions(
-        controls = { now },
-        account = { ACCOUNT },
+        state = FixedTimerState(controls = { now }, account = ACCOUNT),
         changes = Queue(),
         server = Server(),
-        sendQueued = { calls += "send queue" },
+        sender = { calls += "send queue" },
     )
 
     @Test

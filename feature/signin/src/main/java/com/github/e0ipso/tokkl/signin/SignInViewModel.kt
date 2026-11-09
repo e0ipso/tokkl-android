@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.api.ServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
+import com.github.e0ipso.tokkl.session.CacheRefresh
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
@@ -85,8 +86,9 @@ data class SignInState(
  * @param scope runs the view model's coroutines on one thread, the main thread in
  *   the app.
  * @param io where the blocking [SignIn.attempt] and the writes to [trust] run.
- * @param onSignedIn runs once the server has accepted the credentials and the
- *   app has stored them.
+ * @param refreshes loads the account settings and the cache once the server
+ *   has accepted the credentials and the app has stored them, as coming to the
+ *   foreground does.
  */
 class SignInViewModel(
     private val signIn: SignIn,
@@ -95,7 +97,7 @@ class SignInViewModel(
     scope: CoroutineScope,
     private val io: CoroutineContext,
     private val clock: Clock,
-    onSignedIn: () -> Unit,
+    refreshes: CacheRefresh,
 ) : ViewModel(scope) {
 
     private val mutableState = MutableStateFlow(SignInState())
@@ -103,7 +105,7 @@ class SignInViewModel(
 
     init {
         viewModelScope.launch {
-            state.map { it.signedIn }.distinctUntilChanged().filter { it }.collect { onSignedIn() }
+            state.map { it.signedIn }.distinctUntilChanged().filter { it }.collect { refreshes.refresh() }
         }
     }
 

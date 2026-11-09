@@ -21,4 +21,6 @@ dependencies {
     testImplementation(libs.mockwebserver3)
     testImplementation(testFixtures(project(":core:api")))
     testImplementation(testFixtures(project(":core:platform")))
+    testImplementation(testFixtures(project(":core:session")))
+    androidTestImplementation(testFixtures(project(":core:session")))
 }

@@ -6,7 +6,6 @@ import com.github.e0ipso.tokkl.platform.DefaultNetwork
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.platform.offlineIn
 import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
-import com.github.e0ipso.tokkl.session.AccountRefresh
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.Session
 import org.koin.core.module.dsl.viewModel
@@ -22,8 +21,8 @@ val tagsFeatureModule = module {
         val scope = viewModelCoroutineScope()
         TagsViewModel(
             repository = get(),
-            workspaceId = accountSettings::defaultWorkspaceId,
-            refreshCache = get<AccountRefresh>()::refreshAfterChange,
+            settings = accountSettings,
+            refreshes = get(),
             scope = scope,
             io = io(),
             cachedTags = get<AccountCache>().tags,

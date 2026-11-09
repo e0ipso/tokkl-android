@@ -43,27 +43,42 @@ interface ReminderNotice {
 }
 
 /**
+ * What the reminder reads and does for the signed-in account. [AccountReminder] does it over the
+ * cache, the queue and the timer's surfaces; the unit tests answer in memory.
+ */
+interface ReminderAccount {
+
+    /** The running entry and the reminder settings now. */
+    suspend fun input(): ReminderInput
+
+    /** Stops the running entry on the phone. */
+    suspend fun stop(entryId: EntryId): Boolean
+
+    /**
+     * The server's Pause of the running entry with this id, ready to send, or null when Pause is
+     * not offered for it now: without the server's timer API, or during a Pomodoro session.
+     */
+    suspend fun pause(entryId: EntryId): SurfaceTap.Request?
+}
+
+/**
  * Follows the shared running state. One delayed request, no periodic work and no network constraint.
  * Re-reads the cache inside the lock: queued flow emissions and old workers cannot revive an old timer.
  * The persisted handled flag survives process death, disable/enable and edits other than the start.
  * Pause (docs/PRD.md T1) goes to the server, which stops the entry, and that cancels its reminder.
  * Resume's new entry gets one from its own start.
  *
- * @param inputs the signed-in account's running entry and reminder settings now.
+ * @param account the signed-in account's running entry and reminder settings now, and its Stop
+ *   and Pause.
  * @param delays the delayed wakeup at a timer's reminder time.
  * @param notice shows the reminder for a timer, and decides then whether it offers Pause.
- * @param stop stops the running entry on the phone.
- * @param pause the server's Pause of the running entry with this id, ready to send, or null when
- *   Pause is not offered for it now: without the server's timer API, or during a Pomodoro session.
  */
 class ReminderSync(
-    private val inputs: suspend () -> ReminderInput,
+    private val account: ReminderAccount,
     private val ids: CurrentEntryIds,
     private val timers: ValueStore<ReminderTimer?>,
     private val delays: ReminderDelays,
     private val notice: ReminderNotice,
-    private val stop: suspend (EntryId) -> Boolean,
-    private val pause: suspend (EntryId) -> SurfaceTap.Request?,
 ) : AccountDataOwner {
 
     override val signOutPhase = SignOutPhase.CLEAR_DATA
@@ -82,7 +97,7 @@ class ReminderSync(
         }
     }
 
-    suspend fun reconcile() = lock.withLock { update(inputs()) }
+    suspend fun reconcile() = lock.withLock { update(account.input()) }
 
     private suspend fun update(input: ReminderInput): ReminderTimer? {
         val entry = input.running?.takeIf { it.stop == null }
@@ -112,7 +127,7 @@ class ReminderSync(
 
     /** A worker may arrive late, after cancellation, a start correction, sign-out or a switch. */
     suspend fun fire(id: Long, start: Long, due: Long): Unit = lock.withLock {
-        val timer = update(inputs()) ?: return@withLock
+        val timer = update(account.input()) ?: return@withLock
         val same = timer.start == start && ids.currentId(
             EntryId(id),
         ) == ids.currentId(EntryId(timer.id)) && !timer.handled
@@ -137,7 +152,7 @@ class ReminderSync(
         beforeRequest: () -> Unit = {},
     ): TimerActionResult? {
         val request = lock.withLock {
-            val input = inputs()
+            val input = account.input()
             val entry = input.running ?: return null
             if (entry.stop != null || entry.start.epochSecond != start || ids.currentId(
                     EntryId(id),
@@ -148,9 +163,9 @@ class ReminderSync(
             val timer = timers.load() ?: return null
             if (timer.start != start || ids.currentId(EntryId(timer.id)) != entry.id) return null
             if (pauseTimer) {
-                pause(entry.id) ?: return null
+                account.pause(entry.id) ?: return null
             } else {
-                if (stopTimer && !stop(entry.id)) return null
+                if (stopTimer && !account.stop(entry.id)) return null
                 handled(timer)
                 return null
             }

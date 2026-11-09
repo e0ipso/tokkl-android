@@ -197,6 +197,7 @@ dependencies {
 
     // The test runner, the compose rules with their accessibility checks and the device rules.
     androidTestImplementation(project(":core:testing"))
+    androidTestImplementation(testFixtures(project(":core:session")))
     // The instrumented tests read the shared parts' strings and classes too.
     androidTestImplementation(project(":core:catalog"))
     androidTestImplementation(project(":core:entryfields"))

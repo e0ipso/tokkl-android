@@ -8,6 +8,7 @@ import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.api.UntrustedCertificateException
 import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.session.CountingRefresh
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
@@ -90,7 +91,7 @@ class SignInViewModelTest {
 
                 override fun instant(): Instant = Instant.ofEpochMilli(now)
             },
-            onSignedIn = {},
+            refreshes = CountingRefresh(),
         )
     }
 

@@ -10,6 +10,8 @@ import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.model.Task
 import com.github.e0ipso.tokkl.model.TaskId
 import com.github.e0ipso.tokkl.model.WorkspaceId
+import com.github.e0ipso.tokkl.session.AccountSettingsSource
+import com.github.e0ipso.tokkl.session.CacheRefresh
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import kotlin.coroutines.CoroutineContext
@@ -39,14 +41,14 @@ typealias TasksState = CatalogState<TasksData, TaskOverlay>
  * The task list in the project form (docs/PRD.md P5): the project's tasks from the server, loaded
  * each time a project's form opens or the app comes back to the page, and the changes the list
  * sends at once, as [CatalogModel] describes. Nothing is queued, and after each change the server accepts,
- * [refreshCache] reloads the offline cache, so the entry editor's picker offers the change.
+ * [refreshes] reloads the offline cache, so the entry editor's picker offers the change.
  *
  * @param repository the project's tasks on the server.
  */
 class TasksModel(
     private val repository: TasksRepository,
-    workspaceId: () -> WorkspaceId?,
-    refreshCache: () -> Unit,
+    settings: AccountSettingsSource,
+    refreshes: CacheRefresh,
     scope: CoroutineScope,
     io: CoroutineContext,
 ) {
@@ -55,7 +57,7 @@ class TasksModel(
     @Volatile
     private var project: ProjectId? = null
 
-    private val catalog = CatalogModel<TasksData, TaskOverlay>(OpenProject(), workspaceId, refreshCache, scope, io)
+    private val catalog = CatalogModel<TasksData, TaskOverlay>(OpenProject(), settings, refreshes, scope, io)
 
     val state: StateFlow<TasksState> = catalog.state
 

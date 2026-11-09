@@ -8,7 +8,9 @@ import com.github.e0ipso.tokkl.catalog.CatalogChange
 import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.model.Task
 import com.github.e0ipso.tokkl.model.WorkspaceId
+import com.github.e0ipso.tokkl.session.CountingRefresh
 import com.github.e0ipso.tokkl.session.ServerProblem
+import com.github.e0ipso.tokkl.session.accountSettingsIn
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import mockwebserver3.Dispatcher
@@ -35,7 +37,7 @@ class TasksModelTest {
 
     /** Each request's method, path and body, in order. */
     private val requests = CopyOnWriteArrayList<String>()
-    private var refreshes = 0
+    private val refresh = CountingRefresh()
     private lateinit var model: TasksModel
 
     @Before
@@ -82,8 +84,8 @@ class TasksModelTest {
         testApi.trust = InMemoryServerTrust(url)
         model = TasksModel(
             repository = TasksRepository { testApi.api(url, ApiCredentials.ApiToken("tok-123")) },
-            workspaceId = { WorkspaceId(7) },
-            refreshCache = { refreshes++ },
+            settings = accountSettingsIn(WorkspaceId(7)),
+            refreshes = refresh,
             scope = CoroutineScope(Dispatchers.Unconfined),
             io = Dispatchers.Unconfined,
         )
@@ -112,7 +114,7 @@ class TasksModelTest {
         assertEquals("""POST /api/v9/workspaces/7/projects/5/tasks {"name":"Copy"}""", requests[opened])
         assertEquals(CatalogChange.Created("Copy"), model.state.value.done)
         assertEquals(listOf("Copy", "Design", "brief"), model.state.value.data!!.tasks.map { it.name })
-        assertEquals(1, refreshes)
+        assertEquals(1, refresh.afterChanges)
     }
 
     @Test
@@ -135,7 +137,7 @@ class TasksModelTest {
             listOf("brief", "Wireframes"),
             model.state.value.data!!.tasks.map { it.name },
         )
-        assertEquals(1, refreshes)
+        assertEquals(1, refresh.afterChanges)
     }
 
     @Test
@@ -155,7 +157,7 @@ class TasksModelTest {
         assertEquals("DELETE /api/v9/workspaces/7/projects/5/tasks/1", requests[opened])
         assertEquals(CatalogChange.Deleted("Design"), model.state.value.done)
         assertEquals(listOf("brief"), model.state.value.data!!.tasks.map { it.name })
-        assertEquals(1, refreshes)
+        assertEquals(1, refresh.afterChanges)
     }
 
     @Test
@@ -178,7 +180,7 @@ class TasksModelTest {
         model.create("Copy")
 
         assertEquals(ServerProblem.Refused("Can not change tasks of archived project"), model.state.value.changeProblem)
-        assertEquals(0, refreshes)
+        assertEquals(0, refresh.afterChanges)
     }
 
     private fun json(body: String) = MockResponse.Builder()

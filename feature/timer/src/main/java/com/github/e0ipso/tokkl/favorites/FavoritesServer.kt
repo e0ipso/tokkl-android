@@ -19,18 +19,26 @@ const val MAX_FAVORITES = 9
  *
  * @param client the signed-in account's API client, or null when signed out.
  */
-class FavoritesServer(private val client: ApiClientProvider, private val cache: AccountCache) {
+class FavoritesServer(private val client: ApiClientProvider, private val cache: AccountCache) : FavoritesStore {
 
     /**
      * Posts [favorites], in order, to `POST /api/v9/me/preferences`, and once the server has
      * stored them, puts them in the cache. Blocks on the disk, so call it on the IO dispatcher.
      */
-    suspend fun save(favorites: List<EntryFields>): ApiResult<Unit> {
+    override suspend fun save(favorites: List<EntryFields>): ApiResult<Unit> {
         val api = client() ?: return ApiResult.Failure(ApiError.AuthFailed)
         return api.account.savePreferences(favoritesBody(favorites)).map {
             cache.replaceFavorites(favorites.mapIndexed { position, fields -> fields.toFavorite(position) })
         }
     }
+}
+
+/**
+ * Stores the favorites, in order, once the server has them. [FavoritesServer] posts them; the
+ * favorites page's unit tests answer for the server.
+ */
+fun interface FavoritesStore {
+    suspend fun save(favorites: List<EntryFields>): ApiResult<Unit>
 }
 
 /**

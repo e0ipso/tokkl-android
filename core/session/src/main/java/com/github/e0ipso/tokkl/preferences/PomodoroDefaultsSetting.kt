@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.preferences
 
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.PomodoroDefaultsChange
+import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.MePreferences
 import com.github.e0ipso.tokkl.session.SignOutPhase
@@ -60,13 +61,13 @@ typealias StoredPomodoroDefaults = StoredPreference<PomodoroDefaults>
  *
  * @param store keeps the values on the phone. They load from it as this is made, off the main thread.
  * @param client the signed-in account's API client, or null when signed out.
- * @param keepsPreferences true when the server keeps Tokkl's preferences.
+ * @param capabilities whether the server keeps Tokkl's preferences.
  * @param scope outlives every screen, so leaving the app does not cancel a write.
  */
 class PomodoroDefaultsSetting(
     store: ClearableStore<StoredPomodoroDefaults>,
     client: ApiClientProvider,
-    private val keepsPreferences: suspend () -> Boolean,
+    private val capabilities: CapabilitiesSource,
     scope: CoroutineScope,
 ) : AccountDataOwner,
     StartupLoad {
@@ -107,11 +108,11 @@ class PomodoroDefaultsSetting(
      * them to the server in the background. Call it on the main thread.
      */
     fun change(defaults: PomodoroDefaults): Job =
-        preference.change(defaults.clamped(), unsent = keepsPreferences, sendIf = keepsPreferences)
+        preference.change(defaults.clamped(), capabilities::keepsPreferences, capabilities::keepsPreferences)
 
     /**
      * Takes the refresh's `GET /api/v9/me/preferences`, null when it failed, from a server that
-     * keeps Tokkl's preferences when [keepsPreferences]. Sends unsent values instead of reading
+     * keeps Tokkl's preferences when `keepsPreferences`. Sends unsent values instead of reading
      * the server's.
      */
     suspend fun refreshed(preferences: MePreferences?, keepsPreferences: Boolean) {

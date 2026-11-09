@@ -7,6 +7,7 @@ import com.github.e0ipso.tokkl.cache.UndoOutcome
 import com.github.e0ipso.tokkl.entryfields.SplitProblem
 import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
 import com.github.e0ipso.tokkl.favorites.MAX_FAVORITES
+import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.EntryWithSendState
@@ -20,6 +21,7 @@ import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.platform.MainDispatcherRule
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.ServerProblem
+import com.github.e0ipso.tokkl.session.capabilitiesOf
 import com.github.e0ipso.tokkl.time.SnappedSpan
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -508,11 +510,11 @@ class EntryActionsViewModelTest {
     private fun model(canRestore: Boolean) = EntryActionsViewModel(
         entries = entries,
         changes = FakeChanges(),
-        undoDelete = { entryId ->
+        undo = { entryId ->
             calls += "undo $entryId"
             undoOutcome
         },
-        canRestore = { canRestore },
+        capabilities = capabilitiesOf(Capabilities.NONE.copy(restore = canRestore)),
         accountSettings = MutableStateFlow(SETTINGS),
         scope = scope,
         clock = Clock.systemUTC(),

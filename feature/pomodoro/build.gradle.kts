@@ -18,4 +18,6 @@ dependencies {
     implementation(project(":core:entryfields"))
     implementation(project(":core:navigation"))
     implementation(libs.androidx.activity.compose)
+
+    testImplementation(testFixtures(project(":core:timerstate")))
 }

@@ -1,12 +1,10 @@
 package com.github.e0ipso.tokkl.trash
 
-import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
 import com.github.e0ipso.tokkl.platform.DefaultNetwork
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.platform.offlineIn
 import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
-import com.github.e0ipso.tokkl.session.AccountRefresh
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.Session
 import org.koin.core.module.dsl.viewModel
@@ -22,8 +20,8 @@ val trashFeatureModule = module {
         val scope = viewModelCoroutineScope()
         TrashViewModel(
             repository = get(),
-            refreshCache = get<AccountRefresh>()::refreshAfterChange,
-            trashMissing = get<CapabilitiesSource>()::trashMissing,
+            refreshes = get(),
+            capabilities = get(),
             scope = scope,
             io = io(),
             settings = accountSettings.state,

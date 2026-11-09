@@ -14,10 +14,13 @@ import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.appApiClient
 import com.github.e0ipso.tokkl.appConfiguredServer
 import com.github.e0ipso.tokkl.appHttp
+import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.orFail
+import com.github.e0ipso.tokkl.session.AccountRefreshRequests
+import com.github.e0ipso.tokkl.session.capabilitiesOf
 import com.github.e0ipso.tokkl.signin.SignIn
 import com.github.e0ipso.tokkl.signin.SignInAgain
 import com.github.e0ipso.tokkl.signin.SignInCredentials
@@ -268,8 +271,8 @@ class ChangeRejectionServerTest {
         },
         clock = Clock.systemUTC(),
         spans = ServerSpans.Unsnapped,
-        allDay = { false },
-        undo = DeleteUndoer(store, client, Dispatchers.IO, restored = {}),
+        capabilities = capabilitiesOf(Capabilities.NONE),
+        undo = DeleteUndoer(store, client, Dispatchers.IO, refreshes = AccountRefreshRequests()),
     )
 
     private fun cachedEntry(description: String): Long {

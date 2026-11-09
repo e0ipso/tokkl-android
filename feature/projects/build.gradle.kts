@@ -19,4 +19,5 @@ dependencies {
     testImplementation(testFixtures(project(":core:api")))
     testImplementation(testFixtures(project(":core:platform")))
     testImplementation(testFixtures(project(":core:ui")))
+    testImplementation(testFixtures(project(":core:session")))
 }

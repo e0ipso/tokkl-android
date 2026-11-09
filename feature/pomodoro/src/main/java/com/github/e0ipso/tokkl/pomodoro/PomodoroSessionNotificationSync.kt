@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.pomodoro
 
 import com.github.e0ipso.tokkl.platform.AppHook
 import com.github.e0ipso.tokkl.platform.SingleFlight
+import com.github.e0ipso.tokkl.session.SignInStatus
 import com.github.e0ipso.tokkl.session.SignedInListener
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.timerstate.SessionActions
@@ -48,6 +49,7 @@ interface PomodoroSessionPoster {
  * @param alarm the phase alarm, which holds the held state and knows whether its phase rings.
  * @param actions the server's session actions.
  * @param changes emits on every change of the held state, the capability or the ringing service.
+ * @param isSignedIn whether an account is signed in.
  * @param serviceRunning whether the ringing service runs, which then owns the shared id.
  * @param memory what the last process showed, for the account it showed it to.
  * @param notifications posts and removes the session notification.
@@ -56,8 +58,8 @@ class PomodoroSessionNotificationSync internal constructor(
     private val alarm: PomodoroPhaseAlarm,
     private val actions: SessionActions,
     private val changes: Flow<Unit>,
-    private val isSignedIn: suspend () -> Boolean,
-    private val serviceRunning: () -> Boolean,
+    private val isSignedIn: SignInStatus,
+    private val serviceRunning: RingingServiceState,
     private val memory: PomodoroNotificationMemory,
     private val notifications: PomodoroSessionPoster,
     private val scope: CoroutineScope,
@@ -117,7 +119,7 @@ class PomodoroSessionNotificationSync internal constructor(
         if (retired) return@withLock
         alarm.withState { held, ringing ->
             if (retired) return@withState
-            if (!isSignedIn()) {
+            if (!isSignedIn.isSignedIn()) {
                 display = null
                 loaded = true
                 notifications.remove()
@@ -131,7 +133,7 @@ class PomodoroSessionNotificationSync internal constructor(
             if (content == null) {
                 notifications.remove()
                 remember(state.copy(shown = null))
-            } else if (ringing || serviceRunning()) {
+            } else if (ringing || serviceRunning.running()) {
                 // ID 3 is now owned by the ring, including a service still stopping. Never
                 // cancel it here. The service-state emission republishes after onDestroy.
                 remember(state.copy(shown = null))
@@ -150,14 +152,14 @@ class PomodoroSessionNotificationSync internal constructor(
      * null. Otherwise returns what the server action came to.
      */
     suspend fun act(account: String, phase: PomodoroPhaseKey, revision: Long, end: Boolean): TimerActionResult? {
-        val accepted = lock.withLock { !retired && isSignedIn() && account == readDisplay().account }
+        val accepted = lock.withLock { !retired && isSignedIn.isSignedIn() && account == readDisplay().account }
         if (!accepted) return null
         return alarm.sendPhaseAction(actions, phase, revision, end)
     }
 
     /** Whether a tap on the notification of [account] and [phase] may open the Pomodoro page. */
     suspend fun acceptsTap(account: String, phase: PomodoroPhaseKey): Boolean = lock.withLock {
-        if (retired || !isSignedIn() || account != readDisplay().account) return@withLock false
+        if (retired || !isSignedIn.isSignedIn() || account != readDisplay().account) return@withLock false
         alarm.current()?.phase == phase
     }
 
@@ -187,4 +189,9 @@ class PomodoroNotificationHook(private val sync: Lazy<PomodoroSessionNotificatio
     override fun processStart() = sync.value.start()
 
     override suspend fun notificationsAllowed() = sync.value.refresh(force = true)
+}
+
+/** Whether the ringing service runs now. [ServicePomodoroRinging] knows; the unit tests say. */
+fun interface RingingServiceState {
+    fun running(): Boolean
 }

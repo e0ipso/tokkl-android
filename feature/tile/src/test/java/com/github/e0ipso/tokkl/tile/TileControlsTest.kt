@@ -6,6 +6,7 @@ import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
+import com.github.e0ipso.tokkl.timerstate.FixedTimerState
 import com.github.e0ipso.tokkl.timerstate.PauseActions
 import com.github.e0ipso.tokkl.timerstate.ServerTimerStates
 import com.github.e0ipso.tokkl.timerstate.SurfaceTap
@@ -143,11 +144,10 @@ class TileControlsTest {
 
     private fun press(control: TileControl): SurfaceTap? = runBlocking {
         TimerSurfaceActions(
-            { now },
-            { ServerTimerStates.ACCOUNT },
+            FixedTimerState(controls = { now }),
             RecordingChanges(),
             RecordingServer(),
-            sendQueued = {},
+            sender = {},
         ).tap(control.action, control.target)
     }
 

@@ -24,4 +24,5 @@ dependencies {
     implementation(libs.androidx.compose.ui)
 
     testImplementation(libs.junit)
+    testImplementation(testFixtures(project(":core:session")))
 }

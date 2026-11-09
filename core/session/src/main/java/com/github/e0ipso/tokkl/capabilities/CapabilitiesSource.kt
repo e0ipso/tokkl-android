@@ -22,7 +22,9 @@ import java.io.IOException
  * from [store], a file of a few flags, as this is made, in [scope], off the main thread. Code
  * that may run before that load ends reads them through the suspending calls or [loaded].
  */
-class CapabilitiesSource(private val store: ValueStore<Capabilities>, scope: CoroutineScope) : StartupLoad {
+class CapabilitiesSource(private val store: ValueStore<Capabilities>, scope: CoroutineScope) :
+    StartupLoad,
+    TimerApiOffer {
 
     /** What the disk holds, so a refresh after a failed write writes again. Guarded by [changing]. */
     private var stored: Capabilities? = null
@@ -52,7 +54,7 @@ class CapabilitiesSource(private val store: ValueStore<Capabilities>, scope: Cor
     suspend fun keepsPreferences(): Boolean = current().favorites
 
     /** Whether the server offers Tokkl's timer API ([Capabilities.timerState]). */
-    suspend fun offersTimerApi(): Boolean = current().timerState
+    override suspend fun offersTimerApi(): Boolean = current().timerState
 
     /** Whether the server stores no-time entries ([Capabilities.allDay]). */
     suspend fun offersAllDay(): Boolean = current().allDay == true
@@ -151,4 +153,13 @@ interface ProbedTimerState<R> {
 
     /** Takes the [state] that [read] got. Returns false when a newer state is already held. */
     fun accept(read: R, state: TimerState): Boolean
+}
+
+/**
+ * Whether the server offers Tokkl's timer API, once the capabilities have loaded. Only a refresh
+ * against the server turns it on in [CapabilitiesSource], so the unit tests of the timer sync and
+ * the phase alarm answer it themselves.
+ */
+fun interface TimerApiOffer {
+    suspend fun offersTimerApi(): Boolean
 }

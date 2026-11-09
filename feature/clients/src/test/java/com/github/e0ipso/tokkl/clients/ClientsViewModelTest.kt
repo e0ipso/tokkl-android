@@ -10,6 +10,8 @@ import com.github.e0ipso.tokkl.model.ClientId
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.platform.TestApp
 import com.github.e0ipso.tokkl.platform.TestScreen
+import com.github.e0ipso.tokkl.session.CountingRefresh
+import com.github.e0ipso.tokkl.session.accountSettingsIn
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -43,7 +45,7 @@ class ClientsViewModelTest {
 
     /** Each request's method, path and body, in order. */
     private val requests = CopyOnWriteArrayList<String>()
-    private var refreshes = 0
+    private val refresh = CountingRefresh()
     private val offline = MutableStateFlow(false)
 
     /** While true, the server answers every request with a 503. */
@@ -88,8 +90,8 @@ class ClientsViewModelTest {
         testApi.trust = InMemoryServerTrust(url)
         model = ClientsViewModel(
             repository = ClientsRepository { testApi.api(url, ApiCredentials.ApiToken("tok-123")) },
-            workspaceId = { WorkspaceId(7) },
-            refreshCache = { refreshes++ },
+            settings = accountSettingsIn(WorkspaceId(7)),
+            refreshes = refresh,
             scope = scope,
             io = Dispatchers.Unconfined,
             cachedClients = flowOf(emptyList()),
@@ -170,7 +172,7 @@ class ClientsViewModelTest {
         assertEquals(CatalogChange.Archived("Acme"), model.state.value.done)
         assertNull("the question closes", model.state.value.overlay)
         assertEquals(true, model.state.value.data!!.clients.single().archived)
-        assertEquals("the cache's projects changed too", 1, refreshes)
+        assertEquals("the cache's projects changed too", 1, refresh.afterChanges)
     }
 
     /** Restoring brings the client's projects back too, as the web app does. */
@@ -185,7 +187,7 @@ class ClientsViewModelTest {
         assertEquals("""POST /api/v9/workspaces/7/clients/1/restore {"restore_all_projects":true}""", requests[opened])
         assertEquals(CatalogChange.Restored("Acme"), model.state.value.done)
         assertEquals(false, model.state.value.data!!.clients.single().archived)
-        assertEquals(1, refreshes)
+        assertEquals(1, refresh.afterChanges)
     }
 
     @Test
@@ -209,8 +211,8 @@ class ClientsViewModelTest {
             repository = ClientsRepository {
                 testApi.api(checkNotNull(testApi.stored), ApiCredentials.ApiToken("tok-123"))
             },
-            workspaceId = { WorkspaceId(7) },
-            refreshCache = {},
+            settings = accountSettingsIn(WorkspaceId(7)),
+            refreshes = CountingRefresh(),
             scope = scope,
             io = Dispatchers.Unconfined,
             cachedClients = MutableStateFlow(

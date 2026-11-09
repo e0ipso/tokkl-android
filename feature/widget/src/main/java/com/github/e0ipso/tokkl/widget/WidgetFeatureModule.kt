@@ -3,7 +3,6 @@ package com.github.e0ipso.tokkl.widget
 import com.github.e0ipso.tokkl.platform.AppHook
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.session.AccountDataOwner
-import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timerstate.HeldFieldsMemory
 import com.github.e0ipso.tokkl.timerstate.PomodoroWidgetRedraw
 import org.koin.android.ext.koin.androidApplication
@@ -43,7 +42,7 @@ val widgetFeatureModule = module {
             capabilities = get(),
             accountSettings = get(),
             pomodoroDefaults = get(),
-            signedIn = get<Session>()::isSignedIn,
+            signedIn = get(),
             clock = get(),
             io = io(),
         )

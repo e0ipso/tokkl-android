@@ -4,6 +4,8 @@ import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.platform.AppHook
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.preferences.ReminderSetting
+import com.github.e0ipso.tokkl.reminder.AccountReminder
+import com.github.e0ipso.tokkl.reminder.ReminderAccount
 import com.github.e0ipso.tokkl.reminder.ReminderDelays
 import com.github.e0ipso.tokkl.reminder.ReminderHook
 import com.github.e0ipso.tokkl.reminder.ReminderStore
@@ -49,19 +51,8 @@ val notificationFeatureModule = module {
 
     // The running entry's reminder, followed independently of any screen, with its delay in WorkManager.
     single { ReminderWork(get(), get()) } bind ReminderDelays::class
-    single {
-        accountReminderSync(
-            androidContext(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-        )
-    } bind AccountDataOwner::class
+    single { AccountReminder(get(), get(), get(), get(), get(), get()) } bind ReminderAccount::class
+    single { accountReminderSync(androidContext(), get(), get(), get(), get()) } bind AccountDataOwner::class
     single { ReminderHook(inject(), inject(), inject(), get(), io()) } bind AppHook::class
 
     worker { params -> ReminderWorker(androidContext(), params.get(), get(), io()) }

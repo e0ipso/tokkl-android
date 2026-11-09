@@ -29,6 +29,7 @@ import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.UndoOutcome
 import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
 import com.github.e0ipso.tokkl.feature.timer.R
+import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.EntryWithSendState
@@ -36,6 +37,7 @@ import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.session.capabilitiesOf
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
@@ -318,11 +320,11 @@ class EntryActionsUiTest {
         val model = EntryActionsViewModel(
             entries = MutableStateFlow(listOf(EntryWithSendState(CACHED, unsent = false))),
             changes = RecordingChanges(),
-            undoDelete = { entryId ->
+            undo = { entryId ->
                 calls += "undo $entryId"
                 undo
             },
-            canRestore = { canRestore },
+            capabilities = capabilitiesOf(Capabilities.NONE.copy(restore = canRestore)),
             accountSettings = MutableStateFlow(HISTORY.settings),
             scope = scope,
             clock = Clock.systemUTC(),

@@ -52,7 +52,7 @@ interface TimerSyncConnections<A : Any> {
  */
 class TimerSync<A : Any>(
     private val scope: CoroutineScope,
-    private val now: () -> Long,
+    private val now: MonotonicClock,
     private val connections: TimerSyncConnections<A>,
 ) {
 
@@ -130,14 +130,14 @@ class TimerSync<A : Any>(
     private fun connected(link: TimerSyncLink) {
         scope.launch {
             if (link !== this@TimerSync.link) return@launch
-            connectedAt = now()
-            heardAt = now()
+            connectedAt = now.millis()
+            heardAt = now.millis()
         }
     }
 
     private fun alive(link: TimerSyncLink) {
         scope.launch {
-            if (link === this@TimerSync.link) heardAt = now()
+            if (link === this@TimerSync.link) heardAt = now.millis()
         }
     }
 
@@ -162,7 +162,7 @@ class TimerSync<A : Any>(
     private fun connect(): TimerSyncLink {
         val next = TimerSyncLink(::connected, ::alive, ::ended)
         link = next
-        heardAt = now()
+        heardAt = now.millis()
         connectedAt = null
         watch(next, SILENCE_MILLIS)
         return next
@@ -177,13 +177,13 @@ class TimerSync<A : Any>(
 
     private fun checkSilence(watched: TimerSyncLink) {
         if (watched !== link) return
-        val silent = now() - heardAt
+        val silent = now.millis() - heardAt
         if (silent >= SILENCE_MILLIS) retry() else watch(watched, SILENCE_MILLIS - silent)
     }
 
     /** Closes the call, if any, and schedules the next connection. */
     private fun retry() {
-        val healthy = connectedAt?.let { now() - it >= HEALTHY_MILLIS } == true
+        val healthy = connectedAt?.let { now.millis() - it >= HEALTHY_MILLIS } == true
         drop()
         if (healthy) failures = 0
         val delay = delayAfter(failures)
@@ -258,4 +258,9 @@ class TimerSyncLink internal constructor(
         active = false
         cancellation.cancel()
     }
+}
+
+/** Milliseconds on a clock that never goes back, such as `SystemClock.elapsedRealtime`. */
+fun interface MonotonicClock {
+    fun millis(): Long
 }

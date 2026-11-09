@@ -3,10 +3,13 @@ package com.github.e0ipso.tokkl.trash
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TrashEntry
+import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.platform.TestApp
 import com.github.e0ipso.tokkl.platform.TestScreen
+import com.github.e0ipso.tokkl.session.CountingRefresh
 import com.github.e0ipso.tokkl.session.ServerProblem
+import com.github.e0ipso.tokkl.session.capabilitiesOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,8 +29,8 @@ import java.io.IOException
 class TrashViewModelTest {
 
     private val trash = AnsweringTrash()
-    private var cacheRefreshes = 0
-    private var missing = 0
+    private val refresh = CountingRefresh()
+    private val capabilities = capabilitiesOf(Capabilities.NONE.copy(trash = true, restore = true))
 
     private val scheduler = TestCoroutineScheduler()
     private val scope = CoroutineScope(UnconfinedTestDispatcher(scheduler))
@@ -35,8 +38,8 @@ class TrashViewModelTest {
     private val model by lazy {
         TrashViewModel(
             repository = trash,
-            refreshCache = { cacheRefreshes++ },
-            trashMissing = { missing++ },
+            refreshes = refresh,
+            capabilities = capabilities,
             scope = scope,
             io = Dispatchers.Unconfined,
             settings = MutableStateFlow(null),
@@ -61,7 +64,7 @@ class TrashViewModelTest {
     fun aServerWithoutTheTrashHidesItInsteadOfFailing() {
         screen.show()
 
-        assertEquals("the 404 told the capabilities", 1, missing)
+        assertFalse("the 404 told the capabilities", capabilities.state.value.trash)
         assertNull(model.state.value.entries)
     }
 
@@ -71,7 +74,7 @@ class TrashViewModelTest {
 
         screen.show()
 
-        assertEquals(1, missing)
+        assertFalse(capabilities.state.value.trash)
     }
 
     @Test
@@ -82,7 +85,7 @@ class TrashViewModelTest {
 
         assertEquals(ServerProblem.Unreachable, model.state.value.loadProblem)
         assertFalse(model.state.value.canChange)
-        assertEquals("an unreachable server is no missing trash", 0, missing)
+        assertTrue("an unreachable server is no missing trash", capabilities.state.value.trash)
     }
 
     @Test
@@ -95,7 +98,7 @@ class TrashViewModelTest {
 
         assertEquals(listOf(2L), model.state.value.entries?.map { it.id.value })
         assertEquals(TrashChange.Restored, model.state.value.done)
-        assertEquals(1, cacheRefreshes)
+        assertEquals(1, refresh.afterChanges)
     }
 
     @Test
@@ -108,7 +111,7 @@ class TrashViewModelTest {
 
         assertEquals(listOf(1L), model.state.value.entries?.map { it.id.value })
         assertEquals(TrashChange.Purged, model.state.value.done)
-        assertEquals("a purge leaves the cache alone", 0, cacheRefreshes)
+        assertEquals("a purge leaves the cache alone", 0, refresh.afterChanges)
     }
 
     @Test
@@ -122,7 +125,7 @@ class TrashViewModelTest {
 
         assertEquals(ServerProblem.Refused("Time entry not found in trash"), model.state.value.changeProblem)
         assertEquals(emptyList<TrashEntry>(), model.state.value.entries)
-        assertEquals("a missing entry is no missing trash", 0, missing)
+        assertTrue("a missing entry is no missing trash", capabilities.state.value.trash)
     }
 
     @Test

@@ -34,7 +34,8 @@ import org.koin.android.ext.android.inject
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 class ServicePomodoroRinging(private val context: Context) :
     PomodoroRinging,
-    PomodoroRingingPhase {
+    PomodoroRingingPhase,
+    RingingServiceState {
     @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
     var service: PomodoroRingingService? = null
     private val observed = MutableStateFlow(PomodoroRingingState())
@@ -42,6 +43,8 @@ class ServicePomodoroRinging(private val context: Context) :
     @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
     val state = observed.asStateFlow()
     override val ringingPhase: Flow<PomodoroPhaseKey?> = state.map { it.ring?.phase }
+
+    override fun running(): Boolean = state.value.serviceRunning
 
     internal fun update(value: PomodoroRingingState) {
         observed.value = value

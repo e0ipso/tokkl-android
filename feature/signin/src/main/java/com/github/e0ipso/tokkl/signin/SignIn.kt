@@ -122,7 +122,7 @@ class SignIn(
     private val httpClient: OkHttpClient,
     private val configured: ConfiguredServer,
     private val io: CoroutineContext,
-    private val signedInAccount: suspend () -> SignInAgain?,
+    private val signedInAccount: SignedInAccount,
 ) {
 
     /**
@@ -130,7 +130,7 @@ class SignIn(
      * than the signed-in one is not stored: both end in [SignInResult.OtherAccount].
      */
     suspend fun attempt(server: ServerUrl, credentials: SignInCredentials, again: SignInAgain? = null): SignInResult {
-        val account = signedInAccount() ?: again
+        val account = signedInAccount.current() ?: again
         if (account != null && server != account.server) return SignInResult.OtherAccount
         val api = TokklApi(TogglApiClient(server, credentials.toApiCredentials(), httpClient, io = io))
         // Until the server is stored, the URL being tried is the configured server.
@@ -173,6 +173,14 @@ private fun ApiError.toSignInResult(): SignInResult = when (this) {
 }
 
 /**
+ * The account signed in now, which a sign-in may only sign in again, or null while signed out.
+ * [StoredSignInAccount] reads it from the disk; the view model's tests answer in memory.
+ */
+fun interface SignedInAccount {
+    suspend fun current(): SignInAgain?
+}
+
+/**
  * The account a sign-in would replace, read from the stores on each call: the stored server and
  * the stored settings' user. Sign-in rechecks it on every submit, including a form restored after
  * the process died, whose in-memory reauthentication marker may be gone. The stores read the
@@ -181,8 +189,8 @@ private fun ApiError.toSignInResult(): SignInResult = when (this) {
 internal class StoredSignInAccount(
     private val servers: ServerConfigStore,
     private val accountSettings: AccountSettingsStore,
-) {
-    suspend fun current(): SignInAgain? = servers.load()?.let { server ->
+) : SignedInAccount {
+    override suspend fun current(): SignInAgain? = servers.load()?.let { server ->
         SignInAgain(
             server,
             accountSettings.load()?.userId,

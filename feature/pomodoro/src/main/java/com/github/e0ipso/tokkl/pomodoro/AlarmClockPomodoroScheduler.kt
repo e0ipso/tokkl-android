@@ -7,6 +7,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import com.github.e0ipso.tokkl.capabilities.TimerApiOffer
 import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.platform.mainActivityIntent
 import com.github.e0ipso.tokkl.timerstate.PomodoroAlarmScheduler
@@ -47,14 +48,14 @@ import java.time.Instant
  */
 class AlarmClockPomodoroScheduler(
     private val context: Context,
-    private val timerSyncStarts: suspend () -> Boolean,
-    private val exactAlarms: () -> Boolean,
+    private val timerSyncStarts: TimerApiOffer,
+    private val exactAlarms: ExactAlarmAccess,
 ) : PomodoroAlarmScheduler,
     TimerSyncWatcher {
     private val manager = context.getSystemService(AlarmManager::class.java)
 
     override val permissionDenied: Boolean
-        get() = exactAlarms()
+        get() = exactAlarms.denied()
 
     override fun schedule(triggerAt: Instant, phase: PomodoroPhaseKey): Boolean {
         if (permissionDenied) return scheduleRedraw(triggerAt, phase)
@@ -96,7 +97,7 @@ class AlarmClockPomodoroScheduler(
     private val watching = Mutex()
 
     private suspend fun applyRearmReceiver() {
-        val state = if (timerSyncStarts()) {
+        val state = if (timerSyncStarts.offersTimerApi()) {
             PackageManager.COMPONENT_ENABLED_STATE_ENABLED
         } else {
             PackageManager.COMPONENT_ENABLED_STATE_DISABLED
@@ -240,4 +241,14 @@ class PomodoroAlarmRearm(private val alarm: PomodoroPhaseAlarm, private val time
         /** The broadcasts that may start a foreground service from the background. */
         val TIMER_SYNC_STARTS = setOf(Intent.ACTION_BOOT_COMPLETED, Intent.ACTION_MY_PACKAGE_REPLACED)
     }
+}
+
+/** Whether Android refuses exact alarms now. [PlatformExactAlarms] asks the platform; tests deny it on purpose. */
+fun interface ExactAlarmAccess {
+    fun denied(): Boolean
+}
+
+/** Asks [AlarmManager.canScheduleExactAlarms] each time. */
+class PlatformExactAlarms(private val manager: AlarmManager) : ExactAlarmAccess {
+    override fun denied(): Boolean = !manager.canScheduleExactAlarms()
 }

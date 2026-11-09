@@ -1,10 +1,8 @@
 package com.github.e0ipso.tokkl.pomodoro
 
 import android.app.AlarmManager
-import android.app.NotificationManager
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.ChangeQueue
-import com.github.e0ipso.tokkl.cache.ChangeSender
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
 import com.github.e0ipso.tokkl.navigation.PageBadge
@@ -44,7 +42,7 @@ val pomodoroFeatureModule = module {
         PomodoroDefaultsSetting(
             store = get<PomodoroDefaultsStore>(),
             client = get<Session>(),
-            keepsPreferences = get<CapabilitiesSource>()::keepsPreferences,
+            capabilities = get(),
             scope = get(),
         )
     } binds arrayOf(AccountDataOwner::class, StartupLoad::class)
@@ -53,14 +51,11 @@ val pomodoroFeatureModule = module {
     // [PomodoroAlarmScheduler.permissionDenied] is what the Pomodoro page reads when that alarm
     // cannot be set, from the platform. Its boot and update receiver also starts the timer sync
     // service.
-    single {
-        val manager = androidContext().getSystemService(AlarmManager::class.java)
-        AlarmClockPomodoroScheduler(
-            androidContext(),
-            timerSyncStarts = get<CapabilitiesSource>()::offersTimerApi,
-            exactAlarms = { !manager.canScheduleExactAlarms() },
-        )
-    } binds arrayOf(PomodoroAlarmScheduler::class, TimerSyncWatcher::class)
+    single<ExactAlarmAccess> {
+        PlatformExactAlarms(androidContext().getSystemService(AlarmManager::class.java))
+    }
+    single { AlarmClockPomodoroScheduler(androidContext(), timerSyncStarts = get(), exactAlarms = get()) } binds
+        arrayOf(PomodoroAlarmScheduler::class, TimerSyncWatcher::class)
 
     // The ringing service at a Pomodoro phase's planned end, as [PomodoroPhaseAlarm] drives it and the Pomodoro widget
     // reads it.
@@ -68,15 +63,15 @@ val pomodoroFeatureModule = module {
         ServicePomodoroRinging(
             androidContext(),
         )
-    } binds arrayOf(PomodoroRinging::class, PomodoroRingingPhase::class)
+    } binds arrayOf(PomodoroRinging::class, PomodoroRingingPhase::class, RingingServiceState::class)
 
     // The exact alarm and the ring of the server's Pomodoro session, which follow the held timer
     // state while the server offers the timer API (docs/PRD.md W7). Loaded at process start; its
     // first call loads the held state from disk, and waits for the capabilities to load.
     single {
         PomodoroPhaseAlarm(
-            held = get<AccountTimerStates>()::heldNow,
-            available = get<CapabilitiesSource>()::offersTimerApi,
+            timerStates = get(),
+            available = get(),
             alarms = get<AlarmClockPomodoroScheduler>(),
             ringing = get<ServicePomodoroRinging>(),
             io = io(),
@@ -102,13 +97,12 @@ val pomodoroFeatureModule = module {
         val held = get<AccountTimerStates>()
         val capabilities = get<CapabilitiesSource>()
         val ringing = get<ServicePomodoroRinging>()
-        val session = get<Session>()
         PomodoroSessionNotificationSync(
             alarm = get(),
             actions = get<TimerActions>(),
             changes = combine(held.held, capabilities.loaded, ringing.state) { _, _, _ -> Unit },
-            isSignedIn = session::isSignedIn,
-            serviceRunning = { ringing.state.value.serviceRunning },
+            isSignedIn = get(),
+            serviceRunning = get(),
             memory = store,
             notifications = notifier,
             scope = get(),
@@ -122,18 +116,11 @@ val pomodoroFeatureModule = module {
 
     // Sign-out: the alarm, the session notification and the notification ID they share.
     single {
-        val notifications = androidContext().getSystemService(NotificationManager::class.java)
-        PomodoroSignOut(
-            alarm = get(),
-            notification = get(),
-            sharedId = { notifications.cancel(PomodoroSessionNotifier.NOTIFICATION_ID) },
-        )
+        PomodoroSignOut(alarm = get(), notification = get(), sharedId = PomodoroSessionNotifier(androidContext()))
     } bind AccountDataOwner::class
 
     viewModel {
         val changes = get<ChangeQueue>()
-        val sender = get<ChangeSender>()
-        val alarms = get<PomodoroAlarmScheduler>()
         val cache = get<AccountCache>()
         val scope = viewModelCoroutineScope()
         PomodoroViewModel(
@@ -146,8 +133,8 @@ val pomodoroFeatureModule = module {
             unsent = changes.unsentCount,
             refused = changes.held,
             scope = scope,
-            sendQueued = sender::sendQueued,
-            alarmProbe = { alarms.permissionDenied },
+            sender = get(),
+            exactAlarms = get(),
             picker = pickerSource(cache.projects, cache.clients, cache.tasks, cache.tags),
             offline = get<DefaultNetwork>().offlineIn(scope),
         )

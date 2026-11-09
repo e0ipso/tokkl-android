@@ -5,7 +5,9 @@ import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.api.TokklApi
+import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.session.MePreferences
+import com.github.e0ipso.tokkl.session.capabilitiesOf
 import com.github.e0ipso.tokkl.storage.InMemoryValueStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -164,7 +166,7 @@ class TimerViewSettingTest {
     private fun setting(initial: StoredTimerView? = null, keepsTimerView: Boolean = true) = TimerViewSetting(
         store = InMemoryValueStore(initial) { saved += it },
         client = { client },
-        keepsTimerView = { keepsTimerView },
+        capabilities = capabilitiesOf(Capabilities.NONE.copy(favorites = keepsTimerView)),
         scope = CoroutineScope(Dispatchers.Unconfined),
     )
 

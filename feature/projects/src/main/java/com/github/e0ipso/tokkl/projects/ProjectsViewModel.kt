@@ -12,6 +12,8 @@ import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.platform.AppForeground
 import com.github.e0ipso.tokkl.platform.PageLoads
 import com.github.e0ipso.tokkl.platform.stateInPage
+import com.github.e0ipso.tokkl.session.AccountSettingsSource
+import com.github.e0ipso.tokkl.session.CacheRefresh
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -75,8 +77,8 @@ data class ProjectsPageState(
 class ProjectsViewModel(
     private val repository: ProjectsRepository,
     tasksRepository: TasksRepository,
-    workspaceId: () -> WorkspaceId?,
-    refreshCache: () -> Unit,
+    settings: AccountSettingsSource,
+    refreshes: CacheRefresh,
     scope: CoroutineScope,
     io: CoroutineContext,
     cachedProjects: Flow<List<Project>>,
@@ -87,14 +89,14 @@ class ProjectsViewModel(
 
     private val catalog = CatalogModel<ProjectsData, ProjectForm>(
         repository,
-        workspaceId,
-        refreshCache,
+        settings,
+        refreshes,
         viewModelScope,
         io,
     )
 
     /** The task list of the project the form edits. */
-    val tasks = TasksModel(tasksRepository, workspaceId, refreshCache, viewModelScope, io)
+    val tasks = TasksModel(tasksRepository, settings, refreshes, viewModelScope, io)
 
     val state: StateFlow<ProjectsState> = catalog.state
 

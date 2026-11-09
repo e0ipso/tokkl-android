@@ -21,35 +21,46 @@ import kotlinx.coroutines.flow.first
 internal fun accountReminderSync(
     context: Context,
     store: ReminderStore,
-    session: Session,
+    account: AccountReminder,
     changes: ChangeQueue,
-    cache: AccountCache,
-    settings: ReminderSetting,
-    controls: AccountTimerStates,
-    surfaceActions: TimerSurfaceActions,
     work: ReminderWork,
 ): ReminderSync {
     val notifier = ReminderNotifier(context)
-
-    suspend fun runningNow(entryId: EntryId) = (controls.currentControls() as? TimerControls.Running)?.takeIf {
-        it.entry.id ==
-            entryId
-    }
-
     return ReminderSync(
-        inputs = { ReminderInput(cache.running.first()?.entry?.takeIf { session.isSignedIn() }, settings.current()) },
+        account = account,
         ids = changes,
         timers = store.timers,
         delays = work,
         notice = object : ReminderNotice {
-            override suspend fun post(timer: ReminderTimer) =
-                notifier.post(timer, pausable = runningNow(changes.currentId(EntryId(timer.id)))?.pausable == true)
+            override suspend fun post(timer: ReminderTimer) = notifier.post(
+                timer,
+                pausable = account.runningNow(changes.currentId(EntryId(timer.id)))?.pausable == true,
+            )
 
             override fun remove() = notifier.remove()
         },
-        stop = { entryId -> changes.stop(entryId) },
-        pause = { entryId ->
-            runningNow(entryId)?.let { surfaceActions.tap(TimerSurfaceAction.Pause, it.target) as? SurfaceTap.Request }
-        },
     )
+}
+
+/** The reminder's view of the signed-in account: its running entry, its Stop in the queue and its Pause. */
+internal class AccountReminder(
+    private val session: Session,
+    private val cache: AccountCache,
+    private val settings: ReminderSetting,
+    private val changes: ChangeQueue,
+    private val controls: AccountTimerStates,
+    private val surfaceActions: TimerSurfaceActions,
+) : ReminderAccount {
+
+    override suspend fun input() =
+        ReminderInput(cache.running.first()?.entry?.takeIf { session.isSignedIn() }, settings.current())
+
+    override suspend fun stop(entryId: EntryId) = changes.stop(entryId)
+
+    override suspend fun pause(entryId: EntryId) =
+        runningNow(entryId)?.let { surfaceActions.tap(TimerSurfaceAction.Pause, it.target) as? SurfaceTap.Request }
+
+    /** The running controls of [entryId], or null while another entry or none runs. */
+    suspend fun runningNow(entryId: EntryId) =
+        (controls.currentControls() as? TimerControls.Running)?.takeIf { it.entry.id == entryId }
 }

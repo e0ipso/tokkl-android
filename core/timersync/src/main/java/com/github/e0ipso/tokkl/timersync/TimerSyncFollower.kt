@@ -1,8 +1,11 @@
 package com.github.e0ipso.tokkl.timersync
 
+import com.github.e0ipso.tokkl.capabilities.TimerApiOffer
 import com.github.e0ipso.tokkl.platform.AppHook
 import com.github.e0ipso.tokkl.session.AccountDataOwner
+import com.github.e0ipso.tokkl.session.SignInStatus
 import com.github.e0ipso.tokkl.session.SignOutPhase
+import com.github.e0ipso.tokkl.timerstate.CurrentTimerState
 import com.github.e0ipso.tokkl.timerstate.TimerStateSource
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -12,6 +15,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.util.concurrent.atomic.AtomicInteger
+
+/** Starts a foreground service, and returns false when the platform refuses, as for an app in the background. */
+fun interface ServiceStart {
+    fun start(): Boolean
+}
 
 /** Hears each decision on whether the timer sync runs, so it can follow whether the server has the timer API. */
 fun interface TimerSyncWatcher {
@@ -27,17 +35,17 @@ fun interface TimerSyncWatcher {
  * @param startService starts [TimerSyncService] in the foreground, and returns false when the
  *   platform refuses, as it does for an app in the background.
  * @param signedIn whether an account is signed in, read from the session.
- * @param source the signed-in account's timer state.
+ * @param timerState the signed-in account's timer state.
  * @param timerApi whether the server offers the timer API.
  * @param signInNeeded whether the server refused the account's credential.
  */
 class TimerSyncFollower(
-    private val startService: () -> Boolean,
-    private val signedIn: suspend () -> Boolean,
-    private val source: () -> TimerStateSource,
+    private val startService: ServiceStart,
+    private val signedIn: SignInStatus,
+    private val timerState: CurrentTimerState,
     private val timerSync: TimerSync<TimerStateSource>,
-    private val timerApi: suspend () -> Boolean,
-    private val signInNeeded: () -> Boolean,
+    private val timerApi: TimerApiOffer,
+    private val signInNeeded: StateFlow<Boolean>,
     private val syncWatcher: TimerSyncWatcher,
 ) : AccountDataOwner {
 
@@ -69,7 +77,7 @@ class TimerSyncFollower(
      * Whether the timer event stream should run: signed in to a server with the timer API, whose
      * token the server has not refused. Reads the disk.
      */
-    internal suspend fun wanted(): Boolean = timerApi() && !signInNeeded() && signedIn()
+    internal suspend fun wanted(): Boolean = timerApi.offersTimerApi() && !signInNeeded.value && signedIn.isSignedIn()
 
     /**
      * Starts [TimerSyncService], or points the running one at the account signed in now, while
@@ -87,7 +95,7 @@ class TimerSyncFollower(
         } else if (running != null) {
             run(running)
         } else {
-            startService()
+            startService.start()
         }
     }
 
@@ -96,8 +104,8 @@ class TimerSyncFollower(
      * one that runs and the stream is still wanted.
      */
     internal fun run(instance: Int) {
-        timerSync.run(source()) {
-            running.value == instance && timerApi() && !signInNeeded()
+        timerSync.run(timerState.source) {
+            running.value == instance && timerApi.offersTimerApi() && !signInNeeded.value
         }
     }
 

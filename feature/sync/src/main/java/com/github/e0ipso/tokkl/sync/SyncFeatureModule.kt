@@ -6,7 +6,6 @@ import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
 import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
 import com.github.e0ipso.tokkl.session.AccountDataOwner
-import com.github.e0ipso.tokkl.session.AccountRefresh
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.storage.StartupLoad
 import org.koin.android.ext.koin.androidContext
@@ -34,14 +33,7 @@ val syncFeatureModule = module {
 
     // The "needs attention" list of the changes the server refused (docs/PRD.md O6). Discarding
     // one refreshes the account, so the cache takes the server's entry back.
-    single {
-        val refresh = get<AccountRefresh>()
-        NeedsAttention(
-            changes = get<ChangeQueue>(),
-            afterDiscard = { refresh.refresh() },
-            scope = get(),
-        )
-    }
+    single { NeedsAttention(changes = get<ChangeQueue>(), refreshes = get(), scope = get()) }
 
     viewModel {
         NeedsAttentionViewModel(

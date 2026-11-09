@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.sync
 
 import com.github.e0ipso.tokkl.cache.HeldChange
 import com.github.e0ipso.tokkl.cache.HeldChanges
+import com.github.e0ipso.tokkl.session.CacheRefresh
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
@@ -11,14 +12,14 @@ import kotlinx.coroutines.launch
  * the server's reason, which wait for the user while later changes to the same entry wait behind
  * them. Editing the entry folds the fix into the held change and sends it, as `ChangeQueue` does
  * for any change to that entry. [sendAgain] sends a held change as it is, and [discard] drops it
- * with the changes behind it, then calls [afterDiscard] so the cache can take the server's entry
- * back.
+ * with the changes behind it, then asks [refreshes] for a refresh so the cache can take the
+ * server's entry back.
  *
  * @param scope outlives the screen, so leaving it does not cancel a write.
  */
 class NeedsAttention(
     private val changes: HeldChanges,
-    private val afterDiscard: () -> Unit,
+    private val refreshes: CacheRefresh,
     private val scope: CoroutineScope,
 ) {
 
@@ -29,6 +30,6 @@ class NeedsAttention(
     }
 
     fun discard(change: HeldChange) {
-        scope.launch { if (changes.discard(change.sequence)) afterDiscard() }
+        scope.launch { if (changes.discard(change.sequence)) refreshes.refresh() }
     }
 }

@@ -9,6 +9,7 @@ import com.github.e0ipso.tokkl.api.SuccessListener
 import com.github.e0ipso.tokkl.api.TrustListener
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesStore
+import com.github.e0ipso.tokkl.capabilities.TimerApiOffer
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
 import com.github.e0ipso.tokkl.platform.AppHook
 import com.github.e0ipso.tokkl.platform.io
@@ -46,7 +47,7 @@ val sessionModule = module {
             trustListener = get<TrustListener>(),
             successListener = get<SuccessListener>(),
         )
-    } binds arrayOf(ApiClientProvider::class, AccountDataOwner::class)
+    } binds arrayOf(ApiClientProvider::class, SignInStatus::class, AccountDataOwner::class)
 
     single { AccountSettingsStore(androidContext()) } bind AccountDataOwner::class
     single { CapabilitiesStore(androidContext()) }
@@ -54,7 +55,8 @@ val sessionModule = module {
     single { AccountSettingsSource(get<AccountSettingsStore>(), get()) } bind StartupLoad::class
 
     // What the server offers. It loads at process start from a file of a few flags.
-    single { CapabilitiesSource(get<CapabilitiesStore>(), get()) } bind StartupLoad::class
+    single { CapabilitiesSource(get<CapabilitiesStore>(), get()) } binds
+        arrayOf(StartupLoad::class, TimerApiOffer::class)
 
     single { AccountRefreshRequests() }
     single { RefreshRequestsHook(get(), inject(), get(), io()) } bind AppHook::class
@@ -67,7 +69,7 @@ val sessionModule = module {
             io = io(),
             steps = get(),
         )
-    } bind AccountDataOwner::class
+    } binds arrayOf(AccountDataOwner::class, CacheRefresh::class)
 
     // Where each account begins and ends, which the timer state and the navigation follow.
     single { AccountLifetime() }

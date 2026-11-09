@@ -33,7 +33,7 @@ class AccountRefreshRequests {
      * Hands every request to [refresh] until the calling coroutine is cancelled. [refresh] is
      * read on the first request, so nothing loads before one comes.
      */
-    suspend fun forward(refresh: Lazy<AccountRefresh>) {
+    suspend fun forward(refresh: Lazy<CacheRefresh>) {
         for (request in requests) {
             when (request) {
                 Request.REFRESH -> refresh.value.refresh()
@@ -46,7 +46,7 @@ class AccountRefreshRequests {
 /** First of the hooks at process start: forwards the refreshes the other components ask for, from any process. */
 class RefreshRequestsHook(
     private val requests: AccountRefreshRequests,
-    private val refresh: Lazy<AccountRefresh>,
+    private val refresh: Lazy<CacheRefresh>,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
 ) : AppHook {

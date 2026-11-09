@@ -14,4 +14,5 @@ dependencies {
     implementation(project(":core:navigation"))
 
     testImplementation(testFixtures(project(":core:platform")))
+    testImplementation(testFixtures(project(":core:session")))
 }

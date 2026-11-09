@@ -44,6 +44,7 @@ class Session(
     private val trustListener: TrustListener?,
     private val successListener: SuccessListener?,
 ) : ApiClientProvider,
+    SignInStatus,
     AccountDataOwner {
 
     override val signOutPhase = SignOutPhase.FORGET_SESSION
@@ -82,7 +83,7 @@ class Session(
      * Signed in means a server is stored and the token decrypts. A Keystore or
      * disk failure counts as signed out, so the user can sign in again.
      */
-    suspend fun isSignedIn(): Boolean = read()?.signedIn == true
+    override suspend fun isSignedIn(): Boolean = read()?.signedIn == true
 
     /**
      * The API of the signed-in account, or null when signed out. A Keystore or disk failure

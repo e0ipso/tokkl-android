@@ -6,6 +6,8 @@ import com.github.e0ipso.tokkl.api.fold
 import com.github.e0ipso.tokkl.api.getOrElse
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.platform.PageLoads
+import com.github.e0ipso.tokkl.session.AccountSettingsSource
+import com.github.e0ipso.tokkl.session.CacheRefresh
 import com.github.e0ipso.tokkl.session.ServerProblem
 import com.github.e0ipso.tokkl.session.toServerProblem
 import kotlinx.coroutines.CoroutineScope
@@ -68,20 +70,20 @@ data class CatalogState<D, O>(
  * stateInPage tells it through [PageLoads], and sends each change at once. A load keeps the list
  * and the form or question open over it until the answer comes. They go with the view model, when
  * the page's route leaves the back stack. Nothing is queued: offline, or with the server out of
- * reach, nothing changes. After each change the server accepts, [refreshCache] reloads the offline
+ * reach, nothing changes. After each change the server accepts, [refreshes] reloads the offline
  * cache, so the picker, the history and the reports show it.
  *
  * Call every function on the main thread.
  *
  * @param repository finds the workspace and reads the page's data from it. Runs on [io].
- * @param workspaceId the account's default workspace from the stored settings, or null when they
+ * @param settings the account's default workspace from the stored settings, or null when they
  *   do not have it.
- * @param refreshCache starts a refresh of the cache that reads the server after the change.
+ * @param refreshes starts a refresh of the cache that reads the server after the change.
  */
 class CatalogModel<D, O>(
     private val repository: CatalogRepository<D>,
-    private val workspaceId: () -> WorkspaceId?,
-    private val refreshCache: () -> Unit,
+    private val settings: AccountSettingsSource,
+    private val refreshes: CacheRefresh,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
 ) : PageLoads {
@@ -99,7 +101,7 @@ class CatalogModel<D, O>(
     private var workspace: WorkspaceId? = null
 
     /** The workspace the page manages: the one the data came from, or else the stored one, or null. */
-    fun workspace(): WorkspaceId? = workspace ?: workspaceId()
+    fun workspace(): WorkspaceId? = workspace ?: settings.defaultWorkspaceId()
 
     /**
      * The page shows: loads the data. A page that shows again after a trip to the background keeps
@@ -172,7 +174,7 @@ class CatalogModel<D, O>(
             val answer = withContext(io + NonCancellable) { request(workspace) }
             // The list closed while the request ran. What the server accepted still reaches the cache.
             if (!opened) {
-                if (answer is ApiResult.Success) refreshCache()
+                if (answer is ApiResult.Success) refreshes.refreshAfterChange()
                 return@launch
             }
             when (answer) {
@@ -185,7 +187,7 @@ class CatalogModel<D, O>(
                             done = done(answer.value),
                         )
                     }
-                    refreshCache()
+                    refreshes.refreshAfterChange()
                 }
 
                 is ApiResult.Failure -> {
@@ -205,7 +207,7 @@ class CatalogModel<D, O>(
     private fun load() {
         loading?.cancel()
         mutableState.update { it.copy(loading = true) }
-        val stored = workspaceId()
+        val stored = settings.defaultWorkspaceId()
         loading = scope.launch {
             // A cancelled load cancels its requests and drops its answer.
             val answer = withContext(io) { read(stored) }

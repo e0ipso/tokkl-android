@@ -7,11 +7,13 @@ import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.HttpStatus
 import com.github.e0ipso.tokkl.api.TrashEntry
+import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.platform.AppForeground
 import com.github.e0ipso.tokkl.platform.PageLoads
 import com.github.e0ipso.tokkl.platform.stateInPage
 import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.session.CacheRefresh
 import com.github.e0ipso.tokkl.session.ServerProblem
 import com.github.e0ipso.tokkl.session.toServerProblem
 import kotlinx.coroutines.CoroutineScope
@@ -78,10 +80,10 @@ data class TrashPageState(
  * page sends at once. A load keeps the list and the question open over it until the answer comes;
  * they go with the view model, when the page's route leaves the back stack. Nothing is queued, so
  * offline nothing changes, as on the catalog pages.
- * After a restore, [refreshCache] reloads the offline cache, so the history shows the entry again.
+ * After a restore, [refreshes] reloads the offline cache, so the history shows the entry again.
  *
  * A server without the trash answers the list with a 404, or with something that is not a list.
- * Then [trashMissing], on [io], tells the capabilities, which hide the page, rather than the page
+ * Then the page tells the [capabilities], on [io], which hide the page, rather than the page
  * failing.
  *
  * Call every function on the main thread.
@@ -94,8 +96,8 @@ data class TrashPageState(
  */
 class TrashViewModel(
     private val repository: TrashRepository,
-    private val refreshCache: () -> Unit,
-    private val trashMissing: suspend () -> Unit,
+    private val refreshes: CacheRefresh,
+    private val capabilities: CapabilitiesSource,
     scope: CoroutineScope,
     private val io: CoroutineContext,
     settings: StateFlow<AccountSettings?>,
@@ -201,7 +203,7 @@ class TrashViewModel(
         mutableState.update { it.copy(sending = true, changeProblem = null) }
         viewModelScope.launch {
             val answer = withContext(io + NonCancellable) { request(repository) }
-            if (answer is ApiResult.Success && restored) refreshCache()
+            if (answer is ApiResult.Success && restored) refreshes.refreshAfterChange()
             when (answer) {
                 is ApiResult.Success -> mutableState.update { current ->
                     current.copy(
@@ -234,7 +236,7 @@ class TrashViewModel(
             // A cancelled load cancels its request and drops its answer.
             val answer = withContext(io) {
                 repository.list().also {
-                    if (it is ApiResult.Failure && it.error.meansNoTrash()) trashMissing()
+                    if (it is ApiResult.Failure && it.error.meansNoTrash()) capabilities.trashMissing()
                 }
             }
             when (answer) {

@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.timerstate
 
 import androidx.annotation.VisibleForTesting
 import com.github.e0ipso.tokkl.cache.EntryChanges
+import com.github.e0ipso.tokkl.cache.QueueSender
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.ConcurrentHashMap
@@ -51,19 +52,18 @@ sealed interface SurfaceTap {
  * the server publishes the next state, a tap on its control waits for the previous call to
  * return, then checks the state again before sending. A Stop of a running entry never waits.
  *
- * @param controls what the phone shows now, read at the tap.
- * @param account the signed-in account's name, as the targets of its controls carry it.
+ * @param state what the phone shows now, read at the tap, and the signed-in account's name, as
+ *   the targets of its controls carry it.
  * @param changes the change queue, which Stop of a running entry goes to.
  * @param server the server's Pause, Resume and Discard.
- * @param sendQueued sends the queue and waits for it, so a Start the server has not had yet
- *   reaches it before the Pause that follows it.
+ * @param sender sends the queue and waits for it, so a Start the server has not had yet reaches
+ *   it before the Pause that follows it.
  */
 class TimerSurfaceActions(
-    private val controls: suspend () -> TimerControls,
-    private val account: () -> String,
+    private val state: CurrentTimerState,
     private val changes: EntryChanges,
     private val server: PauseActions,
-    private val sendQueued: suspend () -> Unit,
+    private val sender: QueueSender,
 ) {
 
     /**
@@ -72,7 +72,7 @@ class TimerSurfaceActions(
      * control showed, or the action is not offered there, and nothing was done.
      */
     suspend fun tap(action: TimerSurfaceAction, target: TimerTarget): SurfaceTap? {
-        if (target.account != account()) return null
+        if (target.account != state.account()) return null
         return when (action) {
             TimerSurfaceAction.Pause -> pause(target)
 
@@ -90,12 +90,12 @@ class TimerSurfaceActions(
     /** A request for [action] on the paused chain [target] showed, while a chain is paused. */
     private suspend fun whilePaused(target: TimerTarget, action: suspend () -> TimerActionResult): SurfaceTap? {
         if (target.entryId != null) return null
-        val paused = controls() as? TimerControls.Paused ?: return null
+        val paused = state.currentControls() as? TimerControls.Paused ?: return null
         return request(paused.target, action)
     }
 
     private suspend fun pause(target: TimerTarget): SurfaceTap? {
-        val running = controls() as? TimerControls.Running ?: return null
+        val running = state.currentControls() as? TimerControls.Running ?: return null
         if (!running.pausable || target.entryId == null || changes.currentId(
                 target.entryId,
             ) != running.entry.id
@@ -103,7 +103,7 @@ class TimerSurfaceActions(
             return null
         }
         return request(running.target) {
-            if (running.unsent) sendQueued()
+            if (running.unsent) sender.sendQueued()
             server.pause()
         }
     }
@@ -115,8 +115,8 @@ class TimerSurfaceActions(
             if (!sending.add(expected)) return@Request null
             try {
                 requests.withLock {
-                    val current = controls()
-                    val moved = expected.account != account() || current.target != expected
+                    val current = state.currentControls()
+                    val moved = expected.account != state.account() || current.target != expected
                     if (moved || (current is TimerControls.Running && !current.pausable)) {
                         return@withLock null
                     }

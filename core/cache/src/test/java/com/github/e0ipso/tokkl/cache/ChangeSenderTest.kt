@@ -9,16 +9,23 @@ import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
+import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
+import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.session.AccountRefreshRequests
+import com.github.e0ipso.tokkl.session.CacheRefresh
+import com.github.e0ipso.tokkl.storage.InMemoryValueStore
 import com.github.e0ipso.tokkl.time.SnappedSpan
 import com.github.e0ipso.tokkl.time.stopSpan
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withTimeoutOrNull
@@ -69,7 +76,7 @@ class ChangeSenderTest {
         testApi.stored = url
         testApi.trust = InMemoryServerTrust(url)
         val client = ApiClientProvider { if (signedIn) testApi.api(url, ApiCredentials.ApiToken("tok-123")) else null }
-        undo = DeleteUndoer(store, client, Dispatchers.IO, restored = {})
+        undo = DeleteUndoer(store, client, Dispatchers.IO, refreshes = AccountRefreshRequests())
         sender = changeSender(store, client, scope = scope, io = Dispatchers.IO, clock = clock, undo = undo)
     }
 
@@ -1674,11 +1681,18 @@ class ChangeSenderTest {
     @Test
     fun aRestoreRefreshesTheAccountOnceAndACancelledDeleteDoesNot() = runTest {
         val refreshes = java.util.concurrent.atomic.AtomicInteger()
+        val requests = AccountRefreshRequests()
+        val counting = object : CacheRefresh {
+            override fun refresh(): Job = Job()
+
+            override fun refreshAfterChange(): Job = Job().also { refreshes.incrementAndGet() }
+        }
+        val forwarding = CoroutineScope(Dispatchers.Unconfined).launch { requests.forward(lazy { counting }) }
         val refreshing = DeleteUndoer(
             store,
             client = { testApi.api(url, ApiCredentials.ApiToken("tok-123")) },
             io = Dispatchers.IO,
-            restored = { refreshes.incrementAndGet() },
+            refreshes = requests,
         )
         store.queue(ChangeKind.DELETE, 54, TAP, stop = TAP.plusSeconds(60), description = "Unsent")
         assertEquals(UndoOutcome.Cancelled, run { refreshing.undoDelete(EntryId(54)) })
@@ -1687,6 +1701,7 @@ class ChangeSenderTest {
         server.enqueue(entry(55, "Deleted", stop = "2026-10-19T08:01:30+00:00"))
         assertEquals(UndoOutcome.Restored, run { refreshing.undoDelete(EntryId(55)) })
         assertEquals(1, refreshes.get())
+        forwarding.cancel()
     }
 
     @Test
@@ -1753,7 +1768,7 @@ class ChangeSenderTest {
         scope = scope,
         io = Dispatchers.IO,
         clock = clock,
-        allDay = { true },
+        allDay = true,
     )
 
     private fun nothingRuns() = MockResponse.Builder().code(
@@ -1953,8 +1968,8 @@ private fun changeSender(
     onDiscarded: (Int) -> Unit = {},
     clock: Clock = Clock.systemUTC(),
     spans: ServerSpans = ServerSpans.Unsnapped,
-    allDay: suspend () -> Boolean = { false },
-    undo: DeleteUndoer = DeleteUndoer(store, client, io, restored = {}),
+    allDay: Boolean = false,
+    undo: DeleteUndoer = DeleteUndoer(store, client, io, refreshes = AccountRefreshRequests()),
 ) = ChangeSender(
     store,
     client,
@@ -1969,6 +1984,9 @@ private fun changeSender(
     },
     clock,
     spans,
-    allDay,
+    CapabilitiesSource(
+        InMemoryValueStore(Capabilities.NONE.copy(allDay = allDay)),
+        CoroutineScope(Dispatchers.Unconfined),
+    ),
     undo,
 )

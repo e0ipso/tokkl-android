@@ -577,7 +577,7 @@ class RunningEntryEditorServerTest {
                         clock = Clock.systemUTC(),
                         trace = TapTrace.None,
                         pauseChain = null,
-                        sendQueued = {},
+                        sender = {},
                         discards = object : DiscardNotices {
                             override val discardNotice = flowOf<DiscardedPomodoro?>(null)
 

@@ -3,7 +3,6 @@ package com.github.e0ipso.tokkl.trust
 import com.github.e0ipso.tokkl.api.TrustListener
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.session.AccountDataOwner
-import com.github.e0ipso.tokkl.session.AccountRefreshRequests
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import org.koin.dsl.binds
 import org.koin.dsl.module
@@ -17,7 +16,7 @@ val trustModule = module {
     single {
         SessionTrust(
             trust = get<ServerTrustStore>(),
-            retry = get<AccountRefreshRequests>()::refresh,
+            refreshes = get(),
             scope = get(),
             io = io(),
         )

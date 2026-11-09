@@ -5,7 +5,6 @@ import com.github.e0ipso.tokkl.navigation.FeatureEntries
 import com.github.e0ipso.tokkl.navigation.SignInRoutes
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
-import com.github.e0ipso.tokkl.session.AccountRefresh
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
@@ -32,7 +31,6 @@ val signInFeatureModule = module {
     } bind SessionWriter::class
 
     viewModel { params ->
-        val refresh = get<AccountRefresh>()
         SignInViewModel(
             // Runs on the IO thread, since the stores touch the disk.
             signIn = SignIn(
@@ -40,15 +38,14 @@ val signInFeatureModule = module {
                 httpClient = get<SharedHttpClient>().instance,
                 configured = get(),
                 io = io(),
-                signedInAccount = StoredSignInAccount(get(), get())::current,
+                signedInAccount = StoredSignInAccount(get(), get()),
             ),
             trust = get<ServerTrustStore>(),
             cooldowns = get<SignInCooldownStore>(),
             scope = viewModelCoroutineScope(),
             io = io(),
             clock = get(),
-            // A sign-in loads the account settings and the cache, as coming to the foreground does.
-            onSignedIn = { refresh.refresh() },
+            refreshes = get(),
         ).also { model -> params.getOrNull<SignInAgain>()?.let(model::signInAgain) }
     }
 

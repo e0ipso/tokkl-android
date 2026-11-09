@@ -11,6 +11,8 @@ import com.github.e0ipso.tokkl.model.TagId
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.platform.AppForeground
 import com.github.e0ipso.tokkl.platform.stateInPage
+import com.github.e0ipso.tokkl.session.AccountSettingsSource
+import com.github.e0ipso.tokkl.session.CacheRefresh
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -64,8 +66,8 @@ data class TagsPageState(
  */
 class TagsViewModel(
     private val repository: TagsRepository,
-    workspaceId: () -> WorkspaceId?,
-    refreshCache: () -> Unit,
+    settings: AccountSettingsSource,
+    refreshes: CacheRefresh,
     scope: CoroutineScope,
     io: CoroutineContext,
     cachedTags: Flow<List<Tag>>,
@@ -75,8 +77,8 @@ class TagsViewModel(
 
     private val catalog = CatalogModel<TagsData, TagsOverlay>(
         repository,
-        workspaceId,
-        refreshCache,
+        settings,
+        refreshes,
         viewModelScope,
         io,
     )

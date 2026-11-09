@@ -3,10 +3,12 @@ package com.github.e0ipso.tokkl.timersync
 import com.github.e0ipso.tokkl.cache.CurrentEntryCache
 import com.github.e0ipso.tokkl.cache.RunningCheckStart
 import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.timerstate.FixedTimerState
 import com.github.e0ipso.tokkl.timerstate.TimerStateSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -50,10 +52,10 @@ class TimerSyncFollowerTest {
             true
         },
         signedIn = { true },
-        source = { account },
+        timerState = FixedTimerState(sourceOf = { account }),
         timerSync = sync,
         timerApi = { timerApi },
-        signInNeeded = { false },
+        signInNeeded = MutableStateFlow(false),
         syncWatcher = {},
     )
 

@@ -19,6 +19,7 @@ import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.appConfiguredServer
 import com.github.e0ipso.tokkl.appHttp
 import com.github.e0ipso.tokkl.feature.signin.R
+import com.github.e0ipso.tokkl.session.CountingRefresh
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import kotlinx.coroutines.Dispatchers
@@ -75,7 +76,7 @@ class CertificateHostMismatchTest {
             scope = scope,
             io = Dispatchers.IO,
             clock = Clock.systemUTC(),
-            onSignedIn = {},
+            refreshes = CountingRefresh(),
         )
         composeRule.setContent { TokklTheme { SignInScreen(model, onSignedIn = {}) } }
     }

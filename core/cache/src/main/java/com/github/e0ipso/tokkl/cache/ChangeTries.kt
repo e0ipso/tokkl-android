@@ -8,6 +8,7 @@ import com.github.e0ipso.tokkl.api.flatMap
 import com.github.e0ipso.tokkl.api.getOrElse
 import com.github.e0ipso.tokkl.api.map
 import com.github.e0ipso.tokkl.api.onFailure
+import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import java.time.temporal.ChronoUnit
@@ -24,12 +25,12 @@ internal class SentChange(val change: PendingChange, val serverId: Long, val ent
  *
  * @param spans where the server puts a start once the entry is stopped, which finds the entry a
  *   lost create made, and the span of a queued start ended before a later timer.
- * @param allDay whether the server stores no-time entries, read for each request.
+ * @param capabilities whether the server stores no-time entries, read for each request.
  */
 internal class ChangeTries(
     private val store: ChangeStore,
     private val spans: ServerSpans,
-    private val allDay: suspend () -> Boolean,
+    private val capabilities: CapabilitiesSource,
 ) {
 
     /** Sends an update, a legacy stop or a restore, as [sendOnce] does. */
@@ -65,7 +66,10 @@ internal class ChangeTries(
                 api.entries.stop(change.workspace, EntryId(change.entryId), it.truncatedTo(ChronoUnit.SECONDS))
             } ?: api.entries.update(change.workspace, EntryId(change.entryId), change.body(allDay = false))
 
-            else -> api.entries.update(change.workspace, EntryId(change.entryId), change.body(allDay()))
+            else -> {
+                val allDay = capabilities.offersAllDay()
+                api.entries.update(change.workspace, EntryId(change.entryId), change.body(allDay))
+            }
         }
 
     /**
@@ -83,7 +87,7 @@ internal class ChangeTries(
         }
         val change = if (queued.stop == null) endBeforeALaterTimer(api, queued).getOrElse { return it } else queued
         if (!change.maybeSent) store.maybeSent(change, true)
-        return api.entries.create(change.workspace, change.body(allDay()))
+        return api.entries.create(change.workspace, change.body(capabilities.offersAllDay()))
             .onFailure { if (it.leftNothingOnTheServer()) store.maybeSent(change, false) }
             .map { SentChange(change, it.id, it.toCached()) }
     }

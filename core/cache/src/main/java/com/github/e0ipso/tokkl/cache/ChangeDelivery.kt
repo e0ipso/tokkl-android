@@ -2,14 +2,15 @@ package com.github.e0ipso.tokkl.cache
 
 import com.github.e0ipso.tokkl.session.AccountRefresh
 import com.github.e0ipso.tokkl.session.AccountRefreshRequests
+import com.github.e0ipso.tokkl.session.ForegroundReads
 
 /**
  * What a change queued on the phone starts ([ChangeQueue]'s `onQueued`): the [background] send
  * first, so a fast drain cannot finish and cancel it before it is registered, then a send at
  * once by the [sender].
  */
-class SendOnQueue(private val background: BackgroundSend, private val sender: ChangeSender) {
-    fun queued() {
+class SendOnQueue(private val background: BackgroundSend, private val sender: ChangeSender) : QueuedListener {
+    override fun queued() {
         background.schedule()
         sender.send()
     }
@@ -55,15 +56,15 @@ fun ChangeStore.readsEmpty(): Boolean = runCatching { first() == null }.getOrDef
  * so an expired token still asks for sign-in when `/me` fails on opening the app with a saved
  * queue.
  */
-class SendThenRefresh(private val sender: ChangeSender, private val account: AccountRefresh) {
+class SendThenRefresh(private val sender: ChangeSender, private val account: AccountRefresh) : ForegroundReads {
 
-    fun refresh() {
+    override fun refresh() {
         sender.send()
         account.refresh()
     }
 
     /** As [refresh], when the network came back, with [AccountRefresh.refreshOnReconnect]. */
-    fun refreshOnReconnect() {
+    override fun refreshOnReconnect() {
         sender.send()
         account.refreshOnReconnect()
     }

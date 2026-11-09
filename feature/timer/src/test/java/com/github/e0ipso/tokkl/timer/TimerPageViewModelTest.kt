@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.timer
 
+import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.model.Client
 import com.github.e0ipso.tokkl.model.ClientId
 import com.github.e0ipso.tokkl.model.EntryId
@@ -9,6 +10,7 @@ import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.session.capabilitiesOf
 import com.github.e0ipso.tokkl.storage.InMemoryValueStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -38,7 +40,7 @@ class TimerPageViewModelTest {
     private val views = TimerViewSetting(
         store = InMemoryValueStore(null),
         client = { null },
-        keepsTimerView = { false },
+        capabilities = capabilitiesOf(Capabilities.NONE),
         scope = scope,
     )
     private val entries = MutableStateFlow(listOf(entry(1, "Code review", WEBSITE.id)))

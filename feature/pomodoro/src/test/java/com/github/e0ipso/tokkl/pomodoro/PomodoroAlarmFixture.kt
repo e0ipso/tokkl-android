@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.pomodoro
 
+import com.github.e0ipso.tokkl.timerstate.FixedTimerState
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.PomodoroAlarmScheduler
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
@@ -118,7 +119,14 @@ internal class AlarmFixture(initial: HeldTimerState? = heldState(revision = 3)) 
     val output = FakeOutput()
     val controller = PomodoroRingController(output)
     val ringing = ServiceLikeRinging(controller)
-    val alarm = PomodoroPhaseAlarm({ held }, { available }, alarms, ringing, Dispatchers.Unconfined, clock)
+    val alarm = PomodoroPhaseAlarm(
+        FixedTimerState(held = { held }),
+        { available },
+        alarms,
+        ringing,
+        Dispatchers.Unconfined,
+        clock,
+    )
 
     /** The ring of the held phase, as the alarm derives it. */
     val ring: PomodoroRing get() = checkNotNull(held?.ring())

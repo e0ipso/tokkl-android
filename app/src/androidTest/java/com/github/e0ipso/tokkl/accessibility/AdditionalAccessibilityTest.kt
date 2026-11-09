@@ -37,6 +37,7 @@ import com.github.e0ipso.tokkl.navigation.topLevelPages
 import com.github.e0ipso.tokkl.pomodoro.PomodoroRoute
 import com.github.e0ipso.tokkl.reports.ReportsRoute
 import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.session.CountingRefresh
 import com.github.e0ipso.tokkl.sync.NeedsAttention
 import com.github.e0ipso.tokkl.sync.NeedsAttentionScreen
 import com.github.e0ipso.tokkl.sync.NeedsAttentionViewModel
@@ -158,7 +159,7 @@ abstract class AdditionalAccessibilityTest(private val dark: Boolean) {
                     return true
                 }
             },
-            afterDiscard = {},
+            refreshes = CountingRefresh(),
             scope = scope,
         )
         val model = NeedsAttentionViewModel(attention, settings, scope)

@@ -7,6 +7,7 @@ import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.model.TaskId
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
+import com.github.e0ipso.tokkl.timerstate.FixedTimerState
 import com.github.e0ipso.tokkl.timerstate.PauseActions
 import com.github.e0ipso.tokkl.timerstate.ServerTimerStates
 import com.github.e0ipso.tokkl.timerstate.SurfaceTap
@@ -188,7 +189,7 @@ class RunningTileContentTest {
         val changes = RecordingChanges()
         tapTile(
             content,
-            TimerSurfaceActions({ now }, { ServerTimerStates.ACCOUNT }, changes, RecordingServer(), sendQueued = {}),
+            TimerSurfaceActions(FixedTimerState(controls = { now }), changes, RecordingServer(), sender = {}),
             changes,
         )
     }

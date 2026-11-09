@@ -71,7 +71,7 @@ class TimerActionsTest {
         )
         actions = TimerActions(
             client = { if (signedIn) testApi.api(url, credentials, trustListener = trustListener) else null },
-            states = { holder },
+            states = FixedTimerState(sourceOf = { holder }),
             io = Dispatchers.IO,
         )
     }

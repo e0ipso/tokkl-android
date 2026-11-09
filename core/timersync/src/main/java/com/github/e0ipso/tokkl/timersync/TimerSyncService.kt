@@ -11,6 +11,7 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
+import android.os.SystemClock
 import com.github.e0ipso.tokkl.core.timersync.R
 import com.github.e0ipso.tokkl.platform.DefaultNetwork
 import com.github.e0ipso.tokkl.platform.IoDispatcher
@@ -209,4 +210,14 @@ internal object TimerSyncNotification {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
     }
+}
+
+/** Starts [TimerSyncService] in the foreground from [context], as [TimerSyncService.start] does. */
+class TimerSyncServiceStart(private val context: Context) : ServiceStart {
+    override fun start(): Boolean = TimerSyncService.start(context)
+}
+
+/** The sleep-counting clock the timer sync's watchdog reads. */
+object ElapsedRealtimeClock : MonotonicClock {
+    override fun millis(): Long = SystemClock.elapsedRealtime()
 }

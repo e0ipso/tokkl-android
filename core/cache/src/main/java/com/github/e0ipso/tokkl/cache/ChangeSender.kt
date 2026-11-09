@@ -5,6 +5,7 @@ import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TokklApi
+import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import kotlinx.coroutines.CompletableDeferred
@@ -72,8 +73,8 @@ interface ChangeSenderEvents {
  * @param events hears on [io] what the drains did, as [ChangeSenderEvents] says.
  * @param spans where the server puts a start once the entry is stopped, which finds the entry a
  *   lost create made, and the span of a queued start ended before a later timer.
- * @param allDay whether the server stores no-time entries (`Capabilities.allDay`), read for each
- *   request. While it is false no request carries `all_day`, as Toggl Track needs.
+ * @param capabilities whether the server stores no-time entries (`Capabilities.allDay`), read for
+ *   each request. While it is false no request carries `all_day`, as Toggl Track needs.
  * @param undo takes deletes back; the sender sends each delete through it.
  */
 class ChangeSender(
@@ -84,15 +85,16 @@ class ChangeSender(
     private val events: ChangeSenderEvents,
     private val clock: Clock,
     private val spans: ServerSpans,
-    private val allDay: suspend () -> Boolean,
+    private val capabilities: CapabilitiesSource,
     private val undo: DeleteUndoer,
-) : AccountDataOwner {
+) : AccountDataOwner,
+    QueueSender {
 
     override val signOutPhase = SignOutPhase.FINISH_SENDING
 
     override suspend fun forgetAccount() = stop()
 
-    private val tries = ChangeTries(store, spans, allDay)
+    private val tries = ChangeTries(store, spans, capabilities)
 
     /** What one [drain] did. */
     sealed interface Outcome {
@@ -183,7 +185,7 @@ class ChangeSender(
     }
 
     /** Drains the queue as [sendAndWait] does, for a caller that needs no outcome. */
-    suspend fun sendQueued() {
+    override suspend fun sendQueued() {
         sendAndWait()
     }
 
@@ -385,4 +387,12 @@ class ChangeSender(
         /** Twice the farthest a snap moves a start: half of Tokkl's coarsest time resolution, an hour. */
         val LOOKUP_MARGIN: Duration = Duration.ofHours(1)
     }
+}
+
+/**
+ * Drains the queue and waits for it, as the timer's surfaces and pages ask before a server action.
+ * [ChangeSender] sends over Room and the network; their unit tests stand in for it.
+ */
+fun interface QueueSender {
+    suspend fun sendQueued()
 }

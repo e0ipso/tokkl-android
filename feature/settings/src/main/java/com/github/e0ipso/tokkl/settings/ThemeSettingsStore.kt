@@ -4,6 +4,7 @@ import android.content.Context
 import com.github.e0ipso.tokkl.storage.PreferencesFile
 import com.github.e0ipso.tokkl.ui.theme.ThemeMode
 import com.github.e0ipso.tokkl.ui.theme.ThemeSettings
+import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsDisk
 import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsRepository
 import com.github.e0ipso.tokkl.ui.theme.syncApplicationNightMode
 import kotlinx.coroutines.CoroutineScope
@@ -18,12 +19,12 @@ import kotlin.coroutines.CoroutineContext
  *
  * Each call reads or writes the file on the I/O dispatcher.
  */
-class ThemeSettingsStore(context: Context) {
+class ThemeSettingsStore(context: Context) : ThemeSettingsDisk {
 
     private val file = PreferencesFile(context, FILE_NAME)
 
     /** The stored settings, with the defaults for anything missing or unknown. */
-    suspend fun load(): ThemeSettings = file.read {
+    override suspend fun load(): ThemeSettings = file.read {
         val defaults = ThemeSettings()
         val mode = getString(KEY_MODE, null)
             ?.let { name -> ThemeMode.entries.firstOrNull { it.name == name } }
@@ -35,7 +36,7 @@ class ThemeSettingsStore(context: Context) {
     }
 
     @Throws(IOException::class)
-    suspend fun save(settings: ThemeSettings) {
+    override suspend fun save(settings: ThemeSettings) {
         file.commit {
             putString(KEY_MODE, settings.mode.name)
             putBoolean(KEY_DYNAMIC_COLOR, settings.dynamicColor)
@@ -66,7 +67,6 @@ fun themeSettingsWithNightMode(
     store: ThemeSettingsStore,
     scope: CoroutineScope,
     io: CoroutineContext,
-): ThemeSettingsRepository =
-    ThemeSettingsRepository(load = store::load, store = store::save, scope = scope).also { themes ->
-        syncApplicationNightMode(context, themes.loaded.map { it.mode }, scope, io)
-    }
+): ThemeSettingsRepository = ThemeSettingsRepository(store, scope).also { themes ->
+    syncApplicationNightMode(context, themes.loaded.map { it.mode }, scope, io)
+}

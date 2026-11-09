@@ -71,6 +71,7 @@ import com.github.e0ipso.tokkl.reports.ReportTab
 import com.github.e0ipso.tokkl.reports.ReportsRoute
 import com.github.e0ipso.tokkl.reports.ReportsScreen
 import com.github.e0ipso.tokkl.reports.ReportsState
+import com.github.e0ipso.tokkl.session.CountingRefresh
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.settings.SettingsContent
 import com.github.e0ipso.tokkl.settings.SettingsRoute
@@ -414,7 +415,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
                 scope = scope,
                 io = Dispatchers.IO,
                 clock = Clock.systemUTC(),
-                onSignedIn = {},
+                refreshes = CountingRefresh(),
             )
         }
 

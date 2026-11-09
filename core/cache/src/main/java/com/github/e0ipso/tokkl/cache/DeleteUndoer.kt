@@ -4,6 +4,7 @@ import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.session.AccountRefreshRequests
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -40,14 +41,14 @@ sealed interface UndoOutcome {
  * on its way, and a delete that Undo took back never goes out.
  *
  * @param client the signed-in account's client, or null when signed out. Runs on [io].
- * @param restored asked for a refresh after the server restored an entry.
+ * @param refreshes asked for a refresh after the server restored an entry.
  */
 class DeleteUndoer(
     private val store: ChangeStore,
     private val client: ApiClientProvider,
     private val io: CoroutineContext,
-    private val restored: () -> Unit,
-) {
+    private val refreshes: AccountRefreshRequests,
+) : DeleteUndo {
 
     /** Held while a delete goes out and while [undoDelete] takes one back, so the two never overlap. */
     private val deletes = Mutex()
@@ -61,7 +62,7 @@ class DeleteUndoer(
      * entry. Blocks the sender's deletes meanwhile. Once started, the Undo reaches the server and
      * the queue also when the caller is cancelled.
      */
-    suspend fun undoDelete(entryId: EntryId): UndoOutcome {
+    override suspend fun undoDelete(entryId: EntryId): UndoOutcome {
         val outcome = withContext(io + NonCancellable) {
             deletes.withLock {
                 when (val found = store.takeBackDelete(entryId)) {
@@ -71,7 +72,7 @@ class DeleteUndoer(
                 }
             }
         }
-        if (outcome == UndoOutcome.Restored) withContext(io) { restored() }
+        if (outcome == UndoOutcome.Restored) withContext(io) { refreshes.refreshAfterChange() }
         return outcome
     }
 
@@ -107,4 +108,9 @@ class DeleteUndoer(
         /** Bad gateway, service unavailable and gateway timeout, which a proxy answers while its server is down. */
         val PROXY_UNREACHABLE = setOf(502, 503, 504)
     }
+}
+
+/** Takes a delete back, as [DeleteUndoer] does over the queue and the server; a page's unit tests answer for it. */
+fun interface DeleteUndo {
+    suspend fun undoDelete(entryId: EntryId): UndoOutcome
 }

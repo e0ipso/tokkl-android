@@ -96,7 +96,7 @@ class FavoritesViewModel(
     projects: Flow<List<Project>>,
     tasks: Flow<List<Task>>,
     available: Flow<Boolean>,
-    private val store: suspend (List<EntryFields>) -> ApiResult<Unit>,
+    private val store: FavoritesStore,
     scope: CoroutineScope,
     private val io: CoroutineContext,
     picker: Flow<PickerSource>,
@@ -185,7 +185,7 @@ class FavoritesViewModel(
         }
         local.value = Local(saving = true)
         viewModelScope.launch {
-            val result = withContext(io + NonCancellable) { store(next) }
+            val result = withContext(io + NonCancellable) { store.save(next) }
             val problem = (result as? ApiResult.Failure)?.let { FavoritesProblem.Server(it.error.toServerProblem()) }
             local.value = Local(problem = problem)
             onDone(problem)

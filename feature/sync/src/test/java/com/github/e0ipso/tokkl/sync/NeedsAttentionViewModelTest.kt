@@ -7,6 +7,7 @@ import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.session.CountingRefresh
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -36,7 +37,7 @@ class NeedsAttentionViewModelTest {
 
                 override suspend fun discard(sequence: Long) = true
             },
-            afterDiscard = {},
+            refreshes = CountingRefresh(),
             scope = scope,
         ),
         settings = settings,

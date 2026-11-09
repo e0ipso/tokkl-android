@@ -1,8 +1,10 @@
 package com.github.e0ipso.tokkl.pomodoro
 
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
+import com.github.e0ipso.tokkl.capabilities.TimerApiOffer
 import com.github.e0ipso.tokkl.platform.AppHook
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
+import com.github.e0ipso.tokkl.timerstate.CurrentTimerState
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.PomodoroAlarmScheduler
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
@@ -36,14 +38,14 @@ import kotlin.coroutines.CoroutineContext
  * Every call reads the held state anew, under one lock, so a delivery, the ringing service's own
  * check and a state change never act on different phases.
  *
- * @param held the account's held timer state now: after a process restart, the stored one.
+ * @param timerStates the account's held timer state now: after a process restart, the stored one.
  * @param available whether the account's server offers the timer API.
  * @param io where calls run: the first read of the held state loads it from disk.
  * @param clock the phone's clock.
  */
 class PomodoroPhaseAlarm(
-    private val held: () -> HeldTimerState?,
-    private val available: suspend () -> Boolean,
+    private val timerStates: CurrentTimerState,
+    private val available: TimerApiOffer,
     private val alarms: PomodoroAlarmScheduler,
     private val ringing: PomodoroRinging,
     private val io: CoroutineContext,
@@ -130,7 +132,7 @@ class PomodoroPhaseAlarm(
 
     private suspend fun <T> locked(block: suspend () -> T): T = withContext(io) { lock.withLock { block() } }
 
-    private suspend fun heldLocked(): HeldTimerState? = held()?.takeIf { available() }
+    private suspend fun heldLocked(): HeldTimerState? = timerStates.heldNow()?.takeIf { available.offersTimerApi() }
 
     private suspend fun currentLocked(): PomodoroRing? = heldLocked()?.ring()
 

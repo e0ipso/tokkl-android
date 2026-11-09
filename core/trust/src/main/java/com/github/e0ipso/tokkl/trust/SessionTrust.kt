@@ -5,6 +5,7 @@ import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ServerTrust
 import com.github.e0ipso.tokkl.api.TrustListener
 import com.github.e0ipso.tokkl.session.AccountDataOwner
+import com.github.e0ipso.tokkl.session.AccountRefreshRequests
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,20 +25,19 @@ import kotlin.coroutines.CoroutineContext
  * A refusal the user can answer, an [ApiError.TrustQuestion], opens its
  * prompt: the certificate prompt or the http warning that sign-in shows.
  * [accept] stores the pin or the confirmation in [trust], which the shared
- * client reads, then runs [retry]. [cancel] closes the prompt but keeps the
+ * client reads, then asks [refreshes] to send the refused request again. [cancel] closes the prompt but keeps the
  * refusal, so requests stay refused and the host shows a way back through
  * [reopen]. A certificate that does not name the server's host opens no
  * prompt, since no answer fixes it: the host shows only its notice. The same
  * refusal again, as every refresh brings, leaves a closed prompt closed. Any
  * answer from the server clears the refusal.
  *
- * @param retry sends the refused request again, such as the account settings
- *   refresh.
+ * @param refreshes takes the account refresh that sends the refused request again.
  * @param io where the writes to [trust] run.
  */
 class SessionTrust(
     private val trust: ServerTrust,
-    private val retry: () -> Unit,
+    private val refreshes: AccountRefreshRequests,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
 ) : TrustListener,
@@ -97,7 +97,7 @@ class SessionTrust(
             }
             if (stored) {
                 mutableState.update { if (it.refusal == refusal) State() else it }
-                retry()
+                refreshes.refresh()
             }
         }
     }

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.api.TimerPomodoro
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.HeldChange
+import com.github.e0ipso.tokkl.cache.QueueSender
 import com.github.e0ipso.tokkl.cache.toTimeEntry
 import com.github.e0ipso.tokkl.entryfields.entryLabels
 import com.github.e0ipso.tokkl.entryfields.withPicked
@@ -57,8 +58,8 @@ import kotlinx.coroutines.withTimeoutOrNull
  *
  * @param held the account's held timer state, null before the first one.
  * @param controls what the shared timer controls show: the cache's running entry, with queued edits.
- * @param sendQueued sends the change queue now and waits for it.
- * @param alarmProbe whether exact alarms are refused, until the page reports the grants itself.
+ * @param sender sends the change queue now and waits for it.
+ * @param exactAlarms whether exact alarms are refused, until the page reports the grants itself.
  * @param picker the cached projects, clients, tasks and tags, which the page's picker offers and
  *   its project and task are named from.
  * @param offline whether the phone is offline, which the picker says.
@@ -73,8 +74,8 @@ class PomodoroViewModel(
     unsent: Flow<Int>,
     refused: Flow<List<HeldChange>>,
     scope: CoroutineScope,
-    private val sendQueued: suspend () -> Unit,
-    private val alarmProbe: () -> Boolean,
+    private val sender: QueueSender,
+    private val exactAlarms: ExactAlarmAccess,
     picker: Flow<PickerSource>,
     val offline: StateFlow<Boolean>,
 ) : ViewModel(scope) {
@@ -150,7 +151,7 @@ class PomodoroViewModel(
         }
     }
 
-    private fun alarmDenied(): Boolean = exactAlarmAllowed?.not() ?: alarmProbe()
+    private fun alarmDenied(): Boolean = exactAlarmAllowed?.not() ?: exactAlarms.denied()
 
     private fun accept(value: HeldTimerState?) {
         val ended = heldNow?.state?.pomodoro != null && value?.state?.pomodoro == null
@@ -326,7 +327,7 @@ class PomodoroViewModel(
         fieldWrites.toList().joinAll()
         if (!unflushed) return shown.revision
         unflushed = false
-        sendQueued()
+        sender.sendQueued()
         actions.read()
         val moved = withTimeoutOrNull(REFRESH_MS) {
             state.first { it.shown.let { now -> now == null || now.revision > shown.revision } }

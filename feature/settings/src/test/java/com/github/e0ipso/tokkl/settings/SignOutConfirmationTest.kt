@@ -1,10 +1,15 @@
 package com.github.e0ipso.tokkl.settings
 
+import com.github.e0ipso.tokkl.session.AccountDataOwner
+import com.github.e0ipso.tokkl.session.AccountLifetime
+import com.github.e0ipso.tokkl.session.SignOut
+import com.github.e0ipso.tokkl.session.SignOutPhase
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import java.io.IOException
 
 class SignOutConfirmationTest {
 
@@ -18,11 +23,20 @@ class SignOutConfirmationTest {
             clears++
             clearSucceeds
         },
-    ) = SignOutConfirmation(
-        unsentCount = { if (countFails) throw IllegalStateException("disk I/O error") else unsent },
-        clear = clear,
-        scope = CoroutineScope(Dispatchers.Unconfined),
-    )
+    ): SignOutConfirmation {
+        val step = object : AccountDataOwner {
+            override val signOutPhase = SignOutPhase.CLEAR_DATA
+
+            override suspend fun forgetAccount() {
+                if (!clear()) throw IOException("a step failed")
+            }
+        }
+        return SignOutConfirmation(
+            unsent = { if (countFails) throw IllegalStateException("disk I/O error") else unsent },
+            signOut = SignOut(listOf(step), AccountLifetime(), Dispatchers.Unconfined),
+            scope = CoroutineScope(Dispatchers.Unconfined),
+        )
+    }
 
     @Test
     fun anEmptyQueueSignsOutWithoutAsking() {

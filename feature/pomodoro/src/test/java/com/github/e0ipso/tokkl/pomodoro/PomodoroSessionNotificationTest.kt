@@ -288,9 +288,14 @@ class PomodoroSessionNotificationTest {
         val removesBefore = f.removes
         var seenAtIdCancel: Pair<Int, Int>? = null
         f.writeFailure = true
-        val signOut = PomodoroSignOut(f.alarm.alarm, f.sync) {
-            seenAtIdCancel = f.alarm.alarms.cancels - cancelsBefore to f.removes - removesBefore
+        val sharedId = object : PomodoroSessionPoster {
+            override fun post(content: PomodoroSessionNotificationContent, account: String) = false
+
+            override fun remove() {
+                seenAtIdCancel = f.alarm.alarms.cancels - cancelsBefore to f.removes - removesBefore
+            }
         }
+        val signOut = PomodoroSignOut(f.alarm.alarm, f.sync, sharedId)
 
         assertTrue(runCatching { signOut.forgetAccount() }.exceptionOrNull() is IOException)
 

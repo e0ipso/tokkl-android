@@ -1,5 +1,7 @@
 package com.github.e0ipso.tokkl.settings
 
+import com.github.e0ipso.tokkl.cache.UnsentChanges
+import com.github.e0ipso.tokkl.session.SignOut
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,13 +14,13 @@ import kotlinx.coroutines.launch
  * received, [signOut] first asks, with their count, and [cancel] keeps everything. With an empty
  * queue it signs out at once. Call it on the main thread.
  *
- * @param unsentCount reads how many changes the queue holds.
- * @param clear signs out and clears the phone, returning false when a step failed.
+ * @param unsent reads how many changes the queue holds.
+ * @param signOut signs out and clears the phone, and says when a step failed.
  * @param scope outlives every screen, so leaving the app does not stop a sign-out half way.
  */
 class SignOutConfirmation(
-    private val unsentCount: suspend () -> Int,
-    private val clear: suspend () -> Boolean,
+    private val unsent: UnsentChanges,
+    private val signOut: SignOut,
     private val scope: CoroutineScope,
 ) {
 
@@ -38,7 +40,7 @@ class SignOutConfirmation(
         mutableState.value = State(signingOut = true)
         scope.launch {
             val unsent = try {
-                unsentCount()
+                unsent.unsentNow()
             } catch (e: CancellationException) {
                 throw e
             } catch (_: Exception) {
@@ -68,6 +70,6 @@ class SignOutConfirmation(
     }
 
     private suspend fun clearPhone() {
-        mutableState.value = State(failed = !clear())
+        mutableState.value = State(failed = !signOut.run())
     }
 }

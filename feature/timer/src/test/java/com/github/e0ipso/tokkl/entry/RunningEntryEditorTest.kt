@@ -95,7 +95,7 @@ class RunningEntryEditorTest {
         clock,
         trace = TapTrace.None,
         pauseChain = null,
-        sendQueued = {},
+        sender = {},
         discards = discardNotices(),
         timerApi = flowOf(true),
         view = MutableStateFlow(TimerView.LIST),

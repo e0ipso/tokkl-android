@@ -6,6 +6,8 @@ import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.platform.TestApp
 import com.github.e0ipso.tokkl.platform.TestScreen
+import com.github.e0ipso.tokkl.session.CountingRefresh
+import com.github.e0ipso.tokkl.session.accountSettingsIn
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -56,8 +58,8 @@ class ProjectsViewModelTest {
         model = ProjectsViewModel(
             repository = ProjectsRepository { testApi.api(url) },
             tasksRepository = TasksRepository { testApi.api(url) },
-            workspaceId = { WorkspaceId(7) },
-            refreshCache = {},
+            settings = accountSettingsIn(WorkspaceId(7)),
+            refreshes = CountingRefresh(),
             scope = scope,
             io = Dispatchers.Unconfined,
             cachedProjects = flowOf(emptyList()),

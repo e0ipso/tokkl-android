@@ -168,7 +168,7 @@ class PomodoroViewModelTest {
         val f = idle()
         val unread = PomodoroViewModel(
             emptyFlow(), emptyFlow(), f.server, f.changes, f.defaults, f.settings, f.unsent, f.refused, f.scope,
-            sendQueued = {}, alarmProbe = { false }, picker = flowOf(PickerSource()), offline = MutableStateFlow(false),
+            sender = {}, exactAlarms = { false }, picker = flowOf(PickerSource()), offline = MutableStateFlow(false),
         )
         assertTrue(unread.state.value.loading)
         assertFalse(unread.state.value.canStart)

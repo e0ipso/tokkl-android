@@ -55,7 +55,8 @@ class AccountTimerStates(
     private val clock: Clock,
     private val io: CoroutineContext,
 ) : AccountDataOwner,
-    DiscardNotices {
+    DiscardNotices,
+    CurrentTimerState {
 
     override val signOutPhase = SignOutPhase.RETIRE_STATE
 
@@ -68,15 +69,10 @@ class AccountTimerStates(
     private val lock = Any()
     private var forAccount = ForAccount(lifetime.accounts.value, lazy { newTimerState(restore = true) })
 
-    /** The signed-in account's source. */
-    val source: TimerStateSource
+    override val source: TimerStateSource
         get() = current().source
 
-    /** The signed-in account's held state now, or null without one. Loads the stored state on first use. */
-    fun heldNow(): HeldTimerState? = source.state.value
-
-    /** The name the signed-in account's timer controls carry in their targets. */
-    fun account(): String = current().account
+    override fun account(): String = current().account
 
     /** The source and the account name of the account signed in now, read together. */
     fun current(): AccountTimerState {
@@ -132,7 +128,7 @@ class AccountTimerStates(
     }.flowOn(io).distinctUntilChanged()
 
     /** What [controls] holds now. */
-    suspend fun currentControls(): TimerControls = controls.first()
+    override suspend fun currentControls(): TimerControls = controls.first()
 
     /**
      * Retires the source and clears its store and the remembered Start fields, so the account

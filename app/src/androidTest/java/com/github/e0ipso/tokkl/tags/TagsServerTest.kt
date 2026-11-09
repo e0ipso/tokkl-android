@@ -41,6 +41,7 @@ import com.github.e0ipso.tokkl.model.Tag
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.platform.AppForeground
+import com.github.e0ipso.tokkl.session.CacheRefresh
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -101,8 +102,12 @@ class TagsServerTest {
         runBlocking { app.accountRefresh.refresh().join() }
         model = TagsViewModel(
             repository = ServerTagsRepository(Session(context).api),
-            workspaceId = { app.accountSettings.state.value?.defaultWorkspaceId },
-            refreshCache = { refreshes += app.accountRefresh.refreshAfterChange() },
+            settings = app.accountSettings,
+            refreshes = object : CacheRefresh {
+                override fun refresh() = app.accountRefresh.refresh().also { refreshes += it }
+
+                override fun refreshAfterChange() = app.accountRefresh.refreshAfterChange().also { refreshes += it }
+            },
             scope = scope,
             io = Dispatchers.IO,
             cachedTags = app.cache.tags,

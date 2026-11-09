@@ -9,9 +9,12 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.appApiClient
+import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.WorkspaceId
+import com.github.e0ipso.tokkl.session.AccountRefreshRequests
+import com.github.e0ipso.tokkl.session.capabilitiesOf
 import com.github.e0ipso.tokkl.tokklApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -500,8 +503,8 @@ class CacheDatabaseMigrationTest {
                     },
                     clock = Clock.systemUTC(),
                     spans = ServerSpans.Unsnapped,
-                    allDay = { false },
-                    undo = DeleteUndoer(store, client, Dispatchers.IO, restored = {}),
+                    capabilities = capabilitiesOf(Capabilities.NONE),
+                    undo = DeleteUndoer(store, client, Dispatchers.IO, refreshes = AccountRefreshRequests()),
                 )
                 val outcome = runBlocking { sender.sendAndWait() }
                 assertTrue(

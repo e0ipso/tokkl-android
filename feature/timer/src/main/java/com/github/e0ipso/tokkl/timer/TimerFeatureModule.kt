@@ -2,14 +2,13 @@ package com.github.e0ipso.tokkl.timer
 
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.ChangeQueue
-import com.github.e0ipso.tokkl.cache.ChangeSender
-import com.github.e0ipso.tokkl.cache.DeleteUndoer
 import com.github.e0ipso.tokkl.calendar.CalendarViewModel
 import com.github.e0ipso.tokkl.calendar.ServerWeeks
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.entry.EntryFormViewModel
 import com.github.e0ipso.tokkl.entry.openIn
 import com.github.e0ipso.tokkl.favorites.FavoritesServer
+import com.github.e0ipso.tokkl.favorites.FavoritesStore
 import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
 import com.github.e0ipso.tokkl.history.EntryActionsViewModel
 import com.github.e0ipso.tokkl.history.HistoryViewModel
@@ -55,13 +54,15 @@ val timerFeatureModule = module {
         TimerViewSetting(
             store = get<TimerViewStore>(),
             client = get<Session>(),
-            keepsTimerView = get<CapabilitiesSource>()::keepsPreferences,
+            capabilities = get(),
             scope = get(),
         )
     } binds arrayOf(AccountDataOwner::class, StartupLoad::class)
 
     // The system trace of each Start and Stop tap on the Timer page.
     single { TapTrace.System }
+
+    single<FavoritesStore> { FavoritesServer(client = get<Session>(), cache = get()) }
 
     // The history's and the calendar's days outside the cache, from the server.
     single { OlderPages(get<Session>()) }
@@ -85,13 +86,11 @@ val timerFeatureModule = module {
         )
     }
     viewModel {
-        val capabilities = get<CapabilitiesSource>()
         EntryActionsViewModel(
             entries = get<AccountCache>().entries,
             changes = get<ChangeQueue>(),
-            undoDelete = get<DeleteUndoer>()::undoDelete,
-            // A tap on a screen, which shows once the capabilities have loaded.
-            canRestore = { capabilities.state.value.restore },
+            undo = get(),
+            capabilities = get(),
             accountSettings = get<AccountSettingsSource>().state,
             scope = viewModelCoroutineScope(),
             clock = get(),
@@ -118,7 +117,6 @@ val timerFeatureModule = module {
     }
     viewModel {
         val cache = get<AccountCache>()
-        val sender = get<ChangeSender>()
         TimerViewModel(
             controls = get<AccountTimerStates>().controls,
             projects = cache.projects,
@@ -129,7 +127,7 @@ val timerFeatureModule = module {
             clock = get(),
             trace = get(),
             pauseChain = get<TimerActions>(),
-            sendQueued = sender::sendQueued,
+            sender = get(),
             discards = get<AccountTimerStates>(),
             timerApi = get<CapabilitiesSource>().state.map { it.timerState },
             view = get<TimerViewSetting>().view,
@@ -143,7 +141,7 @@ val timerFeatureModule = module {
             projects = cache.projects,
             tasks = cache.tasks,
             available = get<CapabilitiesSource>().state.map { it.favorites },
-            store = FavoritesServer(client = get<Session>(), cache = cache)::save,
+            store = get(),
             scope = scope,
             io = io(),
             picker = pickerSource(cache.projects, cache.clients, cache.tasks, cache.tags),

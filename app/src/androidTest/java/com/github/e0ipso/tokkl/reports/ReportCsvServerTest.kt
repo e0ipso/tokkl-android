@@ -51,7 +51,7 @@ class ReportCsvServerTest {
             client = { fixture.account.client.tokklApi() },
             files = files,
             account = GlobalContext.get().get(),
-            csvMissing = {},
+            capabilities = GlobalContext.get().get(),
             scope = scope,
             io = Dispatchers.IO,
         )

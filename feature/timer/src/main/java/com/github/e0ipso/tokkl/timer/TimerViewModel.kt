@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.timer
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.cache.EntryChanges
+import com.github.e0ipso.tokkl.cache.QueueSender
 import com.github.e0ipso.tokkl.entryfields.withPicked
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.Project
@@ -66,7 +67,7 @@ import java.time.temporal.ChronoUnit
  * @param trace marks each Start and Stop tap until the screen reports with [shown] that it drew
  *   what the tap did.
  * @param pauseChain the server's Pause, Resume and Discard, or null where the app sends none.
- * @param sendQueued sends the queue now and waits for it, so a description typed before Pause
+ * @param sender sends the queue now and waits for it, so a description typed before Pause
  *   reaches the server before the Pause does.
  * @param discards the too-short pomodoro whose notice no screen has shown, from the account's
  *   timer state, which a screen takes when it shows it.
@@ -84,7 +85,7 @@ class TimerViewModel(
     private val clock: Clock,
     private val trace: TapTrace,
     private val pauseChain: PauseActions?,
-    private val sendQueued: suspend () -> Unit,
+    private val sender: QueueSender,
     discards: DiscardNotices,
     timerApi: Flow<Boolean>,
     view: StateFlow<TimerView>,
@@ -313,7 +314,7 @@ class TimerViewModel(
         act(running.target, done = { it.target != running.target }) {
             if (typed != null) {
                 fieldEdits.awaitWrites()
-                sendQueued()
+                sender.sendQueued()
             }
             actions.pause()
         }

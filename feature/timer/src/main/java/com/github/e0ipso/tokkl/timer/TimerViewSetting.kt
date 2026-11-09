@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.timer
 
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.TimerViewChange
+import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.preferences.PreferenceCodec
 import com.github.e0ipso.tokkl.preferences.StoredPreference
 import com.github.e0ipso.tokkl.preferences.SyncedPreference
@@ -29,13 +30,13 @@ typealias StoredTimerView = StoredPreference<TimerView>
  *
  * @param store keeps the view on the phone. It loads from it as this is made, off the main thread.
  * @param client the signed-in account's API client, or null when signed out.
- * @param keepsTimerView true when the server keeps Tokkl's preferences, read when a tap is sent.
+ * @param capabilities whether the server keeps Tokkl's preferences, read when a tap is sent.
  * @param scope outlives every screen, so leaving the app does not cancel a write.
  */
 class TimerViewSetting(
     store: ClearableStore<StoredTimerView>,
     client: ApiClientProvider,
-    private val keepsTimerView: suspend () -> Boolean,
+    private val capabilities: CapabilitiesSource,
     scope: CoroutineScope,
 ) : AccountDataOwner,
     StartupLoad {
@@ -68,12 +69,12 @@ class TimerViewSetting(
 
     /** Shows [view] at once, keeps it on the phone and sends it to the server in the background. */
     fun choose(view: TimerView) {
-        preference.change(view, unsent = { true }, sendIf = keepsTimerView)
+        preference.change(view, unsent = { true }, sendIf = capabilities::keepsPreferences)
     }
 
     /**
      * Takes the refresh's `GET /api/v9/me/preferences`, null when it failed, from a server that
-     * keeps Tokkl's preferences when [keepsTimerView]. Sends an unsent choice instead of reading
+     * keeps Tokkl's preferences when `keepsTimerView`. Sends an unsent choice instead of reading
      * the server's.
      */
     suspend fun refreshed(preferences: MePreferences?, keepsTimerView: Boolean) {

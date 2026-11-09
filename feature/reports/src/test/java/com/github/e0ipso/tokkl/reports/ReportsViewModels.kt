@@ -7,6 +7,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.platform.AppForeground
 import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.session.capabilitiesOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -44,7 +45,7 @@ internal fun reportsViewModel(
             client = { null },
             files = files,
             account = ExportAccount(files),
-            csvMissing = {},
+            capabilities = capabilitiesOf(Capabilities.NONE),
             scope = scope,
             io = io,
         )

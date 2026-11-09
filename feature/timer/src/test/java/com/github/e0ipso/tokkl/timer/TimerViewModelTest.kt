@@ -83,7 +83,7 @@ class TimerViewModelTest {
             clock = clock,
             trace = trace,
             pauseChain = null,
-            sendQueued = {},
+            sender = {},
             discards = discardNotices(),
             timerApi = flowOf(true),
             view = MutableStateFlow(TimerView.LIST),

@@ -3,7 +3,9 @@ package com.github.e0ipso.tokkl.catalog
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.model.WorkspaceId
+import com.github.e0ipso.tokkl.session.CountingRefresh
 import com.github.e0ipso.tokkl.session.ServerProblem
+import com.github.e0ipso.tokkl.session.accountSettingsIn
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.junit.Assert.assertEquals
@@ -40,8 +42,8 @@ class CatalogModelTest {
 
     private val model = CatalogModel<List<String>, String>(
         repository = repository,
-        workspaceId = { WorkspaceId(7) },
-        refreshCache = {},
+        settings = accountSettingsIn(WorkspaceId(7)),
+        refreshes = CountingRefresh(),
         scope = CoroutineScope(Dispatchers.Unconfined),
         io = Dispatchers.Unconfined,
     )

@@ -38,7 +38,8 @@ class AccountRefresh(
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
     private val steps: AccountRefreshSteps,
-) : AccountDataOwner {
+) : AccountDataOwner,
+    CacheRefresh {
 
     override val signOutPhase = SignOutPhase.FINISH_REFRESH
 
@@ -64,7 +65,7 @@ class AccountRefresh(
      * stored workspace. While one refresh runs, another call returns that one instead of sending
      * a second request.
      */
-    fun refresh(): Job = refreshing.launch { refreshNow() }
+    override fun refresh(): Job = refreshing.launch { refreshNow() }
 
     /**
      * A [refresh] that reads the server after a change the caller has just sent, such as a new
@@ -73,7 +74,7 @@ class AccountRefresh(
      * or joins one that another call started meanwhile. Returns the job that ends with that
      * refresh.
      */
-    fun refreshAfterChange(): Job = scope.launch(io) {
+    override fun refreshAfterChange(): Job = scope.launch(io) {
         refreshing.running()?.join()
         refresh().join()
     }

@@ -13,6 +13,7 @@ import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timernotice.showTimerActionFailure
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
+import com.github.e0ipso.tokkl.timerstate.CurrentTimerState
 import com.github.e0ipso.tokkl.timerstate.SessionActions
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import com.github.e0ipso.tokkl.timerstate.TimerActions
@@ -162,7 +163,10 @@ private fun KoinComponent.dispatchPomodoroWidget(context: Context, tap: Pomodoro
         // Keep the captured holder and credential together across sign-out/account replacement.
         val actions = TimerActions(
             client = { api.takeIf { timerStates.source === source && session.isSignedIn() } },
-            states = { source },
+            // The captured holder, whichever account signs in meanwhile.
+            states = object : CurrentTimerState by timerStates {
+                override val source = source
+            },
             io = io,
         )
         sendPomodoroWidgetAction(tap, current, actions)?.let { showTimerActionFailure(app, it) }

@@ -9,8 +9,12 @@ import com.github.e0ipso.tokkl.api.ServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.api.UntrustedCertificateException
+import com.github.e0ipso.tokkl.session.AccountRefreshRequests
+import com.github.e0ipso.tokkl.session.CacheRefresh
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonObject
 import mockwebserver3.MockResponse
@@ -164,12 +168,16 @@ class SessionTrustTest {
         assertEquals(0, retries)
     }
 
-    private fun model(trust: ServerTrust) = SessionTrust(
-        trust,
-        retry = { retries++ },
-        scope = CoroutineScope(Dispatchers.Unconfined),
-        io = Dispatchers.Unconfined,
-    )
+    private fun model(trust: ServerTrust): SessionTrust {
+        val refreshes = AccountRefreshRequests()
+        val counting = object : CacheRefresh {
+            override fun refresh(): Job = Job().also { retries++ }
+
+            override fun refreshAfterChange(): Job = Job()
+        }
+        CoroutineScope(Dispatchers.Unconfined).launch { refreshes.forward(lazy { counting }) }
+        return SessionTrust(trust, refreshes, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined)
+    }
 
     /** The signed-in session's client, as Session builds it. */
     private fun client(httpClient: OkHttpClient = testApi.http.instance) =

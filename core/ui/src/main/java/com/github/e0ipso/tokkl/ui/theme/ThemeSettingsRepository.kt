@@ -16,6 +16,18 @@ import kotlinx.coroutines.sync.withLock
 import java.io.IOException
 
 /**
+ * Where the theme settings are kept. The settings feature keeps them in a preferences file, out of
+ * this module's reach; the unit tests keep them in memory.
+ */
+interface ThemeSettingsDisk {
+    @Throws(IOException::class)
+    suspend fun load(): ThemeSettings
+
+    @Throws(IOException::class)
+    suspend fun save(settings: ThemeSettings)
+}
+
+/**
  * The theme settings for the whole process. They load as this is made, in [scope], and the store
  * reads the disk off the main thread; MainActivity draws its first frame once they have loaded,
  * so the app starts in the right colours. A change shows in [state] at once, so the theme redraws
@@ -23,15 +35,10 @@ import java.io.IOException
  * back to what the disk holds, unless a newer change has replaced it, so the screen never shows a
  * choice that would be gone after a restart.
  *
- * @param load reads the stored settings.
- * @param store writes the settings.
+ * @param store reads and writes the stored settings.
  * @param scope outlives every screen, so leaving the app does not cancel a pending write.
  */
-class ThemeSettingsRepository(
-    load: suspend () -> ThemeSettings,
-    private val store: suspend (ThemeSettings) -> Unit,
-    private val scope: CoroutineScope,
-) {
+class ThemeSettingsRepository(private val store: ThemeSettingsDisk, private val scope: CoroutineScope) {
 
     private val mutableState = MutableStateFlow(ThemeSettings())
 
@@ -46,7 +53,7 @@ class ThemeSettingsRepository(
     // Unconfined, so the load ends on the store's I/O thread and never waits for the main thread.
     private val loading = scope.launch(Dispatchers.Unconfined, start = CoroutineStart.UNDISPATCHED) {
         try {
-            val stored = load()
+            val stored = store.load()
             saved = stored
             mutableState.value = stored
         } catch (_: IOException) {
@@ -79,7 +86,7 @@ class ThemeSettingsRepository(
                 val wanted = mutableState.value
                 if (wanted == saved) return@withLock
                 try {
-                    store(wanted)
+                    store.save(wanted)
                     saved = wanted
                 } catch (_: IOException) {
                     mutableState.compareAndSet(wanted, saved)

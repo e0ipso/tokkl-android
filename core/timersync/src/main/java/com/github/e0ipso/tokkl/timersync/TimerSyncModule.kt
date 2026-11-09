@@ -1,14 +1,10 @@
 package com.github.e0ipso.tokkl.timersync
 
-import android.os.SystemClock
 import com.github.e0ipso.tokkl.cache.ChangeSender
-import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.platform.AppHook
 import com.github.e0ipso.tokkl.platform.DefaultDispatcher
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.session.AccountDataOwner
-import com.github.e0ipso.tokkl.session.Session
-import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -40,25 +36,25 @@ val timerSyncModule = module {
     // time, not on the main thread, with its reconnect delays. Its clock is elapsedRealtime,
     // which counts deep sleep too, so a stream that went quiet while the phone slept counts as
     // silent for all of it once the phone wakes.
+    single<MonotonicClock> { ElapsedRealtimeClock }
     single {
         val oneAtATime = get<CoroutineDispatcher>(DefaultDispatcher).limitedParallelism(1)
         TimerSync(
             scope = CoroutineScope(SupervisorJob() + oneAtATime),
-            now = SystemClock::elapsedRealtime,
+            now = get(),
             connections = get<TimerEventConnections>(),
         )
     }
 
+    single<ServiceStart> { TimerSyncServiceStart(androidContext()) }
     single {
-        val context = androidContext()
-        val sender = get<ChangeSender>()
         TimerSyncFollower(
-            startService = { TimerSyncService.start(context) },
-            signedIn = get<Session>()::isSignedIn,
-            source = get<AccountTimerStates>()::source,
+            startService = get(),
+            signedIn = get(),
+            timerState = get(),
             timerSync = get(),
-            timerApi = get<CapabilitiesSource>()::offersTimerApi,
-            signInNeeded = { sender.signInNeeded.value },
+            timerApi = get(),
+            signInNeeded = get<ChangeSender>().signInNeeded,
             syncWatcher = get(),
         )
     } bind AccountDataOwner::class

@@ -75,11 +75,12 @@ data class ShortStopOffer(val entryId: EntryId, val capturedAt: Instant)
 class ChangeQueue(
     private val store: RoomChangeStore,
     private val io: CoroutineContext,
-    private val onQueued: () -> Unit,
+    private val onQueued: QueuedListener,
     private val clock: Clock,
     private val spans: ServerSpans,
 ) : EntryChanges,
-    HeldChanges {
+    HeldChanges,
+    UnsentChanges {
 
     private val dao = store.dao
 
@@ -87,7 +88,7 @@ class ChangeQueue(
     val unsentCount: Flow<Int> = dao.count()
 
     /** How many changes the server has not received, held ones included: [unsentCount] now. */
-    suspend fun unsentNow(): Int = unsentCount.first()
+    override suspend fun unsentNow(): Int = unsentCount.first()
 
     /** The changes the server refused, which wait for the user, oldest first (docs/PRD.md O6). */
     override val held: Flow<List<HeldChange>> = dao.held().map { changes -> changes.map { it.toHeld() } }
@@ -297,7 +298,7 @@ class ChangeQueue(
         val (result, holdsChanges) = withContext(io) {
             store.transaction { change() to (dao.first() != null) }
         }
-        if (holdsChanges) onQueued()
+        if (holdsChanges) onQueued.queued()
         return result
     }
 
@@ -458,4 +459,14 @@ class ChangeQueue(
 
     /** The server's id for a local id the server has answered, or [entryId] as it is. */
     private fun resolve(entryId: EntryId): Long = store.resolve(entryId)
+}
+
+/** Hears that a change went into the queue. [SendOnQueue] starts the sends; the queue's device tests hear nothing. */
+fun interface QueuedListener {
+    fun queued()
+}
+
+/** How many changes the server has not received, held ones included, as [ChangeQueue] counts them. */
+fun interface UnsentChanges {
+    suspend fun unsentNow(): Int
 }

@@ -32,7 +32,13 @@ class ReminderSyncTest {
     private val mappings = mutableMapOf<EntryId, EntryId>()
     private var removals = 0
     private fun sync() = ReminderSync(
-        inputs = { input },
+        account = account(
+            stop = {
+                stopped += it
+                true
+            },
+            pause = { null },
+        ),
         ids = { mappings[it] ?: it },
         timers = valueStore(load = { stored }, save = { stored = it }),
         delays = object : ReminderDelays {
@@ -45,11 +51,6 @@ class ReminderSyncTest {
             override fun cancel() = waiting.clear()
         },
         notice = notice(onRemove = {}),
-        stop = {
-            stopped += it
-            true
-        },
-        pause = { null },
     )
 
     /** The reminder notification as a list of posts, with [onRemove] for its removals. */
@@ -232,7 +233,13 @@ class ReminderSyncTest {
     }
 
     private fun pausing(pause: suspend (EntryId) -> SurfaceTap.Request?) = ReminderSync(
-        inputs = { input },
+        account = account(
+            stop = {
+                stopped += it
+                true
+            },
+            pause = pause,
+        ),
         ids = { mappings[it] ?: it },
         timers = valueStore(
             load = { stored },
@@ -246,12 +253,17 @@ class ReminderSyncTest {
             override fun cancel() = waiting.clear()
         },
         notice = notice(onRemove = { removals++ }),
-        stop = {
-            stopped += it
-            true
-        },
-        pause = pause,
     )
+
+    /** The account as the test sets [input], with [stop] and [pause]. */
+    private fun account(stop: suspend (EntryId) -> Boolean, pause: suspend (EntryId) -> SurfaceTap.Request?) =
+        object : ReminderAccount {
+            override suspend fun input() = input
+
+            override suspend fun stop(entryId: EntryId) = stop(entryId)
+
+            override suspend fun pause(entryId: EntryId) = pause(entryId)
+        }
 
     @Test fun futureTimerWaitsAndChangingHoursReplacesTheDelay() = runTest {
         input = input.copy(running = entry.copy(start = now))

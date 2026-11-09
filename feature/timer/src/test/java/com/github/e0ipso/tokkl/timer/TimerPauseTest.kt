@@ -117,7 +117,7 @@ class TimerPauseTest {
         scope = scope,
         clock = clock,
         pauseChain = server,
-        sendQueued = { events += "send queued" },
+        sender = { events += "send queued" },
         discards = discardNotices(discardNotices, takeDiscardNotice),
         trace = TapTrace.None,
         timerApi = flowOf(true),
