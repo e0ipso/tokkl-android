@@ -19,9 +19,12 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -31,13 +34,13 @@ import java.time.Instant
 import java.time.ZoneOffset
 
 /**
- * The timer's taps without a view model: what goes to the queue and the server, and what [local]
- * holds meanwhile. Unconfined runs each tap until it waits for the queue or the server.
+ * The timer's taps without a view model: what goes to the queue and the server, and what
+ * [TimerController.taps] holds meanwhile. Unconfined runs each tap until it waits for the queue or
+ * the server.
  */
-class TimerTapActionsTest {
+class TimerControllerTest {
 
-    private val local = MutableStateFlow(TimerTaps(draft = EntryFields(description = "Write")))
-    private val cached = MutableStateFlow<CachedControls>(CachedControls.Read(TimerControls.Idle, null, null))
+    private val controls = MutableStateFlow<TimerControls>(TimerControls.Idle)
     private val settings = MutableStateFlow<AccountSettings?>(
         AccountSettings("UTC", DayOfWeek.MONDAY, null, defaultWorkspaceId = WorkspaceId(7)),
     )
@@ -48,63 +51,100 @@ class TimerTapActionsTest {
     /** Swallows the start the queue refuses, as a test cannot let it reach the thread. */
     private val scope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob() + CoroutineExceptionHandler { _, _ -> })
 
-    private val snapshot = TimerSnapshot(cached, local, settings, MutableStateFlow(true))
-    private val taps = TimerTapActions(
-        local = local,
-        cached = cached,
-        snapshot = snapshot,
+    private val timer = TimerController(
+        controls = controls,
+        projects = MutableStateFlow(emptyList()),
+        tasks = MutableStateFlow(emptyList()),
         settings = settings,
+        timerApi = MutableStateFlow(true),
         changes = changes,
         pauseChain = server,
         sender = { changes.calls += "send queue" },
-        fieldEdits = RunningFieldEdits(local, cached, changes, scope, snapshot, MutableStateFlow(Catalog())),
         notices = notices,
         sections = TapSections(TapTrace.None),
         clock = Clock.fixed(TAP, ZoneOffset.UTC),
         scope = scope,
     )
 
+    init {
+        // The screen collects the state while it shows.
+        scope.launch { timer.state.collect {} }
+        timer.editDescription("Write")
+    }
+
+    @After
+    fun tearDown() {
+        scope.cancel()
+    }
+
     @Test
     fun aDoubleStartQueuesOneEntryWithTheDraft() {
-        taps.start()
-        taps.start()
+        timer.start()
+        timer.start()
 
         assertEquals(listOf("start 7 Write"), changes.calls)
-        assertEquals(EntryFields(), local.value.draft)
-        assertEquals(PendingTap.Starting(TAP, EntryFields(description = "Write"), WorkspaceId(7)), local.value.pending)
+        assertEquals(EntryFields(), timer.taps.value.draft)
+        assertEquals(
+            PendingTap.Starting(TAP, EntryFields(description = "Write"), WorkspaceId(7)),
+            timer.taps.value.pending,
+        )
     }
 
     @Test
     fun aStartTheQueueRefusesBringsTheDraftBack() {
         changes.refuseStart = true
 
-        taps.start()
+        timer.start()
 
-        assertEquals(EntryFields(description = "Write"), local.value.draft)
-        assertNull(local.value.pending)
+        assertEquals(EntryFields(description = "Write"), timer.taps.value.draft)
+        assertNull(timer.taps.value.pending)
     }
 
     @Test
     fun stopOfTheRunningEntryGoesToTheQueue() {
-        cached.value = CachedControls.Read(running(), null, null)
+        controls.value = running()
 
-        taps.stop()
+        timer.stop()
 
         assertEquals(listOf("stop 42"), changes.calls)
-        assertEquals(PendingTap.Stopping(TAP), local.value.pending)
+        assertEquals(PendingTap.Stopping(TAP), timer.taps.value.pending)
     }
 
     @Test
     fun aRefusedPauseBecomesANoticeAndFreesTheTimer() = runBlocking {
-        cached.value = CachedControls.Read(running(), null, null)
+        controls.value = running()
         server.answer = TimerActionResult.Refused
 
-        taps.pause()
+        timer.pause()
 
         assertEquals(listOf("pause"), server.calls)
-        assertNull(local.value.pending)
+        assertNull(timer.taps.value.pending)
         val notice = notices.notices(MutableStateFlow(null)).first() as TimerNotice.ActionFailed
         assertEquals(TimerActionResult.Refused, notice.result)
+    }
+
+    @Test
+    fun aTapThatEndsAfterANewerOneLeavesTheNewerOnePending() {
+        val stopping = PendingTap.Stopping(TAP)
+        val acting = PendingTap.Acting(TimerTarget(entryId = EntryId(42)))
+
+        val taps = TimerTaps().reduce(TapEvent.StopTapped(stopping)).reduce(TapEvent.ActionTapped(acting))
+
+        assertEquals(acting, taps.reduce(TapEvent.TapEnded(stopping)).pending)
+        assertNull(taps.reduce(TapEvent.TapEnded(acting)).pending)
+    }
+
+    @Test
+    fun aStartThatQueuedNothingKeepsADraftTypedMeanwhile() {
+        val starting = PendingTap.Starting(TAP, EntryFields(description = "Write"), WorkspaceId(7))
+        val typed = TimerTaps(draft = EntryFields(description = "Write"))
+            .reduce(TapEvent.StartTapped(starting, typed = false))
+            .reduce(TapEvent.Drafted(EntryFields(description = "Read")))
+
+        val cleared = EntryFields(description = "Write")
+        val ended = typed.reduce(TapEvent.StartEnded(starting, queued = false, draft = cleared))
+
+        assertEquals(TimerTaps(draft = EntryFields(description = "Read")), ended)
     }
 
     private fun running() = TimerControls.Running(

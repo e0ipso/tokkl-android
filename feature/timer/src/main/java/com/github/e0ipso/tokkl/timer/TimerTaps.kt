@@ -28,8 +28,8 @@ internal sealed interface CachedControls {
 }
 
 /**
- * What the taps have done that the cache or the server may not show yet. It changes only through
- * the transitions below, one for each tap and for each end of one.
+ * What the taps have done that the cache or the server may not show yet. Only [reduce] makes a
+ * new one, for a [TapEvent].
  */
 internal data class TimerTaps(
     /** What Start starts with. */
@@ -37,47 +37,74 @@ internal data class TimerTaps(
     val edit: FieldEdit? = null,
     val pending: PendingTap? = null,
 ) {
-    /**
-     * A Start tap: [tap] waits for the queue, and the draft makes way for the new entry. A [typed]
-     * edit goes with it.
-     */
-    fun startTapped(tap: PendingTap.Starting, typed: Boolean) =
-        copy(pending = tap, draft = EntryFields(), edit = if (typed) null else edit)
-
-    /**
-     * The Start [tap] ended, unless a newer tap replaced it. When it [queued] nothing and no new draft
-     * was typed meanwhile, the [draft] it cleared comes back.
-     */
-    fun startEnded(tap: PendingTap.Starting, queued: Boolean, draft: EntryFields) = when {
-        pending != tap -> this
-        !queued && this.draft == EntryFields() -> copy(pending = null, draft = draft)
-        else -> copy(pending = null)
-    }
-
-    /** A Stop tap: [tap] waits for the queue, and the edit it sends with it no longer shows. */
-    fun stopTapped(tap: PendingTap.Stopping) = copy(pending = tap, edit = null)
-
-    /** A Pause, Resume or Stop while paused: [tap] waits for the server. */
-    fun actionTapped(tap: PendingTap.Acting) = copy(pending = tap)
-
-    /** [tap] ended, unless a newer tap replaced it. */
-    fun tapEnded(tap: PendingTap) = if (pending == tap) copy(pending = null) else this
-
-    /** The idle timer's draft changed with [change]. */
-    fun drafted(change: (EntryFields) -> EntryFields) = copy(draft = change(draft))
-
-    /** [edit] shows over the running entry. */
-    fun editing(edit: FieldEdit) = copy(edit = edit)
-
-    /** [edit] no longer shows, unless a newer edit replaced it: the cache has it, or it gave way. */
-    fun editEnded(edit: FieldEdit) = if (this.edit == edit) copy(edit = null) else this
-
     /** The edit shown over the running entry [shown], while it still matches the [cached] entry. */
     fun editFor(shown: TimerState.Running, cached: CachedControls): FieldEdit? {
         val read = cached as? CachedControls.Read ?: return null
         val entry = read.controls.runningEntry()?.takeIf { it.id == shown.entryId } ?: return null
         return edit?.takeIf { it.matches(entry, read) }
     }
+
+    /** The description still being typed for the running entry [shown], not queued yet. */
+    fun typedFor(shown: TimerState.Running, cached: CachedControls): TypedEdit? =
+        editFor(shown, cached)?.takeIf { !it.sent }?.let { edit ->
+            shown.entryId?.let { TypedEdit(RunningEntryIdentity(it, shown.workspaceId, shown.start), edit) }
+        }
+}
+
+/** What happened to the taps: a tap, or the end of the effect one started. */
+internal sealed interface TapEvent {
+    /** Start was tapped: [tap] waits for the queue. A [typed] edit goes with it. */
+    data class StartTapped(val tap: PendingTap.Starting, val typed: Boolean) : TapEvent
+
+    /** The Start [tap] ended. It [queued] the entry or not, and [draft] is the draft it cleared. */
+    data class StartEnded(val tap: PendingTap.Starting, val queued: Boolean, val draft: EntryFields) : TapEvent
+
+    /** Stop was tapped: [tap] waits for the queue. */
+    data class StopTapped(val tap: PendingTap.Stopping) : TapEvent
+
+    /** Pause, Resume or Stop while paused was tapped: [tap] waits for the server. */
+    data class ActionTapped(val tap: PendingTap.Acting) : TapEvent
+
+    /** The Stop or pause chain [tap] ended. */
+    data class TapEnded(val tap: PendingTap) : TapEvent
+
+    /** The idle timer's draft is now [draft]. */
+    data class Drafted(val draft: EntryFields) : TapEvent
+
+    /** [edit] shows over the running entry. */
+    data class Edited(val edit: FieldEdit) : TapEvent
+
+    /** [edit] has reached the cache, or gave way. */
+    data class EditEnded(val edit: FieldEdit) : TapEvent
+}
+
+/**
+ * The taps after [event]. A tap that ends changes nothing once a newer one replaced it, and an
+ * edit that ends nothing once a newer edit replaced it.
+ */
+internal fun TimerTaps.reduce(event: TapEvent): TimerTaps = when (event) {
+    // The draft makes way for the new entry, and a typed edit goes with the start.
+    is TapEvent.StartTapped -> copy(pending = event.tap, draft = EntryFields(), edit = if (event.typed) null else edit)
+
+    // A start that queued nothing brings its draft back, unless a new one was typed meanwhile.
+    is TapEvent.StartEnded -> when {
+        pending != event.tap -> this
+        !event.queued && draft == EntryFields() -> copy(pending = null, draft = event.draft)
+        else -> copy(pending = null)
+    }
+
+    // The edit a Stop sends with it no longer shows.
+    is TapEvent.StopTapped -> copy(pending = event.tap, edit = null)
+
+    is TapEvent.ActionTapped -> copy(pending = event.tap)
+
+    is TapEvent.TapEnded -> if (pending == event.tap) copy(pending = null) else this
+
+    is TapEvent.Drafted -> copy(draft = event.draft)
+
+    is TapEvent.Edited -> copy(edit = event.edit)
+
+    is TapEvent.EditEnded -> if (edit == event.edit) copy(edit = null) else this
 }
 
 /** [fields] for the running entry that started at [start], shown until the cache has them. [sent] once queued. */
@@ -195,6 +222,9 @@ internal fun TimerControls.runningEntry(): TimeEntry? = (this as? TimerControls.
 
 /** The controls, or null while unread. */
 internal fun CachedControls.controls(): TimerControls? = (this as? CachedControls.Read)?.controls
+
+/** The cached projects and tasks, for the timer's labels and its picks. */
+internal data class Catalog(val projects: List<Project> = emptyList(), val tasks: List<Task> = emptyList())
 
 /**
  * Waits until the controls pass [done], or gives up after [SETTLE_MS]: far longer than a write to

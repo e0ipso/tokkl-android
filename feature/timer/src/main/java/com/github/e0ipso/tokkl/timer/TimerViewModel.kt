@@ -21,23 +21,18 @@ import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import com.github.e0ipso.tokkl.timerstate.target
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import java.time.Clock
 
 /**
  * The timer on the Timer page (docs/PRD.md T1): Start, Pause, Resume, Stop and the running entry's
- * fields. The taps are [TimerTapActions], the field edits [RunningFieldEdits], the trace of each
- * Start and Stop [TapSections], and what the signed-in frame reads of the timer, with its notices,
- * is [frame].
- *
- * [local] holds what the taps did that the cache or the server may not show yet, and changes only
- * through the transitions in TimerTaps.kt. The shown [state] is [timerState] of [local] over the
- * cached controls.
+ * fields. The taps and the field edits are [TimerController], which owns what they did that the
+ * cache or the server may not show yet and changes it only through the events in TimerTaps.kt.
+ * The trace of each Start and Stop is [TapSections], and what the signed-in frame reads of the
+ * timer, with its notices, is [frame].
  *
  * Call the tap handlers on the main thread. The running clock counts from
  * [TimerState.Running.start] on the phone and never asks the server (principle 3).
@@ -63,7 +58,7 @@ class TimerViewModel(
     projects: Flow<List<Project>>,
     tasks: Flow<List<Task>>,
     val accountSettings: StateFlow<AccountSettings?>,
-    private val changes: RunningEntryChanges,
+    changes: RunningEntryChanges,
     scope: CoroutineScope,
     clock: Clock,
     trace: TapTrace,
@@ -74,56 +69,27 @@ class TimerViewModel(
     view: StateFlow<TimerView>,
 ) : ViewModel(scope) {
 
-    private val local = MutableStateFlow(TimerTaps())
-
-    private val cached: StateFlow<CachedControls> = controls
-        .map<TimerControls, CachedControls> { entry ->
-            val editId = local.value.edit?.entryId
-            CachedControls.Read(entry, editId, editId?.let { changes.currentId(it) })
-        }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), CachedControls.Unread)
-
-    private val catalog: StateFlow<Catalog> = combine(projects, tasks, ::Catalog)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), Catalog())
-
-    private val pauseOffered: StateFlow<Boolean> = timerApi.stateIn(
-        viewModelScope,
-        SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
-        false,
-    )
-
-    val state: StateFlow<TimerState> = combine(
-        cached,
-        catalog,
-        accountSettings,
-        local,
-        pauseOffered,
-    ) { running, names, settings, taps, offered ->
-        timerState(running, settings?.defaultWorkspaceId, taps, offered).labelled(names.projects, names.tasks)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), TimerState.Loading)
-
-    private val snapshot = TimerSnapshot(cached, local, accountSettings, pauseOffered)
-
-    private val fieldEdits = RunningFieldEdits(local, cached, changes, viewModelScope, snapshot, catalog)
-
     private val notices = TimerNoticeBoard(discards)
 
     private val sections = TapSections(trace)
 
-    private val taps = TimerTapActions(
-        local,
-        cached,
-        snapshot,
+    private val controller = TimerController(
+        controls,
+        projects,
+        tasks,
         accountSettings,
+        timerApi,
         changes,
         pauseChain,
         sender,
-        fieldEdits,
         notices,
         sections,
         clock,
         viewModelScope,
     )
+
+    /** What the timer shows, as [TimerController.state] projects it. */
+    val state: StateFlow<TimerState> = controller.state
 
     /** What the signed-in frame reads of the timer: whether it is idle, the page's view, the starts and the notices. */
     val frame: TimerFrame = TimerFrameSource(
@@ -131,14 +97,14 @@ class TimerViewModel(
         // Kept up to date while the view model lives, so the frame's first frame back reads it.
         listView = view.map { it == TimerView.LIST }
             .stateIn(viewModelScope, SharingStarted.Eagerly, view.value == TimerView.LIST),
-        starts = taps.starts,
+        starts = controller.starts,
         notices = notices,
         discards = discards,
         scope = viewModelScope,
     )
 
     /** Starts a timer with the idle timer's fields, unless one runs or no workspace is known yet. */
-    fun start() = taps.start()
+    fun start() = controller.start()
 
     /**
      * Tells the view model that the screen has drawn [state], which ends the trace section of a Start
@@ -146,23 +112,23 @@ class TimerViewModel(
      */
     fun shown(state: TimerState) = sections.shown(state)
 
-    /** Continues [source], as [TimerTapActions.continueEntry] does. */
-    fun continueEntry(source: TimeEntry) = taps.continueEntry(source)
+    /** Continues [source], as [TimerController.continueEntry] does. */
+    fun continueEntry(source: TimeEntry) = controller.continueEntry(source)
 
-    /** Starts a timer with [fields] at once, as a favorite does: [TimerTapActions.startFrom]. */
-    fun startFrom(fields: EntryFields) = taps.startFrom(fields)
+    /** Starts a timer with [fields] at once, as a favorite does: [TimerController.startFrom]. */
+    fun startFrom(fields: EntryFields) = controller.startFrom(fields)
 
     /** Stops the running entry through the queue, or ends the paused chain on the server. */
-    fun stop() = taps.stop()
+    fun stop() = controller.stop()
 
     /** Pauses the running entry on the server, after a description still being typed. */
-    fun pause() = taps.pause()
+    fun pause() = controller.pause()
 
     /** Resumes the paused chain on the server, at the revision it was shown at. */
-    fun resume() = taps.resume()
+    fun resume() = controller.resume()
 
     /** A focused control keeps the durable target that supplied its displayed context. */
-    fun isShown(target: TimerTarget): Boolean = taps.isShown(target)
+    fun isShown(target: TimerTarget): Boolean = controller.isShown(target)
 
     fun pauseShown(target: TimerTarget) {
         if (isShown(target)) pause()
@@ -179,10 +145,10 @@ class TimerViewModel(
         if (isShown(target)) runningForEdit() else null
 
     /** Shows [description] as typed. It goes to the queue with [descriptionDone], a pick, Pause or Stop. */
-    fun editDescription(description: String) = fieldEdits.editDescription(description)
+    fun editDescription(description: String) = controller.editDescription(description)
 
     /** Sends a description typed for the running entry when it differs from the cache's. */
-    fun descriptionDone() = fieldEdits.descriptionDone()
+    fun descriptionDone() = controller.descriptionDone()
 
     /**
      * Settles the description and initial Start before opening the shared editor. The caller
@@ -191,19 +157,19 @@ class TimerViewModel(
      * just because it has the same start time. Cancellation, including a disposed navigation host,
      * opens nothing. Nothing opens while a Stop or a pause chain action is on its way.
      */
-    suspend fun runningForEdit(): RunningEntryIdentity? = fieldEdits.runningForEdit()
+    suspend fun runningForEdit(): RunningEntryIdentity? = controller.runningForEdit()
 
     /** Sets the project, task and tags, as [EntryFields.withPicked] says. */
-    fun pick(picked: Picked) = fieldEdits.pick(picked)
+    fun pick(picked: Picked) = controller.pick(picked)
 
-    fun setBillable(billable: Boolean) = fieldEdits.setBillable(billable)
+    fun setBillable(billable: Boolean) = controller.setBillable(billable)
 
     /**
      * Sets every field to [fields], as a picked description suggestion does: the web app's
      * pickSuggestion in TimerBar.tsx (../tokkl/packages/web) fills the description, project, task,
      * tags and billable, on the idle timer's draft or the running entry.
      */
-    fun fill(fields: EntryFields) = fieldEdits.fill(fields)
+    fun fill(fields: EntryFields) = controller.fill(fields)
 
     private companion object {
         const val STOP_TIMEOUT_MS = 5_000L
