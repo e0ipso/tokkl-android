@@ -1,6 +1,6 @@
 // Settings, and the Licences screen it opens.
 plugins {
-    alias(libs.plugins.tokkl.android.feature)
+    alias(libs.plugins.tokkl.android.feature.screen)
     alias(libs.plugins.kotlin.serialization)
 }
 

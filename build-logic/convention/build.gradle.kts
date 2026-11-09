@@ -30,6 +30,10 @@ gradlePlugin {
             id = "tokkl.android.feature"
             implementationClass = "AndroidFeatureConventionPlugin"
         }
+        register("androidScreenFeature") {
+            id = "tokkl.android.feature.screen"
+            implementationClass = "AndroidScreenFeatureConventionPlugin"
+        }
         register("jvmLibrary") {
             id = "tokkl.jvm.library"
             implementationClass = "JvmLibraryConventionPlugin"

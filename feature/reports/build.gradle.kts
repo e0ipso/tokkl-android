@@ -1,6 +1,6 @@
 // Reports: the summary, detailed and weekly reports, their filters and the CSV export.
 plugins {
-    alias(libs.plugins.tokkl.android.feature)
+    alias(libs.plugins.tokkl.android.feature.screen)
     alias(libs.plugins.kotlin.serialization)
 }
 

@@ -1,6 +1,6 @@
 // The sync status band, the notice of discarded changes and the changes the server refused.
 plugins {
-    alias(libs.plugins.tokkl.android.feature)
+    alias(libs.plugins.tokkl.android.feature.screen)
     alias(libs.plugins.kotlin.serialization)
 }
 

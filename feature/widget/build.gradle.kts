@@ -1,6 +1,7 @@
 // The Timer and Pomodoro home screen widgets.
 plugins {
     alias(libs.plugins.tokkl.android.feature)
+    alias(libs.plugins.tokkl.android.library.compose)
     alias(libs.plugins.kotlin.serialization)
 }
 
@@ -13,6 +14,7 @@ dependencies {
     implementation(project(":core:cache"))
     implementation(project(":core:timerstate"))
     implementation(project(":core:entryfields"))
+    implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.glance.material3)
     implementation(libs.androidx.glance.appwidget)
     implementation(libs.androidx.work.runtime)

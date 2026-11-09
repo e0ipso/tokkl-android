@@ -1,7 +1,7 @@
 // The Pomodoro page, the phase alarm with its ringing service and alarm screen, and the session
 // notification.
 plugins {
-    alias(libs.plugins.tokkl.android.feature)
+    alias(libs.plugins.tokkl.android.feature.screen)
     alias(libs.plugins.kotlin.serialization)
 }
 

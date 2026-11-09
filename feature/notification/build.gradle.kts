@@ -2,6 +2,7 @@
 // long-running timer.
 plugins {
     alias(libs.plugins.tokkl.android.feature)
+    alias(libs.plugins.tokkl.android.library.compose)
 }
 
 dependencies {
@@ -15,6 +16,8 @@ dependencies {
     implementation(libs.androidx.work.runtime)
     implementation(libs.koin.androidx.workmanager)
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.ui)
 
     testImplementation(testFixtures(project(":core:platform")))
     testImplementation(testFixtures(project(":core:timerstate")))

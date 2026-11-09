@@ -1,6 +1,6 @@
 // The Projects page, and a project's form with its tasks.
 plugins {
-    alias(libs.plugins.tokkl.android.feature)
+    alias(libs.plugins.tokkl.android.feature.screen)
     alias(libs.plugins.kotlin.serialization)
 }
 

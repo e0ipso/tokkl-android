@@ -5,26 +5,24 @@ import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
 
 /**
- * A feature module, `:feature:<name>`: [AndroidLibraryComposeConventionPlugin] with the namespace
- * `com.github.e0ipso.tokkl.feature.<name>`, the libraries every feature's screens and Koin
- * module use, and instrumented tests run as the app runs its own ([configureInstrumentedTests]).
- * Each feature's build file names the core modules it depends on itself, so that
- * ModuleLayersTest reads the module graph from the build files.
+ * A feature module, `:feature:<name>`: [AndroidLibraryConventionPlugin] with the namespace
+ * `com.github.e0ipso.tokkl.feature.<name>`, Koin, which every feature's module binds itself with,
+ * the unit test libraries, and instrumented tests run as the app runs its own
+ * ([configureInstrumentedTests]). A feature with screens applies [AndroidScreenFeatureConventionPlugin]
+ * instead; one that draws only a widget, a dialog or a frame part applies Compose and names the
+ * Compose libraries it uses itself. Each feature's build file names the core modules it depends on
+ * itself, so that ModuleLayersTest reads the module graph from the build files.
  */
 class AndroidFeatureConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) = with(target) {
-        pluginManager.apply("tokkl.android.library.compose")
+        pluginManager.apply("tokkl.android.library")
         extensions.configure<LibraryExtension> {
             namespace = "com.github.e0ipso.tokkl.feature.${name.replace('-', '_')}"
             configureInstrumentedTests(this)
         }
         dependencies {
-            add("implementation", libs.findLibrary("androidx-compose-material3").get())
-            add("implementation", libs.findLibrary("androidx-compose-ui").get())
-            add("implementation", libs.findLibrary("androidx-lifecycle-viewmodel-compose").get())
             add("implementation", platform(libs.findLibrary("koin-bom").get()))
             add("implementation", libs.findLibrary("koin-android").get())
-            add("implementation", libs.findLibrary("koin-androidx-compose").get())
 
             add("testImplementation", libs.findLibrary("junit").get())
             add("testImplementation", libs.findLibrary("kotlinx-coroutines-test").get())

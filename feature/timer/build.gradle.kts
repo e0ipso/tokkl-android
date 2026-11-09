@@ -1,7 +1,7 @@
 // The Timer page with its history and week calendar, the fullscreen timer, the entry form and
 // the timer templates.
 plugins {
-    alias(libs.plugins.tokkl.android.feature)
+    alias(libs.plugins.tokkl.android.feature.screen)
     alias(libs.plugins.kotlin.serialization)
 }
 
