@@ -3,10 +3,10 @@ package com.github.e0ipso.tokkl.entry
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.cache.EntryChanges
-import com.github.e0ipso.tokkl.cache.HistoryWindow
 import com.github.e0ipso.tokkl.cache.LocalWrite
 import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.cache.localWrite
+import com.github.e0ipso.tokkl.entries.SessionEntries
 import com.github.e0ipso.tokkl.entryfields.withPicked
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.EntryWithSendState
@@ -68,6 +68,8 @@ import java.time.LocalDate
  * @param entries the cached entries with their send state, as AccountCache.entries gives them.
  * @param changes the change queue, which a new or edited stopped entry goes to.
  * @param running the change queue's edits of the running segment, which the form opens and saves.
+ * @param sessionEntries the session's entries, which save an edit whether the cache holds the
+ *   entry or an older page or a server week does.
  * @param clock where now comes from, which a start without AM or PM is guessed against.
  * @param allDay whether the server stores no-time entries, as `Capabilities.allDay` says, which
  *   decides whether the form offers the No times switch.
@@ -81,6 +83,7 @@ class EntryFormViewModel(
     private val accountSettings: StateFlow<AccountSettings?>,
     private val changes: EntryChanges,
     private val running: RunningEntryChanges,
+    private val sessionEntries: SessionEntries,
     scope: CoroutineScope,
     private val clock: Clock,
     allDay: Flow<Boolean>,
@@ -234,7 +237,7 @@ class EntryFormViewModel(
         viewModelScope.launch {
             var outcome: LocalWrite<Boolean>? = null
             try {
-                outcome = localWrite { write(form, span, workspaceId, time) }
+                outcome = localWrite { write(form, span, workspaceId) }
             } finally {
                 // A write the storage refused, or one that threw, gives the form back to the user.
                 phase.update { current ->
@@ -253,7 +256,7 @@ class EntryFormViewModel(
      * Queues [form] with its checked [span]: a new entry in [workspaceId], the running segment, or
      * an edit. Returns false when the entry it edits has gone.
      */
-    private suspend fun write(form: EntryDraft, span: CheckedTimes.Valid, workspaceId: WorkspaceId, time: AccountTime) =
+    private suspend fun write(form: EntryDraft, span: CheckedTimes.Valid, workspaceId: WorkspaceId) =
         when (val target = form.target) {
             DraftTarget.New -> {
                 changes.create(workspaceId, form.fields, span.start, requireNotNull(span.stop), span.noTimeDay)
@@ -262,30 +265,16 @@ class EntryFormViewModel(
 
             is DraftTarget.Running -> running.updateRunning(target.identity, form.fields, span.start)
 
-            is DraftTarget.Edit -> when {
-                target.onPhone && changes.update(
-                    target.entryId,
-                    form.fields,
-                    span.start,
-                    span.stop,
-                    span.noTimeDay,
-                ) -> true
-
-                // An older entry goes whole, also one whose copy the refresh after its send dropped.
-                !target.onPhone || target.start < HistoryWindow.endingToday(time).start -> {
-                    changes.updateOlder(
-                        target.entryId,
-                        target.workspaceId,
-                        form.fields,
-                        span.start,
-                        requireNotNull(span.stop),
-                        span.noTimeDay,
-                    )
-                    true
-                }
-
-                else -> false
-            }
+            is DraftTarget.Edit -> sessionEntries.saveEdit(
+                target.entryId,
+                target.workspaceId,
+                target.start,
+                target.onPhone,
+                form.fields,
+                span.start,
+                span.stop,
+                span.noTimeDay,
+            )
         }
 
     /** Delete uses the entry as opened, never an unsaved field, and skips time validation. */

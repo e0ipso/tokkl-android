@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.entry
 
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.RunningEntryChanges
+import com.github.e0ipso.tokkl.entries.sessionEntries
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.EntryWithSendState
@@ -75,6 +76,7 @@ class RunningEntryEditorTest {
         settings,
         changes,
         changes,
+        sessionEntries(rows, settings, scope, clock, changes = changes),
         scope,
         clock,
         allDay = flowOf(false),

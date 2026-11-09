@@ -21,6 +21,9 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.cache.EntryChanges
+import com.github.e0ipso.tokkl.entries.OlderPages
+import com.github.e0ipso.tokkl.entries.ServerWeeks
+import com.github.e0ipso.tokkl.entries.SessionEntries
 import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
@@ -245,22 +248,31 @@ class CalendarGesturesTest {
      * The calendar on [ENTRY], in a window of [window], or the phone's own, with the All day row when [allDayOffered].
      */
     private fun show(window: DpSize?, allDayOffered: Boolean = false): CalendarViewModel {
-        val model = CalendarViewModel(
-            entries = MutableStateFlow(
+        val settings = MutableStateFlow<AccountSettings?>(SETTINGS)
+        val entries = SessionEntries(
+            MutableStateFlow(
                 listOf(EntryWithSendState(ENTRY, unsent = false), EntryWithSendState(ALL_DAY_ENTRY, unsent = false)),
             ),
+            settings,
+            changes,
+            OlderPages { null },
+            ServerWeeks { null },
+            CLOCK,
+            AppForeground(MutableStateFlow(true), emptyFlow()),
+            emptyFlow(),
+            scope,
+            Dispatchers.IO,
+        )
+        val model = CalendarViewModel(
+            entries = entries,
             projects = MutableStateFlow(emptyList()),
             tasks = MutableStateFlow(emptyList()),
-            accountSettings = MutableStateFlow(SETTINGS),
+            accountSettings = settings,
             changes = changes,
-            weeks = ServerWeeks { null },
             scope = scope,
-            io = Dispatchers.IO,
             computation = Dispatchers.Default,
             clock = CLOCK,
             allDayOffered = flowOf(allDayOffered),
-            overrides = emptyFlow(),
-            app = AppForeground(MutableStateFlow(true), emptyFlow()),
         )
         composeRule.setContent {
             TokklTheme(darkTheme = false) {

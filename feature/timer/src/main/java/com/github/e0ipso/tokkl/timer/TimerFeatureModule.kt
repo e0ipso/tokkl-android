@@ -3,8 +3,10 @@ package com.github.e0ipso.tokkl.timer
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.calendar.CalendarViewModel
-import com.github.e0ipso.tokkl.calendar.ServerWeeks
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
+import com.github.e0ipso.tokkl.entries.OlderPages
+import com.github.e0ipso.tokkl.entries.ServerWeeks
+import com.github.e0ipso.tokkl.entries.SessionEntries
 import com.github.e0ipso.tokkl.entry.EntryFormViewModel
 import com.github.e0ipso.tokkl.entry.openIn
 import com.github.e0ipso.tokkl.favorites.FavoritesServer
@@ -12,9 +14,6 @@ import com.github.e0ipso.tokkl.favorites.FavoritesStore
 import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
 import com.github.e0ipso.tokkl.history.EntryActionsViewModel
 import com.github.e0ipso.tokkl.history.HistoryViewModel
-import com.github.e0ipso.tokkl.history.OlderPages
-import com.github.e0ipso.tokkl.model.EntryId
-import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.navigation.EntryFormRequest
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
 import com.github.e0ipso.tokkl.navigation.PageBadge
@@ -25,26 +24,24 @@ import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.platform.offlineIn
 import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
 import com.github.e0ipso.tokkl.session.AccountDataOwner
+import com.github.e0ipso.tokkl.session.AccountLifetime
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.storage.StartupLoad
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.TimerActions
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
-import org.koin.core.parameter.ParametersHolder
 import org.koin.dsl.bind
 import org.koin.dsl.binds
 import org.koin.dsl.module
 
 /**
  * The Timer page with its history and calendar, the entry form and the timer templates: the Timer
- * view setting, the view models and the screens. The history and the calendar take the entry
- * actions' deletes and restores from the Timer page, and the entry form what it opens.
+ * view setting, the view models and the screens. The history, the calendar, the entry actions and
+ * the entry form take the session's [SessionEntries] from their screens, and the entry form what
+ * it opens.
  */
 val timerFeatureModule = module {
     single { TimerViewStore(androidContext(), io()) }
@@ -69,28 +66,37 @@ val timerFeatureModule = module {
     single { OlderPages(get<Session>()) }
     single { ServerWeeks(get<Session>()) }
 
-    viewModel { params ->
-        val cache = get<AccountCache>()
-        val changes = get<ChangeQueue>()
-        HistoryViewModel(
-            entries = cache.entries,
-            projects = cache.projects,
-            tasks = cache.tasks,
+    // The session's one owner of the entries the history, the calendar and the entry form show.
+    // It lives in the signed-in session's store, and the screens hand it to their view models.
+    viewModel {
+        SessionEntries(
+            cached = get<AccountCache>().entries,
             accountSettings = get<AccountSettingsSource>().state,
+            changes = get<ChangeQueue>(),
             olderPages = get(),
+            serverWeeks = get(),
+            clock = get(),
+            app = get(),
+            accounts = get<AccountLifetime>().accounts,
             scope = viewModelCoroutineScope(),
             io = io(),
-            computation = computation(),
-            clock = get(),
-            ids = changes,
-            overrides = params.overrides(),
-            app = get(),
         )
     }
-    viewModel {
+    viewModel { params ->
+        val cache = get<AccountCache>()
+        HistoryViewModel(
+            entries = params.get(),
+            projects = cache.projects,
+            tasks = cache.tasks,
+            scope = viewModelCoroutineScope(),
+            computation = computation(),
+        )
+    }
+    viewModel { params ->
         EntryActionsViewModel(
             entries = get<AccountCache>().entries,
             changes = get<ChangeQueue>(),
+            sessionEntries = params.get(),
             undo = get(),
             capabilities = get(),
             accountSettings = get<AccountSettingsSource>().state,
@@ -102,20 +108,16 @@ val timerFeatureModule = module {
         val cache = get<AccountCache>()
         val capabilities = get<CapabilitiesSource>()
         CalendarViewModel(
-            entries = cache.entries,
+            entries = params.get(),
             projects = cache.projects,
             tasks = cache.tasks,
             accountSettings = get<AccountSettingsSource>().state,
             changes = get<ChangeQueue>(),
-            weeks = get(),
             scope = viewModelCoroutineScope(),
-            io = io(),
             computation = computation(),
             clock = get(),
             // From the capabilities once they have loaded.
             allDayOffered = capabilities.allDayOffers(),
-            overrides = params.overrides(),
-            app = get(),
         )
     }
     viewModel {
@@ -162,6 +164,7 @@ val timerFeatureModule = module {
             accountSettings = get<AccountSettingsSource>().state,
             changes = get<ChangeQueue>(),
             running = get<ChangeQueue>(),
+            sessionEntries = params.get(),
             scope = scope,
             clock = get(),
             allDay = get<CapabilitiesSource>().state.map { it.allDay == true },
@@ -188,7 +191,3 @@ val timerFeatureModule = module {
     // The bar's running dot on Timer while an entry runs, by the cache's word.
     single { TimerBadge(get()) } bind PageBadge::class
 }
-
-/** The entry actions' deletes and restores, which the Timer page passes, or none. */
-private fun ParametersHolder.overrides(): Flow<Map<EntryId, TimeEntry?>> =
-    getOrNull<StateFlow<Map<EntryId, TimeEntry?>>>() ?: emptyFlow()

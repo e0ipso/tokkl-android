@@ -3,18 +3,14 @@ package com.github.e0ipso.tokkl.calendar
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.cache.EntryChanges
-import com.github.e0ipso.tokkl.cache.HistoryWindow
-import com.github.e0ipso.tokkl.cache.reconcileEntryRows
-import com.github.e0ipso.tokkl.cache.resolveEntryOverrides
+import com.github.e0ipso.tokkl.entries.SessionEntries
+import com.github.e0ipso.tokkl.entries.WeekEntries
 import com.github.e0ipso.tokkl.entryfields.TimeRange
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
-import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.model.Task
 import com.github.e0ipso.tokkl.model.TimeEntry
-import com.github.e0ipso.tokkl.model.fields
-import com.github.e0ipso.tokkl.platform.AppForeground
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.AccountTime
 import kotlinx.coroutines.CoroutineScope
@@ -23,16 +19,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.time.Clock
-import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import kotlin.coroutines.CoroutineContext
@@ -63,117 +53,58 @@ import kotlin.coroutines.CoroutineContext
  * before its window only until the send and the refresh after it, and the week then shows the copy
  * the cache last held, until the week loads again.
  *
+ * [entries], the session's one owner of the entries, loads the server's weeks, keeps them and
+ * merges them with the cache's; this model picks the week to show and lays out its blocks.
+ *
  * Call [step], [showToday], [loadWeek], [create], [move] and [resize] on the main thread.
  *
- * @param entries the cached entries with their send state, as AccountCache.entries gives them.
- * @param weeks the weeks outside the cache, from the server. Runs on [io].
  * @param computation where the week's blocks are laid out from the entries.
  * @param clock where today comes from, in the account's timezone.
  * @param allDayOffered whether the server stores no-time entries (`Capabilities.allDay == true`),
  *   which [CalendarState.Shown.allDayOffered] reports for the All day row.
- * @param overrides the entry actions' deletes and restores, which [reconcile] applies.
- * @param app the app's trips to the background and back, and the network's returns, which make
- *   the weeks on screen load again.
  */
 class CalendarViewModel(
-    private val entries: Flow<List<EntryWithSendState>>,
+    private val entries: SessionEntries,
     projects: Flow<List<Project>>,
     tasks: Flow<List<Task>>,
     private val accountSettings: StateFlow<AccountSettings?>,
     private val changes: EntryChanges,
-    private val weeks: ServerWeeks,
     scope: CoroutineScope,
-    private val io: CoroutineContext,
     computation: CoroutineContext,
     private val clock: Clock,
     allDayOffered: Flow<Boolean>,
-    overrides: Flow<Map<EntryId, TimeEntry?>>,
-    app: AppForeground,
 ) : ViewModel(scope) {
 
     /** The chosen day, or null to follow today. */
     private val selected = MutableStateFlow<LocalDate?>(null)
 
-    /** What the server sent, by the span it covers, as far as it has loaded. */
-    private val loaded = MutableStateFlow<Map<WeekSpan, ServerWeek>>(emptyMap())
-
-    /**
-     * The newest copy the cache has shown of each entry from [loaded] that it held before its
-     * window, as after a drag on an older week, which the cache keeps only until the send and the
-     * refresh after it. [Edit.held] says whether the cache still held it when [state] last read
-     * the cache. A load that starts once the cache no longer holds an entry replaces its copy.
-     */
-    private val edited = MutableStateFlow<Map<EntryId, Edit>>(emptyMap())
-
-    private val reconciliation = MutableStateFlow<Map<EntryId, TimeEntry?>>(emptyMap())
-
-    fun reconcile(overrides: Map<EntryId, TimeEntry?>) {
-        val before = reconciliation.value
-        val restored = overrides.filter { (id, entry) -> entry != null && before[id] != entry }.values.filterNotNull()
-        // A response started before Undo must not replace its restored snapshot. Later loads
-        // replace these entries through the same held/sent guard as older calendar edits.
-        edited.update { edits -> edits + restored.associate { it.id to Edit(it, held = false) } }
-        reconciliation.value = overrides
-    }
-
-    private val choice = combine(selected, loaded, reconciliation, allDayOffered) { day, weeks, overrides, offered ->
-        Choice(day, weeks, overrides, offered)
-    }
-
-    /** The app went to the background, and has not come back yet. */
-    private var backgrounded = false
-
-    private val foregroundCount = MutableStateFlow(0)
-
     /**
      * How many times the app came back to the foreground or the network came back; the calendar
      * on screen loads its week again on each when the week is due.
      */
-    val foregrounds: StateFlow<Int> = foregroundCount
+    val foregrounds: StateFlow<Int> = entries.foregrounds
 
     val state: StateFlow<CalendarState> = combine(
-        entries,
+        entries.week(selected),
         projects,
         tasks,
-        accountSettings,
-        choice,
-    ) { cached, projectRows, taskRows, settings, picked ->
-        val day = picked.day
-        val weeks = picked.weeks
-        val overrides = picked.overrides
-        val offered = picked.allDayOffered
-        val time = settings?.time(clock)
-        when {
-            settings == null -> CalendarState.Loading
+        allDayOffered,
+    ) { week, projectRows, taskRows, offered ->
+        when (week) {
+            WeekEntries.Loading -> CalendarState.Loading
 
-            time == null -> CalendarState.NoAccountTime(settings.timeZone)
+            is WeekEntries.NoAccountTime -> CalendarState.NoAccountTime(week.timeZone)
 
-            else -> {
-                val today = time.today()
-                val shown = day ?: today
-                val weekStart = time.startOfWeek(shown)
-                val server = weeks[spanOf(time, weekStart, today)]
-                val resolved = resolveEntryOverrides(overrides, changes)
-                val edits = keepEdits(cached, weeks, time, resolved.values.filterNotNull().mapTo(HashSet()) { it.id })
-                val restored = resolved.mapValues { (id, entry) ->
-                    entry?.let { edits[id]?.entry ?: server?.entries?.firstOrNull { it.id == id } ?: it }
-                }
-                val (current, serverRows) = reconcileEntryRows(
-                    cached,
-                    server?.entries.orEmpty().map { edits[it.id]?.entry ?: it },
-                    restored,
-                )
-                CalendarState.Shown(
-                    selected = shown,
-                    weekStart = weekStart,
-                    today = today,
-                    zone = time.zone,
-                    settings = settings,
-                    entries = weekEntries(current, serverRows, projectRows, taskRows, time, weekStart),
-                    week = if (isCached(weekStart, today)) WeekSource.Cached else server?.status ?: WeekSource.Loading,
-                    allDayOffered = offered,
-                )
-            }
+            is WeekEntries.Shown -> CalendarState.Shown(
+                selected = week.shown,
+                weekStart = week.weekStart,
+                today = week.today,
+                zone = week.time.zone,
+                settings = week.settings,
+                entries = weekEntries(week.current, week.server, projectRows, taskRows, week.time, week.weekStart),
+                week = week.source,
+                allDayOffered = offered,
+            )
         }
     }
         .flowOn(computation)
@@ -196,113 +127,17 @@ class CalendarViewModel(
     }
 
     /**
-     * Loads the server's part of the week from [weekStart], unless it is loading or has loaded
-     * since the app last came to the foreground: the whole week outside the cache, or the entries
-     * from before the cache for a cached week. Showing a week is the event that loads it, and so
-     * are Try again after a failure and coming back to the foreground. A week that failed loads
-     * again the next time it shows. A week that loaded before keeps its entries on screen while
-     * they load again, and keeps them, to load again the next time, when the server is out of
-     * reach.
+     * Loads the server's part of the week from [weekStart], as [SessionEntries.loadWeek] does.
+     * Showing a week is the event that loads it, and so are Try again after a failure and coming
+     * back to the foreground.
      */
-    fun loadWeek(weekStart: LocalDate) {
-        val time = accountSettings.value?.time(clock) ?: return
-        val span = spanOf(time, weekStart, time.today())
-        val known = loaded.value[span]
-        if (known?.isCurrent() == true) return
-        val before = known?.takeIf { it.status == WeekSource.Loaded }
-        loaded.update { it + (span to (before?.copy(stale = false) ?: ServerWeek(emptyList(), WeekSource.Loading))) }
-        // The server has every edit that the cache no longer holds, so this load's copies replace them.
-        val sent = edited.value.filterValues { !it.held }
-        val foregroundAtStart = foregroundCount.value
-        viewModelScope.launch {
-            val week = withContext(io) { weeks.week(span) }
-            val kept = before?.takeIf { week.status == WeekSource.Unreachable }?.copy(stale = true)
-            if (kept == null && week.status == WeekSource.Loaded) {
-                val ids = week.entries.mapTo(HashSet()) { it.id }
-                edited.update { edits -> edits.filterNot { (id, edit) -> id in ids && sent[id] == edit } }
-            }
-            loaded.update { it + (span to (kept ?: week)) }
-            // A reconnect or foreground event can arrive while this request is still pending.
-            // Its loadWeek call then does nothing. Retry the failed attempt once for that event,
-            // while this span is still shown, without starting a polling loop.
-            if (week.status == WeekSource.Unreachable && foregroundCount.value != foregroundAtStart && !backgrounded) {
-                val current = accountSettings.value?.time(clock) ?: return@launch
-                val currentWeek = current.startOfWeek(selected.value ?: current.today())
-                if (spanOf(current, currentWeek, current.today()) == span) loadWeek(currentWeek)
-            }
-        }
-    }
-
-    /** The app went to the background. A configuration change is no trip to the background. */
-    private fun wentToBackground() {
-        backgrounded = true
-    }
-
-    /**
-     * The network came back while the app is in the foreground. [foregrounds] counts up, so the
-     * calendar on screen loads its week again when it failed or when it kept old entries offline.
-     * A week that loaded since the last foreground asks nothing.
-     */
-    private fun reconnected() {
-        foregroundCount.update { it + 1 }
-    }
-
-    /**
-     * The app came back to the foreground. After [wentToBackground], every loaded week loads
-     * again the next time it shows, and [foregrounds] counts up so the calendar on screen loads
-     * its week at once.
-     */
-    private fun cameToForeground() {
-        if (!backgrounded) return
-        backgrounded = false
-        loaded.update { weeks ->
-            weeks.mapValues { (_, week) ->
-                if (week.status == WeekSource.Loaded) {
-                    week.copy(
-                        stale = true,
-                    )
-                } else {
-                    week
-                }
-            }
-        }
-        foregroundCount.update { it + 1 }
-    }
+    fun loadWeek(weekStart: LocalDate) = entries.loadWeek(weekStart, selected)
 
     /**
      * The entry [id] as the server sent it for a week the phone does not keep, or null. The entry
      * form opens on this copy of an entry the cache lacks.
      */
-    fun serverEntry(id: EntryId): TimeEntry? =
-        loaded.value.values.firstNotNullOfOrNull { week -> week.entries.firstOrNull { it.id == id } }
-            ?.let { edited.value[id]?.entry ?: it }
-
-    /**
-     * Updates [edited] from [cached] and returns it. An entry of [weeks] that the cache holds from
-     * before its window was changed on the phone, and its copy goes in, with the times the server
-     * stores for it. One that the cache holds inside its window shows from the cache, and one that
-     * the cache dropped keeps its copy, no longer held.
-     */
-    private fun keepEdits(
-        cached: List<EntryWithSendState>,
-        weeks: Map<WeekSpan, ServerWeek>,
-        time: AccountTime,
-        restored: Set<EntryId>,
-    ): Map<EntryId, Edit> {
-        val ids = weeks.values.flatMapTo(HashSet()) { week -> week.entries.map { it.id } } + restored
-        val windowStart = HistoryWindow.endingToday(time).start
-        val held = cached.filter { it.entry.id in ids }.associateBy { it.entry.id }
-        return edited.updateAndGet { edits ->
-            val dropped = edits.filterKeys { it !in held }.mapValues { (_, edit) -> edit.copy(held = false) }
-            val kept = held.values.filter { it.entry.start < windowStart }.associate {
-                it.entry.id to Edit(
-                    it.entry.stored(time),
-                    held = true,
-                )
-            }
-            dropped + kept
-        }
-    }
+    fun serverEntry(id: EntryId): TimeEntry? = entries.weekEntry(id)
 
     /**
      * Queues the entry that a drag from clock minute [fromMinute] to [toMinute] on [day] makes, in
@@ -347,59 +182,11 @@ class CalendarViewModel(
         val time = settings.time(clock) ?: return
         val span = range(stop, time, dragStep(settings.dragResolution))
         if (span.stop < span.start || time.snapUnsent(span.start, span.stop) == null) return
-        viewModelScope.launch {
-            val cached = entries.first().firstOrNull { it.entry.id == entry.id }?.entry
-            when {
-                cached != null -> changes.update(cached.id, cached.fields(), span.start, span.stop)
-
-                else -> serverEntry(
-                    entry.id,
-                )?.let { changes.updateOlder(it.id, it.workspaceId, it.fields(), span.start, span.stop) }
-            }
-        }
-    }
-
-    /**
-     * What [state] reads besides the cache: the chosen day, the weeks from the server, the overrides and whether the
-     * All day row is offered.
-     */
-    private data class Choice(
-        val day: LocalDate?,
-        val weeks: Map<WeekSpan, ServerWeek>,
-        val overrides: Map<EntryId, TimeEntry?>,
-        val allDayOffered: Boolean,
-    )
-
-    /** The copy of an entry changed on the phone, and whether the cache [held] it when last read. */
-    private data class Edit(val entry: TimeEntry, val held: Boolean)
-
-    init {
-        viewModelScope.launch { overrides.collect(::reconcile) }
-        viewModelScope.launch {
-            app.foreground.drop(1).collect { foreground -> if (foreground) cameToForeground() else wentToBackground() }
-        }
-        viewModelScope.launch { app.reconnects.collect { reconnected() } }
+        viewModelScope.launch { entries.moveWeekEntry(entry.id, span.start, span.stop) }
     }
 
     companion object {
         /** How long the state keeps following the cache after the last screen stops reading it. */
         private const val STOP_TIMEOUT_MS = 5_000L
-
-        /**
-         * The longest stopped entry Tokkl stores, 999 hours, so a stopped entry that starts
-         * earlier ends before the week.
-         */
-        internal val LONGEST_ENTRY: Duration = Duration.ofHours(999)
-
-        /**
-         * The phone keeps today and the 13 days before it, so it holds every day of the week from
-         * [weekStart] up to [today] when the week starts in that window: today's week and the
-         * week before it.
-         */
-        internal fun isCached(weekStart: LocalDate, today: LocalDate): Boolean =
-            weekStart <= today && weekStart >= today.minusDays(HistoryWindow.DAYS - 1)
     }
 }
-
-/** True while the week loads, or once it loaded and nothing has made it stale. */
-private fun ServerWeek.isCurrent(): Boolean = status == WeekSource.Loading || (status == WeekSource.Loaded && !stale)

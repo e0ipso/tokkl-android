@@ -1,5 +1,6 @@
-package com.github.e0ipso.tokkl.history
+package com.github.e0ipso.tokkl.entries
 
+import androidx.compose.runtime.Immutable
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
@@ -13,6 +14,35 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
+
+/** The end of the history: the days before the ones shown. */
+@Immutable
+sealed interface OlderDays {
+
+    /**
+     * Older days may have entries. With [auto], they load once the end of the list shows. After a
+     * page without entries from a server that does not say where its history starts, as Toggl
+     * Track, only a tap loads more, so scrolling never walks back through empty weeks on its own.
+     */
+    data class More(val auto: Boolean) : OlderDays
+
+    data object Loading : OlderDays
+
+    /** The server has no entries before the days shown. */
+    data object End : OlderDays
+
+    /** No answer: the phone is offline, or the server or the proxy in front of it is down. */
+    data object Unreachable : OlderDays
+
+    /** The server refused the stored API token, or the phone could not read it. */
+    data object AuthFailed : OlderDays
+
+    /** The app sends nothing to the server until the user answers its trust prompt. */
+    data object TrustRefused : OlderDays
+
+    /** Any other answer. [status] is the HTTP status, or null when the body was not a list of entries. */
+    data class Failed(val status: Int?) : OlderDays
+}
 
 /** One request for older days: the days it loaded, or the status the days end with instead. */
 internal sealed interface OlderPage {
@@ -42,6 +72,11 @@ private sealed interface BoundsAnswer {
 /** The history's days before the cache, from the signed-in account's server. */
 class OlderPages(private val client: ApiClientProvider) {
 
+    companion object {
+        /** How many days one request for older entries covers, as the web app's "Show 14 more days". */
+        const val PAGE_DAYS = 14L
+    }
+
     /** The page of days before [before], and where the history starts, [known] or read now. */
     internal suspend fun page(
         time: AccountTime,
@@ -54,7 +89,7 @@ class OlderPages(private val client: ApiClientProvider) {
             is BoundsAnswer.Failed -> return OlderPage.NotLoaded(answer.status) to null
         }
         if (bounds.nothingBefore(before)) return OlderPage.NotLoaded(OlderDays.End) to bounds
-        val from = before.minusDays(HistoryViewModel.PAGE_DAYS)
+        val from = before.minusDays(PAGE_DAYS)
         val start = from.atStartOfDay(time.zone).toInstant()
         val end = before.atStartOfDay(time.zone).toInstant()
         val page = api.entries.list(start, end).fold(

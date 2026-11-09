@@ -27,6 +27,10 @@ import com.github.e0ipso.tokkl.accessibility.createComposeRule
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.UndoOutcome
+import com.github.e0ipso.tokkl.entries.OlderDays
+import com.github.e0ipso.tokkl.entries.OlderPages
+import com.github.e0ipso.tokkl.entries.ServerWeeks
+import com.github.e0ipso.tokkl.entries.SessionEntries
 import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
 import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.model.Capabilities
@@ -36,6 +40,7 @@ import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.picker.PickerSource
+import com.github.e0ipso.tokkl.platform.AppForeground
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.capabilitiesOf
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -43,6 +48,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -317,9 +323,24 @@ class EntryActionsUiTest {
         undo: UndoOutcome = UndoOutcome.Restored,
         favorites: FavoritesViewModel? = null,
     ) {
+        val cached = MutableStateFlow(listOf(EntryWithSendState(CACHED, unsent = false)))
+        val changes = RecordingChanges()
+        val settings = MutableStateFlow<AccountSettings?>(HISTORY.settings)
         val model = EntryActionsViewModel(
-            entries = MutableStateFlow(listOf(EntryWithSendState(CACHED, unsent = false))),
-            changes = RecordingChanges(),
+            entries = cached,
+            changes = changes,
+            sessionEntries = SessionEntries(
+                cached,
+                settings,
+                changes,
+                OlderPages { null },
+                ServerWeeks { null },
+                Clock.systemUTC(),
+                AppForeground(MutableStateFlow(true), emptyFlow()),
+                emptyFlow(),
+                scope,
+                Dispatchers.IO,
+            ),
             undo = { entryId ->
                 calls += "undo $entryId"
                 undo

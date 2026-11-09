@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.entry
 
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.RunningEntryChanges
+import com.github.e0ipso.tokkl.entries.sessionEntries
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
@@ -70,6 +71,13 @@ class EntryFormViewModelTest {
             accountSettings = settings,
             changes = changes,
             running = changes,
+            sessionEntries = sessionEntries(
+                entries,
+                settings,
+                scope,
+                Clock.fixed(NOW, ZoneOffset.UTC),
+                changes = changes,
+            ),
             scope = scope,
             clock = Clock.fixed(NOW, ZoneOffset.UTC),
             allDay = allDay,
@@ -146,6 +154,13 @@ class EntryFormViewModelTest {
             accountSettings = settings,
             changes = changes,
             running = changes,
+            sessionEntries = sessionEntries(
+                entries,
+                settings,
+                failing,
+                Clock.fixed(NOW, ZoneOffset.UTC),
+                changes = changes,
+            ),
             scope = failing,
             clock = Clock.fixed(NOW, ZoneOffset.UTC),
             allDay = allDay,

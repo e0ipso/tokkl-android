@@ -40,6 +40,7 @@ import com.github.e0ipso.tokkl.components.sessionViewModels
 import com.github.e0ipso.tokkl.components.timerPageViewModels
 import com.github.e0ipso.tokkl.components.timerView
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
+import com.github.e0ipso.tokkl.entries.SessionEntries
 import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
 import com.github.e0ipso.tokkl.feature.settings.R
 import com.github.e0ipso.tokkl.finishWithin
@@ -372,6 +373,7 @@ class SignOutServerTest {
             ReportChoices::class.java,
             TimerViewModel::class.java,
             EntryActionsViewModel::class.java,
+            SessionEntries::class.java,
             FavoritesViewModel::class.java,
             PomodoroViewModel::class.java,
         )

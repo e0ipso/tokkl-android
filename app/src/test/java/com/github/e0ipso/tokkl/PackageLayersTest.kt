@@ -228,9 +228,9 @@ class PackageLayersTest {
             setOf("credentials", "capabilities", "session", "preferences", "cache", "timerstate"),
             setOf("timersync", "catalog", "picker", "entryfields", "trust", "timernotice", "navigation"),
             setOf(
-                "calendar", "clients", "entry", "favorites", "history", "licences", "notification", "pomodoro",
-                "projects", "reminder", "reports", "settings", "shortcuts", "signin", "sync", "tags", "tile",
-                "timer", "trash", "widget",
+                "calendar", "clients", "entries", "entry", "favorites", "history", "licences", "notification",
+                "pomodoro", "projects", "reminder", "reports", "settings", "shortcuts", "signin", "sync", "tags",
+                "tile", "timer", "trash", "widget",
             ),
             setOf(ROOT, "di", "navhost", "lifecycle"),
         )
@@ -249,10 +249,13 @@ class PackageLayersTest {
             // The entry fields pick projects and tags.
             "entryfields" to setOf("picker"),
             // The Timer page shows the history, the calendar and the timer templates and opens the
-            // entry form, and the history pins entries as timer templates. Settings opens Licences.
-            // The notification feature's Koin module defines the reminder's notification too.
-            "timer" to setOf("favorites", "history", "calendar", "entry"),
-            "history" to setOf("favorites"),
+            // entry form, and the history pins entries as timer templates. The history, the calendar
+            // and the entry form show the session's entries. Settings opens Licences. The
+            // notification feature's Koin module defines the reminder's notification too.
+            "timer" to setOf("favorites", "history", "calendar", "entry", "entries"),
+            "history" to setOf("favorites", "entries"),
+            "calendar" to setOf("entries"),
+            "entry" to setOf("entries"),
             "settings" to setOf("licences"),
             "notification" to setOf("reminder"),
             // TokklApplication starts Koin; Koin builds the lifecycle observers and the navigation host.

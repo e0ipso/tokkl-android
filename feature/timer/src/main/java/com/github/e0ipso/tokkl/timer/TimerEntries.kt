@@ -10,6 +10,7 @@ import androidx.navigation3.runtime.EntryProviderScope
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.calendar.CalendarViewModel
 import com.github.e0ipso.tokkl.calendar.WeekCalendar
+import com.github.e0ipso.tokkl.entries.SessionEntries
 import com.github.e0ipso.tokkl.entry.EntryFormScreen
 import com.github.e0ipso.tokkl.entry.EntryFormViewModel
 import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
@@ -104,7 +105,7 @@ internal object TimerEntries : FeatureEntries {
 
 /**
  * The Timer page. Its history and calendar live in its entry, which stays at the bottom of every
- * signed-in back stack, and apply the entry actions' deletes and restores. A tap on an entry in
+ * signed-in back stack, and show what the session's [SessionEntries] merges. A tap on an entry in
  * the history, or on the button for a past entry, opens the entry form above the page, and an
  * entry's Continue starts the timer with its fields. Each part reads its own state, so a state
  * that changes often, such as the ticking totals, redraws only its part.
@@ -113,10 +114,14 @@ internal object TimerEntries : FeatureEntries {
 private fun TimerPage(navigator: Navigator) {
     val timer = koinViewModel<TimerViewModel>(viewModelStoreOwner = LocalSignedInSession.current)
     val favorites = koinViewModel<FavoritesViewModel>(viewModelStoreOwner = LocalSignedInSession.current)
-    val actions = koinViewModel<EntryActionsViewModel>(viewModelStoreOwner = LocalSignedInSession.current)
+    val entries = koinViewModel<SessionEntries>(viewModelStoreOwner = LocalSignedInSession.current)
+    val actions = koinViewModel<EntryActionsViewModel>(
+        viewModelStoreOwner = LocalSignedInSession.current,
+        parameters = { parametersOf(entries) },
+    )
     val page = koinViewModel<TimerPageViewModel>()
-    val history = koinViewModel<HistoryViewModel>(parameters = { parametersOf(actions.reconciliation) })
-    val calendar = koinViewModel<CalendarViewModel>(parameters = { parametersOf(actions.reconciliation) })
+    val history = koinViewModel<HistoryViewModel>(parameters = { parametersOf(entries) })
+    val calendar = koinViewModel<CalendarViewModel>(parameters = { parametersOf(entries) })
     val pageState by page.state.collectAsStateWithLifecycle()
     val focusManager = LocalFocusManager.current
     val scope = rememberCoroutineScope()
@@ -232,14 +237,19 @@ private fun FullscreenTimer(navigator: Navigator) {
 
 /**
  * The entry form [route] opens. Its view model is its own, opened on what the route says when
- * this process opened it ([EntryFormOpenings]). A delete goes through the session's entry
- * actions, so the Timer page offers its Undo.
+ * this process opened it ([EntryFormOpenings]). An edit saves through the session's
+ * [SessionEntries], and a delete goes through the session's entry actions, so the Timer page offers
+ * its Undo.
  */
 @Composable
 private fun EntryForm(route: Route.Entry, navigator: Navigator) {
     val openings = navigator.openings
-    val model = koinViewModel<EntryFormViewModel>(parameters = { parametersOf(openings.take(route)) })
-    val actions = koinViewModel<EntryActionsViewModel>(viewModelStoreOwner = LocalSignedInSession.current)
+    val entries = koinViewModel<SessionEntries>(viewModelStoreOwner = LocalSignedInSession.current)
+    val model = koinViewModel<EntryFormViewModel>(parameters = { parametersOf(openings.take(route), entries) })
+    val actions = koinViewModel<EntryActionsViewModel>(
+        viewModelStoreOwner = LocalSignedInSession.current,
+        parameters = { parametersOf(entries) },
+    )
     EntryFormScreen(
         model = model,
         canRestore = actions::canRestoreDelete,

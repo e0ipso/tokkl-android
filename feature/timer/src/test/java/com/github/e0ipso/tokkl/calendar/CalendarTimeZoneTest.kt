@@ -1,17 +1,18 @@
 package com.github.e0ipso.tokkl.calendar
 
 import com.github.e0ipso.tokkl.cache.EntryChanges
+import com.github.e0ipso.tokkl.entries.WeekSource
+import com.github.e0ipso.tokkl.entries.sessionEntries
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
-import com.github.e0ipso.tokkl.platform.AppForeground
 import com.github.e0ipso.tokkl.session.AccountSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -48,21 +49,7 @@ class CalendarTimeZoneTest {
 
     @Test
     fun theWeekAndItsBlocksFollowTheAccountTimezone() = runTest {
-        val model = CalendarViewModel(
-            entries = flowOf(listOf(EntryWithSendState(LATE_CALL, unsent = false))),
-            projects = flowOf(emptyList()),
-            tasks = flowOf(emptyList()),
-            accountSettings = MutableStateFlow(TOKYO_SUNDAY),
-            changes = NoChanges,
-            weeks = ServerWeeks { null },
-            scope = CoroutineScope(Dispatchers.Unconfined),
-            io = Dispatchers.Unconfined,
-            computation = Dispatchers.Unconfined,
-            clock = NOW,
-            allDayOffered = flowOf(false),
-            overrides = emptyFlow(),
-            app = AppForeground(MutableStateFlow(true), emptyFlow()),
-        )
+        val model = model(flowOf(listOf(EntryWithSendState(LATE_CALL, unsent = false))))
 
         val state = model.state.first { it is CalendarState.Shown } as CalendarState.Shown
 
@@ -98,21 +85,7 @@ class CalendarTimeZoneTest {
             allDay = true,
             day = LocalDate.of(2026, 10, 11),
         )
-        val model = CalendarViewModel(
-            entries = flowOf(listOf(EntryWithSendState(stale, unsent = true))),
-            projects = flowOf(emptyList()),
-            tasks = flowOf(emptyList()),
-            accountSettings = MutableStateFlow(TOKYO_SUNDAY),
-            changes = NoChanges,
-            weeks = ServerWeeks { null },
-            scope = CoroutineScope(Dispatchers.Unconfined),
-            io = Dispatchers.Unconfined,
-            computation = Dispatchers.Unconfined,
-            clock = NOW,
-            allDayOffered = flowOf(false),
-            overrides = emptyFlow(),
-            app = AppForeground(MutableStateFlow(true), emptyFlow()),
-        )
+        val model = model(flowOf(listOf(EntryWithSendState(stale, unsent = true))))
 
         val state = model.state.first { it is CalendarState.Shown } as CalendarState.Shown
 
@@ -148,6 +121,23 @@ class CalendarTimeZoneTest {
             billable = false,
             tags = emptyList(),
             tagIds = emptyList(),
+        )
+    }
+
+    /** The calendar on [cached], in Tokyo, with weeks that start on Sunday. */
+    private fun model(cached: Flow<List<EntryWithSendState>>): CalendarViewModel {
+        val settings = MutableStateFlow<AccountSettings?>(TOKYO_SUNDAY)
+        val scope = CoroutineScope(Dispatchers.Unconfined)
+        return CalendarViewModel(
+            entries = sessionEntries(cached, settings, scope, NOW, changes = NoChanges),
+            projects = flowOf(emptyList()),
+            tasks = flowOf(emptyList()),
+            accountSettings = settings,
+            changes = NoChanges,
+            scope = scope,
+            computation = Dispatchers.Unconfined,
+            clock = NOW,
+            allDayOffered = flowOf(false),
         )
     }
 

@@ -39,22 +39,6 @@ internal fun weekEntries(
         .filter { if (it.allDay) it.day in days else it.start < to && (it.stop == null || it.stop > from) }
 }
 
-/** The entry with the times the server stores once it gets it: a stopped entry's span snapped. */
-internal fun TimeEntry.stored(time: AccountTime): TimeEntry {
-    if (allDay) {
-        val span = stop?.let {
-            time.noTimeSpan(
-                noTimeDay(time.zone),
-                Duration.between(start, it).seconds,
-            )
-        } ?: return this
-        return copy(start = span.start, stop = span.stop)
-    }
-    val stop = stop?.takeIf { !it.isBefore(start) } ?: return this
-    val span = time.snapUnsent(start, stop) ?: return this
-    return copy(start = span.start, stop = span.stop)
-}
-
 private fun TimeEntry.shown(
     unsent: Boolean,
     time: AccountTime,

@@ -59,11 +59,15 @@ import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.entries.OlderPages
+import com.github.e0ipso.tokkl.entries.ServerWeeks
+import com.github.e0ipso.tokkl.entries.SessionEntries
 import com.github.e0ipso.tokkl.entryfields.resolveRange
 import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.picker.PickerSource
+import com.github.e0ipso.tokkl.platform.AppForeground
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.time.SnappedSpan
@@ -73,6 +77,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -824,6 +829,18 @@ class EntryFormServerTest {
             app.accountSettings.state,
             app.changes,
             app.changes,
+            SessionEntries(
+                app.cache.entries,
+                app.accountSettings.state,
+                app.changes,
+                OlderPages { null },
+                ServerWeeks { null },
+                Clock.systemUTC(),
+                AppForeground(MutableStateFlow(true), emptyFlow()),
+                emptyFlow(),
+                scope,
+                Dispatchers.IO,
+            ),
             scope,
             clock = Clock.systemUTC(),
             allDay = flowOf(false),

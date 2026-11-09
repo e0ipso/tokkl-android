@@ -5,6 +5,9 @@ import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.cache.EntryChanges
+import com.github.e0ipso.tokkl.entries.ServerWeeks
+import com.github.e0ipso.tokkl.entries.WeekSource
+import com.github.e0ipso.tokkl.entries.sessionEntries
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.EntryWithSendState
@@ -16,7 +19,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
@@ -581,21 +583,30 @@ class CalendarViewModelTest {
         cache: Flow<List<EntryWithSendState>> = flowOf(cached.map { EntryWithSendState(it, unsent = false) }),
         io: CoroutineContext = Dispatchers.Unconfined,
         allDayOffered: Boolean = false,
-    ) = CalendarViewModel(
-        entries = cache,
-        projects = flowOf(emptyList()),
-        tasks = flowOf(emptyList()),
-        accountSettings = MutableStateFlow(settings),
-        changes = changes,
-        weeks = ServerWeeks { testApi.api(url, ApiCredentials.ApiToken("tok-123")) },
-        scope = CoroutineScope(Dispatchers.Unconfined),
-        io = io,
-        computation = Dispatchers.Unconfined,
-        clock = CLOCK,
-        allDayOffered = flowOf(allDayOffered),
-        overrides = emptyFlow(),
-        app = app.app,
-    )
+    ): CalendarViewModel {
+        val accountSettings = MutableStateFlow<AccountSettings?>(settings)
+        val scope = CoroutineScope(Dispatchers.Unconfined)
+        return CalendarViewModel(
+            entries = sessionEntries(
+                cache,
+                accountSettings,
+                scope,
+                CLOCK,
+                changes = changes,
+                serverWeeks = ServerWeeks { testApi.api(url, ApiCredentials.ApiToken("tok-123")) },
+                app = app.app,
+                io = io,
+            ),
+            projects = flowOf(emptyList()),
+            tasks = flowOf(emptyList()),
+            accountSettings = accountSettings,
+            changes = changes,
+            scope = scope,
+            computation = Dispatchers.Unconfined,
+            clock = CLOCK,
+            allDayOffered = flowOf(allDayOffered),
+        )
+    }
 
     private fun shown(model: CalendarViewModel, condition: (CalendarState.Shown) -> Boolean): CalendarState.Shown =
         runBlocking {

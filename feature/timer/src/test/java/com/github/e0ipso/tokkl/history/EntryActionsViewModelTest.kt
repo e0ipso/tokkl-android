@@ -4,6 +4,7 @@ import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.UndoOutcome
+import com.github.e0ipso.tokkl.entries.sessionEntries
 import com.github.e0ipso.tokkl.entryfields.SplitProblem
 import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
 import com.github.e0ipso.tokkl.favorites.MAX_FAVORITES
@@ -510,6 +511,7 @@ class EntryActionsViewModelTest {
     private fun model(canRestore: Boolean) = EntryActionsViewModel(
         entries = entries,
         changes = FakeChanges(),
+        sessionEntries = sessionEntries(entries, MutableStateFlow(SETTINGS), scope, Clock.systemUTC()),
         undo = { entryId ->
             calls += "undo $entryId"
             undoOutcome

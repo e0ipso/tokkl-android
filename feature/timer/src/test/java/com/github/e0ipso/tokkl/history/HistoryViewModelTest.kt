@@ -5,6 +5,10 @@ import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.api.TokklApi
+import com.github.e0ipso.tokkl.entries.OlderDays
+import com.github.e0ipso.tokkl.entries.OlderPages
+import com.github.e0ipso.tokkl.entries.SessionEntries
+import com.github.e0ipso.tokkl.entries.sessionEntries
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.Project
@@ -21,7 +25,6 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onEach
@@ -34,6 +37,7 @@ import mockwebserver3.RecordedRequest
 import mockwebserver3.SocketEffect
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -70,6 +74,10 @@ class HistoryViewModelTest {
     private val mainDispatcher: ExecutorCoroutineDispatcher = main.asCoroutineDispatcher()
     private val scope = CoroutineScope(SupervisorJob() + mainDispatcher)
     private val reconnects = MutableSharedFlow<Unit>(extraBufferCapacity = 8)
+
+    /** The account lifetime's sign-ins. */
+    private val accounts = MutableStateFlow(1)
+    private lateinit var entries: SessionEntries
     private lateinit var client: TokklApi
 
     /** The day the account's first entry starts on, as `GET /api/app/bounds` says. */
@@ -161,6 +169,34 @@ class HistoryViewModelTest {
             days("2026-10-20", "2026-09-08"),
             older.days.map { it.date },
         )
+    }
+
+    @Test
+    fun aSignInOfAnotherAccountDropsTheOlderDays() {
+        cached.value = cachedDays(LocalDate.parse("2026-10-06"), LocalDate.parse("2026-10-19"))
+        val model = model()
+        awaitShown(model) { it.days.size == 14 }
+        onMain { model.loadOlder() }
+        awaitShown(model) { it.days.size == 28 }
+
+        onMain { accounts.value = 2 }
+
+        val shown = awaitShown(model) { it.days.size == 14 }
+        assertEquals(OlderDays.More(auto = true), shown.older)
+    }
+
+    @Test
+    fun aDeletedEntryLeavesTheHistoryUntilItsDeleteIsTakenBack() {
+        cached.value = cachedDays(LocalDate.parse("2026-10-06"), LocalDate.parse("2026-10-19"))
+        val model = model()
+        awaitShown(model) { it.days.size == 14 }
+        val deleted = entryOn(LocalDate.parse("2026-10-10"))
+
+        onMain { entries.deleted(deleted) }
+        assertFalse(awaitShown(model) { it.days.size == 13 }.days.any { it.date == LocalDate.parse("2026-10-10") })
+
+        runBlocking(mainDispatcher) { entries.restored(deleted.id) }
+        awaitShown(model) { it.days.size == 14 }
     }
 
     @Test
@@ -392,20 +428,25 @@ class HistoryViewModelTest {
         assertEquals(OlderDays.Unreachable, awaitShown(model) { it.older.settled() }.older)
     }
 
-    private fun model() = HistoryViewModel(
-        entries = cached,
-        projects = MutableStateFlow(emptyList<Project>()),
-        tasks = MutableStateFlow(emptyList<Task>()),
-        accountSettings = MutableStateFlow(SETTINGS),
-        olderPages = OlderPages { client },
-        scope = scope,
-        io = Dispatchers.IO,
-        computation = mainDispatcher,
-        clock = MovableClock(now),
-        ids = { it },
-        overrides = emptyFlow(),
-        app = AppForeground(MutableStateFlow(true), reconnects),
-    )
+    private fun model(): HistoryViewModel {
+        entries = sessionEntries(
+            cached,
+            MutableStateFlow(SETTINGS),
+            scope,
+            MovableClock(now),
+            olderPages = OlderPages { client },
+            app = AppForeground(MutableStateFlow(true), reconnects),
+            io = Dispatchers.IO,
+            accounts = accounts,
+        )
+        return HistoryViewModel(
+            entries = entries,
+            projects = MutableStateFlow(emptyList<Project>()),
+            tasks = MutableStateFlow(emptyList<Task>()),
+            scope = scope,
+            computation = mainDispatcher,
+        )
+    }
 
     /**
      * The page has come back with anything but more days to load on scroll, the state before

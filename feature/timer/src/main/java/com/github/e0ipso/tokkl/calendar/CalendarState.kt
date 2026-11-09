@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.calendar
 
 import androidx.compose.runtime.Immutable
+import com.github.e0ipso.tokkl.entries.WeekSource
 import com.github.e0ipso.tokkl.session.AccountSettings
 import java.time.LocalDate
 import java.time.ZoneId
@@ -37,38 +38,6 @@ sealed interface CalendarState {
         /** The seven days of the week, from [weekStart]. */
         val weekDays: List<LocalDate> get() = (0L until 7L).map(weekStart::plusDays)
     }
-}
-
-/** Where the shown week's entries come from. */
-@Immutable
-sealed interface WeekSource {
-
-    /**
-     * The phone keeps the week: today's week and the week before it. The entries that start
-     * before the cache and run into the week join them once the server sends them.
-     */
-    data object Cached : WeekSource
-
-    /** The week is not on the phone, and its entries load from the server. */
-    data object Loading : WeekSource
-
-    /** The server sent the week's entries. */
-    data object Loaded : WeekSource
-
-    /** No answer: the phone is offline, or the server or the proxy in front of it is down. */
-    data object Unreachable : WeekSource
-
-    /** The server refused the stored API token, or the phone could not read it. */
-    data object AuthFailed : WeekSource
-
-    /** The app sends nothing to the server until the user answers its trust prompt. */
-    data object TrustRefused : WeekSource
-
-    /** Any other answer. [status] is the HTTP status, or null when the body was not a list of entries. */
-    data class Failed(val status: Int?) : WeekSource
-
-    /** The week's entries are known, from the phone or the server. */
-    val shows: Boolean get() = this == Cached || this == Loaded
 }
 
 /** The edge of a block that a resize drags. */
