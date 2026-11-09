@@ -3,9 +3,16 @@ package com.github.e0ipso.tokkl.widget
 import com.github.e0ipso.tokkl.storage.valueStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 import java.io.IOException
 
@@ -30,19 +37,76 @@ class PomodoroWidgetSyncTest {
         assertEquals("ended", disk["pomodoro"])
     }
 
-    @Test fun aFailedDrawDoesNotRememberAKeyThatWasNeverDrawn() = runTest {
+    @Test fun aFailedDrawRemembersNothingAndTriesAgainWithoutEndingTheSync() = runTest {
         var saved: String? = "work"
+        var failures = 2
+        val keys = MutableStateFlow("ended")
+        val draws = mutableListOf<String>()
         val sync = WidgetSync(
-            keys = flowOf("ended"),
+            keys = keys,
             shown = valueStore(load = { saved }, save = { saved = it }),
-            redraw = { throw IOException("launcher unavailable") },
-            scope = CoroutineScope(Dispatchers.Unconfined),
+            redraw = {
+                if (failures-- > 0) throw IOException("launcher unavailable")
+                draws += keys.value
+            },
+            scope = backgroundScope,
             io = Dispatchers.Unconfined,
         )
-        try {
-            sync.follow()
-        } catch (_: IOException) { /* Retry on the next process or state. */ }
-        assertEquals("work", saved)
+        var ended: Throwable? = null
+        val following = launch {
+            try {
+                sync.follow()
+            } catch (failure: IOException) {
+                ended = failure
+            }
+        }
+
+        runCurrent()
+        assertEquals("a failed draw remembers no key", "work", saved)
+        advanceUntilIdle()
+        assertNull("a failed draw ends the sync", ended)
+        assertEquals(listOf("ended"), draws)
+        assertEquals("ended", saved)
+
+        keys.value = "idle"
+        runCurrent()
+        assertEquals("the sync still follows", listOf("ended", "idle"), draws)
+        following.cancel()
+    }
+
+    @Test fun aFailedReadOfTheStateReadsAgainWithoutEndingTheSync() = runTest {
+        var reads = 0
+        var saved: String? = null
+        var draws = 0
+        val keys = flow {
+            reads++
+            emit(if (reads == 1) "work" else "ended")
+            if (reads == 1) throw IOException("cache unreadable")
+            awaitCancellation()
+        }
+        val sync = WidgetSync(
+            keys = keys,
+            shown = valueStore(load = { saved }, save = { saved = it }),
+            redraw = { draws++ },
+            scope = backgroundScope,
+            io = Dispatchers.Unconfined,
+        )
+        var ended: Throwable? = null
+        val following = launch {
+            try {
+                sync.follow()
+            } catch (failure: IOException) {
+                ended = failure
+            }
+        }
+
+        advanceUntilIdle()
+
+        assertNull("a failed read ends the sync", ended)
+        assertEquals(2, reads)
+        assertEquals(2, draws)
+        assertEquals("ended", saved)
+        following.cancel()
     }
 
     @Test fun failedStorageStillAllowsTheNextPhaseToDraw() = runTest {
