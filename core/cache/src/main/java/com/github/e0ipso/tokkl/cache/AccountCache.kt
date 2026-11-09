@@ -1,9 +1,6 @@
 package com.github.e0ipso.tokkl.cache
 
 import android.database.sqlite.SQLiteException
-import com.github.e0ipso.tokkl.api.Me
-import com.github.e0ipso.tokkl.api.TokklApi
-import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.model.Client
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.EntryWithSendState
@@ -14,21 +11,20 @@ import com.github.e0ipso.tokkl.model.Tag
 import com.github.e0ipso.tokkl.model.Task
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.session.AccountDataOwner
-import com.github.e0ipso.tokkl.session.MePreferences
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import java.time.Clock
 
 /**
  * What the app last loaded from the server, readable offline (docs/PRD.md O2): projects, clients,
  * tags, tasks, favorites and about two weeks of history. Screens read the flows, which come from
- * the phone and never wait for the network. [refresh] replaces the rows with the server's values.
+ * the phone and never wait for the network. [ServerCacheRefresh] replaces the rows with the server's
+ * values.
  *
  * The account settings are not cached here. AccountSettingsSource keeps them and stays their one
  * source of truth.
  */
-class AccountCache(private val database: CacheDatabase, private val clock: Clock) :
+class AccountCache(private val database: CacheDatabase) :
     CurrentEntryCache,
     AccountDataOwner {
 
@@ -65,52 +61,6 @@ class AccountCache(private val database: CacheDatabase, private val clock: Clock
 
     /** One item at once, and one after each change to which server entry each phone entry is ([serverIdsOf]). */
     val entryIdsChanged: Flow<Unit> = database.invalidationTracker.createFlow("entry_ids").map { }
-
-    /**
-     * Reads the server with [api] and replaces the cached rows, as [refreshedWith] describes, with
-     * the queued changes applied on top. Entries changed during the read, or pending when it
-     * began, keep their current cached state even if their changes have since left the queue.
-     * [me] is the refresh's `GET /api/v9/me` with related data, [preferences] its
-     * `GET /api/v9/me/preferences`, null when that failed, and [capabilities] the flags they set.
-     * A server without favorites gets none cached. A failed request keeps its rows, and a failed
-     * write keeps the whole cache as it was. [onAllDayMissing] runs when Tokkl lists an entry
-     * without `all_day`, as [readServerSnapshot] describes. Blocks on the disk, so call it on the IO
-     * dispatcher.
-     */
-    suspend fun refresh(
-        api: TokklApi,
-        me: Me,
-        preferences: MePreferences?,
-        capabilities: Capabilities,
-        onAllDayMissing: suspend () -> Unit = {},
-    ) {
-        val changes = database.changes()
-        val before = try {
-            database.runInTransaction<EntryRefreshStart> { dao.entryRefreshStart() }
-        } catch (_: SQLiteException) {
-            // Without the before-read state, a stale answer could overwrite a completed send.
-            return
-        }
-        val snapshot = readServerSnapshot(
-            api,
-            me,
-            preferences,
-            clock,
-            favorites = capabilities.favorites,
-            onAllDayMissing = onAllDayMissing,
-        )
-        try {
-            database.runInTransaction {
-                // A pending local entry may have been created and then removed during the read.
-                // Protect its server ID too, even when no cached row remains to compare.
-                val mappedIds = before.pendingIds.filter { it < 0 }.mapNotNull(changes::serverId)
-                val protectedBefore = before.copy(pendingIds = before.pendingIds + mappedIds)
-                dao.refresh { current, pending -> current.refreshedWith(snapshot, pending, protectedBefore) }
-            }
-        } catch (_: SQLiteException) {
-            // Keeps the cache until the next refresh.
-        }
-    }
 
     /**
      * Replaces the cached favorites with [favorites], in the user's order, once the server has

@@ -2,8 +2,8 @@ package com.github.e0ipso.tokkl.lifecycle
 
 import com.github.e0ipso.tokkl.api.Me
 import com.github.e0ipso.tokkl.api.TokklApi
-import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.ChangeSender
+import com.github.e0ipso.tokkl.cache.ServerCacheRefresh
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaultsSetting
 import com.github.e0ipso.tokkl.preferences.ReminderSetting
@@ -25,7 +25,7 @@ import com.github.e0ipso.tokkl.timersync.TimerSyncFollower
 internal class AppRefreshSteps(
     private val capabilities: CapabilitiesSource,
     private val timerStates: AccountTimerStates,
-    private val cache: AccountCache,
+    private val cache: ServerCacheRefresh,
     private val timerView: TimerViewSetting,
     private val pomodoroDefaults: PomodoroDefaultsSetting,
     private val reminder: ReminderSetting,
@@ -35,7 +35,7 @@ internal class AppRefreshSteps(
 
     override suspend fun afterAnswer(api: TokklApi, me: Me, preferences: MePreferences?) {
         val flags = capabilities.refresh(api, me, timerStates.source)
-        cache.refresh(api, me, preferences, flags, onAllDayMissing = capabilities::allDayMissing)
+        cache.refresh(api, me, preferences, flags)
         timerView.refreshed(preferences, keepsTimerView = flags.favorites)
         pomodoroDefaults.refreshed(preferences, keepsPreferences = flags.favorites)
         reminder.refreshed(preferences, tokkl = flags.favorites)

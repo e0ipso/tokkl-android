@@ -3,7 +3,6 @@ package com.github.e0ipso.tokkl.timer
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.entryfields.withPicked
 import com.github.e0ipso.tokkl.model.EntryFields
-import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.model.RunningEntryIdentity
 import com.github.e0ipso.tokkl.model.fields
 import com.github.e0ipso.tokkl.picker.Picked
@@ -29,15 +28,15 @@ import kotlinx.coroutines.launch
  * @param cached the controls as the cache read them.
  * @param scope the view model's scope.
  * @param snapshot the timer state as of now, without labels.
- * @param projects the cached projects, for a pick.
+ * @param catalog the cached projects, for a pick.
  */
 internal class RunningFieldEdits(
     private val local: MutableStateFlow<TimerTaps>,
     private val cached: StateFlow<CachedControls>,
     private val changes: EntryChanges,
     private val scope: CoroutineScope,
-    private val snapshot: () -> TimerState,
-    private val projects: () -> List<Project>,
+    private val snapshot: TimerSnapshot,
+    private val catalog: StateFlow<Catalog>,
 ) {
     private val writes = mutableSetOf<Job>()
     private var openingRunning = false
@@ -46,7 +45,7 @@ internal class RunningFieldEdits(
 
     fun descriptionDone() {
         if (local.value.pending != null) return
-        val shown = snapshot() as? TimerState.Running ?: return
+        val shown = snapshot.now() as? TimerState.Running ?: return
         val edit = local.value.editFor(shown, cached.value)?.takeIf { !it.sent } ?: return
         if (edit.fields == cached.value.controls()?.runningEntry()?.fields()) {
             local.update { it.editEnded(edit) }
@@ -55,7 +54,7 @@ internal class RunningFieldEdits(
         }
     }
 
-    fun pick(picked: Picked) = edit(send = true) { it.withPicked(picked, projects()) }
+    fun pick(picked: Picked) = edit(send = true) { it.withPicked(picked, catalog.value.projects) }
 
     fun setBillable(billable: Boolean) = edit(send = true) { it.copy(billable = billable) }
 
@@ -69,7 +68,7 @@ internal class RunningFieldEdits(
     /** See [TimerViewModel.runningForEdit]. */
     suspend fun runningForEdit(): RunningEntryIdentity? {
         if (openingRunning) return null
-        val shown = snapshot() as? TimerState.Running ?: return null
+        val shown = snapshot.now() as? TimerState.Running ?: return null
         val pending = local.value.pending
         if (pending is PendingTap.Stopping || pending is PendingTap.Acting) return null
         openingRunning = true
@@ -83,7 +82,7 @@ internal class RunningFieldEdits(
             }
             descriptionDone()
             awaitWrites()
-            val settled = snapshot() as? TimerState.Running ?: return null
+            val settled = snapshot.now() as? TimerState.Running ?: return null
             val identity = RunningEntryIdentity(
                 id,
                 shown.workspaceId,
@@ -101,7 +100,7 @@ internal class RunningFieldEdits(
      * not known yet, or it is stopping.
      */
     private fun edit(send: Boolean, change: (EntryFields) -> EntryFields) {
-        when (val shown = snapshot()) {
+        when (val shown = snapshot.now()) {
             TimerState.Loading, is TimerState.Paused -> Unit
 
             is TimerState.Idle -> local.update { it.drafted(change) }

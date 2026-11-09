@@ -205,7 +205,7 @@ class RunningEntryQueueTest {
                 receivedAt = resumedAt,
             )
             fun controls() = serverTimerControls(
-                AccountCache(database, clock).runningNow(),
+                AccountCache(database).runningNow(),
                 held,
                 timerApi = true,
             ) as TimerControls.Running
@@ -233,7 +233,7 @@ class RunningEntryQueueTest {
     @Test
     fun aRunningEntryAnswerKeepsAStartAndAnEditSentDuringItsRead() {
         runBlocking {
-            val cache = AccountCache(database, clock)
+            val cache = AccountCache(database)
             val store = RoomChangeStore(database)
             val local = queue.start(WorkspaceId(WORKSPACE), EntryFields("Running"))
             val startRead = cache.runningCheckStart()

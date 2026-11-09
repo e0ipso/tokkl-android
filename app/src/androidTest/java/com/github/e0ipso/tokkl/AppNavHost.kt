@@ -33,6 +33,6 @@ internal fun AppNavHost(
         signOuts = remember { koin.get<AccountLifetime>().signOuts },
         capabilities = capabilities,
         signIns = remember { koin.get() },
-        timerFrame = { koinViewModel<TimerViewModel>(viewModelStoreOwner = LocalSignedInSession.current) },
+        timerFrame = { koinViewModel<TimerViewModel>(viewModelStoreOwner = LocalSignedInSession.current).frame },
     )
 }

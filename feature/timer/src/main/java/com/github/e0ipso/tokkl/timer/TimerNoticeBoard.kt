@@ -37,7 +37,7 @@ internal class TimerNoticeBoard(private val discards: DiscardNotices) {
         failures.value = TimerNotice.ActionFailed(result, ++failureCount)
     }
 
-    /** See [TimerViewModel.claim]. */
+    /** See [TimerFrameSource.claim]. */
     suspend fun claim(notice: TimerNotice): TimerNotice? = when (notice) {
         is TimerNotice.ActionFailed -> notice.takeIf { failures.value == it }
 
@@ -53,7 +53,7 @@ internal class TimerNoticeBoard(private val discards: DiscardNotices) {
             }
     }
 
-    /** See [TimerViewModel.noticeShown]. */
+    /** The screen has shown [notice], or stopped showing it. */
     fun shown(notice: TimerNotice) {
         when (notice) {
             is TimerNotice.ActionFailed -> failures.compareAndSet(notice, null)

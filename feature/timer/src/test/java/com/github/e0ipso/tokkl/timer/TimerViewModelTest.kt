@@ -21,6 +21,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -521,7 +522,7 @@ class TimerViewModelTest {
         val announced = CopyOnWriteArrayList<Int>()
         onMain {
             scope.launch(start = CoroutineStart.UNDISPATCHED) {
-                model.starts.collect { announced += changes.calls.count { it.startsWith("start") } }
+                model.frame.starts.collect { announced += changes.calls.count { it.startsWith("start") } }
             }
         }
         awaitIdle()
@@ -551,7 +552,7 @@ class TimerViewModelTest {
         awaitIdle()
         onMain { running.value = EntryWithSendState(PAST.copy(stop = null), unsent = false) }
         awaitState("the external running entry") { it is TimerState.Running }
-        assertEquals(emptyList<Unit>(), model.starts.replayCache)
+        assertEquals(emptyList<Unit>(), (model.frame.starts as SharedFlow<Unit>).replayCache)
     }
 
     @Test
@@ -559,7 +560,7 @@ class TimerViewModelTest {
         awaitIdle()
         onMain { model.start() }
         awaitState("the queued start") { it is TimerState.Running && it.entryId != null }
-        assertEquals(listOf(Unit), model.starts.replayCache)
+        assertEquals(listOf(Unit), (model.frame.starts as SharedFlow<Unit>).replayCache)
     }
 
     private fun awaitAnnounced(announced: List<Int>, expected: List<Int>) {

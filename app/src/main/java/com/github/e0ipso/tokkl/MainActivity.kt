@@ -107,7 +107,9 @@ class MainActivity : ComponentActivity() {
                     signOuts = lifetime.signOuts,
                     capabilities = capabilities.state,
                     signIns = signIns,
-                    timerFrame = { koinViewModel<TimerViewModel>(viewModelStoreOwner = LocalSignedInSession.current) },
+                    timerFrame = {
+                        koinViewModel<TimerViewModel>(viewModelStoreOwner = LocalSignedInSession.current).frame
+                    },
                     notificationPrompt = { starts, retries, onAnswer ->
                         NotificationPermissionPrompt(
                             starts,

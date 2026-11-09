@@ -187,8 +187,8 @@ class TimerPauseTest {
         assertTrue("nothing was queued", changes.calls.isEmpty())
         assertEquals(listOf("pause"), calls)
 
-        assertEquals(notice, main.onMain { model.claim(notice) })
-        onMain { model.noticeShown(notice) }
+        assertEquals(notice, main.onMain { model.frame.claim(notice) })
+        onMain { model.frame.noticeShown(notice) }
         awaitNotice { it == null }
     }
 
@@ -249,7 +249,7 @@ class TimerPauseTest {
         assertTrue(resumed.pausable)
         assertNotNull(
             "a resume asks about notifications as a start does",
-            main.onMain { withTimeoutOrNull(TIMEOUT_MS) { model.starts.first() } },
+            main.onMain { withTimeoutOrNull(TIMEOUT_MS) { model.frame.starts.first() } },
         )
         assertTrue("nothing was queued", changes.calls.isEmpty())
     }
@@ -442,23 +442,23 @@ class TimerPauseTest {
             discardNotices = holder.discardNotice,
             takeDiscardNotice = { holder.takeDiscardNotice() },
         )
-        scope.launch { notices.notice.collect {} }
+        scope.launch { notices.frame.notice.collect {} }
         val discarded = DiscardedPomodoro(entryId = 70, start = TAP.minusSeconds(40), stop = TAP)
         val state = held(revision = 20).state.copy(discardedPomodoro = discarded)
 
         assertTrue(holder.accept(holder.begin(), state))
         val notice = awaitNotice(notices) { it is TimerNotice.PomodoroDiscarded }
         assertEquals(TimerNotice.PomodoroDiscarded(70), notice)
-        assertEquals(notice, main.onMain { notices.claim(notice!!) })
+        assertEquals(notice, main.onMain { notices.frame.claim(notice!!) })
         assertNull("the holder recorded it as shown", holder.discardNotice.value)
         awaitNotice(notices) { it == notice }
 
-        onMain { notices.noticeShown(notice!!) }
+        onMain { notices.frame.noticeShown(notice!!) }
         awaitNotice(notices) { it == null }
         assertTrue("the same state arrives again", holder.accept(holder.begin(), state))
         main.settle(SETTLE_PAUSE_MS)
-        assertNull("its notice does not come back", notices.notice.value)
-        assertNull("nor can a screen claim it", main.onMain { notices.claim(notice!!) })
+        assertNull("its notice does not come back", notices.frame.notice.value)
+        assertNull("nor can a screen claim it", main.onMain { notices.frame.claim(notice!!) })
     }
 
     private fun awaitState(what: String, condition: (TimerState) -> Boolean): TimerState {
@@ -475,7 +475,7 @@ class TimerPauseTest {
         var matched = false
         val found = main.onMain {
             withTimeoutOrNull(TIMEOUT_MS) {
-                from.notice.onEach { last = it }.first(condition).also { matched = true }
+                from.frame.notice.onEach { last = it }.first(condition).also { matched = true }
             }
         }
         if (!matched) throw AssertionError("timed out waiting for a notice; the last was $last, after $calls")
