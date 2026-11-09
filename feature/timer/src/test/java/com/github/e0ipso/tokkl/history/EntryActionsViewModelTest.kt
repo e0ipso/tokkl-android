@@ -511,7 +511,7 @@ class EntryActionsViewModelTest {
     private fun model(canRestore: Boolean) = EntryActionsViewModel(
         entries = entries,
         changes = FakeChanges(),
-        sessionEntries = sessionEntries(entries, MutableStateFlow(SETTINGS), scope, Clock.systemUTC()),
+        removals = sessionEntries(entries, MutableStateFlow(SETTINGS), scope, Clock.systemUTC()),
         undo = { entryId ->
             calls += "undo $entryId"
             undoOutcome

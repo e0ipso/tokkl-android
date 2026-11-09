@@ -262,6 +262,7 @@ class CalendarGesturesTest {
             emptyFlow(),
             scope,
             Dispatchers.IO,
+            Dispatchers.Default,
         )
         val model = CalendarViewModel(
             entries = entries,

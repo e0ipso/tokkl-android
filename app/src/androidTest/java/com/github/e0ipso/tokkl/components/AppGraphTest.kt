@@ -197,6 +197,7 @@ class AppGraphTest {
             "SessionTrust" to SignOutPhase.CLEAR_DATA,
             "LastAnswer" to SignOutPhase.CLEAR_DATA,
             "DiscardedChanges" to SignOutPhase.CLEAR_DATA,
+            "SessionEntries" to SignOutPhase.CLEAR_DATA,
         )
     }
 }

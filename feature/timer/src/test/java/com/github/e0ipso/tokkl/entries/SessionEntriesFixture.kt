@@ -31,7 +31,8 @@ internal fun sessionEntries(
     app: AppForeground = AppForeground(MutableStateFlow(true), emptyFlow()),
     io: CoroutineContext = Dispatchers.Unconfined,
     accounts: Flow<Int> = emptyFlow(),
-) = SessionEntries(cached, settings, changes, olderPages, serverWeeks, clock, app, accounts, scope, io)
+    computation: CoroutineContext = Dispatchers.Unconfined,
+) = SessionEntries(cached, settings, changes, olderPages, serverWeeks, clock, app, accounts, scope, io, computation)
 
 /** A queue whose entries keep their ids and that takes no change. */
 internal object NoEntryChanges : EntryChanges {

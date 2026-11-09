@@ -71,7 +71,7 @@ class EntryFormViewModelTest {
             accountSettings = settings,
             changes = changes,
             running = changes,
-            sessionEntries = sessionEntries(
+            pastEdits = sessionEntries(
                 entries,
                 settings,
                 scope,
@@ -154,7 +154,7 @@ class EntryFormViewModelTest {
             accountSettings = settings,
             changes = changes,
             running = changes,
-            sessionEntries = sessionEntries(
+            pastEdits = sessionEntries(
                 entries,
                 settings,
                 failing,

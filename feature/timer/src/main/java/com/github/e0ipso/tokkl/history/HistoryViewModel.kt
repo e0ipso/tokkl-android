@@ -3,8 +3,8 @@ package com.github.e0ipso.tokkl.history
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.entries.HistoryEntries
+import com.github.e0ipso.tokkl.entries.HistoryEntriesSource
 import com.github.e0ipso.tokkl.entries.OlderPages
-import com.github.e0ipso.tokkl.entries.SessionEntries
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.model.Task
@@ -35,14 +35,14 @@ import kotlin.coroutines.CoroutineContext
  * @param computation where the days are grouped from the entries.
  */
 class HistoryViewModel(
-    private val entries: SessionEntries,
+    private val entries: HistoryEntriesSource,
     projects: Flow<List<Project>>,
     tasks: Flow<List<Task>>,
     scope: CoroutineScope,
     computation: CoroutineContext,
 ) : ViewModel(scope) {
 
-    val state: StateFlow<HistoryState> = combine(entries.history(), projects, tasks) { shown, projectRows, taskRows ->
+    val state: StateFlow<HistoryState> = combine(entries.history, projects, tasks) { shown, projectRows, taskRows ->
         when (shown) {
             HistoryEntries.Loading -> HistoryState.Loading
 
@@ -68,10 +68,10 @@ class HistoryViewModel(
         .flowOn(computation)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), HistoryState.Loading)
 
-    /** The entry [entryId] as the history last showed it, as [SessionEntries.entry] keeps it. */
+    /** The entry [entryId] as the history last showed it, as [HistoryEntriesSource.entry] keeps it. */
     fun entry(entryId: EntryId): TimeEntry? = entries.entry(entryId)
 
-    /** Loads the days before the oldest day loaded, as [SessionEntries.loadOlder] does. */
+    /** Loads the days before the oldest day loaded, as [HistoryEntriesSource.loadOlder] does. */
     fun loadOlder() = entries.loadOlder()
 
     private companion object {

@@ -3,7 +3,7 @@ package com.github.e0ipso.tokkl.calendar
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.cache.EntryChanges
-import com.github.e0ipso.tokkl.entries.SessionEntries
+import com.github.e0ipso.tokkl.entries.CalendarWeeks
 import com.github.e0ipso.tokkl.entries.WeekEntries
 import com.github.e0ipso.tokkl.entryfields.TimeRange
 import com.github.e0ipso.tokkl.model.EntryFields
@@ -64,7 +64,7 @@ import kotlin.coroutines.CoroutineContext
  *   which [CalendarState.Shown.allDayOffered] reports for the All day row.
  */
 class CalendarViewModel(
-    private val entries: SessionEntries,
+    private val entries: CalendarWeeks,
     projects: Flow<List<Project>>,
     tasks: Flow<List<Task>>,
     private val accountSettings: StateFlow<AccountSettings?>,
@@ -127,7 +127,7 @@ class CalendarViewModel(
     }
 
     /**
-     * Loads the server's part of the week from [weekStart], as [SessionEntries.loadWeek] does.
+     * Loads the server's part of the week from [weekStart], as [CalendarWeeks.loadWeek] does.
      * Showing a week is the event that loads it, and so are Try again after a failure and coming
      * back to the foreground.
      */

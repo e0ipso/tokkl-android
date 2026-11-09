@@ -4,7 +4,11 @@ import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.calendar.CalendarViewModel
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
+import com.github.e0ipso.tokkl.entries.CalendarWeeks
+import com.github.e0ipso.tokkl.entries.EntryRemovals
+import com.github.e0ipso.tokkl.entries.HistoryEntriesSource
 import com.github.e0ipso.tokkl.entries.OlderPages
+import com.github.e0ipso.tokkl.entries.PastEntryEdits
 import com.github.e0ipso.tokkl.entries.ServerWeeks
 import com.github.e0ipso.tokkl.entries.SessionEntries
 import com.github.e0ipso.tokkl.entry.EntryFormViewModel
@@ -20,6 +24,7 @@ import com.github.e0ipso.tokkl.navigation.FeatureRoutes
 import com.github.e0ipso.tokkl.navigation.PageBadge
 import com.github.e0ipso.tokkl.picker.pickerSource
 import com.github.e0ipso.tokkl.platform.DefaultNetwork
+import com.github.e0ipso.tokkl.platform.MainDispatcher
 import com.github.e0ipso.tokkl.platform.computation
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.platform.offlineIn
@@ -31,7 +36,10 @@ import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.storage.StartupLoad
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.TimerActions
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.plus
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
@@ -40,9 +48,9 @@ import org.koin.dsl.module
 
 /**
  * The Timer page with its history and calendar, the entry form and the timer templates: the Timer
- * view setting, the view models and the screens. The history, the calendar, the entry actions and
- * the entry form take the session's [SessionEntries] from their screens, and the entry form what
- * it opens.
+ * view setting, the session's entries, the view models and the screens. The history, the
+ * calendar, the entry actions and the entry form each take the part of the session's
+ * [SessionEntries] they use, and the entry form what its screen opens.
  */
 val timerFeatureModule = module {
     single { TimerViewStore(androidContext(), io()) }
@@ -68,8 +76,8 @@ val timerFeatureModule = module {
     single { ServerWeeks(get<Session>()) }
 
     // The session's one owner of the entries the history, the calendar and the entry form show.
-    // It lives in the signed-in session's store, and the screens hand it to their view models.
-    viewModel {
+    // Sign-out forgets them, and each view model takes the part it uses.
+    single {
         SessionEntries(
             cached = get<AccountCache>().entries,
             accountSettings = get<AccountSettingsSource>().state,
@@ -79,25 +87,32 @@ val timerFeatureModule = module {
             clock = get(),
             app = get(),
             accounts = get<AccountLifetime>().accounts,
-            scope = viewModelCoroutineScope(),
+            scope = get<CoroutineScope>() + get<CoroutineDispatcher>(MainDispatcher),
             io = io(),
+            computation = computation(),
         )
-    }
-    viewModel { params ->
+    } binds arrayOf(
+        HistoryEntriesSource::class,
+        CalendarWeeks::class,
+        PastEntryEdits::class,
+        EntryRemovals::class,
+        AccountDataOwner::class,
+    )
+    viewModel {
         val cache = get<AccountCache>()
         HistoryViewModel(
-            entries = params.get(),
+            entries = get(),
             projects = cache.projects,
             tasks = cache.tasks,
             scope = viewModelCoroutineScope(),
             computation = computation(),
         )
     }
-    viewModel { params ->
+    viewModel {
         EntryActionsViewModel(
             entries = get<AccountCache>().entries,
             changes = get<ChangeQueue>(),
-            sessionEntries = params.get(),
+            removals = get(),
             undo = get(),
             capabilities = get(),
             accountSettings = get<AccountSettingsSource>().state,
@@ -105,11 +120,11 @@ val timerFeatureModule = module {
             clock = get(),
         )
     }
-    viewModel { params ->
+    viewModel {
         val cache = get<AccountCache>()
         val capabilities = get<CapabilitiesSource>()
         CalendarViewModel(
-            entries = params.get(),
+            entries = get(),
             projects = cache.projects,
             tasks = cache.tasks,
             accountSettings = get<AccountSettingsSource>().state,
@@ -165,7 +180,7 @@ val timerFeatureModule = module {
             accountSettings = get<AccountSettingsSource>().state,
             changes = get<ChangeQueue>(),
             running = get<ChangeQueue>(),
-            sessionEntries = params.get(),
+            pastEdits = get(),
             scope = scope,
             clock = get(),
             allDay = get<CapabilitiesSource>().state.map { it.allDay == true },

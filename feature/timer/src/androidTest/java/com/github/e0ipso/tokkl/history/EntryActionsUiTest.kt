@@ -329,7 +329,7 @@ class EntryActionsUiTest {
         val model = EntryActionsViewModel(
             entries = cached,
             changes = changes,
-            sessionEntries = SessionEntries(
+            removals = SessionEntries(
                 cached,
                 settings,
                 changes,
@@ -340,6 +340,7 @@ class EntryActionsUiTest {
                 emptyFlow(),
                 scope,
                 Dispatchers.IO,
+                Dispatchers.Default,
             ),
             undo = { entryId ->
                 calls += "undo $entryId"

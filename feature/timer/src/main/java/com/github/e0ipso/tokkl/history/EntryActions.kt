@@ -7,7 +7,7 @@ import com.github.e0ipso.tokkl.cache.DeleteUndo
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.UndoOutcome
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
-import com.github.e0ipso.tokkl.entries.SessionEntries
+import com.github.e0ipso.tokkl.entries.EntryRemovals
 import com.github.e0ipso.tokkl.entryfields.SplitHalves
 import com.github.e0ipso.tokkl.entryfields.SplitProblem
 import com.github.e0ipso.tokkl.entryfields.SplitResult
@@ -117,7 +117,7 @@ data class EntryActionsState(
  *   and Split cuts.
  * @param accountSettings the account's timezone, time resolution and clock format, which Split
  *   reads the time with.
- * @param sessionEntries the session's entries, which leave a deleted entry out and show a restored one again.
+ * @param removals the session's entries, which leave a deleted entry out and show a restored one again.
  * @param undo takes back the delete of an entry, as `DeleteUndoer` does.
  * @param capabilities whether the server restores deleted entries, `Capabilities.restore`, read
  *   at a tap on a screen, which shows once the capabilities have loaded.
@@ -125,7 +125,7 @@ data class EntryActionsState(
 class EntryActionsViewModel(
     private val entries: Flow<List<EntryWithSendState>>,
     private val changes: EntryChanges,
-    private val sessionEntries: SessionEntries,
+    private val removals: EntryRemovals,
     private val undo: DeleteUndo,
     private val capabilities: CapabilitiesSource,
     private val accountSettings: StateFlow<AccountSettings?>,
@@ -140,9 +140,9 @@ class EntryActionsViewModel(
 
     fun canRestoreDelete(): Boolean = capabilities.state.value.restore
 
-    /** Called only after the editor's deletion transaction commits. [SessionEntries] leaves it out. */
+    /** Called only after the editor's deletion transaction commits. The session's entries leave it out. */
     fun deleted(entry: TimeEntry, undo: Boolean) {
-        sessionEntries.deleted(entry)
+        removals.deleted(entry)
         mutableState.update { it.copy(notice = EntryNotice.Deleted(++serial, entry.id, undo)) }
     }
 
@@ -179,7 +179,7 @@ class EntryActionsViewModel(
             try {
                 val notice = when (val outcome = undo.undoDelete(entryId)) {
                     UndoOutcome.Cancelled, UndoOutcome.Restored -> {
-                        sessionEntries.restored(entryId)
+                        removals.restored(entryId)
                         null
                     }
 

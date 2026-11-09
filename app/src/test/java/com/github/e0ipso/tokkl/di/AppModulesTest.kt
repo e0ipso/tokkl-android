@@ -136,7 +136,7 @@ class AppModulesTest {
             "TimerStateStore", "PomodoroWidgetFieldsStore", "ReminderSync", "ReminderSetting",
             "RunningNotificationSync", "FavoriteShortcutSync", "AccountSettingsStore", "CapabilitiesSignOut",
             "TimerViewSetting", "PomodoroDefaultsSetting", "ServerTrustStore", "SessionTrust", "LastAnswer",
-            "DiscardedChanges", "ExportAccount",
+            "DiscardedChanges", "ExportAccount", "SessionEntries",
         )
     }
 }
