@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.cache
 
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.Me
+import com.github.e0ipso.tokkl.api.MePreferences
 import com.github.e0ipso.tokkl.api.ServerClient
 import com.github.e0ipso.tokkl.api.ServerFavorite
 import com.github.e0ipso.tokkl.api.ServerProject
@@ -9,7 +10,6 @@ import com.github.e0ipso.tokkl.api.ServerTag
 import com.github.e0ipso.tokkl.api.ServerTask
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.TokklApi
-import com.github.e0ipso.tokkl.api.MePreferences
 import com.github.e0ipso.tokkl.session.accountSettings
 import java.time.Clock
 import java.time.Instant

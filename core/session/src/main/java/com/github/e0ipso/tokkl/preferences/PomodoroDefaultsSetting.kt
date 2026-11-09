@@ -1,11 +1,11 @@
 package com.github.e0ipso.tokkl.preferences
 
 import com.github.e0ipso.tokkl.api.ApiClientProvider
+import com.github.e0ipso.tokkl.api.MePreferences
 import com.github.e0ipso.tokkl.api.PomodoroDefaultsChange
 import com.github.e0ipso.tokkl.capabilities.PreferencesOffer
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.CurrentAccount
-import com.github.e0ipso.tokkl.api.MePreferences
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import com.github.e0ipso.tokkl.storage.ClearableStore
 import com.github.e0ipso.tokkl.storage.StartupLoad
@@ -110,8 +110,7 @@ class PomodoroDefaultsSetting(
      * Clamps [defaults] to their ranges, shows them at once, keeps them on the phone and sends
      * them to the server in the background. Call it on the main thread.
      */
-    fun change(defaults: PomodoroDefaults): Job =
-        preference.change(defaults.clamped())
+    fun change(defaults: PomodoroDefaults): Job = preference.change(defaults.clamped())
 
     /**
      * Takes the refresh's `GET /api/v9/me/preferences`, null when it failed, from a server that

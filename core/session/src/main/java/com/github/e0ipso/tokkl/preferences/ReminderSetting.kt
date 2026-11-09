@@ -1,10 +1,10 @@
 package com.github.e0ipso.tokkl.preferences
 
 import com.github.e0ipso.tokkl.api.ApiClientProvider
+import com.github.e0ipso.tokkl.api.MePreferences
 import com.github.e0ipso.tokkl.api.ReminderChange
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.CurrentAccount
-import com.github.e0ipso.tokkl.api.MePreferences
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import com.github.e0ipso.tokkl.storage.ClearableStore
 import com.github.e0ipso.tokkl.storage.StartupLoad
@@ -23,7 +23,10 @@ data class ReminderPreferences(val enabled: Boolean = true, val hours: Int = 8) 
     }
 }
 
-/** The reminder's preferences as the phone keeps them, and whether the server has the keys and still has to get them. */
+/**
+ * The reminder's preferences as the phone keeps them, whether the server still has to get them,
+ * and whether a refresh found its two keys there.
+ */
 typealias StoredReminderPreferences = StoredPreference<ReminderPreferences>
 
 /**

@@ -156,11 +156,10 @@ internal class RunningFieldEdits(
 
                     send -> send(shown, fields)
 
-                    else -> ledger.dispatch(
-                        TapEvent.Edited(
-                            FieldEdit(RunningEntryIdentity(shown.entryId, shown.workspaceId, shown.start), fields, false),
-                        ),
-                    )
+                    else -> {
+                        val identity = RunningEntryIdentity(shown.entryId, shown.workspaceId, shown.start)
+                        ledger.dispatch(TapEvent.Edited(FieldEdit(identity, fields, sent = false)))
+                    }
                 }
             }
         }

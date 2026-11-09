@@ -62,7 +62,7 @@ internal fun decodeAppSummary(body: JsonObject): ApiResult<SummaryReport> = try 
     ApiResult.Failure(ApiError.InvalidResponse(IllegalArgumentException("invalid summary date", e)))
 }
 
-/** The summary's known fields, decoded as the API's JSON settings decode them: unknown fields are left to the extras. */
+/** Decodes the summary's known fields as the API's JSON settings do, leaving unknown ones to the extras. */
 private val SummaryJson = Json { ignoreUnknownKeys = true }
 
 // kotlinx.serialization accepts quoted numerals for numeric properties. The report contract

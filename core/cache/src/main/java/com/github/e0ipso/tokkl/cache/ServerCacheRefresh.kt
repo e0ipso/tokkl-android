@@ -2,9 +2,9 @@ package com.github.e0ipso.tokkl.cache
 
 import android.database.sqlite.SQLiteException
 import com.github.e0ipso.tokkl.api.Me
+import com.github.e0ipso.tokkl.api.MePreferences
 import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.model.Capabilities
-import com.github.e0ipso.tokkl.api.MePreferences
 import java.time.Clock
 
 /**

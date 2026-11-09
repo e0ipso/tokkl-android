@@ -41,7 +41,8 @@ class MePreferencesTest {
     fun favoritesAreNoneWhenLeftOutAndNullWhenTheyDoNotDecode() {
         assertEquals(emptyList<ServerFavorite>(), mePreferences("{}").favorites())
         assertNull(mePreferences("""{"favorites":"no"}""").favorites())
-        assertEquals("Write", mePreferences("""{"favorites":[{"description":"Write"}]}""").favorites()!!.single().description)
+        val saved = mePreferences("""{"favorites":[{"description":"Write"}]}""").favorites()
+        assertEquals("Write", saved!!.single().description)
     }
 
     @Test

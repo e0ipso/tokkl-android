@@ -24,8 +24,11 @@ class TrashApi internal constructor(private val client: ApiTransport) {
      * `POST /api/app/time_entries/{id}/restore` from the trash page. Tokkl answers with the
      * entry, which this call does not read, so any 2xx is a success.
      */
-    suspend fun restore(id: EntryId): ApiResult<Unit> =
-        client.sendNoContent(HttpMethod.POST, client.server.appUrl("time_entries", id.toString(), "restore"), EMPTY_BODY)
+    suspend fun restore(id: EntryId): ApiResult<Unit> = client.sendNoContent(
+        HttpMethod.POST,
+        client.server.appUrl("time_entries", id.toString(), "restore"),
+        EMPTY_BODY,
+    )
 
     /** `DELETE /api/app/trash/{id}`, which deletes the entry for good. */
     suspend fun purge(id: EntryId): ApiResult<PurgedEntries> =

@@ -2,10 +2,10 @@ package com.github.e0ipso.tokkl.preferences
 
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.MePreferences
 import com.github.e0ipso.tokkl.api.PreferencesChange
 import com.github.e0ipso.tokkl.session.AccountContext
 import com.github.e0ipso.tokkl.session.CurrentAccount
-import com.github.e0ipso.tokkl.api.MePreferences
 import com.github.e0ipso.tokkl.storage.ClearableStore
 import com.github.e0ipso.tokkl.storage.LoadedState
 import com.github.e0ipso.tokkl.storage.StartupLoad
@@ -60,12 +60,13 @@ fun interface PreferenceSharing {
  * [store], so a cold start has it before the refresh answers, and offline.
  *
  * A [change] shows at once and goes to `POST /api/v9/me/preferences` with [body], without waiting
- * for the answer, when [sharing] says the server keeps it. When that fails, as offline, the value stays on the phone, marked unsent, and
- * goes to the server with the next refresh, so the change that reaches the server last wins, as
- * for time entries (docs/PRD.md O3). Each refresh otherwise takes the server's value through
- * [fromServer], except the one refresh right after a change, whose preferences may predate it. A
- * server without Tokkl's preferences, such as Toggl Track, gets nothing: the value stays on the
- * phone. A change made before a refresh found the server keeping it goes there with that refresh.
+ * for the answer, when [sharing] says the server keeps it. When that fails, as offline, the value
+ * stays on the phone, marked unsent, and goes to the server with the next refresh, so the change
+ * that reaches the server last wins, as for time entries (docs/PRD.md O3). Each refresh otherwise
+ * takes the server's value through [fromServer], except the one refresh right after a change,
+ * whose preferences may predate it. A server without Tokkl's preferences, such as Toggl Track,
+ * gets nothing: the value stays on the phone. A change made before a refresh found the server
+ * keeping it goes there with that refresh.
  *
  * @param store keeps the value on the phone. It loads from it as this is made, off the main thread.
  * @param client the signed-in account's API client, or null when signed out.
