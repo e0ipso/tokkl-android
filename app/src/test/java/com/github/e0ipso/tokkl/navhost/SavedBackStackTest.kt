@@ -34,7 +34,7 @@ class SavedBackStackTest {
     private val serializer = NavBackStackSerializer(PolymorphicSerializer(Route::class))
 
     /** The routes' serializers as the host registers them, from every feature the app's graph binds. */
-    private val json = Json { serializersModule = routeSerializers(appFeatureEntries) }
+    private val json = Json { serializersModule = routeSerializers(appFeatures.routes) }
 
     @Test
     fun everyScreenComesBackFromTheSavedBackStack() {

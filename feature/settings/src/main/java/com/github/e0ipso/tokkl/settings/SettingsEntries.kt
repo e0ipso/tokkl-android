@@ -3,7 +3,7 @@ package com.github.e0ipso.tokkl.settings
 import androidx.navigation3.runtime.EntryProviderScope
 import com.github.e0ipso.tokkl.feature.settings.R
 import com.github.e0ipso.tokkl.licences.LicencesScreen
-import com.github.e0ipso.tokkl.navigation.FeatureEntries
+import com.github.e0ipso.tokkl.navigation.FeatureRoutes
 import com.github.e0ipso.tokkl.navigation.NavigationHost
 import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.TopLevelDestination
@@ -16,7 +16,7 @@ import kotlinx.serialization.modules.subclass
 import org.koin.compose.viewmodel.koinViewModel
 
 /** Settings, and the Licences screen it opens above itself. */
-internal object SettingsEntries : FeatureEntries {
+internal object SettingsEntries : FeatureRoutes {
     override val pages get() = listOf(settingsPage)
 
     override fun PolymorphicModuleBuilder<Route>.registerRoutes() {

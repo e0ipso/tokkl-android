@@ -4,7 +4,8 @@ import android.app.AlarmManager
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
-import com.github.e0ipso.tokkl.navigation.FeatureEntries
+import com.github.e0ipso.tokkl.navigation.FeatureRequests
+import com.github.e0ipso.tokkl.navigation.FeatureRoutes
 import com.github.e0ipso.tokkl.navigation.PageBadge
 import com.github.e0ipso.tokkl.picker.pickerSource
 import com.github.e0ipso.tokkl.platform.AppHook
@@ -151,7 +152,8 @@ val pomodoroFeatureModule = module {
         )
     }
 
-    single { PomodoroEntries(notification = inject(), io = io()) } bind FeatureEntries::class
+    single { PomodoroEntries } bind FeatureRoutes::class
+    single { PomodoroRequests(notification = inject(), io = io()) } bind FeatureRequests::class
 
     // The bar's running dot on Pomodoro while the server's session runs.
     single { PomodoroBadge(get()) } bind PageBadge::class

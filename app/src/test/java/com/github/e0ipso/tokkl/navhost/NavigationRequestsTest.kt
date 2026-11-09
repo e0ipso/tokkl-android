@@ -16,7 +16,7 @@ import org.junit.Test
 
 /** The taps from outside the app that wait for the navigation host. */
 class NavigationRequestsTest {
-    private val serializers = requestSerializers(appFeatureEntries)
+    private val serializers = requestSerializers(appFeatures.requests)
 
     @Test
     fun aLaterTapOfTheSameKindReplacesTheWaitingOne() {

@@ -4,7 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation3.runtime.EntryProviderScope
 import com.github.e0ipso.tokkl.feature.pomodoro.R
-import com.github.e0ipso.tokkl.navigation.FeatureEntries
+import com.github.e0ipso.tokkl.navigation.FeatureRequests
+import com.github.e0ipso.tokkl.navigation.FeatureRoutes
 import com.github.e0ipso.tokkl.navigation.LinkIntent
 import com.github.e0ipso.tokkl.navigation.LocalSignedInSession
 import com.github.e0ipso.tokkl.navigation.NavigationHost
@@ -29,16 +30,10 @@ import kotlin.coroutines.CoroutineContext
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
- * The Pomodoro page, and the taps that open it: the Pomodoro widget's, and a session
- * notification's while that notification still belongs to the signed-in account and its phase,
- * which [notification] says on [io]. The notification is made on the first tap, so listing the
- * features makes nothing. The page's view model is the signed-in session's, and its
- * starts and retries may ask for the notification permission through the frame's prompt.
+ * The Pomodoro page. Its view model is the signed-in session's, and its starts and retries may ask
+ * for the notification permission through the frame's prompt.
  */
-internal class PomodoroEntries(
-    private val notification: Lazy<PomodoroSessionNotificationSync>,
-    private val io: CoroutineContext,
-) : FeatureEntries {
+internal object PomodoroEntries : FeatureRoutes {
     override val pages get() = listOf(pomodoroPage)
 
     override fun PolymorphicModuleBuilder<Route>.registerRoutes() {
@@ -56,7 +51,17 @@ internal class PomodoroEntries(
             )
         }
     }
+}
 
+/**
+ * The taps that open the Pomodoro page: the Pomodoro widget's, and a session notification's while
+ * that notification still belongs to the signed-in account and its phase, which [notification]
+ * says on [io]. The notification is made on the first tap, so listing the features makes nothing.
+ */
+internal class PomodoroRequests(
+    private val notification: Lazy<PomodoroSessionNotificationSync>,
+    private val io: CoroutineContext,
+) : FeatureRequests {
     override val linkExtras
         get() = listOf(POMODORO_WIDGET_TAP, POMODORO_NOTIFICATION_ACCOUNT, EXTRA_PHASE_START, EXTRA_REVISION)
 

@@ -19,7 +19,7 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.runtime.serialization.NavBackStackSerializer
 import androidx.savedstate.serialization.SavedStateConfiguration
 import com.github.e0ipso.tokkl.model.Capabilities
-import com.github.e0ipso.tokkl.navigation.FeatureEntries
+import com.github.e0ipso.tokkl.navigation.FeatureNavigation
 import com.github.e0ipso.tokkl.navigation.LocalSignedInSession
 import com.github.e0ipso.tokkl.navigation.NavigationHost
 import com.github.e0ipso.tokkl.navigation.Navigator
@@ -50,7 +50,7 @@ import kotlinx.serialization.PolymorphicSerializer
  * nowhere, and a back stack restored from before shows Timer. [requests] opens the pages that
  * taps from outside the app ask for, through the features that read them.
  *
- * Each feature declares its routes, adds their entries ([FeatureEntries]) and names its top-level
+ * Each feature declares its routes, adds their entries ([FeatureNavigation.routes]) and names its top-level
  * pages, which the bar, the rail and the More sheet show in order ([TopLevelPages]). The back stack
  * is saved with the serializers of every feature's routes ([routeSerializers]). Each route's screen takes its
  * own view models, which go when the route leaves the stack. The ones that several screens share
@@ -62,7 +62,7 @@ import kotlinx.serialization.PolymorphicSerializer
 @Composable
 internal fun TokklNavHost(
     requests: NavigationRequests,
-    features: List<FeatureEntries>,
+    features: FeatureNavigation,
     pages: TopLevelPages,
     signOuts: StateFlow<Int>,
     capabilities: StateFlow<Capabilities>,
@@ -101,13 +101,15 @@ private fun Navigation(
     stores: NavigationStores,
     requests: NavigationRequests,
     capabilities: StateFlow<Capabilities>,
-    features: List<FeatureEntries>,
+    features: FeatureNavigation,
     pages: TopLevelPages,
     signIns: SignInRoutes,
     timerFrame: @Composable () -> TimerFrame,
     notificationPrompt: NotificationPrompt?,
 ) {
-    val routes = remember(features) { SavedStateConfiguration { serializersModule = routeSerializers(features) } }
+    val routes = remember(features) {
+        SavedStateConfiguration { serializersModule = routeSerializers(features.routes) }
+    }
     val backStack = rememberSerializable(
         serializer = NavBackStackSerializer(PolymorphicSerializer(Route::class)),
         configuration = routes,
@@ -117,7 +119,7 @@ private fun Navigation(
     val prompts = remember { NotificationPrompts() }
     val host = remember(navigator, prompts) { NavigationHost(navigator, prompts) }
     val entryProvider = remember(features, host) {
-        entryProvider<Route> { features.forEach { feature -> with(feature) { addEntries(host) } } }
+        entryProvider<Route> { features.routes.forEach { feature -> with(feature) { addEntries(host) } } }
     }
     val entries = rememberDecoratedNavEntries(
         backStack = backStack,
@@ -150,7 +152,7 @@ private fun Navigation(
     // A page the server lacks never shows, not even for the frame before the stack is corrected.
     val top = backStack.last().orTimerIfUnavailable(unavailable)
     val onSignIn = signIns.isSignIn(top)
-    NavigationRequestEffects(requests, features, navigator, signIns, unavailable, onSignIn = onSignIn)
+    NavigationRequestEffects(requests, features.requests, navigator, signIns, unavailable, onSignIn = onSignIn)
     BackHandler(enabled = backStack.size > 1) { navigator.back() }
     if (onSignIn) {
         LaunchedEffect(Unit) { savedStates.removeState(Route.Timer.contentKey) }
@@ -162,7 +164,7 @@ private fun Navigation(
         top = top,
         entries = entries,
         host = host,
-        features = features,
+        features = features.frame,
         pages = pages,
         unavailable = unavailable,
         notificationPrompt = notificationPrompt,

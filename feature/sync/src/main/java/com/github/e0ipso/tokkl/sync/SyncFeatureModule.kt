@@ -3,7 +3,8 @@ package com.github.e0ipso.tokkl.sync
 import com.github.e0ipso.tokkl.api.SuccessListener
 import com.github.e0ipso.tokkl.cache.ChangeDiscards
 import com.github.e0ipso.tokkl.cache.ChangeQueue
-import com.github.e0ipso.tokkl.navigation.FeatureEntries
+import com.github.e0ipso.tokkl.navigation.FeatureRoutes
+import com.github.e0ipso.tokkl.navigation.FrameContributions
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
 import com.github.e0ipso.tokkl.session.AccountDataOwner
@@ -59,5 +60,6 @@ val syncFeatureModule = module {
         )
     }
 
-    single { SyncEntries } bind FeatureEntries::class
+    single { SyncEntries } bind FeatureRoutes::class
+    single { SyncFrameContributions } bind FrameContributions::class
 }

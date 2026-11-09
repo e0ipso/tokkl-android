@@ -7,7 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import com.github.e0ipso.tokkl.feature.projects.R
-import com.github.e0ipso.tokkl.navigation.FeatureEntries
+import com.github.e0ipso.tokkl.navigation.FeatureRoutes
 import com.github.e0ipso.tokkl.navigation.NavigationHost
 import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.TopLevelDestination
@@ -21,7 +21,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /** The Projects page, with a view model of its own that goes when the page closes. */
-internal object ProjectsEntries : FeatureEntries {
+internal object ProjectsEntries : FeatureRoutes {
     override val pages get() = listOf(projectsPage)
 
     override fun PolymorphicModuleBuilder<Route>.registerRoutes() {

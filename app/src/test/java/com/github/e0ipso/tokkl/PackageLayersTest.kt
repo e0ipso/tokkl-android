@@ -40,7 +40,8 @@ class PackageLayersTest {
 
     /**
      * The navigation host names no feature, by package or R class: each feature hands it its pages,
-     * badges, taps from outside the app and frame parts through core:navigation's FeatureEntries.
+     * badges, taps from outside the app and frame parts through core:navigation's FeatureRoutes,
+     * FeatureRequests and FrameContributions.
      */
     @Test
     fun theNavigationHostNamesNoFeature() {

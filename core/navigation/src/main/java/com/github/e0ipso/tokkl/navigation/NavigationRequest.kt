@@ -1,13 +1,48 @@
 package com.github.e0ipso.tokkl.navigation
 
+import androidx.compose.runtime.Composable
+import kotlinx.serialization.modules.PolymorphicModuleBuilder
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
+
 /**
  * A page that a tap outside the app asks MainActivity to open, such as a widget's or a
  * notification's. Each feature declares the requests of its taps as `@Serializable` classes and
- * registers them ([FeatureEntries.registerRequests]), reads them from MainActivity's intents
- * ([FeatureEntries.readLinks]) and opens them ([FeatureEntries.OpenRequest]), so the host names
+ * registers them ([FeatureRequests.registerRequests]), reads them from MainActivity's intents
+ * ([FeatureRequests.readLinks]) and opens them ([FeatureRequests.OpenRequest]), so the host names
  * none of them. One request of each class waits at a time.
  */
 interface NavigationRequest
+
+/**
+ * The taps from outside the app that open one feature's pages, such as its widget's or its
+ * notification's. Only a feature whose pages such taps open binds one.
+ */
+interface FeatureRequests {
+
+    /** Every intent extra this feature's taps carry, which MainActivity removes once read. */
+    val linkExtras: List<String>
+
+    /** The requests that one of MainActivity's intents, [intent], carries for this feature. */
+    fun readLinks(intent: LinkIntent): List<NavigationRequest>
+
+    /** Registers the serializer of each request this feature declares, so a waiting one outlives the process. */
+    fun PolymorphicModuleBuilder<NavigationRequest>.registerRequests()
+
+    /**
+     * Opens [request] when it is one this feature declared, once it can, through [opening], which
+     * it tells when the request is handled. The host calls it for every waiting request.
+     */
+    @Composable
+    fun OpenRequest(request: NavigationRequest, opening: RequestOpening)
+}
+
+/** The serializers of every request from outside the app that [features] declare. */
+fun requestSerializers(features: List<FeatureRequests>): SerializersModule = SerializersModule {
+    polymorphic(NavigationRequest::class) {
+        features.forEach { feature -> with(feature) { registerRequests() } }
+    }
+}
 
 /** What a feature reads of one of MainActivity's intents: its action and its extras. */
 interface LinkIntent {

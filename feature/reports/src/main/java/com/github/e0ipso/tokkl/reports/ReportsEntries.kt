@@ -16,7 +16,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.currentStateAsState
 import androidx.navigation3.runtime.EntryProviderScope
 import com.github.e0ipso.tokkl.feature.reports.R
-import com.github.e0ipso.tokkl.navigation.FeatureEntries
+import com.github.e0ipso.tokkl.navigation.FeatureRequests
+import com.github.e0ipso.tokkl.navigation.FeatureRoutes
 import com.github.e0ipso.tokkl.navigation.LinkIntent
 import com.github.e0ipso.tokkl.navigation.LocalSignedInSession
 import com.github.e0ipso.tokkl.navigation.NavigationHost
@@ -35,10 +36,9 @@ import org.koin.core.parameter.parametersOf
 
 /**
  * Reports. Its view model is the route's own, and its tab and filters ([ReportChoices]) the
- * signed-in session's, so they stay after the page closes while the range starts over. The Timer
- * widget's day report opens it on today's summary.
+ * signed-in session's, so they stay after the page closes while the range starts over.
  */
-internal object ReportsEntries : FeatureEntries {
+internal object ReportsEntries : FeatureRoutes {
     override val pages get() = listOf(reportsPage)
 
     override fun PolymorphicModuleBuilder<Route>.registerRoutes() {
@@ -51,7 +51,10 @@ internal object ReportsEntries : FeatureEntries {
             ReportsPage(model = koinViewModel { parametersOf(choices) })
         }
     }
+}
 
+/** The Timer widget's day report, which opens Reports on today's summary. */
+internal object ReportsRequests : FeatureRequests {
     override val linkExtras get() = listOf(TODAY_REPORT_TAP)
 
     override fun readLinks(intent: LinkIntent): List<NavigationRequest> =

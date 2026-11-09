@@ -7,11 +7,13 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import com.github.e0ipso.tokkl.navigation.EntryOpening
-import com.github.e0ipso.tokkl.navigation.FeatureEntries
+import com.github.e0ipso.tokkl.navigation.FeatureRoutes
+import com.github.e0ipso.tokkl.navigation.FrameContributions
 import com.github.e0ipso.tokkl.navigation.LocalSignedInSession
 import com.github.e0ipso.tokkl.navigation.NavigationHost
 import com.github.e0ipso.tokkl.navigation.Navigator
 import com.github.e0ipso.tokkl.navigation.Route
+import com.github.e0ipso.tokkl.navigation.TopLevelDestination
 import com.github.e0ipso.tokkl.navigation.route
 import kotlinx.coroutines.launch
 import kotlinx.serialization.SerialName
@@ -20,13 +22,11 @@ import kotlinx.serialization.modules.PolymorphicModuleBuilder
 import kotlinx.serialization.modules.subclass
 import org.koin.compose.viewmodel.koinViewModel
 
-/**
- * The changes the server refused, whose editing opens the entry form, and what the signed-in frame
- * shows around every page: the sync status band while changes wait to reach the server
- * (docs/PRD.md O5, O6), whose buttons open the refused changes and, after a refused token,
- * sign-in again for the account, and the notice that says how many changes were discarded.
- */
-internal object SyncEntries : FeatureEntries {
+/** The changes the server refused, whose editing opens the entry form. */
+internal object SyncEntries : FeatureRoutes {
+    /** The refused changes open from the sync band, not from the bar. */
+    override val pages get() = emptyList<TopLevelDestination>()
+
     override fun PolymorphicModuleBuilder<Route>.registerRoutes() {
         subclass(NeedsAttentionRoute::class)
     }
@@ -41,7 +41,15 @@ internal object SyncEntries : FeatureEntries {
             )
         }
     }
+}
 
+/**
+ * What the signed-in frame shows around every page: the sync status band while changes wait to
+ * reach the server (docs/PRD.md O5, O6), whose buttons open the refused changes and, after a
+ * refused token, sign-in again for the account, and the notice that says how many changes were
+ * discarded.
+ */
+internal object SyncFrameContributions : FrameContributions {
     @Composable
     override fun frameBand(host: NavigationHost): (@Composable () -> Unit)? {
         val model = koinViewModel<SyncFrameViewModel>(viewModelStoreOwner = LocalSignedInSession.current)

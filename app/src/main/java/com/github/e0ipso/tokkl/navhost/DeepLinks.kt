@@ -1,16 +1,16 @@
 package com.github.e0ipso.tokkl.navhost
 
 import android.content.Intent
-import com.github.e0ipso.tokkl.navigation.FeatureEntries
+import com.github.e0ipso.tokkl.navigation.FeatureRequests
 import com.github.e0ipso.tokkl.navigation.LinkIntent
 import com.github.e0ipso.tokkl.navigation.NavigationRequest
 
 /**
  * The pages that one of MainActivity's intents asks to open, as each of the [features] reads its
- * own taps from it ([FeatureEntries.readLinks]), such as a widget's page or a notification's tap.
+ * own taps from it ([FeatureRequests.readLinks]), such as a widget's page or a notification's tap.
  * It reads only what [LinkIntent] gives it, so it has no Android in it.
  */
-internal class DeepLinks(private val features: List<FeatureEntries>) {
+internal class DeepLinks(private val features: List<FeatureRequests>) {
 
     /** Every extra [parse] reads. MainActivity removes them once read, so a rotation opens nothing again. */
     val extras: List<String> get() = features.flatMap { it.linkExtras }

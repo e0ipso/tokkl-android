@@ -7,7 +7,7 @@ import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.navhost.NavigationRequests
 import com.github.e0ipso.tokkl.navhost.TokklNavHost
-import com.github.e0ipso.tokkl.navigation.FeatureEntries
+import com.github.e0ipso.tokkl.navigation.FeatureNavigation
 import com.github.e0ipso.tokkl.navigation.LocalSignedInSession
 import com.github.e0ipso.tokkl.navigation.requestSerializers
 import com.github.e0ipso.tokkl.session.AccountLifetime
@@ -25,9 +25,9 @@ internal fun AppNavHost(
     capabilities: StateFlow<Capabilities> = remember { GlobalContext.get().get<CapabilitiesSource>().state },
 ) {
     val koin = remember { GlobalContext.get() }
-    val features = remember { koin.getAll<FeatureEntries>() }
+    val features = remember { koin.get<FeatureNavigation>() }
     TokklNavHost(
-        requests = remember { NavigationRequests(SavedStateHandle(), requestSerializers(features)) },
+        requests = remember { NavigationRequests(SavedStateHandle(), requestSerializers(features.requests)) },
         features = features,
         pages = remember { koin.get() },
         signOuts = remember { koin.get<AccountLifetime>().signOuts },

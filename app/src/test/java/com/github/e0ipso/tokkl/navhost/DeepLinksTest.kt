@@ -23,7 +23,7 @@ import org.junit.Test
  */
 class DeepLinksTest {
 
-    private val links = DeepLinks(appFeatureEntries)
+    private val links = DeepLinks(appFeatures.requests)
 
     private class Extras(override val action: String? = null, private val extras: Map<String, Any> = emptyMap()) :
         LinkIntent {

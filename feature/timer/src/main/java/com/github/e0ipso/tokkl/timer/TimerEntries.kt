@@ -22,7 +22,8 @@ import com.github.e0ipso.tokkl.history.HistoryList
 import com.github.e0ipso.tokkl.history.HistoryViewModel
 import com.github.e0ipso.tokkl.history.pinAction
 import com.github.e0ipso.tokkl.navigation.EntryOpening
-import com.github.e0ipso.tokkl.navigation.FeatureEntries
+import com.github.e0ipso.tokkl.navigation.FeatureRequests
+import com.github.e0ipso.tokkl.navigation.FeatureRoutes
 import com.github.e0ipso.tokkl.navigation.LinkIntent
 import com.github.e0ipso.tokkl.navigation.LocalSignedInSession
 import com.github.e0ipso.tokkl.navigation.NavigationHost
@@ -52,7 +53,7 @@ import com.github.e0ipso.tokkl.core.ui.R as UiR
  * signed-in session's ([LocalSignedInSession]) when other screens share them or their state outlives
  * the page. The screens get plain state from them and send their events back.
  */
-internal object TimerEntries : FeatureEntries {
+internal object TimerEntries : FeatureRoutes {
     override val pages get() = listOf(timerPage, templatesPage)
 
     override fun PolymorphicModuleBuilder<Route>.registerRoutes() {
@@ -60,6 +61,19 @@ internal object TimerEntries : FeatureEntries {
         subclass(TemplatesRoute::class)
     }
 
+    override fun EntryProviderScope<Route>.addEntries(host: NavigationHost) {
+        route(Route.Timer) { TimerPage(host.navigator) }
+        route(FullscreenTimerRoute) { FullscreenTimer(host.navigator) }
+        routes<Route.Entry> { route -> EntryForm(route, host.navigator) }
+        route(TemplatesRoute) {
+            val favorites = koinViewModel<FavoritesViewModel>(viewModelStoreOwner = LocalSignedInSession.current)
+            TemplatesScreen(model = favorites)
+        }
+    }
+}
+
+/** The taps outside the app that open Timer: a Timer widget's and a reminder's. */
+internal object TimerRequests : FeatureRequests {
     override val linkExtras get() = listOf(TIMER_WIDGET_TAP, REMINDER_TAP)
 
     override fun readLinks(intent: LinkIntent): List<NavigationRequest> = listOfNotNull(
@@ -89,16 +103,6 @@ internal object TimerEntries : FeatureEntries {
                 opening.navigator.open(Route.Timer)
                 opening.handled(request)
             }
-        }
-    }
-
-    override fun EntryProviderScope<Route>.addEntries(host: NavigationHost) {
-        route(Route.Timer) { TimerPage(host.navigator) }
-        route(FullscreenTimerRoute) { FullscreenTimer(host.navigator) }
-        routes<Route.Entry> { route -> EntryForm(route, host.navigator) }
-        route(TemplatesRoute) {
-            val favorites = koinViewModel<FavoritesViewModel>(viewModelStoreOwner = LocalSignedInSession.current)
-            TemplatesScreen(model = favorites)
         }
     }
 }

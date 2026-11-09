@@ -7,7 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import com.github.e0ipso.tokkl.feature.clients.R
-import com.github.e0ipso.tokkl.navigation.FeatureEntries
+import com.github.e0ipso.tokkl.navigation.FeatureRoutes
 import com.github.e0ipso.tokkl.navigation.NavigationHost
 import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.TopLevelDestination
@@ -20,7 +20,7 @@ import kotlinx.serialization.modules.subclass
 import org.koin.compose.viewmodel.koinViewModel
 
 /** The Clients page, with a view model of its own that goes when the page closes. */
-internal object ClientsEntries : FeatureEntries {
+internal object ClientsEntries : FeatureRoutes {
     override val pages get() = listOf(clientsPage)
 
     override fun PolymorphicModuleBuilder<Route>.registerRoutes() {

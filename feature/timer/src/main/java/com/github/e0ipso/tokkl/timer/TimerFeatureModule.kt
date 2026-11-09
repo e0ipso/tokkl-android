@@ -15,7 +15,8 @@ import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
 import com.github.e0ipso.tokkl.history.EntryActionsViewModel
 import com.github.e0ipso.tokkl.history.HistoryViewModel
 import com.github.e0ipso.tokkl.navigation.EntryFormRequest
-import com.github.e0ipso.tokkl.navigation.FeatureEntries
+import com.github.e0ipso.tokkl.navigation.FeatureRequests
+import com.github.e0ipso.tokkl.navigation.FeatureRoutes
 import com.github.e0ipso.tokkl.navigation.PageBadge
 import com.github.e0ipso.tokkl.picker.pickerSource
 import com.github.e0ipso.tokkl.platform.DefaultNetwork
@@ -186,7 +187,8 @@ val timerFeatureModule = module {
         )
     }
 
-    single { TimerEntries } bind FeatureEntries::class
+    single { TimerEntries } bind FeatureRoutes::class
+    single { TimerRequests } bind FeatureRequests::class
 
     // The bar's running dot on Timer while an entry runs, by the cache's word.
     single { TimerBadge(get()) } bind PageBadge::class

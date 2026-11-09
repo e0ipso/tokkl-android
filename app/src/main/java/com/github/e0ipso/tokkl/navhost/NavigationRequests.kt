@@ -11,7 +11,7 @@ import androidx.savedstate.SavedState
 import androidx.savedstate.serialization.SavedStateConfiguration
 import androidx.savedstate.serialization.decodeFromSavedState
 import androidx.savedstate.serialization.encodeToSavedState
-import com.github.e0ipso.tokkl.navigation.FeatureEntries
+import com.github.e0ipso.tokkl.navigation.FeatureRequests
 import com.github.e0ipso.tokkl.navigation.NavigationRequest
 import com.github.e0ipso.tokkl.navigation.Navigator
 import com.github.e0ipso.tokkl.navigation.RequestOpening
@@ -67,13 +67,13 @@ class NavigationRequests(saved: SavedStateHandle, serializers: SerializersModule
 
 /**
  * Opens what [requests] ask for, each as soon as it can, through the feature that declared it
- * ([FeatureEntries.OpenRequest]), which reads whether somebody is signed in from [signIns]. A
+ * ([FeatureRequests.OpenRequest]), which reads whether somebody is signed in from [signIns]. A
  * page in [unavailable] opens Timer, and [onSignIn] tells a request that sign-in shows.
  */
 @Composable
 internal fun NavigationRequestEffects(
     requests: NavigationRequests,
-    features: List<FeatureEntries>,
+    features: List<FeatureRequests>,
     navigator: Navigator,
     signIns: SignInRoutes,
     unavailable: Set<Route>,

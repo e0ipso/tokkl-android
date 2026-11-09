@@ -2,7 +2,8 @@ package com.github.e0ipso.tokkl.reports
 
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
-import com.github.e0ipso.tokkl.navigation.FeatureEntries
+import com.github.e0ipso.tokkl.navigation.FeatureRequests
+import com.github.e0ipso.tokkl.navigation.FeatureRoutes
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
 import com.github.e0ipso.tokkl.session.AccountDataOwner
@@ -68,7 +69,8 @@ val reportsFeatureModule = module {
         )
     }
 
-    single { ReportsEntries } bind FeatureEntries::class
+    single { ReportsEntries } bind FeatureRoutes::class
+    single { ReportsRequests } bind FeatureRequests::class
 }
 
 /** How long the cache's flows stay collected after the screen stops reading them, as across a rotation. */

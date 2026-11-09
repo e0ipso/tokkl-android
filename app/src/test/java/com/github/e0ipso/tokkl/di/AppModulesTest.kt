@@ -123,8 +123,9 @@ class AppModulesTest {
         val JOINED = setOf(
             // Every store's load at process start, which MainActivity's first frame waits for.
             "com.github.e0ipso.tokkl.storage.StartupLoads",
-            // Every feature's top-level pages and screens.
+            // Every feature's top-level pages and screens, and what the features give the navigation.
             "com.github.e0ipso.tokkl.navigation.TopLevelPages",
+            "com.github.e0ipso.tokkl.navigation.FeatureNavigation",
             "java.util.List",
         )
 

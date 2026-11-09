@@ -1,7 +1,7 @@
 package com.github.e0ipso.tokkl.clients
 
 import com.github.e0ipso.tokkl.cache.AccountCache
-import com.github.e0ipso.tokkl.navigation.FeatureEntries
+import com.github.e0ipso.tokkl.navigation.FeatureRoutes
 import com.github.e0ipso.tokkl.platform.DefaultNetwork
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.platform.offlineIn
@@ -31,5 +31,5 @@ val clientsFeatureModule = module {
         )
     }
 
-    single { ClientsEntries } bind FeatureEntries::class
+    single { ClientsEntries } bind FeatureRoutes::class
 }

@@ -1,6 +1,6 @@
 package com.github.e0ipso.tokkl.trash
 
-import com.github.e0ipso.tokkl.navigation.FeatureEntries
+import com.github.e0ipso.tokkl.navigation.FeatureRoutes
 import com.github.e0ipso.tokkl.platform.DefaultNetwork
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.platform.offlineIn
@@ -30,5 +30,5 @@ val trashFeatureModule = module {
         )
     }
 
-    single { TrashEntries } bind FeatureEntries::class
+    single { TrashEntries } bind FeatureRoutes::class
 }

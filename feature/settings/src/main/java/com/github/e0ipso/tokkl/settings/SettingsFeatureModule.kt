@@ -1,7 +1,7 @@
 package com.github.e0ipso.tokkl.settings
 
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
-import com.github.e0ipso.tokkl.navigation.FeatureEntries
+import com.github.e0ipso.tokkl.navigation.FeatureRoutes
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
 import com.github.e0ipso.tokkl.storage.StartupLoad
@@ -40,5 +40,5 @@ val settingsFeatureModule = module {
         )
     }
 
-    single { SettingsEntries } bind FeatureEntries::class
+    single { SettingsEntries } bind FeatureRoutes::class
 }

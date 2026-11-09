@@ -10,7 +10,7 @@ import java.time.LocalDate
 
 /**
  * A screen, as the back stack holds it. Each feature declares the routes of its screens as
- * `@Serializable` classes and registers them in [FeatureEntries.registerRoutes], so the stack is
+ * `@Serializable` classes and registers them in [FeatureRoutes.registerRoutes], so the stack is
  * saved with their serializers and survives configuration changes and process death. Timer and the
  * entry form stay here: every signed-in stack starts at Timer, and other features open the form.
  * The routes that moved to their features keep, with `@SerialName`, the serial names they had as

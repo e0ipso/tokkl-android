@@ -29,7 +29,7 @@ import com.github.e0ipso.tokkl.navhost.DeepLinks
 import com.github.e0ipso.tokkl.navhost.NavigationRequests
 import com.github.e0ipso.tokkl.navhost.TokklNavHost
 import com.github.e0ipso.tokkl.navhost.takeDeepLinks
-import com.github.e0ipso.tokkl.navigation.FeatureEntries
+import com.github.e0ipso.tokkl.navigation.FeatureNavigation
 import com.github.e0ipso.tokkl.navigation.LocalSignedInSession
 import com.github.e0ipso.tokkl.navigation.SignInRoutes
 import com.github.e0ipso.tokkl.navigation.TopLevelPages
@@ -45,7 +45,6 @@ import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsRepository
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.launch
-import org.koin.android.ext.android.getKoin
 import org.koin.android.ext.android.inject
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -54,7 +53,7 @@ class MainActivity : ComponentActivity() {
     private val themeSettings: ThemeSettingsRepository by inject()
     private val foreground: MainActivityForeground by inject()
     private val io: CoroutineDispatcher by inject(IoDispatcher)
-    private val features: List<FeatureEntries> by lazy { getKoin().getAll() }
+    private val features: FeatureNavigation by inject()
     private val pages: TopLevelPages by inject()
     private val lifetime: AccountLifetime by inject()
     private val capabilities: CapabilitiesSource by inject()
@@ -63,11 +62,13 @@ class MainActivity : ComponentActivity() {
 
     /** The pages that taps outside the app asked to open, until the navigation opens them. */
     private val requests: NavigationRequests by viewModels {
-        viewModelFactory { initializer { NavigationRequests(createSavedStateHandle(), requestSerializers(features)) } }
+        viewModelFactory {
+            initializer { NavigationRequests(createSavedStateHandle(), requestSerializers(features.requests)) }
+        }
     }
 
     /** What each feature reads of the taps from outside the app. */
-    private val links by lazy { DeepLinks(features) }
+    private val links by lazy { DeepLinks(features.requests) }
 
     /** Whether the screens are composed, which they are once every store has loaded. */
     private var composed = false

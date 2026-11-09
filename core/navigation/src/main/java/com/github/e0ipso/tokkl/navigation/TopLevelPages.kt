@@ -26,7 +26,7 @@ data class TopLevelDestination(
 )
 
 /**
- * The app's top-level pages, from every feature's [FeatureEntries.pages], in the order of their
+ * The app's top-level pages, from every feature's [FeatureRoutes.pages], in the order of their
  * positions. As on the web app on a phone, the pages in More sit on the More sheet, not in the
  * bottom bar. Admin stays out, since the app has no admin features.
  */

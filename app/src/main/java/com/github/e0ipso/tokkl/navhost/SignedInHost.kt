@@ -17,7 +17,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavEntry
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.navigation.FeatureEntries
+import com.github.e0ipso.tokkl.navigation.FrameContributions
 import com.github.e0ipso.tokkl.navigation.LocalSignedInSession
 import com.github.e0ipso.tokkl.navigation.NavigationHost
 import com.github.e0ipso.tokkl.navigation.Navigator
@@ -60,7 +60,7 @@ internal fun SignedInHost(
     top: Route,
     entries: List<NavEntry<Route>>,
     host: NavigationHost,
-    features: List<FeatureEntries>,
+    features: List<FrameContributions>,
     pages: TopLevelPages,
     unavailable: Set<Route>,
     notificationPrompt: NotificationPrompt?,
