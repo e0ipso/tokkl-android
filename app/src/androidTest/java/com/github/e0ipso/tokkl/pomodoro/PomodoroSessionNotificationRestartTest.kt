@@ -12,11 +12,11 @@ import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
-import com.github.e0ipso.tokkl.api.PhaseTransition
 import com.github.e0ipso.tokkl.components.initializeTestWorkManager
 import com.github.e0ipso.tokkl.components.pomodoroSessionNotification
 import com.github.e0ipso.tokkl.components.signOut
 import com.github.e0ipso.tokkl.components.timerState
+import com.github.e0ipso.tokkl.model.PhaseTransition
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -68,7 +68,7 @@ class PomodoroSessionNotificationRestartTest {
             setProperty("account", identity)
             setProperty("posted", posted.postTime.toString())
             setProperty("phase", HeldPhases.key(held).start.toEpochMilli().toString())
-            setProperty("revision", held.state.revision.toString())
+            setProperty("revision", held.revision.toString())
             handover.outputStream().use { store(it, null) }
         }
     }
@@ -81,7 +81,7 @@ class PomodoroSessionNotificationRestartTest {
             assertNotEquals(saved.getProperty("process"), processIdentity())
             // The new process holds the stored state, with no request for it.
             val held = checkNotNull(app.timerState.state.value)
-            assertEquals(saved.getProperty("revision").toLong(), held.state.revision)
+            assertEquals(saved.getProperty("revision").toLong(), held.revision)
             val phase = HeldPhases.key(held)
             assertEquals(saved.getProperty("phase").toLong(), phase.start.toEpochMilli())
             assertTrue(runBlocking { app.pomodoroSessionNotification.acceptsTap(saved.getProperty("account"), phase) })

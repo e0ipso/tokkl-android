@@ -4,6 +4,10 @@ import android.content.Context
 import com.github.e0ipso.tokkl.api.ApiJson
 import com.github.e0ipso.tokkl.api.IsoInstantSerializer
 import com.github.e0ipso.tokkl.api.TimerState
+import com.github.e0ipso.tokkl.model.DiscardedPomodoro
+import com.github.e0ipso.tokkl.model.PauseChain
+import com.github.e0ipso.tokkl.model.PomodoroSession
+import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import com.github.e0ipso.tokkl.storage.PreferencesFile
@@ -16,27 +20,44 @@ import java.util.UUID
 import kotlin.coroutines.CoroutineContext
 
 /**
- * A timer state as the phone holds it: the server's [state] and the phone's clock when it
- * arrived, [receivedAt].
+ * A timer state as the phone holds it, in the model's types: the server's [revision], its clock
+ * [serverTime] when it sent the state, the [runningEntry], the [pause] chain, the [pomodoro]
+ * session and the [discardedPomodoro], and the phone's clock when the state arrived, [receivedAt].
+ * [held] makes one from the server's answer.
  */
-@Serializable
 data class HeldTimerState(
-    val state: TimerState,
-    @SerialName("received_at") @Serializable(with = IsoInstantSerializer::class) val receivedAt: Instant,
+    val revision: Long,
+    val serverTime: Instant,
+    val runningEntry: TimeEntry?,
+    val pause: PauseChain?,
+    val pomodoro: PomodoroSession?,
+    val discardedPomodoro: DiscardedPomodoro?,
+    val receivedAt: Instant,
 ) {
     /** `server_time - receivedAt`. The phone's clock plus this is the server's clock. */
-    val clockOffset: Duration get() = Duration.between(receivedAt, state.serverTime)
+    val clockOffset: Duration get() = Duration.between(receivedAt, serverTime)
 }
 
+/** A timer state as [TimerStateStore] writes it: the server's [state] and when it arrived, [receivedAt]. */
+@Serializable
+internal data class StoredHeld(
+    val state: TimerState,
+    @SerialName("received_at") @Serializable(with = IsoInstantSerializer::class) val receivedAt: Instant,
+)
+
 /**
- * What [TimerStateStore] keeps: the [held] state and the entry id of the last too-short pomodoro
- * whose notice was taken, [acknowledgedDiscard], so neither a replay nor a restart shows it again.
+ * What [TimerStateStore] keeps: the state as the server sent it, [wire], and the entry id of the
+ * last too-short pomodoro whose notice was taken, [acknowledgedDiscard], so neither a replay nor a
+ * restart shows it again.
  */
 @Serializable
-data class StoredTimerState(
-    val held: HeldTimerState,
-    @SerialName("acknowledged_discard") val acknowledgedDiscard: Long?,
-)
+class StoredTimerState internal constructor(
+    @SerialName("held") internal val wire: StoredHeld,
+    @SerialName("acknowledged_discard") internal val acknowledgedDiscard: Long?,
+) {
+    /** The stored state as the phone holds it. */
+    val held: HeldTimerState get() = wire.toHeld()
+}
 
 /**
  * The signed-in account's last timer state in its own private preferences file, so the alarm

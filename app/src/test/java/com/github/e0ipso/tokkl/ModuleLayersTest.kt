@@ -192,10 +192,11 @@ class ModuleLayersTest {
             // The timer event stream feeds the account's timer state.
             ":core:timersync" to setOf(":core:timerstate"),
             // The catalog pages' model carries the API's errors, the session's server problems, the
-            // model's ids and the platform's page loads, and draws with the design system.
-            ":core:catalog" to setOf(":core:api", ":core:session", ":core:model", ":core:ui", ":core:platform"),
-            // The entry fields edit the model's entries in the account's time with the design system.
-            ":core:entryfields" to setOf(":core:model", ":core:time", ":core:ui"),
+            // model's ids and the platform's page loads. Its pages draw with the design system,
+            // which none of their signatures name.
+            ":core:catalog" to setOf(":core:api", ":core:session", ":core:model", ":core:platform"),
+            // The entry fields edit the model's entries in the account's time.
+            ":core:entryfields" to setOf(":core:model", ":core:time"),
             // The trust prompts show the session's trust state.
             ":core:trust" to setOf(":core:session"),
             // Routes carry the model's ids, and pages their section hue and the capabilities they need.

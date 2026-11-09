@@ -15,7 +15,7 @@ data class PomodoroClock(val overtime: Boolean, val seconds: Long)
  * clock reads 0:00 until the planned end and then counts overtime from 0:00.
  */
 fun HeldTimerState.phaseClockAt(deviceNow: Instant): PomodoroClock? {
-    val end = state.pomodoro?.phase?.plannedEnd ?: return null
+    val end = pomodoro?.phase?.plannedEnd ?: return null
     return clockFor(Duration.between(serverNow(deviceNow), end).toMillis())
 }
 

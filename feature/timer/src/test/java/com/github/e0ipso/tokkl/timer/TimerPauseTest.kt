@@ -1,8 +1,5 @@
 package com.github.e0ipso.tokkl.timer
 
-import com.github.e0ipso.tokkl.api.DiscardedPomodoro
-import com.github.e0ipso.tokkl.api.PhaseKind
-import com.github.e0ipso.tokkl.api.PhaseTransition
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.TimerPause
 import com.github.e0ipso.tokkl.api.TimerPomodoro
@@ -11,9 +8,12 @@ import com.github.e0ipso.tokkl.cache.CurrentEntryCache
 import com.github.e0ipso.tokkl.cache.RunningCheckStart
 import com.github.e0ipso.tokkl.cache.RunningCheckWrites
 import com.github.e0ipso.tokkl.cache.RunningEntryChanges
+import com.github.e0ipso.tokkl.model.DiscardedPomodoro
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.EntryWithSendState
+import com.github.e0ipso.tokkl.model.PhaseKind
+import com.github.e0ipso.tokkl.model.PhaseTransition
 import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.model.RunningEntryIdentity
@@ -31,6 +31,7 @@ import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import com.github.e0ipso.tokkl.timerstate.TimerStateSource
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import com.github.e0ipso.tokkl.timerstate.continueEntry
+import com.github.e0ipso.tokkl.timerstate.held
 import com.github.e0ipso.tokkl.timerstate.serverTimerControls
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.cancel
@@ -59,6 +60,8 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicReference
+import com.github.e0ipso.tokkl.api.DiscardedPomodoro as ServerDiscardedPomodoro
+import com.github.e0ipso.tokkl.api.TimerState as ServerTimerState
 
 /**
  * Pause, Resume and Stop while paused on the timer's model (docs/PRD.md T1), against the cache's
@@ -442,8 +445,8 @@ class TimerPauseTest {
             takeDiscardNotice = { holder.takeDiscardNotice() },
         )
         scope.launch { notices.frame.notice.collect {} }
-        val discarded = DiscardedPomodoro(entryId = 70, start = TAP.minusSeconds(40), stop = TAP)
-        val state = held(revision = 20).state.copy(discardedPomodoro = discarded)
+        val discarded = ServerDiscardedPomodoro(entryId = 70, start = TAP.minusSeconds(40), stop = TAP)
+        val state = serverState(revision = 20).copy(discardedPomodoro = discarded)
 
         assertTrue(holder.accept(holder.begin(), state))
         val notice = awaitNotice(notices) { it is TimerNotice.PomodoroDiscarded }
@@ -523,7 +526,15 @@ class TimerPauseTest {
         pause: TimerPause? = null,
         pomodoro: TimerPomodoro? = null,
         offset: Duration = OFFSET,
-    ): HeldTimerState {
+    ): HeldTimerState = serverState(revision, pause, pomodoro, offset).held(TAP)
+
+    /** The server's state that [held] is. */
+    private fun serverState(
+        revision: Long,
+        pause: TimerPause? = null,
+        pomodoro: TimerPomodoro? = null,
+        offset: Duration = OFFSET,
+    ): ServerTimerState {
         val clone = pause?.cloneEntryId?.let {
             ServerTimeEntry(
                 id = it,
@@ -532,17 +543,7 @@ class TimerPauseTest {
                 start = CLONE_START.toString(),
             )
         }
-        return HeldTimerState(
-            com.github.e0ipso.tokkl.api.TimerState(
-                revision,
-                TAP.plus(offset),
-                clone,
-                pause,
-                pomodoro,
-                discardedPomodoro = null,
-            ),
-            receivedAt = TAP,
-        )
+        return ServerTimerState(revision, TAP.plus(offset), clone, pause, pomodoro, discardedPomodoro = null)
     }
 
     private fun pause(seconds: Long, cloneEntryId: EntryId?) = TimerPause(
@@ -602,7 +603,7 @@ class TimerPauseTest {
         }
 
         override suspend fun resume(revision: Long): TimerActionResult = act("resume $revision") { shown ->
-            val chain = shown.held?.state?.pause ?: return@act shown
+            val chain = shown.held?.pause ?: return@act shown
             Phone(
                 clone(),
                 held(revision(shown) + 1, pause = pause(seconds = chain.seconds, cloneEntryId = EntryId(CLONE_ID))),
@@ -613,7 +614,7 @@ class TimerPauseTest {
             Phone(running = null, held(revision(shown) + 1))
         }
 
-        private fun revision(shown: Phone) = shown.held?.state?.revision ?: 0
+        private fun revision(shown: Phone) = shown.held?.revision ?: 0
 
         private suspend fun act(call: String, done: (Phone) -> Phone): TimerActionResult {
             calls += call

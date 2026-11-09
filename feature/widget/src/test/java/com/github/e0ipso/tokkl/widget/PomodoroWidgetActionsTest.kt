@@ -31,7 +31,7 @@ class PomodoroWidgetActionsTest {
     private val active = PomodoroWidgetState.Active(
         "account-a",
         17,
-        ServerTimerStates.session(EntryId(42), at),
+        checkNotNull(ServerTimerStates.held(17, at, pomodoro = ServerTimerStates.session(EntryId(42), at)).pomodoro),
         at.minusSeconds(120),
         at.plusSeconds(1380),
         false,

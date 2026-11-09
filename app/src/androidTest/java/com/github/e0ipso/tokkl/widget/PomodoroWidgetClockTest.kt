@@ -13,12 +13,13 @@ import androidx.glance.appwidget.provideContent
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
-import com.github.e0ipso.tokkl.api.PhaseKind
-import com.github.e0ipso.tokkl.api.PhaseTransition
-import com.github.e0ipso.tokkl.api.TimerPomodoro
-import com.github.e0ipso.tokkl.api.TimerPomodoroPhase
 import com.github.e0ipso.tokkl.core.ui.R
 import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.PhaseKind
+import com.github.e0ipso.tokkl.model.PhaseTransition
+import com.github.e0ipso.tokkl.model.PomodoroPhase
+import com.github.e0ipso.tokkl.model.PomodoroSession
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -42,10 +43,10 @@ class PomodoroWidgetClockTest {
                 val now = Instant.now()
                 val end = if (ended) now.minusSeconds(65) else now.plusSeconds(120)
                 val start = end.minusSeconds(1500)
-                val phase = TimerPomodoroPhase(PhaseKind.WORK, start.plusSeconds(90), 1, end.plusSeconds(90))
+                val phase = PomodoroPhase(PhaseKind.WORK, start.plusSeconds(90), 1, end.plusSeconds(90))
                 // Server boundaries differ by 90 seconds. The state supplies corrected boundaries.
                 val server =
-                    TimerPomodoro(
+                    PomodoroSession(
                         25,
                         5,
                         15,
@@ -54,7 +55,7 @@ class PomodoroWidgetClockTest {
                         PhaseKind.SHORT_REST,
                         PhaseTransition.WORK_TO_SHORT_REST,
                         2,
-                        42,
+                        EntryId(42),
                         phase.start,
                     )
                 val state = PomodoroWidgetState.Active(

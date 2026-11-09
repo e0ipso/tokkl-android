@@ -11,10 +11,11 @@ android {
 
 dependencies {
     // The fields and the picker's options are the model's projects, tasks, tags and entries, in
-    // the account's time, drawn with the design system.
+    // the account's time.
     api(project(":core:model"))
     api(project(":core:time"))
-    api(project(":core:ui"))
+    // They draw with the design system, which none of their signatures name.
+    implementation(project(":core:ui"))
 
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui)

@@ -253,7 +253,7 @@ class CapabilitiesTest {
         val capabilities = source().refresh(client, me(TOKKL_ME))
 
         assertTrue(capabilities.timerState)
-        assertEquals(3L, timerStates.state.value?.state?.revision)
+        assertEquals(3L, timerStates.state.value?.revision)
         assertEquals(1, server.requests().count { it == TIMER })
     }
 

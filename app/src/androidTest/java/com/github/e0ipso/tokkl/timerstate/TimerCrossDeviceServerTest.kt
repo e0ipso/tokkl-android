@@ -20,8 +20,6 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TimerActionToasts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.api.HttpMethod
-import com.github.e0ipso.tokkl.api.PhaseKind
-import com.github.e0ipso.tokkl.api.TimerPomodoro
 import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.awaitControls
@@ -38,6 +36,8 @@ import com.github.e0ipso.tokkl.components.timerSync
 import com.github.e0ipso.tokkl.components.timerSyncServiceRuns
 import com.github.e0ipso.tokkl.feature.pomodoro.R
 import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.PhaseKind
+import com.github.e0ipso.tokkl.model.PomodoroSession
 import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.notification.action
@@ -50,6 +50,8 @@ import com.github.e0ipso.tokkl.pomodoro.PomodoroViewModel
 import com.github.e0ipso.tokkl.pomodoro.PomodoroWorkWaits
 import com.github.e0ipso.tokkl.pomodoro.pomodoroAlarmIntent
 import com.github.e0ipso.tokkl.timer.TimerAcceptanceFixture
+import com.github.e0ipso.tokkl.timerstate.HeldTimerState
+import com.github.e0ipso.tokkl.timerstate.held
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -144,7 +146,7 @@ class TimerCrossDeviceServerTest {
 
             val started = postTimer("pomodoro", body = sessionBody("Shared session", every = 2))
             val sent = SystemClock.elapsedRealtime()
-            val session = checkNotNull(started.pomodoro)
+            val session = checkNotNull(started.model().pomodoro)
             var countdown: Pair<HeldTimerState, Notification>? = null
             within(
                 "the remote session reaches the backgrounded phone",
@@ -165,9 +167,9 @@ class TimerCrossDeviceServerTest {
                         // A same-phase refresh can move the offset while its notification post
                         // is still on its way. Capture the pair that agrees within the original
                         // arrival deadline instead of mixing snapshots after the wait returns.
-                        val remaining = Duration.between(snapshot.state.serverTime, session.phase.plannedEnd)
+                        val remaining = Duration.between(snapshot.serverTime, session.phase.plannedEnd)
                         val matches =
-                            snapshot.state.revision >= started.revision && snapshot.state.pomodoro == session &&
+                            snapshot.revision >= started.revision && snapshot.pomodoro == session &&
                                 shown.title() == sessionTitle(R.string.pomodoro_session_work, 1, 2) &&
                                 shown.notification.`when` == snapshot.receivedAt.plus(remaining).toEpochMilli()
                         if (matches) countdown = snapshot to shown.notification
@@ -176,7 +178,7 @@ class TimerCrossDeviceServerTest {
                 },
             )
             val (held, notification) = checkNotNull(countdown)
-            assertEquals("the phone holds the server's session", session, held.state.pomodoro)
+            assertEquals("the phone holds the server's session", session, held.pomodoro)
             assertEquals(PhaseKind.WORK, session.phase.kind)
             assertEquals(1, session.number)
             assertEquals(2, session.longRestEvery)
@@ -188,7 +190,7 @@ class TimerCrossDeviceServerTest {
 
             val next = postTimer("pomodoro", "next", revision = other.timerState().revision)
             val confirmed = SystemClock.elapsedRealtime()
-            val rest = checkNotNull(next.pomodoro)
+            val rest = checkNotNull(next.model().pomodoro)
             assertEquals(PhaseKind.SHORT_REST, rest.phase.kind)
             within(
                 "the other device's Next phase silences the phone",
@@ -290,7 +292,7 @@ class TimerCrossDeviceServerTest {
             assertEquals("the phone holds what the other device reads", server.revision, held()?.revision)
 
             BackgroundTrip.leave()
-            val ring = awaitRingAtItsEnd(session)
+            val ring = awaitRingAtItsEnd(checkNotNull(server.model().pomodoro))
             val drawn = checkNotNull(held())
             val next = checkNotNull(
                 TimerSurfaces.ringingNotification(),
@@ -301,7 +303,7 @@ class TimerCrossDeviceServerTest {
             val current = other.timerState().revision
             assertEquals("the ring shows the server's revision", current, drawn.revision)
             val moved = postTimer("pomodoro", "next", revision = current)
-            val rest = checkNotNull(moved.pomodoro)
+            val rest = checkNotNull(moved.model().pomodoro)
             assertEquals(PhaseKind.SHORT_REST, rest.phase.kind)
             assertEquals("the phone has not heard of it", drawn, held())
             assertTrue("the phone still rings the work phase", app.pomodoroRinging.state.value.playing)
@@ -312,7 +314,7 @@ class TimerCrossDeviceServerTest {
 
             val after = other.timerState()
             assertEquals("the refused Next advanced nothing", moved.revision, after.revision)
-            assertEquals(rest, after.pomodoro)
+            assertEquals(rest, after.model().pomodoro)
             val adopted = checkNotNull(held())
             assertEquals("the phone took the server's state from the refusal", moved.revision, adopted.revision)
             assertEquals(rest, adopted.pomodoro)
@@ -347,7 +349,7 @@ class TimerCrossDeviceServerTest {
                 ongoing = true,
             ).action(NotificationR.string.notification_pause).actionIntent.send()
             val paused = app.awaitControls<TimerControls.Paused>("the phone's Pause")
-            val chain = checkNotNull(other.timerState().pause)
+            val chain = checkNotNull(other.timerState().model().pause)
             assertTrue(chain.paused)
             assertEquals("the server's frozen total", chain.seconds, paused.seconds)
             assertEquals(chain, held()?.pause)
@@ -359,7 +361,7 @@ class TimerCrossDeviceServerTest {
             within(
                 "the other device's Resume reaches the phone",
                 sent,
-                "held" to { held()?.pause?.cloneEntryId == clone },
+                "held" to { held()?.pause?.cloneEntryId?.value == clone },
             )
             val running = app.awaitControls<TimerControls.Running>(
                 "the clone runs on the phone",
@@ -408,7 +410,10 @@ class TimerCrossDeviceServerTest {
     }
 
     /** The signed-in account's held timer state, or null. */
-    private fun held(): TimerState? = app.timerState.state.value?.state
+    private fun held(): HeldTimerState? = app.timerState.state.value
+
+    /** This answer of the server as the phone holds it, its arrival aside. */
+    private fun TimerState.model(): HeldTimerState = held(Instant.EPOCH)
 
     /**
      * The other device starts an entry [startedSecondsAgo] ago through v9 and waits until the
@@ -434,7 +439,7 @@ class TimerCrossDeviceServerTest {
         }.orFail("POST a running entry").getValue("id").jsonPrimitive.long
         val revision = other.timerState().revision
         val deadline = SystemClock.elapsedRealtime() + STREAM_CONNECT_MS
-        while (held().let { it == null || it.revision < revision || it.runningEntry?.id != id }) {
+        while (held().let { it == null || it.revision < revision || it.runningEntry?.id?.value != id }) {
             if (SystemClock.elapsedRealtime() > deadline) {
                 throw AssertionError(
                     "the stream brought no state: held ${held()}",
@@ -476,7 +481,7 @@ class TimerCrossDeviceServerTest {
      * Waits for the ring of [session]'s phase and checks that it began at the phase's planned end,
      * as the phone's clock corrected by the server's reads it: not before, and soon after.
      */
-    private fun awaitRingAtItsEnd(session: TimerPomodoro): PomodoroRing {
+    private fun awaitRingAtItsEnd(session: PomodoroSession): PomodoroRing {
         val phase = PomodoroPhaseKey(session.phase.start)
         val untilEnd = Duration.between(Instant.now(), session.phase.plannedEnd).toMillis().coerceAtLeast(0)
         val state = runBlocking {
@@ -543,7 +548,7 @@ class TimerCrossDeviceServerTest {
      */
     private fun assertCountsDownTo(
         notification: Notification,
-        session: TimerPomodoro,
+        session: PomodoroSession,
         held: HeldTimerState,
         upcoming: Int,
     ) {
@@ -551,7 +556,7 @@ class TimerCrossDeviceServerTest {
         assertTrue(notification.extras.getBoolean(Notification.EXTRA_CHRONOMETER_COUNT_DOWN))
         // The device need not share the server's clock. Check the actual notification against
         // the server's remaining interval at receipt, without using the production offset helper.
-        val remaining = Duration.between(held.state.serverTime, session.phase.plannedEnd)
+        val remaining = Duration.between(held.serverTime, session.phase.plannedEnd)
         assertEquals(
             "it counts down for the server's remaining time",
             held.receivedAt.plus(remaining).toEpochMilli(),

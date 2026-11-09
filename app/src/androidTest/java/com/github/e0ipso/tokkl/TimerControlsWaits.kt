@@ -31,7 +31,7 @@ inline fun <reified T : TimerControls> TokklApplication.awaitControls(
             }
         }
     }
-    return reached as? T ?: throw AssertionError("$what: last controls $last; held ${timerState.state.value?.state}")
+    return reached as? T ?: throw AssertionError("$what: last controls $last; held ${timerState.state.value}")
 }
 
 /** The server's timer state, read with [client]'s own token, past the app. */

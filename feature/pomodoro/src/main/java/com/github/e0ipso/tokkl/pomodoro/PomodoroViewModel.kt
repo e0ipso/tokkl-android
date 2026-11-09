@@ -2,15 +2,14 @@ package com.github.e0ipso.tokkl.pomodoro
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.github.e0ipso.tokkl.api.TimerPomodoro
 import com.github.e0ipso.tokkl.cache.HeldChange
 import com.github.e0ipso.tokkl.cache.QueueSender
 import com.github.e0ipso.tokkl.cache.RunningEntryChanges
-import com.github.e0ipso.tokkl.cache.toTimeEntry
 import com.github.e0ipso.tokkl.entryfields.entryLabels
 import com.github.e0ipso.tokkl.entryfields.withPicked
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.PomodoroSession
 import com.github.e0ipso.tokkl.model.RunningEntryIdentity
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.fields
@@ -163,7 +162,7 @@ class PomodoroViewModel(
     private fun alarmDenied(): Boolean = exactAlarmAllowed?.not() ?: exactAlarms.denied()
 
     private fun accept(value: HeldTimerState?) {
-        val ended = heldNow?.state?.pomodoro != null && value?.state?.pomodoro == null
+        val ended = heldNow?.pomodoro != null && value?.pomodoro == null
         heldNow = value
         heldRead = true
         if (ended) {
@@ -178,7 +177,7 @@ class PomodoroViewModel(
 
     /** Puts the held state and the fields to show into [state], once both inputs have been read. */
     private fun publish() {
-        val pomodoro = heldNow?.state?.pomodoro
+        val pomodoro = heldNow?.pomodoro
         val shown = if (pomodoro == null) draft else openFields(pomodoro) ?: draft
         if (pomodoro != null) draft = shown
         val loading = !(heldRead && controlsRead)
@@ -193,15 +192,14 @@ class PomodoroViewModel(
     }
 
     /** The open pomodoro's fields: a typed edit, else the cache's running entry, else the server's. */
-    private fun openFields(pomodoro: TimerPomodoro): EntryFields? {
-        edit?.takeIf { it.entryId.value == pomodoro.entryId }?.let { return it.fields }
+    private fun openFields(pomodoro: PomodoroSession): EntryFields? {
+        edit?.takeIf { it.entryId == pomodoro.entryId }?.let { return it.fields }
         return openEntry(pomodoro)?.fields()
     }
 
     /** The open pomodoro's entry as the cache holds it, else as the server's state does. */
-    private fun openEntry(pomodoro: TimerPomodoro): TimeEntry? =
-        cached.value?.takeIf { it.id.value == pomodoro.entryId }
-            ?: heldNow?.state?.runningEntry?.takeIf { it.id == pomodoro.entryId }?.toTimeEntry()
+    private fun openEntry(pomodoro: PomodoroSession): TimeEntry? = cached.value?.takeIf { it.id == pomodoro.entryId }
+        ?: heldNow?.runningEntry?.takeIf { it.id == pomodoro.entryId }
 
     fun editLengths(lengths: PomodoroLengths) {
         if (state.value.loading || state.value.busy || state.value.pomodoro != null) return
@@ -218,19 +216,19 @@ class PomodoroViewModel(
      */
     fun editFields(
         fields: EntryFields,
-        entryId: EntryId? = state.value.pomodoro?.entryId?.let(::EntryId),
+        entryId: EntryId? = state.value.pomodoro?.entryId,
         send: Boolean = true,
     ): Job? {
         val current = state.value
         if (current.loading || current.busy || current.workspaceId == null) return null
         val pomodoro = current.pomodoro
-        if (entryId?.value != pomodoro?.entryId) return null
+        if (entryId != pomodoro?.entryId) return null
         if (pomodoro == null) {
             draft = fields
             publish()
             return null
         }
-        val change = Edit(EntryId(pomodoro.entryId), fields, sent = false)
+        val change = Edit(pomodoro.entryId, fields, sent = false)
         edit = change
         publish()
         return if (send) write(change) else null
@@ -244,10 +242,10 @@ class PomodoroViewModel(
         editFields(fields.withPicked(picked, pickerShown.value.projects), entryId)
 
     /** Sends a description typed for the open pomodoro when it differs from the cache's. */
-    fun fieldsDone(entryId: EntryId? = state.value.pomodoro?.entryId?.let(::EntryId)): Job? {
+    fun fieldsDone(entryId: EntryId? = state.value.pomodoro?.entryId): Job? {
         val pomodoro = state.value.pomodoro ?: return null
         val typed =
-            edit?.takeIf { it.entryId == entryId && it.entryId.value == pomodoro.entryId && !it.sent } ?: return null
+            edit?.takeIf { it.entryId == entryId && it.entryId == pomodoro.entryId && !it.sent } ?: return null
         if (typed.fields == openEntry(pomodoro)?.fields()) {
             edit = null
             publish()

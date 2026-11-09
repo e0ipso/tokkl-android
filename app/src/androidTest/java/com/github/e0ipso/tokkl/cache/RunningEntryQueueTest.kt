@@ -11,8 +11,8 @@ import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.RunningEntryIdentity
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.time.SnappedSpan
-import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.TimerControls
+import com.github.e0ipso.tokkl.timerstate.held
 import com.github.e0ipso.tokkl.timerstate.seconds
 import com.github.e0ipso.tokkl.timerstate.serverTimerControls
 import kotlinx.coroutines.Dispatchers
@@ -200,10 +200,7 @@ class RunningEntryQueueTest {
                 description = "Pause chain",
                 start = resumedAt.toString(),
             )
-            val held = HeldTimerState(
-                TimerState(4, resumedAt, clone, pause, pomodoro = null, discardedPomodoro = null),
-                receivedAt = resumedAt,
-            )
+            val held = TimerState(4, resumedAt, clone, pause, pomodoro = null, discardedPomodoro = null).held(resumedAt)
             fun controls() = serverTimerControls(
                 AccountCache(database).runningNow(),
                 held,

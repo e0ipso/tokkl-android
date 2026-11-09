@@ -1,7 +1,5 @@
 package com.github.e0ipso.tokkl.pomodoro
 
-import com.github.e0ipso.tokkl.api.PhaseKind
-import com.github.e0ipso.tokkl.api.PhaseTransition
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.TimerPomodoro
 import com.github.e0ipso.tokkl.api.TimerPomodoroPhase
@@ -10,6 +8,8 @@ import com.github.e0ipso.tokkl.cache.HeldChange
 import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.PhaseKind
+import com.github.e0ipso.tokkl.model.PhaseTransition
 import com.github.e0ipso.tokkl.model.RunningEntryIdentity
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
@@ -22,6 +22,7 @@ import com.github.e0ipso.tokkl.timerstate.SessionLengths
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import com.github.e0ipso.tokkl.timerstate.TimerControls
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
+import com.github.e0ipso.tokkl.timerstate.held
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -52,10 +53,14 @@ internal fun heldState(
             start = it.pomodoroStart.toString(),
         )
     }
-    return HeldTimerState(
-        TimerState(revision, T0.plus(offset), running, pause = null, pomodoro = pomodoro, discardedPomodoro = null),
-        T0,
-    )
+    return TimerState(
+        revision,
+        T0.plus(offset),
+        running,
+        pause = null,
+        pomodoro = pomodoro,
+        discardedPomodoro = null,
+    ).held(T0)
 }
 
 internal fun work(
@@ -104,7 +109,7 @@ internal class FakeServer(val held: MutableStateFlow<HeldTimerState?>) : Session
     /** What a Done action leaves behind, given the state it acted on. */
     var advance: (HeldTimerState?) -> HeldTimerState? = { current ->
         heldState(
-            (current?.state?.revision ?: 0) + 1,
+            (current?.revision ?: 0) + 1,
             rest(),
         )
     }
@@ -142,7 +147,7 @@ internal class FakeServer(val held: MutableStateFlow<HeldTimerState?>) : Session
         gate.await()
         answer?.let { return it }
         val current = held.value
-        if (current == null || current.state.revision != revision) return TimerActionResult.Refused
+        if (current == null || current.revision != revision) return TimerActionResult.Refused
         held.value = next(current)
         return TimerActionResult.Done
     }

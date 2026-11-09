@@ -1,7 +1,5 @@
 package com.github.e0ipso.tokkl.timerstate
 
-import com.github.e0ipso.tokkl.api.PhaseKind
-import com.github.e0ipso.tokkl.api.PhaseTransition
 import com.github.e0ipso.tokkl.api.TimerPause
 import com.github.e0ipso.tokkl.api.TimerPomodoro
 import com.github.e0ipso.tokkl.api.TimerPomodoroPhase
@@ -9,6 +7,8 @@ import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.EntryWithSendState
+import com.github.e0ipso.tokkl.model.PhaseKind
+import com.github.e0ipso.tokkl.model.PhaseTransition
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import java.time.Duration
@@ -31,10 +31,16 @@ object ServerTimerStates {
         pause: TimerPause? = null,
         pomodoro: TimerPomodoro? = null,
         offset: Duration = Duration.ZERO,
-    ) = HeldTimerState(
-        TimerState(revision, at.plus(offset), runningEntry = null, pause, pomodoro, discardedPomodoro = null),
-        receivedAt = at,
-    )
+    ) = state(revision, at, pause, pomodoro, offset).held(at)
+
+    /** The server's state for [held], as the server sends it. */
+    fun state(
+        revision: Long,
+        at: Instant,
+        pause: TimerPause? = null,
+        pomodoro: TimerPomodoro? = null,
+        offset: Duration = Duration.ZERO,
+    ) = TimerState(revision, at.plus(offset), runningEntry = null, pause, pomodoro, discardedPomodoro = null)
 
     /** A chain paused at [seconds], which Resume starts with [fields] in [workspaceId]. */
     fun paused(seconds: Long, fields: EntryFields, workspaceId: WorkspaceId = WorkspaceId(1)) = pause(

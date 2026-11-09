@@ -1,6 +1,6 @@
 package com.github.e0ipso.tokkl.timer
 
-import com.github.e0ipso.tokkl.api.DiscardedPomodoro
+import com.github.e0ipso.tokkl.model.DiscardedPomodoro
 import com.github.e0ipso.tokkl.timernotice.TimerNotice
 import com.github.e0ipso.tokkl.timerstate.DiscardNotices
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
@@ -29,7 +29,7 @@ internal class TimerNoticeBoard(private val discards: DiscardNotices) {
      */
     fun notices(discardNotices: Flow<DiscardedPomodoro?>): Flow<TimerNotice?> =
         combine(claimedDiscard, failures, discardNotices) { claimed, failure, discarded ->
-            claimed ?: failure ?: discarded?.let { TimerNotice.PomodoroDiscarded(it.entryId) }
+            claimed ?: failure ?: discarded?.let { TimerNotice.PomodoroDiscarded(it.entryId.value) }
         }
 
     /** A pause chain action ended with [result], which is not done. */
@@ -47,7 +47,7 @@ internal class TimerNoticeBoard(private val discards: DiscardNotices) {
             } else {
                 discards.takeDiscardNotice()?.let { taken ->
                     TimerNotice.PomodoroDiscarded(
-                        taken.entryId,
+                        taken.entryId.value,
                     ).also { claimedDiscard.value = it }
                 }
             }

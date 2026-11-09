@@ -10,13 +10,14 @@ android {
 }
 
 dependencies {
-    // The model carries the API's errors, and the pages draw with the design system.
+    // The model carries the API's errors.
     api(project(":core:api"))
     // Why the server failed, which the model and the pages say in the session's words.
     api(project(":core:session"))
     // The pages manage one workspace, by its model id.
     api(project(":core:model"))
-    api(project(":core:ui"))
+    // The pages draw with the design system, which none of their signatures name.
+    implementation(project(":core:ui"))
     // Its model loads as the pages' view models share their state.
     api(project(":core:platform"))
 

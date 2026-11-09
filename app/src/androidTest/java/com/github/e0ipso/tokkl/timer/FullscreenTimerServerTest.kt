@@ -228,7 +228,7 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
                 hasSetTextAction() and hasAnyAncestor(hasTestTag("fullscreen_timer")),
             ).assertCountEquals(0)
             val frozen = paused.seconds
-            assertEquals(frozen, app.timerState.state.value!!.state.pause!!.seconds)
+            assertEquals(frozen, app.timerState.state.value!!.pause!!.seconds)
             assertEquals(frozen, parseDuration(elapsedText()))
             assertEquals(0, runBlocking { app.changes.unsentCount.first() })
             scenario.recreate()
@@ -319,7 +319,7 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
             awaitIdle()
             compose.awaitTimerPage()
             compose.onNodeWithTag("fullscreen_timer").assertDoesNotExist()
-            assertNull(app.timerState.state.value!!.state.pause)
+            assertNull(app.timerState.state.value!!.pause)
             assertEquals(0, runBlocking { app.changes.unsentCount.first() })
         }
     }
@@ -464,7 +464,7 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
                 val linesBeforePause = requests.lines.size
                 focusedButton(UiR.string.timer_pause).performScrollTo().performClick()
                 val paused = awaitPaused()
-                val held = app.timerState.state.value!!.state
+                val held = app.timerState.state.value!!
                 val pause = held.pause!!
                 assertTrue(pause.paused)
                 assertEquals(pause.seconds, paused.seconds)

@@ -7,10 +7,10 @@ import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
-import com.github.e0ipso.tokkl.api.PhaseTransition
 import com.github.e0ipso.tokkl.components.pomodoroAlarmRearm
 import com.github.e0ipso.tokkl.components.pomodoroAlarms
 import com.github.e0ipso.tokkl.components.timerState
+import com.github.e0ipso.tokkl.model.PhaseTransition
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Rule

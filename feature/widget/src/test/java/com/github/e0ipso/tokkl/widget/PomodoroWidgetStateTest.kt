@@ -1,13 +1,13 @@
 package com.github.e0ipso.tokkl.widget
 
-import com.github.e0ipso.tokkl.api.PhaseKind
-import com.github.e0ipso.tokkl.api.PhaseTransition
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.cache.CurrentEntryCache
 import com.github.e0ipso.tokkl.cache.RunningCheckStart
 import com.github.e0ipso.tokkl.cache.RunningCheckWrites
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.PhaseKind
+import com.github.e0ipso.tokkl.model.PhaseTransition
 import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.model.Task
@@ -19,6 +19,7 @@ import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.timerstate.ServerTimerStates
 import com.github.e0ipso.tokkl.timerstate.TimerStateSource
+import com.github.e0ipso.tokkl.timerstate.held
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -47,8 +48,9 @@ class PomodoroWidgetStateTest {
         tags = fields.tags,
     )
     private val session = ServerTimerStates.session(EntryId(42), at)
-    private val held = ServerTimerStates.held(17, at, pomodoro = session, offset = Duration.ofSeconds(120))
-        .let { it.copy(state = it.state.copy(runningEntry = serverEntry)) }
+    private val server = ServerTimerStates.state(17, at, pomodoro = session, offset = Duration.ofSeconds(120))
+        .copy(runningEntry = serverEntry)
+    private val held = server.held(at)
     private val remembered = RememberedPomodoroFields(
         account,
         WorkspaceId(1),
@@ -106,7 +108,7 @@ class PomodoroWidgetStateTest {
         val active = state() as PomodoroWidgetState.Active
         assertEquals(account, active.account)
         assertEquals(17L, active.revision)
-        assertEquals(session, active.session)
+        assertEquals(held.pomodoro, active.session)
         assertEquals(at.minusSeconds(120), active.start)
         assertEquals(at.plusSeconds(1380), active.end)
         assertEquals(fields, active.entry.fields)
@@ -128,8 +130,9 @@ class PomodoroWidgetStateTest {
                     PhaseTransition.LONG_REST_TO_WORK
                 },
             )
-            val active = state(held = held.copy(state = held.state.copy(pomodoro = rest))) as PomodoroWidgetState.Active
-            assertEquals(rest, active.session)
+            val restHeld = server.copy(pomodoro = rest).held(at)
+            val active = state(held = restHeld) as PomodoroWidgetState.Active
+            assertEquals(restHeld.pomodoro, active.session)
             assertEquals(4, active.session.number)
             assertEquals(4, active.session.longRestEvery)
         }
@@ -147,10 +150,10 @@ class PomodoroWidgetStateTest {
 
     @Test fun missingOrWrongEntryDoesNotLeakAnotherTimersFields() {
         val missing = state(
-            held = held.copy(state = held.state.copy(runningEntry = null)),
+            held = server.copy(runningEntry = null).held(at),
         ) as PomodoroWidgetState.Active
         val wrong = state(
-            held = held.copy(state = held.state.copy(runningEntry = serverEntry.copy(id = 99))),
+            held = server.copy(runningEntry = serverEntry.copy(id = 99)).held(at),
         ) as PomodoroWidgetState.Active
         assertEquals(fields, missing.entry.fields)
         assertEquals(fields, wrong.entry.fields)
@@ -200,12 +203,12 @@ class PomodoroWidgetStateTest {
 
     @Test fun onlyTheSessionsMatchingRunningEntryIsRemembered() {
         assertEquals(remembered, rememberedPomodoroFields(account, held))
-        assertNull(rememberedPomodoroFields(account, held.copy(state = held.state.copy(pomodoro = null))))
-        assertNull(rememberedPomodoroFields(account, held.copy(state = held.state.copy(runningEntry = null))))
+        assertNull(rememberedPomodoroFields(account, server.copy(pomodoro = null).held(at)))
+        assertNull(rememberedPomodoroFields(account, server.copy(runningEntry = null).held(at)))
         assertNull(
             rememberedPomodoroFields(
                 account,
-                held.copy(state = held.state.copy(runningEntry = serverEntry.copy(id = 99))),
+                server.copy(runningEntry = serverEntry.copy(id = 99)).held(at),
             ),
         )
     }
@@ -226,17 +229,17 @@ class PomodoroWidgetStateTest {
             runningEnded = {},
         )
         val slowRead = source.begin()
-        assertTrue(source.accept(source.begin(), held.state))
+        assertTrue(source.accept(source.begin(), server))
         assertEquals(remembered, disk?.let { decodeRememberedPomodoroFields(it, account) })
         assertFalse(
             source.accept(
                 slowRead,
-                held.state.copy(revision = 16, runningEntry = serverEntry.copy(description = "Stale")),
+                server.copy(revision = 16, runningEntry = serverEntry.copy(description = "Stale")),
             ),
         )
         assertEquals(fields, disk?.let { decodeRememberedPomodoroFields(it, account) }?.fields())
         val lateRead = source.begin()
-        assertTrue(source.accept(source.begin(), held.state.copy(revision = 18, pomodoro = null, runningEntry = null)))
+        assertTrue(source.accept(source.begin(), server.copy(revision = 18, pomodoro = null, runningEntry = null)))
         val idle = state(
             held = source.state.value,
             remembered = disk?.let { decodeRememberedPomodoroFields(it, account) },
@@ -244,7 +247,7 @@ class PomodoroWidgetStateTest {
         assertEquals(fields, idle.entry.fields)
         source.retire()
         disk = null // Sign-out clears only after retirement has waited for accepted writes.
-        assertFalse(source.accept(lateRead, held.state.copy(revision = 19)))
+        assertFalse(source.accept(lateRead, server.copy(revision = 19)))
         assertNull(disk)
     }
 

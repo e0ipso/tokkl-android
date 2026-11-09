@@ -1,7 +1,7 @@
 package com.github.e0ipso.tokkl.timer
 
-import com.github.e0ipso.tokkl.api.DiscardedPomodoro
 import com.github.e0ipso.tokkl.cache.RunningEntryChanges
+import com.github.e0ipso.tokkl.model.DiscardedPomodoro
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.RunningEntryIdentity

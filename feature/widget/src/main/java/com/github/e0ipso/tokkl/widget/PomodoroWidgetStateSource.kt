@@ -41,7 +41,7 @@ class PomodoroWidgetStateSource(
     val state: Flow<PomodoroWidgetState> = run {
         val deadlines = pomodoroWidgetDeadlineChanges(
             timerStates.held.map { held ->
-                held?.let { it.state.pomodoro?.phase?.plannedEnd?.minus(it.clockOffset) }
+                held?.let { it.pomodoro?.phase?.plannedEnd?.minus(it.clockOffset) }
             },
             clock,
         )

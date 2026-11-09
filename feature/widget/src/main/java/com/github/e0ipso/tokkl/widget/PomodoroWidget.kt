@@ -31,8 +31,8 @@ import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.width
 import androidx.glance.material3.ColorProviders
-import com.github.e0ipso.tokkl.api.PhaseKind
 import com.github.e0ipso.tokkl.feature.widget.R
+import com.github.e0ipso.tokkl.model.PhaseKind
 import com.github.e0ipso.tokkl.platform.mainActivityIntent
 import com.github.e0ipso.tokkl.ui.theme.TokklDarkColorScheme
 import com.github.e0ipso.tokkl.ui.theme.TokklLightColorScheme

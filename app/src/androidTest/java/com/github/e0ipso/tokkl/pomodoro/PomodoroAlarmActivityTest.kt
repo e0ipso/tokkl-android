@@ -18,14 +18,13 @@ import androidx.test.uiautomator.Until
 import com.github.e0ipso.tokkl.DeviceShell
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklApplication
-import com.github.e0ipso.tokkl.api.PhaseKind
-import com.github.e0ipso.tokkl.api.PhaseTransition
-import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.components.capabilities
 import com.github.e0ipso.tokkl.components.pomodoroRinging
 import com.github.e0ipso.tokkl.components.timerActions
 import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.PhaseKind
+import com.github.e0ipso.tokkl.model.PhaseTransition
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.timer.TimerAcceptanceFixture
@@ -213,7 +212,7 @@ class PomodoroAlarmActivityTest {
             assertTrue(device.wait(Until.gone(By.text("Work done: start short rest")), 10_000))
             val rest = checkNotNull(serverTimer().pomodoro)
             assertEquals(PhaseKind.SHORT_REST, rest.phase.kind)
-            assertEquals(rest.phase.start, app.timerState.state.value?.state?.pomodoro?.phase?.start)
+            assertEquals(rest.phase.start, app.timerState.state.value?.pomodoro?.phase?.start)
 
             val restRing = awaitPlaying(timeoutMillis = 90_000).ring!!
             assertEquals(PomodoroPhaseKey(rest.phase.start), restRing.phase)
@@ -343,9 +342,9 @@ class PomodoroAlarmActivityTest {
         return HeldPhases.hold()
     }
 
-    private fun serverTimer(): TimerState = runBlocking {
+    private fun serverTimer(): HeldTimerState = runBlocking {
         assertEquals(TimerActionResult.Done, app.timerActions.read())
-        checkNotNull(app.timerState.state.value).state
+        checkNotNull(app.timerState.state.value)
     }
 
     private fun openAlarm(phase: PomodoroPhaseKey) {

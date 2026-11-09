@@ -1,7 +1,7 @@
 package com.github.e0ipso.tokkl.pomodoro
 
-import com.github.e0ipso.tokkl.api.PhaseKind
-import com.github.e0ipso.tokkl.api.PhaseTransition
+import com.github.e0ipso.tokkl.model.PhaseKind
+import com.github.e0ipso.tokkl.model.PhaseTransition
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import java.time.Instant
@@ -34,7 +34,7 @@ data class PomodoroRing(
 
 /** The phase this state's session is in, or null without a session. */
 fun HeldTimerState.ring(): PomodoroRing? {
-    val session = state.pomodoro ?: return null
+    val session = pomodoro ?: return null
     return PomodoroRing(
         phase = PomodoroPhaseKey(session.phase.start),
         kind = session.phase.kind,
@@ -42,7 +42,7 @@ fun HeldTimerState.ring(): PomodoroRing? {
         number = session.number,
         longRestEvery = session.longRestEvery,
         end = session.phase.plannedEnd.minus(clockOffset),
-        revision = state.revision,
+        revision = revision,
     )
 }
 

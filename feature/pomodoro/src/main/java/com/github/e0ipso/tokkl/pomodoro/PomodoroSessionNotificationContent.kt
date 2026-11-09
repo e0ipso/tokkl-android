@@ -1,6 +1,6 @@
 package com.github.e0ipso.tokkl.pomodoro
 
-import com.github.e0ipso.tokkl.api.PhaseKind
+import com.github.e0ipso.tokkl.model.PhaseKind
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import java.security.MessageDigest
@@ -31,9 +31,9 @@ data class PomodoroSessionNotificationContent(
 
 /** The session notification of this state, or null without a session. */
 fun HeldTimerState.notificationContent(): PomodoroSessionNotificationContent? {
-    val session = state.pomodoro ?: return null
+    val session = pomodoro ?: return null
     val ring = ring() ?: return null
-    val open = state.runningEntry?.takeIf { it.id == session.entryId }
+    val open = runningEntry?.takeIf { it.id == session.entryId }
     return PomodoroSessionNotificationContent(
         phase = ring.phase,
         kind = session.phase.kind,
@@ -42,6 +42,6 @@ fun HeldTimerState.notificationContent(): PomodoroSessionNotificationContent? {
         longRestEvery = session.longRestEvery,
         description = open?.description.orEmpty(),
         end = ring.end,
-        revision = state.revision,
+        revision = revision,
     )
 }

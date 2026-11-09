@@ -194,21 +194,11 @@ class PackageLayersTest {
         private val API_IMPORT = Regex("""^import com\.github\.e0ipso\.tokkl\.api\.(\w+)$""", RegexOption.MULTILINE)
 
         /**
-         * The wire types a screen may import. The server owns the timer state, Pomodoro and pause
-         * (docs/PRD.md T1): core:timerstate holds and stores it as the server sent it, and the
-         * Pomodoro page, the widget and the timer's notices read its parts. The trash page shows
-         * each deleted entry as the server lists it, for display only.
+         * The wire types a screen may import. The trash page shows each deleted entry as the
+         * server lists it, for display only. The timer state reaches the screens as the model's
+         * types, which core:timerstate maps it to.
          */
-        val SERVER_STATE = setOf(
-            "TimerState",
-            "TimerPause",
-            "TimerPomodoro",
-            "TimerPomodoroPhase",
-            "DiscardedPomodoro",
-            "PhaseKind",
-            "PhaseTransition",
-            "TrashEntry",
-        )
+        val SERVER_STATE = setOf("TrashEntry")
 
         /** The layer of [pkg], counted from 0 for the lowest. */
         fun layerOf(pkg: String): Int = LAYERS.indexOfFirst { pkg in it }.also {

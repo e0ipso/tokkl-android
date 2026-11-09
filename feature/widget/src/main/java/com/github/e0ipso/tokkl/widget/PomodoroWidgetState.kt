@@ -1,9 +1,9 @@
 package com.github.e0ipso.tokkl.widget
 
 import com.github.e0ipso.tokkl.api.ApiJson
-import com.github.e0ipso.tokkl.api.TimerPomodoro
 import com.github.e0ipso.tokkl.entryfields.entryLabels
 import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.PomodoroSession
 import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.model.Task
 import com.github.e0ipso.tokkl.model.WorkspaceId
@@ -28,7 +28,7 @@ sealed interface PomodoroWidgetState {
     data class Active(
         val account: String,
         val revision: Long,
-        val session: TimerPomodoro,
+        val session: PomodoroSession,
         /** Phase boundaries on the phone's clock, corrected by the held server offset. */
         val start: Instant,
         val end: Instant,
@@ -66,7 +66,7 @@ fun pomodoroWidgetState(
     if (workspaceId == null || account == null) return PomodoroWidgetState.NoAccount
     if (!available) return PomodoroWidgetState.Unsupported
     val last = remembered?.takeIf { it.account == account }
-    val session = held?.state?.pomodoro
+    val session = held?.pomodoro
     val fields = held?.let { rememberedPomodoroFields(account, it) } ?: last
     val entryWorkspace = fields?.workspaceId ?: workspaceId
     val entryFields = fields?.fields() ?: EntryFields()
@@ -80,7 +80,7 @@ fun pomodoroWidgetState(
     val end = session.phase.plannedEnd.minus(held.clockOffset)
     return PomodoroWidgetState.Active(
         account,
-        held.state.revision,
+        held.revision,
         session,
         session.phase.start.minus(held.clockOffset),
         end,
@@ -111,7 +111,7 @@ fun PomodoroWidgetState.key(): String {
                 put("state", "active")
                 put("account", state.account)
                 put("revision", state.revision)
-                put("session", ApiJson.encodeToJsonElement(TimerPomodoro.serializer(), state.session))
+                put("session", state.session.keyContent())
                 put("start", state.start.toString())
                 put("end", state.end.toString())
                 put("ended", state.ended)
@@ -137,4 +137,21 @@ private fun PomodoroWidgetEntry.keyContent() = buildJsonObject {
     put("project", project?.let(::JsonPrimitive) ?: JsonNull)
     put("projectColor", projectColor?.let(::JsonPrimitive) ?: JsonNull)
     put("task", task?.let(::JsonPrimitive) ?: JsonNull)
+}
+
+/** Every value of the session the widget draws or acts on, for [key]. */
+private fun PomodoroSession.keyContent() = buildJsonObject {
+    put("work_minutes", workMinutes)
+    put("short_rest_minutes", shortRestMinutes)
+    put("long_rest_minutes", longRestMinutes)
+    put("long_rest_every", longRestEvery)
+    put("kind", phase.kind.name)
+    put("start", phase.start.toString())
+    put("completed", phase.completed)
+    put("planned_end", phase.plannedEnd.toString())
+    put("upcoming_phase", upcomingPhase.name)
+    put("transition", transition.name)
+    put("number", number)
+    put("entry_id", entryId.value)
+    put("pomodoro_start", pomodoroStart.toString())
 }

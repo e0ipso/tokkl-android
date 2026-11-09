@@ -8,7 +8,6 @@ import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TimerActionToasts
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.HttpMethod
-import com.github.e0ipso.tokkl.api.PhaseKind
 import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.appConfiguredServer
 import com.github.e0ipso.tokkl.appHttp
@@ -23,6 +22,7 @@ import com.github.e0ipso.tokkl.components.storeSignIn
 import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.components.timerSync
 import com.github.e0ipso.tokkl.core.ui.R
+import com.github.e0ipso.tokkl.model.PhaseKind
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.pomodoro.HeldPhases
 import com.github.e0ipso.tokkl.session.ServerTrustStore
@@ -201,7 +201,7 @@ class PomodoroWidgetServerTest {
         } finally {
             AirplaneMode.set(false, fixture.account.client)
         }
-        assertEquals(before!!.state.revision, fixture.account.otherDevice.timerState().revision)
+        assertEquals(before!!.revision, fixture.account.otherDevice.timerState().revision)
     }
 
     @Test fun capturedNextAndEndRevisionsAreRefusedAfterRemoteEditsAndAdoptConflictState() {

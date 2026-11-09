@@ -2,8 +2,8 @@ package com.github.e0ipso.tokkl.pomodoro
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.PreviewLightDark
-import com.github.e0ipso.tokkl.api.PhaseKind
 import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.PhaseKind
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey

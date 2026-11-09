@@ -44,6 +44,8 @@ import com.github.e0ipso.tokkl.pomodoro.PomodoroViewModel
 import com.github.e0ipso.tokkl.pomodoro.PomodoroWorkWaits
 import com.github.e0ipso.tokkl.pomodoro.pomodoroAlarmIntent
 import com.github.e0ipso.tokkl.timer.TimerAcceptanceFixture
+import com.github.e0ipso.tokkl.timerstate.HeldTimerState
+import com.github.e0ipso.tokkl.timerstate.held
 import com.github.e0ipso.tokkl.widget.NativeWidget
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -223,7 +225,7 @@ class TimerActionsOfflineServerTest {
             tapOnTheTimerPage(R.string.timer_stop_spoken)
             app.awaitControls<TimerControls.Idle>("the clone's Stop, at once", timeoutMs = AT_ONCE_MS)
             assertEquals("the Stop waits in the queue", 1, unsent())
-            assertEquals("the server has not heard of it", clone, held()?.pause?.cloneEntryId)
+            assertEquals("the server has not heard of it", clone, held()?.pause?.cloneEntryId?.value)
             assertNoNotice()
 
             // Only the queue sends: the tap sent nothing, as the phone was offline. Its v9 stop
@@ -332,7 +334,7 @@ class TimerActionsOfflineServerTest {
     }
 
     /** What the offline actions must leave as it is: the held state, its clock aside, and the queue. */
-    private data class Snapshot(val state: TimerState?, val unsent: Int)
+    private data class Snapshot(val state: HeldTimerState?, val unsent: Int)
 
     private fun snapshot() = Snapshot(held()?.withoutClock(), unsent())
 
@@ -341,9 +343,9 @@ class TimerActionsOfflineServerTest {
         assertEquals("$what: nothing was queued", before.unsent, unsent())
     }
 
-    private fun TimerState.withoutClock() = copy(serverTime = Instant.EPOCH)
+    private fun HeldTimerState.withoutClock() = copy(serverTime = Instant.EPOCH, receivedAt = Instant.EPOCH)
 
-    private fun held(): TimerState? = app.timerState.state.value?.state
+    private fun held(): HeldTimerState? = app.timerState.state.value
 
     private fun shown(): TimerControls = runBlocking { app.timerControls.first() }
 

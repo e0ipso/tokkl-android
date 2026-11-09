@@ -1,11 +1,11 @@
 package com.github.e0ipso.tokkl.pomodoro
 
 import androidx.compose.runtime.Immutable
-import com.github.e0ipso.tokkl.api.TimerPomodoro
 import com.github.e0ipso.tokkl.cache.HeldChange
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.PomodoroSession
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
@@ -76,20 +76,18 @@ data class PomodoroPageState(
     val offline: Boolean = false,
 ) {
     /** The server's session, or null without one. */
-    val pomodoro: TimerPomodoro? get() = held?.state?.pomodoro
+    val pomodoro: PomodoroSession? get() = held?.pomodoro
 
     val shown: PomodoroShown?
         get() {
-            val state = held?.state ?: return null
+            val state = held ?: return null
             val session = state.pomodoro ?: return null
-            return PomodoroShown(state.revision, session.phase.start, EntryId(session.entryId))
+            return PomodoroShown(state.revision, session.phase.start, session.entryId)
         }
 
     /** The session's workspace while it runs, and the account's default for a new one. */
     val workspaceId: WorkspaceId?
-        get() = held?.state?.takeIf { it.pomodoro != null }?.runningEntry?.workspaceId?.let(
-            ::WorkspaceId,
-        ) ?: account?.defaultWorkspaceId
+        get() = held?.takeIf { it.pomodoro != null }?.runningEntry?.workspaceId ?: account?.defaultWorkspaceId
 
     val canStart: Boolean get() = !loading && !busy && pomodoro == null && workspaceId != null &&
         lengths.sessionLengths() != null

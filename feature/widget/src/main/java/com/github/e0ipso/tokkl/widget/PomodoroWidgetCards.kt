@@ -28,8 +28,8 @@ import androidx.glance.layout.width
 import androidx.glance.semantics.contentDescription
 import androidx.glance.semantics.semantics
 import androidx.glance.unit.ColorProvider
-import com.github.e0ipso.tokkl.api.PhaseKind
 import com.github.e0ipso.tokkl.feature.widget.R
+import com.github.e0ipso.tokkl.model.PhaseKind
 import com.github.e0ipso.tokkl.time.formatDuration
 import java.time.Duration
 import java.time.Instant

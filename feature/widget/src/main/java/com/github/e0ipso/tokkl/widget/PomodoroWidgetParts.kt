@@ -32,8 +32,8 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
-import com.github.e0ipso.tokkl.api.PhaseKind
 import com.github.e0ipso.tokkl.feature.widget.R
+import com.github.e0ipso.tokkl.model.PhaseKind
 import com.github.e0ipso.tokkl.time.formatDuration
 import com.github.e0ipso.tokkl.ui.theme.TokklDarkColorScheme
 import com.github.e0ipso.tokkl.ui.theme.TokklDarkExtraColors

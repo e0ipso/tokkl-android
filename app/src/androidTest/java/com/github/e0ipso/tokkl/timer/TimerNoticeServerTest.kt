@@ -81,7 +81,7 @@ class TimerNoticeServerTest {
         }
         // A new activity and view model, and the state at that revision read again.
         fixture.refresh()
-        assertEquals("the server repeats it", discarded, app.timerState.state.value!!.state.discardedPomodoro)
+        assertEquals("the server repeats it", discarded, app.timerState.state.value!!.discardedPomodoro)
         ActivityScenario.launch(MainActivity::class.java).use {
             compose.awaitTimerPage()
             compose.waitForIdle()

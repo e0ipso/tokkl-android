@@ -142,4 +142,4 @@ data object PomodoroRoute : Route {
 
 /** The Pomodoro page's running dot, while a session runs. */
 class PomodoroBadge(timerStates: AccountTimerStates) :
-    PageBadge(PomodoroRoute, R.string.nav_pomodoro_running, timerStates.held.map { it?.state?.pomodoro != null })
+    PageBadge(PomodoroRoute, R.string.nav_pomodoro_running, timerStates.held.map { it?.pomodoro != null })

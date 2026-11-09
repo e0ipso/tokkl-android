@@ -327,7 +327,7 @@ class BottomBarTest {
         }
     }
 
-    private fun heldRevision(): Long = app.timerState.state.value!!.state.revision
+    private fun heldRevision(): Long = app.timerState.state.value!!.revision
 
     /** Signs in to a new account of the test server, which the test deletes at its end. */
     private fun signInToNewAccount(): TestAccounts.Account {

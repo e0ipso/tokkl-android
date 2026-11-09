@@ -1,9 +1,6 @@
 package com.github.e0ipso.tokkl.timerstate
 
 import com.github.e0ipso.tokkl.api.ApiJson
-import com.github.e0ipso.tokkl.api.DiscardedPomodoro
-import com.github.e0ipso.tokkl.api.PhaseKind
-import com.github.e0ipso.tokkl.api.PhaseTransition
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.TimerPause
 import com.github.e0ipso.tokkl.api.TimerPomodoro
@@ -13,7 +10,10 @@ import com.github.e0ipso.tokkl.cache.CurrentEntryCache
 import com.github.e0ipso.tokkl.cache.RunningCheckStart
 import com.github.e0ipso.tokkl.cache.RunningCheckWrites
 import com.github.e0ipso.tokkl.cache.runningCheckWrites
+import com.github.e0ipso.tokkl.model.DiscardedPomodoro
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.PhaseKind
+import com.github.e0ipso.tokkl.model.PhaseTransition
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import org.junit.Assert.assertEquals
@@ -26,6 +26,7 @@ import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
+import com.github.e0ipso.tokkl.api.DiscardedPomodoro as ServerDiscardedPomodoro
 
 /** How the account's timer state source orders, keeps and applies the server's timer states. */
 class TimerStateSourceTest {
@@ -61,8 +62,8 @@ class TimerStateSourceTest {
         assertTrue(timer.accept(fast, state(revision = 6, running = serverEntry(2, "Newer"))))
         assertFalse(timer.accept(slow, state(revision = 5, running = serverEntry(1, "Older"))))
 
-        assertEquals(6L, timer.state.value?.state?.revision)
-        assertEquals("the disk keeps the newer state", 6L, stored()?.held?.state?.revision)
+        assertEquals(6L, timer.state.value?.revision)
+        assertEquals("the disk keeps the newer state", 6L, stored()?.held?.revision)
         assertEquals("the cache keeps the newer running entry", listOf(EntryId(2)), cache.running().map { it.id })
     }
 
@@ -208,47 +209,45 @@ class TimerStateSourceTest {
     fun theCountdownAndOvertimeRunOnTheCorrectedClock() {
         // The server's clock runs two minutes ahead of the phone's.
         val end = DEVICE_T0.plusSeconds(120 + 300)
-        val held = HeldTimerState(
-            state(revision = 1, serverTime = DEVICE_T0.plusSeconds(120), pomodoro = pomodoro(end)),
-            DEVICE_T0,
-        )
+        val held = state(
+            revision = 1,
+            serverTime = DEVICE_T0.plusSeconds(120),
+            pomodoro = pomodoro(end),
+        ).held(DEVICE_T0)
 
         assertEquals(Duration.ofSeconds(300), held.phaseRemaining(DEVICE_T0))
         assertEquals(Duration.ZERO, held.phaseOvertime(DEVICE_T0))
         assertEquals(Duration.ZERO, held.phaseRemaining(DEVICE_T0.plusSeconds(345)))
         assertEquals(Duration.ofSeconds(45), held.phaseOvertime(DEVICE_T0.plusSeconds(345)))
-        assertNull("no session, no countdown", HeldTimerState(state(revision = 1), DEVICE_T0).phaseRemaining(DEVICE_T0))
+        assertNull("no session, no countdown", state(revision = 1).held(DEVICE_T0).phaseRemaining(DEVICE_T0))
     }
 
     @Test
     fun aPausedChainIsFrozenAndARunningCloneAddsItsTimeSinceItsStart() {
-        val paused = HeldTimerState(state(revision = 1, pause = pause(seconds = 600, cloneEntryId = null)), DEVICE_T0)
+        val paused = state(revision = 1, pause = pause(seconds = 600, cloneEntryId = null)).held(DEVICE_T0)
         assertEquals(Duration.ofSeconds(600), paused.chainTotal(DEVICE_T0.plusSeconds(3600)))
         assertNull(paused.cloneElapsed(DEVICE_T0.plusSeconds(3600)))
 
         // The clone started at ENTRY_START. The server's clock runs a minute ahead of the phone's.
-        val resumed = HeldTimerState(
-            state(
-                revision = 2,
-                serverTime = ENTRY_START.plusSeconds(90),
-                running = serverEntry(12, "Resumed"),
-                pause = pause(600, cloneEntryId = EntryId(12)),
-            ),
-            receivedAt = ENTRY_START.plusSeconds(30),
-        )
+        val resumed = state(
+            revision = 2,
+            serverTime = ENTRY_START.plusSeconds(90),
+            running = serverEntry(12, "Resumed"),
+            pause = pause(600, cloneEntryId = EntryId(12)),
+        ).held(ENTRY_START.plusSeconds(30))
         assertEquals(Duration.ofSeconds(190), resumed.cloneElapsed(ENTRY_START.plusSeconds(130)))
         assertEquals(Duration.ofSeconds(790), resumed.chainTotal(ENTRY_START.plusSeconds(130)))
-        assertNull("no chain, no total", HeldTimerState(state(revision = 1), DEVICE_T0).chainTotal(DEVICE_T0))
+        assertNull("no chain, no total", state(revision = 1).held(DEVICE_T0).chainTotal(DEVICE_T0))
     }
 
     @Test
     fun aDiscardedPomodoroGivesOneNoticeAcrossReplaysAndRestarts() {
         val timer = source()
-        val discarded = DiscardedPomodoro(77, ENTRY_START, ENTRY_START)
+        val discarded = ServerDiscardedPomodoro(77, ENTRY_START, ENTRY_START)
         timer.accept(timer.begin(), state(revision = 3, discarded = discarded))
-        assertEquals(discarded, timer.discardNotice.value)
+        assertEquals(discarded.model(), timer.discardNotice.value)
 
-        assertEquals(discarded, timer.takeDiscardNotice())
+        assertEquals(discarded.model(), timer.takeDiscardNotice())
         assertNull("a second surface finds nothing to show", timer.takeDiscardNotice())
         assertNull(timer.discardNotice.value)
 
@@ -260,17 +259,17 @@ class TimerStateSourceTest {
         assertNull("a restart does not show it again", restarted.discardNotice.value)
         assertNull(restarted.takeDiscardNotice())
 
-        val next = DiscardedPomodoro(78, ENTRY_START, ENTRY_START)
+        val next = ServerDiscardedPomodoro(78, ENTRY_START, ENTRY_START)
         restarted.accept(restarted.begin(), state(revision = 5, discarded = next))
-        assertEquals(next, restarted.takeDiscardNotice())
+        assertEquals(next.model(), restarted.takeDiscardNotice())
     }
 
     @Test
     fun aNoticeNotShownBeforeARestartIsShownOnceAfterIt() {
-        val discarded = DiscardedPomodoro(77, ENTRY_START, ENTRY_START)
+        val discarded = ServerDiscardedPomodoro(77, ENTRY_START, ENTRY_START)
         source().let { it.accept(it.begin(), state(revision = 3, discarded = discarded)) }
 
-        assertEquals(discarded, source().takeDiscardNotice())
+        assertEquals(discarded.model(), source().takeDiscardNotice())
         assertNull(source().takeDiscardNotice())
     }
 
@@ -320,7 +319,7 @@ class TimerStateSourceTest {
         running: ServerTimeEntry? = null,
         pause: TimerPause? = null,
         pomodoro: TimerPomodoro? = null,
-        discarded: DiscardedPomodoro? = null,
+        discarded: ServerDiscardedPomodoro? = null,
     ) = TimerState(revision, serverTime, running, pause, pomodoro, discarded)
 
     private fun serverEntry(id: Long, description: String) = ServerTimeEntry(
@@ -409,3 +408,6 @@ class TimerStateSourceTest {
         val DEVICE_T0: Instant = Instant.parse("2026-10-28T09:00:00Z")
     }
 }
+
+/** The notice the holder gives for this pomodoro the server discarded. */
+private fun ServerDiscardedPomodoro.model() = DiscardedPomodoro(EntryId(entryId), start, stop)

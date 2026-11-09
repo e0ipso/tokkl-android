@@ -19,12 +19,13 @@ import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
-import com.github.e0ipso.tokkl.api.PhaseKind
-import com.github.e0ipso.tokkl.api.PhaseTransition
-import com.github.e0ipso.tokkl.api.TimerPomodoro
-import com.github.e0ipso.tokkl.api.TimerPomodoroPhase
 import com.github.e0ipso.tokkl.core.ui.R
 import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.PhaseKind
+import com.github.e0ipso.tokkl.model.PhaseTransition
+import com.github.e0ipso.tokkl.model.PomodoroPhase
+import com.github.e0ipso.tokkl.model.PomodoroSession
 import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.model.TaskId
 import com.github.e0ipso.tokkl.model.WorkspaceId
@@ -203,7 +204,7 @@ abstract class PomodoroWidgetScreenshotTest(private val dark: Boolean, private v
                 PhaseKind.LONG_REST -> 15
             }
             val start = NOW.minusSeconds(65)
-            val phase = TimerPomodoroPhase(
+            val phase = PomodoroPhase(
                 kind,
                 start,
                 if (kind == PhaseKind.WORK) {
@@ -215,7 +216,7 @@ abstract class PomodoroWidgetScreenshotTest(private val dark: Boolean, private v
                 },
                 start.plusSeconds(minutes * 60L),
             )
-            val session = TimerPomodoro(
+            val session = PomodoroSession(
                 25, 5, 15, 4, phase,
                 if (kind == PhaseKind.WORK) PhaseKind.SHORT_REST else PhaseKind.WORK,
                 when (kind) {
@@ -223,7 +224,7 @@ abstract class PomodoroWidgetScreenshotTest(private val dark: Boolean, private v
                     PhaseKind.SHORT_REST -> PhaseTransition.SHORT_REST_TO_WORK
                     PhaseKind.LONG_REST -> PhaseTransition.LONG_REST_TO_WORK
                 },
-                if (kind == PhaseKind.LONG_REST) 4 else 2, 42, start,
+                if (kind == PhaseKind.LONG_REST) 4 else 2, EntryId(42), start,
             )
             val current = PomodoroWidgetState.Active("fixture", 17, session, start, phase.plannedEnd, false, entry)
             listOf(

@@ -159,7 +159,7 @@ class PomodoroAlarmViewModelTest {
         assertFalse(model.state.value.busy)
         assertFalse(model.state.value.closed)
         assertEquals(key, model.state.value.ring?.phase)
-        assertEquals(3L, held.value?.state?.revision)
+        assertEquals(3L, held.value?.revision)
 
         server.answer = null
         model.next()!!.join()

@@ -10,8 +10,8 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.drawable.Icon
 import android.os.Build
-import com.github.e0ipso.tokkl.api.PhaseKind
 import com.github.e0ipso.tokkl.feature.pomodoro.R
+import com.github.e0ipso.tokkl.model.PhaseKind
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /** A native countdown crosses zero into negative elapsed overtime without app ticks. */

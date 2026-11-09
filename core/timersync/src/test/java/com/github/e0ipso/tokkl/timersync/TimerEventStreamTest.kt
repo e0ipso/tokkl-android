@@ -138,7 +138,7 @@ class TimerEventStreamTest {
         val end = readTimerEvents(chunks(body, 7), holder, link.link, holder.begin())
 
         assertEquals(StreamEnd.Ended, end)
-        assertEquals(4L, holder.state.value?.state?.revision)
+        assertEquals(4L, holder.state.value?.revision)
         assertEquals(
             "the running entry reaches the cache",
             listOf(EntryId(40)),
@@ -187,7 +187,7 @@ class TimerEventStreamTest {
         } catch (e: IOException) {
             assertEquals("Connection reset", e.message)
         }
-        assertEquals(9L, holder.state.value?.state?.revision)
+        assertEquals(9L, holder.state.value?.revision)
     }
 
     @Test
@@ -228,7 +228,7 @@ class TimerEventStreamTest {
         val end = run { holdTimerEvents(TokklApi(client), holder, link.link) }
 
         assertEquals(StreamEnd.Ended, end)
-        assertEquals(12L, holder.state.value?.state?.revision)
+        assertEquals(12L, holder.state.value?.revision)
         assertEquals(1, link.connected)
         val request = server.takeRequest()
         assertEquals("GET" to "/tokkl/api/app/timer/events", request.method to request.url.encodedPath)

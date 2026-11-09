@@ -1,6 +1,6 @@
 package com.github.e0ipso.tokkl.pomodoro
 
-import com.github.e0ipso.tokkl.api.PhaseKind
+import com.github.e0ipso.tokkl.model.PhaseKind
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
@@ -202,7 +202,7 @@ class PomodoroSessionNotificationTest {
 
         f.server.answer = TimerActionResult.Offline
         assertEquals(TimerActionResult.Offline, f.sync.act(account, key, revision = 3, end = true))
-        assertEquals(3L, f.held?.state?.revision)
+        assertEquals(3L, f.held?.revision)
         f.sync.refresh()
         assertEquals(1, f.posts.size)
     }
@@ -328,7 +328,7 @@ class PomodoroSessionNotificationTest {
             // The server's answers become the held state, as the timer actions give them to it.
             server.advance = { current ->
                 heldState(
-                    (current?.state?.revision ?: 0) + 1,
+                    (current?.revision ?: 0) + 1,
                     rest(),
                 ).also { alarm.held = it }
             }

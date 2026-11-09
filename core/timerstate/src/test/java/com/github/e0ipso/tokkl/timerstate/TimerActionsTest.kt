@@ -158,10 +158,10 @@ class TimerActionsTest {
 
         assertEquals(TimerActionResult.Done, run { actions.read() })
         assertEquals("GET" to "/tokkl/api/app/timer", server.takeRequest().let { it.method to it.url.encodedPath })
-        assertEquals(3L, holder.state.value?.state?.revision)
+        assertEquals(3L, holder.state.value?.revision)
 
         assertEquals(TimerActionResult.Done, run { actions.resume(3) })
-        assertEquals(4L, holder.state.value?.state?.revision)
+        assertEquals(4L, holder.state.value?.revision)
         assertEquals(
             "the running entry reaches the cache",
             listOf(EntryId(40)),
@@ -170,7 +170,7 @@ class TimerActionsTest {
 
         val refused = run { actions.nextPhase(4) }
         assertEquals(TimerActionResult.Refused, refused)
-        assertEquals("the refusal's state is held", 6L, holder.state.value?.state?.revision)
+        assertEquals("the refusal's state is held", 6L, holder.state.value?.revision)
     }
 
     @Test
@@ -183,7 +183,7 @@ class TimerActionsTest {
         assertEquals(TimerActionResult.Done, run { actions.pause() })
         assertEquals(TimerActionResult.Refused, run { actions.endSession(13) })
 
-        assertEquals(15L, holder.state.value?.state?.revision)
+        assertEquals(15L, holder.state.value?.revision)
     }
 
     @Test

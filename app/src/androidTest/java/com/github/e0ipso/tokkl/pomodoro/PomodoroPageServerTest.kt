@@ -23,12 +23,12 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.api.HttpMethod
-import com.github.e0ipso.tokkl.api.PhaseKind
 import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.koinViewModels
 import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.core.ui.R
+import com.github.e0ipso.tokkl.model.PhaseKind
 import com.github.e0ipso.tokkl.navhost.SignedInPanes
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.timer.TimerAcceptanceFixture
@@ -117,7 +117,7 @@ class PomodoroPageServerTest {
             listOf(session.workMinutes, session.shortRestMinutes, session.longRestMinutes, session.longRestEvery),
         )
         assertEquals("First work", started.runningEntry!!.description)
-        assertEquals("the page holds the server's state", started.revision, model.page.value.held!!.state.revision)
+        assertEquals("the page holds the server's state", started.revision, model.page.value.held!!.revision)
         compose.onNode(
             hasText(context.getString(R.string.pomodoro_work)) and isHeading(),
         ).performScrollTo().assertIsDisplayed()

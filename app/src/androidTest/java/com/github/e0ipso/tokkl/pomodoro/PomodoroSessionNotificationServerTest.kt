@@ -21,8 +21,6 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
-import com.github.e0ipso.tokkl.api.PhaseKind
-import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.changes
@@ -34,11 +32,13 @@ import com.github.e0ipso.tokkl.components.timerActions
 import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.PhaseKind
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.openBarPage
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.timerstate.SessionLengths
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
@@ -174,8 +174,8 @@ class PomodoroSessionNotificationServerTest {
             work.actions[1].actionIntent.send()
         }
         // Neither reached the server: the phone holds the same state and shows the same phase.
-        assertEquals(shown.revision, app.timerState.state.value?.state?.revision)
-        assertEquals(PhaseKind.WORK, app.timerState.state.value?.state?.pomodoro?.phase?.kind)
+        assertEquals(shown.revision, app.timerState.state.value?.revision)
+        assertEquals(PhaseKind.WORK, app.timerState.state.value?.pomodoro?.phase?.kind)
         assertEquals(
             work.extras.getCharSequence(Notification.EXTRA_TITLE).toString(),
             awaitSessionNotification().extras.getCharSequence(Notification.EXTRA_TITLE).toString(),
@@ -266,9 +266,9 @@ class PomodoroSessionNotificationServerTest {
     }
 
     /** The server's timer now, which the phone also holds. */
-    private fun serverTimer(): TimerState = runBlocking {
+    private fun serverTimer(): HeldTimerState = runBlocking {
         assertEquals(TimerActionResult.Done, app.timerActions.read())
-        checkNotNull(app.timerState.state.value).state
+        checkNotNull(app.timerState.state.value)
     }
 
     private fun sendActions(count: Int, block: () -> Unit) = PomodoroWorkWaits.sessionButtons(count, send = block)

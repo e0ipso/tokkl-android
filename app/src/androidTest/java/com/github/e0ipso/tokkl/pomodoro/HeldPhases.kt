@@ -2,8 +2,6 @@ package com.github.e0ipso.tokkl.pomodoro
 
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.TokklApplication
-import com.github.e0ipso.tokkl.api.PhaseKind
-import com.github.e0ipso.tokkl.api.PhaseTransition
 import com.github.e0ipso.tokkl.api.TimerPomodoro
 import com.github.e0ipso.tokkl.api.TimerPomodoroPhase
 import com.github.e0ipso.tokkl.api.TimerState
@@ -11,6 +9,8 @@ import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.capabilities
 import com.github.e0ipso.tokkl.components.pomodoroRinging
 import com.github.e0ipso.tokkl.components.timerState
+import com.github.e0ipso.tokkl.model.PhaseKind
+import com.github.e0ipso.tokkl.model.PhaseTransition
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import kotlinx.coroutines.flow.first
@@ -124,7 +124,7 @@ internal object HeldPhases {
         ) { app.pomodoroRinging.state.first { !it.serviceRunning && !it.playing && !it.vibrationRequested } }
     }
 
-    private fun nextRevision(): Long = maxOf(FIRST_REVISION, (app.timerState.state.value?.state?.revision ?: 0) + 1)
+    private fun nextRevision(): Long = maxOf(FIRST_REVISION, (app.timerState.state.value?.revision ?: 0) + 1)
 
     private const val ENTRY = 9_000_001L
 }

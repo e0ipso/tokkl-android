@@ -1,7 +1,5 @@
 package com.github.e0ipso.tokkl.timerstate
 
-import com.github.e0ipso.tokkl.api.PhaseKind
-import com.github.e0ipso.tokkl.api.PhaseTransition
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.TimerPause
 import com.github.e0ipso.tokkl.api.TimerPomodoro
@@ -10,6 +8,8 @@ import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.EntryWithSendState
+import com.github.e0ipso.tokkl.model.PhaseKind
+import com.github.e0ipso.tokkl.model.PhaseTransition
 import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.model.TaskId
 import com.github.e0ipso.tokkl.model.TimeEntry
@@ -241,10 +241,7 @@ class TimerControlsTest {
         val running = pause?.cloneEntryId?.let { id ->
             ServerTimeEntry(id = id, workspaceId = 3, description = kept.description, start = start.toString())
         }
-        return HeldTimerState(
-            TimerState(revision, start.plus(offset), running, pause, pomodoro, discardedPomodoro = null),
-            receivedAt = start,
-        )
+        return TimerState(revision, start.plus(offset), running, pause, pomodoro, discardedPomodoro = null).held(start)
     }
 
     private fun pause(seconds: Long, cloneEntryId: EntryId?) = TimerPause(

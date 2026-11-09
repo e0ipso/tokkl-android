@@ -1,12 +1,12 @@
 package com.github.e0ipso.tokkl.timerstate
 
-import com.github.e0ipso.tokkl.api.DiscardedPomodoro
 import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.cache.CurrentEntryCache
 import com.github.e0ipso.tokkl.cache.RunningCheckStart
 import com.github.e0ipso.tokkl.cache.RunningCheckWrites
 import com.github.e0ipso.tokkl.cache.toTimeEntry
 import com.github.e0ipso.tokkl.capabilities.ProbedTimerState
+import com.github.e0ipso.tokkl.model.DiscardedPomodoro
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.TimeEntry
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -64,8 +64,11 @@ class TimerStateSource(
     private var written = 0L
     private val recentWrites = ArrayDeque<Pair<Long, RunningCheckWrites>>()
 
+    /** The newest state as the server sent it, which [store] writes. */
+    private var stored: StoredHeld? = initial?.wire
+
     private val mutableState = MutableStateFlow(initial?.held)
-    private val mutableNotice = MutableStateFlow(initial?.held?.unshownDiscard(acknowledged))
+    private val mutableNotice = MutableStateFlow(mutableState.value?.unshownDiscard(acknowledged))
 
     /** The newest state with its arrival time: the stored one after a restart, null before any. */
     val state: StateFlow<HeldTimerState?> = mutableState.asStateFlow()
@@ -101,11 +104,13 @@ class TimerStateSource(
         val ended = synchronized(lock) {
             if (retired || read.source !== this) return false
             val held = mutableState.value
-            if (held != null && state.revision < held.state.revision) return false
-            val next = HeldTimerState(state, receivedAt)
+            if (held != null && state.revision < held.revision) return false
+            val next = StoredHeld(state, receivedAt)
+            stored = next
             write(next)
-            mutableState.value = next
-            mutableNotice.value = next.unshownDiscard(acknowledged)
+            val shown = next.toHeld()
+            mutableState.value = shown
+            mutableNotice.value = shown.unshownDiscard(acknowledged)
             writeRunning(read, state)
         }
         if (ended) runningEnded()
@@ -129,9 +134,9 @@ class TimerStateSource(
     fun takeDiscardNotice(): DiscardedPomodoro? = synchronized(lock) {
         if (retired) return null
         val notice = mutableNotice.value ?: return null
-        acknowledged = notice.entryId
+        acknowledged = notice.entryId.value
         mutableNotice.value = null
-        mutableState.value?.let(::write)
+        stored?.let(::write)
         notice
     }
 
@@ -143,13 +148,14 @@ class TimerStateSource(
     fun retire() {
         synchronized(lock) {
             retired = true
+            stored = null
             mutableState.value = null
             mutableNotice.value = null
         }
     }
 
     /** A failed write keeps the state for this process, and the next state writes again. */
-    private fun write(held: HeldTimerState) {
+    private fun write(held: StoredHeld) {
         try {
             store(StoredTimerState(held, acknowledged))
         } catch (_: IOException) {
@@ -188,7 +194,7 @@ class TimerStateSource(
 
 /** The discarded pomodoro of this state, unless its notice was taken as [acknowledged]. */
 private fun HeldTimerState.unshownDiscard(acknowledged: Long?): DiscardedPomodoro? =
-    state.discardedPomodoro?.takeIf { it.entryId != acknowledged }
+    discardedPomodoro?.takeIf { it.entryId.value != acknowledged }
 
 /** These running entries as they would read had [writes] happened before them. */
 private fun RunningCheckStart.withWrites(writes: List<RunningCheckWrites>): RunningCheckStart {

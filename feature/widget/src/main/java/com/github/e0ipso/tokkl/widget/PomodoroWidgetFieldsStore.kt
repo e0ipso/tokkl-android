@@ -30,16 +30,16 @@ data class RememberedPomodoroFields(
 }
 
 internal fun rememberedPomodoroFields(account: String, held: HeldTimerState): RememberedPomodoroFields? {
-    val session = held.state.pomodoro ?: return null
-    val entry = held.state.runningEntry?.takeIf { it.id == session.entryId } ?: return null
+    val session = held.pomodoro ?: return null
+    val entry = held.runningEntry?.takeIf { it.id == session.entryId } ?: return null
     return RememberedPomodoroFields(
         account,
-        WorkspaceId(entry.workspaceId),
-        entry.description.orEmpty(),
-        entry.projectId?.let(::ProjectId),
-        entry.taskId?.let(::TaskId),
-        entry.tags.orEmpty(),
-        entry.billable == true,
+        entry.workspaceId,
+        entry.description,
+        entry.projectId,
+        entry.taskId,
+        entry.tags,
+        entry.billable,
     )
 }
 

@@ -6,7 +6,6 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":core:api"))
     implementation(project(":core:time"))
     implementation(project(":core:ui"))
     implementation(project(":core:platform"))
@@ -19,5 +18,7 @@ dependencies {
     implementation(project(":core:navigation"))
     implementation(libs.androidx.activity.compose)
 
+    // The tests build the server's timer states, which core:timerstate maps for the screens.
+    testImplementation(project(":core:api"))
     testImplementation(testFixtures(project(":core:timerstate")))
 }

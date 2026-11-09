@@ -3,8 +3,6 @@ package com.github.e0ipso.tokkl.timerstate
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.EntryWithSendState
-import com.github.e0ipso.tokkl.model.ProjectId
-import com.github.e0ipso.tokkl.model.TaskId
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
@@ -106,11 +104,11 @@ fun serverTimerControls(
     timerApi: Boolean,
     account: String = "",
 ): TimerControls {
-    val state = held?.takeIf { timerApi }?.state
+    val state = held?.takeIf { timerApi }
     val pause = state?.pause
     if (running != null) {
         val entry = running.entry
-        val clone = pause?.takeIf { !it.paused && it.cloneEntryId == entry.id.value }
+        val clone = pause?.takeIf { !it.paused && it.cloneEntryId == entry.id }
         return TimerControls.Running(
             entry = entry,
             unsent = running.unsent,
@@ -123,14 +121,8 @@ fun serverTimerControls(
     if (pause != null && pause.paused) {
         return TimerControls.Paused(
             seconds = pause.seconds,
-            workspaceId = WorkspaceId(pause.workspaceId),
-            fields = EntryFields(
-                pause.description,
-                pause.projectId?.let(::ProjectId),
-                pause.taskId?.let(::TaskId),
-                pause.tags,
-                pause.billable,
-            ),
+            workspaceId = pause.workspaceId,
+            fields = pause.fields,
             target = TimerTarget.server(revision = state?.revision ?: 0, account = account),
         )
     }

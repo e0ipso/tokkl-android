@@ -1,6 +1,8 @@
 package com.github.e0ipso.tokkl.api
 
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
+import com.github.e0ipso.tokkl.model.PhaseKind
+import com.github.e0ipso.tokkl.model.PhaseTransition
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -120,38 +122,6 @@ data class DiscardedPomodoro(
 )
 
 /** A phase of a Pomodoro session, as the server names it. */
-@Serializable
-enum class PhaseKind {
-    @SerialName("work")
-    WORK,
-
-    @SerialName("shortRest")
-    SHORT_REST,
-
-    @SerialName("longRest")
-    LONG_REST,
-}
-
-/** The change that ends a phase, as the server names it. */
-@Serializable
-enum class PhaseTransition {
-    @SerialName("workToShortRest")
-    WORK_TO_SHORT_REST,
-
-    @SerialName("shortRestToWork")
-    SHORT_REST_TO_WORK,
-
-    @SerialName("workToLongRest")
-    WORK_TO_LONG_REST,
-
-    @SerialName("longRestToWork")
-    LONG_REST_TO_WORK,
-}
-
-/**
- * An ISO 8601 instant. The timer state's own times end in `Z` with milliseconds; an offset such
- * as `+00:00` reads too. It writes `Z`. A value that is not a timestamp fails the whole decode.
- */
 object IsoInstantSerializer : KSerializer<Instant> {
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("tokkl.IsoInstant", PrimitiveKind.STRING)
 
