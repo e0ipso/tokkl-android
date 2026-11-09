@@ -43,8 +43,10 @@ fun interface ApiConnector {
  */
 class SharedHttpClient(private val server: ConfiguredServer, private val trust: ServerTrust) : ApiConnector {
 
+    private val built = lazy { build() }
+
     /** The client. Built on first use, which loads the platform's CAs, so first use it off the main thread. */
-    internal val client: OkHttpClient by lazy { build() }
+    internal val client: OkHttpClient by built
 
     override fun api(server: ServerUrl, credentials: ApiCredentials, io: CoroutineContext): TokklApi =
         api(server, credentials, io, trustListener = null, successListener = null)
@@ -65,18 +67,21 @@ class SharedHttpClient(private val server: ConfiguredServer, private val trust: 
 
     /**
      * Cancels every call in flight. Signing out calls this once it has forgotten the server, so no
-     * answer for the old account arrives after the phone has cleared its data.
+     * answer for the old account arrives after the phone has cleared its data. Before the client
+     * is built no call is in flight, so it does nothing and builds nothing.
      */
     fun cancelAll() {
-        client.dispatcher.cancelAll()
+        if (built.isInitialized()) client.dispatcher.cancelAll()
     }
 
     /**
      * Closes every idle pooled connection. Call it when the network drops: a request on a
-     * connection kept from the old network would fail only after it was written.
+     * connection kept from the old network would fail only after it was written. Before the
+     * client is built no connection is pooled, so it does nothing and builds nothing: it never
+     * loads the platform's CAs, and the main thread can call it.
      */
     fun dropIdleConnections() {
-        client.connectionPool.evictAll()
+        if (built.isInitialized()) client.connectionPool.evictAll()
     }
 
     private fun build(): OkHttpClient {
