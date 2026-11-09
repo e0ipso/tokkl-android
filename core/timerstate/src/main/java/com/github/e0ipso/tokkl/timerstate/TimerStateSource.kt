@@ -3,11 +3,9 @@ package com.github.e0ipso.tokkl.timerstate
 import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.cache.CurrentEntryCache
 import com.github.e0ipso.tokkl.cache.RunningCheckStart
-import com.github.e0ipso.tokkl.cache.RunningCheckWrites
 import com.github.e0ipso.tokkl.cache.toTimeEntry
 import com.github.e0ipso.tokkl.capabilities.ProbedTimerState
 import com.github.e0ipso.tokkl.model.DiscardedPomodoro
-import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.TimeEntry
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -36,9 +34,12 @@ interface TimerStateIntake : ProbedTimerState<TimerStateRead>
 /**
  * The signed-in account's timer state from the Tokkl server, and the one place on the phone that
  * holds it. Answers to `GET /api/app/timer`, action answers, 409 bodies and timer events all go
- * through [accept], which keeps the newest revision with its arrival time, stores it, and writes
- * its running entry to the cache through the same current-entry reconciliation as the running
- * entry check, so queued Starts, Stops and edits keep showing until the server has them.
+ * through [accept], which coordinates the steps in order under one lock: the revision rule
+ * ([acceptsRevision]), the write to disk ([HeldStateDisk]), the published state and its notice
+ * ([DiscardNoticeSlot]), and the running entry's write to the cache through the same
+ * current-entry reconciliation as the running entry check, against what the cache held at the
+ * request with the writes of states accepted since ([RecentWrites], [withWrites]), so queued
+ * Starts, Stops and edits keep showing until the server has them.
  *
  * One source serves one account. Sign-out [retire]s it before clearing the cache and the store,
  * and sign-in makes a new one, so an answer that kept a retired source changes nothing. Only
@@ -55,7 +56,7 @@ interface TimerStateIntake : ProbedTimerState<TimerStateRead>
  */
 class TimerStateSource(
     initial: StoredTimerState?,
-    private val store: (StoredTimerState) -> Unit,
+    store: (StoredTimerState) -> Unit,
     private val cache: CurrentEntryCache,
     private val clock: Clock,
     private val runningEnded: () -> Unit,
@@ -67,17 +68,10 @@ class TimerStateSource(
     private val lock = Any()
 
     private var retired = false
-    private var acknowledged: Long? = initial?.acknowledgedDiscard
-
-    /** How many accepted states wrote to the cache, and the latest of those writes. */
-    private var written = 0L
-    private val recentWrites = ArrayDeque<Pair<Long, RunningCheckWrites>>()
-
-    /** The newest state as the server sent it, which [store] writes. */
-    private var stored: StoredHeld? = initial?.wire
-
+    private val disk = HeldStateDisk(store, initial?.wire)
+    private val notices = DiscardNoticeSlot(initial)
+    private val recentWrites = RecentWrites(RECENT_WRITES)
     private val mutableState = MutableStateFlow(initial?.held)
-    private val mutableNotice = MutableStateFlow(mutableState.value?.unshownDiscard(acknowledged))
 
     /** The newest state with its arrival time: the stored one after a restart, null before any. */
     val state: StateFlow<HeldTimerState?> = mutableState.asStateFlow()
@@ -86,7 +80,7 @@ class TimerStateSource(
      * The too-short pomodoro whose notice no surface has taken yet, or null. Show it only after
      * [takeDiscardNotice] returns it.
      */
-    val discardNotice: StateFlow<DiscardedPomodoro?> = mutableNotice.asStateFlow()
+    val discardNotice: StateFlow<DiscardedPomodoro?> = notices.notice
 
     /**
      * Reads what the cache holds, for the [accept] of a state the server builds after this call.
@@ -95,31 +89,26 @@ class TimerStateSource(
      * I/O.
      */
     override fun begin(): TimerStateRead {
-        val writtenBefore = synchronized(lock) { written }
+        val writtenBefore = synchronized(lock) { recentWrites.count }
         return TimerStateRead(this, cache.runningCheckStart(), writtenBefore)
     }
 
     /**
      * Takes [state], read through [read], unless this source is retired, [read] belongs to
-     * another source, or a state with a higher revision is already held. A state with the held
-     * revision replaces it, which refreshes the arrival time and the clock offset. An accepted
-     * state is stored, published and its running entry written to the cache, in that order and
-     * under one lock, so a slower answer with a lower revision cannot overwrite a newer one.
-     * Returns whether it took the state. Blocks on disk I/O.
+     * another source, or [acceptsRevision] refuses it. An accepted state is stored, published and
+     * its running entry written to the cache, in that order and under one lock. Returns whether
+     * it took the state. Blocks on disk I/O.
      */
     override fun accept(read: TimerStateRead, state: TimerState): Boolean {
         // Taken before waiting for the lock, so a wait does not skew the clock offset.
         val receivedAt = clock.instant()
         val ended = synchronized(lock) {
-            if (retired || read.source !== this) return false
-            val held = mutableState.value
-            if (held != null && state.revision < held.revision) return false
+            if (retired || read.source !== this || !acceptsRevision(mutableState.value, state.revision)) return false
             val next = StoredHeld(state, receivedAt)
-            stored = next
-            write(next)
+            disk.write(next, notices.acknowledged)
             val shown = next.toHeld()
             mutableState.value = shown
-            mutableNotice.value = shown.unshownDiscard(acknowledged)
+            notices.follow(shown)
             writeRunning(read, state)
         }
         if (ended) runningEnded()
@@ -142,11 +131,7 @@ class TimerStateSource(
      */
     fun takeDiscardNotice(): DiscardedPomodoro? = synchronized(lock) {
         if (retired) return null
-        val notice = mutableNotice.value ?: return null
-        acknowledged = notice.entryId.value
-        mutableNotice.value = null
-        stored?.let(::write)
-        notice
+        notices.take()?.also { disk.write(null, notices.acknowledged) }
     }
 
     /**
@@ -157,62 +142,76 @@ class TimerStateSource(
     fun retire() {
         synchronized(lock) {
             retired = true
-            stored = null
+            disk.forget()
             mutableState.value = null
-            mutableNotice.value = null
-        }
-    }
-
-    /** A failed write keeps the state for this process, and the next state writes again. */
-    private fun write(held: StoredHeld) {
-        try {
-            store(StoredTimerState(held, acknowledged))
-        } catch (_: IOException) {
-            // The next accepted state or taken notice writes again.
+            notices.follow(null)
         }
     }
 
     /**
      * Writes [state]'s running entry to the cache, against what the cache held at [read] with the
-     * writes of states accepted since applied to it. Those states are older than this one, so
-     * their rows count as server values, not as changes made during the read. Returns whether a
-     * running entry left the cache. Call it holding [lock].
+     * writes of states accepted since applied to it. Returns whether a running entry left the
+     * cache. Call it holding [lock].
      */
     private fun writeRunning(read: TimerStateRead, state: TimerState): Boolean {
         val server: TimeEntry? = state.runningEntry?.let { entry ->
             // A running entry the phone cannot read leaves the cache as it is.
             entry.toTimeEntry() ?: return false
         }
-        val since = recentWrites.filter { (number, _) -> number > read.written }.map { it.second }
-        val writes = cache.checkedRunning(read.before.withWrites(since), server) ?: return false
+        val before = read.before.withWrites(recentWrites.since(read.written))
+        val writes = cache.checkedRunning(before, server) ?: return false
         if (writes.delete.isEmpty() && writes.upsert == null) return false
-        written++
-        recentWrites.addLast(written to writes)
-        while (recentWrites.size > RECENT_WRITES) recentWrites.removeFirst()
+        recentWrites.add(writes)
         return writes.delete.isNotEmpty()
     }
 
     private companion object {
-        /**
-         * Accepted writes kept for reads still out. A read older than these sees the rows of the
-         * forgotten writes as changes and leaves them alone, which errs towards keeping the cache.
-         */
+        /** Accepted writes kept for reads still out. */
         const val RECENT_WRITES = 32
     }
 }
 
-/** The discarded pomodoro of this state, unless its notice was taken as [acknowledged]. */
-private fun HeldTimerState.unshownDiscard(acknowledged: Long?): DiscardedPomodoro? =
-    discardedPomodoro?.takeIf { it.entryId.value != acknowledged }
+/**
+ * Writes the newest state as the server sent it, with the entry id of the last notice taken,
+ * through [store]. A failed write keeps the state for this process, and the next one writes again.
+ */
+private class HeldStateDisk(private val store: (StoredTimerState) -> Unit, private var stored: StoredHeld?) {
 
-/** These running entries as they would read had [writes] happened before them. */
-private fun RunningCheckStart.withWrites(writes: List<RunningCheckWrites>): RunningCheckStart {
-    if (writes.isEmpty()) return this
-    val rows = LinkedHashMap<EntryId, TimeEntry>()
-    running.forEach { rows[it.id] = it }
-    for (write in writes) {
-        write.delete.forEach(rows::remove)
-        write.upsert?.let { rows[it.id] = it }
+    /** Writes [held], or again the state written last when null, unless there is none or it was forgotten. */
+    fun write(held: StoredHeld?, acknowledged: Long?) {
+        val next = held ?: stored ?: return
+        stored = next
+        try {
+            store(StoredTimerState(next, acknowledged))
+        } catch (_: IOException) {
+            // The next accepted state or taken notice writes again.
+        }
     }
-    return RunningCheckStart(rows.values.toList(), pendingIds)
+
+    fun forget() {
+        stored = null
+    }
+}
+
+/** The held state's too-short pomodoro until a surface takes its notice, and the last one taken. */
+private class DiscardNoticeSlot(initial: StoredTimerState?) {
+
+    /** The entry id of the last notice taken, which a replay or a restart does not show again. */
+    var acknowledged: Long? = initial?.acknowledgedDiscard
+        private set
+
+    private val mutable = MutableStateFlow(initial?.held?.unshownDiscard(acknowledged))
+    val notice: StateFlow<DiscardedPomodoro?> = mutable.asStateFlow()
+
+    /** Shows the notice of [held], unless it was taken. */
+    fun follow(held: HeldTimerState?) {
+        mutable.value = held?.unshownDiscard(acknowledged)
+    }
+
+    fun take(): DiscardedPomodoro? {
+        val notice = mutable.value ?: return null
+        acknowledged = notice.entryId.value
+        mutable.value = null
+        return notice
+    }
 }
