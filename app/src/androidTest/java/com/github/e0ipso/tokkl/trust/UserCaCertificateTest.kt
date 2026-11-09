@@ -22,6 +22,7 @@ import com.github.e0ipso.tokkl.feature.signin.R
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -63,8 +64,11 @@ class UserCaCertificateTest {
         composeRule.awaitTimerPage(NETWORK_TIMEOUT_MS)
         assertFalse("a certificate prompt shows", exists(TrustR.string.sign_in_certificate_title))
         assertFalse("a certificate prompt shows", exists(TrustR.string.sign_in_certificate_changed_title))
-        assertNull("a pin for the server", ServerTrustStore(context).pinnedSha256(endpoint.host, endpoint.port))
-        runBlocking { assertEquals(TokklTestServer.userCaTlsUrl, ServerConfigStore(context).load()) }
+        assertNull(
+            "a pin for the server",
+            ServerTrustStore(context, Dispatchers.IO).pinnedSha256(endpoint.host, endpoint.port),
+        )
+        runBlocking { assertEquals(TokklTestServer.userCaTlsUrl, ServerConfigStore(context, Dispatchers.IO).load()) }
         val client = Session(context).client() ?: throw AssertionError("no stored session")
         val body = (runBlocking { client.get(endpoint, JsonObject.serializer()) } as? ApiResult.Success)?.value
             ?: throw AssertionError("GET /api/v9/me failed without a pin")

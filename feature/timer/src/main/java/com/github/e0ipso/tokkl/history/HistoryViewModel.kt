@@ -15,7 +15,6 @@ import com.github.e0ipso.tokkl.platform.AppForeground
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.AccountTime
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -52,6 +51,7 @@ import kotlin.coroutines.CoroutineContext
  *
  * @param entries the cached entries with their send state, as AccountCache.entries gives them.
  * @param olderPages the days before the cache, from the server. Runs on [io].
+ * @param computation where the days are grouped from the entries.
  * @param clock where today comes from, in the account's timezone.
  * @param overrides the entry actions' deletes and restores, which [reconcile] applies.
  * @param app each return of the network while the app is in the foreground calls [reconnected].
@@ -64,6 +64,7 @@ class HistoryViewModel(
     private val olderPages: OlderPages,
     scope: CoroutineScope,
     private val io: CoroutineContext,
+    computation: CoroutineContext,
     private val clock: Clock,
     private val ids: CurrentEntryIds,
     overrides: Flow<Map<EntryId, TimeEntry?>>,
@@ -148,7 +149,7 @@ class HistoryViewModel(
             }
         }
     }
-        .flowOn(Dispatchers.Default)
+        .flowOn(computation)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), HistoryState.Loading)
 
     /**

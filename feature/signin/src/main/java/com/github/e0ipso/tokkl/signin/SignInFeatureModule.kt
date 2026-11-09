@@ -16,7 +16,7 @@ import org.koin.dsl.module
  * the account to sign in again to, and the screen.
  */
 val signInFeatureModule = module {
-    single { SignInCooldownStore(androidContext()) } bind SignInCooldowns::class
+    single { SignInCooldownStore(androidContext(), io()) } bind SignInCooldowns::class
 
     single {
         AccountSessionWriter(

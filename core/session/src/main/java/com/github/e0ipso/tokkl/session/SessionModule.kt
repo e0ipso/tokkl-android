@@ -26,9 +26,9 @@ import org.koin.dsl.module
  * module that refreshes.
  */
 val sessionModule = module {
-    single { ServerConfigStore(androidContext()) } bind StoredServer::class
-    single { ApiTokenStore(androidContext()) }
-    single { ServerTrustStore(androidContext()) } binds arrayOf(ServerTrust::class, AccountDataOwner::class)
+    single { ServerConfigStore(androidContext(), io()) } bind StoredServer::class
+    single { ApiTokenStore(androidContext(), io()) }
+    single { ServerTrustStore(androidContext(), io()) } binds arrayOf(ServerTrust::class, AccountDataOwner::class)
 
     // Every process sends requests only to the stored server, and to a plain http:// server only
     // once the user has confirmed it, through the one HTTP client and its connection pool.
@@ -49,8 +49,8 @@ val sessionModule = module {
         )
     } binds arrayOf(ApiClientProvider::class, SignInStatus::class, AccountDataOwner::class)
 
-    single { AccountSettingsStore(androidContext()) } bind AccountDataOwner::class
-    single { CapabilitiesStore(androidContext()) }
+    single { AccountSettingsStore(androidContext(), io()) } bind AccountDataOwner::class
+    single { CapabilitiesStore(androidContext(), io()) }
     // The account settings. They load at process start from a file of a few short values.
     single { AccountSettingsSource(get<AccountSettingsStore>(), get()) } bind StartupLoad::class
 

@@ -5,6 +5,7 @@ import com.github.e0ipso.tokkl.storage.PreferencesFile
 import com.github.e0ipso.tokkl.storage.ValueStore
 import java.io.IOException
 import java.time.Instant
+import kotlin.coroutines.CoroutineContext
 
 /**
  * [LastAnswer]'s time, in its own private preferences file. It stays on the phone, because the
@@ -12,9 +13,9 @@ import java.time.Instant
  *
  * Each call reads or writes the file on the I/O dispatcher.
  */
-class LastAnswerStore(context: Context) : ValueStore<Instant?> {
+class LastAnswerStore(context: Context, private val io: CoroutineContext) : ValueStore<Instant?> {
 
-    private val file = PreferencesFile(context, FILE_NAME)
+    private val file = PreferencesFile(context, FILE_NAME, io)
 
     override suspend fun load(): Instant? =
         file.read { getLong(KEY_ANSWERED, NONE) }.takeIf { it != NONE }?.let(Instant::ofEpochMilli)

@@ -44,6 +44,7 @@ import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.ui.assertBrandReadsOnce
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -103,8 +104,11 @@ class SignInScreenTest {
         confirmHttpWarning()
 
         awaitHome()
-        assertEquals(TokklTestServer.url, ServerConfigStore(context).load())
-        assertTrue("the token store holds the API token", ApiTokenStore(context).load() == TokklTestServer.apiToken)
+        assertEquals(TokklTestServer.url, ServerConfigStore(context, Dispatchers.IO).load())
+        assertTrue(
+            "the token store holds the API token",
+            ApiTokenStore(context, io = Dispatchers.IO).load() == TokklTestServer.apiToken,
+        )
         // The test account is in UTC (scripts/instrumented-tests.sh), with Tokkl's other defaults.
         val settings = AccountSettings(
             "UTC",
@@ -113,7 +117,7 @@ class SignInScreenTest {
             defaultWorkspaceId = WorkspaceId(serverId("default_workspace_id")),
             userId = serverId("id"),
         )
-        assertEquals(settings, AccountSettingsStore(context).load())
+        assertEquals(settings, AccountSettingsStore(context, Dispatchers.IO).load())
         assertEquals(settings, (context.applicationContext as TokklApplication).accountSettings.state.value)
         assertStoredNowhere(TokklTestServer.apiToken, "the API token in plain text")
     }
@@ -129,11 +133,11 @@ class SignInScreenTest {
         confirmHttpWarning()
 
         awaitHome()
-        runBlocking { assertEquals(TokklTestServer.url, ServerConfigStore(context).load()) }
+        runBlocking { assertEquals(TokklTestServer.url, ServerConfigStore(context, Dispatchers.IO).load()) }
         // scripts/instrumented-tests.sh read tokklApiToken from GET /api/v9/me.
         assertTrue(
             "the stored token is the api_token from GET /api/v9/me",
-            runBlocking { ApiTokenStore(context).load() } == TokklTestServer.apiToken,
+            runBlocking { ApiTokenStore(context, io = Dispatchers.IO).load() } == TokklTestServer.apiToken,
         )
         assertStoredNowhere(TokklTestServer.password, "the password")
         assertStoredNowhere(TokklTestServer.apiToken, "the API token in plain text")
@@ -154,8 +158,8 @@ class SignInScreenTest {
         composeRule.onNode(
             hasText(string(R.string.sign_in_submit)) and hasClickAction(),
         ).performScrollTo().assertIsDisplayed()
-        assertNull(ServerConfigStore(context).load())
-        assertNull(ApiTokenStore(context).load())
+        assertNull(ServerConfigStore(context, Dispatchers.IO).load())
+        assertNull(ApiTokenStore(context, io = Dispatchers.IO).load())
     }
 
     @Test
@@ -190,12 +194,15 @@ class SignInScreenTest {
         continueButton().assertIsEnabled().performClick()
 
         awaitHome()
-        assertTrue("the confirmation is stored", ServerTrustStore(context).isCleartextConfirmed(TokklTestServer.url))
+        assertTrue(
+            "the confirmation is stored",
+            ServerTrustStore(context, Dispatchers.IO).isCleartextConfirmed(TokklTestServer.url),
+        )
     }
 
     @Test
     fun confirmedUrlSignsInWithoutTheWarning() {
-        ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(TokklTestServer.url)
         enterServerUrl()
         field(R.string.sign_in_api_token).performTextInput(TokklTestServer.apiToken)
 
@@ -316,9 +323,12 @@ class SignInScreenTest {
         composeRule.onNode(hasText(string(TrustR.string.sign_in_http_warning_continue)) and hasClickAction())
 
     private fun assertNothingStored() {
-        runBlocking { assertNull(ServerConfigStore(context).load()) }
-        runBlocking { assertNull(ApiTokenStore(context).load()) }
-        assertFalse("no confirmation is stored", ServerTrustStore(context).isCleartextConfirmed(TokklTestServer.url))
+        runBlocking { assertNull(ServerConfigStore(context, Dispatchers.IO).load()) }
+        runBlocking { assertNull(ApiTokenStore(context, io = Dispatchers.IO).load()) }
+        assertFalse(
+            "no confirmation is stored",
+            ServerTrustStore(context, Dispatchers.IO).isCleartextConfirmed(TokklTestServer.url),
+        )
     }
 
     private fun awaitHome() {
@@ -331,6 +341,7 @@ class SignInScreenTest {
             TokklTestServer.url,
             ApiCredentials.ApiToken(TokklTestServer.apiToken),
             httpClient = OkHttpClient(),
+            io = Dispatchers.IO,
         )
         return runBlocking { api.get(api.server.api("me"), JsonObject.serializer()) }.orFail("GET /api/v9/me")
             .getValue(field).jsonPrimitive.long

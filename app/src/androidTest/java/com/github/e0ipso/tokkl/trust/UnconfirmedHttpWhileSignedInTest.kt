@@ -23,6 +23,7 @@ import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.core.trust.R
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import org.junit.Assert.assertEquals
@@ -69,7 +70,10 @@ class UnconfirmedHttpWhileSignedInTest {
         continueButton().assertIsEnabled().performClick()
 
         awaitGone(hasText(string(R.string.sign_in_http_warning_title)), "the warning closes")
-        assertTrue("the confirmation is stored", ServerTrustStore(context).isCleartextConfirmed(TokklTestServer.url))
+        assertTrue(
+            "the confirmation is stored",
+            ServerTrustStore(context, Dispatchers.IO).isCleartextConfirmed(TokklTestServer.url),
+        )
         assertTrue("requests reach the server", me() is ApiResult.Success)
     }
 
@@ -82,7 +86,7 @@ class UnconfirmedHttpWhileSignedInTest {
 
         awaitNode(hasText(string(R.string.trust_refused_http)), "the notice shows")
         assertEquals(ApiError.CleartextNotConfirmed(TokklTestServer.url), (me() as? ApiResult.Failure)?.error)
-        assertFalse(ServerTrustStore(context).isCleartextConfirmed(TokklTestServer.url))
+        assertFalse(ServerTrustStore(context, Dispatchers.IO).isCleartextConfirmed(TokklTestServer.url))
 
         composeRule.onNode(hasText(string(R.string.trust_refused_review)) and hasClickAction()).performClick()
 

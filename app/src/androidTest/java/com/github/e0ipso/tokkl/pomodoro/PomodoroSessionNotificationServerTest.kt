@@ -42,6 +42,7 @@ import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.timerstate.SessionLengths
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -93,7 +94,7 @@ class PomodoroSessionNotificationServerTest {
                 app.signOut.run()
                 withTimeout(10_000) { app.pomodoroRinging.state.first { !it.serviceRunning } }
             }
-            runBlocking { assertNull(PomodoroSessionNotificationStore(context).load()) }
+            runBlocking { assertNull(PomodoroSessionNotificationStore(context, Dispatchers.IO).load()) }
             assertFalse(manager.activeNotifications.any { it.id == PomodoroSessionNotifier.NOTIFICATION_ID })
             assertNull(app.timerState.state.value)
         } finally {
@@ -108,7 +109,11 @@ class PomodoroSessionNotificationServerTest {
     @Test fun aColdNotificationLaunchOpensPomodoroAndRotationPreservesItsDestination() {
         val phase = startSession()
         awaitSessionNotification()
-        val identity = runBlocking { checkNotNull(PomodoroSessionNotificationStore(context).load()).account }
+        val identity = runBlocking {
+            checkNotNull(
+                PomodoroSessionNotificationStore(context, Dispatchers.IO).load(),
+            ).account
+        }
         // ActivityScenario starts a new Activity with the same immutable intent the posted tap owns.
         ActivityScenario.launch<MainActivity>(pomodoroSessionOpenIntent(context, identity, phase)).use { scenario ->
             awaitHeading(UiR.string.pomodoro_title)
@@ -223,18 +228,18 @@ class PomodoroSessionNotificationServerTest {
     @Test fun signOutRemovesDisplayStateAndOldButtonsAndTapCannotAffectTheLaterAccount() = runBlocking<Unit> {
         val phase = startSession()
         val old = awaitSessionNotification()
-        val oldIdentity = checkNotNull(PomodoroSessionNotificationStore(context).load()).account
+        val oldIdentity = checkNotNull(PomodoroSessionNotificationStore(context, Dispatchers.IO).load()).account
         val settings = checkNotNull(app.accountSettings.state.value)
         app.signOut.run()
-        assertNull(PomodoroSessionNotificationStore(context).load())
+        assertNull(PomodoroSessionNotificationStore(context, Dispatchers.IO).load())
         assertFalse(manager.activeNotifications.any { it.id == PomodoroSessionNotifier.NOTIFICATION_ID })
 
         // Sign in again: the server still has the session, and a new notification identity shows it.
-        ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(TokklTestServer.url)
         app.storeSignIn(TokklTestServer.url, account.apiToken, settings)
         HeldPhases.learnTheTimerApi()
         awaitSessionNotification()
-        val newIdentity = checkNotNull(PomodoroSessionNotificationStore(context).load()).account
+        val newIdentity = checkNotNull(PomodoroSessionNotificationStore(context, Dispatchers.IO).load()).account
         assertNotEquals(oldIdentity, newIdentity)
         val revision = serverTimer().revision
         sendActions(2) {

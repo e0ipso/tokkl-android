@@ -23,6 +23,7 @@ import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.Session
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -109,7 +110,12 @@ class TimerViewServerTest {
      */
     @Test
     fun aViewMissingOnTheServerOpensListOverTheStoredOne() {
-        runBlocking { TimerViewStore(context).save(StoredTimerView(TimerView.CALENDAR, unsent = false)) }
+        runBlocking {
+            TimerViewStore(
+                context,
+                Dispatchers.IO,
+            ).save(StoredTimerView(TimerView.CALENDAR, unsent = false))
+        }
 
         launch {
             refresh()
@@ -158,7 +164,7 @@ class TimerViewServerTest {
     }
 
     /** What the phone keeps of the view, read as the app reads it. */
-    private fun storedView() = runBlocking { TimerViewStore(context).load() }
+    private fun storedView() = runBlocking { TimerViewStore(context, Dispatchers.IO).load() }
 
     private fun launch(steps: (ActivityScenario<MainActivity>) -> Unit) {
         ActivityScenario.launch(MainActivity::class.java).use {

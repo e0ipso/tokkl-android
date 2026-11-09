@@ -6,6 +6,7 @@ import com.github.e0ipso.tokkl.storage.PreferencesFile
 import com.github.e0ipso.tokkl.storage.ValueStore
 import com.github.e0ipso.tokkl.time.DurationFormat
 import java.io.IOException
+import kotlin.coroutines.CoroutineContext
 
 /**
  * The account settings in their own private preferences file, so screens have them offline and
@@ -14,7 +15,7 @@ import java.io.IOException
  *
  * Each call reads or writes the file on the I/O dispatcher.
  */
-class AccountSettingsStore(context: Context) :
+class AccountSettingsStore(context: Context, private val io: CoroutineContext) :
     ValueStore<AccountSettings>,
     AccountDataOwner {
 
@@ -22,7 +23,7 @@ class AccountSettingsStore(context: Context) :
 
     override suspend fun forgetAccount() = clear()
 
-    private val file = PreferencesFile(context, FILE_NAME)
+    private val file = PreferencesFile(context, FILE_NAME, io)
 
     /** The stored settings, or null when none are stored. */
     override suspend fun load(): AccountSettings? = file.read {

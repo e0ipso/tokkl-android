@@ -9,10 +9,11 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.IBinder
 import androidx.annotation.VisibleForTesting
+import com.github.e0ipso.tokkl.platform.MainDispatcher
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.timerstate.PomodoroRingingPhase
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
@@ -22,6 +23,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.android.ext.android.inject
+import kotlin.coroutines.CoroutineContext
 
 /**
  * The ringing service as [PomodoroPhaseAlarm] drives it. Stop releases both outputs on the main
@@ -32,7 +34,7 @@ import org.koin.android.ext.android.inject
  * observe the ring through them.
  */
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-class ServicePomodoroRinging(private val context: Context) :
+class ServicePomodoroRinging(private val context: Context, private val main: CoroutineContext) :
     PomodoroRinging,
     PomodoroRingingPhase,
     RingingServiceState {
@@ -50,7 +52,7 @@ class ServicePomodoroRinging(private val context: Context) :
         observed.value = value
     }
 
-    override suspend fun start(ring: PomodoroRing) = withContext(Dispatchers.Main.immediate) {
+    override suspend fun start(ring: PomodoroRing) = withContext(main) {
         val active = service
         if (active != null && active.current?.phase == ring.phase) {
             active.show(ring)
@@ -67,12 +69,12 @@ class ServicePomodoroRinging(private val context: Context) :
         Unit
     }
 
-    override suspend fun update(ring: PomodoroRing) = withContext(Dispatchers.Main.immediate) {
+    override suspend fun update(ring: PomodoroRing) = withContext(main) {
         service?.takeIf { it.current?.phase == ring.phase }?.show(ring)
         Unit
     }
 
-    override suspend fun stop(keep: PomodoroPhaseKey?) = withContext(Dispatchers.Main.immediate) {
+    override suspend fun stop(keep: PomodoroPhaseKey?) = withContext(main) {
         val active = service
         // A start still checking the held phase stops itself when that phase has gone.
         if (keep != null && (active?.current == null || active.current?.phase == keep)) return@withContext
@@ -114,7 +116,8 @@ data class PomodoroRingingState(
  * https://developer.android.com/develop/background-work/services/fgs/restrictions-bg-start#exemptions
  */
 class PomodoroRingingService : Service() {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val main: CoroutineDispatcher by inject(MainDispatcher)
+    private val scope by lazy { CoroutineScope(SupervisorJob() + main) }
     private val ringing: ServicePomodoroRinging by inject()
     private val ringCheck: PomodoroRingCheck by inject()
 
@@ -160,7 +163,7 @@ class PomodoroRingingService : Service() {
         }
         scope.launch {
             val valid = ringCheck.withRingingPhase(expected) { ring ->
-                withContext(Dispatchers.Main.immediate) { controller.start(ring) }
+                withContext(main) { controller.start(ring) }
             }
             // An old start must neither play nor stop a newer valid ring.
             if (!valid && current == null) finishRinging(startId)

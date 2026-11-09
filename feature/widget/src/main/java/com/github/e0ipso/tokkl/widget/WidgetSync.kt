@@ -89,7 +89,7 @@ class TimerWidgetHook(
     override fun processStart() {
         val keys = flow { emitAll(source.value.state.map { it.key() }) }
         val context = context.value
-        WidgetSync(keys, WidgetStore(context), GlanceRedraw(context, TokklWidget()), scope, io).start()
+        WidgetSync(keys, WidgetStore(context, io), GlanceRedraw(context, TokklWidget()), scope, io).start()
     }
 }
 
@@ -105,7 +105,7 @@ class PomodoroWidgetHook(
     override fun processStart() {
         val keys = flow { emitAll(source.value.state.map { it.key() }) }
         val context = context.value
-        val shown = WidgetStore(context, keyName = WidgetStore.POMODORO_KEY)
+        val shown = WidgetStore(context, io, keyName = WidgetStore.POMODORO_KEY)
         WidgetSync(keys, shown, GlanceRedraw(context, PomodoroWidget()), scope, io).start()
     }
 }
@@ -117,9 +117,10 @@ class PomodoroWidgetHook(
  *
  * Each call reads or writes the file on the I/O dispatcher.
  */
-class WidgetStore(context: Context, private val keyName: String = TIMER_KEY) : ValueStore<String> {
+class WidgetStore(context: Context, private val io: CoroutineContext, private val keyName: String = TIMER_KEY) :
+    ValueStore<String> {
 
-    private val file = PreferencesFile(context, FILE_NAME)
+    private val file = PreferencesFile(context, FILE_NAME, io)
 
     override suspend fun load(): String? = file.read { getString(keyName, null) }
 

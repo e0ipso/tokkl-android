@@ -4,6 +4,7 @@ import android.content.Context
 import com.github.e0ipso.tokkl.storage.ClearableStore
 import com.github.e0ipso.tokkl.storage.PreferencesFile
 import java.io.IOException
+import kotlin.coroutines.CoroutineContext
 
 /**
  * [DiscardedChanges]'s count, in its own private preferences file. It stays on the phone, because
@@ -11,9 +12,9 @@ import java.io.IOException
  *
  * Each call reads or writes the file on the I/O dispatcher.
  */
-class DiscardedChangesStore(context: Context) : ClearableStore<Int> {
+class DiscardedChangesStore(context: Context, private val io: CoroutineContext) : ClearableStore<Int> {
 
-    private val file = PreferencesFile(context, FILE_NAME)
+    private val file = PreferencesFile(context, FILE_NAME, io)
 
     override suspend fun load(): Int = file.read { getInt(KEY_COUNT, 0) }
 

@@ -34,6 +34,7 @@ import com.github.e0ipso.tokkl.components.sessionViewModels
 import com.github.e0ipso.tokkl.feature.notification.R
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timer.TimerViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -144,7 +145,12 @@ class NativeNotificationPermissionTest {
             println(
                 "Native permission start: lifecycle=${activity.lifecycle.currentState}, events=$starts, permission=${activity.checkSelfPermission(
                     Manifest.permission.POST_NOTIFICATIONS,
-                )}, asked=${runBlocking { NotificationPermissionStore(activity.applicationContext).asked() }}",
+                )}, asked=${runBlocking {
+                    NotificationPermissionStore(
+                        activity.applicationContext,
+                        Dispatchers.IO,
+                    ).asked()
+                }}",
             )
         }
         var nativeButton: UiObject2? = null
@@ -154,7 +160,10 @@ class NativeNotificationPermissionTest {
             nativeButton = device.findObject(By.res(PERMISSION_CONTROLLER, button))
             nativeButton != null
         }
-        assertTrue("the launched request was persisted", runBlocking { NotificationPermissionStore(context).asked() })
+        assertTrue(
+            "the launched request was persisted",
+            runBlocking { NotificationPermissionStore(context, Dispatchers.IO).asked() },
+        )
         println("Native notification permission dialog: timer running before $button on API ${Build.VERSION.SDK_INT}")
         return checkNotNull(nativeButton)
     }

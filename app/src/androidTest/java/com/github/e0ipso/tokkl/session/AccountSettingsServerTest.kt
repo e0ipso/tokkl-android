@@ -13,6 +13,7 @@ import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.orFail
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -45,7 +46,7 @@ class AccountSettingsServerTest {
         try {
             putMe(timezone = "UTC", beginningOfWeek = 1)
         } finally {
-            runBlocking { AccountSettingsStore(context).clear() }
+            runBlocking { AccountSettingsStore(context, Dispatchers.IO).clear() }
         }
     }
 
@@ -67,7 +68,7 @@ class AccountSettingsServerTest {
             userId = serverId("id"),
         )
         assertEquals(expected, source.state.value)
-        assertEquals("the stored settings", expected, AccountSettingsStore(context).load())
+        assertEquals("the stored settings", expected, AccountSettingsStore(context, Dispatchers.IO).load())
         assertEquals(ZoneId.of("America/Sao_Paulo"), expected.time()?.zone)
     }
 

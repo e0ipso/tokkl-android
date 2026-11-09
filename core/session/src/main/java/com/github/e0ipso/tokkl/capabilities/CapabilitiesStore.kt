@@ -6,6 +6,7 @@ import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.storage.PreferencesFile
 import com.github.e0ipso.tokkl.storage.ValueStore
 import java.io.IOException
+import kotlin.coroutines.CoroutineContext
 
 /**
  * The server's capabilities in their own private preferences file, so features know what to show
@@ -14,9 +15,9 @@ import java.io.IOException
  *
  * Each call reads or writes the file on the I/O dispatcher.
  */
-class CapabilitiesStore(context: Context) : ValueStore<Capabilities> {
+class CapabilitiesStore(context: Context, private val io: CoroutineContext) : ValueStore<Capabilities> {
 
-    private val file = PreferencesFile(context, FILE_NAME)
+    private val file = PreferencesFile(context, FILE_NAME, io)
 
     /** The stored capabilities, or null when none are stored. */
     override suspend fun load(): Capabilities? = file.read {

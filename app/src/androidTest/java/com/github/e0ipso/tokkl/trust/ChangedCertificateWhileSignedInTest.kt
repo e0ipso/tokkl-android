@@ -21,6 +21,7 @@ import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.core.trust.R
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -49,6 +50,7 @@ class ChangedCertificateWhileSignedInTest {
             override fun before() {
                 ServerTrustStore(
                     context,
+                    Dispatchers.IO,
                 ).pinCertificate(ServerCertificate(endpoint.host, endpoint.port, OLD_SHA256, subject = ""))
                 Session(context).save(TokklTestServer.tlsUrl, TokklTestServer.apiToken)
             }
@@ -68,7 +70,7 @@ class ChangedCertificateWhileSignedInTest {
         composeRule.onNode(hasText(string(R.string.sign_in_certificate_trust)) and hasClickAction()).performClick()
 
         awaitGone(hasText(string(R.string.sign_in_certificate_changed_title)), "the prompt closes")
-        assertEquals(newSha256, ServerTrustStore(context).pinnedSha256(endpoint.host, endpoint.port))
+        assertEquals(newSha256, ServerTrustStore(context, Dispatchers.IO).pinnedSha256(endpoint.host, endpoint.port))
         val body = (me() as? ApiResult.Success)?.value ?: throw AssertionError(
             "GET /api/v9/me still fails after the user trusted the certificate",
         )
@@ -90,7 +92,7 @@ class ChangedCertificateWhileSignedInTest {
             ),
             (me() as? ApiResult.Failure)?.error,
         )
-        assertEquals(OLD_SHA256, ServerTrustStore(context).pinnedSha256(endpoint.host, endpoint.port))
+        assertEquals(OLD_SHA256, ServerTrustStore(context, Dispatchers.IO).pinnedSha256(endpoint.host, endpoint.port))
 
         composeRule.onNode(hasText(string(R.string.trust_refused_review)) and hasClickAction()).performClick()
 

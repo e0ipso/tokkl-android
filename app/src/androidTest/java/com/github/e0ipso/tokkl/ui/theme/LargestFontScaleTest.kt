@@ -59,6 +59,7 @@ import com.github.e0ipso.tokkl.settings.cardLabel
 import com.github.e0ipso.tokkl.settings.label
 import com.github.e0ipso.tokkl.signin.assertFieldErrorsLeaveTheFormInPlace
 import com.github.e0ipso.tokkl.signin.assertServerUrlErrorFitsTheHint
+import kotlinx.coroutines.Dispatchers
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -1149,6 +1150,7 @@ private class RefusedSessionRule : TestRule {
                 val endpoint = it.api("me")
                 ServerTrustStore(
                     context,
+                    Dispatchers.IO,
                 ).pinCertificate(ServerCertificate(endpoint.host, endpoint.port, "00".repeat(32), subject = ""))
             }
         }

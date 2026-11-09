@@ -6,6 +6,7 @@ import com.github.e0ipso.tokkl.api.ServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.storage.PreferencesFile
 import java.io.IOException
+import kotlin.coroutines.CoroutineContext
 
 /**
  * The user's trust decisions, in the app's private preferences file
@@ -20,7 +21,7 @@ import java.io.IOException
  * OkHttp's trust checks read it on OkHttp's threads, and the decisions are written on the I/O
  * dispatcher. Never call it on the main thread.
  */
-class ServerTrustStore(context: Context) :
+class ServerTrustStore(context: Context, private val io: CoroutineContext) :
     ServerTrust,
     AccountDataOwner {
 
@@ -28,7 +29,7 @@ class ServerTrustStore(context: Context) :
 
     override suspend fun forgetAccount() = clear()
 
-    private val file = PreferencesFile(context, FILE_NAME)
+    private val file = PreferencesFile(context, FILE_NAME, io)
     private val preferences get() = file.preferences
 
     override fun isCleartextConfirmed(server: ServerUrl): Boolean =

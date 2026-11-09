@@ -12,7 +12,7 @@ sealed interface AppDispatcher {
     /** [Dispatchers.IO], for disk and network work. */
     data object Io : AppDispatcher
 
-    /** [Dispatchers.Default], which the timer event stream's clock runs on. */
+    /** [Dispatchers.Default], for computation, such as the timer event stream's clock and the history's grouping. */
     data object Default : AppDispatcher
 }
 
@@ -22,5 +22,5 @@ val MainDispatcher: Qualifier = named<AppDispatcher.Main>()
 /** [Dispatchers.IO], for disk and network work. */
 val IoDispatcher: Qualifier = named<AppDispatcher.Io>()
 
-/** [Dispatchers.Default], which the timer event stream's clock runs on. */
+/** [Dispatchers.Default], for computation, such as the timer event stream's clock and the history's grouping. */
 val DefaultDispatcher: Qualifier = named<AppDispatcher.Default>()

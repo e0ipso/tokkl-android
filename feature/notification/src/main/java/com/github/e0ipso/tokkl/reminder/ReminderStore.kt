@@ -6,10 +6,11 @@ import com.github.e0ipso.tokkl.preferences.StoredReminderPreferences
 import com.github.e0ipso.tokkl.storage.ClearableStore
 import com.github.e0ipso.tokkl.storage.PreferencesFile
 import com.github.e0ipso.tokkl.storage.ValueStore
+import kotlin.coroutines.CoroutineContext
 
 /** Account-scoped, excluded from backups with the other private stores. */
-class ReminderStore(context: Context) : ClearableStore<StoredReminderPreferences> {
-    private val file = PreferencesFile(context, "long_timer_reminder")
+class ReminderStore(context: Context, private val io: CoroutineContext) : ClearableStore<StoredReminderPreferences> {
+    private val file = PreferencesFile(context, "long_timer_reminder", io)
 
     override suspend fun load(): StoredReminderPreferences? = file.read {
         if (!contains("hours")) return@read null

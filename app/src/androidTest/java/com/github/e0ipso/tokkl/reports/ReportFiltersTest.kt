@@ -41,6 +41,7 @@ import com.github.e0ipso.tokkl.openMorePage
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonNull
@@ -120,7 +121,7 @@ class ReportFiltersTest {
         } finally {
             try {
                 // The relay replaced the stored server and its cleartext confirmation.
-                ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
+                ServerTrustStore(context, Dispatchers.IO).confirmCleartext(TokklTestServer.url)
                 Session(context).save(TokklTestServer.url, report.account.apiToken)
                 relay?.close()
             } finally {
@@ -293,7 +294,7 @@ class ReportFiltersTest {
     @Test
     fun theSearchNarrowsTheChoicesAndAsksNothing() {
         val relay = RequestCounter(TokklTestServer.url, " HTTP/1.1").also { this.relay = it }
-        ServerTrustStore(context).confirmCleartext(relay.url)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(relay.url)
         Session(context).save(relay.url, report.account.apiToken)
         openReports()
         Thread.sleep(SETTLE_MS)
@@ -350,7 +351,7 @@ class ReportFiltersTest {
     @Test
     fun theSheetOffersTheCachedChoicesAndAsksNothing() {
         val relay = RequestCounter(TokklTestServer.url, " HTTP/1.1").also { this.relay = it }
-        ServerTrustStore(context).confirmCleartext(relay.url)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(relay.url)
         Session(context).save(relay.url, report.account.apiToken)
         openReports()
         // The refresh as the app starts, and the report.

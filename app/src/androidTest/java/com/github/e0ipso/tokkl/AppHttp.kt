@@ -6,6 +6,7 @@ import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.api.TokklApi
+import kotlinx.coroutines.Dispatchers
 import org.koin.core.context.GlobalContext
 
 /** The app's shared HTTP client, from its Koin graph, with its guard and trust checks. */
@@ -16,7 +17,7 @@ val appConfiguredServer: ConfiguredServer get() = GlobalContext.get().get()
 
 /** An API client that sends through [appHttp], as the app's own clients do. */
 fun appApiClient(server: ServerUrl, credentials: ApiCredentials): TogglApiClient =
-    TogglApiClient(server, credentials, appHttp.instance)
+    TogglApiClient(server, credentials, appHttp.instance, io = Dispatchers.IO)
 
 /** The app's [TokklApi] over this client, for the app's code that a test calls directly. */
 fun TogglApiClient.tokklApi(): TokklApi = TokklApi(this)

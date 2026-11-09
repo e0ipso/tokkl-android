@@ -5,6 +5,7 @@ import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.storage.PreferencesFile
 import com.github.e0ipso.tokkl.storage.ValueStore
 import java.io.IOException
+import kotlin.coroutines.CoroutineContext
 
 /**
  * The running entry the notification last followed, its key and id, in its own private
@@ -13,9 +14,9 @@ import java.io.IOException
  *
  * Each call reads or writes the file on the I/O dispatcher.
  */
-class RunningNotificationStore(context: Context) : ValueStore<FollowedEntry?> {
+class RunningNotificationStore(context: Context, private val io: CoroutineContext) : ValueStore<FollowedEntry?> {
 
-    private val file = PreferencesFile(context, FILE_NAME)
+    private val file = PreferencesFile(context, FILE_NAME, io)
 
     override suspend fun load(): FollowedEntry? = file.read {
         val key = getString(KEY_SHOWN, null) ?: return@read null

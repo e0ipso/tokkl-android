@@ -26,6 +26,7 @@ import com.github.e0ipso.tokkl.components.timerState
 import com.github.e0ipso.tokkl.notification.NotificationPermissionStore
 import com.github.e0ipso.tokkl.openBarPage
 import com.github.e0ipso.tokkl.session.Session
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -110,7 +111,7 @@ class NativePomodoroPermissionTest {
             tap(UiR.string.pomodoro_start)
             compose.waitUntil(15_000) { session() != null }
             assertNull(device.findObject(By.res(CONTROLLER, "permission_allow_button")))
-            assertTrue(runBlocking { NotificationPermissionStore(context).asked() })
+            assertTrue(runBlocking { NotificationPermissionStore(context, Dispatchers.IO).asked() })
             tap(PomodoroR.string.pomodoro_notifications_settings)
             compose.waitUntil(15_000) { device.currentPackageName == "com.android.settings" }
             assertNotNull("settings never ends the running session", session())
@@ -126,7 +127,7 @@ class NativePomodoroPermissionTest {
         compose.waitUntil(15_000) { device.findObject(By.res(CONTROLLER, "permission_allow_button")) != null }
         // The native dialog is deliberately unanswered while the server's session arrives.
         compose.waitUntil(15_000) { session() != null }
-        compose.waitUntil(15_000) { runBlocking { NotificationPermissionStore(context).asked() } }
+        compose.waitUntil(15_000) { runBlocking { NotificationPermissionStore(context, Dispatchers.IO).asked() } }
     }
 
     /** The server's session as the phone holds it, or null without one. */

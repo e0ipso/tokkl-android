@@ -5,7 +5,6 @@ import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.AtomicFile
 import com.github.e0ipso.tokkl.storage.ClearableStore
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -31,7 +30,7 @@ import kotlin.coroutines.CoroutineContext
  *
  * Each call does its disk and Keystore work on [io].
  */
-class ApiTokenStore(context: Context, private val io: CoroutineContext = Dispatchers.IO) : ClearableStore<String> {
+class ApiTokenStore(context: Context, private val io: CoroutineContext) : ClearableStore<String> {
 
     private val file = AtomicFile(File(context.filesDir, FILE_NAME))
 

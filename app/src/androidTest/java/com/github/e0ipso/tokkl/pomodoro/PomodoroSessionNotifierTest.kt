@@ -14,6 +14,7 @@ import com.github.e0ipso.tokkl.navhost.DeepLinks
 import com.github.e0ipso.tokkl.navhost.takeDeepLinks
 import com.github.e0ipso.tokkl.notification.RunningNotifier
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -102,16 +103,16 @@ class PomodoroSessionNotifierTest {
         val fixture = object : ContextWrapper(context) {
             override fun getSharedPreferences(name: String, mode: Int) = super.getSharedPreferences(file, mode)
         }
-        val store = PomodoroSessionNotificationStore(fixture)
+        val store = PomodoroSessionNotificationStore(fixture, Dispatchers.IO)
         try {
             val display = PomodoroNotificationDisplay("fixture-account", content.key)
             store.save(display)
-            assertEquals(display, PomodoroSessionNotificationStore(fixture).load())
+            assertEquals(display, PomodoroSessionNotificationStore(fixture, Dispatchers.IO).load())
             val all = fixture.getSharedPreferences("ignored", Context.MODE_PRIVATE).all
             assertEquals(setOf("account", "shown"), all.keys)
             assertFalse(all.values.any { it.toString().contains(content.description) })
             store.save(null)
-            assertNull(PomodoroSessionNotificationStore(fixture).load())
+            assertNull(PomodoroSessionNotificationStore(fixture, Dispatchers.IO).load())
             assertTrue(fixture.getSharedPreferences("ignored", Context.MODE_PRIVATE).all.isEmpty())
         } finally {
             store.save(null)

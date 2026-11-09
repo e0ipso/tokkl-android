@@ -16,6 +16,7 @@ import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.settings.DefaultThemeSettings
 import com.github.e0ipso.tokkl.settings.ThemeSettingsStore
 import com.github.e0ipso.tokkl.settings.systemIsDark
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -67,7 +68,7 @@ class WindowBackgroundTest {
     }
 
     private fun assertLaunches(mode: ThemeMode, dark: Boolean) {
-        runBlocking { ThemeSettingsStore(context).save(ThemeSettings(mode = mode)) }
+        runBlocking { ThemeSettingsStore(context, Dispatchers.IO).save(ThemeSettings(mode = mode)) }
         val background = if (dark) TokklDarkColorScheme.background else TokklLightColorScheme.background
 
         launch { activity ->

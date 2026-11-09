@@ -51,6 +51,7 @@ import com.github.e0ipso.tokkl.tile.QuickSettingsTile
 import com.github.e0ipso.tokkl.time.formatDuration
 import com.github.e0ipso.tokkl.timerState
 import com.github.e0ipso.tokkl.timerstate.TimerControls
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -96,7 +97,12 @@ class WidgetServerTest {
     private var widget: NativeWidget? = null
     private val native get() = checkNotNull(widget)
     private val web by lazy {
-        TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(account.apiToken), httpClient = OkHttpClient())
+        TogglApiClient(
+            TokklTestServer.url,
+            ApiCredentials.ApiToken(account.apiToken),
+            httpClient = OkHttpClient(),
+            io = Dispatchers.IO,
+        )
     }
 
     @Before
@@ -313,7 +319,7 @@ class WidgetServerTest {
         // The active Glance composition can show Start's state before WidgetSync has
         // queued its own redraw. Finish those one-off setup updates before measuring ticks.
         val expected = runBlocking { app.widgetState.first() }.key()
-        val store = WidgetStore(context)
+        val store = WidgetStore(context, Dispatchers.IO)
         native.await("WidgetSync has queued the running state") { runBlocking { store.load() } == expected }
         native.awaitUpdatesSettled()
         native.assertClockTicksWithoutUpdates()
@@ -536,7 +542,7 @@ class WidgetServerTest {
     private fun unsentCount() = runBlocking { app.changes.unsentCount.first() }
 
     private fun signIn(server: ServerUrl, token: String) {
-        ServerTrustStore(context).confirmCleartext(server)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(server)
         Session(context).save(server, token)
     }
 

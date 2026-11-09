@@ -25,6 +25,7 @@ import com.github.e0ipso.tokkl.feature.signin.R
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -104,13 +105,16 @@ class SignInUnderPathPrefixTest {
      * password.
      */
     private fun assertSignedInThroughThePrefix() {
-        runBlocking { assertEquals(server, ServerConfigStore(context).load()) }
+        runBlocking { assertEquals(server, ServerConfigStore(context, Dispatchers.IO).load()) }
         assertTrue(
             "the token store holds the API token from /me",
-            runBlocking { ApiTokenStore(context).load() } == TokklTestServer.apiToken,
+            runBlocking { ApiTokenStore(context, io = Dispatchers.IO).load() } == TokklTestServer.apiToken,
         )
-        runBlocking { assertEquals("UTC", AccountSettingsStore(context).load()?.timeZone) }
-        assertTrue("the confirmation names the prefixed URL", ServerTrustStore(context).isCleartextConfirmed(server))
+        runBlocking { assertEquals("UTC", AccountSettingsStore(context, Dispatchers.IO).load()?.timeZone) }
+        assertTrue(
+            "the confirmation names the prefixed URL",
+            ServerTrustStore(context, Dispatchers.IO).isCleartextConfirmed(server),
+        )
     }
 
     /** The brand above the form can push the button below the screen's or the keyboard's edge. */

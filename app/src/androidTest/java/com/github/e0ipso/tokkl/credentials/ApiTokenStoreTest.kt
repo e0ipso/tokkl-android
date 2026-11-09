@@ -5,6 +5,7 @@ import android.security.keystore.KeyInfo
 import android.security.keystore.KeyProperties
 import android.util.Base64
 import androidx.test.platform.app.InstrumentationRegistry
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
@@ -27,7 +28,7 @@ import javax.crypto.SecretKeyFactory
 class ApiTokenStoreTest {
 
     private val context: Context = InstrumentationRegistry.getInstrumentation().targetContext
-    private val store = ApiTokenStore(context)
+    private val store = ApiTokenStore(context, io = Dispatchers.IO)
     private val token = "test-token-${UUID.randomUUID()}"
     private val storedFile = File(context.filesDir, FILE_NAME)
 
@@ -46,7 +47,7 @@ class ApiTokenStoreTest {
     fun savedTokenLoadsBack() = runBlocking<Unit> {
         store.save(token)
 
-        assertEquals(token, ApiTokenStore(context).load())
+        assertEquals(token, ApiTokenStore(context, io = Dispatchers.IO).load())
     }
 
     @Test

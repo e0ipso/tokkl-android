@@ -2,7 +2,6 @@ package com.github.e0ipso.tokkl.storage
 
 import android.content.Context
 import android.content.SharedPreferences
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import kotlin.coroutines.CoroutineContext
@@ -12,7 +11,7 @@ import kotlin.coroutines.CoroutineContext
  * one loads the file from disk. [commit] throws when the write fails, so no store takes an
  * unwritten value for a stored one.
  */
-class PreferencesFile(context: Context, private val name: String, private val io: CoroutineContext = Dispatchers.IO) {
+class PreferencesFile(context: Context, private val name: String, private val io: CoroutineContext) {
 
     /**
      * The file itself, which the first use loads from disk. Only for code that runs on a worker

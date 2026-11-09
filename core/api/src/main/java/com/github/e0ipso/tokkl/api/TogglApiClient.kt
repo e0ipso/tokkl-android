@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.api
 
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.json.JsonElement
@@ -35,7 +34,7 @@ class TogglApiClient(
     private val httpClient: OkHttpClient,
     private val trustListener: TrustListener? = null,
     private val successListener: SuccessListener? = null,
-    private val io: CoroutineContext = Dispatchers.IO,
+    private val io: CoroutineContext,
 ) {
 
     /** [httpClient] for calls with `resend` false. */

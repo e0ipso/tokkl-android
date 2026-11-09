@@ -256,6 +256,7 @@ class CalendarGesturesTest {
             weeks = ServerWeeks { null },
             scope = scope,
             io = Dispatchers.IO,
+            computation = Dispatchers.Default,
             clock = CLOCK,
             allDayOffered = flowOf(allDayOffered),
             overrides = emptyFlow(),

@@ -151,7 +151,12 @@ class RunningEntryEditorServerTest {
     private var relay: HangingRelay? = null
     private var barrier: WriteBarrier? = null
     private val web by lazy {
-        TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(account.apiToken), httpClient = OkHttpClient())
+        TogglApiClient(
+            TokklTestServer.url,
+            ApiCredentials.ApiToken(account.apiToken),
+            httpClient = OkHttpClient(),
+            io = Dispatchers.IO,
+        )
     }
 
     // A stopped version of this fixture must remain inside the cache's history window.
@@ -906,6 +911,7 @@ class RunningEntryEditorServerTest {
             TokklTestServer.url,
             ApiCredentials.ApiToken(TokklTestServer.apiToken),
             httpClient = OkHttpClient(),
+            io = Dispatchers.IO,
         )
         val url = admin.server.app("admin", "settings")
         if (originalResolution == null) {
@@ -935,7 +941,7 @@ class RunningEntryEditorServerTest {
     }
 
     private fun signIn(server: ServerUrl, token: String) {
-        ServerTrustStore(context).confirmCleartext(server)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(server)
         Session(context).save(server, token)
     }
 

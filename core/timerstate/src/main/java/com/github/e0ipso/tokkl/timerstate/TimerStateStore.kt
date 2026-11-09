@@ -13,6 +13,7 @@ import java.io.IOException
 import java.time.Duration
 import java.time.Instant
 import java.util.UUID
+import kotlin.coroutines.CoroutineContext
 
 /**
  * A timer state as the phone holds it: the server's [state] and the phone's clock when it
@@ -48,13 +49,13 @@ data class StoredTimerState(
  * writes it under its acceptance lock, on the OkHttp and I/O threads that answers and events
  * arrive on, without suspending. Never call it on the main thread.
  */
-class TimerStateStore(context: Context) : AccountDataOwner {
+class TimerStateStore(context: Context, private val io: CoroutineContext) : AccountDataOwner {
 
     override val signOutPhase = SignOutPhase.CLEAR_DATA
 
     override suspend fun forgetAccount() = clear()
 
-    private val file = PreferencesFile(context, FILE_NAME)
+    private val file = PreferencesFile(context, FILE_NAME, io)
     private val preferences get() = file.preferences
 
     /** The stored state, or null when none is stored or the file does not decode. */

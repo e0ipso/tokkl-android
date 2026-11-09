@@ -6,6 +6,7 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.appApiClient
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -28,9 +29,9 @@ class ServerSmokeTest {
 
     private val client = appApiClient(TokklTestServer.url, ApiCredentials.ApiToken(TokklTestServer.apiToken))
 
-    private val servers = ServerConfigStore(InstrumentationRegistry.getInstrumentation().targetContext)
+    private val servers = ServerConfigStore(InstrumentationRegistry.getInstrumentation().targetContext, Dispatchers.IO)
 
-    private val trust = ServerTrustStore(InstrumentationRegistry.getInstrumentation().targetContext)
+    private val trust = ServerTrustStore(InstrumentationRegistry.getInstrumentation().targetContext, Dispatchers.IO)
 
     /** The shared client sends requests only to the stored server, and to a plain http one only once confirmed. */
     @Before

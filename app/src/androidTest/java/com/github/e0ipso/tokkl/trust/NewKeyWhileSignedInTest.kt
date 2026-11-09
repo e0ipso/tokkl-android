@@ -26,6 +26,7 @@ import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.core.trust.R
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -112,7 +113,10 @@ class NewKeyWhileSignedInTest {
         ).performScrollTo().performClick()
     }
 
-    private fun pinnedSha256(): String? = ServerTrustStore(context).pinnedSha256(LOOPBACK, relay.localPort)
+    private fun pinnedSha256(): String? = ServerTrustStore(
+        context,
+        Dispatchers.IO,
+    ).pinnedSha256(LOOPBACK, relay.localPort)
 
     /** `GET /api/v9/me` with the stored session's client, as the app sends it. */
     private fun me(): ApiResult<JsonObject> {

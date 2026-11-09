@@ -13,6 +13,7 @@ import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import org.junit.Assert.assertEquals
@@ -42,7 +43,7 @@ class CapabilitiesServerTest {
     @Test
     fun step1RefreshTurnsEveryCapabilityOnForAFreshTokklAccount() {
         SessionRule.signOut()
-        ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(TokklTestServer.url)
         Session(context).save(TokklTestServer.url, TokklTestServer.apiToken)
         val api = appApiClient(TokklTestServer.url, ApiCredentials.ApiToken(TokklTestServer.apiToken))
         val preferences = runBlocking {
@@ -57,7 +58,7 @@ class CapabilitiesServerTest {
         runBlocking { app.accountRefresh.refresh().join() }
 
         assertEquals(ALL, app.capabilities.state.value)
-        runBlocking { assertEquals("the stored flags", ALL, CapabilitiesStore(context).load()) }
+        runBlocking { assertEquals("the stored flags", ALL, CapabilitiesStore(context, Dispatchers.IO).load()) }
         previousStep.writeText(currentProcess())
     }
 

@@ -328,12 +328,12 @@ class ClientsServerTest {
     private fun throughARelay(block: (HangingRelay) -> Unit) {
         val relay = HangingRelay(TokklTestServer.url)
         try {
-            ServerTrustStore(context).confirmCleartext(relay.url)
+            ServerTrustStore(context, Dispatchers.IO).confirmCleartext(relay.url)
             Session(context).save(relay.url, account.apiToken)
             block(relay)
         } finally {
             relay.close()
-            ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
+            ServerTrustStore(context, Dispatchers.IO).confirmCleartext(TokklTestServer.url)
             Session(context).save(TokklTestServer.url, account.apiToken)
         }
     }

@@ -7,6 +7,7 @@ import com.github.e0ipso.tokkl.api.StoredServer
 import com.github.e0ipso.tokkl.storage.ClearableStore
 import com.github.e0ipso.tokkl.storage.PreferencesFile
 import java.io.IOException
+import kotlin.coroutines.CoroutineContext
 
 /**
  * The configured server's base URL, in the app's private preferences. The URL
@@ -16,11 +17,11 @@ import java.io.IOException
  * The suspending calls read and write the file on the I/O dispatcher. [storedNow] reads it on the
  * calling thread, which is OkHttp's.
  */
-class ServerConfigStore(context: Context) :
+class ServerConfigStore(context: Context, private val io: CoroutineContext) :
     StoredServer,
     ClearableStore<ServerUrl> {
 
-    private val file = PreferencesFile(context, FILE_NAME)
+    private val file = PreferencesFile(context, FILE_NAME, io)
 
     /** The stored server, or null when there is none or it no longer parses. */
     override suspend fun load(): ServerUrl? = file.read { storedServer() }

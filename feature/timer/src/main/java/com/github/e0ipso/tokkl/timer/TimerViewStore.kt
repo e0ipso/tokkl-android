@@ -4,6 +4,7 @@ import android.content.Context
 import com.github.e0ipso.tokkl.storage.ClearableStore
 import com.github.e0ipso.tokkl.storage.PreferencesFile
 import java.io.IOException
+import kotlin.coroutines.CoroutineContext
 
 /**
  * The Timer page's view in its own private preferences file, so a cold start opens the last
@@ -12,9 +13,9 @@ import java.io.IOException
  *
  * Each call reads or writes the file on the I/O dispatcher.
  */
-class TimerViewStore(context: Context) : ClearableStore<StoredTimerView> {
+class TimerViewStore(context: Context, private val io: CoroutineContext) : ClearableStore<StoredTimerView> {
 
-    private val file = PreferencesFile(context, FILE_NAME)
+    private val file = PreferencesFile(context, FILE_NAME, io)
 
     /** The stored view, or null when none is stored or it names a view this version lacks. */
     override suspend fun load(): StoredTimerView? = file.read {

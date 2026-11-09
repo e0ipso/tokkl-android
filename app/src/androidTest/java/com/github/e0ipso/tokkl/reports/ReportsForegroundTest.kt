@@ -28,6 +28,7 @@ import com.github.e0ipso.tokkl.openMorePage
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -84,7 +85,7 @@ class ReportsForegroundTest {
                 // The relay replaced the stored server and its cleartext confirmation, and the
                 // app's client reaches the test server, where the account is deleted, only with both.
                 if (::account.isInitialized) {
-                    ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
+                    ServerTrustStore(context, Dispatchers.IO).confirmCleartext(TokklTestServer.url)
                     Session(context).save(TokklTestServer.url, account.apiToken)
                     DeviceShell.run("cmd connectivity airplane-mode disable")
                     awaitServer(answers = true)
@@ -141,7 +142,7 @@ class ReportsForegroundTest {
     @Test
     fun theForegroundAsksOnceAndARotationAsksNothing() {
         val relay = RequestCounter(TokklTestServer.url, SEARCH).also { this.relay = it }
-        ServerTrustStore(context).confirmCleartext(relay.url)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(relay.url)
         Session(context).save(relay.url, account.apiToken)
 
         val model = openReports()

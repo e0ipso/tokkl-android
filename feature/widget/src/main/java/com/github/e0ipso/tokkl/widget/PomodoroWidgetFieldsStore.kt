@@ -13,6 +13,7 @@ import com.github.e0ipso.tokkl.timerstate.HeldFieldsMemory
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import kotlinx.serialization.Serializable
 import java.io.IOException
+import kotlin.coroutines.CoroutineContext
 
 /** The last accepted session's fields, scoped to the holder's persisted account name. */
 @Serializable
@@ -61,7 +62,7 @@ internal fun decodeRememberedPomodoroFields(text: String, account: String): Reme
  * call them on the main thread. Like the held timer state, these private preferences are excluded from
  * backup by the app's existing rules. No token or other credential is stored here.
  */
-class PomodoroWidgetFieldsStore(context: Context) :
+class PomodoroWidgetFieldsStore(context: Context, private val io: CoroutineContext) :
     HeldFieldsMemory,
     AccountDataOwner {
 
@@ -69,7 +70,7 @@ class PomodoroWidgetFieldsStore(context: Context) :
 
     override suspend fun forgetAccount() = clear()
 
-    private val file = PreferencesFile(context, FILE_NAME)
+    private val file = PreferencesFile(context, FILE_NAME, io)
     private val preferences get() = file.preferences
 
     fun load(account: String): RememberedPomodoroFields? =

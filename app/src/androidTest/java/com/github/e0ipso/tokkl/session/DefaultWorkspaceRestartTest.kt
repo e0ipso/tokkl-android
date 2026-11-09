@@ -15,6 +15,7 @@ import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.orFail
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonNull
@@ -52,7 +53,7 @@ class DefaultWorkspaceRestartTest {
         SessionRule.signOut()
         state.delete()
         // The admin creates the account through the app's client, which sends only to the stored server.
-        ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(TokklTestServer.url)
         Session(context).save(TokklTestServer.url, TokklTestServer.apiToken)
         val account = TestAccounts.create(timezone = "UTC")
         try {
@@ -61,7 +62,10 @@ class DefaultWorkspaceRestartTest {
             app.accountRefresh.refresh().join()
 
             assertEquals(account.workspaceId, app.accountSettings.state.value?.defaultWorkspaceId?.value)
-            assertEquals(account.workspaceId, AccountSettingsStore(context).load()?.defaultWorkspaceId?.value)
+            assertEquals(
+                account.workspaceId,
+                AccountSettingsStore(context, Dispatchers.IO).load()?.defaultWorkspaceId?.value,
+            )
             state.writeText(listOf(currentProcess(), account.id, account.email, account.workspaceId).joinToString("\n"))
         } catch (e: Throwable) {
             TestAccounts.delete(account)

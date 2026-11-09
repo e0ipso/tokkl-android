@@ -79,13 +79,18 @@ class SyncStatusServerTest {
 
     /** The same account straight on the server, past the app's guard, to tell when the network is gone or back. */
     private val direct by lazy {
-        TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(account.apiToken), httpClient = OkHttpClient())
+        TogglApiClient(
+            TokklTestServer.url,
+            ApiCredentials.ApiToken(account.apiToken),
+            httpClient = OkHttpClient(),
+            io = Dispatchers.IO,
+        )
     }
 
     @Before
     fun signIn() {
         account = TestAccounts.create(timezone = ZONE.id)
-        ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(TokklTestServer.url)
         Session(context).save(TokklTestServer.url, account.apiToken)
     }
 

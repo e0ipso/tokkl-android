@@ -6,6 +6,7 @@ import com.github.e0ipso.tokkl.preferences.StoredPomodoroDefaults
 import com.github.e0ipso.tokkl.storage.ClearableStore
 import com.github.e0ipso.tokkl.storage.PreferencesFile
 import java.io.IOException
+import kotlin.coroutines.CoroutineContext
 
 /**
  * The Pomodoro defaults in their own private preferences file, so a cold start has the last
@@ -14,9 +15,10 @@ import java.io.IOException
  *
  * Each call reads or writes the file on the I/O dispatcher.
  */
-class PomodoroDefaultsStore(context: Context) : ClearableStore<StoredPomodoroDefaults> {
+class PomodoroDefaultsStore(context: Context, private val io: CoroutineContext) :
+    ClearableStore<StoredPomodoroDefaults> {
 
-    private val file = PreferencesFile(context, FILE_NAME)
+    private val file = PreferencesFile(context, FILE_NAME, io)
 
     /** The stored values, or null when none are stored or one of them is missing. */
     override suspend fun load(): StoredPomodoroDefaults? = file.read {

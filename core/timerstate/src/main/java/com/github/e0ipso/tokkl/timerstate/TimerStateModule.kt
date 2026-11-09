@@ -11,7 +11,7 @@ import org.koin.dsl.module
 
 /** The server's timer state, its actions, and the controls every timer surface shows. */
 val timerStateModule = module {
-    single { TimerStateStore(androidContext()) } bind AccountDataOwner::class
+    single { TimerStateStore(androidContext(), io()) } bind AccountDataOwner::class
 
     single {
         AccountTimerStates(

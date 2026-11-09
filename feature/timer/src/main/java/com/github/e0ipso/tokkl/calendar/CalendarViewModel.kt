@@ -18,7 +18,6 @@ import com.github.e0ipso.tokkl.platform.AppForeground
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.AccountTime
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -68,6 +67,7 @@ import kotlin.coroutines.CoroutineContext
  *
  * @param entries the cached entries with their send state, as AccountCache.entries gives them.
  * @param weeks the weeks outside the cache, from the server. Runs on [io].
+ * @param computation where the week's blocks are laid out from the entries.
  * @param clock where today comes from, in the account's timezone.
  * @param allDayOffered whether the server stores no-time entries (`Capabilities.allDay == true`),
  *   which [CalendarState.Shown.allDayOffered] reports for the All day row.
@@ -84,6 +84,7 @@ class CalendarViewModel(
     private val weeks: ServerWeeks,
     scope: CoroutineScope,
     private val io: CoroutineContext,
+    computation: CoroutineContext,
     private val clock: Clock,
     allDayOffered: Flow<Boolean>,
     overrides: Flow<Map<EntryId, TimeEntry?>>,
@@ -175,7 +176,7 @@ class CalendarViewModel(
             }
         }
     }
-        .flowOn(Dispatchers.Default)
+        .flowOn(computation)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), CalendarState.Loading)
 
     /** Shows the day [days] days from the chosen one: 7 or -7 for a week, 1 or -1 for a day. */

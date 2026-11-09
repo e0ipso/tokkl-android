@@ -400,6 +400,7 @@ class HistoryViewModelTest {
         olderPages = OlderPages { client },
         scope = scope,
         io = Dispatchers.IO,
+        computation = mainDispatcher,
         clock = MovableClock(now),
         ids = { it },
         overrides = emptyFlow(),

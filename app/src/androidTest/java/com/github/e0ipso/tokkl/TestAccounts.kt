@@ -5,6 +5,7 @@ import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -53,6 +54,7 @@ object TestAccounts {
                 TokklTestServer.url,
                 ApiCredentials.EmailPassword(email, secret),
                 httpClient = OkHttpClient.Builder().connectionPool(ConnectionPool(0, 1, TimeUnit.SECONDS)).build(),
+                io = Dispatchers.IO,
             )
         }
 
@@ -119,6 +121,7 @@ object TestAccounts {
             TokklTestServer.url,
             ApiCredentials.ApiToken(TokklTestServer.apiToken),
             httpClient = OkHttpClient(),
+            io = Dispatchers.IO,
         )
     }
 

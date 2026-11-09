@@ -9,6 +9,7 @@ import com.github.e0ipso.tokkl.navigation.PageBadge
 import com.github.e0ipso.tokkl.picker.pickerSource
 import com.github.e0ipso.tokkl.platform.AppHook
 import com.github.e0ipso.tokkl.platform.DefaultNetwork
+import com.github.e0ipso.tokkl.platform.MainDispatcher
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.platform.offlineIn
 import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
@@ -24,6 +25,7 @@ import com.github.e0ipso.tokkl.timerstate.PomodoroRingingPhase
 import com.github.e0ipso.tokkl.timerstate.TimerActions
 import com.github.e0ipso.tokkl.timersync.TimerSyncFollower
 import com.github.e0ipso.tokkl.timersync.TimerSyncWatcher
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.combine
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
@@ -33,7 +35,7 @@ import org.koin.dsl.module
 
 /** The Pomodoro defaults, the phase alarm, its ring, the session notification and the Pomodoro page. */
 val pomodoroFeatureModule = module {
-    single { PomodoroDefaultsStore(androidContext()) }
+    single { PomodoroDefaultsStore(androidContext(), io()) }
 
     // The lengths a Pomodoro session starts with, kept in Tokkl's four `pomodoro_*` length
     // preferences, or on the phone only where the server lacks them. They load at process start
@@ -62,6 +64,7 @@ val pomodoroFeatureModule = module {
     single {
         ServicePomodoroRinging(
             androidContext(),
+            get<CoroutineDispatcher>(MainDispatcher),
         )
     } binds arrayOf(PomodoroRinging::class, PomodoroRingingPhase::class, RingingServiceState::class)
 
@@ -92,7 +95,7 @@ val pomodoroFeatureModule = module {
     // The session notification, made at process start, which restores what the last process
     // showed. It starts following each account that signs in.
     single {
-        val store = PomodoroSessionNotificationStore(androidContext())
+        val store = PomodoroSessionNotificationStore(androidContext(), io())
         val notifier = PomodoroSessionNotifier(androidContext())
         val held = get<AccountTimerStates>()
         val capabilities = get<CapabilitiesSource>()

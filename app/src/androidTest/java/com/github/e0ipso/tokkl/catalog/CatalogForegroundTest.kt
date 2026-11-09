@@ -31,6 +31,7 @@ import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -85,7 +86,7 @@ class CatalogForegroundTest {
                 // The counter's relay replaced the stored server and its cleartext confirmation,
                 // and the app's client reaches the test server only with both.
                 if (::account.isInitialized && counter != null) {
-                    ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
+                    ServerTrustStore(context, Dispatchers.IO).confirmCleartext(TokklTestServer.url)
                     Session(context).save(TokklTestServer.url, account.apiToken)
                 }
             } finally {
@@ -109,7 +110,7 @@ class CatalogForegroundTest {
             TokklTestServer.url,
             "/workspaces/${account.workspaceId}/projects HTTP/1.1",
         ).also { this.counter = it }
-        ServerTrustStore(context).confirmCleartext(counter.url)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(counter.url)
         Session(context).save(counter.url, account.apiToken)
 
         launch()

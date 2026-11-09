@@ -249,7 +249,12 @@ class ChangeRejectionServerTest {
             if (http == null) {
                 appApiClient(TokklTestServer.url, ApiCredentials.ApiToken(token)).tokklApi()
             } else {
-                TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(token), httpClient = http).tokklApi()
+                TogglApiClient(
+                    TokklTestServer.url,
+                    ApiCredentials.ApiToken(token),
+                    httpClient = http,
+                    io = Dispatchers.IO,
+                ).tokklApi()
             }
         }
         return sender(store, client)

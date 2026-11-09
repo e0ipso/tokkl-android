@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.signin
 
 import android.content.Context
 import androidx.test.platform.app.InstrumentationRegistry
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -12,7 +13,7 @@ import org.junit.Test
 class SignInCooldownStoreTest {
 
     private val context: Context = InstrumentationRegistry.getInstrumentation().targetContext
-    private val store = SignInCooldownStore(context)
+    private val store = SignInCooldownStore(context, Dispatchers.IO)
 
     @Before
     @After
@@ -28,7 +29,7 @@ class SignInCooldownStoreTest {
 
         assertEquals(
             mapOf("https://tokkl.example:443" to 3_000L, "http://10.0.2.2:8080" to 2_000L),
-            SignInCooldownStore(context).load(),
+            SignInCooldownStore(context, Dispatchers.IO).load(),
         )
         val file = context.getSharedPreferences(SignInCooldownStore.FILE_NAME, Context.MODE_PRIVATE).all
         assertEquals("the file holds the origins and deadlines only", store.load(), file)

@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.signin
 import android.content.Context
 import com.github.e0ipso.tokkl.storage.PreferencesFile
 import java.io.IOException
+import kotlin.coroutines.CoroutineContext
 
 /**
  * The sign-in cooldowns in the app's private preferences file
@@ -12,9 +13,9 @@ import java.io.IOException
  *
  * Each call reads or writes the file on the I/O dispatcher.
  */
-class SignInCooldownStore(context: Context) : SignInCooldowns {
+class SignInCooldownStore(context: Context, private val io: CoroutineContext) : SignInCooldowns {
 
-    private val file = PreferencesFile(context, FILE_NAME)
+    private val file = PreferencesFile(context, FILE_NAME, io)
 
     override suspend fun load(): Map<String, Long> =
         file.read { all }.mapNotNull { (origin, deadline) -> (deadline as? Long)?.let { origin to it } }.toMap()

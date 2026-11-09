@@ -71,8 +71,8 @@ class CertificateHostMismatchTest {
                 io = Dispatchers.IO,
                 signedInAccount = { null },
             ),
-            trust = ServerTrustStore(context),
-            cooldowns = SignInCooldownStore(context),
+            trust = ServerTrustStore(context, Dispatchers.IO),
+            cooldowns = SignInCooldownStore(context, Dispatchers.IO),
             scope = scope,
             io = Dispatchers.IO,
             clock = Clock.systemUTC(),
@@ -98,7 +98,7 @@ class CertificateHostMismatchTest {
 
         awaitHostMessage()
         assertFalse("the trust prompt shows", exists(hasText(string(TrustR.string.sign_in_certificate_title))))
-        assertNull(ServerTrustStore(context).pinnedSha256(HOST, proxy.port))
+        assertNull(ServerTrustStore(context, Dispatchers.IO).pinnedSha256(HOST, proxy.port))
         assertFalse("the session was stored", saved)
     }
 
@@ -109,7 +109,10 @@ class CertificateHostMismatchTest {
     @Test
     fun aPinnedCertificateStillFailsTheHostNameCheck() {
         val sha256 = TokklTestServer.tlsFingerprint.replace(":", "").lowercase()
-        ServerTrustStore(context).pinCertificate(ServerCertificate(HOST, proxy.port, sha256, subject = ""))
+        ServerTrustStore(
+            context,
+            Dispatchers.IO,
+        ).pinCertificate(ServerCertificate(HOST, proxy.port, sha256, subject = ""))
 
         signIn()
 

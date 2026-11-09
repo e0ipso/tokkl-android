@@ -16,6 +16,7 @@ val widgetFeatureModule = module {
     single {
         PomodoroWidgetFieldsStore(
             androidContext(),
+            io(),
         )
     } binds arrayOf(HeldFieldsMemory::class, AccountDataOwner::class)
 

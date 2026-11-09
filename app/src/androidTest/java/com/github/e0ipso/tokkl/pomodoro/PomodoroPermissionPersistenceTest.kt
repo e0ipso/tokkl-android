@@ -37,20 +37,20 @@ class PomodoroPermissionPersistenceTest {
 
     @Test fun diskRecordSurvivesFreshStoreAndCoordinatorInstances() = runBlocking<Unit> {
         // Explicit API value exercises durable request history even on the API 31 test device.
-        val first = ask(NotificationPermissionStore(context))
+        val first = ask(NotificationPermissionStore(context, Dispatchers.IO))
         assertTrue(first.atStartInApp())
         first.requested()
         val recreatedContext = context.createPackageContext(context.packageName, 0)
-        val restarted = ask(NotificationPermissionStore(recreatedContext))
+        val restarted = ask(NotificationPermissionStore(recreatedContext, Dispatchers.IO))
         assertFalse(restarted.atStartInApp())
-        assertTrue(NotificationPermissionStore(recreatedContext).asked())
+        assertTrue(NotificationPermissionStore(recreatedContext, Dispatchers.IO).asked())
     }
 
     @Test fun signOutKeepsTheDevicePermissionHistoryForTheNextAccount() = runBlocking<Unit> {
-        NotificationPermissionStore(context).markAsked()
+        NotificationPermissionStore(context, Dispatchers.IO).markAsked()
         SessionRule.signOut()
-        assertTrue(NotificationPermissionStore(context).asked())
-        assertFalse(ask(NotificationPermissionStore(context)).atStartInApp())
+        assertTrue(NotificationPermissionStore(context, Dispatchers.IO).asked())
+        assertFalse(ask(NotificationPermissionStore(context, Dispatchers.IO)).atStartInApp())
     }
 
     /** The question on Android 13, before notifications are allowed, with its record in [store]. */

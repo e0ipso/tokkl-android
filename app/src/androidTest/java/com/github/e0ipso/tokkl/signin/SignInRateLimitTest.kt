@@ -26,6 +26,7 @@ import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.feature.signin.R
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import okhttp3.Credentials
 import okhttp3.OkHttpClient
@@ -65,7 +66,7 @@ class SignInRateLimitTest {
         account = TestAccounts.create("UTC")
         SessionRule.signOut()
         // Spares every attempt the http warning, which SignInScreenTest covers.
-        ServerTrustStore(context).confirmCleartext(server)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(server)
     }
 
     /**
@@ -75,9 +76,9 @@ class SignInRateLimitTest {
      */
     @After
     fun forgetCooldownAndDeleteAccount() {
-        runBlocking { SignInCooldownStore(context).clear(server.origin) }
+        runBlocking { SignInCooldownStore(context, Dispatchers.IO).clear(server.origin) }
         if (!::account.isInitialized) return
-        ServerTrustStore(context).confirmCleartext(server)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(server)
         Session(context).save(server, TokklTestServer.apiToken)
         TestAccounts.delete(account)
     }

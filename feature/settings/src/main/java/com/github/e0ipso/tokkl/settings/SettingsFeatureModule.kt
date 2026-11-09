@@ -13,7 +13,7 @@ import org.koin.dsl.module
 
 /** Settings and Licences: the theme settings, the sign-out confirmation and the Settings page's view model. */
 val settingsFeatureModule = module {
-    single { ThemeSettingsStore(androidContext()) } bind ThemeSettingsDisk::class
+    single { ThemeSettingsStore(androidContext(), io()) } bind ThemeSettingsDisk::class
 
     // Loaded at process start, off the main thread. MainActivity draws its first frame once they
     // have loaded, so it knows the theme.

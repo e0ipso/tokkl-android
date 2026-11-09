@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.notification
 
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.platform.AppHook
+import com.github.e0ipso.tokkl.platform.MainDispatcher
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.preferences.ReminderSetting
 import com.github.e0ipso.tokkl.reminder.AccountReminder
@@ -17,6 +18,7 @@ import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.storage.StartupLoad
 import com.github.e0ipso.tokkl.timernotice.TimerFailureNotice
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
+import kotlinx.coroutines.CoroutineDispatcher
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.workmanager.dsl.worker
 import org.koin.dsl.bind
@@ -25,7 +27,7 @@ import org.koin.dsl.module
 
 /** The running timer's notification and the reminder of a long-running timer, with its setting and its worker. */
 val notificationFeatureModule = module {
-    single { RunningNotificationStore(androidContext()) }
+    single { RunningNotificationStore(androidContext(), io()) }
 
     // The running timer's notification (docs/PRD.md N1), which follows the timer controls, the
     // cache's running entry and the server's pause chain (T1), from process start, so every
@@ -43,7 +45,7 @@ val notificationFeatureModule = module {
     } bind AccountDataOwner::class
     single { RunningNotificationHook(inject()) } bind AppHook::class
 
-    single { ReminderStore(androidContext()) }
+    single { ReminderStore(androidContext(), io()) }
 
     // Shared reminder settings where both keys exist, account-local on older servers. They load at
     // process start.
@@ -58,7 +60,7 @@ val notificationFeatureModule = module {
 
     worker { params -> ReminderWorker(androidContext(), params.get(), get(), io()) }
     // What a timer action sent from outside the screens says when it does not go through.
-    single<TimerFailureNotice> { ToastTimerFailureNotice(androidContext()) }
+    single<TimerFailureNotice> { ToastTimerFailureNotice(androidContext(), get<CoroutineDispatcher>(MainDispatcher)) }
 
     worker { params -> TimerActionWorker(androidContext(), params.get(), get(), get(), io()) }
 }

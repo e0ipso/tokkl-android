@@ -5,6 +5,7 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.preferences.StoredPomodoroDefaults
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -19,7 +20,7 @@ class PomodoroDefaultsStoreTest {
     val session = SessionRule()
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
-    private val store get() = PomodoroDefaultsStore(context)
+    private val store get() = PomodoroDefaultsStore(context, Dispatchers.IO)
 
     @After
     fun cleanUp() {

@@ -19,9 +19,9 @@ import kotlin.coroutines.CoroutineContext
  *
  * Each call reads or writes the file on the I/O dispatcher.
  */
-class ThemeSettingsStore(context: Context) : ThemeSettingsDisk {
+class ThemeSettingsStore(context: Context, private val io: CoroutineContext) : ThemeSettingsDisk {
 
-    private val file = PreferencesFile(context, FILE_NAME)
+    private val file = PreferencesFile(context, FILE_NAME, io)
 
     /** The stored settings, with the defaults for anything missing or unknown. */
     override suspend fun load(): ThemeSettings = file.read {

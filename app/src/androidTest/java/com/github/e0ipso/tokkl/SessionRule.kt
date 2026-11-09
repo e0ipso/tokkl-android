@@ -15,6 +15,7 @@ import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.signin.SignInCooldownStore
 import com.github.e0ipso.tokkl.sync.LastAnswerStore
 import com.github.e0ipso.tokkl.timer.TimerViewStore
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.rules.TestRule
 import org.junit.runner.Description
@@ -43,9 +44,9 @@ class SessionRule : TestRule {
             signOut()
             // A timer start in a test never brings up the system's permission dialog over
             // the app. NotificationPermissionPromptTest asks with a record of its own.
-            runBlocking { NotificationPermissionStore(context).markAsked() }
+            runBlocking { NotificationPermissionStore(context, Dispatchers.IO).markAsked() }
             if (!signedOut) {
-                ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
+                ServerTrustStore(context, Dispatchers.IO).confirmCleartext(TokklTestServer.url)
                 Session(context).save(TokklTestServer.url, TokklTestServer.apiToken)
             }
             base.evaluate()
@@ -76,18 +77,18 @@ class SessionRule : TestRule {
             // Process-start widget and shortcut observers can load these before this rule.
             // Forget the loaded account too, waiting out a refresh before clearing its stores.
             runBlocking { app.accountRefresh.forget() }
-            runBlocking { AccountSettingsStore(context).clear() }
+            runBlocking { AccountSettingsStore(context, Dispatchers.IO).clear() }
             runBlocking { app.capabilities.forget() }
-            runBlocking { CapabilitiesStore(context).clear() }
+            runBlocking { CapabilitiesStore(context, Dispatchers.IO).clear() }
             // The timer state of the account the last test signed in as. Its revision is higher
             // than a new account's, so the holder would drop the new account's states.
             app.renewTimerState()
             app.cache.clear()
-            runBlocking { TimerViewStore(context).clear() }
-            runBlocking { PomodoroDefaultsStore(context).clear() }
-            ServerTrustStore(context).clear()
-            runBlocking { SignInCooldownStore(context).run { load().keys.forEach { clear(it) } } }
-            runBlocking { LastAnswerStore(context).save(null) }
+            runBlocking { TimerViewStore(context, Dispatchers.IO).clear() }
+            runBlocking { PomodoroDefaultsStore(context, Dispatchers.IO).clear() }
+            ServerTrustStore(context, Dispatchers.IO).clear()
+            runBlocking { SignInCooldownStore(context, Dispatchers.IO).run { load().keys.forEach { clear(it) } } }
+            runBlocking { LastAnswerStore(context, Dispatchers.IO).save(null) }
         }
     }
 }

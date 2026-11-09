@@ -18,6 +18,7 @@ import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.ui.theme.SystemDisplaySize
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -92,7 +93,7 @@ class WidgetLargeTextTest {
             Session(context).save(TokklTestServer.url, account.apiToken)
             runBlocking { app.accountRefresh.refresh().join() }
             val offline = checkNotNull(ServerUrl.parse("http://127.0.0.1:9"))
-            ServerTrustStore(context).confirmCleartext(offline)
+            ServerTrustStore(context, Dispatchers.IO).confirmCleartext(offline)
             Session(context).save(offline, account.apiToken)
             NativeWidget().use { widget ->
                 if (combinedSizes) {
@@ -138,7 +139,7 @@ class WidgetLargeTextTest {
             }
         } finally {
             assertTrue("sign-out clears the fixture", runBlocking { app.signOut.run() })
-            ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
+            ServerTrustStore(context, Dispatchers.IO).confirmCleartext(TokklTestServer.url)
             Session(context).save(TokklTestServer.url, TokklTestServer.apiToken)
             TestAccounts.delete(account)
             SessionRule.signOut()

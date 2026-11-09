@@ -32,6 +32,7 @@ import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.settings.PomodoroDefaultField
 import com.github.e0ipso.tokkl.settings.cardLabel
 import com.github.e0ipso.tokkl.settings.label
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
@@ -253,10 +254,10 @@ class PomodoroDefaultsServerTest {
     }
 
     /** What the phone keeps of the defaults, read as the app reads them. */
-    private fun storedDefaults() = runBlocking { PomodoroDefaultsStore(context).load() }
+    private fun storedDefaults() = runBlocking { PomodoroDefaultsStore(context, Dispatchers.IO).load() }
 
     private fun signIn(server: ServerUrl) {
-        ServerTrustStore(context).confirmCleartext(server)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(server)
         Session(context).save(server, account.apiToken)
     }
 

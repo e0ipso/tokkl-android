@@ -5,6 +5,7 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.appApiClient
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -24,8 +25,8 @@ import org.junit.Test
 class PinnedCertificateTest {
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
-    private val servers = ServerConfigStore(context)
-    private val trust = ServerTrustStore(context)
+    private val servers = ServerConfigStore(context, Dispatchers.IO)
+    private val trust = ServerTrustStore(context, Dispatchers.IO)
     private val server = TokklTestServer.tlsUrl
     private val me = server.api("me")
     private val client = appApiClient(server, ApiCredentials.ApiToken(TokklTestServer.apiToken))

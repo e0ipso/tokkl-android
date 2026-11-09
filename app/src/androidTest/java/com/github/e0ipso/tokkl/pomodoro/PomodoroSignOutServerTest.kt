@@ -47,6 +47,7 @@ import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timerstate.TimerStateStore
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -103,7 +104,7 @@ class PomodoroSignOutServerTest {
         } finally {
             try {
                 awaitStopped()
-                ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
+                ServerTrustStore(context, Dispatchers.IO).confirmCleartext(TokklTestServer.url)
                 // Restore the suite account before deleting its disposable test accounts.
                 app.storeSignIn(TokklTestServer.url, TokklTestServer.apiToken, suiteSettings)
                 accounts.forEach(TestAccounts::delete)
@@ -191,7 +192,7 @@ class PomodoroSignOutServerTest {
         sendOldButtons(notification)
         assertCleared()
         // Authenticate a second disposable account through the normal application handoff.
-        ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(TokklTestServer.url)
         app.storeSignIn(TokklTestServer.url, TokklTestServer.apiToken, suiteSettings)
         val next = TestAccounts.create(timezone = "Etc/UTC").also(accounts::add)
         signIn(next, suiteSettings.copy(defaultWorkspaceId = WorkspaceId(next.workspaceId), userId = next.id))
@@ -217,7 +218,7 @@ class PomodoroSignOutServerTest {
 
     /** Signs [owner] in on the test server and learns its timer API, as the sign-in screen and its refresh do. */
     private fun signIn(owner: TestAccounts.Account, with: AccountSettings) {
-        ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(TokklTestServer.url)
         app.storeSignIn(TokklTestServer.url, owner.apiToken, with)
         HeldPhases.learnTheTimerApi()
     }
@@ -229,7 +230,7 @@ class PomodoroSignOutServerTest {
     }
 
     private fun goOffline() {
-        ServerTrustStore(context).confirmCleartext(DEAD_SERVER)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(DEAD_SERVER)
         Session(context).save(DEAD_SERVER, account.apiToken)
         runBlocking { app.sender.sendAndWait() }
     }
@@ -245,9 +246,9 @@ class PomodoroSignOutServerTest {
     private fun assertCleared() {
         awaitStopped()
         assertFalse(Session(context).isSignedIn())
-        runBlocking { assertNull(ServerConfigStore(context).load()) }
-        runBlocking { assertNull(ApiTokenStore(context).load()) }
-        assertNull(TimerStateStore(context).load())
+        runBlocking { assertNull(ServerConfigStore(context, Dispatchers.IO).load()) }
+        runBlocking { assertNull(ApiTokenStore(context, io = Dispatchers.IO).load()) }
+        assertNull(TimerStateStore(context, Dispatchers.IO).load())
         assertNull(app.timerState.state.value)
         awaitNextAlarm(null)
         assertEquals(

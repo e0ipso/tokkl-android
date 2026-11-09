@@ -19,6 +19,7 @@ import com.github.e0ipso.tokkl.model.TaskId
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.Session
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.SerialName
@@ -138,7 +139,7 @@ class AccountCacheServerTest {
             runBlocking { cache.favorites.first() },
         )
 
-        val settings = runBlocking { AccountSettingsStore(context).load() }
+        val settings = runBlocking { AccountSettingsStore(context, Dispatchers.IO).load() }
         assertNotNull("the account settings are stored", settings)
         assertEquals(ZONE, settings!!.timeZone)
         assertEquals(settings, app.accountSettings.state.value)

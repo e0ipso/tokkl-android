@@ -40,6 +40,7 @@ import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.runBlocking
@@ -122,7 +123,7 @@ class TimerTotalsServerTest {
         HangingRelay(TokklTestServer.url).use { relay ->
             RequestCounter(relay.url, "/reports/").use { reports ->
                 RequestCounter(reports.url, "GET /api/v9/me/time_entries?").use { history ->
-                    ServerTrustStore(context).confirmCleartext(history.url)
+                    ServerTrustStore(context, Dispatchers.IO).confirmCleartext(history.url)
                     Session(context).save(history.url, fixture.account.apiToken)
                     fixture.refresh()
                     ActivityScenario.launch(MainActivity::class.java).use { scenario ->
@@ -220,7 +221,7 @@ class TimerTotalsServerTest {
         val subscriptions = AtomicInteger()
         val input = rows.onStart { subscriptions.incrementAndGet() }
         RequestCounter(TokklTestServer.url, " HTTP/1.1").use { requests ->
-            ServerTrustStore(context).confirmCleartext(requests.url)
+            ServerTrustStore(context, Dispatchers.IO).confirmCleartext(requests.url)
             Session(context).save(requests.url, fixture.account.apiToken)
             ActivityScenario.launch(MainActivity::class.java).use { scenario ->
                 compose.awaitTimerPage()

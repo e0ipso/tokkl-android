@@ -66,6 +66,7 @@ import com.github.e0ipso.tokkl.timerstate.TimerStateStore
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
@@ -414,7 +415,7 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
     fun focusedLocalTicksAndFrozenPauseAddNoRequests() {
         holdTimerEventsOnTheServerItself()
         RequestCounter(TokklTestServer.url, " HTTP/1.1").use { requests ->
-            ServerTrustStore(context).confirmCleartext(requests.url)
+            ServerTrustStore(context, Dispatchers.IO).confirmCleartext(requests.url)
             Session(context).save(requests.url, fixture.account.apiToken)
             fixture.refresh()
             val clock = MutableClock(Instant.now())
@@ -469,7 +470,10 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
                 assertEquals(pause.seconds, paused.seconds)
                 // Native surfaces carry the sign-in's account id, so a tap drawn for another account does nothing.
                 assertEquals(
-                    TimerTarget.server(revision = held.revision, account = TimerStateStore(app).account()),
+                    TimerTarget.server(
+                        revision = held.revision,
+                        account = TimerStateStore(app, Dispatchers.IO).account(),
+                    ),
                     paused.target,
                 )
                 assertEquals("Pause queued no Stop", 0, runBlocking { app.changes.unsentCount.first() })

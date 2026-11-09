@@ -27,6 +27,7 @@ import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotifier
 import com.github.e0ipso.tokkl.timer.TimerAcceptanceFixture
 import com.github.e0ipso.tokkl.timerState
 import com.github.e0ipso.tokkl.timersync.TimerSyncService
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -91,7 +92,7 @@ class TimerSyncServiceLifecycleTest {
 
         awaitEverythingStopped("sign-out")
         assertNull("sign-out clears the held state", app.timerState.state.value)
-        assertNull("sign-out clears the stored state", TimerStateStore(context).load())
+        assertNull("sign-out clears the stored state", TimerStateStore(context, Dispatchers.IO).load())
         val kept = other.timerState().pomodoro
         assertEquals("the other devices keep the server's session", session.phase.start, kept?.phase?.start)
 

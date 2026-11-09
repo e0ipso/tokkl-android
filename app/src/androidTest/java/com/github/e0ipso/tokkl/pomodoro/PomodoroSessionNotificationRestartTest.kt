@@ -21,6 +21,7 @@ import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timerstate.TimerStateStore
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -49,7 +50,7 @@ class PomodoroSessionNotificationRestartTest {
 
     @Test fun step1PostsAHeldSessionAndLeavesItsImmutableTapForTheNextProcess() = runBlocking<Unit> {
         SessionRule.signOut()
-        ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(TokklTestServer.url)
         Session(context).save(TokklTestServer.url, TokklTestServer.apiToken)
         HeldPhases.learnTheTimerApi()
         RunningNotifications.allow()
@@ -61,7 +62,7 @@ class PomodoroSessionNotificationRestartTest {
         )
         app.pomodoroSessionNotification.refresh(force = true)
         val posted = manager.activeNotifications.single { it.id == PomodoroSessionNotifier.NOTIFICATION_ID }
-        val identity = checkNotNull(PomodoroSessionNotificationStore(context).load()).account
+        val identity = checkNotNull(PomodoroSessionNotificationStore(context, Dispatchers.IO).load()).account
         Properties().apply {
             setProperty("process", processIdentity())
             setProperty("account", identity)
@@ -97,8 +98,8 @@ class PomodoroSessionNotificationRestartTest {
                     .filterIsInstance<MainActivity>().forEach { it.finish() }
             }
             runBlocking { app.signOut.run() }
-            runBlocking { assertNull(PomodoroSessionNotificationStore(context).load()) }
-            assertNull(TimerStateStore(context).load())
+            runBlocking { assertNull(PomodoroSessionNotificationStore(context, Dispatchers.IO).load()) }
+            assertNull(TimerStateStore(context, Dispatchers.IO).load())
             assertNull(app.timerState.state.value)
             assertFalse(manager.activeNotifications.any { it.id == PomodoroSessionNotifier.NOTIFICATION_ID })
             assertTrue(handover.delete())

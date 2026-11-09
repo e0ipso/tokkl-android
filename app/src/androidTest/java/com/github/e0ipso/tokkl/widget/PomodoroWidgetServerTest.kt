@@ -139,7 +139,7 @@ class PomodoroWidgetServerTest {
             250.0,
         )
         assertEquals(0, host.provider.updatePeriodMillis)
-        val remembered = checkNotNull(PomodoroWidgetFieldsStore(context).load(active.account))
+        val remembered = checkNotNull(PomodoroWidgetFieldsStore(context, Dispatchers.IO).load(active.account))
         assertEquals(project, remembered.projectId?.value)
         assertEquals(task, remembered.taskId?.value)
         assertEquals(listOf("focus"), remembered.tags)
@@ -248,11 +248,11 @@ class PomodoroWidgetServerTest {
         val replacement = TestAccounts.create("Europe/Madrid")
         assertTrue(runBlocking { app.signOut.run() })
         host.awaitDescription(context.getString(WidgetR.string.widget_sign_in))
-        assertNull(PomodoroWidgetFieldsStore(context).load(owner))
+        assertNull(PomodoroWidgetFieldsStore(context, Dispatchers.IO).load(owner))
         try {
             // Production sign-out removes the HTTP confirmation as well as account settings.
             // Admit the replacement through the real sign-in request with its own /me response.
-            ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
+            ServerTrustStore(context, Dispatchers.IO).confirmCleartext(TokklTestServer.url)
             assertEquals(
                 SignInResult.SignedIn,
                 runBlocking {
@@ -316,8 +316,8 @@ class PomodoroWidgetServerTest {
             timer.awaitDescription(context.getString(WidgetR.string.widget_start_description))
             host.awaitUpdatesSettled()
             timer.awaitUpdatesSettled()
-            val timerKey = runBlocking { WidgetStore(context).load() }
-            val oldPomodoroKey = runBlocking { WidgetStore(context, WidgetStore.POMODORO_KEY).load() }
+            val timerKey = runBlocking { WidgetStore(context, Dispatchers.IO).load() }
+            val oldPomodoroKey = runBlocking { WidgetStore(context, Dispatchers.IO, WidgetStore.POMODORO_KEY).load() }
             runBlocking {
                 fixture.account.otherDevice.sendNoContent(
                     HttpMethod.POST,
@@ -332,9 +332,9 @@ class PomodoroWidgetServerTest {
             }.orFail("change defaults")
             fixture.refresh()
             host.await("Pomodoro independently persists its changed key") {
-                runBlocking { WidgetStore(context, WidgetStore.POMODORO_KEY).load() != oldPomodoroKey }
+                runBlocking { WidgetStore(context, Dispatchers.IO, WidgetStore.POMODORO_KEY).load() != oldPomodoroKey }
             }
-            runBlocking { assertEquals(timerKey, WidgetStore(context).load()) }
+            runBlocking { assertEquals(timerKey, WidgetStore(context, Dispatchers.IO).load()) }
             assertEquals(
                 42,
                 (runBlocking { app.pomodoroWidgetState.first() } as PomodoroWidgetState.Idle).defaults.workMinutes,

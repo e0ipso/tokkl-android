@@ -27,6 +27,7 @@ import com.github.e0ipso.tokkl.core.trust.R
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -72,8 +73,8 @@ class CertificatePromptTest {
         composeRule.onNode(hasText(TokklTestServer.tlsFingerprint)).performScrollTo().assertIsDisplayed()
         composeRule.onNode(hasText("CN=Tokkl instrumented tests")).performScrollTo().assertIsDisplayed()
         assertFalse("https shows no http warning", exists(hasText(string(R.string.sign_in_http_warning_title))))
-        assertNull(ServerConfigStore(context).load())
-        assertNull(ApiTokenStore(context).load())
+        assertNull(ServerConfigStore(context, Dispatchers.IO).load())
+        assertNull(ApiTokenStore(context, io = Dispatchers.IO).load())
         for (node in composeRule.onAllNodes(hasClickAction()).fetchSemanticsNodes()) {
             val description = node.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty().joinToString(" ")
             val text = node.config.getOrNull(SemanticsProperties.Text).orEmpty().joinToString(" ") { it.text }
@@ -83,14 +84,17 @@ class CertificatePromptTest {
         composeRule.onNode(hasText(string(R.string.sign_in_certificate_trust)) and hasClickAction()).performClick()
 
         composeRule.awaitTimerPage(NETWORK_TIMEOUT_MS)
-        assertEquals(sha256, ServerTrustStore(context).pinnedSha256(endpoint.host, endpoint.port))
-        assertEquals(TokklTestServer.tlsUrl, ServerConfigStore(context).load())
+        assertEquals(sha256, ServerTrustStore(context, Dispatchers.IO).pinnedSha256(endpoint.host, endpoint.port))
+        assertEquals(TokklTestServer.tlsUrl, ServerConfigStore(context, Dispatchers.IO).load())
     }
 
     @Test
     fun changedCertificatePromptsAgainAndCancelKeepsTheOldPin() {
         val old = "00".repeat(32)
-        ServerTrustStore(context).pinCertificate(ServerCertificate(endpoint.host, endpoint.port, old, subject = ""))
+        ServerTrustStore(
+            context,
+            Dispatchers.IO,
+        ).pinCertificate(ServerCertificate(endpoint.host, endpoint.port, old, subject = ""))
 
         signIn()
 
@@ -101,8 +105,8 @@ class CertificatePromptTest {
         composeRule.waitUntil(
             "the prompt closes",
         ) { !exists(hasText(string(R.string.sign_in_certificate_changed_title))) }
-        assertEquals(old, ServerTrustStore(context).pinnedSha256(endpoint.host, endpoint.port))
-        runBlocking { assertNull(ServerConfigStore(context).load()) }
+        assertEquals(old, ServerTrustStore(context, Dispatchers.IO).pinnedSha256(endpoint.host, endpoint.port))
+        runBlocking { assertNull(ServerConfigStore(context, Dispatchers.IO).load()) }
     }
 
     @Test
@@ -115,7 +119,7 @@ class CertificatePromptTest {
         composeRule.waitForIdle()
 
         composeRule.onNode(hasText(string(R.string.sign_in_certificate_title))).assertIsDisplayed()
-        assertNull(ServerTrustStore(context).pinnedSha256(endpoint.host, endpoint.port))
+        assertNull(ServerTrustStore(context, Dispatchers.IO).pinnedSha256(endpoint.host, endpoint.port))
     }
 
     private fun signIn() {

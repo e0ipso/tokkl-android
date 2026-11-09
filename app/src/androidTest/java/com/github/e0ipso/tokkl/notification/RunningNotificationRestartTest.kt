@@ -18,6 +18,7 @@ import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timerstate.TimerControls
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertNotEquals
@@ -59,7 +60,7 @@ class RunningNotificationRestartTest {
         val start = runBlocking { app.cache.running.first() }!!.entry.start
         val controls = app.awaitControls<TimerControls.Running>("the new running entry") { it.entry.id == id }
         val content = checkNotNull(runningNotificationContent(controls, emptyList(), emptyList()))
-        val store = RunningNotificationStore(context)
+        val store = RunningNotificationStore(context, Dispatchers.IO)
         // Process-start observers may still be retiring the previous test's notification.
         // Dismiss this start only once its notification and restart record both reached it.
         RunningNotifications.awaitShown("the persisted start") {
@@ -114,7 +115,7 @@ class RunningNotificationRestartTest {
     /** Nothing listens on this port, so every request fails for want of a route. */
     private fun signIn() {
         val server = checkNotNull(ServerUrl.parse("http://127.0.0.1:9"))
-        ServerTrustStore(context).confirmCleartext(server)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(server)
         Session(context).save(server, "not a token")
     }
 

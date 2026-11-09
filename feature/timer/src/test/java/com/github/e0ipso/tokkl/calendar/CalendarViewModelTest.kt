@@ -590,6 +590,7 @@ class CalendarViewModelTest {
         weeks = ServerWeeks { testApi.api(url, ApiCredentials.ApiToken("tok-123")) },
         scope = CoroutineScope(Dispatchers.Unconfined),
         io = io,
+        computation = Dispatchers.Unconfined,
         clock = CLOCK,
         allDayOffered = flowOf(allDayOffered),
         overrides = emptyFlow(),

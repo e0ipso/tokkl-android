@@ -131,7 +131,12 @@ class EntryFormServerTest {
 
     /** The web app: the same account, straight to the server and past the app's guard. */
     private val web by lazy {
-        TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(account.apiToken), httpClient = OkHttpClient())
+        TogglApiClient(
+            TokklTestServer.url,
+            ApiCredentials.ApiToken(account.apiToken),
+            httpClient = OkHttpClient(),
+            io = Dispatchers.IO,
+        )
     }
 
     /** Two days ago in Madrid, inside the two weeks the phone keeps. */
@@ -157,6 +162,7 @@ class EntryFormServerTest {
                 TokklTestServer.url,
                 ApiCredentials.ApiToken(TokklTestServer.apiToken),
                 httpClient = OkHttpClient(),
+                io = Dispatchers.IO,
             )
             AirplaneMode.set(false, admin)
             try {
@@ -786,6 +792,7 @@ class EntryFormServerTest {
             TokklTestServer.url,
             ApiCredentials.ApiToken(TokklTestServer.apiToken),
             httpClient = OkHttpClient(),
+            io = Dispatchers.IO,
         )
         val url = admin.server.app("admin", "settings")
         if (originalResolution == null) {
@@ -867,7 +874,7 @@ class EntryFormServerTest {
     }
 
     private fun signIn(server: ServerUrl, token: String) {
-        ServerTrustStore(context).confirmCleartext(server)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(server)
         Session(context).save(server, token)
     }
 

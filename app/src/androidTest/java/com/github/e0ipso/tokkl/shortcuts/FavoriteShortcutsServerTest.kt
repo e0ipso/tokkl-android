@@ -35,6 +35,7 @@ import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.widget.NativeWidget
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
@@ -82,7 +83,12 @@ class FavoriteShortcutsServerTest {
 
     /** The web app: the same account, straight to the server and past the app's guard. */
     private val web by lazy {
-        TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(account.apiToken), httpClient = OkHttpClient())
+        TogglApiClient(
+            TokklTestServer.url,
+            ApiCredentials.ApiToken(account.apiToken),
+            httpClient = OkHttpClient(),
+            io = Dispatchers.IO,
+        )
     }
 
     @Before
@@ -99,7 +105,7 @@ class FavoriteShortcutsServerTest {
                 JsonObject.serializer(),
             )
         }.orFail("POST a project").getValue("id").jsonPrimitive.long
-        ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(TokklTestServer.url)
         Session(context).save(TokklTestServer.url, account.apiToken)
     }
 
@@ -107,7 +113,7 @@ class FavoriteShortcutsServerTest {
     fun cleanUp() {
         try {
             if (::account.isInitialized) {
-                ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
+                ServerTrustStore(context, Dispatchers.IO).confirmCleartext(TokklTestServer.url)
                 Session(context).save(TokklTestServer.url, account.apiToken)
                 AirplaneMode.set(false, web)
                 TestAccounts.delete(account)

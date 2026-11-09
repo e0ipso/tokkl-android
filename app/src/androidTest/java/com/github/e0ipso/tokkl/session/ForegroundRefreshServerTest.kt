@@ -23,6 +23,7 @@ import com.github.e0ipso.tokkl.bottomBarItem
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.followNoTimerEvents
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import org.junit.After
@@ -57,7 +58,12 @@ class ForegroundRefreshServerTest {
 
     /** The account straight on the server, past the app's guard and the counters. */
     private val direct by lazy {
-        TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(account.apiToken), httpClient = OkHttpClient())
+        TogglApiClient(
+            TokklTestServer.url,
+            ApiCredentials.ApiToken(account.apiToken),
+            httpClient = OkHttpClient(),
+            io = Dispatchers.IO,
+        )
     }
 
     @Before
@@ -74,7 +80,7 @@ class ForegroundRefreshServerTest {
         account = TestAccounts.create(timezone = "Europe/Madrid")
         val all = RequestCounter(TokklTestServer.url, " HTTP/1.1\r\n").also { this.all = it }
         val me = RequestCounter(all.url, "GET /api/v9/me?with_related_data=true HTTP/1.1").also { this.me = it }
-        ServerTrustStore(context).confirmCleartext(me.url)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(me.url)
         Session(context).save(me.url, account.apiToken)
     }
 
@@ -89,7 +95,7 @@ class ForegroundRefreshServerTest {
                 try {
                     // TestAccounts talks to the server through the app's guard, which follows the session.
                     if (::account.isInitialized) {
-                        ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
+                        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(TokklTestServer.url)
                         Session(context).save(TokklTestServer.url, account.apiToken)
                     }
                 } finally {

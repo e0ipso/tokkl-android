@@ -2,7 +2,6 @@ package com.github.e0ipso.tokkl.platform
 
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.SharingStarted
 import org.koin.core.scope.Scope
@@ -10,11 +9,16 @@ import org.koin.core.scope.Scope
 /** The IO dispatcher, for the Koin definitions of the app and its features. */
 fun Scope.io(): CoroutineDispatcher = get(IoDispatcher)
 
+/** The dispatcher for work that keeps the CPU busy, such as grouping a list of entries. */
+fun Scope.computation(): CoroutineDispatcher = get(DefaultDispatcher)
+
 /**
- * The scope a view model gets, as `viewModelScope` makes it by default: the main thread, and a
- * failed child does not cancel the others. The view model cancels it when it is cleared.
+ * The scope a view model gets, as `viewModelScope` makes it by default: the main thread, here the
+ * graph's [MainDispatcher], and a failed child does not cancel the others. The view model cancels
+ * it when it is cleared.
  */
-fun viewModelCoroutineScope(): CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+fun Scope.viewModelCoroutineScope(): CoroutineScope =
+    CoroutineScope(SupervisorJob() + get<CoroutineDispatcher>(MainDispatcher))
 
 /**
  * How a view model shares a flow that its screen reads: while the screen reads it, and for five

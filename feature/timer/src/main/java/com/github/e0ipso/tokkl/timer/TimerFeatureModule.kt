@@ -20,6 +20,7 @@ import com.github.e0ipso.tokkl.navigation.FeatureEntries
 import com.github.e0ipso.tokkl.navigation.PageBadge
 import com.github.e0ipso.tokkl.picker.pickerSource
 import com.github.e0ipso.tokkl.platform.DefaultNetwork
+import com.github.e0ipso.tokkl.platform.computation
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.platform.offlineIn
 import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
@@ -46,7 +47,7 @@ import org.koin.dsl.module
  * actions' deletes and restores from the Timer page, and the entry form what it opens.
  */
 val timerFeatureModule = module {
-    single { TimerViewStore(androidContext()) }
+    single { TimerViewStore(androidContext(), io()) }
 
     // The Timer page's List or Calendar choice, kept in Tokkl's `timerView` preference. It loads
     // at process start from a file of two values.
@@ -79,6 +80,7 @@ val timerFeatureModule = module {
             olderPages = get(),
             scope = viewModelCoroutineScope(),
             io = io(),
+            computation = computation(),
             clock = get(),
             ids = changes,
             overrides = params.overrides(),
@@ -108,6 +110,7 @@ val timerFeatureModule = module {
             weeks = get(),
             scope = viewModelCoroutineScope(),
             io = io(),
+            computation = computation(),
             clock = get(),
             // From the capabilities once they have loaded.
             allDayOffered = capabilities.allDayOffers(),

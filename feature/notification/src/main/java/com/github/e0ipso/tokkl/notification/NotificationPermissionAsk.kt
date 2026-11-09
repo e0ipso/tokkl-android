@@ -61,7 +61,7 @@ class NotificationPermissionAsk(
         /** The question as the app asks it on this device, with its record read and written on [io]. */
         fun forApp(context: Context, io: CoroutineContext): NotificationPermissionAsk {
             val app = context.applicationContext
-            return NotificationPermissionAsk(Build.VERSION.SDK_INT, NotificationPermissionStore(app), io) {
+            return NotificationPermissionAsk(Build.VERSION.SDK_INT, NotificationPermissionStore(app, io), io) {
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
                     app.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
             }
@@ -76,9 +76,10 @@ class NotificationPermissionAsk(
  *
  * Each call reads or writes the file on the I/O dispatcher.
  */
-class NotificationPermissionStore(context: Context) : NotificationPermissionAsk.AskRecord {
+class NotificationPermissionStore(context: Context, private val io: CoroutineContext) :
+    NotificationPermissionAsk.AskRecord {
 
-    private val file = PreferencesFile(context, FILE_NAME)
+    private val file = PreferencesFile(context, FILE_NAME, io)
 
     override suspend fun asked(): Boolean = file.read { getBoolean(KEY_ASKED, false) }
 

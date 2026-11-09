@@ -15,12 +15,12 @@ import android.os.SystemClock
 import com.github.e0ipso.tokkl.core.timersync.R
 import com.github.e0ipso.tokkl.platform.DefaultNetwork
 import com.github.e0ipso.tokkl.platform.IoDispatcher
+import com.github.e0ipso.tokkl.platform.MainDispatcher
 import com.github.e0ipso.tokkl.platform.NetworkReport
 import com.github.e0ipso.tokkl.platform.mainActivityIntent
 import com.github.e0ipso.tokkl.timerstate.TimerStateSource
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
@@ -50,7 +50,8 @@ import com.github.e0ipso.tokkl.core.ui.R as UiR
 class TimerSyncService : Service() {
 
     /** Cancelled in [onDestroy]. */
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val main: CoroutineDispatcher by inject(MainDispatcher)
+    private val scope by lazy { CoroutineScope(SupervisorJob() + main) }
     private val follower: TimerSyncFollower by inject()
     private val timerSync: TimerSync<TimerStateSource> by inject()
     private val io: CoroutineDispatcher by inject(IoDispatcher)

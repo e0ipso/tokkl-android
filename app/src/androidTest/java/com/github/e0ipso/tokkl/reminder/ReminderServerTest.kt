@@ -40,6 +40,7 @@ import com.github.e0ipso.tokkl.preferences.StoredReminderPreferences
 import com.github.e0ipso.tokkl.preferences.reminderPreferences
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -76,7 +77,7 @@ class ReminderServerTest {
 
     @Before fun prepare() {
         assertTrue(runBlocking { app.signOut.run() })
-        ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(TokklTestServer.url)
         Session(context).save(TokklTestServer.url, TokklTestServer.apiToken)
         account = TestAccounts.create("Europe/Madrid")
         signIn(TokklTestServer.url)
@@ -91,13 +92,13 @@ class ReminderServerTest {
         } finally {
             assertTrue("production sign-out succeeds", runBlocking { app.signOut.run() })
         }
-        runBlocking { assertNull(ReminderStore(context).load()) }
-        runBlocking { assertNull(ReminderStore(context).loadTimer()) }
+        runBlocking { assertNull(ReminderStore(context, Dispatchers.IO).load()) }
+        runBlocking { assertNull(ReminderStore(context, Dispatchers.IO).loadTimer()) }
         assertTrue(work.getWorkInfosForUniqueWork(ReminderWork.NAME).get().all { it.state.isFinished })
         assertNull(notification())
     }
     private fun signIn(url: ServerUrl) {
-        ServerTrustStore(context).confirmCleartext(url)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(url)
         Session(context).save(url, account.apiToken)
     }
     private fun refresh() = runBlocking { app.accountRefresh.refresh().join() }
@@ -276,7 +277,7 @@ class ReminderServerTest {
     }
 
     @Test fun preferenceRoundtripAndOfflineRetryPreserveOtherKeys() {
-        runBlocking { assertTrue(ReminderStore(context).load()!!.shared) }
+        runBlocking { assertTrue(ReminderStore(context, Dispatchers.IO).load()!!.shared) }
         runBlocking {
             account.client.send(
                 HttpMethod.POST,
@@ -297,7 +298,7 @@ class ReminderServerTest {
         )
         signIn(NO_ROUTE)
         change(ReminderPreferences(true, 1))
-        runBlocking { assertTrue(ReminderStore(context).load()!!.unsent) }
+        runBlocking { assertTrue(ReminderStore(context, Dispatchers.IO).load()!!.unsent) }
         signIn(TokklTestServer.url)
         refresh()
         // Join the retry path without changing the values again or polling a file.
@@ -307,7 +308,7 @@ class ReminderServerTest {
                 true,
             ).join()
         }
-        runBlocking { assertFalse(ReminderStore(context).load()!!.unsent) }
+        runBlocking { assertFalse(ReminderStore(context, Dispatchers.IO).load()!!.unsent) }
         val result = preferences()
         assertEquals(
             ReminderPreferences(true, 1),
@@ -317,11 +318,11 @@ class ReminderServerTest {
     }
 
     @Test fun preferenceStoreRoundtripClampsAndClearsAccountData() = runBlocking<Unit> {
-        val store = ReminderStore(context)
+        val store = ReminderStore(context, Dispatchers.IO)
         store.save(StoredReminderPreferences(ReminderPreferences(false, 999), true, false))
         assertEquals(StoredReminderPreferences(ReminderPreferences(false, 168), true, false), store.load())
         store.saveTimer(ReminderTimer(42, 500, 1000, true))
-        assertEquals(ReminderTimer(42, 500, 1000, true), ReminderStore(context).loadTimer())
+        assertEquals(ReminderTimer(42, 500, 1000, true), ReminderStore(context, Dispatchers.IO).loadTimer())
         store.clear()
         assertNull(store.load())
         assertNull(store.loadTimer())

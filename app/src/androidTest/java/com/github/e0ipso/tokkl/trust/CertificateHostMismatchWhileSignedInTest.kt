@@ -19,6 +19,7 @@ import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.core.trust.R
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import org.junit.Assert.assertEquals
@@ -72,8 +73,11 @@ class CertificateHostMismatchWhileSignedInTest {
         assertFalse("a certificate prompt shows", exists(hasText(string(R.string.sign_in_certificate_title))))
         assertFalse("a certificate prompt shows", exists(hasText(string(R.string.sign_in_certificate_changed_title))))
         assertEquals(ApiError.CertificateHostMismatch(HOST), (me() as? ApiResult.Failure)?.error)
-        assertNull("a pin for $HOST", ServerTrustStore(context).pinnedSha256(HOST, relay.localPort))
-        assertNull("a pin for the proxy", ServerTrustStore(context).pinnedSha256(proxy.host, proxy.port))
+        assertNull("a pin for $HOST", ServerTrustStore(context, Dispatchers.IO).pinnedSha256(HOST, relay.localPort))
+        assertNull(
+            "a pin for the proxy",
+            ServerTrustStore(context, Dispatchers.IO).pinnedSha256(proxy.host, proxy.port),
+        )
     }
 
     /** `GET /api/v9/me` with the stored session's client, as the app sends it. */

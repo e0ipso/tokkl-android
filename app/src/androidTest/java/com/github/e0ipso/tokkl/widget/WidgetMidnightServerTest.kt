@@ -23,6 +23,7 @@ import com.github.e0ipso.tokkl.timer.TimerAcceptanceFixture
 import com.github.e0ipso.tokkl.timer.TimerTotalsOf
 import com.github.e0ipso.tokkl.timerstate.timerPeriodTotals
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -127,7 +128,7 @@ class WidgetMidnightServerTest {
             driver.setInitialDelayMet(check.id)
             driver.setAllConstraintsMet(check.id)
             host.await("running check redraws a new account day") {
-                runBlocking { WidgetStore(fixture.context).load() } != oldKey
+                runBlocking { WidgetStore(fixture.context, Dispatchers.IO).load() } != oldKey
             }
             val after = ready()
             val afterDay = after.day!!
