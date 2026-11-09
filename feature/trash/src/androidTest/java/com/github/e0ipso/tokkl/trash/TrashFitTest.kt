@@ -20,9 +20,9 @@ import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
-import com.github.e0ipso.tokkl.api.TrashEntry
 import com.github.e0ipso.tokkl.feature.trash.R
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.ServerProblem
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
@@ -34,6 +34,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
 import java.time.DayOfWeek
+import java.time.Duration
+import java.time.Instant
 
 /**
  * The trash page, its question and its offline state at Android's largest font scale, 200%: no
@@ -143,22 +145,21 @@ class TrashFitTest {
             timeResolutionMinutes = null,
         )
         val ENTRIES = listOf(
-            TrashEntry(
+            DeletedEntry(
                 id = EntryId(1),
                 description = "Review the quarterly report with the whole team",
-                start = "2026-10-19T07:00:00+00:00",
-                stop = "2026-10-19T08:30:00+00:00",
-                duration = 5400,
-                projectId = 3,
+                projectId = ProjectId(3),
                 projectName = "Website redesign for the new brand",
-                deletedAt = "2026-10-20T08:00:00+00:00",
+                start = Instant.parse("2026-10-19T07:00:00Z"),
+                duration = Duration.ofSeconds(5400),
+                deletedAt = Instant.parse("2026-10-20T08:00:00Z"),
             ),
-            TrashEntry(
+            // Still running when it was deleted.
+            DeletedEntry(
                 id = EntryId(2),
                 description = null,
-                start = "2025-12-30T16:00:00+00:00",
-                duration = -1767110400,
-                deletedAt = "2026-01-02T09:15:00+00:00",
+                start = Instant.parse("2025-12-30T16:00:00Z"),
+                deletedAt = Instant.parse("2026-01-02T09:15:00Z"),
             ),
         )
         val LOADED = TrashState(entries = ENTRIES)

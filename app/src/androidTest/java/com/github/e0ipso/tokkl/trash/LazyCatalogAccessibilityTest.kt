@@ -16,7 +16,6 @@ import androidx.core.view.WindowCompat
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
-import com.github.e0ipso.tokkl.api.TrashEntry
 import com.github.e0ipso.tokkl.feature.trash.R
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.Tag
@@ -27,6 +26,7 @@ import com.github.e0ipso.tokkl.tags.TagsData
 import com.github.e0ipso.tokkl.tags.TagsPageState
 import com.github.e0ipso.tokkl.tags.TagsScreen
 import com.github.e0ipso.tokkl.tags.TagsState
+import com.github.e0ipso.tokkl.trash.DeletedEntry
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import org.junit.Assert.assertEquals
@@ -34,6 +34,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.Duration
+import java.time.Instant
 import com.github.e0ipso.tokkl.feature.tags.R as TagsR
 
 /** Stable row identity and reading order deep in both lists at Android's largest font scale. */
@@ -56,7 +58,12 @@ class LazyCatalogAccessibilityTest {
     fun trashKeepsItsVisibleEntryAndReadingOrderAfterRemovingAnEarlierEntry() {
         val entries = mutableStateOf(
             List(1000) { index ->
-                TrashEntry(EntryId(index.toLong()), "Trash $index", "2026-10-19T08:00:00Z", "2026-10-19T08:01:00Z", 60)
+                DeletedEntry(
+                    EntryId(index.toLong()),
+                    "Trash $index",
+                    start = Instant.parse("2026-10-19T08:00:00Z"),
+                    duration = Duration.ofSeconds(60),
+                )
             },
         )
         compose.activityRule.scenario.onActivity { WindowCompat.enableEdgeToEdge(it.window) }

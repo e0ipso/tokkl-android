@@ -14,7 +14,8 @@ import java.io.File
  *
  * Two rules keep the model between the screens and the storage and wire formats below them. The
  * cache's Room rows never leave core:cache, which maps them to the model. A feature's view models
- * and composables import no core:api wire type, apart from [SERVER_STATE].
+ * and composables import no core:api wire type: each feature's repository maps the server's answers
+ * to its own types, and core:timerstate maps the timer state to the model's.
  */
 class PackageLayersTest {
 
@@ -99,7 +100,7 @@ class PackageLayersTest {
         assertTrue("the features have screens", screens.size > 10)
         val imported = screens.flatMap { (_, file) ->
             API_IMPORT.findAll(file.readText()).map { it.groupValues[1] }
-                .filter { it in wire && it !in SERVER_STATE }
+                .filter { it in wire }
                 .map { "${file.relativeTo(ROOT_DIR)}: $it" }
         }
 
@@ -193,13 +194,6 @@ class PackageLayersTest {
             Regex("""^\s*(?:api|implementation|ksp)\(libs\.androidx\.room""", RegexOption.MULTILINE)
 
         private val API_IMPORT = Regex("""^import com\.github\.e0ipso\.tokkl\.api\.(\w+)$""", RegexOption.MULTILINE)
-
-        /**
-         * The wire types a screen may import. The trash page shows each deleted entry as the
-         * server lists it, for display only. The timer state reaches the screens as the model's
-         * types, which core:timerstate maps it to.
-         */
-        val SERVER_STATE = setOf("TrashEntry")
 
         /** The layer of [pkg], counted from 0 for the lowest. */
         fun layerOf(pkg: String): Int = LAYERS.indexOfFirst { pkg in it }.also {

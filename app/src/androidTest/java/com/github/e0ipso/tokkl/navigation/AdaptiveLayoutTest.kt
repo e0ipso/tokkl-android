@@ -34,7 +34,6 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createComposeRule
-import com.github.e0ipso.tokkl.api.TrashEntry
 import com.github.e0ipso.tokkl.appConfiguredServer
 import com.github.e0ipso.tokkl.appHttp
 import com.github.e0ipso.tokkl.calendar.CalendarContent
@@ -90,6 +89,7 @@ import com.github.e0ipso.tokkl.timer.TimerBarContent
 import com.github.e0ipso.tokkl.timer.TimerScreen
 import com.github.e0ipso.tokkl.timer.TimerState
 import com.github.e0ipso.tokkl.timer.TimerView
+import com.github.e0ipso.tokkl.trash.DeletedEntry
 import com.github.e0ipso.tokkl.trash.TrashActions
 import com.github.e0ipso.tokkl.trash.TrashPageState
 import com.github.e0ipso.tokkl.trash.TrashRoute
@@ -110,6 +110,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import java.time.Clock
+import java.time.Duration
+import java.time.Instant
 import java.time.LocalDate
 import kotlin.math.abs
 import com.github.e0ipso.tokkl.core.ui.R as UiR
@@ -554,15 +556,14 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
 
         val TRASH = TrashState(
             entries = listOf(
-                TrashEntry(
+                DeletedEntry(
                     id = EntryId(1),
                     description = "Review the quarterly report with the whole team",
-                    start = "2026-10-12T07:00:00+00:00",
-                    stop = "2026-10-12T08:30:00+00:00",
-                    duration = 5400,
-                    projectId = 3,
+                    projectId = ProjectId(3),
                     projectName = "Website redesign for the new brand",
-                    deletedAt = "2026-10-14T08:00:00+00:00",
+                    start = Instant.parse("2026-10-12T07:00:00Z"),
+                    duration = Duration.ofSeconds(5400),
+                    deletedAt = Instant.parse("2026-10-14T08:00:00Z"),
                 ),
             ),
         )

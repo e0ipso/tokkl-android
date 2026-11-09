@@ -6,7 +6,6 @@ import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.HttpStatus
-import com.github.e0ipso.tokkl.api.TrashEntry
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.platform.AppForeground
@@ -50,7 +49,7 @@ sealed interface TrashChange {
  */
 @Immutable
 data class TrashState(
-    val entries: List<TrashEntry>? = null,
+    val entries: List<DeletedEntry>? = null,
     val loading: Boolean = false,
     val loadProblem: ServerProblem? = null,
     val confirmingEmpty: Boolean = false,
@@ -79,7 +78,7 @@ data class TrashPageState(
     val canChange: Boolean get() = trash.canChange && !offline
 
     /** The deleted entries once loaded, and none while the server is needed: the phone keeps no copy. */
-    val entries: List<TrashEntry>? get() = trash.entries.takeUnless { serverNeeded }
+    val entries: List<DeletedEntry>? get() = trash.entries.takeUnless { serverNeeded }
 
     /** Whether a notice shows above the list. */
     val hasNotices: Boolean
@@ -212,7 +211,7 @@ class TrashViewModel(
      */
     private fun <R> send(
         request: suspend (TrashRepository) -> ApiResult<R>,
-        apply: (List<TrashEntry>, R) -> List<TrashEntry>,
+        apply: (List<DeletedEntry>, R) -> List<DeletedEntry>,
         done: (R) -> TrashChange,
         restored: Boolean = false,
     ) {

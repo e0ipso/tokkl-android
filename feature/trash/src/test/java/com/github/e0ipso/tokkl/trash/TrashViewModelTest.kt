@@ -2,9 +2,9 @@ package com.github.e0ipso.tokkl.trash
 
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.api.TrashEntry
 import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.platform.TestApp
 import com.github.e0ipso.tokkl.platform.TestScreen
 import com.github.e0ipso.tokkl.session.CountingRefresh
@@ -22,6 +22,8 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.IOException
+import java.time.Duration
+import java.time.Instant
 
 /**
  * The trash page's model over a repository that answers each call as the test sets it, a 404
@@ -125,7 +127,7 @@ class TrashViewModelTest {
         model.purge(EntryId(1))
 
         assertEquals(ServerProblem.Refused("Time entry not found in trash"), model.state.value.changeProblem)
-        assertEquals(emptyList<TrashEntry>(), model.state.value.entries)
+        assertEquals(emptyList<DeletedEntry>(), model.state.value.entries)
         assertTrue("a missing entry is no missing trash", capabilities.state.value.trash)
     }
 
@@ -143,7 +145,7 @@ class TrashViewModelTest {
         model.empty()
 
         assertTrue(PURGE_ALL in trash.calls)
-        assertEquals(emptyList<TrashEntry>(), model.state.value.entries)
+        assertEquals(emptyList<DeletedEntry>(), model.state.value.entries)
         assertFalse(model.state.value.confirmingEmpty)
         assertEquals(TrashChange.Emptied(2), model.state.value.done)
     }
@@ -189,27 +191,26 @@ class TrashViewModelTest {
         assertEquals(2, trash.calls.count { it == LIST })
     }
 
-    /** A deleted entry as Tokkl lists it. */
-    private fun entry(id: Long, description: String?) = TrashEntry(
+    /** A deleted entry as the repository gives it. */
+    private fun entry(id: Long, description: String?) = DeletedEntry(
         id = EntryId(id),
         description = description,
-        start = "2026-10-19T09:00:00+00:00",
-        stop = "2026-10-19T10:30:00+00:00",
-        duration = 5400,
-        projectId = 3,
+        projectId = ProjectId(3),
         projectName = "Website",
-        deletedAt = "2026-10-20T08:00:00+00:00",
+        start = Instant.parse("2026-10-19T09:00:00Z"),
+        duration = Duration.ofSeconds(5400),
+        deletedAt = Instant.parse("2026-10-20T08:00:00Z"),
     )
 
     /** Answers each call as set, and a 404 as a server without the trash does otherwise. */
     private class AnsweringTrash : TrashRepository {
-        var list: ApiResult<List<TrashEntry>> = NOT_FOUND
+        var list: ApiResult<List<DeletedEntry>> = NOT_FOUND
         val restored = mutableMapOf<EntryId, ApiResult<Unit>>()
         val purged = mutableMapOf<EntryId, ApiResult<Int>>()
         var purgedAll: ApiResult<Int> = NOT_FOUND
         val calls = mutableListOf<String>()
 
-        override suspend fun list(): ApiResult<List<TrashEntry>> = list.also { calls += LIST }
+        override suspend fun list(): ApiResult<List<DeletedEntry>> = list.also { calls += LIST }
 
         override suspend fun restore(id: EntryId): ApiResult<Unit> =
             (restored[id] ?: NOT_FOUND).also { calls += "restore $id" }

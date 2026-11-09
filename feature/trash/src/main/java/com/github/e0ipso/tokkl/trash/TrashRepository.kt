@@ -14,7 +14,7 @@ import com.github.e0ipso.tokkl.session.signedIn
 interface TrashRepository {
 
     /** The deleted entries, the most recently deleted first, at most [LIST_LIMIT] of them. */
-    suspend fun list(): ApiResult<List<TrashEntry>>
+    suspend fun list(): ApiResult<List<DeletedEntry>>
 
     /** Puts entry [id] back among the time entries. */
     suspend fun restore(id: EntryId): ApiResult<Unit>
@@ -38,7 +38,10 @@ interface TrashRepository {
  */
 class ServerTrashRepository(private val client: ApiClientProvider) : TrashRepository {
 
-    override suspend fun list() = client.signedIn { it.trash.list() }
+    /** Each row as the page shows it ([deleted]). */
+    override suspend fun list() = client.signedIn { api ->
+        api.trash.list().map { rows -> rows.map(TrashEntry::deleted) }
+    }
 
     /** Tokkl answers with the entry, which the page does not need. */
     override suspend fun restore(id: EntryId) = client.signedIn { it.trash.restore(id) }

@@ -19,7 +19,6 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
-import com.github.e0ipso.tokkl.api.TrashEntry
 import com.github.e0ipso.tokkl.catalog.CatalogEmpty
 import com.github.e0ipso.tokkl.catalog.CatalogNotices
 import com.github.e0ipso.tokkl.catalog.CatalogPage
@@ -36,8 +35,6 @@ import com.github.e0ipso.tokkl.ui.TokklGhostButton
 import com.github.e0ipso.tokkl.ui.TokklIconButton
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.Instant
-import java.time.OffsetDateTime
-import java.time.format.DateTimeParseException
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
@@ -177,7 +174,7 @@ private fun changeText(change: TrashChange): String = when (change) {
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun TrashRow(
-    entry: TrashEntry,
+    entry: DeletedEntry,
     time: AccountTime?,
     format: DurationFormat,
     twelveHour: Boolean,
@@ -191,9 +188,7 @@ private fun TrashRow(
     val details = buildList {
         add(entry.projectName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.trash_no_project))
         if (time != null) {
-            parseInstant(
-                entry.start,
-            )?.let {
+            entry.start?.let {
                 add(
                     stringResource(
                         R.string.trash_started,
@@ -203,19 +198,9 @@ private fun TrashRow(
                 )
             }
         }
-        add(
-            if (entry.stop == null || entry.duration < 0) {
-                stringResource(
-                    R.string.trash_running,
-                )
-            } else {
-                formatDuration(entry.duration, format)
-            },
-        )
+        add(entry.duration?.let { formatDuration(it.seconds, format) } ?: stringResource(R.string.trash_running))
         if (time != null) {
-            entry.deletedAt?.let(
-                ::parseInstant,
-            )?.let {
+            entry.deletedAt?.let {
                 add(
                     stringResource(
                         R.string.trash_deleted_at,
@@ -271,11 +256,4 @@ private fun TrashRow(
 private fun date(instant: Instant, time: AccountTime, words: DateWords): String {
     val day = time.local(instant).toLocalDate()
     return if (day.year == time.today().year) words.short(day) else words.shortWithYear(day)
-}
-
-/** Tokkl writes `+00:00` and Toggl `Z`; both parse here. Null for anything else. */
-private fun parseInstant(text: String): Instant? = try {
-    OffsetDateTime.parse(text).toInstant()
-} catch (e: DateTimeParseException) {
-    null
 }
