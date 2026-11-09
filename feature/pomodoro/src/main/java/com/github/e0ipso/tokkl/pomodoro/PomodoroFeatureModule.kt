@@ -127,17 +127,16 @@ val pomodoroFeatureModule = module {
         val changes = get<ChangeQueue>()
         val cache = get<AccountCache>()
         val scope = viewModelCoroutineScope()
+        val held = get<AccountTimerStates>().held
         PomodoroViewModel(
-            held = get<AccountTimerStates>().held,
+            held = held,
             controls = get<AccountTimerStates>().controls,
-            actions = get<TimerActions>(),
-            changes = changes,
+            session = PomodoroSessionEdits(held, actions = get<TimerActions>(), changes = changes, sender = get()),
             defaults = get<PomodoroDefaultsSetting>().defaults,
             settings = get<AccountSettingsSource>().state,
             unsent = changes.unsentCount,
             refused = changes.held,
             scope = scope,
-            sender = get(),
             exactAlarms = get(),
             picker = pickerSource(cache.projects, cache.clients, cache.tasks, cache.tags),
             offline = get<DefaultNetwork>().offlineIn(scope),

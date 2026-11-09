@@ -3,14 +3,11 @@ package com.github.e0ipso.tokkl.pomodoro
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.cache.HeldChange
-import com.github.e0ipso.tokkl.cache.QueueSender
-import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.entryfields.entryLabels
 import com.github.e0ipso.tokkl.entryfields.withPicked
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.PomodoroSession
-import com.github.e0ipso.tokkl.model.RunningEntryIdentity
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.fields
 import com.github.e0ipso.tokkl.picker.Picked
@@ -19,7 +16,6 @@ import com.github.e0ipso.tokkl.platform.whileShown
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
-import com.github.e0ipso.tokkl.timerstate.SessionActions
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import com.github.e0ipso.tokkl.timerstate.TimerControls
 import kotlinx.coroutines.CoroutineScope
@@ -34,30 +30,24 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
 
 /**
- * The Pomodoro page's view and controller of the server's session. The server owns the session:
- * this view model shows the held timer state and sends Start, Next phase and End straight to it
- * through [actions], and applies no phase rule of its own. Field edits of the open pomodoro go
- * to the running entry through [changes], the queue every running-entry edit uses, and the
- * server carries them to the later pomodoros.
- *
- * Next phase and End send the revision the page showed. When the user's own edits are still on
- * their way, they first go to the server and the view model reads the revision they produced,
- * because every edit of the running entry moves it. It sends the new revision only while the phase is the
- * one the page showed, and otherwise tells the user another device changed the timer.
+ * The Pomodoro page's view of the server's session. The server owns the session: this view model
+ * shows the held timer state, hands Start, Next phase and End and the open pomodoro's field edits
+ * to [session], which sends them, and applies no phase rule of its own. It maps each result to
+ * what the page shows: a refused Next phase or End, as after another device changed the timer,
+ * says so.
  *
  * All public methods are called on the main thread, as for the other screens' view models. The
  * start form's draft and the typed fields outlive a rotation, until the account signs out.
  *
  * @param held the account's held timer state, null before the first one.
  * @param controls what the shared timer controls show: the cache's running entry, with queued edits.
- * @param sender sends the change queue now and waits for it.
+ * @param session sends the session's commands and the open pomodoro's edits.
  * @param exactAlarms whether exact alarms are refused, until the page reports the grants itself.
  * @param picker the cached projects, clients, tasks and tags, which the page's picker offers and
  *   its project and task are named from.
@@ -66,14 +56,12 @@ import kotlinx.coroutines.withTimeoutOrNull
 class PomodoroViewModel(
     held: Flow<HeldTimerState?>,
     controls: Flow<TimerControls>,
-    private val actions: SessionActions,
-    private val changes: RunningEntryChanges,
+    private val session: PomodoroSessionEdits,
     private val defaults: StateFlow<PomodoroDefaults>,
     settings: StateFlow<AccountSettings?>,
     unsent: Flow<Int>,
     refused: Flow<List<HeldChange>>,
     scope: CoroutineScope,
-    private val sender: QueueSender,
     private val exactAlarms: ExactAlarmAccess,
     picker: Flow<PickerSource>,
     private val offline: StateFlow<Boolean>,
@@ -118,10 +106,6 @@ class PomodoroViewModel(
     /** The start form's fields. They follow the open pomodoro, so the form keeps them after End. */
     private var draft = EntryFields()
     private var edit: Edit? = null
-    private val fieldWrites = mutableSetOf<Job>()
-
-    /** Whether an edit reached the queue that the server may not have yet. */
-    private var unflushed = false
 
     init {
         modelScope.launch { held.collect { value -> accept(value) } }
@@ -254,7 +238,7 @@ class PomodoroViewModel(
         return write(typed)
     }
 
-    /** Queues [change] for the running entry with the identity the cache holds it under. */
+    /** Queues [change] for the open pomodoro, and shows it until the cache does. */
     private fun write(change: Edit): Job? {
         val pomodoro = state.value.pomodoro
         val entry = pomodoro?.let(::openEntry)?.takeIf { it.id == change.entryId }
@@ -267,11 +251,9 @@ class PomodoroViewModel(
         val sent = change.copy(sent = true)
         edit = sent
         publish()
-        val write = modelScope.launch(start = CoroutineStart.UNDISPATCHED) {
+        return modelScope.launch(start = CoroutineStart.UNDISPATCHED) {
             try {
-                val identity = RunningEntryIdentity(entry.id, entry.workspaceId, entry.start)
-                if (changes.updateRunning(identity, change.fields, entry.start)) {
-                    unflushed = true
+                if (session.editOpenPomodoro(entry, change.fields)) {
                     // Keeps the typed fields on screen until the cache shows them.
                     withTimeoutOrNull(SETTLE_MS) {
                         cached.first { row ->
@@ -287,9 +269,6 @@ class PomodoroViewModel(
                 }
             }
         }
-        fieldWrites += write
-        write.invokeOnCompletion { fieldWrites -= write }
-        return write
     }
 
     /**
@@ -303,44 +282,27 @@ class PomodoroViewModel(
         val lengths = before.lengths.sessionLengths() ?: return null
         val workspace = before.workspaceId ?: return null
         return command(PomodoroAction.START) {
-            actions.startSession(
-                workspace,
-                before.fields,
-                lengths,
-            ).also { if (it == TimerActionResult.Done) onStarted() }
-        }
-    }
-
-    fun next(shown: PomodoroShown? = state.value.shown): Job? = finish(PomodoroAction.NEXT, shown, actions::nextPhase)
-
-    fun end(shown: PomodoroShown? = state.value.shown): Job? = finish(PomodoroAction.END, shown, actions::endSession)
-
-    private fun finish(action: PomodoroAction, shown: PomodoroShown?, send: suspend (Long) -> TimerActionResult): Job? {
-        val current = state.value
-        if (shown == null || current.loading || current.busy) return null
-        return command(action) {
-            val revision = revisionToSend(shown)
-            if (revision == null) TimerActionResult.Refused else send(revision)
+            session.start(workspace, before.fields, lengths).also { if (it == TimerActionResult.Done) onStarted() }
         }
     }
 
     /**
-     * The revision Next phase or End sends: the one the page showed, or after the user's own edits
-     * the one the server gave them, which they moved. Null when the session left the phase the
-     * page showed meanwhile. Sending the edits first keeps them on the pomodoro this action ends,
-     * and lets Next phase carry them to the next.
+     * Confirms the phase [shown], which the page drew, and starts the next one. The user's own
+     * edits reach the server first; a phase that moved meanwhile ends in a refusal.
      */
-    private suspend fun revisionToSend(shown: PomodoroShown): Long? {
-        fieldWrites.toList().joinAll()
-        if (!unflushed) return shown.revision
-        unflushed = false
-        sender.sendQueued()
-        actions.read()
-        val moved = withTimeoutOrNull(REFRESH_MS) {
-            state.first { it.shown.let { now -> now == null || now.revision > shown.revision } }
-        }
-        val latest = (moved ?: state.value).shown ?: return null
-        return if (latest.phaseStart == shown.phaseStart) latest.revision else null
+    fun next(shown: PomodoroShown? = state.value.shown): Job? = finish(PomodoroAction.NEXT, shown, session::next)
+
+    /** Ends the session [shown], which the page drew, after the user's own edits. */
+    fun end(shown: PomodoroShown? = state.value.shown): Job? = finish(PomodoroAction.END, shown, session::end)
+
+    private fun finish(
+        action: PomodoroAction,
+        shown: PomodoroShown?,
+        send: suspend (PomodoroShown) -> TimerActionResult,
+    ): Job? {
+        val current = state.value
+        if (shown == null || current.loading || current.busy) return null
+        return command(action) { send(shown) }
     }
 
     private fun command(action: PomodoroAction, send: suspend () -> TimerActionResult): Job {
@@ -368,8 +330,5 @@ class PomodoroViewModel(
     private companion object {
         /** How long typed fields stay on screen waiting for the cache to show them. */
         const val SETTLE_MS = 5_000L
-
-        /** How long Next phase waits for the revision the user's own edits produced. */
-        const val REFRESH_MS = 3_000L
     }
 }

@@ -167,8 +167,9 @@ class PomodoroViewModelTest {
     fun nothingStartsUntilTheHeldStateAndTheCacheHaveBeenRead() {
         val f = idle()
         val unread = PomodoroViewModel(
-            emptyFlow(), emptyFlow(), f.server, f.changes, f.defaults, f.settings, f.unsent, f.refused, f.scope,
-            sender = {}, exactAlarms = { false }, picker = flowOf(PickerSource()), offline = MutableStateFlow(false),
+            emptyFlow(), emptyFlow(), PomodoroSessionEdits(emptyFlow(), f.server, f.changes, sender = {}), f.defaults,
+            f.settings, f.unsent, f.refused, f.scope,
+            exactAlarms = { false }, picker = flowOf(PickerSource()), offline = MutableStateFlow(false),
         )
         assertTrue(unread.state.value.loading)
         assertFalse(unread.state.value.canStart)

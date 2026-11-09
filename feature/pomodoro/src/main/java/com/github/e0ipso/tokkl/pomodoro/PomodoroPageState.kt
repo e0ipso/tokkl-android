@@ -52,6 +52,12 @@ data class PomodoroProblem(val action: PomodoroAction, val result: TimerActionRe
  */
 data class PomodoroShown(val revision: Long, val phaseStart: Instant, val entryId: EntryId)
 
+/** What a page drawn from this state shows of its session, or null without one. */
+internal fun HeldTimerState.shown(): PomodoroShown? {
+    val session = pomodoro ?: return null
+    return PomodoroShown(revision, session.phase.start, session.entryId)
+}
+
 @Immutable
 data class PomodoroPageState(
     val loading: Boolean = true,
@@ -78,12 +84,7 @@ data class PomodoroPageState(
     /** The server's session, or null without one. */
     val pomodoro: PomodoroSession? get() = held?.pomodoro
 
-    val shown: PomodoroShown?
-        get() {
-            val state = held ?: return null
-            val session = state.pomodoro ?: return null
-            return PomodoroShown(state.revision, session.phase.start, session.entryId)
-        }
+    val shown: PomodoroShown? get() = held?.shown()
 
     /** The session's workspace while it runs, and the account's default for a new one. */
     val workspaceId: WorkspaceId?

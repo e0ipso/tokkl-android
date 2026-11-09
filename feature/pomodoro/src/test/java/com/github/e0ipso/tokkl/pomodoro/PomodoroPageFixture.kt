@@ -206,9 +206,9 @@ internal class PageFixture(
     val queueSends = CopyOnWriteArrayList<String>()
     var alarmsDenied = false
     val picker = MutableStateFlow(PickerSource())
+    val session = PomodoroSessionEdits(held, server, changes, sender = { queueSends += "send" })
     val page = PomodoroViewModel(
-        held, controls, server, changes, defaults, settings, unsent, refused, scope,
-        sender = { queueSends += "send" },
+        held, controls, session, defaults, settings, unsent, refused, scope,
         exactAlarms = { alarmsDenied },
         picker = picker,
         offline = MutableStateFlow(false),
