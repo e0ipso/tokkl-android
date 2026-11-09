@@ -13,7 +13,7 @@ import com.github.e0ipso.tokkl.feature.notification.R
 import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.platform.finishOnce
 import com.github.e0ipso.tokkl.platform.mainActivityIntent
-import com.github.e0ipso.tokkl.timernotice.showTimerActionFailure
+import com.github.e0ipso.tokkl.timernotice.TimerFailureNotice
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -123,9 +123,9 @@ class ReminderActionReceiver :
     private val reminder: ReminderSync by inject()
     private val scope: CoroutineScope by inject()
     private val io: CoroutineDispatcher by inject(IoDispatcher)
+    private val failures: TimerFailureNotice by inject()
 
     override fun onReceive(context: Context, intent: Intent) {
-        val app = context.applicationContext
         val finish = goAsync().finishOnce()
         scope.launch(io) {
             try {
@@ -135,7 +135,7 @@ class ReminderActionReceiver :
                     stopTimer = intent.getBooleanExtra(ReminderNotifier.STOP, false),
                     pauseTimer = intent.getBooleanExtra(ReminderNotifier.PAUSE, false),
                     beforeRequest = finish,
-                )?.let { showTimerActionFailure(app, it) }
+                )?.let { failures.show(it) }
             } catch (_: SQLiteException) {
                 // The disk refused Stop. Keep the notification so the user can try again.
             } catch (_: IOException) {

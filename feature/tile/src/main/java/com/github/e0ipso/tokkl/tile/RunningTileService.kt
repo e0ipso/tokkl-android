@@ -6,7 +6,7 @@ import android.service.quicksettings.TileService
 import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.platform.IoDispatcher
-import com.github.e0ipso.tokkl.timernotice.showTimerActionFailure
+import com.github.e0ipso.tokkl.timernotice.TimerFailureNotice
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.SurfaceTap
 import com.github.e0ipso.tokkl.timerstate.TimerSurfaceActions
@@ -54,6 +54,7 @@ class RunningTileService : TileService() {
     private val tileRefresh: TileRefresh by inject()
     private val appScope: CoroutineScope by inject()
     private val io: CoroutineDispatcher by inject(IoDispatcher)
+    private val failures: TimerFailureNotice by inject()
 
     /** Cancelled in [onDestroy], with the listening interval's collection. */
     private val scope = MainScope()
@@ -84,11 +85,10 @@ class RunningTileService : TileService() {
     override fun onClick() {
         super.onClick()
         val showing = shown ?: return
-        val app = applicationContext
         appScope.launch(io) {
             try {
                 val tap = tapTile(showing, surfaceActions, changes)
-                if (tap is SurfaceTap.Request) tap.send()?.let { showTimerActionFailure(app, it) }
+                if (tap is SurfaceTap.Request) tap.send()?.let { failures.show(it) }
             } catch (_: SQLiteException) {
                 // The disk refused the change. Nothing changed, and the tile still says so.
             }

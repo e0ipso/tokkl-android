@@ -11,7 +11,7 @@ import com.github.e0ipso.tokkl.api.ApiJson
 import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.session.Session
-import com.github.e0ipso.tokkl.timernotice.showTimerActionFailure
+import com.github.e0ipso.tokkl.timernotice.TimerFailureNotice
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.CurrentTimerState
 import com.github.e0ipso.tokkl.timerstate.SessionActions
@@ -129,7 +129,7 @@ class StartPomodoroWidgetAction :
                 ),
             )
         }.getOrNull() ?: return
-        dispatchPomodoroWidget(context, tap)
+        dispatchPomodoroWidget(tap)
     }
 }
 
@@ -145,13 +145,12 @@ class PhasePomodoroWidgetAction :
                 parameters[END] ?: return,
             )
         }.getOrNull() ?: return
-        dispatchPomodoroWidget(context, tap)
+        dispatchPomodoroWidget(tap)
     }
 }
 
 /** A server request must outlive Glance's broadcast, like the shipped Timer widget actions. */
-private fun KoinComponent.dispatchPomodoroWidget(context: Context, tap: PomodoroWidgetTap) {
-    val app = context.applicationContext
+private fun KoinComponent.dispatchPomodoroWidget(tap: PomodoroWidgetTap) {
     val timerStates = get<AccountTimerStates>()
     val session = get<Session>()
     val io = get<CoroutineDispatcher>(IoDispatcher)
@@ -169,7 +168,7 @@ private fun KoinComponent.dispatchPomodoroWidget(context: Context, tap: Pomodoro
             },
             io = io,
         )
-        sendPomodoroWidgetAction(tap, current, actions)?.let { showTimerActionFailure(app, it) }
+        sendPomodoroWidgetAction(tap, current, actions)?.let { get<TimerFailureNotice>().show(it) }
     }
 }
 

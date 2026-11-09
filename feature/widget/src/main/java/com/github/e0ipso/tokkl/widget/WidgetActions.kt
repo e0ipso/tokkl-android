@@ -15,7 +15,7 @@ import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.model.TaskId
 import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
-import com.github.e0ipso.tokkl.timernotice.showTimerActionFailure
+import com.github.e0ipso.tokkl.timernotice.TimerFailureNotice
 import com.github.e0ipso.tokkl.timerstate.SurfaceTap
 import com.github.e0ipso.tokkl.timerstate.TimerSurfaceAction
 import com.github.e0ipso.tokkl.timerstate.TimerSurfaceActions
@@ -58,7 +58,7 @@ class StopTimerAction :
     KoinComponent {
 
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
-        tapTimer(context, TimerSurfaceAction.Stop, parameters)
+        tapTimer(TimerSurfaceAction.Stop, parameters)
     }
 }
 
@@ -68,7 +68,7 @@ class PauseTimerAction :
     KoinComponent {
 
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
-        tapTimer(context, TimerSurfaceAction.Pause, parameters)
+        tapTimer(TimerSurfaceAction.Pause, parameters)
     }
 }
 
@@ -81,7 +81,7 @@ class ResumeTimerAction :
     KoinComponent {
 
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
-        tapTimer(context, TimerSurfaceAction.Resume, parameters)
+        tapTimer(TimerSurfaceAction.Resume, parameters)
     }
 }
 
@@ -91,8 +91,7 @@ class ResumeTimerAction :
  * its own, so Glance's broadcast does not wait for the server, and one that fails, offline
  * included, says why in a toast while the widget keeps showing what it showed.
  */
-private suspend fun KoinComponent.tapTimer(context: Context, action: TimerSurfaceAction, parameters: ActionParameters) {
-    val app = context.applicationContext
+private suspend fun KoinComponent.tapTimer(action: TimerSurfaceAction, parameters: ActionParameters) {
     val tap = try {
         get<TimerSurfaceActions>().tap(action, parameters.target())
     } catch (_: SQLiteException) {
@@ -102,7 +101,7 @@ private suspend fun KoinComponent.tapTimer(context: Context, action: TimerSurfac
     if (tap is SurfaceTap.Request) {
         get<CoroutineScope>().launch(
             get<CoroutineDispatcher>(IoDispatcher),
-        ) { tap.send()?.let { showTimerActionFailure(app, it) } }
+        ) { tap.send()?.let { get<TimerFailureNotice>().show(it) } }
     }
 }
 

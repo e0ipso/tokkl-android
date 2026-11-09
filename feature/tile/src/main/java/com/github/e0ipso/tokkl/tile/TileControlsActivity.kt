@@ -29,7 +29,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import com.github.e0ipso.tokkl.feature.tile.R
 import com.github.e0ipso.tokkl.platform.IoDispatcher
-import com.github.e0ipso.tokkl.timernotice.showTimerActionFailure
+import com.github.e0ipso.tokkl.timernotice.TimerFailureNotice
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.SurfaceTap
 import com.github.e0ipso.tokkl.timerstate.TimerControls
@@ -60,6 +60,7 @@ class TileControlsActivity : ComponentActivity() {
     private val surfaceActions: TimerSurfaceActions by inject()
     private val scope: CoroutineScope by inject()
     private val io: CoroutineDispatcher by inject(IoDispatcher)
+    private val failures: TimerFailureNotice by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -95,11 +96,10 @@ class TileControlsActivity : ComponentActivity() {
      * the timer it drew.
      */
     private fun runControl(control: TileControl) {
-        val app = applicationContext
         scope.launch(io) {
             try {
                 val tap = surfaceActions.tap(control.action, control.target)
-                if (tap is SurfaceTap.Request) tap.send()?.let { showTimerActionFailure(app, it) }
+                if (tap is SurfaceTap.Request) tap.send()?.let { failures.show(it) }
             } catch (_: SQLiteException) {
                 // The disk refused the change. The dialog still shows the timer it drew.
             }

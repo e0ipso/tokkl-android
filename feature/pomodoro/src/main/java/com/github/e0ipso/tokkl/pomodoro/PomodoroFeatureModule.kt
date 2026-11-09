@@ -86,7 +86,7 @@ val pomodoroFeatureModule = module {
 
     // What the ringing notification's buttons do.
     single<PomodoroRingingButtons> {
-        AlarmRingingButtons(androidContext(), alarm = get(), actions = get<TimerActions>())
+        AlarmRingingButtons(get(), alarm = get(), actions = get<TimerActions>())
     }
 
     // The session notification, made at process start, which restores what the last process
@@ -112,7 +112,7 @@ val pomodoroFeatureModule = module {
     single { PomodoroNotificationHook(inject()) } bind AppHook::class
 
     // What the session notification's buttons do.
-    single<PomodoroSessionButtons> { SessionNotificationButtons(androidContext(), notification = get()) }
+    single<PomodoroSessionButtons> { SessionNotificationButtons(get(), notification = get()) }
 
     // Sign-out: the alarm, the session notification and the notification ID they share.
     single {

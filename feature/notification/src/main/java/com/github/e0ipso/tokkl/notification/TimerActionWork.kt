@@ -10,7 +10,7 @@ import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.platform.CurrentWorkManager
-import com.github.e0ipso.tokkl.timernotice.showTimerActionFailure
+import com.github.e0ipso.tokkl.timernotice.TimerFailureNotice
 import com.github.e0ipso.tokkl.timerstate.SurfaceTap
 import com.github.e0ipso.tokkl.timerstate.TimerSurfaceAction
 import com.github.e0ipso.tokkl.timerstate.TimerSurfaceActions
@@ -48,6 +48,7 @@ class TimerActionWorker(
     context: Context,
     parameters: WorkerParameters,
     private val surfaceActions: TimerSurfaceActions,
+    private val failures: TimerFailureNotice,
     private val io: CoroutineContext,
 ) : CoroutineWorker(context, parameters) {
 
@@ -55,7 +56,7 @@ class TimerActionWorker(
         val action = inputData.action() ?: return@withContext Result.success()
         try {
             val tap = surfaceActions.tap(action, inputData.target())
-            if (tap is SurfaceTap.Request) tap.send()?.let { showTimerActionFailure(applicationContext, it) }
+            if (tap is SurfaceTap.Request) tap.send()?.let { failures.show(it) }
         } catch (_: SQLiteException) {
             // The disk could not be read. The timer stays as it was, and the notification with it.
         }

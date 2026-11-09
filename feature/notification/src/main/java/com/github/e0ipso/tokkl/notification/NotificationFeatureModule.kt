@@ -15,6 +15,7 @@ import com.github.e0ipso.tokkl.reminder.accountReminderSync
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.storage.StartupLoad
+import com.github.e0ipso.tokkl.timernotice.TimerFailureNotice
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.workmanager.dsl.worker
@@ -56,5 +57,8 @@ val notificationFeatureModule = module {
     single { ReminderHook(inject(), inject(), inject(), get(), io()) } bind AppHook::class
 
     worker { params -> ReminderWorker(androidContext(), params.get(), get(), io()) }
-    worker { params -> TimerActionWorker(androidContext(), params.get(), get(), io()) }
+    // What a timer action sent from outside the screens says when it does not go through.
+    single<TimerFailureNotice> { ToastTimerFailureNotice(androidContext()) }
+
+    worker { params -> TimerActionWorker(androidContext(), params.get(), get(), get(), io()) }
 }
