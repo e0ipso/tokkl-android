@@ -1,10 +1,16 @@
 package com.github.e0ipso.tokkl.pomodoro
 
+import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
+import com.github.e0ipso.tokkl.platform.AppHook
+import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.PomodoroAlarmScheduler
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.timerstate.SessionActions
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -176,4 +182,25 @@ interface PomodoroRingCheck {
      * restart after the process died, through this before it plays.
      */
     suspend fun withRingingPhase(expected: PomodoroPhaseKey?, use: suspend (PomodoroRing) -> Unit): Boolean
+}
+
+/**
+ * After the running notification, before the session notification that shows its phase: arms,
+ * moves and drops the phase alarm and its ring on every held state and capability change, from
+ * the stored state at process start on, also with the app in the background.
+ */
+class PomodoroAlarmHook(
+    private val alarm: Lazy<PomodoroPhaseAlarm>,
+    private val timerStates: Lazy<AccountTimerStates>,
+    private val capabilities: Lazy<CapabilitiesSource>,
+    private val scope: CoroutineScope,
+    private val io: CoroutineContext,
+) : AppHook {
+    override val order = 30
+
+    override fun processStart() {
+        scope.launch(io) {
+            combine(timerStates.value.held, capabilities.value.loaded) { _, _ -> Unit }.collect { alarm.value.follow() }
+        }
+    }
 }

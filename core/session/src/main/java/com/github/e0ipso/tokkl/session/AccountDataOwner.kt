@@ -1,5 +1,7 @@
 package com.github.e0ipso.tokkl.session
 
+import com.github.e0ipso.tokkl.api.SharedHttpClient
+
 /**
  * A component that keeps the signed-in account's data on the phone, and forgets it when the
  * account signs out (docs/PRD.md S6). [SignOut] runs every owner once, phase by phase, in
@@ -48,7 +50,9 @@ enum class SignOutPhase {
     CLEAR_DATA,
 }
 
-/** A sign-out step that belongs to no single component, such as cancelling calls. */
-class SignOutStep(override val signOutPhase: SignOutPhase, private val step: suspend () -> Unit) : AccountDataOwner {
-    override suspend fun forgetAccount() = step()
+/** Sign-out's cancel of every call in flight on the shared HTTP client. */
+class CallsSignOut(private val http: SharedHttpClient) : AccountDataOwner {
+    override val signOutPhase = SignOutPhase.STOP_WORK
+
+    override suspend fun forgetAccount() = http.cancelAll()
 }

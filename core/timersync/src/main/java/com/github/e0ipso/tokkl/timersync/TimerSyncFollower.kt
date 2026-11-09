@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.timersync
 
+import com.github.e0ipso.tokkl.platform.AppHook
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import com.github.e0ipso.tokkl.timerstate.TimerStateSource
@@ -112,4 +113,11 @@ class TimerSyncFollower(
     internal fun serviceEnded(instance: Int) {
         running.compareAndSet(instance, null)
     }
+}
+
+/** The last hook: on each MainActivity start, starts or stops the timer sync to match. */
+class TimerSyncHook(private val follower: Lazy<TimerSyncFollower>) : AppHook {
+    override val order = 100
+
+    override suspend fun foregroundStart() = follower.value.follow()
 }

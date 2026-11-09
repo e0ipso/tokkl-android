@@ -1,9 +1,12 @@
 package com.github.e0ipso.tokkl.reminder
 
+import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.CurrentEntryIds
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.platform.AppHook
 import com.github.e0ipso.tokkl.preferences.ReminderPreferences
+import com.github.e0ipso.tokkl.preferences.ReminderSetting
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import com.github.e0ipso.tokkl.storage.ValueStore
@@ -11,6 +14,7 @@ import com.github.e0ipso.tokkl.timerstate.SurfaceTap
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -174,5 +178,24 @@ class ReminderSync(
         delays.cancel()
         notice.remove()
         timers.save(null)
+    }
+}
+
+/** Follows the running entry's reminder: after the running and Pomodoro notifications, before the widgets. */
+class ReminderHook(
+    private val reminder: Lazy<ReminderSync>,
+    private val settings: Lazy<ReminderSetting>,
+    private val cache: Lazy<AccountCache>,
+    private val scope: CoroutineScope,
+    private val io: CoroutineContext,
+) : AppHook {
+    override val order = 50
+
+    override fun processStart() {
+        reminder.value.follow(
+            combine(cache.value.running, settings.value.loaded) { running, preferences -> running to preferences },
+            scope,
+            io,
+        )
     }
 }

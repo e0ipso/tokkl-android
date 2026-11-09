@@ -11,7 +11,6 @@ import com.github.e0ipso.tokkl.entry.EntryFormViewModel
 import com.github.e0ipso.tokkl.entry.openIn
 import com.github.e0ipso.tokkl.favorites.FavoritesServer
 import com.github.e0ipso.tokkl.favorites.FavoritesViewModel
-import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.history.EntryActionsViewModel
 import com.github.e0ipso.tokkl.history.HistoryViewModel
 import com.github.e0ipso.tokkl.history.OlderPages
@@ -20,7 +19,6 @@ import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.navigation.EntryFormRequest
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
 import com.github.e0ipso.tokkl.navigation.PageBadge
-import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.picker.pickerSource
 import com.github.e0ipso.tokkl.platform.DefaultNetwork
 import com.github.e0ipso.tokkl.platform.io
@@ -39,7 +37,6 @@ import kotlinx.coroutines.flow.map
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.parameter.ParametersHolder
-import org.koin.core.qualifier.named
 import org.koin.dsl.bind
 import org.koin.dsl.binds
 import org.koin.dsl.module
@@ -187,9 +184,7 @@ val timerFeatureModule = module {
     single { TimerEntries } bind FeatureEntries::class
 
     // The bar's running dot on Timer while an entry runs, by the cache's word.
-    single(named("badge-timer")) {
-        PageBadge(Route.Timer, R.string.nav_timer_running, get<AccountCache>().running.map { it != null })
-    }
+    single { TimerBadge(get()) } bind PageBadge::class
 }
 
 /** The entry actions' deletes and restores, which the Timer page passes, or none. */

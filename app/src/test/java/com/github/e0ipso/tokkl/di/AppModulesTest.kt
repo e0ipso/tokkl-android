@@ -87,7 +87,7 @@ class AppModulesTest {
         val koin = koinApplication { modules(appModules) }.koin
         val owners = koin.instanceRegistry.instances.values.map { it.beanDefinition }.distinct()
             .filter { AccountDataOwner::class in it.secondaryTypes }
-            .map { definition -> definition.qualifier?.value ?: definition.primaryType.java.simpleName }
+            .map { definition -> definition.primaryType.java.simpleName }
 
         assertEquals(SIGN_OUT_OWNERS.sorted(), owners.sorted())
     }
@@ -132,10 +132,10 @@ class AppModulesTest {
             "java.util.List",
         )
 
-        /** Each owner by its class, or by its Koin name for a step of no single component. */
+        /** Each owner by its class. */
         val SIGN_OUT_OWNERS = listOf(
             "Session", "AccountTimerStates", "PomodoroSignOut", "TimerSyncFollower", "BackgroundSend",
-            "RunningCheck", "sign-out-http-calls", "AccountRefresh", "ChangeSender", "AccountCache",
+            "RunningCheck", "CallsSignOut", "AccountRefresh", "ChangeSender", "AccountCache",
             "TimerStateStore", "PomodoroWidgetFieldsStore", "ReminderSync", "ReminderSetting",
             "RunningNotificationSync", "FavoriteShortcutSync", "AccountSettingsStore", "CapabilitiesSignOut",
             "TimerViewSetting", "PomodoroDefaultsSetting", "ServerTrustStore", "SessionTrust", "LastAnswer",

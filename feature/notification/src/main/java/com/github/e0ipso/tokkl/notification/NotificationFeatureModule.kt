@@ -1,13 +1,12 @@
 package com.github.e0ipso.tokkl.notification
 
-import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.platform.AppHook
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.preferences.ReminderSetting
 import com.github.e0ipso.tokkl.reminder.ReminderDelays
+import com.github.e0ipso.tokkl.reminder.ReminderHook
 import com.github.e0ipso.tokkl.reminder.ReminderStore
-import com.github.e0ipso.tokkl.reminder.ReminderSync
 import com.github.e0ipso.tokkl.reminder.ReminderWork
 import com.github.e0ipso.tokkl.reminder.ReminderWorker
 import com.github.e0ipso.tokkl.reminder.accountReminderSync
@@ -15,11 +14,8 @@ import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.storage.StartupLoad
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.combine
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.workmanager.dsl.worker
-import org.koin.core.qualifier.named
 import org.koin.dsl.bind
 import org.koin.dsl.binds
 import org.koin.dsl.module
@@ -42,18 +38,7 @@ val notificationFeatureModule = module {
             io = io(),
         )
     } bind AccountDataOwner::class
-    single(named("hook-running-notification")) {
-        val sync = inject<RunningNotificationSync>()
-        AppHook(
-            // Right after the refresh requests: later hooks may change the running notification.
-            order = 20,
-            // Reads the cache off the main thread, and posts or removes nothing for the entry the
-            // notification already followed, so opening the app never brings back a dismissed one.
-            processStart = { sync.value.start() },
-            // A grant in notification settings makes the already-running timer visible too.
-            notificationsAllowed = { sync.value.repost() },
-        )
-    }
+    single { RunningNotificationHook(inject()) } bind AppHook::class
 
     single { ReminderStore(androidContext()) }
 
@@ -77,26 +62,7 @@ val notificationFeatureModule = module {
             get(),
         )
     } bind AccountDataOwner::class
-    single(named("hook-reminder")) {
-        val reminder = inject<ReminderSync>()
-        val settings = inject<ReminderSetting>()
-        val cache = inject<AccountCache>()
-        val scope = get<CoroutineScope>()
-        val io = io()
-        AppHook(
-            // After the running notification and the Pomodoro session's, before the widgets.
-            order = 50,
-            processStart = {
-                reminder.value.follow(
-                    combine(cache.value.running, settings.value.loaded) { running, preferences ->
-                        running to preferences
-                    },
-                    scope,
-                    io,
-                )
-            },
-        )
-    }
+    single { ReminderHook(inject(), inject(), inject(), get(), io()) } bind AppHook::class
 
     worker { params -> ReminderWorker(androidContext(), params.get(), get(), io()) }
     worker { params -> TimerActionWorker(androidContext(), params.get(), get(), io()) }

@@ -11,6 +11,7 @@ import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.platform.AppHook
 import com.github.e0ipso.tokkl.platform.CurrentWorkManager
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.SignOutPhase
@@ -18,6 +19,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.Duration
@@ -186,4 +188,18 @@ fun runningCheckWrites(
         delete = unchanged.filter { it.id != running?.id }.map { it.id },
         upsert = upsert?.takeIf { it != cached(it.id) },
     )
+}
+
+/** After the features' hooks, before the timer sync: checks every 15 minutes while the cache holds a running entry. */
+class RunningCheckHook(
+    private val check: Lazy<RunningCheck>,
+    private val cache: Lazy<AccountCache>,
+    private val scope: CoroutineScope,
+    private val io: CoroutineContext,
+) : AppHook {
+    override val order = 90
+
+    override fun processStart() {
+        check.value.follow(cache.value.running.map { it != null }, scope, io)
+    }
 }

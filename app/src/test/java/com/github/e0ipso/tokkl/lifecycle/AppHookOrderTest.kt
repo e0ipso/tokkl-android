@@ -4,7 +4,6 @@ import com.github.e0ipso.tokkl.di.appModules
 import com.github.e0ipso.tokkl.platform.AppHook
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import org.koin.core.annotation.KoinInternalApi
 import org.koin.dsl.koinApplication
 
 /**
@@ -14,28 +13,24 @@ import org.koin.dsl.koinApplication
  */
 class AppHookOrderTest {
 
-    @OptIn(KoinInternalApi::class)
     @Test
     fun theHooksRunInThisOrder() {
         val koin = koinApplication { modules(appModules) }.koin
-        val hooks = koin.instanceRegistry.instances.values.map { it.beanDefinition }.distinct()
-            .filter { it.primaryType == AppHook::class }
-            .map { definition -> checkNotNull(definition.qualifier) { "a hook without a name" } }
-            .map { name -> name.value to koin.get<AppHook>(name).order }
+        val hooks = koin.getAll<AppHook>().map { it::class.java.simpleName to it.order }
 
         assertEquals("two hooks share an order", hooks.size, hooks.map { it.second }.distinct().size)
         assertEquals(
             listOf(
-                "hook-refresh-requests",
-                "hook-running-notification",
-                "hook-pomodoro-alarm",
-                "hook-pomodoro-notification",
-                "hook-reminder",
-                "hook-timer-widget",
-                "hook-pomodoro-widget",
-                "hook-favorite-shortcuts",
-                "hook-running-check",
-                "hook-timer-sync",
+                "RefreshRequestsHook",
+                "RunningNotificationHook",
+                "PomodoroAlarmHook",
+                "PomodoroNotificationHook",
+                "ReminderHook",
+                "TimerWidgetHook",
+                "PomodoroWidgetHook",
+                "FavoriteShortcutsHook",
+                "RunningCheckHook",
+                "TimerSyncHook",
             ),
             hooks.sortedBy { it.second }.map { it.first },
         )

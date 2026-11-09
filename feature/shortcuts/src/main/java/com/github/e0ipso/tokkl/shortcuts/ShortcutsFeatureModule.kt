@@ -4,7 +4,6 @@ import com.github.e0ipso.tokkl.platform.AppHook
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import org.koin.android.ext.koin.androidContext
-import org.koin.core.qualifier.named
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
@@ -21,9 +20,5 @@ val shortcutsFeatureModule = module {
             io = io(),
         )
     } bind AccountDataOwner::class
-    single(named("hook-favorite-shortcuts")) {
-        val sync = inject<FavoriteShortcutSync>()
-        // After the widgets, before the running entry's check.
-        AppHook(order = 80, processStart = { sync.value.start() })
-    }
+    single { FavoriteShortcutsHook(inject()) } bind AppHook::class
 }

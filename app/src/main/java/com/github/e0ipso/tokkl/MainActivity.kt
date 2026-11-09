@@ -24,7 +24,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
-import com.github.e0ipso.tokkl.di.FeatureScreens
 import com.github.e0ipso.tokkl.lifecycle.MainActivityForeground
 import com.github.e0ipso.tokkl.navhost.DeepLinks
 import com.github.e0ipso.tokkl.navhost.NavigationRequests
@@ -46,6 +45,7 @@ import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsRepository
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.launch
+import org.koin.android.ext.android.getKoin
 import org.koin.android.ext.android.inject
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -54,7 +54,7 @@ class MainActivity : ComponentActivity() {
     private val themeSettings: ThemeSettingsRepository by inject()
     private val foreground: MainActivityForeground by inject()
     private val io: CoroutineDispatcher by inject(IoDispatcher)
-    private val features: List<FeatureEntries> by inject(FeatureScreens)
+    private val features: List<FeatureEntries> by lazy { getKoin().getAll() }
     private val pages: TopLevelPages by inject()
     private val lifetime: AccountLifetime by inject()
     private val capabilities: CapabilitiesSource by inject()

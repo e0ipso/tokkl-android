@@ -9,12 +9,15 @@ import com.github.e0ipso.tokkl.navigation.LinkIntent
 import com.github.e0ipso.tokkl.navigation.LocalSignedInSession
 import com.github.e0ipso.tokkl.navigation.NavigationHost
 import com.github.e0ipso.tokkl.navigation.NavigationRequest
+import com.github.e0ipso.tokkl.navigation.PageBadge
 import com.github.e0ipso.tokkl.navigation.RequestOpening
 import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.TopLevelDestination
 import com.github.e0ipso.tokkl.navigation.route
+import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.ui.theme.SectionHues
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -136,3 +139,7 @@ val pomodoroPage = TopLevelDestination(
 data object PomodoroRoute : Route {
     override val showsTimerNotices: Boolean get() = true
 }
+
+/** The Pomodoro page's running dot, while a session runs. */
+class PomodoroBadge(timerStates: AccountTimerStates) :
+    PageBadge(PomodoroRoute, R.string.nav_pomodoro_running, timerStates.held.map { it?.state?.pomodoro != null })

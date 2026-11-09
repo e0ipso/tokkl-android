@@ -1,6 +1,10 @@
 package com.github.e0ipso.tokkl.session
 
+import com.github.e0ipso.tokkl.platform.AppHook
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Refreshes that components of the refresh itself ask for: the change sender once it has sent
@@ -36,5 +40,19 @@ class AccountRefreshRequests {
                 Request.AFTER_CHANGE -> refresh.value.refreshAfterChange()
             }
         }
+    }
+}
+
+/** First of the hooks at process start: forwards the refreshes the other components ask for, from any process. */
+class RefreshRequestsHook(
+    private val requests: AccountRefreshRequests,
+    private val refresh: Lazy<AccountRefresh>,
+    private val scope: CoroutineScope,
+    private val io: CoroutineContext,
+) : AppHook {
+    override val order = 10
+
+    override fun processStart() {
+        scope.launch(io) { requests.forward(refresh) }
     }
 }

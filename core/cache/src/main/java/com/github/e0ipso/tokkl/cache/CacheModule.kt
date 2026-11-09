@@ -7,11 +7,8 @@ import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountRefreshRequests
 import com.github.e0ipso.tokkl.session.ForegroundRefresh
 import com.github.e0ipso.tokkl.session.Session
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.map
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.workmanager.dsl.worker
-import org.koin.core.qualifier.named
 import org.koin.dsl.bind
 import org.koin.dsl.binds
 import org.koin.dsl.module
@@ -81,18 +78,7 @@ val cacheModule = module {
     // check's answer from landing after sign-out.
     single { RunningCheckResults() }
     single { RunningCheck(get(), get()) } bind AccountDataOwner::class
-    // Checks every 15 minutes while the cache holds a running entry.
-    single(named("hook-running-check")) {
-        val check = inject<RunningCheck>()
-        val cache = inject<AccountCache>()
-        val scope = get<CoroutineScope>()
-        val io = io()
-        AppHook(
-            // After the features' hooks, before the timer sync.
-            order = 90,
-            processStart = { check.value.follow(cache.value.running.map { it != null }, scope, io) },
-        )
-    }
+    single { RunningCheckHook(inject(), inject(), get(), io()) } bind AppHook::class
 
     // Refreshes the account, and with it the running entry and the cache, each time the app comes
     // to the foreground and each time the network comes back while it is there. MainActivity

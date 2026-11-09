@@ -9,7 +9,6 @@ import android.content.pm.PackageManager
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.api.PhaseKind
-import com.github.e0ipso.tokkl.di.FeatureScreens
 import com.github.e0ipso.tokkl.feature.pomodoro.R
 import com.github.e0ipso.tokkl.navhost.DeepLinks
 import com.github.e0ipso.tokkl.navhost.takeDeepLinks
@@ -85,7 +84,7 @@ class PomodoroSessionNotifierTest {
         val tap = pomodoroSessionOpenIntent(context, "tap-account", key)
         assertTrue(tap.flags and Intent.FLAG_ACTIVITY_SINGLE_TOP != 0)
         assertTrue(tap.flags and Intent.FLAG_ACTIVITY_CLEAR_TOP != 0)
-        val links = DeepLinks(GlobalContext.get().get(FeatureScreens))
+        val links = DeepLinks(GlobalContext.get().getAll())
         assertEquals(
             PomodoroNotificationTap("tap-account", key),
             (tap.takeDeepLinks(links).single() as PomodoroSessionTap).tap,

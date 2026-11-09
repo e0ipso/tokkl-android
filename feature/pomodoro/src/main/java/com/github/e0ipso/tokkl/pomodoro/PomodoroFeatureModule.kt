@@ -6,7 +6,6 @@ import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.cache.ChangeSender
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
-import com.github.e0ipso.tokkl.feature.pomodoro.R
 import com.github.e0ipso.tokkl.navigation.FeatureEntries
 import com.github.e0ipso.tokkl.navigation.PageBadge
 import com.github.e0ipso.tokkl.picker.pickerSource
@@ -27,13 +26,9 @@ import com.github.e0ipso.tokkl.timerstate.PomodoroRingingPhase
 import com.github.e0ipso.tokkl.timerstate.TimerActions
 import com.github.e0ipso.tokkl.timersync.TimerSyncFollower
 import com.github.e0ipso.tokkl.timersync.TimerSyncWatcher
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
-import org.koin.core.qualifier.named
 import org.koin.dsl.bind
 import org.koin.dsl.binds
 import org.koin.dsl.module
@@ -88,25 +83,7 @@ val pomodoroFeatureModule = module {
             clock = get(),
         )
     } bind PomodoroRingCheck::class
-    single(named("hook-pomodoro-alarm")) {
-        val alarm = inject<PomodoroPhaseAlarm>()
-        val timerStates = inject<AccountTimerStates>()
-        val capabilities = inject<CapabilitiesSource>()
-        val scope = get<CoroutineScope>()
-        val io = io()
-        AppHook(
-            // After the running notification, before the session notification that shows its phase.
-            order = 30,
-            // Arms, moves and drops the phase alarm and its ring on every held state and capability
-            // change, from the stored state at process start on, also with the app in the background.
-            processStart = {
-                scope.launch(io) {
-                    combine(timerStates.value.held, capabilities.value.loaded) { _, _ -> Unit }
-                        .collect { alarm.value.follow() }
-                }
-            },
-        )
-    }
+    single { PomodoroAlarmHook(inject(), inject(), inject(), get(), io()) } bind AppHook::class
 
     // What the boot, update, clock and exact-alarm broadcasts do: arm the held phase again, and
     // start the timer sync service after boot and an update.
@@ -138,15 +115,7 @@ val pomodoroFeatureModule = module {
             io = io(),
         )
     } bind SignedInListener::class
-    single(named("hook-pomodoro-notification")) {
-        val sync = inject<PomodoroSessionNotificationSync>()
-        AppHook(
-            // After the phase alarm, before the reminder.
-            order = 40,
-            processStart = { sync.value.start() },
-            notificationsAllowed = { sync.value.refresh(force = true) },
-        )
-    }
+    single { PomodoroNotificationHook(inject()) } bind AppHook::class
 
     // What the session notification's buttons do.
     single<PomodoroSessionButtons> { SessionNotificationButtons(androidContext(), notification = get()) }
@@ -195,8 +164,5 @@ val pomodoroFeatureModule = module {
     single { PomodoroEntries(notification = inject(), io = io()) } bind FeatureEntries::class
 
     // The bar's running dot on Pomodoro while the server's session runs.
-    single(named("badge-pomodoro")) {
-        val running = get<AccountTimerStates>().held.map { it?.state?.pomodoro != null }
-        PageBadge(PomodoroRoute, R.string.nav_pomodoro_running, running)
-    }
+    single { PomodoroBadge(get()) } bind PageBadge::class
 }

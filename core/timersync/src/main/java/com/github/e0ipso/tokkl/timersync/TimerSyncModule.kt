@@ -13,7 +13,6 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import org.koin.android.ext.koin.androidContext
-import org.koin.core.qualifier.named
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
@@ -65,11 +64,7 @@ val timerSyncModule = module {
     } bind AccountDataOwner::class
     // Every start of MainActivity, a rotation's too, starts the timer sync service when it should
     // run, since the app is on screen and the platform lets it start, also offline.
-    single(named("hook-timer-sync")) {
-        val follower = inject<TimerSyncFollower>()
-        // Last.
-        AppHook(order = 100, foregroundStart = { follower.value.follow() })
-    }
+    single { TimerSyncHook(inject()) } bind AppHook::class
 
     single { CapabilitiesSignOut(get(), get(), get()) } bind AccountDataOwner::class
 }

@@ -16,7 +16,7 @@ class PomodoroWidgetSyncTest {
         fun sync(name: String, vararg keys: String) = WidgetSync(
             keys = flowOf(*keys),
             shown = valueStore(load = { disk[name] }, save = { disk[name] = it }),
-            update = { updates += name },
+            redraw = { updates += name },
             scope = CoroutineScope(Dispatchers.Unconfined),
             io = Dispatchers.Unconfined,
         )
@@ -35,7 +35,7 @@ class PomodoroWidgetSyncTest {
         val sync = WidgetSync(
             keys = flowOf("ended"),
             shown = valueStore(load = { saved }, save = { saved = it }),
-            update = { throw IOException("launcher unavailable") },
+            redraw = { throw IOException("launcher unavailable") },
             scope = CoroutineScope(Dispatchers.Unconfined),
             io = Dispatchers.Unconfined,
         )
@@ -50,7 +50,7 @@ class PomodoroWidgetSyncTest {
         val sync = WidgetSync(
             keys = flowOf("work", "work", "ended"),
             shown = valueStore(load = { null }, save = { throw IOException("disk full") }),
-            update = { draws++ },
+            redraw = { draws++ },
             scope = CoroutineScope(Dispatchers.Unconfined),
             io = Dispatchers.Unconfined,
         )

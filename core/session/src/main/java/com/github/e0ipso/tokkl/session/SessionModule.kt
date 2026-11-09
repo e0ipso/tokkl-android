@@ -13,10 +13,7 @@ import com.github.e0ipso.tokkl.credentials.ApiTokenStore
 import com.github.e0ipso.tokkl.platform.AppHook
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.storage.StartupLoad
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import org.koin.android.ext.koin.androidContext
-import org.koin.core.qualifier.named
 import org.koin.dsl.bind
 import org.koin.dsl.binds
 import org.koin.dsl.module
@@ -37,9 +34,7 @@ val sessionModule = module {
     single { ConfiguredServer(get()) }
     single { SharedHttpClient(server = get(), trust = get<ServerTrust>()) }
     // Sign-out cancels every call in flight.
-    single(named("sign-out-http-calls")) {
-        SignOutStep(SignOutPhase.STOP_WORK, get<SharedHttpClient>()::cancelAll)
-    } bind AccountDataOwner::class
+    single { CallsSignOut(get()) } bind AccountDataOwner::class
 
     // Reports trust refusals to the session's trust prompt, and answers to the last answer's time.
     single {
@@ -62,14 +57,7 @@ val sessionModule = module {
     single { CapabilitiesSource(get<CapabilitiesStore>(), get()) } bind StartupLoad::class
 
     single { AccountRefreshRequests() }
-    single(named("hook-refresh-requests")) {
-        val requests = get<AccountRefreshRequests>()
-        val refresh = inject<AccountRefresh>()
-        val scope = get<CoroutineScope>()
-        val io = io()
-        // First: the refreshes the other components ask for, from any process.
-        AppHook(order = 10, processStart = { scope.launch(io) { requests.forward(refresh) } })
-    }
+    single { RefreshRequestsHook(get(), inject(), get(), io()) } bind AppHook::class
 
     single {
         AccountRefresh(

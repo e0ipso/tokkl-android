@@ -4,7 +4,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.lifecycle.SavedStateHandle
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
-import com.github.e0ipso.tokkl.di.FeatureScreens
 import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.navhost.NavigationRequests
 import com.github.e0ipso.tokkl.navhost.TokklNavHost
@@ -26,7 +25,7 @@ internal fun AppNavHost(
     capabilities: StateFlow<Capabilities> = remember { GlobalContext.get().get<CapabilitiesSource>().state },
 ) {
     val koin = remember { GlobalContext.get() }
-    val features = remember { koin.get<List<FeatureEntries>>(FeatureScreens) }
+    val features = remember { koin.getAll<FeatureEntries>() }
     TokklNavHost(
         requests = remember { NavigationRequests(SavedStateHandle(), requestSerializers(features)) },
         features = features,

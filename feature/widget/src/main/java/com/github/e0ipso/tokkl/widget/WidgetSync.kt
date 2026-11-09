@@ -1,12 +1,18 @@
 package com.github.e0ipso.tokkl.widget
 
 import android.content.Context
+import androidx.glance.appwidget.GlanceAppWidget
+import androidx.glance.appwidget.updateAll
+import com.github.e0ipso.tokkl.platform.AppHook
 import com.github.e0ipso.tokkl.storage.PreferencesFile
 import com.github.e0ipso.tokkl.storage.ValueStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.io.IOException
 import kotlin.coroutines.CoroutineContext
@@ -24,12 +30,12 @@ import kotlin.coroutines.CoroutineContext
  *
  * @param keys keys of what one widget provider shows. Collected on [io], since they read the disk.
  * @param shown the key of what the widget last showed, null for none.
- * @param update draws every placed widget again from the phone's state.
+ * @param redraw draws every placed widget again from the phone's state.
  */
 class WidgetSync(
     private val keys: Flow<String>,
     private val shown: ValueStore<String>,
-    private val update: suspend () -> Unit,
+    private val redraw: WidgetRedraw,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
 ) {
@@ -45,12 +51,62 @@ class WidgetSync(
     /** Updates the widgets unless they already show what [key] stands for. */
     suspend fun apply(key: String) {
         if (key == shown.load()) return
-        update()
+        redraw.redraw()
         try {
             shown.save(key)
         } catch (_: IOException) {
             // The widgets are right. A new process draws them once more, which costs nothing else.
         }
+    }
+}
+
+/**
+ * Draws every placed widget of one provider again. [GlanceRedraw] asks Glance; the unit tests
+ * count the redraws without a launcher.
+ */
+fun interface WidgetRedraw {
+    suspend fun redraw()
+}
+
+/** Redraws every placed [widget] through Glance. */
+class GlanceRedraw(private val context: Context, private val widget: GlanceAppWidget) : WidgetRedraw {
+    override suspend fun redraw() = widget.updateAll(context)
+}
+
+/**
+ * Updates the Timer widget whenever what it shows changes, whichever surface changed it, from
+ * process start, after the notifications and the reminder. It builds the widget state off the
+ * main thread. Like every hook, it reads nothing of the graph, the context included, until it runs.
+ */
+class TimerWidgetHook(
+    private val context: Lazy<Context>,
+    private val source: Lazy<WidgetStateSource>,
+    private val scope: CoroutineScope,
+    private val io: CoroutineContext,
+) : AppHook {
+    override val order = 60
+
+    override fun processStart() {
+        val keys = flow { emitAll(source.value.state.map { it.key() }) }
+        val context = context.value
+        WidgetSync(keys, WidgetStore(context), GlanceRedraw(context, TokklWidget()), scope, io).start()
+    }
+}
+
+/** The Pomodoro widget's redraws, after the Timer widget's. Its key is independent of the Timer widget. */
+class PomodoroWidgetHook(
+    private val context: Lazy<Context>,
+    private val source: Lazy<PomodoroWidgetStateSource>,
+    private val scope: CoroutineScope,
+    private val io: CoroutineContext,
+) : AppHook {
+    override val order = 70
+
+    override fun processStart() {
+        val keys = flow { emitAll(source.value.state.map { it.key() }) }
+        val context = context.value
+        val shown = WidgetStore(context, keyName = WidgetStore.POMODORO_KEY)
+        WidgetSync(keys, shown, GlanceRedraw(context, PomodoroWidget()), scope, io).start()
     }
 }
 

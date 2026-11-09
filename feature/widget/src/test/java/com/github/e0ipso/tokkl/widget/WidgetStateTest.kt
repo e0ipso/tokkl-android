@@ -535,7 +535,7 @@ class WidgetStateTest {
         val sync = WidgetSync(
             keys = flowOf(first, first, second).map { it.key() },
             shown = valueStore(load = { shown }, save = { shown = it }),
-            update = { updates += shown },
+            redraw = { updates += shown },
             scope = CoroutineScope(Dispatchers.Unconfined),
             io = Dispatchers.Unconfined,
         )
@@ -553,7 +553,7 @@ class WidgetStateTest {
         val sync = WidgetSync(
             keys = flowOf(state()).map { it.key() },
             shown = valueStore(load = { shown }, save = { shown = it }),
-            update = { updates++ },
+            redraw = { updates++ },
             scope = CoroutineScope(Dispatchers.Unconfined),
             io = Dispatchers.Unconfined,
         )
@@ -570,7 +570,7 @@ class WidgetStateTest {
         val sync = WidgetSync(
             keys = flowOf(state(), state(entry = null)).map { it.key() },
             shown = valueStore(load = { null }, save = { throw IOException("disk full") }),
-            update = { updates++ },
+            redraw = { updates++ },
             scope = CoroutineScope(Dispatchers.Unconfined),
             io = Dispatchers.Unconfined,
         )
