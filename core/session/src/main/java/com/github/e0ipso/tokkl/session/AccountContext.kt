@@ -42,7 +42,8 @@ class AccountContext internal constructor(val number: Int) {
      * Launches [block] in [scope], on its dispatcher, as work of this account: the end of the
      * account cancels it, and once the account has ended it does not start.
      */
-    fun launchIn(scope: CoroutineScope, block: suspend CoroutineScope.() -> Unit): Job = scope.launch(job, block = block)
+    fun launchIn(scope: CoroutineScope, block: suspend CoroutineScope.() -> Unit): Job =
+        scope.launch(job, block = block)
 
     /** Calls [action] once when the account ends, at once when it has. Dispose of the handle to drop it. */
     fun onEnd(action: () -> Unit): DisposableHandle = job.invokeOnCompletion { action() }

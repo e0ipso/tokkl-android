@@ -123,7 +123,14 @@ class SyncedPreferenceTest {
                     ops += "clear"
                 }
             }
-            val preference = SyncedPreference(store, { api }, account, CoroutineScope(Dispatchers.IO), default = 0, codec = Sent)
+            val preference = SyncedPreference(
+                store,
+                { api },
+                account,
+                CoroutineScope(Dispatchers.IO),
+                default = 0,
+                codec = Sent,
+            )
             runBlocking { preference.ready() }
 
             val change = preference.change(5, unsent = { true }, sendIf = { true })

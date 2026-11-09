@@ -5,7 +5,9 @@ import android.util.Log
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.retryWhen
 import java.io.IOException
@@ -46,41 +48,25 @@ suspend fun <T> Flow<T>.collectDurably(
 ) {
     var failedReads = 0
     onEach { failedReads = 0 }
-        .retryWhen { failure, _ ->
-            val again = failure is Exception && failure !is CancellationException
-            if (again) {
-                failed(observer, failure as Exception, failures)
-                delay(observerRetryDelay(failedReads++))
-            }
-            again
-        }
+        .retryWhen { failure, _ -> waitAfter(failure, failedReads++, observer, failures) }
         .let { if (latestOnly) it.conflate() else it }
-        .collect { value -> applyUntilDone(observer, value, failures, action) }
-}
-
-/** Runs [action] for [value] again after each failure, with the waits of [collectDurably], until it goes through. */
-private suspend fun <T> applyUntilDone(
-    observer: String,
-    value: T,
-    failures: ObserverFailures,
-    action: suspend (T) -> Unit,
-) {
-    var failed = 0
-    while (true) {
-        try {
-            action(value)
-            return
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            failed(observer, e, failures)
-            delay(observerRetryDelay(failed++))
+        .collect { value ->
+            var failed = 0
+            flow { emit(action(value)) }
+                .retryWhen { failure, _ -> waitAfter(failure, failed++, observer, failures) }
+                .collect()
         }
-    }
 }
 
-private fun failed(observer: String, failure: Exception, failures: ObserverFailures) {
+/**
+ * Whether to try again after [failure], the [failed]th in a row counted from 0, having waited as
+ * [collectDurably] says: false for cancellation and for errors.
+ */
+private suspend fun waitAfter(failure: Throwable, failed: Int, observer: String, failures: ObserverFailures): Boolean {
+    if (failure !is Exception || failure is CancellationException) return false
     if (!failure.isStorageFailure()) failures.unexpected(observer, failure)
+    delay(observerRetryDelay(failed))
+    return true
 }
 
 /** A failure of the disk or the database, after which a read or a write can go through later. */

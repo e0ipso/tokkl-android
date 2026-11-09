@@ -10,7 +10,9 @@ import com.github.e0ipso.tokkl.platform.AppHook
 internal class AppHooks(val inOrder: List<AppHook>, bound: List<AppHook>) {
     init {
         val unordered = bound.filter { hook -> inOrder.none { it === hook } }
-        require(unordered.isEmpty()) { "hooks missing from the startup order: ${unordered.map { it::class.simpleName }}" }
+        require(unordered.isEmpty()) {
+            "hooks missing from the startup order: ${unordered.map { it::class.simpleName }}"
+        }
         require(inOrder.distinct().size == inOrder.size) { "a hook is listed twice in the startup order" }
     }
 }
