@@ -35,6 +35,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.io.IOException
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Instant
@@ -659,7 +660,7 @@ class TimerViewModelTest {
         var gate: CompletableDeferred<Unit> = CompletableDeferred(Unit)
         private var nextLocalId = -1L
 
-        /** Start throws, as a write to the phone's database that fails would. */
+        /** Start fails as a storage write does, which the start reports and does not throw. */
         @Volatile
         var failStart = false
 
@@ -667,7 +668,7 @@ class TimerViewModelTest {
             val at = clock.instant()
             calls += "start $workspaceId $fields at $at"
             gate.await()
-            if (failStart) throw IllegalStateException("the database refused the start")
+            if (failStart) throw IOException("the disk refused the start")
             val id = nextLocalId--
             running.value = EntryWithSendState(
                 TimeEntry(
