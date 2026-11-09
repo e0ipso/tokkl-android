@@ -168,7 +168,7 @@ class TimerViewSettingTest {
         store = InMemoryValueStore(initial) { saved += it },
         client = { client },
         capabilities = capabilitiesOf(Capabilities.NONE.copy(favorites = keepsTimerView)),
-        account = CurrentAccount(),
+        account = CurrentAccount(CoroutineScope(Dispatchers.Unconfined)),
         scope = CoroutineScope(Dispatchers.Unconfined),
     )
 

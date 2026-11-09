@@ -150,7 +150,7 @@ class SyncedPreference<T : Any>(
             sendNow
         }
         persist(context)
-        if (sendNow) context.launchIn(scope) { send(context) }
+        if (sendNow) context.launch { send(context) }
     }
 
     /**

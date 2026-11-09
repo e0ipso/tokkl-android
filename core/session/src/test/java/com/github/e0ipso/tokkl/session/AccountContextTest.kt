@@ -3,6 +3,9 @@ package com.github.e0ipso.tokkl.session
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.job
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -16,7 +19,9 @@ import kotlin.concurrent.thread
 /** What work started for an account can still do once the account has gone. */
 class AccountContextTest {
 
-    private val account = CurrentAccount()
+    /** The application's scope. */
+    private val app = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+    private val account = CurrentAccount(app)
 
     @Test
     fun aReplyFromBeforeSignOutCannotWriteAndTheNextAccountsCan() {
@@ -38,7 +43,7 @@ class AccountContextTest {
         val before = account.context.value
         val ended = CompletableDeferred<Unit>()
         before.onEnd { ended.complete(Unit) }
-        val work = before.launchIn(CoroutineScope(Dispatchers.Unconfined)) { CompletableDeferred<Unit>().await() }
+        val work = before.launch { CompletableDeferred<Unit>().await() }
 
         account.begin()
 
@@ -47,6 +52,31 @@ class AccountContextTest {
         assertTrue(ended.isCompleted)
         assertTrue(account.context.value.isCurrent)
         assertEquals(before.number + 1, account.context.value.number)
+    }
+
+    @Test
+    fun cancellingTheAppScopeCancelsTheAccountsWork() {
+        val work = account.context.value.launch { CompletableDeferred<Unit>().await() }
+
+        app.cancel()
+
+        assertTrue("the account's work ends with the app's scope", work.isCancelled)
+    }
+
+    @Test
+    fun anEndedAccountLeavesNothingUnderTheAppScope() {
+        val before = account.context.value
+        val work = before.launch { CompletableDeferred<Unit>().await() }
+        assertEquals("the account runs under the app's scope", 1, app.coroutineContext.job.children.count())
+
+        account.begin()
+
+        assertTrue(work.isCancelled)
+        assertEquals("only the next account stays under the app's scope", 1, app.coroutineContext.job.children.count())
+        var started = false
+        before.launch { started = true }
+        assertFalse("an ended account's work does not start", started)
+        app.cancel()
     }
 
     @Test

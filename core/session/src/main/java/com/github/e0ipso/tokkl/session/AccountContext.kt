@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 
 /**
@@ -19,11 +20,16 @@ import kotlinx.coroutines.launch
  * of nobody.
  *
  * @param number tells the contexts of one process apart, counting from 0.
+ * @param app the application's scope. The account's work runs in it, on its dispatcher, as a child
+ *   of its job, so cancelling it cancels the account's work too.
  */
-class AccountContext internal constructor(val number: Int) {
+class AccountContext internal constructor(val number: Int, app: CoroutineScope) {
 
-    /** The parent of the account's work, cancelled when the account ends. */
-    private val job = SupervisorJob()
+    /** The parent of the account's work, a child of [app]'s job, cancelled when the account ends. */
+    private val job = SupervisorJob(app.coroutineContext.job)
+
+    /** Where the account's work runs: [app] with [job] as the parent. */
+    private val scope = CoroutineScope(app.coroutineContext + job)
 
     @Volatile
     private var ended = false
@@ -39,11 +45,11 @@ class AccountContext internal constructor(val number: Int) {
     fun <T> ifCurrent(write: () -> T): T? = synchronized(this) { if (ended) null else write() }
 
     /**
-     * Launches [block] in [scope], on its dispatcher, as work of this account: the end of the
-     * account cancels it, and once the account has ended it does not start.
+     * Launches [block] in the application's scope, on its dispatcher, as work of this account: the
+     * end of the account cancels it, and so does the end of the application's scope. Once the
+     * account has ended it does not start.
      */
-    fun launchIn(scope: CoroutineScope, block: suspend CoroutineScope.() -> Unit): Job =
-        scope.launch(job, block = block)
+    fun launch(block: suspend CoroutineScope.() -> Unit): Job = scope.launch(block = block)
 
     /** Calls [action] once when the account ends, at once when it has. Dispose of the handle to drop it. */
     fun onEnd(action: () -> Unit): DisposableHandle = job.invokeOnCompletion { action() }
@@ -59,10 +65,12 @@ class AccountContext internal constructor(val number: Int) {
  * The account signed in now, as an [AccountContext], and the count of the sign-outs that finished.
  * Each sign-in begins a context, also a sign-in again over a refused token, and sign-out ends it as
  * it starts, before its first step.
+ *
+ * @param app the application's scope, which each account's work runs in, as [AccountContext] says.
  */
-class CurrentAccount {
+class CurrentAccount(private val app: CoroutineScope) {
 
-    private val mutableContext = MutableStateFlow(AccountContext(0))
+    private val mutableContext = MutableStateFlow(AccountContext(0, app))
     private val signedOut = MutableStateFlow(0)
 
     /**
@@ -86,7 +94,7 @@ class CurrentAccount {
     fun begin() {
         val before = mutableContext.value
         before.end()
-        mutableContext.value = AccountContext(before.number + 1)
+        mutableContext.value = AccountContext(before.number + 1, app)
     }
 
     /** Sign-out has started: ends the account's context. */

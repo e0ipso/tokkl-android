@@ -250,7 +250,7 @@ class PomodoroDefaultsSettingTest {
                 InMemoryValueStore(Capabilities.NONE.copy(favorites = keepsPreferences)),
                 CoroutineScope(Dispatchers.Unconfined),
             ),
-            account = CurrentAccount(),
+            account = CurrentAccount(CoroutineScope(Dispatchers.Unconfined)),
             scope = CoroutineScope(Dispatchers.Unconfined),
         )
 

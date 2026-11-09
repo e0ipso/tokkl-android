@@ -47,7 +47,7 @@ internal fun reportsViewModel(
         ReportExportController(
             client = { null },
             files = files,
-            account = CurrentAccount(),
+            account = CurrentAccount(scope),
             capabilities = capabilitiesOf(Capabilities.NONE),
             scope = scope,
             io = io,

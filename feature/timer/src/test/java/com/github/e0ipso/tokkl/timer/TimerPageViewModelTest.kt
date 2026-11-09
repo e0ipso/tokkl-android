@@ -43,7 +43,7 @@ class TimerPageViewModelTest {
         store = InMemoryValueStore(null),
         client = { null },
         capabilities = capabilitiesOf(Capabilities.NONE),
-        account = CurrentAccount(),
+        account = CurrentAccount(scope),
         scope = scope,
     )
     private val entries = MutableStateFlow(listOf(entry(1, "Code review", WEBSITE.id)))

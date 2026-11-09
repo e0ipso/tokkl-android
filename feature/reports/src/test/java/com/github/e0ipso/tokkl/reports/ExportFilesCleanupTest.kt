@@ -70,7 +70,7 @@ class ExportFilesCleanupTest {
             testApi.trust = InMemoryServerTrust(url)
             val api = testApi.api(url, ApiCredentials.ApiToken("test"))
             val root = folder.newFolder(ReportExportFiles.DIRECTORY)
-            val account = CurrentAccount()
+            val account = CurrentAccount(CoroutineScope(Dispatchers.Unconfined))
             val exports = ReportExportController(
                 client = { api },
                 files = ReportExportFiles(root, Clock.systemUTC()),

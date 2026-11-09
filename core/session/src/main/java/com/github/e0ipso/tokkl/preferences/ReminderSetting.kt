@@ -132,7 +132,7 @@ class ReminderSetting(
             changed = false
         }
         persist(context)
-        return context.launchIn(scope) { send(context) }
+        return context.launch { send(context) }
     }
 
     /**

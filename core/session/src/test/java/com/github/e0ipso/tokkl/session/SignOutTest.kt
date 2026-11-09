@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.session
 
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.test.runTest
@@ -14,7 +15,7 @@ import java.io.IOException
 class SignOutTest {
 
     private val ran = mutableListOf<String>()
-    private val account = CurrentAccount()
+    private val account = CurrentAccount(CoroutineScope(Dispatchers.Unconfined))
 
     private fun step(name: String, phase: SignOutPhase, fails: () -> Boolean = { false }) = SignOutStep(phase) {
         ran += name

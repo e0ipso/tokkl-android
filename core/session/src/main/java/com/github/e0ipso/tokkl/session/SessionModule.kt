@@ -75,7 +75,7 @@ val sessionModule = module {
     single { ServerChanges(scope = get(), io = io(), refreshes = get()) }
 
     // Where each account begins and ends, which the timer state and the navigation follow.
-    single { CurrentAccount() }
+    single { CurrentAccount(app = get()) }
 
     // Sign-out (docs/PRD.md S6): every [AccountDataOwner], phase by phase in [SignOutPhase] order.
     single { SignOut(owners = getAll(), account = get(), io = io()) }

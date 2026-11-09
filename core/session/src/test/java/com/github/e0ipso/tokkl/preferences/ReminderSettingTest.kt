@@ -48,13 +48,14 @@ class ReminderSettingTest {
         testApi.stored = null
         testApi.trust = InMemoryServerTrust()
     }
-    private val account = CurrentAccount()
+    private val scope = CoroutineScope(Dispatchers.Unconfined)
+    private val account = CurrentAccount(scope)
 
     private fun setting(initial: StoredReminderPreferences? = null) = ReminderSetting(
         InMemoryValueStore(initial) { saved += it },
         { client },
         account,
-        CoroutineScope(Dispatchers.Unconfined),
+        scope,
     )
     private fun prefs(body: String = """{"long_timer_reminder_enabled":true,"long_timer_reminder_hours":12}""") =
         MePreferences(Json.parseToJsonElement(body).jsonObject)

@@ -32,7 +32,7 @@ class SyncedPreferenceTest {
 
     private val scheduler = TestCoroutineScheduler()
     private val scope = CoroutineScope(StandardTestDispatcher(scheduler))
-    private val account = CurrentAccount()
+    private val account = CurrentAccount(scope)
 
     @Test
     fun signOutDeletesTheFileAfterAWriteInFlight() {
