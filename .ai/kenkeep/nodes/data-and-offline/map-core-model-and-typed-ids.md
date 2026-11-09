@@ -21,15 +21,15 @@ kk_relates_to:
 kk_depends_on: []
 kk_confidence: high
 ---
-`:core:model`, package `model`, holds what the screens show and change: `TimeEntry`, `Project`, `Client`, `Task`, `Tag`, `Favorite`, `EntryFields`, `EntryWithSendState` and `RunningEntryIdentity`, with `noTimeDay` and `fields()`. It is a Kotlin/JVM module at the bottom layer and needs no other app module, only kotlinx-serialization-core for the ids.
+`:core:model`, package `model`, holds what the screens show and change: `TimeEntry`, `Project`, `Client`, `Task`, `Tag`, `Favorite`, `EntryFields`, `EntryWithSendState` and `RunningEntryIdentity`, with `noTimeDay` and `fields()`. It is a Kotlin/JVM module, alone in the bottom layer, and needs no other app module, only kotlinx-serialization-core for the ids. `:core:api` depends on it and exposes it, because its calls take these ids and its answers carry them.
 
-The ids are value classes: `EntryId`, `WorkspaceId`, `ProjectId`, `ClientId`, `TaskId` and `TagId`, so a project id cannot go where a task id belongs. Each is `@Serializable` and serializes as its number, so routes and the catalog pages' server shapes hold one. Its `toString` is the number, so text keys and logs built from an id read as before. `LocalEntryId` is the negative id of an entry the phone created, and only `EntryId.local` makes one (see the change queue node).
+The ids are value classes: `EntryId`, `WorkspaceId`, `ProjectId`, `ClientId`, `TaskId` and `TagId`, so a project id cannot go where a task id belongs. Each is `@Serializable` and serializes as its number, so routes and core:api's request and answer types hold one. Its `toString` is the number, so text keys and logs built from an id read as before. `LocalEntryId` is the negative id of an entry the phone created, and only `EntryId.local` makes one (see the change queue node).
 
 Where each boundary maps:
 
 - `:core:cache` maps its Room rows to the model in `CacheModels.kt`, and `ServerTimeEntry.toTimeEntry()` reads a server entry. The rows keep `Long` columns. Room 2.8 binds value class columns (on 2026-11-08 KSP generated `entity.id.value` for a `TagId` column and the exported schema stayed the same), but typed rows would retype the queue, the sender and their tests with no change outside the module.
-- A feature's server class decodes its JSON into a private shape and maps it there: the tags, clients and tasks of the catalog pages. Reports keep their filter ids as numbers, the shape of their requests.
-- The server's timer state (`TimerState` and its parts, with `PhaseKind` and `PhaseTransition`) and the trash's `TrashEntry` stay core:api's types. core:timerstate holds and stores the state as the server sent it, the Pomodoro widget stores its session as that JSON, and the trash page only shows its rows.
+- core:api reads each catalog answer into a type of its own in `WorkspaceItems.kt`, such as `WorkspaceTag`, `WorkspaceClient`, `WorkspaceProject` and `ProjectTask`, with typed ids, and the feature's server class (`TagsServer`, `ClientsServer`, `ProjectsServer`, `TasksServer`) maps it to the model or a page type. `ReportsServer` maps `ReportSearchRow`, `ReportSearchEntry` and `WeeklyReportRow` the same way. Reports keep their filter ids as numbers, the shape of their requests.
+- The server's timer state (`TimerState` and its parts, with `PhaseKind` and `PhaseTransition`) and the trash's `TrashEntry`, whose `id` is an `EntryId`, stay core:api's types. core:timerstate holds and stores the state as the server sent it, the Pomodoro widget stores its session as that JSON, and the trash page only shows its rows.
 
 `PackageLayersTest` checks two rules: no main source outside `:core:cache` names a Room row, and no feature file that declares a view model or a composable imports a `@Serializable` class of `:core:api`, apart from its `SERVER_STATE` list.
 

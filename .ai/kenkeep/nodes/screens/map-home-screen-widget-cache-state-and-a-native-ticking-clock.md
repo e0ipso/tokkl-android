@@ -29,7 +29,7 @@ Day totals use the Timer page’s `countedTimerEntries`: an entry belongs to its
 
 Start, ordinary Stop and template starts use `ChangeQueue` offline. Pause, Resume and Stop while paused go to the server and need a connection; controls carry the account and revision they were drawn for. Pause is hidden during a session. Signed out opens sign-in.
 
-`WidgetSync` follows state changes and stores separate redraw keys for each provider. Native Chronometers tick elapsed time and applicable totals in the launcher; `updatePeriodMillis` is zero, with no periodic widget work.
+`WidgetSync` follows state changes and stores separate redraw keys for each provider. `TimerWidgetHook` (order 60) builds the Timer widget's `WidgetSync` when it runs at process start, with its `WidgetStore` and a `GlanceRedraw`, the `WidgetRedraw` that asks Glance to draw every placed widget again; Koin holds no `WidgetSync` of its own. Native Chronometers tick elapsed time and applicable totals in the launcher; `updatePeriodMillis` is zero, with no periodic widget work.
 
 <!-- kk:related:start -->
 # Related
