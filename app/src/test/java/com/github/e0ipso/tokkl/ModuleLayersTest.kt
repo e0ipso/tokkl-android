@@ -203,10 +203,9 @@ class ModuleLayersTest {
          * The core modules in layers, lowest first. The model needs no other core module. The
          * layer above needs only the model: the API client, whose calls take the model's ids, the
          * time helpers, the design system and the Android plumbing. Above it sit the session, the
-         * cache that reads it, and the timer state that reads the cache, with what the timer's
-         * surfaces say about it.
-         * Then the timer state's event stream and its service, the parts several features show,
-         * and the routes.
+         * cache that reads it, and the timer state that reads the cache. Then the timer state's
+         * event stream, its service and its Android delivery, with what the timer's surfaces say
+         * about it, the parts several features show, and the routes.
          */
         val CORE_LAYERS: List<Set<String>> = listOf(
             setOf(":core:model"),

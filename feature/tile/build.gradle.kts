@@ -11,6 +11,7 @@ dependencies {
     implementation(project(":core:session"))
     implementation(project(":core:cache"))
     implementation(project(":core:timerstate"))
+    implementation(project(":core:timersync"))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui)

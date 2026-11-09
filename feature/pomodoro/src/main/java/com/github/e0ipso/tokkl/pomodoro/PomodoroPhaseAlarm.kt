@@ -7,10 +7,10 @@ import com.github.e0ipso.tokkl.platform.collectDurably
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.CurrentTimerState
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
-import com.github.e0ipso.tokkl.timerstate.PomodoroAlarmScheduler
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.timerstate.SessionActions
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
+import com.github.e0ipso.tokkl.timersync.PomodoroAlarmScheduler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine

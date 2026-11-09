@@ -8,7 +8,7 @@ import com.github.e0ipso.tokkl.preferences.PomodoroDefaultsSetting
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.SignInStatus
 import com.github.e0ipso.tokkl.timerstate.HeldTimerStates
-import com.github.e0ipso.tokkl.timerstate.PomodoroRingingPhase
+import com.github.e0ipso.tokkl.timersync.PomodoroRingingPhase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged

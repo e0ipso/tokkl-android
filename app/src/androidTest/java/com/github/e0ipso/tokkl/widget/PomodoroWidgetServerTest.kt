@@ -54,7 +54,7 @@ import org.junit.Rule
 import org.junit.Test
 import java.time.Duration
 import java.time.Instant
-import com.github.e0ipso.tokkl.core.timerstate.R as TimerNoticeR
+import com.github.e0ipso.tokkl.core.timersync.R as TimerNoticeR
 import com.github.e0ipso.tokkl.feature.widget.R as WidgetR
 
 /** Real pinned-server actions through the installed provider's native PendingIntents. */

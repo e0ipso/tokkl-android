@@ -49,7 +49,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
 import com.github.e0ipso.tokkl.core.entryfields.R as FieldsR
-import com.github.e0ipso.tokkl.core.timerstate.R as TimerNoticeR
+import com.github.e0ipso.tokkl.core.timersync.R as TimerNoticeR
 import com.github.e0ipso.tokkl.feature.pomodoro.R as PomodoroR
 
 /**

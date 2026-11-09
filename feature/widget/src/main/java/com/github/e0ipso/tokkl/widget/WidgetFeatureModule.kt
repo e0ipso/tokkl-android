@@ -7,8 +7,8 @@ import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.timerstate.HeldFieldsMemory
-import com.github.e0ipso.tokkl.timerstate.PomodoroWidgetRedraw
 import com.github.e0ipso.tokkl.timerstate.TimerControlsSource
+import com.github.e0ipso.tokkl.timersync.PomodoroWidgetRedraw
 import org.koin.android.ext.koin.androidApplication
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.workmanager.dsl.worker
@@ -56,7 +56,7 @@ val widgetFeatureModule = module {
     }
 
     // What the phase alarm redraws when it could not arm an exact alarm.
-    factory<PomodoroWidgetRedraw> { PomodoroWidgetRedrawer(get(), get()) }
+    factory<PomodoroWidgetRedraw> { PomodoroWidgetRedrawer(androidContext(), get(), get()) }
     single { PomodoroWidgetHook(inject(), inject(), get(), io()) } bind AppHook::class
 
     // The Pomodoro widget's Start, Next phase and End session, as expedited work that outlives

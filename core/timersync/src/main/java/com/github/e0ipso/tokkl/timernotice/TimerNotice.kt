@@ -1,7 +1,7 @@
 package com.github.e0ipso.tokkl.timernotice
 
 import android.content.res.Resources
-import com.github.e0ipso.tokkl.core.timerstate.R
+import com.github.e0ipso.tokkl.core.timersync.R
 import com.github.e0ipso.tokkl.session.ServerProblem
 import com.github.e0ipso.tokkl.session.problemText
 import com.github.e0ipso.tokkl.session.toServerProblem

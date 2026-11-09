@@ -77,7 +77,7 @@ import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 import kotlin.math.abs
-import com.github.e0ipso.tokkl.core.timerstate.R as TimerNoticeR
+import com.github.e0ipso.tokkl.core.timersync.R as TimerNoticeR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 import com.github.e0ipso.tokkl.feature.notification.R as NotificationR
 

@@ -1,5 +1,6 @@
-package com.github.e0ipso.tokkl.timerstate
+package com.github.e0ipso.tokkl.timersync
 
+import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import kotlinx.coroutines.flow.Flow
 
 /** The phase whose end rings, as the Pomodoro ringing service reports it. The Pomodoro widget redraws on it. */

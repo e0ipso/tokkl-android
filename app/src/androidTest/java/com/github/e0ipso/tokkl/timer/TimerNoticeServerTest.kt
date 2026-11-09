@@ -10,7 +10,7 @@ import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.components.heldTimerState
 import com.github.e0ipso.tokkl.components.timerStates
-import com.github.e0ipso.tokkl.core.timerstate.R
+import com.github.e0ipso.tokkl.core.timersync.R
 import com.github.e0ipso.tokkl.orFail
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking

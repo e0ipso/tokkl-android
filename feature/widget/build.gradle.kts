@@ -13,6 +13,7 @@ dependencies {
     implementation(project(":core:session"))
     implementation(project(":core:cache"))
     implementation(project(":core:timerstate"))
+    implementation(project(":core:timersync"))
     implementation(project(":core:entryfields"))
     implementation(project(":core:navigation"))
     implementation(libs.androidx.compose.material3)

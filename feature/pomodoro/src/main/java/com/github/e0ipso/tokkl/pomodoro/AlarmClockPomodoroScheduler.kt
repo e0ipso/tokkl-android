@@ -10,9 +10,9 @@ import android.content.pm.PackageManager
 import com.github.e0ipso.tokkl.capabilities.TimerApiOffer
 import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.platform.mainActivityIntent
-import com.github.e0ipso.tokkl.timerstate.PomodoroAlarmScheduler
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
-import com.github.e0ipso.tokkl.timerstate.PomodoroWidgetRedraw
+import com.github.e0ipso.tokkl.timersync.PomodoroAlarmScheduler
+import com.github.e0ipso.tokkl.timersync.PomodoroWidgetRedraw
 import com.github.e0ipso.tokkl.timersync.TimerSyncFollower
 import com.github.e0ipso.tokkl.timersync.TimerSyncWatcher
 import kotlinx.coroutines.CoroutineDispatcher
@@ -167,7 +167,7 @@ class PomodoroPhaseAlarmReceiver :
                 if (intent.action == ACTION_PHASE_END) {
                     get<PomodoroPhaseAlarm>().onAlarm(phase)
                 } else {
-                    get<PomodoroWidgetRedraw>().redraw(context, phase)
+                    get<PomodoroWidgetRedraw>().redraw(phase)
                 }
             } finally {
                 pending.finish()

@@ -1,7 +1,6 @@
 // The timer's state: the running entry's controls and totals, and Pause, Resume and the Pomodoro
 // session of a Tokkl server with the timer API, which the server sends and the phone keeps, with
-// their Koin definitions, what the timer's surfaces say when a timer action does not go through,
-// and the expedited work that sends the notification's and the widget's server actions.
+// their Koin definitions.
 plugins {
     alias(libs.plugins.tokkl.android.library)
     alias(libs.plugins.kotlin.serialization)
@@ -21,11 +20,8 @@ dependencies {
     implementation(project(":core:platform"))
     implementation(project(":core:session"))
     implementation(project(":core:cache"))
-    // The server actions of the notification and the widget run as expedited work.
-    implementation(libs.androidx.work.runtime)
     implementation(platform(libs.koin.bom))
     implementation(libs.koin.android)
-    implementation(libs.koin.androidx.workmanager)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

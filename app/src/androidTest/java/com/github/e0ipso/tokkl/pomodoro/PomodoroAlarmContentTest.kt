@@ -41,7 +41,7 @@ import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
-import com.github.e0ipso.tokkl.core.timerstate.R as TimerNoticeR
+import com.github.e0ipso.tokkl.core.timersync.R as TimerNoticeR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /** The alarm and Pomodoro page content at the largest font scale, with no server or ring. */

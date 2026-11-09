@@ -11,7 +11,7 @@ import android.os.IBinder
 import androidx.annotation.VisibleForTesting
 import com.github.e0ipso.tokkl.platform.MainDispatcher
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
-import com.github.e0ipso.tokkl.timerstate.PomodoroRingingPhase
+import com.github.e0ipso.tokkl.timersync.PomodoroRingingPhase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob

@@ -1,5 +1,6 @@
-package com.github.e0ipso.tokkl.timerstate
+package com.github.e0ipso.tokkl.timersync
 
+import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import java.time.Instant
 
 /**
