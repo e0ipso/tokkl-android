@@ -191,7 +191,7 @@ class ReportTabsViewModelTest {
         model.applyFilters(filters)
         assertTrue("the summary loads again", model.state.value is ReportsState.Loading)
         io.runAll()
-        assertEquals(filters, model.filters.value)
+        assertEquals(filters, model.chosen.value.filters)
         assertEquals(filters, repository.summaries.last().filters)
 
         model.selectTab(ReportTab.DETAILED)
@@ -212,8 +212,8 @@ class ReportTabsViewModelTest {
         screen = TestScreen(model.page, scope, scheduler)
         screen.show()
         io.runAll()
-        assertEquals("the filters stay", filters, model.filters.value)
-        assertEquals("the tab stays", ReportTab.WEEKLY, model.tab.value)
+        assertEquals("the filters stay", filters, model.chosen.value.filters)
+        assertEquals("the tab stays", ReportTab.WEEKLY, model.chosen.value.tab)
         assertEquals(filters, repository.weeklies.last().filters)
 
         val nonBillable = ReportFilters(billable = BillableFilter.NON_BILLABLE)
@@ -244,8 +244,8 @@ class ReportTabsViewModelTest {
         screen.show()
         io.runAll()
 
-        assertEquals(filters, model.filters.value)
-        assertEquals(ReportTab.WEEKLY, model.tab.value)
+        assertEquals(filters, model.chosen.value.filters)
+        assertEquals(ReportTab.WEEKLY, model.chosen.value.tab)
         assertEquals(filters, repository.weeklies.last().filters)
     }
 
@@ -261,8 +261,8 @@ class ReportTabsViewModelTest {
 
         route.restart(before = ReportChoices::openToday)
 
-        assertEquals(ReportFilters(), model.filters.value)
-        assertEquals(ReportTab.SUMMARY, model.tab.value)
+        assertEquals(ReportFilters(), model.chosen.value.filters)
+        assertEquals(ReportTab.SUMMARY, model.chosen.value.tab)
     }
 
     /** A weekly answer ServerReportsRepository could not read shows as an unexpected answer. */

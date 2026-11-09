@@ -72,11 +72,12 @@ class ReportsViewModel(
     /** Snapshot every export setting now, independently of the rows loaded by Detailed. */
     fun exportCsv() {
         val shown = state.value as? ReportsState.Loaded ?: return
-        val kind = tab.value.csvKind() ?: return
+        val choice = chosen.value
+        val kind = choice.tab.csvKind() ?: return
         if (!exportCapabilities.value.supports(kind) || accountTime() == null) return
         val settings = accountSettings.value ?: return
         val knownWorkspace = workspace ?: return
-        val selectedFilters = filters.value.let {
+        val selectedFilters = choice.filters.let {
             it.copy(projects = it.projects.toList(), clients = it.clients.toList(), tags = it.tags.toList())
         }
         exporter.start(
@@ -102,15 +103,11 @@ class ReportsViewModel(
     /** The report on screen. */
     internal val state: StateFlow<ReportsState> = mutableState.asStateFlow()
 
-    private val mutableTab = choices.tab
-
-    /** The tab on screen. It stays when the screen closes and opens again. */
-    internal val tab: StateFlow<ReportTab> = mutableTab.asStateFlow()
-
-    private val mutableFilters = choices.filters
-
-    /** The filters every tab's report applies. They stay when the screen closes and opens again, as the tab does. */
-    internal val filters: StateFlow<ReportFilters> = mutableFilters.asStateFlow()
+    /**
+     * The tab on screen and the filters every tab's report applies. They stay when the screen
+     * closes and opens again.
+     */
+    internal val chosen: StateFlow<ReportChoice> = choices.chosen
 
     /** Whether the screen has opened: from its first show, or a widget's day tap. */
     private var opened = false
@@ -120,20 +117,20 @@ class ReportsViewModel(
 
     /** What the screen shows, while it reads it. */
     val page: StateFlow<ReportsPageState> = combine(
-        combine(state, tab, filters, ::Triple),
+        combine(state, chosen, ::Pair),
         accountSettings,
         filterOptions,
         exportState,
         exportCapabilities,
-    ) { (report, shownTab, shownFilters), settings, options, export, capabilities ->
+    ) { (report, choice), settings, options, export, capabilities ->
         ReportsPageState(
             report = report,
-            tab = shownTab,
+            tab = choice.tab,
             settings = settings,
             time = settings?.time(clock),
-            filters = shownFilters,
+            filters = choice.filters,
             filterOptions = options,
-            exportSupported = shownTab.csvKind()?.let(capabilities::supports) == true,
+            exportSupported = choice.tab.csvKind()?.let(capabilities::supports) == true,
             exportState = export,
         )
     }.stateInPage(
@@ -211,16 +208,12 @@ class ReportsViewModel(
      * that [ReportRange.week] picks from that range.
      */
     fun selectTab(tab: ReportTab) {
-        if (tab == mutableTab.value) return
-        mutableTab.value = tab
-        selection()?.let(::load)
+        if (choices.selectTab(tab)) selection()?.let(::load)
     }
 
     /** Applies [filters] to every tab and asks for the report on screen again when they change. */
     fun applyFilters(filters: ReportFilters) {
-        if (filters == mutableFilters.value) return
-        mutableFilters.value = filters
-        selection()?.let(::load)
+        if (choices.applyFilters(filters)) selection()?.let(::load)
     }
 
     /**
@@ -238,7 +231,7 @@ class ReportsViewModel(
             // A cancelled page drops its answer, as a cancelled load does.
             mutableState.value = withContext(
                 io,
-            ) { nextPage(shown.selection, known, report, next, mutableFilters.value) }
+            ) { nextPage(shown.selection, known, report, next, chosen.value.filters) }
         }
     }
 
@@ -259,8 +252,7 @@ class ReportsViewModel(
     }
 
     private fun load(requested: RangeSelection) {
-        val tab = mutableTab.value
-        val filters = mutableFilters.value
+        val (tab, filters) = chosen.value
         val selection = if (tab == ReportTab.WEEKLY) weekOf(requested) ?: return showNoAccountTime() else requested
         loading?.cancel()
         mutableState.value = ReportsState.Loading(selection)
@@ -330,7 +322,7 @@ class ReportsViewModel(
     init {
         // A new process that restored the page brings back what the page kept, and keeps it from then on.
         saved.get<String>(SAVED_CHOICES)?.let(choices::restore)
-        viewModelScope.launch { combine(tab, filters, ::Pair).collect { saved[SAVED_CHOICES] = choices.saved() } }
+        viewModelScope.launch { chosen.collect { saved[SAVED_CHOICES] = choices.saved() } }
         // A widget's day tap, from before the page opened or while it shows.
         viewModelScope.launch {
             choices.todayAsked.collect { asked -> if (asked && choices.takeToday()) openToday() }
@@ -340,12 +332,12 @@ class ReportsViewModel(
     /** What [page] starts with, from the flows as they are now. */
     private fun pageNow() = ReportsPageState(
         report = state.value,
-        tab = tab.value,
+        tab = chosen.value.tab,
         settings = accountSettings.value,
         time = accountTime(),
-        filters = filters.value,
+        filters = chosen.value.filters,
         filterOptions = filterOptions.value,
-        exportSupported = tab.value.csvKind()?.let(exportCapabilities.value::supports) == true,
+        exportSupported = chosen.value.tab.csvKind()?.let(exportCapabilities.value::supports) == true,
         exportState = exportState.value,
     )
 

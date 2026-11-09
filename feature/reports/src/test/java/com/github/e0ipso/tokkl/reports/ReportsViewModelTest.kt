@@ -91,8 +91,8 @@ class ReportsViewModelTest {
         model.applyFilters(ReportFilters(billable = BillableFilter.BILLABLE))
         model.selectTab(ReportTab.WEEKLY)
         route.choices.openToday()
-        assertEquals(ReportTab.SUMMARY, model.tab.value)
-        assertEquals(ReportFilters(), model.filters.value)
+        assertEquals(ReportTab.SUMMARY, model.chosen.value.tab)
+        assertEquals(ReportFilters(), model.chosen.value.filters)
         io.runAll()
         assertEquals(RangeSelection(range("2026-10-21", "2026-10-21"), RangePreset.TODAY), loaded().selection)
         assertSearched("2026-10-21", "2026-10-21")
@@ -110,8 +110,8 @@ class ReportsViewModelTest {
 
     @Test
     fun aWidgetTapBeforeThePageOpensShowsTodayOnce() {
-        route.choices.tab.value = ReportTab.WEEKLY
-        route.choices.filters.value = ReportFilters(billable = BillableFilter.BILLABLE)
+        route.choices.selectTab(ReportTab.WEEKLY)
+        route.choices.applyFilters(ReportFilters(billable = BillableFilter.BILLABLE))
         route.leave()
         route.choices.openToday()
         route.reopen()
@@ -119,8 +119,8 @@ class ReportsViewModelTest {
         screen.show()
         io.runAll()
 
-        assertEquals(ReportTab.SUMMARY, model.tab.value)
-        assertEquals(ReportFilters(), model.filters.value)
+        assertEquals(ReportTab.SUMMARY, model.chosen.value.tab)
+        assertEquals(ReportFilters(), model.chosen.value.filters)
         assertEquals(RangeSelection(range("2026-10-21", "2026-10-21"), RangePreset.TODAY), loaded().selection)
         assertEquals(1, repository.summaries.size)
     }
@@ -221,7 +221,7 @@ class ReportsViewModelTest {
         io.runAll()
         assertEquals(RangeSelection(range("2026-10-14", "2026-10-20"), RangePreset.LAST_WEEK), loaded().selection)
         assertSearched("2026-10-14", "2026-10-20")
-        assertEquals(filters, model.filters.value)
+        assertEquals(filters, model.chosen.value.filters)
         assertEquals("the search asks with the filters", filters, repository.summaries.last().filters)
         assertEquals(3, repository.summaries.size)
     }
@@ -245,7 +245,7 @@ class ReportsViewModelTest {
         screen.show()
         io.runAll()
         assertEquals(RangePreset.THIS_WEEK, loaded().selection.preset)
-        assertEquals("the tab stays", ReportTab.DETAILED, model.tab.value)
+        assertEquals("the tab stays", ReportTab.DETAILED, model.chosen.value.tab)
         assertTrue("nothing waits to run", io.isEmpty())
         assertEquals("the summary, last week's details, then this week's", 3, searches())
         assertEquals(range("2026-10-21", "2026-10-27"), repository.detailedPages.last().range)
