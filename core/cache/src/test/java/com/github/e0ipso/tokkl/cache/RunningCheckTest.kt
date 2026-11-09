@@ -3,8 +3,14 @@ package com.github.e0ipso.tokkl.cache
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import java.io.IOException
 import java.time.Instant
 
 /** What the running entry check writes to the cache for each answer (docs/PRD.md 6.3). */
@@ -162,6 +168,24 @@ class RunningCheckTest {
             RunningCheckWrites(),
             writes(before = listOf(before), now = listOf(started), server = entry(2)),
         )
+    }
+
+    @Test
+    fun aFailedReadOfTheRunningEntryReadsItAgainWithoutEndingTheCheck() = runTest {
+        val calls = mutableListOf<String>()
+        var reads = 0
+        val running = flow {
+            reads++
+            if (reads == 1) throw IOException("cache unreadable")
+            emit(true)
+            awaitCancellation()
+        }
+
+        val following = launch { followRunning(running, { calls += "schedule" }, { calls += "cancel" }) }
+        advanceTimeBy(1_001)
+
+        assertEquals(listOf("schedule"), calls)
+        following.cancel()
     }
 
     @Test

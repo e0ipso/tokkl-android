@@ -29,8 +29,8 @@ object LogcatObserverFailures : ObserverFailures {
  *
  * - When the flow fails, the observer waits and collects it again from the start.
  * - When [action] fails, the observer waits and hands it the same value again, until it goes
- *   through. Meanwhile the newest value waits and the values before it are dropped, unless
- *   [everyValue] keeps them all, for a flow of events of which each one counts.
+ *   through. The values that come meanwhile wait. With [latestOnly], only the newest of them
+ *   waits, also while [action] runs, for an observer that needs no step in between.
  * - A failure of the disk or the database ([IOException], [SQLiteException]) is expected. Any
  *   other exception goes to [failures] before the wait.
  * - The waits start at one second and double after each failure in a row, up to two minutes.
@@ -41,7 +41,7 @@ object LogcatObserverFailures : ObserverFailures {
 suspend fun <T> Flow<T>.collectDurably(
     observer: String,
     failures: ObserverFailures = LogcatObserverFailures,
-    everyValue: Boolean = false,
+    latestOnly: Boolean = false,
     action: suspend (T) -> Unit,
 ) {
     var failedReads = 0
@@ -54,7 +54,7 @@ suspend fun <T> Flow<T>.collectDurably(
             }
             again
         }
-        .let { if (everyValue) it else it.conflate() }
+        .let { if (latestOnly) it.conflate() else it }
         .collect { value -> applyUntilDone(observer, value, failures, action) }
 }
 

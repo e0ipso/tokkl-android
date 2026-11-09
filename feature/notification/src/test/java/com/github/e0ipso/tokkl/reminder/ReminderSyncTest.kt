@@ -7,13 +7,18 @@ import com.github.e0ipso.tokkl.preferences.ReminderPreferences
 import com.github.e0ipso.tokkl.storage.valueStore
 import com.github.e0ipso.tokkl.timerstate.SurfaceTap
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.IOException
 import java.time.Instant
+import kotlin.coroutines.EmptyCoroutineContext
 
 class ReminderSyncTest {
     private val now = Instant.parse("2026-10-21T12:00:00Z")
@@ -264,6 +269,22 @@ class ReminderSyncTest {
 
             override suspend fun pause(entryId: EntryId) = pause(entryId)
         }
+
+    @Test fun aFailedReadOfTheRunningEntryFollowsItAgain() = runTest {
+        var reads = 0
+        val changes = flow {
+            reads++
+            if (reads == 1) throw IOException("cache unreadable")
+            emit(Unit)
+            awaitCancellation()
+        }
+
+        val following = sync().follow(changes, this, EmptyCoroutineContext)
+        advanceTimeBy(1_001)
+
+        assertEquals("the reminder waits for the running entry", 1, waiting.size)
+        following.cancel()
+    }
 
     @Test fun futureTimerWaitsAndChangingHoursReplacesTheDelay() = runTest {
         input = input.copy(running = entry.copy(start = now))

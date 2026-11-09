@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.pomodoro
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.capabilities.TimerApiOffer
 import com.github.e0ipso.tokkl.platform.AppHook
+import com.github.e0ipso.tokkl.platform.collectDurably
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.CurrentTimerState
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
@@ -11,6 +12,7 @@ import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.timerstate.SessionActions
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -62,6 +64,14 @@ class PomodoroPhaseAlarm(
 
     /** True when the exact-alarm permission is denied. The Pomodoro page reads this. */
     val permissionDenied: Boolean get() = alarms.permissionDenied
+
+    /**
+     * [follow]s after each of [changes], the held state's and the capability's, until they end. A
+     * failed read or follow tries again after a wait, as [collectDurably] does.
+     */
+    suspend fun followChanges(changes: Flow<*>) {
+        changes.collectDurably("PomodoroPhaseAlarm") { follow() }
+    }
 
     /**
      * Arms, moves or drops the alarm and the ring for the held state now. Every state change and
@@ -200,7 +210,7 @@ class PomodoroAlarmHook(
 ) : AppHook {
     override fun processStart() {
         scope.launch(io) {
-            combine(timerStates.value.held, capabilities.value.loaded) { _, _ -> Unit }.collect { alarm.value.follow() }
+            alarm.value.followChanges(combine(timerStates.value.held, capabilities.value.loaded) { _, _ -> Unit })
         }
     }
 }

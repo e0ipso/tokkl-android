@@ -9,13 +9,19 @@ import com.github.e0ipso.tokkl.model.TaskId
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.IOException
+import kotlin.coroutines.EmptyCoroutineContext
 
 class FavoriteShortcutsTest {
 
@@ -158,6 +164,35 @@ class FavoriteShortcutsTest {
         workspaceId: WorkspaceId? = WorkspaceId(3),
         start: suspend (WorkspaceId, EntryFields) -> EntryId,
     ) = startFavoriteShortcut(id, available, favorites, listOf(project), workspaceId, names, start)
+
+    @Test
+    fun aFailedReadOfTheFavoritesReadsThemAgainWithoutEndingTheSync() = runTest {
+        var launcher = emptyList<FavoriteShortcut>()
+        var reads = 0
+        val sync = FavoriteShortcutSync(
+            shortcuts = flow {
+                reads++
+                if (reads == 1) throw IOException("cache unreadable")
+                emit(shortcuts())
+                awaitCancellation()
+            },
+            launcher = object : PublishedShortcuts {
+                override fun published() = launcher
+
+                override fun publish(shortcuts: List<FavoriteShortcut>) {
+                    launcher = shortcuts
+                }
+            },
+            scope = backgroundScope,
+            io = EmptyCoroutineContext,
+        )
+
+        val following = launch { sync.follow() }
+        advanceTimeBy(1_001)
+
+        assertEquals(shortcuts(), launcher)
+        following.cancel()
+    }
 
     @Test
     fun theSyncSetsOnlyAListTheLauncherLacks() = runTest {

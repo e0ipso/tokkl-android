@@ -79,9 +79,7 @@ class TimerSyncFollower(
     }
 
     init {
-        scope.launch {
-            timerSync.terminations.collectDurably("TimerSyncFollower", everyValue = true, action = ::streamEnded)
-        }
+        scope.launch { timerSync.terminations.collectDurably("TimerSyncFollower", action = ::streamEnded) }
     }
 
     /**

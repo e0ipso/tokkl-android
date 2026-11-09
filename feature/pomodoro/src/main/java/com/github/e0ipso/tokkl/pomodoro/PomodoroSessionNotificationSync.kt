@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.pomodoro
 
 import com.github.e0ipso.tokkl.platform.AppHook
 import com.github.e0ipso.tokkl.platform.SingleFlight
+import com.github.e0ipso.tokkl.platform.collectDurably
 import com.github.e0ipso.tokkl.session.SignInStatus
 import com.github.e0ipso.tokkl.session.SignedInListener
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
@@ -76,7 +77,7 @@ class PomodoroSessionNotificationSync internal constructor(
     // the suspending work.
     @Synchronized fun start() {
         if (retired) return
-        observing.launch { changes.collect { refresh() } }
+        observing.launch { changes.collectDurably("PomodoroSessionNotificationSync") { refresh() } }
     }
 
     /**

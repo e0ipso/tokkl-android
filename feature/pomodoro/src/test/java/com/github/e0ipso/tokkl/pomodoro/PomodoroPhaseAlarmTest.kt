@@ -1,12 +1,17 @@
 package com.github.e0ipso.tokkl.pomodoro
 
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.IOException
 import java.time.Duration
 import java.time.Instant
 
@@ -31,6 +36,24 @@ class PomodoroPhaseAlarmTest {
         assertEquals(1, f.alarms.scheduled.size)
         assertEquals(0, f.alarms.cancels)
         assertNull(f.controller.current)
+    }
+
+    @Test
+    fun aFailedReadOfTheChangesReadsThemAgainWithoutEndingTheAlarm() = runTest {
+        val f = AlarmFixture(heldState(revision = 3))
+        var reads = 0
+        val changes = flow {
+            reads++
+            if (reads == 1) throw IOException("state unreadable")
+            emit(Unit)
+            awaitCancellation()
+        }
+
+        val following = launch { f.alarm.followChanges(changes) }
+        advanceTimeBy(1_001)
+
+        assertEquals(T0.plusSeconds(1_500) to key, f.alarms.armed)
+        following.cancel()
     }
 
     @Test

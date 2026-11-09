@@ -9,9 +9,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -21,6 +25,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.IOException
 import java.time.Duration
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * The session notification of the held session: its content comes from the server's phase,
@@ -54,6 +60,22 @@ class PomodoroSessionNotificationTest {
         assertNull(heldState(revision = 5, pomodoro = null).notificationContent())
         // The description is the open pomodoro's, not another running entry's.
         assertEquals("", heldState(revision = 6, entryId = 999).notificationContent()?.description)
+    }
+
+    @Test fun aFailedReadOfTheChangesReadsThemAgainWithoutEndingTheNotification() = runTest {
+        val f = Fixture()
+        var reads = 0
+        val changes = flow {
+            reads++
+            if (reads == 1) throw IOException("state unreadable")
+            emit(Unit)
+            awaitCancellation()
+        }
+
+        f.newSync(changes, backgroundScope, EmptyCoroutineContext).start()
+        advanceTimeBy(1_001)
+
+        assertEquals(1, f.posts.size)
     }
 
     @Test fun idleRemovesAndASessionPostsOnceIncludingAfterObserverRecreation() = runTest {
@@ -334,7 +356,11 @@ class PomodoroSessionNotificationTest {
             }
         }
 
-        fun newSync() = PomodoroSessionNotificationSync(
+        fun newSync(
+            changes: Flow<Unit> = this.changes,
+            scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined),
+            io: CoroutineContext = Dispatchers.Unconfined,
+        ) = PomodoroSessionNotificationSync(
             alarm.alarm, server, changes, { signedIn }, { serviceRunning },
             object : PomodoroNotificationMemory {
                 override suspend fun load() = saved
@@ -354,7 +380,7 @@ class PomodoroSessionNotificationTest {
                     removes++
                 }
             },
-            CoroutineScope(SupervisorJob() + Dispatchers.Unconfined), Dispatchers.Unconfined,
+            scope, io,
         )
     }
 }

@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.notification
 
 import com.github.e0ipso.tokkl.cache.CurrentEntryIds
 import com.github.e0ipso.tokkl.platform.AppHook
+import com.github.e0ipso.tokkl.platform.collectDurably
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import com.github.e0ipso.tokkl.storage.ValueStore
@@ -61,9 +62,9 @@ class RunningNotificationSync(
     /** Follows the running entry until the scope ends. Call once, at process start. */
     fun start(): Job = scope.launch(io) { follow() }
 
-    /** Follows the running entry until [running] ends. */
+    /** Follows the running entry until [running] ends, reading it again after a failure, as [collectDurably] does. */
     suspend fun follow() {
-        running.distinctUntilChanged().collect(::apply)
+        running.distinctUntilChanged().collectDurably("RunningNotificationSync", action = ::apply)
     }
 
     /**

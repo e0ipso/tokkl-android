@@ -13,6 +13,7 @@ import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.platform.AppHook
 import com.github.e0ipso.tokkl.platform.CurrentWorkManager
+import com.github.e0ipso.tokkl.platform.collectDurably
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import kotlinx.coroutines.CoroutineScope
@@ -47,7 +48,7 @@ class RunningCheck(private val workManager: CurrentWorkManager, private val resu
      * a stop and a refresh land in the cache from any surface, so following it covers them all.
      */
     fun follow(running: Flow<Boolean>, scope: CoroutineScope, io: CoroutineContext): Job = scope.launch(io) {
-        running.distinctUntilChanged().collect { if (it) schedule() else cancel() }
+        followRunning(running, ::schedule, ::cancel)
     }
 
     /**
@@ -136,6 +137,14 @@ class RunningCheckResults {
     fun write(expected: Long, apply: () -> Unit) {
         if (generation == expected) apply()
     }
+}
+
+/**
+ * Calls [schedule] while [running] is true and [cancel] while it is false, until [running] ends. A
+ * failed read tries again after a wait, as [collectDurably] does.
+ */
+internal suspend fun followRunning(running: Flow<Boolean>, schedule: () -> Unit, cancel: () -> Unit) {
+    running.distinctUntilChanged().collectDurably("RunningCheck") { if (it) schedule() else cancel() }
 }
 
 /** What one running entry check writes to the cache. */

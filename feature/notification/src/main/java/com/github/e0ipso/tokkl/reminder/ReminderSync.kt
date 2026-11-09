@@ -5,6 +5,7 @@ import com.github.e0ipso.tokkl.cache.CurrentEntryIds
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.platform.AppHook
+import com.github.e0ipso.tokkl.platform.collectDurably
 import com.github.e0ipso.tokkl.preferences.ReminderPreferences
 import com.github.e0ipso.tokkl.preferences.ReminderSetting
 import com.github.e0ipso.tokkl.session.AccountDataOwner
@@ -18,7 +19,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import java.io.IOException
 import java.time.Duration
 import kotlin.coroutines.CoroutineContext
 
@@ -87,14 +87,12 @@ class ReminderSync(
 
     private val lock = Mutex()
 
+    /**
+     * [reconcile]s after each of [changes], in [scope] on [io], until the scope ends. A failed read
+     * of the changes or a failed reconcile tries again after a wait, as [collectDurably] does.
+     */
     fun follow(changes: Flow<*>, scope: CoroutineScope, io: CoroutineContext) = scope.launch(io) {
-        changes.collect {
-            try {
-                reconcile()
-            } catch (_: IOException) {
-                // Keep the old state on a failed disk write; the next running/settings event retries.
-            }
-        }
+        changes.collectDurably("ReminderSync") { reconcile() }
     }
 
     suspend fun reconcile() = lock.withLock { update(account.input()) }

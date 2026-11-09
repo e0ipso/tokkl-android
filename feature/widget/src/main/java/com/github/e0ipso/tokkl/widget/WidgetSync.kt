@@ -50,7 +50,7 @@ class WidgetSync(
 
     /** Follows the phone's state until it ends, reading it again after a failed read or draw. */
     suspend fun follow() {
-        keys.distinctUntilChanged().collectDurably("WidgetSync", action = ::apply)
+        keys.distinctUntilChanged().collectDurably("WidgetSync", latestOnly = true, action = ::apply)
     }
 
     /** Updates the widgets unless they already show what [key] stands for. */

@@ -16,7 +16,11 @@ import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -160,6 +164,25 @@ class RunningNotificationTest {
 
         assertEquals(listOf("post Notification -3", "post Edited -3", "remove"), fake.calls)
         assertNull(fake.shown)
+    }
+
+    @Test
+    fun aFailedReadOfTheRunningEntryReadsItAgainWithoutEndingTheNotification() = runTest {
+        val fake = FakeNotification()
+        val first = content()!!
+        var reads = 0
+        val running = flow {
+            reads++
+            if (reads == 1) throw IOException("cache unreadable")
+            emit(first)
+            awaitCancellation()
+        }
+
+        val following = launch { fake.sync(running).follow() }
+        advanceTimeBy(1_001)
+
+        assertEquals(listOf("post Notification -3"), fake.calls)
+        following.cancel()
     }
 
     @Test

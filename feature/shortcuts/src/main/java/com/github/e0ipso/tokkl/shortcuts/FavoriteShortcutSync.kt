@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.shortcuts
 
 import com.github.e0ipso.tokkl.platform.AppHook
+import com.github.e0ipso.tokkl.platform.collectDurably
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import kotlinx.coroutines.CoroutineScope
@@ -51,9 +52,9 @@ class FavoriteShortcutSync(
     /** Follows the favorites until the scope ends. Call once, at process start. */
     fun start(): Job = scope.launch(io) { follow() }
 
-    /** Follows the favorites until [shortcuts] ends. */
+    /** Follows the favorites until [shortcuts] ends, reading them again after a failure, as [collectDurably] does. */
     suspend fun follow() {
-        shortcuts.distinctUntilChanged().collect(::apply)
+        shortcuts.distinctUntilChanged().collectDurably("FavoriteShortcutSync", action = ::apply)
     }
 
     /** Publishes [next], unless the launcher has it already. */
