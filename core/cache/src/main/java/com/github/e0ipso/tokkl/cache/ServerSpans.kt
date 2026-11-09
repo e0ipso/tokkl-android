@@ -41,10 +41,8 @@ interface ServerSpans {
  * [ServerSpans] on the grid of the signed-in account's [settings], or unsnapped while there are
  * none, once [load] has read them from the disk.
  */
-internal class AccountServerSpans(
-    private val settings: StateFlow<AccountSettings?>,
-    private val load: StartupLoad,
-) : ServerSpans {
+internal class AccountServerSpans(private val settings: StateFlow<AccountSettings?>, private val load: StartupLoad) :
+    ServerSpans {
 
     override suspend fun ready() = load.ready()
 

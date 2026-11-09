@@ -19,21 +19,17 @@ internal data class SavedPomodoroForm(
     val taskId: TaskId?,
     val tags: List<String>,
     val billable: Boolean,
-    val lengths: List<String>? = null,
+    val lengths: SavedLengths? = null,
 ) {
 
     fun fields() = EntryFields(description, projectId, taskId, tags, billable)
 
-    /** The typed lengths, or null while they follow the defaults or were saved in another shape. */
-    fun lengths(): PomodoroLengths? = lengths?.takeIf { it.size == LENGTHS }?.let { (work, short, long, every) ->
-        PomodoroLengths(work, short, long, every)
-    }
+    /** The typed lengths, or null while they follow the defaults. */
+    fun lengths(): PomodoroLengths? = lengths?.let { PomodoroLengths(it.work, it.shortRest, it.longRest, it.every) }
 
     fun encode(): String = json.encodeToString(serializer(), this)
 
     companion object {
-        private const val LENGTHS = 4
-
         private val json = Json { ignoreUnknownKeys = true }
 
         fun of(fields: EntryFields, lengths: PomodoroLengths?) = SavedPomodoroForm(
@@ -42,7 +38,7 @@ internal data class SavedPomodoroForm(
             fields.taskId,
             fields.tags,
             fields.billable,
-            lengths?.let { listOf(it.work, it.shortRest, it.longRest, it.every) },
+            lengths?.let { SavedLengths(it.work, it.shortRest, it.longRest, it.every) },
         )
 
         /** The form [text] saved, or null for one an older version saved in a shape this one cannot read. */
@@ -55,3 +51,7 @@ internal data class SavedPomodoroForm(
         }
     }
 }
+
+/** [PomodoroLengths] as the saved state keeps them: the four fields as typed. */
+@Serializable
+internal data class SavedLengths(val work: String, val shortRest: String, val longRest: String, val every: String)

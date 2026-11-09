@@ -76,6 +76,7 @@ class PomodoroViewModel(
     private val modelScope = CoroutineScope(
         viewModelScope.coroutineContext + SupervisorJob(viewModelScope.coroutineContext[Job]),
     )
+
     /** The start form a new process restored from the route's saved state, if any. */
     private val restored = saved.get<String>(SAVED_FORM)?.let(SavedPomodoroForm::decode)
 

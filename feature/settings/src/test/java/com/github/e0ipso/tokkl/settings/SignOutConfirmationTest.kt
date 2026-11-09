@@ -33,7 +33,11 @@ class SignOutConfirmationTest {
         }
         return SignOutConfirmation(
             unsent = { if (countFails) throw IllegalStateException("disk I/O error") else unsent },
-            signOut = SignOut(listOf(step), CurrentAccount(CoroutineScope(Dispatchers.Unconfined)), Dispatchers.Unconfined),
+            signOut = SignOut(
+                listOf(step),
+                CurrentAccount(CoroutineScope(Dispatchers.Unconfined)),
+                Dispatchers.Unconfined,
+            ),
             scope = CoroutineScope(Dispatchers.Unconfined),
         )
     }

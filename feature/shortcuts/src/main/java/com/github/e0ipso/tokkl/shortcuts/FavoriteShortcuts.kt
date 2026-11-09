@@ -93,7 +93,6 @@ internal fun favoriteShortcutLists(
     capabilities: Flow<Capabilities>,
     favorites: Flow<List<Favorite>>,
     projects: Flow<List<Project>>,
-): Flow<List<FavoriteShortcut>> =
-    combine(capabilities, favorites, projects) { flags, cachedFavorites, cachedProjects ->
-        favoriteShortcuts(flags.favorites, cachedFavorites, cachedProjects, launcher.limit, favoriteNames(context))
-    }
+): Flow<List<FavoriteShortcut>> = combine(capabilities, favorites, projects) { flags, cachedFavorites, cachedProjects ->
+    favoriteShortcuts(flags.favorites, cachedFavorites, cachedProjects, launcher.limit, favoriteNames(context))
+}
