@@ -9,6 +9,8 @@ import com.github.e0ipso.tokkl.timerstate.TimerSurfaceActions
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import com.github.e0ipso.tokkl.timerstate.continueEntry
 import com.github.e0ipso.tokkl.timerstate.lastStopped
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 
 /**
  * What the Quick Settings tile shows (docs/PRD.md N4), read from the phone's cache and the
@@ -33,6 +35,14 @@ sealed interface RunningTileContent {
 
     /** No timer runs and no entry is cached to continue, as after sign-out: the tile is unavailable. */
     data object Nothing : RunningTileContent
+}
+
+/**
+ * What the tile shows as the timer [controls] and the cache's [entries] change, which the service
+ * follows while the panel shows it.
+ */
+class RunningTileContents(controls: Flow<TimerControls>, entries: Flow<List<TimeEntry>>) {
+    val content: Flow<RunningTileContent> = combine(controls, entries, ::runningTileContent)
 }
 
 /** The tile for what the timer [controls] show, a paused timer too, and the cache's [entries]. */

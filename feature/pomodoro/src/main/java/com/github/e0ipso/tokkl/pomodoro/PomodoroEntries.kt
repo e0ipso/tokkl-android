@@ -16,9 +16,10 @@ import com.github.e0ipso.tokkl.navigation.RequestOpening
 import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.TopLevelDestination
 import com.github.e0ipso.tokkl.navigation.route
-import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
+import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.ui.theme.SectionHues
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
@@ -140,5 +141,5 @@ data object PomodoroRoute : Route {
 }
 
 /** The Pomodoro page's running dot, while a session runs. */
-class PomodoroBadge(timerStates: AccountTimerStates) :
-    PageBadge(PomodoroRoute, R.string.nav_pomodoro_running, timerStates.held.map { it?.pomodoro != null })
+class PomodoroBadge(held: Flow<HeldTimerState?>) :
+    PageBadge(PomodoroRoute, R.string.nav_pomodoro_running, held.map { it?.pomodoro != null })

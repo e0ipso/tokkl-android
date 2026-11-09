@@ -3,11 +3,9 @@ package com.github.e0ipso.tokkl.tile
 import android.database.sqlite.SQLiteException
 import android.graphics.drawable.Icon
 import android.service.quicksettings.TileService
-import com.github.e0ipso.tokkl.cache.AccountCache
-import com.github.e0ipso.tokkl.cache.ChangeQueue
+import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.timernotice.TimerFailureNotice
-import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.SurfaceTap
 import com.github.e0ipso.tokkl.timerstate.TimerSurfaceActions
 import kotlinx.coroutines.CoroutineDispatcher
@@ -15,8 +13,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
@@ -47,9 +43,8 @@ import org.koin.android.ext.android.inject
  */
 class RunningTileService : TileService() {
 
-    private val timerControls: AccountTimerStates by inject()
-    private val cache: AccountCache by inject()
-    private val changes: ChangeQueue by inject()
+    private val contents: RunningTileContents by inject()
+    private val changes: RunningEntryChanges by inject()
     private val surfaceActions: TimerSurfaceActions by inject()
     private val tileRefresh: TileRefresh by inject()
     private val appScope: CoroutineScope by inject()
@@ -66,7 +61,7 @@ class RunningTileService : TileService() {
     override fun onStartListening() {
         super.onStartListening()
         listening?.cancel()
-        listening = scope.launch { content().distinctUntilChanged().collect(::show) }
+        listening = scope.launch { contents.content.distinctUntilChanged().collect(::show) }
         tileRefresh.onStartListening()
     }
 
@@ -99,11 +94,6 @@ class RunningTileService : TileService() {
         scope.cancel()
         super.onDestroy()
     }
-
-    private fun content(): Flow<RunningTileContent> = combine(
-        timerControls.controls,
-        cache.entries,
-    ) { controls, entries -> runningTileContent(controls, entries.map { it.entry }) }
 
     private fun show(content: RunningTileContent) {
         val tile = qsTile ?: return

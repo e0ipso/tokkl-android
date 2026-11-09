@@ -1,6 +1,6 @@
 package com.github.e0ipso.tokkl.timersync
 
-import com.github.e0ipso.tokkl.cache.ChangeSender
+import com.github.e0ipso.tokkl.cache.SignInPause
 import com.github.e0ipso.tokkl.capabilities.TimerApiOffer
 import com.github.e0ipso.tokkl.platform.AppHook
 import com.github.e0ipso.tokkl.platform.collectDurably
@@ -34,8 +34,8 @@ internal fun interface SignInRefusal {
 }
 
 /** Pauses the queue as its own refusal does, which shows the prompt to sign in again. */
-internal class PauseQueueOnRefusal(private val sender: ChangeSender) : SignInRefusal {
-    override fun refused() = sender.signInRefused()
+internal class PauseQueueOnRefusal(private val queue: SignInPause) : SignInRefusal {
+    override fun refused() = queue.signInRefused()
 }
 
 /** Hears each decision on whether the timer sync runs, so it can follow whether the server has the timer API. */

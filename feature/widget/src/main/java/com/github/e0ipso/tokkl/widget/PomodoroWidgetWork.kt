@@ -10,7 +10,7 @@ import androidx.work.workDataOf
 import com.github.e0ipso.tokkl.platform.CurrentWorkManager
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timernotice.TimerFailureNotice
-import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
+import com.github.e0ipso.tokkl.timerstate.TimerStateIntakes
 import com.github.e0ipso.tokkl.timerstate.TimerActions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
@@ -41,7 +41,7 @@ internal fun CurrentWorkManager.sendPomodoroWidgetTap(tap: PomodoroWidgetTap) {
 class PomodoroWidgetActionWorker(
     context: Context,
     parameters: WorkerParameters,
-    private val timerStates: AccountTimerStates,
+    private val timerStates: TimerStateIntakes,
     private val session: Session,
     private val widgetStates: PomodoroWidgetStateSource,
     private val failures: TimerFailureNotice,

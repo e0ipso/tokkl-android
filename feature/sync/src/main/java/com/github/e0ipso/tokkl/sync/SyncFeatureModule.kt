@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.sync
 import com.github.e0ipso.tokkl.api.SuccessListener
 import com.github.e0ipso.tokkl.cache.ChangeDiscards
 import com.github.e0ipso.tokkl.cache.ChangeQueue
+import com.github.e0ipso.tokkl.cache.SignInPause
 import com.github.e0ipso.tokkl.navigation.FeatureRoutes
 import com.github.e0ipso.tokkl.navigation.FrameContributions
 import com.github.e0ipso.tokkl.platform.io
@@ -46,7 +47,15 @@ val syncFeatureModule = module {
     }
 
     single {
-        SyncStatusSource(changes = get(), lastAnswer = get(), accountSettings = get(), sender = get(), scope = get())
+        val changes = get<ChangeQueue>()
+        SyncStatusSource(
+            unsent = changes.unsentCount,
+            needsAttention = changes.heldCount,
+            signInNeeded = get<SignInPause>().signInNeeded,
+            lastAnswered = get<LastAnswer>().state,
+            settings = get<AccountSettingsSource>().state,
+            scope = get(),
+        )
     }
 
     // The sync status band and the discarded changes' notice in the signed-in frame, in the

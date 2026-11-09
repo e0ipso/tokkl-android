@@ -6,6 +6,7 @@ import com.github.e0ipso.tokkl.navigation.SignInRoutes
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
 import com.github.e0ipso.tokkl.session.ServerTrustStore
+import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
@@ -21,11 +22,11 @@ val signInFeatureModule = module {
     single {
         AccountSessionWriter(
             accountSettings = get(),
-            timerStates = get(),
+            clearTimerState = get<AccountTimerStates>()::clearForSignIn,
             account = get(),
             session = get(),
             signedIn = getAll(),
-            sender = get(),
+            queue = get(),
             timerSync = get(),
         )
     } bind SessionWriter::class

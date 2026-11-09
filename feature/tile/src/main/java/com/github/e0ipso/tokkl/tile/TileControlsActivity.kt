@@ -30,7 +30,7 @@ import androidx.compose.ui.text.style.TextAlign
 import com.github.e0ipso.tokkl.feature.tile.R
 import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.timernotice.TimerFailureNotice
-import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
+import com.github.e0ipso.tokkl.timerstate.TimerControlsSource
 import com.github.e0ipso.tokkl.timerstate.SurfaceTap
 import com.github.e0ipso.tokkl.timerstate.TimerControls
 import com.github.e0ipso.tokkl.timerstate.TimerSurfaceAction
@@ -56,7 +56,7 @@ import com.github.e0ipso.tokkl.core.ui.R as UiR
  */
 class TileControlsActivity : ComponentActivity() {
 
-    private val timerControls: AccountTimerStates by inject()
+    private val timerControls: TimerControlsSource by inject()
     private val surfaceActions: TimerSurfaceActions by inject()
     private val scope: CoroutineScope by inject()
     private val io: CoroutineDispatcher by inject(IoDispatcher)

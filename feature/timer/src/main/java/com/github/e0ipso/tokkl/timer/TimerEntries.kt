@@ -7,7 +7,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
-import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.calendar.CalendarViewModel
 import com.github.e0ipso.tokkl.calendar.WeekCalendar
 import com.github.e0ipso.tokkl.entry.EntryFormScreen
@@ -37,7 +36,7 @@ import com.github.e0ipso.tokkl.navigation.route
 import com.github.e0ipso.tokkl.navigation.routes
 import com.github.e0ipso.tokkl.ui.theme.SectionHues
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -297,6 +296,5 @@ data object FullscreenTimerRoute : Route {
 @SerialName("com.github.e0ipso.tokkl.navigation.Route.Templates")
 data object TemplatesRoute : Route
 
-/** The Timer page's running dot, while an entry runs. */
-class TimerBadge(cache: AccountCache) :
-    PageBadge(Route.Timer, R.string.nav_timer_running, cache.running.map { it != null })
+/** The Timer page's running dot, while an entry runs, as [running] says. */
+class TimerBadge(running: Flow<Boolean>) : PageBadge(Route.Timer, R.string.nav_timer_running, running)

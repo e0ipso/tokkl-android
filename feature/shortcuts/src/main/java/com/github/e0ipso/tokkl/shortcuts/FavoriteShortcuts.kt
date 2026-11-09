@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.shortcuts
 
 import android.content.Context
-import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.Favorite
@@ -92,8 +91,9 @@ internal fun favoriteShortcutLists(
     context: Context,
     launcher: LauncherShortcuts,
     capabilities: CapabilitiesSource,
-    cache: AccountCache,
+    favorites: Flow<List<Favorite>>,
+    projects: Flow<List<Project>>,
 ): Flow<List<FavoriteShortcut>> =
-    combine(capabilities.loaded, cache.favorites, cache.projects) { flags, favorites, projects ->
-        favoriteShortcuts(flags.favorites, favorites, projects, launcher.limit, favoriteNames(context))
+    combine(capabilities.loaded, favorites, projects) { flags, cachedFavorites, cachedProjects ->
+        favoriteShortcuts(flags.favorites, cachedFavorites, cachedProjects, launcher.limit, favoriteNames(context))
     }

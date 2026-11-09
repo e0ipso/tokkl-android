@@ -70,7 +70,14 @@ val timerFeatureModule = module {
     // The system trace of each Start and Stop tap on the Timer page.
     single { TapTrace.System }
 
-    single<FavoritesStore> { FavoritesServer(client = get<Session>(), cache = get(), scope = get(), io = io()) }
+    single<FavoritesStore> {
+        FavoritesServer(
+            client = get<Session>(),
+            cacheFavorites = get<AccountCache>()::replaceFavorites,
+            scope = get(),
+            io = io(),
+        )
+    }
 
     // The history's and the calendar's days outside the cache, from the server.
     single { OlderPages(get<Session>()) }
@@ -207,5 +214,5 @@ val timerFeatureModule = module {
     single { TimerRequests } bind FeatureRequests::class
 
     // The bar's running dot on Timer while an entry runs, by the cache's word.
-    single { TimerBadge(get()) } bind PageBadge::class
+    single { TimerBadge(get<AccountCache>().running.map { it != null }) } bind PageBadge::class
 }

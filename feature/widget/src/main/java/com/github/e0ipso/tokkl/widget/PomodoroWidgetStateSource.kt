@@ -1,12 +1,13 @@
 package com.github.e0ipso.tokkl.widget
 
 import androidx.annotation.VisibleForTesting
-import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.Task
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaultsSetting
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.SignInStatus
-import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
+import com.github.e0ipso.tokkl.timerstate.HeldTimerStates
 import com.github.e0ipso.tokkl.timerstate.PomodoroRingingPhase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -27,8 +28,9 @@ import kotlin.coroutines.CoroutineContext
 @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 class PomodoroWidgetStateSource(
     fields: PomodoroWidgetFieldsStore,
-    timerStates: AccountTimerStates,
-    cache: AccountCache,
+    timerStates: HeldTimerStates,
+    projects: Flow<List<Project>>,
+    tasks: Flow<List<Task>>,
     ringing: PomodoroRingingPhase,
     capabilities: CapabilitiesSource,
     accountSettings: AccountSettingsSource,
@@ -46,12 +48,12 @@ class PomodoroWidgetStateSource(
             clock,
         )
         val catalog = combine(
-            cache.projects,
-            cache.tasks,
+            projects,
+            tasks,
             ringing.ringingPhase,
             deadlines,
-        ) { projects, tasks, ring, _ ->
-            Triple(projects, tasks, ring)
+        ) { cachedProjects, cachedTasks, ring, _ ->
+            Triple(cachedProjects, cachedTasks, ring)
         }
         combine(
             timerStates.held,
@@ -59,7 +61,7 @@ class PomodoroWidgetStateSource(
             accountSettings.loaded,
             pomodoroDefaults.loadedDefaults,
             catalog,
-        ) { _, flags, settings, defaults, (projects, tasks, ringing) ->
+        ) { _, flags, settings, defaults, (cachedProjects, cachedTasks, ringing) ->
             val isSignedIn = signedIn.isSignedIn()
             timerStates.withHeld { owner, held ->
                 pomodoroWidgetState(
@@ -69,8 +71,8 @@ class PomodoroWidgetStateSource(
                     held = held,
                     defaults = defaults,
                     remembered = fields.load(owner),
-                    projects = projects,
-                    tasks = tasks,
+                    projects = cachedProjects,
+                    tasks = cachedTasks,
                     deviceNow = clock.instant(),
                     ringing = ringing,
                 )

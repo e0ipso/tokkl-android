@@ -21,6 +21,7 @@ import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.session.SignedInListener
 import com.github.e0ipso.tokkl.storage.StartupLoad
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
+import com.github.e0ipso.tokkl.timerstate.HeldTimerStates
 import com.github.e0ipso.tokkl.timerstate.PomodoroAlarmScheduler
 import com.github.e0ipso.tokkl.timerstate.PomodoroRingingPhase
 import com.github.e0ipso.tokkl.timerstate.TimerActions
@@ -156,5 +157,5 @@ val pomodoroFeatureModule = module {
     single { PomodoroRequests(notification = inject(), io = io()) } bind FeatureRequests::class
 
     // The bar's running dot on Pomodoro while the server's session runs.
-    single { PomodoroBadge(get()) } bind PageBadge::class
+    single { PomodoroBadge(get<HeldTimerStates>().held) } bind PageBadge::class
 }

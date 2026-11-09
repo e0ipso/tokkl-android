@@ -88,7 +88,8 @@ class ChangeSender(
     private val capabilities: CapabilitiesSource,
     private val undo: DeleteUndoer,
 ) : AccountDataOwner,
-    QueueSender {
+    QueueSender,
+    SignInPause {
 
     override val signOutPhase = SignOutPhase.FINISH_SENDING
 
@@ -144,7 +145,7 @@ class ChangeSender(
      * True once the server refused the session's token for a queued change (docs/PRD.md O6). The
      * queue then sends nothing and discards nothing until [resume].
      */
-    val signInNeeded: StateFlow<Boolean> = mutableSignInNeeded.asStateFlow()
+    override val signInNeeded: StateFlow<Boolean> = mutableSignInNeeded.asStateFlow()
 
     init {
         scope.launch(io) { serveRequests() }
@@ -155,12 +156,12 @@ class ChangeSender(
      * or 403. Pauses the queue as its own refusal would, so the status asks to sign in again, until
      * [resume].
      */
-    fun signInRefused() {
+    override fun signInRefused() {
         mutableSignInNeeded.value = true
     }
 
     /** Lifts the pause after a refused token, once the user has signed in again, and drains the queue. */
-    fun resume() {
+    override fun resume() {
         mutableSignInNeeded.value = false
         send()
     }
@@ -387,6 +388,23 @@ class ChangeSender(
         /** Twice the farthest a snap moves a start: half of Tokkl's coarsest time resolution, an hour. */
         val LOOKUP_MARGIN: Duration = Duration.ofHours(1)
     }
+}
+
+/**
+ * The queue's pause after the server refused the session's token (docs/PRD.md O6), as
+ * [ChangeSender] keeps it, for the sign-in, the sync status and the timer event stream, which read
+ * or change nothing else of the sender.
+ */
+interface SignInPause {
+
+    /** True from a refused token until [resume]: the queue sends nothing meanwhile. */
+    val signInNeeded: StateFlow<Boolean>
+
+    /** Another request's token was refused: pauses the queue as its own refusal would. */
+    fun signInRefused()
+
+    /** Lifts the pause once the user has signed in again, and drains the queue. */
+    fun resume()
 }
 
 /**

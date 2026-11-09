@@ -9,15 +9,10 @@ import android.os.Handler
 import android.os.Looper
 import android.view.WindowManager
 import android.widget.Toast
-import com.github.e0ipso.tokkl.cache.AccountCache
-import com.github.e0ipso.tokkl.cache.ChangeQueue
-import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.feature.shortcuts.R
 import com.github.e0ipso.tokkl.platform.IoDispatcher
-import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.android.ext.android.inject
@@ -36,10 +31,7 @@ import com.github.e0ipso.tokkl.core.ui.R as UiR
  */
 class StartFavoriteActivity : Activity() {
 
-    private val capabilities: CapabilitiesSource by inject()
-    private val cache: AccountCache by inject()
-    private val accountSettings: AccountSettingsSource by inject()
-    private val changes: ChangeQueue by inject()
+    private val starts: FavoriteShortcutStarts by inject()
     private val scope: CoroutineScope by inject()
     private val io: CoroutineDispatcher by inject(IoDispatcher)
 
@@ -55,17 +47,7 @@ class StartFavoriteActivity : Activity() {
         scope.launch {
             val names = favoriteNames(app)
             val message = try {
-                val started = withContext(io) {
-                    startFavoriteShortcut(
-                        id = id,
-                        available = capabilities.current().favorites,
-                        favorites = cache.favorites.first(),
-                        projects = cache.projects.first(),
-                        workspaceId = accountSettings.current()?.defaultWorkspaceId,
-                        names = names,
-                        start = changes::start,
-                    )
-                }
+                val started = withContext(io) { starts.start(id, names) }
                 when (started) {
                     is ShortcutStart.Started -> app.getString(R.string.shortcut_started, started.name)
                     ShortcutStart.Gone -> app.getString(R.string.shortcut_gone)

@@ -69,7 +69,7 @@ val cacheModule = module {
             capabilities = get(),
             undo = get(),
         )
-    } binds arrayOf(AccountDataOwner::class, QueueSender::class)
+    } binds arrayOf(AccountDataOwner::class, QueueSender::class, SignInPause::class)
 
     // Takes a delete back, and refreshes once the server restored the entry. The sender sends each
     // delete through it, so an Undo never decides while a delete is on its way.

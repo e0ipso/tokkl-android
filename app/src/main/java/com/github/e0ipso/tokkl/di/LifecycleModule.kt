@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.di
 
+import com.github.e0ipso.tokkl.cache.ChangeSender
 import com.github.e0ipso.tokkl.lifecycle.AppRefreshSteps
 import com.github.e0ipso.tokkl.lifecycle.MainActivityForeground
 import com.github.e0ipso.tokkl.platform.MainDispatcher
@@ -22,7 +23,7 @@ internal val lifecycleModule = module {
             timerView = get(),
             pomodoroDefaults = get(),
             reminder = get(),
-            sender = get(),
+            sendQueue = get<ChangeSender>()::send,
             timerSync = get(),
         )
     } bind AccountRefreshSteps::class

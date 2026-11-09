@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.notification
 
-import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.entryfields.entryLabels
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.Project
@@ -195,9 +194,8 @@ private fun tagKey(name: String): String =
  */
 internal fun runningNotificationContents(
     controls: Flow<TimerControls>,
-    cache: AccountCache,
-): Flow<RunningNotificationContent?> = combine(
-    controls,
-    cache.projects,
-    cache.tasks,
-) { current, projects, tasks -> runningNotificationContent(current, projects, tasks) }
+    projects: Flow<List<Project>>,
+    tasks: Flow<List<Task>>,
+): Flow<RunningNotificationContent?> = combine(controls, projects, tasks) { current, cachedProjects, cachedTasks ->
+    runningNotificationContent(current, cachedProjects, cachedTasks)
+}

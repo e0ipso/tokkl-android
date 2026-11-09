@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.timerstate
 
-import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.cache.CurrentEntryCache
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.model.DiscardedPomodoro
@@ -49,12 +48,15 @@ private class AccountTimerState(val source: TimerStateSource, val account: Strin
  *
  * The flows follow the signed-in account across sign-ins and load the stored state off the main
  * thread, on [io].
+ *
+ * @param entriesOrQueueChanged emits when the cache's entries or the queue change, which the
+ *   [controls] read again.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class AccountTimerStates(
     private val store: TimerStateStore,
     private val lastFields: HeldFieldsMemory,
-    private val cache: AccountCache,
+    entriesOrQueueChanged: Flow<Unit>,
     private val entries: CurrentEntryCache,
     private val capabilities: CapabilitiesSource,
     private val refreshes: AccountRefreshRequests,
@@ -64,7 +66,9 @@ class AccountTimerStates(
 ) : AccountDataOwner,
     DiscardNotices,
     CurrentTimerState,
-    TimerStateIntakes {
+    TimerStateIntakes,
+    TimerControlsSource,
+    HeldTimerStates {
 
     override val signOutPhase = SignOutPhase.RETIRE_STATE
 
@@ -89,7 +93,7 @@ class AccountTimerStates(
      * [TimerStateSource.withState] does. Keep [read] short. Blocks on disk I/O when [read] reads
      * the cache.
      */
-    fun <T> withHeld(read: (account: String, held: HeldTimerState?) -> T): T {
+    override fun <T> withHeld(read: (account: String, held: HeldTimerState?) -> T): T {
         val owner = current()
         return owner.source.withState { held -> read(owner.account, held) }
     }
@@ -111,7 +115,7 @@ class AccountTimerStates(
     private val states: Flow<AccountTimerState> = account.context.map { current() }
 
     /** The signed-in account's held timer state, or null without one. */
-    val held: Flow<HeldTimerState?> = states.flatMapLatest { it.source.state }.flowOn(io)
+    override val held: Flow<HeldTimerState?> = states.flatMapLatest { it.source.state }.flowOn(io)
 
     /**
      * [held] while the account's server offers the timer API, and null otherwise: what the
@@ -137,8 +141,8 @@ class AccountTimerStates(
      * held state under the holder's lock, so a state never shows apart from the running entry it
      * wrote to the cache.
      */
-    val controls: Flow<TimerControls> = combine(
-        cache.entriesOrQueueChanged,
+    override val controls: Flow<TimerControls> = combine(
+        entriesOrQueueChanged,
         states.flatMapLatest { it.source.state },
         capabilities.loaded,
     ) { _, _, flags ->

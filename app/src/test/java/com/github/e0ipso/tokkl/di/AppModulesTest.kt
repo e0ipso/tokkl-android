@@ -57,6 +57,11 @@ class AppModulesTest {
                 Boolean::class,
                 Flow::class,
                 StateFlow::class,
+                // A function a definition passes, such as a method reference. A suspend function
+                // takes its continuation as one more parameter.
+                Function0::class,
+                Function1::class,
+                Function2::class,
                 Instant::class,
                 File::class,
                 ValueStore::class,

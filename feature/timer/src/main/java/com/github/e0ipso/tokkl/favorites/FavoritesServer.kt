@@ -6,7 +6,6 @@ import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.FavoriteBody
 import com.github.e0ipso.tokkl.api.FavoritesChange
 import com.github.e0ipso.tokkl.api.map
-import com.github.e0ipso.tokkl.cache.AccountCache
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.Favorite
 import kotlinx.coroutines.CoroutineScope
@@ -17,15 +16,16 @@ import kotlin.coroutines.CoroutineContext
 const val MAX_FAVORITES = 9
 
 /**
- * Saves the account's favorites on the server, then in [cache]. Editing the list needs the
+ * Saves the account's favorites on the server, then in the cache. Editing the list needs the
  * server: nothing is queued, and a failure leaves the server and the cache as they were.
  *
  * @param client the signed-in account's API client, or null when signed out.
+ * @param cacheFavorites replaces the cached favorites, as `AccountCache.replaceFavorites` does.
  * @param scope the application's scope, where each save runs on [io].
  */
 class FavoritesServer(
     private val client: ApiClientProvider,
-    private val cache: AccountCache,
+    private val cacheFavorites: suspend (List<Favorite>) -> Unit,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
 ) : FavoritesStore {
@@ -38,7 +38,7 @@ class FavoritesServer(
     override suspend fun save(favorites: List<EntryFields>): ApiResult<Unit> = scope.async(io) {
         val api = client() ?: return@async ApiResult.Failure(ApiError.AuthFailed)
         api.account.savePreferences(favoritesBody(favorites)).map {
-            cache.replaceFavorites(favorites.mapIndexed { position, fields -> fields.toFavorite(position) })
+            cacheFavorites(favorites.mapIndexed { position, fields -> fields.toFavorite(position) })
         }
     }.await()
 }

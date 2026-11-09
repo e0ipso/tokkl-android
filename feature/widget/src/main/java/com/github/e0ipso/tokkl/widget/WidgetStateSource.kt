@@ -8,7 +8,7 @@ import com.github.e0ipso.tokkl.cache.RunningCheck
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.platform.CurrentWorkManager
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
-import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
+import com.github.e0ipso.tokkl.timerstate.TimerControls
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -34,7 +34,7 @@ class WidgetStateSource(
     cache: AccountCache,
     accountSettings: AccountSettingsSource,
     capabilities: CapabilitiesSource,
-    timerControls: AccountTimerStates,
+    timerControls: Flow<TimerControls>,
     workManager: CurrentWorkManager,
     clock: Clock,
     io: CoroutineContext,
@@ -74,7 +74,7 @@ class WidgetStateSource(
         combine(
             accountSettings.loaded,
             capabilities.loaded,
-            timerControls.controls,
+            timerControls,
             cache.favorites,
             catalog,
         ) { settings, flags, controls, favorites, (projects, tasks, history) ->
