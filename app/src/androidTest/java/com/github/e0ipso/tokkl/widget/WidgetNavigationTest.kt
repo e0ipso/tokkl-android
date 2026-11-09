@@ -106,13 +106,13 @@ class WidgetNavigationTest {
             var today = false
             scenario.onActivity {
                 val model = reportsViewModel(it)
-                val selection = when (val state = model.state.value) {
+                val selection = when (val state = model.page.value.report) {
                     is ReportsState.Loaded -> state.selection
                     is ReportsState.Loading -> state.selection
                     is ReportsState.Failed -> state.selection
                     else -> null
                 }
-                today = selection?.preset == RangePreset.TODAY && model.tab.value == ReportTab.SUMMARY
+                today = selection?.preset == RangePreset.TODAY && model.page.value.tab == ReportTab.SUMMARY
             }
             today
         }

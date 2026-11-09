@@ -5,6 +5,7 @@ import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.picker.Picked
+import com.github.e0ipso.tokkl.picker.PickerSource
 import java.time.LocalDate
 
 /** A time field of the entry form. */
@@ -101,3 +102,11 @@ sealed interface EntryFormState {
         val noTimesOffered: Boolean = false,
     ) : EntryFormState
 }
+
+/** What the entry form's screen draws: the [form], what its picker offers, and whether the phone is [offline]. */
+@Immutable
+data class EntryFormPage(
+    val form: EntryFormState = EntryFormState.Closed,
+    val picker: PickerSource = PickerSource(),
+    val offline: Boolean = false,
+)

@@ -98,7 +98,8 @@ class ProjectsViewModel(
     /** The task list of the project the form edits. */
     val tasks = TasksModel(tasksRepository, settings, refreshes, viewModelScope, io)
 
-    val state: StateFlow<ProjectsState> = catalog.state
+    /** The list and what is open over it, before the cache and the network join them in [page]. */
+    internal val state: StateFlow<ProjectsState> = catalog.state
 
     /** What the page shows, while it reads it. The cached rows are empty until the cache is read. */
     val page: StateFlow<ProjectsPageState> = combine(

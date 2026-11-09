@@ -124,11 +124,11 @@ class ReportsForegroundTest {
             ) { hasNode(string(R.string.reports_offline_title)) }
         }
         assertTrue(
-            "the offline message shows; state ${model.state.value}, old total shows: ${hasNode(total)}",
+            "the offline message shows; state ${model.page.value.report}, old total shows: ${hasNode(total)}",
             offline.isSuccess,
         )
         assertTrue("the offline explanation shows", hasNode(string(R.string.reports_offline_message)))
-        val state = model.state.value
+        val state = model.page.value.report
         assertEquals(
             "failed for want of the server",
             ReportsState.Failed(loaded.selection, ReportFailure.Unreachable),
@@ -165,7 +165,7 @@ class ReportsForegroundTest {
         compose.waitForIdle()
         Thread.sleep(SETTLE_MS)
         assertSame("the rotation keeps the model", model, modelOf(landscape))
-        assertSame("the rotation keeps the report", second, model.state.value)
+        assertSame("the rotation keeps the report", second, model.page.value.report)
         assertEquals("the rotation asks nothing", 2, relay.count)
         assertEquals("the relay reached the server each time", emptyList<String>(), relay.failures)
     }
@@ -184,14 +184,14 @@ class ReportsForegroundTest {
      */
     private fun awaitLoaded(model: ReportsViewModel, after: ReportsState.Loaded?): ReportsState.Loaded {
         compose.waitUntil("a report loads", LOAD_TIMEOUT_MS) {
-            when (val state = model.state.value) {
+            when (val state = model.page.value.report) {
                 is ReportsState.Loaded -> state !== after
                 is ReportsState.Failed, is ReportsState.NoAccountTime -> true
                 ReportsState.Closed, is ReportsState.Loading -> false
             }
         }
         compose.waitForIdle()
-        val state = model.state.value
+        val state = model.page.value.report
         assertTrue("a report loads: $state", state is ReportsState.Loaded && state !== after)
         return state as ReportsState.Loaded
     }

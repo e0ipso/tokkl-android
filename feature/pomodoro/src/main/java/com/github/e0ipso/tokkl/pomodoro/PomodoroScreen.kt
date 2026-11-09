@@ -69,8 +69,6 @@ fun PomodoroScreen(
     notificationPermissionRevision: Int = 0,
 ) {
     val state by model.page.collectAsStateWithLifecycle()
-    val catalog by model.picker.collectAsStateWithLifecycle()
-    val offline by model.offline.collectAsStateWithLifecycle()
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val context = LocalContext.current
     var fullScreenSettingsUnavailable by remember { mutableStateOf(false) }
@@ -105,7 +103,7 @@ fun PomodoroScreen(
         onEnd = { model.end(displayed) },
         picker = { original, picked, onPicked, pickerModifier ->
             state.workspaceId?.let { workspace ->
-                EntityPicker(catalog, offline, workspace, original, picked, onPicked, pickerModifier)
+                EntityPicker(state.picker, state.offline, workspace, original, picked, onPicked, pickerModifier)
             }
         },
         modifier = modifier,

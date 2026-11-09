@@ -252,7 +252,7 @@ class ReportFiltersTest {
         )
 
         checkFilter(picks = emptyList(), web = JsonObject(emptyMap()), entries = 4, lines = emptyList())
-        assertEquals("Clear filters turns \"Is not\" off too", ReportFilters(), model().filters.value)
+        assertEquals("Clear filters turns \"Is not\" off too", ReportFilters(), model().page.value.filters)
     }
 
     /** Against a server that cannot negate, such as Toggl Track, the sheet offers no "Is not". */
@@ -379,7 +379,7 @@ class ReportFiltersTest {
         composeRule.waitUntil("the sheet closes", LOAD_TIMEOUT_MS) { !exists(sheetTitle()) }
         Thread.sleep(SETTLE_MS)
         assertEquals("closing it asks nothing", before, relay.count)
-        assertEquals(ReportFilters(), model().filters.value)
+        assertEquals(ReportFilters(), model().page.value.filters)
         assertEquals("the relay reached the server each time", emptyList<String>(), relay.failures)
     }
 
@@ -529,7 +529,7 @@ class ReportFiltersTest {
         return (state() as ReportsState.Loaded).report as T
     }
 
-    private fun state(): ReportsState = model().state.value
+    private fun state(): ReportsState = model().page.value.report
 
     private fun model(): ReportsViewModel {
         var model: ReportsViewModel? = null

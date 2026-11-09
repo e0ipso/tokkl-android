@@ -75,6 +75,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -542,13 +543,13 @@ class EntryFormServerTest {
             val description = "Typed snap $index"
             withModel { model ->
                 model.new(date)
-                model.state.first { it is EntryFormState.Open }
+                model.page.map { it.form }.first { it is EntryFormState.Open }
                 model.setDescription(description)
                 model.setStart(case[2])
                 model.setEnd(case[3])
                 model.timesDone()
                 model.save()
-                model.state.first { it == EntryFormState.Saved }
+                model.page.map { it.form }.first { it == EntryFormState.Saved }
             }
             drainUntilEmpty()
             val created = serverEntry(description, date)
@@ -563,14 +564,14 @@ class EntryFormServerTest {
                         created,
                     ).toTimeEntry(),
                 )
-                model.state.first { it is EntryFormState.Open }
+                model.page.map { it.form }.first { it is EntryFormState.Open }
                 model.setDescription("$description edited")
                 model.setStart(case[2])
                 model.setDuration(Duration.between(raw.start, raw.stop).seconds.toString() + "s")
                 model.durationDone()
                 model.durationDone()
                 model.save()
-                model.state.first { it == EntryFormState.Saved }
+                model.page.map { it.form }.first { it == EntryFormState.Saved }
             }
             drainUntilEmpty()
             val edited = runBlocking {
@@ -602,12 +603,12 @@ class EntryFormServerTest {
         }
         withModel { model ->
             model.new(day)
-            model.state.first { it is EntryFormState.Open }
+            model.page.map { it.form }.first { it is EntryFormState.Open }
             model.setStart("12:00")
             model.setDuration("10m")
             model.durationDone()
             model.save()
-            model.state.first {
+            model.page.map { it.form }.first {
                 it is EntryFormState.Open && it.mistakes == mapOf(
                     TimeField.DURATION to TimeMistake.TOO_SHORT,
                 )
@@ -681,10 +682,10 @@ class EntryFormServerTest {
         )
         withModel { model ->
             model.edit(EntryId(id))
-            model.state.first { it is EntryFormState.Open }
+            model.page.map { it.form }.first { it is EntryFormState.Open }
             model.setDescription("Legacy zero renamed")
             model.save()
-            model.state.first { it == EntryFormState.Saved }
+            model.page.map { it.form }.first { it == EntryFormState.Saved }
         }
         drainUntilEmpty()
         val saved = runBlocking {
@@ -821,7 +822,7 @@ class EntryFormServerTest {
             picker = flowOf(PickerSource()),
             offline = MutableStateFlow(false),
         )
-        val collector = scope.launch { model.state.collect {} }
+        val collector = scope.launch { model.page.collect {} }
         try {
             withTimeout(NETWORK_TIMEOUT.toMillis()) { withContext(Dispatchers.Main) { steps(model) } }
         } finally {

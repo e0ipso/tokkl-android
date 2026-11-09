@@ -264,7 +264,7 @@ class TimerActionsOfflineServerTest {
             var model: PomodoroViewModel? = null
             scenario.onActivity { model = sessionViewModels(it)[PomodoroViewModel::class.java] }
             val page = checkNotNull(model)
-            compose.waitUntil("the page has loaded", 15_000) { !page.state.value.loading }
+            compose.waitUntil("the page has loaded", 15_000) { !page.page.value.loading }
             compose.runOnIdle {
                 page.editLengths(PomodoroLengths(work = "1", shortRest = "1", longRest = "1", every = "4"))
                 page.editFields(EntryFields("Offline session"), entryId = null)
@@ -275,14 +275,14 @@ class TimerActionsOfflineServerTest {
             tapOnThePage(R.string.pomodoro_start)
             awaitProblem(page, PomodoroAction.START)
             assertUnchanged("Start session on the page", idle)
-            assertNull(page.state.value.pomodoro)
+            assertNull(page.page.value.pomodoro)
 
             AirplaneMode.set(false, fixture.account.client)
             tapOnThePage(R.string.pomodoro_start)
             compose.waitUntil(
                 "the server started the session",
                 15_000,
-            ) { page.state.value.pomodoro != null && !page.state.value.busy }
+            ) { page.page.value.pomodoro != null && !page.page.value.busy }
             val session = checkNotNull(other.timerState().pomodoro)
             compose.waitUntil("the session notification", 10_000) { TimerSurfaces.sessionNotification() != null }
 
@@ -403,8 +403,8 @@ class TimerActionsOfflineServerTest {
         compose.waitUntil(
             "$action fails offline",
             15_000,
-        ) { !page.state.value.busy && page.state.value.problem != null }
-        assertEquals(PomodoroProblem(action, TimerActionResult.Offline), page.state.value.problem)
+        ) { !page.page.value.busy && page.page.value.problem != null }
+        assertEquals(PomodoroProblem(action, TimerActionResult.Offline), page.page.value.problem)
         compose.onNodeWithText(offline).performScrollTo().assertIsDisplayed()
     }
 

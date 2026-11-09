@@ -4,6 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.fold
+import com.github.e0ipso.tokkl.api.getOrElse
+import com.github.e0ipso.tokkl.api.map
 import com.github.e0ipso.tokkl.capabilities.supports
 import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.platform.AppForeground
@@ -32,7 +35,8 @@ import kotlin.coroutines.CoroutineContext
  * in memory while the route is on the back stack, and go with it, while the tab and the filters
  * stay in [choices] for the next visit. Explicit CSV sharing uses a separate bounded private
  * export area. When a request fails, the screen shows why and no numbers or entries, even those of
- * pages that loaded before.
+ * pages that loaded before. The screen reads one state, [page]; [state], [tab] and [filters] are
+ * its parts, which the module's tests read too.
  *
  * Call every function on the main thread.
  *
@@ -48,18 +52,18 @@ import kotlin.coroutines.CoroutineContext
  */
 class ReportsViewModel(
     private val choices: ReportChoices,
-    val accountSettings: StateFlow<AccountSettings?>,
+    private val accountSettings: StateFlow<AccountSettings?>,
     private val repository: ReportsRepository,
     scope: CoroutineScope,
     private val io: CoroutineContext,
     private val clock: Clock,
-    val filterOptions: StateFlow<FilterOptions>,
-    val exportCapabilities: StateFlow<Capabilities>,
+    private val filterOptions: StateFlow<FilterOptions>,
+    private val exportCapabilities: StateFlow<Capabilities>,
     private val exporter: ReportExportController,
     app: AppForeground,
 ) : ViewModel(scope) {
 
-    val exportState: StateFlow<ReportExportState> = exporter.state
+    private val exportState: StateFlow<ReportExportState> = exporter.state
 
     /** Snapshot every export setting now, independently of the rows loaded by Detailed. */
     fun exportCsv() {
@@ -76,17 +80,12 @@ class ReportsViewModel(
         )
     }
 
-    fun launchExportShare(launch: (File) -> Unit) {
-        exporter.launchShare(launch)
-    }
-    fun exportShareFinished() {
-        exporter.shareFinished()
-    }
-    fun exportNoShareTarget() {
-        exporter.noShareTarget()
-    }
-    fun exportShareFailed() {
-        exporter.shareFailed()
+    /** What happened to the share of the ready export, as the page reports it. */
+    fun onExportShare(event: ExportShareEvent) = when (event) {
+        is ExportShareEvent.Launch -> exporter.launchShare(event.launch)
+        ExportShareEvent.Finished -> exporter.shareFinished()
+        ExportShareEvent.NoTarget -> exporter.noShareTarget()
+        ExportShareEvent.Failed -> exporter.shareFailed()
     }
 
     override fun onCleared() {
@@ -95,17 +94,19 @@ class ReportsViewModel(
     }
 
     private val mutableState = MutableStateFlow<ReportsState>(ReportsState.Closed)
-    val state: StateFlow<ReportsState> = mutableState.asStateFlow()
+
+    /** The report on screen. */
+    internal val state: StateFlow<ReportsState> = mutableState.asStateFlow()
 
     private val mutableTab = choices.tab
 
     /** The tab on screen. It stays when the screen closes and opens again. */
-    val tab: StateFlow<ReportTab> = mutableTab.asStateFlow()
+    internal val tab: StateFlow<ReportTab> = mutableTab.asStateFlow()
 
     private val mutableFilters = choices.filters
 
     /** The filters every tab's report applies. They stay when the screen closes and opens again, as the tab does. */
-    val filters: StateFlow<ReportFilters> = mutableFilters.asStateFlow()
+    internal val filters: StateFlow<ReportFilters> = mutableFilters.asStateFlow()
 
     /** Whether the screen has opened: from its first show, or a widget's day tap. */
     private var opened = false
@@ -288,51 +289,19 @@ class ReportsViewModel(
         filters: ReportFilters,
     ): Pair<ReportsState, ReportWorkspace?> {
         val time = accountTime() ?: return ReportsState.NoAccountTime(accountSettings.value?.timeZone) to known
-        val workspace = known ?: when (val answer = repository.workspace()) {
-            is ApiResult.Success -> answer.value
-            is ApiResult.Failure -> return ReportsState.Failed(selection, failureOf(answer.error)) to null
+        val workspace = known
+            ?: repository.workspace().getOrElse { return ReportsState.Failed(selection, failureOf(it.error)) to null }
+        val report = when (tab) {
+            ReportTab.SUMMARY ->
+                repository.summary(workspace, selection.range, time.zone, time.firstDayOfWeek, filters)
+
+            ReportTab.DETAILED -> repository.detailedPage(workspace, selection.range, time.zone, firstRow = 1, filters)
+                .map { DetailedReport(it.entries, it.nextRow) }
+
+            ReportTab.WEEKLY -> repository.weekly(workspace, selection.range.from, filters)
+                .map { WeeklyReport.of(selection.range.from, it) }
         }
-        val shown = when (tab) {
-            ReportTab.SUMMARY -> when (
-                val answer = repository.summary(
-                    workspace,
-                    selection.range,
-                    time.zone,
-                    time.firstDayOfWeek,
-                    filters,
-                )
-            ) {
-                is ApiResult.Success -> ReportsState.Loaded(selection, answer.value)
-                is ApiResult.Failure -> ReportsState.Failed(selection, failureOf(answer.error))
-            }
-
-            ReportTab.DETAILED -> when (
-                val answer = repository.detailedPage(
-                    workspace,
-                    selection.range,
-                    time.zone,
-                    firstRow = 1,
-                    filters,
-                )
-            ) {
-                is ApiResult.Success -> ReportsState.Loaded(
-                    selection,
-                    DetailedReport(answer.value.entries, answer.value.nextRow),
-                )
-
-                is ApiResult.Failure -> ReportsState.Failed(selection, failureOf(answer.error))
-            }
-
-            ReportTab.WEEKLY -> when (val answer = repository.weekly(workspace, selection.range.from, filters)) {
-                is ApiResult.Success -> ReportsState.Loaded(
-                    selection,
-                    WeeklyReport.of(selection.range.from, answer.value),
-                )
-
-                is ApiResult.Failure -> ReportsState.Failed(selection, failureOf(answer.error))
-            }
-        }
-        return shown to workspace
+        return shownAs(selection, report) to workspace
     }
 
     /** [report] with the page that starts at [next] added, or why there is none. */
@@ -344,15 +313,13 @@ class ReportsViewModel(
         filters: ReportFilters,
     ): ReportsState {
         val time = accountTime() ?: return ReportsState.NoAccountTime(accountSettings.value?.timeZone)
-        return when (val answer = repository.detailedPage(workspace, selection.range, time.zone, next, filters)) {
-            is ApiResult.Success -> ReportsState.Loaded(
-                selection,
-                DetailedReport(report.entries + answer.value.entries, answer.value.nextRow),
-            )
-
-            is ApiResult.Failure -> ReportsState.Failed(selection, failureOf(answer.error))
-        }
+        val page = repository.detailedPage(workspace, selection.range, time.zone, next, filters)
+        return shownAs(selection, page.map { DetailedReport(report.entries + it.entries, it.nextRow) })
     }
+
+    /** The loaded [report] of [selection], or why it did not load. */
+    private fun shownAs(selection: RangeSelection, report: ApiResult<Report>): ReportsState =
+        report.fold({ ReportsState.Loaded(selection, it) }, { ReportsState.Failed(selection, failureOf(it)) })
 
     private fun failureOf(error: ApiError): ReportFailure = reportFailureOf(error)
 
@@ -374,4 +341,20 @@ class ReportsViewModel(
         exportSupported = tab.value.csvKind()?.let(exportCapabilities.value::supports) == true,
         exportState = exportState.value,
     )
+}
+
+/** What happened to the share of a ready CSV export, as the Reports page reports it. */
+sealed interface ExportShareEvent {
+
+    /** The share chooser is about to open: [launch] opens it with the export's file. */
+    class Launch(val launch: (File) -> Unit) : ExportShareEvent
+
+    /** The chooser closed, whatever the user picked. */
+    data object Finished : ExportShareEvent
+
+    /** No app takes the file. */
+    data object NoTarget : ExportShareEvent
+
+    /** The share could not open. */
+    data object Failed : ExportShareEvent
 }

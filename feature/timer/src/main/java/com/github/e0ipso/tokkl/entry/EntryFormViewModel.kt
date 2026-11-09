@@ -79,7 +79,7 @@ class EntryFormViewModel(
     private val clock: Clock,
     allDay: Flow<Boolean>,
     picker: Flow<PickerSource>,
-    val offline: StateFlow<Boolean>,
+    private val offline: StateFlow<Boolean>,
 ) : ViewModel(scope) {
 
     private val phase = MutableStateFlow<Phase>(Phase.Closed)
@@ -87,7 +87,8 @@ class EntryFormViewModel(
     private val catalog: StateFlow<Catalog> = combine(projects, tasks, ::Catalog)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), Catalog())
 
-    val state: StateFlow<EntryFormState> = combine(
+    /** The form, before the picker and the network join it in [page]. */
+    internal val state: StateFlow<EntryFormState> = combine(
         phase,
         catalog,
         accountSettings,
@@ -96,8 +97,13 @@ class EntryFormViewModel(
         current.shown(names, settings, offered)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), EntryFormState.Closed)
 
-    /** What the form's picker offers, while the form reads it. */
-    val picker: StateFlow<PickerSource> = picker.stateIn(viewModelScope, whileShown, PickerSource())
+    /** What the form's screen draws: the form, what its picker offers, and whether the phone is offline. */
+    val page: StateFlow<EntryFormPage> = combine(
+        state,
+        picker.stateIn(viewModelScope, whileShown, PickerSource()),
+        offline,
+        ::EntryFormPage,
+    ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), EntryFormPage())
 
     /** Whether a form is open, or opening. False after [close], and in a new process. */
     val isOpen: Boolean get() = phase.value != Phase.Closed

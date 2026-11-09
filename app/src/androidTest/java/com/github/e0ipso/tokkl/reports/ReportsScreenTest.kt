@@ -454,7 +454,7 @@ class ReportsScreenTest {
     private fun modelState(): ReportsState {
         var state: ReportsState? = null
         finishWithin("reading the report's state") {
-            scenario!!.onActivity { state = reportsViewModel(it).state.value }
+            scenario!!.onActivity { state = reportsViewModel(it).page.value.report }
         }
         return state!!
     }

@@ -65,7 +65,7 @@ class PomodoroFullScreenPageTest {
         assertTrue(device.wait(Until.hasObject(By.pkg("com.android.settings")), 10_000))
         DeviceShell.run("cmd appops set ${context.packageName} USE_FULL_SCREEN_INTENT allow")
         device.pressBack()
-        compose.waitUntil(10_000) { !model.state.value.fullScreenDenied }
+        compose.waitUntil(10_000) { !model.page.value.fullScreenDenied }
         compose.onNodeWithText(context.getString(R.string.pomodoro_fullscreen_denied)).assertDoesNotExist()
         compose.onNodeWithText(context.getString(R.string.pomodoro_fullscreen_settings)).assertDoesNotExist()
     }

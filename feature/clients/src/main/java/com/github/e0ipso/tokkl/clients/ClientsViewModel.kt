@@ -93,7 +93,8 @@ class ClientsViewModel(
         io,
     )
 
-    val state: StateFlow<ClientsState> = catalog.state
+    /** The list and what is open over it, before the cache and the network join them in [page]. */
+    internal val state: StateFlow<ClientsState> = catalog.state
 
     /** What the page shows, while it reads it. The cached rows are empty until the cache is read. */
     val page: StateFlow<ClientsPageState> = combine(

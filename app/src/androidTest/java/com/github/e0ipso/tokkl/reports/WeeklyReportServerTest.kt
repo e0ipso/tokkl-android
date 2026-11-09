@@ -361,7 +361,7 @@ class WeeklyReportServerTest {
         finishWithin("reading the reports state") {
             checkNotNull(
                 scenario,
-            ).onActivity { state = reportsViewModel(it).state.value }
+            ).onActivity { state = reportsViewModel(it).page.value.report }
         }
         return checkNotNull(state)
     }

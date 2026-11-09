@@ -74,9 +74,8 @@ fun EntryFormScreen(
     onEntryDelete: (TimeEntry, Boolean) -> Unit = { _, _ -> },
 ) {
     LaunchedEffect(model) { if (!model.isOpen) onClose() }
-    val state by model.state.collectAsStateWithLifecycle()
-    val picker by model.picker.collectAsStateWithLifecycle()
-    val offline by model.offline.collectAsStateWithLifecycle()
+    val page by model.page.collectAsStateWithLifecycle()
+    val state = page.form
     val close = { if ((state as? EntryFormState.Open)?.saving != true) onClose() }
     BackHandler(onBack = close)
     LaunchedEffect(state) { if (state == EntryFormState.Saved) onClose() }
@@ -100,7 +99,7 @@ fun EntryFormScreen(
             onClose = close,
         ),
         picker = { workspaceId, original, picked, onPickedChange, pickerModifier ->
-            EntityPicker(picker, offline, workspaceId, original, picked, onPickedChange, pickerModifier)
+            EntityPicker(page.picker, page.offline, workspaceId, original, picked, onPickedChange, pickerModifier)
         },
         modifier = modifier,
     )

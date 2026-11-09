@@ -260,7 +260,7 @@ class TimerCrossDeviceServerTest {
             var model: PomodoroViewModel? = null
             scenario.onActivity { model = sessionViewModels(it)[PomodoroViewModel::class.java] }
             val page = checkNotNull(model)
-            compose.waitUntil("the page has loaded", 15_000) { !page.state.value.loading }
+            compose.waitUntil("the page has loaded", 15_000) { !page.page.value.loading }
             compose.runOnIdle {
                 page.editLengths(PomodoroLengths(work = "1", shortRest = "2", longRest = "3", every = "3"))
                 page.editFields(fields, entryId = null)
@@ -271,7 +271,7 @@ class TimerCrossDeviceServerTest {
             compose.waitUntil(
                 "the server started the session",
                 15_000,
-            ) { page.state.value.pomodoro != null && !page.state.value.busy }
+            ) { page.page.value.pomodoro != null && !page.page.value.busy }
 
             val server = other.timerState()
             val session = checkNotNull(server.pomodoro)

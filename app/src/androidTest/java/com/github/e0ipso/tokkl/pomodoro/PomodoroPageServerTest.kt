@@ -108,7 +108,7 @@ class PomodoroPageServerTest {
         typeLength(R.string.pomodoro_card_long_rest_every, "2")
         type(FieldsR.string.entry_description, "First work")
         tap(R.string.pomodoro_start)
-        await { model.state.value.pomodoro != null && !model.state.value.busy }
+        await { model.page.value.pomodoro != null && !model.page.value.busy }
 
         val started = serverTimer()
         val session = started.pomodoro!!
@@ -117,7 +117,7 @@ class PomodoroPageServerTest {
             listOf(session.workMinutes, session.shortRestMinutes, session.longRestMinutes, session.longRestEvery),
         )
         assertEquals("First work", started.runningEntry!!.description)
-        assertEquals("the page holds the server's state", started.revision, model.state.value.held!!.state.revision)
+        assertEquals("the page holds the server's state", started.revision, model.page.value.held!!.state.revision)
         compose.onNode(
             hasText(context.getString(R.string.pomodoro_work)) and isHeading(),
         ).performScrollTo().assertIsDisplayed()
@@ -128,7 +128,7 @@ class PomodoroPageServerTest {
             .performScrollTo().assertIsDisplayed()
 
         tap(R.string.pomodoro_start_short_rest)
-        await { model.state.value.pomodoro?.phase?.kind == PhaseKind.SHORT_REST && !model.state.value.busy }
+        await { model.page.value.pomodoro?.phase?.kind == PhaseKind.SHORT_REST && !model.page.value.busy }
         assertEquals(PhaseKind.SHORT_REST, serverTimer().pomodoro!!.phase.kind)
         compose.onNode(
             hasText(context.getString(R.string.pomodoro_short_rest)) and isHeading(),
@@ -136,7 +136,7 @@ class PomodoroPageServerTest {
         compose.onNodeWithText(context.getString(R.string.pomodoro_number, 1, 2)).performScrollTo().assertIsDisplayed()
 
         tap(R.string.pomodoro_end)
-        await { model.state.value.pomodoro == null && !model.state.value.busy }
+        await { model.page.value.pomodoro == null && !model.page.value.busy }
         assertNull(serverTimer().pomodoro)
         // The form is back, on the account's defaults again.
         compose.lengthCard(context.getString(R.string.pomodoro_card_work)).performScrollTo()
@@ -147,8 +147,8 @@ class PomodoroPageServerTest {
     fun aTapDrawnBeforeAnotherDeviceMovedTheTimerOnIsRefusedAndTheServersStateShows() {
         show()
         tap(R.string.pomodoro_start)
-        await { model.state.value.pomodoro != null && !model.state.value.busy }
-        val drawn = model.state.value.shown!!
+        await { model.page.value.pomodoro != null && !model.page.value.busy }
+        val drawn = model.page.value.shown!!
         // Another device confirms the phase first.
         val client = fixture.account.client
         runBlocking {
@@ -162,13 +162,13 @@ class PomodoroPageServerTest {
             .orFail("POST /api/app/pomodoro/next")
 
         compose.runOnIdle { model.next(drawn) }
-        await { model.state.value.problem != null && !model.state.value.busy }
-        assertEquals(PomodoroProblem(PomodoroAction.NEXT, TimerActionResult.Refused), model.state.value.problem)
+        await { model.page.value.problem != null && !model.page.value.busy }
+        assertEquals(PomodoroProblem(PomodoroAction.NEXT, TimerActionResult.Refused), model.page.value.problem)
         compose.onNodeWithText(
             context.getString(TimerNoticeR.string.timer_action_refused),
         ).performScrollTo().assertIsDisplayed()
         // The refusal carried the server's state, and the old tap advanced nothing a second time.
-        assertEquals(PhaseKind.SHORT_REST, model.state.value.pomodoro!!.phase.kind)
+        assertEquals(PhaseKind.SHORT_REST, model.page.value.pomodoro!!.phase.kind)
         val server = serverTimer()
         assertEquals(PhaseKind.SHORT_REST, server.pomodoro!!.phase.kind)
         assertEquals(drawn.revision + 1, server.revision)
@@ -179,12 +179,12 @@ class PomodoroPageServerTest {
         show()
         type(FieldsR.string.entry_description, "Before")
         tap(R.string.pomodoro_start)
-        await { model.state.value.pomodoro != null && !model.state.value.busy }
+        await { model.page.value.pomodoro != null && !model.page.value.busy }
 
         type(FieldsR.string.entry_description, "After the edit")
         tap(R.string.pomodoro_start_short_rest)
-        await { model.state.value.pomodoro?.phase?.kind == PhaseKind.SHORT_REST && !model.state.value.busy }
-        assertNull("the user's own edit is not another device's change", model.state.value.problem)
+        await { model.page.value.pomodoro?.phase?.kind == PhaseKind.SHORT_REST && !model.page.value.busy }
+        assertNull("the user's own edit is not another device's change", model.page.value.problem)
         val server = serverTimer()
         assertEquals(PhaseKind.SHORT_REST, server.pomodoro!!.phase.kind)
         assertEquals("After the edit", server.runningEntry!!.description)
@@ -196,12 +196,12 @@ class PomodoroPageServerTest {
     fun billableChangedOnThePageUpdatesTheServersRunningEntry() {
         show()
         tap(R.string.pomodoro_start)
-        await { model.state.value.pomodoro != null && !model.state.value.busy }
+        await { model.page.value.pomodoro != null && !model.page.value.busy }
         assertTrue(serverTimer().runningEntry!!.billable != true)
         compose.onNode(
             hasText(context.getString(FieldsR.string.entry_billable)) and isToggleable(),
         ).performScrollTo().performClick()
-        await { model.state.value.fields.billable }
+        await { model.page.value.fields.billable }
         // The page shows the switch at once and queues the edit a moment later. Send once the
         // queue has it, which the cache's running entry shows.
         await { runBlocking { app.cache.running.first() }?.entry?.billable == true }
@@ -216,12 +216,12 @@ class PomodoroPageServerTest {
         type(FieldsR.string.entry_description, "Offline start")
         AirplaneMode.set(true, fixture.account.client)
         tap(R.string.pomodoro_start)
-        await { model.state.value.problem != null && !model.state.value.busy }
-        assertEquals(PomodoroProblem(PomodoroAction.START, TimerActionResult.Offline), model.state.value.problem)
+        await { model.page.value.problem != null && !model.page.value.busy }
+        assertEquals(PomodoroProblem(PomodoroAction.START, TimerActionResult.Offline), model.page.value.problem)
         compose.onNodeWithText(
             context.getString(TimerNoticeR.string.timer_action_offline),
         ).performScrollTo().assertIsDisplayed()
-        assertNull(model.state.value.pomodoro)
+        assertNull(model.page.value.pomodoro)
         field(FieldsR.string.entry_description).performScrollTo().assert(hasText("Offline start"))
         button(R.string.pomodoro_start).performScrollTo().assertIsEnabled()
         AirplaneMode.set(false, fixture.account.client)
@@ -252,7 +252,7 @@ class PomodoroPageServerTest {
                 }
             }
         }
-        await { !model.state.value.loading }
+        await { !model.page.value.loading }
     }
 
     private fun await(condition: () -> Boolean) = compose.waitUntil(15_000, condition)

@@ -106,7 +106,9 @@ class TrashViewModel(
 ) : ViewModel(scope) {
 
     private val mutableState = MutableStateFlow(TrashState())
-    val state: StateFlow<TrashState> = mutableState.asStateFlow()
+
+    /** The trash and what is open over it, before the network and the settings join them in [page]. */
+    internal val state: StateFlow<TrashState> = mutableState.asStateFlow()
 
     /** Whether the page has shown, so it has asked for the trash. */
     private var opened = false

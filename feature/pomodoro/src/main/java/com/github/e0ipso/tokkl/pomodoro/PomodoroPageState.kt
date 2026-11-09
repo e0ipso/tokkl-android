@@ -7,6 +7,7 @@ import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.WorkspaceId
+import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
@@ -69,6 +70,10 @@ data class PomodoroPageState(
     val unsentCount: Int? = null,
     val refused: List<HeldChange> = emptyList(),
     val problem: PomodoroProblem? = null,
+    /** What the fields' picker offers, from the cache. */
+    val picker: PickerSource = PickerSource(),
+    /** Whether the phone is offline, which the picker says. */
+    val offline: Boolean = false,
 ) {
     /** The server's session, or null without one. */
     val pomodoro: TimerPomodoro? get() = held?.state?.pomodoro

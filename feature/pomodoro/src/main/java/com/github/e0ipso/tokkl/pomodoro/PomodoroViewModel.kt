@@ -77,7 +77,7 @@ class PomodoroViewModel(
     private val sender: QueueSender,
     private val exactAlarms: ExactAlarmAccess,
     picker: Flow<PickerSource>,
-    val offline: StateFlow<Boolean>,
+    private val offline: StateFlow<Boolean>,
 ) : ViewModel(scope) {
     private val modelScope = CoroutineScope(
         viewModelScope.coroutineContext + SupervisorJob(viewModelScope.coroutineContext[Job]),
@@ -85,14 +85,23 @@ class PomodoroViewModel(
     private val mutableState = MutableStateFlow(
         PomodoroPageState(lengths = PomodoroLengths.from(defaults.value), account = settings.value),
     )
-    val state: StateFlow<PomodoroPageState> = mutableState.asStateFlow()
 
     /** What the page's picker offers, while the page reads it. */
-    val picker: StateFlow<PickerSource> = picker.stateIn(viewModelScope, whileShown, PickerSource())
+    private val pickerShown: StateFlow<PickerSource> = picker.stateIn(viewModelScope, whileShown, PickerSource())
 
-    /** What the page draws: [state], with its fields' project and task named from [picker]'s rows. */
-    val page: StateFlow<PomodoroPageState> = combine(state, this.picker) { shown, source ->
-        shown.copy(labels = entryLabels(shown.fields, source.projects, source.tasks))
+    /** The page's state, before the picker and the network join it in [page]. */
+    internal val state: StateFlow<PomodoroPageState> = mutableState.asStateFlow()
+
+    /**
+     * What the page draws: [state], with its fields' project and task named from the picker's rows,
+     * what the picker offers, and whether the phone is offline.
+     */
+    val page: StateFlow<PomodoroPageState> = combine(state, pickerShown, offline) { shown, source, isOffline ->
+        shown.copy(
+            labels = entryLabels(shown.fields, source.projects, source.tasks),
+            picker = source,
+            offline = isOffline,
+        )
     }.stateIn(viewModelScope, whileShown, state.value)
 
     /** Commands to the server run one at a time, in tap order. */
@@ -232,7 +241,7 @@ class PomodoroViewModel(
      * [editFields] does. Picking a billable project makes them billable.
      */
     fun pick(fields: EntryFields, picked: Picked, entryId: EntryId?): Job? =
-        editFields(fields.withPicked(picked, picker.value.projects), entryId)
+        editFields(fields.withPicked(picked, pickerShown.value.projects), entryId)
 
     /** Sends a description typed for the open pomodoro when it differs from the cache's. */
     fun fieldsDone(entryId: EntryId? = state.value.pomodoro?.entryId?.let(::EntryId)): Job? {

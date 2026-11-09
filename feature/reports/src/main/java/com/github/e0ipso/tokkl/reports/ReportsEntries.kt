@@ -99,26 +99,27 @@ fun ReportsPage(model: ReportsViewModel, modifier: Modifier = Modifier) {
     val chooser = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         // The chooser may return RESULT_CANCELED even after a selection. Files stay bounded
         // and readable for receivers that open their stream after the chooser has closed.
-        model.exportShareFinished()
+        model.onExportShare(ExportShareEvent.Finished)
     }
     LaunchedEffect(page.exportState, lifecycleState) {
         if (page.exportState is ReportExportState.Ready && lifecycleState.isAtLeast(Lifecycle.State.STARTED)) {
-            model.launchExportShare { file ->
+            val launch = ExportShareEvent.Launch { file ->
                 try {
                     val send = ReportCsvShare.intent(context, file)
                     if (ReportCsvShare.hasTarget(context, send)) {
                         chooser.launch(Intent.createChooser(send, shareTitle))
                     } else {
-                        model.exportNoShareTarget()
+                        model.onExportShare(ExportShareEvent.NoTarget)
                     }
                 } catch (_: ActivityNotFoundException) {
-                    model.exportNoShareTarget()
+                    model.onExportShare(ExportShareEvent.NoTarget)
                 } catch (_: IllegalArgumentException) {
-                    model.exportShareFailed()
+                    model.onExportShare(ExportShareEvent.Failed)
                 } catch (_: SecurityException) {
-                    model.exportShareFailed()
+                    model.onExportShare(ExportShareEvent.Failed)
                 }
             }
+            model.onExportShare(launch)
         }
     }
     ReportsScreen(
