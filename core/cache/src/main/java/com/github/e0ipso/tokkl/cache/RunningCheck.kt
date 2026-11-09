@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.cache
 
 import android.content.Context
+import androidx.annotation.WorkerThread
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -70,8 +71,9 @@ class RunningCheck(private val workManager: CurrentWorkManager, private val resu
 
     /**
      * Cancels the check and returns once WorkManager has recorded that. Signing out calls this.
-     * Blocks, so call it off the main thread.
+     * Blocks, so call it on a worker thread.
      */
+    @WorkerThread
     fun cancelAndWait() {
         results.forget()
         workManager.get().cancelUniqueWork(WORK_NAME).result.get()

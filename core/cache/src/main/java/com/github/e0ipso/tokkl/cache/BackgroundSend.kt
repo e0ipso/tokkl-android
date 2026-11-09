@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.cache
 
 import android.content.Context
+import androidx.annotation.WorkerThread
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
@@ -52,12 +53,13 @@ class BackgroundSend(private val workManager: CurrentWorkManager, private val ru
      * out its backoff never wakes the phone to find nothing to send. A running worker stays: it
      * joined that same drain through [ChangeSender.sendAndWait] and ends on its own. When
      * [queueEmpty] turns false after the cancel, a change came meanwhile and the work is
-     * scheduled again. Blocks on WorkManager and [queueEmpty], so call it off the main thread.
+     * scheduled again. Blocks on WorkManager and [queueEmpty], so call it on a worker thread.
      *
      * Worker registration and the cancel share a lock. Even when the state read becomes stale,
      * a worker that joined stays, and a worker cancelled before registration sends nothing.
      */
-    fun cancelWaiting(queueEmpty: () -> Boolean) {
+    @WorkerThread
+    internal fun cancelWaiting(queueEmpty: () -> Boolean) {
         val workManager = workManager.get()
         runs.cancelWaiting(
             waiting = {
@@ -73,8 +75,9 @@ class BackgroundSend(private val workManager: CurrentWorkManager, private val ru
 
     /**
      * Cancels the work, waiting or running, and returns once WorkManager has recorded that.
-     * Signing out calls this. Blocks, so call it off the main thread.
+     * Signing out calls this. Blocks, so call it on a worker thread.
      */
+    @WorkerThread
     fun cancel() {
         workManager.get().cancelUniqueWork(WORK_NAME).result.get()
     }

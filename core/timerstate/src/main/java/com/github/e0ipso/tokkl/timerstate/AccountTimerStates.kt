@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.timerstate
 
 import com.github.e0ipso.tokkl.cache.AccountCache
+import com.github.e0ipso.tokkl.cache.CurrentEntryCache
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.model.DiscardedPomodoro
 import com.github.e0ipso.tokkl.session.AccountDataOwner
@@ -54,6 +55,7 @@ class AccountTimerStates(
     private val store: TimerStateStore,
     private val lastFields: HeldFieldsMemory,
     private val cache: AccountCache,
+    private val entries: CurrentEntryCache,
     private val capabilities: CapabilitiesSource,
     private val refreshes: AccountRefreshRequests,
     private val lifetime: AccountLifetime,
@@ -142,7 +144,7 @@ class AccountTimerStates(
     ) { _, _, flags ->
         val account = current()
         account.source.withState { held ->
-            serverTimerControls(cache.runningNow(), held, flags.timerState, account.account)
+            serverTimerControls(entries.latestRunning(), held, flags.timerState, account.account)
         }
     }.flowOn(io).distinctUntilChanged()
 
@@ -178,7 +180,7 @@ class AccountTimerStates(
                     // Under the holder's acceptance lock, for actions and SSE from any surface.
                     lastFields.remember(account, stored.held)
                 },
-                cache = cache,
+                cache = entries,
                 clock = clock,
                 // The state does not carry a stopped entry's stop; the history read does.
                 runningEnded = refreshes::refreshAfterChange,

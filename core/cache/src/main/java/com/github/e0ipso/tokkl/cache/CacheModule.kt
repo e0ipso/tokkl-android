@@ -22,7 +22,9 @@ val cacheModule = module {
     single { CacheDatabase.open(androidContext()) }
 
     // The offline cache.
-    single { AccountCache(get()) } binds arrayOf(AccountDataOwner::class, CurrentEntryCache::class)
+    single { AccountCache(get(), io()) } bind AccountDataOwner::class
+    // The running entry, read and reconciled on a worker thread under the caller's lock.
+    single<CurrentEntryCache> { RoomCurrentEntries(get()) }
     single { ServerCacheRefresh(get(), get(), get()) }
 
     // The queue's tables, which the queue writes and the sender reads.

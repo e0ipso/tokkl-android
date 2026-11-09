@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.timersync
 
 import com.github.e0ipso.tokkl.cache.CurrentEntryCache
 import com.github.e0ipso.tokkl.cache.RunningCheckStart
+import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.timerstate.TimerStateIntake
 import com.github.e0ipso.tokkl.timerstate.TimerStateSource
@@ -217,6 +218,8 @@ class TimerSyncFollowerTest {
         initial = null,
         store = {},
         cache = object : CurrentEntryCache {
+            override fun latestRunning(): EntryWithSendState? = null
+
             override fun runningCheckStart(): RunningCheckStart = error("the follower reads no cache")
 
             override fun checkedRunning(before: RunningCheckStart, server: TimeEntry?) =

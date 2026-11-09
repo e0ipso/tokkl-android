@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.cache
 
 import android.database.sqlite.SQLiteException
+import androidx.annotation.WorkerThread
 import com.github.e0ipso.tokkl.model.Client
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.EntryWithSendState
@@ -14,6 +15,8 @@ import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.CoroutineContext
 
 /**
  * What the app last loaded from the server, readable offline (docs/PRD.md O2): projects, clients,
@@ -22,11 +25,11 @@ import kotlinx.coroutines.flow.map
  * values.
  *
  * The account settings are not cached here. AccountSettingsSource keeps them and stays their one
- * source of truth.
+ * source of truth. Every read and write here is main-safe: the flows read off the main thread, and
+ * the suspending calls switch to [io] themselves. What must run under a caller's lock goes through
+ * [CurrentEntryCache].
  */
-class AccountCache(private val database: CacheDatabase) :
-    CurrentEntryCache,
-    AccountDataOwner {
+class AccountCache(private val database: CacheDatabase, private val io: CoroutineContext) : AccountDataOwner {
 
     override val signOutPhase = SignOutPhase.CLEAR_CACHE
 
@@ -64,9 +67,9 @@ class AccountCache(private val database: CacheDatabase) :
 
     /**
      * Replaces the cached favorites with [favorites], in the user's order, once the server has
-     * stored them. Blocks, so call it off the main thread.
+     * stored them. Writes on [io].
      */
-    fun replaceFavorites(favorites: List<Favorite>) {
+    suspend fun replaceFavorites(favorites: List<Favorite>) = withContext(io) {
         dao.replaceFavorites(
             favorites.mapIndexed { position, favorite -> favorite.copy(position = position).toCached() },
         )
@@ -74,22 +77,34 @@ class AccountCache(private val database: CacheDatabase) :
 
     /**
      * The server ids that replaced the local ids of [entries], for the entries the phone created
-     * whose creates the server has answered. Blocks on disk I/O.
+     * whose creates the server has answered. Reads on [io].
      */
-    fun serverIdsOf(entries: List<TimeEntry>): Map<LocalEntryId, EntryId> {
+    suspend fun serverIdsOf(entries: List<TimeEntry>): Map<LocalEntryId, EntryId> = withContext(io) {
         val changes = database.changes()
-        return entries.mapNotNull { it.id.local }.mapNotNull { local ->
+        entries.mapNotNull { it.id.local }.mapNotNull { local ->
             changes.serverId(local.value)?.let { local to EntryId(it) }
         }.toMap()
     }
 
-    /** The running entry that started last, as [running] shows it, read now. Blocks on disk I/O. */
-    fun runningNow(): EntryWithSendState? = database.changes().latestRunning()?.toModel()
-
     /**
-     * The cached running entries and the ids with queued changes, read together, as a running
-     * entry check reads them before its request. Blocks on disk I/O.
+     * Deletes every cached row and the queue of unsent changes, on [io]. Signing out calls this,
+     * before it clears what follows the cache.
      */
+    suspend fun clear() = withContext(io) {
+        database.clearAllTables()
+    }
+}
+
+/**
+ * The cache's current-entry reads and writes over Room, for [CurrentEntryCache]'s callers, which
+ * run them on a worker thread under their own lock.
+ */
+class RoomCurrentEntries(private val database: CacheDatabase) : CurrentEntryCache {
+
+    @WorkerThread
+    override fun latestRunning(): EntryWithSendState? = database.changes().latestRunning()?.toModel()
+
+    @WorkerThread
     override fun runningCheckStart(): RunningCheckStart {
         val changes = database.changes()
         return database.runInTransaction<RunningCheckStart> {
@@ -100,15 +115,7 @@ class AccountCache(private val database: CacheDatabase) :
         }
     }
 
-    /**
-     * Writes a running entry check's answer, [server], the entry the server runs or null when none
-     * runs, read after the cache held what [before] holds, in one transaction, as
-     * [runningCheckWrites] describes: entries with unsent changes, entries with changes queued at
-     * [before] that the sender may have sent since, and rows written since [before], stay as they
-     * are. A pending local id that the server has answered since protects its server id too.
-     * Returns what it wrote, or null when the write failed and the cache stays for the next check.
-     * Blocks on disk I/O.
-     */
+    @WorkerThread
     override fun checkedRunning(before: RunningCheckStart, server: TimeEntry?): RunningCheckWrites? {
         val changes = database.changes()
         return try {
@@ -134,14 +141,6 @@ class AccountCache(private val database: CacheDatabase) :
             null
         }
     }
-
-    /**
-     * Deletes every cached row and the queue of unsent changes. Signing out calls this, before it
-     * clears what follows the cache. Blocks, so call it off the main thread.
-     */
-    fun clear() {
-        database.clearAllTables()
-    }
 }
 
 /**
@@ -151,12 +150,30 @@ class AccountCache(private val database: CacheDatabase) :
 class RunningCheckStart(val running: List<TimeEntry>, val pendingIds: Set<EntryId> = emptySet())
 
 /**
- * The cache's current-entry reconciliation, for every server answer that names the running entry:
- * the running entry check, the tile's refresh and the timer state. Read [runningCheckStart] before
- * the request, then hand its answer to [checkedRunning]. [AccountCache] implements it.
+ * The cache's running entry, read and reconciled where no suspension may come in between: under
+ * the timer state holder's lock, in the running entry check's worker and in the tile's refresh.
+ * Every call blocks on the disk, so make it on a worker thread. For every server answer that
+ * names the running entry, read [runningCheckStart] before the request, then hand its answer to
+ * [checkedRunning]. [RoomCurrentEntries] implements it.
  */
 interface CurrentEntryCache {
+
+    /** The running entry that started last, as `AccountCache.running` shows it, read now. */
+    @WorkerThread
+    fun latestRunning(): EntryWithSendState?
+
+    /** The cached running entries and the ids with queued changes, read together before a request. */
+    @WorkerThread
     fun runningCheckStart(): RunningCheckStart
 
+    /**
+     * Writes a running entry check's answer, [server], the entry the server runs or null when none
+     * runs, read after the cache held what [before] holds, in one transaction, as
+     * [runningCheckWrites] describes: entries with unsent changes, entries with changes queued at
+     * [before] that the sender may have sent since, and rows written since [before], stay as they
+     * are. A pending local id that the server has answered since protects its server id too.
+     * Returns what it wrote, or null when the write failed and the cache stays for the next check.
+     */
+    @WorkerThread
     fun checkedRunning(before: RunningCheckStart, server: TimeEntry?): RunningCheckWrites?
 }

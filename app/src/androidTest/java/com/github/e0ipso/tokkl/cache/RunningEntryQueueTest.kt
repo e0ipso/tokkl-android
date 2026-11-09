@@ -6,6 +6,7 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.TimerPause
 import com.github.e0ipso.tokkl.api.TimerState
+import com.github.e0ipso.tokkl.cache.RoomCurrentEntries
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.RunningEntryIdentity
@@ -202,7 +203,7 @@ class RunningEntryQueueTest {
             )
             val held = TimerState(4, resumedAt, clone, pause, pomodoro = null, discardedPomodoro = null).held(resumedAt)
             fun controls() = serverTimerControls(
-                AccountCache(database).runningNow(),
+                RoomCurrentEntries(database).latestRunning(),
                 held,
                 timerApi = true,
             ) as TimerControls.Running
@@ -230,7 +231,7 @@ class RunningEntryQueueTest {
     @Test
     fun aRunningEntryAnswerKeepsAStartAndAnEditSentDuringItsRead() {
         runBlocking {
-            val cache = AccountCache(database)
+            val cache = RoomCurrentEntries(database)
             val store = RoomChangeStore(database)
             val local = queue.start(WorkspaceId(WORKSPACE), EntryFields("Running"))
             val startRead = cache.runningCheckStart()

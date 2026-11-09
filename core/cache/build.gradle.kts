@@ -26,6 +26,8 @@ dependencies {
     // CacheDatabase is a RoomDatabase. No module above names it: they read the cache's flows.
     implementation(libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)
+    // The worker-thread contract of the current-entry reads.
+    implementation(libs.androidx.annotation)
     implementation(libs.androidx.work.runtime)
     implementation(platform(libs.koin.bom))
     implementation(libs.koin.android)

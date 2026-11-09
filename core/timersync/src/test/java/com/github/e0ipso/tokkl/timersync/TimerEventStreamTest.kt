@@ -14,6 +14,7 @@ import com.github.e0ipso.tokkl.cache.CurrentEntryCache
 import com.github.e0ipso.tokkl.cache.RunningCheckStart
 import com.github.e0ipso.tokkl.cache.RunningCheckWrites
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.timerstate.TimerStateSource
 import kotlinx.coroutines.test.runTest
@@ -313,6 +314,8 @@ class TimerEventStreamTest {
 
     private class RecordingCache : CurrentEntryCache {
         val written = mutableListOf<TimeEntry?>()
+
+        override fun latestRunning(): EntryWithSendState? = null
 
         override fun runningCheckStart() = RunningCheckStart(emptyList())
 

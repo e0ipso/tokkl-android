@@ -12,6 +12,7 @@ import com.github.e0ipso.tokkl.cache.RunningCheckWrites
 import com.github.e0ipso.tokkl.cache.runningCheckWrites
 import com.github.e0ipso.tokkl.model.DiscardedPomodoro
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.PhaseKind
 import com.github.e0ipso.tokkl.model.PhaseTransition
 import com.github.e0ipso.tokkl.model.TimeEntry
@@ -375,6 +376,8 @@ class TimerStateSourceTest {
         val mappings = mutableMapOf<EntryId, EntryId>()
 
         fun running(): List<TimeEntry> = rows.values.filter { it.stop == null }
+
+        override fun latestRunning(): EntryWithSendState? = null
 
         override fun runningCheckStart() = RunningCheckStart(running(), pendingIds = pending.toSet())
 

@@ -10,6 +10,7 @@ import com.github.e0ipso.tokkl.cache.CurrentEntryCache
 import com.github.e0ipso.tokkl.cache.RunningCheckStart
 import com.github.e0ipso.tokkl.cache.RunningCheckWrites
 import com.github.e0ipso.tokkl.model.Capabilities
+import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.storage.InMemoryValueStore
 import com.github.e0ipso.tokkl.storage.ValueStore
@@ -399,6 +400,8 @@ class CapabilitiesTest {
 
     /** No running entry in the cache, which is all these timer states carry. */
     private object EmptyCache : CurrentEntryCache {
+        override fun latestRunning(): EntryWithSendState? = null
+
         override fun runningCheckStart() = RunningCheckStart(emptyList())
 
         override fun checkedRunning(before: RunningCheckStart, server: TimeEntry?): RunningCheckWrites? = null

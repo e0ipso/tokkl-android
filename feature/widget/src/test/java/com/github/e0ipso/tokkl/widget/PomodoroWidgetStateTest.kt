@@ -6,6 +6,7 @@ import com.github.e0ipso.tokkl.cache.RunningCheckStart
 import com.github.e0ipso.tokkl.cache.RunningCheckWrites
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.PhaseKind
 import com.github.e0ipso.tokkl.model.PhaseTransition
 import com.github.e0ipso.tokkl.model.Project
@@ -216,6 +217,8 @@ class PomodoroWidgetStateTest {
     @Test fun acceptedStatesRememberFieldsBeforeIdleAndRejectStaleAndRetiredResponses() {
         var disk: String? = null
         val cache = object : CurrentEntryCache {
+            override fun latestRunning(): EntryWithSendState? = null
+
             override fun runningCheckStart() = RunningCheckStart(emptyList())
             override fun checkedRunning(before: RunningCheckStart, server: TimeEntry?) = RunningCheckWrites()
         }

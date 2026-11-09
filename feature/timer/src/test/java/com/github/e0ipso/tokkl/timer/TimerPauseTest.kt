@@ -698,6 +698,8 @@ class TimerPauseTest {
 
     /** A cache with no running entry, for states that name none. */
     private object NoRunningEntries : CurrentEntryCache {
+        override fun latestRunning(): EntryWithSendState? = null
+
         override fun runningCheckStart() = RunningCheckStart(emptyList())
 
         override fun checkedRunning(before: RunningCheckStart, server: TimeEntry?): RunningCheckWrites? = null

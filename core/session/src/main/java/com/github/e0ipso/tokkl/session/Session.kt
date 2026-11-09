@@ -23,7 +23,8 @@ import kotlin.coroutines.CoroutineContext
  * The token goes only through [ApiTokenStore]; no password is ever stored.
  *
  * The first [api] or [isSignedIn] reads the stores on [io], with a Keystore decrypt, and keeps the
- * signed-in API in memory, so later calls touch neither the disk nor the Keystore. [save] and
+ * signed-in API in memory, so later calls touch neither the disk nor the Keystore. The first [api]
+ * also builds the API's client on [io], so every call is safe on the main thread. [save] and
  * [clear] drop what was kept, so the next call reads the stores again. A read that fails on the
  * disk or the Keystore keeps nothing, and the next call tries again. Reads, saves and clears take
  * turns, so a read never keeps what a change of account replaced.
@@ -58,7 +59,7 @@ class Session(
     private inner class Read(private val server: ServerUrl?, private val token: String?) {
         val signedIn: Boolean get() = server != null && token != null
 
-        val api: TokklApi? by lazy {
+        private val client = lazy {
             if (server == null || token == null) return@lazy null
             TokklApi(
                 TogglApiClient(
@@ -71,6 +72,12 @@ class Session(
                 ),
             )
         }
+
+        /**
+         * The signed-in API, built on [io] on first use, since the shared HTTP client may load the
+         * platform's certificates then.
+         */
+        suspend fun api(): TokklApi? = if (client.isInitialized()) client.value else withContext(io) { client.value }
     }
 
     /** The last read, or null before the first and after each change of account. */
@@ -89,7 +96,7 @@ class Session(
      * The API of the signed-in account, or null when signed out. A Keystore or disk failure
      * counts as signed out, as in [isSignedIn].
      */
-    suspend fun api(): TokklApi? = read()?.api
+    suspend fun api(): TokklApi? = read()?.api()
 
     override suspend fun invoke(): TokklApi? = api()
 

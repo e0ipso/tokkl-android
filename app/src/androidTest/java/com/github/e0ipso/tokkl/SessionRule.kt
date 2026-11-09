@@ -83,7 +83,7 @@ class SessionRule : TestRule {
             // The timer state of the account the last test signed in as. Its revision is higher
             // than a new account's, so the holder would drop the new account's states.
             app.renewTimerState()
-            app.cache.clear()
+            runBlocking { app.cache.clear() }
             runBlocking { TimerViewStore(context, Dispatchers.IO).clear() }
             runBlocking { PomodoroDefaultsStore(context, Dispatchers.IO).clear() }
             ServerTrustStore(context, Dispatchers.IO).clear()

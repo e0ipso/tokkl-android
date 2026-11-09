@@ -16,6 +16,7 @@ import com.github.e0ipso.tokkl.cache.RunningCheckStart
 import com.github.e0ipso.tokkl.cache.RunningCheckWrites
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
@@ -378,6 +379,8 @@ class TimerActionsTest {
     /** A cache with no running entry that records each running entry a state writes to it. */
     private class RecordingCache : CurrentEntryCache {
         val written = mutableListOf<TimeEntry?>()
+
+        override fun latestRunning(): EntryWithSendState? = null
 
         override fun runningCheckStart() = RunningCheckStart(emptyList())
 
