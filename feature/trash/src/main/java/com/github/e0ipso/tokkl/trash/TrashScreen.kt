@@ -27,8 +27,6 @@ import com.github.e0ipso.tokkl.catalog.ConfirmDialog
 import com.github.e0ipso.tokkl.catalog.DetailLine
 import com.github.e0ipso.tokkl.feature.trash.R
 import com.github.e0ipso.tokkl.model.EntryId
-import com.github.e0ipso.tokkl.session.AccountSettings
-import com.github.e0ipso.tokkl.session.ServerProblem
 import com.github.e0ipso.tokkl.time.AccountTime
 import com.github.e0ipso.tokkl.time.DurationFormat
 import com.github.e0ipso.tokkl.time.formatDuration
@@ -50,20 +48,14 @@ import com.github.e0ipso.tokkl.core.ui.R as UiR
  * every action is off. Coming back online, or to the foreground, loads the trash again.
  */
 @Composable
-fun TrashScreen(
-    state: TrashState,
-    offline: Boolean,
-    settings: AccountSettings?,
-    actions: TrashActions,
-    modifier: Modifier = Modifier,
-) {
-    val serverNeeded = offline || state.loadProblem == ServerProblem.Unreachable
-    val canChange = state.canChange && !offline
-    // Entries show only once loaded: the phone keeps no copy of the trash.
-    val entries = state.entries.takeUnless { serverNeeded }
+fun TrashScreen(page: TrashPageState, actions: TrashActions, modifier: Modifier = Modifier) {
+    val state = page.trash
+    val serverNeeded = page.serverNeeded
+    val canChange = page.canChange
+    val entries = page.entries
+    val settings = page.settings
     val time = remember(settings) { settings?.time() }
-    val hasNotices = serverNeeded || state.loadProblem != null ||
-        (state.loading && state.entries == null) || (state.changeProblem != null && !state.confirmingEmpty)
+    val hasNotices = page.hasNotices
     CatalogPage(
         title = stringResource(R.string.nav_trash),
         done = state.done?.let { changeText(it) },

@@ -201,7 +201,7 @@ private fun Notice(text: String) {
 private fun Fields(state: EntryFormState.Open, actions: EntryFormActions, picker: EntryFormPicker) {
     val spacing = TokklTheme.spacing
     val words = DateWords(LocalResources.current)
-    val canChange = state.workspaceId != null && !state.saving
+    val canChange = state.canChange
     Column(verticalArrangement = Arrangement.spacedBy(spacing.betweenGroups)) {
         EntryFieldsEditor(
             fields = state.fields,

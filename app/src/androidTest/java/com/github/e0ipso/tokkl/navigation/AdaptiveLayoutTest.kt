@@ -41,6 +41,7 @@ import com.github.e0ipso.tokkl.calendar.CalendarContent
 import com.github.e0ipso.tokkl.catalog.CatalogSamples
 import com.github.e0ipso.tokkl.clients.ClientsActions
 import com.github.e0ipso.tokkl.clients.ClientsOverlay
+import com.github.e0ipso.tokkl.clients.ClientsPageState
 import com.github.e0ipso.tokkl.clients.ClientsRoute
 import com.github.e0ipso.tokkl.clients.ClientsScreen
 import com.github.e0ipso.tokkl.entry.EntryFormActions
@@ -61,6 +62,7 @@ import com.github.e0ipso.tokkl.navhost.syncBand
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.projects.ProjectForm
 import com.github.e0ipso.tokkl.projects.ProjectsActions
+import com.github.e0ipso.tokkl.projects.ProjectsPageState
 import com.github.e0ipso.tokkl.projects.ProjectsRoute
 import com.github.e0ipso.tokkl.projects.ProjectsScreen
 import com.github.e0ipso.tokkl.reports.FilterOptions
@@ -81,6 +83,7 @@ import com.github.e0ipso.tokkl.signin.SignInCooldownStore
 import com.github.e0ipso.tokkl.signin.SignInScreen
 import com.github.e0ipso.tokkl.signin.SignInViewModel
 import com.github.e0ipso.tokkl.tags.TagsActions
+import com.github.e0ipso.tokkl.tags.TagsPageState
 import com.github.e0ipso.tokkl.tags.TagsRoute
 import com.github.e0ipso.tokkl.tags.TagsScreen
 import com.github.e0ipso.tokkl.timer.TimerBarContent
@@ -88,6 +91,7 @@ import com.github.e0ipso.tokkl.timer.TimerScreen
 import com.github.e0ipso.tokkl.timer.TimerState
 import com.github.e0ipso.tokkl.timer.TimerView
 import com.github.e0ipso.tokkl.trash.TrashActions
+import com.github.e0ipso.tokkl.trash.TrashPageState
 import com.github.e0ipso.tokkl.trash.TrashRoute
 import com.github.e0ipso.tokkl.trash.TrashScreen
 import com.github.e0ipso.tokkl.trash.TrashState
@@ -442,10 +446,12 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
         Screen("Projects") {
             Framed(ProjectsRoute) {
                 ProjectsScreen(
-                    CatalogSamples.PROJECTS_LOADED,
-                    offline = false,
-                    cachedProjects = emptyList(),
-                    clients = CatalogSamples.CACHED_CLIENTS,
+                    ProjectsPageState(
+                        CatalogSamples.PROJECTS_LOADED,
+                        false,
+                        emptyList(),
+                        CatalogSamples.CACHED_CLIENTS,
+                    ),
                     actions = ProjectsActions(),
                 )
             }
@@ -453,10 +459,12 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
         Screen("the project form") {
             Framed(ProjectsRoute) {
                 ProjectsScreen(
-                    CatalogSamples.PROJECTS_LOADED.copy(overlay = ProjectForm.New),
-                    offline = false,
-                    cachedProjects = emptyList(),
-                    clients = CatalogSamples.CACHED_CLIENTS,
+                    ProjectsPageState(
+                        CatalogSamples.PROJECTS_LOADED.copy(overlay = ProjectForm.New),
+                        false,
+                        emptyList(),
+                        CatalogSamples.CACHED_CLIENTS,
+                    ),
                     actions = ProjectsActions(),
                 )
             }
@@ -464,9 +472,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
         Screen("Clients") {
             Framed(ClientsRoute) {
                 ClientsScreen(
-                    CatalogSamples.CLIENTS_LOADED,
-                    offline = false,
-                    cachedClients = emptyList(),
+                    ClientsPageState(CatalogSamples.CLIENTS_LOADED, false, emptyList()),
                     actions = ClientsActions(),
                 )
             }
@@ -474,9 +480,11 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
         Screen("the client form") {
             Framed(ClientsRoute) {
                 ClientsScreen(
-                    CatalogSamples.CLIENTS_LOADED.copy(overlay = ClientsOverlay.New),
-                    offline = false,
-                    cachedClients = emptyList(),
+                    ClientsPageState(
+                        CatalogSamples.CLIENTS_LOADED.copy(overlay = ClientsOverlay.New),
+                        false,
+                        emptyList(),
+                    ),
                     actions = ClientsActions(),
                 )
             }
@@ -484,9 +492,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
         Screen("Tags") {
             Framed(TagsRoute) {
                 TagsScreen(
-                    CatalogSamples.TAGS_LOADED,
-                    offline = false,
-                    cachedTags = emptyList(),
+                    TagsPageState(CatalogSamples.TAGS_LOADED, false, emptyList()),
                     actions = TagsActions(),
                 )
             }
@@ -494,7 +500,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
         Screen("Trash") {
             Framed(
                 TrashRoute,
-            ) { TrashScreen(TRASH, offline = false, settings = ScreenshotTest.ACCOUNT, actions = TrashActions()) }
+            ) { TrashScreen(TrashPageState(TRASH, false, ScreenshotTest.ACCOUNT), actions = TrashActions()) }
         },
         Screen("Settings") {
             Framed(SettingsRoute) {

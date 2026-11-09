@@ -42,10 +42,7 @@ fun ProjectsPage(model: ProjectsViewModel, modifier: Modifier = Modifier) {
     val state = page.catalog
     BackHandler(enabled = state.overlay != null) { model.closeForm() }
     ProjectsScreen(
-        state = state,
-        offline = page.offline,
-        cachedProjects = page.cachedProjects,
-        clients = page.clients,
+        page = page,
         actions = ProjectsActions(
             onRetry = model::retry,
             onNew = model::newProject,
@@ -55,7 +52,6 @@ fun ProjectsPage(model: ProjectsViewModel, modifier: Modifier = Modifier) {
             onCloseForm = model::closeForm,
             onDoneShow = model::doneShown,
         ),
-        tasks = page.tasks,
         taskActions = TaskActions(
             onRetry = model.tasks::retry,
             onCreate = model.tasks::create,

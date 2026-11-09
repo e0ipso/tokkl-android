@@ -14,11 +14,11 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 private fun ClientsPreview() {
     TokklTheme {
         ClientsScreen(
-            state = ClientsState(
-                data = ClientsData(SAMPLE_CLIENTS, projectCounts = mapOf(ClientId(1) to 3, ClientId(2) to 1)),
+            ClientsPageState(
+                ClientsState(
+                    data = ClientsData(SAMPLE_CLIENTS, projectCounts = mapOf(ClientId(1) to 3, ClientId(2) to 1)),
+                ),
             ),
-            offline = false,
-            cachedClients = emptyList(),
             actions = ClientsActions(),
         )
     }
@@ -29,9 +29,11 @@ private fun ClientsPreview() {
 private fun ClientsOfflinePreview() {
     TokklTheme {
         ClientsScreen(
-            state = ClientsState(),
-            offline = true,
-            cachedClients = listOf(Client(ClientId(1), WorkspaceId(7), "Acme", archived = false)),
+            ClientsPageState(
+                ClientsState(),
+                true,
+                listOf(Client(ClientId(1), WorkspaceId(7), "Acme", archived = false)),
+            ),
             actions = ClientsActions(),
         )
     }

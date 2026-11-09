@@ -60,24 +60,15 @@ import com.github.e0ipso.tokkl.core.ui.R as UiR
  * off. Coming back online, or to the foreground, loads the tags again.
  */
 @Composable
-fun TagsScreen(
-    state: TagsState,
-    offline: Boolean,
-    cachedTags: List<Tag>,
-    actions: TagsActions,
-    modifier: Modifier = Modifier,
-) {
-    val serverNeeded = offline || state.loadProblem == ServerProblem.Unreachable
-    val canChange = state.canChange && !offline
+fun TagsScreen(page: TagsPageState, actions: TagsActions, modifier: Modifier = Modifier) {
+    val state = page.catalog
+    val canChange = page.canChange
     var newName by rememberSaveable { mutableStateOf("") }
     var nameMissing by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(state.done) {
         if (state.done is CatalogChange.Created) newName = ""
     }
-    val rows = state.data?.tags?.map { TagRow(it, fromServer = true) }
-        ?: cachedTags.map { TagRow(it, fromServer = false) }
-    val hasNotices = serverNeeded || state.loadProblem != null ||
-        (state.loading && state.data == null) || (state.changeProblem != null && state.overlay == null)
+    val rows = page.rows
     CatalogPage(
         title = stringResource(R.string.nav_tags),
         done = state.done?.let { changeText(it) },
@@ -101,7 +92,7 @@ fun TagsScreen(
             item(key = "notices") {
                 Column(Modifier.padding(top = TokklTheme.spacing.betweenGroups)) {
                     CatalogNotices(
-                        serverNeeded = serverNeeded,
+                        serverNeeded = page.serverNeeded,
                         neededTitle = stringResource(R.string.tags_server_needed_title),
                         neededMessage = stringResource(R.string.tags_server_needed_message),
                         loadProblem = state.loadProblem,
@@ -110,7 +101,7 @@ fun TagsScreen(
                         changeProblem = state.changeProblem.takeIf { state.overlay == null },
                         onRetry = actions.onRetry,
                     )
-                    if (hasNotices && (state.data != null || rows.isNotEmpty())) {
+                    if (page.hasNotices && (state.data != null || rows.isNotEmpty())) {
                         Spacer(
                             Modifier.height(TokklTheme.spacing.betweenGroups),
                         )
@@ -179,7 +170,7 @@ class TagsActions(
 /**
  * A tag as the list shows it. A row the phone had and the server did not send ([fromServer] false) offers no action.
  */
-private data class TagRow(val tag: Tag, val fromServer: Boolean)
+data class TagRow(val tag: Tag, val fromServer: Boolean)
 
 /** The web app's field and Add tag button, which creates a tag at once. */
 @Composable

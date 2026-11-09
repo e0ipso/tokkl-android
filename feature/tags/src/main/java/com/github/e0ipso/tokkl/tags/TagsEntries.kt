@@ -39,9 +39,7 @@ internal object TagsEntries : FeatureEntries {
 fun TagsPage(model: TagsViewModel, modifier: Modifier = Modifier) {
     val page by model.page.collectAsStateWithLifecycle()
     TagsScreen(
-        state = page.catalog,
-        offline = page.offline,
-        cachedTags = page.cachedTags,
+        page = page,
         actions = TagsActions(
             onRetry = model::retry,
             onCreate = model::create,

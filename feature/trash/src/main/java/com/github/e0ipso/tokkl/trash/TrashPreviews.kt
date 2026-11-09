@@ -26,9 +26,11 @@ private fun TrashOfflinePreview() {
 private fun TrashPagePreview(offline: Boolean) {
     TokklTheme {
         TrashScreen(
-            state = TrashState(entries = SAMPLE_ENTRIES),
-            offline = offline,
-            settings = AccountSettings("UTC", DayOfWeek.MONDAY, timeResolutionMinutes = null),
+            TrashPageState(
+                TrashState(entries = SAMPLE_ENTRIES),
+                offline,
+                AccountSettings("UTC", DayOfWeek.MONDAY, timeResolutionMinutes = null),
+            ),
             actions = TrashActions(),
         )
     }

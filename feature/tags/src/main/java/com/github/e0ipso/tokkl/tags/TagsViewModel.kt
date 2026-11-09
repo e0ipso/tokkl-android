@@ -13,6 +13,7 @@ import com.github.e0ipso.tokkl.platform.AppForeground
 import com.github.e0ipso.tokkl.platform.stateInPage
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.CacheRefresh
+import com.github.e0ipso.tokkl.session.ServerProblem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -51,7 +52,23 @@ data class TagsPageState(
     val catalog: TagsState = TagsState(),
     val offline: Boolean = false,
     val cachedTags: List<Tag> = emptyList(),
-)
+) {
+    /** Whether the page says that changing the tags needs the server. */
+    val serverNeeded: Boolean get() = offline || catalog.loadProblem == ServerProblem.Unreachable
+
+    /** Whether a change can go to the server now. */
+    val canChange: Boolean get() = catalog.canChange && !offline
+
+    /** The server's tags once loaded, the phone's until then. */
+    val rows: List<TagRow>
+        get() = catalog.data?.tags?.map { TagRow(it, fromServer = true) }
+            ?: cachedTags.map { TagRow(it, fromServer = false) }
+
+    /** Whether a notice shows above the list. */
+    val hasNotices: Boolean
+        get() = serverNeeded || catalog.loadProblem != null || (catalog.loading && catalog.data == null) ||
+            (catalog.changeProblem != null && catalog.overlay == null)
+}
 
 /**
  * The tags page's state (docs/PRD.md P4): the workspace's tags from the server, loaded each time

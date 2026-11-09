@@ -39,9 +39,7 @@ internal object TrashEntries : FeatureEntries {
 fun TrashPage(model: TrashViewModel, modifier: Modifier = Modifier) {
     val page by model.page.collectAsStateWithLifecycle()
     TrashScreen(
-        state = page.trash,
-        offline = page.offline,
-        settings = page.settings,
+        page = page,
         actions = TrashActions(
             onRetry = model::retry,
             onRestore = model::restore,

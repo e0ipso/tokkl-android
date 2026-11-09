@@ -43,9 +43,7 @@ fun ClientsPage(model: ClientsViewModel, modifier: Modifier = Modifier) {
         enabled = state.overlay is ClientsOverlay.New || state.overlay is ClientsOverlay.Edit,
     ) { model.dismiss() }
     ClientsScreen(
-        state = state,
-        offline = page.offline,
-        cachedClients = page.cachedClients,
+        page = page,
         actions = ClientsActions(
             onRetry = model::retry,
             onNew = model::newClient,

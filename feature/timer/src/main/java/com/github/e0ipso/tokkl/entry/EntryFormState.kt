@@ -100,7 +100,10 @@ sealed interface EntryFormState {
         val running: Boolean = false,
         val noTimes: Boolean = false,
         val noTimesOffered: Boolean = false,
-    ) : EntryFormState
+    ) : EntryFormState {
+        /** Whether the fields can change: a workspace is known and no save is on its way. */
+        val canChange: Boolean get() = workspaceId != null && !saving
+    }
 }
 
 /** What the entry form's screen draws: the [form], what its picker offers, and whether the phone is [offline]. */

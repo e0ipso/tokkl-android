@@ -72,7 +72,21 @@ data class TrashPageState(
     val trash: TrashState = TrashState(),
     val offline: Boolean = false,
     val settings: AccountSettings? = null,
-)
+) {
+    /** Whether the page says that the trash needs the server. */
+    val serverNeeded: Boolean get() = offline || trash.loadProblem == ServerProblem.Unreachable
+
+    /** Whether a change can go to the server now. */
+    val canChange: Boolean get() = trash.canChange && !offline
+
+    /** The deleted entries once loaded, and none while the server is needed: the phone keeps no copy. */
+    val entries: List<TrashEntry>? get() = trash.entries.takeUnless { serverNeeded }
+
+    /** Whether a notice shows above the list. */
+    val hasNotices: Boolean
+        get() = serverNeeded || trash.loadProblem != null || (trash.loading && trash.entries == null) ||
+            (trash.changeProblem != null && !trash.confirmingEmpty)
+}
 
 /**
  * The trash page's state (docs/PRD.md H7): the deleted entries from `GET /api/app/trash`, loaded

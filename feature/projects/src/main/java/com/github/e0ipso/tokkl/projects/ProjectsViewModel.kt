@@ -14,6 +14,7 @@ import com.github.e0ipso.tokkl.platform.PageLoads
 import com.github.e0ipso.tokkl.platform.stateInPage
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.CacheRefresh
+import com.github.e0ipso.tokkl.session.ServerProblem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -58,7 +59,16 @@ data class ProjectsPageState(
     val cachedProjects: List<Project> = emptyList(),
     val clients: List<Client> = emptyList(),
     val tasks: TasksState = TasksState(),
-)
+) {
+    /** Whether the page says that changing the projects needs the server. */
+    val serverNeeded: Boolean get() = offline || catalog.loadProblem == ServerProblem.Unreachable
+
+    /** Whether a change can go to the server now. */
+    val canChange: Boolean get() = catalog.canChange && !offline
+
+    /** The change the page says it made last: the open project's tasks' first. */
+    val done: CatalogChange? get() = tasks.done ?: catalog.done
+}
 
 /**
  * The projects page's state (docs/PRD.md P2): the workspace's projects from the server, loaded

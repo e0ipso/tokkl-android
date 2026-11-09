@@ -13,6 +13,7 @@ import com.github.e0ipso.tokkl.platform.AppForeground
 import com.github.e0ipso.tokkl.platform.stateInPage
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.CacheRefresh
+import com.github.e0ipso.tokkl.session.ServerProblem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -59,7 +60,16 @@ data class ClientsPageState(
     val catalog: ClientsState = ClientsState(),
     val offline: Boolean = false,
     val cachedClients: List<Client> = emptyList(),
-)
+) {
+    /** Whether the page says that changing the clients needs the server. */
+    val serverNeeded: Boolean get() = offline || catalog.loadProblem == ServerProblem.Unreachable
+
+    /** Whether a change can go to the server now. */
+    val canChange: Boolean get() = catalog.canChange && !offline
+
+    /** Whether the form to add or edit a client is open. */
+    val formOpen: Boolean get() = catalog.overlay is ClientsOverlay.New || catalog.overlay is ClientsOverlay.Edit
+}
 
 /**
  * The clients page's state (docs/PRD.md P3): the workspace's clients from the server, loaded each

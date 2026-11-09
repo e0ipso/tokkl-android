@@ -31,7 +31,6 @@ import com.github.e0ipso.tokkl.model.Client
 import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.picker.projectColor
-import com.github.e0ipso.tokkl.session.ServerProblem
 import com.github.e0ipso.tokkl.ui.TokklButton
 import com.github.e0ipso.tokkl.ui.TokklIconButton
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -58,18 +57,19 @@ class ProjectsActions(
  */
 @Composable
 fun ProjectsScreen(
-    state: ProjectsState,
-    offline: Boolean,
-    cachedProjects: List<Project>,
-    clients: List<Client>,
+    page: ProjectsPageState,
     actions: ProjectsActions,
     modifier: Modifier = Modifier,
-    tasks: TasksState = TasksState(),
     taskActions: TaskActions = TaskActions(),
 ) {
-    val serverNeeded = offline || state.loadProblem == ServerProblem.Unreachable
-    val canChange = state.canChange && !offline
-    val done = tasks.done ?: state.done
+    val state = page.catalog
+    val serverNeeded = page.serverNeeded
+    val canChange = page.canChange
+    val offline = page.offline
+    val cachedProjects = page.cachedProjects
+    val clients = page.clients
+    val tasks = page.tasks
+    val done = page.done
     val doneShown = {
         actions.onDoneShow()
         taskActions.onDoneShow()

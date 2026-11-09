@@ -41,16 +41,13 @@ import com.github.e0ipso.tokkl.core.ui.R as UiR
  * foreground, loads the clients again.
  */
 @Composable
-fun ClientsScreen(
-    state: ClientsState,
-    offline: Boolean,
-    cachedClients: List<Client>,
-    actions: ClientsActions,
-    modifier: Modifier = Modifier,
-) {
-    val serverNeeded = offline || state.loadProblem == ServerProblem.Unreachable
-    val canChange = state.canChange && !offline
-    val formOpen = state.overlay is ClientsOverlay.New || state.overlay is ClientsOverlay.Edit
+fun ClientsScreen(page: ClientsPageState, actions: ClientsActions, modifier: Modifier = Modifier) {
+    val state = page.catalog
+    val serverNeeded = page.serverNeeded
+    val canChange = page.canChange
+    val offline = page.offline
+    val cachedClients = page.cachedClients
+    val formOpen = page.formOpen
     val title = when (state.overlay) {
         ClientsOverlay.New -> R.string.client_form_new
         is ClientsOverlay.Edit -> R.string.client_form_edit

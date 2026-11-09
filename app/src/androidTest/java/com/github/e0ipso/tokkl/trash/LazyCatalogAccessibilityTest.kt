@@ -24,6 +24,7 @@ import com.github.e0ipso.tokkl.model.TagId
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.tags.TagsActions
 import com.github.e0ipso.tokkl.tags.TagsData
+import com.github.e0ipso.tokkl.tags.TagsPageState
 import com.github.e0ipso.tokkl.tags.TagsScreen
 import com.github.e0ipso.tokkl.tags.TagsState
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
@@ -62,7 +63,12 @@ class LazyCatalogAccessibilityTest {
         compose.setContent {
             TokklTheme(
                 darkTheme = false,
-            ) { TrashScreen(TrashState(entries = entries.value), false, null, TrashActions()) }
+            ) {
+                TrashScreen(
+                    TrashPageState(TrashState(entries = entries.value), offline = false),
+                    actions = TrashActions(),
+                )
+            }
         }
         compose.onNode(hasScrollAction()).performScrollToIndex(242)
         val row = compose.onNode(hasText("Trash 240", substring = true))
@@ -84,7 +90,12 @@ class LazyCatalogAccessibilityTest {
         compose.setContent {
             TokklTheme(
                 darkTheme = false,
-            ) { TagsScreen(TagsState(data = TagsData(tags.value)), false, emptyList(), TagsActions()) }
+            ) {
+                TagsScreen(
+                    TagsPageState(TagsState(data = TagsData(tags.value)), offline = false),
+                    actions = TagsActions(),
+                )
+            }
         }
         compose.onNode(hasScrollAction()).performScrollToIndex(242)
         val row = compose.onNode(hasText("Tag 240"))

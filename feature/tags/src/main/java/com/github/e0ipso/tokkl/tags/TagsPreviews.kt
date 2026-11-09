@@ -14,9 +14,11 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 private fun TagsPreview() {
     TokklTheme {
         TagsScreen(
-            state = TagsState(data = TagsData(listOf(tag(1, "call"), tag(2, "review"), tag(3, "travel")))),
-            offline = false,
-            cachedTags = emptyList(),
+            TagsPageState(
+                TagsState(data = TagsData(listOf(tag(1, "call"), tag(2, "review"), tag(3, "travel")))),
+                false,
+                emptyList(),
+            ),
             actions = TagsActions(),
         )
     }

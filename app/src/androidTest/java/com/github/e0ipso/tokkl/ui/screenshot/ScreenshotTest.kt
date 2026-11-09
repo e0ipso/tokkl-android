@@ -61,6 +61,7 @@ import com.github.e0ipso.tokkl.calendar.ResizeEdge
 import com.github.e0ipso.tokkl.calendar.WeekSource
 import com.github.e0ipso.tokkl.catalog.CatalogSamples
 import com.github.e0ipso.tokkl.clients.ClientsActions
+import com.github.e0ipso.tokkl.clients.ClientsPageState
 import com.github.e0ipso.tokkl.clients.ClientsRoute
 import com.github.e0ipso.tokkl.clients.ClientsScreen
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
@@ -94,6 +95,7 @@ import com.github.e0ipso.tokkl.pomodoro.lengthCardMatcher
 import com.github.e0ipso.tokkl.pomodoro.ring
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.projects.ProjectsActions
+import com.github.e0ipso.tokkl.projects.ProjectsPageState
 import com.github.e0ipso.tokkl.projects.ProjectsRoute
 import com.github.e0ipso.tokkl.projects.ProjectsScreen
 import com.github.e0ipso.tokkl.reports.DetailedEntry
@@ -117,6 +119,7 @@ import com.github.e0ipso.tokkl.settings.followTheSystemNightMode
 import com.github.e0ipso.tokkl.settings.systemIsDark
 import com.github.e0ipso.tokkl.sync.SyncStatus
 import com.github.e0ipso.tokkl.tags.TagsActions
+import com.github.e0ipso.tokkl.tags.TagsPageState
 import com.github.e0ipso.tokkl.tags.TagsRoute
 import com.github.e0ipso.tokkl.tags.TagsScreen
 import com.github.e0ipso.tokkl.timer.TimerBarContent
@@ -496,10 +499,12 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
         show({
             SignedInFrame(pages = topLevelPages, current = ProjectsRoute, onOpen = {}) {
                 ProjectsScreen(
-                    CatalogSamples.PROJECTS_LOADED,
-                    offline = false,
-                    cachedProjects = emptyList(),
-                    clients = CatalogSamples.CACHED_CLIENTS,
+                    ProjectsPageState(
+                        CatalogSamples.PROJECTS_LOADED,
+                        false,
+                        emptyList(),
+                        CatalogSamples.CACHED_CLIENTS,
+                    ),
                     actions = ProjectsActions(),
                 )
             }
@@ -516,9 +521,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
         show({
             SignedInFrame(pages = topLevelPages, current = ClientsRoute, onOpen = {}) {
                 ClientsScreen(
-                    CatalogSamples.CLIENTS_LOADED,
-                    offline = false,
-                    cachedClients = emptyList(),
+                    ClientsPageState(CatalogSamples.CLIENTS_LOADED, false, emptyList()),
                     actions = ClientsActions(),
                 )
             }
@@ -535,9 +538,7 @@ abstract class ScreenshotTest(private val dark: Boolean, private val fontScale: 
         show({
             SignedInFrame(pages = topLevelPages, current = TagsRoute, onOpen = {}) {
                 TagsScreen(
-                    CatalogSamples.TAGS_LOADED,
-                    offline = false,
-                    cachedTags = emptyList(),
+                    TagsPageState(CatalogSamples.TAGS_LOADED, false, emptyList()),
                     actions = TagsActions(),
                 )
             }

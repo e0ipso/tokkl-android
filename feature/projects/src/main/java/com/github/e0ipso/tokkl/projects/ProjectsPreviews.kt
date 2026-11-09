@@ -15,10 +15,12 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 private fun ProjectsPreview() {
     TokklTheme {
         ProjectsScreen(
-            state = ProjectsState(data = ProjectsData(SAMPLE_PROJECTS, WorkspaceDefaults("EUR", 50.0))),
-            offline = false,
-            cachedProjects = emptyList(),
-            clients = listOf(Client(ClientId(1), WorkspaceId(7), "Acme", archived = false)),
+            ProjectsPageState(
+                ProjectsState(data = ProjectsData(SAMPLE_PROJECTS, WorkspaceDefaults("EUR", 50.0))),
+                false,
+                emptyList(),
+                listOf(Client(ClientId(1), WorkspaceId(7), "Acme", archived = false)),
+            ),
             actions = ProjectsActions(),
         )
     }
