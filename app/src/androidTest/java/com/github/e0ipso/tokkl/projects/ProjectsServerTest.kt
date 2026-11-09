@@ -114,8 +114,8 @@ class ProjectsServerTest {
         }.orFail("archive Gone")
         runBlocking { app.accountRefresh.refresh().join() }
         model = ProjectsViewModel(
-            repository = ProjectsRepository(Session(context).api),
-            tasksRepository = TasksRepository(Session(context).api),
+            repository = ServerProjectsRepository(Session(context).api),
+            tasksRepository = ServerTasksRepository(Session(context).api),
             settings = app.accountSettings,
             changes = ServerChanges(
                 scope = scope,

@@ -54,7 +54,7 @@ class ProjectsRequestsTest {
         testApi.stored = url
         // The user has confirmed the MockWebServer's plain http URL.
         testApi.trust = InMemoryServerTrust(url)
-        repository = ProjectsRepository { testApi.api(url) }
+        repository = ServerProjectsRepository { testApi.api(url) }
     }
 
     @After

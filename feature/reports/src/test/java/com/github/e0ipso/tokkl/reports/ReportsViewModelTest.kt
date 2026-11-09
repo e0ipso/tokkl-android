@@ -1,44 +1,31 @@
 package com.github.e0ipso.tokkl.reports
 
-import com.github.e0ipso.tokkl.api.ApiCredentials
-import com.github.e0ipso.tokkl.api.InMemoryServerTrust
-import com.github.e0ipso.tokkl.api.ServerUrl
-import com.github.e0ipso.tokkl.api.TestApi
+import com.github.e0ipso.tokkl.api.ApiError
+import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.platform.TestApp
 import com.github.e0ipso.tokkl.platform.TestScreen
 import com.github.e0ipso.tokkl.session.AccountSettings
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
-import mockwebserver3.Dispatcher
-import mockwebserver3.MockResponse
-import mockwebserver3.MockWebServer
-import mockwebserver3.RecordedRequest
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.io.IOException
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Instant
-import java.time.LocalDate
+import java.time.ZoneId
 import java.time.ZoneOffset
-import java.util.concurrent.CopyOnWriteArrayList
-import kotlin.coroutines.CoroutineContext
 
 /**
- * The reports screen's model against a MockWebServer, for an account at UTC+14 whose week starts
- * on Wednesday. The clock reads Tuesday 20 October in UTC, which is already Wednesday the 21st
- * for the account, so a range taken from the phone's day or from Monday weeks would differ.
+ * The reports screen's model over a [FakeReportsRepository] that stands in for the server, for
+ * an account at UTC+14 whose week starts on Wednesday. The clock reads Tuesday 20 October in UTC,
+ * which is already Wednesday the 21st for the account, so a range taken from the phone's day or
+ * from Monday weeks would differ.
  *
  * The model's work off the main thread waits in [io] until a test runs it, so a test sees what
  * the screen shows while the answer is on its way.
@@ -49,9 +36,7 @@ import kotlin.coroutines.CoroutineContext
  */
 class ReportsViewModelTest {
 
-    private val testApi = TestApi(null)
-    private val server = MockWebServer()
-    private val searches = CopyOnWriteArrayList<JsonObject>()
+    private val repository = FakeReportsRepository()
     private val io = QueuedDispatcher()
     private val settings = MutableStateFlow<AccountSettings?>(
         AccountSettings(ZONE, DayOfWeek.WEDNESDAY, timeResolutionMinutes = null),
@@ -63,39 +48,14 @@ class ReportsViewModelTest {
     private val scope = CoroutineScope(UnconfinedTestDispatcher(scheduler))
     private val app = TestApp(scheduler)
 
-    /** The search gets the 503 of a proxy whose server is down. */
-    @Volatile
-    private var searchUnreachable = false
-
     @Before
     fun setUp() {
-        server.dispatcher = object : Dispatcher() {
-            override fun dispatch(request: RecordedRequest): MockResponse = when (request.url.encodedPath) {
-                "/api/v9/me" -> json("""{"id":1,"default_workspace_id":7}""")
-
-                "/api/v9/workspaces/7" -> json("""{"id":7,"rounding":0,"rounding_minutes":0}""")
-
-                SEARCH -> if (searchUnreachable) {
-                    MockResponse.Builder().code(503).build()
-                } else {
-                    searches += Json.parseToJsonElement(request.body!!.utf8()).jsonObject
-                    json(
-                        """[{"billable":false,"currency":"EUR","time_entries":[{"seconds":3600""" +
-                            ""","start":"2026-10-21T00:30:00+14:00"}]}]""",
-                    )
-                }
-
-                else -> MockResponse.Builder().code(404).build()
-            }
-        }
-        server.start()
-        val url = ServerUrl.parse(server.url("/").toString())!!
-        testApi.stored = url
-        testApi.trust = InMemoryServerTrust(url)
+        repository.workspaceAnswer = { ApiResult.Success(WORKSPACE) }
+        repository.summaryAnswer = { ApiResult.Success(summaryOf(it.range, seconds = 3600)) }
         route = TestReportsRoute(scope) { choices, own ->
             reportsViewModel(
                 accountSettings = settings,
-                repository = ReportsRepository { testApi.api(url, ApiCredentials.ApiToken("token")) },
+                repository = repository,
                 scope = own,
                 io = io,
                 clock = CLOCK,
@@ -104,11 +64,6 @@ class ReportsViewModelTest {
             )
         }
         screen = TestScreen(model.page, scope, scheduler)
-    }
-
-    @After
-    fun tearDown() {
-        server.close()
     }
 
     @Test
@@ -121,8 +76,11 @@ class ReportsViewModelTest {
 
         val loaded = loaded()
         assertEquals(thisWeek, loaded.selection)
-        assertEquals(3600L, (loaded.report as SummaryReport).totals.seconds)
-        assertSearched("2026-10-21", "2026-10-27")
+        assertEquals(summaryOf(thisWeek.range, seconds = 3600), loaded.report)
+        assertEquals(
+            ReportCall.Summary(WORKSPACE, thisWeek.range, ZoneId.of(ZONE), DayOfWeek.WEDNESDAY, ReportFilters()),
+            repository.summaries.single(),
+        )
     }
 
     @Test
@@ -137,13 +95,15 @@ class ReportsViewModelTest {
         io.runAll()
         assertEquals(RangeSelection(range("2026-10-21", "2026-10-21"), RangePreset.TODAY), loaded().selection)
         assertSearched("2026-10-21", "2026-10-21")
+        assertEquals("the latest search has no filters", ReportFilters(), repository.summaries.last().filters)
+        assertTrue("the weekly tab asked for nothing", repository.weeklies.isEmpty())
         screen.leave()
         route.reopen()
         route.choices.openToday()
         screen = TestScreen(model.page, scope, scheduler)
         screen.show()
         io.runAll()
-        assertEquals("the tap asks before the page shows, which asks nothing", 3, searches.size)
+        assertEquals("the tap asks before the page shows, which asks nothing", 3, repository.summaries.size)
         assertEquals(RangePreset.TODAY, loaded().selection.preset)
     }
 
@@ -161,7 +121,7 @@ class ReportsViewModelTest {
         assertEquals(ReportTab.SUMMARY, model.tab.value)
         assertEquals(ReportFilters(), model.filters.value)
         assertEquals(RangeSelection(range("2026-10-21", "2026-10-21"), RangePreset.TODAY), loaded().selection)
-        assertEquals(1, searches.size)
+        assertEquals(1, repository.summaries.size)
     }
 
     @Test
@@ -190,7 +150,7 @@ class ReportsViewModelTest {
         io.runAll()
         assertEquals(RangeSelection(range("2026-10-28", "2026-11-03"), null), loaded().selection)
         assertSearched("2026-10-28", "2026-11-03")
-        assertEquals(5, searches.size)
+        assertEquals(5, repository.summaries.size)
     }
 
     @Test
@@ -216,7 +176,7 @@ class ReportsViewModelTest {
         )
         io.runAll()
         assertEquals(shown.selection, loaded().selection)
-        assertEquals(3, searches.size)
+        assertEquals(3, repository.summaries.size)
         assertSearched("2026-10-14", "2026-10-20")
 
         val reloaded = model.state.value
@@ -224,7 +184,7 @@ class ReportsViewModelTest {
         screen.show()
         assertSame("a rotation asks nothing", reloaded, model.state.value)
         assertTrue("nothing waits to run", io.isEmpty())
-        assertEquals(3, searches.size)
+        assertEquals(3, repository.summaries.size)
     }
 
     @Test
@@ -234,7 +194,7 @@ class ReportsViewModelTest {
         io.runAll()
 
         assertTrue("nothing waits to run", io.isEmpty())
-        assertEquals(1, searches.size)
+        assertEquals(1, repository.summaries.size)
     }
 
     /**
@@ -261,11 +221,13 @@ class ReportsViewModelTest {
         assertEquals(RangeSelection(range("2026-10-14", "2026-10-20"), RangePreset.LAST_WEEK), loaded().selection)
         assertSearched("2026-10-14", "2026-10-20")
         assertEquals(filters, model.filters.value)
-        assertEquals(3, searches.size)
+        assertEquals("the search asks with the filters", filters, repository.summaries.last().filters)
+        assertEquals(3, repository.summaries.size)
     }
 
     @Test
     fun aScreenThatWentForgetsItsReportAndOpensOnThisWeekAgain() {
+        repository.detailedAnswer = { ApiResult.Success(DetailedPage(emptyList(), nextRow = null)) }
         screen.show()
         io.runAll()
         model.selectTab(ReportTab.DETAILED)
@@ -284,7 +246,8 @@ class ReportsViewModelTest {
         assertEquals(RangePreset.THIS_WEEK, loaded().selection.preset)
         assertEquals("the tab stays", ReportTab.DETAILED, model.tab.value)
         assertTrue("nothing waits to run", io.isEmpty())
-        assertEquals(3, searches.size)
+        assertEquals("the summary, last week's details, then this week's", 3, searches())
+        assertEquals(range("2026-10-21", "2026-10-27"), repository.detailedPages.last().range)
     }
 
     @Test
@@ -292,7 +255,7 @@ class ReportsViewModelTest {
         screen.show()
         io.runAll()
         val shown = loaded()
-        server.close()
+        repository.summaryAnswer = { ApiResult.Failure(ApiError.Network(IOException("connection refused"))) }
 
         screen.hide()
         app.trip()
@@ -304,19 +267,20 @@ class ReportsViewModelTest {
 
     @Test
     fun theNetworksReturnAsksAgainForAReportThatGotNoAnswer() {
-        searchUnreachable = true
+        // The 503 of a proxy whose server is down.
+        repository.summaryAnswer = { ApiResult.Failure(ApiError.UnexpectedStatus(503)) }
         screen.show()
         io.runAll()
         val failed = model.state.value
         assertTrue("no answer: $failed", failed is ReportsState.Failed && failed.failure == ReportFailure.Unreachable)
 
-        searchUnreachable = false
+        repository.summaryAnswer = { ApiResult.Success(summaryOf(it.range, seconds = 3600)) }
         app.reconnect()
         assertEquals(ReportsState.Loading((failed as ReportsState.Failed).selection), model.state.value)
         io.runAll()
 
         assertEquals(failed.selection, loaded().selection)
-        assertEquals(1, searches.size)
+        assertEquals("the failed search, then the one the network's return asked for", 2, repository.summaries.size)
     }
 
     @Test
@@ -331,7 +295,7 @@ class ReportsViewModelTest {
 
         assertSame(shown, model.state.value)
         assertTrue("nothing waits to run", io.isEmpty())
-        assertEquals(1, searches.size)
+        assertEquals(1, repository.summaries.size)
     }
 
     private fun loaded(): ReportsState.Loaded {
@@ -340,40 +304,20 @@ class ReportsViewModelTest {
         return state as ReportsState.Loaded
     }
 
-    /** The latest search asked for [from] to [to]. */
+    /** The latest summary asked for [from] to [to]. */
     private fun assertSearched(from: String, to: String) {
-        val body = searches.last()
-        assertEquals(
-            from to to,
-            body.getValue("start_date").jsonPrimitive.content to body.getValue("end_date").jsonPrimitive.content,
-        )
+        assertEquals(range(from, to), repository.summaries.last().range)
     }
 
-    private fun range(from: String, to: String) = ReportRange(LocalDate.parse(from), LocalDate.parse(to))
-
-    private fun json(body: String) = MockResponse.Builder().code(
-        200,
-    ).body(body).addHeader("Content-Type", "application/json").build()
-
-    /** Holds dispatched work until [runAll] runs it on the calling thread. */
-    private class QueuedDispatcher : CoroutineDispatcher() {
-        private val queue = ArrayDeque<Runnable>()
-
-        override fun dispatch(context: CoroutineContext, block: Runnable) {
-            queue.addLast(block)
-        }
-
-        fun runAll() {
-            while (queue.isNotEmpty()) queue.removeFirst().run()
-        }
-
-        fun isEmpty(): Boolean = queue.isEmpty()
-    }
+    /** The searches the server would have run: one per summary and one per detailed page. */
+    private fun searches(): Int = repository.summaries.size + repository.detailedPages.size
 
     private companion object {
         /** UTC+14 all year. */
         const val ZONE = "Pacific/Kiritimati"
-        const val SEARCH = "/reports/api/v3/workspace/7/search/time_entries"
+
+        /** The account's workspace on a server without Tokkl's app report. */
+        val WORKSPACE = reportWorkspace()
 
         /** Tuesday 20 October in UTC, Wednesday the 21st at UTC+14. */
         val CLOCK: Clock = Clock.fixed(Instant.parse("2026-10-20T11:00:00Z"), ZoneOffset.UTC)

@@ -14,8 +14,8 @@ import org.koin.dsl.module
 
 /** The Projects page: its repositories, its view model and its screen. */
 val projectsFeatureModule = module {
-    single { ProjectsRepository(get<Session>()) }
-    single { TasksRepository(get<Session>()) }
+    single<ProjectsRepository> { ServerProjectsRepository(get<Session>()) }
+    single<TasksRepository> { ServerTasksRepository(get<Session>()) }
 
     viewModel {
         val accountSettings = get<AccountSettingsSource>()

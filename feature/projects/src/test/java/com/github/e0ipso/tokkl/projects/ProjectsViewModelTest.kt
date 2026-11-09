@@ -1,8 +1,9 @@
 package com.github.e0ipso.tokkl.projects
 
-import com.github.e0ipso.tokkl.api.InMemoryServerTrust
-import com.github.e0ipso.tokkl.api.ServerUrl
-import com.github.e0ipso.tokkl.api.TestApi
+import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.Task
+import com.github.e0ipso.tokkl.model.TaskId
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.platform.TestApp
 import com.github.e0ipso.tokkl.platform.TestScreen
@@ -15,25 +16,18 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import mockwebserver3.Dispatcher
-import mockwebserver3.MockResponse
-import mockwebserver3.MockWebServer
-import mockwebserver3.RecordedRequest
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
-import java.util.concurrent.CopyOnWriteArrayList
 
 /**
- * The projects page's model against a MockWebServer with one project, Website, in workspace 7,
- * and its one task. Unconfined runs each request to the end inside the call.
+ * The projects page's model over repositories with one project, Website, in workspace 7, and its
+ * one task, Design. Unconfined runs each call to the end inside the call.
  */
 class ProjectsViewModelTest {
 
-    private val testApi = TestApi(null)
-    private val server = MockWebServer()
-    private val requests = CopyOnWriteArrayList<String>()
+    private val projects = WebsiteRepository()
+    private val tasks = DesignTaskRepository()
     private val scheduler = TestCoroutineScheduler()
     private val scope = CoroutineScope(UnconfinedTestDispatcher(scheduler))
     private lateinit var model: ProjectsViewModel
@@ -41,24 +35,9 @@ class ProjectsViewModelTest {
 
     @Before
     fun setUp() {
-        server.dispatcher = object : Dispatcher() {
-            override fun dispatch(request: RecordedRequest): MockResponse {
-                requests += "${request.method} ${request.url.encodedPath}"
-                return when ("${request.method} ${request.url.encodedPath}") {
-                    "GET /api/v9/workspaces/7/projects" -> json("[$WEBSITE]")
-                    "GET /api/v9/workspaces/7" -> json("""{"default_currency":"EUR","default_hourly_rate":80.5}""")
-                    "GET $TASKS" -> json("""[{"id":1,"project_id":5,"name":"Design","active":true}]""")
-                    else -> MockResponse.Builder().code(404).build()
-                }
-            }
-        }
-        server.start()
-        val url = ServerUrl.parse(server.url("/").toString())!!
-        testApi.stored = url
-        testApi.trust = InMemoryServerTrust(url)
         model = ProjectsViewModel(
-            repository = ProjectsRepository { testApi.api(url) },
-            tasksRepository = TasksRepository { testApi.api(url) },
+            repository = projects,
+            tasksRepository = tasks,
             settings = accountSettingsIn(WorkspaceId(7)),
             changes = ServerChanges(scope, Dispatchers.Unconfined, CountingRefresh()),
             scope = scope,
@@ -71,11 +50,6 @@ class ProjectsViewModelTest {
         screen = TestScreen(model.page, scope, scheduler)
     }
 
-    @After
-    fun tearDown() {
-        server.close()
-    }
-
     /**
      * Another activity hides the page for longer than its state is shared. The open project form
      * stays with its tasks, and the page loads the projects and the tasks again when it shows.
@@ -85,25 +59,65 @@ class ProjectsViewModelTest {
         screen.show()
         val website = model.state.value.data!!.projects.single()
         model.edit(website)
-        assertEquals(1, requests.count { it == "GET $TASKS" })
+        assertEquals(listOf(WEBSITE), tasks.loads)
 
         screen.leave()
         screen.show()
 
         assertEquals(ProjectForm.Edit(website), model.state.value.overlay)
         assertEquals("Design", model.tasks.state.value.data?.tasks?.single()?.name)
-        assertEquals(2, requests.count { it == "GET /api/v9/workspaces/7/projects" })
-        assertEquals(2, requests.count { it == "GET $TASKS" })
+        assertEquals(2, projects.loads)
+        assertEquals(listOf(WEBSITE, WEBSITE), tasks.loads)
     }
 
-    private fun json(body: String) = MockResponse.Builder()
-        .code(200)
-        .addHeader("Content-Type", "application/json")
-        .body(body)
-        .build()
+    /** Lists Website in workspace 7 and counts the loads; the changes are not sent. */
+    private class WebsiteRepository : ProjectsRepository {
+        var loads = 0
+
+        override suspend fun workspace(stored: WorkspaceId?) = ApiResult.Success(checkNotNull(stored))
+
+        override suspend fun load(workspace: WorkspaceId): ApiResult<ProjectsData> {
+            loads++
+            return ApiResult.Success(ProjectsData(listOf(ProjectDetails(WEBSITE, workspace, "Website")), null))
+        }
+
+        override suspend fun create(workspace: WorkspaceId, fields: ProjectFields, known: Set<ProjectId>) =
+            notSent("create")
+
+        override suspend fun update(workspace: WorkspaceId, id: ProjectId, fields: ProjectFields) = notSent("update")
+
+        override suspend fun setActive(workspace: WorkspaceId, id: ProjectId, active: Boolean) = notSent("setActive")
+    }
+
+    /** Lists Design, Website's one task, and records the project of each load; the changes are not sent. */
+    private class DesignTaskRepository : TasksRepository {
+        val loads = mutableListOf<ProjectId>()
+
+        override suspend fun workspace(stored: WorkspaceId?) = ApiResult.Success(checkNotNull(stored))
+
+        override suspend fun load(workspace: WorkspaceId, project: ProjectId): ApiResult<TasksData> {
+            loads += project
+            check(project == WEBSITE) { "the test opens Website's tasks only, not $project's" }
+            return ApiResult.Success(TasksData(listOf(Task(TaskId(1), workspace, project, "Design", active = true))))
+        }
+
+        override suspend fun create(workspace: WorkspaceId, project: ProjectId, name: String, known: Set<TaskId>) =
+            notSent("create")
+
+        override suspend fun update(
+            workspace: WorkspaceId,
+            project: ProjectId,
+            id: TaskId,
+            name: String,
+            done: Boolean,
+        ) = notSent("update")
+
+        override suspend fun delete(workspace: WorkspaceId, project: ProjectId, id: TaskId) = notSent("delete")
+    }
 
     private companion object {
-        const val TASKS = "/api/v9/workspaces/7/projects/5/tasks"
-        const val WEBSITE = """{"id":5,"workspace_id":7,"name":"Website","active":true}"""
+        val WEBSITE = ProjectId(5)
+
+        fun notSent(call: String): Nothing = throw AssertionError("the test sends no $call")
     }
 }

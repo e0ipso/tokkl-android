@@ -1,9 +1,7 @@
 package com.github.e0ipso.tokkl.clients
 
-import com.github.e0ipso.tokkl.api.ApiCredentials
-import com.github.e0ipso.tokkl.api.InMemoryServerTrust
-import com.github.e0ipso.tokkl.api.ServerUrl
-import com.github.e0ipso.tokkl.api.TestApi
+import com.github.e0ipso.tokkl.api.ApiError
+import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.catalog.CatalogChange
 import com.github.e0ipso.tokkl.model.Client
 import com.github.e0ipso.tokkl.model.ClientId
@@ -23,35 +21,21 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
-import mockwebserver3.Dispatcher
-import mockwebserver3.MockResponse
-import mockwebserver3.MockWebServer
-import mockwebserver3.RecordedRequest
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
-import java.util.concurrent.CopyOnWriteArrayList
+import java.io.IOException
 
 /**
- * The clients page's model against a MockWebServer with one client, Acme, in workspace 7, and one
- * project of Acme's. Unconfined runs each request to the end inside the call.
+ * The clients page's model over a repository with one client, Acme, in workspace 7, which has
+ * one project. Unconfined runs each call to the end inside the call.
  */
 class ClientsViewModelTest {
 
-    private val testApi = TestApi(null)
-
-    private val server = MockWebServer()
-
-    /** Each request's method, path and body, in order. */
-    private val requests = CopyOnWriteArrayList<String>()
+    private val repository = AcmeRepository()
     private val refresh = CountingRefresh()
     private val offline = MutableStateFlow(false)
-
-    /** While true, the server answers every request with a 503. */
-    @Volatile
-    private var failing = false
     private lateinit var model: ClientsViewModel
     private lateinit var screen: TestScreen
     private val scheduler = TestCoroutineScheduler()
@@ -60,37 +44,8 @@ class ClientsViewModelTest {
 
     @Before
     fun setUp() {
-        server.dispatcher = object : Dispatcher() {
-            override fun dispatch(request: RecordedRequest): MockResponse {
-                requests += "${request.method} ${request.url.encodedPath} ${request.body?.utf8().orEmpty()}".trim()
-                if (failing) return MockResponse.Builder().code(503).build()
-                return when ("${request.method} ${request.url.encodedPath}") {
-                    "GET /api/v9/workspaces/7/clients" -> json("""[{"id":1,"wid":7,"name":"Acme","archived":false}]""")
-
-                    "GET /api/v9/workspaces/7/projects" -> json("""[{"id":5,"client_id":1}]""")
-
-                    "POST /api/v9/workspaces/7/clients" -> json(
-                        """{"id":2,"wid":7,"name":"Surf school","archived":false}""",
-                    )
-
-                    "POST /api/v9/workspaces/7/clients/1/archive" -> json("[5]")
-
-                    "POST /api/v9/workspaces/7/clients/1/restore" -> json(
-                        """{"id":1,"wid":7,"name":"Acme","archived":false}""",
-                    )
-
-                    else -> MockResponse.Builder().code(404).build()
-                }
-            }
-        }
-        server.start()
-        val url = ServerUrl.parse(server.url("/").toString())!!
-        // The shared client sends requests only to the configured server.
-        testApi.stored = url
-        // The user has confirmed the MockWebServer's plain http URL.
-        testApi.trust = InMemoryServerTrust(url)
         model = ClientsViewModel(
-            repository = ClientsRepository { testApi.api(url, ApiCredentials.ApiToken("tok-123")) },
+            repository = repository,
             settings = accountSettingsIn(WorkspaceId(7)),
             changes = ServerChanges(scope, Dispatchers.Unconfined, refresh),
             scope = scope,
@@ -102,42 +57,35 @@ class ClientsViewModelTest {
         screen = TestScreen(model.page, scope, scheduler)
     }
 
-    @After
-    fun tearDown() {
-        server.close()
-    }
-
     /**
      * A page that could not load loads again when the network comes back. A rotation loads
      * nothing, and a page that loaded or went asks nothing.
      */
     @Test
     fun theNetworksReturnLoadsAgainWhatFailed() {
-        failing = true
+        repository.unreachable = true
         screen.show()
-        assertEquals("the first load", 1, clientLoads())
+        assertEquals("the first load", 1, repository.loads)
         assertNull(model.state.value.data)
 
         app.reconnect()
-        assertEquals("the network came back", 2, clientLoads())
+        assertEquals("the network came back", 2, repository.loads)
 
         screen.hide()
         screen.show()
-        assertEquals("a rotation loads nothing", 2, clientLoads())
+        assertEquals("a rotation loads nothing", 2, repository.loads)
 
-        failing = false
+        repository.unreachable = false
         app.reconnect()
-        assertEquals(3, clientLoads())
+        assertEquals(3, repository.loads)
         assertEquals("Acme", model.state.value.data!!.clients.single().name)
         app.reconnect()
-        assertEquals("a page that loaded asks nothing", 3, clientLoads())
+        assertEquals("a page that loaded asks nothing", 3, repository.loads)
 
         screen.leave()
         app.reconnect()
-        assertEquals("a page that went asks nothing", 3, clientLoads())
+        assertEquals("a page that went asks nothing", 3, repository.loads)
     }
-
-    private fun clientLoads(): Int = requests.count { it == "GET /api/v9/workspaces/7/clients" }
 
     /**
      * Another activity hides the page for longer than its state is shared. The open form stays,
@@ -154,7 +102,7 @@ class ClientsViewModelTest {
 
         assertEquals(ClientsOverlay.Edit(acme), model.state.value.overlay)
         assertEquals("Acme", model.state.value.data!!.clients.single().name)
-        assertEquals(2, clientLoads())
+        assertEquals(2, repository.loads)
     }
 
     /** Archiving asks first, since it archives the client's projects too. */
@@ -166,26 +114,25 @@ class ClientsViewModelTest {
 
         model.askToArchive(acme)
         assertEquals(ClientsOverlay.ConfirmArchive(acme), model.state.value.overlay)
-        val asked = requests.size
+        assertEquals("asking sends nothing", emptyList<String>(), repository.changes)
         model.archive()
 
-        assertEquals("POST /api/v9/workspaces/7/clients/1/archive {}", requests[asked])
+        assertEquals(listOf("archive 1 in 7"), repository.changes)
         assertEquals(CatalogChange.Archived("Acme"), model.state.value.done)
         assertNull("the question closes", model.state.value.overlay)
         assertEquals(true, model.state.value.data!!.clients.single().archived)
         assertEquals("the cache's projects changed too", 1, refresh.afterChanges)
     }
 
-    /** Restoring brings the client's projects back too, as the web app does. */
+    /** Restoring brings the client back as the server sent it, and the cache catches up. */
     @Test
     fun restoringBringsTheProjectsBack() {
         screen.show()
         val acme = model.state.value.data!!.clients.single()
-        val opened = requests.size
 
         model.restore(acme.copy(archived = true))
 
-        assertEquals("""POST /api/v9/workspaces/7/clients/1/restore {"restore_all_projects":true}""", requests[opened])
+        assertEquals(listOf("restore 1 in 7"), repository.changes)
         assertEquals(CatalogChange.Restored("Acme"), model.state.value.done)
         assertEquals(false, model.state.value.data!!.clients.single().archived)
         assertEquals(1, refresh.afterChanges)
@@ -195,11 +142,10 @@ class ClientsViewModelTest {
     fun aNewClientGoesWithItsNameTrimmedAndBlankNotesAsNone() {
         screen.show()
         model.newClient()
-        val opened = requests.size
 
         model.save("  Surf school ", "   ")
 
-        assertEquals("""POST /api/v9/workspaces/7/clients {"name":"Surf school","notes":null}""", requests[opened])
+        assertEquals(listOf("create Surf school, notes null, known [1] in 7"), repository.changes)
         assertEquals(CatalogChange.Created("Surf school"), model.state.value.done)
         assertEquals("sorted by name", listOf("Acme", "Surf school"), model.state.value.data!!.clients.map { it.name })
     }
@@ -209,9 +155,7 @@ class ClientsViewModelTest {
         val scope = CoroutineScope(Dispatchers.Unconfined)
         val offline = MutableStateFlow(false)
         val page = ClientsViewModel(
-            repository = ClientsRepository {
-                testApi.api(checkNotNull(testApi.stored), ApiCredentials.ApiToken("tok-123"))
-            },
+            repository = AcmeRepository(),
             settings = accountSettingsIn(WorkspaceId(7)),
             changes = ServerChanges(scope, Dispatchers.Unconfined, CountingRefresh()),
             scope = scope,
@@ -232,11 +176,53 @@ class ClientsViewModelTest {
         scope.cancel()
     }
 
-    private fun json(body: String) = MockResponse.Builder()
-        .code(200)
-        .addHeader("Content-Type", "application/json")
-        .body(body)
-        .build()
+    /**
+     * Lists Acme, client 1 of workspace 7 with one project, or fails as an unreachable server
+     * while [unreachable]. Answers the archive and the restore of Acme and the create of Surf
+     * school, and records each change it is sent. Any other change fails the test.
+     */
+    private class AcmeRepository : ClientsRepository {
+        var unreachable = false
+        var loads = 0
+        val changes = mutableListOf<String>()
+
+        override suspend fun workspace(stored: WorkspaceId?) = ApiResult.Success(checkNotNull(stored))
+
+        override suspend fun load(workspace: WorkspaceId): ApiResult<ClientsData> {
+            loads++
+            if (unreachable) return ApiResult.Failure(ApiError.Network(IOException("unreachable")))
+            return ApiResult.Success(ClientsData(listOf(acme(workspace)), mapOf(ClientId(1) to 1)))
+        }
+
+        override suspend fun create(workspace: WorkspaceId, name: String, notes: String?, known: Set<ClientId>) =
+            answer("create $name, notes $notes, known ${known.map { it.value }} in ${workspace.value}") {
+                check(name == "Surf school") { "the test creates Surf school only, not $name" }
+                Client(ClientId(2), workspace, name, archived = false)
+            }
+
+        override suspend fun update(workspace: WorkspaceId, id: ClientId, name: String, notes: String?) =
+            unexpected("update $id")
+
+        override suspend fun archive(workspace: WorkspaceId, id: ClientId) =
+            answer("archive ${id.value} in ${workspace.value}") { checkAcme(id) }
+
+        override suspend fun restore(workspace: WorkspaceId, id: ClientId) =
+            answer("restore ${id.value} in ${workspace.value}") {
+                checkAcme(id)
+                acme(workspace)
+            }
+
+        private fun <R> answer(change: String, value: () -> R): ApiResult<R> {
+            changes += change
+            return ApiResult.Success(value())
+        }
+
+        private fun checkAcme(id: ClientId) = check(id == ClientId(1)) { "the test changes Acme only, not $id" }
+
+        private fun acme(workspace: WorkspaceId) = Client(ClientId(1), workspace, "Acme", archived = false)
+
+        private fun unexpected(call: String): Nothing = throw AssertionError("the test sends no $call")
+    }
 
     private companion object {
         val CACHED_ACME = Client(ClientId(1), WorkspaceId(7), "Acme", archived = false)

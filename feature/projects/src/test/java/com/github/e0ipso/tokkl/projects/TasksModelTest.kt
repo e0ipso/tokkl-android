@@ -1,12 +1,11 @@
 package com.github.e0ipso.tokkl.projects
 
-import com.github.e0ipso.tokkl.api.ApiCredentials
-import com.github.e0ipso.tokkl.api.InMemoryServerTrust
-import com.github.e0ipso.tokkl.api.ServerUrl
-import com.github.e0ipso.tokkl.api.TestApi
+import com.github.e0ipso.tokkl.api.ApiError
+import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.catalog.CatalogChange
 import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.model.Task
+import com.github.e0ipso.tokkl.model.TaskId
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.CountingRefresh
 import com.github.e0ipso.tokkl.session.ServerChanges
@@ -14,105 +13,44 @@ import com.github.e0ipso.tokkl.session.ServerProblem
 import com.github.e0ipso.tokkl.session.accountSettingsIn
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import mockwebserver3.Dispatcher
-import mockwebserver3.MockResponse
-import mockwebserver3.MockWebServer
-import mockwebserver3.RecordedRequest
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
-import org.junit.Before
 import org.junit.Test
-import java.util.concurrent.CopyOnWriteArrayList
 
 /**
- * The project form's task list against a MockWebServer with project 5 in workspace 7, which has
- * the open task Design and the done task Brief, and project 6, which has none. Unconfined runs
- * each request to the end inside the call.
+ * The project form's task list over a repository where project 5 in workspace 7 has the open task
+ * Design and the done task Brief, and project 6, which is archived, has none. Unconfined runs
+ * each call to the end inside the call.
  */
 class TasksModelTest {
 
-    private val testApi = TestApi(null)
-
-    private val server = MockWebServer()
-
-    /** Each request's method, path and body, in order. */
-    private val requests = CopyOnWriteArrayList<String>()
+    private val repository = TwoProjectsRepository()
     private val refresh = CountingRefresh()
-    private lateinit var model: TasksModel
-
-    @Before
-    fun setUp() {
-        server.dispatcher = object : Dispatcher() {
-            override fun dispatch(request: RecordedRequest): MockResponse {
-                requests += "${request.method} ${request.url.encodedPath} ${request.body?.utf8().orEmpty()}".trim()
-                return when ("${request.method} ${request.url.encodedPath}") {
-                    "GET /api/v9/workspaces/7/projects/5/tasks" ->
-                        json(
-                            """[{"id":2,"project_id":5,"name":"brief","active":false},{"id":1,"project_id":5""" +
-                                ""","name":"Design","active":true}]""",
-                        )
-
-                    "GET /api/v9/workspaces/7/projects/6/tasks" -> json("[]")
-
-                    "POST /api/v9/workspaces/7/projects/5/tasks" -> json(
-                        """{"id":3,"project_id":5,"name":"Copy","active":true}""",
-                    )
-
-                    "PUT /api/v9/workspaces/7/projects/5/tasks/1" -> json(
-                        """{"id":1,"project_id":5,"name":"Wireframes","active":false}""",
-                    )
-
-                    "DELETE /api/v9/workspaces/7/projects/5/tasks/1" -> MockResponse.Builder().code(200).build()
-
-                    "POST /api/v9/workspaces/7/projects/6/tasks" ->
-                        MockResponse.Builder().code(
-                            400,
-                        ).addHeader(
-                            "Content-Type",
-                            "application/json",
-                        ).body("\"Can not change tasks of archived project\"").build()
-
-                    else -> MockResponse.Builder().code(404).build()
-                }
-            }
-        }
-        server.start()
-        val url = ServerUrl.parse(server.url("/").toString())!!
-        // The shared client sends requests only to the configured server.
-        testApi.stored = url
-        // The user has confirmed the MockWebServer's plain http URL.
-        testApi.trust = InMemoryServerTrust(url)
-        model = TasksModel(
-            repository = TasksRepository { testApi.api(url, ApiCredentials.ApiToken("tok-123")) },
-            settings = accountSettingsIn(WorkspaceId(7)),
-            changes = ServerChanges(CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, refresh),
-            scope = CoroutineScope(Dispatchers.Unconfined),
-            io = Dispatchers.Unconfined,
-        )
-    }
-
-    @After
-    fun tearDown() {
-        server.close()
-    }
+    private val scope = CoroutineScope(Dispatchers.Unconfined)
+    private val model = TasksModel(
+        repository = repository,
+        settings = accountSettingsIn(WorkspaceId(7)),
+        changes = ServerChanges(scope, Dispatchers.Unconfined, refresh),
+        scope = scope,
+        io = Dispatchers.Unconfined,
+    )
 
     @Test
-    fun openTasksComeBeforeDoneOnesEachByName() {
-        model.open(ProjectId(5))
+    fun openingAProjectsFormLoadsItsTasksOnce() {
+        model.open(WEBSITE)
 
         assertEquals(listOf("Design", "brief"), model.state.value.data!!.tasks.map { it.name })
-        assertEquals(listOf("GET /api/v9/workspaces/7/projects/5/tasks"), requests)
+        assertEquals(listOf("load 5 in 7"), repository.calls)
     }
 
     @Test
     fun aNewTaskGoesWithItsNameTrimmedAndRefreshesTheCache() {
-        model.open(ProjectId(5))
-        val opened = requests.size
+        model.open(WEBSITE)
+        val opened = repository.calls.size
 
         model.create("  Copy ")
 
-        assertEquals("""POST /api/v9/workspaces/7/projects/5/tasks {"name":"Copy"}""", requests[opened])
+        assertEquals("create Copy in 5, known [1, 2]", repository.calls[opened])
         assertEquals(CatalogChange.Created("Copy"), model.state.value.done)
         assertEquals(listOf("Copy", "Design", "brief"), model.state.value.data!!.tasks.map { it.name })
         assertEquals(1, refresh.afterChanges)
@@ -120,17 +58,14 @@ class TasksModelTest {
 
     @Test
     fun theFormRenamesTheTaskAndMarksItDone() {
-        model.open(ProjectId(5))
+        model.open(WEBSITE)
         val design = model.state.value.data!!.tasks.first()
         model.askToEdit(design)
-        val asked = requests.size
+        val asked = repository.calls.size
 
         model.save(" Wireframes ", done = true)
 
-        assertEquals(
-            """PUT /api/v9/workspaces/7/projects/5/tasks/1 {"name":"Wireframes","active":false}""",
-            requests[asked],
-        )
+        assertEquals("update 1 in 5 to Wireframes, done true", repository.calls[asked])
         assertEquals(CatalogChange.Saved("Wireframes"), model.state.value.done)
         assertNull("the form closes", model.state.value.overlay)
         assertEquals(
@@ -143,19 +78,19 @@ class TasksModelTest {
 
     @Test
     fun deletingAsksFirstAndCancellingKeepsTheTask() {
-        model.open(ProjectId(5))
+        model.open(WEBSITE)
         val design = model.state.value.data!!.tasks.first()
-        val opened = requests.size
+        val opened = repository.calls.size
 
         model.askToDelete(design)
         assertEquals(TaskOverlay.ConfirmDelete(design), model.state.value.overlay)
         model.dismiss()
-        assertEquals("cancelling sends nothing", opened, requests.size)
+        assertEquals("cancelling sends nothing", opened, repository.calls.size)
         assertEquals(2, model.state.value.data!!.tasks.size)
 
         model.askToDelete(design)
         model.delete()
-        assertEquals("DELETE /api/v9/workspaces/7/projects/5/tasks/1", requests[opened])
+        assertEquals("delete 1 in 5", repository.calls[opened])
         assertEquals(CatalogChange.Deleted("Design"), model.state.value.done)
         assertEquals(listOf("brief"), model.state.value.data!!.tasks.map { it.name })
         assertEquals(1, refresh.afterChanges)
@@ -163,20 +98,17 @@ class TasksModelTest {
 
     @Test
     fun anotherProjectsFormLoadsItsOwnTasks() {
-        model.open(ProjectId(5))
-        model.open(ProjectId(5))
-        model.open(ProjectId(6))
+        model.open(WEBSITE)
+        model.open(WEBSITE)
+        model.open(ARCHIVED)
 
         assertEquals(emptyList<Task>(), model.state.value.data!!.tasks)
-        assertEquals(
-            listOf("GET /api/v9/workspaces/7/projects/5/tasks", "GET /api/v9/workspaces/7/projects/6/tasks"),
-            requests,
-        )
+        assertEquals(listOf("load 5 in 7", "load 6 in 7"), repository.calls)
     }
 
     @Test
     fun aRefusalKeepsTheListWithTheServersReason() {
-        model.open(ProjectId(6))
+        model.open(ARCHIVED)
 
         model.create("Copy")
 
@@ -184,9 +116,64 @@ class TasksModelTest {
         assertEquals(0, refresh.afterChanges)
     }
 
-    private fun json(body: String) = MockResponse.Builder()
-        .code(200)
-        .addHeader("Content-Type", "application/json")
-        .body(body)
-        .build()
+    /**
+     * Project 5's tasks, Design open and Brief done, already in the order the server repository
+     * sorts them; project 6, archived, with none, which refuses every change. Records each call.
+     */
+    private class TwoProjectsRepository : TasksRepository {
+        val calls = mutableListOf<String>()
+
+        override suspend fun workspace(stored: WorkspaceId?) = ApiResult.Success(checkNotNull(stored))
+
+        override suspend fun load(workspace: WorkspaceId, project: ProjectId): ApiResult<TasksData> {
+            calls += "load ${project.value} in ${workspace.value}"
+            return ApiResult.Success(
+                TasksData(
+                    when (project) {
+                        WEBSITE -> listOf(
+                            Task(TaskId(1), workspace, project, "Design", active = true),
+                            Task(TaskId(2), workspace, project, "brief", active = false),
+                        )
+
+                        ARCHIVED -> emptyList()
+
+                        else -> throw AssertionError("the test opens no project $project")
+                    },
+                ),
+            )
+        }
+
+        override suspend fun create(
+            workspace: WorkspaceId,
+            project: ProjectId,
+            name: String,
+            known: Set<TaskId>,
+        ): ApiResult<Task> {
+            calls += "create $name in ${project.value}, known ${known.map { it.value }.sorted()}"
+            if (project == ARCHIVED) return ApiResult.Failure(ApiError.UnexpectedStatus(400, REFUSAL))
+            return ApiResult.Success(Task(TaskId(3), workspace, project, name, active = true))
+        }
+
+        override suspend fun update(
+            workspace: WorkspaceId,
+            project: ProjectId,
+            id: TaskId,
+            name: String,
+            done: Boolean,
+        ): ApiResult<Task> {
+            calls += "update ${id.value} in ${project.value} to $name, done $done"
+            return ApiResult.Success(Task(id, workspace, project, name, active = !done))
+        }
+
+        override suspend fun delete(workspace: WorkspaceId, project: ProjectId, id: TaskId): ApiResult<Unit> {
+            calls += "delete ${id.value} in ${project.value}"
+            return ApiResult.Success(Unit)
+        }
+    }
+
+    private companion object {
+        val WEBSITE = ProjectId(5)
+        val ARCHIVED = ProjectId(6)
+        const val REFUSAL = "Can not change tasks of archived project"
+    }
 }

@@ -100,7 +100,7 @@ class ClientsServerTest {
         workspace = account.workspaceId
         runBlocking { app.accountRefresh.refresh().join() }
         model = ClientsViewModel(
-            repository = ClientsRepository(Session(context).api),
+            repository = ServerClientsRepository(Session(context).api),
             settings = app.accountSettings,
             changes = ServerChanges(
                 scope = scope,

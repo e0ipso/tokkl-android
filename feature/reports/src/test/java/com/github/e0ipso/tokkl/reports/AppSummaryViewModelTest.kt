@@ -1,33 +1,19 @@
 package com.github.e0ipso.tokkl.reports
 
-import com.github.e0ipso.tokkl.api.ApiCredentials
-import com.github.e0ipso.tokkl.api.InMemoryServerTrust
-import com.github.e0ipso.tokkl.api.ServerUrl
-import com.github.e0ipso.tokkl.api.TestApi
+import com.github.e0ipso.tokkl.api.ApiError
+import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.platform.TestApp
 import com.github.e0ipso.tokkl.platform.TestScreen
 import com.github.e0ipso.tokkl.session.AccountSettings
-import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
-import mockwebserver3.Dispatcher
-import mockwebserver3.MockResponse
-import mockwebserver3.MockWebServer
-import mockwebserver3.RecordedRequest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
@@ -37,18 +23,18 @@ import org.junit.Test
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Instant
+import java.time.ZoneId
 import java.time.ZoneOffset
-import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
-import kotlin.coroutines.CoroutineContext
 
+/**
+ * The reports model's summary on a Tokkl server whose account has a role, so the workspace is a
+ * candidate for Tokkl's app report. A [FakeReportsRepository] stands in for the server; which
+ * endpoint answers the summary, and how its answer reads, is ReportsServer's and
+ * AppSummaryServerTest pins it. The account is at UTC+14 with weeks from Wednesday.
+ */
 class AppSummaryViewModelTest {
 
-    private val testApi = TestApi(null)
-    private val http = MockWebServer()
-    private val requests = CopyOnWriteArrayList<JsonObject>()
-    private val paths = CopyOnWriteArrayList<String>()
+    private val repository = FakeReportsRepository()
     private val io = QueuedDispatcher()
     private lateinit var route: TestReportsRoute
     private val model get() = route.model
@@ -57,49 +43,26 @@ class AppSummaryViewModelTest {
     private val scope = CoroutineScope(UnconfinedTestDispatcher(scheduler))
     private val app = TestApp(scheduler)
 
-    @Volatile private var summaryBody = APP_SUMMARY_FIXTURE
+    private val settings = MutableStateFlow<AccountSettings?>(
+        AccountSettings("Pacific/Kiritimati", DayOfWeek.WEDNESDAY, timeResolutionMinutes = null),
+    )
 
-    @Volatile private var summaryStatus = 200
-
-    @Volatile private var beforeSummaryReply: (() -> Unit)? = null
+    /** What the summary answers, 7317 seconds until a test changes it. */
+    private var summary: (ReportCall.Summary) -> ApiResult<SummaryReport> = {
+        ApiResult.Success(summaryOf(it.range, 7317))
+    }
 
     @Before
     fun setUp() {
-        http.dispatcher = object : Dispatcher() {
-            override fun dispatch(request: RecordedRequest): MockResponse {
-                paths += request.url.encodedPath
-                return when (request.url.encodedPath) {
-                    "/api/v9/me" -> json("""{"default_workspace_id":7,"role":"user"}""")
-
-                    "/api/v9/workspaces/7" -> json("""{"rounding":1,"rounding_minutes":15}""")
-
-                    "/api/app/report" -> {
-                        requests += Json.parseToJsonElement(request.body!!.utf8()).jsonObject
-                        beforeSummaryReply?.invoke()
-                        MockResponse.Builder().code(summaryStatus).body(summaryBody).build()
-                    }
-
-                    "/reports/api/v3/workspace/7/search/time_entries",
-                    "/reports/api/v3/workspace/7/weekly/time_entries",
-                    -> json("[]")
-
-                    else -> MockResponse.Builder().code(404).build()
-                }
-            }
-        }
-        http.start()
-        val url = ServerUrl.parse(http.url("/").toString())!!
-        testApi.stored = url
-        testApi.trust = InMemoryServerTrust(url)
+        repository.workspaceAnswer = { ApiResult.Success(WORKSPACE) }
+        repository.summaryAnswer = { summary(it) }
         route = TestReportsRoute(scope) { choices, own ->
             reportsViewModel(
-                accountSettings = MutableStateFlow(
-                    AccountSettings("Pacific/Kiritimati", DayOfWeek.WEDNESDAY, timeResolutionMinutes = null),
-                ),
-                repository = ReportsRepository { testApi.api(url, ApiCredentials.ApiToken("test-token")) },
+                accountSettings = settings,
+                repository = repository,
                 scope = own,
                 io = io,
-                clock = Clock.fixed(Instant.parse("2026-10-20T11:00:00Z"), ZoneOffset.UTC),
+                clock = CLOCK,
                 app = app.app,
                 choices = choices,
             )
@@ -110,7 +73,6 @@ class AppSummaryViewModelTest {
     @After
     fun tearDown() {
         screen.leave()
-        http.close()
     }
 
     @Test
@@ -118,11 +80,18 @@ class AppSummaryViewModelTest {
         screen.show()
         assertTrue(model.state.value is ReportsState.Loading)
         io.runAll()
-        assertEquals("2026-10-21", requests.single().getValue("start_date").jsonPrimitive.content)
-        assertEquals("2026-10-27", requests.single().getValue("end_date").jsonPrimitive.content)
-        assertEquals(7317L, report().totals.seconds)
-        assertEquals(Resolution.WEEK, report().resolution)
-        assertTrue(paths.none { it.contains("search/time_entries") })
+        assertEquals(
+            ReportCall.Summary(
+                WORKSPACE,
+                range("2026-10-21", "2026-10-27"),
+                ZoneId.of("Pacific/Kiritimati"),
+                DayOfWeek.WEDNESDAY,
+                ReportFilters(),
+            ),
+            repository.summaries.single(),
+        )
+        assertEquals("the server's summary as it sent it", summaryOf(range("2026-10-21", "2026-10-27"), 7317), report())
+        assertTrue("the summary alone", repository.detailedPages.isEmpty())
     }
 
     @Test
@@ -133,26 +102,27 @@ class AppSummaryViewModelTest {
         screen.hide()
         screen.show()
         assertSame("a rotation asks nothing", first, model.state.value)
-        assertEquals(1, requests.size)
-        summaryBody = APP_SUMMARY_FIXTURE.replace("7317", "9001")
+        assertEquals(1, repository.summaries.size)
+        summary = { ApiResult.Success(summaryOf(it.range, 9001)) }
         screen.hide()
         app.trip()
         screen.show()
         assertTrue(model.state.value is ReportsState.Loading)
         io.runAll()
         assertEquals(9001L, report().totals.seconds)
-        assertEquals(2, requests.size)
+        assertEquals(2, repository.summaries.size)
     }
 
     @Test
     fun latestRangeAndFiltersCancelQueuedLoads() {
         screen.show()
         model.select(RangePreset.TODAY)
-        model.applyFilters(ReportFilters(tags = listOf(null, 4), tagsNot = true))
+        val filters = ReportFilters(tags = listOf(null, 4), tagsNot = true)
+        model.applyFilters(filters)
         io.runAll()
-        assertEquals(1, requests.size)
-        assertEquals("2026-10-21", requests.single().getValue("end_date").jsonPrimitive.content)
-        assertEquals("[null,4]", requests.single().getValue("exclude_tag_ids").toString())
+        val asked = repository.summaries.single()
+        assertEquals(range("2026-10-21", "2026-10-21"), asked.range)
+        assertEquals(filters, asked.filters)
         assertEquals(7317L, report().totals.seconds)
     }
 
@@ -162,34 +132,32 @@ class AppSummaryViewModelTest {
         reopen()
         io.runAll()
         assertEquals(ReportsState.Closed, model.state.value)
-        assertTrue(requests.isEmpty())
+        assertTrue(repository.summaries.isEmpty())
         screen.show()
         io.runAll()
         assertEquals(7317L, report().totals.seconds)
         reopen()
         screen.show()
         io.runAll()
-        assertEquals(2, paths.count { it == "/api/v9/me" })
+        assertEquals(2, repository.workspaceCalls.size)
     }
 
+    /**
+     * The route leaves the back stack while the summary is on its way. The repository still
+     * returns its answer, as a request that already reached the server would, and the model drops it.
+     */
     @Test
-    fun closingWhileTheServerIsAnsweringCannotPublishItsLateSummary() = runBlocking {
-        val entered = CountDownLatch(1)
-        val release = CountDownLatch(1)
-        beforeSummaryReply = {
-            entered.countDown()
-            check(release.await(5, TimeUnit.SECONDS)) { "test did not release summary reply" }
-        }
+    fun closingWhileTheServerIsAnsweringCannotPublishItsLateSummary() {
+        val answer = CompletableDeferred<ApiResult<SummaryReport>>()
+        repository.summaryAnswer = { withContext(NonCancellable) { answer.await() } }
         val liveScope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(scheduler))
-        val url = ServerUrl.parse(http.url("/").toString())!!
         val liveRoute = TestReportsRoute(liveScope) { choices, own ->
             reportsViewModel(
-                accountSettings = MutableStateFlow(
-                    AccountSettings("Pacific/Kiritimati", DayOfWeek.WEDNESDAY, timeResolutionMinutes = null),
-                ),
-                repository = ReportsRepository { testApi.api(url, ApiCredentials.ApiToken("test-token")) },
+                accountSettings = settings,
+                repository = repository,
                 scope = own,
-                io = Dispatchers.IO,
+                io = UnconfinedTestDispatcher(scheduler),
+                clock = CLOCK,
                 app = app.app,
                 choices = choices,
             )
@@ -198,19 +166,19 @@ class AppSummaryViewModelTest {
         val liveScreen = TestScreen(live.page, liveScope, scheduler)
         try {
             liveScreen.show()
-            assertTrue(withContext(Dispatchers.IO) { entered.await(5, TimeUnit.SECONDS) })
+            assertEquals("the summary is on its way", 1, repository.summaries.size)
             val loading = live.state.value
             assertTrue("loading: $loading", loading is ReportsState.Loading)
+
             // The route leaves the back stack, which cancels the view model's scope and its load.
             liveRoute.leave()
-            val cancelled = liveScope.coroutineContext[Job]!!.children.filter { it.isCancelled }.toList()
-            release.countDown()
-            withTimeout(5_000) { cancelled.forEach { it.join() } }
+            answer.complete(ApiResult.Success(summaryOf(range("2026-10-21", "2026-10-27"), 7317)))
+            scheduler.runCurrent()
+
             assertSame("the late summary does not show", loading, live.state.value)
-            assertEquals(1, requests.size)
+            assertEquals(1, repository.summaries.size)
         } finally {
-            release.countDown()
-            beforeSummaryReply = null
+            answer.cancel()
             liveScreen.leave()
             liveScope.cancel()
         }
@@ -220,12 +188,12 @@ class AppSummaryViewModelTest {
     fun failureRefreshShowsNoStaleNumbersAndRetryCanRecover() {
         screen.show()
         io.runAll()
-        summaryBody = "{}"
+        summary = { ApiResult.Failure(ApiError.InvalidResponse(IllegalArgumentException("not a report"))) }
         model.retry()
         io.runAll()
         assertEquals(ReportFailure.Unexpected(null), (model.state.value as ReportsState.Failed).failure)
-        assertTrue(paths.none { it.contains("search/time_entries") })
-        summaryBody = APP_SUMMARY_FIXTURE
+        assertTrue("no other report stands in", repository.detailedPages.isEmpty())
+        summary = { ApiResult.Success(summaryOf(it.range, 7317)) }
         model.retry()
         io.runAll()
         assertEquals(7317L, report().totals.seconds)
@@ -235,36 +203,38 @@ class AppSummaryViewModelTest {
     fun networkRecoveryRetriesSummaryButAuthAndQuotaRemainVisible() {
         screen.show()
         io.runAll()
-        for ((status, expected) in listOf(
-            503 to ReportFailure.Unreachable,
-            403 to ReportFailure.AuthFailed,
-            429 to ReportFailure.Unexpected(429),
+        for ((error, expected) in listOf(
+            ApiError.UnexpectedStatus(503) to ReportFailure.Unreachable,
+            ApiError.AuthFailed to ReportFailure.AuthFailed,
+            ApiError.RateLimited(retryAfterSeconds = 17) to ReportFailure.Unexpected(429),
         )) {
-            summaryStatus = status
+            summary = { ApiResult.Failure(error) }
             model.retry()
             io.runAll()
             assertEquals(expected, (model.state.value as ReportsState.Failed).failure)
-            val count = requests.size
+            val count = repository.summaries.size
             app.reconnect()
             io.runAll()
-            assertEquals(count + if (status == 503) 1 else 0, requests.size)
+            assertEquals(count + if (expected == ReportFailure.Unreachable) 1 else 0, repository.summaries.size)
         }
-        assertTrue(paths.none { it.contains("search/time_entries") })
+        assertTrue("no other report stands in", repository.detailedPages.isEmpty())
     }
 
     @Test
-    fun switchingTabsKeepsDetailedAndWeeklyOnTheirExistingEndpoints() {
+    fun switchingTabsKeepsDetailedAndWeeklyOnTheirOwnReports() {
+        repository.detailedAnswer = { ApiResult.Success(DetailedPage(emptyList(), nextRow = null)) }
+        repository.weeklyAnswer = { ApiResult.Success(emptyList()) }
         screen.show()
         io.runAll()
         model.selectTab(ReportTab.DETAILED)
         io.runAll()
         assertTrue((model.state.value as ReportsState.Loaded).report is DetailedReport)
-        assertEquals("/reports/api/v3/workspace/7/search/time_entries", paths.last())
+        assertEquals(1, repository.detailedPages.size)
         model.selectTab(ReportTab.WEEKLY)
         io.runAll()
         assertTrue((model.state.value as ReportsState.Loaded).report is WeeklyReport)
-        assertEquals("/reports/api/v3/workspace/7/weekly/time_entries", paths.last())
-        assertEquals(1, requests.size)
+        assertEquals(1, repository.weeklies.size)
+        assertEquals(1, repository.summaries.size)
     }
 
     private fun report() = (model.state.value as ReportsState.Loaded).report as SummaryReport
@@ -275,14 +245,11 @@ class AppSummaryViewModelTest {
         route.reopen()
         screen = TestScreen(model.page, scope, scheduler)
     }
-    private fun json(body: String) = MockResponse.Builder().code(200).body(body).build()
-    private class QueuedDispatcher : CoroutineDispatcher() {
-        private val queue = ArrayDeque<Runnable>()
-        override fun dispatch(context: CoroutineContext, block: Runnable) {
-            queue.addLast(block)
-        }
-        fun runAll() {
-            while (queue.isNotEmpty()) queue.removeFirst().run()
-        }
+
+    private companion object {
+        /** A Tokkl workspace with rounding, a candidate for the app report. */
+        val WORKSPACE = reportWorkspace(rounding = 1, roundingMinutes = 15, appSummaryCandidate = true)
+
+        val CLOCK: Clock = Clock.fixed(Instant.parse("2026-10-20T11:00:00Z"), ZoneOffset.UTC)
     }
 }

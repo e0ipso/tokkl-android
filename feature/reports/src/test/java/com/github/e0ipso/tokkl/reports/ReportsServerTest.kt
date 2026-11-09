@@ -150,6 +150,111 @@ class ReportsServerTest {
         assertTrue("$answer", (answer as ApiResult.Failure).error is ApiError.InvalidResponse)
     }
 
+    /**
+     * A Detailed page asks for 50 rows newest first from the row it starts at, with the
+     * workspace's rounding and the filters, and reads each entry in the account's zone. The page
+     * after it starts at the row the server names, and the last page names none.
+     */
+    @Test
+    fun theDetailedSearchPagesNewestFirstAndReadsEachEntryInTheAccountsZone() = runTest {
+        val stop = "\"2026-10-21T01:30:00+14:00\""
+        server.enqueue(json("[" + detailedRow(10, "2026-10-21T00:30:00+14:00", stop) + "]", NEXT_ROW to "51"))
+        server.enqueue(json("[" + detailedRow(9, "2026-10-20T10:00:00+00:00", "null") + "]"))
+        val workspace = ReportWorkspace(WorkspaceId(7), 1, 15)
+        val week = ReportRange(LocalDate.parse("2026-10-21"), LocalDate.parse("2026-10-27"))
+        val zone = ZoneId.of("Pacific/Kiritimati")
+
+        val first = (reports.detailedPage(workspace, week, zone, firstRow = 1, FILTERS) as ApiResult.Success).value
+
+        assertEquals(51, first.nextRow)
+        val entry = first.entries.single()
+        assertEquals(zone, entry.start.zone)
+        assertEquals(LocalDate.parse("2026-10-21"), entry.start.toLocalDate())
+        assertEquals(0 to 30, entry.start.hour to entry.start.minute)
+        assertEquals(listOf("d10", "Web", "Design"), listOf(entry.description, entry.projectName, entry.taskName))
+        val request = server.takeRequest()
+        assertEquals("/reports/api/v3/workspace/7/search/time_entries", request.url.encodedPath)
+        val body = request.json()
+        assertEquals(
+            mapOf(
+                "order_dir" to "DESC",
+                "page_size" to "50",
+                "first_row_number" to "1",
+                "start_date" to "2026-10-21",
+                "end_date" to "2026-10-27",
+                "rounding" to "1",
+                "rounding_minutes" to "15",
+            ),
+            body.strings(
+                "order_dir",
+                "page_size",
+                "first_row_number",
+                "start_date",
+                "end_date",
+                "rounding",
+                "rounding_minutes",
+            ),
+        )
+        assertEquals(FILTER_FIELDS, body.filterFields())
+
+        val last = (reports.detailedPage(workspace, week, zone, firstRow = 51, FILTERS) as ApiResult.Success).value
+
+        assertEquals("the last page", null, last.nextRow)
+        assertEquals("a running entry has no stop", null, last.entries.single().stop)
+        val next = server.takeRequest().json()
+        assertEquals("51", next.string("first_row_number"))
+        assertEquals(FILTER_FIELDS, next.filterFields())
+    }
+
+    /**
+     * The weekly report asks for the seven days from the week's start with the workspace's
+     * rounding and the filters. A row reads project_hex_color when it has no project_color, and a
+     * row without a project has no title.
+     */
+    @Test
+    fun theWeeklyReportAsksForSevenDaysAndReadsEachProjectsRow() = runTest {
+        server.enqueue(
+            json(
+                """[{"project_id":null,"project_name":null,"project_color":null,"seconds":[0,0,0,0,0,0,900]},
+                {"project_id":5,"project_name":"Big","project_hex_color":"#990099","seconds":[3600,0,0,0,0,0,0]}]""",
+            ),
+        )
+
+        val rows = run {
+            reports.weekly(ReportWorkspace(WorkspaceId(7), 1, 15), LocalDate.parse("2026-10-21"), FILTERS)
+        } as ApiResult.Success
+
+        assertEquals(
+            listOf(
+                WeeklyRow(null, "", null, listOf(0L, 0L, 0L, 0L, 0L, 0L, 900L)),
+                WeeklyRow(5, "Big", "#990099", listOf(3600L, 0L, 0L, 0L, 0L, 0L, 0L)),
+            ),
+            rows.value,
+        )
+        val request = server.takeRequest()
+        assertEquals("/reports/api/v3/workspace/7/weekly/time_entries", request.url.encodedPath)
+        val body = request.json()
+        assertEquals(
+            mapOf(
+                "start_date" to "2026-10-21",
+                "end_date" to "2026-10-27",
+                "rounding" to "1",
+                "rounding_minutes" to "15",
+            ),
+            body.strings("start_date", "end_date", "rounding", "rounding_minutes"),
+        )
+        assertEquals(FILTER_FIELDS, body.filterFields())
+    }
+
+    @Test
+    fun aWeeklyRowWithoutSevenDaysIsAnInvalidResponse() = runTest {
+        server.enqueue(json("""[{"project_id":1,"project_name":"x","seconds":[1,2]}]"""))
+
+        val answer = run { reports.weekly(ReportWorkspace(WorkspaceId(7), 0, 0), LocalDate.parse("2026-10-21")) }
+
+        assertTrue("$answer", (answer as ApiResult.Failure).error is ApiError.InvalidResponse)
+    }
+
     private fun oneDay() = ReportRange(LocalDate.parse("2026-10-12"), LocalDate.parse("2026-10-12"))
 
     /** A detailed row as Tokkl sends it, with one time entry. */
@@ -158,6 +263,12 @@ class ReportsServerTest {
         "project_hex":"#06aaf5","client_name":null,"task_id":null,"task_name":null,"description":"d","billable":true,
         "tag_ids":[],"tag_names":[],"hourly_rate_in_cents":5000,"billable_amount_in_cents":$amount,"currency":"EUR",
         "row_number":$id,"time_entries":[{"id":$id,"seconds":900,"start":"$start","stop":"x","at":"y"}]}"""
+
+    /** A detailed row of Web's Design task with one entry of 15 minutes, as Tokkl sends it. */
+    private fun detailedRow(id: Int, start: String, stop: String) = """{"project_id":3""" +
+        ""","project_name":"Web","project_color":"#06aaf5","task_name":"Design","description":"d$id",""" +
+        """"billable":true,"billable_amount_in_cents":null,"currency":"EUR","row_number":$id,""" +
+        """"time_entries":[{"id":$id,"seconds":900,"start":"$start","stop":$stop,"at":"2026-10-20T10:00:00+00:00"}]}"""
 
     private fun json(body: String, vararg headers: Pair<String, String>) =
         MockResponse.Builder().code(200).body(body).addHeader("Content-Type", "application/json").apply {
@@ -170,7 +281,32 @@ class ReportsServerTest {
 
     private fun JsonObject.int(key: String): Int = getValue(key).jsonPrimitive.int
 
+    private fun JsonObject.strings(vararg keys: String): Map<String, String> = keys.associateWith { string(it) }
+
+    /** The filter fields of a request body, as JSON text. */
+    private fun JsonObject.filterFields(): Map<String, String> = FILTER_KEYS
+        .mapNotNull { key -> this[key]?.let { key to it.toString() } }
+        .toMap()
+
     private companion object {
         const val NEXT_ROW = "X-Next-Row-Number"
+
+        /** Project 3 or none, client 8, no tags, billable only. */
+        val FILTERS = ReportFilters(
+            projects = listOf(3L, null),
+            clients = listOf(8L),
+            tags = listOf(null),
+            billable = BillableFilter.BILLABLE,
+        )
+
+        val FILTER_KEYS = listOf("project_ids", "client_ids", "tag_ids", "billable")
+
+        /** [FILTERS] in the fields the web app sends, null for "without". */
+        val FILTER_FIELDS = mapOf(
+            "project_ids" to "[3,null]",
+            "client_ids" to "[8]",
+            "tag_ids" to "[null]",
+            "billable" to "true",
+        )
     }
 }

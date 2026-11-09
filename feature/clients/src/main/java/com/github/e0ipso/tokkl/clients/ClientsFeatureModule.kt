@@ -14,7 +14,7 @@ import org.koin.dsl.module
 
 /** The Clients page: its repository, its view model and its screen. */
 val clientsFeatureModule = module {
-    single { ClientsRepository(get<Session>()) }
+    single<ClientsRepository> { ServerClientsRepository(get<Session>()) }
 
     viewModel {
         val accountSettings = get<AccountSettingsSource>()

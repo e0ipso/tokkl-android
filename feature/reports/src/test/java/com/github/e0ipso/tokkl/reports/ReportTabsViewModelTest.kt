@@ -1,26 +1,13 @@
 package com.github.e0ipso.tokkl.reports
 
-import com.github.e0ipso.tokkl.api.ApiCredentials
-import com.github.e0ipso.tokkl.api.InMemoryServerTrust
-import com.github.e0ipso.tokkl.api.ServerUrl
-import com.github.e0ipso.tokkl.api.TestApi
+import com.github.e0ipso.tokkl.api.ApiError
+import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.platform.TestScreen
 import com.github.e0ipso.tokkl.session.AccountSettings
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
-import mockwebserver3.Dispatcher
-import mockwebserver3.MockResponse
-import mockwebserver3.MockWebServer
-import mockwebserver3.RecordedRequest
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -32,23 +19,19 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset
-import java.util.concurrent.CopyOnWriteArrayList
-import kotlin.coroutines.CoroutineContext
+import java.time.ZonedDateTime
 
 /**
- * The Detailed and Weekly tabs of the reports model against a MockWebServer that answers as Tokkl
- * does. The account is at UTC+14 with weeks from Wednesday, and the clock says Tuesday 20 October
- * in UTC, already Wednesday 21 October in the account's zone. Requests run when [io] runs them, so
- * a test can look at the state while they wait.
+ * The Detailed and Weekly tabs of the reports model over a [FakeReportsRepository] that answers
+ * as ReportsServer reads Tokkl's answers. The account is at UTC+14 with weeks from Wednesday, and
+ * the clock says Tuesday 20 October in UTC, already Wednesday 21 October in the account's zone.
+ * Calls run when [io] runs them, so a test can look at the state while they wait. What each
+ * request sends and how each answer reads is ReportsServerTest's.
  */
 class ReportTabsViewModelTest {
 
-    private val testApi = TestApi(null)
-
-    private val server = MockWebServer()
-    private val searches = CopyOnWriteArrayList<JsonObject>()
-    private val weeklies = CopyOnWriteArrayList<JsonObject>()
-    private val io = Queued()
+    private val repository = FakeReportsRepository()
+    private val io = QueuedDispatcher()
     private val settings = MutableStateFlow<AccountSettings?>(
         AccountSettings(ZONE, DayOfWeek.WEDNESDAY, timeResolutionMinutes = null),
     )
@@ -58,44 +41,25 @@ class ReportTabsViewModelTest {
     private val scheduler = TestCoroutineScheduler()
     private val scope = CoroutineScope(UnconfinedTestDispatcher(scheduler))
 
-    /** The detailed search's pages after the first answer 503, as a proxy does while the server is down. */
-    @Volatile
+    /** The detailed pages after the first fail as with a proxy's 503 while the server is down. */
     private var laterPagesFail = false
-
-    /** What the weekly endpoint answers. */
-    @Volatile
-    private var weeklyBody = WEEKLY
 
     @Before
     fun setUp() {
-        server.dispatcher = object : Dispatcher() {
-            override fun dispatch(request: RecordedRequest): MockResponse = when (request.url.encodedPath) {
-                "/api/v9/me" -> json("""{"id":1,"default_workspace_id":7}""")
-
-                "/api/v9/workspaces/7" -> json("""{"id":7,"rounding":1,"rounding_minutes":15}""")
-
-                "/reports/api/v3/workspace/7/search/time_entries" -> search(
-                    Json.parseToJsonElement(request.body!!.utf8()).jsonObject,
-                )
-
-                "/reports/api/v3/workspace/7/weekly/time_entries" -> {
-                    weeklies += Json.parseToJsonElement(request.body!!.utf8()).jsonObject
-                    json(weeklyBody)
-                }
-
-                else -> MockResponse.Builder().code(404).build()
+        repository.workspaceAnswer = { ApiResult.Success(WORKSPACE) }
+        repository.summaryAnswer = { ApiResult.Success(summaryOf(it.range, seconds = 900)) }
+        repository.detailedAnswer = { call ->
+            when {
+                call.firstRow == 1 -> ApiResult.Success(DetailedPage(listOf(NEWEST), nextRow = 51))
+                laterPagesFail -> ApiResult.Failure(ApiError.UnexpectedStatus(503))
+                else -> ApiResult.Success(DetailedPage(listOf(RUNNING), nextRow = null))
             }
         }
-        server.start()
-        val url = ServerUrl.parse(server.url("/").toString())!!
-        // The shared client sends requests only to the configured server.
-        testApi.stored = url
-        // The user has confirmed the MockWebServer's plain http URL.
-        testApi.trust = InMemoryServerTrust(url)
+        repository.weeklyAnswer = { ApiResult.Success(WEEKLY) }
         route = TestReportsRoute(scope) { choices, own ->
             reportsViewModel(
                 settings,
-                ReportsRepository { testApi.api(url, ApiCredentials.ApiToken("tok-123")) },
+                repository,
                 own,
                 io,
                 Clock.fixed(Instant.parse("2026-10-20T11:00:00Z"), ZoneOffset.UTC),
@@ -105,15 +69,10 @@ class ReportTabsViewModelTest {
         screen = TestScreen(model.page, scope, scheduler)
     }
 
-    @After
-    fun tearDown() {
-        server.close()
-    }
-
     /**
-     * The Detailed tab asks for 50 rows at a time, newest first, with the workspace's rounding, and
-     * shows each entry in the account's zone. The next page loads from the row the server names,
-     * once at a time, and nothing more loads after the last.
+     * The Detailed tab asks for the account's week from the first row, in the account's zone and
+     * with the workspace the screen read. The next page loads from the row the server named, once
+     * at a time, and nothing more loads after the last.
      */
     @Test
     fun theDetailedTabPagesAsTheServerSays() {
@@ -125,31 +84,10 @@ class ReportTabsViewModelTest {
 
         val first = detailed()
         assertEquals(51, first.nextRow)
-        val entry = first.entries.single()
-        assertEquals(ZoneId.of(ZONE), entry.start.zone)
-        assertEquals(LocalDate.parse("2026-10-21"), entry.start.toLocalDate())
-        assertEquals(0 to 30, entry.start.hour to entry.start.minute)
-        assertEquals(listOf("d10", "Web", "Design"), listOf(entry.description, entry.projectName, entry.taskName))
-        val body = searches.last()
+        assertEquals(listOf(NEWEST), first.entries)
         assertEquals(
-            mapOf(
-                "order_dir" to "DESC",
-                "page_size" to "50",
-                "first_row_number" to "1",
-                "start_date" to "2026-10-21",
-                "end_date" to "2026-10-27",
-                "rounding" to "1",
-                "rounding_minutes" to "15",
-            ),
-            body.strings(
-                "order_dir",
-                "page_size",
-                "first_row_number",
-                "start_date",
-                "end_date",
-                "rounding",
-                "rounding_minutes",
-            ),
+            ReportCall.Detailed(WORKSPACE, week("2026-10-21"), ZoneId.of(ZONE), firstRow = 1, ReportFilters()),
+            repository.detailedPages.single(),
         )
 
         model.loadMore()
@@ -160,9 +98,9 @@ class ReportTabsViewModelTest {
         val second = detailed()
         assertEquals(listOf(10L, 9L), second.entries.map { it.id })
         assertNull("the last page", second.nextRow)
-        assertNull("a running entry has no stop", second.entries[1].stop)
-        assertEquals("51", searches.last().string("first_row_number"))
-        assertEquals("the summary, then two pages", 3, searches.size)
+        assertEquals(51, repository.detailedPages.last().firstRow)
+        assertEquals("the summary", 1, repository.summaries.size)
+        assertEquals("then two pages", 2, repository.detailedPages.size)
         model.loadMore()
         assertTrue("nothing more to load", io.isEmpty())
     }
@@ -182,10 +120,11 @@ class ReportTabsViewModelTest {
         model.retry()
         io.runAll()
         assertEquals(1, detailed().entries.size)
+        assertEquals("Try again asks for the first page", 1, repository.detailedPages.last().firstRow)
         model.selectTab(ReportTab.SUMMARY)
         io.runAll()
         assertTrue((model.state.value as ReportsState.Loaded).report is SummaryReport)
-        assertEquals("the summary sums the search oldest first", "ASC", searches.last().string("order_dir"))
+        assertEquals(week("2026-10-21"), repository.summaries.single().range)
     }
 
     /**
@@ -201,31 +140,23 @@ class ReportTabsViewModelTest {
         model.selectTab(ReportTab.WEEKLY)
 
         val loading = model.state.value as ReportsState.Loading
-        assertEquals(
-            RangeSelection(ReportRange(LocalDate.parse("2026-10-21"), LocalDate.parse("2026-10-27")), null),
-            loading.selection,
-        )
+        assertEquals(RangeSelection(week("2026-10-21"), null), loading.selection)
         io.runAll()
         val report = (model.state.value as ReportsState.Loaded).report as WeeklyReport
         assertEquals(
-            mapOf(
-                "start_date" to "2026-10-21",
-                "end_date" to "2026-10-27",
-                "rounding" to "1",
-                "rounding_minutes" to "15",
-            ),
-            weeklies.last().strings("start_date", "end_date", "rounding", "rounding_minutes"),
+            ReportCall.Weekly(WORKSPACE, LocalDate.parse("2026-10-21"), ReportFilters()),
+            repository.weeklies.last(),
         )
         assertEquals(listOf(5L, 4L, 3L, null), report.rows.map { it.id })
         assertEquals(listOf(900L, 0, 0, 0, 0, 0, 900), report.rows[1].seconds)
-        assertEquals("project_hex_color when there is no project_color", "#990099", report.rows[0].color)
+        assertEquals("#990099", report.rows[0].color)
         assertEquals(listOf(4500L, 900, 0, 0, 0, 0, 1800), report.dayTotals)
         assertEquals(7200L, report.total)
         assertEquals(LocalDate.parse("2026-10-21"), report.weekStart)
 
         model.shift(-1)
         io.runAll()
-        assertEquals("2026-10-14", weeklies.last().string("start_date"))
+        assertEquals(LocalDate.parse("2026-10-14"), repository.weeklies.last().weekStart)
         assertEquals(week("2026-10-14"), loadedRange())
         model.select(RangePreset.TODAY)
         io.runAll()
@@ -241,9 +172,9 @@ class ReportTabsViewModelTest {
     }
 
     /**
-     * The filters go with the summary's search, every page of the detailed search and the weekly
-     * request, in the fields the web app sends, null for "without". Changing them asks again for
-     * the tab on screen, the same filters ask nothing, and they stay when the screen closes.
+     * The filters go with the summary, every page of the detailed report and the weekly report.
+     * Changing them asks again for the tab on screen, the same filters ask nothing, and they stay
+     * when the screen closes.
      */
     @Test
     fun theFiltersGoWithEveryTabsRequest() {
@@ -260,19 +191,18 @@ class ReportTabsViewModelTest {
         assertTrue("the summary loads again", model.state.value is ReportsState.Loading)
         io.runAll()
         assertEquals(filters, model.filters.value)
-        assertEquals("ASC", searches.last().string("order_dir"))
-        assertEquals(FILTER_FIELDS, searches.last().filterFields())
+        assertEquals(filters, repository.summaries.last().filters)
 
         model.selectTab(ReportTab.DETAILED)
         io.runAll()
         model.loadMore()
         io.runAll()
-        assertEquals(listOf("1", "51"), searches.takeLast(2).map { it.string("first_row_number") })
-        assertEquals("both pages", listOf(FILTER_FIELDS, FILTER_FIELDS), searches.takeLast(2).map { it.filterFields() })
+        assertEquals(listOf(1, 51), repository.detailedPages.takeLast(2).map { it.firstRow })
+        assertEquals("both pages", listOf(filters, filters), repository.detailedPages.takeLast(2).map { it.filters })
 
         model.selectTab(ReportTab.WEEKLY)
         io.runAll()
-        assertEquals(FILTER_FIELDS, weeklies.last().filterFields())
+        assertEquals(filters, repository.weeklies.last().filters)
         model.applyFilters(filters)
         assertTrue("the same filters ask nothing", io.isEmpty())
 
@@ -283,19 +213,23 @@ class ReportTabsViewModelTest {
         io.runAll()
         assertEquals("the filters stay", filters, model.filters.value)
         assertEquals("the tab stays", ReportTab.WEEKLY, model.tab.value)
-        assertEquals(FILTER_FIELDS, weeklies.last().filterFields())
+        assertEquals(filters, repository.weeklies.last().filters)
 
-        model.applyFilters(ReportFilters(billable = BillableFilter.NON_BILLABLE))
+        val nonBillable = ReportFilters(billable = BillableFilter.NON_BILLABLE)
+        model.applyFilters(nonBillable)
         io.runAll()
-        assertEquals(mapOf("billable" to "false"), weeklies.last().filterFields())
+        assertEquals(nonBillable, repository.weeklies.last().filters)
         model.applyFilters(ReportFilters())
         io.runAll()
-        assertEquals("no filter, no field", emptyMap<String, String>(), weeklies.last().filterFields())
+        assertEquals("no filters", ReportFilters(), repository.weeklies.last().filters)
     }
 
+    /** A weekly answer ReportsServer could not read shows as an unexpected answer. */
     @Test
-    fun aWeeklyRowWithoutSevenDaysIsAnUnexpectedAnswer() {
-        weeklyBody = """[{"project_id":1,"project_name":"x","seconds":[1,2]}]"""
+    fun aWeeklyAnswerThatIsNotAWeekIsAnUnexpectedAnswer() {
+        repository.weeklyAnswer = {
+            ApiResult.Failure(ApiError.InvalidResponse(IllegalArgumentException("a weekly row does not hold 7 days")))
+        }
         model.selectTab(ReportTab.WEEKLY)
         screen.show()
         io.runAll()
@@ -332,97 +266,52 @@ class ReportTabsViewModelTest {
         )
     }
 
-    /** The detailed search: the summary's search oldest first, and two pages newest first. */
-    private fun search(body: JsonObject): MockResponse {
-        searches += body
-        val first = body.string("first_row_number").toInt()
-        return when {
-            body.string(
-                "order_dir",
-            ) == "ASC" -> json(rows(row(10, "2026-10-21T00:30:00+14:00", "2026-10-21T01:30:00+14:00")))
-
-            first == 1 -> json(
-                rows(row(10, "2026-10-21T00:30:00+14:00", "2026-10-21T01:30:00+14:00")),
-                NEXT_ROW to "51",
-            )
-
-            laterPagesFail -> MockResponse.Builder().code(503).build()
-
-            else -> json(rows(row(9, "2026-10-20T10:00:00+00:00", stop = null)))
-        }
-    }
-
     private fun detailed(): DetailedReport = (model.state.value as ReportsState.Loaded).report as DetailedReport
 
     private fun loadedRange(): ReportRange = (model.state.value as ReportsState.Loaded).selection.range
 
     private fun week(start: String): ReportRange = LocalDate.parse(start).let { ReportRange(it, it.plusDays(6)) }
 
-    private fun JsonObject.string(key: String): String = getValue(key).jsonPrimitive.content
-
-    private fun JsonObject.strings(vararg keys: String): Map<String, String> = keys.associateWith { string(it) }
-
-    /** The filter fields of a request body, as JSON text. */
-    private fun JsonObject.filterFields(): Map<String, String> = listOf(
-        "project_ids",
-        "client_ids",
-        "tag_ids",
-        "billable",
-    ).mapNotNull { key -> this[key]?.let { key to it.toString() } }.toMap()
-
-    private fun rows(vararg rows: String) = rows.joinToString(",", "[", "]")
-
-    /** A detailed row with one entry of 15 minutes, as Tokkl sends it. */
-    private fun row(id: Int, start: String, stop: String?) = """{"project_id":3""" +
-        ""","project_name":"Web","project_color":"#06aaf5","task_name":"Design","description":"d$id",""" +
-        """"billable":true,"billable_amount_in_cents":null,"currency":"EUR","row_number":$id,""" +
-        """"time_entries":[{"id":$id,"seconds":900,"start":"$start","stop":${stop?.let {
-            "\"$it\""
-        } ?: "null"},"at":"2026-10-20T10:00:00+00:00"}]}"""
-
-    private fun json(body: String, vararg headers: Pair<String, String>) = MockResponse.Builder()
-        .code(200)
-        .addHeader("Content-Type", "application/json")
-        .apply { for ((name, value) in headers) addHeader(name, value) }
-        .body(body)
-        .build()
-
-    /** Runs what is dispatched to it only when [runAll] says so. */
-    private class Queued : CoroutineDispatcher() {
-        private val queue = ArrayDeque<Runnable>()
-
-        override fun dispatch(context: CoroutineContext, block: Runnable) {
-            queue.addLast(block)
-        }
-
-        fun runAll() {
-            while (queue.isNotEmpty()) queue.removeFirst().run()
-        }
-
-        fun isEmpty(): Boolean = queue.isEmpty()
-    }
-
     private companion object {
         const val ZONE = "Pacific/Kiritimati"
-        const val NEXT_ROW = "X-Next-Row-Number"
 
-        /** Project 3 or none, client 8, no tags, billable only, as the web app's filterBody writes them. */
-        val FILTER_FIELDS = mapOf(
-            "project_ids" to "[3,null]",
-            "client_ids" to "[8]",
-            "tag_ids" to "[null]",
-            "billable" to "true",
+        /** The account's workspace, with rounding to the next quarter of an hour. */
+        val WORKSPACE = reportWorkspace(rounding = 1, roundingMinutes = 15)
+
+        /** The first detailed page's one entry, 15 minutes on Wednesday 21 October at UTC+14. */
+        val NEWEST = DetailedEntry(
+            id = 10,
+            description = "d10",
+            projectName = "Web",
+            projectColor = "#06aaf5",
+            taskName = "Design",
+            start = ZonedDateTime.parse("2026-10-21T00:30:00+14:00[Pacific/Kiritimati]"),
+            stop = ZonedDateTime.parse("2026-10-21T01:30:00+14:00[Pacific/Kiritimati]"),
+            seconds = 900,
+        )
+
+        /** The second and last page's one entry, still running. */
+        val RUNNING = DetailedEntry(
+            id = 9,
+            description = "d9",
+            projectName = "Web",
+            projectColor = "#06aaf5",
+            taskName = "Design",
+            start = ZonedDateTime.parse("2026-10-21T00:00:00+14:00[Pacific/Kiritimati]"),
+            stop = null,
+            seconds = 900,
         )
 
         /**
-         * Two rows of Beta to merge, ties by time to sort by title, a project_hex_color, and time without a project.
+         * Two rows of Beta to merge, ties by time to sort by title, and time without a project, as
+         * ReportsServer reads them.
          */
-        const val WEEKLY = """[
-            {"project_id":null,"project_name":null,"project_color":null,"seconds":[0,0,0,0,0,0,900]},
-            {"project_id":4,"project_name":"Beta","project_color":"#06aaf5","seconds":[900,0,0,0,0,0,0]},
-            {"project_id":3,"project_name":"alpha","project_color":"#06aaf5","seconds":[0,900,0,0,0,0,0]},
-            {"project_id":5,"project_name":"Big","project_hex_color":"#990099","seconds":[3600,0,0,0,0,0,0]},
-            {"project_id":4,"project_name":"Beta","project_color":"#06aaf5","seconds":[0,0,0,0,0,0,900]}
-        ]"""
+        val WEEKLY = listOf(
+            WeeklyRow(null, "", null, listOf(0L, 0L, 0L, 0L, 0L, 0L, 900L)),
+            WeeklyRow(4, "Beta", "#06aaf5", listOf(900L, 0L, 0L, 0L, 0L, 0L, 0L)),
+            WeeklyRow(3, "alpha", "#06aaf5", listOf(0L, 900L, 0L, 0L, 0L, 0L, 0L)),
+            WeeklyRow(5, "Big", "#990099", listOf(3600L, 0L, 0L, 0L, 0L, 0L, 0L)),
+            WeeklyRow(4, "Beta", "#06aaf5", listOf(0L, 0L, 0L, 0L, 0L, 0L, 900L)),
+        )
     }
 }
