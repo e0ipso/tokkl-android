@@ -9,6 +9,7 @@ import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
+import com.github.e0ipso.tokkl.timersync.TimerSyncFollower
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
@@ -29,7 +30,7 @@ val signInFeatureModule = module {
             storeSession = get<Session>()::save,
             signedIn = getAll(),
             queue = get(),
-            timerSync = get(),
+            followTimerSync = get<TimerSyncFollower>()::follow,
         )
     } bind SessionWriter::class
 

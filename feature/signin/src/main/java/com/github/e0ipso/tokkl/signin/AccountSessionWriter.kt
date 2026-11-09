@@ -5,7 +5,6 @@ import com.github.e0ipso.tokkl.cache.SignInPause
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.CurrentAccount
 import com.github.e0ipso.tokkl.session.SignedInListener
-import com.github.e0ipso.tokkl.timersync.TimerSyncFollower
 import java.io.IOException
 import java.security.GeneralSecurityException
 
@@ -32,7 +31,7 @@ internal class AccountSessionWriter(
     private val storeSession: suspend (ServerUrl, String) -> Unit,
     private val signedIn: List<SignedInListener>,
     private val queue: SignInPause,
-    private val timerSync: TimerSyncFollower,
+    private val followTimerSync: suspend () -> Unit,
 ) : SessionWriter {
 
     @Throws(GeneralSecurityException::class, IOException::class)
@@ -45,6 +44,6 @@ internal class AccountSessionWriter(
         if (queue.signInNeeded.value) queue.resume()
         // Signing in again over a refused token keeps the capability: the stream restarts for the
         // new source now. A first sign-in starts it once its refresh has learned the capability.
-        timerSync.follow()
+        followTimerSync()
     }
 }
