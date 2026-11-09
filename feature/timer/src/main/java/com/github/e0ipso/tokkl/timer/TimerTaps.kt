@@ -56,8 +56,16 @@ internal sealed interface TapEvent {
     /** Start was tapped: [tap] waits for the queue. A [typed] edit goes with it. */
     data class StartTapped(val tap: PendingTap.Starting, val typed: Boolean) : TapEvent
 
-    /** The Start [tap] ended. It [queued] the entry or not, and [draft] is the draft it cleared. */
-    data class StartEnded(val tap: PendingTap.Starting, val queued: Boolean, val draft: EntryFields) : TapEvent
+    /**
+     * The Start [tap] ended. It [queued] the entry or not, and [draft] is the draft it cleared and
+     * [typed] the edit it took with it, which both come back when it queued nothing.
+     */
+    data class StartEnded(
+        val tap: PendingTap.Starting,
+        val queued: Boolean,
+        val draft: EntryFields,
+        val typed: FieldEdit? = null,
+    ) : TapEvent
 
     /** Stop was tapped: [tap] waits for the queue. */
     data class StopTapped(val tap: PendingTap.Stopping) : TapEvent
@@ -65,8 +73,8 @@ internal sealed interface TapEvent {
     /** Pause, Resume or Stop while paused was tapped: [tap] waits for the server. */
     data class ActionTapped(val tap: PendingTap.Acting) : TapEvent
 
-    /** The Stop or pause chain [tap] ended. */
-    data class TapEnded(val tap: PendingTap) : TapEvent
+    /** The Stop or pause chain [tap] ended. A Stop the storage refused brings back the edit it took, [restored]. */
+    data class TapEnded(val tap: PendingTap, val restored: FieldEdit? = null) : TapEvent
 
     /** The idle timer's draft is now [draft]. */
     data class Drafted(val draft: EntryFields) : TapEvent
@@ -76,6 +84,9 @@ internal sealed interface TapEvent {
 
     /** [edit] has reached the cache, or gave way. */
     data class EditEnded(val edit: FieldEdit) : TapEvent
+
+    /** The storage refused to queue [edit], which stays as typed, not sent. */
+    data class EditRefused(val edit: FieldEdit) : TapEvent
 }
 
 /**
@@ -86,11 +97,17 @@ internal fun TimerTaps.reduce(event: TapEvent): TimerTaps = when (event) {
     // The draft makes way for the new entry, and a typed edit goes with the start.
     is TapEvent.StartTapped -> copy(pending = event.tap, draft = EntryFields(), edit = if (event.typed) null else edit)
 
-    // A start that queued nothing brings its draft back, unless a new one was typed meanwhile.
+    // A start that queued nothing brings its draft and its typed edit back, unless new ones came meanwhile.
     is TapEvent.StartEnded -> when {
         pending != event.tap -> this
-        !event.queued && draft == EntryFields() -> copy(pending = null, draft = event.draft)
-        else -> copy(pending = null)
+
+        event.queued -> copy(pending = null)
+
+        else -> copy(
+            pending = null,
+            draft = if (draft == EntryFields()) event.draft else draft,
+            edit = edit ?: event.typed,
+        )
     }
 
     // The edit a Stop sends with it no longer shows.
@@ -98,13 +115,15 @@ internal fun TimerTaps.reduce(event: TapEvent): TimerTaps = when (event) {
 
     is TapEvent.ActionTapped -> copy(pending = event.tap)
 
-    is TapEvent.TapEnded -> if (pending == event.tap) copy(pending = null) else this
+    is TapEvent.TapEnded -> if (pending == event.tap) copy(pending = null, edit = edit ?: event.restored) else this
 
     is TapEvent.Drafted -> copy(draft = event.draft)
 
     is TapEvent.Edited -> copy(edit = event.edit)
 
     is TapEvent.EditEnded -> if (edit == event.edit) copy(edit = null) else this
+
+    is TapEvent.EditRefused -> if (edit == event.edit) copy(edit = event.edit.copy(sent = false)) else this
 }
 
 /** [fields] for the running entry that started at [start], shown until the cache has them. [sent] once queued. */

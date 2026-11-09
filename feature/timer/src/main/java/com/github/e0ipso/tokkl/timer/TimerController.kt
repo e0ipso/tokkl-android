@@ -1,7 +1,9 @@
 package com.github.e0ipso.tokkl.timer
 
+import com.github.e0ipso.tokkl.cache.LocalWrite
 import com.github.e0ipso.tokkl.cache.QueueSender
 import com.github.e0ipso.tokkl.cache.RunningEntryChanges
+import com.github.e0ipso.tokkl.cache.localWrite
 import com.github.e0ipso.tokkl.entryfields.withPicked
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.Project
@@ -59,6 +61,10 @@ import java.time.temporal.ChronoUnit
  * description goes once typing ends, so the queue does not get a change for every letter. Until
  * the cache has an edit, the timer shows it over the cache's entry. A paused timer's fields are
  * read-only.
+ *
+ * A queue write the phone's storage refuses ([LocalWrite.Failed]) gives the timer back as it was
+ * before the tap, as the entry form gives its form back: Start brings its draft back, Stop leaves
+ * the entry running, and an edit stays on the timer as typed, not sent, for the next send to take.
  *
  * Call everything on the main thread.
  *
@@ -202,14 +208,19 @@ internal class TimerController(
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             var queued = false
             try {
-                if (typed != null) changes.updateRunning(typed.identity, typed.edit.fields, typed.identity.start)
-                starting.entryId.complete(changes.start(workspaceId, starting.fields))
-                queued = true
-                queuedStarts.tryEmit(Unit)
-                cached.settle { it.runningEntry()?.start?.isBefore(starting.at) == false }
+                val started = localWrite {
+                    if (typed != null) changes.updateRunning(typed.identity, typed.edit.fields, typed.identity.start)
+                    changes.start(workspaceId, starting.fields)
+                }
+                if (started is LocalWrite.Written) {
+                    starting.entryId.complete(started.value)
+                    queued = true
+                    queuedStarts.tryEmit(Unit)
+                    cached.settle { it.runningEntry()?.start?.isBefore(starting.at) == false }
+                }
             } finally {
                 starting.entryId.complete(null)
-                dispatch(TapEvent.StartEnded(starting, queued, draft))
+                dispatch(TapEvent.StartEnded(starting, queued, draft, typed?.edit))
             }
         }
     }
@@ -230,15 +241,23 @@ internal class TimerController(
 
     private fun stopRunning(shown: TimerState.Running) {
         val entryId = shown.entryId ?: return
-        val edited = taps.value.editFor(shown, cached.value)?.fields
+        val edit = taps.value.editFor(shown, cached.value)
         sections.begin(TapTrace.STOP) { it is TimerState.Idle }
         val stopping = PendingTap.Stopping(shown.start)
         dispatch(TapEvent.StopTapped(stopping))
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
+            var refused = false
             try {
-                if (changes.stop(entryId, edited)) cached.settle { it.runningEntry()?.start != shown.start }
+                when (val stopped = localWrite { changes.stop(entryId, edit?.fields) }) {
+                    is LocalWrite.Written -> if (stopped.value) {
+                        cached.settle { it.runningEntry()?.start != shown.start }
+                    }
+
+                    is LocalWrite.Failed -> refused = true
+                }
             } finally {
-                dispatch(TapEvent.TapEnded(stopping))
+                // The edit the refused Stop took with it shows again, not sent.
+                dispatch(TapEvent.TapEnded(stopping, restored = edit?.takeIf { refused }?.copy(sent = false)))
             }
         }
     }
@@ -409,21 +428,22 @@ internal class TimerController(
         val edit = FieldEdit(entryId, shown.workspaceId, shown.start, fields, sent = true)
         dispatch(TapEvent.Edited(edit))
         val write = scope.launch(start = CoroutineStart.UNDISPATCHED) {
+            var refused = false
             try {
-                if (changes.updateRunning(
-                        RunningEntryIdentity(entryId, shown.workspaceId, shown.start),
-                        fields,
-                        shown.start,
-                    )
-                ) {
-                    cached.settle { controls ->
-                        val entry = controls.runningEntry()
-                        entry == null || entry.start != shown.start ||
-                            entry.fields().let { it == fields || it != before }
+                val identity = RunningEntryIdentity(entryId, shown.workspaceId, shown.start)
+                when (val written = localWrite { changes.updateRunning(identity, fields, shown.start) }) {
+                    is LocalWrite.Written -> if (written.value) {
+                        cached.settle { controls ->
+                            val entry = controls.runningEntry()
+                            entry == null || entry.start != shown.start ||
+                                entry.fields().let { it == fields || it != before }
+                        }
                     }
+
+                    is LocalWrite.Failed -> refused = true
                 }
             } finally {
-                dispatch(TapEvent.EditEnded(edit))
+                dispatch(if (refused) TapEvent.EditRefused(edit) else TapEvent.EditEnded(edit))
             }
         }
         writes += write

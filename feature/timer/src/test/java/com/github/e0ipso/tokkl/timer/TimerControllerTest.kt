@@ -28,10 +28,12 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import java.io.IOException
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.ZoneOffset
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * The timer's taps without a view model: what goes to the queue and the server, and what
@@ -48,8 +50,12 @@ class TimerControllerTest {
     private val server = AnsweringServer()
     private val notices = TimerNoticeBoard(NoDiscards)
 
-    /** Swallows the start the queue refuses, as a test cannot let it reach the thread. */
-    private val scope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob() + CoroutineExceptionHandler { _, _ -> })
+    /** What escaped the taps' effects, which on the phone would reach the thread and end the app. */
+    private val escaped = CopyOnWriteArrayList<Throwable>()
+
+    private val scope = CoroutineScope(
+        Dispatchers.Unconfined + SupervisorJob() + CoroutineExceptionHandler { _, thrown -> escaped += thrown },
+    )
 
     private val timer = TimerController(
         controls = controls,
@@ -98,6 +104,45 @@ class TimerControllerTest {
 
         assertEquals(EntryFields(description = "Write"), timer.taps.value.draft)
         assertNull(timer.taps.value.pending)
+    }
+
+    /** A start the phone's storage refuses gives the draft back, as the entry form gives its form back. */
+    @Test
+    fun aStartTheStorageRefusesBringsTheDraftBackAndThrowsNothing() {
+        changes.storageRefusal = IOException("disk full")
+
+        timer.start()
+
+        assertEquals(EntryFields(description = "Write"), timer.taps.value.draft)
+        assertNull(timer.taps.value.pending)
+        assertEquals(emptyList<Throwable>(), escaped.toList())
+    }
+
+    /** A stop the storage refuses leaves the entry running, for another tap. */
+    @Test
+    fun aStopTheStorageRefusesLeavesTheEntryRunningAndThrowsNothing() {
+        controls.value = running()
+        changes.storageRefusal = IOException("disk full")
+
+        timer.stop()
+
+        assertNull(timer.taps.value.pending)
+        assertEquals(EntryId(42), (timer.now() as TimerState.Running).entryId)
+        assertEquals(emptyList<Throwable>(), escaped.toList())
+    }
+
+    /** A pick the storage refuses stays on the timer as typed, not sent, for the next send to take. */
+    @Test
+    fun aFieldEditTheStorageRefusesStaysAsTypedAndThrowsNothing() {
+        controls.value = running()
+        changes.storageRefusal = IOException("disk full")
+
+        timer.setBillable(true)
+
+        val edit = timer.taps.value.edit
+        assertEquals(EntryFields(description = "Write", billable = true), edit?.fields)
+        assertEquals(false, edit?.sent)
+        assertEquals(emptyList<Throwable>(), escaped.toList())
     }
 
     @Test
@@ -154,12 +199,17 @@ class TimerControllerTest {
         target = TimerTarget(entryId = EntryId(42)),
     )
 
-    /** Records each start and stop; a start is queued unless refused, and nothing reaches the cache. */
+    /**
+     * Records each start and stop; a start is queued unless refused, and nothing reaches the cache.
+     * Every write throws [storageRefusal] when it is set, as the phone's storage refuses one.
+     */
     private class QueueingChanges : RunningEntryChanges {
         val calls = mutableListOf<String>()
         var refuseStart = false
+        var storageRefusal: Exception? = null
 
         override suspend fun start(workspaceId: WorkspaceId, fields: EntryFields): EntryId {
+            storageRefusal?.let { throw it }
             if (refuseStart) throw IllegalStateException("the database refused the start")
             calls += "start $workspaceId ${fields.description}"
             CompletableDeferred<Unit>().await()
@@ -167,6 +217,7 @@ class TimerControllerTest {
         }
 
         override suspend fun stop(entryId: EntryId, fields: EntryFields?): Boolean {
+            storageRefusal?.let { throw it }
             calls += "stop $entryId"
             CompletableDeferred<Unit>().await()
             error("unreachable")
@@ -179,7 +230,7 @@ class TimerControllerTest {
             identity: RunningEntryIdentity,
             fields: EntryFields,
             start: Instant,
-        ): Boolean = throw AssertionError("unexpected updateRunning")
+        ): Boolean = throw storageRefusal ?: AssertionError("unexpected updateRunning")
 
         override suspend fun currentId(entryId: EntryId): EntryId = entryId
     }
