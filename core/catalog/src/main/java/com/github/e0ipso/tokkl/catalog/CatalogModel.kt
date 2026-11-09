@@ -96,6 +96,12 @@ class CatalogModel<D, O>(
 
     private var loading: Job? = null
 
+    /**
+     * Counts the lists this model opened: [close] moves it on, so an answer to a change sent
+     * before then, as for another project's tasks, finds a later list and changes nothing in it.
+     */
+    private var opening = 0
+
     /** The workspace the data came from, once a load found it. */
     private var workspace: WorkspaceId? = null
 
@@ -132,6 +138,7 @@ class CatalogModel<D, O>(
     fun close() {
         loading?.cancel()
         loading = null
+        opening++
         opened = false
         workspace = null
         mutableState.value = CatalogState()
@@ -159,7 +166,9 @@ class CatalogModel<D, O>(
      * server accepts it, the cache refreshes, and while the list is open [apply] puts the answer
      * into the data, the overlay closes and [done] says what happened. A refusal keeps the overlay
      * open with the reason. An unreachable server turns every action off until a load gets through.
-     * Once sent, the change and the refresh after it outlive the page's scope.
+     * Once sent, the change and the refresh after it outlive the page's scope. An answer that comes
+     * after the list closed, also when it opened again since, as for another project, changes
+     * nothing on the page.
      */
     fun <R> send(
         request: suspend (workspace: WorkspaceId) -> ApiResult<R>,
@@ -169,11 +178,12 @@ class CatalogModel<D, O>(
         val workspace = workspace ?: return
         if (!opened || !state.value.canChange) return
         mutableState.update { it.copy(sending = true, changeProblem = null) }
+        val sentFrom = opening
         val sent = changes.send { request(workspace) }
         scope.launch {
             val answer = sent.await()
             // The list closed while the request ran. What the server accepted still reaches the cache.
-            if (!opened) return@launch
+            if (!opened || opening != sentFrom) return@launch
             when (answer) {
                 is ApiResult.Success -> {
                     mutableState.update { current ->

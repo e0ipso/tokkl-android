@@ -11,6 +11,7 @@ import com.github.e0ipso.tokkl.session.CountingRefresh
 import com.github.e0ipso.tokkl.session.ServerChanges
 import com.github.e0ipso.tokkl.session.ServerProblem
 import com.github.e0ipso.tokkl.session.accountSettingsIn
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.junit.Assert.assertEquals
@@ -107,6 +108,22 @@ class TasksModelTest {
     }
 
     @Test
+    fun aLateAnswerForTheProjectBeforeLeavesTheNextProjectsListAlone() {
+        val answer = CompletableDeferred<Unit>()
+        repository.answers = answer
+        model.open(WEBSITE)
+        model.create("Copy")
+        model.close()
+        model.open(ARCHIVED)
+        val shown = model.state.value
+
+        answer.complete(Unit)
+
+        assertEquals("project 6's list stays as it loaded", shown, model.state.value)
+        assertEquals("the accepted change still refreshes the cache", 1, refresh.afterChanges)
+    }
+
+    @Test
     fun aRefusalKeepsTheListWithTheServersReason() {
         model.open(ARCHIVED)
 
@@ -122,6 +139,9 @@ class TasksModelTest {
      */
     private class TwoProjectsRepository : TasksRepository {
         val calls = mutableListOf<String>()
+
+        /** Completes when the server answers a create, at once unless a test holds it. */
+        var answers = CompletableDeferred(Unit)
 
         override suspend fun workspace(stored: WorkspaceId?) = ApiResult.Success(checkNotNull(stored))
 
@@ -150,6 +170,7 @@ class TasksModelTest {
             known: Set<TaskId>,
         ): ApiResult<Task> {
             calls += "create $name in ${project.value}, known ${known.map { it.value }.sorted()}"
+            answers.await()
             if (project == ARCHIVED) return ApiResult.Failure(ApiError.UnexpectedStatus(400, REFUSAL))
             return ApiResult.Success(Task(TaskId(3), workspace, project, name, active = true))
         }
