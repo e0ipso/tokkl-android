@@ -10,6 +10,7 @@ import com.github.e0ipso.tokkl.session.ForegroundRefresh
 import com.github.e0ipso.tokkl.session.Session
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.workmanager.dsl.worker
+import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.binds
 import org.koin.dsl.module
@@ -23,14 +24,13 @@ val cacheModule = module {
     // The file of the cache and the queue. It opens on the first query, which Room keeps off the main thread.
     single { CacheDatabase.open(androidContext()) }
 
-    // The offline cache.
     single { AccountCache(get(), io()) } bind AccountDataOwner::class
     // The running entry, read and reconciled on a worker thread under the caller's lock.
-    single<CurrentEntryCache> { RoomCurrentEntries(get()) }
+    singleOf(::RoomCurrentEntries) bind CurrentEntryCache::class
     single { ServerCacheRefresh(get(), get(), allDayMissing = get<CapabilitiesSource>()::allDayMissing) }
 
     // The queue's tables, which the queue writes and the sender reads.
-    single { RoomChangeStore(get()) } binds arrayOf(ChangeStore::class, QueueStorage::class)
+    singleOf(::RoomChangeStore) binds arrayOf(ChangeStore::class, QueueStorage::class)
 
     single {
         val settings = get<AccountSettingsSource>()
@@ -40,8 +40,8 @@ val cacheModule = module {
     // Start, stop, create, edit and delete entries on the phone. The [ChangeSender] sends each
     // change at once, and [BackgroundSend] sends what is left when the network returns, also with
     // the app closed.
-    single { BackgroundSendRuns() }
-    single { BackgroundSend(get(), get()) } bind AccountDataOwner::class
+    singleOf(::BackgroundSendRuns)
+    singleOf(::BackgroundSend) bind AccountDataOwner::class
     single {
         val background = get<BackgroundSend>()
         val sender = get<ChangeSender>()
@@ -61,7 +61,7 @@ val cacheModule = module {
 
     // Sends the queued changes in order, and refreshes, cancels the background retry and counts
     // the discarded changes as its drains end ([QueueDrainEvents]).
-    single<ChangeSenderEvents> { QueueDrainEvents(get(), get(), get(), get()) }
+    singleOf(::QueueDrainEvents) bind ChangeSenderEvents::class
     single {
         val session = get<Session>()
         ChangeSender(
@@ -91,7 +91,7 @@ val cacheModule = module {
     }
 
     // The running entry's check every 15 minutes while a timer runs.
-    single { RunningCheck(get()) } bind AccountDataOwner::class
+    singleOf(::RunningCheck) bind AccountDataOwner::class
     single { RunningCheckHook(inject(), inject(), get(), io()) } bind AppHook::class
 
     // Refreshes the account, and with it the running entry and the cache, each time the app comes
@@ -114,7 +114,6 @@ val cacheModule = module {
         )
     }
 
-    // The queue's WorkManager workers, which KoinWorkerFactory makes with their dependencies.
     worker { params ->
         BackgroundSendWorker(
             context = androidContext(),

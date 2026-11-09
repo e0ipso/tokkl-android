@@ -8,6 +8,7 @@ import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
 import com.github.e0ipso.tokkl.storage.StartupLoad
 import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsDisk
 import org.koin.android.ext.koin.androidContext
+import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -19,9 +20,8 @@ val settingsFeatureModule = module {
     // Loaded at process start, off the main thread. MainActivity draws its first frame once they
     // have loaded, so it knows the theme.
     single { themeSettingsWithNightMode(androidContext(), get(), get(), io()) }
-    single { ThemeSettingsLoad(get()) } bind StartupLoad::class
+    singleOf(::ThemeSettingsLoad) bind StartupLoad::class
 
-    // The Settings page's sign-out button and its warning about unsent changes.
     single {
         SignOutConfirmation(
             unsentNow = get<ChangeQueue>()::unsentNow,

@@ -14,6 +14,7 @@ import com.github.e0ipso.tokkl.platform.AppHook
 import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.storage.StartupLoad
 import org.koin.android.ext.koin.androidContext
+import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.binds
 import org.koin.dsl.module
@@ -31,10 +32,10 @@ val sessionModule = module {
 
     // Every process sends requests only to the stored server, and to a plain http:// server only
     // once the user has confirmed it, through the one HTTP client and its connection pool.
-    single { ConfiguredServer(get()) }
-    single { SharedHttpClient(server = get(), trust = get<ServerTrust>()) }
+    singleOf(::ConfiguredServer)
+    singleOf(::SharedHttpClient)
     // Sign-out cancels every call in flight.
-    single { CallsSignOut(get()) } bind AccountDataOwner::class
+    singleOf(::CallsSignOut) bind AccountDataOwner::class
 
     // Reports trust refusals to the session's trust prompt, and answers to the last answer's time.
     single {
@@ -56,7 +57,7 @@ val sessionModule = module {
     // What the server offers. It loads at process start from a file of a few flags.
     single { CapabilitiesSource(get<CapabilitiesStore>(), get(), io()) } bind StartupLoad::class
 
-    single { AccountRefreshRequests() }
+    singleOf(::AccountRefreshRequests)
     single { RefreshRequestsHook(get(), inject(), get(), io()) } bind AppHook::class
 
     single {
@@ -74,7 +75,7 @@ val sessionModule = module {
     single { ServerChanges(scope = get(), io = io(), refreshes = get()) }
 
     // Where each account begins and ends, which the timer state and the navigation follow.
-    single { CurrentAccount(app = get()) }
+    singleOf(::CurrentAccount)
 
     // Sign-out (docs/PRD.md S6): every [AccountDataOwner], phase by phase in [SignOutPhase] order.
     single { SignOut(owners = getAll(), account = get(), io = io()) }

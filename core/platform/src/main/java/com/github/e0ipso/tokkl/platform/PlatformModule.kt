@@ -6,6 +6,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import org.koin.android.ext.koin.androidContext
+import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 import java.time.Clock
 
@@ -32,7 +33,7 @@ val platformModule = module {
 
     // Whether the app is on screen, and the network's returns while it is, which the screens'
     // view models load again on.
-    single { processForeground(get(), get()) }
+    singleOf(::processForeground)
 
     // The wall clock, for components that read the time on each event, such as the widget's day.
     single<Clock> { Clock.systemUTC() }

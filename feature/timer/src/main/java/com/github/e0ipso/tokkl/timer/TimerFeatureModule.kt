@@ -39,6 +39,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.plus
 import org.koin.android.ext.koin.androidContext
+import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.binds
@@ -79,8 +80,8 @@ val timerFeatureModule = module {
     }
 
     // The history's and the calendar's days outside the cache, from the server.
-    single { OlderPages(get<Session>()) }
-    single { ServerWeeks(get<Session>()) }
+    singleOf(::OlderPages)
+    singleOf(::ServerWeeks)
 
     // The session's one owner of the entries the history, the calendar and the entry form show.
     // Sign-out forgets them.

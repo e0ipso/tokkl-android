@@ -12,6 +12,7 @@ import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.storage.StartupLoad
 import org.koin.android.ext.koin.androidContext
+import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.binds
@@ -36,7 +37,7 @@ val syncFeatureModule = module {
 
     // The "needs attention" list of the changes the server refused (docs/PRD.md O6). Discarding
     // one refreshes the account, so the cache takes the server's entry back.
-    single { NeedsAttention(changes = get<ChangeQueue>(), refreshes = get(), scope = get()) }
+    singleOf(::NeedsAttention)
 
     viewModel {
         NeedsAttentionViewModel(

@@ -7,15 +7,15 @@ import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.platform.offlineIn
 import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
-import com.github.e0ipso.tokkl.session.Session
+import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
 /** The Projects page: its repositories, its view model and its screen. */
 val projectsFeatureModule = module {
-    single { ServerProjectsRepository(get<Session>()) }
-    single { ServerTasksRepository(get<Session>()) }
+    singleOf(::ServerProjectsRepository)
+    singleOf(::ServerTasksRepository)
 
     viewModel {
         val accountSettings = get<AccountSettingsSource>()

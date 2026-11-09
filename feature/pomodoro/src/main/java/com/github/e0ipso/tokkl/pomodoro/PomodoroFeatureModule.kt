@@ -25,11 +25,11 @@ import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.TimerActions
 import com.github.e0ipso.tokkl.timersync.PomodoroAlarmScheduler
 import com.github.e0ipso.tokkl.timersync.PomodoroRingingPhase
-import com.github.e0ipso.tokkl.timersync.TimerSyncFollower
 import com.github.e0ipso.tokkl.timersync.TimerSyncWatcher
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.combine
 import org.koin.android.ext.koin.androidContext
+import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.binds
@@ -94,12 +94,9 @@ val pomodoroFeatureModule = module {
 
     // What the boot, update, clock and exact-alarm broadcasts do: arm the held phase again, and
     // start the timer sync service after boot and an update.
-    single { PomodoroAlarmRearm(alarm = get(), timerSync = get<TimerSyncFollower>()) }
+    singleOf(::PomodoroAlarmRearm)
 
-    // What the ringing notification's buttons do.
-    single<PomodoroRingingButtons> {
-        AlarmRingingButtons(get(), alarm = get(), actions = get<TimerActions>())
-    }
+    singleOf(::AlarmRingingButtons) bind PomodoroRingingButtons::class
 
     // The session notification, made at process start, which restores what the last process
     // showed. It starts following each account that signs in.
@@ -123,8 +120,7 @@ val pomodoroFeatureModule = module {
     } bind SignedInListener::class
     single { PomodoroNotificationHook(inject()) } bind AppHook::class
 
-    // What the session notification's buttons do.
-    single<PomodoroSessionButtons> { SessionNotificationButtons(get(), notification = get()) }
+    singleOf(::SessionNotificationButtons) bind PomodoroSessionButtons::class
 
     // Sign-out: the alarm, the session notification and the notification ID they share.
     single {

@@ -13,7 +13,9 @@ import com.github.e0ipso.tokkl.session.SignedInListener
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import org.koin.android.ext.koin.androidContext
+import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModel
+import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.bind
 import org.koin.dsl.binds
 import org.koin.dsl.module
@@ -24,7 +26,7 @@ import java.io.File
  * and sign-out invalidates, the choices that outlive the page, the view model and the screen.
  */
 val reportsFeatureModule = module {
-    single { ServerReportsRepository(get<Session>()) }
+    singleOf(::ServerReportsRepository)
     single {
         ReportExportFiles(
             File(androidContext().cacheDir, ReportExportFiles.DIRECTORY),
@@ -33,10 +35,10 @@ val reportsFeatureModule = module {
     }
 
     // The exports' account, which every sign-in and sign-out invalidates, deleting the files.
-    single { ExportFilesCleanup(get()) } binds arrayOf(AccountDataOwner::class, SignedInListener::class)
+    singleOf(::ExportFilesCleanup) binds arrayOf(AccountDataOwner::class, SignedInListener::class)
 
     // The tab and the filters, in the signed-in session's store, which the next visit opens on.
-    viewModel { ReportChoices() }
+    viewModelOf(::ReportChoices)
 
     // The Reports route's own view model, which goes when the route leaves the back stack.
     viewModel { (choices: ReportChoices) ->

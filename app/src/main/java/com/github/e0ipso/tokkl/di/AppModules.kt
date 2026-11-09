@@ -24,6 +24,7 @@ import com.github.e0ipso.tokkl.trash.trashFeatureModule
 import com.github.e0ipso.tokkl.trust.trustModule
 import com.github.e0ipso.tokkl.widget.widgetFeatureModule
 import org.koin.core.module.Module
+import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
 /**
@@ -32,7 +33,7 @@ import org.koin.dsl.module
  */
 internal val startupModule = module {
     single { StartupLoads(getAll()) }
-    single { AppStartup(hooks = get()) }
+    singleOf(::AppStartup)
 }
 
 /**

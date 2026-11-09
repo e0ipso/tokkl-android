@@ -22,6 +22,7 @@ import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import kotlinx.coroutines.CoroutineDispatcher
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.workmanager.dsl.worker
+import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.binds
 import org.koin.dsl.module
@@ -58,7 +59,7 @@ val notificationFeatureModule = module {
         arrayOf(AccountDataOwner::class, StartupLoad::class)
 
     // The running entry's reminder, followed independently of any screen, with its delay in WorkManager.
-    single { ReminderWork(get(), get()) } bind ReminderDelays::class
+    singleOf(::ReminderWork) bind ReminderDelays::class
     single {
         AccountReminder(
             session = get(),
