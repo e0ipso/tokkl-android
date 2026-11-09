@@ -2,7 +2,6 @@ package com.github.e0ipso.tokkl.timersync
 
 import com.github.e0ipso.tokkl.capabilities.TimerApiOffer
 import com.github.e0ipso.tokkl.platform.AppHook
-import com.github.e0ipso.tokkl.platform.StartupPhase
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.SignInStatus
 import com.github.e0ipso.tokkl.session.SignOutPhase
@@ -126,7 +125,5 @@ class TimerSyncFollower(
 
 /** The last hook: on each MainActivity start, starts or stops the timer sync to match. */
 class TimerSyncHook(private val follower: Lazy<TimerSyncFollower>) : AppHook {
-    override val phase = StartupPhase.TIMER_SYNC
-
     override suspend fun foregroundStart() = follower.value.follow()
 }

@@ -32,7 +32,7 @@ import org.koin.dsl.module
  */
 internal val startupModule = module {
     single { StartupLoads(getAll()) }
-    single { AppStartup(hooks = getAll()) }
+    single { AppStartup(hooks = get()) }
 }
 
 /**
@@ -48,6 +48,7 @@ internal val appModules: List<Module> = listOf(
     timerNoticeModule,
     timerSyncModule,
     lifecycleModule,
+    hooksModule,
     startupModule,
     navigationModule,
     signInFeatureModule,

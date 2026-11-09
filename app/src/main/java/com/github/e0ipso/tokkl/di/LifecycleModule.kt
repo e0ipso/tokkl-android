@@ -33,7 +33,7 @@ internal val lifecycleModule = module {
         MainActivityForeground(
             context = androidContext(),
             refresh = get(),
-            hooks = getAll(),
+            hooks = get(),
             http = get(),
             defaultNetwork = get(),
             scope = get(),

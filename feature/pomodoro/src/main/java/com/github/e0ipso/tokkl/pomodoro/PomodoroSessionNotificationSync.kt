@@ -2,7 +2,6 @@ package com.github.e0ipso.tokkl.pomodoro
 
 import com.github.e0ipso.tokkl.platform.AppHook
 import com.github.e0ipso.tokkl.platform.SingleFlight
-import com.github.e0ipso.tokkl.platform.StartupPhase
 import com.github.e0ipso.tokkl.session.SignInStatus
 import com.github.e0ipso.tokkl.session.SignedInListener
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
@@ -185,8 +184,6 @@ class PomodoroSessionNotificationSync internal constructor(
 
 /** After the phase alarm, before the reminder: the session notification, from process start and after a grant. */
 class PomodoroNotificationHook(private val sync: Lazy<PomodoroSessionNotificationSync>) : AppHook {
-    override val phase = StartupPhase.SESSION_NOTIFICATION
-
     override fun processStart() = sync.value.start()
 
     override suspend fun notificationsAllowed() = sync.value.refresh(force = true)

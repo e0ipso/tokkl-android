@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.shortcuts
 
 import com.github.e0ipso.tokkl.platform.AppHook
-import com.github.e0ipso.tokkl.platform.StartupPhase
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import kotlinx.coroutines.CoroutineScope
@@ -72,8 +71,6 @@ class FavoriteShortcutSync(
 
 /** Publishes the favorites as launcher shortcuts from process start, after the widgets. */
 class FavoriteShortcutsHook(private val sync: Lazy<FavoriteShortcutSync>) : AppHook {
-    override val phase = StartupPhase.LAUNCHER_SHORTCUTS
-
     override fun processStart() {
         sync.value.start()
     }

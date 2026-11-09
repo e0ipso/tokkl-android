@@ -3,7 +3,6 @@ package com.github.e0ipso.tokkl.pomodoro
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.capabilities.TimerApiOffer
 import com.github.e0ipso.tokkl.platform.AppHook
-import com.github.e0ipso.tokkl.platform.StartupPhase
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.CurrentTimerState
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
@@ -199,8 +198,6 @@ class PomodoroAlarmHook(
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
 ) : AppHook {
-    override val phase = StartupPhase.PHASE_ALARM
-
     override fun processStart() {
         scope.launch(io) {
             combine(timerStates.value.held, capabilities.value.loaded) { _, _ -> Unit }.collect { alarm.value.follow() }
