@@ -3,8 +3,8 @@ package com.github.e0ipso.tokkl.reminder
 import android.content.Context
 import com.github.e0ipso.tokkl.cache.CurrentEntryIds
 import com.github.e0ipso.tokkl.cache.RunningEntryChanges
-import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.preferences.ReminderSetting
 import com.github.e0ipso.tokkl.session.SignInStatus
 import com.github.e0ipso.tokkl.timerstate.CurrentTimerState
