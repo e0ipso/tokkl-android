@@ -491,7 +491,7 @@ class CacheDatabaseMigrationTest {
                 }
                 val sender = ChangeSender(
                     store,
-                    client = client,
+                    entries = { client()?.let(::ServerEntrySends) },
                     scope = scope,
                     io = Dispatchers.IO,
                     events = object : ChangeSenderEvents {
@@ -504,7 +504,13 @@ class CacheDatabaseMigrationTest {
                     clock = Clock.systemUTC(),
                     spans = ServerSpans.Unsnapped,
                     capabilities = capabilitiesOf(Capabilities.NONE),
-                    undo = DeleteUndoer(store, client, Dispatchers.IO, AccountRefreshRequests(), scope),
+                    undo = DeleteUndoer(
+                        store,
+                        { client()?.let(::ServerEntrySends) },
+                        Dispatchers.IO,
+                        AccountRefreshRequests(),
+                        scope,
+                    ),
                 )
                 val outcome = runBlocking { sender.sendAndWait() }
                 assertTrue(

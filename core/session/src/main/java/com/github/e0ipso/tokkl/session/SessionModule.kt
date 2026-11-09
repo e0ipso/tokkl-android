@@ -72,12 +72,13 @@ val sessionModule = module {
     single { RefreshRequestsHook(get(), inject(), get(), io()) } bind AppHook::class
 
     single {
+        val session = get<Session>()
         AccountRefresh(
-            client = get<Session>(),
+            reads = { session()?.let(::ServerAccountReads) },
             settings = get(),
             scope = get(),
             io = io(),
-            steps = get(),
+            steps = get<AccountRefreshSteps<ServerAccountReads>>(),
         )
     } binds arrayOf(AccountDataOwner::class, CacheRefresh::class)
 

@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.cache
 
-import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.model.EntryId
@@ -41,13 +40,14 @@ sealed interface UndoOutcome {
  * [sendingDelete], which holds the lock [undoDelete] holds, so Undo never decides while a delete is
  * on its way, and a delete that Undo took back never goes out.
  *
- * @param client the signed-in account's client, or null when signed out. Runs on [io].
+ * @param entries opens the entry calls of the signed-in account, or gives null when signed out.
+ *   Runs on [io].
  * @param refreshes asked for a refresh after the server restored an entry.
  * @param scope the application's scope, where each Undo runs on [io].
  */
 class DeleteUndoer(
     private val store: ChangeStore,
-    private val client: ApiClientProvider,
+    private val entries: suspend () -> EntrySends?,
     private val io: CoroutineContext,
     private val refreshes: AccountRefreshRequests,
     private val scope: CoroutineScope,
@@ -81,8 +81,8 @@ class DeleteUndoer(
 
     /** Asks the server to restore its entry [serverId], and records the answer. */
     private suspend fun restore(serverId: Long): UndoOutcome {
-        val api = client() ?: return UndoOutcome.NeedsServer
-        return when (val result = api.entries.restore(EntryId(serverId), resend = true)) {
+        val server = entries() ?: return UndoOutcome.NeedsServer
+        return when (val result = server.restore(EntryId(serverId), resend = true)) {
             is ApiResult.Success -> {
                 store.restored(serverId, result.value.toCached())
                 UndoOutcome.Restored

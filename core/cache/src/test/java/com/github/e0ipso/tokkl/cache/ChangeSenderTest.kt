@@ -77,7 +77,7 @@ class ChangeSenderTest {
         testApi.stored = url
         testApi.trust = InMemoryServerTrust(url)
         val client = ApiClientProvider { if (signedIn) testApi.api(url, ApiCredentials.ApiToken("tok-123")) else null }
-        undo = DeleteUndoer(store, client, Dispatchers.IO, refreshes = AccountRefreshRequests(), scope = scope)
+        undo = DeleteUndoer(store, client.entries(), Dispatchers.IO, refreshes = AccountRefreshRequests(), scope = scope)
         sender = changeSender(store, client, scope = scope, io = Dispatchers.IO, clock = clock, undo = undo)
     }
 
@@ -1691,7 +1691,7 @@ class ChangeSenderTest {
         val forwarding = CoroutineScope(Dispatchers.Unconfined).launch { requests.forward(lazy { counting }) }
         val refreshing = DeleteUndoer(
             store,
-            client = { testApi.api(url, ApiCredentials.ApiToken("tok-123")) },
+            entries = { ServerEntrySends(testApi.api(url, ApiCredentials.ApiToken("tok-123"))) },
             io = Dispatchers.IO,
             refreshes = requests,
             scope = scope,
@@ -1971,10 +1971,10 @@ private fun changeSender(
     clock: Clock = Clock.systemUTC(),
     spans: ServerSpans = ServerSpans.Unsnapped,
     allDay: Boolean = false,
-    undo: DeleteUndoer = DeleteUndoer(store, client, io, refreshes = AccountRefreshRequests(), scope = scope),
+    undo: DeleteUndoer = DeleteUndoer(store, client.entries(), io, refreshes = AccountRefreshRequests(), scope = scope),
 ) = ChangeSender(
     store,
-    client,
+    client.entries(),
     scope,
     io,
     object : ChangeSenderEvents {
@@ -1993,3 +1993,6 @@ private fun changeSender(
     ),
     undo,
 )
+
+/** The entry calls over [this] client, as the app opens them. */
+private fun ApiClientProvider.entries(): suspend () -> EntrySends? = { this()?.let(::ServerEntrySends) }

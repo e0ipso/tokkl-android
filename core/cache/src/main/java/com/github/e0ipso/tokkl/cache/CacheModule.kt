@@ -63,9 +63,10 @@ val cacheModule = module {
     // the discarded changes as its drains end ([QueueDrainEvents]).
     single<ChangeSenderEvents> { QueueDrainEvents(get(), get(), get(), get()) }
     single {
+        val session = get<Session>()
         ChangeSender(
             get(),
-            client = get<Session>(),
+            entries = { session()?.let(::ServerEntrySends) },
             scope = get(),
             io = io(),
             events = get(),
@@ -79,9 +80,10 @@ val cacheModule = module {
     // Takes a delete back, and refreshes once the server restored the entry. The sender sends each
     // delete through it, so an Undo never decides while a delete is on its way.
     single {
+        val session = get<Session>()
         DeleteUndoer(
             get(),
-            client = get<Session>(),
+            entries = { session()?.let(::ServerEntrySends) },
             io = io(),
             refreshes = get(),
             scope = get(),

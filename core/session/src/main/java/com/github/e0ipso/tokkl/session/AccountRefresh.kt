@@ -1,10 +1,8 @@
 package com.github.e0ipso.tokkl.session
 
-import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.Me
 import com.github.e0ipso.tokkl.api.MePreferences
-import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.platform.SingleFlight
 import com.github.e0ipso.tokkl.time.DurationFormat
 import kotlinx.coroutines.CoroutineScope
@@ -12,14 +10,14 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 
-/** What runs after each refresh whose `GET /api/v9/me` answered. */
-fun interface AccountRefreshSteps {
+/** What runs after each refresh whose `GET /api/v9/me` answered, with the reads [R] it made. */
+fun interface AccountRefreshSteps<in R : AccountReads> {
 
     /**
-     * Runs on the refresh's dispatcher, inside its job, with its client, its `/me` answer and its
+     * Runs on the refresh's dispatcher, inside its job, with its [reads], its `/me` answer and its
      * `GET /api/v9/me/preferences`, null when that request failed.
      */
-    suspend fun afterAnswer(api: TokklApi, me: Me, preferences: MePreferences?)
+    suspend fun afterAnswer(reads: R, me: Me, preferences: MePreferences?)
 }
 
 /**
@@ -27,18 +25,19 @@ fun interface AccountRefreshSteps {
  * them in [settings]. Each refresh runs [steps] with the same answers, so one `/me` and one
  * `/me/preferences` serve the capabilities, the cache and the preferences of every feature.
  *
- * @param client the API client of the signed-in account, or null when signed out. Runs on [io].
+ * @param reads opens the server reads of the signed-in account, or gives null when signed out.
+ *   Runs on [io].
  * @param scope outlives every screen, so leaving the app does not cancel a refresh.
  * @param steps run on [io] after each refresh whose `GET /api/v9/me` answered, inside the same job,
  *   so a [refresh] call while they run joins them. They do not run when sign-in stored newer
  *   settings while the requests ran.
  */
-class AccountRefresh(
-    private val client: ApiClientProvider,
+class AccountRefresh<R : AccountReads>(
+    private val reads: suspend () -> R?,
     private val settings: AccountSettingsSource,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
-    private val steps: AccountRefreshSteps,
+    private val steps: AccountRefreshSteps<R>,
 ) : AccountDataOwner,
     CacheRefresh {
 
@@ -97,8 +96,8 @@ class AccountRefresh(
 
     /**
      * Shows no settings, and waits for a running refresh to end. That refresh drops its answer and
-     * skips [steps] unless it had already stored the answer. Signing out calls this once [client]
-     * returns null, so no later refresh stores anything, and then deletes the stored settings.
+     * skips [steps] unless it had already stored the answer. Signing out calls this once [reads]
+     * gives null, so no later refresh stores anything, and then deletes the stored settings.
      */
     suspend fun forget() {
         settings.forget()
@@ -107,11 +106,11 @@ class AccountRefresh(
 
     private suspend fun refreshNow() {
         val writesBefore = settings.writeCount()
-        val api = client() ?: return
-        val me = (api.account.meWithRelatedData() as? ApiResult.Success)?.value ?: return
+        val server = reads() ?: return
+        val me = (server.meWithRelatedData() as? ApiResult.Success)?.value ?: return
         synchronized(lock) { answers++ }
         val fromMe = me.accountSettings() ?: return
-        val preferences = readPreferences(api)
+        val preferences = (server.preferences() as? ApiResult.Success)?.value
         val kept = settings.storeRefreshed(writesBefore) { stored ->
             fromMe.copy(
                 durationFormat = preferences?.durationFormat ?: stored?.durationFormat ?: DurationFormat.IMPROVED,
@@ -122,12 +121,6 @@ class AccountRefresh(
         }
         // Sign-in stored newer settings while the requests ran.
         if (!kept) return
-        steps.afterAnswer(api, me, preferences)
-    }
-
-    /** The account's preferences, or null when the request fails. */
-    private suspend fun readPreferences(api: TokklApi): MePreferences? {
-        val answer = api.account.preferences()
-        return (answer as? ApiResult.Success)?.value
+        steps.afterAnswer(server, me, preferences)
     }
 }

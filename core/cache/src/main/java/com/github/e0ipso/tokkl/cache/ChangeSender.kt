@@ -1,10 +1,8 @@
 package com.github.e0ipso.tokkl.cache
 
 import android.database.sqlite.SQLiteException
-import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.capabilities.AllDayOffer
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.SignOutPhase
@@ -68,7 +66,8 @@ interface ChangeSenderEvents {
  * [BackgroundSend]'s worker calls [sendAndWait], also with the app closed. Each delete goes out
  * through [undo], so an Undo never decides while a delete is on its way.
  *
- * @param client the signed-in account's client, or null when signed out. Runs on [io].
+ * @param entries opens the entry calls of the signed-in account, or gives null when signed out.
+ *   Runs on [io].
  * @param scope outlives every screen, so leaving the app does not cancel a drain.
  * @param events hears on [io] what the drains did, as [ChangeSenderEvents] says.
  * @param spans where the server puts a start once the entry is stopped, which finds the entry a
@@ -79,7 +78,7 @@ interface ChangeSenderEvents {
  */
 class ChangeSender(
     private val store: ChangeStore,
-    private val client: ApiClientProvider,
+    private val entries: suspend () -> EntrySends?,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
     private val events: ChangeSenderEvents,
@@ -192,7 +191,7 @@ class ChangeSender(
 
     /**
      * Waits for the drains asked for before this call to end, then cancels the wait after a 429
-     * and forgets it with the paused sign-in. Signing out calls this once [client] returns null,
+     * and forgets it with the paused sign-in. Signing out calls this once [entries] gives null,
      * so the drain ends at its next change and nothing it writes lands after the cache is cleared.
      */
     suspend fun stop() {
@@ -297,8 +296,8 @@ class ChangeSender(
             if (mutableSignInNeeded.value) return Outcome.Stopped(sent, ApiError.AuthFailed)
             retryAfter.pending()?.let { return Outcome.Waiting(sent, it) }
             val queued = store.first() ?: return Outcome.Empty(sent)
-            val api = client() ?: return Outcome.SignedOut(sent)
-            when (val result = send(api, queued)) {
+            val server = entries() ?: return Outcome.SignedOut(sent)
+            when (val result = send(server, queued)) {
                 // Undo took the delete back before it went out.
                 null -> Unit
 
@@ -315,7 +314,7 @@ class ChangeSender(
                         triedAgain = queued.sequence
                         continue
                     }
-                    when (val step = settleRefused(api, queued, error, sent)) {
+                    when (val step = settleRefused(server, queued, error, sent)) {
                         is RefusalStep.Next -> sent += step.left
                         is RefusalStep.Stop -> return step.outcome
                     }
@@ -333,8 +332,13 @@ class ChangeSender(
     }
 
     /** Settles [queued], which the server refused with [error], after [sent] changes went out. */
-    private suspend fun settleRefused(api: TokklApi, queued: PendingChange, error: ApiError, sent: Int): RefusalStep =
-        when (val refused = refusal(api, queued, error)) {
+    private suspend fun settleRefused(
+        server: EntrySends,
+        queued: PendingChange,
+        error: ApiError,
+        sent: Int,
+    ): RefusalStep =
+        when (val refused = refusal(server, queued, error)) {
             is Refusal.Wait -> {
                 val waiting = refused.error
                 RefusalStep.Stop(
@@ -378,11 +382,11 @@ class ChangeSender(
     }
 
     /** Sends [change], or returns null when it left the queue before it went out. */
-    private suspend fun send(api: TokklApi, change: PendingChange): ApiResult<SentChange>? {
-        if (change.kind == ChangeKind.CREATE) return tries.create(api, change)
-        if (change.kind == ChangeKind.DELETE) return undo.sendingDelete { tries.delete(api, change) }
-        if (change.kind == ChangeKind.STOP && change.capturedStop != null) return tries.capturedStop(api, change)
-        return tries.update(api, change)
+    private suspend fun send(server: EntrySends, change: PendingChange): ApiResult<SentChange>? {
+        if (change.kind == ChangeKind.CREATE) return tries.create(server, change)
+        if (change.kind == ChangeKind.DELETE) return undo.sendingDelete { tries.delete(server, change) }
+        if (change.kind == ChangeKind.STOP && change.capturedStop != null) return tries.capturedStop(server, change)
+        return tries.update(server, change)
     }
 
     companion object {

@@ -3,7 +3,6 @@ package com.github.e0ipso.tokkl.cache
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
-import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.api.flatMap
 import com.github.e0ipso.tokkl.api.getOrElse
 import com.github.e0ipso.tokkl.api.map
@@ -34,16 +33,16 @@ internal class ChangeTries(
 ) {
 
     /** Sends an update, a legacy stop or a restore, as [sendOnce] does. */
-    suspend fun update(api: TokklApi, change: PendingChange): ApiResult<SentChange> =
-        sendOnce(api, change).map { SentChange(change, it.id, it.toCached()) }
+    suspend fun update(server: EntrySends, change: PendingChange): ApiResult<SentChange> =
+        sendOnce(server, change).map { SentChange(change, it.id, it.toCached()) }
 
     /** A captured Stop may already have reached the server even when its reply was lost. */
-    suspend fun capturedStop(api: TokklApi, change: PendingChange): ApiResult<SentChange> {
-        if (change.maybeSent && stoppedOnServer(api, change).getOrElse { return it }) {
+    suspend fun capturedStop(server: EntrySends, change: PendingChange): ApiResult<SentChange> {
+        if (change.maybeSent && stoppedOnServer(server, change).getOrElse { return it }) {
             return ApiResult.Success(SentChange(change, change.entryId, if (change.shortStop) null else change.entry()))
         }
         store.maybeSent(change, true)
-        return sendOnce(api, change).flatMap { entry ->
+        return sendOnce(server, change).flatMap { entry ->
             if (entry.matchesStop(change)) {
                 ApiResult.Success(SentChange(change, entry.id, if (change.shortStop) null else entry.toCached()))
             } else {
@@ -58,17 +57,17 @@ internal class ChangeTries(
      * entry, never a no-time one; and a restore as a POST that Tokkl reads nothing from. Creates
      * and deletes go through [create] and [delete].
      */
-    private suspend fun sendOnce(api: TokklApi, change: PendingChange): ApiResult<ServerTimeEntry> =
+    private suspend fun sendOnce(server: EntrySends, change: PendingChange): ApiResult<ServerTimeEntry> =
         when (change.kind) {
-            ChangeKind.RESTORE -> api.entries.restore(EntryId(change.entryId), resend = false)
+            ChangeKind.RESTORE -> server.restore(EntryId(change.entryId), resend = false)
 
             ChangeKind.STOP -> change.capturedStop?.let {
-                api.entries.stop(change.workspace, EntryId(change.entryId), it.truncatedTo(ChronoUnit.SECONDS))
-            } ?: api.entries.update(change.workspace, EntryId(change.entryId), change.body(allDay = false))
+                server.stop(change.workspace, EntryId(change.entryId), it.truncatedTo(ChronoUnit.SECONDS))
+            } ?: server.update(change.workspace, EntryId(change.entryId), change.body(allDay = false))
 
             else -> {
                 val allDay = capabilities.offersAllDay()
-                api.entries.update(change.workspace, EntryId(change.entryId), change.body(allDay))
+                server.update(change.workspace, EntryId(change.entryId), change.body(allDay))
             }
         }
 
@@ -79,15 +78,15 @@ internal class ChangeTries(
      * marked create again it reads the entries around its start ([earlierCopy]), and the entry an
      * earlier post made stands for it instead. A start goes as [endBeforeALaterTimer] has it.
      */
-    suspend fun create(api: TokklApi, queued: PendingChange): ApiResult<SentChange> {
+    suspend fun create(server: EntrySends, queued: PendingChange): ApiResult<SentChange> {
         if (queued.maybeSent) {
-            earlierCopy(api, queued, spans, store).getOrElse { return it }?.let {
+            earlierCopy(server, queued, spans, store).getOrElse { return it }?.let {
                 return ApiResult.Success(SentChange(queued, it.id, it.toCached()))
             }
         }
-        val change = if (queued.stop == null) endBeforeALaterTimer(api, queued).getOrElse { return it } else queued
+        val change = if (queued.stop == null) endBeforeALaterTimer(server, queued).getOrElse { return it } else queued
         if (!change.maybeSent) store.maybeSent(change, true)
-        return api.entries.create(change.workspace, change.body(capabilities.offersAllDay()))
+        return server.create(change.workspace, change.body(capabilities.offersAllDay()))
             .onFailure { if (it.leftNothingOnTheServer()) store.maybeSent(change, false) }
             .map { SentChange(change, it.id, it.toCached()) }
     }
@@ -100,9 +99,9 @@ internal class ChangeTries(
      * clears when another failure shows that the server deleted nothing. Once a try may have
      * reached the server, the mark stays whatever later tries get, so Undo goes through the server.
      */
-    suspend fun delete(api: TokklApi, change: PendingChange): ApiResult<SentChange>? {
+    suspend fun delete(server: EntrySends, change: PendingChange): ApiResult<SentChange>? {
         if (!store.maybeSent(change, true)) return null
-        return when (val result = api.entries.delete(change.workspace, EntryId(change.entryId))) {
+        return when (val result = server.delete(change.workspace, EntryId(change.entryId))) {
             is ApiResult.Success -> ApiResult.Success(SentChange(change, change.entryId, entry = null))
 
             is ApiResult.Failure -> when {
@@ -130,8 +129,8 @@ internal class ChangeTries(
      */
     private val PendingChange.workspace get() = WorkspaceId(workspaceId)
 
-    private suspend fun endBeforeALaterTimer(api: TokklApi, start: PendingChange): ApiResult<PendingChange> {
-        val running = api.entries.current().getOrElse { return it }?.toCached()
+    private suspend fun endBeforeALaterTimer(server: EntrySends, start: PendingChange): ApiResult<PendingChange> {
+        val running = server.current().getOrElse { return it }?.toCached()
         val later = running?.takeIf { it.stop == null && it.start.isAfter(start.start.truncatedTo(ChronoUnit.SECONDS)) }
         spans.ready()
         return ApiResult.Success(if (later == null) start else store.endBefore(start, later, spans::switched))

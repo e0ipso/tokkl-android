@@ -3,7 +3,6 @@ package com.github.e0ipso.tokkl.cache
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.HttpStatus
-import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.model.EntryId
 
 /** What the drain does with a refused change. */
@@ -36,7 +35,7 @@ internal sealed interface Refusal {
  * - A 400, and any other 4xx, is held for the user with the server's message.
  * - A 403, or a 401, pauses the whole queue and discards nothing.
  */
-internal suspend fun refusal(api: TokklApi, change: PendingChange, error: ApiError): Refusal {
+internal suspend fun refusal(server: EntrySends, change: PendingChange, error: ApiError): Refusal {
     if (error == ApiError.AuthFailed) return Refusal.SignInAgain
     val refused = error as? ApiError.UnexpectedStatus ?: return Refusal.Wait(error)
     val status = refused.status
@@ -48,9 +47,9 @@ internal suspend fun refusal(api: TokklApi, change: PendingChange, error: ApiErr
         status == CONFLICT && change.kind == ChangeKind.STOP && change.capturedStop == null -> Refusal.AlreadyDone
 
         change.kind == ChangeKind.STOP && change.capturedStop != null && status in setOf(CONFLICT, NOT_FOUND) ->
-            capturedStopRefusal(api, change, refused)
+            capturedStopRefusal(server, change, refused)
 
-        status == NOT_FOUND && change.kind != ChangeKind.CREATE -> missingEntryRefusal(api, change, refused)
+        status == NOT_FOUND && change.kind != ChangeKind.CREATE -> missingEntryRefusal(server, change, refused)
 
         else -> Refusal.Hold(refused.message)
     }
@@ -58,10 +57,10 @@ internal suspend fun refusal(api: TokklApi, change: PendingChange, error: ApiErr
 
 /** A captured Stop the server refused: done when the server holds that stop, held or waiting otherwise. */
 private suspend fun capturedStopRefusal(
-    api: TokklApi,
+    server: EntrySends,
     change: PendingChange,
     refused: ApiError.UnexpectedStatus,
-): Refusal = when (val found = stoppedOnServer(api, change)) {
+): Refusal = when (val found = stoppedOnServer(server, change)) {
     is ApiResult.Success -> if (found.value) Refusal.AlreadyDone else Refusal.Hold(refused.message)
 
     is ApiResult.Failure -> if ((found.error as? ApiError.Http)?.status in HttpStatus.CLIENT_ERRORS) {
@@ -73,10 +72,10 @@ private suspend fun capturedStopRefusal(
 
 /** A 404 for a change to an entry: gone when the server no longer has the entry. */
 private suspend fun missingEntryRefusal(
-    api: TokklApi,
+    server: EntrySends,
     change: PendingChange,
     refused: ApiError.UnexpectedStatus,
-): Refusal = when (val entry = entryOnServer(api, change.entryId)) {
+): Refusal = when (val entry = entryOnServer(server, change.entryId)) {
     is ApiResult.Success -> if (entry.value) Refusal.Hold(refused.message) else Refusal.EntryGone
 
     is ApiResult.Failure -> if (entry.error == ApiError.AuthFailed ||
@@ -92,8 +91,8 @@ private suspend fun missingEntryRefusal(
  * Whether the server has the entry [id], preserving a failed lookup's retry or sign-in outcome. A
  * 2xx the phone cannot read as an entry still means the server has it.
  */
-private suspend fun entryOnServer(api: TokklApi, id: Long): ApiResult<Boolean> =
-    when (val result = api.entries.get(EntryId(id))) {
+private suspend fun entryOnServer(server: EntrySends, id: Long): ApiResult<Boolean> =
+    when (val result = server.get(EntryId(id))) {
         is ApiResult.Success -> ApiResult.Success(true)
 
         is ApiResult.Failure -> when {

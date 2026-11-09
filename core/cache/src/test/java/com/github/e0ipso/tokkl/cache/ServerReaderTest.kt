@@ -13,6 +13,7 @@ import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.session.AccountRefresh
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
+import com.github.e0ipso.tokkl.session.ServerAccountReads
 import com.github.e0ipso.tokkl.session.durationFormat
 import com.github.e0ipso.tokkl.storage.InMemoryValueStore
 import com.github.e0ipso.tokkl.time.DurationFormat
@@ -303,14 +304,18 @@ class ServerReaderTest {
             """{"duration_format":"decimal","favorites":[{"description":"Standup","billable":true}]}""",
         )
         var snapshot: ServerSnapshot? = null
-        val settings = AccountSettingsSource(InMemoryValueStore(null), CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined)
+        val settings = AccountSettingsSource(
+            InMemoryValueStore(null),
+            CoroutineScope(Dispatchers.Unconfined),
+            Dispatchers.Unconfined,
+        )
         val refresh = AccountRefresh(
-            client = { client },
+            reads = { ServerAccountReads(client) },
             settings = settings,
             scope = CoroutineScope(Dispatchers.Unconfined),
             io = Dispatchers.Unconfined,
-            steps = { api, me, preferences ->
-                snapshot = readServerSnapshot(api, me, preferences, Clock.fixed(NOW, ZoneOffset.UTC), favorites = true)
+            steps = { reads, me, preferences ->
+                snapshot = readServerSnapshot(reads.api, me, preferences, Clock.fixed(NOW, ZoneOffset.UTC), favorites = true)
             },
         )
 

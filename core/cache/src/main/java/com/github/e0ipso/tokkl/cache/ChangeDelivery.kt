@@ -56,7 +56,7 @@ internal fun ChangeStore.readsEmpty(): Boolean = runCatching { first() == null }
  * so an expired token still asks for sign-in when `/me` fails on opening the app with a saved
  * queue.
  */
-internal class SendThenRefresh(private val sender: ChangeSender, private val account: AccountRefresh) :
+internal class SendThenRefresh(private val sender: ChangeSender, private val account: AccountRefresh<*>) :
     ForegroundReads {
 
     override fun refresh() {
