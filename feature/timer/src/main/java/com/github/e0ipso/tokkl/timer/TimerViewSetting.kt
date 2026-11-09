@@ -7,6 +7,7 @@ import com.github.e0ipso.tokkl.preferences.PreferenceCodec
 import com.github.e0ipso.tokkl.preferences.StoredPreference
 import com.github.e0ipso.tokkl.preferences.SyncedPreference
 import com.github.e0ipso.tokkl.session.AccountDataOwner
+import com.github.e0ipso.tokkl.session.CurrentAccount
 import com.github.e0ipso.tokkl.session.MePreferences
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import com.github.e0ipso.tokkl.storage.ClearableStore
@@ -31,12 +32,14 @@ typealias StoredTimerView = StoredPreference<TimerView>
  * @param store keeps the view on the phone. It loads from it as this is made, off the main thread.
  * @param client the signed-in account's API client, or null when signed out.
  * @param capabilities whether the server keeps Tokkl's preferences, read when a tap is sent.
+ * @param account the account each change belongs to: once sign-out has ended it, nothing more is stored or sent.
  * @param scope outlives every screen, so leaving the app does not cancel a write.
  */
 class TimerViewSetting(
     store: ClearableStore<StoredTimerView>,
     client: ApiClientProvider,
     private val capabilities: CapabilitiesSource,
+    account: CurrentAccount,
     scope: CoroutineScope,
 ) : AccountDataOwner,
     StartupLoad {
@@ -51,6 +54,7 @@ class TimerViewSetting(
     private val preference = SyncedPreference(
         store,
         client,
+        account,
         scope,
         default = TimerView.LIST,
         codec = object : PreferenceCodec<TimerView> {

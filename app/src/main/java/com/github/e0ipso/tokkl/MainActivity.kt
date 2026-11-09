@@ -38,7 +38,7 @@ import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
 import com.github.e0ipso.tokkl.notification.NotificationPermissionPrompt
 import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.platform.holdDrawingUntil
-import com.github.e0ipso.tokkl.session.AccountLifetime
+import com.github.e0ipso.tokkl.session.CurrentAccount
 import com.github.e0ipso.tokkl.storage.StartupLoads
 import com.github.e0ipso.tokkl.timer.TimerViewModel
 import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsRepository
@@ -55,7 +55,7 @@ class MainActivity : ComponentActivity() {
     private val io: CoroutineDispatcher by inject(IoDispatcher)
     private val features: FeatureNavigation by inject()
     private val pages: TopLevelPages by inject()
-    private val lifetime: AccountLifetime by inject()
+    private val account: CurrentAccount by inject()
     private val capabilities: CapabilitiesSource by inject()
     private val signIns: SignInRoutes by inject()
     private val loads: StartupLoads by inject()
@@ -105,7 +105,7 @@ class MainActivity : ComponentActivity() {
                     requests = requests,
                     features = features,
                     pages = pages,
-                    signOuts = lifetime.signOuts,
+                    signOuts = account.signOuts,
                     capabilities = capabilities.state,
                     signIns = signIns,
                     timerFrame = {

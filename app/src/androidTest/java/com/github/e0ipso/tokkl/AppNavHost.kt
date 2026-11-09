@@ -10,7 +10,7 @@ import com.github.e0ipso.tokkl.navhost.TokklNavHost
 import com.github.e0ipso.tokkl.navigation.FeatureNavigation
 import com.github.e0ipso.tokkl.navigation.LocalSignedInSession
 import com.github.e0ipso.tokkl.navigation.requestSerializers
-import com.github.e0ipso.tokkl.session.AccountLifetime
+import com.github.e0ipso.tokkl.session.CurrentAccount
 import com.github.e0ipso.tokkl.timer.TimerViewModel
 import kotlinx.coroutines.flow.StateFlow
 import org.koin.compose.viewmodel.koinViewModel
@@ -30,7 +30,7 @@ internal fun AppNavHost(
         requests = remember { NavigationRequests(SavedStateHandle(), requestSerializers(features.requests)) },
         features = features,
         pages = remember { koin.get() },
-        signOuts = remember { koin.get<AccountLifetime>().signOuts },
+        signOuts = remember { koin.get<CurrentAccount>().signOuts },
         capabilities = capabilities,
         signIns = remember { koin.get() },
         timerFrame = { koinViewModel<TimerViewModel>(viewModelStoreOwner = LocalSignedInSession.current).frame },

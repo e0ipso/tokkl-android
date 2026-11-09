@@ -21,7 +21,7 @@ val timerStateModule = module {
             entries = get(),
             capabilities = get(),
             refreshes = get(),
-            lifetime = get(),
+            account = get(),
             clock = get(),
             io = io(),
         )

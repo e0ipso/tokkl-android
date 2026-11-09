@@ -33,7 +33,7 @@ val reportsFeatureModule = module {
     }
 
     // The exports' account, which every sign-in and sign-out invalidates, deleting the files.
-    single { ExportAccount(get()) } binds arrayOf(AccountDataOwner::class, SignedInListener::class)
+    single { ExportFilesCleanup(get()) } binds arrayOf(AccountDataOwner::class, SignedInListener::class)
 
     // The tab and the filters, in the signed-in session's store, which the next visit opens on.
     viewModel { ReportChoices() }

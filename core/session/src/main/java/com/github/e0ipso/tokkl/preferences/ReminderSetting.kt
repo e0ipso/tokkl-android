@@ -3,7 +3,9 @@ package com.github.e0ipso.tokkl.preferences
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ReminderChange
+import com.github.e0ipso.tokkl.session.AccountContext
 import com.github.e0ipso.tokkl.session.AccountDataOwner
+import com.github.e0ipso.tokkl.session.CurrentAccount
 import com.github.e0ipso.tokkl.session.MePreferences
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import com.github.e0ipso.tokkl.storage.ClearableStore
@@ -37,12 +39,14 @@ data class StoredReminderPreferences(val preferences: ReminderPreferences, val u
 /**
  * Account preferences with the same immediate local change and refresh retry as Pomodoro defaults.
  * Capability comes from the two actual keys, not Tokkl's role: older Tokkl and Toggl use the phone.
- * Only these keys go to POST /me/preferences. A generation prevents an old send persisting after sign-out.
+ * Only these keys go to POST /me/preferences. Each change, refresh and send belongs to the account
+ * of [account] it began for, so an old send stores nothing once sign-out has ended that account.
  * The preferences load from [store] as this is made, in [scope], off the main thread.
  */
 class ReminderSetting(
     private val store: ClearableStore<StoredReminderPreferences>,
     private val client: ApiClientProvider,
+    private val account: CurrentAccount,
     private val scope: CoroutineScope,
 ) : AccountDataOwner,
     StartupLoad {
@@ -58,10 +62,6 @@ class ReminderSetting(
     private var shared = false
     private var unsent = false
     private var changed = false
-
-    /** Counts the sign-outs. Written under [lock]; [change] reads it as it is called. */
-    @Volatile
-    private var generation = 0L
 
     private val held = LoadedState(scope, ReminderPreferences()) {
         store.load()?.let { stored ->
@@ -93,27 +93,28 @@ class ReminderSetting(
 
     /** Shows [preferences] at once, once loaded, keeps them on the phone and sends them in the background. */
     fun change(preferences: ReminderPreferences): Job {
-        val expected = generation
+        val context = account.context.value
         return scope.launch(start = CoroutineStart.UNDISPATCHED) {
             ready()
             val current = lock.withLock {
                 // A sign-out came first: the change belonged to the account before.
-                if (generation != expected) return@withLock false
+                if (!context.isCurrent) return@withLock false
                 held.value = preferences.clamped()
                 unsent = shared
                 changed = true
                 true
             }
             if (!current) return@launch
-            persist(expected)
-            send(expected)
+            persist(context)
+            send(context)
         }
     }
 
     /** Receives the existing account refresh, without another GET. */
     suspend fun refreshed(preferences: MePreferences?, tokkl: Boolean): Job {
+        val context = account.context.value
         ready()
-        val expected = lock.withLock {
+        lock.withLock {
             val wasShared = shared
             if (!tokkl) {
                 shared = false
@@ -129,18 +130,20 @@ class ReminderSetting(
                 held.value = preferences.reminderPreferences()
             }
             changed = false
-            generation
         }
-        persist(expected)
-        return scope.launch { send(expected) }
+        persist(context)
+        return context.launchIn(scope) { send(context) }
     }
 
-    /** Goes back to the defaults, once a write on its way has landed, and keeps later writes off the disk. */
+    /**
+     * Goes back to the defaults, once a write on its way has landed. Signing out calls this once
+     * the account's context has ended, so no later write of the account's preferences reaches the
+     * disk.
+     */
     suspend fun forget() {
         ready()
         storing.withLock {
             lock.withLock {
-                generation++
                 held.value = ReminderPreferences()
                 shared = false
                 unsent = false
@@ -149,23 +152,23 @@ class ReminderSetting(
         }
     }
 
-    private suspend fun send(expected: Long) = sending.withLock {
+    private suspend fun send(context: AccountContext) = sending.withLock {
         val values = lock.withLock {
-            held.value.takeIf { expected == generation && unsent && shared }
+            held.value.takeIf { context.isCurrent && unsent && shared }
         } ?: return@withLock
         val api = client() ?: return@withLock
         val result = api.account.savePreferences(values.body())
         if (result is ApiResult.Success) {
             lock.withLock {
-                if (expected == generation && held.value == values) unsent = false
+                if (context.isCurrent && held.value == values) unsent = false
             }
         }
-        persist(expected)
+        persist(context)
     }
 
-    private suspend fun persist(expected: Long) = storing.withLock {
+    private suspend fun persist(context: AccountContext) = storing.withLock {
         val stored = lock.withLock {
-            StoredReminderPreferences(held.value, unsent, shared).takeIf { generation == expected }
+            StoredReminderPreferences(held.value, unsent, shared).takeIf { context.isCurrent }
         } ?: return@withLock
         try {
             store.save(stored)

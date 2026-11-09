@@ -16,6 +16,7 @@ import com.github.e0ipso.tokkl.platform.AppHook
 import com.github.e0ipso.tokkl.platform.CurrentWorkManager
 import com.github.e0ipso.tokkl.platform.collectDurably
 import com.github.e0ipso.tokkl.session.AccountDataOwner
+import com.github.e0ipso.tokkl.session.CurrentAccount
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -33,11 +34,8 @@ import kotlin.coroutines.CoroutineContext
  * [follow] schedules the check while the cache holds a running entry and cancels it once none
  * runs, so no work waits while no timer runs (section 7, Battery). This is the app's only
  * periodic work.
- *
- * @param results serializes each check's cache write with sign-out, which [cancelAndWait] forgets.
  */
-class RunningCheck(private val workManager: CurrentWorkManager, private val results: RunningCheckResults) :
-    AccountDataOwner {
+class RunningCheck(private val workManager: CurrentWorkManager) : AccountDataOwner {
 
     override val signOutPhase = SignOutPhase.STOP_WORK
 
@@ -75,7 +73,6 @@ class RunningCheck(private val workManager: CurrentWorkManager, private val resu
      */
     @WorkerThread
     fun cancelAndWait() {
-        results.forget()
         workManager.get().cancelUniqueWork(WORK_NAME).result.get()
     }
 
@@ -93,51 +90,31 @@ class RunningCheck(private val workManager: CurrentWorkManager, private val resu
 
 /**
  * Reads `GET /api/v9/me/time_entries/current` once and writes the answer to the cache that the
- * notification, the widget and the tile read, as [AccountCache.checkedRunning] describes. It
+ * notification, the widget and the tile read, as [CurrentEntryCache.checkedRunning] describes. It
  * sends nothing from the queue and refreshes nothing else. A failed request leaves the cache for
- * the next period, with no retry in between, so a failure adds no wakeup.
+ * the next period, with no retry in between, so a failure adds no wakeup. The answer is written
+ * only while the account the check began for is signed in: a synchronous request can finish
+ * after its worker is cancelled, and a reply for an account that has gone must never refill the
+ * cleared cache.
  */
 class RunningCheckWorker(
     context: Context,
     params: WorkerParameters,
     private val cache: CurrentEntryCache,
     private val session: ApiClientProvider,
-    private val results: RunningCheckResults,
+    private val account: CurrentAccount,
     private val io: CoroutineContext,
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result = withContext(io) {
-        val generation = results.generation()
+        val context = account.context.value
         val api = session() ?: return@withContext Result.success()
         val before = cache.runningCheckStart()
         val current = api.entries.current()
         if (current is ApiResult.Success) {
-            results.write(generation) { cache.checkedRunning(before, current.value?.toTimeEntry()) }
+            context.ifCurrent { cache.checkedRunning(before, current.value?.toTimeEntry()) }
         }
         Result.success()
-    }
-}
-
-/**
- * Serializes a check's cache write with sign-out. A synchronous request can finish after its
- * worker is cancelled; a reply from the forgotten session must never refill the cleared cache.
- */
-class RunningCheckResults {
-    private var generation = 0L
-
-    // A JVM lock, not a Mutex: WorkManager's threads and the sign-out call these without
-    // suspending.
-    @Synchronized
-    fun generation(): Long = generation
-
-    @Synchronized
-    fun forget() {
-        generation++
-    }
-
-    @Synchronized
-    fun write(expected: Long, apply: () -> Unit) {
-        if (generation == expected) apply()
     }
 }
 

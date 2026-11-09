@@ -3,6 +3,8 @@ package com.github.e0ipso.tokkl.preferences
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.PreferencesChange
+import com.github.e0ipso.tokkl.session.AccountContext
+import com.github.e0ipso.tokkl.session.CurrentAccount
 import com.github.e0ipso.tokkl.session.MePreferences
 import com.github.e0ipso.tokkl.storage.ClearableStore
 import com.github.e0ipso.tokkl.storage.LoadedState
@@ -47,6 +49,8 @@ interface PreferenceCodec<T : Any> {
  *
  * @param store keeps the value on the phone. It loads from it as this is made, off the main thread.
  * @param client the signed-in account's API client, or null when signed out.
+ * @param account the account each change, refresh and send belongs to: once its context has
+ *   ended, which sign-out does first, they show, store and send nothing more.
  * @param scope outlives every screen, so leaving the app does not cancel a write.
  * @param default the value before one is stored, and after [forget].
  * @param codec how the value reads from the server's preferences and posts back.
@@ -54,6 +58,7 @@ interface PreferenceCodec<T : Any> {
 class SyncedPreference<T : Any>(
     private val store: ClearableStore<StoredPreference<T>>,
     private val client: ApiClientProvider,
+    private val account: CurrentAccount,
     private val scope: CoroutineScope,
     private val default: T,
     private val codec: PreferenceCodec<T>,
@@ -64,13 +69,6 @@ class SyncedPreference<T : Any>(
 
     /** A change came after the last refresh, whose preferences may predate it. Guarded by [memory]. */
     private var changedSinceRefresh = false
-
-    /**
-     * Counts the sign-outs, so a change or write from before one shows and stores nothing after
-     * it. Written under [memory]; [change] reads it as it is called, on the main thread.
-     */
-    @Volatile
-    private var generation = 0L
 
     private val held = LoadedState(scope, default) {
         store.load()?.let { stored ->
@@ -104,21 +102,21 @@ class SyncedPreference<T : Any>(
      * once the value has loaded, as it has for every screen, it shows before this returns.
      */
     fun change(value: T, unsent: suspend () -> Boolean, sendIf: suspend () -> Boolean): Job {
-        val expected = generation
+        val context = account.context.value
         return scope.launch(start = CoroutineStart.UNDISPATCHED) {
             ready()
             val markUnsent = unsent()
             val current = memory.withLock {
                 // A sign-out came first: the change belonged to the account before.
-                if (generation != expected) return@withLock false
+                if (!context.isCurrent) return@withLock false
                 held.value = value
                 this@SyncedPreference.unsent = markUnsent
                 changedSinceRefresh = true
                 true
             }
             if (!current) return@launch
-            persist(expected)
-            if (sendIf()) send()
+            persist(context)
+            if (sendIf()) send(context)
         }
     }
 
@@ -128,8 +126,9 @@ class SyncedPreference<T : Any>(
      * the server's.
      */
     suspend fun refreshed(preferences: MePreferences?, keepsPreferences: Boolean) {
+        val context = account.context.value
         ready()
-        val (sendNow, expected) = memory.withLock {
+        val sendNow = memory.withLock {
             val changed = changedSinceRefresh
             changedSinceRefresh = false
             val sendNow = when {
@@ -148,16 +147,16 @@ class SyncedPreference<T : Any>(
                     false
                 }
             }
-            sendNow to generation
+            sendNow
         }
-        persist(expected)
-        if (sendNow) scope.launch { send() }
+        persist(context)
+        if (sendNow) context.launchIn(scope) { send(context) }
     }
 
     /**
-     * Goes back to [default] with nothing unsent, once a write on its way has landed, and keeps
-     * every later write of the account's value off the disk. Signing out calls this once the
-     * client is gone, so no send can succeed, and then deletes the stored value with [clear].
+     * Goes back to [default] with nothing unsent, once a write on its way has landed. Signing out
+     * calls this once the account's context has ended, so no later write of the account's value
+     * reaches the disk, and then deletes the stored value with [clear].
      */
     suspend fun forget() {
         ready()
@@ -166,7 +165,6 @@ class SyncedPreference<T : Any>(
                 held.value = default
                 unsent = false
                 changedSinceRefresh = false
-                generation++
             }
         }
     }
@@ -177,23 +175,25 @@ class SyncedPreference<T : Any>(
         store.clear()
     }
 
-    /** Posts the value on show while it is unsent. A failure leaves it unsent for the next refresh. */
-    private suspend fun send() = sending.withLock {
-        val (value, expected) = memory.withLock { held.value.takeIf { unsent } to generation }
-        if (value == null) return@withLock
+    /**
+     * Posts the value on show while it is unsent, for the account of [context]. A failure leaves
+     * it unsent for the next refresh.
+     */
+    private suspend fun send(context: AccountContext) = sending.withLock {
+        val value = memory.withLock { held.value.takeIf { unsent && context.isCurrent } } ?: return@withLock
         val api = client() ?: return@withLock
         val answer = api.account.savePreferences(codec.body(value))
         if (answer !is ApiResult.Success) return@withLock
         memory.withLock {
             // A change while the request ran has its own write queued.
-            if (generation == expected && held.value == value) unsent = false
+            if (context.isCurrent && held.value == value) unsent = false
         }
-        persist(expected)
+        persist(context)
     }
 
-    /** Writes the value on show, unless a sign-out came after [expected]. */
-    private suspend fun persist(expected: Long) = storing.withLock {
-        val stored = memory.withLock { StoredPreference(held.value, unsent).takeIf { generation == expected } }
+    /** Writes the value on show, while [context] is the account's. */
+    private suspend fun persist(context: AccountContext) = storing.withLock {
+        val stored = memory.withLock { StoredPreference(held.value, unsent).takeIf { context.isCurrent } }
             ?: return@withLock
         try {
             store.save(stored)

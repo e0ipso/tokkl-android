@@ -19,7 +19,7 @@ import com.github.e0ipso.tokkl.navigation.EntryFormOpenings
  * Lifecycle's own `rememberViewModelStoreProvider` clears its stores when its call leaves the
  * composition, but not when that happens while MainActivity is being made again. A sign-out that
  * finishes then would leave the old account's view models in MainActivity's store, so the stores
- * keep which of the account lifetime's sign-outs they came after.
+ * keep which of the account's finished sign-outs they came after.
  */
 internal class NavigationStores : ViewModel() {
 
@@ -35,7 +35,7 @@ internal class NavigationStores : ViewModel() {
     val entryOpenings = EntryFormOpenings()
 
     /**
-     * Tells the stores how many sign-outs have finished, as `AccountLifetime.signOuts` counts them. When
+     * Tells the stores how many sign-outs have finished, as `CurrentAccount.signOuts` counts them. When
      * one finished since the last call, also while MainActivity was being made again, the stores
      * drop every view model and this returns true.
      */

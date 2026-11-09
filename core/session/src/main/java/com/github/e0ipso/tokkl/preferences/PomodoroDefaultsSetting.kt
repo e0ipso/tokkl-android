@@ -4,6 +4,7 @@ import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.PomodoroDefaultsChange
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.session.AccountDataOwner
+import com.github.e0ipso.tokkl.session.CurrentAccount
 import com.github.e0ipso.tokkl.session.MePreferences
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import com.github.e0ipso.tokkl.storage.ClearableStore
@@ -62,12 +63,14 @@ typealias StoredPomodoroDefaults = StoredPreference<PomodoroDefaults>
  * @param store keeps the values on the phone. They load from it as this is made, off the main thread.
  * @param client the signed-in account's API client, or null when signed out.
  * @param capabilities whether the server keeps Tokkl's preferences.
+ * @param account the account each change belongs to: once sign-out has ended it, nothing more is stored or sent.
  * @param scope outlives every screen, so leaving the app does not cancel a write.
  */
 class PomodoroDefaultsSetting(
     store: ClearableStore<StoredPomodoroDefaults>,
     client: ApiClientProvider,
     private val capabilities: CapabilitiesSource,
+    account: CurrentAccount,
     scope: CoroutineScope,
 ) : AccountDataOwner,
     StartupLoad {
@@ -82,6 +85,7 @@ class PomodoroDefaultsSetting(
     private val preference = SyncedPreference(
         store,
         client,
+        account,
         scope,
         default = PomodoroDefaults.DEFAULT,
         codec = object : PreferenceCodec<PomodoroDefaults> {

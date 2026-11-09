@@ -5,9 +5,9 @@ import android.os.SystemClock
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.cache.CurrentEntryCache
-import com.github.e0ipso.tokkl.cache.RunningCheckResults
 import com.github.e0ipso.tokkl.cache.toTimeEntry
 import com.github.e0ipso.tokkl.platform.DefaultNetwork
+import com.github.e0ipso.tokkl.session.CurrentAccount
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
@@ -22,7 +22,7 @@ internal class TileRefresh(
     private val network: DefaultNetwork,
     private val session: ApiClientProvider,
     private val cache: CurrentEntryCache,
-    private val results: RunningCheckResults,
+    private val account: CurrentAccount,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
 ) {
@@ -30,7 +30,8 @@ internal class TileRefresh(
 
     fun onStartListening() {
         scope.launch(io) {
-            val generation = results.generation()
+            val context = account.context.value
+            val generation = context.number.toLong()
             val online = network.reachesInternet()
             if (!online) return@launch
             val api = session() ?: return@launch
@@ -40,8 +41,9 @@ internal class TileRefresh(
                 val before = cache.runningCheckStart()
                 val current = api.entries.current()
                 if (current is ApiResult.Success) {
-                    // Reuse the background check's sign-out, queued-change and newer-write guards.
-                    results.write(generation) { cache.checkedRunning(before, current.value?.toTimeEntry()) }
+                    // The background check's guards: only for the account the read began for, and
+                    // the cache's own for queued changes and newer writes.
+                    context.ifCurrent { cache.checkedRunning(before, current.value?.toTimeEntry()) }
                     succeeded = true
                 }
             } catch (_: SQLiteException) {
@@ -53,7 +55,7 @@ internal class TileRefresh(
     }
 }
 
-/** Monotonic milliseconds, shared across listening intervals and scoped to the account generation. */
+/** Monotonic milliseconds, shared across listening intervals and scoped to the account context's number. */
 internal class TileRefreshThrottle {
     private var accountGeneration = Long.MIN_VALUE
     private var inFlight = false

@@ -5,6 +5,7 @@ import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.api.TokklApi
+import com.github.e0ipso.tokkl.session.CurrentAccount
 import com.github.e0ipso.tokkl.session.MePreferences
 import com.github.e0ipso.tokkl.storage.InMemoryValueStore
 import kotlinx.coroutines.CoroutineScope
@@ -47,9 +48,12 @@ class ReminderSettingTest {
         testApi.stored = null
         testApi.trust = InMemoryServerTrust()
     }
+    private val account = CurrentAccount()
+
     private fun setting(initial: StoredReminderPreferences? = null) = ReminderSetting(
         InMemoryValueStore(initial) { saved += it },
         { client },
+        account,
         CoroutineScope(Dispatchers.Unconfined),
     )
     private fun prefs(body: String = """{"long_timer_reminder_enabled":true,"long_timer_reminder_hours":12}""") =
@@ -139,12 +143,15 @@ class ReminderSettingTest {
         val setting = ReminderSetting(
             InMemoryValueStore(null) { saved += it },
             { client },
+            account,
             CoroutineScope(Dispatchers.IO),
         )
         runBlocking { setting.refreshed(prefs(), true).join() }
         val job = setting.change(ReminderPreferences(false, 6))
         try {
             assertNotNull(server.takeRequest(10, TimeUnit.SECONDS))
+            // Sign-out ends the account's context before it forgets the setting.
+            account.end()
             setting.forget()
             val writes = saved.size
             release.countDown()

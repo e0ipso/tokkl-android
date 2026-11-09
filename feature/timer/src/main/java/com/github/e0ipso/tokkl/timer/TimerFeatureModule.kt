@@ -30,7 +30,7 @@ import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.platform.offlineIn
 import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
 import com.github.e0ipso.tokkl.session.AccountDataOwner
-import com.github.e0ipso.tokkl.session.AccountLifetime
+import com.github.e0ipso.tokkl.session.CurrentAccount
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.storage.StartupLoad
@@ -62,6 +62,7 @@ val timerFeatureModule = module {
             store = get<TimerViewStore>(),
             client = get<Session>(),
             capabilities = get(),
+            account = get(),
             scope = get(),
         )
     } binds arrayOf(AccountDataOwner::class, StartupLoad::class)
@@ -86,7 +87,7 @@ val timerFeatureModule = module {
             serverWeeks = get(),
             clock = get(),
             app = get(),
-            accounts = get<AccountLifetime>().accounts,
+            accounts = get<CurrentAccount>().context.map { it.number },
             scope = get<CoroutineScope>() + get<CoroutineDispatcher>(MainDispatcher),
             io = io(),
             computation = computation(),

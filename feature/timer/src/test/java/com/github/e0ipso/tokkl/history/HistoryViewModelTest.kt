@@ -75,7 +75,7 @@ class HistoryViewModelTest {
     private val scope = CoroutineScope(SupervisorJob() + mainDispatcher)
     private val reconnects = MutableSharedFlow<Unit>(extraBufferCapacity = 8)
 
-    /** The account lifetime's sign-ins. */
+    /** The number of the account context signed in now. */
     private val accounts = MutableStateFlow(1)
     private lateinit var entries: SessionEntries
     private lateinit var client: TokklApi

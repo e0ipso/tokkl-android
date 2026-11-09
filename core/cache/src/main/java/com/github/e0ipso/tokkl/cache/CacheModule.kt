@@ -83,10 +83,8 @@ val cacheModule = module {
         )
     } bind DeleteUndo::class
 
-    // The running entry's check every 15 minutes while a timer runs, and the guard that keeps a
-    // check's answer from landing after sign-out.
-    single { RunningCheckResults() }
-    single { RunningCheck(get(), get()) } bind AccountDataOwner::class
+    // The running entry's check every 15 minutes while a timer runs.
+    single { RunningCheck(get()) } bind AccountDataOwner::class
     single { RunningCheckHook(inject(), inject(), get(), io()) } bind AppHook::class
 
     // Refreshes the account, and with it the running entry and the cache, each time the app comes
@@ -112,7 +110,7 @@ val cacheModule = module {
             params = params.get(),
             cache = get(),
             session = get(),
-            results = get(),
+            account = get(),
             io = io(),
         )
     }

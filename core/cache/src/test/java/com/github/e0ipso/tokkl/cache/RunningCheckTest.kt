@@ -188,19 +188,6 @@ class RunningCheckTest {
         following.cancel()
     }
 
-    @Test
-    fun aReplyFromBeforeSignOutCannotRefillTheCache() {
-        val results = RunningCheckResults()
-        val beforeSignOut = results.generation()
-        var cached: String? = "old account"
-        results.forget()
-        cached = null
-        results.write(beforeSignOut) { cached = "late old reply" }
-        assertEquals(null, cached)
-        results.write(results.generation()) { cached = "new account" }
-        assertEquals("new account", cached)
-    }
-
     /** The writes for [server], with [now] the running entries and [cached] every row when the answer arrives. */
     private fun writes(
         before: List<TimeEntry>,

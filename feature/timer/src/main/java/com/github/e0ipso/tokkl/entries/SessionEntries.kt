@@ -59,7 +59,8 @@ import kotlin.coroutines.CoroutineContext
  * @param serverWeeks the calendar's weeks outside the cache, from the server. Runs on [io].
  * @param clock where today comes from, in the account's timezone.
  * @param app the app's trips to the background and back, and the network's returns.
- * @param accounts the account lifetime's sign-ins, each of which drops what the server sent.
+ * @param accounts the number of the account context signed in now. Each sign-in changes it,
+ *   which drops what the server sent.
  * @param scope the session's scope, on the main thread, where the loads start.
  * @param computation where the entries are merged.
  */

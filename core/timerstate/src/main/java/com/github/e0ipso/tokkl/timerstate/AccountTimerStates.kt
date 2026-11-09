@@ -5,8 +5,8 @@ import com.github.e0ipso.tokkl.cache.CurrentEntryCache
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.model.DiscardedPomodoro
 import com.github.e0ipso.tokkl.session.AccountDataOwner
-import com.github.e0ipso.tokkl.session.AccountLifetime
 import com.github.e0ipso.tokkl.session.AccountRefreshRequests
+import com.github.e0ipso.tokkl.session.CurrentAccount
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -37,7 +37,7 @@ private class AccountTimerState(val source: TimerStateSource, val account: Strin
 /**
  * The account's timer state from a Tokkl server with the timer API, which every timer request,
  * action and event feeds, and what every timer surface reads from it. Each account of the
- * [lifetime] gets its own, made on first use: the first one of the process from the stored state,
+ * [account] gets its own, made on first use: the first one of the process from the stored state,
  * a small file, and each one after a sign-in from nothing. Sign-out retires it. Take it once per
  * request or stream and give its answer to the same source: an answer kept for a retired source
  * changes nothing.
@@ -58,7 +58,7 @@ class AccountTimerStates(
     private val entries: CurrentEntryCache,
     private val capabilities: CapabilitiesSource,
     private val refreshes: AccountRefreshRequests,
-    private val lifetime: AccountLifetime,
+    private val account: CurrentAccount,
     private val clock: Clock,
     private val io: CoroutineContext,
 ) : AccountDataOwner,
@@ -70,12 +70,12 @@ class AccountTimerStates(
 
     override suspend fun forgetAccount() = current().source.retire()
 
-    /** The timer state of one account of the [lifetime], made on first use. */
+    /** The timer state of one account context of [account], made on first use. */
     private class ForAccount(val account: Int, val state: Lazy<AccountTimerState>)
 
     // A JVM lock, not a Mutex: current() is read from any thread without suspending.
     private val lock = Any()
-    private var forAccount = ForAccount(lifetime.accounts.value, lazy { newTimerState(restore = true) })
+    private var forAccount = ForAccount(account.context.value.number, lazy { newTimerState(restore = true) })
 
     override fun intake(): TimerStateIntake = current().source
 
@@ -96,7 +96,7 @@ class AccountTimerStates(
 
     /** The source and the account name of the account signed in now, read together. */
     private fun current(): AccountTimerState {
-        val account = lifetime.accounts.value
+        val account = account.context.value.number
         val state = synchronized(lock) {
             if (forAccount.account != account) forAccount = ForAccount(account, lazy { newTimerState(restore = false) })
             forAccount.state
@@ -108,7 +108,7 @@ class AccountTimerStates(
      * The signed-in account's timer state, and a new one after each sign-in. The first value
      * loads the stored state, so collect it off the main thread.
      */
-    private val states: Flow<AccountTimerState> = lifetime.accounts.map { current() }
+    private val states: Flow<AccountTimerState> = account.context.map { current() }
 
     /** The signed-in account's held timer state, or null without one. */
     val held: Flow<HeldTimerState?> = states.flatMapLatest { it.source.state }.flowOn(io)

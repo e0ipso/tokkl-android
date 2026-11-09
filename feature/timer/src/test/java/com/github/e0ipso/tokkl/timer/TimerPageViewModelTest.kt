@@ -10,6 +10,7 @@ import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.session.CurrentAccount
 import com.github.e0ipso.tokkl.session.capabilitiesOf
 import com.github.e0ipso.tokkl.storage.InMemoryValueStore
 import kotlinx.coroutines.CoroutineScope
@@ -41,6 +42,7 @@ class TimerPageViewModelTest {
         store = InMemoryValueStore(null),
         client = { null },
         capabilities = capabilitiesOf(Capabilities.NONE),
+        account = CurrentAccount(),
         scope = scope,
     )
     private val entries = MutableStateFlow(listOf(entry(1, "Code review", WEBSITE.id)))

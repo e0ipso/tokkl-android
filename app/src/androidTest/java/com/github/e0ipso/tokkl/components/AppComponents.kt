@@ -36,10 +36,10 @@ import com.github.e0ipso.tokkl.preferences.ReminderSetting
 import com.github.e0ipso.tokkl.reminder.ReminderSync
 import com.github.e0ipso.tokkl.reports.ReportsRoute
 import com.github.e0ipso.tokkl.reports.ReportsViewModel
-import com.github.e0ipso.tokkl.session.AccountLifetime
 import com.github.e0ipso.tokkl.session.AccountRefresh
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
+import com.github.e0ipso.tokkl.session.CurrentAccount
 import com.github.e0ipso.tokkl.session.SignOut
 import com.github.e0ipso.tokkl.settings.SignOutConfirmation
 import com.github.e0ipso.tokkl.signin.SessionWriter
@@ -125,7 +125,7 @@ val TokklApplication.testClock: TestClock get() = component<Clock>() as TestCloc
 /** Clears the timer state and begins a new account, as a sign-in does, so the next read makes a new source. */
 fun TokklApplication.renewTimerState() {
     component<AccountTimerStates>().clearForSignIn()
-    component<AccountLifetime>().begin()
+    component<CurrentAccount>().begin()
 }
 
 fun TokklApplication.followTimerSync() = runBlocking { component<TimerSyncFollower>().follow() }

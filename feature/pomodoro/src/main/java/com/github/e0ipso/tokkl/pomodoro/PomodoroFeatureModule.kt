@@ -46,6 +46,7 @@ val pomodoroFeatureModule = module {
             store = get<PomodoroDefaultsStore>(),
             client = get<Session>(),
             capabilities = get(),
+            account = get(),
             scope = get(),
         )
     } binds arrayOf(AccountDataOwner::class, StartupLoad::class)

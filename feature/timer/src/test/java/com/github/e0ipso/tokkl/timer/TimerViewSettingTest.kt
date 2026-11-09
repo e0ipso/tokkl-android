@@ -6,6 +6,7 @@ import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.model.Capabilities
+import com.github.e0ipso.tokkl.session.CurrentAccount
 import com.github.e0ipso.tokkl.session.MePreferences
 import com.github.e0ipso.tokkl.session.capabilitiesOf
 import com.github.e0ipso.tokkl.storage.InMemoryValueStore
@@ -167,6 +168,7 @@ class TimerViewSettingTest {
         store = InMemoryValueStore(initial) { saved += it },
         client = { client },
         capabilities = capabilitiesOf(Capabilities.NONE.copy(favorites = keepsTimerView)),
+        account = CurrentAccount(),
         scope = CoroutineScope(Dispatchers.Unconfined),
     )
 

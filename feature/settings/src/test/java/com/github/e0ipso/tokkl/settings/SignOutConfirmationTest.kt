@@ -1,7 +1,7 @@
 package com.github.e0ipso.tokkl.settings
 
 import com.github.e0ipso.tokkl.session.AccountDataOwner
-import com.github.e0ipso.tokkl.session.AccountLifetime
+import com.github.e0ipso.tokkl.session.CurrentAccount
 import com.github.e0ipso.tokkl.session.SignOut
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import kotlinx.coroutines.CompletableDeferred
@@ -33,7 +33,7 @@ class SignOutConfirmationTest {
         }
         return SignOutConfirmation(
             unsent = { if (countFails) throw IllegalStateException("disk I/O error") else unsent },
-            signOut = SignOut(listOf(step), AccountLifetime(), Dispatchers.Unconfined),
+            signOut = SignOut(listOf(step), CurrentAccount(), Dispatchers.Unconfined),
             scope = CoroutineScope(Dispatchers.Unconfined),
         )
     }

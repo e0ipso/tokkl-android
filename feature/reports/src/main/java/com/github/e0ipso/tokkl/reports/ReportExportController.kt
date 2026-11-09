@@ -7,6 +7,8 @@ import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.capabilities.csvEndpointAbsent
+import com.github.e0ipso.tokkl.session.AccountContext
+import com.github.e0ipso.tokkl.session.CurrentAccount
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -30,11 +32,15 @@ sealed interface ReportExportState {
     data class Failed(val error: ApiError? = null, val noTargets: Boolean = false) : ReportExportState
 }
 
-/** One export at a time, independent of report pagination and protected by an account lease. */
+/**
+ * One export at a time, independent of report pagination. Each export belongs to the account
+ * context it began in: the end of that account cancels its download, and from then on it
+ * publishes, shows and shares nothing.
+ */
 class ReportExportController(
     private val client: ApiClientProvider,
     private val files: ReportExportFiles,
-    private val account: ExportAccount,
+    private val account: CurrentAccount,
     private val capabilities: CapabilitiesSource,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
@@ -43,13 +49,33 @@ class ReportExportController(
     val state: StateFlow<ReportExportState> = mutableState.asStateFlow()
     private var job: Job? = null
     private var cancellation: ApiCallCancellation? = null
-    private var lease: ExportAccount.Lease? = null
+    private var lease: ExportLease? = null
+
+    /**
+     * One export's hold on the account context it began in, until [close]. [cancel] runs once that
+     * account ends.
+     */
+    private class ExportLease(private val context: AccountContext, cancel: () -> Unit) {
+        private val ending = context.onEnd(cancel)
+        private var closed = false
+
+        // A JVM lock, not a Mutex: the export runs its step inside the lease without suspending,
+        // on the IO and main threads, and no end of the account may come in between.
+        @Synchronized
+        fun <T> current(action: () -> T): T? = if (closed) null else context.ifCurrent(action)
+
+        @Synchronized
+        fun close() {
+            closed = true
+            ending.dispose()
+        }
+    }
 
     /** Main thread only. Failed attempts may be retried, but pending exports cannot be duplicated. */
     fun start(request: ReportCsvRequest) {
         if (state.value !is ReportExportState.Idle && state.value !is ReportExportState.Failed) return
         val cancellation = ApiCallCancellation()
-        val lease = account.open { cancellation.cancel() }
+        val lease = ExportLease(account.context.value) { cancellation.cancel() }
         this.cancellation = cancellation
         this.lease = lease
         mutableState.value = ReportExportState.Preparing
@@ -91,7 +117,7 @@ class ReportExportController(
      */
     private suspend fun download(
         request: ReportCsvRequest,
-        lease: ExportAccount.Lease,
+        lease: ExportLease,
         cancellation: ApiCallCancellation,
         attempt: AttemptFiles,
     ): ReportExportState {
@@ -115,7 +141,7 @@ class ReportExportController(
         }
         return when (answer) {
             is ApiResult.Failure -> {
-                // Only for the account the export began with: sign-out forgets the flags after it ends the lease.
+                // Only for the account the export began with: sign-out forgets the flags after it ends that account.
                 if (answer.error.csvEndpointAbsent() && lease.current { true } == true) {
                     capabilities.csvMissing(request.kind)
                 }
@@ -132,7 +158,7 @@ class ReportExportController(
     }
 
     /** Lets go of [lease] once its export is over and nothing keeps its file. */
-    private fun release(lease: ExportAccount.Lease) {
+    private fun release(lease: ExportLease) {
         lease.close()
         if (this.lease === lease) {
             this.lease = null

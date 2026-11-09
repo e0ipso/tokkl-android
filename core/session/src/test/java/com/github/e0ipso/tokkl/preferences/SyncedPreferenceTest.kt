@@ -6,6 +6,7 @@ import com.github.e0ipso.tokkl.api.PreferencesChange
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.api.TimerViewChange
+import com.github.e0ipso.tokkl.session.CurrentAccount
 import com.github.e0ipso.tokkl.session.MePreferences
 import com.github.e0ipso.tokkl.storage.ClearableStore
 import kotlinx.coroutines.CompletableDeferred
@@ -31,6 +32,7 @@ class SyncedPreferenceTest {
 
     private val scheduler = TestCoroutineScheduler()
     private val scope = CoroutineScope(StandardTestDispatcher(scheduler))
+    private val account = CurrentAccount()
 
     @Test
     fun signOutDeletesTheFileAfterAWriteInFlight() {
@@ -48,15 +50,12 @@ class SyncedPreferenceTest {
                 ops += "clear"
             }
         }
-        val preference = SyncedPreference(store, { null }, scope, default = 0, codec = Codec)
+        val preference = SyncedPreference(store, { null }, account, scope, default = 0, codec = Codec)
         scheduler.runCurrent()
 
         preference.change(5, unsent = { false }, sendIf = { false })
         scheduler.runCurrent()
-        scope.launch {
-            preference.forget()
-            preference.clear()
-        }
+        scope.launch { signOut(preference) }
         scheduler.runCurrent()
         assertEquals("sign-out waits for the write", emptyList<String>(), ops)
         release.complete(Unit)
@@ -80,16 +79,13 @@ class SyncedPreferenceTest {
                 ops += "clear"
             }
         }
-        val preference = SyncedPreference(store, { null }, scope, default = 0, codec = Codec)
+        val preference = SyncedPreference(store, { null }, account, scope, default = 0, codec = Codec)
         val delayed = CompletableDeferred<Boolean>()
         scheduler.runCurrent()
 
         // The change waits for its unsent flag, as for the capabilities, while sign-out runs.
         preference.change(5, unsent = { delayed.await() }, sendIf = { false })
-        scope.launch {
-            preference.forget()
-            preference.clear()
-        }
+        scope.launch { signOut(preference) }
         scheduler.runCurrent()
         delayed.complete(false)
         scheduler.runCurrent()
@@ -127,7 +123,7 @@ class SyncedPreferenceTest {
                     ops += "clear"
                 }
             }
-            val preference = SyncedPreference(store, { api }, CoroutineScope(Dispatchers.IO), default = 0, codec = Sent)
+            val preference = SyncedPreference(store, { api }, account, CoroutineScope(Dispatchers.IO), default = 0, codec = Sent)
             runBlocking { preference.ready() }
 
             val change = preference.change(5, unsent = { true }, sendIf = { true })
@@ -144,8 +140,12 @@ class SyncedPreferenceTest {
         }
     }
 
-    /** What sign-out does to one synced preference: forgets it, then deletes its file. */
+    /**
+     * What sign-out does to one synced preference: ends the account's context first, then forgets
+     * the preference and deletes its file.
+     */
     private suspend fun signOut(preference: SyncedPreference<Int>) {
+        account.end()
         preference.forget()
         preference.clear()
     }

@@ -22,7 +22,7 @@ val signInFeatureModule = module {
         AccountSessionWriter(
             accountSettings = get(),
             timerStates = get(),
-            lifetime = get(),
+            account = get(),
             session = get(),
             signedIn = getAll(),
             sender = get(),

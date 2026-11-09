@@ -7,6 +7,7 @@ import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.model.Capabilities
+import com.github.e0ipso.tokkl.session.CurrentAccount
 import com.github.e0ipso.tokkl.session.MePreferences
 import com.github.e0ipso.tokkl.storage.InMemoryValueStore
 import kotlinx.coroutines.CoroutineScope
@@ -249,6 +250,7 @@ class PomodoroDefaultsSettingTest {
                 InMemoryValueStore(Capabilities.NONE.copy(favorites = keepsPreferences)),
                 CoroutineScope(Dispatchers.Unconfined),
             ),
+            account = CurrentAccount(),
             scope = CoroutineScope(Dispatchers.Unconfined),
         )
 
