@@ -1,7 +1,7 @@
 package com.github.e0ipso.tokkl.reports
 
 import com.github.e0ipso.tokkl.api.ApiClientProvider
-import com.github.e0ipso.tokkl.catalog.SignedInApi
+import com.github.e0ipso.tokkl.session.SignedInApi
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.ZoneId

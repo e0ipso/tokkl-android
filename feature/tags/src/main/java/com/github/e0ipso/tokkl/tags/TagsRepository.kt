@@ -4,10 +4,11 @@ import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.map
 import com.github.e0ipso.tokkl.catalog.CatalogRepository
-import com.github.e0ipso.tokkl.catalog.SignedInApi
+import com.github.e0ipso.tokkl.catalog.workspace
 import com.github.e0ipso.tokkl.model.Tag
 import com.github.e0ipso.tokkl.model.TagId
 import com.github.e0ipso.tokkl.model.WorkspaceId
+import com.github.e0ipso.tokkl.session.SignedInApi
 
 /**
  * The workspace's tags, for the tags page. [ServerTagsRepository] reads and changes them on the

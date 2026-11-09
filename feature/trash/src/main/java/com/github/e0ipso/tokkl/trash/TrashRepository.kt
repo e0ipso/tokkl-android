@@ -3,8 +3,8 @@ package com.github.e0ipso.tokkl.trash
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TrashEntry
-import com.github.e0ipso.tokkl.catalog.SignedInApi
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.session.SignedInApi
 
 /**
  * The account's trash on a Tokkl server, for the trash page. [ServerTrashRepository] sends the

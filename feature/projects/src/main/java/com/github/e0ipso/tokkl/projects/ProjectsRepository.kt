@@ -5,10 +5,11 @@ import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.getOrElse
 import com.github.e0ipso.tokkl.api.map
 import com.github.e0ipso.tokkl.catalog.CatalogRepository
-import com.github.e0ipso.tokkl.catalog.SignedInApi
+import com.github.e0ipso.tokkl.catalog.workspace
 import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.model.TaskId
 import com.github.e0ipso.tokkl.model.WorkspaceId
+import com.github.e0ipso.tokkl.session.SignedInApi
 
 /** The workspace's projects on the server, for the projects page. */
 class ProjectsRepository(client: ApiClientProvider) : CatalogRepository<ProjectsData> {

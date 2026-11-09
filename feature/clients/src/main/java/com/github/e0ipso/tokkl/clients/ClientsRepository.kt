@@ -5,9 +5,10 @@ import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.getOrElse
 import com.github.e0ipso.tokkl.api.map
 import com.github.e0ipso.tokkl.catalog.CatalogRepository
-import com.github.e0ipso.tokkl.catalog.SignedInApi
+import com.github.e0ipso.tokkl.catalog.workspace
 import com.github.e0ipso.tokkl.model.ClientId
 import com.github.e0ipso.tokkl.model.WorkspaceId
+import com.github.e0ipso.tokkl.session.SignedInApi
 
 /** The workspace's clients on the server, for the clients page. */
 class ClientsRepository(client: ApiClientProvider) : CatalogRepository<ClientsData> {

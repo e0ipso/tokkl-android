@@ -11,7 +11,6 @@ dependencies {
     implementation(project(":core:platform"))
     implementation(project(":core:session"))
     implementation(project(":core:cache"))
-    implementation(project(":core:catalog"))
     implementation(project(":core:navigation"))
     implementation(libs.androidx.activity.compose)
 
