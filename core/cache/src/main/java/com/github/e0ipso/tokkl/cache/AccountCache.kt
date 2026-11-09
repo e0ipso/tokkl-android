@@ -67,9 +67,11 @@ class AccountCache(private val database: CacheDatabase, private val io: Coroutin
 
     /**
      * Replaces the cached favorites with [favorites], in the user's order, once the server has
-     * stored them. Writes on [io].
+     * stored them. Blocks on the disk, so a caller can hold sign-out back until it returns
+     * ([com.github.e0ipso.tokkl.session.AccountContext.ifCurrent]): call it off the main thread.
      */
-    suspend fun replaceFavorites(favorites: List<Favorite>) = withContext(io) {
+    @WorkerThread
+    fun replaceFavorites(favorites: List<Favorite>) {
         dao.replaceFavorites(
             favorites.mapIndexed { position, favorite -> favorite.copy(position = position).toCached() },
         )

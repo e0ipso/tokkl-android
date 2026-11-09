@@ -73,6 +73,7 @@ val timerFeatureModule = module {
     single<FavoritesStore> {
         FavoritesServer(
             client = get<Session>(),
+            account = get(),
             cacheFavorites = get<AccountCache>()::replaceFavorites,
             scope = get(),
             io = io(),
