@@ -13,9 +13,11 @@ import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.model.TaskId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.platform.CurrentWorkManager
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.timernotice.sendTimerAction
+import com.github.e0ipso.tokkl.timerstate.CurrentTimerState
 import com.github.e0ipso.tokkl.timerstate.TimerSurfaceAction
 import com.github.e0ipso.tokkl.timerstate.TimerSurfaceActions
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
@@ -26,7 +28,8 @@ import org.koin.core.component.get
  * The widget's Start and its timer templates (docs/PRD.md N3). It starts a timer on the phone
  * and queues the change, as Start in the app does, without opening the app or waiting for the network. A
  * running entry stops at the new one's start. The start goes in the account's default workspace,
- * which the phone keeps, so it works offline.
+ * which the phone keeps, so it works offline. Each carries the account the widget was drawn for,
+ * as Stop, Pause and Resume do, and starts nothing in another one.
  *
  * Glance's own receiver runs it, which is not exported: only the widget's PendingIntents reach it.
  */
@@ -35,14 +38,38 @@ class StartTimerAction :
     KoinComponent {
 
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
-        // Signed out since the widget was drawn: nothing to start in.
-        val workspaceId = get<AccountSettingsSource>().current()?.defaultWorkspaceId ?: return
+        val start = WidgetStart(parameters[ACCOUNT].orEmpty(), parameters.fields())
+        val queue = get<ChangeQueue>()
         try {
-            get<ChangeQueue>().start(workspaceId, parameters.fields())
+            start.run(
+                account = get<CurrentTimerState>().account(),
+                workspaceId = get<AccountSettingsSource>().current()?.defaultWorkspaceId,
+            ) { workspaceId, fields -> queue.start(workspaceId, fields) }
         } catch (_: SQLiteException) {
             // The disk refused the change. Nothing starts, and the widget stays as it was.
         }
     }
+}
+
+/** A Start or a template's start, with the [account] the widget drew it for and the [fields] it starts. */
+internal data class WidgetStart(val account: String, val fields: EntryFields)
+
+/**
+ * Queues this start in [workspaceId], the default workspace of the account signed in now, whose
+ * timer controls carry the name [account], unless the widget drew it for another account, as a
+ * template kept from before a sign-out, or for none, as a widget an older version drew. Returns
+ * whether it queued it.
+ */
+internal suspend fun WidgetStart.run(
+    account: String,
+    workspaceId: WorkspaceId?,
+    queue: suspend (WorkspaceId, EntryFields) -> Unit,
+): Boolean {
+    if (this.account != account) return false
+    // Signed out since the widget was drawn: nothing to start in.
+    workspaceId ?: return false
+    queue(workspaceId, fields)
+    return true
 }
 
 /**
@@ -101,8 +128,12 @@ private suspend fun KoinComponent.tapTimer(action: TimerSurfaceAction, parameter
     }
 }
 
-/** Starts a timer with [fields], the empty ones for Start and a template's for that template. */
-fun startTimer(fields: EntryFields = EntryFields()): Action = actionRunCallback<StartTimerAction>(fields.toParameters())
+/**
+ * Starts a timer with [fields], the empty ones for Start and a template's for that template, for
+ * [account], the account the widget was drawn for.
+ */
+fun startTimer(account: String, fields: EntryFields = EntryFields()): Action =
+    actionRunCallback<StartTimerAction>(fields.toParameters(account))
 
 /** Stops what [target] shows: the running entry or the paused timer. */
 fun stopTimer(target: TimerTarget): Action = actionRunCallback<StopTimerAction>(target.toParameters())
@@ -130,8 +161,9 @@ private fun ActionParameters.target(): TimerTarget = TimerTarget.server(
  * The fields as the PendingIntent carries them. Glance puts each parameter in the intent's
  * extras, so an unset project or task is left out rather than null.
  */
-private fun EntryFields.toParameters(): ActionParameters {
+private fun EntryFields.toParameters(account: String): ActionParameters {
     val pairs = buildList {
+        add(ACCOUNT to account)
         add(DESCRIPTION to description)
         projectId?.let { add(PROJECT_ID to it.value) }
         taskId?.let { add(TASK_ID to it.value) }

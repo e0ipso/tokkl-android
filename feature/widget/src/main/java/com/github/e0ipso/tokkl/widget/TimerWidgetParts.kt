@@ -71,7 +71,7 @@ internal fun PrimaryControl(context: Context, state: WidgetState.Ready, size: Fl
         else -> Control(
             context.getString(R.string.widget_start_description),
             UiR.drawable.ic_play,
-            startTimer(),
+            startTimer(state.account),
             size,
             PrimaryFill,
             OnPrimaryFill,
@@ -329,7 +329,13 @@ internal fun ProjectRow(
 }
 
 @Composable
-internal fun TemplateChips(context: Context, favorites: List<WidgetFavorite>, width: Float, scale: Float) {
+internal fun TemplateChips(
+    context: Context,
+    account: String,
+    favorites: List<WidgetFavorite>,
+    width: Float,
+    scale: Float,
+) {
     val count = minOf(favorites.size, (width / (96 * scale)).toInt().coerceAtLeast(1))
     Row(GlanceModifier.fillMaxWidth().height(48.dp), verticalAlignment = Alignment.CenterVertically) {
         favorites.take(count).forEachIndexed { index, favorite ->
@@ -360,7 +366,7 @@ internal fun TemplateChips(context: Context, favorites: List<WidgetFavorite>, wi
                     colorFilter = ColorFilter.tint(GlanceTheme.colors.surfaceVariant),
                 )
                     .clickable(
-                        startTimer(favorite.fields),
+                        startTimer(account, favorite.fields),
                     ).padding(
                         horizontal = 8.dp,
                     ).semantics { contentDescription = label },

@@ -348,6 +348,6 @@ private fun ColumnScope.TimerCard(context: Context, state: WidgetState.Ready, ki
     }
     if (templates) {
         Spacer(GlanceModifier.defaultWeight())
-        TemplateChips(context, state.favorites, width, scale)
+        TemplateChips(context, state.account, state.favorites, width, scale)
     }
 }

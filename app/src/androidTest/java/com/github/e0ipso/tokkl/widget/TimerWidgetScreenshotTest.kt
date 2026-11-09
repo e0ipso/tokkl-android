@@ -145,7 +145,7 @@ abstract class TimerWidgetScreenshotTest(private val dark: Boolean, private val 
                 ),
                 "Widget mock-ups", "Tokkl for Android", "Design", start, 3600, target, true, "#0b83d9",
             )
-        val ready = WidgetState.Ready(running, favorites, day = day)
+        val ready = WidgetState.Ready(running, favorites, day = day, account = "account")
         return listOf(
             "running" to ready,
             "paused" to ready.copy(

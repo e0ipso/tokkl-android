@@ -40,12 +40,15 @@ sealed interface WidgetState {
      * @param favorites in the user's order, empty when the server keeps no favorites.
      * @param paused the paused timer (docs/PRD.md T1), null unless the server's pause chain is paused.
      * @param day the cached account-local day, null when the account's zone cannot be resolved.
+     * @param account the name the signed-in account's timer controls carry, which Start and the
+     *   templates carry too.
      */
     data class Ready(
         val running: WidgetRunning?,
         val favorites: List<WidgetFavorite>,
         val paused: WidgetPaused? = null,
         val day: WidgetDayReport? = null,
+        val account: String,
     ) : WidgetState
 }
 
@@ -128,13 +131,15 @@ data class WidgetDayProject(
 
 /**
  * The widget for an account whose default workspace is [workspaceId], null when the phone has no
- * account, with what the timer [controls] show and the cached [favorites]. [favoritesAvailable]
+ * account, and whose timer controls carry the name [account], with what the timer [controls] show
+ * and the cached [favorites]. [favoritesAvailable]
  * is the favorites capability: without it, as on Toggl Track, the widget shows none.
  * [entries], [settings], [now] and [serverIdOf] supply the day report using the Timer page's
  * start-day rule. The clock snapshot selects the day; it is not part of the redraw key.
  */
 fun widgetState(
     workspaceId: WorkspaceId?,
+    account: String,
     controls: TimerControls,
     favorites: List<Favorite>,
     favoritesAvailable: Boolean,
@@ -182,7 +187,7 @@ fun widgetState(
         }
     }
     val day = settings?.let { dayReport(it, entries, projects, now, serverIdOf) }
-    return WidgetState.Ready(shown, starts, paused, day)
+    return WidgetState.Ready(shown, starts, paused, day, account)
 }
 
 /** The day report of [settings]' account for the day [now] falls on, or null without its time zone. */

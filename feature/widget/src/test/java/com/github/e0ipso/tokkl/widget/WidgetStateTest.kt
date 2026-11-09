@@ -100,6 +100,7 @@ class WidgetStateTest {
         serverIdOf: Map<LocalEntryId, EntryId> = emptyMap(),
     ) = widgetState(
         workspaceId,
+        ServerTimerStates.ACCOUNT,
         ServerTimerStates.controls(
             entry,
             held,

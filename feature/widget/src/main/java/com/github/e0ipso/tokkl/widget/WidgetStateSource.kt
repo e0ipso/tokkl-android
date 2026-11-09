@@ -27,6 +27,8 @@ import kotlin.coroutines.CoroutineContext
  * page's day rule. App opens and the existing running check reread the day even offline or
  * when an unchanged current entry produces no Room write. No widget work is scheduled.
  *
+ * @param account the name the signed-in account's timer controls carry, read with each state.
+ *   A sign-in changes [timerControls], so the state reads the new name.
  * @param clock the clock read on each widget event.
  */
 class WidgetStateSource(
@@ -35,6 +37,7 @@ class WidgetStateSource(
     accountSettings: Flow<AccountSettings?>,
     capabilities: Flow<Capabilities>,
     timerControls: Flow<TimerControls>,
+    account: () -> String,
     workManager: CurrentWorkManager,
     clock: Clock,
     io: CoroutineContext,
@@ -80,7 +83,7 @@ class WidgetStateSource(
         ) { settings, flags, controls, favorites, (projects, tasks, history) ->
             val (entries, mappings) = history
             widgetState(
-                settings?.defaultWorkspaceId, controls, favorites, flags.favorites, projects, tasks,
+                settings?.defaultWorkspaceId, account(), controls, favorites, flags.favorites, projects, tasks,
                 entries = entries, settings = settings, now = clock.instant(), serverIdOf = mappings,
             )
         }.flowOn(io).distinctUntilChanged()
