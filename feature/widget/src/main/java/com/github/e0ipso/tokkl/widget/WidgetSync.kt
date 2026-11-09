@@ -1,22 +1,19 @@
 package com.github.e0ipso.tokkl.widget
 
 import android.content.Context
-import android.database.sqlite.SQLiteException
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.updateAll
 import com.github.e0ipso.tokkl.platform.AppHook
+import com.github.e0ipso.tokkl.platform.collectDurably
 import com.github.e0ipso.tokkl.storage.PreferencesFile
 import com.github.e0ipso.tokkl.storage.ValueStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.launch
 import java.io.IOException
 import kotlin.coroutines.CoroutineContext
@@ -32,10 +29,9 @@ import kotlin.coroutines.CoroutineContext
  * Nothing here schedules work or wakes the phone: the widget's clock is a Chronometer that the
  * launcher ticks, and the widget sets no update period.
  *
- * The sync lives as long as the process. A read of the state or a draw that the disk or the
- * database refuses does not end it: it waits, from [FIRST_RETRY_MS] doubling up to
- * [LAST_RETRY_MS], and tries again, and the newest key waits meanwhile. Any other failure, and
- * cancellation, still ends it.
+ * The sync lives as long as the process. A failed read of the state or a failed draw does not end
+ * it: it reads the state again after a wait, as [collectDurably] does, and the newest key waits
+ * meanwhile.
  *
  * @param keys keys of what one widget provider shows. Collected on [io], since they read the disk.
  * @param shown the key of what the widget last showed, null for none.
@@ -52,17 +48,9 @@ class WidgetSync(
     /** Follows the phone's state until the scope ends. Call once, at process start. */
     fun start(): Job = scope.launch(io) { follow() }
 
-    /** Follows the phone's state until it ends, reading it again after a failed read. */
+    /** Follows the phone's state until it ends, reading it again after a failed read or draw. */
     suspend fun follow() {
-        keys
-            .retryWhen { failure, attempt ->
-                val again = failure.isStorageFailure()
-                if (again) delay(retryDelay(attempt))
-                again
-            }
-            .distinctUntilChanged()
-            .conflate()
-            .collect(::applyUntilDone)
+        keys.distinctUntilChanged().collectDurably("WidgetSync", action = ::apply)
     }
 
     /** Updates the widgets unless they already show what [key] stands for. */
@@ -74,34 +62,6 @@ class WidgetSync(
         } catch (_: IOException) {
             // The widgets are right. A new process draws them once more, which costs nothing else.
         }
-    }
-
-    /** [apply], again after each failure of the disk or the database until it goes through. */
-    private suspend fun applyUntilDone(key: String) {
-        var attempt = 0L
-        while (true) {
-            try {
-                apply(key)
-                return
-            } catch (_: IOException) {
-                delay(retryDelay(attempt++))
-            } catch (_: SQLiteException) {
-                delay(retryDelay(attempt++))
-            }
-        }
-    }
-
-    private companion object {
-        const val FIRST_RETRY_MS = 1_000L
-        const val LAST_RETRY_MS = 120_000L
-        const val DOUBLINGS = 7L
-
-        /** The wait after failure [attempt], counted from 0: one second, doubling up to two minutes. */
-        fun retryDelay(attempt: Long): Long =
-            minOf(LAST_RETRY_MS, FIRST_RETRY_MS shl attempt.coerceAtMost(DOUBLINGS).toInt())
-
-        /** The failures of the disk and the database, after which a read or a draw can go through later. */
-        fun Throwable.isStorageFailure(): Boolean = this is IOException || this is SQLiteException
     }
 }
 
