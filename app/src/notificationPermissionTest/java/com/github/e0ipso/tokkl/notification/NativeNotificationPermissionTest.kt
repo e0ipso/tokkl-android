@@ -34,6 +34,7 @@ import com.github.e0ipso.tokkl.components.sessionViewModels
 import com.github.e0ipso.tokkl.feature.notification.R
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timer.TimerViewModel
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -138,7 +139,8 @@ class NativeNotificationPermissionTest {
         // The system question remains unanswered: starting the timer must not wait for consent.
         runBlocking { withTimeout(TIMEOUT_MS) { app.cache.running.first { it != null } } }
         scenario.onActivity { activity ->
-            val starts = sessionViewModels(activity)[TimerViewModel::class.java].starts.replayCache.size
+            val frame = sessionViewModels(activity)[TimerViewModel::class.java].frame
+            val starts = (frame.starts as SharedFlow<Unit>).replayCache.size
             println(
                 "Native permission start: lifecycle=${activity.lifecycle.currentState}, events=$starts, permission=${activity.checkSelfPermission(
                     Manifest.permission.POST_NOTIFICATIONS,
