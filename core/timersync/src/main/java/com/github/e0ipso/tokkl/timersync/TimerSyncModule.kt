@@ -8,6 +8,7 @@ import com.github.e0ipso.tokkl.session.AccountDataOwner
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.plus
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -21,9 +22,6 @@ val timerSyncModule = module {
     single {
         TimerEventConnections(
             session = get(),
-            timerStates = get(),
-            sender = get(),
-            follower = inject(),
             scope = CoroutineScope(SupervisorJob() + get<CoroutineDispatcher>(DefaultDispatcher)),
             io = io(),
         )
@@ -47,6 +45,8 @@ val timerSyncModule = module {
     }
 
     single<ServiceStart> { TimerSyncServiceStart(androidContext()) }
+    // A refused credential on the stream pauses the queue, as the queue's own refusal does.
+    single<SignInRefusal> { PauseQueueOnRefusal(get()) }
     single {
         TimerSyncFollower(
             startService = get(),
@@ -56,6 +56,8 @@ val timerSyncModule = module {
             timerApi = get(),
             signInNeeded = get<ChangeSender>().signInNeeded,
             syncWatcher = get(),
+            refusal = get(),
+            scope = get<CoroutineScope>() + io(),
         )
     } bind AccountDataOwner::class
     // Every start of MainActivity, a rotation's too, starts the timer sync service when it should

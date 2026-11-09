@@ -10,6 +10,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -17,6 +18,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.IOException
 import java.time.Clock
 
 /**
@@ -27,21 +29,24 @@ import java.time.Clock
 @OptIn(ExperimentalCoroutinesApi::class)
 class TimerSyncFollowerTest {
 
-    private val scope = CoroutineScope(UnconfinedTestDispatcher())
+    private val scheduler = TestCoroutineScheduler()
+    private val scope = CoroutineScope(UnconfinedTestDispatcher(scheduler))
 
-    /** The account each stream opened for, in order. */
+    /** The account each stream opened for, in order, and the stream's link. */
     private val opens = mutableListOf<TimerStateIntake>()
-    private val sync = TimerSync(
+    private val links = mutableListOf<TimerSyncLink>()
+    private val sync = TimerSync<TimerStateIntake>(
         scope = scope,
         now = { 0L },
-        connections = object : TimerSyncConnections<TimerStateIntake> {
-            override fun open(account: TimerStateIntake, link: TimerSyncLink) {
-                opens += account
-            }
-
-            override fun stopped(account: TimerStateIntake, end: StreamEnd) = Unit
+        connections = { account, link ->
+            opens += account
+            links += link
         },
     )
+
+    /** How many refused credentials the follower reported, and how many reports fail next. */
+    private var refusals = 0
+    private var failingRefusals = 0
 
     private var starts = 0
     private var timerApi = true
@@ -57,6 +62,11 @@ class TimerSyncFollowerTest {
         timerApi = { timerApi },
         signInNeeded = MutableStateFlow(false),
         syncWatcher = {},
+        refusal = {
+            if (failingRefusals-- > 0) throw IOException("queue unwritable")
+            refusals++
+        },
+        scope = scope,
     )
 
     /** Every stop request a running service received. */
@@ -155,6 +165,47 @@ class TimerSyncFollowerTest {
 
         assertEquals(listOf(first, account), opens)
         assertTrue(opens[0] !== opens[1])
+    }
+
+    @Test
+    fun aRefusedCredentialOfTheAccountSignedInNowAsksToSignInAgainAndStopsTheService() = runTest {
+        follower.serviceRuns()
+        collectStopRequests()
+        follower.follow()
+
+        links.single().ended(StreamEnd.Refused)
+
+        assertEquals(1, refusals)
+        assertEquals(1, stopsReceived)
+    }
+
+    @Test
+    fun aStreamOfAnAccountSignedOutSinceOnlyStopsTheService() = runTest {
+        follower.serviceRuns()
+        collectStopRequests()
+        follower.follow()
+        account = source()
+
+        links.single().ended(StreamEnd.Refused)
+
+        assertEquals("the account signed in now was not refused", 0, refusals)
+        assertEquals(1, stopsReceived)
+    }
+
+    @Test
+    fun aRefusalWhoseReportFailedIsReportedAgainAfterAWait() = runTest {
+        follower.serviceRuns()
+        collectStopRequests()
+        follower.follow()
+        failingRefusals = 1
+
+        links.single().ended(StreamEnd.Refused)
+        assertEquals(0, refusals)
+        scheduler.advanceTimeBy(1_000)
+        scheduler.runCurrent()
+
+        assertEquals(1, refusals)
+        assertEquals(1, stopsReceived)
     }
 
     /** Collects the stop requests as the running service does. */

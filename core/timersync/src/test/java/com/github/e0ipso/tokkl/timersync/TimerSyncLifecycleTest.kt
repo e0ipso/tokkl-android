@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.timersync
 import com.github.e0ipso.tokkl.api.ApiError
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.Assert.assertEquals
@@ -23,19 +24,11 @@ class TimerSyncLifecycleTest {
     /** Every call opened, in order, with its account and the time it opened. */
     private val opens = mutableListOf<Opened>()
     private val stops = mutableListOf<Pair<String, StreamEnd>>()
-    private val sync = TimerSync(
+    private val sync = TimerSync<String>(
         scope = clock.scope,
         now = { clock.time },
-        connections = object : TimerSyncConnections<String> {
-            override fun open(account: String, link: TimerSyncLink) {
-                opens += Opened(account, link, clock.time)
-            }
-
-            override fun stopped(account: String, end: StreamEnd) {
-                stops += account to end
-            }
-        },
-    )
+        connections = { account, link -> opens += Opened(account, link, clock.time) },
+    ).also { sync -> clock.scope.launch { sync.terminations.collect { stops += it.account to it.end } } }
 
     @Test
     fun heartbeatsKeepAStreamOpenAndAboutAMinuteOfSilenceClosesIt() {

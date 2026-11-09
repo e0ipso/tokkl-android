@@ -4,24 +4,24 @@ import com.github.e0ipso.tokkl.api.ApiCallCancellation
 import com.github.e0ipso.tokkl.timerstate.TimerStateIntake
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
 /** How [TimerSync] holds each account's stream, such as [TimerEventConnections]. */
-interface TimerSyncConnections<A : Any> {
+fun interface TimerSyncConnections<A : Any> {
 
     /**
      * Starts holding the stream for [account] over [link], off the calling thread, and reports
      * through the link's callbacks, ending with [TimerSyncLink.ended].
      */
     fun open(account: A, link: TimerSyncLink)
-
-    /**
-     * Hears that a stream ended in a way no reconnect can fix, [StreamEnd.Refused] or
-     * [StreamEnd.SignedOut], for the [account] that held it. It is called once per such end.
-     */
-    fun stopped(account: A, end: StreamEnd)
 }
+
+/** A stream of [account] ended in a way no reconnect can fix, [StreamEnd.Refused] or [StreamEnd.SignedOut]. */
+data class StreamTermination<A : Any>(val account: A, val end: StreamEnd)
 
 /**
  * The one owner of the timer event stream: at most one call open at a time, for one account, and
@@ -33,8 +33,8 @@ interface TimerSyncConnections<A : Any> {
  * - After a stream ends or fails, the next connection waits [FIRST_DELAY_MILLIS], doubling after
  *   each failure up to [MAX_DELAY_MILLIS]. A stream that stayed open for [HEALTHY_MILLIS] starts
  *   that over. A network that comes back connects at once.
- * - A 401 or 403 ends it for that account: [TimerSyncConnections.stopped] hears it and nothing reconnects until [run]
- *   names another account.
+ * - A 401 or 403 ends it for that account: [terminations] reports it and nothing reconnects until
+ *   [run] names another account.
  *
  * Callbacks of a stream this owner has cancelled or replaced change nothing, so a late answer of
  * a signed-out or replaced account cannot restart, stop or prompt for the current one.
@@ -48,13 +48,22 @@ interface TimerSyncConnections<A : Any> {
  * @param scope runs every change of the stream's state, one at a time, such as a scope on
  *   `Dispatchers.Default.limitedParallelism(1)`.
  * @param now milliseconds on a clock that never goes back, for the watchdog and the backoff.
- * @param connections open each stream and hear the ends no reconnect can fix.
+ * @param connections open each stream.
  */
 class TimerSync<A : Any>(
     private val scope: CoroutineScope,
     private val now: MonotonicClock,
     private val connections: TimerSyncConnections<A>,
 ) {
+
+    private val ended = Channel<StreamTermination<A>>(Channel.UNLIMITED)
+
+    /**
+     * Each end of a stream that no reconnect can fix, once per end, in order: what decides
+     * whether the service runs collects it. Collect it from one place only; each end reaches one
+     * collector, also one that starts collecting after it.
+     */
+    val terminations: Flow<StreamTermination<A>> = ended.receiveAsFlow()
 
     /** The account the stream is held for, or null while stopped. */
     private var account: A? = null
@@ -152,7 +161,7 @@ class TimerSync<A : Any>(
                     drop()
                     account = null
                     if (end == StreamEnd.Refused) refused = gone
-                    if (gone != null) connections.stopped(gone, end)
+                    if (gone != null) ended.trySend(StreamTermination(gone, end))
                 }
             }
         }

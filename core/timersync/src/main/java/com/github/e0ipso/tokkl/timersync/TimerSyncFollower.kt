@@ -1,12 +1,15 @@
 package com.github.e0ipso.tokkl.timersync
 
+import com.github.e0ipso.tokkl.cache.ChangeSender
 import com.github.e0ipso.tokkl.capabilities.TimerApiOffer
 import com.github.e0ipso.tokkl.platform.AppHook
+import com.github.e0ipso.tokkl.platform.collectDurably
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.SignInStatus
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import com.github.e0ipso.tokkl.timerstate.TimerStateIntake
 import com.github.e0ipso.tokkl.timerstate.TimerStateIntakes
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,11 +17,25 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicInteger
 
 /** Starts a foreground service, and returns false when the platform refuses, as for an app in the background. */
 fun interface ServiceStart {
     fun start(): Boolean
+}
+
+/**
+ * Hears that the server refused the account's credential on the timer event stream, as
+ * [PauseQueueOnRefusal] does for the queue.
+ */
+fun interface SignInRefusal {
+    fun refused()
+}
+
+/** Pauses the queue as its own refusal does, which shows the prompt to sign in again. */
+class PauseQueueOnRefusal(private val sender: ChangeSender) : SignInRefusal {
+    override fun refused() = sender.signInRefused()
 }
 
 /** Hears each decision on whether the timer sync runs, so it can follow whether the server has the timer API. */
@@ -38,6 +55,9 @@ fun interface TimerSyncWatcher {
  * @param timerState where the signed-in account's timer state takes the stream's events.
  * @param timerApi whether the server offers the timer API.
  * @param signInNeeded whether the server refused the account's credential.
+ * @param refusal hears a credential the stream's server refused.
+ * @param scope where it follows the ends of [timerSync]'s streams that no reconnect fixes, for as
+ *   long as the process lives.
  */
 class TimerSyncFollower(
     private val startService: ServiceStart,
@@ -47,12 +67,30 @@ class TimerSyncFollower(
     private val timerApi: TimerApiOffer,
     private val signInNeeded: StateFlow<Boolean>,
     private val syncWatcher: TimerSyncWatcher,
+    private val refusal: SignInRefusal,
+    scope: CoroutineScope,
 ) : AccountDataOwner {
 
     override val signOutPhase = SignOutPhase.STOP_WORK
 
     override suspend fun forgetAccount() {
         timerSync.stop().join()
+        stopService()
+    }
+
+    init {
+        scope.launch {
+            timerSync.terminations.collectDurably("TimerSyncFollower", everyValue = true, action = ::streamEnded)
+        }
+    }
+
+    /**
+     * A stream ended in a way no reconnect fixes. A refused credential of the account signed in now
+     * pauses the queue, which asks to sign in again. Either way the service stops, as with no
+     * account.
+     */
+    private fun streamEnded(termination: StreamTermination<TimerStateIntake>) {
+        if (termination.end == StreamEnd.Refused && termination.account === timerState.intake()) refusal.refused()
         stopService()
     }
 
