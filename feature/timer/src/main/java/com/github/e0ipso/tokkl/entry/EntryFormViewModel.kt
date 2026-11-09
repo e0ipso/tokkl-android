@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.HistoryWindow
+import com.github.e0ipso.tokkl.cache.LocalWrite
 import com.github.e0ipso.tokkl.cache.RunningEntryChanges
+import com.github.e0ipso.tokkl.cache.localWrite
 import com.github.e0ipso.tokkl.entryfields.withPicked
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.EntryWithSendState
@@ -12,12 +14,12 @@ import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.model.RunningEntryIdentity
 import com.github.e0ipso.tokkl.model.Task
 import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.platform.whileShown
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.time.AccountTime
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -230,48 +232,61 @@ class EntryFormViewModel(
         val saving = form.copy(mistakes = emptyMap(), saving = true)
         phase.value = Phase.Open(saving)
         viewModelScope.launch {
-            val saved = when (val target = form.target) {
-                DraftTarget.New -> {
-                    changes.create(workspaceId, form.fields, span.start, requireNotNull(span.stop), span.noTimeDay)
-                    true
-                }
-
-                is DraftTarget.Running -> running.updateRunning(target.identity, form.fields, span.start)
-
-                is DraftTarget.Edit -> when {
-                    target.onPhone && changes.update(
-                        target.entryId,
-                        form.fields,
-                        span.start,
-                        span.stop,
-                        span.noTimeDay,
-                    ) -> true
-
-                    // An older entry goes whole, also one whose copy the refresh after its send dropped.
-                    !target.onPhone || target.start < HistoryWindow.endingToday(time).start -> {
-                        changes.updateOlder(
-                            target.entryId,
-                            target.workspaceId,
-                            form.fields,
-                            span.start,
-                            requireNotNull(span.stop),
-                            span.noTimeDay,
-                        )
-                        true
+            var outcome: LocalWrite<Boolean>? = null
+            try {
+                outcome = localWrite { write(form, span, workspaceId, time) }
+            } finally {
+                // A write the storage refused, or one that threw, gives the form back to the user.
+                phase.update { current ->
+                    when {
+                        current != Phase.Open(saving) -> current
+                        outcome == LocalWrite.Written(true) -> Phase.Saved
+                        outcome == LocalWrite.Written(false) -> Phase.Missing
+                        else -> Phase.Open(saving.copy(saving = false))
                     }
-
-                    else -> false
-                }
-            }
-            phase.update { current ->
-                when {
-                    current != Phase.Open(saving) -> current
-                    saved -> Phase.Saved
-                    else -> Phase.Missing
                 }
             }
         }
     }
+
+    /**
+     * Queues [form] with its checked [span]: a new entry in [workspaceId], the running segment, or
+     * an edit. Returns false when the entry it edits has gone.
+     */
+    private suspend fun write(form: EntryDraft, span: CheckedTimes.Valid, workspaceId: WorkspaceId, time: AccountTime) =
+        when (val target = form.target) {
+            DraftTarget.New -> {
+                changes.create(workspaceId, form.fields, span.start, requireNotNull(span.stop), span.noTimeDay)
+                true
+            }
+
+            is DraftTarget.Running -> running.updateRunning(target.identity, form.fields, span.start)
+
+            is DraftTarget.Edit -> when {
+                target.onPhone && changes.update(
+                    target.entryId,
+                    form.fields,
+                    span.start,
+                    span.stop,
+                    span.noTimeDay,
+                ) -> true
+
+                // An older entry goes whole, also one whose copy the refresh after its send dropped.
+                !target.onPhone || target.start < HistoryWindow.endingToday(time).start -> {
+                    changes.updateOlder(
+                        target.entryId,
+                        target.workspaceId,
+                        form.fields,
+                        span.start,
+                        requireNotNull(span.stop),
+                        span.noTimeDay,
+                    )
+                    true
+                }
+
+                else -> false
+            }
+        }
 
     /** Delete uses the entry as opened, never an unsaved field, and skips time validation. */
     fun delete(canRestore: Boolean, onDeleted: (TimeEntry, Boolean) -> Unit) {
@@ -296,21 +311,21 @@ class EntryFormViewModel(
         val deleting = form.copy(saving = true, confirmDelete = false, deleteFailed = false)
         phase.value = Phase.Open(deleting)
         viewModelScope.launch {
-            val deleted = try {
-                changes.delete(target.snapshot)
-            } catch (cancelled: CancellationException) {
-                throw cancelled
-            } catch (_: Exception) {
-                null
-            }
-            if (deleted != null) onDeleted(deleted, undo)
-            phase.update { current ->
-                if (current != Phase.Open(deleting)) {
-                    current
-                } else if (deleted != null) {
-                    Phase.Saved
-                } else {
-                    Phase.Open(form.copy(saving = false, confirmDelete = false, deleteFailed = true))
+            var outcome: LocalWrite<TimeEntry?>? = null
+            try {
+                outcome = localWrite { changes.delete(target.snapshot) }
+                (outcome as? LocalWrite.Written)?.value?.let { onDeleted(it, undo) }
+            } finally {
+                val deleted = (outcome as? LocalWrite.Written)?.value != null
+                val back = form.copy(saving = false, confirmDelete = false)
+                // Nothing queued and a delete the storage refused both fail; one that threw gives the form back.
+                phase.update { current ->
+                    when {
+                        current != Phase.Open(deleting) -> current
+                        deleted -> Phase.Saved
+                        outcome != null -> Phase.Open(back.copy(deleteFailed = true))
+                        else -> Phase.Open(back)
+                    }
                 }
             }
         }

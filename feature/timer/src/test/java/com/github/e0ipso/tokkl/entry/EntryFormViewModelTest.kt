@@ -17,6 +17,9 @@ import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.platform.MainDispatcherRule
 import com.github.e0ipso.tokkl.session.AccountSettings
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -29,6 +32,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.io.IOException
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Instant
@@ -103,6 +107,60 @@ class EntryFormViewModelTest {
             ),
             form,
         )
+    }
+
+    @Test
+    fun aSaveTheStorageRefusesGivesTheFormBackAsTyped() {
+        openEntry()
+        changes.refusal = IOException("disk full")
+
+        onMain {
+            model.setDescription("Write the form again")
+            model.save()
+        }
+
+        val form = awaitOpen("the form is back") { !it.saving && it.fields.description == "Write the form again" }
+        assertEquals(emptyMap<TimeField, TimeMistake>(), form.mistakes)
+        assertEquals(emptyList<String>(), changes.calls)
+    }
+
+    @Test
+    fun aDeleteTheStorageRefusesSaysItFailed() {
+        openEntry()
+        changes.refusal = IOException("disk full")
+
+        onMain { model.delete(canRestore = true) { _, _ -> throw AssertionError("nothing was deleted") } }
+
+        awaitOpen("the delete failed") { it.deleteFailed && !it.saving }
+    }
+
+    @Test
+    fun aSaveThatFailsForAnyOtherReasonStillThrowsAndGivesTheFormBack() {
+        val thrown = mutableListOf<Throwable>()
+        val handler = CoroutineExceptionHandler { _, e -> thrown += e }
+        val failing = CoroutineScope(SupervisorJob() + main.dispatcher + handler)
+        model = EntryFormViewModel(
+            entries = entries,
+            projects = MutableStateFlow(listOf(APP, CLIENT_WORK)),
+            tasks = MutableStateFlow(listOf(DESIGN)),
+            accountSettings = settings,
+            changes = changes,
+            running = changes,
+            scope = failing,
+            clock = Clock.fixed(NOW, ZoneOffset.UTC),
+            allDay = allDay,
+            picker = flowOf(PickerSource()),
+            offline = MutableStateFlow(false),
+        )
+        failing.launch { model.state.collect {} }
+        openEntry()
+        changes.refusal = IllegalStateException("a bug")
+
+        onMain { model.save() }
+
+        awaitOpen("the form is back") { !it.saving }
+        assertEquals(listOf("a bug"), thrown.map { it.message })
+        failing.cancel()
     }
 
     @Test
@@ -1036,6 +1094,10 @@ class EntryFormViewModelTest {
         @Volatile
         var updates = true
 
+        /** What the storage throws on update and delete, as a full disk would, or null. */
+        @Volatile
+        var refusal: Exception? = null
+
         override suspend fun update(
             entryId: EntryId,
             fields: EntryFields,
@@ -1043,6 +1105,7 @@ class EntryFormViewModelTest {
             stop: Instant?,
             noTimeDay: LocalDate?,
         ): Boolean {
+            refusal?.let { throw it }
             calls += "update $entryId $fields $start $stop" + noTimeDay.onDay()
             return updates
         }
@@ -1091,7 +1154,7 @@ class EntryFormViewModelTest {
         /** A no-time change names its day, and a timed one names none. */
         private fun LocalDate?.onDay(): String = this?.let { " on $it" } ?: ""
 
-        override suspend fun delete(entry: TimeEntry): TimeEntry? = throw AssertionError("unexpected delete")
+        override suspend fun delete(entry: TimeEntry): TimeEntry? = throw refusal ?: AssertionError("unexpected delete")
 
         override suspend fun currentId(entryId: EntryId): EntryId = entryId
 
