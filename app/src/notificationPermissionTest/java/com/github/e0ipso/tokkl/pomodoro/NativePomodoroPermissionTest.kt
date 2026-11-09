@@ -21,7 +21,7 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.components.accountRefresh
-import com.github.e0ipso.tokkl.components.timerState
+import com.github.e0ipso.tokkl.components.heldTimerState
 import com.github.e0ipso.tokkl.model.PomodoroSession
 import com.github.e0ipso.tokkl.notification.NotificationPermissionStore
 import com.github.e0ipso.tokkl.openBarPage
@@ -131,7 +131,7 @@ class NativePomodoroPermissionTest {
     }
 
     /** The server's session as the phone holds it, or null without one. */
-    private fun session(): PomodoroSession? = app.timerState.state.value?.pomodoro
+    private fun session(): PomodoroSession? = app.heldTimerState?.pomodoro
 
     /**
      * Waits for the snackbar that says [id], then for it to go. It shows at the bottom of the page,
