@@ -138,6 +138,9 @@ class AppModulesTest {
             // Every feature's top-level pages and screens, and what the features give the navigation.
             "com.github.e0ipso.tokkl.navigation.TopLevelPages",
             "com.github.e0ipso.tokkl.navigation.FeatureNavigation",
+            // A sign-in's account transition, whose steps span the session, the timer state,
+            // the queue and the timer sync.
+            "com.github.e0ipso.tokkl.session.AccountTransition",
             "java.util.List",
         )
 

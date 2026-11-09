@@ -40,9 +40,9 @@ import com.github.e0ipso.tokkl.session.AccountRefresh
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.CurrentAccount
+import com.github.e0ipso.tokkl.session.SignInTransition
 import com.github.e0ipso.tokkl.session.SignOut
 import com.github.e0ipso.tokkl.settings.SignOutConfirmation
-import com.github.e0ipso.tokkl.signin.SessionWriter
 import com.github.e0ipso.tokkl.sync.DiscardedChanges
 import com.github.e0ipso.tokkl.sync.LastAnswer
 import com.github.e0ipso.tokkl.timer.TimerViewSetting
@@ -131,7 +131,7 @@ fun TokklApplication.renewTimerState() {
 fun TokklApplication.followTimerSync() = runBlocking { component<TimerSyncFollower>().follow() }
 
 fun TokklApplication.storeSignIn(server: ServerUrl, token: String, settings: AccountSettings) =
-    runBlocking { component<SessionWriter>().save(server, token, settings) }
+    runBlocking { component<SignInTransition>().signIn(server, token, settings) }
 
 /**
  * Puts an empty test WorkManager in this process, as [WorkManagerTestInitHelper.initializeTestWorkManager]

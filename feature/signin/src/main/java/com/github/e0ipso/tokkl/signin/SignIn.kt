@@ -10,6 +10,7 @@ import com.github.e0ipso.tokkl.api.getOrElse
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.ServerConfigStore
+import com.github.e0ipso.tokkl.session.SignInTransition
 import com.github.e0ipso.tokkl.session.accountSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
@@ -97,15 +98,6 @@ sealed interface SignInResult {
 }
 
 /**
- * Stores the configured server, its API token and the account settings once the server has
- * accepted them.
- */
-fun interface SessionWriter {
-    @Throws(GeneralSecurityException::class, IOException::class)
-    suspend fun save(server: ServerUrl, token: String, settings: AccountSettings)
-}
-
-/**
  * One sign-in attempt for the sign-in form: the server is asked, and what it accepted is stored.
  * [ServerSignIn] sends it; the form's unit tests answer for it.
  */
@@ -133,7 +125,7 @@ interface SignIn {
  * @param io where the request and the stores' disk work run.
  */
 class ServerSignIn(
-    private val session: SessionWriter,
+    private val session: SignInTransition,
     private val connector: ApiConnector,
     private val configured: ConfiguredServer,
     private val scope: CoroutineScope,
@@ -165,7 +157,7 @@ class ServerSignIn(
                 ?: return SignInResult.NoApiToken
         }
         return try {
-            session.save(server, token, settings)
+            session.signIn(server, token, settings)
             SignInResult.SignedIn
         } catch (_: GeneralSecurityException) {
             SignInResult.StorageFailed

@@ -7,38 +7,24 @@ import com.github.e0ipso.tokkl.platform.io
 import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.ServerTrustStore
-import com.github.e0ipso.tokkl.session.Session
-import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
-import com.github.e0ipso.tokkl.timersync.TimerSyncFollower
+import com.github.e0ipso.tokkl.session.SignInTransition
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
 /**
- * Sign-in: the cooldowns after failed sign-ins, what a sign-in stores, the view model, which takes
- * the account to sign in again to, and the screen.
+ * Sign-in: the cooldowns after failed sign-ins, the view model, which takes the account to sign in
+ * again to and hands what the server accepted to the session's [SignInTransition], and the screen.
  */
 val signInFeatureModule = module {
     single { SignInCooldownStore(androidContext(), io()) } bind SignInCooldowns::class
-
-    single {
-        AccountSessionWriter(
-            storeSettings = get<AccountSettingsSource>()::store,
-            clearTimerState = get<AccountTimerStates>()::clearForSignIn,
-            account = get(),
-            storeSession = get<Session>()::save,
-            signedIn = getAll(),
-            queue = get(),
-            followTimerSync = get<TimerSyncFollower>()::follow,
-        )
-    } bind SessionWriter::class
 
     viewModel { params ->
         SignInViewModel(
             // Runs on the IO thread, since the stores touch the disk.
             signIn = ServerSignIn(
-                session = get<SessionWriter>(),
+                session = get<SignInTransition>(),
                 connector = get<SharedHttpClient>(),
                 configured = get(),
                 scope = get(),

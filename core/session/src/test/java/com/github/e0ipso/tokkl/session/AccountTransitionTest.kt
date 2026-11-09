@@ -1,14 +1,8 @@
-package com.github.e0ipso.tokkl.signin
+package com.github.e0ipso.tokkl.session
 
 import com.github.e0ipso.tokkl.api.ServerUrl
-import com.github.e0ipso.tokkl.cache.SignInPause
-import com.github.e0ipso.tokkl.session.AccountSettings
-import com.github.e0ipso.tokkl.session.CurrentAccount
-import com.github.e0ipso.tokkl.session.SignedInListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -19,40 +13,33 @@ import java.time.DayOfWeek
  * in, so the begin of the new account shows between clearing the timer state and storing the
  * session.
  */
-class AccountSessionWriterTest {
+class AccountTransitionTest {
 
     private val steps = mutableListOf<String>()
     private val account = CurrentAccount(CoroutineScope(Dispatchers.Unconfined))
-    private val paused = MutableStateFlow(true)
+    private var paused = true
 
     private fun step(name: String) {
         steps += "$name in account ${account.context.value.number}"
     }
 
-    private val queue = object : SignInPause {
-        override val signInNeeded: StateFlow<Boolean> = paused
-
-        override fun signInRefused() = throw AssertionError("nothing refuses")
-
-        override fun resume() {
-            step("resume the queue")
-            paused.value = false
-        }
-    }
-
-    private fun writer() = AccountSessionWriter(
+    private fun transition() = AccountTransition(
         storeSettings = { step("store the settings of ${it.timeZone}") },
         clearTimerState = { step("clear the timer state") },
         account = account,
         storeSession = { server, token -> step("store $server with $token") },
         signedIn = listOf(SignedInListener { step("first listener") }, SignedInListener { step("second listener") }),
-        queue = queue,
+        queuePaused = { paused },
+        resumeQueue = {
+            step("resume the queue")
+            paused = false
+        },
         followTimerSync = { step("follow the timer sync") },
     )
 
     @Test
     fun aSignInOverARefusedTokenRunsEveryStepInOrder() = runTest {
-        writer().save(SERVER, "tok-123", SETTINGS)
+        transition().signIn(SERVER, "tok-123", SETTINGS)
 
         assertEquals(
             listOf(
@@ -70,9 +57,9 @@ class AccountSessionWriterTest {
 
     @Test
     fun aQueueThatIsNotPausedIsNotResumed() = runTest {
-        paused.value = false
+        paused = false
 
-        writer().save(SERVER, "tok-123", SETTINGS)
+        transition().signIn(SERVER, "tok-123", SETTINGS)
 
         assertEquals(
             listOf(
