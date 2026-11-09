@@ -315,7 +315,13 @@ class ServerReaderTest {
             scope = CoroutineScope(Dispatchers.Unconfined),
             io = Dispatchers.Unconfined,
             steps = { reads, me, preferences ->
-                snapshot = readServerSnapshot(reads.api, me, preferences, Clock.fixed(NOW, ZoneOffset.UTC), favorites = true)
+                snapshot = readServerSnapshot(
+                    reads.api,
+                    me,
+                    preferences,
+                    Clock.fixed(NOW, ZoneOffset.UTC),
+                    favorites = true,
+                )
             },
         )
 

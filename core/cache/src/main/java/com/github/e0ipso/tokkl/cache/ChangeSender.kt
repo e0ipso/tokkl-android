@@ -337,36 +337,35 @@ class ChangeSender(
         queued: PendingChange,
         error: ApiError,
         sent: Int,
-    ): RefusalStep =
-        when (val refused = refusal(server, queued, error)) {
-            is Refusal.Wait -> {
-                val waiting = refused.error
-                RefusalStep.Stop(
-                    if (waiting is ApiError.RateLimited) waitOut(sent, waiting) else Outcome.Stopped(sent, waiting),
-                )
-            }
-
-            Refusal.SignInAgain -> {
-                mutableSignInNeeded.value = true
-                RefusalStep.Stop(Outcome.Stopped(sent, ApiError.AuthFailed))
-            }
-
-            Refusal.AlreadyDone -> {
-                store.sent(queued, queued.entryId, answer = null)
-                RefusalStep.Next(1)
-            }
-
-            Refusal.EntryGone -> {
-                val discarded = store.discardEntry(queued)
-                if (discarded > 0) events.discarded(discarded)
-                RefusalStep.Next(discarded)
-            }
-
-            is Refusal.Hold -> {
-                store.hold(queued, refused.reason)
-                RefusalStep.Next(0)
-            }
+    ): RefusalStep = when (val refused = refusal(server, queued, error)) {
+        is Refusal.Wait -> {
+            val waiting = refused.error
+            RefusalStep.Stop(
+                if (waiting is ApiError.RateLimited) waitOut(sent, waiting) else Outcome.Stopped(sent, waiting),
+            )
         }
+
+        Refusal.SignInAgain -> {
+            mutableSignInNeeded.value = true
+            RefusalStep.Stop(Outcome.Stopped(sent, ApiError.AuthFailed))
+        }
+
+        Refusal.AlreadyDone -> {
+            store.sent(queued, queued.entryId, answer = null)
+            RefusalStep.Next(1)
+        }
+
+        Refusal.EntryGone -> {
+            val discarded = store.discardEntry(queued)
+            if (discarded > 0) events.discarded(discarded)
+            RefusalStep.Next(discarded)
+        }
+
+        is Refusal.Hold -> {
+            store.hold(queued, refused.reason)
+            RefusalStep.Next(0)
+        }
+    }
 
     /** Waits out the server's rate limit [error] before the next send. */
     private fun waitOut(sent: Int, error: ApiError.RateLimited): Outcome =

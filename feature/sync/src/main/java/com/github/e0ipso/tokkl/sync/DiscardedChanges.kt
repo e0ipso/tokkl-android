@@ -19,10 +19,13 @@ import kotlin.coroutines.CoroutineContext
  * user last dismissed the notice that says so (docs/PRD.md O6): "1 change discarded: the entry was
  * deleted elsewhere". Each discard adds to the count, so one notice covers them all. The count
  * outlives the process, so a discard by the background send with the app closed shows when the
- * app opens. The stored count loads from [store] as this is made, in [scope] on [io], off the main thread.
+ * app opens. The stored count loads from [store] as this is made, in [scope] on [io].
  */
-class DiscardedChanges(private val store: ClearableStore<Int>, private val scope: CoroutineScope, io: CoroutineContext) :
-    ChangeDiscards,
+class DiscardedChanges(
+    private val store: ClearableStore<Int>,
+    private val scope: CoroutineScope,
+    io: CoroutineContext,
+) : ChangeDiscards,
     AccountDataOwner,
     StartupLoad {
 

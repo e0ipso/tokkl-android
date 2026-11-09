@@ -89,7 +89,8 @@ class SurfaceCommandTest {
         controls = paused(revision = 3)
 
         val sent = actions.runFromSurface(TimerSurfaceAction.Resume, TimerTarget.Paused(3, ACCOUNT), failures)
-        val stale = actions.runFromSurface(TimerSurfaceAction.Resume, TimerTarget.Paused(3, "another account"), failures)
+        val other = TimerTarget.Paused(3, "another account")
+        val stale = actions.runFromSurface(TimerSurfaceAction.Resume, other, failures)
 
         assertEquals(SurfaceCommandResult.Completed, sent)
         assertEquals(SurfaceCommandResult.Completed, stale)
@@ -118,13 +119,17 @@ class SurfaceCommandTest {
         override suspend fun start(workspaceId: WorkspaceId, fields: EntryFields): EntryId =
             throw AssertionError("nothing starts")
 
-        override suspend fun stop(entryId: EntryId, fields: EntryFields?): Boolean = throw AssertionError("nothing stops")
+        override suspend fun stop(entryId: EntryId, fields: EntryFields?): Boolean =
+            throw AssertionError("nothing stops")
 
         override suspend fun runningEntry(identity: RunningEntryIdentity): TimeEntry? =
             throw AssertionError("unexpected runningEntry")
 
-        override suspend fun updateRunning(identity: RunningEntryIdentity, fields: EntryFields, start: Instant): Boolean =
-            throw AssertionError("unexpected updateRunning")
+        override suspend fun updateRunning(
+            identity: RunningEntryIdentity,
+            fields: EntryFields,
+            start: Instant,
+        ): Boolean = throw AssertionError("unexpected updateRunning")
     }
 
     private companion object {

@@ -24,8 +24,11 @@ import kotlin.coroutines.CoroutineContext
  * @param disk keeps the settings on the phone. They load from it as this is made, in [scope] on
  *   [io], off the main thread.
  */
-class AccountSettingsSource(private val disk: ValueStore<AccountSettings>, scope: CoroutineScope, io: CoroutineContext) :
-    StartupLoad,
+class AccountSettingsSource(
+    private val disk: ValueStore<AccountSettings>,
+    scope: CoroutineScope,
+    io: CoroutineContext,
+) : StartupLoad,
     DefaultWorkspace {
 
     private val held = LoadedState<AccountSettings?>(scope, null, io) { disk.load() }

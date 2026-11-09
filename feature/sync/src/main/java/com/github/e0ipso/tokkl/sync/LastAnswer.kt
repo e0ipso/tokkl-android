@@ -29,8 +29,7 @@ class LastAnswer(
     private val clock: Clock,
     private val scope: CoroutineScope,
     io: CoroutineContext,
-) :
-    SuccessListener,
+) : SuccessListener,
     AccountDataOwner,
     StartupLoad {
 

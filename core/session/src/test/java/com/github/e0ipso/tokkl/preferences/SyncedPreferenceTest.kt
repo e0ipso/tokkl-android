@@ -52,7 +52,16 @@ class SyncedPreferenceTest {
             }
         }
         val preference =
-            SyncedPreference(store, { null }, account, scope, dispatcher, default = 0, codec = Codec, sharing = { false })
+            SyncedPreference(
+                store,
+                { null },
+                account,
+                scope,
+                dispatcher,
+                default = 0,
+                codec = Codec,
+                sharing = { false },
+            )
         scheduler.runCurrent()
 
         preference.change(5)

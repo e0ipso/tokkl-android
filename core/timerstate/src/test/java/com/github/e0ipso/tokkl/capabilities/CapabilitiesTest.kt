@@ -368,8 +368,11 @@ class CapabilitiesTest {
 
     private fun MockWebServer.requests(): List<String> = List(requestCount) { takeRequest().url.encodedPath }
 
-    private fun source(initial: Capabilities? = null) =
-        CapabilitiesSource(InMemoryValueStore(initial) { saved += it }, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined)
+    private fun source(initial: Capabilities? = null) = CapabilitiesSource(
+        InMemoryValueStore(initial) { saved += it },
+        CoroutineScope(Dispatchers.Unconfined),
+        Dispatchers.Unconfined,
+    )
 
     private fun me(body: String): Me = Json { ignoreUnknownKeys = true }.decodeFromString(Me.serializer(), body)
 

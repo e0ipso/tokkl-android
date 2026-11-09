@@ -77,7 +77,13 @@ class ChangeSenderTest {
         testApi.stored = url
         testApi.trust = InMemoryServerTrust(url)
         val client = ApiClientProvider { if (signedIn) testApi.api(url, ApiCredentials.ApiToken("tok-123")) else null }
-        undo = DeleteUndoer(store, client.entries(), Dispatchers.IO, refreshes = AccountRefreshRequests(), scope = scope)
+        undo = DeleteUndoer(
+            store,
+            client.entries(),
+            Dispatchers.IO,
+            refreshes = AccountRefreshRequests(),
+            scope = scope,
+        )
         sender = changeSender(store, client, scope = scope, io = Dispatchers.IO, clock = clock, undo = undo)
     }
 

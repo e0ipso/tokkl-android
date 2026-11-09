@@ -33,7 +33,9 @@ class CapabilitiesSource(private val store: ValueStore<Capabilities>, scope: Cor
     /** What the disk holds, so a refresh after a failed write writes again. Guarded by [changing]. */
     private var stored: Capabilities? = null
 
-    private val held = LoadedState(scope, Capabilities.NONE, io) { store.load()?.also { stored = it } ?: Capabilities.NONE }
+    private val held = LoadedState(scope, Capabilities.NONE, io) {
+        store.load()?.also { stored = it } ?: Capabilities.NONE
+    }
 
     /**
      * Lets one change of the flags run at a time, [refresh] included while its probes wait for the

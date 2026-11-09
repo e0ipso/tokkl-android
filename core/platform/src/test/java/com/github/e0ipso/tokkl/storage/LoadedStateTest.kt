@@ -73,7 +73,9 @@ class LoadedStateTest {
     @Test
     fun theLoadsAreReadyOnceEachHasEnded() {
         val first = CompletableDeferred<Int>()
-        val loads = StartupLoads(listOf(LoadedState(scope, 0, dispatcher) { first.await() }, LoadedState(scope, 0, dispatcher) { 2 }))
+        val loads = StartupLoads(
+            listOf(LoadedState(scope, 0, dispatcher) { first.await() }, LoadedState(scope, 0, dispatcher) { 2 }),
+        )
         scheduler.runCurrent()
         assertFalse(loads.isReady)
 
