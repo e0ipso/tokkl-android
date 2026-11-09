@@ -77,7 +77,7 @@ import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.settings.SettingsContent
 import com.github.e0ipso.tokkl.settings.SettingsRoute
 import com.github.e0ipso.tokkl.settings.SignOutConfirmation
-import com.github.e0ipso.tokkl.signin.SignIn
+import com.github.e0ipso.tokkl.signin.ServerSignIn
 import com.github.e0ipso.tokkl.signin.SignInCooldownStore
 import com.github.e0ipso.tokkl.signin.SignInScreen
 import com.github.e0ipso.tokkl.signin.SignInViewModel
@@ -409,7 +409,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
     private inner class ScreenScope {
         private val signInModel by lazy {
             SignInViewModel(
-                signIn = SignIn(
+                signIn = ServerSignIn(
                     session = { _, _, _ -> },
                     httpClient = appHttp.instance,
                     configured = appConfiguredServer,

@@ -34,7 +34,7 @@ val signInFeatureModule = module {
     viewModel { params ->
         SignInViewModel(
             // Runs on the IO thread, since the stores touch the disk.
-            signIn = SignIn(
+            signIn = ServerSignIn(
                 session = get<SessionWriter>(),
                 httpClient = get<SharedHttpClient>().instance,
                 configured = get(),

@@ -1,21 +1,12 @@
 package com.github.e0ipso.tokkl.signin
 
-import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.ServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
-import com.github.e0ipso.tokkl.api.TestApi
-import com.github.e0ipso.tokkl.api.UntrustedCertificateException
-import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.CountingRefresh
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.test.runTest
-import mockwebserver3.MockResponse
-import mockwebserver3.MockWebServer
-import okhttp3.OkHttpClient
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -23,77 +14,89 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.IOException
-import java.security.cert.CertificateException
 import java.time.Clock
-import java.time.DayOfWeek
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
-import javax.net.ssl.SSLHandshakeException
 
 /**
- * The sign-in form against a MockWebServer, which shows the exact requests
- * and can answer 429 with any Retry-After. On the device,
- * SignInUnderPathPrefixTest signs in to the Tokkl container under a path
- * prefix, and SignInRateLimitTest trips the container's own 429 with a
- * throwaway account, so the shared account is never locked.
+ * The sign-in form over a [SignIn] that answers in memory: what the form sends, how it shows each
+ * answer, its 429 countdown and the user's answers to its warnings. What one attempt sends to the
+ * server and what each answer becomes is ServerSignInTest's.
  */
 class SignInViewModelTest {
 
-    private val testApi = TestApi(null)
-
-    private val server = MockWebServer()
-    private val saved = mutableListOf<Pair<ServerUrl, String>>()
-    private val savedSettings = mutableListOf<AccountSettings>()
-    private var saveFailure: IOException? = null
     private var now = 5_000_000L
     private val cooldowns = InMemoryCooldowns()
+    private val refreshes = CountingRefresh()
+    private val signIn = AnsweringSignIn()
     private lateinit var trust: InMemoryServerTrust
     private lateinit var model: SignInViewModel
 
     @Before
     fun setUp() {
-        server.start()
-        // Most tests sign in to the MockWebServer's plain http URLs, which the user has confirmed here.
-        trust = InMemoryServerTrust(ServerUrl.parse(baseUrl("/"))!!, ServerUrl.parse(baseUrl("/tokkl"))!!)
-        testApi.trust = trust
+        // Most tests sign in to plain http URLs, which the user has confirmed here.
+        trust = InMemoryServerTrust(SERVER, ServerUrl.parse(TOKKL)!!)
         model = model(trust)
     }
 
-    @After
-    fun tearDown() {
-        server.close()
+    /** Unconfined runs each attempt to the end inside submit(). */
+    private fun model(trust: ServerTrust): SignInViewModel = SignInViewModel(
+        signIn,
+        trust,
+        cooldowns,
+        CoroutineScope(Dispatchers.Unconfined),
+        Dispatchers.Unconfined,
+        clock = object : Clock() {
+            override fun getZone(): ZoneId = ZoneOffset.UTC
+
+            override fun withZone(zone: ZoneId): Clock = this
+
+            override fun instant(): Instant = Instant.ofEpochMilli(now)
+        },
+        refreshes = refreshes,
+    )
+
+    /** One attempt the form made, with its credentials as text, since they print no secret. */
+    private data class Attempt(val server: ServerUrl, val credentials: String, val again: SignInAgain?)
+
+    /**
+     * A sign-in that answers each attempt with [answer], which by default asks for the user's
+     * answer to a plain http URL or an unpinned certificate as the shared client does, and
+     * otherwise signs in.
+     */
+    private inner class AnsweringSignIn : SignIn {
+        val attempts = mutableListOf<Attempt>()
+        var answer: (ServerUrl) -> SignInResult = { SignInResult.SignedIn }
+
+        /** The certificate the server presents, which the user has to pin before anything is sent. */
+        var certificate: ServerCertificate? = null
+
+        override suspend fun attempt(
+            server: ServerUrl,
+            credentials: SignInCredentials,
+            again: SignInAgain?,
+        ): SignInResult {
+            attempts += Attempt(server, credentials.text(), again)
+            val presented = certificate
+            return when {
+                server.toString().startsWith("http:") && !trust.isCleartextConfirmed(server) ->
+                    SignInResult.CleartextNotConfirmed(server)
+
+                presented != null && trust.pinnedSha256(presented.host, presented.port) != presented.sha256 ->
+                    SignInResult.UntrustedCertificate(
+                        presented,
+                        changed = trust.pinnedSha256(presented.host, presented.port) != null,
+                    )
+
+                else -> answer(server)
+            }
+        }
     }
 
-    private fun model(trust: ServerTrust, httpClient: OkHttpClient = testApi.http.instance): SignInViewModel {
-        val signIn = SignIn(
-            session = { url, token, settings ->
-                saveFailure?.let { throw it }
-                saved += url to token
-                savedSettings += settings
-            },
-            httpClient = httpClient,
-            configured = testApi.configured,
-            scope = CoroutineScope(Dispatchers.Unconfined),
-            io = Dispatchers.Unconfined,
-            signedInAccount = { null },
-        )
-        // Unconfined runs each attempt to the end inside submit().
-        return SignInViewModel(
-            signIn,
-            trust,
-            cooldowns,
-            CoroutineScope(Dispatchers.Unconfined),
-            Dispatchers.Unconfined,
-            clock = object : Clock() {
-                override fun getZone(): ZoneId = ZoneOffset.UTC
-
-                override fun withZone(zone: ZoneId): Clock = this
-
-                override fun instant(): Instant = Instant.ofEpochMilli(now)
-            },
-            refreshes = CountingRefresh(),
-        )
+    private fun SignInCredentials.text(): String = when (this) {
+        is SignInCredentials.ApiToken -> "token $token"
+        is SignInCredentials.EmailPassword -> "email $email password $password"
     }
 
     /** The deadlines a [SignInCooldownStore] would hold, in memory. */
@@ -112,34 +115,26 @@ class SignInViewModelTest {
     }
 
     @Test
-    fun apiTokenSignInKeepsTheBasePathAndStoresServerAndToken() {
-        server.enqueue(me("""{"id":7,$SETTINGS,"api_token":"$TOKEN"}"""))
-        model.onServerUrlChange(" ${baseUrl("/tokkl/")} ")
+    fun apiTokenSignInSendsTheTrimmedServerAndTokenAndKeepsNoSecret() {
+        model.onServerUrlChange(" $TOKKL/ ")
         model.onApiTokenChange(" $TOKEN\n")
 
         model.submit()
 
-        val request = server.takeRequest()
-        assertEquals("/tokkl/api/v9/me", request.url.encodedPath)
-        assertEquals(ApiCredentials.ApiToken(TOKEN).authorizationHeader, request.headers["Authorization"])
-        assertEquals(listOf(ServerUrl.parse(baseUrl("/tokkl"))!! to TOKEN), saved)
-        assertEquals(listOf(AccountSettings("Europe/Madrid", DayOfWeek.SUNDAY, 15.0, userId = 7)), savedSettings)
-        assertTrue(model.state.value.signedIn)
+        assertEquals(listOf(Attempt(ServerUrl.parse(TOKKL)!!, "token $TOKEN", null)), signIn.attempts)
+        assertEquals("the form keeps no secret after sign-in", SignInState(signedIn = true), model.state.value)
+        assertEquals("the account loads once signed in", 1, refreshes.refreshes)
     }
 
     /** A URL copied from the browser's address bar signs in to the server it names. */
     @Test
     fun aQueryAndAFragmentInTheServerUrlAreDropped() {
-        server.enqueue(me("""{"id":7,$SETTINGS,"api_token":"$TOKEN"}"""))
-        model.onServerUrlChange(baseUrl("/tokkl/") + "?from=2026-10-01#week")
+        model.onServerUrlChange("$TOKKL/?from=2026-10-01#week")
         model.onApiTokenChange(TOKEN)
 
         model.submit()
 
-        val request = server.takeRequest()
-        assertEquals("/tokkl/api/v9/me", request.url.encodedPath)
-        assertNull(request.url.query)
-        assertEquals(listOf(ServerUrl.parse(baseUrl("/tokkl"))!! to TOKEN), saved)
+        assertEquals(ServerUrl.parse(TOKKL)!!, signIn.attempts.single().server)
         assertTrue(model.state.value.signedIn)
     }
 
@@ -154,129 +149,40 @@ class SignInViewModelTest {
 
             assertEquals(url, setOf(InputError.SERVER_URL), model.state.value.inputErrors)
         }
-        assertEquals("nothing sent", 0, server.requestCount)
-        assertEquals(emptyList<Pair<ServerUrl, String>>(), saved)
+        assertEquals("nothing sent", emptyList<Attempt>(), signIn.attempts)
     }
 
     @Test
-    fun meWithoutTimeResolutionSignsInWithNoSnapping() {
-        server.enqueue(me("""{"id":7,"api_token":"$TOKEN","timezone":"Europe/Madrid","beginning_of_week":1}"""))
-        fillApiToken()
-
-        model.submit()
-
-        assertNull(model.state.value.failure)
-        assertTrue(model.state.value.signedIn)
-        assertEquals(listOf(AccountSettings("Europe/Madrid", DayOfWeek.MONDAY, null, userId = 7)), savedSettings)
-    }
-
-    @Test
-    fun emailAndPasswordSignInStoresOnlyTheTokenFromMe() {
-        server.enqueue(me("""{"id":7,$SETTINGS,"email":"ana@example.com","api_token":"$TOKEN"}"""))
-        model.onServerUrlChange(baseUrl("/"))
-        model.onMethodChange(SignInMethod.EMAIL_PASSWORD)
-        model.onEmailChange("ana@example.com")
-        model.onPasswordChange(PASSWORD)
-
-        model.submit()
-
-        assertEquals(
-            ApiCredentials.EmailPassword("ana@example.com", PASSWORD).authorizationHeader,
-            server.takeRequest().headers["Authorization"],
-        )
-        assertEquals(listOf(ServerUrl.parse(baseUrl("/"))!! to TOKEN), saved)
-        val state = model.state.value
-        assertTrue(state.signedIn)
-        assertEquals("the form keeps no secret after sign-in", SignInState(signedIn = true), state)
-    }
-
-    @Test
-    fun passwordIsSentExactlyAsTyped() {
-        server.enqueue(me("""{"id":7,$SETTINGS,"api_token":"$TOKEN"}"""))
-        model.onServerUrlChange(baseUrl("/"))
+    fun emailAndPasswordGoAsTypedWithTheEmailTrimmed() {
+        model.onServerUrlChange(SERVER.toString())
         model.onMethodChange(SignInMethod.EMAIL_PASSWORD)
         model.onEmailChange(" ana@example.com ")
         model.onPasswordChange(" $PASSWORD ")
 
         model.submit()
 
-        assertEquals(
-            ApiCredentials.EmailPassword("ana@example.com", " $PASSWORD ").authorizationHeader,
-            server.takeRequest().headers["Authorization"],
-        )
+        assertEquals("email ana@example.com password  $PASSWORD ", signIn.attempts.single().credentials)
+        assertEquals(SignInState(signedIn = true), model.state.value)
     }
 
     @Test
-    fun aFormOpenedBeforeSettingsLoadStillChecksThePersistedIdentity() = runTest {
-        val url = ServerUrl.parse(baseUrl("/"))!!
-        val signIn = SignIn(
-            session = { _, _, _ -> error("must not replace the existing account") },
-            httpClient = testApi.http.instance,
-            configured = testApi.configured,
-            scope = CoroutineScope(Dispatchers.Unconfined),
-            io = Dispatchers.Unconfined,
-            signedInAccount = { SignInAgain(url, 7) },
-        )
-        server.enqueue(me("""{"id":8,$SETTINGS,"api_token":"$TOKEN"}"""))
-        assertEquals(
-            SignInResult.OtherAccount,
-            run { signIn.attempt(url, SignInCredentials.ApiToken(TOKEN), SignInAgain(url, null)) },
-        )
-    }
-
-    @Test
-    fun aRestoredFormStillChecksThePersistedAccountBeforeStoringCredentials() = runTest {
-        val signIn = SignIn(
-            session = { _, _, _ -> error("must not replace the existing account") },
-            httpClient = testApi.http.instance,
-            configured = testApi.configured,
-            scope = CoroutineScope(Dispatchers.Unconfined),
-            io = Dispatchers.Unconfined,
-            signedInAccount = { SignInAgain(ServerUrl.parse(baseUrl("/"))!!, 7) },
-        )
-        server.enqueue(me("""{"id":8,$SETTINGS,"api_token":"$TOKEN"}"""))
-        assertEquals(
-            SignInResult.OtherAccount,
-            run { signIn.attempt(ServerUrl.parse(baseUrl("/"))!!, SignInCredentials.ApiToken(TOKEN)) },
-        )
-    }
-
-    @Test
-    fun signingInAgainRefusesAnotherServerWithoutSendingTheToken() {
-        model.signInAgain(SignInAgain(ServerUrl.parse(baseUrl("/"))!!, 7))
-        model.onServerUrlChange("https://other.example.com/")
+    fun signingInAgainSendsTheAccountAndShowsAnotherAccountsRefusal() {
+        val again = SignInAgain(SERVER, 7)
+        signIn.answer = { SignInResult.OtherAccount }
+        model.signInAgain(again)
+        assertEquals("the server is filled in", SERVER.toString(), model.state.value.serverUrl)
         model.onApiTokenChange(TOKEN)
+
         model.submit()
+
+        assertEquals(again, signIn.attempts.single().again)
         assertEquals(SignInResult.OtherAccount, model.state.value.failure)
-        assertEquals(0, server.requestCount)
-        assertTrue(saved.isEmpty())
+        assertFalse(model.state.value.signedIn)
     }
 
     @Test
-    fun signingInAgainRefusesAnotherAccountAndKeepsTheExistingSession() {
-        model.signInAgain(SignInAgain(ServerUrl.parse(baseUrl("/"))!!, 7))
-        server.enqueue(me("""{"id":8,$SETTINGS,"api_token":"$TOKEN"}"""))
-        model.onApiTokenChange(TOKEN)
-        model.submit()
-        assertEquals(SignInResult.OtherAccount, model.state.value.failure)
-        assertTrue(saved.isEmpty())
-        assertTrue(savedSettings.isEmpty())
-    }
-
-    @Test
-    fun signingInAgainAcceptsTheSameAccountWithItsNewToken() {
-        model.signInAgain(SignInAgain(ServerUrl.parse(baseUrl("/"))!!, 7))
-        server.enqueue(me("""{"id":7,$SETTINGS,"api_token":"$TOKEN"}"""))
-        model.onApiTokenChange(TOKEN)
-        model.submit()
-        assertTrue(model.state.value.signedIn)
-        assertEquals(TOKEN, saved.single().second)
-        assertEquals(7L, savedSettings.single().userId)
-    }
-
-    @Test
-    fun forbiddenIsABadCredentialsFailureAndStoresNothing() {
-        server.enqueue(MockResponse.Builder().code(403).body("\"Incorrect username and/or password\"").build())
+    fun aFailureShowsAndTheFormCanSendAgain() {
+        signIn.answer = { SignInResult.BadCredentials }
         fillApiToken()
 
         model.submit()
@@ -285,13 +191,26 @@ class SignInViewModelTest {
         assertEquals(SignInResult.BadCredentials, state.failure)
         assertFalse(state.submitting)
         assertFalse(state.signedIn)
-        assertTrue(saved.isEmpty())
+        assertEquals("nothing loads without a sign-in", 0, refreshes.refreshes)
+        signIn.answer = { SignInResult.SignedIn }
+        model.submit()
+        assertTrue(model.state.value.signedIn)
+    }
+
+    @Test
+    fun aStorageFailureShows() {
+        signIn.answer = { SignInResult.StorageFailed }
+        fillApiToken()
+
+        model.submit()
+
+        assertEquals(SignInResult.StorageFailed, model.state.value.failure)
+        assertFalse(model.state.value.signedIn)
     }
 
     @Test
     fun tooManyRequestsBlocksSubmitUntilRetryAfterPassesAndNeverRetriesAlone() {
-        server.enqueue(MockResponse.Builder().code(429).addHeader("Retry-After", "30").build())
-        server.enqueue(me("""{"id":7,$SETTINGS,"api_token":"$TOKEN"}"""))
+        signIn.answer = { SignInResult.RateLimited(30) }
         fillApiToken()
 
         model.submit()
@@ -301,50 +220,51 @@ class SignInViewModelTest {
         now += 29_001
         assertEquals(1, model.secondsUntilRetry())
         model.submit()
-        assertEquals("submit is refused while the countdown runs", 1, server.requestCount)
+        assertEquals("submit is refused while the countdown runs", 1, signIn.attempts.size)
 
         now += 999
         assertEquals(0, model.secondsUntilRetry())
-        assertEquals("nothing retries when the countdown ends", 1, server.requestCount)
+        assertEquals("nothing retries when the countdown ends", 1, signIn.attempts.size)
         assertFalse(model.state.value.signedIn)
 
+        signIn.answer = { SignInResult.SignedIn }
         model.submit()
-        assertEquals(2, server.requestCount)
+        assertEquals(2, signIn.attempts.size)
         assertTrue(model.state.value.signedIn)
     }
 
     /** A new model, as after process death, for the same server still waits out the 429. */
     @Test
     fun recreatedModelWithinTheCooldownStillBlocksSignIn() {
-        server.enqueue(MockResponse.Builder().code(429).addHeader("Retry-After", "60").build())
+        signIn.answer = { SignInResult.RateLimited(60) }
         fillApiToken()
         model.submit()
         assertEquals(60, model.secondsUntilRetry())
 
         now += 10_000
         val recreated = model(trust)
-        recreated.onServerUrlChange(baseUrl("/"))
+        recreated.onServerUrlChange(SERVER.toString())
         recreated.onApiTokenChange(TOKEN)
 
         assertEquals(50, recreated.secondsUntilRetry())
         recreated.submit()
-        assertEquals("no request during the cooldown", 1, server.requestCount)
+        assertEquals("no attempt during the cooldown", 1, signIn.attempts.size)
     }
 
     @Test
     fun onlyTheServerOriginAndTheDeadlineAreStored() {
-        server.enqueue(MockResponse.Builder().code(429).addHeader("Retry-After", "30").build())
-        model.onServerUrlChange(baseUrl("/tokkl/"))
+        signIn.answer = { SignInResult.RateLimited(30) }
+        model.onServerUrlChange("$TOKKL/")
         model.onApiTokenChange(TOKEN)
 
         model.submit()
 
-        assertEquals(mapOf("http://${server.hostName}:${server.port}" to now + 30_000), cooldowns.stored)
+        assertEquals(mapOf(SERVER.origin to now + 30_000), cooldowns.stored)
     }
 
     @Test
     fun aPassedDeadlineIsGoneFromThePhone() {
-        server.enqueue(MockResponse.Builder().code(429).addHeader("Retry-After", "30").build())
+        signIn.answer = { SignInResult.RateLimited(30) }
         fillApiToken()
         model.submit()
 
@@ -358,7 +278,7 @@ class SignInViewModelTest {
 
     @Test
     fun aStoredDeadlineThatHasPassedIsDroppedWhenTheModelStarts() {
-        cooldowns.stored["http://${server.hostName}:${server.port}"] = now - 1
+        cooldowns.stored[SERVER.origin] = now - 1
 
         model(trust)
 
@@ -367,13 +287,13 @@ class SignInViewModelTest {
 
     @Test
     fun aSuccessfulSignInForgetsTheDeadline() {
-        server.enqueue(MockResponse.Builder().code(429).addHeader("Retry-After", "30").build())
-        server.enqueue(me("""{"id":7,$SETTINGS,"api_token":"$TOKEN"}"""))
+        signIn.answer = { SignInResult.RateLimited(30) }
         fillApiToken()
         model.submit()
         assertEquals(1, cooldowns.stored.size)
 
         now += 30_000
+        signIn.answer = { SignInResult.SignedIn }
         model.submit()
 
         assertTrue(model.state.value.signedIn)
@@ -382,20 +302,20 @@ class SignInViewModelTest {
 
     @Test
     fun aDeadlineBlocksOnlyItsOwnServer() {
-        server.enqueue(MockResponse.Builder().code(429).addHeader("Retry-After", "30").build())
+        signIn.answer = { SignInResult.RateLimited(30) }
         fillApiToken()
         model.submit()
 
         model.onServerUrlChange("https://other.example/tokkl")
 
         assertEquals(0, model.secondsUntilRetry())
-        model.onServerUrlChange(baseUrl("/tokkl"))
+        model.onServerUrlChange(TOKKL)
         assertEquals(30, model.secondsUntilRetry())
     }
 
     @Test
     fun tooManyRequestsWithoutRetryAfterWaitsAMinute() {
-        server.enqueue(MockResponse.Builder().code(429).build())
+        signIn.answer = { SignInResult.RateLimited(null) }
         fillApiToken()
 
         model.submit()
@@ -424,109 +344,22 @@ class SignInViewModelTest {
             setOf(InputError.SERVER_URL, InputError.PASSWORD),
             model.state.value.inputErrors,
         )
-        assertEquals(0, server.requestCount)
-    }
-
-    @Test
-    fun meWithoutAnApiTokenFailsEmailAndPasswordSignIn() {
-        server.enqueue(me("""{"id":7,$SETTINGS,"email":"ana@example.com"}"""))
-        model.onServerUrlChange(baseUrl("/"))
-        model.onMethodChange(SignInMethod.EMAIL_PASSWORD)
-        model.onEmailChange("ana@example.com")
-        model.onPasswordChange(PASSWORD)
-
-        model.submit()
-
-        assertEquals(SignInResult.NoApiToken, model.state.value.failure)
-        assertTrue(saved.isEmpty())
-    }
-
-    @Test
-    fun answerThatIsNotAUserIsNotTokkl() {
-        server.enqueue(MockResponse.Builder().code(200).body("<html>router login</html>").build())
-        fillApiToken()
-
-        model.submit()
-
-        assertEquals(SignInResult.NotTokkl, model.state.value.failure)
-    }
-
-    /** Toggl Track and Tokkl always send both fields, and the week starts on a day from 0 to 6. */
-    @Test
-    fun meWithoutTimezoneOrWeekStartIsNotTokklAndStoresNothing() {
-        val bodies = listOf(
-            """{"id":7,"api_token":"$TOKEN","beginning_of_week":1}""",
-            """{"id":7,"api_token":"$TOKEN","timezone":"Europe/Madrid"}""",
-            """{"id":7,"api_token":"$TOKEN","timezone":"Europe/Madrid","beginning_of_week":7}""",
-        )
-        fillApiToken()
-
-        for (body in bodies) {
-            server.enqueue(me(body))
-            model.submit()
-
-            assertEquals(body, SignInResult.NotTokkl, model.state.value.failure)
-        }
-        assertEquals(bodies.size, server.requestCount)
-        assertTrue(saved.isEmpty())
-        assertTrue(savedSettings.isEmpty())
-    }
-
-    @Test
-    fun notFoundKeepsItsStatus() {
-        server.enqueue(MockResponse.Builder().code(404).build())
-        fillApiToken()
-
-        model.submit()
-
-        assertEquals(SignInResult.UnexpectedStatus(404), model.state.value.failure)
-    }
-
-    @Test
-    fun redirectToAnotherHostIsRefusedAndStoresNothing() {
-        val elsewhere = MockWebServer().apply { start() }
-        try {
-            val target = elsewhere.url("/api/v9/me")
-            server.enqueue(MockResponse.Builder().code(302).addHeader("Location", target.toString()).build())
-            fillApiToken()
-
-            model.submit()
-
-            assertEquals(SignInResult.HostNotAllowed("http://${target.host}:${target.port}"), model.state.value.failure)
-            assertEquals(0, elsewhere.requestCount)
-            assertTrue(saved.isEmpty())
-        } finally {
-            elsewhere.close()
-        }
-    }
-
-    @Test
-    fun storageFailureIsReported() {
-        saveFailure = IOException("disk full")
-        server.enqueue(me("""{"id":7,$SETTINGS,"api_token":"$TOKEN"}"""))
-        fillApiToken()
-
-        model.submit()
-
-        assertEquals(SignInResult.StorageFailed, model.state.value.failure)
-        assertFalse(model.state.value.signedIn)
+        assertEquals(emptyList<Attempt>(), signIn.attempts)
     }
 
     @Test
     fun untrustedCertificatePromptsAndTrustingItPinsThatCertificateThenSends() {
-        server.enqueue(me("""{"id":7,$SETTINGS,"api_token":"$TOKEN"}"""))
-        model = model(trust, handshakeAsIfServing(CERTIFICATE))
+        signIn.certificate = CERTIFICATE
         fillApiToken()
 
         model.submit()
 
         assertEquals(SignInResult.UntrustedCertificate(CERTIFICATE, changed = false), model.state.value.failure)
-        assertEquals("no request before the user trusts the certificate", 0, server.requestCount)
 
         model.trustCertificate()
 
         assertEquals(mapOf("${CERTIFICATE.host}:${CERTIFICATE.port}" to CERTIFICATE.sha256), trust.pins)
-        assertEquals(1, server.requestCount)
+        assertEquals("the form sends again once pinned", 2, signIn.attempts.size)
         assertTrue(model.state.value.signedIn)
     }
 
@@ -534,7 +367,7 @@ class SignInViewModelTest {
     fun changedCertificatePromptsAgainAndCancelKeepsTheOldPin() {
         val old = "cd".repeat(32)
         trust.pins["${CERTIFICATE.host}:${CERTIFICATE.port}"] = old
-        model = model(trust, handshakeAsIfServing(CERTIFICATE))
+        signIn.certificate = CERTIFICATE
         fillApiToken()
 
         model.submit()
@@ -544,33 +377,12 @@ class SignInViewModelTest {
 
         assertNull(model.state.value.failure)
         assertEquals(old, trust.pinnedSha256(CERTIFICATE.host, CERTIFICATE.port))
-        assertEquals(0, server.requestCount)
+        assertEquals(1, signIn.attempts.size)
     }
 
-    /**
-     * The shared client with a step that stands in for its trust manager: the
-     * handshake with a server presenting [certificate] fails unless the user
-     * pinned it, as PinningTrustManager makes it fail.
-     */
-    private fun handshakeAsIfServing(certificate: ServerCertificate): OkHttpClient = testApi.http.instance.newBuilder()
-        .addInterceptor { chain ->
-            val pin = trust.pinnedSha256(certificate.host, certificate.port)
-            if (pin != certificate.sha256) {
-                val refusal = UntrustedCertificateException(
-                    certificate,
-                    pinChanged = pin != null,
-                    cause = CertificateException("no trust anchor"),
-                )
-                throw SSLHandshakeException("handshake failed").apply { initCause(refusal) }
-            }
-            chain.proceed(chain.request())
-        }
-        .build()
-
     @Test
-    fun plainHttpServerShowsTheWarningAndSendsNothingUntilTheUserConfirms() {
-        server.enqueue(me("""{"id":7,$SETTINGS,"api_token":"$TOKEN"}"""))
-        val fresh = ServerUrl.parse(baseUrl("/fresh"))!!
+    fun plainHttpServerShowsTheWarningAndSendsAgainOnceTheUserConfirms() {
+        val fresh = ServerUrl.parse("$HTTP/fresh")!!
         model.onServerUrlChange(fresh.toString())
         model.onApiTokenChange(TOKEN)
 
@@ -578,18 +390,17 @@ class SignInViewModelTest {
 
         assertEquals(SignInResult.CleartextNotConfirmed(fresh), model.state.value.failure)
         assertFalse(model.state.value.submitting)
-        assertEquals("no request before the confirmation", 0, server.requestCount)
 
         model.confirmCleartext()
 
         assertTrue(trust.isCleartextConfirmed(fresh))
-        assertEquals(1, server.requestCount)
+        assertEquals(2, signIn.attempts.size)
         assertTrue(model.state.value.signedIn)
     }
 
     @Test
-    fun dismissingTheWarningSendsAndStoresNothingAndTheNextSubmitAsksAgain() {
-        val fresh = ServerUrl.parse(baseUrl("/fresh"))!!
+    fun dismissingTheWarningStoresNothingAndTheNextSubmitAsksAgain() {
+        val fresh = ServerUrl.parse("$HTTP/fresh")!!
         model.onServerUrlChange(fresh.toString())
         model.onApiTokenChange(TOKEN)
         model.submit()
@@ -600,37 +411,6 @@ class SignInViewModelTest {
         assertFalse(trust.isCleartextConfirmed(fresh))
         model.submit()
         assertEquals(SignInResult.CleartextNotConfirmed(fresh), model.state.value.failure)
-        assertEquals(0, server.requestCount)
-    }
-
-    @Test
-    fun anotherUrlAsksAgain() {
-        // baseUrl("/tokkl") is confirmed; the same host under another path is a different URL.
-        model.onServerUrlChange(baseUrl("/tokkl/other"))
-        model.onApiTokenChange(TOKEN)
-
-        model.submit()
-
-        assertEquals(
-            SignInResult.CleartextNotConfirmed(ServerUrl.parse(baseUrl("/tokkl/other"))!!),
-            model.state.value.failure,
-        )
-        assertEquals(0, server.requestCount)
-    }
-
-    @Test
-    fun httpsServerNeverShowsTheWarning() {
-        val nothingConfirmed = InMemoryServerTrust()
-        testApi.trust = nothingConfirmed
-        model = model(nothingConfirmed)
-        // The MockWebServer speaks plain HTTP, so the TLS handshake fails.
-        model.onServerUrlChange(server.url("/").newBuilder().scheme("https").port(server.port).build().toString())
-        model.onApiTokenChange(TOKEN)
-
-        model.submit()
-
-        assertEquals(SignInResult.Unreachable, model.state.value.failure)
-        assertTrue(nothingConfirmed.cleartextConfirmed.isEmpty())
     }
 
     @Test
@@ -644,15 +424,15 @@ class SignInViewModelTest {
 
             override fun pinCertificate(certificate: ServerCertificate) = throw IOException("disk full")
         }
-        testApi.trust = failing
         model = model(failing)
+        signIn.answer = { SignInResult.CleartextNotConfirmed(it) }
         fillApiToken()
         model.submit()
 
         model.confirmCleartext()
 
         assertEquals(SignInResult.AnswerNotStored, model.state.value.failure)
-        assertEquals(0, server.requestCount)
+        assertEquals("nothing sent again", 1, signIn.attempts.size)
     }
 
     @Test
@@ -674,25 +454,22 @@ class SignInViewModelTest {
     }
 
     private fun fillApiToken() {
-        model.onServerUrlChange(baseUrl("/"))
+        model.onServerUrlChange(SERVER.toString())
         model.onApiTokenChange(TOKEN)
     }
-
-    private fun baseUrl(path: String): String = server.url(path).toString()
-
-    private fun me(json: String) = MockResponse.Builder()
-        .code(200)
-        .addHeader("Content-Type", "application/json")
-        .body(json)
-        .build()
 
     private companion object {
         val CERTIFICATE = ServerCertificate("tokkl.test", 443, "ab".repeat(32), "CN=tokkl.test")
 
+        const val HTTP = "http://tokkl.test:8080"
+
+        /** A plain http server the user has confirmed. */
+        val SERVER: ServerUrl = ServerUrl.parse("$HTTP/")!!
+
+        /** The same server under a path prefix, which the user has confirmed too. */
+        const val TOKKL = "$HTTP/tokkl"
+
         const val TOKEN = "0123456789abcdef0123456789abcdef"
         const val PASSWORD = "correct horse:battery"
-
-        /** The settings fields of `GET /api/v9/me`, which Toggl Track and Tokkl always send. */
-        const val SETTINGS = """"timezone":"Europe/Madrid","beginning_of_week":0,"time_resolution_minutes":15"""
     }
 }

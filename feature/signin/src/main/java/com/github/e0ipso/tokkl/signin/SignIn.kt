@@ -108,6 +108,19 @@ fun interface SessionWriter {
 }
 
 /**
+ * One sign-in attempt for the sign-in form: the server is asked, and what it accepted is stored.
+ * [ServerSignIn] sends it; the form's unit tests answer for it.
+ */
+interface SignIn {
+    /**
+     * Signs in to [server] with [credentials]. With [again], a server or an account other than
+     * the signed-in one ends in [SignInResult.OtherAccount]. A caller that stops waiting does not
+     * stop the attempt.
+     */
+    suspend fun attempt(server: ServerUrl, credentials: SignInCredentials, again: SignInAgain? = null): SignInResult
+}
+
+/**
  * One sign-in attempt: `GET /api/v9/me` with HTTP Basic auth, then the server,
  * the token and the account settings from that response go to [session]. With
  * email and password, the token kept is the `api_token` from that response;
@@ -121,21 +134,21 @@ fun interface SessionWriter {
  * @param scope the application's scope, where each attempt runs.
  * @param io where the request and the stores' disk work run.
  */
-class SignIn(
+class ServerSignIn(
     private val session: SessionWriter,
     private val httpClient: OkHttpClient,
     private val configured: ConfiguredServer,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
     private val signedInAccount: SignedInAccount,
-) {
+) : SignIn {
 
     /**
      * With [again], a server other than the signed-in one gets no request, and an account other
-     * than the signed-in one is not stored: both end in [SignInResult.OtherAccount]. A caller that
-     * stops waiting does not stop the attempt.
+     * than the signed-in one is not stored: both end in [SignInResult.OtherAccount]. The signed-in
+     * account on the disk counts as [again] too, also for a form that lost it.
      */
-    suspend fun attempt(server: ServerUrl, credentials: SignInCredentials, again: SignInAgain? = null): SignInResult =
+    override suspend fun attempt(server: ServerUrl, credentials: SignInCredentials, again: SignInAgain?): SignInResult =
         scope.async(io) { signIn(server, credentials, again) }.await()
 
     private suspend fun signIn(server: ServerUrl, credentials: SignInCredentials, again: SignInAgain?): SignInResult {

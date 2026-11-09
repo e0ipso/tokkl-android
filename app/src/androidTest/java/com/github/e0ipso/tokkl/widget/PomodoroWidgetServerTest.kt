@@ -26,8 +26,8 @@ import com.github.e0ipso.tokkl.model.PhaseKind
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.pomodoro.HeldPhases
 import com.github.e0ipso.tokkl.session.ServerTrustStore
+import com.github.e0ipso.tokkl.signin.ServerSignIn
 import com.github.e0ipso.tokkl.signin.SessionWriter
-import com.github.e0ipso.tokkl.signin.SignIn
 import com.github.e0ipso.tokkl.signin.SignInCredentials
 import com.github.e0ipso.tokkl.signin.SignInResult
 import com.github.e0ipso.tokkl.timer.TimerAcceptanceFixture
@@ -257,7 +257,7 @@ class PomodoroWidgetServerTest {
             assertEquals(
                 SignInResult.SignedIn,
                 runBlocking {
-                    SignIn(
+                    ServerSignIn(
                         SessionWriter(app::storeSignIn),
                         appHttp.instance,
                         appConfiguredServer,

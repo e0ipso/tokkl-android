@@ -22,7 +22,7 @@ import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.AccountRefreshRequests
 import com.github.e0ipso.tokkl.session.capabilitiesOf
-import com.github.e0ipso.tokkl.signin.SignIn
+import com.github.e0ipso.tokkl.signin.ServerSignIn
 import com.github.e0ipso.tokkl.signin.SignInAgain
 import com.github.e0ipso.tokkl.signin.SignInCredentials
 import com.github.e0ipso.tokkl.signin.SignInResult
@@ -224,7 +224,7 @@ class ChangeRejectionServerTest {
         token = newToken
         assertEquals(ChangeSender.Outcome.Stopped(0, ApiError.AuthFailed), runBlocking { sender.sendAndWait() })
         assertEquals(2, count())
-        val signIn = SignIn(
+        val signIn = ServerSignIn(
             session = { _, accepted, _ -> token = accepted },
             httpClient = appHttp.instance,
             configured = appConfiguredServer,
