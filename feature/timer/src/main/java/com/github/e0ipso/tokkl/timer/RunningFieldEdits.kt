@@ -1,8 +1,7 @@
 package com.github.e0ipso.tokkl.timer
 
-import com.github.e0ipso.tokkl.cache.LocalWrite
 import com.github.e0ipso.tokkl.cache.RunningEntryChanges
-import com.github.e0ipso.tokkl.cache.localWrite
+import com.github.e0ipso.tokkl.cache.RunningEntryEdits
 import com.github.e0ipso.tokkl.entryfields.withPicked
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.RunningEntryIdentity
@@ -10,10 +9,10 @@ import com.github.e0ipso.tokkl.model.fields
 import com.github.e0ipso.tokkl.picker.Picked
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 /**
@@ -44,8 +43,8 @@ internal interface TapLedger {
  * not get a change for every letter. Until the cache has an edit, the timer shows it over the
  * cache's entry, as [ledger] keeps it. A paused timer's fields are read-only.
  *
- * A write the phone's storage refuses ([LocalWrite.Failed]) leaves the edit on the timer as typed,
- * not sent, for the next send to take.
+ * Each write goes through [RunningEntryEdits], which the Pomodoro page's edits share. A write the
+ * phone's storage refuses leaves the edit on the timer as typed, not sent, for the next send to take.
  *
  * Call everything on the main thread.
  *
@@ -59,8 +58,8 @@ internal class RunningFieldEdits(
     private val scope: CoroutineScope,
 ) {
 
-    /** The running entry's field writes that have not ended. */
-    private val writes = mutableSetOf<Job>()
+    /** The running entry's field writes on their way to the cache. */
+    private val writes = RunningEntryEdits(changes)
     private var openingRunning = false
 
     fun editDescription(description: String) = edit(send = false) { it.copy(description = description) }
@@ -72,7 +71,7 @@ internal class RunningFieldEdits(
         val cached = ledger.cached.value
         val edit = ledger.taps.value.editFor(shown, cached)?.takeIf { !it.sent } ?: return
         if (edit.fields == cached.controls()?.runningEntry()?.fields()) {
-            ledger.dispatch(TapEvent.EditEnded(edit))
+            ledger.dispatch(TapEvent.EditWritten(edit, refused = false))
         } else {
             send(shown, edit.fields)
         }
@@ -84,9 +83,9 @@ internal class RunningFieldEdits(
 
     fun fill(fields: EntryFields) = edit(send = true) { fields }
 
-    /** Waits until every field write queued here has ended, including ones that start meanwhile. */
+    /** Waits until every field write started here has reached the queue, including ones that start meanwhile. */
     suspend fun awaitWrites() {
-        while (writes.isNotEmpty()) writes.toList().joinAll()
+        writes.awaitQueued()
     }
 
     /** See [TimerViewModel.runningForEdit]. */
@@ -125,29 +124,17 @@ internal class RunningFieldEdits(
     fun send(shown: TimerState.Running, fields: EntryFields) {
         val entryId = shown.entryId ?: return
         val before = ledger.cached.value.controls()?.runningEntry()?.fields()
-        val edit = FieldEdit(entryId, shown.workspaceId, shown.start, fields, sent = true)
+        val edit = FieldEdit(RunningEntryIdentity(entryId, shown.workspaceId, shown.start), fields, sent = true)
         ledger.dispatch(TapEvent.Edited(edit))
-        val write = scope.launch(start = CoroutineStart.UNDISPATCHED) {
+        scope.launch(start = CoroutineStart.UNDISPATCHED) {
             var refused = false
             try {
-                val identity = RunningEntryIdentity(entryId, shown.workspaceId, shown.start)
-                when (val written = localWrite { changes.updateRunning(identity, fields, shown.start) }) {
-                    is LocalWrite.Written -> if (written.value) {
-                        ledger.cached.settle { controls ->
-                            val entry = controls.runningEntry()
-                            entry == null || entry.start != shown.start ||
-                                entry.fields().let { it == fields || it != before }
-                        }
-                    }
-
-                    is LocalWrite.Failed -> refused = true
-                }
+                val running = ledger.cached.filterIsInstance<CachedControls.Read>().map { it.controls.runningEntry() }
+                refused = writes.write(edit.target, fields, before, running)
             } finally {
-                ledger.dispatch(if (refused) TapEvent.EditRefused(edit) else TapEvent.EditEnded(edit))
+                ledger.dispatch(TapEvent.EditWritten(edit, refused))
             }
         }
-        writes += write
-        write.invokeOnCompletion { writes -= write }
     }
 
     /**
@@ -170,7 +157,9 @@ internal class RunningFieldEdits(
                     send -> send(shown, fields)
 
                     else -> ledger.dispatch(
-                        TapEvent.Edited(FieldEdit(shown.entryId, shown.workspaceId, shown.start, fields, sent = false)),
+                        TapEvent.Edited(
+                            FieldEdit(RunningEntryIdentity(shown.entryId, shown.workspaceId, shown.start), fields, false),
+                        ),
                     )
                 }
             }

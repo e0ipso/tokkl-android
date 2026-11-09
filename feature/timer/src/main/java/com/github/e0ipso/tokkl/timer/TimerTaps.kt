@@ -1,5 +1,7 @@
 package com.github.e0ipso.tokkl.timer
 
+import com.github.e0ipso.tokkl.cache.PendingEdit
+import com.github.e0ipso.tokkl.cache.afterWrite
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.entryfields.entryLabels
 import com.github.e0ipso.tokkl.model.EntryFields
@@ -82,11 +84,11 @@ internal sealed interface TapEvent {
     /** [edit] shows over the running entry. */
     data class Edited(val edit: FieldEdit) : TapEvent
 
-    /** [edit] has reached the cache, or gave way. */
-    data class EditEnded(val edit: FieldEdit) : TapEvent
-
-    /** The storage refused to queue [edit], which stays as typed, not sent. */
-    data class EditRefused(val edit: FieldEdit) : TapEvent
+    /**
+     * The write of [edit] ended: it reached the cache or gave way, or the storage [refused] to
+     * queue it, and it stays as typed, not sent.
+     */
+    data class EditWritten(val edit: FieldEdit, val refused: Boolean) : TapEvent
 }
 
 /**
@@ -121,19 +123,11 @@ internal fun TimerTaps.reduce(event: TapEvent): TimerTaps = when (event) {
 
     is TapEvent.Edited -> copy(edit = event.edit)
 
-    is TapEvent.EditEnded -> if (edit == event.edit) copy(edit = null) else this
-
-    is TapEvent.EditRefused -> if (edit == event.edit) copy(edit = event.edit.copy(sent = false)) else this
+    is TapEvent.EditWritten -> copy(edit = edit.afterWrite(event.edit, event.refused))
 }
 
-/** [fields] for the running entry that started at [start], shown until the cache has them. [sent] once queued. */
-internal data class FieldEdit(
-    val entryId: EntryId,
-    val workspaceId: WorkspaceId,
-    val start: Instant,
-    val fields: EntryFields,
-    val sent: Boolean,
-)
+/** Fields for the running entry with the identity it was shown with, shown until the cache has them. */
+internal typealias FieldEdit = PendingEdit<RunningEntryIdentity>
 
 /** An [edit] not queued yet for the active [identity], which a Continue or a favorite stops. */
 internal data class TypedEdit(val identity: RunningEntryIdentity, val edit: FieldEdit)
@@ -231,6 +225,7 @@ internal fun TimerState.labelled(projects: List<Project>, tasks: List<Task>): Ti
 
 /** Whether this edit is for [entry], also once the cache has remapped its local id as [read] says. */
 internal fun FieldEdit.matches(entry: TimeEntry, read: CachedControls.Read): Boolean {
+    val (entryId, workspaceId, start) = target
     val remapped = entryId != entry.id && read.editId == entryId && read.resolvedEditId == entry.id
     return (entryId == entry.id || remapped) && workspaceId == entry.workspaceId &&
         (start == entry.start || (remapped && start.truncatedTo(ChronoUnit.SECONDS) == entry.start))

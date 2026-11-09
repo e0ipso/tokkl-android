@@ -4,8 +4,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.cache.HeldChange
-import com.github.e0ipso.tokkl.cache.LocalWrite
-import com.github.e0ipso.tokkl.cache.localWrite
+import com.github.e0ipso.tokkl.cache.PendingEdit
+import com.github.e0ipso.tokkl.cache.afterWrite
 import com.github.e0ipso.tokkl.entryfields.entryLabels
 import com.github.e0ipso.tokkl.entryfields.withPicked
 import com.github.e0ipso.tokkl.model.EntryFields
@@ -30,13 +30,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * The Pomodoro page's view of the server's session. The server owns the session: this view model
@@ -119,7 +117,7 @@ class PomodoroViewModel(
 
     /** The start form's fields. They follow the open pomodoro, so the form keeps them after End. */
     private var draft = restored?.fields() ?: EntryFields()
-    private var edit: Edit? = null
+    private var edit: PendingEdit<EntryId>? = null
 
     init {
         modelScope.launch { held.collect { value -> accept(value) } }
@@ -198,7 +196,7 @@ class PomodoroViewModel(
 
     /** The open pomodoro's fields: a typed edit, else the cache's running entry, else the server's. */
     private fun openFields(pomodoro: PomodoroSession): EntryFields? {
-        edit?.takeIf { it.entryId == pomodoro.entryId }?.let { return it.fields }
+        edit?.takeIf { it.target == pomodoro.entryId }?.let { return it.fields }
         return openEntry(pomodoro)?.fields()
     }
 
@@ -234,7 +232,7 @@ class PomodoroViewModel(
             publish()
             return null
         }
-        val change = Edit(pomodoro.entryId, fields, sent = false)
+        val change = PendingEdit(pomodoro.entryId, fields, sent = false)
         edit = change
         publish()
         return if (send) write(change) else null
@@ -251,7 +249,7 @@ class PomodoroViewModel(
     fun fieldsDone(entryId: EntryId? = state.value.pomodoro?.entryId): Job? {
         val pomodoro = state.value.pomodoro ?: return null
         val typed =
-            edit?.takeIf { it.entryId == entryId && it.entryId == pomodoro.entryId && !it.sent } ?: return null
+            edit?.takeIf { it.target == entryId && it.target == pomodoro.entryId && !it.sent } ?: return null
         if (typed.fields == openEntry(pomodoro)?.fields()) {
             edit = null
             publish()
@@ -262,42 +260,27 @@ class PomodoroViewModel(
 
     /**
      * Queues [change] for the open pomodoro, and shows it until the cache does. A write the phone's
-     * storage refuses ([LocalWrite.Failed]) keeps the typed fields on screen, unsent, so the next
-     * [fieldsDone] sends them again, as the entry form gives a refused save back as typed.
+     * storage refuses keeps the typed fields on screen, unsent, so the next [fieldsDone] sends them
+     * again, as the entry form gives a refused save back as typed.
      */
-    private fun write(change: Edit): Job? {
+    private fun write(change: PendingEdit<EntryId>): Job? {
         val pomodoro = state.value.pomodoro
-        val entry = pomodoro?.let(::openEntry)?.takeIf { it.id == change.entryId }
+        val entry = pomodoro?.let(::openEntry)?.takeIf { it.id == change.target }
         if (entry == null) {
             edit = null
             publish()
             return null
         }
-        val before = entry.fields()
         val sent = change.copy(sent = true)
         edit = sent
         publish()
         return modelScope.launch(start = CoroutineStart.UNDISPATCHED) {
             var refused = false
             try {
-                when (val queued = localWrite { session.editOpenPomodoro(entry, change.fields) }) {
-                    is LocalWrite.Failed -> refused = true
-
-                    // Keeps the typed fields on screen until the cache shows them.
-                    is LocalWrite.Written -> if (queued.value) {
-                        withTimeoutOrNull(SETTLE_MS) {
-                            cached.first { row ->
-                                row == null || row.id != entry.id ||
-                                    row.fields().let { it == change.fields || it != before }
-                            }
-                        }
-                    }
-                }
+                refused = session.editOpenPomodoro(entry, change.fields, cached)
             } finally {
-                if (edit == sent) {
-                    edit = change.takeIf { refused }
-                    publish()
-                }
+                edit = edit.afterWrite(sent, refused)
+                publish()
             }
         }
     }
@@ -355,13 +338,7 @@ class PomodoroViewModel(
         }
     }
 
-    /** Fields typed for the open pomodoro [entryId], shown until the cache has them. */
-    private data class Edit(val entryId: EntryId, val fields: EntryFields, val sent: Boolean)
-
     private companion object {
-        /** How long typed fields stay on screen waiting for the cache to show them. */
-        const val SETTLE_MS = 5_000L
-
         /** The key of the start form's [SavedPomodoroForm] in the route's saved state. */
         const val SAVED_FORM = "pomodoro-form"
     }

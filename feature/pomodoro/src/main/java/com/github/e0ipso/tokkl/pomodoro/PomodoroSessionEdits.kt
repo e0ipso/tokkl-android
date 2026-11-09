@@ -2,26 +2,26 @@ package com.github.e0ipso.tokkl.pomodoro
 
 import com.github.e0ipso.tokkl.cache.QueueSender
 import com.github.e0ipso.tokkl.cache.RunningEntryChanges
+import com.github.e0ipso.tokkl.cache.RunningEntryEdits
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.RunningEntryIdentity
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
+import com.github.e0ipso.tokkl.model.fields
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.SessionActions
 import com.github.e0ipso.tokkl.timerstate.SessionLengths
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withTimeoutOrNull
-import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * A Pomodoro session's commands to the server and the edits of its open pomodoro, apart from what
  * the page shows. Start, Next phase and End go to the server through [actions]. Field edits of
  * the open pomodoro go to the running entry through [changes], the queue every running-entry
- * edit uses, and the server carries them to the later pomodoros.
+ * edit uses, as [RunningEntryEdits] writes them for the timer too, and the server carries them to
+ * the later pomodoros.
  *
  * Every edit of the running entry moves the server's revision. So when edits made here may not
  * have reached the server, Next phase and End first wait for the edits still being queued, send
@@ -36,31 +36,19 @@ import java.util.concurrent.atomic.AtomicBoolean
 class PomodoroSessionEdits(
     private val held: Flow<HeldTimerState?>,
     private val actions: SessionActions,
-    private val changes: RunningEntryChanges,
+    changes: RunningEntryChanges,
     private val sender: QueueSender,
 ) {
 
-    /** How many edits are on their way into the queue. */
-    private val writing = MutableStateFlow(0)
-
-    /** Whether an edit reached the queue that the server may not have yet. */
-    private val unflushed = AtomicBoolean(false)
+    private val edits = RunningEntryEdits(changes)
 
     /**
-     * Queues [fields] for the open pomodoro, [entry] as the cache holds it, with the identity the
-     * cache holds it under. Returns false when the queue no longer runs that entry.
+     * Queues [fields] for the open pomodoro, [entry] as the page shows it, with the identity the
+     * cache holds it under, and waits until [running], the cache's running entry, shows them, as
+     * [RunningEntryEdits.write] does. Returns whether the phone's storage refused the write.
      */
-    suspend fun editOpenPomodoro(entry: TimeEntry, fields: EntryFields): Boolean {
-        writing.update { it + 1 }
-        try {
-            val identity = RunningEntryIdentity(entry.id, entry.workspaceId, entry.start)
-            return changes.updateRunning(identity, fields, entry.start).also { queued ->
-                if (queued) unflushed.set(true)
-            }
-        } finally {
-            writing.update { it - 1 }
-        }
-    }
+    suspend fun editOpenPomodoro(entry: TimeEntry, fields: EntryFields, running: Flow<TimeEntry?>): Boolean =
+        edits.write(RunningEntryIdentity(entry.id, entry.workspaceId, entry.start), fields, entry.fields(), running)
 
     /** Starts a session in [workspaceId] whose first pomodoro has [fields], with [lengths]. */
     suspend fun start(workspaceId: WorkspaceId, fields: EntryFields, lengths: SessionLengths): TimerActionResult =
@@ -84,8 +72,7 @@ class PomodoroSessionEdits(
      * and lets Next phase carry them to the next.
      */
     private suspend fun revisionToSend(shown: PomodoroShown): Long? {
-        writing.first { it == 0 }
-        if (!unflushed.getAndSet(false)) return shown.revision
+        if (!edits.awaitQueued()) return shown.revision
         sender.sendQueued()
         actions.read()
         withTimeoutOrNull(REFRESH_MS) {

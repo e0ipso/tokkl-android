@@ -90,7 +90,7 @@ internal class TimerCommands(
 
     private val cached: StateFlow<CachedControls> = controls
         .map<TimerControls, CachedControls> { entry ->
-            val editId = taps.value.edit?.entryId
+            val editId = taps.value.edit?.target?.entryId
             CachedControls.Read(entry, editId, editId?.let { changes.currentId(it) })
         }
         .stateIn(scope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), CachedControls.Unread)
