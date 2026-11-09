@@ -1,11 +1,12 @@
 package com.github.e0ipso.tokkl.catalog
 
+import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.api.flatMap
 import com.github.e0ipso.tokkl.model.WorkspaceId
-import com.github.e0ipso.tokkl.session.SignedInApi
+import com.github.e0ipso.tokkl.session.signedIn
 
 /**
  * The workspace whose projects, clients and tags the pages manage: the account's default
@@ -21,4 +22,5 @@ suspend fun managedWorkspace(api: TokklApi, stored: WorkspaceId?): ApiResult<Wor
 }
 
 /** The workspace the catalog pages manage, as [managedWorkspace] finds it with the signed-in account's API. */
-suspend fun SignedInApi.workspace(stored: WorkspaceId?): ApiResult<WorkspaceId> = call { managedWorkspace(it, stored) }
+suspend fun ApiClientProvider.managedWorkspace(stored: WorkspaceId?): ApiResult<WorkspaceId> =
+    signedIn { managedWorkspace(it, stored) }

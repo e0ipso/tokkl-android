@@ -92,7 +92,7 @@ class ReportCsvServerTest {
             ReportRange(fixture.today, fixture.today),
             ReportFilters(projects = listOf(selected)),
             runBlocking {
-                ReportsServer(fixture.account.client.tokklApi()).workspace()
+                ServerReportsRepository { fixture.account.client.tokklApi() }.workspace()
             }.orFail("read report workspace"),
             DurationFormat.DECIMAL,
         )

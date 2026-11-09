@@ -40,7 +40,6 @@ import com.github.e0ipso.tokkl.timerstate.TimerControls
 import com.github.e0ipso.tokkl.timerstate.countsFrom
 import com.github.e0ipso.tokkl.timersync.TimerSyncService
 import com.github.e0ipso.tokkl.tokklApi
-import com.github.e0ipso.tokkl.trash.TrashServer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filterNotNull
@@ -293,9 +292,7 @@ class RunningNotificationServerTest {
         assertEquals(0, unsentCount())
         if (shortStop) {
             val trashed = runBlocking {
-                TrashServer(
-                    web.tokklApi(),
-                ).list()
+                web.tokklApi().trash.list()
             }.orFail("GET /api/app/trash").single { it.id == serverId }
             assertEquals("Stopped from the notification", trashed.description)
             assertEquals("the notification's short Stop reached Trash", trashed.start, trashed.stop)
@@ -503,7 +500,7 @@ class RunningNotificationServerTest {
             "the starts have distinct server ids",
             firstServerId.value > 0 && secondServerId.value > 0 && firstServerId != secondServerId,
         )
-        val trashed = runBlocking { TrashServer(web.tokklApi()).list() }.orFail("GET /api/app/trash")
+        val trashed = runBlocking { web.tokklApi().trash.list() }.orFail("GET /api/app/trash")
         assertTrue("the first start was also short", trashed.any { it.id == firstServerId })
         val secondTrash = trashed.single { it.id == secondServerId }
         assertEquals(
@@ -523,7 +520,7 @@ class RunningNotificationServerTest {
         AirplaneMode.set(false, web)
         runBlocking { app.sender.sendAndWait() }
         assertEquals("Undo reached the server", 0, unsentCount())
-        val remainingTrash = runBlocking { TrashServer(web.tokklApi()).list() }.orFail("GET /api/app/trash")
+        val remainingTrash = runBlocking { web.tokklApi().trash.list() }.orFail("GET /api/app/trash")
         assertTrue("Undo left the older entry in Trash", remainingTrash.any { it.id == firstServerId })
         assertTrue("Undo restored only the newer entry", remainingTrash.none { it.id == secondServerId })
         val restoredOnServer = runBlocking {

@@ -165,7 +165,7 @@ class ReportsScreenTest {
 
     @Test
     fun summaryUsesCurrentServerRoundingEvenWithAnAlreadyReadWorkspace() {
-        val server = ReportsServer(account.client.tokklApi())
+        val server = ServerReportsRepository { account.client.tokklApi() }
         val old = runBlocking { server.workspace() }.orFail("read workspace before changing rounding")
         assertTrue(old.appSummaryCandidate)
         assertEquals(15, old.roundingMinutes)
@@ -216,7 +216,7 @@ class ReportsScreenTest {
         assertEquals(50L, report.projects.single { it.id == project }.amountCents)
         val money = formatMoney(50, "GBP", context.resources.configuration.locales[0])
         compose.onNode(hasText(money)).performScrollTo().assertExists()
-        val server = ReportsServer(account.client.tokklApi())
+        val server = ServerReportsRepository { account.client.tokklApi() }
         val workspace = runBlocking { server.workspace() }.orFail("read workspace")
         val filtered = runBlocking {
             server.summary(

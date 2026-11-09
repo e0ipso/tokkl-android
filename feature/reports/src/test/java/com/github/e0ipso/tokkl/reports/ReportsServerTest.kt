@@ -33,7 +33,7 @@ class ReportsServerTest {
 
     private val testApi = TestApi(null)
     private val server = MockWebServer()
-    private lateinit var reports: ReportsServer
+    private lateinit var reports: ServerReportsRepository
 
     @Before
     fun setUp() {
@@ -41,7 +41,8 @@ class ReportsServerTest {
         val url = ServerUrl.parse(server.url("/").toString())!!
         testApi.stored = url
         testApi.trust = InMemoryServerTrust(url)
-        reports = ReportsServer(testApi.api(url, ApiCredentials.ApiToken("token")))
+        val api = testApi.api(url, ApiCredentials.ApiToken("token"))
+        reports = ServerReportsRepository { api }
     }
 
     @After
@@ -66,7 +67,7 @@ class ReportsServerTest {
         val range = ReportRange(LocalDate.parse("2026-10-12"), LocalDate.parse("2026-10-18"))
 
         val workspace = ReportWorkspace(WorkspaceId(7), -1, 30)
-        val answer = run { reports.entries(workspace, range, ZoneId.of("Pacific/Kiritimati")) }
+        val answer = run { reports.entries(workspace, range, ZoneId.of("Pacific/Kiritimati"), ReportFilters()) }
 
         val entries = (answer as ApiResult.Success).value
         assertEquals(2, entries.size)
@@ -103,6 +104,7 @@ class ReportsServerTest {
                 ReportWorkspace(WorkspaceId(7), 0, 0),
                 ReportRange(LocalDate.parse("2026-10-12"), LocalDate.parse("2026-10-18")),
                 ZoneId.of("UTC"),
+                ReportFilters(),
             )
         }
 
@@ -115,7 +117,9 @@ class ReportsServerTest {
     fun aNextRowThatDoesNotMoveForwardIsRefused() = runTest {
         server.enqueue(json("[]", NEXT_ROW to "1"))
 
-        val answer = run { reports.entries(ReportWorkspace(WorkspaceId(7), 0, 0), oneDay(), ZoneId.of("UTC")) }
+        val answer = run {
+            reports.entries(ReportWorkspace(WorkspaceId(7), 0, 0), oneDay(), ZoneId.of("UTC"), ReportFilters())
+        }
 
         assertTrue("$answer", (answer as ApiResult.Failure).error is ApiError.InvalidResponse)
         assertEquals(1, server.requestCount)
@@ -132,6 +136,7 @@ class ReportsServerTest {
                 oneDay(),
                 ZoneId.of("UTC"),
                 firstRow = 3,
+                ReportFilters(),
             )
         }
 
@@ -145,7 +150,9 @@ class ReportsServerTest {
             json("""[{"billable":false,"currency":"EUR","time_entries":[{"seconds":1,"start":"yesterday"}]}]"""),
         )
 
-        val answer = run { reports.entries(ReportWorkspace(WorkspaceId(7), 0, 0), oneDay(), ZoneId.of("UTC")) }
+        val answer = run {
+            reports.entries(ReportWorkspace(WorkspaceId(7), 0, 0), oneDay(), ZoneId.of("UTC"), ReportFilters())
+        }
 
         assertTrue("$answer", (answer as ApiResult.Failure).error is ApiError.InvalidResponse)
     }
@@ -250,7 +257,9 @@ class ReportsServerTest {
     fun aWeeklyRowWithoutSevenDaysIsAnInvalidResponse() = runTest {
         server.enqueue(json("""[{"project_id":1,"project_name":"x","seconds":[1,2]}]"""))
 
-        val answer = run { reports.weekly(ReportWorkspace(WorkspaceId(7), 0, 0), LocalDate.parse("2026-10-21")) }
+        val answer = run {
+            reports.weekly(ReportWorkspace(WorkspaceId(7), 0, 0), LocalDate.parse("2026-10-21"), ReportFilters())
+        }
 
         assertTrue("$answer", (answer as ApiResult.Failure).error is ApiError.InvalidResponse)
     }

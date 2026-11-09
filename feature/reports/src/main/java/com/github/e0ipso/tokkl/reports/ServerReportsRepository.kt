@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.reports
 
+import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.AppSummaryBody
@@ -13,6 +14,7 @@ import com.github.e0ipso.tokkl.api.flatMap
 import com.github.e0ipso.tokkl.api.getOrElse
 import com.github.e0ipso.tokkl.api.map
 import com.github.e0ipso.tokkl.model.WorkspaceId
+import com.github.e0ipso.tokkl.session.signedIn
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.OffsetDateTime
@@ -33,18 +35,18 @@ data class ReportWorkspace(
 )
 
 /**
- * The Reports API v3 calls behind the reports, on the configured server. Each call suspends
- * while its request runs. Nothing here stores what the server sends.
+ * The Reports API v3 calls behind the reports, on the signed-in account's server. Each call
+ * suspends while its request runs. Nothing here stores what the server sends.
  */
-class ReportsServer(private val api: TokklApi) {
+class ServerReportsRepository(private val client: ApiClientProvider) : ReportsRepository {
 
     /** The account's default workspace from `GET /api/v9/me`, with its rounding from `GET /api/v9/workspaces/{id}`. */
-    suspend fun workspace(): ApiResult<ReportWorkspace> {
-        val user = api.account.defaultWorkspace().getOrElse { return it }
-        val id = user.defaultWorkspaceId ?: return ApiResult.Failure(
+    override suspend fun workspace(): ApiResult<ReportWorkspace> = client.signedIn { api ->
+        val user = api.account.defaultWorkspace().getOrElse { return@signedIn it }
+        val id = user.defaultWorkspaceId ?: return@signedIn ApiResult.Failure(
             ApiError.InvalidResponse(IllegalArgumentException("/me has no default_workspace_id")),
         )
-        return api.account.workspace(id).map { ReportWorkspace(id, it.rounding, it.roundingMinutes, user.role != null) }
+        api.account.workspace(id).map { ReportWorkspace(id, it.rounding, it.roundingMinutes, user.role != null) }
     }
 
     /**
@@ -53,13 +55,13 @@ class ReportsServer(private val api: TokklApi) {
      * The app endpoint selects the current default workspace, timezone and rounding itself;
      * sending cached rounding here would override a newer setting on the server.
      */
-    suspend fun summary(
+    override suspend fun summary(
         workspace: ReportWorkspace,
         range: ReportRange,
         zone: ZoneId,
         firstDayOfWeek: DayOfWeek,
-        filters: ReportFilters = ReportFilters(),
-    ): ApiResult<SummaryReport> {
+        filters: ReportFilters,
+    ): ApiResult<SummaryReport> = client.signedIn { api ->
         if (workspace.appSummaryCandidate) {
             val body = AppSummaryBody(
                 startDate = range.from,
@@ -72,9 +74,9 @@ class ReportsServer(private val api: TokklApi) {
             val absent = answer is ApiResult.Failure && answer.error.let {
                 it is ApiError.UnexpectedStatus && it.status in setOf(HttpStatus.NOT_FOUND, HttpStatus.GONE)
             }
-            if (!absent) return answer.flatMap(::decodeAppSummary)
+            if (!absent) return@signedIn answer.flatMap(::decodeAppSummary)
         }
-        return entries(workspace, range, zone, filters).map { SummaryReport.of(it, range, firstDayOfWeek) }
+        api.entries(workspace, range, zone, filters).map { SummaryReport.of(it, range, firstDayOfWeek) }
     }
 
     /**
@@ -84,11 +86,18 @@ class ReportsServer(private val api: TokklApi) {
      * The request asks for the workspace's rounding. Tokkl's web app always applies it, while the
      * Reports API rounds only when asked, as in Toggl (Tokkl's docs/PRD.md R8).
      */
-    suspend fun entries(
+    internal suspend fun entries(
         workspace: ReportWorkspace,
         range: ReportRange,
         zone: ZoneId,
-        filters: ReportFilters = ReportFilters(),
+        filters: ReportFilters,
+    ): ApiResult<List<ReportEntry>> = client.signedIn { it.entries(workspace, range, zone, filters) }
+
+    private suspend fun TokklApi.entries(
+        workspace: ReportWorkspace,
+        range: ReportRange,
+        zone: ZoneId,
+        filters: ReportFilters,
     ): ApiResult<List<ReportEntry>> {
         val entries = mutableListOf<ReportEntry>()
         var firstRow = 1
@@ -112,20 +121,21 @@ class ReportsServer(private val api: TokklApi) {
      * 1 for the first page, then the row the server named for the next one. Times are in [zone].
      * The phone never works out a page itself.
      */
-    suspend fun detailedPage(
+    override suspend fun detailedPage(
         workspace: ReportWorkspace,
         range: ReportRange,
         zone: ZoneId,
         firstRow: Int,
-        filters: ReportFilters = ReportFilters(),
-    ): ApiResult<DetailedPage> {
-        val page = search(workspace, range, filters, "DESC", DETAILED_PAGE_SIZE, firstRow).getOrElse { return it }
+        filters: ReportFilters,
+    ): ApiResult<DetailedPage> = client.signedIn { api ->
+        val page = api.search(workspace, range, filters, "DESC", DETAILED_PAGE_SIZE, firstRow)
+            .getOrElse { return@signedIn it }
         val entries = try {
             page.value.flatMap { it.detailed(zone) }
         } catch (e: DateTimeParseException) {
-            return notADateAndTime(e)
+            return@signedIn notADateAndTime(e)
         }
-        return nextRow(page, firstRow).map { DetailedPage(entries, it) }
+        nextRow(page, firstRow).map { DetailedPage(entries, it) }
     }
 
     /**
@@ -133,11 +143,11 @@ class ReportsServer(private val api: TokklApi) {
      * [filters], from `POST /reports/api/v3/workspace/{id}/weekly/time_entries`: a row per project
      * with its seconds on each day. The request asks for the workspace's rounding, as [entries] does.
      */
-    suspend fun weekly(
+    override suspend fun weekly(
         workspace: ReportWorkspace,
         weekStart: LocalDate,
-        filters: ReportFilters = ReportFilters(),
-    ): ApiResult<List<WeeklyRow>> {
+        filters: ReportFilters,
+    ): ApiResult<List<WeeklyRow>> = client.signedIn { api ->
         val body = WeeklyReportBody(
             startDate = weekStart,
             endDate = weekStart.plusDays(DAYS_IN_WEEK - 1L),
@@ -145,13 +155,13 @@ class ReportsServer(private val api: TokklApi) {
             roundingMinutes = workspace.roundingMinutes,
             filter = filters.apiFilter(),
         )
-        val rows = api.reports.weekly(workspace.id, body).getOrElse { return it }
+        val rows = api.reports.weekly(workspace.id, body).getOrElse { return@signedIn it }
         if (rows.any { it.seconds.size != DAYS_IN_WEEK }) {
-            return ApiResult.Failure(
+            return@signedIn ApiResult.Failure(
                 ApiError.InvalidResponse(IllegalArgumentException("a weekly row does not hold $DAYS_IN_WEEK days")),
             )
         }
-        return ApiResult.Success(
+        ApiResult.Success(
             rows.map {
                 WeeklyRow(
                     it.projectId,
@@ -167,7 +177,7 @@ class ReportsServer(private val api: TokklApi) {
      * A page of `POST /reports/api/v3/workspace/{id}/search/time_entries` of the entries that pass
      * [filters], by date in [direction], `ASC` or `DESC`, with the workspace's rounding.
      */
-    private suspend fun search(
+    private suspend fun TokklApi.search(
         workspace: ReportWorkspace,
         range: ReportRange,
         filters: ReportFilters,
@@ -186,14 +196,14 @@ class ReportsServer(private val api: TokklApi) {
             firstRowNumber = firstRow,
             filter = filters.apiFilter(),
         )
-        return api.reports.search(workspace.id, body)
+        return reports.search(workspace.id, body)
     }
 
     /**
      * The row the page after [page] starts on, from its `X-Next-Row-Number`, or null when the
      * server sent none, after the last page. A row that does not come after [firstRow] fails.
      */
-    private suspend fun nextRow(page: WithHeaders<*>, firstRow: Int): ApiResult<Int?> {
+    private fun nextRow(page: WithHeaders<*>, firstRow: Int): ApiResult<Int?> {
         val next = page.headers[NEXT_ROW_HEADER]?.trim()?.toIntOrNull() ?: return ApiResult.Success(null)
         if (next <= firstRow) {
             return ApiResult.Failure(

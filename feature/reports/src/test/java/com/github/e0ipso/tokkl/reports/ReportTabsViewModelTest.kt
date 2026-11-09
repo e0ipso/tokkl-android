@@ -23,7 +23,7 @@ import java.time.ZonedDateTime
 
 /**
  * The Detailed and Weekly tabs of the reports model over a [FakeReportsRepository] that answers
- * as ReportsServer reads Tokkl's answers. The account is at UTC+14 with weeks from Wednesday, and
+ * as ServerReportsRepository reads Tokkl's answers. The account is at UTC+14 with weeks from Wednesday, and
  * the clock says Tuesday 20 October in UTC, already Wednesday 21 October in the account's zone.
  * Calls run when [io] runs them, so a test can look at the state while they wait. What each
  * request sends and how each answer reads is ReportsServerTest's.
@@ -265,7 +265,7 @@ class ReportTabsViewModelTest {
         assertEquals(ReportTab.SUMMARY, model.tab.value)
     }
 
-    /** A weekly answer ReportsServer could not read shows as an unexpected answer. */
+    /** A weekly answer ServerReportsRepository could not read shows as an unexpected answer. */
     @Test
     fun aWeeklyAnswerThatIsNotAWeekIsAnUnexpectedAnswer() {
         repository.weeklyAnswer = {
@@ -345,7 +345,7 @@ class ReportTabsViewModelTest {
 
         /**
          * Two rows of Beta to merge, ties by time to sort by title, and time without a project, as
-         * ReportsServer reads them.
+         * ServerReportsRepository reads them.
          */
         val WEEKLY = listOf(
             WeeklyRow(null, "", null, listOf(0L, 0L, 0L, 0L, 0L, 0L, 900L)),

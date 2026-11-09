@@ -33,7 +33,7 @@ class AppSummaryServerTest {
 
     private val testApi = TestApi(null)
     private val http = MockWebServer()
-    private lateinit var server: ReportsServer
+    private lateinit var server: ServerReportsRepository
     private val range = ReportRange(LocalDate.parse("2026-10-21"), LocalDate.parse("2026-10-27"))
     private val workspace = ReportWorkspace(WorkspaceId(7), 1, 15, appSummaryCandidate = true)
     private val zone = ZoneId.of("Pacific/Kiritimati")
@@ -52,7 +52,8 @@ class AppSummaryServerTest {
         val url = ServerUrl.parse(http.url("/prefix/tokkl/").toString())!!
         testApi.stored = url
         testApi.trust = InMemoryServerTrust(url)
-        server = ReportsServer(testApi.api(url, ApiCredentials.ApiToken("test-token")))
+        val api = testApi.api(url, ApiCredentials.ApiToken("test-token"))
+        server = ServerReportsRepository { api }
     }
 
     @After
@@ -147,6 +148,7 @@ class AppSummaryServerTest {
                     range,
                     zone,
                     DayOfWeek.WEDNESDAY,
+                    ReportFilters(),
                 )
             },
         )
@@ -171,6 +173,7 @@ class AppSummaryServerTest {
                     range,
                     zone,
                     DayOfWeek.WEDNESDAY,
+                    ReportFilters(),
                 )
             } as ApiResult.Failure
             assertEquals(status, (answer.error as ApiError.Http).status)
@@ -192,6 +195,7 @@ class AppSummaryServerTest {
                     range,
                     zone,
                     DayOfWeek.WEDNESDAY,
+                    ReportFilters(),
                 )
             } as ApiResult.Failure
             assertTrue(answer.error is ApiError.InvalidResponse)
@@ -203,7 +207,9 @@ class AppSummaryServerTest {
     @Test
     fun unreachableServerStaysANetworkFailure() = runTest {
         http.close()
-        val answer = run { server.summary(workspace, range, zone, DayOfWeek.WEDNESDAY) } as ApiResult.Failure
+        val answer = run {
+            server.summary(workspace, range, zone, DayOfWeek.WEDNESDAY, ReportFilters())
+        } as ApiResult.Failure
         assertTrue(answer.error is ApiError.Network)
     }
 

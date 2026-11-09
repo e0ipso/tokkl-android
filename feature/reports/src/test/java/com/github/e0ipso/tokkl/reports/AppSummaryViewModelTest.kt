@@ -29,7 +29,7 @@ import java.time.ZoneOffset
 /**
  * The reports model's summary on a Tokkl server whose account has a role, so the workspace is a
  * candidate for Tokkl's app report. A [FakeReportsRepository] stands in for the server; which
- * endpoint answers the summary, and how its answer reads, is ReportsServer's and
+ * endpoint answers the summary, and how its answer reads, is ServerReportsRepository's and
  * AppSummaryServerTest pins it. The account is at UTC+14 with weeks from Wednesday.
  */
 class AppSummaryViewModelTest {

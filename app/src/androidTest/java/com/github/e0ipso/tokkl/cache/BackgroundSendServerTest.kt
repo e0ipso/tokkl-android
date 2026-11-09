@@ -31,7 +31,6 @@ import com.github.e0ipso.tokkl.reminder.ReminderWorker
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.tokklApi
-import com.github.e0ipso.tokkl.trash.TrashServer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -154,9 +153,7 @@ class BackgroundSendServerTest {
         val sentId = serverId(id.value)
         if (shortStop) {
             val trashed = runBlocking {
-                TrashServer(
-                    web.tokklApi(),
-                ).list()
+                web.tokklApi().trash.list()
             }.orFail("GET /api/app/trash").single { it.id.value == sentId }
             assertEquals("Queued offline", trashed.description)
             assertEquals("the short Stop reached Trash", trashed.start, trashed.stop)

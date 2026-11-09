@@ -2,15 +2,19 @@ package com.github.e0ipso.tokkl.projects
 
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.ProjectTask
+import com.github.e0ipso.tokkl.api.TaskBody
+import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.api.getOrElse
 import com.github.e0ipso.tokkl.api.map
 import com.github.e0ipso.tokkl.catalog.CatalogRepository
-import com.github.e0ipso.tokkl.catalog.workspace
+import com.github.e0ipso.tokkl.catalog.createOnce
+import com.github.e0ipso.tokkl.catalog.managedWorkspace
 import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.model.Task
 import com.github.e0ipso.tokkl.model.TaskId
 import com.github.e0ipso.tokkl.model.WorkspaceId
-import com.github.e0ipso.tokkl.session.SignedInApi
+import com.github.e0ipso.tokkl.session.signedIn
 
 /**
  * The workspace's projects, for the projects page. [ServerProjectsRepository] reads and changes
@@ -30,34 +34,53 @@ interface ProjectsRepository : CatalogRepository<ProjectsData> {
     suspend fun setActive(workspace: WorkspaceId, id: ProjectId, active: Boolean): ApiResult<ProjectDetails>
 }
 
-/** The workspace's projects on the signed-in account's server, through [ProjectsServer]. */
-class ServerProjectsRepository(client: ApiClientProvider) : ProjectsRepository {
+/**
+ * The workspace's projects on the signed-in account's server, from the API v9 project calls. Each
+ * call suspends while its request runs.
+ */
+class ServerProjectsRepository(private val client: ApiClientProvider) : ProjectsRepository {
 
-    private val api = SignedInApi(client)
-
-    override suspend fun workspace(stored: WorkspaceId?): ApiResult<WorkspaceId> = api.workspace(stored)
+    override suspend fun workspace(stored: WorkspaceId?): ApiResult<WorkspaceId> = client.managedWorkspace(stored)
 
     /** The workspace's projects and, for the form's hints only, its defaults, which may fail alone. */
-    override suspend fun load(workspace: WorkspaceId): ApiResult<ProjectsData> = api.call { client ->
-        val server = ProjectsServer(client, workspace)
-        server.list().map { projects ->
+    override suspend fun load(workspace: WorkspaceId): ApiResult<ProjectsData> = client.signedIn { api ->
+        api.projectsOf(workspace).map { projects ->
             ProjectsData(
                 projects = projects.filter { it.workspaceId == workspace }.sortedForList(),
-                defaults = server.defaults().getOrElse { null },
+                defaults = api.account.workspace(workspace)
+                    .map { WorkspaceDefaults(it.defaultCurrency, it.defaultHourlyRate) }
+                    .getOrElse { null },
             )
         }
     }
 
-    /** As [ProjectsServer.create] does. */
+    /**
+     * Creates the project once, as [createOnce] does. When the answer was lost, the project with
+     * the name and client of [fields] whose id is not in [known] counts as the one it made.
+     */
     override suspend fun create(workspace: WorkspaceId, fields: ProjectFields, known: Set<ProjectId>) =
-        api.call { ProjectsServer(it, workspace).create(fields, known) }
+        client.signedIn { api ->
+            createOnce(
+                create = { api.projects.create(workspace, fields.body()).map { it.toDetails() } },
+                list = { api.projectsOf(workspace) },
+                made = {
+                    it.id !in known && it.workspaceId == workspace && it.name == fields.name &&
+                        it.clientId == fields.clientId
+                },
+            )
+        }
 
     override suspend fun update(workspace: WorkspaceId, id: ProjectId, fields: ProjectFields) =
-        api.call { ProjectsServer(it, workspace).update(id, fields) }
+        client.signedIn { api -> api.projects.update(workspace, id, fields.body()).map { it.toDetails() } }
 
+    /** Archives the project when [active] is false and restores it when true. */
     override suspend fun setActive(workspace: WorkspaceId, id: ProjectId, active: Boolean) =
-        api.call { ProjectsServer(it, workspace).setActive(id, active) }
+        client.signedIn { api -> api.projects.setActive(workspace, id, active).map { it.toDetails() } }
 }
+
+/** Every project of [workspace], archived ones included, in the server's order. */
+private suspend fun TokklApi.projectsOf(workspace: WorkspaceId): ApiResult<List<ProjectDetails>> =
+    projects.list(workspace).map { projects -> projects.map { it.toDetails() } }
 
 /**
  * The tasks of a project, for the task list in the project form. [ServerTasksRepository] reads and
@@ -88,26 +111,48 @@ interface TasksRepository {
     suspend fun delete(workspace: WorkspaceId, project: ProjectId, id: TaskId): ApiResult<Unit>
 }
 
-/** The tasks of a project on the signed-in account's server, through [TasksServer]. */
-class ServerTasksRepository(client: ApiClientProvider) : TasksRepository {
+/**
+ * The tasks of a project on the signed-in account's server, from the API v9 task calls. Each call
+ * suspends while its request runs.
+ */
+class ServerTasksRepository(private val client: ApiClientProvider) : TasksRepository {
 
-    private val api = SignedInApi(client)
+    override suspend fun workspace(stored: WorkspaceId?): ApiResult<WorkspaceId> = client.managedWorkspace(stored)
 
-    override suspend fun workspace(stored: WorkspaceId?): ApiResult<WorkspaceId> = api.workspace(stored)
-
-    override suspend fun load(workspace: WorkspaceId, project: ProjectId): ApiResult<TasksData> = api.call { client ->
-        TasksServer(client, workspace, project).list().map { tasks ->
-            TasksData(tasks.filter { it.projectId == project }.sortedForList())
+    override suspend fun load(workspace: WorkspaceId, project: ProjectId): ApiResult<TasksData> =
+        client.signedIn { api ->
+            api.tasksOf(workspace, project).map { tasks ->
+                TasksData(tasks.filter { it.projectId == project }.sortedForList())
+            }
         }
-    }
 
-    /** As [TasksServer.create] does. */
+    /**
+     * Creates the task once, as [createOnce] does. When the answer was lost, the project's task
+     * named [name] whose id is not in [known] counts as the one it made.
+     */
     override suspend fun create(workspace: WorkspaceId, project: ProjectId, name: String, known: Set<TaskId>) =
-        api.call { TasksServer(it, workspace, project).create(name, known) }
+        client.signedIn { api ->
+            createOnce(
+                create = { api.projects.createTask(workspace, project, name).map { it.toTask(workspace) } },
+                list = { api.tasksOf(workspace, project) },
+                made = { it.id !in known && it.projectId == project && it.name == name },
+            )
+        }
 
+    /** Renames the task and marks it done or not done, as the web app's task row does. */
     override suspend fun update(workspace: WorkspaceId, project: ProjectId, id: TaskId, name: String, done: Boolean) =
-        api.call { TasksServer(it, workspace, project).update(id, name, done) }
+        client.signedIn { api ->
+            api.projects.updateTask(workspace, project, id, TaskBody(name, active = !done)).map { it.toTask(workspace) }
+        }
 
+    /** Deletes the task. The server takes it off the time entries that had it, which stay. */
     override suspend fun delete(workspace: WorkspaceId, project: ProjectId, id: TaskId) =
-        api.call { TasksServer(it, workspace, project).delete(id) }
+        client.signedIn { it.projects.deleteTask(workspace, project, id) }
 }
+
+/** Every task of [project], done ones included, sorted by name. */
+private suspend fun TokklApi.tasksOf(workspace: WorkspaceId, project: ProjectId): ApiResult<List<Task>> =
+    projects.tasks(workspace, project).map { tasks -> tasks.map { it.toTask(workspace) } }
+
+/** A task of the list, which the tasks route lists without its workspace. */
+private fun ProjectTask.toTask(workspace: WorkspaceId) = Task(id, workspace, projectId, name, active)
