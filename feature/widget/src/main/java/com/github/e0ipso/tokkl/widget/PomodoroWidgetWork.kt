@@ -11,6 +11,9 @@ import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.platform.CurrentWorkManager
 import com.github.e0ipso.tokkl.session.SignInStatus
 import com.github.e0ipso.tokkl.timernotice.TimerFailureNotice
+import com.github.e0ipso.tokkl.timernotice.runSurfaceCommand
+import com.github.e0ipso.tokkl.timernotice.toWorkResult
+import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import com.github.e0ipso.tokkl.timerstate.TimerActions
 import com.github.e0ipso.tokkl.timerstate.TimerStateIntakes
 import kotlinx.coroutines.CoroutineScope
@@ -37,7 +40,8 @@ internal fun CurrentWorkManager.sendPomodoroWidgetTap(tap: PomodoroWidgetTap) {
  * phase and the revision the tap carries against the widget's state when it runs
  * ([sendPomodoroWidgetAction]), and sends with the account's timer state and API as they are
  * then, which it keeps together until the answer: a sign-out or another account meanwhile drops
- * the answer. One that fails, offline included, says why through [failures].
+ * the answer. One that fails, offline or refused by the phone's storage included, says why
+ * through [failures] ([runSurfaceCommand]) and ends the work as failed.
  */
 class PomodoroWidgetActionWorker(
     context: Context,
@@ -52,14 +56,15 @@ class PomodoroWidgetActionWorker(
 ) : CoroutineWorker(context, parameters) {
 
     override suspend fun doWork(): Result = withContext(io) {
-        inputData.pomodoroWidgetTap()?.let { send(it) }
-        Result.success()
+        val tap = inputData.pomodoroWidgetTap() ?: return@withContext Result.success()
+        runSurfaceCommand(failures) { send(tap) }.toWorkResult()
     }
 
-    private suspend fun send(tap: PomodoroWidgetTap) {
+    /** Sends [tap] and returns what it came to, or null when it sent nothing. */
+    private suspend fun send(tap: PomodoroWidgetTap): TimerActionResult? {
         val intake = timerStates.intake()
         val current = widgetStates.state.first()
-        if (timerStates.intake() !== intake || !signIn.isSignedIn()) return
+        if (timerStates.intake() !== intake || !signIn.isSignedIn()) return null
         val api = client()
         // Keep the captured holder and credential together across sign-out/account replacement.
         val actions = TimerActions(
@@ -69,7 +74,7 @@ class PomodoroWidgetActionWorker(
             scope = scope,
             io = io,
         )
-        sendPomodoroWidgetAction(tap, current, actions)?.let { failures.show(it) }
+        return sendPomodoroWidgetAction(tap, current, actions)
     }
 }
 

@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.tile
 
-import android.database.sqlite.SQLiteException
 import android.os.Bundle
 import android.service.quicksettings.TileService
 import androidx.activity.ComponentActivity
@@ -30,7 +29,7 @@ import androidx.compose.ui.text.style.TextAlign
 import com.github.e0ipso.tokkl.feature.tile.R
 import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.timernotice.TimerFailureNotice
-import com.github.e0ipso.tokkl.timerstate.SurfaceTap
+import com.github.e0ipso.tokkl.timernotice.runFromSurface
 import com.github.e0ipso.tokkl.timerstate.TimerControls
 import com.github.e0ipso.tokkl.timerstate.TimerControlsSource
 import com.github.e0ipso.tokkl.timerstate.TimerSurfaceAction
@@ -92,18 +91,11 @@ class TileControlsActivity : ComponentActivity() {
      * The control goes through [TimerSurfaceActions] in the application scope, so
      * dismissing the dialog does not cancel it. A Stop of a running entry is written on the phone
      * at once and does not wait for the network. Pause, Resume and Stop while paused go to the
-     * server, and one that fails, offline included, says why in a toast while the dialog keeps
-     * the timer it drew.
+     * server, and one that fails, offline or refused by the phone's storage included, says why in
+     * a toast while the dialog keeps the timer it drew.
      */
     private fun runControl(control: TileControl) {
-        scope.launch(io) {
-            try {
-                val tap = surfaceActions.tap(control.action, control.target)
-                if (tap is SurfaceTap.Request) tap.send()?.let { failures.show(it) }
-            } catch (_: SQLiteException) {
-                // The disk refused the change. The dialog still shows the timer it drew.
-            }
-        }
+        scope.launch(io) { surfaceActions.runFromSurface(control.action, control.target, failures) }
     }
 }
 

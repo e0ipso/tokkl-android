@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.widget
 
 import android.content.Context
-import android.database.sqlite.SQLiteException
 import androidx.glance.GlanceId
 import androidx.glance.action.Action
 import androidx.glance.action.ActionParameters
@@ -15,6 +14,9 @@ import com.github.e0ipso.tokkl.model.TaskId
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.platform.CurrentWorkManager
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
+import com.github.e0ipso.tokkl.timernotice.TimerFailureNotice
+import com.github.e0ipso.tokkl.timernotice.runFromSurface
+import com.github.e0ipso.tokkl.timernotice.runSurfaceCommand
 import com.github.e0ipso.tokkl.timernotice.sendTimerAction
 import com.github.e0ipso.tokkl.timerstate.CurrentTimerState
 import com.github.e0ipso.tokkl.timerstate.TimerSurfaceAction
@@ -42,13 +44,13 @@ class StartTimerAction :
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         val start = WidgetStart(parameters[ACCOUNT].orEmpty(), parameters.fields())
         val queue = get<ChangeQueue>()
-        try {
+        // A start the disk refused starts nothing and says so, while the widget stays as it was.
+        runSurfaceCommand(get<TimerFailureNotice>()) {
             start.run(
                 account = get<CurrentTimerState>().account(),
                 workspaceId = get<AccountSettingsSource>().current()?.defaultWorkspaceId,
             ) { workspaceId, fields -> queue.start(workspaceId, fields) }
-        } catch (_: SQLiteException) {
-            // The disk refused the change. Nothing starts, and the widget stays as it was.
+            null
         }
     }
 }
@@ -123,11 +125,8 @@ private suspend fun KoinComponent.tapTimer(action: TimerSurfaceAction, parameter
         get<CurrentWorkManager>().sendTimerAction(action, target)
         return
     }
-    try {
-        get<TimerSurfaceActions>().tap(action, target)
-    } catch (_: SQLiteException) {
-        // The disk refused the change. The timer keeps running, and the widget shows it.
-    }
+    // A Stop the disk refused keeps the timer running, as the widget shows, and says so.
+    get<TimerSurfaceActions>().runFromSurface(action, target, get<TimerFailureNotice>())
 }
 
 /**

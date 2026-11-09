@@ -11,6 +11,12 @@ import com.github.e0ipso.tokkl.timerstate.TimerActionResult
  * screen of its own. The notification feature says it in a toast; what the surface shows stays
  * as it was. A [TimerActionResult.Done] says nothing.
  */
-fun interface TimerFailureNotice {
+interface TimerFailureNotice {
     suspend fun show(result: TimerActionResult)
+
+    /**
+     * The phone's storage refused to read or write a control's action, such as a Start or a Stop
+     * the queue could not take, so nothing changed ([runSurfaceCommand]).
+     */
+    suspend fun showNotStored()
 }

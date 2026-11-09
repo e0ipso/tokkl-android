@@ -42,3 +42,9 @@ fun timerNoticeText(resources: Resources, notice: TimerNotice): String = when (n
         TimerActionResult.Done -> problemText(resources, ServerProblem.Unexpected(null))
     }
 }
+
+/**
+ * What a timer control outside the app's screens says when the phone's storage refused its action,
+ * so nothing changed ([TimerFailureNotice.showNotStored]).
+ */
+fun timerNotStoredText(resources: Resources): String = resources.getString(R.string.timer_action_not_stored)

@@ -9,6 +9,11 @@
     <string name="timer_action_refused">Another device changed the timer first.</string>
     <!-- The action got no answer. Nothing changed on the phone and nothing waits to be sent. -->
     <string name="timer_action_offline">Can\'t reach the server. Try again when you\'re back online.</string>
+    <!--
+        The phone's storage refused a timer action from the notification, the widget, the tile
+        or the reminder, so nothing changed. Worded as the entry form's entry_delete_failed.
+    -->
+    <string name="timer_action_not_stored">Couldn\'t queue the change. Try again.</string>
     <!-- The server sent a pomodoro too short to keep to the trash. Shown once per pomodoro. -->
     <string name="timer_pomodoro_too_short">This pomodoro was too short to save.</string>
 </resources>

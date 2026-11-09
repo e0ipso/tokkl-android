@@ -1,11 +1,11 @@
 package com.github.e0ipso.tokkl.tile
 
-import android.database.sqlite.SQLiteException
 import android.graphics.drawable.Icon
 import android.service.quicksettings.TileService
 import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.timernotice.TimerFailureNotice
+import com.github.e0ipso.tokkl.timernotice.runSurfaceCommand
 import com.github.e0ipso.tokkl.timerstate.SurfaceTap
 import com.github.e0ipso.tokkl.timerstate.TimerSurfaceActions
 import kotlinx.coroutines.CoroutineDispatcher
@@ -81,12 +81,8 @@ class RunningTileService : TileService() {
         super.onClick()
         val showing = shown ?: return
         appScope.launch(io) {
-            try {
-                val tap = tapTile(showing, surfaceActions, changes)
-                if (tap is SurfaceTap.Request) tap.send()?.let { failures.show(it) }
-            } catch (_: SQLiteException) {
-                // The disk refused the change. Nothing changed, and the tile still says so.
-            }
+            // A failure, the storage's included, says why while the tile keeps what it showed.
+            runSurfaceCommand(failures) { (tapTile(showing, surfaceActions, changes) as? SurfaceTap.Request)?.send() }
         }
     }
 

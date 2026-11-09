@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.pomodoro
 
 import com.github.e0ipso.tokkl.timernotice.TimerFailureNotice
+import com.github.e0ipso.tokkl.timernotice.runSurfaceCommand
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.timerstate.SessionActions
 
@@ -38,7 +39,7 @@ internal class SessionNotificationButtons(
 ) : PomodoroSessionButtons {
     override suspend fun press(account: String, phase: PomodoroPhaseKey, revision: Long, end: Boolean) {
         // A button of an account signed out since sends nothing: its identity is gone.
-        notification.act(account, phase, revision, end)?.let { failures.show(it) }
+        runSurfaceCommand(failures) { notification.act(account, phase, revision, end) }
     }
 }
 
@@ -49,7 +50,7 @@ internal class AlarmRingingButtons(
     private val actions: SessionActions,
 ) : PomodoroRingingButtons {
     override suspend fun press(phase: PomodoroPhaseKey, revision: Long, end: Boolean) {
-        alarm.sendPhaseAction(actions, phase, revision, end)?.let { failures.show(it) }
+        runSurfaceCommand(failures) { alarm.sendPhaseAction(actions, phase, revision, end) }
     }
 
     override suspend fun repost(phase: PomodoroPhaseKey) = alarm.repost(phase)

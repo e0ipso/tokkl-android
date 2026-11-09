@@ -7,7 +7,6 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.database.sqlite.SQLiteException
 import androidx.core.net.toUri
 import com.github.e0ipso.tokkl.feature.notification.R
 import com.github.e0ipso.tokkl.navigation.PageTap
@@ -15,12 +14,12 @@ import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.platform.finishOnce
 import com.github.e0ipso.tokkl.platform.mainActivityIntent
 import com.github.e0ipso.tokkl.timernotice.TimerFailureNotice
+import com.github.e0ipso.tokkl.timernotice.runSurfaceCommand
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import java.io.IOException
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /** Separate alert channel; the ongoing notification and its Live Update are unchanged. */
@@ -124,17 +123,17 @@ class ReminderActionReceiver :
         val finish = goAsync().finishOnce()
         scope.launch(io) {
             try {
-                reminder.act(
-                    intent.getLongExtra(ReminderWork.ID, 0),
-                    intent.getLongExtra(ReminderWork.START, 0),
-                    stopTimer = intent.getBooleanExtra(ReminderNotifier.STOP, false),
-                    pauseTimer = intent.getBooleanExtra(ReminderNotifier.PAUSE, false),
-                    beforeRequest = finish,
-                )?.let { failures.show(it) }
-            } catch (_: SQLiteException) {
-                // The disk refused Stop. Keep the notification so the user can try again.
-            } catch (_: IOException) {
-                // Keep the notification if confirmation could not be stored.
+                // A Stop the disk refused, or a confirmation it could not store, keeps the
+                // notification so the user can try again, and says so.
+                runSurfaceCommand(failures) {
+                    reminder.act(
+                        intent.getLongExtra(ReminderWork.ID, 0),
+                        intent.getLongExtra(ReminderWork.START, 0),
+                        stopTimer = intent.getBooleanExtra(ReminderNotifier.STOP, false),
+                        pauseTimer = intent.getBooleanExtra(ReminderNotifier.PAUSE, false),
+                        beforeRequest = finish,
+                    )
+                }
             } finally {
                 finish()
             }
