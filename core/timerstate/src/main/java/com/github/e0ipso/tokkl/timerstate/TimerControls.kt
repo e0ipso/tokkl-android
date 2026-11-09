@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.timerstate
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.EntryWithSendState
+import com.github.e0ipso.tokkl.model.PauseChain
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
@@ -14,25 +15,38 @@ import java.time.Instant
  * action goes ahead only while the phone still shows that state, so a second tap, a tap on an old
  * notification or a widget drawn before sign-out does nothing.
  *
- * Every surface draws its targets from the server's timer state, made with [server]: a paused one
- * carries the server [revision] it was shown at, which Resume and Discard send, and a running one
- * the entry it showed. Each also names the [account] it was drawn for, so a control kept in a
+ * Every surface draws its targets from the server's timer state ([serverTimerControls]): a running
+ * entry or a paused chain. Each names the [account] it was drawn for, so a control kept in a
  * notification, a widget or a PendingIntent past a sign-out acts on nothing in the next account.
- *
- * @property revision the server revision a paused target was shown at, or 0.
- * @property entryId the running entry it showed, or null while paused.
- * @property account the account the control was drawn for, as the timer state's store names it,
- *   or blank where no account names it.
+ * Where a PendingIntent, a work request or a widget action keeps one, it keeps it flat
+ * ([flatRevision], [flatEntryId]) and reads it back with [timerTarget].
  */
-data class TimerTarget(val revision: Long = 0, val entryId: EntryId? = null, val account: String = "") {
-    companion object {
-        /**
-         * A control drawn from the server's timer state for [account]: the running entry
-         * [entryId], or a paused chain shown at the server's [revision].
-         */
-        fun server(revision: Long = 0, entryId: EntryId? = null, account: String = "") =
-            TimerTarget(revision = revision, entryId = entryId, account = account)
-    }
+sealed interface TimerTarget {
+
+    /** The account the control was drawn for, as the timer state's store names it. */
+    val account: String
+
+    /** The running entry [entryId] a control showed, which Pause and Stop act on. */
+    data class Running(val entryId: EntryId, override val account: String) : TimerTarget
+
+    /** A paused chain a control showed at the server's [revision], which Resume and Discard send. */
+    data class Paused(val revision: Long, override val account: String) : TimerTarget
+}
+
+/** The revision a flat copy of this target keeps: a paused chain's, or 0 for a running entry. */
+val TimerTarget.flatRevision: Long get() = (this as? TimerTarget.Paused)?.revision ?: 0
+
+/** The entry a flat copy of this target keeps: a running entry's id, or 0 for a paused chain. */
+val TimerTarget.flatEntryId: Long get() = (this as? TimerTarget.Running)?.entryId?.value ?: 0
+
+/**
+ * The target a PendingIntent, a work request or a widget action kept flat, as [account],
+ * [revision] and [entryId], 0 for none: the running entry [entryId], or else the paused chain at
+ * [revision]. Null when it names no account, as one an older version kept, which acts on nothing.
+ */
+fun timerTarget(account: String?, revision: Long, entryId: Long): TimerTarget? {
+    if (account.isNullOrEmpty()) return null
+    return if (entryId != 0L) TimerTarget.Running(EntryId(entryId), account) else TimerTarget.Paused(revision, account)
 }
 
 /**
@@ -59,7 +73,7 @@ sealed interface TimerControls {
         val entry: TimeEntry,
         val unsent: Boolean,
         val accumulatedSeconds: Long,
-        val target: TimerTarget,
+        val target: TimerTarget.Running,
         val clockOffset: Duration = Duration.ZERO,
         val pausable: Boolean = true,
     ) : TimerControls
@@ -72,7 +86,7 @@ sealed interface TimerControls {
         val seconds: Long,
         val workspaceId: WorkspaceId,
         val fields: EntryFields,
-        val target: TimerTarget,
+        val target: TimerTarget.Paused,
     ) : TimerControls
 }
 
@@ -102,28 +116,28 @@ fun serverTimerControls(
     running: EntryWithSendState?,
     held: HeldTimerState?,
     timerApi: Boolean,
-    account: String = "",
+    account: String,
 ): TimerControls {
     val state = held?.takeIf { timerApi }
     val pause = state?.pause
     if (running != null) {
         val entry = running.entry
-        val clone = pause?.takeIf { !it.paused && it.cloneEntryId == entry.id }
+        val clone = (pause as? PauseChain.Resumed)?.takeIf { it.cloneEntryId == entry.id }
         return TimerControls.Running(
             entry = entry,
             unsent = running.unsent,
             accumulatedSeconds = clone?.seconds ?: 0,
-            target = TimerTarget.server(entryId = entry.id, account = account),
+            target = TimerTarget.Running(entry.id, account),
             clockOffset = clone?.let { held?.clockOffset } ?: Duration.ZERO,
             pausable = timerApi && state?.pomodoro == null,
         )
     }
-    if (pause != null && pause.paused) {
+    if (state != null && pause is PauseChain.Paused) {
         return TimerControls.Paused(
             seconds = pause.seconds,
             workspaceId = pause.workspaceId,
             fields = pause.fields,
-            target = TimerTarget.server(revision = state?.revision ?: 0, account = account),
+            target = TimerTarget.Paused(state.revision, account),
         )
     }
     return TimerControls.Idle

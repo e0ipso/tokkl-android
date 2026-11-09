@@ -22,13 +22,13 @@ sealed interface RunningTileContent {
      * A timer runs: the tile is active, and a tap stops [entry], as [target] shows it, which ends
      * a pause chain.
      */
-    data class Running(val entry: TimeEntry, val target: TimerTarget) : RunningTileContent
+    data class Running(val entry: TimeEntry, val target: TimerTarget.Running) : RunningTileContent
 
     /**
      * The timer is paused (docs/PRD.md T1): the tile is inactive, says so, and a tap resumes
      * [description] as [target] shows it.
      */
-    data class Paused(val description: String, val target: TimerTarget) : RunningTileContent
+    data class Paused(val description: String, val target: TimerTarget.Paused) : RunningTileContent
 
     /** No timer runs: the tile is inactive, and a tap continues [last], the stopped entry that started last. */
     data class Continue(val last: TimeEntry) : RunningTileContent

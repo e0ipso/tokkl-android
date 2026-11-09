@@ -34,6 +34,7 @@ import com.github.e0ipso.tokkl.components.timerActions
 import com.github.e0ipso.tokkl.components.timerControls
 import com.github.e0ipso.tokkl.core.ui.R
 import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.PauseChain
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.notification.action
 import com.github.e0ipso.tokkl.notification.stopAction
@@ -227,7 +228,8 @@ class TimerActionsOfflineServerTest {
             tapOnTheTimerPage(R.string.timer_stop_spoken)
             app.awaitControls<TimerControls.Idle>("the clone's Stop, at once", timeoutMs = AT_ONCE_MS)
             assertEquals("the Stop waits in the queue", 1, unsent())
-            assertEquals("the server has not heard of it", clone, held()?.pause?.cloneEntryId?.value)
+            val heldClone = (held()?.pause as? PauseChain.Resumed)?.cloneEntryId
+            assertEquals("the server has not heard of it", clone, heldClone?.value)
             assertNoNotice()
 
             // Only the queue sends: the tap sent nothing, as the phone was offline. Its v9 stop

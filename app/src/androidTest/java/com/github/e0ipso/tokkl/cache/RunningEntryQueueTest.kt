@@ -206,6 +206,7 @@ class RunningEntryQueueTest {
                 RoomCurrentEntries(database).latestRunning(),
                 held,
                 timerApi = true,
+                account = ACCOUNT,
             ) as TimerControls.Running
             val before = controls()
             val corrected = resumedAt.minusSeconds(61)
@@ -277,3 +278,6 @@ class RunningEntryQueueTest {
         val START: Instant = Instant.parse("2026-10-22T22:03:41.123Z")
     }
 }
+
+/** The name the timer controls of these tests carry for the signed-in account. */
+private const val ACCOUNT = "account"

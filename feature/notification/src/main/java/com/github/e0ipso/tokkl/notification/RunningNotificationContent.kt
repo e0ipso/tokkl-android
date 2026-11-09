@@ -47,7 +47,7 @@ data class RunningNotificationContent(
     val key: String,
     val accumulatedSeconds: Long = 0,
     val paused: Boolean = false,
-    val target: TimerTarget = TimerTarget.server(entryId = entryId),
+    val target: TimerTarget,
     val pausable: Boolean = false,
 )
 
@@ -64,7 +64,12 @@ fun runningNotificationContent(
 ): RunningNotificationContent? = when (controls) {
     TimerControls.Idle -> null
 
-    is TimerControls.Running -> runningNotificationContent(controls.entry, projects, tasks)?.let { content ->
+    is TimerControls.Running -> runningNotificationContent(
+        controls.entry,
+        projects,
+        tasks,
+        controls.target.account,
+    )?.let { content ->
         content.copy(
             start = controls.countsFrom,
             key = hash(
@@ -109,11 +114,15 @@ fun runningNotificationContent(
     }
 }
 
-/** The notification for the [running] entry, or null when none runs. */
+/**
+ * The notification for the [running] entry, or null when none runs. Its actions act on the entry
+ * for [account], the name the signed-in account's timer controls carry.
+ */
 fun runningNotificationContent(
     running: TimeEntry?,
     projects: List<Project>,
     tasks: List<Task>,
+    account: String,
 ): RunningNotificationContent? {
     if (running == null || running.stop != null) return null
     val labels = entryLabels(running.fields(), projects, tasks)
@@ -136,6 +145,7 @@ fun runningNotificationContent(
         task = labels.task,
         start = running.start,
         key = key,
+        target = TimerTarget.Running(running.id, account),
     )
 }
 

@@ -117,7 +117,7 @@ abstract class TimerWidgetScreenshotTest(private val dark: Boolean, private val 
     private fun fixtures(): List<Pair<String, WidgetState>> {
         val now = Instant.now()
         val start = now.minusSeconds(754)
-        val target = TimerTarget.server(1, EntryId(42), "screenshot")
+        val target = TimerTarget.Running(EntryId(42), "screenshot")
         val projects = listOf(
             WidgetDayProject(ProjectId(1), "Tokkl for Android", "#0b83d9", 3600, "1:00", true),
             WidgetDayProject(ProjectId(2), "Client site", "#9e5bd9", 1800, "0:30", false),
@@ -150,7 +150,14 @@ abstract class TimerWidgetScreenshotTest(private val dark: Boolean, private val 
             "running" to ready,
             "paused" to ready.copy(
                 running = null,
-                paused = WidgetPaused("Widget mock-ups", "Tokkl for Android", "Design", 754, target, "#0b83d9"),
+                paused = WidgetPaused(
+                    "Widget mock-ups",
+                    "Tokkl for Android",
+                    "Design",
+                    754,
+                    TimerTarget.Paused(1, "screenshot"),
+                    "#0b83d9",
+                ),
                 day = day.copy(running = null),
             ),
             "idle" to ready.copy(running = null, day = day.copy(running = null)),

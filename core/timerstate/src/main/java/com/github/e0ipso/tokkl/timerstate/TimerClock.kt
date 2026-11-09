@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.timerstate
 
+import com.github.e0ipso.tokkl.model.PauseChain
 import java.time.Duration
 import java.time.Instant
 
@@ -28,8 +29,8 @@ fun HeldTimerState.phaseOvertime(deviceNow: Instant): Duration? {
  * paused, or when the running entry is not its clone.
  */
 fun HeldTimerState.cloneElapsed(deviceNow: Instant): Duration? {
-    val pause = pause ?: return null
-    val clone = runningEntry?.takeIf { !pause.paused && it.id == pause.cloneEntryId } ?: return null
+    val pause = pause as? PauseChain.Resumed ?: return null
+    val clone = runningEntry?.takeIf { it.id == pause.cloneEntryId } ?: return null
     return nonNegative(Duration.between(clone.start, serverNow(deviceNow)))
 }
 

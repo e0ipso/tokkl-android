@@ -46,7 +46,7 @@ class RunningTileContentTest {
         assertEquals(
             RunningTileContent.Running(
                 running,
-                TimerTarget.server(entryId = EntryId(4), account = ServerTimerStates.ACCOUNT),
+                TimerTarget.Running(EntryId(4), ServerTimerStates.ACCOUNT),
             ),
             content,
         )
@@ -67,7 +67,7 @@ class RunningTileContentTest {
         assertEquals(
             RunningTileContent.Running(
                 clone,
-                TimerTarget.server(entryId = EntryId(55), account = ServerTimerStates.ACCOUNT),
+                TimerTarget.Running(EntryId(55), ServerTimerStates.ACCOUNT),
             ),
             content,
         )
@@ -160,7 +160,7 @@ class RunningTileContentTest {
         assertEquals(
             RunningTileContent.Paused(
                 "Paused work",
-                TimerTarget.server(revision = 3, account = ServerTimerStates.ACCOUNT),
+                TimerTarget.Paused(3, ServerTimerStates.ACCOUNT),
             ),
             content,
         )

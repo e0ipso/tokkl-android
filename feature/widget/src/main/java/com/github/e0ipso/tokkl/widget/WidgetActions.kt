@@ -10,7 +10,6 @@ import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionRunCallback
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.model.EntryFields
-import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.model.TaskId
 import com.github.e0ipso.tokkl.model.WorkspaceId
@@ -21,6 +20,9 @@ import com.github.e0ipso.tokkl.timerstate.CurrentTimerState
 import com.github.e0ipso.tokkl.timerstate.TimerSurfaceAction
 import com.github.e0ipso.tokkl.timerstate.TimerSurfaceActions
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
+import com.github.e0ipso.tokkl.timerstate.flatEntryId
+import com.github.e0ipso.tokkl.timerstate.flatRevision
+import com.github.e0ipso.tokkl.timerstate.timerTarget
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
 
@@ -116,8 +118,8 @@ class ResumeTimerAction :
  * included, says why in a toast while the widget keeps showing what it showed.
  */
 private suspend fun KoinComponent.tapTimer(action: TimerSurfaceAction, parameters: ActionParameters) {
-    val target = parameters.target()
-    if (action != TimerSurfaceAction.Stop || target.entryId == null) {
+    val target = parameters.target() ?: return
+    if (action != TimerSurfaceAction.Stop || target !is TimerTarget.Running) {
         get<CurrentWorkManager>().sendTimerAction(action, target)
         return
     }
@@ -146,16 +148,13 @@ fun resumeTimer(target: TimerTarget): Action = actionRunCallback<ResumeTimerActi
 
 private fun TimerTarget.toParameters(): ActionParameters = actionParametersOf(
     ACCOUNT to account,
-    REVISION to revision,
-    ENTRY_ID to (entryId?.value ?: 0L),
+    REVISION to flatRevision,
+    ENTRY_ID to flatEntryId,
 )
 
-/** The target [toParameters] put here. A widget drawn by an older version names no account, so it acts on nothing. */
-private fun ActionParameters.target(): TimerTarget = TimerTarget.server(
-    revision = this[REVISION] ?: 0,
-    entryId = this[ENTRY_ID]?.takeIf { it != 0L }?.let(::EntryId),
-    account = this[ACCOUNT].orEmpty(),
-)
+/** The target [toParameters] put here, or null for a widget an older version drew, which names no account. */
+private fun ActionParameters.target(): TimerTarget? =
+    timerTarget(this[ACCOUNT], this[REVISION] ?: 0, this[ENTRY_ID] ?: 0)
 
 /**
  * The fields as the PendingIntent carries them. Glance puts each parameter in the intent's

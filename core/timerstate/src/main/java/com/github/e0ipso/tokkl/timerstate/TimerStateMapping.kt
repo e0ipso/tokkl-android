@@ -33,13 +33,13 @@ fun TimerState.held(receivedAt: Instant): HeldTimerState = HeldTimerState(
 
 internal fun StoredHeld.toHeld(): HeldTimerState = state.held(receivedAt)
 
-private fun TimerPause.toModel() = PauseChain(
-    paused = paused,
-    seconds = seconds,
-    workspaceId = WorkspaceId(workspaceId),
-    fields = EntryFields(description, projectId?.let(::ProjectId), taskId?.let(::TaskId), tags, billable),
-    cloneEntryId = cloneEntryId?.let(::EntryId),
-)
+/** The server pauses a chain by ending its clone, so a chain without one is the paused chain. */
+private fun TimerPause.toModel(): PauseChain {
+    val workspace = WorkspaceId(workspaceId)
+    val fields = EntryFields(description, projectId?.let(::ProjectId), taskId?.let(::TaskId), tags, billable)
+    val clone = cloneEntryId ?: return PauseChain.Paused(seconds, workspace, fields)
+    return PauseChain.Resumed(seconds, workspace, fields, EntryId(clone))
+}
 
 private fun TimerPomodoro.toModel() = PomodoroSession(
     workMinutes = workMinutes,

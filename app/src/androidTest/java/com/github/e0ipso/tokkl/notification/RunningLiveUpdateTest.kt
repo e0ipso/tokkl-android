@@ -11,6 +11,7 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.feature.notification.R
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.time.formatDuration
+import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import com.github.e0ipso.tokkl.ui.theme.TokklLightExtraColors
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -38,6 +39,7 @@ class RunningLiveUpdateTest {
         task = "Notifications",
         start = Instant.now().minusSeconds(65),
         key = "live-update-test",
+        target = TimerTarget.Running(EntryId(-1), "live-update-test"),
         pausable = true,
     )
 

@@ -75,7 +75,7 @@ class TimerViewModelTest {
     @Before
     fun showTheTimer() {
         model = TimerViewModel(
-            controls = running.map { serverTimerControls(it, held = null, timerApi = true) },
+            controls = running.map { serverTimerControls(it, held = null, timerApi = true, account = ACCOUNT) },
             projects = MutableStateFlow(listOf(APP, CLIENT_WORK)),
             tasks = MutableStateFlow(listOf(DESIGN)),
             accountSettings = settings,
@@ -775,3 +775,6 @@ class TimerViewModelTest {
         )
     }
 }
+
+/** The name the timer controls of these tests carry for the signed-in account. */
+private const val ACCOUNT = "account"

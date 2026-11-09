@@ -74,34 +74,27 @@ class TimerSurfaceActions(
     suspend fun tap(action: TimerSurfaceAction, target: TimerTarget): SurfaceTap? {
         if (target.account != state.account()) return null
         return when (action) {
-            TimerSurfaceAction.Pause -> pause(target)
+            TimerSurfaceAction.Pause -> (target as? TimerTarget.Running)?.let { pause(it) }
 
-            TimerSurfaceAction.Resume -> whilePaused(target) { server.resume(target.revision) }
+            TimerSurfaceAction.Resume ->
+                (target as? TimerTarget.Paused)?.let { paused -> whilePaused { server.resume(paused.revision) } }
 
-            TimerSurfaceAction.Stop ->
-                if (target.entryId != null) {
-                    SurfaceTap.Queued.takeIf { changes.stop(target.entryId) }
-                } else {
-                    whilePaused(target) { server.discard(target.revision) }
-                }
+            TimerSurfaceAction.Stop -> when (target) {
+                is TimerTarget.Running -> SurfaceTap.Queued.takeIf { changes.stop(target.entryId) }
+                is TimerTarget.Paused -> whilePaused { server.discard(target.revision) }
+            }
         }
     }
 
-    /** A request for [action] on the paused chain [target] showed, while a chain is paused. */
-    private suspend fun whilePaused(target: TimerTarget, action: suspend () -> TimerActionResult): SurfaceTap? {
-        if (target.entryId != null) return null
+    /** A request for [action] on the paused chain, while a chain is paused. */
+    private suspend fun whilePaused(action: suspend () -> TimerActionResult): SurfaceTap? {
         val paused = state.currentControls() as? TimerControls.Paused ?: return null
         return request(paused.target, action)
     }
 
-    private suspend fun pause(target: TimerTarget): SurfaceTap? {
+    private suspend fun pause(target: TimerTarget.Running): SurfaceTap? {
         val running = state.currentControls() as? TimerControls.Running ?: return null
-        if (!running.pausable || target.entryId == null || changes.currentId(
-                target.entryId,
-            ) != running.entry.id
-        ) {
-            return null
-        }
+        if (!running.pausable || changes.currentId(target.entryId) != running.entry.id) return null
         return request(running.target) {
             if (running.unsent) sender.sendQueued()
             server.pause()

@@ -70,7 +70,7 @@ class TimerSurfaceActionsTest {
             600,
             WorkspaceId(1),
             EntryFields("Paused"),
-            TimerTarget.server(revision = 8, account = ACCOUNT),
+            TimerTarget.Paused(8, ACCOUNT),
         )
         assertNull("the timer was paused meanwhile", tap(TimerSurfaceAction.Pause, running(id = 42).target))
         assertTrue(calls.isEmpty())
@@ -258,7 +258,7 @@ class TimerSurfaceActionsTest {
             ),
             unsent = unsent,
             accumulatedSeconds = accumulatedSeconds,
-            target = TimerTarget.server(entryId = EntryId(id), account = ACCOUNT),
+            target = TimerTarget.Running(EntryId(id), ACCOUNT),
             pausable = pausable,
         )
 
@@ -266,7 +266,7 @@ class TimerSurfaceActionsTest {
         600,
         WorkspaceId(1),
         EntryFields("Paused"),
-        TimerTarget.server(revision = revision, account = ACCOUNT),
+        TimerTarget.Paused(revision, ACCOUNT),
     )
 
     private inner class Server : PauseActions {

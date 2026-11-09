@@ -59,16 +59,29 @@ data class PomodoroSession(
 )
 
 /**
- * The server's pause chain: [paused], or running as its clone [cloneEntryId], with the [seconds]
- * its stopped entries store and the [fields] Resume starts with in [workspaceId].
+ * The server's pause chain, [Paused] or [Resumed] as a running clone, with the [seconds] its
+ * stopped entries store and the [fields] Resume starts with in [workspaceId].
  */
-data class PauseChain(
-    val paused: Boolean,
-    val seconds: Long,
-    val workspaceId: WorkspaceId,
-    val fields: EntryFields,
-    val cloneEntryId: EntryId?,
-)
+sealed interface PauseChain {
+    val seconds: Long
+    val workspaceId: WorkspaceId
+    val fields: EntryFields
+
+    /** The chain is paused: nothing of it runs. */
+    data class Paused(
+        override val seconds: Long,
+        override val workspaceId: WorkspaceId,
+        override val fields: EntryFields,
+    ) : PauseChain
+
+    /** The chain runs again as its clone, the entry [cloneEntryId] the server started at Resume. */
+    data class Resumed(
+        override val seconds: Long,
+        override val workspaceId: WorkspaceId,
+        override val fields: EntryFields,
+        val cloneEntryId: EntryId,
+    ) : PauseChain
+}
 
 /** The pomodoro [entryId], from [start] to [stop], which the server discarded as too short. */
 data class DiscardedPomodoro(val entryId: EntryId, val start: Instant, val stop: Instant)

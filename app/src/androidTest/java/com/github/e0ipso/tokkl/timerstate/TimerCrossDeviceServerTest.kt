@@ -38,6 +38,7 @@ import com.github.e0ipso.tokkl.components.timerSync
 import com.github.e0ipso.tokkl.components.timerSyncServiceRuns
 import com.github.e0ipso.tokkl.feature.pomodoro.R
 import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.PauseChain
 import com.github.e0ipso.tokkl.model.PhaseKind
 import com.github.e0ipso.tokkl.model.PomodoroSession
 import com.github.e0ipso.tokkl.model.ProjectId
@@ -352,7 +353,7 @@ class TimerCrossDeviceServerTest {
             ).action(NotificationR.string.notification_pause).actionIntent.send()
             val paused = app.awaitControls<TimerControls.Paused>("the phone's Pause")
             val chain = checkNotNull(other.timerState().model().pause)
-            assertTrue(chain.paused)
+            assertTrue(chain is PauseChain.Paused)
             assertEquals("the server's frozen total", chain.seconds, paused.seconds)
             assertEquals(chain, held()?.pause)
 
@@ -363,7 +364,7 @@ class TimerCrossDeviceServerTest {
             within(
                 "the other device's Resume reaches the phone",
                 sent,
-                "held" to { held()?.pause?.cloneEntryId?.value == clone },
+                "held" to { (held()?.pause as? PauseChain.Resumed)?.cloneEntryId?.value == clone },
             )
             val running = app.awaitControls<TimerControls.Running>(
                 "the clone runs on the phone",

@@ -92,6 +92,7 @@ class RunningEntryEditorTest {
                 entries.firstOrNull { it.entry.stop == null },
                 held = null,
                 timerApi = true,
+                account = ACCOUNT,
             )
         },
         projects,
@@ -442,3 +443,6 @@ class RunningEntryEditorTest {
         )
     }
 }
+
+/** The name the timer controls of these tests carry for the signed-in account. */
+private const val ACCOUNT = "account"

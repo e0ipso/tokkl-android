@@ -138,7 +138,7 @@ class WidgetStateTest {
                 task = "Design",
                 start = start,
                 accumulatedSeconds = 0,
-                target = TimerTarget.server(entryId = EntryId(-3), account = ServerTimerStates.ACCOUNT),
+                target = TimerTarget.Running(EntryId(-3), ServerTimerStates.ACCOUNT),
                 pausable = true,
                 projectColor = project.color,
             ),
@@ -262,7 +262,7 @@ class WidgetStateTest {
                 project = "Tokkl for Android",
                 task = "Design",
                 seconds = 600,
-                target = TimerTarget.server(revision = 3, account = ServerTimerStates.ACCOUNT),
+                target = TimerTarget.Paused(3, ServerTimerStates.ACCOUNT),
                 projectColor = project.color,
             ),
             shown.paused,
@@ -289,7 +289,7 @@ class WidgetStateTest {
 
         assertEquals(600L, shown.accumulatedSeconds)
         assertEquals("the clone's start on the phone's clock, to the second", start.minusSeconds(20), shown.start)
-        assertEquals(TimerTarget.server(entryId = EntryId(-3), account = ServerTimerStates.ACCOUNT), shown.target)
+        assertEquals(TimerTarget.Running(EntryId(-3), ServerTimerStates.ACCOUNT), shown.target)
         assertEquals(null, (state(held = held) as WidgetState.Ready).paused)
     }
 

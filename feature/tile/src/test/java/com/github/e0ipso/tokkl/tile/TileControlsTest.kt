@@ -52,10 +52,7 @@ class TileControlsTest {
         assertEquals(listOf(TimerSurfaceAction.Pause, TimerSurfaceAction.Stop), panel.buttons.map { it.action })
         assertTrue(
             panel.buttons.all {
-                it.target == TimerTarget.server(
-                    entryId = EntryId(4),
-                    account = ServerTimerStates.ACCOUNT,
-                )
+                it.target == TimerTarget.Running(EntryId(4), ServerTimerStates.ACCOUNT)
             },
         )
 
@@ -94,7 +91,7 @@ class TileControlsTest {
         assertTrue(panel.paused)
         assertEquals(listOf(TimerSurfaceAction.Resume, TimerSurfaceAction.Stop), panel.buttons.map { it.action })
         assertTrue(
-            panel.buttons.all { it.target == TimerTarget.server(revision = 3, account = ServerTimerStates.ACCOUNT) },
+            panel.buttons.all { it.target == TimerTarget.Paused(3, ServerTimerStates.ACCOUNT) },
         )
         run { panel.buttons.forEach { (press(it) as SurfaceTap.Request).send() } }
         assertEquals(listOf("resume 3", "discard 3"), calls)
@@ -112,7 +109,7 @@ class TileControlsTest {
         now = ServerTimerStates.controls(entry(9))
 
         assertEquals(
-            TimerTarget.server(entryId = EntryId(9), account = ServerTimerStates.ACCOUNT),
+            TimerTarget.Running(EntryId(9), ServerTimerStates.ACCOUNT),
             tileControlsPanel(now)!!.buttons.first().target,
         )
         assertNull("the drawn Pause acts on nothing once another entry runs", press(drawn.buttons.first()))

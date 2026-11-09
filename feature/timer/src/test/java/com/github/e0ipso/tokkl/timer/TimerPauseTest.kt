@@ -112,7 +112,9 @@ class TimerPauseTest {
         discardNotices: Flow<DiscardedPomodoro?> = MutableStateFlow(null),
         takeDiscardNotice: suspend () -> DiscardedPomodoro? = { null },
     ) = TimerViewModel(
-        controls = combine(phone, timerApi) { shown, api -> serverTimerControls(shown.running, shown.held, api) },
+        controls = combine(phone, timerApi) { shown, api ->
+            serverTimerControls(shown.running, shown.held, api, account = ACCOUNT)
+        },
         projects = MutableStateFlow(listOf(APP)),
         tasks = MutableStateFlow(listOf(DESIGN)),
         accountSettings = MutableStateFlow(SETTINGS),
@@ -148,7 +150,7 @@ class TimerPauseTest {
         assertEquals("the server's stored seconds", 90L, paused.seconds)
         assertEquals(FIELDS, paused.fields)
         assertEquals(WorkspaceId(WORKSPACE), paused.workspaceId)
-        assertEquals(TimerTarget.server(revision = 3), paused.target)
+        assertEquals(TimerTarget.Paused(3, ACCOUNT), paused.target)
         assertTrue("nothing was queued", changes.calls.isEmpty())
     }
 
@@ -354,7 +356,7 @@ class TimerPauseTest {
 
         assertNull(main.onMain { model.runningForEditShown(old.target!!) })
         assertTrue(calls.isEmpty() && changes.calls.isEmpty())
-        assertEquals(TimerTarget.server(entryId = EntryId(99)), model.state.value.target)
+        assertEquals(TimerTarget.Running(EntryId(99), ACCOUNT), model.state.value.target)
     }
 
     @Test
@@ -752,3 +754,6 @@ class TimerPauseTest {
         )
     }
 }
+
+/** The name the timer controls of these tests carry for the signed-in account. */
+private const val ACCOUNT = "account"

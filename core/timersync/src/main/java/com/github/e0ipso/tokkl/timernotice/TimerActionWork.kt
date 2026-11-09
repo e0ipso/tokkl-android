@@ -8,12 +8,14 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
-import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.platform.CurrentWorkManager
 import com.github.e0ipso.tokkl.timerstate.SurfaceTap
 import com.github.e0ipso.tokkl.timerstate.TimerSurfaceAction
 import com.github.e0ipso.tokkl.timerstate.TimerSurfaceActions
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
+import com.github.e0ipso.tokkl.timerstate.flatEntryId
+import com.github.e0ipso.tokkl.timerstate.flatRevision
+import com.github.e0ipso.tokkl.timerstate.timerTarget
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
 
@@ -30,8 +32,8 @@ fun CurrentWorkManager.sendTimerAction(action: TimerSurfaceAction, target: Timer
             workDataOf(
                 ACTION to action.name,
                 ACCOUNT to target.account,
-                REVISION to target.revision,
-                ENTRY_ID to (target.entryId?.value ?: 0L),
+                REVISION to target.flatRevision,
+                ENTRY_ID to target.flatEntryId,
             ),
         )
         .build()
@@ -53,8 +55,10 @@ internal class TimerActionWorker(
 
     override suspend fun doWork(): Result = withContext(io) {
         val action = inputData.action() ?: return@withContext Result.success()
+        // A request an older version made names no account, and acts on nothing.
+        val target = inputData.target() ?: return@withContext Result.success()
         try {
-            val tap = surfaceActions.tap(action, inputData.target())
+            val tap = surfaceActions.tap(action, target)
             if (tap is SurfaceTap.Request) tap.send()?.let { failures.show(it) }
         } catch (_: SQLiteException) {
             // The disk could not be read. The timer stays as it was, and the notification with it.
@@ -70,8 +74,4 @@ private const val ENTRY_ID = "entry_id"
 
 private fun Data.action(): TimerSurfaceAction? = TimerSurfaceAction.entries.firstOrNull { it.name == getString(ACTION) }
 
-private fun Data.target() = TimerTarget.server(
-    revision = getLong(REVISION, 0),
-    entryId = getLong(ENTRY_ID, 0).takeIf { it != 0L }?.let(::EntryId),
-    account = getString(ACCOUNT).orEmpty(),
-)
+private fun Data.target(): TimerTarget? = timerTarget(getString(ACCOUNT), getLong(REVISION, 0), getLong(ENTRY_ID, 0))

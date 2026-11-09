@@ -71,7 +71,7 @@ class RunningNotificationTest {
             project,
         ),
         tasks: List<Task> = listOf(task),
-    ) = runningNotificationContent(entry, projects, tasks)
+    ) = runningNotificationContent(entry, projects, tasks, ServerTimerStates.ACCOUNT)
 
     @Test
     fun showsTheDescriptionProjectTaskAndStartOfTheRunningEntry() {
@@ -330,7 +330,7 @@ class RunningNotificationTest {
         assertFalse("the server refuses Pause during a session", session.pausable)
         assertEquals(
             "the actions act on the entry, for this account",
-            TimerTarget.server(entryId = EntryId(-3), account = ServerTimerStates.ACCOUNT),
+            TimerTarget.Running(EntryId(-3), ServerTimerStates.ACCOUNT),
             session.target,
         )
         assertNotEquals("losing Pause posts it again without the action", offered.key, toggl.key)
@@ -348,7 +348,7 @@ class RunningNotificationTest {
         assertEquals(600L, shown.accumulatedSeconds)
         assertEquals(
             "Resume and Stop send the revision shown",
-            TimerTarget.server(revision = 3, account = ServerTimerStates.ACCOUNT),
+            TimerTarget.Paused(3, ServerTimerStates.ACCOUNT),
             shown.target,
         )
     }

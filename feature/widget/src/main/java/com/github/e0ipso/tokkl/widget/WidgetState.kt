@@ -72,7 +72,7 @@ data class WidgetRunning(
     val task: String?,
     val start: Instant,
     val accumulatedSeconds: Long,
-    val target: TimerTarget,
+    val target: TimerTarget.Running,
     val pausable: Boolean,
     val projectColor: String? = null,
 )
@@ -83,7 +83,7 @@ data class WidgetPaused(
     val project: String?,
     val task: String?,
     val seconds: Long,
-    val target: TimerTarget,
+    val target: TimerTarget.Paused,
     val projectColor: String? = null,
 )
 

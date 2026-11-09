@@ -18,6 +18,7 @@ import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.Duration
@@ -39,18 +40,33 @@ class TimerControlsTest {
         billable = true,
     )
 
+    /** A PendingIntent, a work request or a widget action keeps a target flat and reads it back as it was. */
+    @Test
+    fun aFlatTargetReadsBackAsTheTargetItKept() {
+        for (target in listOf(TimerTarget.Running(EntryId(-3), ACCOUNT), TimerTarget.Paused(12, ACCOUNT))) {
+            assertEquals(target, timerTarget(target.account, target.flatRevision, target.flatEntryId))
+        }
+        assertNull("one an older version kept names no account", timerTarget(null, 12, 0))
+        assertNull(timerTarget("", 0, 42))
+    }
+
     @Test
     fun aRunningEntryOutsideAChainShowsItsOwnTimeAndOffersPause() {
         val running = entry(id = 42)
 
-        val shown = serverTimerControls(EntryWithSendState(running, unsent = true), held(revision = 3), timerApi = true)
+        val shown = serverTimerControls(
+            EntryWithSendState(running, unsent = true),
+            held(revision = 3),
+            timerApi = true,
+            account = ACCOUNT,
+        )
 
         assertEquals(
             TimerControls.Running(
                 running,
                 unsent = true,
                 accumulatedSeconds = 0,
-                target = TimerTarget.server(entryId = EntryId(42)),
+                target = TimerTarget.Running(EntryId(42), ACCOUNT),
                 pausable = true,
             ),
             shown,
@@ -71,11 +87,12 @@ class TimerControlsTest {
             EntryWithSendState(clone, unsent = false),
             state,
             timerApi = true,
+            account = ACCOUNT,
         ) as TimerControls.Running
 
         assertEquals(600L, shown.accumulatedSeconds)
         assertEquals(Duration.ofSeconds(20), shown.clockOffset)
-        assertEquals(TimerTarget.server(entryId = EntryId(55)), shown.target)
+        assertEquals(TimerTarget.Running(EntryId(55), ACCOUNT), shown.target)
         assertEquals(
             "the stored seconds plus the clone's on the server's clock",
             600L + 90 + 20,
@@ -92,18 +109,20 @@ class TimerControlsTest {
             EntryWithSendState(started, unsent = true),
             held(revision = 8, pause = pause(600, cloneEntryId = null)),
             timerApi = true,
+            account = ACCOUNT,
         )
         val overClone = serverTimerControls(
             EntryWithSendState(started, unsent = true),
             held(revision = 9, pause = pause(600, cloneEntryId = EntryId(55))),
             timerApi = true,
+            account = ACCOUNT,
         )
 
         val expected = TimerControls.Running(
             started,
             unsent = true,
             accumulatedSeconds = 0,
-            target = TimerTarget.server(entryId = EntryId(-9)),
+            target = TimerTarget.Running(EntryId(-9), ACCOUNT),
             pausable = true,
         )
         assertEquals("a timer started while paused", expected, overPaused)
@@ -116,6 +135,7 @@ class TimerControlsTest {
             running = null,
             held(revision = 12, pause = pause(seconds = 3_725, cloneEntryId = null)),
             timerApi = true,
+            account = ACCOUNT,
         )
 
         assertEquals(
@@ -123,7 +143,7 @@ class TimerControlsTest {
                 seconds = 3_725,
                 workspaceId = WorkspaceId(3),
                 fields = kept,
-                target = TimerTarget.server(revision = 12),
+                target = TimerTarget.Paused(12, ACCOUNT),
             ),
             shown,
         )
@@ -135,15 +155,17 @@ class TimerControlsTest {
             null,
             held(revision = 12, pause = pause(600, cloneEntryId = null)),
             timerApi = true,
+            account = ACCOUNT,
         ) as TimerControls.Paused
         val renamed = serverTimerControls(
             null,
             held(revision = 13, pause = pause(600, cloneEntryId = null)),
             timerApi = true,
+            account = ACCOUNT,
         ) as TimerControls.Paused
 
-        assertEquals(TimerTarget.server(revision = 12), before.target)
-        assertEquals(TimerTarget.server(revision = 13), renamed.target)
+        assertEquals(TimerTarget.Paused(12, ACCOUNT), before.target)
+        assertEquals(TimerTarget.Paused(13, ACCOUNT), renamed.target)
     }
 
     @Test
@@ -153,6 +175,7 @@ class TimerControlsTest {
             running = null,
             held(revision = 9, pause = pause(600, cloneEntryId = EntryId(55))),
             timerApi = true,
+            account = ACCOUNT,
         )
 
         assertEquals(TimerControls.Idle, shown)
@@ -160,8 +183,8 @@ class TimerControlsTest {
 
     @Test
     fun withNoTimerAndNoChainTheControlsAreIdle() {
-        assertEquals(TimerControls.Idle, serverTimerControls(running = null, held(revision = 0), timerApi = true))
-        assertEquals(TimerControls.Idle, serverTimerControls(running = null, held = null, timerApi = true))
+        assertEquals(TimerControls.Idle, serverTimerControls(null, held(revision = 0), timerApi = true, ACCOUNT))
+        assertEquals(TimerControls.Idle, serverTimerControls(null, held = null, timerApi = true, ACCOUNT))
     }
 
     @Test
@@ -172,12 +195,13 @@ class TimerControlsTest {
         assertEquals(
             "a held pause counts for nothing",
             TimerControls.Idle,
-            serverTimerControls(null, paused, timerApi = false),
+            serverTimerControls(null, paused, timerApi = false, account = ACCOUNT),
         )
         val running = serverTimerControls(
             EntryWithSendState(entry(42), unsent = false),
             clone,
             timerApi = false,
+            account = ACCOUNT,
         ) as TimerControls.Running
         assertEquals("nor does a held clone's time", 0L, running.accumulatedSeconds)
         assertEquals(Duration.ZERO, running.clockOffset)
@@ -192,6 +216,7 @@ class TimerControlsTest {
             EntryWithSendState(entry(42), unsent = false),
             session,
             timerApi = true,
+            account = ACCOUNT,
         ) as TimerControls.Running
 
         assertFalse("the server refuses Pause during a session", running.pausable)
@@ -202,6 +227,7 @@ class TimerControlsTest {
                     EntryWithSendState(entry(42), unsent = false),
                     held(revision = 7),
                     timerApi = true,
+                    account = ACCOUNT,
                 ) as TimerControls.Running
                 ).pausable,
         )
@@ -214,6 +240,7 @@ class TimerControlsTest {
             EntryWithSendState(entry(55), unsent = false),
             state,
             timerApi = true,
+            account = ACCOUNT,
         ) as TimerControls.Running
 
         assertEquals(600L, shown.seconds(start.plusSeconds(30)))
@@ -270,3 +297,6 @@ class TimerControlsTest {
         pomodoroStart = start,
     )
 }
+
+/** The name the timer controls of these tests carry for the signed-in account. */
+private const val ACCOUNT = "account"

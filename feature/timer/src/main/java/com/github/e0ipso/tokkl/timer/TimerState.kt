@@ -53,7 +53,7 @@ sealed interface TimerState {
         val original: Picked,
         val unsent: Boolean,
         val accumulatedSeconds: Long = 0,
-        val target: TimerTarget? = null,
+        val target: TimerTarget.Running? = null,
         val pausable: Boolean = true,
         val clockOffset: Duration = Duration.ZERO,
     ) : TimerState
@@ -71,7 +71,7 @@ sealed interface TimerState {
         val fields: EntryFields,
         val labels: EntryLabels,
         val original: Picked,
-        val target: TimerTarget? = null,
+        val target: TimerTarget.Paused? = null,
     ) : TimerState
 }
 

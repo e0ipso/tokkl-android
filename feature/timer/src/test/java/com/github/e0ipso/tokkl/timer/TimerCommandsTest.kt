@@ -172,7 +172,7 @@ class TimerCommandsTest {
     @Test
     fun aTapThatEndsAfterANewerOneLeavesTheNewerOnePending() {
         val stopping = PendingTap.Stopping(TAP)
-        val acting = PendingTap.Acting(TimerTarget(entryId = EntryId(42)))
+        val acting = PendingTap.Acting(TimerTarget.Running(EntryId(42), ACCOUNT))
 
         val taps = TimerTaps().reduce(TapEvent.StopTapped(stopping)).reduce(TapEvent.ActionTapped(acting))
 
@@ -202,7 +202,7 @@ class TimerCommandsTest {
         ),
         unsent = false,
         accumulatedSeconds = 0,
-        target = TimerTarget(entryId = EntryId(42)),
+        target = TimerTarget.Running(EntryId(42), ACCOUNT),
     )
 
     /**
@@ -262,3 +262,6 @@ class TimerCommandsTest {
         val TAP: Instant = Instant.parse("2026-10-19T08:00:00Z")
     }
 }
+
+/** The name the timer controls of these tests carry for the signed-in account. */
+private const val ACCOUNT = "account"

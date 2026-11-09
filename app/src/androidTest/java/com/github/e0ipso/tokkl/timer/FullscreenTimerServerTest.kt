@@ -59,6 +59,7 @@ import com.github.e0ipso.tokkl.components.timerStateIntake
 import com.github.e0ipso.tokkl.components.timerStates
 import com.github.e0ipso.tokkl.components.timerSync
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.PauseChain
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
@@ -469,14 +470,11 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
                 val paused = awaitPaused()
                 val held = app.heldTimerState!!
                 val pause = held.pause!!
-                assertTrue(pause.paused)
+                assertTrue(pause is PauseChain.Paused)
                 assertEquals(pause.seconds, paused.seconds)
                 // Native surfaces carry the sign-in's account id, so a tap drawn for another account does nothing.
                 assertEquals(
-                    TimerTarget.server(
-                        revision = held.revision,
-                        account = TimerStateStore(app, Dispatchers.IO).account(),
-                    ),
+                    TimerTarget.Paused(held.revision, TimerStateStore(app, Dispatchers.IO).account()),
                     paused.target,
                 )
                 assertEquals("Pause queued no Stop", 0, runBlocking { app.changes.unsentCount.first() })

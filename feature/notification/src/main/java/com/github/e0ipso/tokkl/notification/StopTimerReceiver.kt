@@ -4,13 +4,15 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.database.sqlite.SQLiteException
-import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.platform.CurrentWorkManager
 import com.github.e0ipso.tokkl.platform.IoDispatcher
 import com.github.e0ipso.tokkl.timernotice.sendTimerAction
 import com.github.e0ipso.tokkl.timerstate.TimerSurfaceAction
 import com.github.e0ipso.tokkl.timerstate.TimerSurfaceActions
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
+import com.github.e0ipso.tokkl.timerstate.flatEntryId
+import com.github.e0ipso.tokkl.timerstate.flatRevision
+import com.github.e0ipso.tokkl.timerstate.timerTarget
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -44,8 +46,8 @@ class StopTimerReceiver :
             ACTION_RESUME -> TimerSurfaceAction.Resume
             else -> return
         }
-        val target = intent.timerTarget()
-        if (action != TimerSurfaceAction.Stop || target.entryId == null) {
+        val target = intent.timerTarget() ?: return
+        if (action != TimerSurfaceAction.Stop || target !is TimerTarget.Running) {
             workManager.sendTimerAction(action, target)
             return
         }
@@ -74,15 +76,15 @@ class StopTimerReceiver :
 
 /** Puts [target] in this intent's extras, for [timerTarget] to read back. */
 fun Intent.putTarget(target: TimerTarget): Intent = putExtra(StopTimerReceiver.EXTRA_ACCOUNT, target.account)
-    .putExtra(StopTimerReceiver.EXTRA_REVISION, target.revision)
-    .putExtra(StopTimerReceiver.EXTRA_ENTRY_ID, target.entryId?.value ?: 0L)
+    .putExtra(StopTimerReceiver.EXTRA_REVISION, target.flatRevision)
+    .putExtra(StopTimerReceiver.EXTRA_ENTRY_ID, target.flatEntryId)
 
 /**
- * The [TimerTarget] [putTarget] put here. An intent without an account, as from a notification
- * posted by an older version, names none, so its actions act on nothing.
+ * The [TimerTarget] [putTarget] put here, or null for an intent without an account, as from a
+ * notification posted by an older version, whose actions act on nothing.
  */
-fun Intent.timerTarget(): TimerTarget = TimerTarget.server(
-    revision = getLongExtra(StopTimerReceiver.EXTRA_REVISION, 0),
-    entryId = getLongExtra(StopTimerReceiver.EXTRA_ENTRY_ID, 0).takeIf { it != 0L }?.let(::EntryId),
-    account = getStringExtra(StopTimerReceiver.EXTRA_ACCOUNT).orEmpty(),
+fun Intent.timerTarget(): TimerTarget? = timerTarget(
+    getStringExtra(StopTimerReceiver.EXTRA_ACCOUNT),
+    getLongExtra(StopTimerReceiver.EXTRA_REVISION, 0),
+    getLongExtra(StopTimerReceiver.EXTRA_ENTRY_ID, 0),
 )

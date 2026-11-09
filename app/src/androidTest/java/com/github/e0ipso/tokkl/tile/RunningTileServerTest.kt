@@ -516,7 +516,7 @@ class RunningTileServerTest {
             app.cache.running.first()!!.entry.also { assertEquals(id, it.id) }
         }
         val running = runningTileLook(
-            RunningTileContent.Running(entry, TimerTarget.server(entryId = entry.id)),
+            RunningTileContent.Running(entry, TimerTarget.Running(entry.id, ACCOUNT)),
             context,
         )
         val stopped = runningTileLook(
@@ -526,7 +526,7 @@ class RunningTileServerTest {
             context,
         )
         val nothing = runningTileLook(RunningTileContent.Nothing, context)
-        val paused = runningTileLook(RunningTileContent.Paused("Looked at", TimerTarget.server(revision = 3)), context)
+        val paused = runningTileLook(RunningTileContent.Paused("Looked at", TimerTarget.Paused(3, ACCOUNT)), context)
 
         assertEquals(Tile.STATE_ACTIVE, running.state)
         assertEquals("Looked at", running.label)
@@ -548,7 +548,7 @@ class RunningTileServerTest {
         assertEquals(
             "No description",
             runningTileLook(
-                RunningTileContent.Running(entry.copy(description = ""), TimerTarget.server(entryId = entry.id)),
+                RunningTileContent.Running(entry.copy(description = ""), TimerTarget.Running(entry.id, ACCOUNT)),
                 context,
             ).label,
         )
@@ -634,3 +634,6 @@ class RunningTileServerTest {
         const val TIMEOUT_MS = 60_000L
     }
 }
+
+/** The name the timer controls of these tests carry for the signed-in account. */
+private const val ACCOUNT = "account"

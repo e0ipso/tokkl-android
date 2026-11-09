@@ -96,7 +96,7 @@ internal fun running(entry: TimeEntry) = TimerControls.Running(
     entry,
     unsent = false,
     accumulatedSeconds = 0,
-    target = TimerTarget.server(entryId = entry.id),
+    target = TimerTarget.Running(entry.id, ACCOUNT),
     pausable = false,
 )
 
@@ -229,3 +229,6 @@ internal class PageFixture(
 
     fun close() = scope.cancel()
 }
+
+/** The name the timer controls of these tests carry for the signed-in account. */
+private const val ACCOUNT = "account"
