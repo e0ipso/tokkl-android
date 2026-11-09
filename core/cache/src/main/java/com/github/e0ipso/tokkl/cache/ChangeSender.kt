@@ -286,9 +286,10 @@ class ChangeSender(
      * Sends the queued changes in order until nothing is left to send or one fails in a way the
      * phone can wait out. Each sent change leaves the queue as [ChangeStore.sent] describes, and
      * each refused one as [ChangeSender] describes. Blocks on the disk, so call it on the IO
-     * dispatcher, and from one coroutine at a time, such as the drain coroutine.
+     * dispatcher, and from one coroutine at a time: the drain coroutine. Callers outside it go
+     * through [send] or [sendAndWait]; this module's tests call it directly.
      */
-    suspend fun drain(): Outcome {
+    internal suspend fun drain(): Outcome {
         var sent = 0
         // The change this drain already tried once more, by its queue sequence.
         var triedAgain: Long? = null

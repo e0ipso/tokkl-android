@@ -1,5 +1,7 @@
 package com.github.e0ipso.tokkl.session
 
+import com.github.e0ipso.tokkl.api.ApiError
+import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.storage.ClearableStore
@@ -47,7 +49,10 @@ class SessionTest {
         session.save(OTHER, "tok-456")
 
         val after = session.api()
-        assertEquals(OTHER, after?.client?.server)
+        // The shared client lets requests through only to the stored server, still SERVER here,
+        // so the new account's request names the server it goes to in its refusal.
+        val refusal = (after?.account?.me() as? ApiResult.Failure)?.error
+        assertEquals(ApiError.HostNotAllowed(OTHER.origin), refusal)
         assertTrue(before !== after)
         assertEquals(2, tokens.loads)
     }

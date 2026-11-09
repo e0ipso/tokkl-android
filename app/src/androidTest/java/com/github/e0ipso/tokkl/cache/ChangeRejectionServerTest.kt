@@ -97,7 +97,7 @@ class ChangeRejectionServerTest {
             queue.update(EntryId(id), EntryFields(description = "Second edit"), EntryTiming.Stopped(start, stop))
         }
         account.deleteEntry(id)
-        assertEquals(ChangeSender.Outcome.Empty(2), runBlocking { sender.drain() })
+        assertEquals(ChangeSender.Outcome.Empty(2), runBlocking { sender.sendAndWait() })
         assertEquals(0, count())
         assertEquals(2, discarded)
         assertNull(database.changes().entry(id))
@@ -120,7 +120,7 @@ class ChangeRejectionServerTest {
                 EntryTiming.Stopped(start, stop),
             )
         }
-        assertEquals(ChangeSender.Outcome.Empty(1), runBlocking { sender.drain() })
+        assertEquals(ChangeSender.Outcome.Empty(1), runBlocking { sender.sendAndWait() })
         val held = runBlocking { queue.held.first() }.single()
         assertEquals("Time entries can not be longer than 999 hours", held.refusal)
         assertEquals(2, count())
@@ -131,7 +131,7 @@ class ChangeRejectionServerTest {
         assertTrue(
             runBlocking { queue.update(id, EntryFields(description = "Fixed"), EntryTiming.Stopped(start, stop)) },
         )
-        assertEquals(ChangeSender.Outcome.Empty(1), runBlocking { sender.drain() })
+        assertEquals(ChangeSender.Outcome.Empty(1), runBlocking { sender.sendAndWait() })
         assertEquals(0, count())
         val serverId = runBlocking { queue.currentId(id) }
         assertEquals("Fixed", account.entry(serverId.value).getValue("description").toString().trim('"'))
@@ -160,7 +160,7 @@ class ChangeRejectionServerTest {
                 EntryTiming.Stopped(start, start.plus(Duration.ofHours(1000))),
             )
         }
-        assertEquals(ChangeSender.Outcome.Empty(0), runBlocking { sender.drain() })
+        assertEquals(ChangeSender.Outcome.Empty(0), runBlocking { sender.sendAndWait() })
         assertTrue(
             runBlocking {
                 queue.update(
@@ -174,7 +174,7 @@ class ChangeRejectionServerTest {
         // its lookup must exclude the entry that existed before this edit moved the start.
         val store = RoomChangeStore(database)
         assertTrue(store.maybeSent(checkNotNull(store.first()), true))
-        assertEquals(ChangeSender.Outcome.Empty(1), runBlocking { sender.drain() })
+        assertEquals(ChangeSender.Outcome.Empty(1), runBlocking { sender.sendAndWait() })
         assertNotEquals("the retry must create its own entry", existing, runBlocking { queue.currentId(local) }.value)
         assertEquals(0, count())
     }
@@ -187,10 +187,10 @@ class ChangeRejectionServerTest {
                 EntryTiming.Stopped(start, start.plus(Duration.ofHours(1000))),
             )
         }
-        assertEquals(ChangeSender.Outcome.Empty(0), runBlocking { sender.drain() })
+        assertEquals(ChangeSender.Outcome.Empty(0), runBlocking { sender.sendAndWait() })
         val held = runBlocking { queue.held.first() }.single()
         assertTrue(runBlocking { queue.sendAgain(held.sequence) })
-        assertEquals(ChangeSender.Outcome.Empty(0), runBlocking { sender.drain() })
+        assertEquals(ChangeSender.Outcome.Empty(0), runBlocking { sender.sendAndWait() })
         assertEquals(held.refusal, runBlocking { queue.held.first() }.single().refusal)
         assertTrue(runBlocking { queue.discard(held.sequence) })
         assertEquals(0, count())
@@ -217,12 +217,12 @@ class ChangeRejectionServerTest {
             )
         }
             .orFail("POST /me/reset_token")
-        assertEquals(ChangeSender.Outcome.Stopped(0, ApiError.AuthFailed), runBlocking { sender.drain() })
+        assertEquals(ChangeSender.Outcome.Stopped(0, ApiError.AuthFailed), runBlocking { sender.sendAndWait() })
         assertTrue(sender.signInNeeded.value)
         assertEquals(2, count())
         // Even a valid token cannot lift the pause without the explicit successful sign-in.
         token = newToken
-        assertEquals(ChangeSender.Outcome.Stopped(0, ApiError.AuthFailed), runBlocking { sender.drain() })
+        assertEquals(ChangeSender.Outcome.Stopped(0, ApiError.AuthFailed), runBlocking { sender.sendAndWait() })
         assertEquals(2, count())
         val signIn = SignIn(
             session = { _, accepted, _ -> token = accepted },

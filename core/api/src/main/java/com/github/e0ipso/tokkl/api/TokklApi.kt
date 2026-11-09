@@ -12,9 +12,10 @@ import kotlinx.serialization.json.JsonObject
  * ids among them, and never build a URL or a JSON body.
  *
  * [client] holds the server, the credentials and the shared HTTP client: the signed-in account's,
- * or the one sign-in tries.
+ * or the one sign-in tries. It stays inside: callers send only the requests the resources here
+ * name.
  */
-class TokklApi(val client: TogglApiClient) {
+class TokklApi(private val client: TogglApiClient) {
     /** The signed-in user, their preferences and their workspaces. */
     val account = AccountApi(client)
 

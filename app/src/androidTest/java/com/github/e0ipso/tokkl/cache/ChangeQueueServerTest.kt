@@ -743,14 +743,14 @@ class ChangeQueueServerTest {
     }
 
     /**
-     * Sends the queue once, with no refresh after, through a counter of the app's reads of the
-     * running entry, and returns how many it made.
+     * Sends the queue, through a counter of the app's reads of the running entry, and returns how
+     * many it made. The refresh after the send reads no running entry.
      */
     private fun drainCountingRunningEntryReads(): Int =
         RequestCounter(TokklTestServer.url, RUNNING_ENTRY).use { counter ->
             signIn(counter.url, account.apiToken)
-            val outcome = runBlocking { app.sender.drain() }
-            assertTrue("the queue is sent: $outcome", outcome is ChangeSender.Outcome.Empty && outcome.sent > 0)
+            val outcome = runBlocking { app.sender.sendAndWait() }
+            assertTrue("the queue is sent: $outcome", outcome is ChangeSender.Outcome.Empty && unsentCount() == 0)
             assertEquals(emptyList<String>(), counter.failures)
             counter.count
         }
