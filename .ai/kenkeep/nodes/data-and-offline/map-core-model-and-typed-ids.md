@@ -35,7 +35,7 @@ Where each boundary maps:
 
 `PackageLayersTest` checks two rules: no main source outside `:core:cache` names a Room row, and no feature file that declares a view model or a composable imports a `@Serializable` class of `:core:api`.
 
-A `LazyColumn` key or a `rememberSaveable` value goes into a Bundle, which cannot hold a value class, so it takes `id.value`, as the tags list does. A form's saved state goes through kotlinx.serialization instead, which writes an id as its number (`SavedEntryForm`, `SavedClientForm`, `SavedProjectForm`). Intent extras and Glance action parameters hold the number too, with 0 for no entry where `TimerTarget.entryId` is null. JUnit's `assertEquals(Object, Object)` compiles with an `EntryId` on one side and a `Long` on the other, then fails at run time: wrap the expected number in its id type, or compare `id.value`.
+A `LazyColumn` key or a `rememberSaveable` value goes into a Bundle, which cannot hold a value class, so it takes `id.value`, as the tags list does. A form's saved state goes through kotlinx.serialization instead, which writes an id as its number (`SavedEntryForm`, `SavedClientsOverlay`, `SavedProjectForm`). Intent extras and Glance action parameters hold the number too, with 0 for no entry where `TimerTarget.entryId` is null. JUnit's `assertEquals(Object, Object)` compiles with an `EntryId` on one side and a `Long` on the other, then fails at run time: wrap the expected number in its id type, or compare `id.value`.
 
 <!-- kk:related:start -->
 # Related
