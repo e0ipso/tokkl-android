@@ -25,6 +25,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.IOException
 
 /** The Pomodoro page as the controller of the server's session: the start form and the open pomodoro's fields. */
 class PomodoroViewModelTest {
@@ -247,6 +248,23 @@ class PomodoroViewModelTest {
         f.changes.accepts = false
         f.page.editFields(EntryFields("Lost"), f.page.state.value.shown!!.entryId)!!.join()
         assertEquals("Focused work", f.page.state.value.fields.description)
+    }
+
+    /** An edit the phone's storage refuses stays on screen as typed and goes again when the field is done. */
+    @Test
+    fun anEditTheStorageRefusesStaysAsTypedAndGoesAgainWhenTheFieldIsDone() = runTest {
+        val f = running()
+        val entry = f.page.state.value.shown!!.entryId
+        f.changes.refusal = IOException("disk full")
+
+        f.page.editFields(EntryFields("Kept"), entry)!!.join()
+
+        assertEquals(emptyList<Throwable>(), f.escaped)
+        assertEquals("Kept", f.page.state.value.fields.description)
+        f.changes.refusal = null
+        f.page.fieldsDone(entry)!!.join()
+        assertEquals("Kept", f.changes.updates.single().second.description)
+        assertEquals("Kept", f.page.state.value.fields.description)
     }
 
     @Test

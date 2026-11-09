@@ -16,8 +16,10 @@ import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.platform.TestApp
 import com.github.e0ipso.tokkl.session.AccountSettings
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -34,6 +36,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.io.IOException
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Duration
@@ -72,6 +75,9 @@ class CalendarViewModelTest {
     private lateinit var url: ServerUrl
 
     private val changes = RecordingChanges()
+
+    /** What escaped the view model's coroutines, which on the phone would reach the thread and end the app. */
+    private val escaped = CopyOnWriteArrayList<Throwable>()
 
     @Before
     fun setUp() {
@@ -354,6 +360,37 @@ class CalendarViewModelTest {
         assertEquals(listOf(EntryId(LOCAL_ID)), created)
     }
 
+    /** A create drag the phone's storage refuses makes nothing and opens no form, as a refused entry form save. */
+    @Test
+    fun aCreateDragTheStorageRefusesMakesNothing() {
+        val model = model(cached = emptyList(), settings = DRAG_SETTINGS)
+        val created = mutableListOf<EntryId>()
+        changes.refusal = IOException("disk full")
+
+        model.create(OCTOBER_20, fromMinute = 600, toMinute = 690) { created += it }
+
+        assertEquals(emptyList<Throwable>(), escaped)
+        assertEquals(emptyList<EntryId>(), created)
+        changes.refusal = null
+        model.create(OCTOBER_20, fromMinute = 600, toMinute = 690) { created += it }
+        assertEquals("the calendar still takes drags", listOf(EntryId(LOCAL_ID)), created)
+    }
+
+    /** A move the phone's storage refuses leaves the entry where it was. */
+    @Test
+    fun aMoveTheStorageRefusesLeavesTheEntry() {
+        val cached = entry(4, "2026-10-20T09:00:00Z", "2026-10-20T10:00:00Z")
+        val model = model(cached = listOf(cached), settings = DRAG_SETTINGS)
+        val block = shown(model) { true }.entries.single()
+        changes.refusal = IOException("disk I/O error")
+
+        model.move(block, OCTOBER_20, deltaMinutes = 60, dayMode = true)
+        model.resize(block, ResizeEdge.END, deltaMinutes = 30)
+
+        assertEquals(emptyList<Throwable>(), escaped)
+        assertEquals(emptyList<String>(), changes.calls)
+    }
+
     /** A move and a resize of a cached entry queue it with every field, from the times its block shows. */
     @Test
     fun aMoveAndAResizeQueueTheCachedEntry() {
@@ -590,7 +627,9 @@ class CalendarViewModelTest {
         allDayOffered: Boolean = false,
     ): CalendarViewModel {
         val accountSettings = MutableStateFlow<AccountSettings?>(settings)
-        val scope = CoroutineScope(Dispatchers.Unconfined)
+        val scope = CoroutineScope(
+            Dispatchers.Unconfined + SupervisorJob() + CoroutineExceptionHandler { _, thrown -> escaped += thrown },
+        )
         return CalendarViewModel(
             entries = sessionEntries(
                 cache,
@@ -663,11 +702,16 @@ class CalendarViewModelTest {
     private class RecordingChanges : EntryChanges {
         val calls = CopyOnWriteArrayList<String>()
 
+        /** What the phone's storage throws for each write, or null while it takes them. */
+        @Volatile
+        var refusal: Exception? = null
+
         override suspend fun create(
             workspaceId: WorkspaceId,
             fields: EntryFields,
             timing: EntryTiming.Ended,
         ): EntryId {
+            refusal?.let { throw it }
             val start = timing.start
             val stop = timing.stop
             calls += "create $workspaceId $fields $start $stop"
@@ -675,6 +719,7 @@ class CalendarViewModelTest {
         }
 
         override suspend fun update(entryId: EntryId, fields: EntryFields, timing: EntryTiming): Boolean {
+            refusal?.let { throw it }
             val start = timing.start
             val stop = (timing as? EntryTiming.Ended)?.stop
             calls += "update $entryId $fields $start $stop"
@@ -687,6 +732,7 @@ class CalendarViewModelTest {
             fields: EntryFields,
             timing: EntryTiming.Ended,
         ) {
+            refusal?.let { throw it }
             val start = timing.start
             val stop = timing.stop
             calls += "updateOlder $entryId $workspaceId $fields $start $stop"

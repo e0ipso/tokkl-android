@@ -24,6 +24,7 @@ import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import com.github.e0ipso.tokkl.timerstate.TimerControls
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import com.github.e0ipso.tokkl.timerstate.held
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -159,7 +160,11 @@ internal class FakeChanges(private val cache: MutableStateFlow<TimerControls>) :
     val updates = CopyOnWriteArrayList<Pair<RunningEntryIdentity, EntryFields>>()
     var accepts = true
 
+    /** What the phone's storage throws for each write, or null while it takes them. */
+    var refusal: Exception? = null
+
     override suspend fun updateRunning(identity: RunningEntryIdentity, fields: EntryFields, start: Instant): Boolean {
+        refusal?.let { throw it }
         updates += identity to fields
         if (!accepts) return false
         val row = (cache.value as? TimerControls.Running)?.entry ?: return true
@@ -194,7 +199,11 @@ internal class PageFixture(
     entry: TimeEntry? = null,
     val defaults: MutableStateFlow<PomodoroDefaults> = MutableStateFlow(PomodoroDefaults(40, 8, 20, 3)),
 ) {
-    val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+    /** What escaped the page's coroutines, which on the phone would reach the thread and end the app. */
+    val escaped = CopyOnWriteArrayList<Throwable>()
+    val scope = CoroutineScope(
+        SupervisorJob() + Dispatchers.Unconfined + CoroutineExceptionHandler { _, thrown -> escaped += thrown },
+    )
     val held = MutableStateFlow(initial)
     val controls = MutableStateFlow<TimerControls>(entry?.let(::running) ?: TimerControls.Idle)
     val server = FakeServer(held)

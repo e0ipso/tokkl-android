@@ -3,6 +3,8 @@ package com.github.e0ipso.tokkl.pomodoro
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.cache.HeldChange
+import com.github.e0ipso.tokkl.cache.LocalWrite
+import com.github.e0ipso.tokkl.cache.localWrite
 import com.github.e0ipso.tokkl.entryfields.entryLabels
 import com.github.e0ipso.tokkl.entryfields.withPicked
 import com.github.e0ipso.tokkl.model.EntryFields
@@ -238,7 +240,11 @@ class PomodoroViewModel(
         return write(typed)
     }
 
-    /** Queues [change] for the open pomodoro, and shows it until the cache does. */
+    /**
+     * Queues [change] for the open pomodoro, and shows it until the cache does. A write the phone's
+     * storage refuses ([LocalWrite.Failed]) keeps the typed fields on screen, unsent, so the next
+     * [fieldsDone] sends them again, as the entry form gives a refused save back as typed.
+     */
     private fun write(change: Edit): Job? {
         val pomodoro = state.value.pomodoro
         val entry = pomodoro?.let(::openEntry)?.takeIf { it.id == change.entryId }
@@ -252,19 +258,24 @@ class PomodoroViewModel(
         edit = sent
         publish()
         return modelScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            var refused = false
             try {
-                if (session.editOpenPomodoro(entry, change.fields)) {
+                when (val queued = localWrite { session.editOpenPomodoro(entry, change.fields) }) {
+                    is LocalWrite.Failed -> refused = true
+
                     // Keeps the typed fields on screen until the cache shows them.
-                    withTimeoutOrNull(SETTLE_MS) {
-                        cached.first { row ->
-                            row == null || row.id != entry.id ||
-                                row.fields().let { it == change.fields || it != before }
+                    is LocalWrite.Written -> if (queued.value) {
+                        withTimeoutOrNull(SETTLE_MS) {
+                            cached.first { row ->
+                                row == null || row.id != entry.id ||
+                                    row.fields().let { it == change.fields || it != before }
+                            }
                         }
                     }
                 }
             } finally {
                 if (edit == sent) {
-                    edit = null
+                    edit = change.takeIf { refused }
                     publish()
                 }
             }

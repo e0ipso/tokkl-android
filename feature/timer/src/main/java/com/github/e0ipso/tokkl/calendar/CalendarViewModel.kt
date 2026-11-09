@@ -3,6 +3,8 @@ package com.github.e0ipso.tokkl.calendar
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.cache.EntryChanges
+import com.github.e0ipso.tokkl.cache.LocalWrite
+import com.github.e0ipso.tokkl.cache.localWrite
 import com.github.e0ipso.tokkl.entries.CalendarWeeks
 import com.github.e0ipso.tokkl.entries.WeekEntries
 import com.github.e0ipso.tokkl.entryfields.TimeRange
@@ -144,7 +146,8 @@ class CalendarViewModel(
      * Queues the entry that a drag from clock minute [fromMinute] to [toMinute] on [day] makes, in
      * the account's default workspace and with no description, and calls [onCreated] with its id
      * so the entry form can open on it, as the web app's editor opens after a drag. A drag that
-     * never grew makes nothing.
+     * never grew makes nothing, and so does one the phone's storage refuses ([LocalWrite.Failed]),
+     * as a refused save of the entry form does.
      */
     fun create(day: LocalDate, fromMinute: Int, toMinute: Int, onCreated: (EntryId) -> Unit = {}) {
         val settings = accountSettings.value ?: return
@@ -153,7 +156,10 @@ class CalendarViewModel(
         val range = createdRange(day, fromMinute, toMinute, dragStep(settings.dragResolution), time) ?: return
         if (range.stop < range.start || time.snapUnsent(range.start, range.stop) == null) return
         val timing = EntryTiming.Stopped(range.start, range.stop)
-        viewModelScope.launch { onCreated(changes.create(workspaceId, EntryFields(), timing)) }
+        viewModelScope.launch {
+            val created = localWrite { changes.create(workspaceId, EntryFields(), timing) }
+            (created as? LocalWrite.Written)?.let { onCreated(it.value) }
+        }
     }
 
     /**
@@ -174,7 +180,8 @@ class CalendarViewModel(
     /**
      * Queues [entry] with the span [range] gives for it, with every other field as the phone or
      * the server has it. The span starts from the times the block shows, which for an unsent entry
-     * are the ones the server will store.
+     * are the ones the server will store. A change the phone's storage refuses leaves the entry
+     * where it was.
      */
     private fun change(entry: CalendarEntry, range: (stop: Instant, time: AccountTime, step: Int) -> TimeRange) {
         // A no-time entry has no time to move or resize, and a running one no end.
@@ -183,7 +190,7 @@ class CalendarViewModel(
         val time = settings.time(clock) ?: return
         val span = range(stop, time, dragStep(settings.dragResolution))
         if (span.stop < span.start || time.snapUnsent(span.start, span.stop) == null) return
-        viewModelScope.launch { entries.moveWeekEntry(entry.id, span.start, span.stop) }
+        viewModelScope.launch { localWrite { entries.moveWeekEntry(entry.id, span.start, span.stop) } }
     }
 
     companion object {
