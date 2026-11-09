@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.reports
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.api.ApiError
@@ -49,6 +50,8 @@ import kotlin.coroutines.CoroutineContext
  * @param app the app's trips to the background, which ask again for the range on screen, and the
  *   network's returns, which ask again for a report that could not reach the server, while the
  *   screen shows ([stateInPage]).
+ * @param saved the route's saved state, which keeps the tab and the filters for a new process that
+ *   restores the page ([ReportChoices.restore]).
  */
 class ReportsViewModel(
     private val choices: ReportChoices,
@@ -61,6 +64,7 @@ class ReportsViewModel(
     private val exportCapabilities: StateFlow<Capabilities>,
     private val exporter: ReportExportController,
     app: AppForeground,
+    private val saved: SavedStateHandle,
 ) : ViewModel(scope) {
 
     private val exportState: StateFlow<ReportExportState> = exporter.state
@@ -324,6 +328,9 @@ class ReportsViewModel(
     private fun failureOf(error: ApiError): ReportFailure = reportFailureOf(error)
 
     init {
+        // A new process that restored the page brings back what the page kept, and keeps it from then on.
+        saved.get<String>(SAVED_CHOICES)?.let(choices::restore)
+        viewModelScope.launch { combine(tab, filters, ::Pair).collect { saved[SAVED_CHOICES] = choices.saved() } }
         // A widget's day tap, from before the page opened or while it shows.
         viewModelScope.launch {
             choices.todayAsked.collect { asked -> if (asked && choices.takeToday()) openToday() }
@@ -341,6 +348,11 @@ class ReportsViewModel(
         exportSupported = tab.value.csvKind()?.let(exportCapabilities.value::supports) == true,
         exportState = exportState.value,
     )
+
+    private companion object {
+        /** The key of the tab and the filters in the route's saved state. */
+        const val SAVED_CHOICES = "report-choices"
+    }
 }
 
 /** What happened to the share of a ready CSV export, as the Reports page reports it. */

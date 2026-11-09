@@ -56,7 +56,7 @@ class AppSummaryViewModelTest {
     fun setUp() {
         repository.workspaceAnswer = { ApiResult.Success(WORKSPACE) }
         repository.summaryAnswer = { summary(it) }
-        route = TestReportsRoute(scope) { choices, own ->
+        route = TestReportsRoute(scope) { choices, saved, own ->
             reportsViewModel(
                 accountSettings = settings,
                 repository = repository,
@@ -65,6 +65,7 @@ class AppSummaryViewModelTest {
                 clock = CLOCK,
                 app = app.app,
                 choices = choices,
+                saved = saved,
             )
         }
         screen = TestScreen(model.page, scope, scheduler)
@@ -151,7 +152,7 @@ class AppSummaryViewModelTest {
         val answer = CompletableDeferred<ApiResult<SummaryReport>>()
         repository.summaryAnswer = { withContext(NonCancellable) { answer.await() } }
         val liveScope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(scheduler))
-        val liveRoute = TestReportsRoute(liveScope) { choices, own ->
+        val liveRoute = TestReportsRoute(liveScope) { choices, saved, own ->
             reportsViewModel(
                 accountSettings = settings,
                 repository = repository,
@@ -160,6 +161,7 @@ class AppSummaryViewModelTest {
                 clock = CLOCK,
                 app = app.app,
                 choices = choices,
+                saved = saved,
             )
         }
         val live = liveRoute.model

@@ -11,6 +11,7 @@ import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.AccountSettings
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.serialization.Serializable
 
 /** Which entries the billable filter keeps, the choices of the web app's Billable select. */
 enum class BillableFilter {
@@ -30,6 +31,7 @@ enum class BillableFilter {
  * sheet offers them where [Capabilities.negatedFilters] is on.
  */
 @Immutable
+@Serializable
 data class ReportFilters(
     val projects: List<Long?> = emptyList(),
     val clients: List<Long?> = emptyList(),

@@ -235,10 +235,11 @@ private fun FullscreenTimer(navigator: Navigator) {
 }
 
 /**
- * The entry form [route] opens. Its view model is its own, opened on what the route says when
- * this process opened it ([EntryFormOpenings]). An edit saves through the session's entries
- * (`SessionEntries`), and a delete goes through the session's entry actions, so the Timer page
- * offers its Undo.
+ * The entry form [route] opens. Its view model is its own, opened on what the route says, with
+ * the copy of an entry the cache lacks when this process opened it ([EntryFormOpenings]), and
+ * after the process was restarted on what the form's saved state kept. An edit saves through the
+ * session's entries (`SessionEntries`), and a delete goes through the session's entry actions, so
+ * the Timer page offers its Undo.
  */
 @Composable
 private fun EntryForm(route: Route.Entry, navigator: Navigator) {

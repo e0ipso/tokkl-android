@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
@@ -847,6 +848,7 @@ class EntryFormServerTest {
             allDay = flowOf(false),
             picker = flowOf(PickerSource()),
             offline = MutableStateFlow(false),
+            saved = SavedStateHandle(),
         )
         val collector = scope.launch { model.page.collect {} }
         try {

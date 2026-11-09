@@ -6,8 +6,8 @@ import java.util.UUID
 /**
  * The entry form openings MainActivity made, each with the copy of an entry that only the
  * history's or the calendar's memory holds, until the form's view model takes it. A new process
- * starts with none, so a form restored from saved state finds nothing and closes: its unsaved
- * fields went with the process, and so may the copy it opened on.
+ * starts with none: a form restored from saved state opens on what its route says, and its view
+ * model brings back the copy and the typed fields from the form's own saved state.
  */
 class EntryFormOpenings {
     private val waiting = mutableMapOf<String, TimeEntry?>()
@@ -19,9 +19,11 @@ class EntryFormOpenings {
         return route
     }
 
-    /** What [route] opens, once, or null when this process did not open it. */
-    fun take(route: Route.Entry): EntryFormRequest? =
-        if (route.id in waiting) EntryFormRequest(route.opening, waiting.remove(route.id)) else null
+    /**
+     * What [route] opens: its opening, with the copy this process holds of an entry the cache
+     * lacks, which only the first take gets.
+     */
+    fun take(route: Route.Entry): EntryFormRequest = EntryFormRequest(route.opening, waiting.remove(route.id))
 
     fun clear() = waiting.clear()
 }

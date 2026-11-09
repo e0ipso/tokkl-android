@@ -52,7 +52,7 @@ class ReportsViewModelTest {
     fun setUp() {
         repository.workspaceAnswer = { ApiResult.Success(WORKSPACE) }
         repository.summaryAnswer = { ApiResult.Success(summaryOf(it.range, seconds = 3600)) }
-        route = TestReportsRoute(scope) { choices, own ->
+        route = TestReportsRoute(scope) { choices, saved, own ->
             reportsViewModel(
                 accountSettings = settings,
                 repository = repository,
@@ -61,6 +61,7 @@ class ReportsViewModelTest {
                 clock = CLOCK,
                 app = app.app,
                 choices = choices,
+                saved = saved,
             )
         }
         screen = TestScreen(model.page, scope, scheduler)

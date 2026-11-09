@@ -71,7 +71,7 @@ class NavigatorTest {
     }
 
     @Test
-    fun aFormTakesWhatItOpensOnceAndAFormFromAnotherProcessNothing() {
+    fun aFormTakesTheCopyItOpensOnOnceAndAFormFromAnotherProcessItsOpeningAlone() {
         val older =
             TimeEntry(
                 EntryId(
@@ -84,11 +84,10 @@ class NavigatorTest {
         val request = openings.take(form)
         assertEquals(EntryOpening.Edit(EntryId(7)), request?.opening)
         assertSame(older, request?.older)
-        assertNull("a configuration change makes no second opening", openings.take(form))
-        assertNull(
-            "a restored route that this process did not open",
-            openings.take(Route.Entry(EntryOpening.Edit(EntryId(7)), id = "restored")),
-        )
+        assertNull("the copy goes to one form", openings.take(form)?.older)
+        val restored = openings.take(Route.Entry(EntryOpening.Edit(EntryId(7)), id = "restored"))
+        assertEquals("a restored route opens on what it says", EntryOpening.Edit(EntryId(7)), restored?.opening)
+        assertNull("with no copy from this process", restored?.older)
     }
 
     @Test

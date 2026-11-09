@@ -62,8 +62,7 @@ typealias EntryFormPicker =
 /**
  * The entry form from [model], with the cached projects, tasks and tags it follows in its picker:
  * a running segment or an entry from the history to edit, or a past entry to add. [onClose] leaves
- * it after Save has queued the change, on Back, on Cancel, and when the form is not open, as after the
- * process was restarted.
+ * it after Save has queued the change, on Back, on Cancel, and when the form is not open.
  */
 @Composable
 fun EntryFormScreen(

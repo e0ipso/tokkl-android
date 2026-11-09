@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.entry
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.cache.EntryChanges
@@ -65,6 +66,11 @@ import java.time.LocalDate
  * discards unsaved fields without asking or keeping a draft. Save queues the draft; Delete
  * queues the current stored entry and ignores unsaved fields.
  *
+ * The form keeps in [saved] what a new process needs to open it again after the old one died
+ * with it on screen ([SavedEntryForm]): the copy it opened on of an entry the cache lacked, and
+ * the fields typed. The first opening after that takes them: it reads the entry from the cache
+ * again, or a missing one is missing, and puts what was typed over it.
+ *
  * @param entries the cached entries with their send state, as AccountCache.entries gives them.
  * @param changes the change queue, which a new or edited stopped entry goes to.
  * @param running the change queue's edits of the running segment, which the form opens and saves.
@@ -75,6 +81,7 @@ import java.time.LocalDate
  *   decides whether the form offers the No times switch.
  * @param picker the cached projects, clients, tasks and tags, which the form's picker offers.
  * @param offline whether the phone is offline, which the picker says.
+ * @param saved the form's saved state, which outlives the process.
  */
 class EntryFormViewModel(
     private val entries: Flow<List<EntryWithSendState>>,
@@ -89,9 +96,17 @@ class EntryFormViewModel(
     allDay: Flow<Boolean>,
     picker: Flow<PickerSource>,
     private val offline: StateFlow<Boolean>,
+    private val saved: SavedStateHandle,
 ) : ViewModel(scope) {
 
     private val phase = MutableStateFlow<Phase>(Phase.Closed)
+
+    /** What the process before kept of the form, until the first opening takes it. */
+    private var restoring: SavedEntryForm? = saved.get<String>(SAVED_FORM)?.let(SavedEntryForm::decode)
+
+    /** The form as it opened, which what was typed is told from, and the copy it opened on. */
+    private var opened: EntryDraft? = null
+    private var openedOn: TimeEntry? = null
 
     private val catalog: StateFlow<Catalog> = combine(projects, tasks, ::Catalog)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), Catalog())
@@ -114,7 +129,7 @@ class EntryFormViewModel(
         ::EntryFormPage,
     ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), EntryFormPage())
 
-    /** Whether a form is open, or opening. False after [close], and in a new process. */
+    /** Whether a form is open, or opening. False after [close], and before the first opening. */
     val isOpen: Boolean get() = phase.value != Phase.Closed
 
     /**
@@ -320,8 +335,16 @@ class EntryFormViewModel(
         }
     }
 
-    private fun open(opening: Opening) {
-        val waiting = Phase.Waiting(opening)
+    private fun open(requested: Opening) {
+        val restored = restoring
+        restoring = null
+        // A route restored in a new process has no copy of an entry the cache lacks but the one the form saved.
+        val opening = if (requested is Opening.Edit && requested.older == null) {
+            requested.copy(older = restored?.older?.entry()?.takeIf { it.id == requested.entryId })
+        } else {
+            requested
+        }
+        val waiting = Phase.Waiting(opening, restored?.typed)
         phase.value = waiting
         viewModelScope.launch {
             val settings = accountSettings.filterNotNull().first()
@@ -354,8 +377,24 @@ class EntryFormViewModel(
                     }
                 }
             }
-            phase.update { if (it == waiting) next else it }
+            if (phase.value != waiting) return@launch
+            opened = (next as? Phase.Open)?.form
+            openedOn = (opening as? Opening.Edit)?.older
+            val typed = waiting.typed
+            phase.value = if (next is Phase.Open && typed != null) Phase.Open(typed.over(next.form)) else next
         }
+    }
+
+    /** What the form keeps for a new process while it is [phase]. */
+    private fun keptFor(phase: Phase): SavedEntryForm? = when (phase) {
+        is Phase.Waiting -> SavedEntryForm((phase.opening as? Opening.Edit)?.older?.let(::SavedEntry), phase.typed)
+
+        is Phase.Open -> SavedEntryForm(
+            openedOn?.let(::SavedEntry),
+            opened?.let { TypedDraft.of(it, phase.form) },
+        )
+
+        else -> null
     }
 
     private fun change(edit: (EntryDraft) -> EntryDraft) {
@@ -408,8 +447,11 @@ class EntryFormViewModel(
     private sealed interface Phase {
         data object Closed : Phase
 
-        /** The form opens once the account settings and the cache are read. */
-        data class Waiting(val opening: Opening) : Phase
+        /**
+         * The form opens once the account settings and the cache are read, with what was [typed]
+         * before the process died.
+         */
+        data class Waiting(val opening: Opening, val typed: TypedDraft?) : Phase
 
         data object Missing : Phase
 
@@ -422,7 +464,15 @@ class EntryFormViewModel(
 
     private data class Catalog(val projects: List<Project> = emptyList(), val tasks: List<Task> = emptyList())
 
+    init {
+        // Kept for a new process at each change, as the form's screen shows it.
+        viewModelScope.launch { phase.collect { saved[SAVED_FORM] = keptFor(it)?.encode() } }
+    }
+
     private companion object {
         const val STOP_TIMEOUT_MS = 5_000L
+
+        /** The key of the form's [SavedEntryForm] in its saved state. */
+        const val SAVED_FORM = "entry-form"
     }
 }

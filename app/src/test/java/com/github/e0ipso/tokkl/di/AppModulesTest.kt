@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.di
 
 import android.app.Application
 import android.content.Context
+import androidx.lifecycle.SavedStateHandle
 import androidx.work.WorkerParameters
 import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.TopLevelDestination
@@ -48,6 +49,8 @@ class AppModulesTest {
                 Context::class,
                 Application::class,
                 WorkerParameters::class,
+                // A view model's saved state, which Koin takes from the store that makes the view model.
+                SavedStateHandle::class,
                 CoroutineContext::class,
                 Boolean::class,
                 Flow::class,

@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.components
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
@@ -12,6 +13,11 @@ import androidx.work.ListenableWorker
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
 import androidx.work.testing.TestListenableWorkerBuilder
+import com.github.e0ipso.tokkl.entry.EntryFormViewModel
+import com.github.e0ipso.tokkl.navigation.EntryFormRequest
+import com.github.e0ipso.tokkl.navigation.EntryOpening
+import com.github.e0ipso.tokkl.reports.ReportChoices
+import com.github.e0ipso.tokkl.reports.ReportsViewModel
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import org.junit.Assert.assertEquals
@@ -21,6 +27,8 @@ import org.koin.core.Koin
 import org.koin.core.annotation.KoinInternalApi
 import org.koin.core.context.GlobalContext
 import org.koin.core.definition.BeanDefinition
+import org.koin.core.parameter.ParametersHolder
+import org.koin.core.parameter.emptyParametersHolder
 import org.koin.core.parameter.parametersOf
 import org.koin.core.qualifier.named
 import java.util.concurrent.CountDownLatch
@@ -93,12 +101,15 @@ class AppGraphTest {
         koin.get<Any>(definition.primaryType, definition.qualifier)
     }
 
-    /** Makes the view model, then clears it in a store of its own, which cancels its scope. */
+    /**
+     * Makes the view model, with what its screen hands it, then clears it in a store of its own,
+     * which cancels its scope.
+     */
     private fun makeAndClear(definition: BeanDefinition<*>) {
         val store = ViewModelStore()
         val factory = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T =
-                koin.get(definition.primaryType, definition.qualifier)
+                koin.get(definition.primaryType, definition.qualifier) { screenParameters(definition) }
         }
         try {
             @Suppress("UNCHECKED_CAST")
@@ -106,6 +117,19 @@ class AppGraphTest {
         } finally {
             store.clear()
         }
+    }
+
+    /**
+     * What a view model's screen hands its definition: the entry form's route request and the
+     * Reports session choices, and the saved state that the view model's store gives through Koin.
+     */
+    private fun screenParameters(definition: BeanDefinition<*>): ParametersHolder = when (definition.primaryType) {
+        EntryFormViewModel::class ->
+            parametersOf(EntryFormRequest(EntryOpening.New(), older = null), SavedStateHandle())
+
+        ReportsViewModel::class -> parametersOf(ReportChoices(), SavedStateHandle())
+
+        else -> emptyParametersHolder()
     }
 
     /**

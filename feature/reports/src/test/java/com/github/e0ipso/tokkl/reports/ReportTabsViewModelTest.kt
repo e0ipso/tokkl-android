@@ -56,7 +56,7 @@ class ReportTabsViewModelTest {
             }
         }
         repository.weeklyAnswer = { ApiResult.Success(WEEKLY) }
-        route = TestReportsRoute(scope) { choices, own ->
+        route = TestReportsRoute(scope) { choices, saved, own ->
             reportsViewModel(
                 settings,
                 repository,
@@ -64,6 +64,7 @@ class ReportTabsViewModelTest {
                 io,
                 Clock.fixed(Instant.parse("2026-10-20T11:00:00Z"), ZoneOffset.UTC),
                 choices = choices,
+                saved = saved,
             )
         }
         screen = TestScreen(model.page, scope, scheduler)
@@ -222,6 +223,46 @@ class ReportTabsViewModelTest {
         model.applyFilters(ReportFilters())
         io.runAll()
         assertEquals("no filters", ReportFilters(), repository.weeklies.last().filters)
+    }
+
+    /**
+     * The process died with Reports on the back stack: the page it restores opens on the tab and
+     * the filters it had, and asks for them.
+     */
+    @Test
+    fun theTabAndTheFiltersComeBackWhenANewProcessRestoresThePage() {
+        screen.show()
+        io.runAll()
+        val filters = ReportFilters(projects = listOf(3L), billable = BillableFilter.BILLABLE)
+        model.applyFilters(filters)
+        model.selectTab(ReportTab.WEEKLY)
+        io.runAll()
+        screen.leave()
+
+        route.restart()
+        screen = TestScreen(model.page, scope, scheduler)
+        screen.show()
+        io.runAll()
+
+        assertEquals(filters, model.filters.value)
+        assertEquals(ReportTab.WEEKLY, model.tab.value)
+        assertEquals(filters, repository.weeklies.last().filters)
+    }
+
+    /** A widget's day tap that waits when the new process restores the page wins over what it saved. */
+    @Test
+    fun aDayTapWaitingAtTheRestoreWinsOverTheSavedFilters() {
+        screen.show()
+        io.runAll()
+        model.applyFilters(ReportFilters(billable = BillableFilter.BILLABLE))
+        model.selectTab(ReportTab.WEEKLY)
+        io.runAll()
+        screen.leave()
+
+        route.restart(before = ReportChoices::openToday)
+
+        assertEquals(ReportFilters(), model.filters.value)
+        assertEquals(ReportTab.SUMMARY, model.tab.value)
     }
 
     /** A weekly answer ReportsServer could not read shows as an unexpected answer. */

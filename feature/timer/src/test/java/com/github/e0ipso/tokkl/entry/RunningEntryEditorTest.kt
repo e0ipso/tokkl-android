@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.entry
 
+import androidx.lifecycle.SavedStateHandle
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.entries.sessionEntries
@@ -82,6 +83,7 @@ class RunningEntryEditorTest {
         allDay = flowOf(false),
         picker = flowOf(PickerSource()),
         offline = MutableStateFlow(false),
+        saved = SavedStateHandle(),
     )
     private val timer = TimerViewModel(
         rows.map { entries ->

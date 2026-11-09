@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.reports
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.viewmodel.initializer
@@ -31,6 +32,7 @@ internal fun reportsViewModel(
     clock: Clock = Clock.systemUTC(),
     app: AppForeground = AppForeground(MutableStateFlow(true), emptyFlow()),
     choices: ReportChoices = ReportChoices(),
+    saved: SavedStateHandle = SavedStateHandle(),
 ) = ReportsViewModel(
     choices = choices,
     accountSettings = accountSettings,
@@ -51,19 +53,23 @@ internal fun reportsViewModel(
         )
     },
     app = app,
+    saved = saved,
 )
 
 /**
  * The Reports route on the back stack in a test, as the navigation host keeps it: the route's own
- * store holds [model], which [make] builds in a scope of its own under [scope], and the session's
- * [choices] outlive it. [reopen] takes the route off the stack, which clears the model, and opens
- * it again with a new one.
+ * store holds [model], which [make] builds in a scope of its own under [scope] with the route's
+ * saved state, and the session's [choices] outlive it. [reopen] takes the route off the stack,
+ * which clears the model, and opens it again with a new one. [restart] is a new process that
+ * restores the route: new choices, and a new model over what the route's saved state kept.
  */
 internal class TestReportsRoute(
     private val scope: CoroutineScope,
-    private val make: (choices: ReportChoices, scope: CoroutineScope) -> ReportsViewModel,
+    private val make: (ReportChoices, SavedStateHandle, CoroutineScope) -> ReportsViewModel,
 ) {
-    val choices = ReportChoices()
+    var choices = ReportChoices()
+        private set
+    private var saved = SavedStateHandle()
     private val store = ViewModelStore()
 
     var model: ReportsViewModel = open()
@@ -79,9 +85,21 @@ internal class TestReportsRoute(
     /** Takes the route off the back stack, which clears its model. */
     fun leave() = store.clear()
 
+    /**
+     * The process died with the route on the back stack and a new one restores it. [before] runs
+     * on the new choices before the route's model is made, as a widget's tap can.
+     */
+    fun restart(before: (ReportChoices) -> Unit = {}): ReportsViewModel {
+        store.clear()
+        saved = SavedStateHandle(saved.keys().associateWith { saved.get<Any?>(it) })
+        choices = ReportChoices().also(before)
+        model = open()
+        return model
+    }
+
     private fun open(): ReportsViewModel {
         val own = CoroutineScope(scope.coroutineContext + SupervisorJob(scope.coroutineContext[Job]))
-        return ViewModelProvider.create(store, viewModelFactory { initializer { make(choices, own) } })[
+        return ViewModelProvider.create(store, viewModelFactory { initializer { make(choices, saved, own) } })[
             ReportsViewModel::class,
         ]
     }

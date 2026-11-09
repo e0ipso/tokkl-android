@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.entry
 
+import androidx.lifecycle.SavedStateHandle
 import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.entries.sessionEntries
@@ -62,31 +63,47 @@ class EntryFormViewModelTest {
     private val changes = FakeChanges()
     private lateinit var model: EntryFormViewModel
 
+    /** The form's saved state, which outlives the process. */
+    private var saved = SavedStateHandle()
+
     @Before
     fun showTheForm() {
-        model = EntryFormViewModel(
-            entries = entries,
-            projects = MutableStateFlow(listOf(APP, CLIENT_WORK)),
-            tasks = MutableStateFlow(listOf(DESIGN)),
-            accountSettings = settings,
-            changes = changes,
-            running = changes,
-            pastEdits = sessionEntries(
-                entries,
-                settings,
-                scope,
-                Clock.fixed(NOW, ZoneOffset.UTC),
-                changes = changes,
-            ),
-            scope = scope,
-            clock = Clock.fixed(NOW, ZoneOffset.UTC),
-            allDay = allDay,
-            picker = flowOf(PickerSource()),
-            offline = MutableStateFlow(false),
-        )
+        model = newModel()
         // The screen collects the state while it shows.
         scope.launch { model.state.collect {} }
     }
+
+    /**
+     * The process died with the form open, and a new one restores its route: a new model over
+     * what the form's saved state kept, which the screen collects.
+     */
+    private fun restart() {
+        saved = SavedStateHandle(saved.keys().associateWith { saved.get<Any?>(it) })
+        model = newModel()
+        scope.launch { model.state.collect {} }
+    }
+
+    private fun newModel() = EntryFormViewModel(
+        entries = entries,
+        projects = MutableStateFlow(listOf(APP, CLIENT_WORK)),
+        tasks = MutableStateFlow(listOf(DESIGN)),
+        accountSettings = settings,
+        changes = changes,
+        running = changes,
+        pastEdits = sessionEntries(
+            entries,
+            settings,
+            scope,
+            Clock.fixed(NOW, ZoneOffset.UTC),
+            changes = changes,
+        ),
+        scope = scope,
+        clock = Clock.fixed(NOW, ZoneOffset.UTC),
+        allDay = allDay,
+        picker = flowOf(PickerSource()),
+        offline = MutableStateFlow(false),
+        saved = saved,
+    )
 
     @After
     fun tearDown() {
@@ -166,6 +183,7 @@ class EntryFormViewModelTest {
             allDay = allDay,
             picker = flowOf(PickerSource()),
             offline = MutableStateFlow(false),
+            saved = SavedStateHandle(),
         )
         failing.launch { model.state.collect {} }
         openEntry()
@@ -1055,6 +1073,58 @@ class EntryFormViewModelTest {
         save()
 
         assertEquals(listOf("update $ENTRY_ID $ENTRY_FIELDS ${ENTRY.start} ${ENTRY.stop}"), changes.calls)
+    }
+
+    /**
+     * The process died with the form open. Its route opens it again, with no copy of the entry,
+     * on what the cache holds now and what was typed, and the save goes as it would have.
+     */
+    @Test
+    fun aFormANewProcessRestoresKeepsWhatWasTyped() {
+        openEntry()
+        onMain {
+            model.setDescription("Typed before the process died")
+            model.setEnd("11:00")
+        }
+        awaitOpen("the end is typed") { it.end == "11:00" }
+
+        restart()
+        onMain { model.edit(EntryId(ENTRY_ID)) }
+
+        val form = awaitOpen("the form opens again") { true }
+        assertEquals("Typed before the process died", form.fields.description)
+        assertEquals("09:00" to "11:00", form.start to form.end)
+        save()
+        val fields = EntryFields(description = "Typed before the process died")
+        assertEquals(listOf("update $ENTRY_ID $fields ${ENTRY.start} 2026-10-14T09:00:00Z"), changes.calls)
+    }
+
+    /** A form on an entry from the older days opens again on the copy it had, which the new process lacks. */
+    @Test
+    fun anOlderEntryANewProcessRestoresOpensOnTheCopyItHad() {
+        onMain { model.edit(OLDER.id, older = OLDER) }
+        awaitOpen("the form opens on the older entry") { true }
+
+        restart()
+        onMain { model.edit(OLDER.id) }
+
+        val form = awaitOpen("the form opens again") { true }
+        assertEquals("Plan the sprint", form.fields.description)
+        assertEquals(WorkspaceId(OLDER_WORKSPACE), form.workspaceId)
+    }
+
+    /** The cache no longer holds the entry the restored form was on, so the form says it is gone. */
+    @Test
+    fun aFormANewProcessRestoresOnAnEntryThatHasGoneIsMissing() {
+        openEntry()
+        onMain { model.setDescription("Typed before the process died") }
+        awaitOpen("the description is typed") { it.fields.description == "Typed before the process died" }
+        entries.value = listOf(EntryWithSendState(ALL_DAY, unsent = false))
+
+        restart()
+        onMain { model.edit(EntryId(ENTRY_ID)) }
+
+        awaitState("the form says the entry is gone") { it == EntryFormState.Missing }
     }
 
     @Test

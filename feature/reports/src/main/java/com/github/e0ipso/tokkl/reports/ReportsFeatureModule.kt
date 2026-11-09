@@ -66,6 +66,7 @@ val reportsFeatureModule = module {
             filterOptions = reportFilterOptions(cache, accountSettings.state, capabilities.state)
                 .stateIn(scope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), FilterOptions.NONE),
             app = get(),
+            saved = get(),
         )
     }
 

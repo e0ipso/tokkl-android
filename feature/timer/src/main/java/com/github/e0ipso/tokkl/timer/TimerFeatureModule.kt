@@ -186,7 +186,8 @@ val timerFeatureModule = module {
             allDay = get<CapabilitiesSource>().state.map { it.allDay == true },
             picker = pickerSource(cache.projects, cache.clients, cache.tasks, cache.tags),
             offline = get<DefaultNetwork>().offlineIn(scope),
-        ).also { form -> params.getOrNull<EntryFormRequest>()?.openIn(form) }
+            saved = get(),
+        ).also { form -> params.get<EntryFormRequest>().openIn(form) }
     }
     viewModel {
         val cache = get<AccountCache>()
