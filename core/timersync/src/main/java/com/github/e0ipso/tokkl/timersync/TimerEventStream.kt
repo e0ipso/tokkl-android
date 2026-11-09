@@ -17,7 +17,7 @@ import java.io.InputStream
 // 25 s (../tokkl/packages/api/src/services/timerStreams.ts at v1.10.0).
 
 /** How one hold of the timer event stream ended, which decides what [TimerSync] does next. */
-sealed interface StreamEnd {
+internal sealed interface StreamEnd {
 
     /**
      * The server ended the response. It does so at a restart, when a newer stream of the same user

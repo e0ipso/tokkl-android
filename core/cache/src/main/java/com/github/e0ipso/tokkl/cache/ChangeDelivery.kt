@@ -9,7 +9,7 @@ import com.github.e0ipso.tokkl.session.ForegroundReads
  * first, so a fast drain cannot finish and cancel it before it is registered, then a send at
  * once by the [sender].
  */
-class SendOnQueue(private val background: BackgroundSend, private val sender: ChangeSender) : QueuedListener {
+internal class SendOnQueue(private val background: BackgroundSend, private val sender: ChangeSender) : QueuedListener {
     override fun queued() {
         background.schedule()
         sender.send()
@@ -30,7 +30,7 @@ fun interface ChangeDiscards {
  * cannot put the cache back. A drain that empties the queue cancels the [background] send's
  * waiting retry, and the changes it discards count in [discards].
  */
-class QueueDrainEvents(
+internal class QueueDrainEvents(
     private val refreshes: AccountRefreshRequests,
     private val background: BackgroundSend,
     private val store: ChangeStore,
@@ -48,7 +48,7 @@ class QueueDrainEvents(
  * Whether the queue holds no change that can go out. A queue the disk cannot read counts as
  * holding one, so the background send stays. Blocks on disk I/O.
  */
-fun ChangeStore.readsEmpty(): Boolean = runCatching { first() == null }.getOrDefault(false)
+internal fun ChangeStore.readsEmpty(): Boolean = runCatching { first() == null }.getOrDefault(false)
 
 /**
  * What the foreground refresh reads ([com.github.e0ipso.tokkl.session.ForegroundRefresh]): the
@@ -56,7 +56,7 @@ fun ChangeStore.readsEmpty(): Boolean = runCatching { first() == null }.getOrDef
  * so an expired token still asks for sign-in when `/me` fails on opening the app with a saved
  * queue.
  */
-class SendThenRefresh(private val sender: ChangeSender, private val account: AccountRefresh) : ForegroundReads {
+internal class SendThenRefresh(private val sender: ChangeSender, private val account: AccountRefresh) : ForegroundReads {
 
     override fun refresh() {
         sender.send()

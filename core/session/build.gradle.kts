@@ -14,12 +14,13 @@ android {
 }
 
 dependencies {
-    // The session's types and calls use the API's, the time helpers' and the disk stores' types.
+    // Session is the API client provider, and its api() gives the API.
     api(project(":core:api"))
     // The account's default workspace is a model id.
     api(project(":core:model"))
+    // The account settings give the account's time.
     api(project(":core:time"))
-    api(project(":core:platform"))
+    implementation(project(":core:platform"))
     implementation(libs.androidx.annotation)
     implementation(platform(libs.koin.bom))
     implementation(libs.koin.android)

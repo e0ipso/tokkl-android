@@ -19,10 +19,12 @@ room {
 }
 
 dependencies {
-    // The cache's types and calls use the session's types, and through it the API's.
-    api(project(":core:session"))
     // Every read and change of the account's data takes and gives the model's types.
     api(project(":core:model"))
+    implementation(project(":core:api"))
+    implementation(project(":core:time"))
+    implementation(project(":core:platform"))
+    implementation(project(":core:session"))
     // CacheDatabase is a RoomDatabase. No module above names it: they read the cache's flows.
     implementation(libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)

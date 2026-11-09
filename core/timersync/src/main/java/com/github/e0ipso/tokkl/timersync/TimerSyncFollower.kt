@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicInteger
 
 /** Starts a foreground service, and returns false when the platform refuses, as for an app in the background. */
-fun interface ServiceStart {
+internal fun interface ServiceStart {
     fun start(): Boolean
 }
 
@@ -29,12 +29,12 @@ fun interface ServiceStart {
  * Hears that the server refused the account's credential on the timer event stream, as
  * [PauseQueueOnRefusal] does for the queue.
  */
-fun interface SignInRefusal {
+internal fun interface SignInRefusal {
     fun refused()
 }
 
 /** Pauses the queue as its own refusal does, which shows the prompt to sign in again. */
-class PauseQueueOnRefusal(private val sender: ChangeSender) : SignInRefusal {
+internal class PauseQueueOnRefusal(private val sender: ChangeSender) : SignInRefusal {
     override fun refused() = sender.signInRefused()
 }
 
@@ -59,7 +59,7 @@ fun interface TimerSyncWatcher {
  * @param scope where it follows the ends of [timerSync]'s streams that no reconnect fixes, for as
  *   long as the process lives.
  */
-class TimerSyncFollower(
+class TimerSyncFollower internal constructor(
     private val startService: ServiceStart,
     private val signedIn: SignInStatus,
     private val timerState: TimerStateIntakes,

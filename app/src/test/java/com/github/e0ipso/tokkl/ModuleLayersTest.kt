@@ -182,23 +182,19 @@ class ModuleLayersTest {
         val EXPOSED: Map<String, Set<String>> = mapOf(
             // The API's calls take the model's ids, and its answers carry them.
             ":core:api" to setOf(":core:model"),
-            // The session's stores, refresh and sign-out take and give the API's, the model's, the
-            // account time's and the disk stores' types.
-            ":core:session" to setOf(":core:api", ":core:model", ":core:time", ":core:platform"),
-            // The cache's reads and changes take the session's types and give the model's.
-            ":core:cache" to setOf(":core:session", ":core:model"),
-            // The timer state reads the cache's running entry and queue.
-            ":core:timerstate" to setOf(":core:cache"),
-            // The timer event stream feeds the account's timer state.
-            ":core:timersync" to setOf(":core:timerstate"),
+            // Session is the API client provider and gives the API; the account settings give the
+            // account's time and the model's ids.
+            ":core:session" to setOf(":core:api", ":core:model", ":core:time"),
+            // The cache's reads and changes give and take the model's types.
+            ":core:cache" to setOf(":core:model"),
+            // The held timer state, its controls and its targets carry the model's types.
+            ":core:timerstate" to setOf(":core:model"),
             // The catalog pages' model carries the API's errors, the session's server problems, the
             // model's ids and the platform's page loads. Its pages draw with the design system,
             // which none of their signatures name.
             ":core:catalog" to setOf(":core:api", ":core:session", ":core:model", ":core:platform"),
             // The entry fields edit the model's entries in the account's time.
             ":core:entryfields" to setOf(":core:model", ":core:time"),
-            // The trust prompts show the session's trust state.
-            ":core:trust" to setOf(":core:session"),
             // Routes carry the model's ids, and pages their section hue and the capabilities they need.
             ":core:navigation" to setOf(":core:model", ":core:ui"),
         )

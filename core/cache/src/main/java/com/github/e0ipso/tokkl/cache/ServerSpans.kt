@@ -36,7 +36,7 @@ interface ServerSpans {
 }
 
 /** [ServerSpans] on the grid of the signed-in account's settings, or unsnapped while there are none. */
-class AccountServerSpans(private val settings: AccountSettingsSource) : ServerSpans {
+internal class AccountServerSpans(private val settings: AccountSettingsSource) : ServerSpans {
 
     override suspend fun ready() = settings.ready()
 

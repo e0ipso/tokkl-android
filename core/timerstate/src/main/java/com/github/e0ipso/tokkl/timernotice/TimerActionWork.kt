@@ -43,7 +43,7 @@ fun CurrentWorkManager.sendTimerAction(action: TimerSurfaceAction, target: Timer
  * with the account and the revision or entry it was drawn for, against what the phone holds now
  * and sends it once. One that fails, offline included, changes nothing and [failures] says why.
  */
-class TimerActionWorker(
+internal class TimerActionWorker(
     context: Context,
     parameters: WorkerParameters,
     private val surfaceActions: TimerSurfaceActions,

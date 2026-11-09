@@ -14,7 +14,7 @@ import kotlin.coroutines.CoroutineContext
  *
  * @param scope where the calls run, on [io].
  */
-class TimerEventConnections(
+internal class TimerEventConnections(
     private val session: ApiClientProvider,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,

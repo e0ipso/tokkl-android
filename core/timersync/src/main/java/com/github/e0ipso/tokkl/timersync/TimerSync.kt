@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
 /** How [TimerSync] holds each account's stream, such as [TimerEventConnections]. */
-fun interface TimerSyncConnections<A : Any> {
+internal fun interface TimerSyncConnections<A : Any> {
 
     /**
      * Starts holding the stream for [account] over [link], off the calling thread, and reports
@@ -21,7 +21,7 @@ fun interface TimerSyncConnections<A : Any> {
 }
 
 /** A stream of [account] ended in a way no reconnect can fix, [StreamEnd.Refused] or [StreamEnd.SignedOut]. */
-data class StreamTermination<A : Any>(val account: A, val end: StreamEnd)
+internal data class StreamTermination<A : Any>(val account: A, val end: StreamEnd)
 
 /**
  * The one owner of the timer event stream: at most one call open at a time, for one account, and
@@ -50,7 +50,7 @@ data class StreamTermination<A : Any>(val account: A, val end: StreamEnd)
  * @param now milliseconds on a clock that never goes back, for the watchdog and the backoff.
  * @param connections open each stream.
  */
-class TimerSync<A : Any>(
+class TimerSync<A : Any> internal constructor(
     private val scope: CoroutineScope,
     private val now: MonotonicClock,
     private val connections: TimerSyncConnections<A>,
@@ -63,7 +63,7 @@ class TimerSync<A : Any>(
      * whether the service runs collects it. Collect it from one place only; each end reaches one
      * collector, also one that starts collecting after it.
      */
-    val terminations: Flow<StreamTermination<A>> = ended.receiveAsFlow()
+    internal val terminations: Flow<StreamTermination<A>> = ended.receiveAsFlow()
 
     /** The account the stream is held for, or null while stopped. */
     private var account: A? = null
@@ -240,7 +240,7 @@ class TimerSync<A : Any>(
  * and [TimerSync] cancels the call through [cancellation]. Only the latest link of a [TimerSync]
  * counts; the callbacks of any other change nothing.
  */
-class TimerSyncLink internal constructor(
+internal class TimerSyncLink(
     private val onConnected: (TimerSyncLink) -> Unit,
     private val onAlive: (TimerSyncLink) -> Unit,
     private val onEnded: (TimerSyncLink, StreamEnd) -> Unit,
@@ -270,6 +270,6 @@ class TimerSyncLink internal constructor(
 }
 
 /** Milliseconds on a clock that never goes back, such as `SystemClock.elapsedRealtime`. */
-fun interface MonotonicClock {
+internal fun interface MonotonicClock {
     fun millis(): Long
 }

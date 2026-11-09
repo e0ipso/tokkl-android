@@ -22,7 +22,7 @@ fun Capabilities.supports(kind: ReportCsvKind): Boolean = when (kind) {
  * and its probe. [allDay] follows the CSV rule: offered on Tokkl until a time entry list
  * proves it gone.
  */
-fun Capabilities.updatedWith(me: Me, trash: TrashProbe, timer: TimerStateProbe): Capabilities {
+internal fun Capabilities.updatedWith(me: Me, trash: TrashProbe, timer: TimerStateProbe): Capabilities {
     val hasTrash = when (trash) {
         TrashProbe.PRESENT -> true
         TrashProbe.ABSENT -> false
@@ -59,7 +59,7 @@ private fun offeredUntilGone(tokkl: Boolean, previous: Boolean?): Boolean? = whe
 }
 
 /** What `GET /api/app/trash` said about the trash. */
-enum class TrashProbe {
+internal enum class TrashProbe {
     /** It answered with a list. */
     PRESENT,
 
@@ -71,7 +71,7 @@ enum class TrashProbe {
 }
 
 /** Sends `GET /api/app/trash` once. */
-suspend fun probeTrash(api: TokklApi): TrashProbe = when (val result = api.trash.probe()) {
+internal suspend fun probeTrash(api: TokklApi): TrashProbe = when (val result = api.trash.probe()) {
     is ApiResult.Success -> TrashProbe.PRESENT
 
     is ApiResult.Failure -> when (val error = result.error) {
@@ -90,7 +90,7 @@ suspend fun probeTrash(api: TokklApi): TrashProbe = when (val result = api.trash
 }
 
 /** What `GET /api/app/timer` said about the server-owned timer. */
-sealed interface TimerStateProbe {
+internal sealed interface TimerStateProbe {
     /** It answered with a timer state, which is [state]. */
     data class Present(val state: TimerState) : TimerStateProbe
 
@@ -102,7 +102,7 @@ sealed interface TimerStateProbe {
 }
 
 /** Sends `GET /api/app/timer` once. */
-suspend fun probeTimerState(api: TokklApi): TimerStateProbe = when (val result = api.timer.state()) {
+internal suspend fun probeTimerState(api: TokklApi): TimerStateProbe = when (val result = api.timer.state()) {
     is ApiResult.Success -> TimerStateProbe.Present(result.value)
 
     is ApiResult.Failure -> when (val error = result.error) {

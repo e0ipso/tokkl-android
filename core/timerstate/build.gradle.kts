@@ -14,8 +14,13 @@ android {
 }
 
 dependencies {
-    // The timer state's types and calls use the cache's types, and through it the session's.
-    api(project(":core:cache"))
+    // The held timer state, its controls and its targets carry the model's types.
+    api(project(":core:model"))
+    implementation(project(":core:api"))
+    implementation(project(":core:time"))
+    implementation(project(":core:platform"))
+    implementation(project(":core:session"))
+    implementation(project(":core:cache"))
     // The server actions of the notification and the widget run as expedited work.
     implementation(libs.androidx.work.runtime)
     implementation(platform(libs.koin.bom))
@@ -26,5 +31,7 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockwebserver3)
     testImplementation(testFixtures(project(":core:api")))
+    // The fixtures build the server's timer states, the API's wire types.
+    testFixturesApi(project(":core:api"))
     testImplementation(testFixtures(project(":core:platform")))
 }

@@ -214,11 +214,11 @@ internal object TimerSyncNotification {
 }
 
 /** Starts [TimerSyncService] in the foreground from [context], as [TimerSyncService.start] does. */
-class TimerSyncServiceStart(private val context: Context) : ServiceStart {
+internal class TimerSyncServiceStart(private val context: Context) : ServiceStart {
     override fun start(): Boolean = TimerSyncService.start(context)
 }
 
 /** The sleep-counting clock the timer sync's watchdog reads. */
-object ElapsedRealtimeClock : MonotonicClock {
+internal object ElapsedRealtimeClock : MonotonicClock {
     override fun millis(): Long = SystemClock.elapsedRealtime()
 }

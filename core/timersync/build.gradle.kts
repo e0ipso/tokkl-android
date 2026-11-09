@@ -9,8 +9,11 @@ android {
 }
 
 dependencies {
-    // The stream feeds the account's timer state, and its types carry the timer state's.
-    api(project(":core:timerstate"))
+    implementation(project(":core:api"))
+    implementation(project(":core:platform"))
+    implementation(project(":core:session"))
+    implementation(project(":core:cache"))
+    implementation(project(":core:timerstate"))
     // The service's notification icon.
     implementation(project(":core:ui"))
     implementation(platform(libs.koin.bom))
