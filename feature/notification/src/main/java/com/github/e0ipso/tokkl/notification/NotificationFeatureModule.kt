@@ -54,7 +54,7 @@ val notificationFeatureModule = module {
 
     // Shared reminder settings where both keys exist, account-local on older servers. They load at
     // process start.
-    single { ReminderSetting(get<ReminderStore>(), get<Session>(), get(), get()) } binds
+    single { ReminderSetting(get<ReminderStore>(), get<Session>(), get(), get(), io()) } binds
         arrayOf(AccountDataOwner::class, StartupLoad::class)
 
     // The running entry's reminder, followed independently of any screen, with its delay in WorkManager.

@@ -1989,6 +1989,7 @@ private fun changeSender(
     CapabilitiesSource(
         InMemoryValueStore(Capabilities.NONE.copy(allDay = allDay)),
         CoroutineScope(Dispatchers.Unconfined),
+        Dispatchers.Unconfined,
     ),
     undo,
 )

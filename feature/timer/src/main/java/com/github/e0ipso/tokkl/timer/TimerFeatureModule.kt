@@ -64,6 +64,7 @@ val timerFeatureModule = module {
             capabilities = get(),
             account = get(),
             scope = get(),
+            io = io(),
         )
     } binds arrayOf(AccountDataOwner::class, StartupLoad::class)
 

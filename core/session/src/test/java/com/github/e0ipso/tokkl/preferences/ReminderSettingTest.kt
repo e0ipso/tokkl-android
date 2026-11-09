@@ -54,6 +54,7 @@ class ReminderSettingTest {
         { client },
         account,
         scope,
+        Dispatchers.Unconfined,
     )
     private fun prefs(body: String = """{"long_timer_reminder_enabled":true,"long_timer_reminder_hours":12}""") =
         mePreferences(body)
@@ -144,6 +145,7 @@ class ReminderSettingTest {
             { client },
             account,
             CoroutineScope(Dispatchers.IO),
+            Dispatchers.IO,
         )
         runBlocking { setting.refreshed(prefs(), true).join() }
         val job = setting.change(ReminderPreferences(false, 6))

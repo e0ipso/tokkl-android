@@ -14,6 +14,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.time.Clock
 import java.time.Instant
+import kotlin.coroutines.CoroutineContext
 
 /**
  * When the server last gave a 2xx answer to the signed-in session (docs/PRD.md O5), from any
@@ -21,9 +22,14 @@ import java.time.Instant
  * Every [succeeded] reads [clock] and saves the time in [store], so the time outlives the process
  * and shows offline after a restart. A time never goes back, so a slow answer that lands after a
  * later one leaves the later one. The stored time, null when the server has not answered since
- * sign-in, loads as this is made, in [scope], off the main thread.
+ * sign-in, loads as this is made, in [scope] on [io], off the main thread.
  */
-class LastAnswer(private val store: ValueStore<Instant?>, private val clock: Clock, private val scope: CoroutineScope) :
+class LastAnswer(
+    private val store: ValueStore<Instant?>,
+    private val clock: Clock,
+    private val scope: CoroutineScope,
+    io: CoroutineContext,
+) :
     SuccessListener,
     AccountDataOwner,
     StartupLoad {
@@ -32,7 +38,7 @@ class LastAnswer(private val store: ValueStore<Instant?>, private val clock: Clo
 
     override suspend fun forgetAccount() = forget()
 
-    private val loaded = LoadedState(scope, null) { store.load() }
+    private val loaded = LoadedState(scope, null, io) { store.load() }
 
     val state: StateFlow<Instant?> = loaded.state
 
@@ -54,7 +60,7 @@ class LastAnswer(private val store: ValueStore<Instant?>, private val clock: Clo
             writing.withLock {
                 val last = loaded.value
                 if (last != null && !now.isAfter(last)) return@withLock
-                loaded.value = now
+                loaded.set(now)
                 store.save(now)
             }
         }
@@ -64,7 +70,7 @@ class LastAnswer(private val store: ValueStore<Instant?>, private val clock: Clo
     suspend fun forget() {
         ready()
         writing.withLock {
-            loaded.value = null
+            loaded.set(null)
             store.save(null)
         }
     }

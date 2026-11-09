@@ -20,6 +20,7 @@ class ThemeSettingsRepositoryTest {
             }
         },
         CoroutineScope(Dispatchers.Unconfined),
+        Dispatchers.Unconfined,
     )
 
     @Test

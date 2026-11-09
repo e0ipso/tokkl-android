@@ -23,7 +23,7 @@ val syncFeatureModule = module {
 
     // When the server last answered the signed-in session (docs/PRD.md O5), which the [Session]'s
     // client reports. It loads at process start from a file of one value.
-    single { LastAnswer(get<LastAnswerStore>(), get(), get()) } binds
+    single { LastAnswer(get<LastAnswerStore>(), get(), get(), io()) } binds
         arrayOf(SuccessListener::class, AccountDataOwner::class, StartupLoad::class)
 
     single { DiscardedChangesStore(androidContext(), io()) }
@@ -31,7 +31,7 @@ val syncFeatureModule = module {
     // How many queued changes the [ChangeSender] discarded because the server no longer had their
     // entries, for the notice that says so (docs/PRD.md O6). It loads at process start from a file
     // of one value.
-    single { DiscardedChanges(get<DiscardedChangesStore>(), get()) } binds
+    single { DiscardedChanges(get<DiscardedChangesStore>(), get(), io()) } binds
         arrayOf(ChangeDiscards::class, AccountDataOwner::class, StartupLoad::class)
 
     // The "needs attention" list of the changes the server refused (docs/PRD.md O6). Discarding

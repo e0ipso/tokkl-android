@@ -14,6 +14,7 @@ import com.github.e0ipso.tokkl.storage.ClearableStore
 import com.github.e0ipso.tokkl.storage.StartupLoad
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
+import kotlin.coroutines.CoroutineContext
 
 /** The Timer page's view as the phone keeps it, and whether the server still has to get it. */
 typealias StoredTimerView = StoredPreference<TimerView>
@@ -40,6 +41,7 @@ class TimerViewSetting(
     private val capabilities: PreferencesOffer,
     account: CurrentAccount,
     scope: CoroutineScope,
+    io: CoroutineContext,
 ) : AccountDataOwner,
     StartupLoad {
 
@@ -55,6 +57,7 @@ class TimerViewSetting(
         client,
         account,
         scope,
+        io,
         default = TimerView.LIST,
         codec = object : PreferenceCodec<TimerView> {
             override fun fromServer(preferences: MePreferences) = preferences.timerView()

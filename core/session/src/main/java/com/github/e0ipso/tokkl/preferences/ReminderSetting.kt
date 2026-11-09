@@ -12,6 +12,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
+import kotlin.coroutines.CoroutineContext
 
 /** Tokkl main: packages/types/index.ts and packages/api/src/models/users.ts. */
 data class ReminderPreferences(val enabled: Boolean = true, val hours: Int = 8) {
@@ -42,6 +43,7 @@ class ReminderSetting(
     client: ApiClientProvider,
     account: CurrentAccount,
     scope: CoroutineScope,
+    io: CoroutineContext,
 ) : AccountDataOwner,
     StartupLoad {
 
@@ -57,6 +59,7 @@ class ReminderSetting(
         client,
         account,
         scope,
+        io,
         default = ReminderPreferences(),
         codec = object : PreferenceCodec<ReminderPreferences> {
             override fun loaded(value: ReminderPreferences) = value.clamped()

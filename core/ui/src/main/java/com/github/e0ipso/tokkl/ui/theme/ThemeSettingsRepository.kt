@@ -2,7 +2,6 @@ package com.github.e0ipso.tokkl.ui.theme
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,6 +13,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.IOException
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Where the theme settings are kept. The settings feature keeps them in a preferences file, out of
@@ -37,8 +37,14 @@ interface ThemeSettingsDisk {
  *
  * @param store reads and writes the stored settings.
  * @param scope outlives every screen, so leaving the app does not cancel a pending write.
+ * @param loadContext where the stored settings load, the I/O dispatcher in the app, so the load
+ *   never waits for the main thread.
  */
-class ThemeSettingsRepository(private val store: ThemeSettingsDisk, private val scope: CoroutineScope) {
+class ThemeSettingsRepository(
+    private val store: ThemeSettingsDisk,
+    private val scope: CoroutineScope,
+    loadContext: CoroutineContext,
+) {
 
     private val mutableState = MutableStateFlow(ThemeSettings())
 
@@ -50,8 +56,7 @@ class ThemeSettingsRepository(private val store: ThemeSettingsDisk, private val 
     /** What the disk holds. Read and written only while holding [writes], or by the load. */
     private var saved = ThemeSettings()
 
-    // Unconfined, so the load ends on the store's I/O thread and never waits for the main thread.
-    private val loading = scope.launch(Dispatchers.Unconfined, start = CoroutineStart.UNDISPATCHED) {
+    private val loading = scope.launch(loadContext) {
         try {
             val stored = store.load()
             saved = stored

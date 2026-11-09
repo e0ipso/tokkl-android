@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.IOException
+import kotlin.coroutines.CoroutineContext
 
 /**
  * The account settings for the whole process, and the one place screens read them from.
@@ -20,14 +21,14 @@ import java.io.IOException
  * [AccountSettings.formatDuration] and clock times with [AccountSettings.formatTime]. The timer
  * and manual entry take the workspace of a new entry from [AccountSettings.defaultWorkspaceId].
  *
- * @param disk keeps the settings on the phone. They load from it as this is made, in [scope], off
- *   the main thread.
+ * @param disk keeps the settings on the phone. They load from it as this is made, in [scope] on
+ *   [io], off the main thread.
  */
-class AccountSettingsSource(private val disk: ValueStore<AccountSettings>, scope: CoroutineScope) :
+class AccountSettingsSource(private val disk: ValueStore<AccountSettings>, scope: CoroutineScope, io: CoroutineContext) :
     StartupLoad,
     DefaultWorkspace {
 
-    private val held = LoadedState<AccountSettings?>(scope, null) { disk.load() }
+    private val held = LoadedState<AccountSettings?>(scope, null, io) { disk.load() }
 
     /** The stored settings, or null when none are stored yet or before they load. */
     val state: StateFlow<AccountSettings?> = held.state
@@ -97,7 +98,7 @@ class AccountSettingsSource(private val disk: ValueStore<AccountSettings>, scope
         ready()
         writing.withLock {
             writes++
-            held.value = null
+            held.set(null)
         }
     }
 
@@ -105,7 +106,7 @@ class AccountSettingsSource(private val disk: ValueStore<AccountSettings>, scope
     private suspend fun write(settings: AccountSettings) {
         disk.save(settings)
         writes++
-        held.value = settings
+        held.set(settings)
     }
 }
 

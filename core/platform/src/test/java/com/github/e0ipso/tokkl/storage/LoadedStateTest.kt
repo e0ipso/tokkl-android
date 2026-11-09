@@ -5,6 +5,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestCoroutineScheduler
 import org.junit.Assert.assertEquals
@@ -18,12 +19,13 @@ import java.io.IOException
 class LoadedStateTest {
 
     private val scheduler = TestCoroutineScheduler()
-    private val scope = CoroutineScope(StandardTestDispatcher(scheduler))
+    private val dispatcher = StandardTestDispatcher(scheduler)
+    private val scope = CoroutineScope(dispatcher)
 
     @Test
     fun aReaderBeforeTheLoadEndsWaitsForTheStoredValue() {
         val disk = CompletableDeferred<String>()
-        val state = LoadedState(scope, "default") { disk.await() }
+        val state = LoadedState(scope, "default", dispatcher) { disk.await() }
         val current = scope.async { state.current() }
         val loaded = scope.async { state.loaded.first() }
         scheduler.runCurrent()
@@ -41,9 +43,27 @@ class LoadedStateTest {
         assertEquals("stored", loaded.getCompleted())
     }
 
+    /** A change asked for while the load runs waits for it, so the stored value cannot replace the change. */
+    @Test
+    fun aChangeBeforeTheLoadEndsLandsAfterIt() {
+        val disk = CompletableDeferred<String>()
+        val state = LoadedState(scope, "default", dispatcher) { disk.await() }
+        val change = scope.launch { state.set("changed") }
+        scheduler.runCurrent()
+
+        assertFalse("the change waits for the load", change.isCompleted)
+        assertEquals("default", state.value)
+
+        disk.complete("stored")
+        scheduler.runCurrent()
+
+        assertTrue(change.isCompleted)
+        assertEquals("changed", state.value)
+    }
+
     @Test
     fun aFailedLoadKeepsTheDefaultAndEnds() {
-        val state = LoadedState<String>(scope, "default") { throw IOException("unreadable") }
+        val state = LoadedState<String>(scope, "default", dispatcher) { throw IOException("unreadable") }
         scheduler.runCurrent()
 
         assertTrue(state.isReady)
@@ -53,7 +73,7 @@ class LoadedStateTest {
     @Test
     fun theLoadsAreReadyOnceEachHasEnded() {
         val first = CompletableDeferred<Int>()
-        val loads = StartupLoads(listOf(LoadedState(scope, 0) { first.await() }, LoadedState(scope, 0) { 2 }))
+        val loads = StartupLoads(listOf(LoadedState(scope, 0, dispatcher) { first.await() }, LoadedState(scope, 0, dispatcher) { 2 }))
         scheduler.runCurrent()
         assertFalse(loads.isReady)
 

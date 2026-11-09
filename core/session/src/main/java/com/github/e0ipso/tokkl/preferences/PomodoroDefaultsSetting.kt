@@ -13,6 +13,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
+import kotlin.coroutines.CoroutineContext
 
 /**
  * The lengths a Pomodoro session starts with: [workMinutes] of work, [shortRestMinutes] of rest
@@ -70,6 +71,7 @@ class PomodoroDefaultsSetting(
     private val capabilities: PreferencesOffer,
     account: CurrentAccount,
     scope: CoroutineScope,
+    io: CoroutineContext,
 ) : AccountDataOwner,
     StartupLoad {
 
@@ -85,6 +87,7 @@ class PomodoroDefaultsSetting(
         client,
         account,
         scope,
+        io,
         default = PomodoroDefaults.DEFAULT,
         codec = object : PreferenceCodec<PomodoroDefaults> {
             override fun loaded(value: PomodoroDefaults) = value.clamped()

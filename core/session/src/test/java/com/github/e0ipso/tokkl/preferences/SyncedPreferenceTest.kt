@@ -31,7 +31,8 @@ import java.util.concurrent.TimeUnit
 class SyncedPreferenceTest {
 
     private val scheduler = TestCoroutineScheduler()
-    private val scope = CoroutineScope(StandardTestDispatcher(scheduler))
+    private val dispatcher = StandardTestDispatcher(scheduler)
+    private val scope = CoroutineScope(dispatcher)
     private val account = CurrentAccount(scope)
 
     @Test
@@ -51,7 +52,7 @@ class SyncedPreferenceTest {
             }
         }
         val preference =
-            SyncedPreference(store, { null }, account, scope, default = 0, codec = Codec, sharing = { false })
+            SyncedPreference(store, { null }, account, scope, dispatcher, default = 0, codec = Codec, sharing = { false })
         scheduler.runCurrent()
 
         preference.change(5)
@@ -87,6 +88,7 @@ class SyncedPreferenceTest {
             { null },
             account,
             scope,
+            dispatcher,
             default = 0,
             codec = Codec,
             sharing = { delayed.await() },
@@ -137,6 +139,7 @@ class SyncedPreferenceTest {
                 { api },
                 account,
                 CoroutineScope(Dispatchers.IO),
+                Dispatchers.IO,
                 default = 0,
                 codec = Sent,
                 sharing = { true },

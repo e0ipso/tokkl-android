@@ -67,6 +67,6 @@ fun themeSettingsWithNightMode(
     store: ThemeSettingsStore,
     scope: CoroutineScope,
     io: CoroutineContext,
-): ThemeSettingsRepository = ThemeSettingsRepository(store, scope).also { themes ->
+): ThemeSettingsRepository = ThemeSettingsRepository(store, scope, io).also { themes ->
     syncApplicationNightMode(context, themes.loaded.map { it.mode }, scope, io)
 }

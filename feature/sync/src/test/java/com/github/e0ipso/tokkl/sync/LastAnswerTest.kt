@@ -28,6 +28,7 @@ class LastAnswerTest {
             InMemoryValueStore(Instant.parse("2026-10-15T20:00:00Z")) { saved += it },
             clock = clock,
             scope = CoroutineScope(Dispatchers.Unconfined),
+            io = Dispatchers.Unconfined,
         )
         assertEquals(Instant.parse("2026-10-15T20:00:00Z"), answer.state.value)
 
@@ -45,6 +46,7 @@ class LastAnswerTest {
             InMemoryValueStore(Instant.parse("2026-10-16T09:00:00Z")) { saved += it },
             clock = clock,
             scope = CoroutineScope(Dispatchers.Unconfined),
+            io = Dispatchers.Unconfined,
         )
 
         answer.succeeded()
@@ -59,6 +61,7 @@ class LastAnswerTest {
             InMemoryValueStore(Instant.parse("2026-10-15T20:00:00Z")) { saved += it },
             clock = clock,
             scope = CoroutineScope(Dispatchers.Unconfined),
+            io = Dispatchers.Unconfined,
         )
 
         answer.forget()

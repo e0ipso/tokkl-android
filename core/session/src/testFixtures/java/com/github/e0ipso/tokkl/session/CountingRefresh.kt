@@ -26,11 +26,11 @@ class CountingRefresh : CacheRefresh {
 
 /** The server's [capabilities], loaded at once from memory. */
 fun capabilitiesOf(capabilities: Capabilities): CapabilitiesSource =
-    CapabilitiesSource(InMemoryValueStore(capabilities), CoroutineScope(Dispatchers.Unconfined))
+    CapabilitiesSource(InMemoryValueStore(capabilities), CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined)
 
 /** The account [settings], loaded at once from memory, or none. */
 fun accountSettingsOf(settings: AccountSettings?): AccountSettingsSource =
-    AccountSettingsSource(InMemoryValueStore(settings), CoroutineScope(Dispatchers.Unconfined))
+    AccountSettingsSource(InMemoryValueStore(settings), CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined)
 
 /** Account settings in UTC from Monday whose default workspace is [workspace], loaded at once. */
 fun accountSettingsIn(workspace: WorkspaceId): AccountSettingsSource =

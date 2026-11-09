@@ -18,6 +18,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.IOException
+import kotlin.coroutines.CoroutineContext
 
 /**
  * A preference's value as the phone keeps it, whether the server still has to get it, and whether
@@ -73,6 +74,7 @@ fun interface PreferenceSharing {
  * @param account the account each change, refresh and send belongs to: once its context has
  *   ended, which sign-out does first, they show, store and send nothing more.
  * @param scope outlives every screen, so leaving the app does not cancel a write.
+ * @param io where the stored value loads.
  * @param default the value before one is stored, and after [forget].
  * @param codec how the value reads from the server's preferences and posts back.
  * @param sharing whether the server keeps the preference, from the capabilities or from its keys.
@@ -82,6 +84,7 @@ class SyncedPreference<T : Any>(
     private val client: ApiClientProvider,
     private val account: CurrentAccount,
     private val scope: CoroutineScope,
+    io: CoroutineContext,
     private val default: T,
     private val codec: PreferenceCodec<T>,
     private val sharing: PreferenceSharing,
@@ -96,7 +99,7 @@ class SyncedPreference<T : Any>(
     /** What the last refresh [PreferenceSharing.found]. Guarded by [memory]. */
     private var shared = false
 
-    private val held = LoadedState(scope, default) {
+    private val held = LoadedState(scope, default, io) {
         store.load()?.let { stored ->
             unsent = stored.unsent
             shared = stored.shared
@@ -136,7 +139,7 @@ class SyncedPreference<T : Any>(
             val current = memory.withLock {
                 // A sign-out came first: the change belonged to the account before.
                 if (!context.isCurrent) return@withLock false
-                held.value = value
+                held.set(value)
                 unsent = sends
                 changedSinceRefresh = true
                 true
@@ -174,7 +177,7 @@ class SyncedPreference<T : Any>(
                 changed || preferences == null -> false
 
                 else -> {
-                    held.value = codec.fromServer(preferences)
+                    held.set(codec.fromServer(preferences))
                     false
                 }
             }
@@ -192,7 +195,7 @@ class SyncedPreference<T : Any>(
         ready()
         storing.withLock {
             memory.withLock {
-                held.value = default
+                held.set(default)
                 unsent = false
                 changedSinceRefresh = false
                 shared = false

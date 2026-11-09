@@ -12,15 +12,16 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.coroutines.CoroutineContext
 
 /**
  * How many queued changes left the queue because the server no longer had their entry, since the
  * user last dismissed the notice that says so (docs/PRD.md O6): "1 change discarded: the entry was
  * deleted elsewhere". Each discard adds to the count, so one notice covers them all. The count
  * outlives the process, so a discard by the background send with the app closed shows when the
- * app opens. The stored count loads from [store] as this is made, in [scope], off the main thread.
+ * app opens. The stored count loads from [store] as this is made, in [scope] on [io], off the main thread.
  */
-class DiscardedChanges(private val store: ClearableStore<Int>, private val scope: CoroutineScope) :
+class DiscardedChanges(private val store: ClearableStore<Int>, private val scope: CoroutineScope, io: CoroutineContext) :
     ChangeDiscards,
     AccountDataOwner,
     StartupLoad {
@@ -30,12 +31,12 @@ class DiscardedChanges(private val store: ClearableStore<Int>, private val scope
     override suspend fun forgetAccount() {
         ready()
         writing.withLock {
-            loaded.value = 0
+            loaded.set(0)
             store.clear()
         }
     }
 
-    private val loaded = LoadedState(scope, 0) { store.load() ?: 0 }
+    private val loaded = LoadedState(scope, 0, io) { store.load() ?: 0 }
 
     /** The count the notice shows, or 0 while it shows none. */
     val state: StateFlow<Int> = loaded.state
@@ -62,7 +63,7 @@ class DiscardedChanges(private val store: ClearableStore<Int>, private val scope
             ready()
             writing.withLock {
                 val count = change(loaded.value)
-                loaded.value = count
+                loaded.set(count)
                 store.save(count)
             }
         }

@@ -426,7 +426,7 @@ class AccountRefreshTest {
         io: CoroutineContext,
         onRefresh: AccountRefreshSteps = AccountRefreshSteps { _, _, _ -> },
     ) {
-        private val settings = AccountSettingsSource(InMemoryValueStore(initial, save), scope)
+        private val settings = AccountSettingsSource(InMemoryValueStore(initial, save), scope, Dispatchers.Unconfined)
         private val refresher = AccountRefresh(client, settings, scope, io, onRefresh)
 
         val state get() = settings.state

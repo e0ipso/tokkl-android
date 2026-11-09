@@ -247,9 +247,11 @@ class PomodoroDefaultsSettingTest {
             capabilities = CapabilitiesSource(
                 InMemoryValueStore(Capabilities.NONE.copy(favorites = keepsPreferences)),
                 CoroutineScope(Dispatchers.Unconfined),
+                Dispatchers.Unconfined,
             ),
             account = CurrentAccount(CoroutineScope(Dispatchers.Unconfined)),
             scope = CoroutineScope(Dispatchers.Unconfined),
+            io = Dispatchers.Unconfined,
         )
 
     private fun preferences(body: String) = mePreferences(body)

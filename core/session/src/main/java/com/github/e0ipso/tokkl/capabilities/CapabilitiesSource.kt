@@ -15,14 +15,15 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.IOException
+import kotlin.coroutines.CoroutineContext
 
 /**
  * The server's capabilities for the whole process, and the one place features read them from.
  * They refresh with each `GET /api/v9/me` of the account settings refresh, and persist. They load
- * from [store], a file of a few flags, as this is made, in [scope], off the main thread. Code
+ * from [store], a file of a few flags, as this is made, in [scope] on [io]. Code
  * that may run before that load ends reads them through the suspending calls or [loaded].
  */
-class CapabilitiesSource(private val store: ValueStore<Capabilities>, scope: CoroutineScope) :
+class CapabilitiesSource(private val store: ValueStore<Capabilities>, scope: CoroutineScope, io: CoroutineContext) :
     StartupLoad,
     TimerApiOffer,
     AllDayOffer,
@@ -32,7 +33,7 @@ class CapabilitiesSource(private val store: ValueStore<Capabilities>, scope: Cor
     /** What the disk holds, so a refresh after a failed write writes again. Guarded by [changing]. */
     private var stored: Capabilities? = null
 
-    private val held = LoadedState(scope, Capabilities.NONE) { store.load()?.also { stored = it } ?: Capabilities.NONE }
+    private val held = LoadedState(scope, Capabilities.NONE, io) { store.load()?.also { stored = it } ?: Capabilities.NONE }
 
     /**
      * Lets one change of the flags run at a time, [refresh] included while its probes wait for the
@@ -125,7 +126,7 @@ class CapabilitiesSource(private val store: ValueStore<Capabilities>, scope: Cor
                 // The next refresh writes them again.
             }
         }
-        held.value = next
+        held.set(next)
         return next
     }
 
@@ -134,7 +135,7 @@ class CapabilitiesSource(private val store: ValueStore<Capabilities>, scope: Cor
      * then deletes the stored flags.
      */
     suspend fun forget() = change<Unit> {
-        held.value = Capabilities.NONE
+        held.set(Capabilities.NONE)
         stored = null
     }
 

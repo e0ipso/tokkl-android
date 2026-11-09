@@ -214,6 +214,7 @@ class CapabilitiesTest {
                 saved += it
             },
             CoroutineScope(Dispatchers.Unconfined),
+            Dispatchers.Unconfined,
         )
 
         assertEquals(ALL, source.refresh(client, me(TOKKL_ME)))
@@ -351,6 +352,7 @@ class CapabilitiesTest {
                 override suspend fun save(value: Capabilities) = Unit
             },
             CoroutineScope(Dispatchers.Unconfined),
+            Dispatchers.Unconfined,
         )
         val timerApi = async(Dispatchers.Unconfined) { loading.offersTimerApi() }
         assertFalse("still loading", timerApi.isCompleted)
@@ -367,7 +369,7 @@ class CapabilitiesTest {
     private fun MockWebServer.requests(): List<String> = List(requestCount) { takeRequest().url.encodedPath }
 
     private fun source(initial: Capabilities? = null) =
-        CapabilitiesSource(InMemoryValueStore(initial) { saved += it }, CoroutineScope(Dispatchers.Unconfined))
+        CapabilitiesSource(InMemoryValueStore(initial) { saved += it }, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined)
 
     private fun me(body: String): Me = Json { ignoreUnknownKeys = true }.decodeFromString(Me.serializer(), body)
 

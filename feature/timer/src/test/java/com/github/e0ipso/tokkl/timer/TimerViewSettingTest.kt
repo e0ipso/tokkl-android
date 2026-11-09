@@ -168,6 +168,7 @@ class TimerViewSettingTest {
         capabilities = capabilitiesOf(Capabilities.NONE.copy(favorites = keepsTimerView)),
         account = CurrentAccount(CoroutineScope(Dispatchers.Unconfined)),
         scope = CoroutineScope(Dispatchers.Unconfined),
+        io = Dispatchers.Unconfined,
     )
 
     private fun preferences(body: String) = mePreferences(body)

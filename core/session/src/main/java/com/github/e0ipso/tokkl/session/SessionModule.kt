@@ -55,11 +55,11 @@ val sessionModule = module {
     single { AccountSettingsStore(androidContext(), io()) } bind AccountDataOwner::class
     single { CapabilitiesStore(androidContext(), io()) }
     // The account settings. They load at process start from a file of a few short values.
-    single { AccountSettingsSource(get<AccountSettingsStore>(), get()) } binds
+    single { AccountSettingsSource(get<AccountSettingsStore>(), get(), io()) } binds
         arrayOf(StartupLoad::class, DefaultWorkspace::class)
 
     // What the server offers. It loads at process start from a file of a few flags.
-    single { CapabilitiesSource(get<CapabilitiesStore>(), get()) } binds
+    single { CapabilitiesSource(get<CapabilitiesStore>(), get(), io()) } binds
         arrayOf(
             StartupLoad::class,
             TimerApiOffer::class,
