@@ -7,7 +7,7 @@ import com.github.e0ipso.tokkl.capabilities.CapabilitiesRefresh
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaultsSetting
 import com.github.e0ipso.tokkl.preferences.ReminderSetting
 import com.github.e0ipso.tokkl.session.AccountRefreshSteps
-import com.github.e0ipso.tokkl.session.MePreferences
+import com.github.e0ipso.tokkl.api.MePreferences
 import com.github.e0ipso.tokkl.timer.TimerViewSetting
 import com.github.e0ipso.tokkl.timerstate.TimerStateIntakes
 import com.github.e0ipso.tokkl.timersync.TimerSyncFollower

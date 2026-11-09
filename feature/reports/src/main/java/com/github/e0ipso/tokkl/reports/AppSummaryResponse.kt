@@ -1,10 +1,10 @@
 package com.github.e0ipso.tokkl.reports
 
 import com.github.e0ipso.tokkl.api.ApiError
-import com.github.e0ipso.tokkl.api.ApiJson
 import com.github.e0ipso.tokkl.api.ApiResult
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
@@ -20,7 +20,7 @@ import java.time.LocalDate
  * all ordered lists come from the server; no sums, sorting, bucketing or rate multiplication.
  */
 internal fun decodeAppSummary(body: JsonObject): ApiResult<SummaryReport> = try {
-    val response = ApiJson.decodeFromJsonElement<AppSummaryResponse>(body)
+    val response = SummaryJson.decodeFromJsonElement<AppSummaryResponse>(body)
     body.requireStrings("start_date", "end_date", "resolution")
     val extras = ReportExtraProjection()
     val reportExtras = extras.fields(
@@ -61,6 +61,9 @@ internal fun decodeAppSummary(body: JsonObject): ApiResult<SummaryReport> = try 
 } catch (e: DateTimeException) {
     ApiResult.Failure(ApiError.InvalidResponse(IllegalArgumentException("invalid summary date", e)))
 }
+
+/** The summary's known fields, decoded as the API's JSON settings decode them: unknown fields are left to the extras. */
+private val SummaryJson = Json { ignoreUnknownKeys = true }
 
 // kotlinx.serialization accepts quoted numerals for numeric properties. The report contract
 // does not: a known field changing JSON type must surface as an incompatible response.

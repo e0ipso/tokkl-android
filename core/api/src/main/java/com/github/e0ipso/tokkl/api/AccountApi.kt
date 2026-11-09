@@ -64,42 +64,43 @@ data class FavoriteBody(
 )
 
 /** The signed-in user, their preferences and their workspaces. */
-class AccountApi internal constructor(private val client: TogglApiClient) {
+class AccountApi internal constructor(private val client: ApiTransport) {
 
     /** `GET /api/v9/me`, the whole [Me] that sign-in reads. */
-    suspend fun me(): ApiResult<Me> = client.get(client.server.api("me"), Me.serializer())
+    suspend fun me(): ApiResult<Me> = client.get(client.server.apiUrl("me"), Me.serializer())
 
     /**
      * `GET /api/v9/me` read for its default workspace and role alone, as the catalog pages and the
      * reports read it, so a body that lacks the rest of a [Me] still serves them.
      */
     suspend fun defaultWorkspace(): ApiResult<MeWorkspace> =
-        client.get(client.server.api("me"), MeWorkspace.serializer())
+        client.get(client.server.apiUrl("me"), MeWorkspace.serializer())
 
     /** `GET /api/v9/me?with_related_data=true`, with the clients, projects, tags and tasks. */
     suspend fun meWithRelatedData(): ApiResult<Me> = client.get(
-        client.server.api("me").newBuilder().addQueryParameter("with_related_data", "true").build(),
+        client.server.apiUrl("me").newBuilder().addQueryParameter("with_related_data", "true").build(),
         Me.serializer(),
     )
 
     /** `GET /api/v9/me/preferences`. */
-    suspend fun preferences(): ApiResult<JsonObject> =
-        client.get(client.server.api("me", "preferences"), JsonObject.serializer())
+    suspend fun preferences(): ApiResult<MePreferences> =
+        client.get(client.server.apiUrl("me", "preferences"), JsonObject.serializer()).map(::MePreferences)
 
     /**
      * `POST /api/v9/me/preferences` with the keys of [change] alone. Tokkl merges them into the
-     * stored preferences, so every other key stays, and answers with the stored preferences.
+     * stored preferences, so every other key stays, and answers with the stored preferences as a
+     * JSON object, which this call checks and does not read.
      */
-    suspend fun savePreferences(change: PreferencesChange): ApiResult<JsonObject> = client.send(
+    suspend fun savePreferences(change: PreferencesChange): ApiResult<Unit> = client.send(
         HttpMethod.POST,
-        client.server.api("me", "preferences"),
+        client.server.apiUrl("me", "preferences"),
         change.json(),
         JsonObject.serializer(),
-    )
+    ).map { }
 
     /** `GET /api/v9/workspaces/{workspaceId}`. */
     suspend fun workspace(workspaceId: WorkspaceId): ApiResult<WorkspaceSettings> =
-        client.get(client.server.api("workspaces", workspaceId.toString()), WorkspaceSettings.serializer())
+        client.get(client.server.apiUrl("workspaces", workspaceId.toString()), WorkspaceSettings.serializer())
 
     private fun PreferencesChange.json(): JsonElement = when (this) {
         is PomodoroDefaultsChange -> json(PomodoroDefaultsChange.serializer(), this)

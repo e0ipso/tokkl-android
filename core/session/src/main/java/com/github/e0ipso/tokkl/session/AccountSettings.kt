@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.session
 
 import com.github.e0ipso.tokkl.api.Me
+import com.github.e0ipso.tokkl.api.MePreferences
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.time.AccountTime
 import com.github.e0ipso.tokkl.time.DAYS_PER_WEEK
@@ -10,12 +11,6 @@ import com.github.e0ipso.tokkl.time.formatDurationWithoutSeconds
 import com.github.e0ipso.tokkl.time.formatTime
 import com.github.e0ipso.tokkl.time.isTwelveHourFormat
 import com.github.e0ipso.tokkl.time.parseTimeZone
-import kotlinx.serialization.json.JsonNull
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.boolean
-import kotlinx.serialization.json.booleanOrNull
-import kotlinx.serialization.json.doubleOrNull
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Instant
@@ -102,51 +97,28 @@ fun Me.accountSettings(): AccountSettings? = dayOfWeek(beginningOfWeek)?.let {
 }
 
 /**
- * One `GET /api/v9/me/preferences` answer. A refresh asks for it once and hands it to each
- * reader: the account settings take [durationFormat] and [twelveHour], the cache the favorites.
- * Each reader decodes only its own key from [body], so a malformed key fails that reader alone.
+ * The web app shows durations as improved when `duration_format` is missing or null, and when it
+ * names any format other than classic or decimal. A value that is not a string reads as improved
+ * too.
  */
-class MePreferences(val body: JsonObject) {
+val MePreferences.durationFormat: DurationFormat
+    get() = DurationFormat.fromTogglName(string("duration_format"))
 
-    /**
-     * The web app shows durations as improved when `duration_format` is missing or null, and
-     * when it names any format other than classic or decimal. A value that is not a string reads
-     * as improved too.
-     */
-    val durationFormat: DurationFormat
-        get() {
-            val name = (body["duration_format"] as? JsonPrimitive)?.takeIf { it.isString }?.content
-            return DurationFormat.fromTogglName(name)
-        }
+/**
+ * The web app writes clock times on the 12-hour clock when `timeofday_format` holds an `a` in
+ * either case, as `h:mm A` does, and on the 24-hour clock otherwise. A missing or null value reads
+ * as the web app's default, `H:mm`, and so does a value that is not a string.
+ */
+val MePreferences.twelveHour: Boolean
+    get() = string("timeofday_format")?.let(::isTwelveHourFormat) ?: false
 
-    /**
-     * The web app writes clock times on the 12-hour clock when `timeofday_format` holds an `a` in
-     * either case, as `h:mm A` does, and on the 24-hour clock otherwise. A missing or null value
-     * reads as the web app's default, `H:mm`, and so does a value that is not a string.
-     */
-    val twelveHour: Boolean
-        get() {
-            val format = (body["timeofday_format"] as? JsonPrimitive)?.takeIf { it.isString } ?: return false
-            return isTwelveHourFormat(format.content)
-        }
-
-    /**
-     * `collapseTimeEntries`, read as the web app's `prefs.collapseTimeEntries ?? true` and its
-     * truthiness: missing or null groups, and so does any value JavaScript takes as true, such as
-     * a non-empty string or a non-zero number. False, 0 and an empty string do not.
-     */
-    val collapseSimilar: Boolean
-        get() {
-            val value = body["collapseTimeEntries"] ?: return true
-            if (value is JsonNull) return true
-            val primitive = value as? JsonPrimitive ?: return true
-            return when {
-                primitive.isString -> primitive.content.isNotEmpty()
-                primitive.booleanOrNull != null -> primitive.boolean
-                else -> primitive.doubleOrNull?.let { it != 0.0 } ?: true
-            }
-        }
-}
+/**
+ * `collapseTimeEntries`, read as the web app's `prefs.collapseTimeEntries ?? true` and its
+ * truthiness: missing or null groups, and so does any value JavaScript takes as true, such as a
+ * non-empty string or a non-zero number. False, 0 and an empty string do not.
+ */
+val MePreferences.collapseSimilar: Boolean
+    get() = truthy("collapseTimeEntries") ?: true
 
 /** The day Toggl numbers [number], from 0 for Sunday to 6 for Saturday, or null outside that. */
 internal fun dayOfWeek(number: Int): DayOfWeek? = if (number in 0 until DAYS_PER_WEEK) {

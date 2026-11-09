@@ -9,10 +9,18 @@ plugins {
 dependencies {
     // The API's calls take the model's typed ids, and its answers carry them.
     api(project(":core:model"))
-    // The API's types and calls use OkHttp's and kotlinx.serialization's types, and its calls suspend.
-    api(libs.okhttp)
-    api(libs.kotlinx.serialization.json)
+    // The API's answers and bodies are kotlinx.serialization types, which ApiJson reads and writes
+    // as text, and its calls suspend.
+    api(libs.kotlinx.serialization.core)
     api(libs.kotlinx.coroutines.core)
+    // The transport and the JSON trees stay inside: no public signature carries them, except the
+    // app summary's tree, whose unknown fields the report shows, so its one reader names JSON too.
+    implementation(libs.okhttp)
+    implementation(libs.kotlinx.serialization.json)
+
+    // Tests that send requests the app does not send build their bodies and clients with these.
+    testFixturesApi(libs.okhttp)
+    testFixturesApi(libs.kotlinx.serialization.json)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

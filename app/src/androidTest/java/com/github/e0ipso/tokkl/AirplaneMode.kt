@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl
 
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.api
 import okhttp3.ConnectionPool
 import okhttp3.OkHttpClient
 import okhttp3.Request

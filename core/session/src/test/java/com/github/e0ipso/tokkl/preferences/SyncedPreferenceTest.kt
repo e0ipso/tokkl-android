@@ -7,7 +7,7 @@ import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.api.TimerViewChange
 import com.github.e0ipso.tokkl.session.CurrentAccount
-import com.github.e0ipso.tokkl.session.MePreferences
+import com.github.e0ipso.tokkl.api.MePreferences
 import com.github.e0ipso.tokkl.storage.ClearableStore
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope

@@ -5,7 +5,7 @@ import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.PreferencesChange
 import com.github.e0ipso.tokkl.session.AccountContext
 import com.github.e0ipso.tokkl.session.CurrentAccount
-import com.github.e0ipso.tokkl.session.MePreferences
+import com.github.e0ipso.tokkl.api.MePreferences
 import com.github.e0ipso.tokkl.storage.ClearableStore
 import com.github.e0ipso.tokkl.storage.LoadedState
 import com.github.e0ipso.tokkl.storage.StartupLoad

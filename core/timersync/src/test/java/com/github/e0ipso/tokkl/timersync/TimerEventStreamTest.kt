@@ -10,6 +10,8 @@ import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.api.TokklApi
+import com.github.e0ipso.tokkl.api.app
+import com.github.e0ipso.tokkl.api.instance
 import com.github.e0ipso.tokkl.cache.CurrentEntryCache
 import com.github.e0ipso.tokkl.cache.RunningCheckStart
 import com.github.e0ipso.tokkl.cache.RunningCheckWrites

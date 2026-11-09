@@ -5,7 +5,7 @@ import com.github.e0ipso.tokkl.api.PomodoroDefaultsChange
 import com.github.e0ipso.tokkl.capabilities.PreferencesOffer
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.CurrentAccount
-import com.github.e0ipso.tokkl.session.MePreferences
+import com.github.e0ipso.tokkl.api.MePreferences
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import com.github.e0ipso.tokkl.storage.ClearableStore
 import com.github.e0ipso.tokkl.storage.StartupLoad
@@ -13,8 +13,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.doubleOrNull
 
 /**
  * The lengths a Pomodoro session starts with: [workMinutes] of work, [shortRestMinutes] of rest
@@ -185,8 +183,7 @@ internal fun MePreferences.pomodoroDefaults(): PomodoroDefaults {
 
 /** [key] as an integer in [range], as Tokkl's integerFrom accepts it, or [default]. Strings and booleans fail. */
 private fun MePreferences.integerIn(key: String, range: IntRange, default: Int): Int {
-    val primitive = (body[key] as? JsonPrimitive)?.takeUnless { it.isString } ?: return default
-    val number = primitive.doubleOrNull ?: return default
+    val number = number(key) ?: return default
     if (number % 1.0 != 0.0 || number < range.first || number > range.last) return default
     return number.toInt()
 }

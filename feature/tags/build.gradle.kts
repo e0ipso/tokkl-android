@@ -12,6 +12,8 @@ dependencies {
     implementation(project(":core:cache"))
     implementation(project(":core:catalog"))
     implementation(project(":core:navigation"))
+    // The route's saved state keeps the open question as JSON.
+    implementation(libs.kotlinx.serialization.json)
 
     testImplementation(libs.mockwebserver3)
     testImplementation(testFixtures(project(":core:api")))

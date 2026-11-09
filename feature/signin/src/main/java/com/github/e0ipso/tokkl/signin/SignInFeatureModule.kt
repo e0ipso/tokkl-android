@@ -38,7 +38,7 @@ val signInFeatureModule = module {
             // Runs on the IO thread, since the stores touch the disk.
             signIn = ServerSignIn(
                 session = get<SessionWriter>(),
-                httpClient = get<SharedHttpClient>().instance,
+                connector = get<SharedHttpClient>(),
                 configured = get(),
                 scope = get(),
                 io = io(),

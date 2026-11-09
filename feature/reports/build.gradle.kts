@@ -13,6 +13,8 @@ dependencies {
     implementation(project(":core:cache"))
     implementation(project(":core:navigation"))
     implementation(libs.androidx.activity.compose)
+    // The saved choices are JSON, and the app summary's unknown fields are read from its JSON tree.
+    implementation(libs.kotlinx.serialization.json)
 
     testImplementation(libs.mockwebserver3)
     testImplementation(testFixtures(project(":core:api")))

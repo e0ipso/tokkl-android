@@ -1,17 +1,15 @@
 package com.github.e0ipso.tokkl.cache
 
-import com.github.e0ipso.tokkl.api.ApiJson
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.Me
 import com.github.e0ipso.tokkl.api.ServerClient
 import com.github.e0ipso.tokkl.api.ServerFavorite
-import com.github.e0ipso.tokkl.api.ServerPreferences
 import com.github.e0ipso.tokkl.api.ServerProject
 import com.github.e0ipso.tokkl.api.ServerTag
 import com.github.e0ipso.tokkl.api.ServerTask
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.TokklApi
-import com.github.e0ipso.tokkl.session.MePreferences
+import com.github.e0ipso.tokkl.api.MePreferences
 import com.github.e0ipso.tokkl.session.accountSettings
 import java.time.Clock
 import java.time.Instant
@@ -69,16 +67,8 @@ private suspend fun readTimeEntries(
  * Tokkl leaves `favorites` out until the user saves one, which means none. Null when the request
  * failed or the favorites do not decode.
  */
-private fun favoritesFrom(preferences: MePreferences?): List<CachedFavorite>? {
-    val body = preferences?.body ?: return null
-    val decoded = try {
-        ApiJson.decodeFromJsonElement(ServerPreferences.serializer(), body)
-    } catch (_: IllegalArgumentException) {
-        // kotlinx.serialization's SerializationException is an IllegalArgumentException.
-        return null
-    }
-    return decoded.favorites.orEmpty().mapIndexed { position, favorite -> favorite.toCached(position) }
-}
+private fun favoritesFrom(preferences: MePreferences?): List<CachedFavorite>? =
+    preferences?.favorites()?.mapIndexed { position, favorite -> favorite.toCached(position) }
 
 /** Null when [ServerTimeEntry.start] is not an RFC 3339 timestamp. */
 internal fun ServerTimeEntry.toCached(): CachedTimeEntry? {

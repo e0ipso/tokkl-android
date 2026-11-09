@@ -4,7 +4,7 @@ import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ReminderChange
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.CurrentAccount
-import com.github.e0ipso.tokkl.session.MePreferences
+import com.github.e0ipso.tokkl.api.MePreferences
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import com.github.e0ipso.tokkl.storage.ClearableStore
 import com.github.e0ipso.tokkl.storage.StartupLoad
@@ -12,9 +12,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.booleanOrNull
-import kotlinx.serialization.json.doubleOrNull
 
 /** Tokkl main: packages/types/index.ts and packages/api/src/models/users.ts. */
 data class ReminderPreferences(val enabled: Boolean = true, val hours: Int = 8) {
@@ -71,7 +68,7 @@ class ReminderSetting(
             override fun found(preferences: MePreferences?, keepsPreferences: Boolean, shared: Boolean) = when {
                 !keepsPreferences -> false
                 preferences == null -> shared
-                else -> preferences.body.keys.containsAll(KEYS)
+                else -> KEYS.all(preferences::has)
             }
         },
     )
@@ -115,9 +112,8 @@ class ReminderSetting(
 internal fun ReminderPreferences.body() = ReminderChange(enabled, clamped().hours)
 
 fun MePreferences.reminderPreferences(): ReminderPreferences {
-    val enabled =
-        (body[ReminderPreferences.ENABLED_KEY] as? JsonPrimitive)?.takeUnless { it.isString }?.booleanOrNull ?: true
-    val number = (body[ReminderPreferences.HOURS_KEY] as? JsonPrimitive)?.takeUnless { it.isString }?.doubleOrNull
+    val enabled = boolean(ReminderPreferences.ENABLED_KEY) ?: true
+    val number = number(ReminderPreferences.HOURS_KEY)
     val hours = number?.takeIf { it % 1.0 == 0.0 && it >= 1 && it <= 168 }?.toInt() ?: 8
     return ReminderPreferences(enabled, hours)
 }

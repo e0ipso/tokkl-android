@@ -1,12 +1,11 @@
 package com.github.e0ipso.tokkl.signin
 
+import com.github.e0ipso.tokkl.api.ApiConnector
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ConfiguredServer
 import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.ServerUrl
-import com.github.e0ipso.tokkl.api.TogglApiClient
-import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.api.getOrElse
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
@@ -14,7 +13,6 @@ import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.accountSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
-import okhttp3.OkHttpClient
 import java.io.IOException
 import java.security.GeneralSecurityException
 import kotlin.coroutines.CoroutineContext
@@ -129,14 +127,14 @@ interface SignIn {
  * An attempt runs in [scope], the application's, on [io]: once sent, a sign-in the server accepts
  * is stored also when the form that sent it goes meanwhile.
  *
- * @param httpClient the shared HTTP client, whose guard lets the request through to [configured]'s
- *   sign-in candidate.
+ * @param connector opens the API of the server tried over the shared HTTP client, whose guard lets
+ *   the request through to [configured]'s sign-in candidate.
  * @param scope the application's scope, where each attempt runs.
  * @param io where the request and the stores' disk work run.
  */
 class ServerSignIn(
     private val session: SessionWriter,
-    private val httpClient: OkHttpClient,
+    private val connector: ApiConnector,
     private val configured: ConfiguredServer,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
@@ -154,7 +152,7 @@ class ServerSignIn(
     private suspend fun signIn(server: ServerUrl, credentials: SignInCredentials, again: SignInAgain?): SignInResult {
         val account = signedInAccount.current() ?: again
         if (account != null && server != account.server) return SignInResult.OtherAccount
-        val api = TokklApi(TogglApiClient(server, credentials.toApiCredentials(), httpClient, io = io))
+        val api = connector.api(server, credentials.toApiCredentials(), io)
         // Until the server is stored, the URL being tried is the configured server.
         val me = configured.signingIn(server) { api.account.me() }
             .getOrElse { return it.error.toSignInResult() }

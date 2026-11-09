@@ -28,7 +28,7 @@ import kotlin.coroutines.CoroutineContext
  * an [ApiResult]. A call cancelled after its request left the phone may still
  * reach the server.
  */
-class TogglApiClient(
+internal class ApiTransport(
     val server: ServerUrl,
     private val credentials: ApiCredentials,
     private val httpClient: OkHttpClient,
@@ -199,7 +199,7 @@ class TogglApiClient(
         onConflict: ((Response) -> ApiResult<T>)? = null,
         onSuccess: (Response) -> ApiResult<T>,
     ): ApiResult<T> = withContext(io) {
-        val json = body?.let { ApiJson.encodeToString(JsonElement.serializer(), it).toRequestBody(JSON) }
+        val json = body?.let { Wire.encodeToString(JsonElement.serializer(), it).toRequestBody(JSON) }
         val request = Request.Builder()
             .url(url)
             .header("Authorization", credentials.authorizationHeader)
@@ -275,7 +275,7 @@ class TogglApiClient(
     /** The reason [text] holds when it is one non-blank JSON string, or null. */
     private fun reasonIn(text: String): String? {
         val element = try {
-            ApiJson.parseToJsonElement(text)
+            Wire.parseToJsonElement(text)
         } catch (_: IllegalArgumentException) {
             // kotlinx.serialization's SerializationException is an IllegalArgumentException.
             return null
@@ -293,7 +293,7 @@ class TogglApiClient(
         )
 
     private fun <T> decode(text: String, deserializer: DeserializationStrategy<T>): ApiResult<T> = try {
-        ApiResult.Success(ApiJson.decodeFromString(deserializer, text))
+        ApiResult.Success(Wire.decodeFromString(deserializer, text))
     } catch (e: IllegalArgumentException) {
         // kotlinx.serialization's SerializationException is an IllegalArgumentException.
         ApiResult.Failure(ApiError.InvalidResponse(e))
@@ -317,9 +317,13 @@ class TogglApiClient(
 }
 
 /** A decoded response body and the headers it came with. */
-class WithHeaders<out T>(val value: T, val headers: Headers)
+class WithHeaders<out T> internal constructor(val value: T, private val headers: Headers) {
 
-/** A decoded answer to [TogglApiClient.sendRefusable]. [refused] is true for a 409. */
+    /** The answer's header [name], or null when it has none. */
+    fun header(name: String): String? = headers[name]
+}
+
+/** A decoded answer to [ApiTransport.sendRefusable]. [refused] is true for a 409. */
 data class Refusable<out T>(val value: T, val refused: Boolean)
 
 /**

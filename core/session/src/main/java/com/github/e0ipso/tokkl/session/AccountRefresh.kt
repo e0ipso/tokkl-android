@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.session
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.Me
+import com.github.e0ipso.tokkl.api.MePreferences
 import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.platform.SingleFlight
 import com.github.e0ipso.tokkl.time.DurationFormat
@@ -127,6 +128,6 @@ class AccountRefresh(
     /** The account's preferences, or null when the request fails. */
     private suspend fun readPreferences(api: TokklApi): MePreferences? {
         val answer = api.account.preferences()
-        return (answer as? ApiResult.Success)?.value?.let(::MePreferences)
+        return (answer as? ApiResult.Success)?.value
     }
 }

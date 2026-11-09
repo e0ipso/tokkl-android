@@ -9,7 +9,7 @@ import kotlinx.serialization.builtins.ListSerializer
 private class TagBody(val name: String)
 
 /** A workspace's tags. Neither Tokkl nor Toggl archives tags. */
-class TagsApi internal constructor(private val client: TogglApiClient) {
+class TagsApi internal constructor(private val client: ApiTransport) {
 
     /** `GET /api/v9/workspaces/{workspaceId}/tags`. */
     suspend fun list(workspaceId: WorkspaceId): ApiResult<List<WorkspaceTag>> =
@@ -37,5 +37,5 @@ class TagsApi internal constructor(private val client: TogglApiClient) {
         client.sendNoContent(HttpMethod.DELETE, tags(workspaceId, id.toString()))
 
     private fun tags(workspaceId: WorkspaceId, vararg path: String) =
-        client.server.api("workspaces", workspaceId.toString(), "tags", *path)
+        client.server.apiUrl("workspaces", workspaceId.toString(), "tags", *path)
 }

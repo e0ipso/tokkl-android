@@ -6,6 +6,7 @@ import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.api.UntrustedCertificateException
+import com.github.e0ipso.tokkl.api.instance
 import com.github.e0ipso.tokkl.session.AccountSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -63,7 +64,7 @@ class ServerSignInTest {
             saved += url to token
             savedSettings += settings
         },
-        httpClient = httpClient,
+        connector = testApi.connector(httpClient),
         configured = testApi.configured,
         scope = CoroutineScope(Dispatchers.Unconfined),
         io = Dispatchers.Unconfined,

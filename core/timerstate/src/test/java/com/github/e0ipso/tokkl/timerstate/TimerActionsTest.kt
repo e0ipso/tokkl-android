@@ -10,6 +10,7 @@ import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.api.TimerPause
 import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.api.TrustListener
+import com.github.e0ipso.tokkl.api.WireJson
 import com.github.e0ipso.tokkl.cache.CREATED_WITH
 import com.github.e0ipso.tokkl.cache.CurrentEntryCache
 import com.github.e0ipso.tokkl.cache.RunningCheckStart
@@ -344,7 +345,7 @@ class TimerActionsTest {
         .body(body)
         .build()
 
-    private fun json(text: String): JsonElement = ApiJson.parseToJsonElement(text)
+    private fun json(text: String): JsonElement = WireJson.parseToJsonElement(text)
 
     /** Every request the server has received and the test has not taken yet. */
     private fun remainingRequests(): List<RecordedRequest> =

@@ -6,6 +6,7 @@ import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.api.TokklApi
+import com.github.e0ipso.tokkl.api.instance
 import kotlinx.coroutines.Dispatchers
 import org.koin.core.context.GlobalContext
 

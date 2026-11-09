@@ -46,6 +46,9 @@ class TestApi(stored: ServerUrl?, trust: ServerTrust = InMemoryServerTrust(*list
         io: CoroutineContext = Dispatchers.Unconfined,
     ): TokklApi = TokklApi(client(server, credentials, httpClient, trustListener, successListener, io))
 
+    /** Opens each API over [httpClient], the shared client by default, as sign-in does. */
+    fun connector(httpClient: OkHttpClient = http.instance): ApiConnector = apiConnector(httpClient)
+
     /** [trust] as it is at each call. */
     private inner class CurrentTrust : ServerTrust {
         override fun isCleartextConfirmed(server: ServerUrl): Boolean = trust.isCleartextConfirmed(server)

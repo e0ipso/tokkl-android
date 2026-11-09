@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl
 
 import com.github.e0ipso.tokkl.api.ServerUrl
+import com.github.e0ipso.tokkl.api.api
 import java.io.Closeable
 import java.io.IOException
 import java.util.concurrent.CountDownLatch

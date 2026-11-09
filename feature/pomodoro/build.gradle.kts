@@ -17,6 +17,8 @@ dependencies {
     implementation(project(":core:entryfields"))
     implementation(project(":core:navigation"))
     implementation(libs.androidx.activity.compose)
+    // The route's saved state keeps the start form as JSON.
+    implementation(libs.kotlinx.serialization.json)
 
     // The tests build the server's timer states, which core:timerstate maps for the screens.
     testImplementation(project(":core:api"))

@@ -16,6 +16,9 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createComposeRule
 import com.github.e0ipso.tokkl.api.ServerCertificate
+import com.github.e0ipso.tokkl.api.api
+import com.github.e0ipso.tokkl.api.apiConnector
+import com.github.e0ipso.tokkl.api.instance
 import com.github.e0ipso.tokkl.appConfiguredServer
 import com.github.e0ipso.tokkl.appHttp
 import com.github.e0ipso.tokkl.feature.signin.R
@@ -66,7 +69,7 @@ class CertificateHostMismatchTest {
         val model = SignInViewModel(
             signIn = ServerSignIn(
                 session = { _, _, _ -> saved = true },
-                httpClient = client,
+                connector = apiConnector(client),
                 configured = appConfiguredServer,
                 scope = scope,
                 io = Dispatchers.IO,

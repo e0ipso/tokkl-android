@@ -8,6 +8,7 @@ import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.api.SuccessListener
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.api.TrustListener
+import com.github.e0ipso.tokkl.api.instance
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking

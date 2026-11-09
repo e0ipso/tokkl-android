@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.api
 
+import kotlinx.serialization.StringFormat
 import kotlinx.serialization.json.Json
 import okhttp3.ConnectionPool
 import okhttp3.Interceptor
@@ -10,6 +11,15 @@ import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
+import kotlin.coroutines.CoroutineContext
+
+/**
+ * Opens the API of a server with credentials over the app's one HTTP client, as sign-in does for
+ * the server it tries. [SharedHttpClient] implements it.
+ */
+fun interface ApiConnector {
+    fun api(server: ServerUrl, credentials: ApiCredentials, io: CoroutineContext): TokklApi
+}
 
 /**
  * The app's only [OkHttpClient]. Every request goes through it, or through
@@ -31,17 +41,34 @@ import javax.net.ssl.X509TrustManager
  * an event stream that waits between events by design. Every other setting
  * stays as it is for it.
  */
-class SharedHttpClient(private val server: ConfiguredServer, private val trust: ServerTrust) {
+class SharedHttpClient(private val server: ConfiguredServer, private val trust: ServerTrust) : ApiConnector {
 
     /** The client. Built on first use, which loads the platform's CAs, so first use it off the main thread. */
-    val instance: OkHttpClient by lazy { build() }
+    internal val client: OkHttpClient by lazy { build() }
+
+    override fun api(server: ServerUrl, credentials: ApiCredentials, io: CoroutineContext): TokklApi =
+        api(server, credentials, io, trustListener = null, successListener = null)
+
+    /**
+     * The API of [server] with [credentials], sending through this client, whose calls run on
+     * [io]. [trustListener] and [successListener] hear how its requests fare with the trust
+     * checks and which get an answer. The first call builds the client: make it off the main
+     * thread.
+     */
+    fun api(
+        server: ServerUrl,
+        credentials: ApiCredentials,
+        io: CoroutineContext,
+        trustListener: TrustListener?,
+        successListener: SuccessListener?,
+    ): TokklApi = TokklApi(ApiTransport(server, credentials, client, trustListener, successListener, io))
 
     /**
      * Cancels every call in flight. Signing out calls this once it has forgotten the server, so no
      * answer for the old account arrives after the phone has cleared its data.
      */
     fun cancelAll() {
-        instance.dispatcher.cancelAll()
+        client.dispatcher.cancelAll()
     }
 
     /**
@@ -49,7 +76,7 @@ class SharedHttpClient(private val server: ConfiguredServer, private val trust: 
      * connection kept from the old network would fail only after it was written.
      */
     fun dropIdleConnections() {
-        instance.connectionPool.evictAll()
+        client.connectionPool.evictAll()
     }
 
     private fun build(): OkHttpClient {
@@ -75,7 +102,7 @@ class SharedHttpClient(private val server: ConfiguredServer, private val trust: 
          * connection. It shares the rest with [client]: connection pool, dispatcher, interceptors and
          * trust checks, so the guard, the pinning and [cancelAll] cover it as they cover [client].
          */
-        fun sendingOnce(client: OkHttpClient): OkHttpClient =
+        internal fun sendingOnce(client: OkHttpClient): OkHttpClient =
             client.newBuilder().retryOnConnectionFailure(false).build()
 
         /** OkHttp's default. */
@@ -119,5 +146,12 @@ class SharedHttpClient(private val server: ConfiguredServer, private val trust: 
  */
 internal object StreamingRead
 
-/** JSON settings for both APIs. Models declare only the fields the app reads. */
-val ApiJson: Json = Json { ignoreUnknownKeys = true }
+/**
+ * JSON settings for both APIs. Models declare only the fields the app reads. Code outside this
+ * module reads and writes the API's types with it as text, as the timer state's store and stream
+ * do.
+ */
+val ApiJson: StringFormat get() = Wire
+
+/** [ApiJson] as JSON, for the trees this module builds and reads. */
+internal val Wire: Json = Json { ignoreUnknownKeys = true }

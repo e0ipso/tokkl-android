@@ -411,7 +411,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
             SignInViewModel(
                 signIn = ServerSignIn(
                     session = { _, _, _ -> },
-                    httpClient = appHttp.instance,
+                    connector = appHttp,
                     configured = appConfiguredServer,
                     scope = scope,
                     io = Dispatchers.IO,

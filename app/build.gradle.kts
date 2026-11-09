@@ -198,6 +198,8 @@ dependencies {
     // The test runner, the compose rules with their accessibility checks and the device rules.
     androidTestImplementation(project(":core:testing"))
     androidTestImplementation(testFixtures(project(":core:session")))
+    // The test server's own requests, sent over the app's HTTP client with JSON bodies.
+    androidTestImplementation(testFixtures(project(":core:api")))
     // The instrumented tests read the shared parts' strings and classes too.
     androidTestImplementation(project(":core:catalog"))
     androidTestImplementation(project(":core:entryfields"))

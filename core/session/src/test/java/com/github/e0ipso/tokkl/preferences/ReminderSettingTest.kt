@@ -5,15 +5,13 @@ import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.api.TokklApi
+import com.github.e0ipso.tokkl.api.mePreferences
 import com.github.e0ipso.tokkl.session.CurrentAccount
-import com.github.e0ipso.tokkl.session.MePreferences
 import com.github.e0ipso.tokkl.storage.InMemoryValueStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonObject
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -58,7 +56,7 @@ class ReminderSettingTest {
         scope,
     )
     private fun prefs(body: String = """{"long_timer_reminder_enabled":true,"long_timer_reminder_hours":12}""") =
-        MePreferences(Json.parseToJsonElement(body).jsonObject)
+        mePreferences(body)
     private fun answer(code: Int = 200) = server.enqueue(MockResponse.Builder().code(code).body("{}").build())
 
     @Test fun readsBothExactKeysAndPostsOnlyThem() = runTest {

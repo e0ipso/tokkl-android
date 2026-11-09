@@ -9,11 +9,7 @@ import com.github.e0ipso.tokkl.api.fold
 import com.github.e0ipso.tokkl.cache.toTimeEntry
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.time.AccountTime
-import kotlinx.serialization.json.JsonNull
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 import java.time.LocalDate
-import java.time.format.DateTimeParseException
 
 /** The end of the history: the days before the ones shown. */
 @Immutable
@@ -109,12 +105,13 @@ class OlderPages(private val client: ApiClientProvider) {
 
 /** `GET /api/app/bounds`, Tokkl's first and last day with an entry in the account's timezone. */
 private suspend fun readBounds(api: TokklApi): BoundsAnswer = when (val answer = api.entries.bounds()) {
-    is ApiResult.Success -> BoundsAnswer.Read(boundsOf(answer.value))
+    is ApiResult.Success -> BoundsAnswer.Read(HistoryBounds.Known(answer.value.firstDate))
 
     is ApiResult.Failure -> when (val status = statusOf(answer.error)) {
         OlderDays.Unreachable, OlderDays.AuthFailed, OlderDays.TrustRefused -> BoundsAnswer.Failed(status)
 
-        // A 404 from a server without it, or any other answer: page without knowing.
+        // A 404 from a server without it, an answer without a first day, or any other answer:
+        // page without knowing.
         else -> BoundsAnswer.Read(HistoryBounds.Unknown)
     }
 }
@@ -138,21 +135,6 @@ private fun statusOf(error: ApiError): OlderDays = when (error) {
     is ApiError.RateLimited -> OlderDays.Failed(error.status)
 
     is ApiError.HostNotAllowed, is ApiError.InvalidResponse -> OlderDays.Failed(null)
-}
-
-/**
- * The bounds' `first_date`. A body without a readable one says nothing about where the
- * history starts, while a null says the account has no entries.
- */
-private fun boundsOf(body: JsonObject): HistoryBounds {
-    val first = body["first_date"] as? JsonPrimitive ?: return HistoryBounds.Unknown
-    if (first is JsonNull) return HistoryBounds.Known(null)
-    if (!first.isString) return HistoryBounds.Unknown
-    return try {
-        HistoryBounds.Known(LocalDate.parse(first.content))
-    } catch (e: DateTimeParseException) {
-        HistoryBounds.Unknown
-    }
 }
 
 /** Bad gateway, service unavailable and gateway timeout. */

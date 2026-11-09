@@ -5,7 +5,6 @@ import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.api.SuccessListener
-import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.api.TrustListener
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
@@ -61,16 +60,7 @@ class Session(
 
         private val client = lazy {
             if (server == null || token == null) return@lazy null
-            TokklApi(
-                TogglApiClient(
-                    server,
-                    ApiCredentials.ApiToken(token),
-                    http.instance,
-                    trustListener = trustListener,
-                    successListener = successListener,
-                    io = io,
-                ),
-            )
+            http.api(server, ApiCredentials.ApiToken(token), io, trustListener, successListener)
         }
 
         /**

@@ -204,7 +204,7 @@ class ServerReportsRepository(private val client: ApiClientProvider) : ReportsRe
      * server sent none, after the last page. A row that does not come after [firstRow] fails.
      */
     private fun nextRow(page: WithHeaders<*>, firstRow: Int): ApiResult<Int?> {
-        val next = page.headers[NEXT_ROW_HEADER]?.trim()?.toIntOrNull() ?: return ApiResult.Success(null)
+        val next = page.header(NEXT_ROW_HEADER)?.trim()?.toIntOrNull() ?: return ApiResult.Success(null)
         if (next <= firstRow) {
             return ApiResult.Failure(
                 ApiError.InvalidResponse(IllegalArgumentException("the next page does not move forward")),

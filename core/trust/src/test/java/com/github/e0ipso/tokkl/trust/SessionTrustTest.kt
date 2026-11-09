@@ -9,6 +9,8 @@ import com.github.e0ipso.tokkl.api.ServerTrust
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.api.UntrustedCertificateException
+import com.github.e0ipso.tokkl.api.api
+import com.github.e0ipso.tokkl.api.instance
 import com.github.e0ipso.tokkl.session.AccountRefreshRequests
 import com.github.e0ipso.tokkl.session.CacheRefresh
 import kotlinx.coroutines.CoroutineScope

@@ -21,6 +21,8 @@ dependencies {
     implementation(libs.androidx.glance.appwidget)
     implementation(libs.androidx.work.runtime)
     implementation(libs.koin.androidx.workmanager)
+    // The widget keeps the Pomodoro fields it starts with as JSON.
+    implementation(libs.kotlinx.serialization.json)
 
     testImplementation(testFixtures(project(":core:platform")))
     testImplementation(testFixtures(project(":core:timerstate")))

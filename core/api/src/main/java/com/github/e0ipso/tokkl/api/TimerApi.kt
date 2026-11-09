@@ -31,20 +31,20 @@ private class RevisionBody(val revision: Long)
 /**
  * Tokkl's server-owned timer under `/api/app`, from Tokkl 1.10.0; older servers answer 404. Each
  * action goes out once and answers with the timer state, also when the server refuses it with a
- * 409, as [TogglApiClient.sendRefusable] describes. The actions that act on what a surface showed
+ * 409, as [ApiTransport.sendRefusable] describes. The actions that act on what a surface showed
  * take that state's revision.
  */
-class TimerApi internal constructor(private val client: TogglApiClient) {
+class TimerApi internal constructor(private val client: ApiTransport) {
 
     /** `GET /api/app/timer`. */
-    suspend fun state(): ApiResult<TimerState> = client.get(client.server.app("timer"), TimerState.serializer())
+    suspend fun state(): ApiResult<TimerState> = client.get(client.server.appUrl("timer"), TimerState.serializer())
 
     /**
      * `GET /api/app/timer/events`, the Server-Sent Events stream, read by [read] until it ends, as
-     * [TogglApiClient.stream] describes. [cancellation] ends it from outside.
+     * [ApiTransport.stream] describes. [cancellation] ends it from outside.
      */
     suspend fun <T> events(cancellation: ApiCallCancellation, read: (InputStream) -> T): ApiResult<T> =
-        client.stream(client.server.app("timer", "events"), cancellation, read)
+        client.stream(client.server.appUrl("timer", "events"), cancellation, read)
 
     /** `POST /api/app/timer/pause`, which reads no field, with an empty object. */
     suspend fun pause(): ApiResult<Refusable<TimerState>> = action(EMPTY_BODY, "timer", "pause")
@@ -70,7 +70,7 @@ class TimerApi internal constructor(private val client: TogglApiClient) {
         action(revisioned(revision), "pomodoro", "end")
 
     private suspend fun action(body: JsonElement, vararg path: String): ApiResult<Refusable<TimerState>> =
-        client.sendRefusable(HttpMethod.POST, client.server.app(*path), body, TimerState.serializer())
+        client.sendRefusable(HttpMethod.POST, client.server.appUrl(*path), body, TimerState.serializer())
 
     private fun revisioned(revision: Long): JsonElement = json(RevisionBody.serializer(), RevisionBody(revision))
 }

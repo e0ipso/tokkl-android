@@ -15,6 +15,7 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerUrl
+import com.github.e0ipso.tokkl.api.api
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.core.trust.R
 import com.github.e0ipso.tokkl.session.ServerTrustStore

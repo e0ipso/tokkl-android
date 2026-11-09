@@ -13,6 +13,8 @@ dependencies {
     implementation(project(":core:catalog"))
     implementation(project(":core:navigation"))
     implementation(libs.androidx.activity.compose)
+    // The route's saved state keeps the open form as JSON.
+    implementation(libs.kotlinx.serialization.json)
 
     testImplementation(libs.mockwebserver3)
     testImplementation(testFixtures(project(":core:api")))

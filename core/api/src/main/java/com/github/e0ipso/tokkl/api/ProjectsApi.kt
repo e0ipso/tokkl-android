@@ -34,7 +34,7 @@ data class TaskBody(val name: String, val active: Boolean)
 private class NewTaskBody(val name: String)
 
 /** A workspace's projects and their tasks. */
-class ProjectsApi internal constructor(private val client: TogglApiClient) {
+class ProjectsApi internal constructor(private val client: ApiTransport) {
 
     /** `GET /api/v9/workspaces/{workspaceId}/projects`, archived projects included. */
     suspend fun list(workspaceId: WorkspaceId): ApiResult<List<WorkspaceProject>> =
@@ -108,7 +108,7 @@ class ProjectsApi internal constructor(private val client: TogglApiClient) {
         client.sendNoContent(HttpMethod.DELETE, taskUrl(workspaceId, projectId, id.toString()))
 
     private fun projects(workspaceId: WorkspaceId, vararg path: String) =
-        client.server.api("workspaces", workspaceId.toString(), "projects", *path)
+        client.server.apiUrl("workspaces", workspaceId.toString(), "projects", *path)
 
     private fun taskUrl(workspaceId: WorkspaceId, projectId: ProjectId, vararg path: String) =
         projects(workspaceId, projectId.toString(), "tasks", *path)

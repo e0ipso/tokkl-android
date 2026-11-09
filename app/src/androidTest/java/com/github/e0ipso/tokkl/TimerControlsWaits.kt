@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl
 
 import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.app
 import com.github.e0ipso.tokkl.components.capabilities
 import com.github.e0ipso.tokkl.components.followTimerSync
 import com.github.e0ipso.tokkl.components.heldTimerState

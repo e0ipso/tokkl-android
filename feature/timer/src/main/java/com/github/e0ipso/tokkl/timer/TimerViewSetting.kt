@@ -8,13 +8,12 @@ import com.github.e0ipso.tokkl.preferences.StoredPreference
 import com.github.e0ipso.tokkl.preferences.SyncedPreference
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.CurrentAccount
-import com.github.e0ipso.tokkl.session.MePreferences
+import com.github.e0ipso.tokkl.api.MePreferences
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import com.github.e0ipso.tokkl.storage.ClearableStore
 import com.github.e0ipso.tokkl.storage.StartupLoad
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.serialization.json.JsonPrimitive
 
 /** The Timer page's view as the phone keeps it, and whether the server still has to get it. */
 typealias StoredTimerView = StoredPreference<TimerView>
@@ -105,6 +104,6 @@ class TimerViewSetting(
  * nothing, as TimerPage.tsx reads it.
  */
 internal fun MePreferences.timerView(): TimerView {
-    val value = (body[TimerViewSetting.PREFERENCE] as? JsonPrimitive)?.takeIf { it.isString }?.content
+    val value = string(TimerViewSetting.PREFERENCE)
     return TimerView.entries.firstOrNull { it.preferenceValue == value } ?: TimerView.LIST
 }

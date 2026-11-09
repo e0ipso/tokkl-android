@@ -9,6 +9,8 @@ import com.github.e0ipso.tokkl.TimerActionToasts
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.TimerState
+import com.github.e0ipso.tokkl.api.api
+import com.github.e0ipso.tokkl.api.app
 import com.github.e0ipso.tokkl.appConfiguredServer
 import com.github.e0ipso.tokkl.appHttp
 import com.github.e0ipso.tokkl.components.accountSettings
@@ -259,7 +261,7 @@ class PomodoroWidgetServerTest {
                 runBlocking {
                     ServerSignIn(
                         SessionWriter(app::storeSignIn),
-                        appHttp.instance,
+                        appHttp,
                         appConfiguredServer,
                         CoroutineScope(Dispatchers.IO),
                         Dispatchers.IO,

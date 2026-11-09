@@ -69,7 +69,7 @@ data class ServerTimeEntry(
 
 /** `GET /api/v9/me/preferences`. Tokkl leaves `favorites` out until the user saves one. */
 @Serializable
-class ServerPreferences(val favorites: List<ServerFavorite>? = null)
+internal class ServerPreferences(val favorites: List<ServerFavorite>? = null)
 
 /** One of Tokkl's favorites: what a tap starts. Tags are names, as in a time entry. */
 @Serializable

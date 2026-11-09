@@ -14,7 +14,7 @@ data class ClientBody(val name: String, val notes: String?)
 private class RestoreBody(@SerialName("restore_all_projects") val restoreAllProjects: Boolean)
 
 /** A workspace's clients. */
-class ClientsApi internal constructor(private val client: TogglApiClient) {
+class ClientsApi internal constructor(private val client: ApiTransport) {
 
     /** `GET /api/v9/workspaces/{workspaceId}/clients?status=both`, archived clients included. */
     suspend fun list(workspaceId: WorkspaceId): ApiResult<List<WorkspaceClient>> = client.get(
@@ -59,5 +59,5 @@ class ClientsApi internal constructor(private val client: TogglApiClient) {
     )
 
     private fun clients(workspaceId: WorkspaceId, vararg path: String) =
-        client.server.api("workspaces", workspaceId.toString(), "clients", *path)
+        client.server.apiUrl("workspaces", workspaceId.toString(), "clients", *path)
 }

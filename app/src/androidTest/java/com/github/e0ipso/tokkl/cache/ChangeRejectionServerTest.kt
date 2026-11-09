@@ -11,6 +11,7 @@ import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.api
 import com.github.e0ipso.tokkl.appApiClient
 import com.github.e0ipso.tokkl.appConfiguredServer
 import com.github.e0ipso.tokkl.appHttp
@@ -226,7 +227,7 @@ class ChangeRejectionServerTest {
         assertEquals(2, count())
         val signIn = ServerSignIn(
             session = { _, accepted, _ -> token = accepted },
-            httpClient = appHttp.instance,
+            connector = appHttp,
             configured = appConfiguredServer,
             scope = scope,
             io = Dispatchers.IO,

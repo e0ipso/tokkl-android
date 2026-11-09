@@ -8,11 +8,12 @@ import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.api.TokklApi
+import com.github.e0ipso.tokkl.api.mePreferences
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.session.AccountRefresh
 import com.github.e0ipso.tokkl.session.AccountSettingsSource
-import com.github.e0ipso.tokkl.session.MePreferences
+import com.github.e0ipso.tokkl.session.durationFormat
 import com.github.e0ipso.tokkl.storage.InMemoryValueStore
 import com.github.e0ipso.tokkl.time.DurationFormat
 import kotlinx.coroutines.CoroutineScope
@@ -21,7 +22,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonObject
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -339,7 +339,7 @@ class ServerReaderTest {
         )
     }
 
-    private fun preferences(body: String) = MePreferences(Json.parseToJsonElement(body).jsonObject)
+    private fun preferences(body: String) = mePreferences(body)
 
     private fun json(body: String) = MockResponse.Builder()
         .code(200)

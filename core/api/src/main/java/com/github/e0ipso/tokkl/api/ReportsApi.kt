@@ -116,15 +116,15 @@ class WeeklyReportRow(
 )
 
 /** The Reports API v3 and Tokkl's own report routes. Dates are the account's inclusive dates. */
-class ReportsApi internal constructor(private val client: TogglApiClient) {
+class ReportsApi internal constructor(private val client: ApiTransport) {
 
     /** `POST /api/app/report`, the summary as Tokkl's web app asks for it. */
     suspend fun appSummary(body: AppSummaryBody): ApiResult<JsonObject> =
-        client.send(HttpMethod.POST, client.server.app("report"), body.json(), JsonObject.serializer())
+        client.send(HttpMethod.POST, client.server.appUrl("report"), body.json(), JsonObject.serializer())
 
     /**
      * `POST /api/app/report/{report}.csv`, where [report] is `summary` or `detailed`, streamed
-     * into [output] as [TogglApiClient.downloadCsv] describes: at most [maxBytes], cancelled
+     * into [output] as [ApiTransport.downloadCsv] describes: at most [maxBytes], cancelled
      * through [cancellation]. Answers with the number of bytes written.
      */
     suspend fun exportCsv(
@@ -134,7 +134,7 @@ class ReportsApi internal constructor(private val client: TogglApiClient) {
         maxBytes: Long,
         cancellation: ApiCallCancellation,
     ): ApiResult<Long> =
-        client.downloadCsv(client.server.app("report", "$report.csv"), body.json(), output, maxBytes, cancellation)
+        client.downloadCsv(client.server.appUrl("report", "$report.csv"), body.json(), output, maxBytes, cancellation)
 
     /**
      * `POST /reports/api/v3/workspace/{workspaceId}/search/time_entries`, one page of the
@@ -151,7 +151,7 @@ class ReportsApi internal constructor(private val client: TogglApiClient) {
         client.send(HttpMethod.POST, timeEntries(workspaceId, "weekly"), body.json(), WEEKLY_ROWS)
 
     private fun timeEntries(workspaceId: WorkspaceId, report: String) =
-        client.server.reports("workspace", workspaceId.toString(), report, "time_entries")
+        client.server.reportsUrl("workspace", workspaceId.toString(), report, "time_entries")
 
     private companion object {
         val SEARCH_ROWS = ListSerializer(ReportSearchRow.serializer())

@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.widget
 
-import com.github.e0ipso.tokkl.api.ApiJson
 import com.github.e0ipso.tokkl.entryfields.entryLabels
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.PomodoroSession
@@ -10,6 +9,7 @@ import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
@@ -133,7 +133,7 @@ private fun PomodoroWidgetEntry.keyContent() = buildJsonObject {
         fields.tags,
         fields.billable,
     )
-    put("fields", ApiJson.encodeToJsonElement(RememberedPomodoroFields.serializer(), saved))
+    put("fields", Json.encodeToJsonElement(RememberedPomodoroFields.serializer(), saved))
     put("project", project?.let(::JsonPrimitive) ?: JsonNull)
     put("projectColor", projectColor?.let(::JsonPrimitive) ?: JsonNull)
     put("task", task?.let(::JsonPrimitive) ?: JsonNull)

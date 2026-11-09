@@ -10,17 +10,17 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
  */
 class ServerUrl private constructor(private val base: HttpUrl) {
 
-    /** A Toggl API v9 endpoint, such as `api("me")` for `GET /api/v9/me`. */
-    fun api(vararg segments: String): HttpUrl = endpoint(API_V9, segments)
+    /** A Toggl API v9 endpoint, such as `apiUrl("me")` for `GET /api/v9/me`. */
+    internal fun apiUrl(vararg segments: String): HttpUrl = endpoint(API_V9, segments)
 
-    /** A Reports API v3 endpoint, such as `reports("workspace", "1", "search", "time_entries")`. */
-    fun reports(vararg segments: String): HttpUrl = endpoint(REPORTS_V3, segments)
+    /** A Reports API v3 endpoint, such as `reportsUrl("workspace", "1", "search", "time_entries")`. */
+    internal fun reportsUrl(vararg segments: String): HttpUrl = endpoint(REPORTS_V3, segments)
 
     /**
-     * A Tokkl-only endpoint outside the Toggl API, such as `app("trash")` for
+     * A Tokkl-only endpoint outside the Toggl API, such as `appUrl("trash")` for
      * `GET /api/app/trash`. Toggl Track and older Tokkl servers answer 404.
      */
-    fun app(vararg segments: String): HttpUrl = endpoint(APP, segments)
+    internal fun appUrl(vararg segments: String): HttpUrl = endpoint(APP, segments)
 
     /**
      * Each segment is percent-encoded on its own, so a `/` or `?` inside one
@@ -39,7 +39,7 @@ class ServerUrl private constructor(private val base: HttpUrl) {
         get() = !base.isHttps
 
     /** Whether [url] has this server's scheme, host and port. */
-    fun isSameOrigin(url: HttpUrl): Boolean =
+    internal fun isSameOrigin(url: HttpUrl): Boolean =
         url.scheme == base.scheme && url.host == base.host && url.port == base.port
 
     override fun toString(): String = base.toString()

@@ -23,6 +23,7 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.ServerUrl
+import com.github.e0ipso.tokkl.api.api
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.cache.BackgroundSend
 import com.github.e0ipso.tokkl.cache.CacheDatabase

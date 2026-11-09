@@ -30,6 +30,8 @@ dependencies {
     ksp(libs.androidx.room.compiler)
     // The worker-thread contract of the current-entry reads.
     implementation(libs.androidx.annotation)
+    // Room stores tag names and ids as JSON text.
+    implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.work.runtime)
     implementation(platform(libs.koin.bom))
     implementation(libs.koin.android)

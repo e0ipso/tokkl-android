@@ -18,6 +18,9 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TimerState
+import com.github.e0ipso.tokkl.api.api
+import com.github.e0ipso.tokkl.api.app
+import com.github.e0ipso.tokkl.api.mePreferences
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.cache
@@ -294,7 +297,7 @@ class ReminderServerTest {
         change(ReminderPreferences(false, 168))
         assertEquals(
             ReminderPreferences(false, 168),
-            com.github.e0ipso.tokkl.session.MePreferences(preferences()).reminderPreferences(),
+            mePreferences(preferences().toString()).reminderPreferences(),
         )
         signIn(NO_ROUTE)
         change(ReminderPreferences(true, 1))
@@ -304,7 +307,7 @@ class ReminderServerTest {
         // Join the retry path without changing the values again or polling a file.
         runBlocking {
             app.reminderSettings.refreshed(
-                com.github.e0ipso.tokkl.session.MePreferences(preferences()),
+                mePreferences(preferences().toString()),
                 true,
             ).join()
         }
@@ -312,7 +315,7 @@ class ReminderServerTest {
         val result = preferences()
         assertEquals(
             ReminderPreferences(true, 1),
-            com.github.e0ipso.tokkl.session.MePreferences(result).reminderPreferences(),
+            mePreferences(result.toString()).reminderPreferences(),
         )
         assertNotNull("Pomodoro preferences remain", result["pomodoro_focus_interval_in_minutes"])
     }

@@ -3,6 +3,8 @@ package com.github.e0ipso.tokkl.reports
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.HttpMethod
+import com.github.e0ipso.tokkl.api.api
+import com.github.e0ipso.tokkl.api.app
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import kotlinx.coroutines.runBlocking

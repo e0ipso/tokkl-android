@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl
 
 import android.util.Log
+import com.github.e0ipso.tokkl.api.instance
 import com.github.e0ipso.tokkl.timer.TapTrace
 import org.koin.core.context.GlobalContext
 import java.util.concurrent.TimeUnit

@@ -21,7 +21,7 @@ class SingleHttpClientTest {
             .filterKeys { !isSharedHttpClient(it) }
             .flatMap { (name, references) -> references.filter(::isForbidden).map { "$name uses $it" } }
 
-        assertTrue("Use SharedHttpClient.instance instead:\n" + offenders.joinToString("\n"), offenders.isEmpty())
+        assertTrue("Use SharedHttpClient instead:\n" + offenders.joinToString("\n"), offenders.isEmpty())
     }
 
     private fun isSharedHttpClient(className: String): Boolean =

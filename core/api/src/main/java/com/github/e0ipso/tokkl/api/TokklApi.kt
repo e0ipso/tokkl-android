@@ -11,11 +11,11 @@ import kotlinx.serialization.json.JsonObject
  * whether OkHttp may send it twice, and the type its answer reads as; callers pass typed values,
  * ids among them, and never build a URL or a JSON body.
  *
- * [client] holds the server, the credentials and the shared HTTP client: the signed-in account's,
- * or the one sign-in tries. It stays inside: callers send only the requests the resources here
- * name.
+ * Its transport holds the server, the credentials and the shared HTTP client: the signed-in
+ * account's, or the one sign-in tries. [SharedHttpClient.api] makes one, and the transport stays
+ * inside: callers send only the requests the resources here name.
  */
-class TokklApi(private val client: TogglApiClient) {
+class TokklApi internal constructor(client: ApiTransport) {
     /** The signed-in user, their preferences and their workspaces. */
     val account = AccountApi(client)
 
@@ -41,9 +41,9 @@ class TokklApi(private val client: TogglApiClient) {
     val timer = TimerApi(client)
 }
 
-/** [body] as the JSON tree [TogglApiClient] sends, encoded with [ApiJson]. */
+/** [body] as the JSON tree [ApiTransport] sends, encoded with [Wire]. */
 internal fun <T> json(serializer: SerializationStrategy<T>, body: T): JsonElement =
-    ApiJson.encodeToJsonElement(serializer, body)
+    Wire.encodeToJsonElement(serializer, body)
 
 /** The body of a POST that Tokkl reads nothing from. OkHttp sends no POST without one. */
 internal val EMPTY_BODY = JsonObject(emptyMap())
