@@ -95,6 +95,7 @@ class PomodoroDefaultsSetting(
 
             override fun body(value: PomodoroDefaults) = value.preferencesBody()
         },
+        sharing = { capabilities.keepsPreferences() },
     )
 
     /** The values a new session starts with, always within their ranges. */
@@ -112,7 +113,7 @@ class PomodoroDefaultsSetting(
      * them to the server in the background. Call it on the main thread.
      */
     fun change(defaults: PomodoroDefaults): Job =
-        preference.change(defaults.clamped(), capabilities::keepsPreferences, capabilities::keepsPreferences)
+        preference.change(defaults.clamped())
 
     /**
      * Takes the refresh's `GET /api/v9/me/preferences`, null when it failed, from a server that

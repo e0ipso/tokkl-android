@@ -25,8 +25,8 @@ class ReminderStore(context: Context, private val io: CoroutineContext) : Cleara
     }
 
     override suspend fun save(value: StoredReminderPreferences) = file.commit {
-        putBoolean("enabled", value.preferences.enabled)
-        putInt("hours", value.preferences.clamped().hours)
+        putBoolean("enabled", value.value.enabled)
+        putInt("hours", value.value.clamped().hours)
         putBoolean("unsent", value.unsent)
         putBoolean("shared", value.shared)
     }

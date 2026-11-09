@@ -50,10 +50,11 @@ class SyncedPreferenceTest {
                 ops += "clear"
             }
         }
-        val preference = SyncedPreference(store, { null }, account, scope, default = 0, codec = Codec)
+        val preference =
+            SyncedPreference(store, { null }, account, scope, default = 0, codec = Codec, sharing = { false })
         scheduler.runCurrent()
 
-        preference.change(5, unsent = { false }, sendIf = { false })
+        preference.change(5)
         scheduler.runCurrent()
         scope.launch { signOut(preference) }
         scheduler.runCurrent()
@@ -79,12 +80,20 @@ class SyncedPreferenceTest {
                 ops += "clear"
             }
         }
-        val preference = SyncedPreference(store, { null }, account, scope, default = 0, codec = Codec)
         val delayed = CompletableDeferred<Boolean>()
+        // The change waits for its unsent flag, as for the capabilities, while sign-out runs.
+        val preference = SyncedPreference(
+            store,
+            { null },
+            account,
+            scope,
+            default = 0,
+            codec = Codec,
+            sharing = { delayed.await() },
+        )
         scheduler.runCurrent()
 
-        // The change waits for its unsent flag, as for the capabilities, while sign-out runs.
-        preference.change(5, unsent = { delayed.await() }, sendIf = { false })
+        preference.change(5)
         scope.launch { signOut(preference) }
         scheduler.runCurrent()
         delayed.complete(false)
@@ -130,10 +139,11 @@ class SyncedPreferenceTest {
                 CoroutineScope(Dispatchers.IO),
                 default = 0,
                 codec = Sent,
+                sharing = { true },
             )
             runBlocking { preference.ready() }
 
-            val change = preference.change(5, unsent = { true }, sendIf = { true })
+            val change = preference.change(5)
             assertNotNull(server.takeRequest(10, TimeUnit.SECONDS))
             runBlocking { signOut(preference) }
             release.countDown()

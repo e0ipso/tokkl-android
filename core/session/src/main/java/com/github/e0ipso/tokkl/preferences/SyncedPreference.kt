@@ -19,8 +19,11 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.IOException
 
-/** A preference's value as the phone keeps it, and whether the server still has to get it. */
-data class StoredPreference<out T>(val value: T, val unsent: Boolean)
+/**
+ * A preference's value as the phone keeps it, whether the server still has to get it, and whether
+ * a refresh found the server keeping it, for a preference whose [PreferenceSharing] looks.
+ */
+data class StoredPreference<out T>(val value: T, val unsent: Boolean, val shared: Boolean = false)
 
 /** How a [SyncedPreference] reads its value from the server's preferences and posts it back. */
 interface PreferenceCodec<T : Any> {
@@ -35,17 +38,34 @@ interface PreferenceCodec<T : Any> {
     fun body(value: T): PreferencesChange
 }
 
+/** How a [SyncedPreference] learns whether the server keeps it, and so whether a change goes there. */
+fun interface PreferenceSharing {
+
+    /**
+     * Whether a change made now goes to the server, and waits as unsent until it has. [shared] is
+     * what the last refresh [found]. It may wait, as for the capabilities to load.
+     */
+    suspend fun sendsChange(shared: Boolean): Boolean
+
+    /**
+     * Whether a refresh's [preferences], null when the read failed, from a server whose
+     * capabilities say [keepsPreferences], show the server keeping this preference, given the
+     * [shared] the phone found before. Null when the capabilities alone tell, and nothing is kept.
+     */
+    fun found(preferences: MePreferences?, keepsPreferences: Boolean, shared: Boolean): Boolean? = null
+}
+
 /**
  * One account preference that Tokkl keeps in `/api/v9/me/preferences` and the phone keeps in
  * [store], so a cold start has it before the refresh answers, and offline.
  *
  * A [change] shows at once and goes to `POST /api/v9/me/preferences` with [body], without waiting
- * for the answer. When that fails, as offline, the value stays on the phone, marked unsent, and
+ * for the answer, when [sharing] says the server keeps it. When that fails, as offline, the value stays on the phone, marked unsent, and
  * goes to the server with the next refresh, so the change that reaches the server last wins, as
  * for time entries (docs/PRD.md O3). Each refresh otherwise takes the server's value through
  * [fromServer], except the one refresh right after a change, whose preferences may predate it. A
  * server without Tokkl's preferences, such as Toggl Track, gets nothing: the value stays on the
- * phone.
+ * phone. A change made before a refresh found the server keeping it goes there with that refresh.
  *
  * @param store keeps the value on the phone. It loads from it as this is made, off the main thread.
  * @param client the signed-in account's API client, or null when signed out.
@@ -54,6 +74,7 @@ interface PreferenceCodec<T : Any> {
  * @param scope outlives every screen, so leaving the app does not cancel a write.
  * @param default the value before one is stored, and after [forget].
  * @param codec how the value reads from the server's preferences and posts back.
+ * @param sharing whether the server keeps the preference, from the capabilities or from its keys.
  */
 class SyncedPreference<T : Any>(
     private val store: ClearableStore<StoredPreference<T>>,
@@ -62,6 +83,7 @@ class SyncedPreference<T : Any>(
     private val scope: CoroutineScope,
     private val default: T,
     private val codec: PreferenceCodec<T>,
+    private val sharing: PreferenceSharing,
 ) : StartupLoad {
 
     /** The server has not received the value on show. Guarded by [memory]. */
@@ -70,9 +92,13 @@ class SyncedPreference<T : Any>(
     /** A change came after the last refresh, whose preferences may predate it. Guarded by [memory]. */
     private var changedSinceRefresh = false
 
+    /** What the last refresh [PreferenceSharing.found]. Guarded by [memory]. */
+    private var shared = false
+
     private val held = LoadedState(scope, default) {
         store.load()?.let { stored ->
             unsent = stored.unsent
+            shared = stored.shared
             codec.loaded(stored.value)
         } ?: default
     }
@@ -97,43 +123,47 @@ class SyncedPreference<T : Any>(
     private val storing = Mutex()
 
     /**
-     * Shows [value] at once, marked unsent when [unsent] says so, keeps it on the phone and then,
-     * in the background, sends it to the server when [sendIf] says so. Call it on the main thread:
-     * once the value has loaded, as it has for every screen, it shows before this returns.
+     * Shows [value] at once, keeps it on the phone and then, in the background, sends it to the
+     * server when [sharing] says so, marked unsent until it has. Call it on the main thread: once
+     * the value has loaded, as it has for every screen, it shows before this returns.
      */
-    fun change(value: T, unsent: suspend () -> Boolean, sendIf: suspend () -> Boolean): Job {
+    fun change(value: T): Job {
         val context = account.context.value
         return scope.launch(start = CoroutineStart.UNDISPATCHED) {
             ready()
-            val markUnsent = unsent()
+            val sends = sharing.sendsChange(memory.withLock { shared })
             val current = memory.withLock {
                 // A sign-out came first: the change belonged to the account before.
                 if (!context.isCurrent) return@withLock false
                 held.value = value
-                this@SyncedPreference.unsent = markUnsent
+                unsent = sends
                 changedSinceRefresh = true
                 true
             }
             if (!current) return@launch
             persist(context)
-            if (sendIf()) send(context)
+            if (sends) send(context)
         }
     }
 
     /**
-     * Takes the refresh's `GET /api/v9/me/preferences`, null when it failed, from a server that
-     * keeps Tokkl's preferences when [keepsPreferences]. Sends an unsent value instead of reading
-     * the server's.
+     * Takes the refresh's `GET /api/v9/me/preferences`, null when it failed, from a server whose
+     * capabilities say [keepsPreferences]. Sends an unsent value instead of reading the server's,
+     * in the returned job.
      */
-    suspend fun refreshed(preferences: MePreferences?, keepsPreferences: Boolean) {
+    suspend fun refreshed(preferences: MePreferences?, keepsPreferences: Boolean): Job {
         val context = account.context.value
         ready()
         val sendNow = memory.withLock {
             val changed = changedSinceRefresh
             changedSinceRefresh = false
-            val sendNow = when {
+            val found = sharing.found(preferences, keepsPreferences, shared)
+            // A change made before the server was found keeping the preference goes to it now.
+            if (found == true && !shared && changed) unsent = true
+            shared = found ?: false
+            when {
                 // The value stays on the phone.
-                !keepsPreferences -> {
+                !(found ?: keepsPreferences) -> {
                     unsent = false
                     false
                 }
@@ -147,10 +177,9 @@ class SyncedPreference<T : Any>(
                     false
                 }
             }
-            sendNow
         }
         persist(context)
-        if (sendNow) context.launch { send(context) }
+        return context.launch { if (sendNow) send(context) }
     }
 
     /**
@@ -165,6 +194,7 @@ class SyncedPreference<T : Any>(
                 held.value = default
                 unsent = false
                 changedSinceRefresh = false
+                shared = false
             }
         }
     }
@@ -193,7 +223,7 @@ class SyncedPreference<T : Any>(
 
     /** Writes the value on show, while [context] is the account's. */
     private suspend fun persist(context: AccountContext) = storing.withLock {
-        val stored = memory.withLock { StoredPreference(held.value, unsent).takeIf { context.isCurrent } }
+        val stored = memory.withLock { StoredPreference(held.value, unsent, shared).takeIf { context.isCurrent } }
             ?: return@withLock
         try {
             store.save(stored)

@@ -62,6 +62,7 @@ class TimerViewSetting(
 
             override fun body(value: TimerView) = TimerViewChange(value.preferenceValue)
         },
+        sharing = { capabilities.keepsPreferences() },
     )
 
     /** The view the Timer page shows. */
@@ -73,7 +74,7 @@ class TimerViewSetting(
 
     /** Shows [view] at once, keeps it on the phone and sends it to the server in the background. */
     fun choose(view: TimerView) {
-        preference.change(view, unsent = { true }, sendIf = capabilities::keepsPreferences)
+        preference.change(view)
     }
 
     /**
