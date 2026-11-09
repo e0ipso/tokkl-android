@@ -27,7 +27,7 @@ kk_confidence: high
 
 Day totals use the Timer page’s `countedTimerEntries`: an entry belongs to its account-local start day and pause segments count once. Project groups include No project, sorted by stopped seconds; over five groups become four plus Other. Account midnight is reread on app-open, cache and RunningCheck events, including an unchanged current-entry response. There is no midnight job.
 
-Start, ordinary Stop and template starts use `ChangeQueue` offline. Pause, Resume and Stop while paused go to the server and need a connection; controls carry the account and revision they were drawn for. Pause is hidden during a session. Signed out opens sign-in.
+Start, ordinary Stop and template starts use `ChangeQueue` offline. Pause, Resume and Stop while paused go to the server and need a connection; controls carry the account and revision they were drawn for. `WidgetActions` stops a running entry on the phone before the Glance callback returns, and hands the server actions to the same expedited `TimerActionWorker` as the notification's (`sendTimerAction`), which checks the target when it runs and sends once, so the process lives until the server answers. Pause is hidden during a session. Signed out opens sign-in.
 
 `WidgetSync` follows state changes and stores separate redraw keys for each provider. `TimerWidgetHook` (order 60) builds the Timer widget's `WidgetSync` when it runs at process start, with its `WidgetStore` and a `GlanceRedraw`, the `WidgetRedraw` that asks Glance to draw every placed widget again; Koin holds no `WidgetSync` of its own. Native Chronometers tick elapsed time and applicable totals in the launcher; `updatePeriodMillis` is zero, with no periodic widget work.
 
