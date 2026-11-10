@@ -28,6 +28,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Test
 import java.io.IOException
 import java.time.Clock
@@ -91,9 +92,10 @@ class TimerCommandsTest {
 
         assertEquals(listOf("start 7 Write"), changes.calls)
         assertEquals(EntryFields(), timer.taps.value.draft)
+        val pending = timer.taps.value.pending as PendingTap.Starting
         assertEquals(
-            PendingTap.Starting(TAP, EntryFields(description = "Write"), WorkspaceId(7)),
-            timer.taps.value.pending,
+            Triple(TAP, EntryFields(description = "Write"), WorkspaceId(7)),
+            Triple(pending.at, pending.fields, pending.workspaceId),
         )
     }
 
@@ -152,7 +154,7 @@ class TimerCommandsTest {
         timer.stop()
 
         assertEquals(listOf("stop 42"), changes.calls)
-        assertEquals(PendingTap.Stopping(TAP), timer.taps.value.pending)
+        assertEquals(TAP, (timer.taps.value.pending as PendingTap.Stopping).start)
     }
 
     @Test
@@ -177,6 +179,21 @@ class TimerCommandsTest {
 
         assertEquals(acting, taps.reduce(TapEvent.TapEnded(stopping)).pending)
         assertNull(taps.reduce(TapEvent.TapEnded(acting)).pending)
+    }
+
+    /** Two Start taps at the same millisecond with the same fields are still two taps. */
+    @Test
+    fun anEndedStartLeavesAnIdenticalNewerStartPending() {
+        fun tap() = PendingTap.Starting(TAP, EntryFields(description = "Write"), WorkspaceId(7))
+        val older = tap()
+        val newer = tap()
+
+        val taps = TimerTaps().reduce(TapEvent.StartTapped(older, typed = false))
+            .reduce(TapEvent.StartTapped(newer, typed = false))
+            .reduce(TapEvent.StartEnded(older, queued = false, draft = EntryFields(description = "Write")))
+
+        assertSame(newer, taps.pending)
+        assertEquals("the newer start keeps the draft cleared", EntryFields(), taps.draft)
     }
 
     @Test

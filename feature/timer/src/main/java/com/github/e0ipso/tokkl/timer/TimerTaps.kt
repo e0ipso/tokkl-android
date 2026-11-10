@@ -128,18 +128,21 @@ internal typealias FieldEdit = PendingEdit<RunningEntryIdentity>
 /** An [edit] not queued yet for the active [identity], which a Continue or a favorite stops. */
 internal data class TypedEdit(val identity: RunningEntryIdentity, val edit: FieldEdit)
 
-/** A tap that the cache or the server may not show yet. */
+/**
+ * A tap that the cache or the server may not show yet. Each is equal only to itself: two taps with
+ * the same time and fields are still two taps, and the end of one never ends the other.
+ */
 internal sealed interface PendingTap {
     /** Start was tapped at [at], in whole milliseconds as the cache keeps times. */
-    data class Starting(val at: Instant, val fields: EntryFields, val workspaceId: WorkspaceId) : PendingTap {
+    class Starting(val at: Instant, val fields: EntryFields, val workspaceId: WorkspaceId) : PendingTap {
         val entryId = CompletableDeferred<EntryId?>()
     }
 
     /** Stop was tapped for the entry that started at [start]. */
-    data class Stopping(val start: Instant) : PendingTap
+    class Stopping(val start: Instant) : PendingTap
 
     /** Pause, Resume or Stop while paused went to the server for what [target] showed. */
-    data class Acting(val target: TimerTarget) : PendingTap
+    class Acting(val target: TimerTarget) : PendingTap
 }
 
 /**
