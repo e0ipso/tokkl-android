@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.cache
 import android.database.sqlite.SQLiteException
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.AccountRefreshRequests
@@ -65,7 +66,7 @@ interface ChangeSenderEvents {
  */
 class ChangeSender(
     private val store: ChangeStore,
-    private val entries: suspend () -> ServerEntrySends?,
+    private val entries: suspend () -> TokklApi?,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
     private val events: ChangeSenderEvents,
@@ -308,7 +309,7 @@ class ChangeSender(
     }
 
     private suspend fun settleRefused(
-        server: ServerEntrySends,
+        server: TokklApi,
         queued: PendingChange,
         error: ApiError,
         sent: Int,
@@ -354,7 +355,7 @@ class ChangeSender(
     }
 
     /** Sends [change], or returns null when it left the queue before it went out. */
-    private suspend fun send(server: ServerEntrySends, change: PendingChange): ApiResult<SentChange>? {
+    private suspend fun send(server: TokklApi, change: PendingChange): ApiResult<SentChange>? {
         if (change.kind == ChangeKind.CREATE) return tries.create(server, change)
         if (change.kind == ChangeKind.DELETE) return undo.sendingDelete { tries.delete(server, change) }
         if (change.kind == ChangeKind.STOP && change.capturedStop != null) return tries.capturedStop(server, change)

@@ -59,7 +59,7 @@ val cacheModule = module {
         val session = get<Session>()
         ChangeSender(
             get(),
-            entries = { session()?.let(::ServerEntrySends) },
+            entries = { session() },
             scope = get(),
             io = io(),
             events = get(),
@@ -74,7 +74,7 @@ val cacheModule = module {
         val session = get<Session>()
         DeleteUndoer(
             get(),
-            entries = { session()?.let(::ServerEntrySends) },
+            entries = { session() },
             io = io(),
             refreshes = get(),
             scope = get(),

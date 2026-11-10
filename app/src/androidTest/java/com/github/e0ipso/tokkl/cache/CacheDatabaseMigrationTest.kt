@@ -491,7 +491,7 @@ class CacheDatabaseMigrationTest {
                 }
                 val sender = ChangeSender(
                     store,
-                    entries = { client()?.let(::ServerEntrySends) },
+                    entries = { client() },
                     scope = scope,
                     io = Dispatchers.IO,
                     events = object : ChangeSenderEvents {
@@ -506,7 +506,7 @@ class CacheDatabaseMigrationTest {
                     capabilities = capabilitiesOf(Capabilities.NONE),
                     undo = DeleteUndoer(
                         store,
-                        { client()?.let(::ServerEntrySends) },
+                        { client() },
                         Dispatchers.IO,
                         AccountRefreshRequests(),
                         scope,

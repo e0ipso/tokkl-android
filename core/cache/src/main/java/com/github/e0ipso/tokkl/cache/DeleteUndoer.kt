@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.cache
 
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.session.AccountRefreshRequests
 import kotlinx.coroutines.CoroutineScope
@@ -44,7 +45,7 @@ sealed interface UndoOutcome {
  */
 class DeleteUndoer(
     private val store: ChangeStore,
-    private val entries: suspend () -> ServerEntrySends?,
+    private val entries: suspend () -> TokklApi?,
     private val io: CoroutineContext,
     private val refreshes: AccountRefreshRequests,
     private val scope: CoroutineScope,
@@ -75,7 +76,7 @@ class DeleteUndoer(
 
     private suspend fun restore(serverId: Long): UndoOutcome {
         val server = entries() ?: return UndoOutcome.NeedsServer
-        return when (val result = server.restore(EntryId(serverId), resend = true)) {
+        return when (val result = server.entries.restore(EntryId(serverId), resend = true)) {
             is ApiResult.Success -> {
                 store.restored(serverId, result.value.toCached())
                 UndoOutcome.Restored

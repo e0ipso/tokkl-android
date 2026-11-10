@@ -9,6 +9,7 @@ import com.github.e0ipso.tokkl.api.InMemoryServerTrust
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
+import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.api.api
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.model.Capabilities
@@ -1688,7 +1689,7 @@ class ChangeSenderTest {
         val forwarding = CoroutineScope(Dispatchers.Unconfined).launch { requests.forward(lazy { counting }) }
         val refreshing = DeleteUndoer(
             store,
-            entries = { ServerEntrySends(testApi.api(url, ApiCredentials.ApiToken("tok-123"))) },
+            entries = { testApi.api(url, ApiCredentials.ApiToken("tok-123")) },
             io = Dispatchers.IO,
             refreshes = requests,
             scope = scope,
@@ -1992,4 +1993,4 @@ private fun changeSender(
 )
 
 /** The entry calls over [this] client, as the app opens them. */
-private fun ApiClientProvider.entries(): suspend () -> ServerEntrySends? = { this()?.let(::ServerEntrySends) }
+private fun ApiClientProvider.entries(): suspend () -> TokklApi? = { this() }

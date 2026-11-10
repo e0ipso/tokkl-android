@@ -280,7 +280,7 @@ class ChangeRejectionServerTest {
 
     private fun sender(store: ChangeStore, client: ApiClientProvider): ChangeSender = ChangeSender(
         store,
-        entries = { client()?.let(::ServerEntrySends) },
+        entries = { client() },
         scope = scope,
         io = Dispatchers.IO,
         events = object : ChangeSenderEvents {
@@ -297,7 +297,7 @@ class ChangeRejectionServerTest {
         capabilities = capabilitiesOf(Capabilities.NONE),
         undo = DeleteUndoer(
             store,
-            { client()?.let(::ServerEntrySends) },
+            { client() },
             Dispatchers.IO,
             AccountRefreshRequests(),
             scope,

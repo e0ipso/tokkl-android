@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.cache
 
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
+import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.api.getOrElse
 import com.github.e0ipso.tokkl.time.jsTrim
 import java.time.Duration
@@ -17,13 +18,13 @@ import java.time.temporal.ChronoUnit
  * start.
  */
 internal suspend fun earlierCopy(
-    server: ServerEntrySends,
+    server: TokklApi,
     create: PendingChange,
     spans: ServerSpans,
     store: ChangeStore,
 ): ApiResult<ServerTimeEntry?> {
     val start = create.start.truncatedTo(ChronoUnit.SECONDS)
-    val entries = server.list(start.minus(ChangeSender.LOOKUP_MARGIN), start.plus(ChangeSender.LOOKUP_MARGIN))
+    val entries = server.entries.list(start.minus(ChangeSender.LOOKUP_MARGIN), start.plus(ChangeSender.LOOKUP_MARGIN))
         .getOrElse { return it }
     spans.ready()
     val starts = setOf(start, spans.start(start))

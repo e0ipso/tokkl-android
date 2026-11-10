@@ -3,6 +3,7 @@ package com.github.e0ipso.tokkl.cache
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
+import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.api.TrashEntry
 import com.github.e0ipso.tokkl.api.flatMap
 import com.github.e0ipso.tokkl.model.EntryId
@@ -13,8 +14,8 @@ import java.time.temporal.ChronoUnit
  * Whether the server stopped the entry of the captured Stop [change] as the phone asked. True only
  * after reading the exact stopped row, including a short row hidden in Trash.
  */
-internal suspend fun stoppedOnServer(server: ServerEntrySends, change: PendingChange): ApiResult<Boolean> =
-    when (val result = server.get(EntryId(change.entryId))) {
+internal suspend fun stoppedOnServer(server: TokklApi, change: PendingChange): ApiResult<Boolean> =
+    when (val result = server.entries.get(EntryId(change.entryId))) {
         is ApiResult.Success -> when {
             result.value.stop == null -> ApiResult.Success(false)
             result.value.matchesStop(change) -> ApiResult.Success(true)
@@ -22,7 +23,7 @@ internal suspend fun stoppedOnServer(server: ServerEntrySends, change: PendingCh
         }
 
         is ApiResult.Failure -> if (change.shortStop && (result.error as? ApiError.Http)?.status == NOT_FOUND) {
-            server.trash().flatMap { trash ->
+            server.trash.list().flatMap { trash ->
                 if (trash.any { it.matchesStop(change) }) {
                     ApiResult.Success(true)
                 } else {
