@@ -41,6 +41,9 @@ class SessionRule : TestRule {
         override fun evaluate() {
             val signedOut = description.getAnnotation(SignedOut::class.java) != null ||
                 description.testClass?.isAnnotationPresent(SignedOut::class.java) == true
+            // A preceding process may have disabled airplane mode without waiting for the
+            // emulator's network to reconnect. Establish the baseline before creating accounts.
+            AirplaneMode.set(false, TokklTestServer.url)
             signOut()
             // A timer start in a test never brings up the system's permission dialog over
             // the app. NotificationPermissionPromptTest asks with a record of its own.

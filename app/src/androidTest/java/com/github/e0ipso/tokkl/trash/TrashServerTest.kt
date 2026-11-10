@@ -64,7 +64,7 @@ class TrashServerTest {
     @After
     fun cleanUp() {
         try {
-            AirplaneMode.off()
+            account?.let { AirplaneMode.set(false, it.client) } ?: AirplaneMode.off()
             account?.let(TestAccounts::delete)
         } finally {
             SessionRule.signOut()
