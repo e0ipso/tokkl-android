@@ -52,7 +52,7 @@ import java.time.format.DateTimeParseException
 @Composable
 fun TrashScreen(model: TrashModel, modifier: Modifier = Modifier) {
     val offline = rememberOffline()
-    CatalogPageEffects(model, offline)
+    CatalogPageEffects(model)
     val state by model.state.collectAsState()
     val settings by model.settings.collectAsState()
     TrashContent(

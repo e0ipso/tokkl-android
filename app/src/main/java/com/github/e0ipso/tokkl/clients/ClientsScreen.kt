@@ -50,7 +50,7 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 @Composable
 fun ClientsScreen(model: ClientsModel, modifier: Modifier = Modifier) {
     val offline = rememberOffline()
-    CatalogPageEffects(model, offline)
+    CatalogPageEffects(model)
     val state by model.state.collectAsState()
     val cachedClients by model.cachedClients.collectAsState(initial = emptyList())
     val workspace = model.workspace()

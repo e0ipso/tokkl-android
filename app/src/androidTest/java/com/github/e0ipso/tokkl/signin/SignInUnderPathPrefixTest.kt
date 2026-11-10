@@ -11,7 +11,6 @@ import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
@@ -21,6 +20,7 @@ import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.tapWhenStill
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.ServerConfigStore
@@ -108,9 +108,14 @@ class SignInUnderPathPrefixTest {
         assertTrue("the confirmation names the prefixed URL", ServerTrustStore(context).isCleartextConfirmed(server))
     }
 
-    /** The brand above the form can push the button below the screen's or the keyboard's edge. */
+    /**
+     * The brand above the form can push the button below the screen's or the keyboard's edge. The
+     * last field typed into opens the keyboard, and the window shrinks above it while it slides in.
+     * On API 31 the password test tapped the button as the keyboard started to slide in, and the
+     * http warning the tap opens never showed. Tap it once it is in view and keeps still.
+     */
     private fun submit() {
-        composeRule.onNode(hasText(string(R.string.sign_in_submit)) and hasClickAction()).performScrollTo().performClick()
+        composeRule.tapWhenStill(composeRule.onNode(hasText(string(R.string.sign_in_submit)) and hasClickAction()))
     }
 
     /**

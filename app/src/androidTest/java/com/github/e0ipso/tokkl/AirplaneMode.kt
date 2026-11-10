@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl
 
 import com.github.e0ipso.tokkl.api.ServerUrl
+import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import java.io.IOException
 import java.util.concurrent.TimeUnit
@@ -28,6 +29,24 @@ object AirplaneMode {
         val deadline = System.nanoTime() + TIMEOUT_NANOS
         while (serverAnswers(server) == on) {
             if (System.nanoTime() > deadline) throw AssertionError("the network did not ${if (on) "go" else "come back"}")
+            Thread.sleep(POLL_MS)
+        }
+        if (on) awaitNoIdleAppConnection(deadline)
+    }
+
+    /**
+     * Waits until the app's client keeps no idle connection. The probe fails as soon as the network
+     * goes, but the app evicts its kept connections only when its own network callback runs, or
+     * after they idle for 4 s. A request sent on a kept connection before then is written to a
+     * socket the network no longer reaches, and can fail only at the 10 s read timeout, too late for
+     * a test that waits 10 s for "Can't reach the server". Without a kept connection the request
+     * fails before it leaves the phone, as it does for a user who goes offline and taps a moment
+     * later.
+     */
+    private fun awaitNoIdleAppConnection(deadline: Long) {
+        val pool = SharedHttpClient.instance.connectionPool
+        while (pool.idleConnectionCount() > 0) {
+            if (System.nanoTime() > deadline) throw AssertionError("the app kept ${pool.idleConnectionCount()} idle connections offline")
             Thread.sleep(POLL_MS)
         }
     }
