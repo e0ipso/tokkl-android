@@ -124,15 +124,7 @@ fun PomodoroWidgetState.key(): String {
 }
 
 private fun PomodoroWidgetEntry.keyContent() = buildJsonObject {
-    val saved = RememberedPomodoroFields(
-        "",
-        workspaceId,
-        fields.description,
-        fields.projectId,
-        fields.taskId,
-        fields.tags,
-        fields.billable,
-    )
+    val saved = RememberedPomodoroFields.of("", workspaceId, fields)
     put("fields", Json.encodeToJsonElement(RememberedPomodoroFields.serializer(), saved))
     put("project", project?.let(::JsonPrimitive) ?: JsonNull)
     put("projectColor", projectColor?.let(::JsonPrimitive) ?: JsonNull)

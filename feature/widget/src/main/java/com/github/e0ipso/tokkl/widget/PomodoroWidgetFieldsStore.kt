@@ -6,6 +6,7 @@ import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.model.TaskId
 import com.github.e0ipso.tokkl.model.WorkspaceId
+import com.github.e0ipso.tokkl.model.fields
 import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import com.github.e0ipso.tokkl.storage.PreferencesFile
@@ -27,20 +28,18 @@ data class RememberedPomodoroFields(
     val billable: Boolean,
 ) {
     fun fields(): EntryFields = EntryFields(description, projectId, taskId, tags, billable)
+
+    companion object {
+        fun of(account: String, workspaceId: WorkspaceId, fields: EntryFields) = fields.run {
+            RememberedPomodoroFields(account, workspaceId, description, projectId, taskId, tags, billable)
+        }
+    }
 }
 
 internal fun rememberedPomodoroFields(account: String, held: HeldTimerState): RememberedPomodoroFields? {
     val session = held.pomodoro ?: return null
     val entry = held.runningEntry?.takeIf { it.id == session.entryId } ?: return null
-    return RememberedPomodoroFields(
-        account,
-        entry.workspaceId,
-        entry.description,
-        entry.projectId,
-        entry.taskId,
-        entry.tags,
-        entry.billable,
-    )
+    return RememberedPomodoroFields.of(account, entry.workspaceId, entry.fields())
 }
 
 internal fun encodeRememberedPomodoroFields(fields: RememberedPomodoroFields): String =

@@ -80,16 +80,7 @@ internal fun startPomodoroWidget(state: PomodoroWidgetState.Idle): Action =
     )
 
 internal fun rememberedFieldsJson(account: String, entry: PomodoroWidgetEntry): String {
-    val fields = entry.fields
-    val saved = RememberedPomodoroFields(
-        account,
-        entry.workspaceId,
-        fields.description,
-        fields.projectId,
-        fields.taskId,
-        fields.tags,
-        fields.billable,
-    )
+    val saved = RememberedPomodoroFields.of(account, entry.workspaceId, entry.fields)
     return ApiJson.encodeToString(RememberedPomodoroFields.serializer(), saved)
 }
 
