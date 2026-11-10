@@ -2,9 +2,10 @@ package com.github.e0ipso.tokkl.widget
 
 import androidx.activity.compose.setContent
 import android.os.SystemClock
-import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
-import androidx.compose.ui.test.onNodeWithTag
 import androidx.test.core.app.ActivityScenario
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
@@ -59,9 +60,7 @@ class WidgetMidnightServerTest {
             ActivityScenario.launch(MainActivity::class.java).use { scenario ->
                 compose.awaitTimerPage()
                 scenario.onActivity { it.setContent { TokklTheme { TimerTotals(app.cache.timeEntries, app.accountSettings.state, clock) } } }
-                compose.waitUntil(5_000) {
-                    compose.onNodeWithTag("timer_totals_today").fetchSemanticsNode().config[SemanticsProperties.Text].any { it.text == settings.formatDuration(beforeSeconds) }
-                }
+                compose.awaitTodayTotal(settings.formatDuration(beforeSeconds))
             }
             val wm = WorkManager.getInstance(fixture.context)
             val check = runBlocking { withTimeout(15_000) { wm.getWorkInfosForUniqueWorkFlow(RunningCheck.WORK_NAME).first { it.singleOrNull()?.state == WorkInfo.State.ENQUEUED }.single() } }
@@ -82,15 +81,20 @@ class WidgetMidnightServerTest {
             ActivityScenario.launch(MainActivity::class.java).use { scenario ->
                 compose.awaitTimerPage()
                 scenario.onActivity { it.setContent { TokklTheme { TimerTotals(app.cache.timeEntries, app.accountSettings.state, clock) } } }
-                compose.waitUntil(5_000) {
-                    compose.onNodeWithTag("timer_totals_today").fetchSemanticsNode().config[SemanticsProperties.Text].any { it.text == settings.formatDuration(0) }
-                }
+                compose.awaitTodayTotal(settings.formatDuration(0))
             }
             assertEquals("only one running-check is active", 1, wm.getWorkInfosForUniqueWork(RunningCheck.WORK_NAME).get().count { !it.state.isFinished })
             fixture.stop()
             host.awaitDescription(fixture.context.getString(R.string.widget_start_description))
             host.await("idle cancels the existing worker") { wm.getWorkInfosForUniqueWork(RunningCheck.WORK_NAME).get().none { !it.state.isFinished } }
         }
+    }
+    /**
+     * TimerTotals composes nothing until the cache's first emission, so right after setContent
+     * the total is missing for a moment. Missing means not shown yet, not a failure.
+     */
+    private fun ComposeTestRule.awaitTodayTotal(text: String) = waitUntil("today's total shows $text", 5_000) {
+        onAllNodes(hasTestTag("timer_totals_today") and hasText(text)).fetchSemanticsNodes(atLeastOneRootRequired = false).size == 1
     }
     private fun ready() = runBlocking { app.widgetState.first() } as WidgetState.Ready
     private class AdvancingClock(@Volatile var at: Instant) : Clock() {
