@@ -1,3 +1,10 @@
+## [0.8.1](https://github.com/e0ipso/tokkl-android/compare/v0.8.0...v0.8.1) (2026-11-10)
+
+### Bug Fixes
+
+* flaky device tests and lint PR titles ([#37](https://github.com/e0ipso/tokkl-android/issues/37)) ([2e7c0ea](https://github.com/e0ipso/tokkl-android/commit/2e7c0ea8f58f5eccfa174460a865021c20a374f0))
+* make release builds reproducible and settle four flaky device tests ([#36](https://github.com/e0ipso/tokkl-android/issues/36)) ([07450e4](https://github.com/e0ipso/tokkl-android/commit/07450e40a419949fd30c31786a8bd4344e62855c))
+
 ## [0.8.0](https://github.com/e0ipso/tokkl-android/compare/v0.7.1...v0.8.0) (2026-11-06)
 
 ### Features
