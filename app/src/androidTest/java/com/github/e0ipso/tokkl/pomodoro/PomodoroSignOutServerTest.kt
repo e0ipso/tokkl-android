@@ -26,6 +26,7 @@ import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.cache.BackgroundSend
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.capabilities
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.heldTimerState
 import com.github.e0ipso.tokkl.components.pomodoroAlarm
@@ -225,7 +226,13 @@ class PomodoroSignOutServerTest {
     private fun awaitNextAlarm(triggerTime: Long?) {
         val deadline = System.nanoTime() + 10_000_000_000L
         while (alarms.nextAlarmClock?.triggerTime != triggerTime && System.nanoTime() < deadline) Thread.sleep(50)
-        assertEquals(triggerTime, alarms.nextAlarmClock?.triggerTime)
+        val actual = alarms.nextAlarmClock?.triggerTime
+        val diagnostic = if (actual == triggerTime) {
+            null
+        } else {
+            PomodoroAlarmTrace.failure(app.heldTimerState, app.capabilities)
+        }
+        assertEquals(diagnostic, triggerTime, actual)
     }
 
     private fun goOffline() {

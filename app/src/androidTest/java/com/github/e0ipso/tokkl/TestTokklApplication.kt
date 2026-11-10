@@ -2,7 +2,13 @@ package com.github.e0ipso.tokkl
 
 import android.content.SharedPreferences
 import com.github.e0ipso.tokkl.notification.RunningNotificationRestartTrace
+import com.github.e0ipso.tokkl.platform.io
+import com.github.e0ipso.tokkl.pomodoro.AlarmClockPomodoroScheduler
+import com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmTrace
+import com.github.e0ipso.tokkl.pomodoro.PomodoroRingCheck
+import com.github.e0ipso.tokkl.pomodoro.ServicePomodoroRinging
 import org.koin.core.module.Module
+import org.koin.dsl.bind
 import org.koin.dsl.module
 import java.time.Clock
 
@@ -20,5 +26,16 @@ class TestTokklApplication : TokklApplication() {
 
     private val testModule = module {
         single<Clock> { TestClock() }
+        // Same alarm and platform dependencies as production, with a bounded diagnostic wrapper.
+        single {
+            PomodoroAlarmTrace.alarm(
+                states = get(),
+                capabilities = get(),
+                scheduler = get<AlarmClockPomodoroScheduler>(),
+                ringing = get<ServicePomodoroRinging>(),
+                io = io(),
+                clock = get(),
+            )
+        } bind PomodoroRingCheck::class
     }
 }
