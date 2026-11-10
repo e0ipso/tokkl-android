@@ -26,9 +26,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.github.e0ipso.tokkl.session.NetworkWatch
 import com.github.e0ipso.tokkl.ui.TokklTopBar
 import com.github.e0ipso.tokkl.ui.theme.ScrollingScreenInsets
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
@@ -37,19 +39,29 @@ import kotlinx.coroutines.launch
 
 /**
  * Ties [model] to its page while the page is on screen. Opens it, and closes it when the page goes
- * but not for a configuration change, so turning the phone sends no request. Loads again when the
- * phone comes back online ([offline] turns false) and when the app comes back to the foreground
- * after a stop that was not a configuration change.
+ * but not for a configuration change, so turning the phone sends no request. Tells it of each
+ * change of the default network that reaches the internet, so a load that could not reach the
+ * server runs again, and when the app comes back to the foreground after a stop that was not a
+ * configuration change.
+ *
+ * The phone can move from Wi-Fi to a cellular route and back without ever going offline, as the
+ * emulator does when its Wi-Fi drops, so the page's offline flag alone never said that a failed
+ * load could get through now.
  */
 @Composable
-fun CatalogPageEffects(model: CatalogPageModel, offline: Boolean) {
+fun CatalogPageEffects(model: CatalogPageModel) {
     val activity = LocalActivity.current
+    val context = LocalContext.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     DisposableEffect(model) {
         model.open()
         onDispose { if (activity?.isChangingConfigurations != true) model.close() }
     }
-    LaunchedEffect(model, offline) { if (!offline) model.reconnected() }
+    DisposableEffect(model, context) {
+        val network = NetworkWatch(context) { online -> if (online) model.reconnected() }
+        network.start()
+        onDispose { network.stop() }
+    }
     DisposableEffect(model, lifecycle) {
         // Adding the observer replays ON_START at once, which the model ignores until a stop.
         val observer = LifecycleEventObserver { _, event ->

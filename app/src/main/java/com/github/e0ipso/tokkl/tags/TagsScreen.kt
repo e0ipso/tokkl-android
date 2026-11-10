@@ -65,7 +65,7 @@ import com.github.e0ipso.tokkl.ui.TokklIconButton
 @Composable
 fun TagsScreen(model: TagsModel, modifier: Modifier = Modifier) {
     val offline = rememberOffline()
-    CatalogPageEffects(model, offline)
+    CatalogPageEffects(model)
     val state by model.state.collectAsState()
     val cachedTags by model.cachedTags.collectAsState(initial = emptyList())
     val workspace = model.workspace()

@@ -106,6 +106,9 @@ class CatalogModel<D, O>(
     /** The app went to the background with the page open, so what it lists may be old. */
     private var backgrounded = false
 
+    /** Counts [reconnected] calls, so a load can tell that one came while it waited. */
+    private var reconnects = 0
+
     /** The workspace the data came from, once a load found it. */
     private var workspace: Long? = null
 
@@ -124,8 +127,13 @@ class CatalogModel<D, O>(
         if (opened) load()
     }
 
-    /** The network came back. Loads again when the server could not be reached. */
+    /**
+     * The network came back, or the phone moved to another network. Loads again when the server
+     * could not be reached. A load still waiting for its answer is left alone, and loads once more
+     * if that answer is that the server could not be reached.
+     */
     override fun reconnected() {
+        reconnects++
         if (opened && state.value.loadProblem != null) load()
     }
 
@@ -225,6 +233,7 @@ class CatalogModel<D, O>(
         loading?.cancel()
         mutableState.update { it.copy(loading = true) }
         val stored = workspaceId()
+        val reconnectsAtStart = reconnects
         loading = scope.launch {
             // A cancelled load drops its answer: withContext throws once it returns.
             val answer = withContext(io) { read(stored) }
@@ -233,7 +242,14 @@ class CatalogModel<D, O>(
                     workspace = answer.workspace
                     mutableState.update { it.copy(data = answer.data, loading = false, loadProblem = null) }
                 }
-                is NotLoaded -> mutableState.update { it.copy(loading = false, loadProblem = answer.problem) }
+                is NotLoaded -> {
+                    mutableState.update { it.copy(loading = false, loadProblem = answer.problem) }
+                    // Wi-Fi can drop while the request is out and the phone carry on over another
+                    // network, so the page never goes offline and no later reconnect comes. A
+                    // reconnect that came while the request waited found no problem to load
+                    // again for. Load again once for it, without starting a polling loop.
+                    if (answer.problem == ServerProblem.Unreachable && reconnects != reconnectsAtStart && !backgrounded) load()
+                }
             }
         }
     }

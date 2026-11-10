@@ -52,7 +52,7 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 @Composable
 fun ProjectsScreen(model: ProjectsModel, modifier: Modifier = Modifier) {
     val offline = rememberOffline()
-    CatalogPageEffects(model, offline)
+    CatalogPageEffects(model)
     val state by model.state.collectAsState()
     val cachedProjects by model.cachedProjects.collectAsState(initial = emptyList())
     val cachedClients by model.cachedClients.collectAsState(initial = emptyList())
