@@ -49,13 +49,13 @@ import kotlin.coroutines.CoroutineContext
  * the entries, and [history] and [week] are pure functions of what it keeps, the older days and
  * the weeks, so a second reader writes nothing.
  *
- * A sign-in again over a refused token, which can be another account, drops what the server sent.
- * Sign-out forgets everything ([forgetAccount]).
+ * A sign-in again over a refused token, which can be another account, drops what the server sent
+ * and the deletes and restores made before it. Sign-out forgets everything ([forgetAccount]).
  *
  * @param olderPages the history's days before the cache, from the server. Runs on [io].
  * @param serverWeeks the calendar's weeks outside the cache, from the server. Runs on [io].
  * @param accounts the number of the account context signed in now. Each sign-in changes it,
- *   which drops what the server sent.
+ *   which drops what the server sent and the deletes and restores.
  * @param scope the session's scope, on the main thread, where the loads start.
  */
 class SessionEntries(
@@ -183,11 +183,7 @@ class SessionEntries(
         return true
     }
 
-    override suspend fun forgetAccount() {
-        paging.forget()
-        weeks.forget()
-        state.update { Reconciliation(rows = it.rows, settings = it.settings) }
-    }
+    override suspend fun forgetAccount() = forgetServer()
 
     /** The cache read [rows] with [settings]: the copies kept of its entries follow. */
     private suspend fun cacheRead(rows: List<EntryWithSendState>, settings: AccountSettings?) {

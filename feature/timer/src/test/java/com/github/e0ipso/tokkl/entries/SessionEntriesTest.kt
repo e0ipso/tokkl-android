@@ -4,6 +4,7 @@ import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.EntryTiming
+import com.github.e0ipso.tokkl.model.EntryWithSendState
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.AccountSettings
@@ -11,6 +12,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -75,6 +77,36 @@ class SessionEntriesTest {
         assertFalse(save(onPhone = true, opened = NOW.minusSeconds(HOUR)))
 
         assertEquals(listOf("update 7"), changes.calls)
+    }
+
+    /**
+     * A delete made before a sign-in again, which may be another account, hides nothing after it:
+     * the account signing in can hold an entry under the same local id.
+     */
+    @Test
+    fun aSignInAgainForgetsTheDeletesMadeBefore() {
+        val rows = MutableStateFlow<List<EntryWithSendState>>(emptyList())
+        val accounts = MutableStateFlow(1)
+        val signedIn = sessionEntries(
+            rows,
+            MutableStateFlow<AccountSettings?>(AccountSettings("UTC", DayOfWeek.MONDAY, null)),
+            scope,
+            Clock.fixed(NOW, ZoneOffset.UTC),
+            accounts = accounts,
+        )
+        scope.launch { signedIn.history.collect {} }
+        val before = TimeEntry(
+            EntryId(-5), WorkspaceId(3), null, null, "Before",
+            EntryTiming.Stopped(NOW.minusSeconds(2 * HOUR), NOW.minusSeconds(HOUR)), false, emptyList(), emptyList(),
+        )
+        signedIn.deleted(before)
+
+        accounts.value = 2
+        val after = before.copy(description = "After")
+        rows.value = listOf(EntryWithSendState(after, unsent = true))
+
+        val shown = signedIn.history.value as HistoryEntries.Shown
+        assertEquals(listOf(after), shown.current.map { it.entry })
     }
 
     private fun save(onPhone: Boolean, opened: Instant) = runBlocking {

@@ -164,8 +164,12 @@ internal fun Reconciliation.weekLoaded(week: ServerWeek, sent: Map<EntryId, Kept
     return copy(weekEdits = weekEdits.filterNot { (id, edit) -> id in ids && sent[id] == edit })
 }
 
-internal fun Reconciliation.forgotServer(): Reconciliation =
-    copy(lastRows = emptyList(), dropped = emptyList(), pageEdits = emptyMap(), weekEdits = emptyMap())
+/**
+ * A sign-in again, which can be another account, drops what the server sent and the deletes and
+ * restores made before it: a delete keyed by a local id would hide the new account's entry with
+ * that id.
+ */
+internal fun Reconciliation.forgotServer(): Reconciliation = Reconciliation(rows = rows, settings = settings)
 
 /**
  * The entries of [entries] on the days from [until] to the day before [firstCached]: days the
