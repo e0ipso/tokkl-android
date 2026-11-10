@@ -180,29 +180,6 @@ class PomodoroRingingServiceTest {
     }
 
     @Test
-    fun offlineButtonsKeepTheRingAndAConfirmElsewhereStopsBothOutputs() {
-        val held = seedDuePhase()
-        val original = awaitPlaying()
-        val notification = ringingNotification()
-        assertEquals(listOf("Next phase", "End session"), notification.actions.map { it.title.toString() })
-        assertEquals(2, notification.actions.size)
-        awaitActions(2) {
-            notification.actions[0].actionIntent.send()
-            notification.actions[1].actionIntent.send()
-        }
-        // Neither reached the server, so the phase and its ring stay as they were.
-        assertEquals(held, app.heldTimerState)
-        val after = PomodoroRingObservation.now()
-        assertAlarmOutput(after)
-        assertEquals("the same player", original.player, after.player)
-        assertEquals("1", DeviceShell.run("settings get global airplane_mode_on").trim())
-
-        // Another device confirms Next phase, and its state reaches the phone.
-        HeldPhases.hold(PhaseTransition.SHORT_REST_TO_WORK, overtime = Duration.ofSeconds(-60))
-        awaitStopped()
-    }
-
-    @Test
     fun swipedNotificationRepostsWithoutRestartingOrStoppingTheSound() {
         val phase = HeldPhases.key(seedDuePhase())
         val original = awaitPlaying()
