@@ -147,7 +147,13 @@ class DeleteUndoServerTest {
         val outcome = RequestCounter(TokklTestServer.url, " HTTP/1.1").use { counter ->
             signIn(counter.url)
             runBlocking { app.deleteUndo.undoDelete(EntryId(id)) }.also {
-                assertEquals("no request", 0, counter.count)
+                // The counter sees every request the app sends while signed in to it, not only
+                // the undo's. Only a request for this entry would be the undo's.
+                assertEquals(
+                    "no request for the entry",
+                    emptyList<String>(),
+                    counter.lines.filter { "time_entries/$id" in it },
+                )
                 assertEquals(emptyList<String>(), counter.failures)
             }
         }

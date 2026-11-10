@@ -49,6 +49,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -137,6 +138,21 @@ class ReminderServerTest {
             while (notification() != null) delay(25)
         }
     }
+
+    /**
+     * NotificationManager.notify() returns before the system lists the notification, so the
+     * worker can finish before activeNotifications holds the reminder it posted.
+     */
+    private fun awaitNotification(): Notification? = runBlocking {
+        withTimeoutOrNull(10_000) {
+            var shown = notification()
+            while (shown == null) {
+                delay(25)
+                shown = notification()
+            }
+            shown
+        }
+    }
     private fun fire(): Notification {
         val pending = awaitWork { !it.state.isFinished }
         assertNull("the reminder waits", notification())
@@ -145,7 +161,7 @@ class ReminderServerTest {
         assertTrue("future delay", pending.initialDelayMillis > 0)
         driver.setInitialDelayMet(pending.id)
         awaitFinished(pending.id)
-        return checkNotNull(notification()) { "the worker posted no reminder" }
+        return checkNotNull(awaitNotification()) { "the worker posted no reminder" }
     }
     private fun send(action: PendingIntent) {
         val finished = CompletableFuture<Unit>()

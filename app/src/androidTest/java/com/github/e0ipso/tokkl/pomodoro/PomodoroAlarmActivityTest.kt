@@ -8,6 +8,10 @@ import android.os.Build
 import android.os.SystemClock
 import android.provider.Settings
 import android.view.WindowManager
+import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
@@ -55,7 +59,11 @@ class PomodoroAlarmActivityTest {
         const val LOCK_PIN = "1111"
     }
 
-    @get:Rule val session = SessionRule()
+    @get:Rule(order = 0)
+    val session = SessionRule()
+
+    @get:Rule(order = 1)
+    val compose = createEmptyComposeRule()
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val context = instrumentation.targetContext
     private val app = context.applicationContext as TokklApplication
@@ -179,9 +187,11 @@ class PomodoroAlarmActivityTest {
         val before = awaitPlaying()
         openAlarm(HeldPhases.key(due))
         device.pressBack()
+        awaitAlarmOffScreen()
         assertKeepsRinging(before, due)
         openAlarm(HeldPhases.key(due))
         device.pressHome()
+        awaitAlarmOffScreen()
         assertKeepsRinging(before, due)
         openAlarm(HeldPhases.key(due))
         assertTrue(device.wait(Until.hasObject(By.text("Next phase")), 10_000))
@@ -227,25 +237,25 @@ class PomodoroAlarmActivityTest {
     @Test fun recreationDuplicateAndStaleIntentsCannotReplaceTheAlarmAndAConfirmElsewhereClosesIt() {
         val due = seedDuePhase()
         val before = awaitPlaying()
-        openAlarm(HeldPhases.key(due))
+        startAlarm(HeldPhases.key(due))
         val original = resumedAlarm()
         onMain { original.recreate() }
-        assertTrue(device.wait(Until.hasObject(By.text("Work done: start short rest")), 10_000))
-        openAlarm(HeldPhases.key(due))
+        awaitAlarmText("Work done: start short rest", shown = true)
+        startAlarm(HeldPhases.key(due))
         // Another phase's identity must leave the active alarm unchanged.
         context.startActivity(
             pomodoroAlarmIntent(context, PomodoroPhaseKey(HeldPhases.key(due).start.minusSeconds(60))),
         )
         instrumentation.waitForIdleSync()
-        assertTrue(device.wait(Until.hasObject(By.text("Work done: start short rest")), 10_000))
+        awaitAlarmText("Work done: start short rest", shown = true)
         assertKeepsRinging(before, due)
         // Another device confirms Next phase: the rest has five minutes left.
         val rest = HeldPhases.hold(PhaseTransition.SHORT_REST_TO_WORK, overtime = Duration.ofSeconds(-300))
         awaitStopped()
-        assertTrue(device.wait(Until.gone(By.text("Work done: start short rest")), 10_000))
+        awaitAlarmText("Work done: start short rest", shown = false)
         context.startActivity(pomodoroAlarmIntent(context, HeldPhases.key(due)))
         instrumentation.waitForIdleSync()
-        assertTrue(device.wait(Until.gone(By.text("Next phase")), 10_000))
+        awaitAlarmText("Next phase", shown = false)
         assertEquals(rest, app.heldTimerState)
         assertFalse(PomodoroRingObservation.now().playing)
     }
@@ -349,9 +359,27 @@ class PomodoroAlarmActivityTest {
         context.startActivity(pomodoroAlarmIntent(context, phase))
         assertTrue(device.wait(Until.hasObject(By.text("Next phase")), 10_000))
     }
+
+    /** Starts the alarm for [phase] and waits until the app shows it, as [awaitAlarmText] reads it. */
+    private fun startAlarm(phase: PomodoroPhaseKey) {
+        context.startActivity(pomodoroAlarmIntent(context, phase))
+        awaitAlarmText("Next phase", shown = true)
+    }
+
+    /**
+     * Waits until the alarm in the app's process shows [text], or no longer does. UiAutomator reads
+     * the screen through the system's accessibility window list. On the API 36 CI emulator that
+     * list still lacked the resumed alarm 8 s after its first frame was drawn. Tests that press
+     * keys or tap through UiAutomator need that list and keep [openAlarm].
+     */
+    private fun awaitAlarmText(text: String, shown: Boolean) {
+        compose.waitUntil("the alarm ${if (shown) "shows" else "no longer shows"} \"$text\"", 10_000) {
+            compose.onAllNodesWithText(text).fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty() == shown
+        }
+    }
     private fun click(text: String) {
-        val button = checkNotNull(device.wait(Until.findObject(By.text(text)), 10_000))
-        button.click()
+        awaitAlarmText(text, shown = true)
+        compose.onNodeWithText(text).performClick()
     }
     private fun resumedAlarm(): PomodoroAlarmActivity {
         var activity: PomodoroAlarmActivity? = null
@@ -360,6 +388,27 @@ class PomodoroAlarmActivityTest {
                 .filterIsInstance<PomodoroAlarmActivity>().single()
         }
         return checkNotNull(activity)
+    }
+
+    /**
+     * pressBack and pressHome return before the alarm leaves the screen. An alarm intent sent
+     * meanwhile reaches the leaving Activity as a new intent, and Home then hides it anyway.
+     */
+    private fun awaitAlarmOffScreen() {
+        val deadline = SystemClock.elapsedRealtime() + 10_000
+        while (alarmOnScreen()) {
+            assertTrue("the alarm leaves the screen", SystemClock.elapsedRealtime() < deadline)
+            SystemClock.sleep(50)
+        }
+    }
+    private fun alarmOnScreen(): Boolean {
+        var shown = false
+        onMain {
+            val registry = ActivityLifecycleMonitorRegistry.getInstance()
+            shown = (Stage.entries - Stage.STOPPED - Stage.DESTROYED)
+                .any { stage -> registry.getActivitiesInStage(stage).any { it is PomodoroAlarmActivity } }
+        }
+        return shown
     }
     private fun assertKeepsRinging(before: ObservedRing, due: HeldTimerState) {
         val after = PomodoroRingObservation.now()

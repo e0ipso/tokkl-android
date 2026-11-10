@@ -196,12 +196,16 @@ class NativeWidget(
 
     /** Capture the rendered native action before a later provider redraw replaces its revision. */
     fun captureTap(label: String): () -> Unit {
-        awaitDescription(label)
-        val target = onMain {
-            val child = descendants().first { it.contentDescription?.toString() == label }
-            generateSequence(child) { it.parent as? View }.first { it.isClickable }
+        // Find and capture in one main-thread task: a redraw between two tasks can replace the
+        // views, so a control seen in one task may be gone in the next.
+        var target: View? = null
+        await("widget control $label") {
+            target = descendants().firstOrNull { it.contentDescription?.toString() == label }
+                ?.let { child -> generateSequence(child) { it.parent as? View }.first { it.isClickable } }
+            target != null
         }
-        return { onMain { assertTrue("the captured native action handles the tap", target.performClick()) } }
+        val captured = checkNotNull(target)
+        return { onMain { assertTrue("the captured native action handles the tap", captured.performClick()) } }
     }
 
     /** Text must fit vertically even when Android enlarges the font. Ellipsis may shorten names. */

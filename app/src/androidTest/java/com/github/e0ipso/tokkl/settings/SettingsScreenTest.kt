@@ -241,8 +241,9 @@ class SettingsScreenTest {
                 composeRule.onNodeWithText(string(R.string.reminder_save)).assertIsNotEnabled()
             }
             field.performTextReplacement("168")
-            // Close the keyboard with Back, then use the dialog's visible Save button.
-            InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
+            // No Back to close the keyboard first. A key goes to whichever window has input focus,
+            // and whether that is the dialog, its keyboard or neither is up to the system. On the
+            // API 36 CI emulator the keyboard never opened, so Back did not close a keyboard.
             composeRule.onNodeWithText(string(R.string.reminder_save)).performClick()
             composeRule.onNodeWithText(
                 composeRule.activity.resources.getQuantityString(R.plurals.reminder_after_hours, 168, 168),

@@ -113,6 +113,7 @@ class CatalogModel<D, O, C>(
         private set
 
     private var loading: Job? = null
+    private var reconnects = 0
 
     /**
      * Counts the lists this model opened: [close] moves it on, so an answer to a change sent
@@ -155,8 +156,9 @@ class CatalogModel<D, O, C>(
     /** The app came back to the foreground with the page on screen: the data may have changed on the server. */
     override fun returned() = retry()
 
-    /** The network came back. Loads again when the server could not be reached. */
+    /** A network change also covers a request that has not reported its failure yet. */
     override fun reconnected() {
+        reconnects++
         if (opened && state.value.loadProblem != null) load()
     }
 
@@ -264,6 +266,7 @@ class CatalogModel<D, O, C>(
         mutableState.update { it.copy(loading = true) }
         val stored = settings.defaultWorkspaceId()
         val acceptedBefore = accepted
+        val reconnectsBefore = reconnects
         loading = scope.launch {
             // A cancelled load cancels its requests and drops its answer.
             val answer = withContext(io) { read(stored) }
@@ -280,7 +283,10 @@ class CatalogModel<D, O, C>(
                     mutableState.update { it.copy(data = answer.data, loading = false, loadProblem = null) }
                 }
 
-                is NotLoaded -> mutableState.update { it.copy(loading = false, loadProblem = answer.problem) }
+                is NotLoaded -> {
+                    mutableState.update { it.copy(loading = false, loadProblem = answer.problem) }
+                    if (opened && answer.problem == ServerProblem.Unreachable && reconnects != reconnectsBefore) load()
+                }
             }
         }
     }

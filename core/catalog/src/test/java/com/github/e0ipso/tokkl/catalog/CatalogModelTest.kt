@@ -25,6 +25,7 @@ class CatalogModelTest {
     /** What the server lists, or null when it is out of reach. */
     private var server: List<String>? = listOf("Website")
     private var loads = 0
+    private var duringFetch: (() -> Unit)? = null
 
     /** When set, the next load waits for this answer instead of reading [server]. */
     private var held: CompletableDeferred<ApiResult<List<String>>>? = null
@@ -41,11 +42,13 @@ class CatalogModelTest {
                 held = null
                 return answer.await()
             }
-            return server?.let {
+            val answer = server?.let {
                 ApiResult.Success(
                     it,
                 )
             } ?: ApiResult.Failure(ApiError.Network(IOException("unreachable")))
+            duringFetch?.also { duringFetch = null }?.invoke()
+            return answer
         }
     }
 
@@ -171,5 +174,46 @@ class CatalogModelTest {
         assertEquals(CatalogChange.Created("Intranet"), model.state.value.done)
         assertEquals(false, model.state.value.sending)
         assertEquals("the page read the list again", 3, loads)
+    }
+
+    /**
+     * The Wi-Fi drops while the load is out and the phone carries on over another network, so it
+     * never goes offline. The reconnect came while the load waited, when there was no problem to
+     * load again for, so the failed load loads once more.
+     */
+    @Test
+    fun aReconnectWhileALoadWaitsLoadsOnceMoreWhenTheServerWasOutOfReach() {
+        model.shown()
+        server = null
+        duringFetch = {
+            model.reconnected()
+            server = listOf("Web site")
+        }
+        model.returned()
+
+        assertEquals("the foreground load, then one more", 3, loads)
+        assertEquals(listOf("Web site"), model.state.value.data)
+        assertNull(model.state.value.loadProblem)
+    }
+
+    /** Without a reconnect while it waited, a failed load stays failed until the next one. */
+    @Test
+    fun aFailedLoadWithoutAReconnectLoadsNothingMore() {
+        server = null
+        model.shown()
+
+        assertEquals(1, loads)
+        assertEquals(ServerProblem.Unreachable, model.state.value.loadProblem)
+    }
+
+    /** The extra load happens once for the reconnect, not again while the server stays out of reach. */
+    @Test
+    fun theExtraLoadForAReconnectHappensOnce() {
+        server = null
+        duringFetch = { model.reconnected() }
+        model.shown()
+
+        assertEquals(2, loads)
+        assertEquals(ServerProblem.Unreachable, model.state.value.loadProblem)
     }
 }

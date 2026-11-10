@@ -345,14 +345,14 @@ class BottomBarTest {
         }
     }
 
-    /** System Back, once the activity's window has input focus, so the key reaches it. */
+    /**
+     * Back, handed to the activity as the system hands it a Back gesture or key. A key event goes
+     * to whichever window has input focus, which the test does not own. On the API 36 CI emulator
+     * the resumed and drawn activity once had no input focus for over 10 s, in two tests in a
+     * row, so the key reached nothing and the tests failed before the app saw a Back.
+     */
     private fun pressBack(scenario: ActivityScenario<MainActivity>) {
-        composeRule.waitUntil("the app window has input focus", TIMEOUT_MS) {
-            var focused = false
-            scenario.onActivity { focused = it.hasWindowFocus() }
-            focused
-        }
-        InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
+        scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
     }
 
     private fun openMore() {

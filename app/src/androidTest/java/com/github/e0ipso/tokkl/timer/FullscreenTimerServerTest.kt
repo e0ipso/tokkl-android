@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.ComposeTimeoutException
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
@@ -165,14 +166,14 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
                 instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
                 compose.awaitTimerPage()
                 compose.onNode(isSelectable() and hasText(context.getString(view.label))).assertIsSelected()
-                assertEquals(positions, scrollPositions())
+                assertScrollPositions(positions)
                 compose.onNodeWithText(
                     context.getString(TimerR.string.timer_open_fullscreen),
                 ).performSemanticsAction(SemanticsActions.OnClick)
                 awaitFocused()
                 focusedButton(TimerR.string.timer_exit_fullscreen).performScrollTo().performClick()
                 compose.awaitTimerPage()
-                assertEquals(positions, scrollPositions())
+                assertScrollPositions(positions)
                 assertEquals(token, shownTarget())
                 assertEquals(queueBefore, runBlocking { app.changes.unsentCount.first() })
             }
@@ -657,6 +658,22 @@ abstract class FullscreenTimerAcceptanceTest(private val fontScale: Float) {
         "fullscreen_elapsed",
     ).fetchSemanticsNode().config[SemanticsProperties.Text]
         .joinToString("") { it.text }
+
+    /**
+     * The bar marks Timer as selected before the page has composed all of its scrolling lists. On
+     * API 31, right after Back from the focused timer, one of the three was still missing. Wait
+     * until the lists are back where they were, and show the difference if they never are.
+     */
+    private fun assertScrollPositions(expected: List<Float>) {
+        try {
+            compose.waitUntil(
+                "the Timer page's lists are back where they were",
+                5_000,
+            ) { scrollPositions() == expected }
+        } catch (_: ComposeTimeoutException) {
+        }
+        assertEquals(expected, scrollPositions())
+    }
     private fun scrollPositions(): List<Float> = compose.onAllNodes(
         hasScrollAction(),
         useUnmergedTree = true,
