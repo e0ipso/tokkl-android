@@ -34,7 +34,7 @@ _None yet._
 - Open [**Cached history days and grouping**](map-cached-history-days-and-grouping.md) — Account-local history groups and pages cached stopped entries with reconnect-aware retention.
 - Open [**Timer Today and This week totals**](map-timer-today-and-this-week-totals.md) — Cached real segments contribute once using account timezone, week start and duration formatting.
 ### #time
-- Open [**Honor account clock formatting in time ports**](../../data-and-offline/typescript-time-ports/practice-honor-account-clock-formatting-in-time-ports.md) — FormatTime matches the account 12-hour or 24-hour preference and server value semantics.
+- Open [**Honor account clock formatting in time ports**](../../data-and-offline/typescript-time-ports/practice-honor-account-clock-formatting-in-time-ports.md) — formatTime matches the account 12-hour or 24-hour preference and server value semantics.
 - Open [**Match JavaScript decimal and percentage formatting**](../../data-and-offline/typescript-time-ports/practice-match-javascript-decimal-and-percentage-formatting.md) — Binary toFixed and shortest-decimal Intl formatting require separate helpers.
 - Open [**Preserve JavaScript parsing and numeric boundaries**](../../data-and-offline/typescript-time-ports/practice-preserve-javascript-parsing-and-numeric-boundaries.md) — Match JavaScript whitespace and rounding while representing invalid numeric results safely.
 ### #accessibility

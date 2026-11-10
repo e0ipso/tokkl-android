@@ -54,7 +54,7 @@ _None._
 - Open [**Run drain Gradle and device jobs in the OOM-safe scope, not behind a sitting cap**](practice-drain-sittings-gate-on-memory-not-a-sitting-cap.md) — Drain Gradle and device runs start directly in the OOM-safe scope, one heavy job at a time; no fixed cap on sittings. T3 checkpoint refs are not reviewer writes.
 ### #architecture
 - Open [**Android stack: shipped UI, cache and native timer surfaces**](map-planned-android-stack.md) — Compose, Room, WorkManager, OkHttp, Glance, the Quick Settings tile and favorite shortcuts are built.
-- Open [**Give composables plain state from view models, with previews beside them**](../design/practice-composables-take-plain-state-from-view-models.md) — Screens read one immutable state from their view model; leaf composables get plain values and callbacks, never the cache or Koin. Light and dark previews live next to each composable.
+- Open [**Give composables plain state from view models**](../design/practice-composables-take-plain-state-from-view-models.md) — Screens read one immutable state from their view model; leaf composables get plain values and callbacks, never the cache or Koin.
 ### #commits
 - Open [**Run npm install in every new clone or worktree to turn on the commit hook**](practice-run-npm-install-in-every-clone-and-worktree.md) — The commit-msg hook lives in git-ignored .husky/_, so a clone or worktree that skipped npm install commits with no checks.
 ### #emulator

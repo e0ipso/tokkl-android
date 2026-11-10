@@ -18,7 +18,7 @@ kk_relates_to:
 kk_depends_on: []
 kk_confidence: high
 ---
-A JVM test that calls suspend code runs its body in `runTest` from kotlinx-coroutines-test, which the catalog pins to the kotlinx-coroutines version the AndroidX and Koin libraries bring. The feature convention plugin and the core modules with coroutine tests put it on `testImplementation`.
+A JVM test that calls suspend code runs its body in `runTest` from kotlinx-coroutines-test, which the catalog pins to the kotlinx-coroutines version the AndroidX and Koin libraries bring. The library and JVM convention plugins put it on every module's `testImplementation`.
 
 A view model test that stands a thread in for the main thread uses `MainDispatcherRule` from core:platform's test fixtures (`testImplementation(testFixtures(project(":core:platform")))`). Declare it as `@get:Rule val main = MainDispatcherRule()` and pass `main.scope` as the view model's scope and `main.dispatcher` where it takes an IO context. The rule sets `Dispatchers.Main` to its `StandardTestDispatcher` for the test. Nothing runs until the test lets it: `runCurrent()` runs what is due, `settle(millis)` lets that much virtual time pass, `awaitUntil(what) { condition }` lets time pass in 10 ms steps until the condition holds and fails after 5 s of virtual time, and `onMain { }` runs a suspend call on the main thread after what is queued there and returns its result. A tap helper calls `runCurrent()`, the tap, and `runCurrent()` again, as the main thread would run the work queued before and after it.
 

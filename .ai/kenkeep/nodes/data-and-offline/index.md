@@ -65,7 +65,7 @@
 - Open [**Timer state holder and sync service: the server owns Pomodoro and pause**](map-timer-state-holder-and-sync-service.md) — One holder keeps the server's timer state; a specialUse service holds its event stream. Session and pause actions go online, never queued.
 - Open [**Pomodoro phase alarms and rearming**](map-pomodoro-phase-alarms-and-rearming.md) — One exact alarm per server phase, set from its planned end and the clock offset. A state from any device silences it; rearming never advances a phase.
 ### #time
-- Open [**Honor account clock formatting in time ports**](typescript-time-ports/practice-honor-account-clock-formatting-in-time-ports.md) — FormatTime matches the account 12-hour or 24-hour preference and server value semantics.
+- Open [**Honor account clock formatting in time ports**](typescript-time-ports/practice-honor-account-clock-formatting-in-time-ports.md) — formatTime matches the account 12-hour or 24-hour preference and server value semantics.
 - Open [**Match JavaScript decimal and percentage formatting**](typescript-time-ports/practice-match-javascript-decimal-and-percentage-formatting.md) — Binary toFixed and shortest-decimal Intl formatting require separate helpers.
 - Open [**Preserve JavaScript parsing and numeric boundaries**](typescript-time-ports/practice-preserve-javascript-parsing-and-numeric-boundaries.md) — Match JavaScript whitespace and rounding while representing invalid numeric results safely.
 ### #ui

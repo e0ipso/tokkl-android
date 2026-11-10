@@ -1,6 +1,6 @@
 ---
 schema_version: 3
-nodes_hash: 'sha256:0be1e3837640f7daeecfd786350da88a356b304b26006044e8c34b20d65609e8'
+nodes_hash: 'sha256:bf21e7ae90c9da798e77072a9630fe15bb88e4b4ae2fbb5873cd7f9ec5c648c4'
 node_count: 96
 ---
 # kenkeep Graph
@@ -492,7 +492,7 @@ Total nodes: 96
 ## practice-composables-take-plain-state-from-view-models
 
 - **kind:** practice
-- **title:** Give composables plain state from view models, with previews beside them
+- **title:** Give composables plain state from view models
 - **path:** design/practice-composables-take-plain-state-from-view-models.md
 - **tags:** ui, compose, architecture
 - **relates_to:** map-ui-components-and-compose-layout-gotchas, map-catalog-pages-projects-clients-tags, map-cached-entity-picker-and-offline-creation, map-timer-today-and-this-week-totals
