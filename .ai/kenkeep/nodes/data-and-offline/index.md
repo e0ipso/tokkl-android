@@ -7,7 +7,10 @@
 > This index only orients you; leaves hold the durable guidance. Open at least one relevant leaf before acting.
 
 ## Subfolders
+- Load [`account-cache/`](account-cache/index.md) for more information on the Room cache ownership, capability probes and account refresh ordering; read before changing cached data, optional server features or refresh steps.
+- Load [`account-settings-and-time/`](account-settings-and-time/index.md) for more information on account time fields, timezone validation and settings refresh; read before changing time formatting, account settings or cache refresh ordering.
 - Load [`change-queue/`](change-queue/index.md) for more information on offline entry mutations, delivery, recovery and picker data; read before changing the entry queue or its sender.
+- Load [`timer-state-and-sync/`](timer-state-and-sync/index.md) for more information on server timer acceptance, account lifetime, online actions and event-stream services; read before changing Pomodoro, pause, native timer controls or timer synchronization.
 - Load [`typescript-time-ports/`](typescript-time-ports/index.md) for more information on JavaScript-compatible time and formatting ports; read before porting Tokkl parsing, rounding or timezone behavior.
 
 ## Conventions (how we build)
@@ -15,9 +18,6 @@
 - Open [**Never make Start or Stop wait for the server**](practice-never-wait-for-server-on-start-stop.md) to learn about: Start and Stop change state on the phone at once and queue the change. Pause, Resume and session actions wait for the server. No sync engine. #offline #network #api
 
 ## Components (what exists)
-- Open [**Offline cache and capabilities: AccountCache, HistoryWindow, CapabilitiesSource**](map-account-cache-and-capabilities.md) to learn about: One refresh reads /me with related data and /me/preferences, then fills the Room cache and the capability flags that screens read offline. #offline #cache #room #api #compatibility
-- Open [**Timer state holder and sync service: the server owns Pomodoro and pause**](map-timer-state-holder-and-sync-service.md) to learn about: One holder keeps the server's timer state; a specialUse service holds its event stream. Session and pause actions go online, never queued. #pomodoro #sync #network #android #battery #offline
-- Open [**Account settings: AccountSettingsSource, AccountTime and NoDeviceZoneTest**](map-account-settings-source-and-account-time.md) to learn about: Sign-in and each refresh store timezone, week start, resolution and duration format. AccountTime gives zone and dates, never the device's. #time #api #android #settings
 - Open [**Pomodoro phase alarms and rearming**](map-pomodoro-phase-alarms-and-rearming.md) to learn about: One exact alarm per server phase, set from its planned end and the clock offset. A state from any device silences it; rearming never advances a phase. #pomodoro #alarms #sync
 - Open [**Running timer notification follows the cache's running entry**](map-running-timer-notification-follows-the-cache.md) to learn about: notification/RunningNotificationSync posts, replaces and removes the ongoing notification from the cache and the held timer state. Stop works offline, Pause needs the server. #notification #offline #android
 - Open [**RunningCheck: guarded background current-entry refresh**](map-runningcheck-guarded-background-current-entry-refresh.md) to learn about: One connected 15-minute worker follows cached running state and protects unsent edits, newer writes and sign-out. #offline #cache #android #battery
@@ -27,9 +27,9 @@
 ## By topic
 
 ### #api
-- Open [**Trash capability and server operations**](../screens/session-and-navigation/map-trash-capability-and-server-operations.md) — Tokkl-only Trash routes, cached rows and explicit unsupported-endpoint handling.
 - Open [**Never make Start or Stop wait for the server**](practice-never-wait-for-server-on-start-stop.md) — Start and Stop change state on the phone at once and queue the change. Pause, Resume and session actions wait for the server. No sync engine.
-- Open [**Match Tokkl web app behavior in the account timezone**](practice-match-web-app-behavior-account-timezone.md) — Use the web app's time parsing, favorites, grouping and undo, in the account timezone read from GET /api/v9/me.
+- Open [**Typed API resources and request contracts**](../api-and-security/api-client/map-typed-api-resources-and-request-contracts.md) — TokklApi resource groups fix request shapes, typed answers and module boundaries.
+- Open [**Ordered entry sending and refusals**](change-queue/map-ordered-entry-sending-and-refusals.md) — Oldest-first HTTP delivery, retry boundaries, held refusals and reauthentication.
 ### #offline
 - Open [**Background queue work and empty-queue cancellation**](change-queue/map-background-queue-work-and-empty-queue-cancellation.md) — Connected WorkManager delivery and serialized cancellation when the queue empties.
 - Open [**Ordered entry sending and refusals**](change-queue/map-ordered-entry-sending-and-refusals.md) — Oldest-first HTTP delivery, retry boundaries, held refusals and reauthentication.
@@ -40,43 +40,42 @@
 - Open [**Choose plain AOSP images and compatible renderers**](../testing/emulator-runtime/practice-choose-plain-aosp-images-and-compatible-renderers.md) — API 36 references and API 31 compatibility use launcher-capable AOSP images and bounded renderers.
 ### #cache
 - Open [**Cached entity picker and offline creation**](change-queue/map-cached-entity-picker-and-offline-creation.md) — Shared project, task and tag selection uses cached data and explicit offline creation limits.
-- Open [**Cached history days and grouping**](../screens/timer-history-calendar/map-cached-history-days-and-grouping.md) — Account-local history groups and pages cached stopped entries with reconnect-aware retention.
-- Open [**Timer Today and This week totals**](../screens/timer-history-calendar/map-timer-today-and-this-week-totals.md) — Cached real segments contribute once using account timezone, week start and duration formatting.
+- Open [**Account cache storage and history window**](account-cache/map-account-cache-storage-and-history-window.md) — AccountCache exposes Room-backed model flows, while server refresh preserves unavailable data and account isolation.
+- Open [**Offline entry mutations and local ID mapping**](change-queue/map-offline-entry-mutations-and-local-id-mapping.md) — Atomic local entry changes, full pending snapshots and negative-ID remapping.
 ### #pomodoro
-- Open [**Timer state holder and sync service: the server owns Pomodoro and pause**](map-timer-state-holder-and-sync-service.md) — One holder keeps the server's timer state; a specialUse service holds its event stream. Session and pause actions go online, never queued.
-- Open [**Pomodoro home screen widget**](../screens/map-pomodoro-home-screen-widget.md) — A separate provider shows the server session and uses native countdowns and online-only session actions.
+- Open [**Account timer state lifetime**](timer-state-and-sync/map-account-timer-state-lifetime.md) — AccountTimerStates owns intake, read-only timer state and retirement across sign-in and sign-out.
+- Open [**Timer state acceptance and persistence**](timer-state-and-sync/map-timer-state-acceptance-and-persistence.md) — Revision acceptance, clock offsets, persisted state and cache reconciliation share one account holder.
+- Open [**Online timer actions and native control failures**](timer-state-and-sync/map-online-timer-actions-and-native-control-failures.md) — Session and pause controls use captured account revisions, single server attempts and shared failure notices.
+### #ui
+- Open [**Timer page layout and scroll-away header**](../screens/timer-history-calendar/map-timer-page-layout-and-scroll-away-header.md) — Bounded Timer content and the shared scroll-away header adapt to short and wide windows.
+- Open [**Signed-in navigation chrome and adaptive windows**](../screens/session-and-navigation/map-signed-in-navigation-chrome-and-adaptive-windows.md) — Bar, rail, back-stack and width rules control signed-in page layout.
+- Open [**External navigation requests and intent consumption**](../screens/session-and-navigation/navigation-state/map-external-navigation-requests-and-intent-consumption.md) — Features decode serializable taps, consume intent extras once, and retain pending requests through configuration changes and process death.
+### #alarms
 - Open [**Pomodoro phase alarms and rearming**](map-pomodoro-phase-alarms-and-rearming.md) — One exact alarm per server phase, set from its planned end and the clock offset. A state from any device silences it; rearming never advances a phase.
 ### #battery
 - Open [**Home screen widget: cache state and a native ticking clock**](../screens/map-home-screen-widget-cache-state-and-a-native-ticking-clock.md) — Glance redraws on cache changes; a launcher Chronometer ticks without periodic app updates.
-- Open [**Timer state holder and sync service: the server owns Pomodoro and pause**](map-timer-state-holder-and-sync-service.md) — One holder keeps the server's timer state; a specialUse service holds its event stream. Session and pause actions go online, never queued.
+- Open [**RunningCheck: guarded background current-entry refresh**](map-runningcheck-guarded-background-current-entry-refresh.md) — One connected 15-minute worker follows cached running state and protects unsent edits, newer writes and sign-out.
 - Open [**Pomodoro home screen widget**](../screens/map-pomodoro-home-screen-widget.md) — A separate provider shows the server session and uses native countdowns and online-only session actions.
 ### #network
+- Open [**Typed API resources and request contracts**](../api-and-security/api-client/map-typed-api-resources-and-request-contracts.md) — TokklApi resource groups fix request shapes, typed answers and module boundaries.
 - Open [**Tokkl and Toggl API endpoints, auth and Tokkl-only extensions**](../api-and-security/map-tokkl-toggl-api.md) — Tokkl speaks a subset of Toggl API v9 at /api/v9 and Reports v3 at /reports/api/v3 with Basic auth, plus Tokkl-only fields and endpoints.
-- Open [**Pin self-signed certificates by fingerprint and warn before plain HTTP**](../api-and-security/practice-pin-self-signed-certs-warn-on-http.md) — Trust a self-signed cert only by its pinned SHA-256 fingerprint, never accept any cert, and put plain HTTP behind a stronger warning.
 - Open [**Never make Start or Stop wait for the server**](practice-never-wait-for-server-on-start-stop.md) — Start and Stop change state on the phone at once and queue the change. Pause, Resume and session actions wait for the server. No sync engine.
+### #notification
+- Open [**Running timer notification follows the cache's running entry**](map-running-timer-notification-follows-the-cache.md) — notification/RunningNotificationSync posts, replaces and removes the ongoing notification from the cache and the held timer state. Stop works offline, Pause needs the server.
+- Open [**Run native permission probes alone with a fresh notification permission**](../testing/instrumented-runner/practice-run-native-permission-probes-alone-with-a-fresh-permission.md) — TOKKL_TEST_FRESH_NOTIFICATION_PERMISSION=1 resets POST_NOTIFICATIONS before one probe method starts, on an API 33+ emulator the script boots.
 ### #room
 - Open [**Offline entry mutations and local ID mapping**](change-queue/map-offline-entry-mutations-and-local-id-mapping.md) — Atomic local entry changes, full pending snapshots and negative-ID remapping.
-- Open [**Offline cache and capabilities: AccountCache, HistoryWindow, CapabilitiesSource**](map-account-cache-and-capabilities.md) — One refresh reads /me with related data and /me/preferences, then fills the Room cache and the capability flags that screens read offline.
+- Open [**Account cache storage and history window**](account-cache/map-account-cache-storage-and-history-window.md) — AccountCache exposes Room-backed model flows, while server refresh preserves unavailable data and account isolation.
 - Open [**Room queue migration continuity**](change-queue/map-room-queue-migration-continuity.md) — Exported schemas and consecutive migrations preserve pending requests and Undo state.
 ### #settings
-- Open [**Account settings: AccountSettingsSource, AccountTime and NoDeviceZoneTest**](map-account-settings-source-and-account-time.md) — Sign-in and each refresh store timezone, week start, resolution and duration format. AccountTime gives zone and dates, never the device's.
+- Open [**Account settings loading and refresh**](account-settings-and-time/map-account-settings-loading-and-refresh.md) — Process-wide settings loading and account refresh preserve local changes made during server reads.
+- Open [**Account refresh steps and preference readers**](account-cache/map-account-refresh-steps-and-preference-readers.md) — One account refresh loads related data, probes capabilities, fills the cache and hands each preference to its reader.
 - Open [**Pomodoro defaults: four preferences with offline persistence**](map-pomodoro-defaults-four-preferences-with-offline-persistence.md) — PomodoroDefaultsSetting syncs four clamped Tokkl preferences, retries after refresh and keeps Toggl values on the phone.
 ### #sync
-- Open [**Timer state holder and sync service: the server owns Pomodoro and pause**](map-timer-state-holder-and-sync-service.md) — One holder keeps the server's timer state; a specialUse service holds its event stream. Session and pause actions go online, never queued.
+- Open [**Timer state acceptance and persistence**](timer-state-and-sync/map-timer-state-acceptance-and-persistence.md) — Revision acceptance, clock offsets, persisted state and cache reconciliation share one account holder.
+- Open [**Account timer state lifetime**](timer-state-and-sync/map-account-timer-state-lifetime.md) — AccountTimerStates owns intake, read-only timer state and retirement across sign-in and sign-out.
 - Open [**Pomodoro phase alarms and rearming**](map-pomodoro-phase-alarms-and-rearming.md) — One exact alarm per server phase, set from its planned end and the clock offset. A state from any device silences it; rearming never advances a phase.
 ### #time
 - Open [**Honor account clock formatting in time ports**](typescript-time-ports/practice-honor-account-clock-formatting-in-time-ports.md) — formatTime matches the account 12-hour or 24-hour preference and server value semantics.
 - Open [**Match JavaScript decimal and percentage formatting**](typescript-time-ports/practice-match-javascript-decimal-and-percentage-formatting.md) — Binary toFixed and shortest-decimal Intl formatting require separate helpers.
 - Open [**Preserve JavaScript parsing and numeric boundaries**](typescript-time-ports/practice-preserve-javascript-parsing-and-numeric-boundaries.md) — Match JavaScript whitespace and rounding while representing invalid numeric results safely.
-### #ui
-- Open [**Timer page layout and scroll-away header**](../screens/timer-history-calendar/map-timer-page-layout-and-scroll-away-header.md) — Bounded Timer content and the shared scroll-away header adapt to short and wide windows.
-- Open [**Tokkl favorites storage and capability**](../screens/timer-and-entry-editing/map-tokkl-favorites-storage-and-capability.md) — Favorite starts share cached fields while preference writes use supported server capabilities.
-- Open [**Timer List and Calendar preference sync**](../screens/timer-history-calendar/map-timer-list-and-calendar-preference-sync.md) — View selection persists locally and writes the supported server preference without blocking navigation.
-### #alarms
-- Open [**Pomodoro phase alarms and rearming**](map-pomodoro-phase-alarms-and-rearming.md) — One exact alarm per server phase, set from its planned end and the clock offset. A state from any device silences it; rearming never advances a phase.
-### #compatibility
-- Open [**Offline cache and capabilities: AccountCache, HistoryWindow, CapabilitiesSource**](map-account-cache-and-capabilities.md) — One refresh reads /me with related data and /me/preferences, then fills the Room cache and the capability flags that screens read offline.
-- Open [**Check server capabilities instead of requiring a server version**](../api-and-security/practice-check-capabilities-not-server-version.md) — Probe optional Tokkl features by capability; snapping follows the latest supported contract, with no version selector.
-### #notification
-- Open [**Running timer notification follows the cache's running entry**](map-running-timer-notification-follows-the-cache.md) — notification/RunningNotificationSync posts, replaces and removes the ongoing notification from the cache and the held timer state. Stop works offline, Pause needs the server.
-- Open [**Run native permission probes alone with a fresh notification permission**](../testing/instrumented-runner/practice-run-native-permission-probes-alone-with-a-fresh-permission.md) — TOKKL_TEST_FRESH_NOTIFICATION_PERMISSION=1 resets POST_NOTIFICATIONS before one probe method starts, on an API 33+ emulator the script boots.

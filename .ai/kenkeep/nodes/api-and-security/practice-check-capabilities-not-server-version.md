@@ -32,8 +32,13 @@ The `favorites` flag follows Tokkl's `role` in `/me`. It also covers Tokkl's oth
 <!-- kk:related:start -->
 # Related
 
-- Related: [map-account-cache-and-capabilities](../data-and-offline/map-account-cache-and-capabilities.md)
-- Related: [map-timer-state-holder-and-sync-service](../data-and-offline/map-timer-state-holder-and-sync-service.md)
+- Related: [map-account-cache-and-capabilities → map-account-cache-storage-and-history-window](../data-and-offline/account-cache/map-account-cache-storage-and-history-window.md)
+- Related: [map-account-cache-and-capabilities → map-account-refresh-steps-and-preference-readers](../data-and-offline/account-cache/map-account-refresh-steps-and-preference-readers.md)
+- Related: [map-account-cache-and-capabilities → map-capability-probes-and-persisted-feature-flags](../data-and-offline/account-cache/map-capability-probes-and-persisted-feature-flags.md)
+- Related: [map-timer-state-holder-and-sync-service → map-account-timer-state-lifetime](../data-and-offline/timer-state-and-sync/map-account-timer-state-lifetime.md)
+- Related: [map-timer-state-holder-and-sync-service → map-online-timer-actions-and-native-control-failures](../data-and-offline/timer-state-and-sync/map-online-timer-actions-and-native-control-failures.md)
+- Related: [map-timer-state-holder-and-sync-service → map-timer-event-stream-and-service-lifetime](../data-and-offline/timer-state-and-sync/map-timer-event-stream-and-service-lifetime.md)
+- Related: [map-timer-state-holder-and-sync-service → map-timer-state-acceptance-and-persistence](../data-and-offline/timer-state-and-sync/map-timer-state-acceptance-and-persistence.md)
 <!-- kk:related:end -->
 
 <!-- kk:citations:start -->

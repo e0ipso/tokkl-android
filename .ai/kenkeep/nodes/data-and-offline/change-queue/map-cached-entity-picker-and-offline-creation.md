@@ -24,7 +24,9 @@ kk_confidence: high
 # Related
 
 - Related: [map-shared-timer-and-entry-fields](../../screens/timer-and-entry-editing/map-shared-timer-and-entry-fields.md)
-- Related: [map-account-cache-and-capabilities](../map-account-cache-and-capabilities.md)
+- Related: [map-account-cache-and-capabilities → map-account-cache-storage-and-history-window](../account-cache/map-account-cache-storage-and-history-window.md)
+- Related: [map-account-cache-and-capabilities → map-account-refresh-steps-and-preference-readers](../account-cache/map-account-refresh-steps-and-preference-readers.md)
+- Related: [map-account-cache-and-capabilities → map-capability-probes-and-persisted-feature-flags](../account-cache/map-capability-probes-and-persisted-feature-flags.md)
 <!-- kk:related:end -->
 
 <!-- kk:citations:start -->

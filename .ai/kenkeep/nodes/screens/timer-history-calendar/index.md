@@ -16,8 +16,8 @@ _None yet._
 - Open [**Cached history days and grouping**](map-cached-history-days-and-grouping.md) to learn about: Account-local history groups and pages cached stopped entries with reconnect-aware retention. #ui #timer #cache #time
 - Open [**Timer page layout and scroll-away header**](map-timer-page-layout-and-scroll-away-header.md) to learn about: Bounded Timer content and the shared scroll-away header adapt to short and wide windows. #ui #timer #android
 - Open [**Timer Today and This week totals**](map-timer-today-and-this-week-totals.md) to learn about: Cached real segments contribute once using account timezone, week start and duration formatting. #ui #timer #cache #time
-- Open [**Timer List and Calendar preference sync**](map-timer-list-and-calendar-preference-sync.md) to learn about: View selection persists locally and writes the supported server preference without blocking navigation. #ui #timer #offline
 - Open [**Week calendar layout and queued dragging**](map-week-calendar-layout-and-queued-dragging.md) to learn about: Adaptive week blocks, accessible navigation and snap-grid dragging operate on cached entries. #ui #timer #cache #accessibility
+- Open [**Timer List and Calendar preference sync**](map-timer-list-and-calendar-preference-sync.md) to learn about: View selection persists locally and writes the supported server preference without blocking navigation. #ui #timer #offline
 
 ## By topic
 
@@ -27,12 +27,12 @@ _None yet._
 - Open [**Entry form and account-time validation**](../timer-and-entry-editing/map-entry-form-and-account-time-validation.md) — Stopped and manual entry editing preserve untouched seconds and validate ranges in account time.
 ### #ui
 - Open [**Timer page layout and scroll-away header**](map-timer-page-layout-and-scroll-away-header.md) — Bounded Timer content and the shared scroll-away header adapt to short and wide windows.
-- Open [**Tokkl favorites storage and capability**](../timer-and-entry-editing/map-tokkl-favorites-storage-and-capability.md) — Favorite starts share cached fields while preference writes use supported server capabilities.
-- Open [**Timer List and Calendar preference sync**](map-timer-list-and-calendar-preference-sync.md) — View selection persists locally and writes the supported server preference without blocking navigation.
+- Open [**Signed-in navigation chrome and adaptive windows**](../session-and-navigation/map-signed-in-navigation-chrome-and-adaptive-windows.md) — Bar, rail, back-stack and width rules control signed-in page layout.
+- Open [**External navigation requests and intent consumption**](../session-and-navigation/navigation-state/map-external-navigation-requests-and-intent-consumption.md) — Features decode serializable taps, consume intent extras once, and retain pending requests through configuration changes and process death.
 ### #cache
 - Open [**Cached entity picker and offline creation**](../../data-and-offline/change-queue/map-cached-entity-picker-and-offline-creation.md) — Shared project, task and tag selection uses cached data and explicit offline creation limits.
-- Open [**Cached history days and grouping**](map-cached-history-days-and-grouping.md) — Account-local history groups and pages cached stopped entries with reconnect-aware retention.
-- Open [**Timer Today and This week totals**](map-timer-today-and-this-week-totals.md) — Cached real segments contribute once using account timezone, week start and duration formatting.
+- Open [**Account cache storage and history window**](../../data-and-offline/account-cache/map-account-cache-storage-and-history-window.md) — AccountCache exposes Room-backed model flows, while server refresh preserves unavailable data and account isolation.
+- Open [**Offline entry mutations and local ID mapping**](../../data-and-offline/change-queue/map-offline-entry-mutations-and-local-id-mapping.md) — Atomic local entry changes, full pending snapshots and negative-ID remapping.
 ### #time
 - Open [**Honor account clock formatting in time ports**](../../data-and-offline/typescript-time-ports/practice-honor-account-clock-formatting-in-time-ports.md) — formatTime matches the account 12-hour or 24-hour preference and server value semantics.
 - Open [**Match JavaScript decimal and percentage formatting**](../../data-and-offline/typescript-time-ports/practice-match-javascript-decimal-and-percentage-formatting.md) — Binary toFixed and shortest-decimal Intl formatting require separate helpers.

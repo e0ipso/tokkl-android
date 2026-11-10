@@ -23,8 +23,8 @@ _None._
 
 ### #ui
 - Open [**Timer page layout and scroll-away header**](../screens/timer-history-calendar/map-timer-page-layout-and-scroll-away-header.md) — Bounded Timer content and the shared scroll-away header adapt to short and wide windows.
-- Open [**Tokkl favorites storage and capability**](../screens/timer-and-entry-editing/map-tokkl-favorites-storage-and-capability.md) — Favorite starts share cached fields while preference writes use supported server capabilities.
-- Open [**Timer List and Calendar preference sync**](../screens/timer-history-calendar/map-timer-list-and-calendar-preference-sync.md) — View selection persists locally and writes the supported server preference without blocking navigation.
+- Open [**Signed-in navigation chrome and adaptive windows**](../screens/session-and-navigation/map-signed-in-navigation-chrome-and-adaptive-windows.md) — Bar, rail, back-stack and width rules control signed-in page layout.
+- Open [**External navigation requests and intent consumption**](../screens/session-and-navigation/navigation-state/map-external-navigation-requests-and-intent-consumption.md) — Features decode serializable taps, consume intent extras once, and retain pending requests through configuration changes and process death.
 ### #accessibility
 - Open [**Shared timer and entry fields**](../screens/timer-and-entry-editing/map-shared-timer-and-entry-fields.md) — Responsive field rows, picker dialogs and accessibility are shared between the timer and entry form.
 - Open [**Design foundation: spacing, shapes, type roles, option rows, brand and insets**](map-design-foundation-spacing-shapes-type-brand.md) — ui/theme and ui/ hold Tokkl's spacing, screen margin, corners, type roles, option rows and Brand, plus the edge-to-edge and keyboard setup.
@@ -37,8 +37,9 @@ _None._
 - Open [**UI components: TopBar, ErrorBanner, Scene, ScrollAwayColumn, and Compose layout gotchas**](map-ui-components-and-compose-layout-gotchas.md) — Shared ui/ pieces beyond the theme, plus fixes for a field under the keyboard, a dialog that never settles and the More sheet's navigation bar.
 - Open [**Give composables plain state from view models**](practice-composables-take-plain-state-from-view-models.md) — Screens read one immutable state from their view model; leaf composables get plain values and callbacks, never the cache or Koin.
 ### #architecture
-- Open [**Android stack: shipped UI, cache and native timer surfaces**](../build-and-tooling/map-planned-android-stack.md) — Compose, Room, WorkManager, OkHttp, Glance, the Quick Settings tile and favorite shortcuts are built.
-- Open [**Give composables plain state from view models**](practice-composables-take-plain-state-from-view-models.md) — Screens read one immutable state from their view model; leaf composables get plain values and callbacks, never the cache or Koin.
+- Open [**Core and feature module boundaries**](../build-and-tooling/android-build/gradle-and-modules/map-core-and-feature-module-boundaries.md) — Layered core modules expose only contract dependencies; features own routes and platform components.
+- Open [**Android stack: shipped UI, cache and native timer surfaces**](../build-and-tooling/android-build/map-planned-android-stack.md) — Compose, Room, WorkManager, OkHttp, Glance, the Quick Settings tile and favorite shortcuts are built.
+- Open [**App composition and lifecycle hooks**](../build-and-tooling/android-build/gradle-and-modules/map-app-composition-and-lifecycle-hooks.md) — Feature-owned Koin definitions, ordered AppHooks and injected dispatchers keep app wiring small.
 ### #brand
 - Open [**Show the wordmark only on sign-in and the launch splash, never in a header**](practice-wordmark-only-on-sign-in-and-splash.md) — Owner rule of 2026-10-19, now in the PRD: no wordmark in page headers or top bars, logo only as the launcher icon. Pages show their title.
 ### #design

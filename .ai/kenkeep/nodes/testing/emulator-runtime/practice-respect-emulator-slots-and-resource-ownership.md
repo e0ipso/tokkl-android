@@ -28,7 +28,7 @@ A run that tests on a device it did not boot, an attached phone or CI's emulator
 <!-- kk:related:start -->
 # Related
 
-- Related: [map-oom-kill-ends-agent-session](../../build-and-tooling/map-oom-kill-ends-agent-session.md)
+- Related: [map-oom-kill-ends-agent-session](../../build-and-tooling/host-runtime/map-oom-kill-ends-agent-session.md)
 - Related: [practice-test-against-a-real-tokkl-server](../practice-test-against-a-real-tokkl-server.md)
 - Related: [practice-use-the-instrumented-runner-and-its-device-selection](../instrumented-runner/practice-use-the-instrumented-runner-and-its-device-selection.md)
 <!-- kk:related:end -->

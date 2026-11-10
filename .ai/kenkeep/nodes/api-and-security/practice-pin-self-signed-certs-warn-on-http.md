@@ -33,6 +33,9 @@ The app keeps the token or password encrypted with a key in the Android Keystore
 <!-- kk:related:start -->
 # Related
 
-- Related: [map-api-client-shared-okhttp-serverurl-and-errors](map-api-client-shared-okhttp-serverurl-and-errors.md)
+- Related: [map-api-client-shared-okhttp-serverurl-and-errors → map-api-execution-retries-and-errors](api-client/map-api-execution-retries-and-errors.md)
+- Related: [map-api-client-shared-okhttp-serverurl-and-errors → map-api-test-fixtures](api-client/map-api-test-fixtures.md)
+- Related: [map-api-client-shared-okhttp-serverurl-and-errors → map-shared-http-client-and-configured-server-security](api-client/map-shared-http-client-and-configured-server-security.md)
+- Related: [map-api-client-shared-okhttp-serverurl-and-errors → map-typed-api-resources-and-request-contracts](api-client/map-typed-api-resources-and-request-contracts.md)
 - Related: [map-connection-trust-store-pinning-and-prompts](map-connection-trust-store-pinning-and-prompts.md)
 <!-- kk:related:end -->

@@ -34,6 +34,6 @@ Every dependency must be free software.
 <!-- kk:citations:start -->
 # Citations
 
-[1] [docs/PRD.md](../../../../docs/PRD.md)
+[1] [docs/PRD.md](../../../../../docs/PRD.md)
 [2] 9c8de91d-411b-498c-b4ed-241fabaa877e:map:0
 <!-- kk:citations:end -->

@@ -44,7 +44,9 @@ F-Droid's `AllowedAPKSigningKeys` takes the certificate's SHA-256 in lower-case 
 <!-- kk:related:start -->
 # Related
 
-- Related: [practice-reproducible-builds-project-key](practice-reproducible-builds-project-key.md)
+- Related: [practice-reproducible-builds-project-key → practice-compare-clean-unsigned-release-builds](reproducible-builds/practice-compare-clean-unsigned-release-builds.md)
+- Related: [practice-reproducible-builds-project-key → practice-pin-ci-actions-and-run-the-android-matrix](reproducible-builds/practice-pin-ci-actions-and-run-the-android-matrix.md)
+- Related: [practice-reproducible-builds-project-key → practice-sign-releases-and-verify-optimized-apks](reproducible-builds/practice-sign-releases-and-verify-optimized-apks.md)
 - Related: [practice-own-version-from-v0-1-0-tag](practice-own-version-from-v0-1-0-tag.md)
 - Related: [map-fdroid-metadata-release-artifacts](map-fdroid-metadata-release-artifacts.md)
 <!-- kk:related:end -->

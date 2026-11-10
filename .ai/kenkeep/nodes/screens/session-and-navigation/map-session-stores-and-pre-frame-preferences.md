@@ -34,7 +34,10 @@ The values the screens and the background read live in holders that load once, a
 
 - Related: [map-api-token-store-and-backup-exclusion](../../api-and-security/map-api-token-store-and-backup-exclusion.md)
 - Related: [map-tokkl-colour-tokens-and-font](../../design/map-tokkl-colour-tokens-and-font.md)
-- Related: [map-account-settings-source-and-account-time](../../data-and-offline/map-account-settings-source-and-account-time.md)
+- Related: [map-account-settings-source-and-account-time → map-account-settings-loading-and-refresh](../../data-and-offline/account-settings-and-time/map-account-settings-loading-and-refresh.md)
+- Related: [map-account-settings-source-and-account-time → map-account-time-fields-and-validation](../../data-and-offline/account-settings-and-time/map-account-time-fields-and-validation.md)
 - Related: [map-connection-trust-store-pinning-and-prompts](../../api-and-security/map-connection-trust-store-pinning-and-prompts.md)
-- Related: [map-account-cache-and-capabilities](../../data-and-offline/map-account-cache-and-capabilities.md)
+- Related: [map-account-cache-and-capabilities → map-account-cache-storage-and-history-window](../../data-and-offline/account-cache/map-account-cache-storage-and-history-window.md)
+- Related: [map-account-cache-and-capabilities → map-account-refresh-steps-and-preference-readers](../../data-and-offline/account-cache/map-account-refresh-steps-and-preference-readers.md)
+- Related: [map-account-cache-and-capabilities → map-capability-probes-and-persisted-feature-flags](../../data-and-offline/account-cache/map-capability-probes-and-persisted-feature-flags.md)
 <!-- kk:related:end -->

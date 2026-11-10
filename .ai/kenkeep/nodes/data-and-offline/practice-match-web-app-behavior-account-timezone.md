@@ -41,7 +41,8 @@ Write durations in the account's `duration_format` and clock times in its `timeo
 - Related: [practice-match-javascript-decimal-and-percentage-formatting](typescript-time-ports/practice-match-javascript-decimal-and-percentage-formatting.md)
 - Related: [practice-honor-account-clock-formatting-in-time-ports](typescript-time-ports/practice-honor-account-clock-formatting-in-time-ports.md)
 - Related: [practice-preserve-tokkl-timezone-conversion-and-database-limits](typescript-time-ports/practice-preserve-tokkl-timezone-conversion-and-database-limits.md)
-- Related: [map-account-settings-source-and-account-time](map-account-settings-source-and-account-time.md)
+- Related: [map-account-settings-source-and-account-time → map-account-settings-loading-and-refresh](account-settings-and-time/map-account-settings-loading-and-refresh.md)
+- Related: [map-account-settings-source-and-account-time → map-account-time-fields-and-validation](account-settings-and-time/map-account-time-fields-and-validation.md)
 <!-- kk:related:end -->
 
 <!-- kk:citations:start -->

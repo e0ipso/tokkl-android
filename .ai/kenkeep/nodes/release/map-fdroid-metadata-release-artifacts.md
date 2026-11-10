@@ -43,7 +43,9 @@ Nothing is submitted yet. Submitting means a merge request to gitlab.com/fdroid/
 # Related
 
 - Related: [map-release-signing-key-actions-secrets-and-signature-checks](map-release-signing-key-actions-secrets-and-signature-checks.md)
-- Related: [practice-reproducible-builds-project-key](practice-reproducible-builds-project-key.md)
+- Related: [practice-reproducible-builds-project-key → practice-compare-clean-unsigned-release-builds](reproducible-builds/practice-compare-clean-unsigned-release-builds.md)
+- Related: [practice-reproducible-builds-project-key → practice-pin-ci-actions-and-run-the-android-matrix](reproducible-builds/practice-pin-ci-actions-and-run-the-android-matrix.md)
+- Related: [practice-reproducible-builds-project-key → practice-sign-releases-and-verify-optimized-apks](reproducible-builds/practice-sign-releases-and-verify-optimized-apks.md)
 - Related: [map-app-id-license-android-versions](map-app-id-license-android-versions.md)
-- Related: [map-oom-kill-ends-agent-session](../build-and-tooling/map-oom-kill-ends-agent-session.md)
+- Related: [map-oom-kill-ends-agent-session](../build-and-tooling/host-runtime/map-oom-kill-ends-agent-session.md)
 <!-- kk:related:end -->

@@ -42,9 +42,9 @@ When a session ends with no explanation, check `journalctl -k | grep 'Killed pro
 # Related
 
 - Related: [map-t3-daily-restart-stops-agent-sessions](map-t3-daily-restart-stops-agent-sessions.md)
-- Related: [practice-choose-plain-aosp-images-and-compatible-renderers](../testing/emulator-runtime/practice-choose-plain-aosp-images-and-compatible-renderers.md)
-- Related: [practice-respect-emulator-slots-and-resource-ownership](../testing/emulator-runtime/practice-respect-emulator-slots-and-resource-ownership.md)
-- Related: [practice-let-the-runner-own-emulator-boot-and-settings](../testing/emulator-runtime/practice-let-the-runner-own-emulator-boot-and-settings.md)
-- Related: [practice-clean-up-only-owned-emulator-resources](../testing/emulator-runtime/practice-clean-up-only-owned-emulator-resources.md)
-- Related: [practice-account-for-emulator-recording-and-screenshot-quirks](../testing/emulator-runtime/practice-account-for-emulator-recording-and-screenshot-quirks.md)
+- Related: [practice-choose-plain-aosp-images-and-compatible-renderers](../../testing/emulator-runtime/practice-choose-plain-aosp-images-and-compatible-renderers.md)
+- Related: [practice-respect-emulator-slots-and-resource-ownership](../../testing/emulator-runtime/practice-respect-emulator-slots-and-resource-ownership.md)
+- Related: [practice-let-the-runner-own-emulator-boot-and-settings](../../testing/emulator-runtime/practice-let-the-runner-own-emulator-boot-and-settings.md)
+- Related: [practice-clean-up-only-owned-emulator-resources](../../testing/emulator-runtime/practice-clean-up-only-owned-emulator-resources.md)
+- Related: [practice-account-for-emulator-recording-and-screenshot-quirks](../../testing/emulator-runtime/practice-account-for-emulator-recording-and-screenshot-quirks.md)
 <!-- kk:related:end -->

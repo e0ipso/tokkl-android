@@ -26,7 +26,8 @@ With Tokkl preference support, a change shows immediately and POSTs only `pomodo
 <!-- kk:related:start -->
 # Related
 
-- Related: [map-account-settings-source-and-account-time](map-account-settings-source-and-account-time.md)
+- Related: [map-account-settings-source-and-account-time → map-account-settings-loading-and-refresh](account-settings-and-time/map-account-settings-loading-and-refresh.md)
+- Related: [map-account-settings-source-and-account-time → map-account-time-fields-and-validation](account-settings-and-time/map-account-time-fields-and-validation.md)
 - Related: [practice-check-capabilities-not-server-version](../api-and-security/practice-check-capabilities-not-server-version.md)
 <!-- kk:related:end -->
 

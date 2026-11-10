@@ -26,7 +26,9 @@ kk_confidence: high
 # Related
 
 - Related: [practice-never-wait-for-server-on-start-stop](../practice-never-wait-for-server-on-start-stop.md)
-- Related: [map-account-cache-and-capabilities](../map-account-cache-and-capabilities.md)
+- Related: [map-account-cache-and-capabilities → map-account-cache-storage-and-history-window](../account-cache/map-account-cache-storage-and-history-window.md)
+- Related: [map-account-cache-and-capabilities → map-account-refresh-steps-and-preference-readers](../account-cache/map-account-refresh-steps-and-preference-readers.md)
+- Related: [map-account-cache-and-capabilities → map-capability-probes-and-persisted-feature-flags](../account-cache/map-capability-probes-and-persisted-feature-flags.md)
 - Related: [map-timer-controls-and-cached-start-suggestions](../../screens/timer-and-entry-editing/map-timer-controls-and-cached-start-suggestions.md)
 <!-- kk:related:end -->
 

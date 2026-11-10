@@ -24,7 +24,9 @@ Version 5 adds `pending_changes.held` and `pending_changes.refusal`; version 6 a
 # Related
 
 - Related: [map-offline-entry-mutations-and-local-id-mapping](map-offline-entry-mutations-and-local-id-mapping.md)
-- Related: [map-account-cache-and-capabilities](../map-account-cache-and-capabilities.md)
+- Related: [map-account-cache-and-capabilities → map-account-cache-storage-and-history-window](../account-cache/map-account-cache-storage-and-history-window.md)
+- Related: [map-account-cache-and-capabilities → map-account-refresh-steps-and-preference-readers](../account-cache/map-account-refresh-steps-and-preference-readers.md)
+- Related: [map-account-cache-and-capabilities → map-capability-probes-and-persisted-feature-flags](../account-cache/map-capability-probes-and-persisted-feature-flags.md)
 <!-- kk:related:end -->
 
 <!-- kk:citations:start -->
