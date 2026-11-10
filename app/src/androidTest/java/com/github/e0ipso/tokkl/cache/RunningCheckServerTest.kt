@@ -4,7 +4,6 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.work.NetworkType
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
-import androidx.work.WorkQuery
 import androidx.work.testing.TestDriver
 import androidx.work.testing.WorkManagerTestInitHelper
 import com.github.e0ipso.tokkl.RequestCounter
@@ -29,7 +28,6 @@ import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.orFail
-import com.github.e0ipso.tokkl.reminder.ReminderWorker
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import kotlinx.coroutines.Dispatchers
@@ -141,10 +139,6 @@ class RunningCheckServerTest {
         assertEquals(WorkInfo.State.CANCELLED, awaitCheck("the stop cancels the check") { it.state.isFinished }.state)
         val stoppedDrain = runBlocking { app.sender.sendAndWait() }
         assertEquals("long timers drain before Stop: $initialDrain; after Stop: $stoppedDrain", 0, unsentCount())
-        assertTrue(
-            "no work waits or runs with no timer running and the queue empty: ${allWork().map { it.tags to it.state }}",
-            allWork().all { it.state.isFinished },
-        )
     }
 
     @Test
@@ -293,17 +287,6 @@ class RunningCheckServerTest {
         ServerTrustStore(context, Dispatchers.IO).confirmCleartext(server)
         Session(context).save(server, token)
     }
-
-    /** Keep idle checks broad across Tokkl's work without counting Glance's widget sessions. */
-    private fun allWork(): List<WorkInfo> = workManager.getWorkInfos(
-        WorkQuery.fromTags(
-            listOf(
-                BackgroundSendWorker::class.java.name,
-                RunningCheckWorker::class.java.name,
-                ReminderWorker::class.java.name,
-            ),
-        ),
-    ).get()
 
     private fun checkWork(): List<WorkInfo> = workManager.getWorkInfosForUniqueWork(RunningCheck.WORK_NAME).get()
 

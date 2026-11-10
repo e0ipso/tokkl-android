@@ -10,9 +10,11 @@ import com.github.e0ipso.tokkl.api.TimerViewChange
 import com.github.e0ipso.tokkl.api.mePreferences
 import com.github.e0ipso.tokkl.session.CurrentAccount
 import com.github.e0ipso.tokkl.storage.ClearableStore
+import com.github.e0ipso.tokkl.storage.InMemoryValueStore
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -29,13 +31,72 @@ import java.io.IOException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-/** Sign-out's order for one synced preference: the file goes last, after every write in flight. */
+/** Preference changes, refreshes and sign-out while disk or server writes are in flight. */
 class SyncedPreferenceTest {
 
     private val scheduler = TestCoroutineScheduler()
     private val dispatcher = StandardTestDispatcher(scheduler)
     private val scope = CoroutineScope(dispatcher)
     private val account = CurrentAccount(scope)
+
+    /** A second refresh can read the old server value while the first refresh's offline retry is in flight. */
+    @Test
+    fun anOfflineRetryAcknowledgedDuringTheNextRefreshKeepsTheLocalChoice() {
+        val release = CountDownLatch(1)
+        val server = MockWebServer()
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                assertTrue(release.await(10, TimeUnit.SECONDS))
+                return MockResponse.Builder().code(200).body("{}").build()
+            }
+        }
+        server.start()
+        val background = CoroutineScope(Dispatchers.IO)
+        try {
+            val url = checkNotNull(ServerUrl.parse(server.url("/").toString()))
+            val testApi = TestApi(url).apply { trust = InMemoryServerTrust(url) }
+            val api = testApi.api(url, ApiCredentials.ApiToken("test"))
+            var online = false
+            val preference = SyncedPreference(
+                InMemoryValueStore<StoredPreference<Int>>(null),
+                { api.takeIf { online } },
+                CurrentAccount(background),
+                background,
+                Dispatchers.IO,
+                default = 0,
+                codec = Sent,
+                sharing = { true },
+            )
+            runBlocking {
+                preference.ready()
+                preference.change(5).join()
+            }
+            online = true
+            val retry = runBlocking { preference.refreshed(mePreferences("{}"), keepsPreferences = true) }
+            assertNotNull(server.takeRequest(10, TimeUnit.SECONDS))
+            // The next refresh read the old preference before this POST completed.
+            val stale = mePreferences("{}")
+            release.countDown()
+            runBlocking {
+                retry.join()
+                preference.refreshed(stale, keepsPreferences = true).join()
+            }
+
+            assertEquals(
+                "the acknowledgement cannot make an older read overwrite the choice",
+                5,
+                preference.value.value,
+            )
+            assertEquals(1, server.requestCount)
+            // A later refresh still takes a change made on another device.
+            runBlocking { preference.refreshed(mePreferences("{}"), keepsPreferences = true).join() }
+            assertEquals(0, preference.value.value)
+        } finally {
+            release.countDown()
+            background.cancel()
+            server.close()
+        }
+    }
 
     @Test
     fun signOutDeletesTheFileAfterAWriteInFlight() {
