@@ -19,6 +19,11 @@ import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import com.github.e0ipso.tokkl.timerstate.countedTimerEntries
 import com.github.e0ipso.tokkl.timerstate.countsFrom
 import com.github.e0ipso.tokkl.timerstate.timerEntrySeconds
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import java.security.MessageDigest
 import java.time.Clock
 import java.time.Duration
@@ -239,12 +244,98 @@ fun chronometerBase(start: Instant, now: Instant, elapsedRealtime: Long, accumul
     ).toMillis().coerceAtLeast(0) - Duration.ofSeconds(accumulatedSeconds).toMillis()
 
 /**
- * Changes with everything the widget shows, so the widget updates only when it would look
- * different. A SHA-256 hash, so the store that keeps it holds no description or name.
+ * Changes with everything the widget shows and every target its actions carry, so the widget
+ * updates only when it would look different or act on something else. Each value goes into JSON
+ * on its own, so a tag named "a, b" never reads as the tags "a" and "b". A SHA-256 hash, so the
+ * store that keeps it holds no description or name.
  */
 fun WidgetState.key(): String {
-    val digest = MessageDigest.getInstance("SHA-256").digest(toString().toByteArray(Charsets.UTF_8))
+    val content = when (this) {
+        WidgetState.NoAccount -> buildJsonObject { put("state", "no-account") }
+
+        is WidgetState.Ready -> buildJsonObject {
+            put("state", "ready")
+            put("account", account)
+            put("running", running?.keyContent() ?: JsonNull)
+            put("favorites", JsonArray(favorites.map { it.keyContent() }))
+            put("paused", paused?.keyContent() ?: JsonNull)
+            put("day", day?.keyContent() ?: JsonNull)
+        }
+    }
+    val digest = MessageDigest.getInstance("SHA-256").digest(content.toString().toByteArray(Charsets.UTF_8))
     return digest.joinToString("") { "%02x".format(it) }
+}
+
+private fun WidgetRunning.keyContent() = buildJsonObject {
+    put("entryId", entryId.value)
+    put("description", description)
+    put("project", project)
+    put("task", task)
+    put("start", start.toString())
+    put("accumulatedSeconds", accumulatedSeconds)
+    put("target", target.keyContent())
+    put("pausable", pausable)
+    put("projectColor", projectColor)
+}
+
+private fun WidgetPaused.keyContent() = buildJsonObject {
+    put("description", description)
+    put("project", project)
+    put("task", task)
+    put("seconds", seconds)
+    put("target", target.keyContent())
+    put("projectColor", projectColor)
+}
+
+private fun WidgetFavorite.keyContent() = buildJsonObject {
+    put("description", fields.description)
+    put("projectId", fields.projectId?.value)
+    put("taskId", fields.taskId?.value)
+    put("tags", JsonArray(fields.tags.map(::JsonPrimitive)))
+    put("billable", fields.billable)
+    put("project", project)
+    put("task", task)
+}
+
+private fun WidgetDayReport.keyContent() = buildJsonObject {
+    put("date", date.toString())
+    put("stoppedSeconds", stoppedSeconds)
+    put("stoppedBillableSeconds", stoppedBillableSeconds)
+    put("entryCount", entryCount)
+    put(
+        "projects",
+        JsonArray(
+            projects.map { row ->
+                buildJsonObject {
+                    put("projectId", row.projectId?.value)
+                    put("project", row.project)
+                    put("projectColor", row.projectColor)
+                    put("stoppedSeconds", row.stoppedSeconds)
+                    put("formattedStopped", row.formattedStopped)
+                    put("running", row.running)
+                }
+            },
+        ),
+    )
+    put(
+        "running",
+        running?.let {
+            buildJsonObject {
+                put("entryId", it.entryId.value)
+                put("start", it.start.toString())
+                put("billable", it.billable)
+            }
+        } ?: JsonNull,
+    )
+    put("durationFormat", durationFormat.name)
+}
+
+private fun TimerTarget.keyContent() = buildJsonObject {
+    put("account", account)
+    when (val target = this@keyContent) {
+        is TimerTarget.Running -> put("entryId", target.entryId.value)
+        is TimerTarget.Paused -> put("revision", target.revision)
+    }
 }
 
 /** Sizes shared by responsive fitting and the widget layout, in dp. */

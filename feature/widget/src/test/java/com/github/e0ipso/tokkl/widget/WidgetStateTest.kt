@@ -96,6 +96,7 @@ class WidgetStateTest {
         settings: AccountSettings = this.settings,
         now: Instant = start.plusSeconds(1_800),
         serverIdOf: Map<LocalEntryId, EntryId> = emptyMap(),
+        favorites: List<Favorite> = this.favorites,
     ) = widgetState(
         workspaceId,
         ServerTimerStates.ACCOUNT,
@@ -316,6 +317,14 @@ class WidgetStateTest {
         assertNotEquals("a later revision, which Resume sends", paused(3).key(), paused(5).key())
         assertNotEquals("other fields at Pause", paused(3).key(), paused(3, EntryFields("Edited")).key())
         assertNotEquals("Pause no longer offered", state().key(), state(timerApi = false).key())
+    }
+
+    /** A template whose tags change from "a" and "b" to one tag "a, b" draws and starts other tags. */
+    @Test
+    fun keysDistinguishTemplateTagNamesContainingSeparators() {
+        fun tags(vararg names: String) = state(favorites = listOf(favorites[0].copy(tags = names.toList()))).key()
+
+        assertNotEquals(tags("a, b"), tags("a", "b"))
     }
 
     @Test
