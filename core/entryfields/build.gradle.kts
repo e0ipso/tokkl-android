@@ -5,10 +5,6 @@ plugins {
     alias(libs.plugins.tokkl.android.library.compose)
 }
 
-android {
-    namespace = "com.github.e0ipso.tokkl.core.entryfields"
-}
-
 dependencies {
     // The fields and the picker's options are the model's projects, tasks, tags and entries, in
     // the account's time.
@@ -19,6 +15,4 @@ dependencies {
 
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui)
-
-    testImplementation(libs.junit)
 }

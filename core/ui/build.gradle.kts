@@ -5,7 +5,6 @@ plugins {
 }
 
 android {
-    namespace = "com.github.e0ipso.tokkl.core.ui"
     // The WCAG contrast check, for the theme's tests here and the app's.
     testFixtures.enable = true
 }
@@ -15,7 +14,6 @@ dependencies {
     implementation(libs.androidx.compose.material3.adaptive)
     implementation(libs.androidx.compose.ui)
 
-    testImplementation(libs.junit)
     testFixturesImplementation(platform(libs.androidx.compose.bom))
     testFixturesImplementation(libs.androidx.compose.ui)
 }

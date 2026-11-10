@@ -8,10 +8,6 @@ plugins {
     alias(libs.plugins.room)
 }
 
-android {
-    namespace = "com.github.e0ipso.tokkl.core.cache"
-}
-
 // Room writes the schema of each database version here. The files are tracked,
 // so a later version can be checked against them and migrated.
 room {
@@ -37,8 +33,6 @@ dependencies {
     implementation(libs.koin.android)
     implementation(libs.koin.androidx.workmanager)
 
-    testImplementation(libs.junit)
-    testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockwebserver3)
     testImplementation(testFixtures(project(":core:api")))
     testImplementation(testFixtures(project(":core:platform")))

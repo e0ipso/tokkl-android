@@ -3,6 +3,3 @@ plugins {
     alias(libs.plugins.tokkl.jvm.library)
 }
 
-dependencies {
-    testImplementation(libs.junit)
-}

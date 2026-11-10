@@ -7,7 +7,6 @@ plugins {
 }
 
 android {
-    namespace = "com.github.e0ipso.tokkl.core.session"
     // The fakes of the session's roles and the in-memory capabilities and account settings that
     // the unit tests of the modules above it share.
     testFixtures.enable = true
@@ -25,8 +24,6 @@ dependencies {
     implementation(platform(libs.koin.bom))
     implementation(libs.koin.android)
 
-    testImplementation(libs.junit)
-    testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockwebserver3)
     testImplementation(testFixtures(project(":core:api")))
     testImplementation(testFixtures(project(":core:platform")))

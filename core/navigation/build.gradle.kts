@@ -6,10 +6,6 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
-android {
-    namespace = "com.github.e0ipso.tokkl.core.navigation"
-}
-
 dependencies {
     // The entry form's route carries the model's ids.
     api(project(":core:model"))
@@ -21,6 +17,4 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     // A feature's notice in the signed-in frame takes the frame's modifier.
     implementation(libs.androidx.compose.ui)
-
-    testImplementation(libs.junit)
 }

@@ -7,7 +7,6 @@ plugins {
 }
 
 android {
-    namespace = "com.github.e0ipso.tokkl.core.timerstate"
     // The server timer states that the unit tests of this module and of the modules above it share.
     testFixtures.enable = true
 }
@@ -23,8 +22,6 @@ dependencies {
     implementation(platform(libs.koin.bom))
     implementation(libs.koin.android)
 
-    testImplementation(libs.junit)
-    testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockwebserver3)
     testImplementation(testFixtures(project(":core:api")))
     // The fixtures build the server's timer states, the API's wire types.

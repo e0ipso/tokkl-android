@@ -9,6 +9,4 @@ plugins {
 dependencies {
     // The ids are @Serializable, so routes and server shapes can hold them.
     api(libs.kotlinx.serialization.core)
-
-    testImplementation(libs.junit)
 }

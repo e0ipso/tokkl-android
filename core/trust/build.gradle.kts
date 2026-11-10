@@ -4,10 +4,6 @@ plugins {
     alias(libs.plugins.tokkl.android.library.compose)
 }
 
-android {
-    namespace = "com.github.e0ipso.tokkl.core.trust"
-}
-
 dependencies {
     // The prompts show the API's refused requests, and the session stores what the user trusts.
     implementation(project(":core:api"))
@@ -20,8 +16,6 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui)
 
-    testImplementation(libs.junit)
-    testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockwebserver3)
     testImplementation(testFixtures(project(":core:api")))
 }

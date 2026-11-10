@@ -51,6 +51,12 @@ internal fun Project.configureCompose(android: CommonExtension) {
     dependencies.add("debugImplementation", libs.findLibrary("androidx-compose-ui-tooling").get())
 }
 
+/** JUnit 4 and the coroutines test library, which every module's unit tests use. */
+internal fun Project.addUnitTestLibraries() {
+    dependencies.add("testImplementation", libs.findLibrary("junit").get())
+    dependencies.add("testImplementation", libs.findLibrary("kotlinx-coroutines-test").get())
+}
+
 internal val Project.libs: VersionCatalog
     get() = extensions.getByType<VersionCatalogsExtension>().named("libs")
 

@@ -27,6 +27,7 @@ class JvmLibraryConventionPlugin : Plugin<Project> {
         keepLintAnalysisToThisCheckout()
         configureDetekt()
         configureAndroidApiCheck()
+        addUnitTestLibraries()
     }
 }
 

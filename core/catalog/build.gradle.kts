@@ -5,10 +5,6 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
-android {
-    namespace = "com.github.e0ipso.tokkl.core.catalog"
-}
-
 dependencies {
     // The model carries the API's errors.
     api(project(":core:api"))
@@ -24,6 +20,5 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui)
 
-    testImplementation(libs.junit)
     testImplementation(testFixtures(project(":core:session")))
 }

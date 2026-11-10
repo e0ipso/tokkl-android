@@ -22,7 +22,5 @@ dependencies {
     testFixturesApi(libs.okhttp)
     testFixturesApi(libs.kotlinx.serialization.json)
 
-    testImplementation(libs.junit)
-    testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockwebserver3)
 }

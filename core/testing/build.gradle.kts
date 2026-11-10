@@ -6,10 +6,6 @@ plugins {
     alias(libs.plugins.tokkl.android.library)
 }
 
-android {
-    namespace = "com.github.e0ipso.tokkl.core.testing"
-}
-
 dependencies {
     // The length card matchers find the stepper cards of the design system by their test tag.
     implementation(project(":core:ui"))

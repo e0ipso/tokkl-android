@@ -7,10 +7,6 @@ plugins {
     alias(libs.plugins.tokkl.android.library)
 }
 
-android {
-    namespace = "com.github.e0ipso.tokkl.core.timersync"
-}
-
 dependencies {
     implementation(project(":core:api"))
     implementation(project(":core:platform"))
@@ -25,8 +21,6 @@ dependencies {
     implementation(libs.koin.android)
     implementation(libs.koin.androidx.workmanager)
 
-    testImplementation(libs.junit)
-    testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockwebserver3)
     testImplementation(testFixtures(project(":core:api")))
     testImplementation(testFixtures(project(":core:platform")))
