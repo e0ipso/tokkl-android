@@ -16,6 +16,7 @@ import com.github.e0ipso.tokkl.TimerActionToasts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.HttpMethod
+import com.github.e0ipso.tokkl.api.ReminderChange
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.api.api
@@ -286,8 +287,8 @@ class ReminderServerTest {
                 HttpMethod.POST,
                 account.client.server.api("me", "preferences"),
                 buildJsonObject {
-                    put(ReminderPreferences.ENABLED_KEY, false)
-                    put(ReminderPreferences.HOURS_KEY, 12)
+                    put(ReminderChange.ENABLED, false)
+                    put(ReminderChange.HOURS, 12)
                 },
                 JsonObject.serializer(),
             )

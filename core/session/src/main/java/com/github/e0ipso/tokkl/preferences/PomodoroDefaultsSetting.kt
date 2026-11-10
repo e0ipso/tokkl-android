@@ -4,11 +4,8 @@ import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.MePreferences
 import com.github.e0ipso.tokkl.api.PomodoroDefaultsChange
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
-import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.CurrentAccount
-import com.github.e0ipso.tokkl.session.SignOutPhase
 import com.github.e0ipso.tokkl.storage.ClearableStore
-import com.github.e0ipso.tokkl.storage.StartupLoad
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
@@ -63,69 +60,35 @@ typealias StoredPomodoroDefaults = StoredPreference<PomodoroDefaults>
 class PomodoroDefaultsSetting(
     store: ClearableStore<StoredPomodoroDefaults>,
     client: ApiClientProvider,
-    private val capabilities: CapabilitiesSource,
+    capabilities: CapabilitiesSource,
     account: CurrentAccount,
     scope: CoroutineScope,
     io: CoroutineContext,
-) : AccountDataOwner,
-    StartupLoad {
+) : SyncedPreference<PomodoroDefaults>(
+    store,
+    client,
+    account,
+    scope,
+    io,
+    default = PomodoroDefaults.DEFAULT,
+    codec = object : PreferenceCodec<PomodoroDefaults> {
+        override fun loaded(value: PomodoroDefaults) = value.clamped()
 
-    override val signOutPhase = SignOutPhase.CLEAR_DATA
+        override fun fromServer(preferences: MePreferences) = preferences.pomodoroDefaults()
 
-    override suspend fun forgetAccount() {
-        forget()
-        preference.clear()
-    }
-
-    private val preference = SyncedPreference(
-        store,
-        client,
-        account,
-        scope,
-        io,
-        default = PomodoroDefaults.DEFAULT,
-        codec = object : PreferenceCodec<PomodoroDefaults> {
-            override fun loaded(value: PomodoroDefaults) = value.clamped()
-
-            override fun fromServer(preferences: MePreferences) = preferences.pomodoroDefaults()
-
-            override fun body(value: PomodoroDefaults) = value.preferencesBody()
-        },
-        sharing = { capabilities.keepsPreferences() },
-    )
+        override fun body(value: PomodoroDefaults) = value.preferencesBody()
+    },
+    sharing = { capabilities.keepsPreferences() },
+) {
 
     /** The values a new session starts with, always within their ranges. */
-    val defaults: StateFlow<PomodoroDefaults> get() = preference.value
+    val defaults: StateFlow<PomodoroDefaults> get() = value
 
     /** [defaults] once loaded, for readers that may run before the load ends. */
-    val loadedDefaults: Flow<PomodoroDefaults> get() = preference.loaded
+    val loadedDefaults: Flow<PomodoroDefaults> get() = loaded
 
-    override val isReady: Boolean get() = preference.isReady
-
-    override suspend fun ready() = preference.ready()
-
-    /** Clamps [defaults] to their ranges first. Call it on the main thread. */
-    fun change(defaults: PomodoroDefaults): Job = preference.change(defaults.clamped())
-
-    suspend fun refreshed(preferences: MePreferences?, keepsPreferences: Boolean) {
-        preference.refreshed(preferences, keepsPreferences)
-    }
-
-    /**
-     * Goes back to Tokkl's defaults with nothing unsent. Signing out calls this once the client is
-     * gone, so no send can succeed, and then deletes the stored values.
-     */
-    suspend fun forget() {
-        preference.forget()
-    }
-
-    internal companion object {
-        /** Tokkl's preference keys, in the order of [PomodoroDefaults]'s values. */
-        const val WORK_MINUTES_KEY = PomodoroDefaultsChange.WORK_MINUTES
-        const val SHORT_REST_MINUTES_KEY = PomodoroDefaultsChange.SHORT_REST_MINUTES
-        const val LONG_REST_MINUTES_KEY = PomodoroDefaultsChange.LONG_REST_MINUTES
-        const val LONG_REST_EVERY_KEY = PomodoroDefaultsChange.LONG_REST_EVERY
-    }
+    /** Clamps [value] to their ranges first. Call it on the main thread. */
+    override fun change(value: PomodoroDefaults): Job = super.change(value.clamped())
 }
 
 /** The change `POST /api/v9/me/preferences` sends: the four keys, clamped, and nothing else. */
@@ -148,22 +111,22 @@ internal fun MePreferences.pomodoroDefaults(): PomodoroDefaults {
     val default = PomodoroDefaults.DEFAULT
     return PomodoroDefaults(
         workMinutes = integerIn(
-            PomodoroDefaultsSetting.WORK_MINUTES_KEY,
+            PomodoroDefaultsChange.WORK_MINUTES,
             PomodoroDefaults.WORK_MINUTES,
             default.workMinutes,
         ),
         shortRestMinutes = integerIn(
-            PomodoroDefaultsSetting.SHORT_REST_MINUTES_KEY,
+            PomodoroDefaultsChange.SHORT_REST_MINUTES,
             PomodoroDefaults.SHORT_REST_MINUTES,
             default.shortRestMinutes,
         ),
         longRestMinutes = integerIn(
-            PomodoroDefaultsSetting.LONG_REST_MINUTES_KEY,
+            PomodoroDefaultsChange.LONG_REST_MINUTES,
             PomodoroDefaults.LONG_REST_MINUTES,
             default.longRestMinutes,
         ),
         longRestEvery = integerIn(
-            PomodoroDefaultsSetting.LONG_REST_EVERY_KEY,
+            PomodoroDefaultsChange.LONG_REST_EVERY,
             PomodoroDefaults.LONG_REST_EVERY,
             default.longRestEvery,
         ),

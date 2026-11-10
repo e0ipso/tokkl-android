@@ -9,11 +9,8 @@ import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.preferences.PreferenceCodec
 import com.github.e0ipso.tokkl.preferences.StoredPreference
 import com.github.e0ipso.tokkl.preferences.SyncedPreference
-import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.CurrentAccount
-import com.github.e0ipso.tokkl.session.SignOutPhase
 import com.github.e0ipso.tokkl.storage.ClearableStore
-import com.github.e0ipso.tokkl.storage.StartupLoad
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import kotlin.coroutines.CoroutineContext
@@ -39,67 +36,29 @@ typealias StoredTimerView = StoredPreference<TimerView>
 class TimerViewSetting(
     store: ClearableStore<StoredTimerView>,
     client: ApiClientProvider,
-    private val capabilities: CapabilitiesSource,
+    capabilities: CapabilitiesSource,
     account: CurrentAccount,
     scope: CoroutineScope,
     io: CoroutineContext,
-) : AccountDataOwner,
-    StartupLoad {
+) : SyncedPreference<TimerView>(
+    store,
+    client,
+    account,
+    scope,
+    io,
+    default = TimerView.LIST,
+    codec = object : PreferenceCodec<TimerView> {
+        override fun fromServer(preferences: MePreferences) = preferences.timerView()
 
-    override val signOutPhase = SignOutPhase.CLEAR_DATA
+        override fun body(value: TimerView) = TimerViewChange(value.preferenceValue)
+    },
+    sharing = { capabilities.keepsPreferences() },
+) {
 
-    override suspend fun forgetAccount() {
-        forget()
-        preference.clear()
-    }
-
-    private val preference = SyncedPreference(
-        store,
-        client,
-        account,
-        scope,
-        io,
-        default = TimerView.LIST,
-        codec = object : PreferenceCodec<TimerView> {
-            override fun fromServer(preferences: MePreferences) = preferences.timerView()
-
-            override fun body(value: TimerView) = TimerViewChange(value.preferenceValue)
-        },
-        sharing = { capabilities.keepsPreferences() },
-    )
-
-    val view: StateFlow<TimerView> get() = preference.value
-
-    override val isReady: Boolean get() = preference.isReady
-
-    override suspend fun ready() = preference.ready()
+    val view: StateFlow<TimerView> get() = value
 
     /** Shows [view] at once, keeps it on the phone and sends it to the server in the background. */
-    fun choose(view: TimerView) {
-        preference.change(view)
-    }
-
-    /**
-     * Takes the refresh's `GET /api/v9/me/preferences`, null when it failed, from a server that
-     * keeps Tokkl's preferences when `keepsTimerView`. Sends an unsent choice instead of reading
-     * the server's.
-     */
-    suspend fun refreshed(preferences: MePreferences?, keepsTimerView: Boolean) {
-        preference.refreshed(preferences, keepsTimerView)
-    }
-
-    /**
-     * Goes back to List with nothing unsent. Signing out calls this once the client is gone, so no
-     * send can succeed, and then deletes the stored view.
-     */
-    suspend fun forget() {
-        preference.forget()
-    }
-
-    internal companion object {
-        /** Tokkl's preference key, which ../tokkl/packages/api/src/models/users.ts accepts as list or calendar. */
-        const val PREFERENCE = TimerViewChange.KEY
-    }
+    fun choose(view: TimerView) = change(view)
 }
 
 /**
@@ -107,7 +66,7 @@ class TimerViewSetting(
  * nothing, as TimerPage.tsx reads it.
  */
 internal fun MePreferences.timerView(): TimerView {
-    val value = string(TimerViewSetting.PREFERENCE)
+    val value = string(TimerViewChange.KEY)
     return TimerView.entries.firstOrNull { it.preferenceValue == value } ?: TimerView.LIST
 }
 

@@ -36,9 +36,9 @@ internal class AppRefreshSteps(
         val api = reads.api
         val flags = capabilities.refresh(api, me, timerStates.intake())
         cache.refresh(api, me, preferences, flags)
-        timerView.refreshed(preferences, keepsTimerView = flags.favorites)
+        timerView.refreshed(preferences, keepsPreferences = flags.favorites)
         pomodoroDefaults.refreshed(preferences, keepsPreferences = flags.favorites)
-        reminder.refreshed(preferences, tokkl = flags.favorites)
+        reminder.refreshed(preferences, keepsPreferences = flags.favorites)
         sendQueue()
         timerSync.follow()
     }

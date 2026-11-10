@@ -75,7 +75,7 @@ class TimerViewSettingTest {
             """{"timerView":null}""" to TimerView.LIST,
         )
         for ((preferences, view) in cases) {
-            setting.refreshed(preferences(preferences), keepsTimerView = true)
+            setting.refreshed(preferences(preferences), keepsPreferences = true)
 
             assertEquals(preferences, view, setting.view.value)
             assertEquals(preferences, StoredTimerView(view, unsent = false), saved.last())
@@ -100,10 +100,10 @@ class TimerViewSettingTest {
         assertEquals("""{"timerView":"calendar"}""", request.body?.utf8())
         assertEquals(StoredTimerView(TimerView.CALENDAR, unsent = false), saved.last())
 
-        setting.refreshed(preferences("""{"timerView":"list"}"""), keepsTimerView = true)
+        setting.refreshed(preferences("""{"timerView":"list"}"""), keepsPreferences = true)
         assertEquals("the refresh may predate the tap", TimerView.CALENDAR, setting.view.value)
 
-        setting.refreshed(preferences("""{"timerView":"list"}"""), keepsTimerView = true)
+        setting.refreshed(preferences("""{"timerView":"list"}"""), keepsPreferences = true)
         assertEquals("the web app chose List since", TimerView.LIST, setting.view.value)
     }
 
@@ -120,7 +120,7 @@ class TimerViewSettingTest {
         val failed = server.requestCount
 
         server.enqueue(ok())
-        setting.refreshed(preferences("""{"timerView":"list"}"""), keepsTimerView = true)
+        setting.refreshed(preferences("""{"timerView":"list"}"""), keepsPreferences = true)
 
         assertEquals(TimerView.CALENDAR, setting.view.value)
         assertEquals("the refresh posted the choice", failed + 1, server.requestCount)
@@ -132,7 +132,7 @@ class TimerViewSettingTest {
         server.enqueue(ok())
         val setting = setting(initial = StoredTimerView(TimerView.CALENDAR, unsent = true))
 
-        setting.refreshed(preferences("""{}"""), keepsTimerView = true)
+        setting.refreshed(preferences("""{}"""), keepsPreferences = true)
 
         assertEquals(TimerView.CALENDAR, setting.view.value)
         assertEquals("""{"timerView":"calendar"}""", server.takeRequest().body?.utf8())
@@ -145,7 +145,7 @@ class TimerViewSettingTest {
         val setting = setting(keepsTimerView = false)
 
         setting.choose(TimerView.CALENDAR)
-        setting.refreshed(preferences("""{}"""), keepsTimerView = false)
+        setting.refreshed(preferences("""{}"""), keepsPreferences = false)
 
         assertEquals(TimerView.CALENDAR, setting.view.value)
         assertEquals(StoredTimerView(TimerView.CALENDAR, unsent = false), saved.last())
@@ -156,7 +156,7 @@ class TimerViewSettingTest {
     fun aFailedPreferencesReadKeepsTheView() = runTest {
         val setting = setting(initial = StoredTimerView(TimerView.CALENDAR, unsent = false))
 
-        setting.refreshed(null, keepsTimerView = true)
+        setting.refreshed(null, keepsPreferences = true)
 
         assertEquals(TimerView.CALENDAR, setting.view.value)
         assertEquals(0, server.requestCount)

@@ -5,7 +5,9 @@ import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.MePreferences
 import com.github.e0ipso.tokkl.api.PreferencesChange
 import com.github.e0ipso.tokkl.session.AccountContext
+import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.CurrentAccount
+import com.github.e0ipso.tokkl.session.SignOutPhase
 import com.github.e0ipso.tokkl.storage.ClearableStore
 import com.github.e0ipso.tokkl.storage.LoadedState
 import com.github.e0ipso.tokkl.storage.StartupLoad
@@ -70,8 +72,10 @@ fun interface PreferenceSharing {
  *   ended, which sign-out does first, they show, store and send nothing more.
  * @param scope outlives every screen, so leaving the app does not cancel a write.
  * @param default the value before one is stored, and after [forget].
+ *
+ * Sign-out forgets the value and clears [store]. Each setting extends this with its codec.
  */
-class SyncedPreference<T : Any>(
+open class SyncedPreference<T : Any>(
     private val store: ClearableStore<StoredPreference<T>>,
     private val client: ApiClientProvider,
     private val account: CurrentAccount,
@@ -80,7 +84,15 @@ class SyncedPreference<T : Any>(
     private val default: T,
     private val codec: PreferenceCodec<T>,
     private val sharing: PreferenceSharing,
-) : StartupLoad {
+) : AccountDataOwner,
+    StartupLoad {
+
+    override val signOutPhase = SignOutPhase.CLEAR_DATA
+
+    override suspend fun forgetAccount() {
+        forget()
+        clear()
+    }
 
     /** The server has not received the value on show. Guarded by [memory]. */
     private var unsent = false
@@ -121,7 +133,7 @@ class SyncedPreference<T : Any>(
      * Call it on the main thread: once the value has loaded, as it has for every screen, it shows
      * before this returns.
      */
-    fun change(value: T): Job {
+    open fun change(value: T): Job {
         val context = account.context.value
         return scope.launch(start = CoroutineStart.UNDISPATCHED) {
             ready()

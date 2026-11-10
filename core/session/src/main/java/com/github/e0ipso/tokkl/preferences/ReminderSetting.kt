@@ -3,14 +3,10 @@ package com.github.e0ipso.tokkl.preferences
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.MePreferences
 import com.github.e0ipso.tokkl.api.ReminderChange
-import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.CurrentAccount
-import com.github.e0ipso.tokkl.session.SignOutPhase
 import com.github.e0ipso.tokkl.storage.ClearableStore
-import com.github.e0ipso.tokkl.storage.StartupLoad
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlin.coroutines.CoroutineContext
 
@@ -19,8 +15,6 @@ data class ReminderPreferences(val enabled: Boolean = true, val hours: Int = 8) 
     fun clamped() = copy(hours = hours.coerceIn(HOURS))
     companion object {
         val HOURS = 1..168
-        const val ENABLED_KEY = ReminderChange.ENABLED
-        const val HOURS_KEY = ReminderChange.HOURS
     }
 }
 
@@ -44,81 +38,52 @@ class ReminderSetting(
     account: CurrentAccount,
     scope: CoroutineScope,
     io: CoroutineContext,
-) : AccountDataOwner,
-    StartupLoad {
+) : SyncedPreference<ReminderPreferences>(
+    store,
+    client,
+    account,
+    scope,
+    io,
+    default = ReminderPreferences(),
+    codec = object : PreferenceCodec<ReminderPreferences> {
+        override fun loaded(value: ReminderPreferences) = value.clamped()
 
-    override val signOutPhase = SignOutPhase.CLEAR_DATA
+        override fun fromServer(preferences: MePreferences) = preferences.reminderPreferences()
 
-    override suspend fun forgetAccount() {
-        forget()
-        preference.clear()
-    }
+        override fun body(value: ReminderPreferences) = value.body()
+    },
+    sharing = object : PreferenceSharing {
+        override suspend fun sendsChange(shared: Boolean) = shared
 
-    private val preference = SyncedPreference(
-        store,
-        client,
-        account,
-        scope,
-        io,
-        default = ReminderPreferences(),
-        codec = object : PreferenceCodec<ReminderPreferences> {
-            override fun loaded(value: ReminderPreferences) = value.clamped()
-
-            override fun fromServer(preferences: MePreferences) = preferences.reminderPreferences()
-
-            override fun body(value: ReminderPreferences) = value.body()
-        },
-        sharing = object : PreferenceSharing {
-            override suspend fun sendsChange(shared: Boolean) = shared
-
-            override fun found(preferences: MePreferences?, keepsPreferences: Boolean, shared: Boolean) = when {
-                !keepsPreferences -> false
-                preferences == null -> shared
-                else -> KEYS.all(preferences::has)
-            }
-        },
-    )
+        override fun found(preferences: MePreferences?, keepsPreferences: Boolean, shared: Boolean) = when {
+            !keepsPreferences -> false
+            preferences == null -> shared
+            else -> KEYS.all(preferences::has)
+        }
+    },
+) {
 
     /** The preferences the reminder follows: the defaults until they load from the store. */
-    val state: StateFlow<ReminderPreferences> get() = preference.value
-
-    /** [state] once loaded, for readers that may run before the load ends. */
-    val loaded: Flow<ReminderPreferences> get() = preference.loaded
-
-    override val isReady: Boolean get() = preference.isReady
-
-    override suspend fun ready() = preference.ready()
+    val state: StateFlow<ReminderPreferences> get() = value
 
     suspend fun current(): ReminderPreferences {
         ready()
         return state.value
     }
 
-    /** Shows [preferences] at once, once loaded, keeps them on the phone and sends them in the background. */
-    fun change(preferences: ReminderPreferences): Job = preference.change(preferences.clamped())
-
-    /** Receives the existing account refresh, without another GET. */
-    suspend fun refreshed(preferences: MePreferences?, tokkl: Boolean): Job = preference.refreshed(preferences, tokkl)
-
-    /**
-     * Goes back to the defaults, once a write on its way has landed. Signing out calls this once
-     * the account's context has ended, so no later write of the account's preferences reaches the
-     * disk.
-     */
-    suspend fun forget() {
-        preference.forget()
-    }
+    /** Shows [value] at once, once loaded, keeps it on the phone and sends it in the background. */
+    override fun change(value: ReminderPreferences): Job = super.change(value.clamped())
 
     private companion object {
-        val KEYS = listOf(ReminderPreferences.ENABLED_KEY, ReminderPreferences.HOURS_KEY)
+        val KEYS = listOf(ReminderChange.ENABLED, ReminderChange.HOURS)
     }
 }
 
 internal fun ReminderPreferences.body() = ReminderChange(enabled, clamped().hours)
 
 fun MePreferences.reminderPreferences(): ReminderPreferences {
-    val enabled = boolean(ReminderPreferences.ENABLED_KEY) ?: true
-    val number = number(ReminderPreferences.HOURS_KEY)
+    val enabled = boolean(ReminderChange.ENABLED) ?: true
+    val number = number(ReminderChange.HOURS)
     val hours = number?.takeIf { it % 1.0 == 0.0 && it >= 1 && it <= 168 }?.toInt() ?: 8
     return ReminderPreferences(enabled, hours)
 }
