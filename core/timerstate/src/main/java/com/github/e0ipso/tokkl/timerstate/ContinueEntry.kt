@@ -31,12 +31,3 @@ private val stoppedEntryOrder = compareBy<TimeEntry> { it.start }
  * phone at once, works offline, and stops a running entry at the new one's start.
  */
 suspend fun RunningEntryChanges.continueEntry(source: TimeEntry): EntryId = start(source.workspaceId, source.fields())
-
-/**
- * Continues the entry [lastStopped] picks among [entries], such as the cache's entries, for a
- * surface without the history, such as the Quick Settings tile (docs/PRD.md N4). Returns the new
- * entry's local id, or null when no entry is stopped.
- */
-suspend fun RunningEntryChanges.continueLast(entries: List<TimeEntry>): EntryId? = lastStopped(
-    entries,
-)?.let { continueEntry(it) }

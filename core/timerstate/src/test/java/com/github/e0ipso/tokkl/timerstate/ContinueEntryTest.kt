@@ -34,7 +34,7 @@ class ContinueEntryTest {
             running(4),
         )
 
-        val id = run { RecordingChanges().continueLast(entries) }
+        val id = run { lastStopped(entries)?.let { RecordingChanges().continueEntry(it) } }
 
         assertEquals(EntryId(LOCAL_ID), id)
         assertEquals(listOf("start 20 ${entry(2, "2026-10-19T11:00:00Z").fieldsOf()}"), calls)
@@ -43,7 +43,7 @@ class ContinueEntryTest {
     @Test
     fun withoutAStoppedEntryNothingStarts() = runTest {
         assertNull(lastStopped(emptyList()))
-        assertNull(run { RecordingChanges().continueLast(listOf(running(4))) })
+        assertNull(lastStopped(listOf(running(4))))
         assertEquals(emptyList<String>(), calls)
     }
 
@@ -95,7 +95,7 @@ class ContinueEntryTest {
 
         for (order in permutations(listOf(server, older, newer))) {
             calls.clear()
-            assertEquals(EntryId(LOCAL_ID), run { RecordingChanges().continueLast(order) })
+            assertEquals(EntryId(LOCAL_ID), run { lastStopped(order)?.let { RecordingChanges().continueEntry(it) } })
             assertEquals(listOf("start 50 ${newer.fieldsOf()}"), calls)
         }
     }

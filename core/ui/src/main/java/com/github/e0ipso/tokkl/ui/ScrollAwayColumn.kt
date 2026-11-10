@@ -102,16 +102,6 @@ fun compactHeightWindow(): Boolean {
 }
 
 /**
- * Whether the window itself is under 480dp tall, whatever the font scale, by Material's window
- * size classes: a phone held sideways, and not one held upright at the largest font scale.
- */
-@Composable
-fun shortWindow(): Boolean {
-    val height = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.height.toDp() }
-    return TokklSpacing.isCompactHeight(height)
-}
-
-/**
  * Scrolls [scroll], the column around a scrolling child, on before the child each time the child
  * scrolls on, so the top goes first. Scrolling back is left to the column's own scroll, which
  * takes what the child leaves once it is back at its start.

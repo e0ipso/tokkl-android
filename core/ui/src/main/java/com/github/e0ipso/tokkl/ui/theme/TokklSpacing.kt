@@ -23,7 +23,6 @@ object TokklSpacing {
     val space4: Dp = 16.dp
     val space5: Dp = 20.dp
     val space6: Dp = 24.dp
-    val space7: Dp = 32.dp
     val space8: Dp = 48.dp
 
     /** Between two groups of content, such as a dialog's message and its details. */

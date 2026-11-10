@@ -70,10 +70,3 @@ class DescriptionSuggestions private constructor(private val candidates: List<Ca
 
     private class Candidate(val entry: TimeEntry, val haystack: String, val suggestion: DescriptionSuggestion)
 }
-
-fun descriptionSuggestions(
-    entries: List<TimeEntry>,
-    projects: List<Project>,
-    clients: List<Client>,
-    query: String,
-): List<DescriptionSuggestion> = DescriptionSuggestions.of(entries, projects, clients).forQuery(query)

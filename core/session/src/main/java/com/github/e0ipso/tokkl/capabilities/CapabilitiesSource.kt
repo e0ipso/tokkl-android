@@ -58,8 +58,6 @@ class CapabilitiesSource(private val store: ValueStore<Capabilities>, scope: Cor
 
     suspend fun offersAllDay(): Boolean = current().allDay == true
 
-    suspend fun offersRestore(): Boolean = current().restore
-
     fun allDayOffers(): Flow<Boolean> = loaded.map { it.allDay == true }.distinctUntilChanged()
 
     /**

@@ -39,7 +39,7 @@ class DescriptionSuggestionsTest {
                 DescriptionSuggestion(EntryFields("", WEBSITE.id), "Website", "#0b83d9"),
                 DescriptionSuggestion(EntryFields("Write the report"), null, null),
             ),
-            descriptionSuggestions(entries, PROJECTS, CLIENTS, "  "),
+            DescriptionSuggestions.of(entries, PROJECTS, CLIENTS).forQuery("  "),
         )
     }
 
@@ -53,24 +53,25 @@ class DescriptionSuggestionsTest {
         )
         assertEquals(
             listOf("Design review"),
-            descriptionSuggestions(entries, PROJECTS, CLIENTS, " REVIEW ").map { it.fields.description },
+            DescriptionSuggestions.of(entries, PROJECTS, CLIENTS).forQuery(" REVIEW ").map { it.fields.description },
         )
         assertEquals(
             listOf("Design review"),
-            descriptionSuggestions(entries, PROJECTS, CLIENTS, "acme").map { it.fields.description },
+            DescriptionSuggestions.of(entries, PROJECTS, CLIENTS).forQuery("acme").map { it.fields.description },
         )
         assertEquals(
             listOf("Call", "Standup"),
-            descriptionSuggestions(entries, PROJECTS, CLIENTS, "intern").map { it.fields.description },
+            DescriptionSuggestions.of(entries, PROJECTS, CLIENTS).forQuery("intern").map { it.fields.description },
         )
         // The description, project and client are joined with spaces, as the web app joins them.
         assertEquals(
             listOf("Design review"),
-            descriptionSuggestions(entries, PROJECTS, CLIENTS, "review website").map { it.fields.description },
+            DescriptionSuggestions.of(entries, PROJECTS, CLIENTS).forQuery("review website")
+                .map { it.fields.description },
         )
         assertEquals(
             emptyList<String>(),
-            descriptionSuggestions(entries, PROJECTS, CLIENTS, "nothing").map { it.fields.description },
+            DescriptionSuggestions.of(entries, PROJECTS, CLIENTS).forQuery("nothing").map { it.fields.description },
         )
     }
 
@@ -79,7 +80,7 @@ class DescriptionSuggestionsTest {
         val entries = (1L..12L).map { entry(it, "Entry $it", projectId = null) }
         assertEquals(
             (1..8).map { "Entry $it" },
-            descriptionSuggestions(entries, PROJECTS, CLIENTS, "entry").map { it.fields.description },
+            DescriptionSuggestions.of(entries, PROJECTS, CLIENTS).forQuery("entry").map { it.fields.description },
         )
     }
 

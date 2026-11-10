@@ -145,8 +145,6 @@ class FavoritesViewModel(
         }
     }
 
-    fun dismissProblem() = local.update { it.copy(problem = null) }
-
     /**
      * Saves what [edit] makes of the shown list, or says the list is full when it returns null,
      * and tells [onDone] how it went. Call it on the main thread.

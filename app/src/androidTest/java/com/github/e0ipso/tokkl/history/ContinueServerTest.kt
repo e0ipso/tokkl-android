@@ -37,7 +37,8 @@ import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
-import com.github.e0ipso.tokkl.timerstate.continueLast
+import com.github.e0ipso.tokkl.timerstate.continueEntry
+import com.github.e0ipso.tokkl.timerstate.lastStopped
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -261,7 +262,9 @@ class ContinueServerTest {
         runBlocking { app.accountRefresh.refresh().join() }
         AirplaneMode.set(true, web)
 
-        val id = runBlocking { app.changes.continueLast(app.cache.entries.first().map { it.entry }) }
+        val id = runBlocking {
+            lastStopped(app.cache.entries.first().map { it.entry })?.let { app.changes.continueEntry(it) }
+        }
 
         val continued = runBlocking { app.cache.running.first() }!!.entry
         assertEquals("the new entry runs on the phone at once", id, continued.id)
