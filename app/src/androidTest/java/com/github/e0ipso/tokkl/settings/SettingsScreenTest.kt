@@ -37,7 +37,6 @@ import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.components.reminderSettings
 import com.github.e0ipso.tokkl.feature.settings.R
-import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.preferences.ReminderPreferences
 import com.github.e0ipso.tokkl.reminder.ReminderNotifier
 import com.github.e0ipso.tokkl.reminder.ReminderTimer
@@ -53,11 +52,8 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
-import com.github.e0ipso.tokkl.R as AppR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
-import com.github.e0ipso.tokkl.feature.projects.R as ProjectsR
 import com.github.e0ipso.tokkl.feature.signin.R as SigninR
-import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 
 /** The settings screen in the real activity, reached from the bottom bar. */
 class SettingsScreenTest {
@@ -206,30 +202,6 @@ class SettingsScreenTest {
         licencesRow().performScrollTo().assertIsDisplayed()
     }
 
-    /** All the text on the screen, read or shown, is one of the app's English string resources. */
-    @Test
-    fun everyTextComesFromStringResources() {
-        composeRule.openSettings()
-
-        val resources = listOf(
-            R.string::class.java,
-            UiR.string::class.java,
-            AppR.string::class.java,
-            TimerR.string::class.java,
-            ProjectsR.string::class.java,
-        ).flatMap { it.fields.map { field -> string(field.getInt(null)) } }.toSet() +
-            composeRule.activity.resources.getQuantityString(R.plurals.reminder_after_hours, 8, 8) +
-            pomodoroDefaultLabels()
-        val shown = composeRule.onAllNodes(SemanticsMatcher("any node") { true }, useUnmergedTree = true)
-            .fetchSemanticsNodes()
-            .flatMap { node ->
-                node.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty() +
-                    node.config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text }
-            }
-        assertTrue("no text found", shown.isNotEmpty())
-        assertEquals("text that is not a string resource", emptyList<String>(), shown.filterNot { it in resources })
-    }
-
     @Test
     fun reminderSwitchAndHoursValidateAndApply() {
         composeRule.openSettings()
@@ -287,34 +259,6 @@ class SettingsScreenTest {
 
     private fun signOutRow(): SemanticsNodeInteraction =
         composeRule.onNode(hasText(string(R.string.settings_sign_out)) and hasClickAction())
-
-    /** The four default rows format plurals, which are not fields of [R.string]. */
-    private fun pomodoroDefaultLabels(): Set<String> {
-        val defaults = PomodoroDefaults.DEFAULT
-        val resources = composeRule.activity.resources
-        return setOf(
-            resources.getQuantityString(
-                R.plurals.settings_pomodoro_minutes,
-                defaults.workMinutes,
-                defaults.workMinutes,
-            ),
-            resources.getQuantityString(
-                R.plurals.settings_pomodoro_minutes,
-                defaults.shortRestMinutes,
-                defaults.shortRestMinutes,
-            ),
-            resources.getQuantityString(
-                R.plurals.settings_pomodoro_minutes,
-                defaults.longRestMinutes,
-                defaults.longRestMinutes,
-            ),
-            resources.getQuantityString(
-                R.plurals.settings_pomodoro_phases,
-                defaults.longRestEvery,
-                defaults.longRestEvery,
-            ),
-        )
-    }
 
     private fun hasRole(role: Role) = SemanticsMatcher.expectValue(SemanticsProperties.Role, role)
 

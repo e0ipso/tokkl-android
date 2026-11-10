@@ -12,6 +12,7 @@ import com.github.e0ipso.tokkl.awaitControls
 import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.initializeTestWorkManager
+import com.github.e0ipso.tokkl.components.timerControls
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.EntryTiming
@@ -74,6 +75,8 @@ class RunningNotificationRestartTest {
             setProperty("process", currentProcess())
             setProperty("id", id.toString())
             setProperty("start", start.toString())
+            setProperty("key", content.key)
+            setProperty("trace", RunningNotificationRestartTrace.report())
             handOver.outputStream().use { store(it, null) }
         }
     }
@@ -84,6 +87,7 @@ class RunningNotificationRestartTest {
         // As SessionRule does: the work step 1 queued must never send in another test.
         initializeTestWorkManager(context)
         val saved = Properties().apply { handOver.inputStream().use { load(it) } }
+        val atStartup = runBlocking { RunningNotificationStore(context, Dispatchers.IO).load() }
         try {
             assertNotEquals("step 1 ran in this same process", saved.getProperty("process"), currentProcess())
 
@@ -105,6 +109,20 @@ class RunningNotificationRestartTest {
                     it.notification.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString() == edited.description
                 }
             }
+        } catch (failure: AssertionError) {
+            val now = runBlocking { RunningNotificationStore(context, Dispatchers.IO).load() }
+            val controls = runBlocking { app.timerControls.first() }
+            val notification = RunningNotifications.shown()?.notification
+            val title = notification?.extras?.getCharSequence(Notification.EXTRA_TITLE)
+            throw AssertionError(
+                "${failure.message}\n" +
+                    "Expected id=${saved.getProperty("id")} key=${saved.getProperty("key")}\n" +
+                    "Record at startup=$atStartup, now=$now\n" +
+                    "Controls=$controls\nNotification title=$title extras=${notification?.extras}\n" +
+                    "Previous process:\n${saved.getProperty("trace")}\n" +
+                    "Current process:\n${RunningNotificationRestartTrace.report()}",
+                failure,
+            )
         } finally {
             SessionRule.signOut()
             handOver.delete()

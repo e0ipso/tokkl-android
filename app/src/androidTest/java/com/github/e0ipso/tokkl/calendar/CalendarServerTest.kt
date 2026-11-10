@@ -6,6 +6,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.ComposeTimeoutException
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.TouchInjectionScope
 import androidx.compose.ui.test.assertIsOn
@@ -755,7 +757,21 @@ class CalendarServerTest {
     }
 
     private fun awaitBlock(spoken: String) {
-        composeRule.waitUntil("a block reads \"$spoken\"", LOAD_TIMEOUT_MS) { exists(hasContentDescription(spoken)) }
+        try {
+            composeRule.waitUntil(
+                "a block reads \"$spoken\"",
+                LOAD_TIMEOUT_MS,
+            ) { exists(hasContentDescription(spoken)) }
+        } catch (failure: ComposeTimeoutException) {
+            val descriptions = composeRule.onAllNodes(SemanticsMatcher("any node") { true }, useUnmergedTree = true)
+                .fetchSemanticsNodes().mapNotNull { it.config.getOrNull(SemanticsProperties.ContentDescription) }
+            val cached = runBlocking { app.cache.entries.first() }
+            throw AssertionError(
+                "${failure.message}\nDescriptions=$descriptions\nCache=$cached\n" +
+                    "Settings=${app.accountSettings.state.value}",
+                failure,
+            )
+        }
     }
 
     /** The day of the week's strip that TalkBack reads as [day] with [minutes] in total, once the week has loaded. */
