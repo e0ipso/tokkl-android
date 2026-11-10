@@ -64,9 +64,9 @@ fun interface PreferenceSharing {
  *
  * A change that fails to reach the server, as offline, stays on the phone, marked unsent, and goes
  * with the next refresh, so the change that reaches the server last wins, as for time entries
- * (docs/PRD.md O3). Each refresh otherwise takes the server's value, except the one refresh right
- * after a change, whose preferences may predate it. A server without Tokkl's preferences, such as
- * Toggl Track, gets nothing: the value stays on the phone.
+ * (docs/PRD.md O3). Each refresh otherwise takes the server's value, except the first refresh after
+ * a change or its acknowledgement, whose preferences may predate the write. A server without
+ * Tokkl's preferences, such as Toggl Track, gets nothing: the value stays on the phone.
  *
  * @param store keeps the value on the phone. It loads from it as this is made, off the main thread.
  * @param account the account each change, refresh and send belongs to: once its context has
@@ -98,7 +98,7 @@ open class SyncedPreference<T : Any>(
     /** The server has not received the value on show. Guarded by [memory]. */
     private var unsent = false
 
-    /** A change came after the last refresh, whose preferences may predate it. Guarded by [memory]. */
+    /** A change or its acknowledgement came after the last refresh, which may predate it. Guarded by [memory]. */
     private var changedSinceRefresh = false
 
     /** What the last refresh [PreferenceSharing.found]. Guarded by [memory]. */
@@ -222,7 +222,11 @@ open class SyncedPreference<T : Any>(
         if (answer !is ApiResult.Success) return@withLock
         memory.withLock {
             // A change while the request ran has its own write queued.
-            if (context.isCurrent && held.value == value) unsent = false
+            if (context.isCurrent && held.value == value) {
+                unsent = false
+                // A refresh can read the old server value while this write is still in flight.
+                changedSinceRefresh = true
+            }
         }
         persist(context)
     }
