@@ -30,7 +30,7 @@ The tests run on the attached device or on `ANDROID_SERIAL`. With neither, apart
 
 - Related: [practice-let-the-runner-own-emulator-boot-and-settings](../emulator-runtime/practice-let-the-runner-own-emulator-boot-and-settings.md)
 - Related: [practice-test-against-a-real-tokkl-server](../practice-test-against-a-real-tokkl-server.md)
-- Related: [practice-gradle-no-daemon-in-parallel-worktrees](../../build-and-tooling/practice-gradle-no-daemon-in-parallel-worktrees.md)
+- Related: [practice-gradle-no-daemon-in-parallel-worktrees](../../build-and-tooling/host-runtime/practice-gradle-no-daemon-in-parallel-worktrees.md)
 <!-- kk:related:end -->
 
 <!-- kk:citations:start -->

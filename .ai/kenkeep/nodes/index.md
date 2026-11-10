@@ -26,10 +26,10 @@ _None yet._
 
 ### #agents
 - Open [**Reuse drain checks by content and test configuration**](testing/practice-reuse-drain-checks-by-content-and-test-configuration.md) — Commit IDs and cherry-picks do not invalidate checks when all checked inputs and the test environment are unchanged.
-- Open [**Run drain Gradle and device jobs in the OOM-safe scope, not behind a sitting cap**](build-and-tooling/practice-drain-sittings-gate-on-memory-not-a-sitting-cap.md) — Drain Gradle and device runs start directly in the OOM-safe scope, one heavy job at a time; no fixed cap on sittings. T3 checkpoint refs are not reviewer writes.
-- Open [**T3 restarts daily and ends running agent sessions**](build-and-tooling/map-t3-daily-restart-stops-agent-sessions.md) — t3-update.timer fires daily with up to 1h delay and restarts t3.service even without an update, which stops every agent session.
+- Open [**Run drain Gradle and device jobs in the OOM-safe scope, not behind a sitting cap**](build-and-tooling/host-runtime/practice-drain-sittings-gate-on-memory-not-a-sitting-cap.md) — Drain Gradle and device runs start directly in the OOM-safe scope, one heavy job at a time; no fixed cap on sittings. T3 checkpoint refs are not reviewer writes.
+- Open [**T3 restarts daily and ends running agent sessions**](build-and-tooling/host-runtime/map-t3-daily-restart-stops-agent-sessions.md) — t3-update.timer fires daily with up to 1h delay and restarts t3.service even without an update, which stops every agent session.
 ### #ci
-- Open [**Keep release builds reproducible and signed with the project key**](release/practice-reproducible-builds-project-key.md) — Reproducible builds let F-Droid publish the APK signed with the project key. The key lives in Actions secrets and CI pins actions by SHA.
+- Open [**Compare clean unsigned release builds**](release/reproducible-builds/practice-compare-clean-unsigned-release-builds.md) — Build the same committed tree in isolated clones and compare APK bytes, paths, timestamps and core-count effects.
 - Open [**Release signing key, Actions secrets and signature checks**](release/map-release-signing-key-actions-secrets-and-signature-checks.md) — The owner's PKCS12 key signs releases through four Actions secrets. Fingerprint and apksigcopier commands check what F-Droid checks.
 - Open [**Test against a real Tokkl server**](testing/practice-test-against-a-real-tokkl-server.md) — Instrumented tests use the real ghcr.io/e0ipso/tokkl image, never a fake.
 ### #testing

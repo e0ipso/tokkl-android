@@ -27,5 +27,7 @@ The app's `navhost` package names no feature, by package or R class, and `Packag
 
 - Related: [map-tokkl-colour-tokens-and-font](../../design/map-tokkl-colour-tokens-and-font.md)
 - Related: [map-ui-components-and-compose-layout-gotchas](../../design/map-ui-components-and-compose-layout-gotchas.md)
-- Related: [map-reports-summary-from-detailed-search](../map-reports-summary-from-detailed-search.md)
+- Related: [map-reports-summary-from-detailed-search → map-report-apis-rounding-and-pagination](../reports/map-report-apis-rounding-and-pagination.md)
+- Related: [map-reports-summary-from-detailed-search → map-report-ranges-and-cached-filters](../reports/map-report-ranges-and-cached-filters.md)
+- Related: [map-reports-summary-from-detailed-search → map-report-state-lifetimes-and-widget-navigation](../reports/map-report-state-lifetimes-and-widget-navigation.md)
 <!-- kk:related:end -->

@@ -17,6 +17,7 @@ _None yet._
 - Open [**Shared timer and entry fields**](map-shared-timer-and-entry-fields.md) to learn about: Responsive field rows, picker dialogs and accessibility are shared between the timer and entry form. #ui #timer #accessibility
 - Open [**Entry form and account-time validation**](map-entry-form-and-account-time-validation.md) to learn about: Stopped and manual entry editing preserve untouched seconds and validate ranges in account time. #ui #timer #offline #queue
 - Open [**History entry menu operations**](map-history-entry-menu-operations.md) to learn about: Delete with Undo, duplicate and split actions use the queue and server capabilities. #ui #timer #offline #queue
+- Open [**No-time entries**](map-no-time-entries.md) to learn about: Tokkl no-time entries have a day and duration and can be created and edited offline. #entries #calendar #offline
 - Open [**Tokkl favorites storage and capability**](map-tokkl-favorites-storage-and-capability.md) to learn about: Favorite starts share cached fields while preference writes use supported server capabilities. #ui #timer #api
 
 ## By topic
@@ -27,8 +28,8 @@ _None yet._
 - Open [**Entry form and account-time validation**](map-entry-form-and-account-time-validation.md) — Stopped and manual entry editing preserve untouched seconds and validate ranges in account time.
 ### #ui
 - Open [**Timer page layout and scroll-away header**](../timer-history-calendar/map-timer-page-layout-and-scroll-away-header.md) — Bounded Timer content and the shared scroll-away header adapt to short and wide windows.
-- Open [**Tokkl favorites storage and capability**](map-tokkl-favorites-storage-and-capability.md) — Favorite starts share cached fields while preference writes use supported server capabilities.
-- Open [**Timer List and Calendar preference sync**](../timer-history-calendar/map-timer-list-and-calendar-preference-sync.md) — View selection persists locally and writes the supported server preference without blocking navigation.
+- Open [**Signed-in navigation chrome and adaptive windows**](../session-and-navigation/map-signed-in-navigation-chrome-and-adaptive-windows.md) — Bar, rail, back-stack and width rules control signed-in page layout.
+- Open [**External navigation requests and intent consumption**](../session-and-navigation/navigation-state/map-external-navigation-requests-and-intent-consumption.md) — Features decode serializable taps, consume intent extras once, and retain pending requests through configuration changes and process death.
 ### #offline
 - Open [**Background queue work and empty-queue cancellation**](../../data-and-offline/change-queue/map-background-queue-work-and-empty-queue-cancellation.md) — Connected WorkManager delivery and serialized cancellation when the queue empties.
 - Open [**Ordered entry sending and refusals**](../../data-and-offline/change-queue/map-ordered-entry-sending-and-refusals.md) — Oldest-first HTTP delivery, retry boundaries, held refusals and reauthentication.
@@ -42,6 +43,10 @@ _None yet._
 - Open [**Design foundation: spacing, shapes, type roles, option rows, brand and insets**](../../design/map-design-foundation-spacing-shapes-type-brand.md) — ui/theme and ui/ hold Tokkl's spacing, screen margin, corners, type roles, option rows and Brand, plus the edge-to-edge and keyboard setup.
 - Open [**UI components: TopBar, ErrorBanner, Scene, ScrollAwayColumn, and Compose layout gotchas**](../../design/map-ui-components-and-compose-layout-gotchas.md) — Shared ui/ pieces beyond the theme, plus fixes for a field under the keyboard, a dialog that never settles and the More sheet's navigation bar.
 ### #api
-- Open [**Trash capability and server operations**](../session-and-navigation/map-trash-capability-and-server-operations.md) — Tokkl-only Trash routes, cached rows and explicit unsupported-endpoint handling.
 - Open [**Never make Start or Stop wait for the server**](../../data-and-offline/practice-never-wait-for-server-on-start-stop.md) — Start and Stop change state on the phone at once and queue the change. Pause, Resume and session actions wait for the server. No sync engine.
-- Open [**Match Tokkl web app behavior in the account timezone**](../../data-and-offline/practice-match-web-app-behavior-account-timezone.md) — Use the web app's time parsing, favorites, grouping and undo, in the account timezone read from GET /api/v9/me.
+- Open [**Typed API resources and request contracts**](../../api-and-security/api-client/map-typed-api-resources-and-request-contracts.md) — TokklApi resource groups fix request shapes, typed answers and module boundaries.
+- Open [**Ordered entry sending and refusals**](../../data-and-offline/change-queue/map-ordered-entry-sending-and-refusals.md) — Oldest-first HTTP delivery, retry boundaries, held refusals and reauthentication.
+### #calendar
+- Open [**No-time entries**](map-no-time-entries.md) — Tokkl no-time entries have a day and duration and can be created and edited offline.
+### #entries
+- Open [**No-time entries**](map-no-time-entries.md) — Tokkl no-time entries have a day and duration and can be created and edited offline.

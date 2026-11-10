@@ -27,7 +27,7 @@ A test APK fails a class it does not hold, and the app and each feature module w
 # Related
 
 - Related: [practice-use-the-instrumented-runner-and-its-device-selection](practice-use-the-instrumented-runner-and-its-device-selection.md)
-- Related: [practice-gradle-no-daemon-in-parallel-worktrees](../../build-and-tooling/practice-gradle-no-daemon-in-parallel-worktrees.md)
+- Related: [practice-gradle-no-daemon-in-parallel-worktrees](../../build-and-tooling/host-runtime/practice-gradle-no-daemon-in-parallel-worktrees.md)
 <!-- kk:related:end -->
 
 <!-- kk:citations:start -->

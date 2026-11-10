@@ -7,6 +7,8 @@
 > This index only orients you; leaves hold the durable guidance. Open at least one relevant leaf before acting.
 
 ## Subfolders
+- Load [`catalog-pages/`](catalog-pages/index.md) for more information on catalog loading, saved forms, project tasks and immediate server mutations; read before changing Projects, Clients, Tags or their shared coordinator.
+- Load [`reports/`](reports/index.md) for more information on report API calculations, filters, ranges and screen state; read before changing report requests, formatting, restoration or widget day navigation.
 - Load [`session-and-navigation/`](session-and-navigation/index.md) for more information on sign-in, account lifetime, navigation and adaptive chrome; read before changing authentication, sign-out or page routing.
 - Load [`timer-and-entry-editing/`](timer-and-entry-editing/index.md) for more information on timer controls, shared fields, entry forms and menus; read before changing entry editing or local start and stop behavior.
 - Load [`timer-history-calendar/`](timer-history-calendar/index.md) for more information on Timer layout, cached totals, history and calendar; read before changing timer totals, entry browsing or saved view state.
@@ -15,10 +17,8 @@
 _None yet._
 
 ## Components (what exists)
-- Open [**Catalog pages: projects, clients and tags changed on the server at once**](map-catalog-pages-projects-clients-tags.md) to learn about: catalog/ is the shared model and UI of the Projects, Clients and Tags pages: no queue, refreshAfterChange, the server's reason on a 4xx. #ui #api #catalog
 - Open [**Home screen widget: cache state and a native ticking clock**](map-home-screen-widget-cache-state-and-a-native-ticking-clock.md) to learn about: Glance redraws on cache changes; a launcher Chronometer ticks without periodic app updates. #android #widget #offline #battery
 - Open [**Pomodoro home screen widget**](map-pomodoro-home-screen-widget.md) to learn about: A separate provider shows the server session and uses native countdowns and online-only session actions. #android #widget #pomodoro #battery
-- Open [**Reports: Summary summed on the phone, Detailed paged, Weekly from v3**](map-reports-summary-from-detailed-search.md) to learn about: reports/ sums the v3 detailed search on the phone for Summary, pages it for Detailed, reads v3 weekly for Weekly, and filters all three. #reports #api #toggl #ui
 - Open [**Favorite launcher shortcuts: cache publication and tap handling**](map-favorite-launcher-shortcuts-cache-publication-and-tap-handling.md) to learn about: FavoriteShortcutSync publishes favorites; StartFavoriteActivity resolves the current favorite and queues an offline start. #android #shortcuts #offline
 - Open [**Quick Settings tile: default listening and cached actions**](map-quick-settings-tile-default-listening-and-cached-actions.md) to learn about: RunningTileService follows the cache while visible and acts on the state it displayed. #android #tile #offline
 
@@ -32,34 +32,18 @@ _None yet._
 - Open [**Background queue work and empty-queue cancellation**](../data-and-offline/change-queue/map-background-queue-work-and-empty-queue-cancellation.md) — Connected WorkManager delivery and serialized cancellation when the queue empties.
 - Open [**Ordered entry sending and refusals**](../data-and-offline/change-queue/map-ordered-entry-sending-and-refusals.md) — Oldest-first HTTP delivery, retry boundaries, held refusals and reauthentication.
 - Open [**Remote running conflicts and lost create responses**](../data-and-offline/change-queue/map-remote-running-conflicts-and-lost-create-responses.md) — Captured start conflict handling and duplicate prevention after uncertain POST delivery.
-### #api
-- Open [**Trash capability and server operations**](session-and-navigation/map-trash-capability-and-server-operations.md) — Tokkl-only Trash routes, cached rows and explicit unsupported-endpoint handling.
-- Open [**Never make Start or Stop wait for the server**](../data-and-offline/practice-never-wait-for-server-on-start-stop.md) — Start and Stop change state on the phone at once and queue the change. Pause, Resume and session actions wait for the server. No sync engine.
-- Open [**Match Tokkl web app behavior in the account timezone**](../data-and-offline/practice-match-web-app-behavior-account-timezone.md) — Use the web app's time parsing, favorites, grouping and undo, in the account timezone read from GET /api/v9/me.
 ### #battery
 - Open [**Home screen widget: cache state and a native ticking clock**](map-home-screen-widget-cache-state-and-a-native-ticking-clock.md) — Glance redraws on cache changes; a launcher Chronometer ticks without periodic app updates.
-- Open [**Timer state holder and sync service: the server owns Pomodoro and pause**](../data-and-offline/map-timer-state-holder-and-sync-service.md) — One holder keeps the server's timer state; a specialUse service holds its event stream. Session and pause actions go online, never queued.
+- Open [**RunningCheck: guarded background current-entry refresh**](../data-and-offline/map-runningcheck-guarded-background-current-entry-refresh.md) — One connected 15-minute worker follows cached running state and protects unsent edits, newer writes and sign-out.
 - Open [**Pomodoro home screen widget**](map-pomodoro-home-screen-widget.md) — A separate provider shows the server session and uses native countdowns and online-only session actions.
-### #ui
-- Open [**Timer page layout and scroll-away header**](timer-history-calendar/map-timer-page-layout-and-scroll-away-header.md) — Bounded Timer content and the shared scroll-away header adapt to short and wide windows.
-- Open [**Tokkl favorites storage and capability**](timer-and-entry-editing/map-tokkl-favorites-storage-and-capability.md) — Favorite starts share cached fields while preference writes use supported server capabilities.
-- Open [**Timer List and Calendar preference sync**](timer-history-calendar/map-timer-list-and-calendar-preference-sync.md) — View selection persists locally and writes the supported server preference without blocking navigation.
 ### #widget
 - Open [**Home screen widget: cache state and a native ticking clock**](map-home-screen-widget-cache-state-and-a-native-ticking-clock.md) — Glance redraws on cache changes; a launcher Chronometer ticks without periodic app updates.
 - Open [**Pomodoro home screen widget**](map-pomodoro-home-screen-widget.md) — A separate provider shows the server session and uses native countdowns and online-only session actions.
-### #catalog
-- Open [**Catalog pages: projects, clients and tags changed on the server at once**](map-catalog-pages-projects-clients-tags.md) — catalog/ is the shared model and UI of the Projects, Clients and Tags pages: no queue, refreshAfterChange, the server's reason on a 4xx.
 ### #pomodoro
-- Open [**Timer state holder and sync service: the server owns Pomodoro and pause**](../data-and-offline/map-timer-state-holder-and-sync-service.md) — One holder keeps the server's timer state; a specialUse service holds its event stream. Session and pause actions go online, never queued.
-- Open [**Pomodoro home screen widget**](map-pomodoro-home-screen-widget.md) — A separate provider shows the server session and uses native countdowns and online-only session actions.
-- Open [**Pomodoro phase alarms and rearming**](../data-and-offline/map-pomodoro-phase-alarms-and-rearming.md) — One exact alarm per server phase, set from its planned end and the clock offset. A state from any device silences it; rearming never advances a phase.
-### #reports
-- Open [**Reports: Summary summed on the phone, Detailed paged, Weekly from v3**](map-reports-summary-from-detailed-search.md) — reports/ sums the v3 detailed search on the phone for Summary, pages it for Detailed, reads v3 weekly for Weekly, and filters all three.
+- Open [**Account timer state lifetime**](../data-and-offline/timer-state-and-sync/map-account-timer-state-lifetime.md) — AccountTimerStates owns intake, read-only timer state and retirement across sign-in and sign-out.
+- Open [**Timer state acceptance and persistence**](../data-and-offline/timer-state-and-sync/map-timer-state-acceptance-and-persistence.md) — Revision acceptance, clock offsets, persisted state and cache reconciliation share one account holder.
+- Open [**Online timer actions and native control failures**](../data-and-offline/timer-state-and-sync/map-online-timer-actions-and-native-control-failures.md) — Session and pause controls use captured account revisions, single server attempts and shared failure notices.
 ### #shortcuts
 - Open [**Favorite launcher shortcuts: cache publication and tap handling**](map-favorite-launcher-shortcuts-cache-publication-and-tap-handling.md) — FavoriteShortcutSync publishes favorites; StartFavoriteActivity resolves the current favorite and queues an offline start.
 ### #tile
 - Open [**Quick Settings tile: default listening and cached actions**](map-quick-settings-tile-default-listening-and-cached-actions.md) — RunningTileService follows the cache while visible and acts on the state it displayed.
-### #toggl
-- Open [**Tokkl and Toggl API endpoints, auth and Tokkl-only extensions**](../api-and-security/map-tokkl-toggl-api.md) — Tokkl speaks a subset of Toggl API v9 at /api/v9 and Reports v3 at /reports/api/v3 with Basic auth, plus Tokkl-only fields and endpoints.
-- Open [**Check server capabilities instead of requiring a server version**](../api-and-security/practice-check-capabilities-not-server-version.md) — Probe optional Tokkl features by capability; snapping follows the latest supported contract, with no version selector.
-- Open [**Reports: Summary summed on the phone, Detailed paged, Weekly from v3**](map-reports-summary-from-detailed-search.md) — reports/ sums the v3 detailed search on the phone for Summary, pages it for Detailed, reads v3 weekly for Weekly, and filters all three.

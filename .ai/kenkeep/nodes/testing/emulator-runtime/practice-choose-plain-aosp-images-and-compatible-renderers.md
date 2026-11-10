@@ -28,7 +28,7 @@ qemu keeps about 100 MB each time an app process that drew with OpenGL ends, wit
 # Related
 
 - Related: [practice-use-the-instrumented-runner-and-its-device-selection](../instrumented-runner/practice-use-the-instrumented-runner-and-its-device-selection.md)
-- Related: [map-jdk-android-sdk-and-agent-shells](../../build-and-tooling/map-jdk-android-sdk-and-agent-shells.md)
+- Related: [map-jdk-android-sdk-and-agent-shells](../../build-and-tooling/host-runtime/map-jdk-android-sdk-and-agent-shells.md)
 <!-- kk:related:end -->
 
 <!-- kk:citations:start -->

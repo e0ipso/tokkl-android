@@ -26,7 +26,7 @@ An emulator the script boots gets its own `emulator-tmp` directory under the run
 # Related
 
 - Related: [practice-use-the-instrumented-runner-and-its-device-selection](../instrumented-runner/practice-use-the-instrumented-runner-and-its-device-selection.md)
-- Related: [map-oom-kill-ends-agent-session](../../build-and-tooling/map-oom-kill-ends-agent-session.md)
+- Related: [map-oom-kill-ends-agent-session](../../build-and-tooling/host-runtime/map-oom-kill-ends-agent-session.md)
 <!-- kk:related:end -->
 
 <!-- kk:citations:start -->

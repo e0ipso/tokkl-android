@@ -33,7 +33,10 @@ Tests prove that a tap on Start or Stop changes the state with a network that ne
 <!-- kk:related:start -->
 # Related
 
-- Related: [map-timer-state-holder-and-sync-service](../data-and-offline/map-timer-state-holder-and-sync-service.md)
+- Related: [map-timer-state-holder-and-sync-service → map-account-timer-state-lifetime](../data-and-offline/timer-state-and-sync/map-account-timer-state-lifetime.md)
+- Related: [map-timer-state-holder-and-sync-service → map-online-timer-actions-and-native-control-failures](../data-and-offline/timer-state-and-sync/map-online-timer-actions-and-native-control-failures.md)
+- Related: [map-timer-state-holder-and-sync-service → map-timer-event-stream-and-service-lifetime](../data-and-offline/timer-state-and-sync/map-timer-event-stream-and-service-lifetime.md)
+- Related: [map-timer-state-holder-and-sync-service → map-timer-state-acceptance-and-persistence](../data-and-offline/timer-state-and-sync/map-timer-state-acceptance-and-persistence.md)
 - Related: [practice-use-the-instrumented-runner-and-its-device-selection](instrumented-runner/practice-use-the-instrumented-runner-and-its-device-selection.md)
 - Related: [practice-use-the-pinned-test-server-and-tls-proxies](instrumented-runner/practice-use-the-pinned-test-server-and-tls-proxies.md)
 - Related: [map-ordered-entry-sending-and-refusals](../data-and-offline/change-queue/map-ordered-entry-sending-and-refusals.md)

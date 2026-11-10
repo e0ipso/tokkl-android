@@ -33,6 +33,12 @@ Every dependency must be free software. F-Droid builds the app from source with 
 <!-- kk:related:start -->
 # Related
 
-- Related: [map-api-client-shared-okhttp-serverurl-and-errors](map-api-client-shared-okhttp-serverurl-and-errors.md)
-- Related: [map-timer-state-holder-and-sync-service](../data-and-offline/map-timer-state-holder-and-sync-service.md)
+- Related: [map-api-client-shared-okhttp-serverurl-and-errors → map-api-execution-retries-and-errors](api-client/map-api-execution-retries-and-errors.md)
+- Related: [map-api-client-shared-okhttp-serverurl-and-errors → map-api-test-fixtures](api-client/map-api-test-fixtures.md)
+- Related: [map-api-client-shared-okhttp-serverurl-and-errors → map-shared-http-client-and-configured-server-security](api-client/map-shared-http-client-and-configured-server-security.md)
+- Related: [map-api-client-shared-okhttp-serverurl-and-errors → map-typed-api-resources-and-request-contracts](api-client/map-typed-api-resources-and-request-contracts.md)
+- Related: [map-timer-state-holder-and-sync-service → map-account-timer-state-lifetime](../data-and-offline/timer-state-and-sync/map-account-timer-state-lifetime.md)
+- Related: [map-timer-state-holder-and-sync-service → map-online-timer-actions-and-native-control-failures](../data-and-offline/timer-state-and-sync/map-online-timer-actions-and-native-control-failures.md)
+- Related: [map-timer-state-holder-and-sync-service → map-timer-event-stream-and-service-lifetime](../data-and-offline/timer-state-and-sync/map-timer-event-stream-and-service-lifetime.md)
+- Related: [map-timer-state-holder-and-sync-service → map-timer-state-acceptance-and-persistence](../data-and-offline/timer-state-and-sync/map-timer-state-acceptance-and-persistence.md)
 <!-- kk:related:end -->

@@ -24,6 +24,6 @@ The CLI reads default flags from `~/.androidrc`. Run `echo --no-metrics > ~/.and
 <!-- kk:related:start -->
 # Related
 
-- Related: [practice-talk-only-to-configured-server](../api-and-security/practice-talk-only-to-configured-server.md)
+- Related: [practice-talk-only-to-configured-server](../../api-and-security/practice-talk-only-to-configured-server.md)
 - Related: [map-jdk-android-sdk-and-agent-shells](map-jdk-android-sdk-and-agent-shells.md)
 <!-- kk:related:end -->

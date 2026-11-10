@@ -50,7 +50,9 @@ The bottom bar's labels share one font size through `SharedLabelSize` in the app
 - Related: [map-sign-in-request-and-credential-admission](../screens/session-and-navigation/map-sign-in-request-and-credential-admission.md)
 - Related: [map-session-stores-and-pre-frame-preferences](../screens/session-and-navigation/map-session-stores-and-pre-frame-preferences.md)
 - Related: [map-sign-out-ordering-and-account-cleanup](../screens/session-and-navigation/map-sign-out-ordering-and-account-cleanup.md)
-- Related: [map-saveable-navigation-stack-and-session-guard](../screens/session-and-navigation/map-saveable-navigation-stack-and-session-guard.md)
+- Related: [map-saveable-navigation-stack-and-session-guard → map-external-navigation-requests-and-intent-consumption](../screens/session-and-navigation/navigation-state/map-external-navigation-requests-and-intent-consumption.md)
+- Related: [map-saveable-navigation-stack-and-session-guard → map-navigation-route-serialization-and-feature-registration](../screens/session-and-navigation/navigation-state/map-navigation-route-serialization-and-feature-registration.md)
+- Related: [map-saveable-navigation-stack-and-session-guard → map-navigation-stores-and-restored-session-guard](../screens/session-and-navigation/navigation-state/map-navigation-stores-and-restored-session-guard.md)
 - Related: [map-signed-in-navigation-chrome-and-adaptive-windows](../screens/session-and-navigation/map-signed-in-navigation-chrome-and-adaptive-windows.md)
 - Related: [map-trash-capability-and-server-operations](../screens/session-and-navigation/map-trash-capability-and-server-operations.md)
 <!-- kk:related:end -->

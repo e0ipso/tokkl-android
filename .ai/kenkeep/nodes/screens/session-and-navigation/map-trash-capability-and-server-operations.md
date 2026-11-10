@@ -22,6 +22,11 @@ The Trash page (`trash/`) calls Tokkl-only endpoints through `ServerTrashReposit
 <!-- kk:related:start -->
 # Related
 
-- Related: [map-account-cache-and-capabilities](../../data-and-offline/map-account-cache-and-capabilities.md)
-- Related: [map-api-client-shared-okhttp-serverurl-and-errors](../../api-and-security/map-api-client-shared-okhttp-serverurl-and-errors.md)
+- Related: [map-account-cache-and-capabilities → map-account-cache-storage-and-history-window](../../data-and-offline/account-cache/map-account-cache-storage-and-history-window.md)
+- Related: [map-account-cache-and-capabilities → map-account-refresh-steps-and-preference-readers](../../data-and-offline/account-cache/map-account-refresh-steps-and-preference-readers.md)
+- Related: [map-account-cache-and-capabilities → map-capability-probes-and-persisted-feature-flags](../../data-and-offline/account-cache/map-capability-probes-and-persisted-feature-flags.md)
+- Related: [map-api-client-shared-okhttp-serverurl-and-errors → map-api-execution-retries-and-errors](../../api-and-security/api-client/map-api-execution-retries-and-errors.md)
+- Related: [map-api-client-shared-okhttp-serverurl-and-errors → map-api-test-fixtures](../../api-and-security/api-client/map-api-test-fixtures.md)
+- Related: [map-api-client-shared-okhttp-serverurl-and-errors → map-shared-http-client-and-configured-server-security](../../api-and-security/api-client/map-shared-http-client-and-configured-server-security.md)
+- Related: [map-api-client-shared-okhttp-serverurl-and-errors → map-typed-api-resources-and-request-contracts](../../api-and-security/api-client/map-typed-api-resources-and-request-contracts.md)
 <!-- kk:related:end -->

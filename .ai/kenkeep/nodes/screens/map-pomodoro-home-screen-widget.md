@@ -27,6 +27,9 @@ The launcher ticks the native clock. `WidgetSync` uses a separate redraw key and
 # Related
 
 - Related: [map-home-screen-widget-cache-state-and-a-native-ticking-clock](map-home-screen-widget-cache-state-and-a-native-ticking-clock.md)
-- Related: [map-timer-state-holder-and-sync-service](../data-and-offline/map-timer-state-holder-and-sync-service.md)
+- Related: [map-timer-state-holder-and-sync-service → map-account-timer-state-lifetime](../data-and-offline/timer-state-and-sync/map-account-timer-state-lifetime.md)
+- Related: [map-timer-state-holder-and-sync-service → map-online-timer-actions-and-native-control-failures](../data-and-offline/timer-state-and-sync/map-online-timer-actions-and-native-control-failures.md)
+- Related: [map-timer-state-holder-and-sync-service → map-timer-event-stream-and-service-lifetime](../data-and-offline/timer-state-and-sync/map-timer-event-stream-and-service-lifetime.md)
+- Related: [map-timer-state-holder-and-sync-service → map-timer-state-acceptance-and-persistence](../data-and-offline/timer-state-and-sync/map-timer-state-acceptance-and-persistence.md)
 - Related: [map-pomodoro-phase-alarms-and-rearming](../data-and-offline/map-pomodoro-phase-alarms-and-rearming.md)
 <!-- kk:related:end -->

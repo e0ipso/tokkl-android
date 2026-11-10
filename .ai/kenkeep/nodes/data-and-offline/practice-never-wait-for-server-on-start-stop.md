@@ -37,7 +37,10 @@ Reports and history older than the cache need the server. With no connection the
 <!-- kk:related:start -->
 # Related
 
-- Related: [map-timer-state-holder-and-sync-service](map-timer-state-holder-and-sync-service.md)
+- Related: [map-timer-state-holder-and-sync-service → map-account-timer-state-lifetime](timer-state-and-sync/map-account-timer-state-lifetime.md)
+- Related: [map-timer-state-holder-and-sync-service → map-online-timer-actions-and-native-control-failures](timer-state-and-sync/map-online-timer-actions-and-native-control-failures.md)
+- Related: [map-timer-state-holder-and-sync-service → map-timer-event-stream-and-service-lifetime](timer-state-and-sync/map-timer-event-stream-and-service-lifetime.md)
+- Related: [map-timer-state-holder-and-sync-service → map-timer-state-acceptance-and-persistence](timer-state-and-sync/map-timer-state-acceptance-and-persistence.md)
 - Related: [map-ordered-entry-sending-and-refusals](change-queue/map-ordered-entry-sending-and-refusals.md)
 - Related: [map-offline-entry-mutations-and-local-id-mapping](change-queue/map-offline-entry-mutations-and-local-id-mapping.md)
 <!-- kk:related:end -->

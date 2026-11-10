@@ -39,12 +39,18 @@ The test harness's TLS proxy certificate names only IP addresses, so a host mism
 # Related
 
 - Related: [practice-pin-self-signed-certs-warn-on-http](practice-pin-self-signed-certs-warn-on-http.md)
-- Related: [map-api-client-shared-okhttp-serverurl-and-errors](map-api-client-shared-okhttp-serverurl-and-errors.md)
+- Related: [map-api-client-shared-okhttp-serverurl-and-errors → map-api-execution-retries-and-errors](api-client/map-api-execution-retries-and-errors.md)
+- Related: [map-api-client-shared-okhttp-serverurl-and-errors → map-api-test-fixtures](api-client/map-api-test-fixtures.md)
+- Related: [map-api-client-shared-okhttp-serverurl-and-errors → map-shared-http-client-and-configured-server-security](api-client/map-shared-http-client-and-configured-server-security.md)
+- Related: [map-api-client-shared-okhttp-serverurl-and-errors → map-typed-api-resources-and-request-contracts](api-client/map-typed-api-resources-and-request-contracts.md)
 - Related: [map-sign-in-request-and-credential-admission](../screens/session-and-navigation/map-sign-in-request-and-credential-admission.md)
 - Related: [map-session-stores-and-pre-frame-preferences](../screens/session-and-navigation/map-session-stores-and-pre-frame-preferences.md)
 - Related: [map-sign-out-ordering-and-account-cleanup](../screens/session-and-navigation/map-sign-out-ordering-and-account-cleanup.md)
-- Related: [map-saveable-navigation-stack-and-session-guard](../screens/session-and-navigation/map-saveable-navigation-stack-and-session-guard.md)
+- Related: [map-saveable-navigation-stack-and-session-guard → map-external-navigation-requests-and-intent-consumption](../screens/session-and-navigation/navigation-state/map-external-navigation-requests-and-intent-consumption.md)
+- Related: [map-saveable-navigation-stack-and-session-guard → map-navigation-route-serialization-and-feature-registration](../screens/session-and-navigation/navigation-state/map-navigation-route-serialization-and-feature-registration.md)
+- Related: [map-saveable-navigation-stack-and-session-guard → map-navigation-stores-and-restored-session-guard](../screens/session-and-navigation/navigation-state/map-navigation-stores-and-restored-session-guard.md)
 - Related: [map-signed-in-navigation-chrome-and-adaptive-windows](../screens/session-and-navigation/map-signed-in-navigation-chrome-and-adaptive-windows.md)
 - Related: [map-trash-capability-and-server-operations](../screens/session-and-navigation/map-trash-capability-and-server-operations.md)
-- Related: [map-account-settings-source-and-account-time](../data-and-offline/map-account-settings-source-and-account-time.md)
+- Related: [map-account-settings-source-and-account-time → map-account-settings-loading-and-refresh](../data-and-offline/account-settings-and-time/map-account-settings-loading-and-refresh.md)
+- Related: [map-account-settings-source-and-account-time → map-account-time-fields-and-validation](../data-and-offline/account-settings-and-time/map-account-time-fields-and-validation.md)
 <!-- kk:related:end -->

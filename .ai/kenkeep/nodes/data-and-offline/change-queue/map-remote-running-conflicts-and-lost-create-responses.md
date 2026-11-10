@@ -27,7 +27,10 @@ A create reaches the server once, though neither Tokkl nor Toggl takes an idempo
 # Related
 
 - Related: [map-tokkl-toggl-api](../../api-and-security/map-tokkl-toggl-api.md)
-- Related: [map-api-client-shared-okhttp-serverurl-and-errors](../../api-and-security/map-api-client-shared-okhttp-serverurl-and-errors.md)
+- Related: [map-api-client-shared-okhttp-serverurl-and-errors → map-api-execution-retries-and-errors](../../api-and-security/api-client/map-api-execution-retries-and-errors.md)
+- Related: [map-api-client-shared-okhttp-serverurl-and-errors → map-api-test-fixtures](../../api-and-security/api-client/map-api-test-fixtures.md)
+- Related: [map-api-client-shared-okhttp-serverurl-and-errors → map-shared-http-client-and-configured-server-security](../../api-and-security/api-client/map-shared-http-client-and-configured-server-security.md)
+- Related: [map-api-client-shared-okhttp-serverurl-and-errors → map-typed-api-resources-and-request-contracts](../../api-and-security/api-client/map-typed-api-resources-and-request-contracts.md)
 - Related: [practice-test-against-a-real-tokkl-server](../../testing/practice-test-against-a-real-tokkl-server.md)
 <!-- kk:related:end -->
 

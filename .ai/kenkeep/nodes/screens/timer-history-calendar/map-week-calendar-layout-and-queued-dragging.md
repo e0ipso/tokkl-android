@@ -29,7 +29,8 @@ Both views write clock times through `formatTime` in `time/TimeOfDay.kt` in the 
 # Related
 
 - Related: [map-offline-entry-mutations-and-local-id-mapping](../../data-and-offline/change-queue/map-offline-entry-mutations-and-local-id-mapping.md)
-- Related: [map-account-settings-source-and-account-time](../../data-and-offline/map-account-settings-source-and-account-time.md)
+- Related: [map-account-settings-source-and-account-time → map-account-settings-loading-and-refresh](../../data-and-offline/account-settings-and-time/map-account-settings-loading-and-refresh.md)
+- Related: [map-account-settings-source-and-account-time → map-account-time-fields-and-validation](../../data-and-offline/account-settings-and-time/map-account-time-fields-and-validation.md)
 - Related: [map-ui-components-and-compose-layout-gotchas](../../design/map-ui-components-and-compose-layout-gotchas.md)
 - Related: [practice-match-web-app-behavior-account-timezone](../../data-and-offline/practice-match-web-app-behavior-account-timezone.md)
 <!-- kk:related:end -->
