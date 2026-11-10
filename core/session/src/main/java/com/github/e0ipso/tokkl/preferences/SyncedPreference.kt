@@ -9,6 +9,7 @@ import com.github.e0ipso.tokkl.session.AccountDataOwner
 import com.github.e0ipso.tokkl.session.CurrentAccount
 import com.github.e0ipso.tokkl.session.SignOutPhase
 import com.github.e0ipso.tokkl.storage.ClearableStore
+import com.github.e0ipso.tokkl.storage.LoadResult
 import com.github.e0ipso.tokkl.storage.LoadedState
 import com.github.e0ipso.tokkl.storage.StartupLoad
 import kotlinx.coroutines.CoroutineScope
@@ -155,11 +156,14 @@ open class SyncedPreference<T : Any>(
     /**
      * Takes the refresh's `GET /api/v9/me/preferences`, null when it failed, from a server whose
      * capabilities say [keepsPreferences]. Sends an unsent value instead of reading the server's,
-     * in the returned job.
+     * in the returned job. When the phone failed to read its stored value at process start, it reads
+     * it again first, and takes nothing while it still cannot, so the server's value never goes to
+     * disk over a change the phone has not sent.
      */
     suspend fun refreshed(preferences: MePreferences?, keepsPreferences: Boolean): Job {
         val context = account.context.value
-        ready()
+        // A value the phone could not read, such as an unsent change, stays on disk as it is.
+        if (held.loadResult() is LoadResult.Failed) return Job().apply { complete() }
         val sendNow = memory.withLock {
             val changed = changedSinceRefresh
             changedSinceRefresh = false
@@ -229,7 +233,7 @@ open class SyncedPreference<T : Any>(
         try {
             store.save(stored)
         } catch (_: IOException) {
-            // The next change writes it again.
+            // The value stays in memory, and the next change or refresh writes it again.
         }
     }
 }

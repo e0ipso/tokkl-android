@@ -7,6 +7,7 @@ import com.github.e0ipso.tokkl.api.PreferencesChange
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.api.TimerViewChange
+import com.github.e0ipso.tokkl.api.mePreferences
 import com.github.e0ipso.tokkl.session.CurrentAccount
 import com.github.e0ipso.tokkl.storage.ClearableStore
 import kotlinx.coroutines.CompletableDeferred
@@ -24,6 +25,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.IOException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -167,6 +169,86 @@ class SyncedPreferenceTest {
             release.countDown()
             server.close()
         }
+    }
+
+    /**
+     * A change made offline is stored as unsent. When the phone fails to read it at the next process
+     * start, the refresh after that reads it again rather than storing the server's value over it.
+     */
+    @Test
+    fun aRefreshAfterAFailedLoadKeepsTheUnsentChangeOnDisk() {
+        val ops = mutableListOf<String>()
+        var reads = 0
+        val store = object : ClearableStore<StoredPreference<Int>> {
+            override suspend fun load(): StoredPreference<Int> {
+                if (reads++ == 0) throw IOException("busy")
+                return StoredPreference(7, unsent = true)
+            }
+
+            override suspend fun save(value: StoredPreference<Int>) {
+                ops += "saved ${value.value} unsent=${value.unsent}"
+            }
+
+            override suspend fun clear() {
+                ops += "clear"
+            }
+        }
+        val preference = SyncedPreference(
+            store,
+            { null },
+            account,
+            scope,
+            dispatcher,
+            default = 0,
+            codec = Codec,
+            sharing = { false },
+        )
+        scheduler.runCurrent()
+
+        scope.launch { preference.refreshed(mePreferences("{}"), keepsPreferences = true) }
+        scheduler.runCurrent()
+
+        assertEquals("the stored change shows", 7, preference.value.value)
+        assertEquals("and stays unsent on disk", listOf("saved 7 unsent=true"), ops)
+    }
+
+    /** A change whose write fails stays in memory, and the next refresh writes it, still unsent. */
+    @Test
+    fun aChangeWhoseWriteFailedIsWrittenByTheNextRefresh() {
+        val ops = mutableListOf<String>()
+        var failing = true
+        val store = object : ClearableStore<StoredPreference<Int>> {
+            override suspend fun load(): StoredPreference<Int>? = null
+
+            override suspend fun save(value: StoredPreference<Int>) {
+                if (failing) throw IOException("disk full")
+                ops += "saved ${value.value} unsent=${value.unsent}"
+            }
+
+            override suspend fun clear() {
+                ops += "clear"
+            }
+        }
+        val preference = SyncedPreference(
+            store,
+            { null },
+            account,
+            scope,
+            dispatcher,
+            default = 0,
+            codec = Codec,
+            sharing = { true },
+        )
+        scheduler.runCurrent()
+        preference.change(5)
+        scheduler.runCurrent()
+        assertEquals(5, preference.value.value)
+
+        failing = false
+        scope.launch { preference.refreshed(mePreferences("{}"), keepsPreferences = true) }
+        scheduler.runCurrent()
+
+        assertEquals(listOf("saved 5 unsent=true"), ops)
     }
 
     /**

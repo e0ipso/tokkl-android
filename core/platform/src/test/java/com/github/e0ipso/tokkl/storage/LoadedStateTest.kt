@@ -84,4 +84,31 @@ class LoadedStateTest {
 
         assertTrue(loads.isReady)
     }
+
+    /** A load that failed says so, and the next ask reads the store again; a change made since wins over it. */
+    @Test
+    fun aFailedLoadIsReadAgainWhenAskedUnlessAChangeCameFirst() {
+        var reads = 0
+        val state = LoadedState(scope, "default", dispatcher) {
+            if (reads++ == 0) throw IOException("busy")
+            "stored"
+        }
+        scheduler.runCurrent()
+        assertTrue(state.isReady)
+        assertEquals("default", state.value)
+
+        val retried = scope.async { state.loadResult() }
+        scheduler.runCurrent()
+
+        assertEquals(LoadResult.Loaded, retried.getCompleted())
+        assertEquals("stored", state.value)
+
+        val failing = LoadedState(scope, "default", dispatcher) { throw IOException("gone") }
+        scope.launch { failing.set("changed") }
+        val afterChange = scope.async { failing.loadResult() }
+        scheduler.runCurrent()
+
+        assertEquals(LoadResult.Loaded, afterChange.getCompleted())
+        assertEquals("changed", failing.value)
+    }
 }
