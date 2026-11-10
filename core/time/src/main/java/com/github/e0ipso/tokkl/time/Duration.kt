@@ -141,9 +141,7 @@ fun formatDurationWithoutSeconds(totalSeconds: Long, format: DurationFormat = Du
         format == DurationFormat.DECIMAL -> formatDuration(totalSeconds, format)
 
         format == DurationFormat.CLASSIC && h == 0.0 -> if (m > 0) {
-            "${whole(
-                m,
-            )} min"
+            "${whole(m)} min"
         } else {
             formatDuration(totalSeconds, format)
         }

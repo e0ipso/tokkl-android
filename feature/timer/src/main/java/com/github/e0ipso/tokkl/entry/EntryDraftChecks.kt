@@ -92,10 +92,7 @@ private fun checkNoTimes(form: EntryDraft, settings: AccountSettings, time: Acco
     val read = noTimeDuration(form.duration, settings.timeResolutionMinutes)
     val seconds = read.seconds
     if (read.error != null || seconds == null) {
-        return CheckedTimes.Invalid(
-            TimeField.DURATION,
-            read.mistake(settings.timeResolutionMinutes),
-        )
+        return CheckedTimes.Invalid(TimeField.DURATION, read.mistake(settings.timeResolutionMinutes))
     }
     return CheckedTimes.Valid(time.noTimeEntry(form.date, seconds))
 }

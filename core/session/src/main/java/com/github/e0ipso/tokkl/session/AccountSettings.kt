@@ -116,9 +116,7 @@ val MePreferences.collapseSimilar: Boolean
 
 /** The day Toggl numbers [number], from 0 for Sunday to 6 for Saturday, or null outside that. */
 internal fun dayOfWeek(number: Int): DayOfWeek? = if (number in 0 until DAYS_PER_WEEK) {
-    DayOfWeek.SUNDAY.plus(
-        number.toLong(),
-    )
+    DayOfWeek.SUNDAY.plus(number.toLong())
 } else {
     null
 }

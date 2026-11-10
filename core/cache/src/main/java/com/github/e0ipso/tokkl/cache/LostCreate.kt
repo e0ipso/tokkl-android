@@ -30,10 +30,7 @@ internal suspend fun earlierCopy(
     val starts = setOf(start, spans.start(start))
     return ApiResult.Success(
         entries.firstOrNull {
-            create.couldHaveMade(
-                it,
-                starts,
-            ) && it.id !in create.existingIds && !store.isMapped(it.id)
+            create.couldHaveMade(it, starts) && it.id !in create.existingIds && !store.isMapped(it.id)
         },
     )
 }

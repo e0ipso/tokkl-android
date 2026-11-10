@@ -27,19 +27,10 @@ val timerStateModule = module {
             clock = get(),
             io = io(),
         )
-    } binds arrayOf(
-        AccountDataOwner::class,
-        DiscardNotices::class,
-        CurrentTimerState::class,
-    )
+    } binds arrayOf(AccountDataOwner::class, DiscardNotices::class, CurrentTimerState::class)
 
     single {
-        TimerActions(
-            client = get<Session>(),
-            states = get<AccountTimerStates>()::intake,
-            scope = get(),
-            io = io(),
-        )
+        TimerActions(client = get<Session>(), states = get<AccountTimerStates>()::intake, scope = get(), io = io())
     } binds arrayOf(PauseActions::class, SessionActions::class)
 
     single {

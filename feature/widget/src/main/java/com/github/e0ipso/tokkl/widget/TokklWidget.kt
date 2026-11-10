@@ -120,10 +120,7 @@ private fun TimerStrip(context: Context, state: WidgetState.Ready, padding: Floa
     Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Column(
             GlanceModifier.defaultWeight().semantics {
-                contentDescription = listOfNotNull(
-                    status,
-                    project,
-                ).joinToString(", ")
+                contentDescription = listOfNotNull(status, project).joinToString(", ")
             },
         ) {
             if (details) {
@@ -132,21 +129,14 @@ private fun TimerStrip(context: Context, state: WidgetState.Ready, padding: Floa
                 }
                 Label(
                     if (state.paused != null) {
-                        context.getString(
-                            R.string.widget_paused_entry,
-                            description,
-                        )
+                        context.getString(R.string.widget_paused_entry, description)
                     } else {
                         description
                     },
                     14f,
                 )
                 if (state.running == null && state.paused == null) {
-                    Label(
-                        context.getString(R.string.widget_today),
-                        10f,
-                        muted = true,
-                    )
+                    Label(context.getString(R.string.widget_today), 10f, muted = true)
                 }
             }
             TimerClock(context, state, if (details) 24f else 18f, available)
@@ -187,10 +177,7 @@ private fun ColumnScope.TimerCard(context: Context, state: WidgetState.Ready, ki
         Column(GlanceModifier.defaultWeight()) {
             Label(
                 if (state.paused != null) {
-                    context.getString(
-                        R.string.widget_paused_entry,
-                        description(context, state),
-                    )
+                    context.getString(R.string.widget_paused_entry, description(context, state))
                 } else {
                     description(context, state)
                 },
@@ -233,9 +220,7 @@ private fun ColumnScope.TimerCard(context: Context, state: WidgetState.Ready, ki
             TimerClock(context, state, if (large) 34f else 22f, if (large) width else width * .55f)
             if (!large) {
                 Spacer(GlanceModifier.width(8.dp))
-                Box(
-                    GlanceModifier.defaultWeight(),
-                ) {
+                Box(GlanceModifier.defaultWeight()) {
                     ProjectLine(
                         projectText(context, state) ?: context.getString(R.string.widget_no_project),
                         projectColor(state),

@@ -133,9 +133,7 @@ internal fun ColumnScope.EntryChips(context: Context, entry: PomodoroWidgetEntry
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 val color = runCatching {
-                    ColorProvider(
-                        Color(android.graphics.Color.parseColor(entry.projectColor)),
-                    )
+                    ColorProvider(Color(android.graphics.Color.parseColor(entry.projectColor)))
                 }.getOrElse { GlanceTheme.colors.onSurfaceVariant }
                 Box(GlanceModifier.size(8.dp).cornerRadius(4.dp).background(color)) {}
                 Spacer(GlanceModifier.width(5.dp))
@@ -164,9 +162,7 @@ internal fun ColumnScope.EntryChips(context: Context, entry: PomodoroWidgetEntry
         PomodoroLabel(
             (
                 entry.fields.tags + if (entry.fields.billable) {
-                    listOf(
-                        context.getString(FieldsR.string.entry_billable),
-                    )
+                    listOf(context.getString(FieldsR.string.entry_billable))
                 } else {
                     emptyList()
                 }
@@ -189,9 +185,7 @@ internal fun PomodoroClock(
     val clock = pomodoroWidgetClock(state, now, SystemClock.elapsedRealtime())
     val metrics = context.resources.displayMetrics
     val paint = Paint().apply {
-        typeface = context.resources.getFont(
-            UiR.font.anybody_wdth_wght,
-        )
+        typeface = context.resources.getFont(UiR.font.anybody_wdth_wght)
         fontFeatureSettings = "tnum"
     }
     var sp = requested
@@ -274,10 +268,7 @@ internal fun phaseColor(state: PomodoroWidgetState.Active) = if (state.ended) {
 } else if (state.session.phase.kind ==
     PhaseKind.WORK
 ) {
-    ColorProvider(
-        TokklLightColorScheme.primary,
-        TokklDarkColorScheme.primary,
-    )
+    ColorProvider(TokklLightColorScheme.primary, TokklDarkColorScheme.primary)
 } else {
     RestText
 }
@@ -294,13 +285,7 @@ internal fun nextLabel(context: Context, state: PomodoroWidgetState.Active) = co
     },
 )
 internal fun defaultsLine(context: Context, state: PomodoroWidgetState.Idle) = state.defaults.run {
-    context.getString(
-        R.string.pomodoro_widget_defaults,
-        workMinutes,
-        shortRestMinutes,
-        longRestMinutes,
-        longRestEvery,
-    )
+    context.getString(R.string.pomodoro_widget_defaults, workMinutes, shortRestMinutes, longRestMinutes, longRestEvery)
 }
 internal fun defaultsDescription(context: Context, state: PomodoroWidgetState.Idle) = state.defaults.run {
     context.getString(
@@ -313,11 +298,7 @@ internal fun defaultsDescription(context: Context, state: PomodoroWidgetState.Id
 }
 private fun projectLine(context: Context, entry: PomodoroWidgetEntry) = entry.project?.let { project ->
     entry.task?.let {
-        context.getString(
-            R.string.widget_project_task,
-            project,
-            it,
-        )
+        context.getString(R.string.widget_project_task, project, it)
     } ?: project
 }
 internal fun entryLine(context: Context, entry: PomodoroWidgetEntry): String {

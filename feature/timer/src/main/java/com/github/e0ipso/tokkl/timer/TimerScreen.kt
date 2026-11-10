@@ -101,11 +101,7 @@ fun TimerScreen(
                 }
             },
         ) {
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .screenContent(columnWidth),
-            ) {
+            Box(Modifier.fillMaxSize().screenContent(columnWidth)) {
                 when (view) {
                     TimerView.LIST -> listContent()
                     TimerView.CALENDAR -> calendarContent()

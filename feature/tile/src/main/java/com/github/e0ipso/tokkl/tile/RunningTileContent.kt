@@ -37,12 +37,8 @@ class RunningTileContents(controls: Flow<TimerControls>, entries: Flow<List<Time
 
 fun runningTileContent(controls: TimerControls, entries: List<TimeEntry>): RunningTileContent = when (controls) {
     is TimerControls.Running -> RunningTileContent.Running(controls.entry, controls.target)
-
     is TimerControls.Paused -> RunningTileContent.Paused(controls.fields.description, controls.target)
-
-    TimerControls.Idle -> lastStopped(
-        entries,
-    )?.let { RunningTileContent.Continue(it) } ?: RunningTileContent.Nothing
+    TimerControls.Idle -> lastStopped(entries)?.let { RunningTileContent.Continue(it) } ?: RunningTileContent.Nothing
 }
 
 /**

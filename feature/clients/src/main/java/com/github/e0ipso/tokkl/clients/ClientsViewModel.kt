@@ -174,9 +174,7 @@ class ClientsViewModel(
             apply = ClientsData::with,
             done = { client ->
                 if (editing == null) {
-                    CatalogChange.Created(
-                        client.name,
-                    )
+                    CatalogChange.Created(client.name)
                 } else {
                     CatalogChange.Saved(client.name)
                 }

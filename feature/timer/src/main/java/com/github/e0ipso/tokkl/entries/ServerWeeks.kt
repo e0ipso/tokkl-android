@@ -97,9 +97,7 @@ private fun statusOf(error: ApiError): WeekSource = when (error) {
     ) {
         WeekSource.Unreachable
     } else {
-        WeekSource.Failed(
-            error.status,
-        )
+        WeekSource.Failed(error.status)
     }
 
     ApiError.AuthFailed -> WeekSource.AuthFailed

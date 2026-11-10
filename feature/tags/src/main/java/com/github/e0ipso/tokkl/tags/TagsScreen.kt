@@ -101,9 +101,7 @@ fun TagsScreen(page: TagsPageState, actions: TagsActions, modifier: Modifier = M
                         onRetry = actions.onRetry,
                     )
                     if (page.hasNotices && (state.data != null || rows.isNotEmpty())) {
-                        Spacer(
-                            Modifier.height(TokklTheme.spacing.betweenGroups),
-                        )
+                        Spacer(Modifier.height(TokklTheme.spacing.betweenGroups))
                     }
                 }
             }

@@ -24,10 +24,7 @@ import java.io.File
 val reportsFeatureModule = module {
     singleOf(::ServerReportsRepository)
     single {
-        ReportExportFiles(
-            File(androidContext().cacheDir, ReportExportFiles.DIRECTORY),
-            get(),
-        )
+        ReportExportFiles(File(androidContext().cacheDir, ReportExportFiles.DIRECTORY), get())
     }
 
     // The exports' account, which every sign-in and sign-out invalidates, deleting the files.

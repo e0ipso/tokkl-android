@@ -39,29 +39,21 @@ internal suspend fun stoppedOnServer(server: TokklApi, change: PendingChange): A
 internal fun ServerTimeEntry.matchesStop(change: PendingChange): Boolean =
     id == change.entryId && workspaceId == change.workspaceId &&
         runCatching {
-            OffsetDateTime.parse(
-                start,
-            ).toInstant()
+            OffsetDateTime.parse(start).toInstant()
         }.getOrNull() == change.start.truncatedTo(ChronoUnit.SECONDS) &&
         stop?.let {
             runCatching {
-                OffsetDateTime.parse(
-                    it,
-                ).toInstant()
+                OffsetDateTime.parse(it).toInstant()
             }.getOrNull()
         } == change.stop?.truncatedTo(ChronoUnit.SECONDS) &&
         (serverDeletedAt != null) == change.shortStop
 
 private fun TrashEntry.matchesStop(change: PendingChange): Boolean = id.value == change.entryId && deletedAt != null &&
     runCatching {
-        OffsetDateTime.parse(
-            start,
-        ).toInstant()
+        OffsetDateTime.parse(start).toInstant()
     }.getOrNull() == change.start.truncatedTo(ChronoUnit.SECONDS) &&
     stop?.let {
         runCatching {
-            OffsetDateTime.parse(
-                it,
-            ).toInstant()
+            OffsetDateTime.parse(it).toInstant()
         }.getOrNull()
     } == change.stop?.truncatedTo(ChronoUnit.SECONDS)

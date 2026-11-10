@@ -195,9 +195,6 @@ internal class StoredSignInAccount(
     private val accountSettings: AccountSettingsStore,
 ) : SignedInAccount {
     override suspend fun current(): SignInAgain? = servers.load()?.let { server ->
-        SignInAgain(
-            server,
-            accountSettings.load()?.userId,
-        )
+        SignInAgain(server, accountSettings.load()?.userId)
     }
 }

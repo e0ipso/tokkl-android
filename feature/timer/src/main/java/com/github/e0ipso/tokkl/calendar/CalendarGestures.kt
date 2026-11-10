@@ -80,11 +80,7 @@ internal class CalendarDrags(
         is CalendarDrag.Change -> {
             val snapped = (Math.round((y - drag.originY) / hour * 60.0 / step) * step).toInt()
             val delta = if (dayMode && drag.kind == DragKind.MOVE) {
-                clampDayMove(
-                    snapped,
-                    drag.top,
-                    drag.bottom,
-                )
+                clampDayMove(snapped, drag.top, drag.bottom)
             } else {
                 snapped
             }
@@ -173,11 +169,7 @@ internal class BlockGeometry(
         step: Int,
     ): DragTarget? {
         val hit = blocks.lastOrNull {
-            contains(
-                it,
-                position,
-                width,
-            )
+            contains(it, position, width)
         } ?: return DragTarget.Empty(snapToStep(position.y / hour * 60.0, step))
         val stop = hit.entry.stop ?: return null
         val top = top(hit)
@@ -198,9 +190,7 @@ internal class BlockGeometry(
         val left = lane * block.lane + gap
         val top = top(block)
         return position.x >= left && position.x <= left + lane - gap * 2 && position.y >= top &&
-            position.y <= top + height(
-                block,
-            )
+            position.y <= top + height(block)
     }
 
     private fun top(block: CalendarBlock): Float = (block.top / MINUTES_PER_HOUR * hour).toFloat()

@@ -60,10 +60,7 @@ class SessionTrust(
             if (it.refusal == refusal) {
                 it
             } else {
-                State(
-                    refusal,
-                    promptOpen = refusal is ApiError.TrustQuestion,
-                )
+                State(refusal, promptOpen = refusal is ApiError.TrustQuestion)
             }
         }
     }

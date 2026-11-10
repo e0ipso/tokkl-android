@@ -226,9 +226,7 @@ private fun ItemLabel(label: String, selected: Boolean, labels: List<String>) {
     // Every label is measured in the bolder of its two weights, so selecting an item
     // changes no item's size.
     val style = LocalTextStyle.current.let {
-        it.copy(
-            fontWeight = maxOf(it.fontWeight ?: FontWeight.Normal, FontWeight.Bold),
-        )
+        it.copy(fontWeight = maxOf(it.fontWeight ?: FontWeight.Normal, FontWeight.Bold))
     }
     val measurer = rememberTextMeasurer(cacheSize = labels.size)
     val fontScale = LocalDensity.current.fontScale

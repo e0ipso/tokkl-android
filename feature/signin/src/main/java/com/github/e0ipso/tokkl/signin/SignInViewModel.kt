@@ -212,10 +212,7 @@ class SignInViewModel(
                 }
             }
             mutableState.update {
-                it.copy(
-                    submitting = false,
-                    failure = SignInResult.AnswerNotStored.takeUnless { stored },
-                )
+                it.copy(submitting = false, failure = SignInResult.AnswerNotStored.takeUnless { stored })
             }
             if (stored) submit()
         }

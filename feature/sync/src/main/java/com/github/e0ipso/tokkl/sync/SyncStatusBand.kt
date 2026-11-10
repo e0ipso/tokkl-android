@@ -41,18 +41,9 @@ fun SyncStatusBand(
 ) {
     val resources = LocalResources.current
     val bodyStyle = MaterialTheme.typography.bodyMedium
-    Column(
-        modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface),
-    ) {
+    Column(modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface)) {
         HorizontalDivider()
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .screenContent()
-                .padding(vertical = TokklTheme.spacing.space2),
-        ) {
+        Column(Modifier.fillMaxWidth().screenContent().padding(vertical = TokklTheme.spacing.space2)) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space2),

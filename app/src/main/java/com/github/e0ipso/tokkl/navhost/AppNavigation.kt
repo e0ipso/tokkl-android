@@ -270,11 +270,7 @@ private fun MoreSheet(
                         },
                         // The active item's outline, as the bar's indicator has one.
                         modifier = if (selected) {
-                            Modifier.border(
-                                FrameWidth,
-                                MaterialTheme.colorScheme.outline,
-                                shape,
-                            )
+                            Modifier.border(FrameWidth, MaterialTheme.colorScheme.outline, shape)
                         } else {
                             Modifier
                         },

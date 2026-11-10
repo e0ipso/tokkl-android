@@ -61,9 +61,7 @@ class BackgroundSend(private val workManager: CurrentWorkManager, private val ru
         val workManager = workManager.get()
         runs.cancelWaiting(
             waiting = {
-                workManager.getWorkInfosForUniqueWork(
-                    WORK_NAME,
-                ).get().any { it.state == WorkInfo.State.ENQUEUED }
+                workManager.getWorkInfosForUniqueWork(WORK_NAME).get().any { it.state == WorkInfo.State.ENQUEUED }
             },
             cancel = { workManager.cancelUniqueWork(WORK_NAME).result.get() },
             queueEmpty = queueEmpty,

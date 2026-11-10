@@ -57,9 +57,7 @@ internal fun SignedInPanes(top: Route, entryBeside: Boolean, screen: @Composable
                     .fillMaxHeight()
                     .then(
                         if (entryBeside) {
-                            Modifier.consumeWindowInsets(
-                                WindowInsets.systemBars.only(WindowInsetsSides.End),
-                            )
+                            Modifier.consumeWindowInsets(WindowInsets.systemBars.only(WindowInsetsSides.End))
                         } else {
                             Modifier
                         },
@@ -76,9 +74,7 @@ internal fun SignedInPanes(top: Route, entryBeside: Boolean, screen: @Composable
                     .fillMaxHeight()
                     .then(
                         if (entryBeside) {
-                            Modifier.consumeWindowInsets(
-                                WindowInsets.systemBars.only(WindowInsetsSides.Start),
-                            )
+                            Modifier.consumeWindowInsets(WindowInsets.systemBars.only(WindowInsetsSides.Start))
                         } else {
                             Modifier
                         },
@@ -115,22 +111,14 @@ internal fun SignedInFrame(
     val rail = showNavigation && width != WindowWidth.COMPACT
     Row(Modifier.fillMaxSize()) {
         if (rail) {
-            AppNavigationRail(
-                pages = pages,
-                current = current,
-                onOpen = onOpen,
-                badges = badges,
-                hidden = hidden,
-            )
+            AppNavigationRail(pages = pages, current = current, onOpen = onOpen, badges = badges, hidden = hidden)
         }
         Scaffold(
             modifier = Modifier
                 .weight(1f)
                 .then(
                     if (rail) {
-                        Modifier.consumeWindowInsets(
-                            WindowInsets.systemBars.only(WindowInsetsSides.Start),
-                        )
+                        Modifier.consumeWindowInsets(WindowInsets.systemBars.only(WindowInsetsSides.Start))
                     } else {
                         Modifier
                     },
@@ -168,13 +156,7 @@ internal fun SignedInFrame(
             // The page's stickers take the current tab's hue, LocalSectionHue.
             val hue = checkNotNull(pages.of(current)) { "$current is no top-level page" }.hue
             CompositionLocalProvider(LocalSectionHue provides hue) {
-                Box(
-                    Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                        .consumeWindowInsets(innerPadding),
-                    content = content,
-                )
+                Box(Modifier.fillMaxSize().padding(innerPadding).consumeWindowInsets(innerPadding), content = content)
             }
         }
     }

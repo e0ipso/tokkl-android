@@ -49,12 +49,7 @@ fun ScrollAwayColumn(
     if (!scrollAway) {
         Column(modifier) {
             top()
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                content = body,
-            )
+            Box(Modifier.fillMaxWidth().weight(1f), content = body)
         }
         return
     }
@@ -67,20 +62,10 @@ fun ScrollAwayColumn(
         val scroll = rememberScrollState(initial = if (startGone) Int.MAX_VALUE else 0)
         val topGoesFirst = remember(scroll) { TopGoesFirst(scroll) }
         val topGone = remember(scroll) { { scroll.value >= scroll.maxValue } }
-        Column(
-            Modifier
-                .fillMaxSize()
-                .nestedScroll(topGoesFirst)
-                .verticalScroll(scroll),
-        ) {
+        Column(Modifier.fillMaxSize().nestedScroll(topGoesFirst).verticalScroll(scroll)) {
             top()
             CompositionLocalProvider(LocalOuterTopGone provides topGone) {
-                Box(
-                    Modifier
-                        .fillMaxWidth()
-                        .height(height),
-                    content = body,
-                )
+                Box(Modifier.fillMaxWidth().height(height), content = body)
             }
         }
     }

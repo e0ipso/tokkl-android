@@ -122,9 +122,7 @@ private fun statusOf(error: ApiError): OlderDays = when (error) {
     is ApiError.UnexpectedStatus -> if (error.status in PROXY_UNREACHABLE) {
         OlderDays.Unreachable
     } else {
-        OlderDays.Failed(
-            error.status,
-        )
+        OlderDays.Failed(error.status)
     }
 
     ApiError.AuthFailed -> OlderDays.AuthFailed

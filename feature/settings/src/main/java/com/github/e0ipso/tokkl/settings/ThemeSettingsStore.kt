@@ -30,10 +30,7 @@ class ThemeSettingsStore(context: Context, private val io: CoroutineContext) : T
         val mode = getString(KEY_MODE, null)
             ?.let { name -> ThemeMode.entries.firstOrNull { it.name == name } }
             ?: defaults.mode
-        ThemeSettings(
-            mode = mode,
-            dynamicColor = getBoolean(KEY_DYNAMIC_COLOR, defaults.dynamicColor),
-        )
+        ThemeSettings(mode = mode, dynamicColor = getBoolean(KEY_DYNAMIC_COLOR, defaults.dynamicColor))
     }
 
     @Throws(IOException::class)

@@ -89,10 +89,7 @@ internal class ReportExtraProjection {
         val limited = value.take(MAX_TEXT_CHARACTERS)
         if (limited.length != value.length) truncated = true
         val safe = limited.map {
-            if (Character.getType(
-                    it,
-                ) == Character.FORMAT.toInt()
-            ) {
+            if (Character.getType(it) == Character.FORMAT.toInt()) {
                 "\\u%04x".format(it.code)
             } else {
                 it.toString()

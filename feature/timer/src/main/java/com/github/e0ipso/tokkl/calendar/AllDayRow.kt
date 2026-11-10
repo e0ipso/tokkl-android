@@ -189,11 +189,7 @@ private fun AllDayChip(
             .drawBehind { drawRect(colours.bar, size = Size(BlockBar.toPx(), size.height)) }
             .then(
                 if (onEdit != null) {
-                    Modifier.clickable(
-                        onClickLabel = editLabel,
-                        role = Role.Button,
-                        onClick = onEdit,
-                    )
+                    Modifier.clickable(onClickLabel = editLabel, role = Role.Button, onClick = onEdit)
                 } else {
                     Modifier
                 },
@@ -212,13 +208,7 @@ private fun AllDayChip(
             oneLine -> ChipLine(heading, duration, mark = entry.unsent)
 
             entry.unsent -> UnsentBlockText { mark ->
-                BlockText(
-                    entry,
-                    heading,
-                    duration,
-                    twoLines = true,
-                    mark = mark,
-                )
+                BlockText(entry, heading, duration, twoLines = true, mark = mark)
             }
 
             else -> BlockText(entry, heading, duration, twoLines = true, mark = false)

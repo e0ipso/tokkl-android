@@ -62,11 +62,7 @@ class ApiTokenStore(context: Context, private val io: CoroutineContext) : Cleara
         val key = key() ?: return@locked null
         try {
             val cipher = Cipher.getInstance(TRANSFORMATION)
-            cipher.init(
-                Cipher.DECRYPT_MODE,
-                key,
-                GCMParameterSpec(TAG_BITS, bytes, HEADER_SIZE, ivEnd - HEADER_SIZE),
-            )
+            cipher.init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(TAG_BITS, bytes, HEADER_SIZE, ivEnd - HEADER_SIZE))
             String(cipher.doFinal(bytes, ivEnd, bytes.size - ivEnd), Charsets.UTF_8)
         } catch (_: GeneralSecurityException) {
             null

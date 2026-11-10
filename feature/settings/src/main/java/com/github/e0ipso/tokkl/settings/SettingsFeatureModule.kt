@@ -22,11 +22,7 @@ val settingsFeatureModule = module {
     singleOf(::ThemeSettingsLoad) bind StartupLoad::class
 
     single {
-        SignOutConfirmation(
-            unsentNow = get<ChangeQueue>()::unsentNow,
-            signOut = get(),
-            scope = get(),
-        )
+        SignOutConfirmation(unsentNow = get<ChangeQueue>()::unsentNow, signOut = get(), scope = get())
     }
 
     viewModel {

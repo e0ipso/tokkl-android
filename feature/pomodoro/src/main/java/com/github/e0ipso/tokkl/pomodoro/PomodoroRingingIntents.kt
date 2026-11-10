@@ -29,10 +29,7 @@ internal fun phaseUri(phase: PomodoroPhaseKey, revision: Long?): Uri {
     return uri.build()
 }
 
-fun Intent.phaseKey(): PomodoroPhaseKey? = if (hasExtra(
-        EXTRA_PHASE_START,
-    )
-) {
+fun Intent.phaseKey(): PomodoroPhaseKey? = if (hasExtra(EXTRA_PHASE_START)) {
     PomodoroPhaseKey(Instant.ofEpochMilli(getLongExtra(EXTRA_PHASE_START, 0)))
 } else {
     null

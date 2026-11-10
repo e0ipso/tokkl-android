@@ -125,22 +125,13 @@ internal fun FullscreenTimerContent(state: TimerState, actions: FullscreenTimerA
                 labels.project?.let { Text(it, style = MaterialTheme.typography.titleMedium) }
                 labels.task?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
                 if (fields.tags.isNotEmpty()) {
-                    Text(
-                        fields.tags.joinToString(", "),
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
+                    Text(fields.tags.joinToString(", "), style = MaterialTheme.typography.bodyLarge)
                 }
                 if (fields.billable) {
-                    Text(
-                        stringResource(FieldsR.string.entry_billable),
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
+                    Text(stringResource(FieldsR.string.entry_billable), style = MaterialTheme.typography.bodyLarge)
                 }
                 if (running?.unsent == true) {
-                    Text(
-                        stringResource(R.string.history_unsent),
-                        style = MaterialTheme.typography.labelLarge,
-                    )
+                    Text(stringResource(R.string.history_unsent), style = MaterialTheme.typography.labelLarge)
                 }
                 val stopAction = stringResource(UiR.string.timer_stop_spoken)
                 FlowRow(

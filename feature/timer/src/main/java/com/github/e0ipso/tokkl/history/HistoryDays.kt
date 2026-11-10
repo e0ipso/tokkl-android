@@ -101,23 +101,13 @@ fun historyDays(
     val olderOnly = older.associateBy { it.id }.values.filter { it.id !in cachedIds }
     val inWindow = { entry: TimeEntry -> windowStart == null || entry.dayIn(time) >= windowStart }
     val rows = cached.map {
-        Row(
-            it.entry,
-            it.unsent,
-            cached = inWindow(it.entry),
-        )
+        Row(it.entry, it.unsent, cached = inWindow(it.entry))
     } + olderOnly.map { Row(it, unsent = false, cached = false) }
     val projectsById = projects.associateBy { it.id }
     val tasksById = tasks.associateBy { it.id }
     return rows
         .mapNotNull { row ->
-            row.entry.shown(
-                row.unsent,
-                row.cached,
-                time,
-                projectsById,
-                tasksById,
-            )?.let { shown ->
+            row.entry.shown(row.unsent, row.cached, time, projectsById, tasksById)?.let { shown ->
                 val timing = row.entry.timing
                 val date = if (timing is EntryTiming.AllDay) {
                     timing.dayIn(time.zone)
@@ -129,9 +119,7 @@ fun historyDays(
         }
         .groupBy({ it.first }, { it.second })
         .map { (date, entries) ->
-            entries.sortedWith(
-                NEWEST_FIRST,
-            ).let { HistoryDay(date, it, rowsForDay(it, collapse)) }
+            entries.sortedWith(NEWEST_FIRST).let { HistoryDay(date, it, rowsForDay(it, collapse)) }
         }
         .sortedByDescending { it.date }
 }

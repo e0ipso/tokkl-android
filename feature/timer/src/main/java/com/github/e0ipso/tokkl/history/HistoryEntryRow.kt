@@ -268,11 +268,7 @@ private fun EntryText(
     val start = range?.let { settings.formatTime(it.start, zone) }
     val stop = range?.let { settings.formatTime(it.stop, zone) }
     val spokenRange = if (start != null && stop != null) {
-        stringResource(
-            R.string.history_time_range_spoken,
-            start,
-            stop,
-        )
+        stringResource(R.string.history_time_range_spoken, start, stop)
     } else {
         null
     }
@@ -308,11 +304,7 @@ private fun EntryText(
                 Spacer(Modifier.width(TokklTheme.spacing.space2))
                 Text(
                     text = entry.task?.let {
-                        stringResource(
-                            R.string.history_project_task,
-                            entry.project,
-                            it,
-                        )
+                        stringResource(R.string.history_project_task, entry.project, it)
                     } ?: entry.project,
                     style = MaterialTheme.typography.bodyMedium,
                 )

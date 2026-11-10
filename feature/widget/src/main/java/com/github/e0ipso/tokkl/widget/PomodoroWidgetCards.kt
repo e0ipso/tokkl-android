@@ -163,9 +163,7 @@ internal fun ColumnScope.SessionCard(
                 Spacer(GlanceModifier.height(8.dp))
                 PomodoroLabel(
                     if (state.ended) {
-                        context.getString(
-                            UiR.string.pomodoro_alarm_waiting,
-                        )
+                        context.getString(UiR.string.pomodoro_alarm_waiting)
                     } else {
                         entryLine(context, state.entry)
                     },
@@ -203,10 +201,7 @@ private fun Actions(
         if (scale > 1.5f) {
             PomodoroIcon(
                 primary,
-                if (primary == LocalContext.current.getString(
-                        UiR.string.pomodoro_start,
-                    )
-                ) {
+                if (primary == LocalContext.current.getString(UiR.string.pomodoro_start)) {
                     UiR.drawable.ic_play
                 } else {
                     R.drawable.ic_widget_next
@@ -218,10 +213,7 @@ private fun Actions(
             Spacer(GlanceModifier.defaultWeight())
             PomodoroIcon(
                 secondaryDescription,
-                if (secondaryDescription == LocalContext.current.getString(
-                        UiR.string.pomodoro_end,
-                    )
-                ) {
+                if (secondaryDescription == LocalContext.current.getString(UiR.string.pomodoro_end)) {
                     UiR.drawable.ic_close
                 } else {
                     UiR.drawable.ic_edit
@@ -245,22 +237,14 @@ private fun Actions(
             val context = LocalContext.current
             val metrics = context.resources.displayMetrics
             val labelPaint = Paint().apply {
-                textSize = TypedValue.applyDimension(
-                    TypedValue.COMPLEX_UNIT_SP,
-                    14f,
-                    metrics,
-                )
+                textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 14f, metrics)
             }
             val secondaryWidth = (labelPaint.measureText(secondary) / metrics.density + 32f).coerceAtLeast(48f)
             Box(
-                GlanceModifier.width(
-                    secondaryWidth.dp,
-                ).height(
+                GlanceModifier.width(secondaryWidth.dp).height(
                     48.dp,
                 ).background(ImageProvider(R.drawable.pomodoro_widget_outline)).padding(horizontal = 12.dp)
-                    .clickable(
-                        secondaryAction,
-                    ).semantics { contentDescription = secondaryDescription },
+                    .clickable(secondaryAction).semantics { contentDescription = secondaryDescription },
                 contentAlignment = Alignment.Center,
             ) {
                 PomodoroLabel(secondary, 14f)

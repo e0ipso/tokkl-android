@@ -149,10 +149,7 @@ class EntryFormViewModel(
     fun setBillable(billable: Boolean) = change { it.copy(fields = it.fields.copy(billable = billable)) }
 
     fun setDate(date: LocalDate) = change {
-        it.copy(
-            date = date,
-            mistakes = it.mistakes - TimeField.START - TimeField.END,
-        )
+        it.copy(date = date, mistakes = it.mistakes - TimeField.START - TimeField.END)
     }
 
     fun setStart(text: String) = change { it.copy(start = text, mistakes = it.mistakes - TimeField.START) }
@@ -160,11 +157,7 @@ class EntryFormViewModel(
     fun setEnd(text: String) = change { it.copy(end = text, mistakes = it.mistakes - TimeField.END) }
 
     fun setDuration(text: String) = change {
-        it.copy(
-            duration = text,
-            durationSeconds = null,
-            mistakes = it.mistakes - TimeField.DURATION,
-        )
+        it.copy(duration = text, durationSeconds = null, mistakes = it.mistakes - TimeField.DURATION)
     }
 
     /**
@@ -182,11 +175,7 @@ class EntryFormViewModel(
             on -> {
                 // Times typed and not left yet give the duration, as leaving them would.
                 val shown = if (form.timesTyped() && !form.durationChanged()) {
-                    form.followTimes(
-                        settings,
-                        time,
-                        clock,
-                    )
+                    form.followTimes(settings, time, clock)
                 } else {
                     form
                 }
@@ -372,21 +361,14 @@ class EntryFormViewModel(
 
     private fun keptFor(phase: Phase): SavedEntryForm? = when (phase) {
         is Phase.Waiting -> SavedEntryForm((phase.opening as? Opening.Edit)?.older?.let(::SavedEntry), phase.typed)
-
-        is Phase.Open -> SavedEntryForm(
-            openedOn?.let(::SavedEntry),
-            opened?.let { TypedDraft.of(it, phase.form) },
-        )
-
+        is Phase.Open -> SavedEntryForm(openedOn?.let(::SavedEntry), opened?.let { TypedDraft.of(it, phase.form) })
         else -> null
     }
 
     private fun change(edit: (EntryDraft) -> EntryDraft) {
         phase.update { current ->
             if (current is Phase.Open && !current.form.saving) {
-                Phase.Open(
-                    edit(current.form),
-                )
+                Phase.Open(edit(current.form))
             } else {
                 current
             }

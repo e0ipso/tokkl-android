@@ -79,12 +79,7 @@ internal fun WeekStrip(
     val shape = MaterialTheme.shapes.small.copy(bottomStart = ZeroCornerSize, bottomEnd = ZeroCornerSize)
     val totals = state.weekDays.map { day ->
         if (state.week.shows) {
-            dayTotalSeconds(
-                state.entries,
-                day,
-                state.zone,
-                now,
-            )
+            dayTotalSeconds(state.entries, day, state.zone, now)
         } else {
             null
         }
@@ -153,18 +148,12 @@ private fun StripDay(
     val words = remember(resources) { DateWords(resources) }
     val scheme = MaterialTheme.colorScheme
     val label = if (isToday) {
-        resources.getString(
-            R.string.history_today,
-        )
+        resources.getString(R.string.history_today)
     } else {
         resources.getString(UiR.string.history_day, words.weekday(day), words.short(day))
     }
     val spoken = totalSeconds?.let {
-        stringResource(
-            R.string.history_day_spoken,
-            label,
-            spokenDuration(resources, it),
-        )
+        stringResource(R.string.history_day_spoken, label, spokenDuration(resources, it))
     } ?: label
     val frame = if (selected) {
         Modifier
@@ -238,13 +227,7 @@ private fun rememberWidestStripTotal(totals: List<String>, style: TextStyle): In
     return remember(totals, style, measurer, density) {
         val smallest = style.copy(fontSize = StripMinFontSize)
         totals.maxOfOrNull {
-            measurer.measure(
-                it,
-                smallest,
-                softWrap = false,
-                maxLines = 1,
-                density = density,
-            ).size.width
+            measurer.measure(it, smallest, softWrap = false, maxLines = 1, density = density).size.width
         } ?: 0
     }
 }

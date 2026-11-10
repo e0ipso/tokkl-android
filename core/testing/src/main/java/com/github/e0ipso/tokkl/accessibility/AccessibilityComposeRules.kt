@@ -30,9 +30,7 @@ inline fun <reified A : ComponentActivity> createAndroidComposeRule() =
  * rule leaves out only the touch-target check; every other check still runs.
  */
 fun createComposeRule(scaledSizes: Boolean = false) = composeRule().also {
-    it.enableTokklAccessibilityChecks(
-        scaledSizes,
-    )
+    it.enableTokklAccessibilityChecks(scaledSizes)
 }
 
 fun createEmptyComposeRule() = emptyComposeRule().also { it.enableTokklAccessibilityChecks() }

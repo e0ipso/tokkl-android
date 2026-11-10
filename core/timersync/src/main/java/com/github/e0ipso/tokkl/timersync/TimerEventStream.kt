@@ -59,9 +59,7 @@ internal suspend fun holdTimerEvents(api: TokklApi?, source: TimerStateSource, l
             is ApiResult.Failure -> if (answer.error.refusesCredential()) {
                 StreamEnd.Refused
             } else {
-                StreamEnd.Failed(
-                    answer.error,
-                )
+                StreamEnd.Failed(answer.error)
             }
         }
     } catch (_: SQLiteException) {
@@ -200,10 +198,7 @@ internal class EventStreamParser(private val maxLineBytes: Int = MAX_LINE_BYTES)
     private fun dispatch(items: MutableList<StreamItem>) {
         val block = data
         if (block != null) {
-            items += StreamItem.Event(
-                name.ifEmpty { DEFAULT_EVENT },
-                block.substring(0, block.length - 1),
-            )
+            items += StreamItem.Event(name.ifEmpty { DEFAULT_EVENT }, block.substring(0, block.length - 1))
         }
         name = ""
         data = null

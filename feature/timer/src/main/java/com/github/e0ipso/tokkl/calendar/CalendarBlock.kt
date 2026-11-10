@@ -144,11 +144,7 @@ internal fun entryColours(entry: CalendarEntry): EntryColours {
         bar = if (entry.running) {
             TokklTheme.extraColors.running
         } else {
-            projectMark(
-                entry.projectColor,
-                TokklTheme.extraColors.projectMix,
-                muted,
-            )
+            projectMark(entry.projectColor, TokklTheme.extraColors.projectMix, muted)
         },
     )
 }
@@ -172,9 +168,7 @@ internal fun BlockText(entry: CalendarEntry, heading: String, duration: String, 
             Text(
                 text = buildAnnotatedString {
                     if (entry.project != null) {
-                        append(
-                            entry.project + resources.getString(R.string.calendar_block_separator),
-                        )
+                        append(entry.project + resources.getString(R.string.calendar_block_separator))
                     }
                     withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = scheme.onSurface)) { append(duration) }
                 },
@@ -274,11 +268,7 @@ private fun spokenBlock(
 ): String {
     val start = settings.formatTime(entry.start, zone)
     val times = entry.stop?.let {
-        resources.getString(
-            R.string.history_time_range_spoken,
-            start,
-            settings.formatTime(it, zone),
-        )
+        resources.getString(R.string.history_time_range_spoken, start, settings.formatTime(it, zone))
     }
         ?: resources.getString(R.string.calendar_running_spoken, start)
     return listOfNotNull(

@@ -14,11 +14,6 @@ import org.koin.dsl.module
  */
 val trustModule = module {
     single {
-        SessionTrust(
-            trust = get<ServerTrustStore>(),
-            refreshes = get(),
-            scope = get(),
-            io = io(),
-        )
+        SessionTrust(trust = get<ServerTrustStore>(), refreshes = get(), scope = get(), io = io())
     } binds arrayOf(TrustListener::class, AccountDataOwner::class)
 }

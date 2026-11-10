@@ -84,11 +84,7 @@ internal fun RangeControl(
     val today = time?.today()
     val active = selection?.preset
         ?: if (selection != null && time != null) {
-            RangePreset.matching(
-                selection.range,
-                time.today(),
-                time.firstDayOfWeek,
-            )
+            RangePreset.matching(selection.range, time.today(), time.firstDayOfWeek)
         } else {
             null
         }

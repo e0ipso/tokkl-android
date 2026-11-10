@@ -207,11 +207,7 @@ class PomodoroViewModel(
      * for each letter of the description, the page shows the fields until [fieldsDone]; otherwise
      * they go to the queue now. Returns the write, or null when nothing was queued.
      */
-    fun editFields(
-        fields: EntryFields,
-        entryId: EntryId? = state.value.pomodoro?.entryId,
-        send: Boolean = true,
-    ): Job? {
+    fun editFields(fields: EntryFields, entryId: EntryId? = state.value.pomodoro?.entryId, send: Boolean = true): Job? {
         val current = state.value
         if (current.loading || current.busy || current.workspaceId == null) return null
         val pomodoro = current.pomodoro

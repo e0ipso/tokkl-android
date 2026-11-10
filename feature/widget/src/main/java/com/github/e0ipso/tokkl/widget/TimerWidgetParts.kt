@@ -112,10 +112,7 @@ internal fun TimerClock(context: Context, state: WidgetState.Ready, size: Float,
         )
     } else {
         val text = if (state.paused != null) {
-            formatDuration(
-                state.paused.seconds,
-                state.day?.durationFormat ?: DurationFormat.IMPROVED,
-            )
+            formatDuration(state.paused.seconds, state.day?.durationFormat ?: DurationFormat.IMPROVED)
         } else {
             state.day?.formattedTotal(Instant.now()) ?: formatDuration(0)
         }
@@ -240,10 +237,7 @@ internal fun StackedBar(context: Context, projects: List<WidgetDayProject>, day:
     val label = projects.mapIndexed { index, project ->
         val name = projectName(context, project, index == 4 && day?.projects.orEmpty().size > 5)
         val duration = project.formattedStopped.ifEmpty {
-            formatDurationWithoutSeconds(
-                project.stoppedSeconds,
-                day?.durationFormat ?: DurationFormat.IMPROVED,
-            )
+            formatDurationWithoutSeconds(project.stoppedSeconds, day?.durationFormat ?: DurationFormat.IMPROVED)
         }
         if (project.running) context.getString(R.string.widget_project_running, name, duration) else "$name, $duration"
     }.joinToString("; ")
@@ -276,17 +270,10 @@ internal fun ProjectRow(
 ) {
     val name = projectName(context, project, other)
     val duration = project.formattedStopped.ifEmpty {
-        formatDurationWithoutSeconds(
-            project.stoppedSeconds,
-            day?.durationFormat ?: DurationFormat.IMPROVED,
-        )
+        formatDurationWithoutSeconds(project.stoppedSeconds, day?.durationFormat ?: DurationFormat.IMPROVED)
     }
     val label = if (project.running) {
-        context.getString(
-            R.string.widget_project_running,
-            name,
-            duration,
-        )
+        context.getString(R.string.widget_project_running, name, duration)
     } else {
         "$name, $duration"
     }
@@ -343,31 +330,20 @@ internal fun TemplateChips(
             val description = favorite.fields.description.ifBlank { context.getString(R.string.widget_no_description) }
             val project = favorite.project?.let { name ->
                 favorite.task?.let {
-                    context.getString(
-                        R.string.widget_project_task,
-                        name,
-                        it,
-                    )
+                    context.getString(R.string.widget_project_task, name, it)
                 } ?: name
             }
             val label = if (project == null) {
-                context.getString(
-                    R.string.widget_start_favorite,
-                    description,
-                )
+                context.getString(R.string.widget_start_favorite, description)
             } else {
                 context.getString(R.string.widget_start_favorite_project, description, project)
             }
             Row(
-                GlanceModifier.defaultWeight().height(
-                    48.dp,
-                ).background(
+                GlanceModifier.defaultWeight().height(48.dp).background(
                     ImageProvider(R.drawable.widget_chip_background),
                     colorFilter = ColorFilter.tint(GlanceTheme.colors.surfaceVariant),
                 )
-                    .clickable(
-                        startTimer(account, favorite.fields),
-                    ).padding(
+                    .clickable(startTimer(account, favorite.fields)).padding(
                         horizontal = 8.dp,
                     ).semantics { contentDescription = label },
                 verticalAlignment = Alignment.CenterVertically,
@@ -386,9 +362,7 @@ internal fun TemplateChips(
 }
 
 private fun projectName(context: Context, project: WidgetDayProject, other: Boolean): String = if (other) {
-    context.getString(
-        R.string.widget_other,
-    )
+    context.getString(R.string.widget_other)
 } else {
     project.project ?: context.getString(R.string.widget_no_project)
 }
@@ -406,9 +380,7 @@ internal fun projectText(context: Context, state: WidgetState.Ready): String? {
 }
 internal fun description(context: Context, state: WidgetState.Ready): String =
     (state.running?.description ?: state.paused?.description)?.ifBlank {
-        context.getString(
-            R.string.widget_no_description,
-        )
+        context.getString(R.string.widget_no_description)
     } ?: context.getString(R.string.widget_idle)
 
 @Composable

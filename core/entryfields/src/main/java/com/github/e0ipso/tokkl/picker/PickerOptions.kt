@@ -134,11 +134,7 @@ fun pickerOptions(
     val tags = (cachedTags.map { it to true } + typedTags.map { it to false })
         .filter { (name, _) -> name.contains(search, ignoreCase = true) }
         .map { (name, cached) ->
-            TagOption(
-                name,
-                selected = picked.tags.any { it.equals(name, ignoreCase = true) },
-                cached = cached,
-            )
+            TagOption(name, selected = picked.tags.any { it.equals(name, ignoreCase = true) }, cached = cached)
         }
     val knownTag = (cachedTags + typedTags).any { it.equals(search, ignoreCase = true) }
 

@@ -66,9 +66,7 @@ class AccountSettingsStore(context: Context, private val io: CoroutineContext) :
             putString(KEY_DURATION_FORMAT, value.durationFormat.togglName)
             val defaultWorkspaceId = value.defaultWorkspaceId
             if (defaultWorkspaceId == null) {
-                remove(
-                    KEY_DEFAULT_WORKSPACE_ID,
-                )
+                remove(KEY_DEFAULT_WORKSPACE_ID)
             } else {
                 putLong(KEY_DEFAULT_WORKSPACE_ID, defaultWorkspaceId.value)
             }

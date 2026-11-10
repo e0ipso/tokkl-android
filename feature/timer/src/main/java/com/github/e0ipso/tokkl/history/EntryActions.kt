@@ -281,9 +281,7 @@ class EntryActionsViewModel(
             if (result !is SplitHalves) {
                 mutableState.update {
                     if (it.split == dialog) {
-                        it.copy(
-                            split = dialog.copy(halves = null, problem = result as SplitProblem),
-                        )
+                        it.copy(split = dialog.copy(halves = null, problem = result as SplitProblem))
                     } else {
                         it
                     }

@@ -218,9 +218,7 @@ class ProjectsViewModel(
             apply = ProjectsData::with,
             done = { saved ->
                 if (form is ProjectForm.New) {
-                    CatalogChange.Created(
-                        saved.name,
-                    )
+                    CatalogChange.Created(saved.name)
                 } else {
                     CatalogChange.Saved(saved.name)
                 }
@@ -235,9 +233,7 @@ class ProjectsViewModel(
             apply = ProjectsData::with,
             done = { saved ->
                 if (saved.active) {
-                    CatalogChange.Restored(
-                        saved.name,
-                    )
+                    CatalogChange.Restored(saved.name)
                 } else {
                     CatalogChange.Archived(saved.name)
                 }

@@ -18,9 +18,7 @@ internal fun pomodoroPermissions(context: Context): PomodoroPermissions {
     return pomodoroPermissions(
         sdk = Build.VERSION.SDK_INT,
         notificationRuntime = {
-            context.checkSelfPermission(
-                Manifest.permission.POST_NOTIFICATIONS,
-            ) == PackageManager.PERMISSION_GRANTED
+            context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
         },
         notificationsEnabled = notifications::areNotificationsEnabled,
         exactAlarm = { context.getSystemService(AlarmManager::class.java).canScheduleExactAlarms() },

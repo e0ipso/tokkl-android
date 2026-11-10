@@ -64,10 +64,7 @@ val pomodoroFeatureModule = module {
     } binds arrayOf(PomodoroAlarmScheduler::class, TimerSyncWatcher::class)
 
     single {
-        ServicePomodoroRinging(
-            androidContext(),
-            get<CoroutineDispatcher>(MainDispatcher),
-        )
+        ServicePomodoroRinging(androidContext(), get<CoroutineDispatcher>(MainDispatcher))
     } binds arrayOf(PomodoroRinging::class, PomodoroRingingPhase::class)
 
     // The exact alarm and the ring of the server's Pomodoro session, which follow the held timer

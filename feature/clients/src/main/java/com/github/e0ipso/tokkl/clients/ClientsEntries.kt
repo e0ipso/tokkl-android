@@ -36,9 +36,7 @@ internal object ClientsEntries : FeatureRoutes {
 fun ClientsPage(model: ClientsViewModel, modifier: Modifier = Modifier) {
     val page by model.page.collectAsStateWithLifecycle()
     val state = page.catalog
-    BackHandler(
-        enabled = state.overlay is ClientsOverlay.Form,
-    ) { model.dismiss() }
+    BackHandler(enabled = state.overlay is ClientsOverlay.Form) { model.dismiss() }
     ClientsScreen(
         page = page,
         actions = ClientsActions(

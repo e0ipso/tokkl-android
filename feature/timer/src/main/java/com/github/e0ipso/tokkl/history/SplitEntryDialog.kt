@@ -104,11 +104,7 @@ internal fun SplitEntryDialog(
             }
         },
         confirmButton = {
-            CancelAndConfirm(
-                stringResource(R.string.history_split_confirm),
-                onConfirm = onConfirm,
-                onCancel = onCancel,
-            )
+            CancelAndConfirm(stringResource(R.string.history_split_confirm), onConfirm = onConfirm, onCancel = onCancel)
         },
     )
 }

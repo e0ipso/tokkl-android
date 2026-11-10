@@ -178,11 +178,7 @@ class TrashViewModel(
     /** Empties the trash, once the question is open. */
     fun empty() {
         if (!state.value.confirmingEmpty) return
-        send(
-            request = { it.purgeAll() },
-            apply = { _, _ -> emptyList() },
-            done = { TrashChange.Emptied(it) },
-        )
+        send(request = { it.purgeAll() }, apply = { _, _ -> emptyList() }, done = { TrashChange.Emptied(it) })
     }
 
     /**

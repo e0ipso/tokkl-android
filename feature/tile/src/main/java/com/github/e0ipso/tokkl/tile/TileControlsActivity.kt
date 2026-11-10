@@ -111,9 +111,7 @@ private fun TileControlsDialog(panel: TileControlsPanel, onPress: (TileControl) 
         onDismissRequest = onDismiss,
         title = { Text(description, modifier = Modifier.semantics { heading() }) },
         text = {
-            Text(
-                stringResource(if (panel.paused) UiR.string.timer_paused else UiR.string.timer_running),
-            )
+            Text(stringResource(if (panel.paused) UiR.string.timer_paused else UiR.string.timer_running))
         },
         confirmButton = {
             Column(

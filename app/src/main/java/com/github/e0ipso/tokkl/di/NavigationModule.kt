@@ -13,11 +13,6 @@ internal val navigationModule = module {
     single { TopLevelPages(get<FeatureNavigation>().routes.flatMap { it.pages }) }
 
     viewModel {
-        SignedInViewModel(
-            badges = getAll(),
-            changes = get(),
-            trust = get(),
-            scope = viewModelCoroutineScope(),
-        )
+        SignedInViewModel(badges = getAll(), changes = get(), trust = get(), scope = viewModelCoroutineScope())
     }
 }

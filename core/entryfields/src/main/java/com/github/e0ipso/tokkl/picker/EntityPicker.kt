@@ -234,10 +234,7 @@ private fun ChoiceRow(
             .padding(start = indent),
     ) {
         if (multiple) {
-            Checkbox(
-                checked = selected,
-                onCheckedChange = null,
-            )
+            Checkbox(checked = selected, onCheckedChange = null)
         } else {
             RadioButton(selected = selected, onClick = null)
         }
@@ -276,11 +273,7 @@ private fun SectionHeading(text: String, modifier: Modifier = Modifier) {
 /** The project's colour beside its name, which carries the meaning; none for "No project". */
 @Composable
 private fun RowScope.ProjectDot(color: Color?) {
-    Box(
-        Modifier
-            .size(TokklTheme.spacing.space3)
-            .background(color ?: Color.Transparent, CircleShape),
-    )
+    Box(Modifier.size(TokklTheme.spacing.space3).background(color ?: Color.Transparent, CircleShape))
     Spacer(Modifier.width(TokklTheme.spacing.space2))
 }
 

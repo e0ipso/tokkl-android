@@ -15,10 +15,7 @@ class ReminderStore(context: Context, private val io: CoroutineContext) : Cleara
     override suspend fun load(): StoredReminderPreferences? = file.read {
         if (!contains("hours")) return@read null
         StoredReminderPreferences(
-            ReminderPreferences(
-                getBoolean("enabled", true),
-                getInt("hours", ReminderPreferences().hours),
-            ).clamped(),
+            ReminderPreferences(getBoolean("enabled", true), getInt("hours", ReminderPreferences().hours)).clamped(),
             getBoolean("unsent", false),
             getBoolean("shared", false),
         )

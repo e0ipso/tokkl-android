@@ -86,16 +86,8 @@ internal fun Grid(
             initiallyPositioned = true
         }
     }
-    Column(
-        Modifier
-            .fillMaxSize()
-            .verticalScroll(scroll),
-    ) {
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .height(HourHeight * HOURS),
-        ) {
+    Column(Modifier.fillMaxSize().verticalScroll(scroll)) {
+        Row(Modifier.fillMaxWidth().height(HourHeight * HOURS)) {
             Gutter(labels, labelStyle, Modifier.width(gutter))
             for (day in days) {
                 DayColumn(
@@ -164,12 +156,8 @@ private fun DayColumn(
 ) {
     val density = LocalDensity.current
     val haptics = LocalHapticFeedback.current
-    val geometry = remember(
-        density,
-    ) {
-        with(
-            density,
-        ) { BlockGeometry(HourHeight.toPx(), BlockGap.toPx(), TokklSpacing.space1.toPx(), EdgeZone.toPx()) }
+    val geometry = remember(density) {
+        with(density) { BlockGeometry(HourHeight.toPx(), BlockGap.toPx(), TokklSpacing.space1.toPx(), EdgeZone.toPx()) }
     }
     val shown by rememberUpdatedState(blocks)
     val gestures = if (drags == null) {
@@ -178,14 +166,7 @@ private fun DayColumn(
         Modifier.pointerInput(day, drags, geometry) {
             detectCalendarGestures(
                 targetAt = { position ->
-                    geometry.targetAt(
-                        position,
-                        size.width.toFloat(),
-                        shown,
-                        day,
-                        zone,
-                        drags.step,
-                    )
+                    geometry.targetAt(position, size.width.toFloat(), shown, day, zone, drags.step)
                 },
                 onTap = drags.editing::edit,
                 onHold = { target, position ->
@@ -243,9 +224,7 @@ private fun DayColumn(
         if (current is CalendarDrag.Create && current.day == day &&
             current.fromMinute != current.toMinute
         ) {
-            NewEntryOutline(
-                current,
-            )
+            NewEntryOutline(current)
         }
     }
 }

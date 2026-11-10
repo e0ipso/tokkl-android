@@ -72,13 +72,7 @@ val cacheModule = module {
 
     single {
         val session = get<Session>()
-        DeleteUndoer(
-            get(),
-            entries = { session() },
-            io = io(),
-            refreshes = get(),
-            scope = get(),
-        )
+        DeleteUndoer(get(), entries = { session() }, io = io(), refreshes = get(), scope = get())
     }
 
     singleOf(::RunningCheck) bind AccountDataOwner::class

@@ -69,12 +69,7 @@ fun TokklTopBar(
     windowInsets: WindowInsets = ScrollingScreenInsets,
 ) {
     val surface = MaterialTheme.colorScheme.surface
-    Column(
-        modifier
-            .fillMaxWidth()
-            .background(surface)
-            .windowInsetsPadding(windowInsets),
-    ) {
+    Column(modifier.fillMaxWidth().background(surface).windowInsetsPadding(windowInsets)) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
@@ -84,12 +79,7 @@ fun TokklTopBar(
         ) {
             if (onBack != null) {
                 // Material's icon button is 40dp inside a 48dp touch area; the back button is 48dp itself.
-                IconButton(
-                    onClick = onBack,
-                    modifier = Modifier
-                        .outdent(BackIconInset)
-                        .size(BackButtonSize),
-                ) {
+                IconButton(onClick = onBack, modifier = Modifier.outdent(BackIconInset).size(BackButtonSize)) {
                     Icon(
                         painter = painterResource(R.drawable.ic_arrow_back),
                         contentDescription = stringResource(R.string.back),

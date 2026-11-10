@@ -131,10 +131,7 @@ class RoomChangeStore(private val database: CacheDatabase) :
                     dao.upsertEntry(local.copy(id = serverId))
                 }
             }
-            if (change.kind == ChangeKind.STOP && change.shortStop && dao.countFor(
-                    serverId,
-                ) == 0
-            ) {
+            if (change.kind == ChangeKind.STOP && change.shortStop && dao.countFor(serverId) == 0) {
                 dao.deleteEntry(serverId)
             }
             if (answer != null && dao.countFor(serverId) == 0) dao.upsertEntry(answer)

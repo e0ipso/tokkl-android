@@ -98,27 +98,13 @@ fun PomodoroWidgetContent(
             PomodoroWidgetState.Unsupported -> Message(context.getString(R.string.pomodoro_widget_unsupported), tiny)
 
             is PomodoroWidgetState.Idle -> if (card) {
-                IdleCard(
-                    context,
-                    state,
-                    width,
-                    height,
-                    large,
-                )
+                IdleCard(context, state, width, height, large)
             } else {
                 IdleStrip(context, state, tiny)
             }
 
             is PomodoroWidgetState.Active -> if (card) {
-                SessionCard(
-                    context,
-                    state,
-                    width,
-                    height,
-                    large,
-                    now,
-                    ticking,
-                )
+                SessionCard(context, state, width, height, large, now, ticking)
             } else {
                 SessionStrip(context, state, width, tiny, now, ticking)
             }

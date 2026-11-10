@@ -37,9 +37,7 @@ internal fun timerWidgetProjectRows(
     val scale = fontScale.coerceAtLeast(1f)
     val timer = 48f + if (active) clockHeightDp else 0f
     val report = if (size == TimerWidgetSize.LARGE) {
-        10f + WidgetLayout.reportHeadingHeight(
-            scale,
-        ) + WidgetLayout.statsHeight(scale)
+        10f + WidgetLayout.reportHeadingHeight(scale) + WidgetLayout.statsHeight(scale)
     } else {
         10f + todayHeightDp + 14f
     }

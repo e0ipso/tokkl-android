@@ -90,10 +90,7 @@ internal fun ColumnScope.ReminderSection(preferences: ReminderPreferences, chang
         AlertDialog(
             onDismissRequest = { editing = false },
             title = {
-                Text(
-                    stringResource(R.string.reminder_hours_label),
-                    modifier = Modifier.semantics { heading() },
-                )
+                Text(stringResource(R.string.reminder_hours_label), modifier = Modifier.semantics { heading() })
             },
             text = {
                 Column(

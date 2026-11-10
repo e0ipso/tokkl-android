@@ -44,10 +44,7 @@ fun TokklTheme(
     }
     val tokklColors = if (darkTheme) TokklDarkExtraColors else TokklLightExtraColors
     val extraColors = if (dynamicColor) {
-        tokklColors.withPrimaryFill(
-            colorScheme.primary,
-            colorScheme.onPrimary,
-        )
+        tokklColors.withPrimaryFill(colorScheme.primary, colorScheme.onPrimary)
     } else {
         tokklColors
     }

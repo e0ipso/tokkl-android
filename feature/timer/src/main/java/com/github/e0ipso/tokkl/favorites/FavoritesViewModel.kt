@@ -103,10 +103,7 @@ class FavoritesViewModel(
             available = shown,
             favorites = rows.map { row ->
                 row.fields().let {
-                    FavoriteItem(
-                        it,
-                        entryLabels(it, projectRows, taskRows),
-                    )
+                    FavoriteItem(it, entryLabels(it, projectRows, taskRows))
                 }
             },
             saving = edits.saving,

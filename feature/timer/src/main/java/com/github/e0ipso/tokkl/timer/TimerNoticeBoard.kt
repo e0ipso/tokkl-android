@@ -39,9 +39,7 @@ internal class TimerNoticeBoard(private val discards: DiscardNotices) {
                 notice
             } else {
                 discards.takeDiscardNotice()?.let { taken ->
-                    TimerNotice.PomodoroDiscarded(
-                        taken.entryId.value,
-                    ).also { claimedDiscard.value = it }
+                    TimerNotice.PomodoroDiscarded(taken.entryId.value).also { claimedDiscard.value = it }
                 }
             }
     }

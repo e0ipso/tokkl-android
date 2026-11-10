@@ -81,11 +81,7 @@ internal fun DetailedContent(
             }
         }
         item(key = END_KEY) {
-            Column(
-                Modifier
-                    .screenContent()
-                    .padding(vertical = TokklTheme.spacing.betweenGroups),
-            ) {
+            Column(Modifier.screenContent().padding(vertical = TokklTheme.spacing.betweenGroups)) {
                 if (report.loadingMore) Loading(stringResource(R.string.reports_loading_more))
             }
         }
@@ -139,11 +135,7 @@ private fun EntryRow(entry: DetailedEntry, settings: AccountSettings, day: Strin
                 Spacer(Modifier.width(TokklTheme.spacing.space2))
                 Text(
                     text = entry.taskName?.let {
-                        stringResource(
-                            R.string.reports_project_task,
-                            entry.projectName,
-                            it,
-                        )
+                        stringResource(R.string.reports_project_task, entry.projectName, it)
                     } ?: entry.projectName,
                     style = MaterialTheme.typography.bodyMedium,
                 )

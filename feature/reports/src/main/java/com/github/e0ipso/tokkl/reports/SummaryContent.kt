@@ -205,12 +205,7 @@ private fun ChartLegend() {
 @Composable
 private fun LegendKey(label: String, swatch: DrawScope.() -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Canvas(
-            Modifier
-                .size(12.dp)
-                .clip(MaterialTheme.shapes.extraSmall),
-            onDraw = swatch,
-        )
+        Canvas(Modifier.size(12.dp).clip(MaterialTheme.shapes.extraSmall), onDraw = swatch)
         Spacer(Modifier.width(TokklTheme.spacing.space1))
         Text(label, style = MaterialTheme.typography.bodyMedium)
     }
@@ -223,12 +218,7 @@ private fun LegendKey(label: String, swatch: DrawScope.() -> Unit) {
  */
 @Composable
 private fun Bar(point: SeriesPoint, longest: Long, colours: TokklExtraColors) {
-    Canvas(
-        Modifier
-            .fillMaxWidth()
-            .height(BAR_HEIGHT)
-            .clip(MaterialTheme.shapes.extraSmall),
-    ) {
+    Canvas(Modifier.fillMaxWidth().height(BAR_HEIGHT).clip(MaterialTheme.shapes.extraSmall)) {
         drawRect(colours.chartBand)
         val billableWidth = size.width * point.billableSeconds / longest
         val otherSeconds = point.seconds - point.billableSeconds
@@ -324,12 +314,7 @@ private fun ProjectBreakdown(report: SummaryReport, settings: AccountSettings) {
 private fun ShareBar(part: Long, whole: Long) {
     val track = MaterialTheme.colorScheme.surfaceVariant
     val fill = MaterialTheme.colorScheme.primary
-    Canvas(
-        Modifier
-            .fillMaxWidth()
-            .height(SHARE_HEIGHT)
-            .clip(CircleShape),
-    ) {
+    Canvas(Modifier.fillMaxWidth().height(SHARE_HEIGHT).clip(CircleShape)) {
         drawRect(track)
         if (whole > 0) drawRect(fill, size = Size(size.width * (part.toFloat() / whole).coerceIn(0f, 1f), size.height))
     }

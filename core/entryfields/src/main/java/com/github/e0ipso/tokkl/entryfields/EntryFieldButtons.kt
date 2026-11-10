@@ -57,10 +57,7 @@ internal fun ProjectButton(fields: EntryFields, labels: EntryLabels, enabled: Bo
         else -> stringResource(R.string.entry_project_task, labels.project, labels.task)
     }
     val spoken = name?.let {
-        stringResource(
-            R.string.entry_project_spoken,
-            it,
-        )
+        stringResource(R.string.entry_project_spoken, it)
     } ?: stringResource(R.string.entry_no_project_spoken)
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
     val dot = projectMark(labels.projectColor, TokklTheme.extraColors.projectMix, muted)
@@ -85,10 +82,7 @@ internal fun ProjectButton(fields: EntryFields, labels: EntryLabels, enabled: Bo
 internal fun TagsButton(tags: List<String>, enabled: Boolean, onClick: () -> Unit) {
     val names = tags.joinToString(", ").takeIf { tags.isNotEmpty() }
     val spoken = names?.let {
-        stringResource(
-            R.string.entry_tags_spoken,
-            it,
-        )
+        stringResource(R.string.entry_tags_spoken, it)
     } ?: stringResource(R.string.entry_no_tags_spoken)
     FieldButton(
         active = names != null,

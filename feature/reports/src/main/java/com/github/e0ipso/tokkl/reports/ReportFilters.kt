@@ -113,9 +113,7 @@ data class FilterOptions(
             fun inWorkspace(id: WorkspaceId) = workspaceId == null || id == workspaceId
             return FilterOptions(
                 projects = projects.filter {
-                    inWorkspace(
-                        it.workspaceId,
-                    )
+                    inWorkspace(it.workspaceId)
                 }.sortedBy { !it.active }.map { FilterOption(it.id.value, it.name) },
                 clients = clients.filter { inWorkspace(it.workspaceId) }.map { FilterOption(it.id.value, it.name) },
                 tags = tags.filter { inWorkspace(it.workspaceId) }.map { FilterOption(it.id.value, it.name) },

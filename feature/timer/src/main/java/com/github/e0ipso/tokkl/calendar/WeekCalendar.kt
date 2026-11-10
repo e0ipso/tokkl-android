@@ -195,23 +195,12 @@ fun CalendarContent(
     ) {
         Column(Modifier.fillMaxSize()) {
             if (dayMode) {
-                WeekStrip(
-                    state,
-                    today,
-                    now,
-                    onSelect,
-                    edits,
-                )
+                WeekStrip(state, today, now, onSelect, edits)
             } else {
                 DayHeads(days, today, state, now, gutter, edits)
             }
             if (state.allDayOffered) AllDayRow(days, state, now, gutter, edits)
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .pointerInput(Unit) { detectSwipes(gesture) { swipe(it) } },
-            ) {
+            Box(Modifier.fillMaxWidth().weight(1f).pointerInput(Unit) { detectSwipes(gesture) { swipe(it) } }) {
                 Grid(
                     days = days,
                     today = today,

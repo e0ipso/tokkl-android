@@ -114,9 +114,7 @@ class ReminderSync(
     /** A worker may arrive late, after cancellation, a start correction, sign-out or a switch. */
     suspend fun fire(id: Long, start: Long, due: Long): Unit = lock.withLock {
         val timer = update(account.input()) ?: return@withLock
-        val same = timer.start == start && currentId(
-            EntryId(id),
-        ) == currentId(EntryId(timer.id)) && !timer.handled
+        val same = timer.start == start && currentId(EntryId(id)) == currentId(EntryId(timer.id)) && !timer.handled
         if (!same || timer.due != due) return@withLock
         // Persist first, so another process or a second delivery never posts it twice.
         timers.save(timer.copy(handled = true))
@@ -140,10 +138,7 @@ class ReminderSync(
         val request = lock.withLock {
             val input = account.input()
             val entry = input.running ?: return null
-            if (entry.stop != null || entry.start.epochSecond != start || currentId(
-                    EntryId(id),
-                ) != entry.id
-            ) {
+            if (entry.stop != null || entry.start.epochSecond != start || currentId(EntryId(id)) != entry.id) {
                 return null
             }
             val timer = timers.load() ?: return null

@@ -134,12 +134,7 @@ internal fun DayHeads(
 ) {
     // --radius-md on the top corners, as the web app's .calendar-head.
     val shape = MaterialTheme.shapes.small.copy(bottomStart = ZeroCornerSize, bottomEnd = ZeroCornerSize)
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .clip(shape)
-            .background(MaterialTheme.colorScheme.surface),
-    ) {
+    Row(Modifier.fillMaxWidth().clip(shape).background(MaterialTheme.colorScheme.surface)) {
         Spacer(Modifier.width(gutter))
         for (day in days) {
             val total = if (state.week.shows) dayTotalSeconds(state.entries, day, state.zone, now) else null
@@ -162,18 +157,12 @@ private fun DayHead(
     val words = remember(resources) { DateWords(resources) }
     val hue = TokklTheme.sectionHue
     val label = if (isToday) {
-        resources.getString(
-            R.string.history_today,
-        )
+        resources.getString(R.string.history_today)
     } else {
         resources.getString(UiR.string.history_day, words.weekday(day), words.short(day))
     }
     val spoken = totalSeconds?.let {
-        stringResource(
-            R.string.history_day_spoken,
-            label,
-            spokenDuration(resources, it),
-        )
+        stringResource(R.string.history_day_spoken, label, spokenDuration(resources, it))
     } ?: label
     val addAction = addEntryAction(day, editing)
     Column(

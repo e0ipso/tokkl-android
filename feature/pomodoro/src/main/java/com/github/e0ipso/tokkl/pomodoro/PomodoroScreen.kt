@@ -163,12 +163,7 @@ fun PomodoroContent(
         focus.clearFocus()
         action()
     }
-    CatalogPage(
-        title = stringResource(UiR.string.pomodoro_title),
-        done = null,
-        onDoneShow = {},
-        modifier = modifier,
-    ) {
+    CatalogPage(title = stringResource(UiR.string.pomodoro_title), done = null, onDoneShow = {}, modifier = modifier) {
         Column(verticalArrangement = Arrangement.spacedBy(spacing.betweenGroups)) {
             PomodoroFeedback(state)
             if (state.notificationsDenied) {
@@ -182,9 +177,7 @@ fun PomodoroContent(
                     Text(stringResource(R.string.pomodoro_exact_alarm_settings))
                 }
                 if (exactAlarmSettingsUnavailable) {
-                    ErrorBanner(
-                        stringResource(R.string.pomodoro_exact_alarm_settings_unavailable),
-                    )
+                    ErrorBanner(stringResource(R.string.pomodoro_exact_alarm_settings_unavailable))
                 }
             }
             if (state.fullScreenDenied) {

@@ -89,10 +89,7 @@ internal fun ColumnScope.PomodoroDefaultsSection(
         AlertDialog(
             onDismissRequest = { editing = null },
             title = {
-                Text(
-                    stringResource(R.string.settings_pomodoro_edit),
-                    modifier = Modifier.semantics { heading() },
-                )
+                Text(stringResource(R.string.settings_pomodoro_edit), modifier = Modifier.semantics { heading() })
             },
             text = {
                 Column(Modifier.verticalScroll(rememberScrollState())) {
