@@ -160,11 +160,13 @@ internal class FakeServer(val held: MutableStateFlow<HeldTimerState?>) : Session
 internal class FakeChanges(private val cache: MutableStateFlow<TimerControls>) : RunningEntryChanges {
     val updates = CopyOnWriteArrayList<Pair<RunningEntryIdentity, EntryFields>>()
     var accepts = true
+    var gate = kotlinx.coroutines.CompletableDeferred(Unit)
 
     /** What the phone's storage throws for each write, or null while it takes them. */
     var refusal: Exception? = null
 
     override suspend fun updateRunning(identity: RunningEntryIdentity, fields: EntryFields, start: Instant): Boolean {
+        gate.await()
         refusal?.let { throw it }
         updates += identity to fields
         if (!accepts) return false

@@ -110,6 +110,36 @@ class PomodoroPagePhaseActionsTest {
     }
 
     @Test
+    fun aTypedDescriptionIsQueuedByNextBeforeItsFocusCallbackRuns() = runTest {
+        val f = page(revision = 4)
+        f.server.onRead = { f.held.value = heldState(revision = 5, description = "Typed") }
+        f.page.editFields(EntryFields("Typed"), EntryId(ENTRY), send = false)
+
+        f.page.next()!!.join()
+
+        assertEquals("Typed", f.changes.updates.single().second.description)
+        assertEquals(listOf("read", "next 5"), f.server.calls)
+        assertNull(f.page.state.value.problem)
+    }
+
+    @Test
+    fun anEditBeingQueuedWhenNextIsTappedSendsItsNewRevision() = runTest {
+        val f = page(revision = 4)
+        f.server.onRead = { f.held.value = heldState(revision = 5, description = "Typed") }
+        f.changes.gate = CompletableDeferred()
+        val edit = f.page.editFields(EntryFields("Typed"), EntryId(ENTRY))!!
+        val next = f.page.next()!!
+        assertTrue(f.server.calls.isEmpty())
+
+        f.changes.gate.complete(Unit)
+        edit.join()
+        next.join()
+
+        assertEquals(listOf("read", "next 5"), f.server.calls)
+        assertNull(f.page.state.value.problem)
+    }
+
+    @Test
     fun anEditSentJustBeforeEndGoesFirstToo() = runTest {
         val f = page(revision = 4)
         f.server.onRead = { f.held.value = heldState(revision = 5, description = "Typed") }

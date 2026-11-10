@@ -292,7 +292,10 @@ class PomodoroViewModel(
     ): Job? {
         val current = state.value
         if (shown == null || current.loading || current.busy) return null
-        return command(action) { send(shown) }
+        return command(action) {
+            fieldsDone(shown.entryId)?.join()
+            send(shown)
+        }
     }
 
     private fun command(action: PomodoroAction, send: suspend () -> TimerActionResult): Job {

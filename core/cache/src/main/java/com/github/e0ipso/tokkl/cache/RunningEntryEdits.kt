@@ -56,13 +56,15 @@ class RunningEntryEdits(private val changes: RunningEntryChanges) {
     ): Boolean {
         writing.update { it + 1 }
         val written = try {
-            localWrite { changes.updateRunning(identity, fields, identity.start) }
+            localWrite { changes.updateRunning(identity, fields, identity.start) }.also {
+                // Publish before waking an action waiting for the last queued write.
+                if (it is LocalWrite.Written && it.value) unflushed.set(true)
+            }
         } finally {
             writing.update { it - 1 }
         }
         if (written !is LocalWrite.Written) return true
         if (written.value) {
-            unflushed.set(true)
             withTimeoutOrNull(SETTLE_MS) {
                 running.first { entry ->
                     entry == null || (entry.id != identity.entryId && entry.start != identity.start) ||
