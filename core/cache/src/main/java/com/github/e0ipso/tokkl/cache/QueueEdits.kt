@@ -146,6 +146,18 @@ internal class QueueEdits(private val tables: QueueTables, private val spans: Se
         return true
     }
 
+    /** Queues [second] as a new entry in [entryId]'s workspace, then ends [entryId] at [first]. False when uncached. */
+    fun split(
+        entryId: EntryId,
+        fields: EntryFields,
+        first: EntryTiming.Stopped,
+        second: EntryTiming.Stopped,
+    ): Boolean {
+        val current = tables.entry(tables.resolve(entryId)) ?: return false
+        queueCreate(current.workspaceId, fields, second)
+        return update(entryId, fields, first)
+    }
+
     /** Sets the running entry's fields and start, while it is still the one [identity] names. */
     fun updateRunning(identity: RunningEntryIdentity, fields: EntryFields, start: Instant): Boolean {
         val current = activeEntry(identity) ?: return false

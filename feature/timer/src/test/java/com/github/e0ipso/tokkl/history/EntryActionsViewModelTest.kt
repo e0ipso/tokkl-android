@@ -24,12 +24,14 @@ import com.github.e0ipso.tokkl.platform.MainDispatcherRule
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.ServerProblem
 import com.github.e0ipso.tokkl.time.SnappedSpan
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.plus
 import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -60,6 +62,13 @@ class EntryActionsViewModelTest {
 
     @Volatile
     private var cached = true
+
+    /** The phone's storage refuses this queue call, as a full disk does, or none while null. */
+    @Volatile
+    private var refused: String? = null
+
+    /** What escaped the actions' effects, which on the phone would reach the main thread and end the app. */
+    private val escaped = CopyOnWriteArrayList<Throwable>()
 
     @Volatile
     private var favoritesAnswer: ApiResult<Unit> = ApiResult.Success(Unit)
@@ -315,10 +324,9 @@ class EntryActionsViewModelTest {
             billable = true,
         )
         assertEquals(
-            "the second half first, with the source's workspace and fields, then the original ends at the split",
+            "one split with the source's fields: the original ends at the split, and the second half runs on",
             listOf(
-                "create 10 $fields 2026-10-19T08:30:00Z 2026-10-19T09:00:00Z",
-                "update 70 $fields 2026-10-19T08:00:00Z 2026-10-19T08:30:00Z",
+                "split 70 $fields 2026-10-19T08:00:00Z 2026-10-19T08:30:00Z 2026-10-19T08:30:00Z 2026-10-19T09:00:00Z",
             ),
             calls,
         )
@@ -362,7 +370,7 @@ class EntryActionsViewModelTest {
     }
 
     @Test
-    fun whenTheOriginalLeftTheCacheTheSecondHalfGoesToo() {
+    fun whenTheOriginalLeftTheCacheNothingIsSplitAndTheDialogCloses() {
         cached = false
         val model = model(canRestore = true)
         onMain { model.split(STOPPED.id) }
@@ -370,10 +378,76 @@ class EntryActionsViewModelTest {
         onMain { model.setSplitText("10:30") }
 
         onMain { model.confirmSplit() }
+        main.settle(POLL_MS)
 
-        awaitCalls(3)
-        assertEquals("delete -1", calls.last())
+        assertEquals(emptyList<String>(), calls)
+        assertNull(model.state.value.split)
         assertNull(model.state.value.notice)
+    }
+
+    /**
+     * A split whose write the storage refuses queues neither half and keeps the dialog with its
+     * time, so Split can be tapped again.
+     */
+    @Test
+    fun aSplitTheStorageRefusesQueuesNeitherHalfAndKeepsTheDialog() {
+        refused = "update"
+        val model = model(canRestore = true)
+        onMain { model.split(STOPPED.id) }
+        awaitSplit(model)
+        onMain { model.setSplitText("10:30") }
+
+        onMain { model.confirmSplit() }
+        main.settle(POLL_MS)
+
+        assertEquals("nothing queued", emptyList<String>(), calls)
+        assertEquals("10:30", model.state.value.split?.text)
+        assertNull(model.state.value.notice)
+        assertEquals(emptyList<Throwable>(), escaped.toList())
+    }
+
+    /** A copy the storage refuses says nothing and throws nothing; Duplicate can be tapped again. */
+    @Test
+    fun aDuplicateTheStorageRefusesShowsNothingAndThrowsNothing() {
+        refused = "create"
+        val model = model(canRestore = true)
+
+        onMain { model.duplicate(STOPPED.id) }
+        main.settle(POLL_MS)
+
+        assertNull(model.state.value.notice)
+        assertEquals(emptyList<Throwable>(), escaped.toList())
+    }
+
+    /** A delete the storage refuses leaves the entry and lets Delete be tapped again. */
+    @Test
+    fun aDeleteTheStorageRefusesThrowsNothingAndCanBeTriedAgain() {
+        refused = "delete"
+        val model = model(canRestore = true)
+
+        onMain { model.delete(EntryId(ENTRY)) }
+        main.settle(POLL_MS)
+        assertNull(model.state.value.notice)
+        assertEquals(emptyList<Throwable>(), escaped.toList())
+
+        refused = null
+        onMain { model.delete(EntryId(ENTRY)) }
+        awaitNotice(model) { it is EntryNotice.Deleted }
+    }
+
+    /** An Undo the storage refuses keeps the message that offers it, so Undo can be tapped again. */
+    @Test
+    fun anUndoTheStorageRefusesKeepsTheOfferAndThrowsNothing() {
+        val model = model(canRestore = true)
+        onMain { model.delete(EntryId(ENTRY)) }
+        val offered = awaitNotice(model) { it is EntryNotice.Deleted }
+        refused = "undo"
+
+        onMain { model.undo(EntryId(ENTRY)) }
+        main.settle(POLL_MS)
+
+        assertEquals(offered, model.state.value.notice)
+        assertEquals(emptyList<Throwable>(), escaped.toList())
     }
 
     @Test
@@ -509,14 +583,19 @@ class EntryActionsViewModelTest {
         changes = FakeChanges(),
         removals = sessionEntries(entries, MutableStateFlow(SETTINGS), scope, Clock.systemUTC()),
         undoDelete = { entryId ->
+            refuse("undo")
             calls += "undo $entryId"
             undoOutcome
         },
         capabilities = MutableStateFlow(Capabilities.NONE.copy(restore = canRestore)),
         accountSettings = MutableStateFlow(SETTINGS),
-        scope = scope,
+        scope = scope + CoroutineExceptionHandler { _, thrown -> escaped += thrown },
         clock = Clock.systemUTC(),
     )
+
+    private fun refuse(call: String) {
+        if (refused == call) throw IOException("disk full")
+    }
 
     private fun awaitNotice(model: EntryActionsViewModel, condition: (EntryNotice) -> Boolean): EntryNotice {
         var last: EntryActionsState? = null
@@ -545,6 +624,7 @@ class EntryActionsViewModelTest {
 
     private inner class FakeChanges : EntryChanges {
         override suspend fun delete(entryId: EntryId): Boolean {
+            refuse("delete")
             calls += "delete $entryId"
             return cached
         }
@@ -554,6 +634,7 @@ class EntryActionsViewModelTest {
             fields: EntryFields,
             timing: EntryTiming.Ended,
         ): EntryId {
+            refuse("create")
             val start = timing.start
             val stop = timing.stop
             val noTimeDay = (timing as? EntryTiming.AllDay)?.day
@@ -562,10 +643,23 @@ class EntryActionsViewModelTest {
         }
 
         override suspend fun update(entryId: EntryId, fields: EntryFields, timing: EntryTiming): Boolean {
+            refuse("update")
             val start = timing.start
             val stop = (timing as? EntryTiming.Ended)?.stop
             calls += "update $entryId $fields $start $stop"
             return cached
+        }
+
+        override suspend fun split(
+            entryId: EntryId,
+            fields: EntryFields,
+            first: EntryTiming.Stopped,
+            second: EntryTiming.Stopped,
+        ): Boolean {
+            refuse("update")
+            if (!cached) return false
+            calls += "split $entryId $fields ${first.start} ${first.stop} ${second.start} ${second.stop}"
+            return true
         }
 
         override suspend fun updateOlder(

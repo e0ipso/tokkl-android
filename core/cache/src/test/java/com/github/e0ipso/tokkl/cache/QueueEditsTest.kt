@@ -160,6 +160,40 @@ class QueueEditsTest {
         assertFalse("only a held change can be discarded", edits.discard(tables.changesInOrder().single().sequence))
     }
 
+    /** A split queues the second half in the entry's workspace first, then the edit that ends the original. */
+    @Test
+    fun aSplitQueuesTheNewHalfThenEndsTheOriginal() {
+        tables.upsertEntry(row(id = 10, start = T0, stop = T1))
+        val middle = T0.plusSeconds(1_800)
+
+        assertTrue(
+            edits.split(
+                EntryId(10),
+                EntryFields("Split"),
+                EntryTiming.Stopped(T0, middle),
+                EntryTiming.Stopped(middle, T1),
+            ),
+        )
+
+        val queued = tables.changesInOrder()
+        assertEquals(listOf(ChangeKind.CREATE, ChangeKind.UPDATE), queued.map { it.kind })
+        assertEquals(listOf(WORKSPACE, WORKSPACE), queued.map { it.workspaceId })
+        assertEquals(middle to T1, queued[0].start to queued[0].stop)
+        assertEquals(T0 to middle, queued[1].start to queued[1].stop)
+        assertEquals(middle, tables.entry(10)!!.stop)
+    }
+
+    @Test
+    fun aSplitOfAnEntryTheCacheNoLongerHoldsQueuesNothing() {
+        val middle = T0.plusSeconds(1_800)
+
+        assertFalse(
+            edits.split(EntryId(10), EntryFields(), EntryTiming.Stopped(T0, middle), EntryTiming.Stopped(middle, T1)),
+        )
+
+        assertEquals(emptyList<PendingChange>(), tables.changesInOrder())
+    }
+
     private fun row(id: Long, start: Instant, stop: Instant?) = CachedTimeEntry(
         id = id,
         workspaceId = WORKSPACE,

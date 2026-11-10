@@ -49,6 +49,18 @@ interface EntryChanges {
     suspend fun update(entryId: EntryId, fields: EntryFields, timing: EntryTiming): Boolean
 
     /**
+     * Splits the cached entry [entryId] in one write: a new entry with [fields] in its workspace
+     * runs [second], and [entryId] keeps [fields] and runs [first]. Returns false, changing nothing,
+     * when the entry is not cached.
+     */
+    suspend fun split(
+        entryId: EntryId,
+        fields: EntryFields,
+        first: EntryTiming.Stopped,
+        second: EntryTiming.Stopped,
+    ): Boolean
+
+    /**
      * Sets every field of the ended entry [entryId] in [workspaceId], whether the phone holds it
      * or not, such as an entry from the older days the history pages from the server.
      */

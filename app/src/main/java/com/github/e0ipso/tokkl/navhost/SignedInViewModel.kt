@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.cache.ChangeQueue
 import com.github.e0ipso.tokkl.cache.ShortStopOffer
+import com.github.e0ipso.tokkl.cache.localWrite
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.navigation.PageBadge
 import com.github.e0ipso.tokkl.navigation.Route
@@ -51,13 +52,14 @@ internal class SignedInViewModel(
         ::SignedInState,
     ).stateIn(viewModelScope, whileShown, SignedInState(trust = trust.state.value))
 
+    /** Takes the short Stop of [entryId] back. A write the phone's storage refuses leaves the offer as it is. */
     suspend fun undoShortStop(entryId: EntryId) {
-        changes.undoShortStop(entryId)
+        localWrite { changes.undoShortStop(entryId) }
     }
 
-    /** Forgets the short Stop of [entryId], once its snackbar went without an Undo. */
+    /** Forgets the short Stop of [entryId], once its snackbar went without an Undo, unless the storage refuses. */
     suspend fun dismissShortStop(entryId: EntryId) {
-        changes.dismissShortStop(entryId)
+        localWrite { changes.dismissShortStop(entryId) }
     }
 
     fun acceptTrust() = trust.accept()

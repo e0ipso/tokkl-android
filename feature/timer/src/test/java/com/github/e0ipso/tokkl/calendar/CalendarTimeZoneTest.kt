@@ -156,6 +156,13 @@ class CalendarTimeZoneTest {
         override suspend fun update(entryId: EntryId, fields: EntryFields, timing: EntryTiming): Boolean =
             throw AssertionError("nothing is edited")
 
+        override suspend fun split(
+            entryId: EntryId,
+            fields: EntryFields,
+            first: EntryTiming.Stopped,
+            second: EntryTiming.Stopped,
+        ): Boolean = throw AssertionError("nothing is split")
+
         override suspend fun delete(entryId: EntryId): Boolean = throw AssertionError("nothing is deleted")
 
         override suspend fun updateOlder(

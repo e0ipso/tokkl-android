@@ -132,6 +132,13 @@ class SessionEntriesTest {
             return updates
         }
 
+        override suspend fun split(
+            entryId: EntryId,
+            fields: EntryFields,
+            first: EntryTiming.Stopped,
+            second: EntryTiming.Stopped,
+        ): Boolean = throw AssertionError("unexpected split")
+
         override suspend fun updateOlder(
             entryId: EntryId,
             workspaceId: WorkspaceId,

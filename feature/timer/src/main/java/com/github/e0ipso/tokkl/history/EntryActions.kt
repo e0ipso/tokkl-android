@@ -4,7 +4,9 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.cache.EntryChanges
+import com.github.e0ipso.tokkl.cache.LocalWrite
 import com.github.e0ipso.tokkl.cache.UndoOutcome
+import com.github.e0ipso.tokkl.cache.localWrite
 import com.github.e0ipso.tokkl.entries.SessionEntries
 import com.github.e0ipso.tokkl.entryfields.SplitHalves
 import com.github.e0ipso.tokkl.entryfields.SplitProblem
@@ -124,6 +126,7 @@ class EntryActionsViewModel(
 
     private val deleting = mutableSetOf<EntryId>()
     private var undoing = false
+    private var splitting = false
 
     fun canRestoreDelete(): Boolean = capabilities.value.restore
 
@@ -163,7 +166,9 @@ class EntryActionsViewModel(
         val offered = mutableState.value.notice
         viewModelScope.launch {
             try {
-                val notice = when (val outcome = undoDelete(entryId)) {
+                // A refusal of the phone's storage keeps the message, so Undo can be tapped again.
+                val undone = localWrite { undoDelete(entryId) } as? LocalWrite.Written ?: return@launch
+                val notice = when (val outcome = undone.value) {
                     UndoOutcome.Cancelled, UndoOutcome.Restored -> {
                         removals.restored(entryId)
                         null
@@ -185,7 +190,7 @@ class EntryActionsViewModel(
      * web app's EntryList.tsx and EntryEditor.tsx does, into the source's workspace through the
      * change queue. A running entry or one the cache no longer holds makes no copy. A no-time
      * source makes a no-time copy on its day; without an account timezone to read that day in, it
-     * makes none.
+     * makes none, and so does a write the phone's storage refuses.
      */
     fun duplicate(entryId: EntryId) {
         viewModelScope.launch {
@@ -199,8 +204,9 @@ class EntryActionsViewModel(
                     day = kept.day ?: accountSettings.value?.time(clock)?.zone?.let(kept::dayIn) ?: return@launch,
                 )
             }
-            changes.create(source.workspaceId, source.fields(), timing)
-            mutableState.update { it.copy(notice = EntryNotice.Duplicated(++serial)) }
+            if (localWrite { changes.create(source.workspaceId, source.fields(), timing) } is LocalWrite.Written) {
+                mutableState.update { it.copy(notice = EntryNotice.Duplicated(++serial)) }
+            }
         }
     }
 
@@ -266,42 +272,49 @@ class EntryActionsViewModel(
     /**
      * Splits the entry at the dialog's time, as split in the web app's EntryEditor.tsx does: the
      * original ends there, and a copy of its fields runs on to the original stop. Both go to the
-     * change queue, the new entry first, as the web app posts it first. A time that cuts nowhere
-     * keeps the dialog open with its problem. An entry that has left the cache closes the dialog.
+     * change queue in one write ([EntryChanges.split]), the new entry first, as the web app posts
+     * it first. A time that cuts nowhere keeps the dialog open with its problem, and so does a
+     * write the phone's storage refuses, so Split can be tapped again. An entry that has left the
+     * cache closes the dialog.
      */
     fun confirmSplit() {
         val dialog = mutableState.value.split ?: return
+        if (splitting) return
+        splitting = true
         viewModelScope.launch {
-            val source = entries.first().firstOrNull { it.entry.id == dialog.source.id }?.entry
-            val result = source?.let { splitOf(it, dialog.text) }
-            if (source == null || result == null) {
-                mutableState.update { if (it.split == dialog) it.copy(split = null) else it }
-                return@launch
+            try {
+                split(dialog)
+            } finally {
+                splitting = false
             }
-            if (result !is SplitHalves) {
-                mutableState.update {
-                    if (it.split == dialog) {
-                        it.copy(split = dialog.copy(halves = null, problem = result as SplitProblem))
-                    } else {
-                        it
-                    }
-                }
-                return@launch
-            }
+        }
+    }
+
+    private suspend fun split(dialog: SplitDialog) {
+        val source = entries.first().firstOrNull { it.entry.id == dialog.source.id }?.entry
+        val result = source?.let { splitOf(it, dialog.text) }
+        if (source == null || result == null) {
             mutableState.update { if (it.split == dialog) it.copy(split = null) else it }
-            val second = EntryTiming.Stopped(result.second.start, result.second.stop)
-            val created = changes.create(source.workspaceId, source.fields(), second)
-            if (changes.update(
-                    source.id,
-                    source.fields(),
-                    EntryTiming.Stopped(result.first.start, result.first.stop),
-                )
-            ) {
-                mutableState.update { it.copy(notice = EntryNotice.Split(++serial)) }
-            } else {
-                // The original left the cache meanwhile, so the second half goes too.
-                changes.delete(created)
+            return
+        }
+        if (result !is SplitHalves) {
+            mutableState.update {
+                if (it.split == dialog) {
+                    it.copy(split = dialog.copy(halves = null, problem = result as SplitProblem))
+                } else {
+                    it
+                }
             }
+            return
+        }
+        val first = EntryTiming.Stopped(result.first.start, result.first.stop)
+        val second = EntryTiming.Stopped(result.second.start, result.second.stop)
+        val split = localWrite { changes.split(source.id, source.fields(), first, second) }
+        if (split !is LocalWrite.Written) return
+        mutableState.update {
+            val closed = if (it.split == dialog) it.copy(split = null) else it
+            // The original left the cache meanwhile, so nothing was split.
+            if (split.value) closed.copy(notice = EntryNotice.Split(++serial)) else closed
         }
     }
 
@@ -323,9 +336,10 @@ class EntryActionsViewModel(
         viewModelScope.launch {
             try {
                 val snapshot = entries.first().firstOrNull { it.entry.id == entryId }?.entry
+                // A refusal of the phone's storage leaves the entry, so Delete can be tapped again.
                 if (snapshot != null) {
-                    changes.delete(snapshot)?.let { deleted(it, undo) }
-                } else if (changes.delete(entryId)) {
+                    (localWrite { changes.delete(snapshot) } as? LocalWrite.Written)?.value?.let { deleted(it, undo) }
+                } else if (localWrite { changes.delete(entryId) } == LocalWrite.Written(true)) {
                     mutableState.update { it.copy(notice = EntryNotice.Deleted(++serial, entryId, undo)) }
                 }
             } finally {

@@ -1198,6 +1198,13 @@ class EntryFormViewModelTest {
             return updates
         }
 
+        override suspend fun split(
+            entryId: EntryId,
+            fields: EntryFields,
+            first: EntryTiming.Stopped,
+            second: EntryTiming.Stopped,
+        ): Boolean = throw AssertionError("the form splits nothing")
+
         override suspend fun create(
             workspaceId: WorkspaceId,
             fields: EntryFields,

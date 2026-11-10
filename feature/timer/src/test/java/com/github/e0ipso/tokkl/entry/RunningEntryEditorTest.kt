@@ -416,6 +416,14 @@ class RunningEntryEditorTest {
 
         override suspend fun update(entryId: EntryId, fields: EntryFields, timing: EntryTiming): Boolean =
             throw AssertionError("A running editor must use the guarded update")
+
+        override suspend fun split(
+            entryId: EntryId,
+            fields: EntryFields,
+            first: EntryTiming.Stopped,
+            second: EntryTiming.Stopped,
+        ): Boolean = throw AssertionError("A running editor splits nothing")
+
         override suspend fun updateOlder(
             entryId: EntryId,
             workspaceId: WorkspaceId,

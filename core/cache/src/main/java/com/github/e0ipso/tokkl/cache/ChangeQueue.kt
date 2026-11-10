@@ -140,6 +140,22 @@ class ChangeQueue(
         return queue { update(entryId, fields, timing) }
     }
 
+    /**
+     * Splits the cached entry [entryId] in one transaction, so a failed write, a cancellation or
+     * the end of the process leaves either both halves or neither: the create of [second] first,
+     * as the web app posts it first, then the edit that ends the original at [first].
+     */
+    override suspend fun split(
+        entryId: EntryId,
+        fields: EntryFields,
+        first: EntryTiming.Stopped,
+        second: EntryTiming.Stopped,
+    ): Boolean {
+        requireForward(first)
+        requireForward(second)
+        return queue { split(entryId, fields, first, second) }
+    }
+
     override suspend fun runningEntry(identity: RunningEntryIdentity): TimeEntry? = withContext(io) {
         storage.transaction { QueueEdits(this, spans).activeEntry(identity) }?.toModel()
     }

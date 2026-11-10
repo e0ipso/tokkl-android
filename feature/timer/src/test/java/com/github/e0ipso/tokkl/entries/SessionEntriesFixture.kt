@@ -43,6 +43,13 @@ internal object NoEntryChanges : EntryChanges {
     override suspend fun update(entryId: EntryId, fields: EntryFields, timing: EntryTiming): Boolean =
         throw AssertionError("unexpected update")
 
+    override suspend fun split(
+        entryId: EntryId,
+        fields: EntryFields,
+        first: EntryTiming.Stopped,
+        second: EntryTiming.Stopped,
+    ): Boolean = throw AssertionError("unexpected split")
+
     override suspend fun updateOlder(
         entryId: EntryId,
         workspaceId: WorkspaceId,

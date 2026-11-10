@@ -234,10 +234,7 @@ class EntryActionsUiTest {
         ) { composeRule.onAllNodes(liveMessage(R.string.history_split_done)).fetchSemanticsNodes().isNotEmpty() }
         assertEquals(0, composeRule.onAllNodes(isDialog()).fetchSemanticsNodes().size)
         assertEquals(
-            listOf(
-                "create 10 2026-10-15T11:15:00Z ${CACHED.stop}",
-                "update $ENTRY ${CACHED.start} 2026-10-15T11:15:00Z",
-            ),
+            listOf("split $ENTRY ${CACHED.start} 2026-10-15T11:15:00Z 2026-10-15T11:15:00Z ${CACHED.stop}"),
             calls,
         )
     }
@@ -409,6 +406,16 @@ class EntryActionsUiTest {
             val start = timing.start
             val stop = (timing as? EntryTiming.Ended)?.stop
             calls += "update $entryId $start $stop"
+            return true
+        }
+
+        override suspend fun split(
+            entryId: EntryId,
+            fields: EntryFields,
+            first: EntryTiming.Stopped,
+            second: EntryTiming.Stopped,
+        ): Boolean {
+            calls += "split $entryId ${first.start} ${first.stop} ${second.start} ${second.stop}"
             return true
         }
 

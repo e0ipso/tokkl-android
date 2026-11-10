@@ -5,6 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.cache.HeldChange
 import com.github.e0ipso.tokkl.cache.HeldChanges
+import com.github.e0ipso.tokkl.cache.LocalWrite
+import com.github.e0ipso.tokkl.cache.localWrite
 import com.github.e0ipso.tokkl.platform.whileShown
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.CacheRefresh
@@ -48,7 +50,8 @@ class NeedsAttentionViewModel(
  * them. Editing the entry folds the fix into the held change and sends it, as `ChangeQueue` does
  * for any change to that entry. [sendAgain] sends a held change as it is, and [discard] drops it
  * with the changes behind it, then asks [refreshes] for a refresh so the cache can take the
- * server's entry back.
+ * server's entry back. A write the phone's storage refuses changes nothing: the change stays in
+ * the list, for the user to try again.
  *
  * @param scope outlives the screen, so leaving it does not cancel a write.
  */
@@ -61,10 +64,12 @@ class NeedsAttention(
     val held: Flow<List<HeldChange>> = changes.held
 
     fun sendAgain(change: HeldChange) {
-        scope.launch { changes.sendAgain(change.sequence) }
+        scope.launch { localWrite { changes.sendAgain(change.sequence) } }
     }
 
     fun discard(change: HeldChange) {
-        scope.launch { if (changes.discard(change.sequence)) refreshes.refresh() }
+        scope.launch {
+            if (localWrite { changes.discard(change.sequence) } == LocalWrite.Written(true)) refreshes.refresh()
+        }
     }
 }

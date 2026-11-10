@@ -364,6 +364,13 @@ class CalendarGesturesTest {
             return true
         }
 
+        override suspend fun split(
+            entryId: EntryId,
+            fields: EntryFields,
+            first: EntryTiming.Stopped,
+            second: EntryTiming.Stopped,
+        ): Boolean = throw AssertionError("the calendar splits nothing")
+
         override suspend fun delete(entryId: EntryId): Boolean = throw AssertionError("the calendar deletes nothing")
 
         override suspend fun updateOlder(
