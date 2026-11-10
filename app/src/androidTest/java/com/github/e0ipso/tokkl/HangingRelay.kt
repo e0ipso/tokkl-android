@@ -76,12 +76,21 @@ class HangingRelay(server: ServerUrl) : Closeable {
     /** Hangs every new connection and cuts the relayed ones. */
     fun hang() {
         relay.holdNewConnections = true
+        relay.dropNewConnections = false
         relay.cutRelayed()
+    }
+
+    /** Fails current and new connections until [release], including automatic retries. */
+    fun refuse() {
+        relay.dropNewConnections = true
+        relay.cutRelayed()
+        relay.dropHeld()
     }
 
     /** Drops the hung connections and relays new ones. */
     fun release() {
         relay.holdNewConnections = false
+        relay.dropNewConnections = false
         relay.dropHeld()
     }
 

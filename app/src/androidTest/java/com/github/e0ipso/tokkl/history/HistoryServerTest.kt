@@ -175,8 +175,8 @@ class HistoryServerTest {
 
     /**
      * When the server cannot be reached while the phone keeps its network, the older days say
-     * that they need the server, and Try again loads them once it can be reached. The network
-     * never changes, so only the tap loads them.
+     * that they need the server. The relay keeps failing requests, including any retry after a
+     * network change, until that error shows. Try again then loads them once it can be reached.
      */
     @Test
     fun unreachableOlderDaysNeedTheServerAndTryAgainLoadsThem() {
@@ -194,10 +194,11 @@ class HistoryServerTest {
             awaitText("Recent")
             list().performScrollToKey(OLDER_KEY)
             awaitText(context.getString(R.string.history_loading_older))
-            // The hung request fails as a network failure would, and the relay reaches the server again.
-            relay.release()
+            // Keep retries unreachable too, until the error shows: Android may change networks.
+            relay.refuse()
             awaitText(context.getString(R.string.history_offline_title))
 
+            relay.release()
             composeRule.onNode(
                 hasText(string(R.string.history_retry)) and hasClickAction(),
             ).performSemanticsAction(SemanticsActions.OnClick)
