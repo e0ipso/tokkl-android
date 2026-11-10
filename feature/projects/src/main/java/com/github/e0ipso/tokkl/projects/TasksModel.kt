@@ -33,7 +33,7 @@ data class TasksData(val tasks: List<Task>) {
     fun without(id: TaskId): TasksData = TasksData(tasks.filterNot { it.id == id })
 }
 
-typealias TasksState = CatalogState<TasksData, TaskOverlay>
+typealias TasksState = CatalogState<TasksData, TaskOverlay, CatalogChange>
 
 /**
  * The task list in the project form (docs/PRD.md P5): the project's tasks from the server, loaded
@@ -53,7 +53,8 @@ class TasksModel(
     @Volatile
     private var project: ProjectId? = null
 
-    private val catalog = CatalogModel<TasksData, TaskOverlay>(OpenProject(), settings, changes, scope, io)
+    private val catalog =
+        CatalogModel<TasksData, TaskOverlay, CatalogChange>(OpenProject(), settings, changes, scope, io)
 
     val state: StateFlow<TasksState> = catalog.state
 

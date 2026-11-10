@@ -86,7 +86,7 @@ class TrashFitTest {
 
     @Test
     fun theEmptyQuestionFits() {
-        show(LOADED.copy(confirmingEmpty = true))
+        show(LOADED.copy(overlay = EmptyTrash))
         assertNoTextCutOff("the question before emptying the trash")
     }
 
@@ -162,6 +162,6 @@ class TrashFitTest {
                 deletedAt = Instant.parse("2026-01-02T09:15:00Z"),
             ),
         )
-        val LOADED = TrashState(entries = ENTRIES)
+        val LOADED = TrashState(data = ENTRIES)
     }
 }

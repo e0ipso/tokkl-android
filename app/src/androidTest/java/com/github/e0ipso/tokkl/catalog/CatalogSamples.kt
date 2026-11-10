@@ -64,7 +64,7 @@ object CatalogSamples {
         ),
     )
 
-    val PROJECTS_LOADED = CatalogState<ProjectsData, ProjectForm>(
+    val PROJECTS_LOADED = CatalogState<ProjectsData, ProjectForm, CatalogChange>(
         data = ProjectsData(PROJECTS, WorkspaceDefaults("EUR", 50.0)),
     )
 
@@ -75,7 +75,7 @@ object CatalogSamples {
         task(23, "Release 1.0", active = false),
     )
 
-    val TASKS_LOADED = CatalogState<TasksData, TaskOverlay>(data = TasksData(TASKS))
+    val TASKS_LOADED = CatalogState<TasksData, TaskOverlay, CatalogChange>(data = TasksData(TASKS))
 
     val CLIENTS = listOf(
         Client(
@@ -89,7 +89,7 @@ object CatalogSamples {
     )
 
     /** Acme has three projects and Gone one. */
-    val CLIENTS_LOADED = CatalogState<ClientsData, ClientsOverlay>(
+    val CLIENTS_LOADED = CatalogState<ClientsData, ClientsOverlay, CatalogChange>(
         data = ClientsData(CLIENTS, mapOf(ClientId(1) to 3, ClientId(2) to 1)),
     )
 
@@ -99,7 +99,7 @@ object CatalogSamples {
         Tag(TagId(23), WorkspaceId(7), "meeting with a client who talks a lot"),
     )
 
-    val TAGS_LOADED = CatalogState<TagsData, TagsOverlay>(data = TagsData(TAGS))
+    val TAGS_LOADED = CatalogState<TagsData, TagsOverlay, CatalogChange>(data = TagsData(TAGS))
 
     private fun task(id: Long, name: String, active: Boolean = true) =
         Task(TaskId(id), WorkspaceId(7), ProjectId(11), name, active)

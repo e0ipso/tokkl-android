@@ -16,7 +16,6 @@ val trashFeatureModule = module {
     singleOf(::ServerTrashRepository)
 
     viewModel {
-        val accountSettings = get<AccountSettingsSource>()
         val scope = viewModelCoroutineScope()
         TrashViewModel(
             repository = get(),
@@ -24,7 +23,7 @@ val trashFeatureModule = module {
             trashMissing = get<CapabilitiesSource>()::trashMissing,
             scope = scope,
             io = io(),
-            settings = accountSettings.state,
+            settings = get<AccountSettingsSource>(),
             offline = get<DefaultNetwork>().offlineIn(scope),
             app = get(),
         )

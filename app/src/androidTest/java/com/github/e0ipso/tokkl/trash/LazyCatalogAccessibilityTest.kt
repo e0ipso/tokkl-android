@@ -72,7 +72,7 @@ class LazyCatalogAccessibilityTest {
                 darkTheme = false,
             ) {
                 TrashScreen(
-                    TrashPageState(TrashState(entries = entries.value), offline = false),
+                    TrashPageState(TrashState(data = entries.value), offline = false),
                     actions = TrashActions(),
                 )
             }

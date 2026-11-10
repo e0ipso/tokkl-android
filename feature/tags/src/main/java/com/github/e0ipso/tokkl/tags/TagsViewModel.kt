@@ -41,7 +41,7 @@ data class TagsData(val tags: List<Tag>) {
     fun without(id: TagId): TagsData = TagsData(tags.filterNot { it.id == id })
 }
 
-typealias TagsState = CatalogState<TagsData, TagsOverlay>
+typealias TagsState = CatalogState<TagsData, TagsOverlay, CatalogChange>
 
 /** The tags on the phone, of the page's workspace, are what the page lists while the server's do not load. */
 @Immutable
@@ -87,7 +87,7 @@ class TagsViewModel(
     saved: SavedStateHandle,
 ) : ViewModel(scope) {
 
-    private val catalog = CatalogModel<TagsData, TagsOverlay>(
+    private val catalog = CatalogModel<TagsData, TagsOverlay, CatalogChange>(
         repository,
         settings,
         changes,

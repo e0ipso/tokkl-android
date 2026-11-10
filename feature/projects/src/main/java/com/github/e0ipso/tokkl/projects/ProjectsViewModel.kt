@@ -66,7 +66,7 @@ data class ProjectsData(val projects: List<ProjectDetails>, val defaults: Worksp
     )
 }
 
-typealias ProjectsState = CatalogState<ProjectsData, ProjectForm>
+typealias ProjectsState = CatalogState<ProjectsData, ProjectForm, CatalogChange>
 
 /**
  * The projects and clients on the phone, of the page's workspace, are what the page lists while
@@ -113,7 +113,7 @@ class ProjectsViewModel(
     private val saved: SavedStateHandle,
 ) : ViewModel(scope) {
 
-    private val catalog = CatalogModel<ProjectsData, ProjectForm>(
+    private val catalog = CatalogModel<ProjectsData, ProjectForm, CatalogChange>(
         repository,
         settings,
         changes,

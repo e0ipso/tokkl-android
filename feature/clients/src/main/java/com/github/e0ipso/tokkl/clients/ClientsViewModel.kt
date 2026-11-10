@@ -65,7 +65,7 @@ data class ClientsData(val clients: List<Client>, val projectCounts: Map<ClientI
     )
 }
 
-typealias ClientsState = CatalogState<ClientsData, ClientsOverlay>
+typealias ClientsState = CatalogState<ClientsData, ClientsOverlay, CatalogChange>
 
 /** The clients on the phone, of the page's workspace, are what the page lists while the server's do not load. */
 @Immutable
@@ -105,7 +105,7 @@ class ClientsViewModel(
     private val saved: SavedStateHandle,
 ) : ViewModel(scope) {
 
-    private val catalog = CatalogModel<ClientsData, ClientsOverlay>(
+    private val catalog = CatalogModel<ClientsData, ClientsOverlay, CatalogChange>(
         repository,
         settings,
         changes,

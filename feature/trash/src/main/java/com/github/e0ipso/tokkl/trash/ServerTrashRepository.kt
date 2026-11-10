@@ -4,7 +4,9 @@ import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.TrashEntry
 import com.github.e0ipso.tokkl.api.map
+import com.github.e0ipso.tokkl.catalog.managedWorkspace
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.signedIn
 
 /**
@@ -12,6 +14,9 @@ import com.github.e0ipso.tokkl.session.signedIn
  * section 6). The trash belongs to the user, not to a workspace.
  */
 class ServerTrashRepository(private val client: ApiClientProvider) {
+
+    /** The workspace the page loads under, as the catalog pages do: [stored], or the server's default. */
+    suspend fun workspace(stored: WorkspaceId?): ApiResult<WorkspaceId> = client.managedWorkspace(stored)
 
     /**
      * The deleted entries, the most recently deleted first, at most [LIST_LIMIT] of them, each row

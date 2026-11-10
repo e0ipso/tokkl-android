@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.HttpStatus
 import com.github.e0ipso.tokkl.api.TokklApi
 import com.github.e0ipso.tokkl.api.flatMap
 import com.github.e0ipso.tokkl.api.fold
@@ -37,7 +38,10 @@ interface CatalogRepository<D> {
     suspend fun load(workspace: WorkspaceId): ApiResult<D>
 }
 
-/** A change the server accepted, for the message that confirms it. [name] is the item's name after the change. */
+/**
+ * A change the server accepted on a page of the account's items, for the message that confirms
+ * it. [name] is the item's name after the change.
+ */
 sealed interface CatalogChange {
     val name: String
 
@@ -61,14 +65,14 @@ sealed interface CatalogChange {
  * @property done the change the server last accepted, until the page has said so.
  */
 @Immutable
-data class CatalogState<D, O>(
+data class CatalogState<D, O, C>(
     val data: D? = null,
     val loading: Boolean = false,
     val loadProblem: ServerProblem? = null,
     val overlay: O? = null,
     val sending: Boolean = false,
     val changeProblem: ServerProblem? = null,
-    val done: CatalogChange? = null,
+    val done: C? = null,
 ) {
     /** Whether a change can go to the server now, as far as the page knows. Offline it cannot either. */
     val canChange: Boolean get() = data != null && loadProblem == null && !sending
@@ -88,18 +92,21 @@ data class CatalogState<D, O>(
  *
  * @param restored the form or question a page kept in its saved state, open over the list from the
  *   start, as after a new process restored the page.
+ * @param reloadWhenMissing whether a change the server refuses with a 404, as for an item no longer
+ *   there, loads the list again.
  */
-class CatalogModel<D, O>(
+class CatalogModel<D, O, C>(
     private val repository: CatalogRepository<D>,
     private val settings: AccountSettingsSource,
     private val changes: ServerChanges,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
     restored: O? = null,
+    private val reloadWhenMissing: Boolean = false,
 ) : PageLoads {
 
-    private val mutableState = MutableStateFlow(CatalogState<D, O>(overlay = restored))
-    val state: StateFlow<CatalogState<D, O>> = mutableState.asStateFlow()
+    private val mutableState = MutableStateFlow(CatalogState<D, O, C>(overlay = restored))
+    val state: StateFlow<CatalogState<D, O, C>> = mutableState.asStateFlow()
 
     /** Whether the list is open: from [shown] until [close], a configuration change included. */
     var opened: Boolean = false
@@ -190,12 +197,12 @@ class CatalogModel<D, O>(
     }
 
     /**
-     * Once the server accepts [request], the cache refreshes, and while the list is open [apply]
-     * puts the answer into the data, the overlay closes and [done] says what happened. When a load
-     * put a list on the page while the request ran, that list may already hold the change, so the
-     * page reads the list again instead of applying the answer to it. A refusal
-     * keeps the overlay open with the reason. An unreachable server turns every action off until a
-     * load gets through.
+     * Once the server accepts [request], the cache refreshes, unless [refresh] is false, and while
+     * the list is open [apply] puts the answer into the data, the overlay closes and [done] says
+     * what happened. When a load put a list on the page while the request ran, that list may
+     * already hold the change, so the page reads the list again instead of applying the answer to
+     * it. A refusal keeps the overlay open with the reason. An unreachable server turns every
+     * action off until a load gets through.
      * Once sent, the change and the refresh after it outlive the page's scope. An answer that comes
      * after the list closed, also when it opened again since, as for another project, changes
      * nothing on the page.
@@ -203,46 +210,53 @@ class CatalogModel<D, O>(
     fun <R> send(
         request: suspend (workspace: WorkspaceId) -> ApiResult<R>,
         apply: (D, R) -> D,
-        done: (R) -> CatalogChange,
+        done: (R) -> C,
+        refresh: Boolean = true,
     ) {
         val workspace = workspace ?: return
         if (!opened || !state.value.canChange) return
         mutableState.update { it.copy(sending = true, changeProblem = null) }
         val sentFrom = opening
         val landedBefore = landed
-        val sent = changes.send { request(workspace) }
+        val sent = changes.send(refresh) { request(workspace) }
         scope.launch {
             val answer = sent.await()
             // The list closed while the request ran. What the server accepted still reaches the cache.
             if (!opened || opening != sentFrom) return@launch
             when (answer) {
-                is ApiResult.Success -> {
-                    accepted++
-                    // A list that landed meanwhile may already hold the change: read it again instead.
-                    val fresh = landed == landedBefore
-                    mutableState.update { current ->
-                        current.copy(
-                            data = if (fresh) current.data?.let { apply(it, answer.value) } else current.data,
-                            sending = false,
-                            overlay = null,
-                            done = done(answer.value),
-                        )
-                    }
-                    if (!fresh && loading?.isActive != true) load()
-                }
-
-                is ApiResult.Failure -> {
-                    val problem = answer.error.toServerProblem()
-                    mutableState.update { current ->
-                        if (problem == ServerProblem.Unreachable) {
-                            current.copy(sending = false, loadProblem = problem)
-                        } else {
-                            current.copy(sending = false, changeProblem = problem)
-                        }
-                    }
-                }
+                is ApiResult.Success -> took(answer.value, fresh = landed == landedBefore, apply, done)
+                is ApiResult.Failure -> refused(answer.error)
             }
         }
+    }
+
+    /**
+     * The server accepted a change. A list that landed while it ran may already hold it, so the
+     * page reads the list again instead of applying the answer to a list that is not [fresh].
+     */
+    private fun <R> took(answer: R, fresh: Boolean, apply: (D, R) -> D, done: (R) -> C) {
+        accepted++
+        mutableState.update { current ->
+            current.copy(
+                data = if (fresh) current.data?.let { apply(it, answer) } else current.data,
+                sending = false,
+                overlay = null,
+                done = done(answer),
+            )
+        }
+        if (!fresh && loading?.isActive != true) load()
+    }
+
+    private fun refused(error: ApiError) {
+        val problem = error.toServerProblem()
+        mutableState.update { current ->
+            if (problem == ServerProblem.Unreachable) {
+                current.copy(sending = false, loadProblem = problem)
+            } else {
+                current.copy(sending = false, changeProblem = problem)
+            }
+        }
+        if (reloadWhenMissing && (error as? ApiError.UnexpectedStatus)?.status == HttpStatus.NOT_FOUND) load()
     }
 
     private fun load() {

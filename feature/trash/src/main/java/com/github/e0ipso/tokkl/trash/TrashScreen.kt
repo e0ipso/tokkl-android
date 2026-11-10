@@ -81,9 +81,9 @@ fun TrashScreen(page: TrashPageState, actions: TrashActions, modifier: Modifier 
                         neededTitle = stringResource(R.string.trash_server_needed_title),
                         neededMessage = stringResource(R.string.trash_server_needed_message),
                         loadProblem = state.loadProblem,
-                        loading = state.loading && state.entries == null,
+                        loading = state.loading && state.data == null,
                         loadingText = stringResource(R.string.trash_loading),
-                        changeProblem = state.changeProblem.takeIf { !state.confirmingEmpty },
+                        changeProblem = state.changeProblem.takeIf { state.overlay == null },
                         onRetry = actions.onRetry,
                     )
                     if (hasNotices && entries != null) Spacer(Modifier.height(TokklTheme.spacing.betweenGroups))
@@ -124,8 +124,8 @@ fun TrashScreen(page: TrashPageState, actions: TrashActions, modifier: Modifier 
             }
         },
     )
-    if (state.confirmingEmpty) {
-        val count = state.entries?.size ?: 0
+    if (state.overlay != null) {
+        val count = state.data?.size ?: 0
         ConfirmDialog(
             title = stringResource(R.string.trash_empty_confirm_title),
             paragraphs = listOf(

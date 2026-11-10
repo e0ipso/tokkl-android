@@ -49,7 +49,7 @@ class CatalogModelTest {
         }
     }
 
-    private val model = CatalogModel<List<String>, String>(
+    private val model = CatalogModel<List<String>, String, CatalogChange>(
         repository = repository,
         settings = accountSettingsIn(WorkspaceId(7)),
         changes = ServerChanges(CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, CountingRefresh()),

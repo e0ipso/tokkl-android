@@ -6,23 +6,20 @@ import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.HttpStatus
+import com.github.e0ipso.tokkl.catalog.CatalogModel
+import com.github.e0ipso.tokkl.catalog.CatalogRepository
+import com.github.e0ipso.tokkl.catalog.CatalogState
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.platform.AppForeground
-import com.github.e0ipso.tokkl.platform.PageLoads
 import com.github.e0ipso.tokkl.platform.stateInPage
 import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.session.AccountSettingsSource
 import com.github.e0ipso.tokkl.session.ServerChanges
 import com.github.e0ipso.tokkl.session.ServerProblem
-import com.github.e0ipso.tokkl.session.toServerProblem
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
 
 /** A change the server accepted, for the message that confirms it. */
@@ -35,27 +32,14 @@ sealed interface TrashChange {
     data class Emptied(val count: Int) : TrashChange
 }
 
+/** The question whether to empty the trash, which the page opens over the list. */
+data object EmptyTrash
+
 /**
- * What the trash page shows.
- *
- * @property entries the deleted entries from the server, or null until they load.
- * @property loadProblem why [entries] did not load, or why the server could not be reached for
- *   the last change. While it is set, nothing can be changed.
- * @property changeProblem why the server refused the last change, or null.
- * @property done the change the server last accepted, until the page has said so.
+ * What the trash page shows: the deleted entries from the server as [CatalogState.data], or null
+ * until they load, and [EmptyTrash] while the page asks whether to empty the trash.
  */
-@Immutable
-data class TrashState(
-    val entries: List<DeletedEntry>? = null,
-    val loading: Boolean = false,
-    val loadProblem: ServerProblem? = null,
-    val confirmingEmpty: Boolean = false,
-    val sending: Boolean = false,
-    val changeProblem: ServerProblem? = null,
-    val done: TrashChange? = null,
-) {
-    val canChange: Boolean get() = entries != null && loadProblem == null && !sending
-}
+typealias TrashState = CatalogState<List<DeletedEntry>, EmptyTrash, TrashChange>
 
 @Immutable
 data class TrashPageState(
@@ -69,23 +53,25 @@ data class TrashPageState(
     val canChange: Boolean get() = trash.canChange && !offline
 
     /** The deleted entries once loaded, and none while the server is needed: the phone keeps no copy. */
-    val entries: List<DeletedEntry>? get() = trash.entries.takeUnless { serverNeeded }
+    val entries: List<DeletedEntry>? get() = trash.data.takeUnless { serverNeeded }
 
     val hasNotices: Boolean
-        get() = serverNeeded || trash.loadProblem != null || (trash.loading && trash.entries == null) ||
-            (trash.changeProblem != null && !trash.confirmingEmpty)
+        get() = serverNeeded || trash.loadProblem != null || (trash.loading && trash.data == null) ||
+            (trash.changeProblem != null && trash.overlay == null)
 }
 
 /**
  * The trash page's state (docs/PRD.md H7): the deleted entries from `GET /api/app/trash`, loaded
- * each time the page opens and each time the app comes back to it. A load keeps the list and the
- * question open over it until the answer comes. Nothing is queued, so offline nothing changes, as
- * on the catalog pages. After a restore, [changes] reloads the offline cache, so the history shows
- * the entry again.
+ * each time the page opens and each time the app comes back to it, through a [CatalogModel], as on
+ * the catalog pages. A load keeps the list and the question open over it until the answer comes,
+ * and a load that read the trash before a change the server accepted reads it again. Nothing is
+ * queued, so offline nothing changes. After a restore, [changes] reloads the offline cache, so
+ * the history shows the entry again. A change the server refuses with a 404, as for an entry no
+ * longer in the trash, loads the list again.
  *
  * A server without the trash answers the list with a 404, or with something that is not a list.
- * Then the page tells the [capabilities], on [io], which hide the page, rather than the page
- * failing.
+ * Then the page tells the capabilities, through [trashMissing] on [io], which hide the page, rather
+ * than the page failing.
  *
  * Call every function on the main thread.
  *
@@ -96,157 +82,73 @@ data class TrashPageState(
  */
 class TrashViewModel(
     private val repository: ServerTrashRepository,
-    private val changes: ServerChanges,
-    private val trashMissing: suspend () -> Unit,
+    changes: ServerChanges,
+    trashMissing: suspend () -> Unit,
     scope: CoroutineScope,
-    private val io: CoroutineContext,
-    settings: StateFlow<AccountSettings?>,
-    private val offline: StateFlow<Boolean>,
+    io: CoroutineContext,
+    settings: AccountSettingsSource,
+    offline: StateFlow<Boolean>,
     app: AppForeground,
 ) : ViewModel(scope) {
 
-    private val mutableState = MutableStateFlow(TrashState())
+    private val catalog = CatalogModel<List<DeletedEntry>, EmptyTrash, TrashChange>(
+        object : CatalogRepository<List<DeletedEntry>> {
+            override suspend fun workspace(stored: WorkspaceId?) = repository.workspace(stored)
 
-    /** The trash and what is open over it, before the network and the settings join them in [page]. */
-    internal val state: StateFlow<TrashState> = mutableState.asStateFlow()
-
-    /** Whether the page has shown, so it has asked for the trash. */
-    private var opened = false
-    private var loading: Job? = null
-
-    val page: StateFlow<TrashPageState> = combine(state, offline, settings, ::TrashPageState).stateInPage(
-        viewModelScope,
-        TrashPageState(state.value, offline.value, settings.value),
-        app,
-        object : PageLoads {
-            override fun shown() {
-                opened = true
-                load()
-            }
-
-            /** Back from the background: the trash may have changed meanwhile. */
-            override fun returned() = retry()
-
-            /** The network came back. Loads again when the server could not be reached. */
-            override fun reconnected() {
-                if (opened && state.value.loadProblem != null) load()
+            override suspend fun load(workspace: WorkspaceId) = repository.list().also {
+                if (it is ApiResult.Failure && it.error.meansNoTrash()) trashMissing()
             }
         },
+        settings,
+        changes,
+        viewModelScope,
+        io,
+        reloadWhenMissing = true,
     )
 
+    /** The trash and what is open over it, before the network and the settings join them in [page]. */
+    internal val state: StateFlow<TrashState> = catalog.state
+
+    val page: StateFlow<TrashPageState> = combine(state, offline, settings.state, ::TrashPageState)
+        .stateInPage(viewModelScope, TrashPageState(state.value, offline.value, settings.state.value), app, catalog)
+
     /** Loads the trash again, as after a failure. */
-    fun retry() {
-        if (opened) load()
-    }
+    fun retry() = catalog.retry()
 
     /** The page has said that [TrashState.done] happened. */
-    fun doneShown() {
-        mutableState.update { it.copy(done = null) }
-    }
+    fun doneShown() = catalog.doneShown()
 
     /** Opens the question whether to empty the trash, while there is something to empty. */
     fun askToEmpty() {
-        val current = state.value
-        if (opened && current.canChange && !current.entries.isNullOrEmpty()) {
-            mutableState.update { it.copy(confirmingEmpty = true, changeProblem = null) }
-        }
+        if (!state.value.data.isNullOrEmpty()) catalog.show(EmptyTrash)
     }
 
     /** Closes the question, which keeps the trash as it is. */
-    fun dismiss() {
-        mutableState.update { it.copy(confirmingEmpty = false, changeProblem = null) }
-    }
+    fun dismiss() = catalog.dismiss()
 
-    fun restore(id: EntryId) {
-        send(
-            request = { it.restore(id) },
-            apply = { entries, _ -> entries.filterNot { it.id == id } },
-            done = { TrashChange.Restored },
-            restored = true,
-        )
-    }
+    fun restore(id: EntryId) = catalog.send(
+        request = { repository.restore(id) },
+        apply = { entries, _ -> entries.filterNot { it.id == id } },
+        done = { TrashChange.Restored },
+    )
 
     /** Deletes entry [id] for good, with no question, as the web app does. */
-    fun purge(id: EntryId) {
-        send(
-            request = { it.purge(id) },
-            apply = { entries, _ -> entries.filterNot { it.id == id } },
-            done = { TrashChange.Purged },
-        )
-    }
+    fun purge(id: EntryId) = catalog.send(
+        request = { repository.purge(id) },
+        apply = { entries, _ -> entries.filterNot { it.id == id } },
+        done = { TrashChange.Purged },
+        refresh = false,
+    )
 
     /** Empties the trash, once the question is open. */
     fun empty() {
-        if (!state.value.confirmingEmpty) return
-        send(request = { it.purgeAll() }, apply = { _, _ -> emptyList() }, done = { TrashChange.Emptied(it) })
-    }
-
-    /**
-     * Sends [request], unless a change cannot go now. Once the server accepts it, [apply] changes
-     * the list, the question closes and [done] says what happened. A refusal keeps the question
-     * open with the reason, and a 404, an entry no longer in the trash, loads the list again. An
-     * unreachable server turns every action off until a load gets through. Once sent, the change
-     * and the cache refresh after a restore outlive the view model.
-     */
-    private fun <R> send(
-        request: suspend (ServerTrashRepository) -> ApiResult<R>,
-        apply: (List<DeletedEntry>, R) -> List<DeletedEntry>,
-        done: (R) -> TrashChange,
-        restored: Boolean = false,
-    ) {
-        if (!opened || !state.value.canChange) return
-        mutableState.update { it.copy(sending = true, changeProblem = null) }
-        val sent = changes.send(refresh = restored) { request(repository) }
-        viewModelScope.launch {
-            when (val answer = sent.await()) {
-                is ApiResult.Success -> mutableState.update { current ->
-                    current.copy(
-                        entries = current.entries?.let { apply(it, answer.value) },
-                        sending = false,
-                        confirmingEmpty = false,
-                        done = done(answer.value),
-                    )
-                }
-
-                is ApiResult.Failure -> {
-                    val problem = answer.error.toServerProblem()
-                    mutableState.update { current ->
-                        if (problem == ServerProblem.Unreachable) {
-                            current.copy(sending = false, loadProblem = problem)
-                        } else {
-                            current.copy(sending = false, changeProblem = problem)
-                        }
-                    }
-                    if ((answer.error as? ApiError.UnexpectedStatus)?.status == NOT_FOUND) load()
-                }
-            }
-        }
-    }
-
-    private fun load() {
-        loading?.cancel()
-        mutableState.update { it.copy(loading = true) }
-        loading = viewModelScope.launch {
-            // A cancelled load cancels its request and drops its answer.
-            val answer = withContext(io) {
-                repository.list().also {
-                    if (it is ApiResult.Failure && it.error.meansNoTrash()) trashMissing()
-                }
-            }
-            when (answer) {
-                is ApiResult.Success -> mutableState.update {
-                    it.copy(entries = answer.value, loading = false, loadProblem = null)
-                }
-
-                is ApiResult.Failure -> mutableState.update {
-                    it.copy(loading = false, loadProblem = answer.error.toServerProblem())
-                }
-            }
-        }
-    }
-
-    private companion object {
-        const val NOT_FOUND = 404
+        if (state.value.overlay == null) return
+        catalog.send(
+            request = { repository.purgeAll() },
+            apply = { _, _ -> emptyList() },
+            done = { TrashChange.Emptied(it) },
+            refresh = false,
+        )
     }
 }
 

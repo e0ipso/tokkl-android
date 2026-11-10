@@ -5,11 +5,13 @@ import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TestApi
 import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.platform.TestApp
 import com.github.e0ipso.tokkl.platform.TestScreen
 import com.github.e0ipso.tokkl.session.CountingRefresh
 import com.github.e0ipso.tokkl.session.ServerChanges
 import com.github.e0ipso.tokkl.session.ServerProblem
+import com.github.e0ipso.tokkl.session.accountSettingsIn
 import com.github.e0ipso.tokkl.session.capabilitiesOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -30,6 +32,9 @@ import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import kotlin.coroutines.CoroutineContext
 
 /**
  * The trash page's model over a MockWebServer that answers each call as the test sets it, and
@@ -44,6 +49,9 @@ class TrashViewModelTest {
     private val refresh = CountingRefresh()
     private val capabilities = capabilitiesOf(Capabilities.NONE.copy(trash = true, restore = true))
 
+    /** Where the model reads the trash: in the call, unless a test holds an answer on another thread. */
+    private var io: CoroutineContext = Dispatchers.Unconfined
+
     private val scheduler = TestCoroutineScheduler()
     private val scope = CoroutineScope(UnconfinedTestDispatcher(scheduler))
     private val screen by lazy { TestScreen(model.page, scope, scheduler) }
@@ -53,8 +61,8 @@ class TrashViewModelTest {
             changes = ServerChanges(scope, Dispatchers.Unconfined, refresh),
             trashMissing = capabilities::trashMissing,
             scope = scope,
-            io = Dispatchers.Unconfined,
-            settings = MutableStateFlow(null),
+            io = io,
+            settings = accountSettingsIn(WorkspaceId(1)),
             offline = MutableStateFlow(false),
             app = TestApp(scheduler).app,
         )
@@ -82,9 +90,9 @@ class TrashViewModelTest {
 
         screen.show()
 
-        assertEquals(listOf(1L, 2L), model.state.value.entries?.map { it.id.value })
-        assertEquals("Write", model.state.value.entries?.first()?.description)
-        assertEquals("Website", model.state.value.entries?.first()?.projectName)
+        assertEquals(listOf(1L, 2L), model.state.value.data?.map { it.id.value })
+        assertEquals("Write", model.state.value.data?.first()?.description)
+        assertEquals("Website", model.state.value.data?.first()?.projectName)
         assertTrue(model.state.value.canChange)
     }
 
@@ -93,7 +101,7 @@ class TrashViewModelTest {
         screen.show()
 
         assertFalse("the 404 told the capabilities", capabilities.state.value.trash)
-        assertNull(model.state.value.entries)
+        assertNull(model.state.value.data)
     }
 
     @Test
@@ -125,9 +133,35 @@ class TrashViewModelTest {
 
         model.restore(EntryId(1))
 
-        assertEquals(listOf(2L), model.state.value.entries?.map { it.id.value })
+        assertEquals(listOf(2L), model.state.value.data?.map { it.id.value })
         assertEquals(TrashChange.Restored, model.state.value.done)
         assertEquals(1, refresh.afterChanges)
+    }
+
+    /**
+     * A reload that read the trash before a restore the server then accepted answers after that
+     * restore: the restored entry stays out of the list, and the page reads the trash again.
+     */
+    @Test
+    fun aReloadThatReadTheTrashBeforeARestoreKeepsTheRestore() {
+        io = Dispatchers.IO
+        trash.list = list(entry(1, "Write"), entry(2, "Read"))
+        trash.restored[1] = json(entry(1, "Write"))
+        screen.show()
+        awaitIdle()
+        val stale = CountDownLatch(1)
+        trash.hold = stale
+
+        model.retry()
+        awaitCalls(LIST, 2)
+        trash.list = list(entry(2, "Read"))
+        model.restore(EntryId(1))
+        assertEquals(listOf(2L), model.state.value.data?.map { it.id.value })
+        stale.countDown()
+        awaitIdle()
+
+        assertEquals("the restore stays", listOf(2L), model.state.value.data?.map { it.id.value })
+        assertEquals("the page read the trash again", 3, trash.calls.count { it == LIST })
     }
 
     @Test
@@ -138,7 +172,7 @@ class TrashViewModelTest {
 
         model.purge(EntryId(2))
 
-        assertEquals(listOf(1L), model.state.value.entries?.map { it.id.value })
+        assertEquals(listOf(1L), model.state.value.data?.map { it.id.value })
         assertEquals(TrashChange.Purged, model.state.value.done)
         assertEquals("a purge leaves the cache alone", 0, refresh.afterChanges)
     }
@@ -153,7 +187,7 @@ class TrashViewModelTest {
         model.purge(EntryId(1))
 
         assertEquals(ServerProblem.Refused("Time entry not found in trash"), model.state.value.changeProblem)
-        assertEquals(emptyList<DeletedEntry>(), model.state.value.entries)
+        assertEquals(emptyList<DeletedEntry>(), model.state.value.data)
         assertTrue("a missing entry is no missing trash", capabilities.state.value.trash)
     }
 
@@ -167,12 +201,12 @@ class TrashViewModelTest {
         assertFalse(PURGE_ALL in trash.calls)
 
         model.askToEmpty()
-        assertTrue(model.state.value.confirmingEmpty)
+        assertEquals(EmptyTrash, model.state.value.overlay)
         model.empty()
 
         assertTrue(PURGE_ALL in trash.calls)
-        assertEquals(emptyList<DeletedEntry>(), model.state.value.entries)
-        assertFalse(model.state.value.confirmingEmpty)
+        assertEquals(emptyList<DeletedEntry>(), model.state.value.data)
+        assertNull(model.state.value.overlay)
         assertEquals(TrashChange.Emptied(2), model.state.value.done)
     }
 
@@ -183,7 +217,7 @@ class TrashViewModelTest {
 
         model.askToEmpty()
 
-        assertFalse(model.state.value.confirmingEmpty)
+        assertNull(model.state.value.overlay)
     }
 
     @Test
@@ -196,7 +230,7 @@ class TrashViewModelTest {
         model.empty()
 
         assertFalse(PURGE_ALL in trash.calls)
-        assertEquals(listOf(1L), model.state.value.entries?.map { it.id.value })
+        assertEquals(listOf(1L), model.state.value.data?.map { it.id.value })
     }
 
     /**
@@ -212,8 +246,8 @@ class TrashViewModelTest {
         screen.leave()
         screen.show()
 
-        assertTrue(model.state.value.confirmingEmpty)
-        assertEquals(listOf(1L), model.state.value.entries?.map { it.id.value })
+        assertEquals(EmptyTrash, model.state.value.overlay)
+        assertEquals(listOf(1L), model.state.value.data?.map { it.id.value })
         assertEquals(2, trash.calls.count { it == LIST })
     }
 
@@ -224,6 +258,21 @@ class TrashViewModelTest {
         """"project_id":3,"project_name":"Website","server_deleted_at":"2026-10-20T08:00:00Z"}"""
 
     private fun list(vararg entries: String) = json(entries.joinToString(",", "[", "]"))
+
+    /** Waits until no load runs, as when its answer came from another thread. */
+    private fun awaitIdle() = await("no load runs") { !model.state.value.loading }
+
+    private fun awaitCalls(call: String, count: Int) = await("$count calls of $call") {
+        trash.calls.count { it == call } >= count
+    }
+
+    private fun await(what: String, condition: () -> Boolean) {
+        val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10)
+        while (!condition()) {
+            if (System.nanoTime() > deadline) throw AssertionError("timed out waiting until $what")
+            Thread.sleep(10)
+        }
+    }
 
     /**
      * Answers each call as set, and a 404 as a server without the trash does otherwise. Records
@@ -237,6 +286,10 @@ class TrashViewModelTest {
 
         @Volatile
         var purgedAll: MockResponse = NOT_FOUND
+
+        /** When set, the next list keeps the answer it read until this opens, as a slow server does. */
+        @Volatile
+        var hold: CountDownLatch? = null
         val calls = CopyOnWriteArrayList<String>()
 
         override fun dispatch(request: RecordedRequest): MockResponse {
@@ -244,10 +297,19 @@ class TrashViewModelTest {
             calls += call
             val id = request.url.pathSegments.firstNotNullOfOrNull { it.toLongOrNull() }
             val answer = when (call) {
-                LIST -> list
+                LIST -> list.also {
+                    hold?.let { latch ->
+                        hold = null
+                        latch.await(10, TimeUnit.SECONDS)
+                    }
+                }
+
                 PURGE_ALL -> purgedAll
+
                 "POST /api/app/time_entries/$id/restore" -> id?.let { restored[it] }
+
                 "DELETE /api/app/trash/$id" -> id?.let { purged[it] }
+
                 else -> null
             }
             return answer ?: NOT_FOUND

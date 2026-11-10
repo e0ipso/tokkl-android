@@ -556,7 +556,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
         const val HISTORY_ENTRY = "Code review"
 
         val TRASH = TrashState(
-            entries = listOf(
+            data = listOf(
                 DeletedEntry(
                     id = EntryId(1),
                     description = "Review the quarterly report with the whole team",
