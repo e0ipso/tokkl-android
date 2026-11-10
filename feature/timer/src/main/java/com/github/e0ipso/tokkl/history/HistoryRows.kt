@@ -23,8 +23,6 @@ data class HistoryRow(val key: Long, val entries: List<HistoryEntry>) {
     /** The newest member, whose fields the row shows, `row.entries[0]` in EntryList.tsx. */
     val newest: HistoryEntry get() = entries.first()
 
-    val oldest: HistoryEntry get() = entries.last()
-
     /**
      * The clock range of the timed members, from the earliest start to the latest stop, as
      * rangeLabel in EntryList.tsx spans them; null when every member is a no-time entry, whose

@@ -455,7 +455,7 @@ class EntryActionsViewModelTest {
         val favorites = favorites(listOf(PINNED))
         val model = model(canRestore = true)
 
-        onMain { model.pin(STOPPED.id, favorites, offline = false) }
+        onMain { model.pin(STOPPED.id, favorites::add, offline = false) }
 
         awaitNotice(model) { it is EntryNotice.Pinned }
         val fields = EntryFields(
@@ -474,7 +474,7 @@ class EntryActionsViewModelTest {
         val favorites = favorites(listOf(PINNED))
         val model = model(canRestore = true)
 
-        onMain { model.pin(STOPPED.id, favorites, offline = true) }
+        onMain { model.pin(STOPPED.id, favorites::add, offline = true) }
 
         awaitNotice(model) { it is EntryNotice.PinNeedsServer }
         assertEquals(emptyList<List<EntryFields>>(), saved)
@@ -487,7 +487,7 @@ class EntryActionsViewModelTest {
         )
         val model = model(canRestore = true)
 
-        onMain { model.pin(STOPPED.id, favorites, offline = false) }
+        onMain { model.pin(STOPPED.id, favorites::add, offline = false) }
 
         awaitNotice(model) { it is EntryNotice.PinFull }
         assertEquals("nothing went to the server", emptyList<List<EntryFields>>(), saved)
@@ -499,11 +499,11 @@ class EntryActionsViewModelTest {
         val model = model(canRestore = true)
 
         favoritesAnswer = ApiResult.Failure(ApiError.Network(IOException("no route")))
-        onMain { model.pin(STOPPED.id, favorites, offline = false) }
+        onMain { model.pin(STOPPED.id, favorites::add, offline = false) }
         awaitNotice(model) { it is EntryNotice.PinNeedsServer }
 
         favoritesAnswer = ApiResult.Failure(ApiError.AuthFailed)
-        onMain { model.pin(STOPPED.id, favorites, offline = false) }
+        onMain { model.pin(STOPPED.id, favorites::add, offline = false) }
         val notice = awaitNotice(model) { it is EntryNotice.PinFailed } as EntryNotice.PinFailed
         assertEquals(ServerProblem.AuthFailed, notice.problem)
         assertEquals(
@@ -518,9 +518,9 @@ class EntryActionsViewModelTest {
         val favorites = favorites(listOf(PINNED))
         val model = model(canRestore = true)
 
-        onMain { model.pin(EntryId(DROPPED), favorites, offline = false) }
+        onMain { model.pin(EntryId(DROPPED), favorites::add, offline = false) }
         // A notice after it shows that the pin of the dropped entry had its turn on the main thread.
-        onMain { model.pin(STOPPED.id, favorites, offline = true) }
+        onMain { model.pin(STOPPED.id, favorites::add, offline = true) }
 
         assertEquals(EntryNotice.PinNeedsServer(1), awaitNotice(model) { true })
         // A save the first pin started would have run by now.

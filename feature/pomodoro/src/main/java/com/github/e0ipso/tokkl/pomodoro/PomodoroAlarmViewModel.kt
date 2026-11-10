@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.pomodoro
 
-import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -39,12 +38,10 @@ data class PomodoroAlarmState(
  * message. Closing, Back, Home and recreation have no ringing side effects. A command in flight
  * outlives a rotation and is not sent again.
  *
- * All public methods are called on the main thread. The class is public for the app's device
- * tests, which read the alarm screen's state from its model.
+ * All public methods are called on the main thread.
  *
  * @param held the held timer state while the server offers the timer API, and null otherwise.
  */
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 class PomodoroAlarmViewModel(
     held: Flow<HeldTimerState?>,
     private val actions: SessionActions,

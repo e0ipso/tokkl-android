@@ -360,7 +360,7 @@ class EntryActionsUiTest {
                         onDelete = model::delete,
                         pin = if (favorites != null && templates != null) {
                             pinAction(templates.favorites) { entryId ->
-                                model.pin(entryId, favorites, templates.offline)
+                                model.pin(entryId, favorites::add, templates.offline)
                             }
                         } else {
                             null

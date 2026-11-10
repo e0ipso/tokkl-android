@@ -41,8 +41,8 @@ import com.github.e0ipso.tokkl.core.ui.R as UiR
  *
  * Every start promotes the service before anything else, as `startForegroundService` requires, and
  * only then checks that the stream is still wanted. While it runs in the foreground, the follower
- * holds its number ([TimerSyncFollower.runningService]), and each stop request the follower sends
- * stops it unless a newer start has arrived, which then promotes and decides for itself.
+ * holds its number, and each stop request the follower sends stops it unless a newer start has
+ * arrived, which then promotes and decides for itself.
  */
 class TimerSyncService : Service() {
 

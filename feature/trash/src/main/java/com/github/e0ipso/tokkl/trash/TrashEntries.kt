@@ -63,4 +63,6 @@ val trashPage = TopLevelDestination(
 
 @Serializable
 @SerialName("com.github.e0ipso.tokkl.navigation.Route.Trash")
-data object TrashRoute : Route
+data object TrashRoute : Route {
+    override val contentKey: String get() = "TrashRoute"
+}

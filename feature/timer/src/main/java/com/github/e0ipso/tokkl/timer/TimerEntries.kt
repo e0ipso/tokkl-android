@@ -155,7 +155,7 @@ private fun TimerPage(navigator: Navigator) {
                 onDuplicate = actions::duplicate,
                 onSplit = actions::split,
                 onDelete = actions::delete,
-                pin = pinAction(templates) { entryId -> actions.pin(entryId, favorites, pageState.offline) },
+                pin = pinAction(templates) { entryId -> actions.pin(entryId, favorites::add, pageState.offline) },
             )
         },
         feedback = {
@@ -283,6 +283,7 @@ data object ReminderTap : NavigationRequest
 @Serializable
 @SerialName("com.github.e0ipso.tokkl.navigation.Route.FullscreenTimer")
 data object FullscreenTimerRoute : Route {
+    override val contentKey: String get() = "FullscreenTimerRoute"
     override val focused: Boolean get() = true
 
     override val showsTimerNotices: Boolean get() = true
@@ -290,7 +291,9 @@ data object FullscreenTimerRoute : Route {
 
 @Serializable
 @SerialName("com.github.e0ipso.tokkl.navigation.Route.Templates")
-data object TemplatesRoute : Route
+data object TemplatesRoute : Route {
+    override val contentKey: String get() = "TemplatesRoute"
+}
 
 /** The Timer page's running dot, while an entry runs, as [running] says. */
 class TimerBadge(running: Flow<Boolean>) : PageBadge(Route.Timer, R.string.nav_timer_running, running)

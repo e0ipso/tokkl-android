@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.timerstate
 
-import androidx.annotation.VisibleForTesting
 import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -25,12 +24,7 @@ sealed interface SurfaceTap {
      * runs in a broadcast ends the broadcast first, so a slow server cannot hold it past its time
      * limit.
      */
-    // Public for the JVM tests of the surfaces in other modules, which stand in for a tap with it.
-    class Request
-    @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-    constructor(
-        private val request: suspend () -> TimerActionResult?,
-    ) : SurfaceTap {
+    class Request(private val request: suspend () -> TimerActionResult?) : SurfaceTap {
         suspend fun send(): TimerActionResult? = request()
     }
 }

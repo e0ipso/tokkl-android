@@ -75,4 +75,6 @@ val projectsPage = TopLevelDestination(
 
 @Serializable
 @SerialName("com.github.e0ipso.tokkl.navigation.Route.Projects")
-data object ProjectsRoute : Route
+data object ProjectsRoute : Route {
+    override val contentKey: String get() = "ProjectsRoute"
+}

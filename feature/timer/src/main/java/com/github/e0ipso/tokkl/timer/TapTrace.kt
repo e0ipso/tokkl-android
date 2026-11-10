@@ -19,9 +19,6 @@ fun interface TapTrace {
         /** From a Stop tap until the screen shows the idle timer. */
         const val STOP = "TimerStop"
 
-        /** Traces nothing. On the JVM, android.os.Trace is a stub that throws. */
-        val None = TapTrace { {} }
-
         /**
          * The system trace, which Perfetto records on request. A section costs a check of a flag
          * when nothing traces.

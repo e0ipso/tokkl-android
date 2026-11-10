@@ -32,8 +32,7 @@ class RunningLiveUpdateTest {
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private val manager = context.getSystemService(NotificationManager::class.java)
     private val notifier = RunningNotifier(context)
-    private val content = RunningNotificationContent(
-        entryId = EntryId(-1),
+    private val content = RunningNotificationContent.Running(
         description = "A Live Update",
         project = "Tokkl",
         task = "Notifications",
@@ -132,7 +131,14 @@ class RunningLiveUpdateTest {
 
     @Test
     fun aPausedTimerIsQuietDismissibleAndAsksForNoPromotion() {
-        val paused = content.copy(entryId = EntryId(0), accumulatedSeconds = 3_900, paused = true, key = "paused-test")
+        val paused = RunningNotificationContent.Paused(
+            content.description,
+            content.project,
+            content.task,
+            "paused-test",
+            3_900,
+            TimerTarget.Paused(3, "live-update-test"),
+        )
         val notification = notifier.build(paused, requestPromotion = true)
 
         assertFalse("it can be swiped away", notification.flags and Notification.FLAG_ONGOING_EVENT != 0)

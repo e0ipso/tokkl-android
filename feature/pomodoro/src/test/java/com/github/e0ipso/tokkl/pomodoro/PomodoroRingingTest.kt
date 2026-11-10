@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.pomodoro
 
+import com.github.e0ipso.tokkl.feature.pomodoro.R
 import com.github.e0ipso.tokkl.model.PhaseKind
 import com.github.e0ipso.tokkl.model.PhaseTransition
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
@@ -26,6 +27,25 @@ import java.time.Duration
 class PomodoroRingingTest {
 
     private val key = PomodoroPhaseKey(T0)
+
+    /** Each transition plays a bundled file of its own. */
+    @Test
+    fun eachSoundPlaysItsOwnBundledFile() {
+        assertEquals(
+            listOf(
+                R.raw.pomodoro_work_to_short_rest,
+                R.raw.pomodoro_work_to_long_rest,
+                R.raw.pomodoro_short_rest_to_work,
+                R.raw.pomodoro_long_rest_to_work,
+            ),
+            listOf(
+                PomodoroSound.WORK_TO_SHORT_REST,
+                PomodoroSound.WORK_TO_LONG_REST,
+                PomodoroSound.SHORT_REST_TO_WORK,
+                PomodoroSound.LONG_REST_TO_WORK,
+            ).map { it.rawResource() },
+        )
+    }
 
     @Test
     fun thePhaseEndStartsBothOutputsWithTheTransitionsSoundAndNeverMovesThePhaseOn() = runTest {

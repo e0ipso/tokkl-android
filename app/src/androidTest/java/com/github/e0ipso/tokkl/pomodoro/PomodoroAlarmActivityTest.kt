@@ -20,7 +20,6 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.components.capabilities
 import com.github.e0ipso.tokkl.components.heldTimerState
-import com.github.e0ipso.tokkl.components.pomodoroRinging
 import com.github.e0ipso.tokkl.components.timerActions
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.PhaseKind
@@ -32,9 +31,7 @@ import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.timerstate.SessionLengths
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -99,8 +96,9 @@ class PomodoroAlarmActivityTest {
             if (app.capabilities.state.value.timerState) HeldPhases.holdNoSession()
             awaitStopped()
             awaitNoSharedNotification()
-            assertFalse(app.pomodoroRinging.state.value.playing)
-            assertFalse(app.pomodoroRinging.state.value.vibrationRequested)
+            val after = PomodoroRingObservation.now()
+            assertFalse(after.playing)
+            assertFalse(after.vibrating)
         } finally {
             try {
                 originalFullScreenMode?.let(::setFullScreenMode)
@@ -164,7 +162,7 @@ class PomodoroAlarmActivityTest {
         // The Activity is resumed and visible while keyguard remains locked. Manifest tests
         // separately pin showWhenLocked/turnScreenOn; no hidden ActivityInfo flags are used.
         assertTrue(context.getSystemService(KeyguardManager::class.java).isKeyguardLocked)
-        assertEquals(HeldPhases.key(due), awaitPlaying().ring?.phase)
+        assertEquals(HeldPhases.key(due), awaitPlaying().phase)
         val notification = ringingNotification()
         assertNotNull(notification.fullScreenIntent)
         assertEquals(PomodoroRingingNotifier.CHANNEL_ID, notification.channelId)
@@ -205,8 +203,8 @@ class PomodoroAlarmActivityTest {
                 },
             )
             // The server's one-minute work phase ends, and the phone rings from its planned end.
-            val work = awaitPlaying(timeoutMillis = 90_000).ring!!
-            openAlarm(work.phase)
+            val work = checkNotNull(awaitPlaying(timeoutMillis = 90_000).phase)
+            openAlarm(work)
             click("Next phase")
             awaitStopped()
             assertTrue(device.wait(Until.gone(By.text("Work done: start short rest")), 10_000))
@@ -214,9 +212,9 @@ class PomodoroAlarmActivityTest {
             assertEquals(PhaseKind.SHORT_REST, rest.phase.kind)
             assertEquals(rest.phase.start, app.heldTimerState?.pomodoro?.phase?.start)
 
-            val restRing = awaitPlaying(timeoutMillis = 90_000).ring!!
-            assertEquals(PomodoroPhaseKey(rest.phase.start), restRing.phase)
-            openAlarm(restRing.phase)
+            val restRing = checkNotNull(awaitPlaying(timeoutMillis = 90_000).phase)
+            assertEquals(PomodoroPhaseKey(rest.phase.start), restRing)
+            openAlarm(restRing)
             click("End session")
             awaitStopped()
             assertTrue(device.wait(Until.gone(By.text("Short rest done: start work")), 10_000))
@@ -249,7 +247,7 @@ class PomodoroAlarmActivityTest {
         instrumentation.waitForIdleSync()
         assertTrue(device.wait(Until.gone(By.text("Next phase")), 10_000))
         assertEquals(rest, app.heldTimerState)
-        assertFalse(app.pomodoroRinging.state.value.playing)
+        assertFalse(PomodoroRingObservation.now().playing)
     }
 
     @Test fun withoutTheTimerApiTheAlarmStopsAndItsIntentShowsNothing() {
@@ -262,7 +260,7 @@ class PomodoroAlarmActivityTest {
         // The activity finishes as soon as it reads that the server has no timer API.
         assertTrue(device.wait(Until.gone(By.text("Next phase")), 10_000))
         instrumentation.waitForIdleSync()
-        assertFalse(app.pomodoroRinging.state.value.serviceRunning)
+        assertFalse(PomodoroRingObservation.now().serviceRunning)
         onMain {
             assertFalse(
                 ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED)
@@ -363,19 +361,15 @@ class PomodoroAlarmActivityTest {
         }
         return checkNotNull(activity)
     }
-    private fun assertKeepsRinging(before: PomodoroRingingState, due: HeldTimerState) {
-        val after = app.pomodoroRinging.state.value
-        assertTrue(after.playing)
-        assertTrue(after.vibrationRequested)
-        assertEquals(before.audioSessionId, after.audioSessionId)
-        assertEquals(HeldPhases.key(due), after.ring?.phase)
+    private fun assertKeepsRinging(before: ObservedRing, due: HeldTimerState) {
+        val after = PomodoroRingObservation.now()
+        assertTrue(after.vibrating)
+        assertEquals("the same player", before.player, after.player)
+        assertEquals(HeldPhases.key(due), after.phase)
         assertEquals(due, app.heldTimerState)
     }
-    private fun awaitPlaying(timeoutMillis: Long = 10_000): PomodoroRingingState = runBlocking {
-        withTimeout(
-            timeoutMillis,
-        ) { app.pomodoroRinging.state.first { it.serviceRunning && it.playing && it.vibrationRequested } }
-    }
+    private fun awaitPlaying(timeoutMillis: Long = 10_000): ObservedRing =
+        PomodoroRingObservation.awaitPlaying(timeoutMillis)
     private fun awaitStopped() = HeldPhases.awaitStopped()
     private fun awaitNoSharedNotification() {
         // cancel() returns before the system drops the notification from its list.

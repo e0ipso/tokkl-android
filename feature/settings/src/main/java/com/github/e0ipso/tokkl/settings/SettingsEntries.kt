@@ -44,9 +44,13 @@ val settingsPage = TopLevelDestination(
 
 @Serializable
 @SerialName("com.github.e0ipso.tokkl.navigation.Route.Settings")
-data object SettingsRoute : Route
+data object SettingsRoute : Route {
+    override val contentKey: String get() = "SettingsRoute"
+}
 
 /** The Licences screen, which Settings opens above itself. */
 @Serializable
 @SerialName("com.github.e0ipso.tokkl.navigation.Route.Licences")
-data object LicencesRoute : Route
+data object LicencesRoute : Route {
+    override val contentKey: String get() = "LicencesRoute"
+}

@@ -11,10 +11,10 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.components.heldTimerState
 import com.github.e0ipso.tokkl.components.pomodoroAlarm
 import com.github.e0ipso.tokkl.components.pomodoroAlarms
-import com.github.e0ipso.tokkl.components.pomodoroRinging
 import com.github.e0ipso.tokkl.core.ui.R
 import com.github.e0ipso.tokkl.pomodoro.HeldPhases
 import com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseAlarmReceiver
+import com.github.e0ipso.tokkl.pomodoro.PomodoroRingObservation
 import com.github.e0ipso.tokkl.pomodoro.putPhase
 import com.github.e0ipso.tokkl.timer.TimerAcceptanceFixture
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
@@ -48,7 +48,7 @@ class PomodoroWidgetRedrawTest {
             app.pomodoroAlarms.cancel()
             host.awaitDescription(context.getString(R.string.pomodoro_overtime), 8_000)
             host.awaitUpdatesSettled()
-            assertFalse(app.pomodoroRinging.state.value.serviceRunning)
+            assertFalse(PomodoroRingObservation.now().serviceRunning)
 
             // The broadcast the fallback alarm delivers when exact alarms are denied, sent ordered so
             // the result receiver hears when the receiver has finished it.
@@ -76,7 +76,7 @@ class PomodoroWidgetRedrawTest {
             deliver(HeldPhases.key(held))
             host.await("matching phase redraws its native widget") { host.updates.get() > before }
             assertEquals("redraw cannot advance or end a session", held, app.heldTimerState)
-            assertFalse("redraw never starts ringing", app.pomodoroRinging.state.value.serviceRunning)
+            assertFalse("redraw never starts ringing", PomodoroRingObservation.now().serviceRunning)
         }
     }
 }

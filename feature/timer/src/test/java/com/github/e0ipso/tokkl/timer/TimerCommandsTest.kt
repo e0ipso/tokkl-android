@@ -69,7 +69,7 @@ class TimerCommandsTest {
         pauseChain = server,
         sender = { changes.calls += "send queue" },
         notices = notices,
-        sections = TapSections(TapTrace.None),
+        sections = TapSections(TapTrace { {} }),
         clock = Clock.fixed(TAP, ZoneOffset.UTC),
         scope = scope,
     )

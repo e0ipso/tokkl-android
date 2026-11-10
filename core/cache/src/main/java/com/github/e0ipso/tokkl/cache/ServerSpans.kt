@@ -32,9 +32,6 @@ interface ServerSpans {
 
     /** The span the server stores for a Stop at [at], or null when it moves the entry to the Trash. */
     fun capturedStop(start: Instant, at: Instant): SnappedSpan? = SnappedSpan(start, maxOf(at, start))
-
-    /** Times as the phone sends them. */
-    object Unsnapped : ServerSpans
 }
 
 /**

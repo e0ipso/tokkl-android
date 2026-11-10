@@ -582,7 +582,7 @@ class RunningEntryEditorServerTest {
                         changes,
                         activity.lifecycleScope,
                         clock = Clock.systemUTC(),
-                        trace = TapTrace.None,
+                        trace = TapTrace { {} },
                         pauseChain = null,
                         sender = {},
                         discards = object : DiscardNotices {
@@ -594,7 +594,7 @@ class RunningEntryEditorServerTest {
                         view = app.timerView.view,
                     )
                     ViewModelProvider(
-                        navigationStores(activity).session,
+                        navigationStores(activity).session(activity),
                         viewModelFactory { initializer { timer } },
                     )[TimerViewModel::class.java]
                 }

@@ -1,9 +1,17 @@
 package com.github.e0ipso.tokkl.navhost
 
+import android.os.Bundle
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.ViewModelStoreProvider
+import androidx.savedstate.SavedStateRegistry
+import androidx.savedstate.SavedStateRegistryController
+import androidx.savedstate.SavedStateRegistryOwner
 import com.github.e0ipso.tokkl.navigation.EntryFormOpenings
+import androidx.lifecycle.viewmodel.ViewModelStoreOwner as savedStateOwner
 
 /**
  * Where the navigation's view models live. It is a view model of MainActivity, so the stores
@@ -29,8 +37,18 @@ internal class NavigationStores : ViewModel() {
     var entries: ViewModelStoreProvider = ViewModelStoreProvider(parentStore = null)
         private set
 
-    var session: ViewModelStoreOwner = entries.getOrCreateOwner(SessionKey)
-        private set
+    fun session(parent: SavedStateRegistryOwner): ViewModelStoreOwner {
+        val store = entries.getOrCreate(SESSION_KEY)
+        val previous = parent.savedStateRegistry.getSavedStateProvider(SESSION_KEY) as? SessionOwner
+        if (previous?.models?.viewModelStore === store) return previous.models
+        previous?.close()
+        return SessionOwner(store, parent).models
+    }
+
+    /** A restored sign-in page must not pass an earlier account's drafts to its next sign-in. */
+    fun discardRestoredSession(parent: SavedStateRegistryOwner) {
+        parent.savedStateRegistry.consumeRestoredStateForKey(SESSION_KEY)
+    }
 
     val entryOpenings = EntryFormOpenings()
 
@@ -46,7 +64,6 @@ internal class NavigationStores : ViewModel() {
         // A screen still composed keeps its store until it leaves the composition.
         entries.clearAllKeys()
         entries = ViewModelStoreProvider(parentStore = null)
-        session = entries.getOrCreateOwner(SessionKey)
         entryOpenings.clear()
         return true
     }
@@ -55,6 +72,32 @@ internal class NavigationStores : ViewModel() {
         entries.clearAllKeys()
     }
 
-    /** The key of [session]'s store. No route's content key equals it. */
-    private object SessionKey
+    /** A separate registry saves the session's handles and cannot retain them after sign-out. */
+    private class SessionOwner(store: ViewModelStore, private val parent: SavedStateRegistryOwner) :
+        SavedStateRegistryOwner,
+        SavedStateRegistry.SavedStateProvider {
+        override val lifecycle = LifecycleRegistry(this)
+        private val controller = SavedStateRegistryController.create(this)
+        override val savedStateRegistry get() = controller.savedStateRegistry
+        val models: ViewModelStoreOwner
+
+        init {
+            controller.performAttach()
+            controller.performRestore(parent.savedStateRegistry.consumeRestoredStateForKey(SESSION_KEY))
+            models = savedStateOwner(store, this)
+            lifecycle.currentState = Lifecycle.State.CREATED
+            parent.savedStateRegistry.registerSavedStateProvider(SESSION_KEY, this)
+        }
+
+        override fun saveState(): Bundle = Bundle().also(controller::performSave)
+
+        fun close() {
+            parent.savedStateRegistry.unregisterSavedStateProvider(SESSION_KEY)
+            lifecycle.currentState = Lifecycle.State.DESTROYED
+        }
+    }
+
+    private companion object {
+        const val SESSION_KEY = "signed-in-session"
+    }
 }

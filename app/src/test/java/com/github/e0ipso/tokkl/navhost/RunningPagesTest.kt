@@ -12,7 +12,9 @@ import org.junit.Test
 /** The running dots on the bar's items, as the features' badges say. */
 class RunningPagesTest {
 
-    private data object Other : Route
+    private data object Other : Route {
+        override val contentKey: String get() = "Other"
+    }
 
     @Test
     fun aPageCarriesItsDotWithItsLabelWhileItsBadgeSaysSo() = runBlocking {

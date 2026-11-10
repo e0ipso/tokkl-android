@@ -124,7 +124,7 @@ class TimerPauseTest {
         pauseChain = server,
         sender = { events += "send queued" },
         discards = discardNotices(discardNotices, takeDiscardNotice),
-        trace = TapTrace.None,
+        trace = TapTrace { {} },
         timerApi = flowOf(true),
         view = MutableStateFlow(TimerView.LIST),
     )

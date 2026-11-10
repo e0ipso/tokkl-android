@@ -69,7 +69,10 @@ class RunningNotificationSync(
         lock.withLock {
             latest = content
             val stored = shown.load()
-            val followed = stored?.let { it.copy(entryId = it.entryId?.let { id -> currentId(id) }) }
+            // Older paused notifications stored 0 as an entry id. Preserve their dismissal.
+            val followed = stored?.let {
+                it.copy(entryId = it.entryId?.takeUnless { id -> id.value == 0L }?.let { id -> currentId(id) })
+            }
             when (val change = runningNotificationChange(followed, content)) {
                 null -> if (content == null || stored?.entryId == content.entryId) return
                 is RunningNotificationChange.Post -> notice.post(change.content)

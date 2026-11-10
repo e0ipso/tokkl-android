@@ -14,7 +14,7 @@ class PomodoroPageFullScreenStateTest {
         f.page.permissionsChanged(PomodoroPermissions(notifications = true, exactAlarm = false, fullScreen = false))
         assertTrue(f.page.state.value.fullScreenDenied)
         assertTrue(f.page.state.value.alarmDenied)
-        f.page.fullScreenPermissionChanged(true)
+        f.page.permissionsChanged(PomodoroPermissions(notifications = true, exactAlarm = false, fullScreen = true))
         assertFalse(f.page.state.value.fullScreenDenied)
         assertTrue(f.page.state.value.alarmDenied)
         assertFalse(f.page.state.value.busy)

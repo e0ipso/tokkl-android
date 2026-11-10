@@ -9,7 +9,6 @@ import android.os.PowerManager
 import android.os.VibrationAttributes
 import android.os.VibrationEffect
 import android.os.VibratorManager
-import androidx.annotation.VisibleForTesting
 import com.github.e0ipso.tokkl.feature.pomodoro.R
 import java.io.IOException
 
@@ -24,54 +23,32 @@ internal fun pomodoroAlarmAudioAttributes(): AudioAttributes = AudioAttributes.B
 internal val POMODORO_VIBRATION_PATTERN: List<Long> = listOf(0L, 700L, 300L, 700L, 1_300L)
 internal const val POMODORO_VIBRATION_REPEAT = 0
 
-// Public for the app's device tests, which check that each sound has its own file.
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-fun PomodoroSound.rawResource(): Int = when (this) {
+internal fun PomodoroSound.rawResource(): Int = when (this) {
     PomodoroSound.WORK_TO_SHORT_REST -> R.raw.pomodoro_work_to_short_rest
     PomodoroSound.WORK_TO_LONG_REST -> R.raw.pomodoro_work_to_long_rest
     PomodoroSound.SHORT_REST_TO_WORK -> R.raw.pomodoro_short_rest_to_work
     PomodoroSound.LONG_REST_TO_WORK -> R.raw.pomodoro_long_rest_to_work
 }
 
-/**
- * Main-thread-only framework output. A foreground service owns its entire lifetime. Public for the
- * app's device tests, which observe the player and the vibrator through it.
- */
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-class AndroidPomodoroRingOutput(
+/** Main-thread-only framework output. A foreground service owns its entire lifetime. */
+internal class AndroidPomodoroRingOutput(
     private val service: PomodoroRingingService,
     private val notifier: PomodoroRingingNotifier,
 ) : PomodoroRingOutput {
     private val audio = service.getSystemService(AudioManager::class.java)
     private val vibrator = service.getSystemService(VibratorManager::class.java).defaultVibrator
-    val audioAttributes: AudioAttributes = pomodoroAlarmAudioAttributes()
+    private val audioAttributes: AudioAttributes = pomodoroAlarmAudioAttributes()
     private val focus = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
         .setAudioAttributes(audioAttributes)
         .setOnAudioFocusChangeListener { /* The phase remains awaiting Next/End. Android owns routing. */ }
         .build()
     private var player: MediaPlayer? = null
-    var sound: PomodoroSound? = null
-        private set
-    var vibrationRequested = false
-        private set
-
-    var vibrationUsage: Int? = null
-        private set
-    var vibrationPattern: List<Long> = emptyList()
-        private set
-    var vibrationRepeat: Int? = null
-        private set
-    val audioSessionId: Int? get() = player?.audioSessionId
-
-    val playing: Boolean get() = player?.let { runCatching { it.isPlaying }.getOrDefault(false) } ?: false
-    val looping: Boolean get() = player?.let { runCatching { it.isLooping }.getOrDefault(false) } ?: false
 
     override fun show(ring: PomodoroRing) {
         service.promote(notifier.build(ring))
     }
 
     override fun play(sound: PomodoroSound) {
-        this.sound = sound
         // Called after startForeground: API 35+ requires a top app or foreground service for focus.
         audio.requestAudioFocus(focus)
         val next = MediaPlayer()
@@ -83,17 +60,11 @@ class AndroidPomodoroRingOutput(
                 next.setDataSource(asset.fileDescriptor, asset.startOffset, asset.length)
             }
             next.isLooping = true
-            next.setOnPreparedListener { prepared ->
-                if (player === prepared) {
-                    prepared.start()
-                    service.publishState()
-                }
-            }
+            next.setOnPreparedListener { prepared -> if (player === prepared) prepared.start() }
             next.setOnErrorListener { failed, _, _ ->
                 if (player === failed) {
                     player = null
                     failed.release()
-                    service.publishState()
                 }
                 true
             }
@@ -115,39 +86,25 @@ class AndroidPomodoroRingOutput(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             val attributes = VibrationAttributes.Builder().setUsage(VibrationAttributes.USAGE_ALARM).build()
             vibrator.vibrate(effect, attributes)
-            vibrationUsage = attributes.usage
         } else {
             // The only overload with alarm usage before API 33, deprecated there for the one above.
             @Suppress("DEPRECATION")
             vibrator.vibrate(effect, audioAttributes)
-            // The legacy alarm AudioAttributes map to the platform alarm vibration usage.
-            vibrationUsage = VibrationAttributes.USAGE_ALARM
         }
-        vibrationPattern = POMODORO_VIBRATION_PATTERN
-        vibrationRepeat = POMODORO_VIBRATION_REPEAT
-        vibrationRequested = true
-        service.publishState()
     }
 
     override fun stopAudio() {
         val previous = player
         player = null
-        sound = null
         try {
             previous?.release()
         } finally {
             audio.abandonAudioFocusRequest(focus)
-            service.publishState()
         }
     }
 
     override fun stopVibration() {
         vibrator.cancel()
-        vibrationRequested = false
-        vibrationUsage = null
-        vibrationPattern = emptyList()
-        vibrationRepeat = null
-        service.publishState()
     }
 
     override fun removeNotification() {

@@ -90,7 +90,7 @@ class CacheDatabaseMigrationTest {
                 Dispatchers.IO,
                 onQueued = {},
                 clock = Clock.systemUTC(),
-                spans = ServerSpans.Unsnapped,
+                spans = object : ServerSpans {},
             )
             assertTrue("the migrated file takes a queued stop", runBlocking { queue.stop(EntryId(42)) })
             assertEquals(1, runBlocking { queue.unsentCount.first() })
@@ -194,7 +194,7 @@ class CacheDatabaseMigrationTest {
                 Dispatchers.IO,
                 onQueued = {},
                 clock = Clock.systemUTC(),
-                spans = ServerSpans.Unsnapped,
+                spans = object : ServerSpans {},
             )
             val copy = runBlocking {
                 queue.create(
@@ -313,7 +313,7 @@ class CacheDatabaseMigrationTest {
                 Dispatchers.IO,
                 onQueued = {},
                 clock = Clock.systemUTC(),
-                spans = ServerSpans.Unsnapped,
+                spans = object : ServerSpans {},
             )
             assertTrue("the migrated file takes a Stop", runBlocking { queue.stop(EntryId(-1)) })
             assertEquals(listOf(ChangeKind.CREATE, ChangeKind.STOP), database.changes().changesFor(-1).map { it.kind })
@@ -502,7 +502,7 @@ class CacheDatabaseMigrationTest {
                         override fun discarded(count: Int) = Unit
                     },
                     clock = Clock.systemUTC(),
-                    spans = ServerSpans.Unsnapped,
+                    spans = object : ServerSpans {},
                     capabilities = capabilitiesOf(Capabilities.NONE),
                     undo = DeleteUndoer(
                         store,
@@ -541,7 +541,7 @@ class CacheDatabaseMigrationTest {
                             Dispatchers.IO,
                             onQueued = {},
                             clock = Clock.systemUTC(),
-                            spans = ServerSpans.Unsnapped,
+                            spans = object : ServerSpans {},
                         ).undoShortStop(EntryId(77))
                     },
                 )

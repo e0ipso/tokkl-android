@@ -30,7 +30,6 @@ import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.followTimerSync
 import com.github.e0ipso.tokkl.components.heldTimerState
-import com.github.e0ipso.tokkl.components.pomodoroRinging
 import com.github.e0ipso.tokkl.components.sessionViewModels
 import com.github.e0ipso.tokkl.components.timerActions
 import com.github.e0ipso.tokkl.components.timerControls
@@ -48,16 +47,17 @@ import com.github.e0ipso.tokkl.openBarPage
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.pomodoro.PomodoroLengths
 import com.github.e0ipso.tokkl.pomodoro.PomodoroRing
+import com.github.e0ipso.tokkl.pomodoro.PomodoroRingObservation
 import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotifier
 import com.github.e0ipso.tokkl.pomodoro.PomodoroViewModel
 import com.github.e0ipso.tokkl.pomodoro.PomodoroWorkWaits
 import com.github.e0ipso.tokkl.pomodoro.pomodoroAlarmIntent
+import com.github.e0ipso.tokkl.pomodoro.ring
 import com.github.e0ipso.tokkl.timer.TimerAcceptanceFixture
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.held
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -125,7 +125,7 @@ class TimerCrossDeviceServerTest {
                 if (left.pause?.paused == true) postTimer("timer", "discard", revision = left.revision)
                 // Read it at once, also where the test held the stream back.
                 runBlocking { app.timerActions.read() }
-                runBlocking { withTimeout(15_000) { app.pomodoroRinging.state.first { !it.serviceRunning } } }
+                PomodoroRingObservation.await("the ringing service ended", 15_000) { !it.serviceRunning }
             }
         } finally {
             if (signedInToTheMainServer) fixture.cleanup() else SessionRule.signOut()
@@ -309,7 +309,7 @@ class TimerCrossDeviceServerTest {
             val rest = checkNotNull(moved.model().pomodoro)
             assertEquals(PhaseKind.SHORT_REST, rest.phase.kind)
             assertEquals("the phone has not heard of it", drawn, held())
-            assertTrue("the phone still rings the work phase", app.pomodoroRinging.state.value.playing)
+            assertTrue("the phone still rings the work phase", PomodoroRingObservation.now().playing)
 
             PomodoroWorkWaits.ringingButtons(1, seconds = 15, what = "the ringing Next phase") {
                 TimerActionToasts.await(TimerNoticeR.string.timer_action_refused) { next.actionIntent.send() }
@@ -322,11 +322,7 @@ class TimerCrossDeviceServerTest {
             assertEquals("the phone took the server's state from the refusal", moved.revision, adopted.revision)
             assertEquals(rest, adopted.pomodoro)
             assertNotEquals(ring.phase, PomodoroPhaseKey(rest.phase.start))
-            runBlocking {
-                withTimeout(
-                    10_000,
-                ) { app.pomodoroRinging.state.first { !it.serviceRunning && !it.playing } }
-            }
+            PomodoroRingObservation.await("the ring stopped") { !it.serviceRunning && !it.playing }
             awaitSessionNotification(sessionTitle(R.string.pomodoro_session_short_rest, 1, 3))
             app.followTimerSync()
         }
@@ -487,13 +483,12 @@ class TimerCrossDeviceServerTest {
     private fun awaitRingAtItsEnd(session: PomodoroSession): PomodoroRing {
         val phase = PomodoroPhaseKey(session.phase.start)
         val untilEnd = Duration.between(Instant.now(), session.phase.plannedEnd).toMillis().coerceAtLeast(0)
-        val state = runBlocking {
-            withTimeout(untilEnd + RING_LATE_MS + 20_000) {
-                app.pomodoroRinging.state.first { it.serviceRunning && it.playing && it.ring?.phase == phase }
-            }
+        PomodoroRingObservation.await("the phase rings", untilEnd + RING_LATE_MS + 20_000) {
+            it.serviceRunning && it.playing && it.phase == phase
         }
         val heard = System.currentTimeMillis()
-        val ring = checkNotNull(state.ring)
+        val ring = checkNotNull(checkNotNull(app.heldTimerState).ring())
+        assertEquals(phase, ring.phase)
         val late = heard - ring.end.toEpochMilli()
         Log.i(TAG, "the ${session.phase.kind} phase rang $late ms after its planned end")
         assertTrue("it rang ${-late} ms before the planned end", late >= -CLOCK_TOLERANCE_MS)
@@ -519,9 +514,8 @@ class TimerCrossDeviceServerTest {
         ).assertIsDisplayed()
     }
 
-    private fun ringStopped(): Boolean = app.pomodoroRinging.state.value.let {
-        !it.serviceRunning && !it.playing &&
-            !it.vibrationRequested
+    private fun ringStopped(): Boolean = PomodoroRingObservation.now().let {
+        !it.serviceRunning && !it.playing && !it.vibrating
     }
 
     private fun awaitSessionNotification(title: String): Notification {
@@ -590,15 +584,10 @@ class TimerCrossDeviceServerTest {
         val middle = before.plusMillis(Duration.between(before, after).toMillis() / 2)
         val shown = runBlocking { app.timerControls.first() } as TimerControls.Running
         val phoneTotal = shown.seconds(middle)
-        val heldTotal = checkNotNull(app.heldTimerState).chainTotal(middle)!!.seconds
-        Log.i(TAG, "chain total: server $serverTotal s at ${sample.serverTime}, phone $phoneTotal s, held $heldTotal s")
+        Log.i(TAG, "chain total: server $serverTotal s at ${sample.serverTime}, phone $phoneTotal s")
         assertTrue(
             "the phone shows $phoneTotal s, the server $serverTotal s",
             abs(phoneTotal - serverTotal) <= TOTAL_TOLERANCE_S,
-        )
-        assertTrue(
-            "the held total is $heldTotal s, the server's $serverTotal s",
-            abs(heldTotal - serverTotal) <= TOTAL_TOLERANCE_S,
         )
     }
 

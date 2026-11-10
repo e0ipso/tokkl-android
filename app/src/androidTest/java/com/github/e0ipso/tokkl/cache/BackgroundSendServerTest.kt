@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.cache
 
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.work.Configuration
 import androidx.work.NetworkType
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
@@ -52,6 +53,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.koin.androidx.workmanager.factory.KoinWorkerFactory
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -206,6 +208,7 @@ class BackgroundSendServerTest {
     fun theRetryAfterTheBackoffSendsTheQueue() {
         WorkManagerTestInitHelper.initializeTestWorkManager(
             context,
+            Configuration.Builder().setWorkerFactory(KoinWorkerFactory()).build(),
             WorkManagerTestInitHelper.ExecutorsMode.USE_TIME_BASED_SCHEDULING,
         )
         signIn(NO_ROUTE, account.apiToken)
@@ -296,12 +299,27 @@ class BackgroundSendServerTest {
 
         driver.setAllConstraintsMet(work.id)
         awaitWork(work.id) { it.state == WorkInfo.State.RUNNING }
-        awaitCondition("the worker registered with the drain") { app.backgroundSendRuns.hasJoined(work.id) }
+        awaitCondition("the worker registered with the drain") { aWorkerHasJoined() }
         relay.releaseAnswer()
 
         assertEquals(WorkInfo.State.SUCCEEDED, awaitWork(work.id) { it.state.isFinished }.state)
         assertEquals(0, unsentCount())
         assertEquals("one run", 1, queueWork().single().runAttemptCount)
+    }
+
+    /**
+     * Whether a worker has joined the app's drain, as the app's own [BackgroundSendRuns] shows it:
+     * a cancellation of waiting work then cancels nothing.
+     */
+    private fun aWorkerHasJoined(): Boolean {
+        var cancelled = false
+        app.backgroundSendRuns.cancelWaiting(
+            waiting = { true },
+            cancel = { cancelled = true },
+            queueEmpty = { true },
+            schedule = {},
+        )
+        return !cancelled
     }
 
     private fun awaitCondition(what: String, condition: () -> Boolean) {

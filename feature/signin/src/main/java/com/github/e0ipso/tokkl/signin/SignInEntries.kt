@@ -50,6 +50,8 @@ internal object SignInEntries : FeatureRoutes {
 @Serializable
 @SerialName("com.github.e0ipso.tokkl.navigation.Route.SignIn")
 data class SignInRoute(val server: String? = null, val userId: Long? = null) : Route {
+    override val contentKey: String get() = "SignIn:${server?.length}:$server:$userId"
+
     /** The account to sign in again to, or null for a plain sign-in. */
     val again: SignInAgain? get() = server?.let(ServerUrl::parse)?.let { SignInAgain(it, userId) }
 

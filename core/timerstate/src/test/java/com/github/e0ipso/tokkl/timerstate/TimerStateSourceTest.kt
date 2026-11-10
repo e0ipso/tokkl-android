@@ -101,10 +101,11 @@ class TimerStateSourceTest {
         device.now = DEVICE_T0.plusSeconds(600)
 
         assertEquals(timer.state.value, restarted.state.value)
+        val restored = checkNotNull(restarted.state.value)
         assertEquals(
             "the countdown keeps the stored offset",
             Duration.ofSeconds(1500 - 600),
-            restarted.state.value?.phaseRemaining(device.instant()),
+            Duration.between(restored.serverNow(device.instant()), checkNotNull(restored.pomodoro).phase.plannedEnd),
         )
     }
 
@@ -208,38 +209,11 @@ class TimerStateSourceTest {
     }
 
     @Test
-    fun theCountdownAndOvertimeRunOnTheCorrectedClock() {
+    fun theServersClockIsThePhonesCorrectedByTheOffset() {
         // The server's clock runs two minutes ahead of the phone's.
-        val end = DEVICE_T0.plusSeconds(120 + 300)
-        val held = state(
-            revision = 1,
-            serverTime = DEVICE_T0.plusSeconds(120),
-            pomodoro = pomodoro(end),
-        ).held(DEVICE_T0)
+        val held = state(revision = 1, serverTime = DEVICE_T0.plusSeconds(120)).held(DEVICE_T0)
 
-        assertEquals(Duration.ofSeconds(300), held.phaseRemaining(DEVICE_T0))
-        assertEquals(Duration.ZERO, held.phaseOvertime(DEVICE_T0))
-        assertEquals(Duration.ZERO, held.phaseRemaining(DEVICE_T0.plusSeconds(345)))
-        assertEquals(Duration.ofSeconds(45), held.phaseOvertime(DEVICE_T0.plusSeconds(345)))
-        assertNull("no session, no countdown", state(revision = 1).held(DEVICE_T0).phaseRemaining(DEVICE_T0))
-    }
-
-    @Test
-    fun aPausedChainIsFrozenAndARunningCloneAddsItsTimeSinceItsStart() {
-        val paused = state(revision = 1, pause = pause(seconds = 600, cloneEntryId = null)).held(DEVICE_T0)
-        assertEquals(Duration.ofSeconds(600), paused.chainTotal(DEVICE_T0.plusSeconds(3600)))
-        assertNull(paused.cloneElapsed(DEVICE_T0.plusSeconds(3600)))
-
-        // The clone started at ENTRY_START. The server's clock runs a minute ahead of the phone's.
-        val resumed = state(
-            revision = 2,
-            serverTime = ENTRY_START.plusSeconds(90),
-            running = serverEntry(12, "Resumed"),
-            pause = pause(600, cloneEntryId = EntryId(12)),
-        ).held(ENTRY_START.plusSeconds(30))
-        assertEquals(Duration.ofSeconds(190), resumed.cloneElapsed(ENTRY_START.plusSeconds(130)))
-        assertEquals(Duration.ofSeconds(790), resumed.chainTotal(ENTRY_START.plusSeconds(130)))
-        assertNull("no chain, no total", state(revision = 1).held(DEVICE_T0).chainTotal(DEVICE_T0))
+        assertEquals(DEVICE_T0.plusSeconds(465), held.serverNow(DEVICE_T0.plusSeconds(345)))
     }
 
     @Test

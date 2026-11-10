@@ -25,7 +25,6 @@ import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.heldTimerState
-import com.github.e0ipso.tokkl.components.pomodoroRinging
 import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.components.signOut
 import com.github.e0ipso.tokkl.components.storeSignIn
@@ -43,9 +42,7 @@ import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.timerstate.SessionLengths
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -90,10 +87,8 @@ class PomodoroSessionNotificationServerTest {
     @After fun cleanup() {
         try {
             AirplaneMode.set(false, account.client)
-            runBlocking {
-                app.signOut.run()
-                withTimeout(10_000) { app.pomodoroRinging.state.first { !it.serviceRunning } }
-            }
+            runBlocking { app.signOut.run() }
+            PomodoroRingObservation.await("the ringing service ended") { !it.serviceRunning }
             runBlocking { assertNull(PomodoroSessionNotificationStore(context, Dispatchers.IO).load()) }
             assertFalse(manager.activeNotifications.any { it.id == PomodoroSessionNotifier.NOTIFICATION_ID })
             assertNull(app.heldTimerState)
@@ -208,20 +203,20 @@ class PomodoroSessionNotificationServerTest {
         val active = awaitSessionNotification()
         assertEquals(PomodoroSessionNotifier.CHANNEL_ID, active.channelId)
         // The server's one-minute work phase ends, and the phone rings from its planned end.
-        withTimeout(90_000) { app.pomodoroRinging.state.first { it.serviceRunning && it.playing } }
+        PomodoroRingObservation.await("the phase rings", 90_000) { it.serviceRunning && it.playing }
         compose.waitUntil(10_000) {
             manager.activeNotifications.singleOrNull { it.id == PomodoroSessionNotifier.NOTIFICATION_ID }
                 ?.notification?.channelId == PomodoroRingingNotifier.CHANNEL_ID
         }
         val ring = manager.activeNotifications.single { it.id == PomodoroSessionNotifier.NOTIFICATION_ID }.notification
-        assertEquals(phase, app.pomodoroRinging.state.value.ring?.phase)
+        assertEquals(phase, PomodoroRingObservation.now().phase)
         PomodoroWorkWaits.ringingButtons(1, what = "Next phase on the ringing notification") {
             ring.actions[0].actionIntent.send()
         }
-        withTimeout(10_000) { app.pomodoroRinging.state.first { !it.serviceRunning } }
+        PomodoroRingObservation.await("the ringing service ended") { !it.serviceRunning }
         awaitSessionNotification(PhaseKind.SHORT_REST)
         assertEquals(1, manager.activeNotifications.count { it.id == PomodoroSessionNotifier.NOTIFICATION_ID })
-        assertFalse(app.pomodoroRinging.state.value.playing)
+        assertFalse(PomodoroRingObservation.now().playing)
         assertEquals(PhaseKind.SHORT_REST, serverTimer().pomodoro?.phase?.kind)
     }
 

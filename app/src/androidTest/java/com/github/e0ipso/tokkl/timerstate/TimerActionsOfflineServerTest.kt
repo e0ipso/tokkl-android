@@ -28,7 +28,6 @@ import com.github.e0ipso.tokkl.awaitPomodoroOffered
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.heldTimerState
-import com.github.e0ipso.tokkl.components.pomodoroRinging
 import com.github.e0ipso.tokkl.components.sessionViewModels
 import com.github.e0ipso.tokkl.components.timerActions
 import com.github.e0ipso.tokkl.components.timerControls
@@ -40,9 +39,11 @@ import com.github.e0ipso.tokkl.notification.action
 import com.github.e0ipso.tokkl.notification.stopAction
 import com.github.e0ipso.tokkl.openBarPage
 import com.github.e0ipso.tokkl.orFail
+import com.github.e0ipso.tokkl.pomodoro.AlarmPlayer
 import com.github.e0ipso.tokkl.pomodoro.PomodoroAction
 import com.github.e0ipso.tokkl.pomodoro.PomodoroLengths
 import com.github.e0ipso.tokkl.pomodoro.PomodoroProblem
+import com.github.e0ipso.tokkl.pomodoro.PomodoroRingObservation
 import com.github.e0ipso.tokkl.pomodoro.PomodoroViewModel
 import com.github.e0ipso.tokkl.pomodoro.PomodoroWorkWaits
 import com.github.e0ipso.tokkl.pomodoro.pomodoroAlarmIntent
@@ -52,7 +53,6 @@ import com.github.e0ipso.tokkl.timerstate.held
 import com.github.e0ipso.tokkl.widget.NativeWidget
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -117,7 +117,7 @@ class TimerActionsOfflineServerTest {
             if (left.pause?.paused == true) postTimer("timer", "discard", revision = left.revision)
             // Read it at once rather than wait for the stream to reconnect after airplane mode.
             runBlocking { app.timerActions.read() }
-            runBlocking { withTimeout(15_000) { app.pomodoroRinging.state.first { !it.serviceRunning } } }
+            PomodoroRingObservation.await("the ringing service ended", 15_000) { !it.serviceRunning }
         } finally {
             fixture.cleanup()
         }
@@ -311,23 +311,21 @@ class TimerActionsOfflineServerTest {
             // The phase ends while the phone is offline, and it rings from the state it holds.
             val phase = PomodoroPhaseKey(session.phase.start)
             val untilEnd = Duration.between(Instant.now(), session.phase.plannedEnd).toMillis().coerceAtLeast(0)
-            val ringing = runBlocking {
-                withTimeout(
-                    untilEnd + 30_000,
-                ) { app.pomodoroRinging.state.first { it.serviceRunning && it.playing && it.ring?.phase == phase } }
+            val ringing = PomodoroRingObservation.await("the phase rings", untilEnd + 30_000) {
+                it.serviceRunning && it.playing && it.phase == phase
             }
             compose.waitUntil("the ringing notification", 10_000) { TimerSurfaces.ringingNotification() != null }
             val ring = checkNotNull(TimerSurfaces.ringingNotification())
             ringAction("Next phase on the ringing notification") { ring.actions[0].actionIntent.send() }
-            assertStillRings(ringing.audioSessionId)
+            assertStillRings(ringing.player)
             ringAction("End session on the ringing notification") { ring.actions[1].actionIntent.send() }
-            assertStillRings(ringing.audioSessionId)
+            assertStillRings(ringing.player)
             assertUnchanged("the ringing notification", work)
 
             alarmAction(phase, PomodoroR.string.pomodoro_alarm_next)
-            assertStillRings(ringing.audioSessionId)
+            assertStillRings(ringing.player)
             alarmAction(phase, PomodoroR.string.pomodoro_alarm_end)
-            assertStillRings(ringing.audioSessionId)
+            assertStillRings(ringing.player)
             assertUnchanged("the full-screen alarm", work)
 
             AirplaneMode.set(false, fixture.account.client)
@@ -458,10 +456,10 @@ class TimerActionsOfflineServerTest {
         }
     }
 
-    private fun assertStillRings(audioSession: Int?) {
-        val state = app.pomodoroRinging.state.value
-        assertTrue("it still rings", state.serviceRunning && state.playing && state.vibrationRequested)
-        assertEquals("the same ring goes on", audioSession, state.audioSessionId)
+    private fun assertStillRings(player: AlarmPlayer?) {
+        val state = PomodoroRingObservation.now()
+        assertTrue("it still rings", state.serviceRunning && state.playing && state.vibrating)
+        assertEquals("the same ring goes on", player, state.player)
     }
 
     /** A timer action from the other device, which must succeed. */

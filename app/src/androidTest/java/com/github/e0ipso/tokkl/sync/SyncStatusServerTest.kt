@@ -232,7 +232,7 @@ class SyncStatusServerTest {
                 Dispatchers.IO,
                 onQueued = {},
                 clock = Clock.systemUTC(),
-                spans = ServerSpans.Unsnapped,
+                spans = object : ServerSpans {},
             )
             runBlocking {
                 quietQueue.create(

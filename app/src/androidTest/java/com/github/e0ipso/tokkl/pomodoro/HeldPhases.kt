@@ -8,15 +8,12 @@ import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.capabilities
 import com.github.e0ipso.tokkl.components.heldTimerState
-import com.github.e0ipso.tokkl.components.pomodoroRinging
 import com.github.e0ipso.tokkl.components.timerStateIntake
 import com.github.e0ipso.tokkl.model.PhaseKind
 import com.github.e0ipso.tokkl.model.PhaseTransition
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
 import org.junit.Assert.assertTrue
 import java.time.Duration
 import java.time.Instant
@@ -110,19 +107,11 @@ internal object HeldPhases {
 
     fun key(held: HeldTimerState): PomodoroPhaseKey = checkNotNull(held.ring()).phase
 
-    /** Waits until the ringing service plays and vibrates. */
-    fun awaitPlaying(): PomodoroRingingState = runBlocking {
-        withTimeout(
-            10_000,
-        ) { app.pomodoroRinging.state.first { it.serviceRunning && it.playing && it.vibrationRequested } }
-    }
+    /** Waits until the ringing service plays and vibrates, as the platform shows it. */
+    fun awaitPlaying(): ObservedRing = PomodoroRingObservation.awaitPlaying()
 
-    /** Waits until the ringing service has stopped both outputs and ended. */
-    fun awaitStopped() = runBlocking {
-        withTimeout(
-            10_000,
-        ) { app.pomodoroRinging.state.first { !it.serviceRunning && !it.playing && !it.vibrationRequested } }
-    }
+    /** Waits until the ringing service has stopped both outputs and ended, as the platform shows it. */
+    fun awaitStopped(): ObservedRing = PomodoroRingObservation.awaitStopped()
 
     private fun nextRevision(): Long = maxOf(FIRST_REVISION, (app.heldTimerState?.revision ?: 0) + 1)
 

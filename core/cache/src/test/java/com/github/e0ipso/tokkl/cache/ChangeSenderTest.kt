@@ -1967,7 +1967,7 @@ private fun changeSender(
     onEmptied: () -> Unit = {},
     onDiscarded: (Int) -> Unit = {},
     clock: Clock = Clock.systemUTC(),
-    spans: ServerSpans = ServerSpans.Unsnapped,
+    spans: ServerSpans = object : ServerSpans {},
     allDay: Boolean = false,
     undo: DeleteUndoer = DeleteUndoer(store, client.entries(), io, refreshes = AccountRefreshRequests(), scope = scope),
 ) = ChangeSender(

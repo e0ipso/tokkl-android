@@ -6,7 +6,6 @@ import com.github.e0ipso.tokkl.DeviceShell
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.components.pomodoroAlarms
-import com.github.e0ipso.tokkl.components.pomodoroRinging
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -46,7 +45,7 @@ class PomodoroDeniedAlarmWidgetTest {
             assertEquals(1, pendingRedraws())
             scheduler.cancel()
             assertEquals("idle cancellation removes the one-shot", 0, pendingRedraws())
-            assertFalse(app.pomodoroRinging.state.value.serviceRunning)
+            assertFalse(PomodoroRingObservation.now().serviceRunning)
         } finally {
             scheduler.cancel()
         }

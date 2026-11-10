@@ -82,7 +82,9 @@ internal object SyncFrameContributions : FrameContributions {
 
 @Serializable
 @SerialName("com.github.e0ipso.tokkl.navigation.Route.NeedsAttention")
-data object NeedsAttentionRoute : Route
+data object NeedsAttentionRoute : Route {
+    override val contentKey: String get() = "NeedsAttentionRoute"
+}
 
 /** Opens the changes the server refused above the screen on top, unless they show already. */
 fun Navigator.openNeedsAttention() {

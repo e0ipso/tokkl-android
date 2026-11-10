@@ -75,7 +75,7 @@ class ChangeRejectionServerTest {
             Dispatchers.IO,
             onQueued = {},
             clock = Clock.systemUTC(),
-            spans = ServerSpans.Unsnapped,
+            spans = object : ServerSpans {},
         )
         sender = sender()
     }
@@ -293,7 +293,7 @@ class ChangeRejectionServerTest {
             }
         },
         clock = Clock.systemUTC(),
-        spans = ServerSpans.Unsnapped,
+        spans = object : ServerSpans {},
         capabilities = capabilitiesOf(Capabilities.NONE),
         undo = DeleteUndoer(
             store,

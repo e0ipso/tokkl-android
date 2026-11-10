@@ -34,9 +34,7 @@ class TypeScaleTest {
         assertRole("totals", TokklTheme.totalTextStyle, size = 28, weight = 800)
         assertRole("day total", TokklTheme.dayTotalTextStyle, size = 22, weight = 800)
         assertRole("day header", TokklTheme.dayHeaderTextStyle, size = 17, weight = 900)
-        assertRole("card title", TokklTheme.cardTitleTextStyle, size = 18, weight = 800)
         assertRole("section heading", TokklTheme.sectionHeadingTextStyle, size = 16, weight = 800)
-        assertRole("button label", TokklTheme.buttonLabelTextStyle, size = 14, weight = 700)
         assertEquals("tabular clock digits", "tnum", TokklTheme.clockTextStyle.fontFeatureSettings)
         assertEquals("tabular total digits", "tnum", TokklTheme.totalTextStyle.fontFeatureSettings)
         assertEquals("tabular day total digits", "tnum", TokklTheme.dayTotalTextStyle.fontFeatureSettings)
@@ -54,7 +52,9 @@ class TypeScaleTest {
         assertRole("small-caps label", smallCaps, size = 12, weight = 700, letterSpacingEm = 0.06f)
         assertSame("headlineLarge is the page title", TokklTheme.pageTitleTextStyle, typography.headlineLarge)
         assertSame("titleMedium is the section heading", TokklTheme.sectionHeadingTextStyle, typography.titleMedium)
-        assertSame("labelLarge is the button label", TokklTheme.buttonLabelTextStyle, typography.labelLarge)
+        assertRole("card title", typography.titleLarge, size = 18, weight = 800)
+        assertSame("headlineSmall is the card title", typography.titleLarge, typography.headlineSmall)
+        assertRole("button label", typography.labelLarge, size = 14, weight = 700)
         for ((name, style) in listOf(
             "bodyLarge" to typography.bodyLarge,
             "bodyMedium" to typography.bodyMedium,

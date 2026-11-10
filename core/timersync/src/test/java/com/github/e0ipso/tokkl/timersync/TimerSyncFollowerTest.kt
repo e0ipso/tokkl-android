@@ -15,7 +15,6 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.IOException
@@ -83,13 +82,11 @@ class TimerSyncFollowerTest {
 
         assertEquals(1, starts)
         assertEquals(emptyList<TimerStateSource>(), opens)
-        assertNull(follower.runningService.value)
     }
 
     @Test
     fun aRunningServiceHoldsTheStreamForTheAccountSignedInNow() = runTest {
-        val instance = follower.serviceRuns()
-        assertEquals(instance, follower.runningService.value)
+        follower.serviceRuns()
 
         follower.follow()
 
@@ -104,7 +101,6 @@ class TimerSyncFollowerTest {
 
         follower.run(ended)
 
-        assertNull(follower.runningService.value)
         assertEquals(emptyList<TimerStateSource>(), opens)
     }
 
@@ -115,7 +111,6 @@ class TimerSyncFollowerTest {
         val current = follower.serviceRuns()
         // An old instance's end that arrives late leaves the current one marked.
         follower.serviceEnded(old)
-        assertEquals(current, follower.runningService.value)
 
         follower.run(old)
         assertEquals("the old instance's startup opens nothing", emptyList<TimerStateSource>(), opens)

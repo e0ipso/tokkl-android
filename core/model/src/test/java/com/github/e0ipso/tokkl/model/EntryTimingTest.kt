@@ -39,6 +39,25 @@ class EntryTimingTest {
         assertEquals("a stored day wins", DAY, fromServer.copy(day = DAY).dayIn(ZoneId.of("UTC")))
     }
 
+    @Test(expected = IllegalArgumentException::class)
+    fun aStoppedEntryCannotEndBeforeItStarts() {
+        EntryTiming.Stopped(START, START.minusSeconds(1))
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun anAllDayEntryCannotHaveANegativeDuration() {
+        EntryTiming.AllDay(DAY, START, Duration.ofSeconds(-1))
+    }
+
+    @Test
+    fun malformedRowsHaveZeroDurationAtTheBoundary() {
+        assertEquals(EntryTiming.Stopped(START, START), EntryTiming.of(START, START.minusSeconds(1), false, null))
+        assertEquals(
+            EntryTiming.AllDay(DAY, START, Duration.ZERO),
+            EntryTiming.of(START, START.minusSeconds(1), true, DAY),
+        )
+    }
+
     private companion object {
         /** Midnight of 14 October 2026 in Madrid. */
         val START: Instant = Instant.parse("2026-10-13T22:00:00Z")

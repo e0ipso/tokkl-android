@@ -14,39 +14,37 @@ import kotlinx.coroutines.flow.combine
 import java.security.MessageDigest
 import java.time.Instant
 
-/**
- * What the running timer's notification shows (docs/PRD.md N1, T1).
- *
- * @param entryId the id the cache held the entry under, which the Stop action stops, or 0 while
- *   [paused].
- * @param description as typed; blank when the entry has none.
- * @param project null when the entry has no project or the cache does not know it.
- * @param start the instant the chronometer counts from: the entry's start, moved by the server's
- *   clock offset for a resumed clone, which the server started.
- * @param key changes with every edit of the running entry, with its start to the second, and with
- *   what the notification shows and its actions act on. It stays when the server answers: an
- *   entry made on the phone gets the server's id, its start whole seconds, its description
- *   trimmed and its tags the case of the account's tags. So two starts with the same fields
- *   within one second give the same key, and [entryId] tells them apart (see
- *   [runningNotificationChange]). It is a SHA-256 hash, so the store that keeps it holds no
- *   description or name.
- * @param accumulatedSeconds what the chain's stopped segments store, which the chronometer adds
- *   to the time since [start], or the paused total while [paused].
- * @param pausable whether the running entry offers Pause, which needs the server's timer API and
- *   no Pomodoro session.
- */
-data class RunningNotificationContent(
-    val entryId: EntryId,
-    val description: String,
-    val project: String?,
-    val task: String?,
-    val start: Instant,
-    val key: String,
-    val accumulatedSeconds: Long = 0,
-    val paused: Boolean = false,
-    val target: TimerTarget,
-    val pausable: Boolean = false,
-)
+/** The timer notification's common labels and the state its actions address. */
+sealed interface RunningNotificationContent {
+    val description: String
+    val project: String?
+    val task: String?
+    val key: String
+    val accumulatedSeconds: Long
+    val target: TimerTarget
+
+    val entryId: EntryId? get() = (target as? TimerTarget.Running)?.entryId
+
+    data class Running(
+        override val description: String,
+        override val project: String?,
+        override val task: String?,
+        val start: Instant,
+        override val key: String,
+        override val accumulatedSeconds: Long = 0,
+        override val target: TimerTarget.Running,
+        val pausable: Boolean = false,
+    ) : RunningNotificationContent
+
+    data class Paused(
+        override val description: String,
+        override val project: String?,
+        override val task: String?,
+        override val key: String,
+        override val accumulatedSeconds: Long,
+        override val target: TimerTarget.Paused,
+    ) : RunningNotificationContent
+}
 
 /**
  * The notification for what the timer [controls] show, or null when no timer runs or is paused.
@@ -84,12 +82,10 @@ fun runningNotificationContent(
     is TimerControls.Paused -> {
         val fields = controls.fields
         val labels = entryLabels(fields, projects, tasks)
-        RunningNotificationContent(
-            entryId = EntryId(0),
+        RunningNotificationContent.Paused(
             description = fields.description,
             project = labels.project,
             task = labels.task,
-            start = Instant.EPOCH,
             // The revision too, so the actions send the revision the server holds now.
             key = hash(
                 "paused",
@@ -105,7 +101,6 @@ fun runningNotificationContent(
                 labels.task.orEmpty(),
             ),
             accumulatedSeconds = controls.seconds,
-            paused = true,
             target = controls.target,
         )
     }
@@ -120,7 +115,7 @@ fun runningNotificationContent(
     projects: List<Project>,
     tasks: List<Task>,
     account: String,
-): RunningNotificationContent? {
+): RunningNotificationContent.Running? {
     if (running == null || running.stop != null) return null
     val labels = entryLabels(running.fields(), projects, tasks)
     // As the server stores them, so its answer to a start or an edit leaves the key as it was.
@@ -135,8 +130,7 @@ fun runningNotificationContent(
         labels.project.orEmpty(),
         labels.task.orEmpty(),
     )
-    return RunningNotificationContent(
-        entryId = running.id,
+    return RunningNotificationContent.Running(
         description = running.description,
         project = labels.project,
         task = labels.task,

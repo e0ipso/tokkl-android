@@ -265,7 +265,7 @@ class RunningEntryQueueTest {
             Dispatchers.IO,
             onQueued = {},
             clock = clock,
-            spans = ServerSpans.Unsnapped,
+            spans = object : ServerSpans {},
         )
     }
 

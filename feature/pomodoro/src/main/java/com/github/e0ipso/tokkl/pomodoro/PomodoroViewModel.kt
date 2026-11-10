@@ -128,11 +128,6 @@ class PomodoroViewModel(
         modelScope.launch { refused.collect { list -> mutableState.update { it.copy(refused = list) } } }
     }
 
-    /** Refreshed on resume after returning from full-screen special app access settings. */
-    fun fullScreenPermissionChanged(allowed: Boolean) {
-        mutableState.update { it.copy(fullScreenDenied = !allowed) }
-    }
-
     /** Permission changes update notices only; a late grant never restarts a session. */
     internal fun permissionsChanged(grants: PomodoroPermissions) {
         exactAlarmAllowed = grants.exactAlarm

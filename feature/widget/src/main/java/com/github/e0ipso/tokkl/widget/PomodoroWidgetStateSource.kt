@@ -1,7 +1,6 @@
 package com.github.e0ipso.tokkl.widget
 
 import android.content.Context
-import androidx.annotation.VisibleForTesting
 import androidx.glance.appwidget.updateAll
 import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.model.Project
@@ -34,10 +33,7 @@ import kotlin.coroutines.CoroutineContext
  * holder lock, rather than combining a previous account's emitted state with new settings.
  * The ringing service and a single in-process phase-end wait trigger redraws. The latter
  * also works with denied exact alarms. No ticking job or idle work is added.
- *
- * Public for the app's device tests, which read the widget's state from the app's Koin graph.
  */
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 class PomodoroWidgetStateSource(
     fields: PomodoroWidgetFieldsStore,
     timerStates: AccountTimerStates,

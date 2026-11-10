@@ -7,9 +7,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.saveable.rememberSerializable
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
@@ -17,6 +19,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberDecoratedNavEntries
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.runtime.serialization.NavBackStackSerializer
+import androidx.savedstate.compose.LocalSavedStateRegistryOwner
 import androidx.savedstate.serialization.SavedStateConfiguration
 import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.navigation.FeatureNavigation
@@ -27,7 +30,6 @@ import com.github.e0ipso.tokkl.navigation.NotificationPrompts
 import com.github.e0ipso.tokkl.navigation.Route
 import com.github.e0ipso.tokkl.navigation.SignInRoutes
 import com.github.e0ipso.tokkl.navigation.TopLevelPages
-import com.github.e0ipso.tokkl.navigation.contentKey
 import com.github.e0ipso.tokkl.navigation.routeSerializers
 import com.github.e0ipso.tokkl.timernotice.TimerFrame
 import kotlinx.coroutines.flow.StateFlow
@@ -70,18 +72,16 @@ internal fun TokklNavHost(
         if (discarded) requests.clear()
     }
     key(signOutCount) {
-        CompositionLocalProvider(LocalSignedInSession provides stores.session) {
-            Navigation(
-                stores = stores,
-                requests = requests,
-                capabilities = capabilities,
-                features = features,
-                pages = pages,
-                signIns = signIns,
-                timerFrame = timerFrame,
-                notificationPrompt = notificationPrompt,
-            )
-        }
+        Navigation(
+            stores = stores,
+            requests = requests,
+            capabilities = capabilities,
+            features = features,
+            pages = pages,
+            signIns = signIns,
+            timerFrame = timerFrame,
+            notificationPrompt = notificationPrompt,
+        )
     }
 }
 
@@ -122,10 +122,13 @@ private fun Navigation(
     // in the background before the process died, or a token that no longer decrypts. The page
     // shows while the stores are read, once per composition of the host, so sign-in pays nothing.
     val restoredSignedIn = remember { backStack.lastOrNull().let { it != null && !signIns.isSignIn(it) } }
-    if (restoredSignedIn) {
+    var checked by remember { mutableStateOf(!restoredSignedIn) }
+    if (!checked) {
         LaunchedEffect(Unit) {
             if (!signIns.isSignedIn()) navigator.startOver(signIns.signIn())
+            checked = true
         }
+        return
     }
     if (backStack.isEmpty()) {
         // Shows the window background, which matches the theme, while the
@@ -141,22 +144,26 @@ private fun Navigation(
     // A page the server lacks never shows, not even for the frame before the stack is corrected.
     val top = backStack.last().orTimerIfUnavailable(unavailable)
     val onSignIn = signIns.isSignIn(top)
-    NavigationRequestEffects(requests, features.requests, navigator, signIns, unavailable, onSignIn = onSignIn)
-    BackHandler(enabled = backStack.size > 1) { navigator.back() }
-    if (onSignIn) {
-        LaunchedEffect(Unit) { savedStates.removeState(Route.Timer.contentKey) }
-        entries.Show(top)
-        return
+    val registryOwner = LocalSavedStateRegistryOwner.current
+    if (onSignIn) stores.discardRestoredSession(registryOwner)
+    CompositionLocalProvider(LocalSignedInSession provides stores.session(registryOwner)) {
+        NavigationRequestEffects(requests, features.requests, navigator, signIns, unavailable, onSignIn = onSignIn)
+        BackHandler(enabled = backStack.size > 1) { navigator.back() }
+        if (onSignIn) {
+            LaunchedEffect(Unit) { savedStates.removeState(Route.Timer.contentKey) }
+            entries.Show(top)
+        } else {
+            SignedInHost(
+                stack = backStack,
+                top = top,
+                entries = entries,
+                host = host,
+                features = features.frame,
+                pages = pages,
+                unavailable = unavailable,
+                notificationPrompt = notificationPrompt,
+                timerFrame = timerFrame,
+            )
+        }
     }
-    SignedInHost(
-        stack = backStack,
-        top = top,
-        entries = entries,
-        host = host,
-        features = features.frame,
-        pages = pages,
-        unavailable = unavailable,
-        notificationPrompt = notificationPrompt,
-        timerFrame = timerFrame,
-    )
 }

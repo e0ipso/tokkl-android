@@ -63,4 +63,6 @@ val tagsPage = TopLevelDestination(
 
 @Serializable
 @SerialName("com.github.e0ipso.tokkl.navigation.Route.Tags")
-data object TagsRoute : Route
+data object TagsRoute : Route {
+    override val contentKey: String get() = "TagsRoute"
+}

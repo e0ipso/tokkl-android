@@ -128,6 +128,7 @@ val pomodoroPage = TopLevelDestination(
 @Serializable
 @SerialName("com.github.e0ipso.tokkl.navigation.Route.Pomodoro")
 data object PomodoroRoute : Route {
+    override val contentKey: String get() = "PomodoroRoute"
     override val showsTimerNotices: Boolean get() = true
 }
 

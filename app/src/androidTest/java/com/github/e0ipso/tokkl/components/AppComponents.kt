@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.components
 
+import android.app.ActivityManager
 import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.lifecycle.ViewModel
@@ -25,12 +26,10 @@ import com.github.e0ipso.tokkl.cache.RunningCheck
 import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.navhost.NavigationStores
 import com.github.e0ipso.tokkl.navigation.Route
-import com.github.e0ipso.tokkl.navigation.contentKey
 import com.github.e0ipso.tokkl.platform.DefaultNetwork
 import com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmRearm
 import com.github.e0ipso.tokkl.pomodoro.PomodoroPhaseAlarm
 import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationSync
-import com.github.e0ipso.tokkl.pomodoro.ServicePomodoroRinging
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaultsSetting
 import com.github.e0ipso.tokkl.preferences.ReminderSetting
 import com.github.e0ipso.tokkl.reminder.ReminderSync
@@ -52,8 +51,10 @@ import com.github.e0ipso.tokkl.timerstate.TimerActions
 import com.github.e0ipso.tokkl.timerstate.TimerControls
 import com.github.e0ipso.tokkl.timerstate.TimerStateSource
 import com.github.e0ipso.tokkl.timersync.PomodoroAlarmScheduler
+import com.github.e0ipso.tokkl.timersync.PomodoroRingingPhase
 import com.github.e0ipso.tokkl.timersync.TimerSync
 import com.github.e0ipso.tokkl.timersync.TimerSyncFollower
+import com.github.e0ipso.tokkl.timersync.TimerSyncService
 import com.github.e0ipso.tokkl.trust.SessionTrust
 import com.github.e0ipso.tokkl.widget.PomodoroWidgetState
 import com.github.e0ipso.tokkl.widget.PomodoroWidgetStateSource
@@ -62,8 +63,10 @@ import com.github.e0ipso.tokkl.widget.WidgetStateSource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.runBlocking
 import org.koin.androidx.workmanager.factory.KoinWorkerFactory
+import org.koin.core.annotation.KoinInternalApi
 import org.koin.core.context.GlobalContext
 import org.koin.core.qualifier.Qualifier
+import org.koin.viewmodel.factory.KoinViewModelFactory
 import java.time.Clock
 
 // The app's components as the tests read them, from the app's Koin graph. Each name matches the
@@ -98,7 +101,7 @@ val TokklApplication.timerSync: TimerSync<TimerStateSource> get() = component()
 val TokklApplication.pomodoroAlarms: PomodoroAlarmScheduler get() = component()
 internal val TokklApplication.pomodoroAlarm: PomodoroPhaseAlarm get() = component()
 internal val TokklApplication.pomodoroAlarmRearm: PomodoroAlarmRearm get() = component()
-internal val TokklApplication.pomodoroRinging: ServicePomodoroRinging get() = component()
+val TokklApplication.pomodoroRingingPhase: PomodoroRingingPhase get() = component()
 
 val TokklApplication.timerStates: AccountTimerStates get() = component()
 
@@ -114,8 +117,11 @@ internal val TokklApplication.pomodoroWidgetState: Flow<PomodoroWidgetState>
     get() = component<PomodoroWidgetStateSource>().state
 internal val TokklApplication.pomodoroSessionNotification: PomodoroSessionNotificationSync get() = component()
 
-/** Whether [com.github.e0ipso.tokkl.timersync.TimerSyncService] runs in the foreground. */
-val TokklApplication.timerSyncServiceRuns: Boolean get() = component<TimerSyncFollower>().runningService.value != null
+/** Whether [TimerSyncService] runs, as the activity manager lists the app's services. */
+@Suppress("DEPRECATION") // Still returns the caller's own services.
+val TokklApplication.timerSyncServiceRuns: Boolean
+    get() = getSystemService(ActivityManager::class.java).getRunningServices(Int.MAX_VALUE)
+        .any { it.service.packageName == packageName && it.service.className == TimerSyncService::class.java.name }
 
 /** The app's clock, which [com.github.e0ipso.tokkl.TestTokklApplication] makes a [TestClock]. */
 val TokklApplication.testClock: TestClock get() = component<Clock>() as TestClock
@@ -152,11 +158,14 @@ fun initializeTestWorkManager(context: Context) {
  * [owner]'s view models, made through Koin when the store lacks one, as the app makes them. A plain
  * [ViewModelProvider] cannot make them: they take their dependencies in their constructors.
  */
+@OptIn(KoinInternalApi::class)
 fun koinViewModels(owner: ViewModelStoreOwner): ViewModelProvider = ViewModelProvider(
     owner,
     object : ViewModelProvider.Factory {
-        override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T =
-            GlobalContext.get().get(modelClass.kotlin)
+        override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T = KoinViewModelFactory(
+            modelClass.kotlin,
+            GlobalContext.get().scopeRegistry.rootScope,
+        ).create(modelClass.kotlin, extras)
     },
 )
 
@@ -169,15 +178,17 @@ internal fun navigationStores(activity: ComponentActivity): NavigationStores =
  * actions, the timer templates, the reports' tab and filters and the Pomodoro page.
  */
 internal fun sessionViewModels(activity: ComponentActivity): ViewModelProvider = koinViewModels(
-    navigationStores(activity).session,
+    navigationStores(activity).session(activity),
 )
 
 /** The view models of [activity]'s Timer page: its history and its calendar. */
-internal fun timerPageViewModels(activity: ComponentActivity): ViewModelProvider =
-    koinViewModels(navigationStores(activity).entries.getOrCreateOwner(Route.Timer.contentKey))
+internal fun timerPageViewModels(activity: ComponentActivity): ViewModelProvider = koinViewModels(
+    navigationStores(activity).entries.getOrCreateOwner(Route.Timer.contentKey, savedStateRegistryOwner = activity),
+)
 
 /** The view model of [activity]'s Reports page, which must be on the back stack. */
-internal fun reportsViewModel(activity: ComponentActivity): ReportsViewModel =
-    koinViewModels(navigationStores(activity).entries.getOrCreateOwner(ReportsRoute.contentKey))[
-        ReportsViewModel::class.java,
-    ]
+internal fun reportsViewModel(activity: ComponentActivity): ReportsViewModel = koinViewModels(
+    navigationStores(activity).entries.getOrCreateOwner(ReportsRoute.contentKey, savedStateRegistryOwner = activity),
+)[
+    ReportsViewModel::class.java,
+]

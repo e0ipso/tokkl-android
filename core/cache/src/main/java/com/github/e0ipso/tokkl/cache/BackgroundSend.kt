@@ -179,8 +179,6 @@ class BackgroundSendRuns {
         synchronized(lock) { joined.remove(id) }
     }
 
-    fun hasJoined(id: UUID): Boolean = synchronized(lock) { id in joined }
-
     fun cancelWaiting(waiting: () -> Boolean, cancel: () -> Unit, queueEmpty: () -> Boolean, schedule: () -> Unit) {
         try {
             if (!waiting()) return

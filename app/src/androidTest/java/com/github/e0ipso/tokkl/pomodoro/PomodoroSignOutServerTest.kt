@@ -29,7 +29,6 @@ import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.heldTimerState
 import com.github.e0ipso.tokkl.components.pomodoroAlarm
-import com.github.e0ipso.tokkl.components.pomodoroRinging
 import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.components.signOut
 import com.github.e0ipso.tokkl.components.signOutConfirmation
@@ -51,7 +50,6 @@ import com.github.e0ipso.tokkl.timerstate.TimerStateStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -212,8 +210,9 @@ class PomodoroSignOutServerTest {
         }
         assertEquals(current, app.heldTimerState)
         assertEquals(nextAlarm, alarms.nextAlarmClock?.triggerTime)
-        assertFalse(app.pomodoroRinging.state.value.playing)
-        assertFalse(app.pomodoroRinging.state.value.vibrationRequested)
+        val ring = PomodoroRingObservation.now()
+        assertFalse(ring.playing)
+        assertFalse(ring.vibrating)
     }
 
     /** Signs [owner] in on the test server and learns its timer API, as the sign-in screen and its refresh do. */
@@ -271,11 +270,7 @@ class PomodoroSignOutServerTest {
         )
     }
 
-    private fun awaitStopped() = runBlocking {
-        withTimeout(10_000) {
-            app.pomodoroRinging.state.first { !it.serviceRunning && !it.playing && !it.vibrationRequested }
-        }
-    }
+    private fun awaitStopped() = PomodoroRingObservation.awaitStopped()
 
     private fun queueCount(): Int = runBlocking { app.changes.unsentCount.first() }
 

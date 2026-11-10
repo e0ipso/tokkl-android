@@ -153,7 +153,9 @@ val reportsPage = TopLevelDestination(
 
 @Serializable
 @SerialName("com.github.e0ipso.tokkl.navigation.Route.Reports")
-data object ReportsRoute : Route
+data object ReportsRoute : Route {
+    override val contentKey: String get() = "ReportsRoute"
+}
 
 /** Only explicit user-directed sharing grants a receiver access to this one completed file. */
 object ReportCsvShare {

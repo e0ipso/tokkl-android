@@ -8,7 +8,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.IBinder
-import androidx.annotation.VisibleForTesting
 import com.github.e0ipso.tokkl.platform.MainDispatcher
 import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import com.github.e0ipso.tokkl.timersync.PomodoroRingingPhase
@@ -28,20 +27,15 @@ import kotlin.coroutines.CoroutineContext
 /**
  * Stop releases both outputs on the main thread before returning, including when the phone has no
  * network. A queued service start still checks the held phase before it plays.
- *
- * It, [service], [state] and [PomodoroRingingState] are public for the app's device tests, which
- * observe the ring through them.
  */
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
 class ServicePomodoroRinging(private val context: Context, private val main: CoroutineContext) :
     PomodoroRinging,
     PomodoroRingingPhase {
-    @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-    var service: PomodoroRingingService? = null
+    internal var service: PomodoroRingingService? = null
     private val observed = MutableStateFlow(PomodoroRingingState())
 
-    @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-    val state = observed.asStateFlow()
+    /** Whether the service runs, and what it rings, which the session notification follows. */
+    internal val state = observed.asStateFlow()
     override val ringingPhase: Flow<PomodoroPhaseKey?> = state.map { it.ring?.phase }
 
     fun running(): Boolean = state.value.serviceRunning
@@ -86,21 +80,8 @@ class ServicePomodoroRinging(private val context: Context, private val main: Cor
     }
 }
 
-/** Observations of the actual framework player and the last vibrator request, for device tests. */
-@VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-data class PomodoroRingingState(
-    val serviceRunning: Boolean = false,
-    val ring: PomodoroRing? = null,
-    val playing: Boolean = false,
-    val looping: Boolean = false,
-    val audioUsage: Int? = null,
-    val audioSessionId: Int? = null,
-    val vibrationRequested: Boolean = false,
-    val vibrationUsage: Int? = null,
-    val vibrationPattern: List<Long> = emptyList(),
-    val vibrationRepeat: Int? = null,
-    val foregroundType: Int = 0,
-)
+/** Whether the ringing service runs, and the ring it plays, or null while it plays none. */
+internal data class PomodoroRingingState(val serviceRunning: Boolean = false, val ring: PomodoroRing? = null)
 
 /**
  * One indefinite alarm, with no phase advancement. START_STICKY restores a killed service only
@@ -119,18 +100,12 @@ class PomodoroRingingService : Service() {
     private val ringing: ServicePomodoroRinging by inject()
     private val ringCheck: PomodoroRingCheck by inject()
 
-    // These three need the service as a Context, which Android attaches only just before
+    // These two need the service as a Context, which Android attaches only just before
     // onCreate, and onCreate makes them in this order before anything reads them.
     private lateinit var notifier: PomodoroRingingNotifier
-
-    // Public for the app's device tests, as [current] is.
-    @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-    lateinit var output: AndroidPomodoroRingOutput
-        private set
     private lateinit var controller: PomodoroRingController
 
-    @VisibleForTesting(otherwise = VisibleForTesting.PACKAGE_PRIVATE)
-    val current: PomodoroRing? get() = controller.current
+    internal val current: PomodoroRing? get() = controller.current
 
     /** Whether this service has posted its notification yet. */
     private var promoted = false
@@ -139,8 +114,7 @@ class PomodoroRingingService : Service() {
         super.onCreate()
         notifier = PomodoroRingingNotifier(this)
         notifier.createChannel()
-        output = AndroidPomodoroRingOutput(this, notifier)
-        controller = PomodoroRingController(output)
+        controller = PomodoroRingController(AndroidPomodoroRingOutput(this, notifier))
         ringing.service = this
         publishState()
     }
@@ -160,9 +134,7 @@ class PomodoroRingingService : Service() {
             return START_NOT_STICKY
         }
         scope.launch {
-            val valid = ringCheck.withRingingPhase(expected) { ring ->
-                withContext(main) { controller.start(ring) }
-            }
+            val valid = ringCheck.withRingingPhase(expected) { ring -> withContext(main) { show(ring) } }
             // An old start must neither play nor stop a newer valid ring.
             if (!valid && current == null) finishRinging(startId)
         }
@@ -178,24 +150,19 @@ class PomodoroRingingService : Service() {
         promoted = true
     }
 
-    internal fun publishState() {
-        if (ringing.service !== this) return
-        ringing.update(
-            PomodoroRingingState(
-                serviceRunning = true, ring = current, playing = output.playing, looping = output.looping,
-                audioUsage = output.audioAttributes.usage, audioSessionId = output.audioSessionId,
-                vibrationRequested = output.vibrationRequested, vibrationUsage = output.vibrationUsage,
-                vibrationPattern = output.vibrationPattern, vibrationRepeat = output.vibrationRepeat,
-                foregroundType = foregroundServiceType,
-            ),
-        )
+    private fun publishState() {
+        if (ringing.service === this) ringing.update(PomodoroRingingState(serviceRunning = true, ring = current))
     }
 
-    /** Shows [ring] of the phase already ringing, as after a swipe or a new revision. */
-    internal fun show(ring: PomodoroRing) = controller.start(ring)
+    /** Rings [ring], or shows it for the phase already ringing, as after a swipe or a new revision. */
+    internal fun show(ring: PomodoroRing) {
+        controller.start(ring)
+        publishState()
+    }
 
     internal fun finishRinging(startId: Int? = null) {
         controller.stop()
+        publishState()
         if (startId == null) stopSelf() else stopSelfResult(startId)
     }
 

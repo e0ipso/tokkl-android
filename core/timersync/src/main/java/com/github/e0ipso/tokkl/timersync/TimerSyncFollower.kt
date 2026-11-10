@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -69,13 +68,12 @@ class TimerSyncFollower internal constructor(
     }
 
     private val instances = AtomicInteger()
-    private val running = MutableStateFlow<Int?>(null)
 
     /**
      * The number of the [TimerSyncService] instance that runs in the foreground, or null while
-     * none does. The service sets and clears it itself. The app's device tests wait on it too.
+     * none does. The service sets and clears it itself.
      */
-    val runningService: StateFlow<Int?> = running.asStateFlow()
+    private val running = MutableStateFlow<Int?>(null)
 
     private val stops = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 

@@ -47,7 +47,7 @@ class NoTimeQueueTest {
             Dispatchers.IO,
             onQueued = {},
             clock = Clock.fixed(NOW, ZoneOffset.UTC),
-            spans = ServerSpans.Unsnapped,
+            spans = object : ServerSpans {},
         )
     }
 

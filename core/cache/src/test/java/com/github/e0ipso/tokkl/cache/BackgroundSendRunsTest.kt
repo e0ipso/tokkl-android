@@ -40,7 +40,7 @@ class BackgroundSendRunsTest {
             returnWaiting.countDown()
             cancellation.get(10, TimeUnit.SECONDS)
             assertFalse("the stale waiting read cannot cancel a registered worker", cancelled.get())
-            assertTrue(runs.hasJoined(id))
+            assertFalse("nor can a later one", cancelsWaiting(runs))
         } finally {
             returnWaiting.countDown()
             runs.leave(id)
@@ -79,7 +79,7 @@ class BackgroundSendRunsTest {
             finishCancel.countDown()
             cancellation.get(10, TimeUnit.SECONDS)
             assertFalse("registration reads the completed cancellation", joined.get(10, TimeUnit.SECONDS))
-            assertFalse(runs.hasJoined(id))
+            assertTrue("no worker keeps a later cancellation off", cancelsWaiting(runs))
         } finally {
             finishCancel.countDown()
             runs.leave(id)
@@ -111,6 +111,13 @@ class BackgroundSendRunsTest {
             schedule = { scheduled.incrementAndGet() },
         )
         assertEquals(1, scheduled.get())
+    }
+
+    /** Whether [runs] cancels waiting work now, which it does only while no worker has joined. */
+    private fun cancelsWaiting(runs: BackgroundSendRuns): Boolean {
+        val cancelled = AtomicBoolean()
+        runs.cancelWaiting(waiting = { true }, cancel = { cancelled.set(true) }, queueEmpty = { true }, schedule = {})
+        return cancelled.get()
     }
 
     private fun await(latch: CountDownLatch) {

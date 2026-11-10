@@ -18,6 +18,9 @@ import java.time.LocalDate
  */
 interface Route : NavKey {
 
+    /** Stable identity for the route's saved state and view models. */
+    val contentKey: String
+
     /**
      * Whether this screen takes the whole window without the bar or the rail, as the fullscreen
      * timer does. The entry form opened above such a screen hides them too ([isFocused]).
@@ -32,6 +35,7 @@ interface Route : NavKey {
 
     /** The Timer page, at the bottom of every signed-in back stack. */
     @Serializable data object Timer : Route {
+        override val contentKey: String get() = "Timer"
         override val showsTimerNotices: Boolean get() = true
     }
 
@@ -40,7 +44,9 @@ interface Route : NavKey {
      * opened twice gets two forms, each with its own view model and saved state.
      */
     @Serializable
-    data class Entry(val opening: EntryOpening, val id: String) : Route
+    data class Entry(val opening: EntryOpening, val id: String) : Route {
+        override val contentKey: String get() = "Entry:$id"
+    }
 }
 
 @Serializable
@@ -79,9 +85,3 @@ sealed interface EntryOpening {
         }
     }
 }
-
-/**
- * The key a route's saved state and view models live under. Every route's text is different: the
- * objects print their names, and the entry form its opening and id.
- */
-val Route.contentKey: String get() = toString()

@@ -28,7 +28,6 @@ import org.koin.core.annotation.KoinInternalApi
 import org.koin.core.context.GlobalContext
 import org.koin.core.definition.BeanDefinition
 import org.koin.core.parameter.ParametersHolder
-import org.koin.core.parameter.emptyParametersHolder
 import org.koin.core.parameter.parametersOf
 import org.koin.core.qualifier.named
 import java.util.concurrent.CountDownLatch
@@ -129,7 +128,7 @@ class AppGraphTest {
 
         ReportsViewModel::class -> parametersOf(ReportChoices(), SavedStateHandle())
 
-        else -> emptyParametersHolder()
+        else -> parametersOf(SavedStateHandle())
     }
 
     /**
@@ -203,7 +202,7 @@ class AppGraphTest {
             "TimerSyncFollower" to SignOutPhase.STOP_WORK,
             "BackgroundSend" to SignOutPhase.STOP_WORK,
             "RunningCheck" to SignOutPhase.STOP_WORK,
-            "sign-out-http-calls" to SignOutPhase.STOP_WORK,
+            "CallsSignOut" to SignOutPhase.STOP_WORK,
             "AccountRefresh" to SignOutPhase.FINISH_REFRESH,
             "ChangeSender" to SignOutPhase.FINISH_SENDING,
             "AccountCache" to SignOutPhase.CLEAR_CACHE,

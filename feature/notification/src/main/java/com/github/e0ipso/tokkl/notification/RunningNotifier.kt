@@ -64,7 +64,7 @@ class RunningNotifier(context: Context) : RunningNotice {
             .setContentTitle(content.description.ifBlank { context.getString(R.string.notification_no_description) })
             .setOnlyAlertOnce(true)
             .setContentIntent(openApp())
-        if (content.paused) {
+        if (content is RunningNotificationContent.Paused) {
             return builder
                 .setContentText(pausedText(content))
                 .setShowWhen(false)
@@ -82,6 +82,7 @@ class RunningNotifier(context: Context) : RunningNotice {
                 )
                 .build()
         }
+        content as RunningNotificationContent.Running
         builder
             .setContentText(projectText(content))
             .setWhen(content.start.toEpochMilli() - content.accumulatedSeconds * MILLIS_PER_SECOND)

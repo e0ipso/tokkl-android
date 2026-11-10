@@ -18,7 +18,6 @@ import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.heldTimerState
 import com.github.e0ipso.tokkl.components.pomodoroAlarm
 import com.github.e0ipso.tokkl.components.pomodoroAlarms
-import com.github.e0ipso.tokkl.components.pomodoroRinging
 import com.github.e0ipso.tokkl.components.pomodoroWidgetState
 import com.github.e0ipso.tokkl.components.signOut
 import com.github.e0ipso.tokkl.components.storeSignIn
@@ -27,6 +26,7 @@ import com.github.e0ipso.tokkl.core.ui.R
 import com.github.e0ipso.tokkl.model.PhaseKind
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.pomodoro.HeldPhases
+import com.github.e0ipso.tokkl.pomodoro.PomodoroRingObservation
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.signin.ServerSignIn
 import com.github.e0ipso.tokkl.signin.SignInCredentials
@@ -308,7 +308,7 @@ class PomodoroWidgetServerTest {
         host.awaitDescription(context.getString(R.string.pomodoro_overtime), untilBoundary + 1_000)
         assertFalse("redraw is not early", Instant.now().isBefore(boundary))
         assertTrue(host.updates.get() > before)
-        assertFalse(app.pomodoroRinging.state.value.serviceRunning)
+        assertFalse(PomodoroRingObservation.now().serviceRunning)
         assertEquals(held, app.heldTimerState)
         host.awaitUpdatesSettled()
         host.assertClockTicksWithoutUpdates()

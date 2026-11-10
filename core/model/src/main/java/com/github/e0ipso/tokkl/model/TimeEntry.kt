@@ -25,7 +25,11 @@ sealed interface EntryTiming {
         val stop: Instant
     }
 
-    data class Stopped(override val start: Instant, override val stop: Instant) : Ended
+    data class Stopped(override val start: Instant, override val stop: Instant) : Ended {
+        init {
+            require(!stop.isBefore(start)) { "The stop comes before the start." }
+        }
+    }
 
     /**
      * A no-time entry: [duration] on a day, with no start or end time.
@@ -37,6 +41,9 @@ sealed interface EntryTiming {
      * @property start local midnight of the day in the account's timezone when the entry was stored.
      */
     data class AllDay(val day: LocalDate?, override val start: Instant, val duration: Duration) : Ended {
+        init {
+            require(!duration.isNegative) { "The duration is negative." }
+        }
 
         override val stop: Instant get() = start + duration
 
@@ -49,12 +56,12 @@ sealed interface EntryTiming {
          * The timing a flat [start], [stop], no-time flag [allDay] and [day] describe, as the
          * cache's rows, the queue's changes and the saved state keep them. Without a stop the
          * entry runs, whatever the flag says, as the cache's running entry does. A timed entry
-         * keeps no day.
+         * keeps no day. A malformed row ending before its start has zero duration.
          */
         fun of(start: Instant, stop: Instant?, allDay: Boolean, day: LocalDate?): EntryTiming = when {
             stop == null -> Running(start)
-            allDay -> AllDay(day, start, Duration.between(start, stop))
-            else -> Stopped(start, stop)
+            allDay -> AllDay(day, start, Duration.between(start, maxOf(start, stop)))
+            else -> Stopped(start, maxOf(start, stop))
         }
     }
 }

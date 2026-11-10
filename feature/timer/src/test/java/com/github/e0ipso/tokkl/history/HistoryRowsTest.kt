@@ -61,7 +61,7 @@ class HistoryRowsTest {
         val group = days[0].rows[1]
         assertTrue(group.grouped)
         assertEquals("the members' total", 3 * 3600L, group.seconds)
-        assertEquals("from the oldest member's start", at(dayA, 9), group.oldest.start)
+        assertEquals("from the oldest member's start", at(dayA, 9), group.entries.last().start)
         assertEquals("to the newest member's stop", at(dayA, 12), group.newest.stop)
     }
 

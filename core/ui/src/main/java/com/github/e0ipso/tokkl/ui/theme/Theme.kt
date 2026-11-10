@@ -87,9 +87,6 @@ object TokklTheme {
     /** A day's header in the history, 17sp Anybody 900, uppercase. */
     val dayHeaderTextStyle: TextStyle get() = DayHeaderTextStyle
 
-    /** A card's title, 18sp Anybody 800. Material's headlineSmall and titleLarge. */
-    val cardTitleTextStyle: TextStyle get() = CardTitleTextStyle
-
     /** A section heading inside a screen, 16sp Anybody 800. Material's titleMedium. */
     val sectionHeadingTextStyle: TextStyle get() = SectionHeadingTextStyle
 
@@ -98,9 +95,6 @@ object TokklTheme {
         @Composable
         @ReadOnlyComposable
         get() = SmallCapsLabelTextStyle.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
-
-    /** Button labels, 14sp system font 700. Material's labelLarge. */
-    val buttonLabelTextStyle: TextStyle get() = ButtonLabelTextStyle
 
     /** Certificate fingerprints and other codes, in the system's monospace font. */
     val monospaceTextStyle: TextStyle get() = MonospaceTextStyle

@@ -325,9 +325,12 @@ class RunningNotificationTest {
             ),
         )!!
 
-        assertTrue(offered.pausable)
-        assertFalse("no timer API", toggl.pausable)
-        assertFalse("the server refuses Pause during a session", session.pausable)
+        assertTrue((offered as RunningNotificationContent.Running).pausable)
+        assertFalse("no timer API", (toggl as RunningNotificationContent.Running).pausable)
+        assertFalse(
+            "the server refuses Pause during a session",
+            (session as RunningNotificationContent.Running).pausable,
+        )
         assertEquals(
             "the actions act on the entry, for this account",
             TimerTarget.Running(EntryId(-3), ServerTimerStates.ACCOUNT),
@@ -340,8 +343,8 @@ class RunningNotificationTest {
     fun aPausedChainShowsTheServersFrozenTotalAndWhatResumeStarts() {
         val shown = paused()!!
 
-        assertTrue(shown.paused)
-        assertEquals("no entry runs", EntryId(0), shown.entryId)
+        assertTrue(shown is RunningNotificationContent.Paused)
+        assertNull("no entry runs", shown.entryId)
         assertEquals("Notification", shown.description)
         assertEquals("Tokkl for Android", shown.project)
         assertEquals("Design", shown.task)
@@ -351,6 +354,33 @@ class RunningNotificationTest {
             TimerTarget.Paused(3, ServerTimerStates.ACCOUNT),
             shown.target,
         )
+    }
+
+    /**
+     * A paused chain has no running entry: the store keeps the paused notification's key alone,
+     * and the queue is never asked about an entry for it, also in a new process.
+     */
+    @Test
+    fun aPausedNotificationFollowsNoEntry() = runTest {
+        val fake = FakeNotification()
+
+        run { fake.sync(flowOf(paused())).follow() }
+        run { fake.sync(flowOf(paused())).follow() }
+
+        assertEquals(FollowedEntry(paused()!!.key, entryId = null), fake.shown)
+        assertEquals("the queue is asked about no entry", emptyList<EntryId>(), fake.asked)
+    }
+
+    @Test
+    fun aLegacyPausedNotificationKeepsItsDismissalWithoutResolvingAPlaceholderEntry() = runTest {
+        val paused = paused()!!
+        val fake = FakeNotification(shown = FollowedEntry(paused.key, EntryId(0)))
+
+        fake.sync(flowOf(paused)).follow()
+
+        assertEquals(emptyList<String>(), fake.calls)
+        assertEquals(emptyList<EntryId>(), fake.asked)
+        assertEquals(FollowedEntry(paused.key, null), fake.shown)
     }
 
     @Test
@@ -365,8 +395,12 @@ class RunningNotificationTest {
             ),
         )!!
 
-        assertFalse(resumed.paused)
-        assertEquals("the clone's start on the phone's clock, to the second", start.minusSeconds(20), resumed.start)
+        assertTrue(resumed is RunningNotificationContent.Running)
+        assertEquals(
+            "the clone's start on the phone's clock, to the second",
+            start.minusSeconds(20),
+            (resumed as RunningNotificationContent.Running).start,
+        )
         assertEquals(600L, resumed.accumulatedSeconds)
         assertNotEquals("the chain's total changes what it shows", controlled()!!.key, resumed.key)
     }
@@ -410,7 +444,7 @@ class RunningNotificationTest {
 
         run { fake.sync(flowOf(controlled(), paused(), resumed)).follow() }
 
-        assertEquals(listOf("post Notification -3", "post Notification 0", "post Notification 55"), fake.calls)
+        assertEquals(listOf("post Notification -3", "post Notification null", "post Notification 55"), fake.calls)
     }
 
     @Test
@@ -421,7 +455,7 @@ class RunningNotificationTest {
 
         run { fake.sync(flowOf(shown, edited)).follow() }
 
-        assertEquals(listOf("post Paused elsewhere 0"), fake.calls)
+        assertEquals(listOf("post Paused elsewhere null"), fake.calls)
         assertNotEquals(
             "a later revision is another notification, whose actions send it",
             shown.key,
@@ -459,13 +493,19 @@ class RunningNotificationTest {
     ) {
         val calls = mutableListOf<String>()
 
+        /** The ids the queue was asked to resolve. */
+        val asked = mutableListOf<EntryId>()
+
         fun sync(running: Flow<RunningNotificationContent?>) = RunningNotificationSync(
             running = running,
             shown = valueStore(
                 load = { shown },
                 save = { followed -> if (failWrites) throw IOException("disk full") else shown = followed },
             ),
-            currentId = { id -> serverIds[id] ?: id },
+            currentId = { id ->
+                asked += id
+                serverIds[id] ?: id
+            },
             notice = object : RunningNotice {
                 override fun post(content: RunningNotificationContent) {
                     calls += "post ${content.description} ${content.entryId}"

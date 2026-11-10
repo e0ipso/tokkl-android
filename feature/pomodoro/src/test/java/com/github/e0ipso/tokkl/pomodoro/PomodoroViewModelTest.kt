@@ -317,12 +317,11 @@ class PomodoroViewModelTest {
     fun permissionGuidanceStaysIndependentAndTheQueueCountsStayVisible() {
         val f = idle()
         f.alarmsDenied = true
-        f.page.fullScreenPermissionChanged(false)
         f.page.permissionsChanged(PomodoroPermissions(notifications = false, exactAlarm = true, fullScreen = false))
         assertTrue(f.page.state.value.notificationsDenied)
         assertFalse(f.page.state.value.alarmDenied)
         assertTrue(f.page.state.value.fullScreenDenied)
-        f.page.fullScreenPermissionChanged(true)
+        f.page.permissionsChanged(PomodoroPermissions(notifications = false, exactAlarm = true, fullScreen = true))
         assertFalse(f.page.state.value.fullScreenDenied)
         assertTrue("the notification denial stays", f.page.state.value.notificationsDenied)
         f.unsent.value = 2

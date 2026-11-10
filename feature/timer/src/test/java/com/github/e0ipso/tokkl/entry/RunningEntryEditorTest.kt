@@ -101,7 +101,7 @@ class RunningEntryEditorTest {
         changes,
         scope,
         clock,
-        trace = TapTrace.None,
+        trace = TapTrace { {} },
         pauseChain = null,
         sender = {},
         discards = discardNotices(),
