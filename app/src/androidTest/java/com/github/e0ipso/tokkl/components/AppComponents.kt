@@ -33,6 +33,7 @@ import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotificationSync
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaultsSetting
 import com.github.e0ipso.tokkl.preferences.ReminderSetting
 import com.github.e0ipso.tokkl.reminder.ReminderSync
+import com.github.e0ipso.tokkl.reports.ReportChoices
 import com.github.e0ipso.tokkl.reports.ReportsRoute
 import com.github.e0ipso.tokkl.reports.ReportsViewModel
 import com.github.e0ipso.tokkl.session.AccountRefresh
@@ -65,6 +66,8 @@ import kotlinx.coroutines.runBlocking
 import org.koin.androidx.workmanager.factory.KoinWorkerFactory
 import org.koin.core.annotation.KoinInternalApi
 import org.koin.core.context.GlobalContext
+import org.koin.core.parameter.ParametersDefinition
+import org.koin.core.parameter.parametersOf
 import org.koin.core.qualifier.Qualifier
 import org.koin.viewmodel.factory.KoinViewModelFactory
 import java.time.Clock
@@ -159,15 +162,18 @@ fun initializeTestWorkManager(context: Context) {
  * [ViewModelProvider] cannot make them: they take their dependencies in their constructors.
  */
 @OptIn(KoinInternalApi::class)
-fun koinViewModels(owner: ViewModelStoreOwner): ViewModelProvider = ViewModelProvider(
-    owner,
-    object : ViewModelProvider.Factory {
-        override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T = KoinViewModelFactory(
-            modelClass.kotlin,
-            GlobalContext.get().scopeRegistry.rootScope,
-        ).create(modelClass.kotlin, extras)
-    },
-)
+fun koinViewModels(owner: ViewModelStoreOwner, parameters: ParametersDefinition? = null): ViewModelProvider =
+    ViewModelProvider(
+        owner,
+        object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T = KoinViewModelFactory(
+                modelClass.kotlin,
+                GlobalContext.get().scopeRegistry.rootScope,
+                null,
+                parameters,
+            ).create(modelClass.kotlin, extras)
+        },
+    )
 
 /** The navigation's view model stores in [activity], which TokklNavHost reads them from. */
 internal fun navigationStores(activity: ComponentActivity): NavigationStores =
@@ -189,6 +195,7 @@ internal fun timerPageViewModels(activity: ComponentActivity): ViewModelProvider
 /** The view model of [activity]'s Reports page, which must be on the back stack. */
 internal fun reportsViewModel(activity: ComponentActivity): ReportsViewModel = koinViewModels(
     navigationStores(activity).entries.getOrCreateOwner(ReportsRoute.contentKey, savedStateRegistryOwner = activity),
+    parameters = { parametersOf(sessionViewModels(activity)[ReportChoices::class.java]) },
 )[
     ReportsViewModel::class.java,
 ]

@@ -47,6 +47,8 @@ import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.model.Task
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.platform.AppForeground
+import com.github.e0ipso.tokkl.platform.DefaultNetwork
+import com.github.e0ipso.tokkl.platform.offlineIn
 import com.github.e0ipso.tokkl.session.CacheRefresh
 import com.github.e0ipso.tokkl.session.ServerChanges
 import com.github.e0ipso.tokkl.session.ServerTrustStore
@@ -75,6 +77,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import org.koin.core.context.GlobalContext
 import java.time.Duration
 import java.util.concurrent.CopyOnWriteArrayList
 import com.github.e0ipso.tokkl.core.catalog.R as CatalogR
@@ -132,7 +135,7 @@ class ProjectsServerTest {
             io = Dispatchers.IO,
             cachedProjects = app.cache.projects,
             cachedClients = app.cache.clients,
-            offline = MutableStateFlow(false),
+            offline = GlobalContext.get().get<DefaultNetwork>().offlineIn(scope),
             app = AppForeground(MutableStateFlow(true), emptyFlow()),
             saved = SavedStateHandle(),
         )

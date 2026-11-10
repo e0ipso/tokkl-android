@@ -87,6 +87,8 @@ class ReminderServerTest {
         account = TestAccounts.create("Europe/Madrid")
         signIn(TokklTestServer.url)
         refresh()
+        app.storeSignIn(TokklTestServer.url, account.apiToken, checkNotNull(app.accountSettings.state.value))
+        refresh()
         RunningNotifications.allow()
     }
 
@@ -100,6 +102,7 @@ class ReminderServerTest {
         runBlocking { assertNull(ReminderStore(context, Dispatchers.IO).load()) }
         runBlocking { assertNull(ReminderStore(context, Dispatchers.IO).loadTimer()) }
         assertTrue(work.getWorkInfosForUniqueWork(ReminderWork.NAME).get().all { it.state.isFinished })
+        awaitNotificationGone()
         assertNull(notification())
     }
     private fun signIn(url: ServerUrl) {

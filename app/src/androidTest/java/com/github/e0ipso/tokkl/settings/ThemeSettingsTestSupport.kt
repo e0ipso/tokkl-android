@@ -17,9 +17,12 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.feature.settings.R
 import com.github.e0ipso.tokkl.ui.theme.ThemeMode
+import com.github.e0ipso.tokkl.ui.theme.ThemeSettings
+import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.rules.ExternalResource
+import org.koin.core.context.GlobalContext
 import java.io.File
 
 private val targetContext get() = InstrumentationRegistry.getInstrumentation().targetContext
@@ -36,8 +39,19 @@ class DefaultThemeSettings : ExternalResource() {
     override fun after() = reset()
 
     private fun reset() {
+        setTestTheme(ThemeSettings())
         runBlocking { ThemeSettingsStore(targetContext, Dispatchers.IO).clear() }
         followTheSystemNightMode()
+    }
+}
+
+/** Changes the shared theme through the same repository as Settings, after its startup read. */
+fun setTestTheme(settings: ThemeSettings) {
+    val repository = GlobalContext.get().get<ThemeSettingsRepository>()
+    runBlocking { repository.ready() }
+    InstrumentationRegistry.getInstrumentation().runOnMainSync {
+        repository.onModeChange(settings.mode)
+        repository.onDynamicColorChange(settings.dynamicColor)
     }
 }
 

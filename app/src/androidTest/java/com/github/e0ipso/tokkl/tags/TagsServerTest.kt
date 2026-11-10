@@ -43,6 +43,8 @@ import com.github.e0ipso.tokkl.model.Tag
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.platform.AppForeground
+import com.github.e0ipso.tokkl.platform.DefaultNetwork
+import com.github.e0ipso.tokkl.platform.offlineIn
 import com.github.e0ipso.tokkl.session.CacheRefresh
 import com.github.e0ipso.tokkl.session.ServerChanges
 import com.github.e0ipso.tokkl.session.ServerTrustStore
@@ -72,6 +74,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import org.koin.core.context.GlobalContext
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -118,7 +121,7 @@ class TagsServerTest {
             scope = scope,
             io = Dispatchers.IO,
             cachedTags = app.cache.tags,
-            offline = MutableStateFlow(false),
+            offline = GlobalContext.get().get<DefaultNetwork>().offlineIn(scope),
             app = AppForeground(MutableStateFlow(true), emptyFlow()),
             saved = SavedStateHandle(),
         )

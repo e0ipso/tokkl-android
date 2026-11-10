@@ -117,6 +117,7 @@ import com.github.e0ipso.tokkl.reports.WeeklyRow
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.settings.ThemeSettingsStore
 import com.github.e0ipso.tokkl.settings.followTheSystemNightMode
+import com.github.e0ipso.tokkl.settings.setTestTheme
 import com.github.e0ipso.tokkl.settings.systemIsDark
 import com.github.e0ipso.tokkl.sync.SyncStatus
 import com.github.e0ipso.tokkl.tags.TagsActions
@@ -1174,11 +1175,12 @@ private class ThemeRule(private val dark: Boolean) : ExternalResource() {
 
     override fun before() {
         val mode = if (dark) ThemeMode.DARK else ThemeMode.LIGHT
-        runBlocking { ThemeSettingsStore(context, Dispatchers.IO).save(ThemeSettings(mode = mode)) }
+        setTestTheme(ThemeSettings(mode = mode))
         context.getSystemService(UiModeManager::class.java).setApplicationNightMode(mode.applicationNightMode)
     }
 
     override fun after() {
+        setTestTheme(ThemeSettings())
         runBlocking { ThemeSettingsStore(context, Dispatchers.IO).clear() }
         followTheSystemNightMode()
     }

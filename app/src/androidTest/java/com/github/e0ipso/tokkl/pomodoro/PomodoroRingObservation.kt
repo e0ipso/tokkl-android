@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.pomodoro
 
+import android.annotation.SuppressLint
 import android.app.ActivityManager
 import android.os.Process
 import android.os.SystemClock
@@ -98,13 +99,19 @@ internal object PomodoroRingObservation {
         .getRunningServices(Int.MAX_VALUE)
         .any { it.service.packageName == packageName && it.service.className == service }
 
-    /** The `types=` or `foregroundServiceType=` of the service record, as hex or decimal. */
+    /** Android 12 omits the type from dumpsys; read the live service's platform getter instead. */
+    @SuppressLint("PrivateApi") // Test-only lookup of the running service; no app observation hooks.
     private fun foregroundType(): Int? {
-        val dump = DeviceShell.run("dumpsys activity services $packageName/$service")
-        if (!Regex("isForeground=true").containsMatchIn(dump)) return null
-        val type = Regex("(?:foregroundServiceType|types)=(0x[0-9a-fA-F]+|\\d+)").find(dump)?.groupValues?.get(1)
-            ?: throw AssertionError("no foreground service type in:\n$dump")
-        return if (type.startsWith("0x")) type.substring(2).toInt(HEX) else type.toInt()
+        var type: Int? = null
+        instrumentation.runOnMainSync {
+            val activityThread = Class.forName("android.app.ActivityThread")
+            val thread = activityThread.getDeclaredMethod("currentActivityThread").invoke(null)
+            val services = activityThread.getDeclaredField("mServices").apply { isAccessible = true }
+                .get(thread) as Map<*, *>
+            type = services.values.filterIsInstance<PomodoroRingingService>().singleOrNull()
+                ?.foregroundServiceType?.takeUnless { it == 0 }
+        }
+        return type
     }
 
     /**
@@ -138,7 +145,7 @@ internal object PomodoroRingObservation {
         if (packageName !in current && "uid=${Process.myUid()}" !in current) return null
         val effect = current.substringAfter("segments=[", "").substringBefore("]")
         return AlarmVibration(
-            alarmUsage = Regex("(?:mUsage|usage)[=:]\\s*(?:USAGE_)?ALARM\\b").containsMatchIn(current),
+            alarmUsage = Regex("(?:mUsage|[Uu]sage)[=:]\\s*(?:USAGE_)?ALARM\\b").containsMatchIn(current),
             timings = Regex("duration=(\\d+)").findAll(effect).map { it.groupValues[1].toLong() }.toList(),
             repeat = Regex("(?:repeatIndex|repeat)=(-?\\d+)").find(current)?.groupValues?.get(1)?.toInt(),
             dump = current,
@@ -149,5 +156,4 @@ internal object PomodoroRingObservation {
     private const val LONGEST_SOUND_MS = 3_000L
     private const val TIMEOUT_MS = 10_000L
     private const val POLL_MS = 200L
-    private const val HEX = 16
 }

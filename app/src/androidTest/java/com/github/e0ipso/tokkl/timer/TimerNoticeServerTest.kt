@@ -12,6 +12,8 @@ import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.components.heldTimerState
 import com.github.e0ipso.tokkl.components.timerStates
 import com.github.e0ipso.tokkl.core.timersync.R
+import com.github.e0ipso.tokkl.model.DiscardedPomodoro
+import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.orFail
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -67,7 +69,8 @@ class TimerNoticeServerTest {
         val discarded = ended.discardedPomodoro
         assertNotNull("the server discarded the pomodoro", discarded)
         fixture.refresh()
-        assertEquals(discarded, runBlocking { app.timerStates.discardNotice.first() })
+        val expected = checkNotNull(discarded).let { DiscardedPomodoro(EntryId(it.entryId), it.start, it.stop) }
+        assertEquals(expected, runBlocking { app.timerStates.discardNotice.first() })
 
         val text = context.getString(R.string.timer_pomodoro_too_short)
         ActivityScenario.launch(MainActivity::class.java).use {
@@ -84,7 +87,7 @@ class TimerNoticeServerTest {
         }
         // A new activity and view model, and the state at that revision read again.
         fixture.refresh()
-        assertEquals("the server repeats it", discarded, app.heldTimerState!!.discardedPomodoro)
+        assertEquals("the server repeats it", expected, app.heldTimerState!!.discardedPomodoro)
         ActivityScenario.launch(MainActivity::class.java).use {
             compose.awaitTimerPage()
             compose.waitForIdle()

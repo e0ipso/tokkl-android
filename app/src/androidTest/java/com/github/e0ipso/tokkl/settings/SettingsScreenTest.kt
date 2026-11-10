@@ -53,8 +53,11 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import com.github.e0ipso.tokkl.R as AppR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
+import com.github.e0ipso.tokkl.feature.projects.R as ProjectsR
 import com.github.e0ipso.tokkl.feature.signin.R as SigninR
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 
 /** The settings screen in the real activity, reached from the bottom bar. */
 class SettingsScreenTest {
@@ -208,7 +211,13 @@ class SettingsScreenTest {
     fun everyTextComesFromStringResources() {
         composeRule.openSettings()
 
-        val resources = R.string::class.java.fields.map { string(it.getInt(null)) }.toSet() +
+        val resources = listOf(
+            R.string::class.java,
+            UiR.string::class.java,
+            AppR.string::class.java,
+            TimerR.string::class.java,
+            ProjectsR.string::class.java,
+        ).flatMap { it.fields.map { field -> string(field.getInt(null)) } }.toSet() +
             composeRule.activity.resources.getQuantityString(R.plurals.reminder_after_hours, 8, 8) +
             pomodoroDefaultLabels()
         val shown = composeRule.onAllNodes(SemanticsMatcher("any node") { true }, useUnmergedTree = true)

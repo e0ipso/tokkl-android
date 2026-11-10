@@ -40,6 +40,7 @@ import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.orFail
+import com.github.e0ipso.tokkl.session.CurrentAccount
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.session.reachesInternet
@@ -67,6 +68,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.koin.core.context.GlobalContext
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import com.github.e0ipso.tokkl.core.ui.R as UiR
@@ -622,6 +624,8 @@ class RunningTileServerTest {
     private fun signIn(server: ServerUrl, token: String) {
         app.runningCheck.cancelAndWait()
         ServerTrustStore(context, Dispatchers.IO).confirmCleartext(server)
+        // A sign-in starts a fresh request lifetime, including the tile refresh throttle.
+        GlobalContext.get().get<CurrentAccount>().begin()
         Session(context).save(server, token)
     }
 

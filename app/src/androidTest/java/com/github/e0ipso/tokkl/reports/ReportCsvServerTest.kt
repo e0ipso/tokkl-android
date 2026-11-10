@@ -12,6 +12,7 @@ import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
 import com.github.e0ipso.tokkl.capabilities.ReportCsvKind
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.session.SignOut
 import com.github.e0ipso.tokkl.time.DurationFormat
 import com.github.e0ipso.tokkl.tokklApi
 import kotlinx.coroutines.Dispatchers
@@ -147,7 +148,7 @@ class ReportCsvServerTest {
         instrumentation.runOnMainSync { exporter.shareFinished() }
         // Chooser completion retains the file for an asynchronous receiver; sign-out removes it.
         assertTrue(file.isFile)
-        Session(context).clear()
+        assertTrue("production sign-out succeeds", runBlocking { GlobalContext.get().get<SignOut>().run() })
         assertFalse(file.exists())
         assertFileRejected { context.contentResolver.openInputStream(uri)?.close() }
     }
