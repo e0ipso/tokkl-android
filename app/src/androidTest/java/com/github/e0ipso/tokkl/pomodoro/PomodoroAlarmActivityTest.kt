@@ -164,9 +164,11 @@ class PomodoroAlarmActivityTest {
         val before = awaitPlaying()
         openAlarm(HeldPhases.key(due))
         device.pressBack()
+        awaitAlarmOffScreen()
         assertKeepsRinging(before, due)
         openAlarm(HeldPhases.key(due))
         device.pressHome()
+        awaitAlarmOffScreen()
         assertKeepsRinging(before, due)
         openAlarm(HeldPhases.key(due))
         assertTrue(device.wait(Until.hasObject(By.text("Next phase")), 10_000))
@@ -324,6 +326,26 @@ class PomodoroAlarmActivityTest {
         onMain { activity = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED)
             .filterIsInstance<PomodoroAlarmActivity>().single() }
         return checkNotNull(activity)
+    }
+    /**
+     * pressBack and pressHome return before the alarm leaves the screen. An alarm intent sent
+     * meanwhile reaches the leaving Activity as a new intent, and Home then hides it anyway.
+     */
+    private fun awaitAlarmOffScreen() {
+        val deadline = SystemClock.elapsedRealtime() + 10_000
+        while (alarmOnScreen()) {
+            assertTrue("the alarm leaves the screen", SystemClock.elapsedRealtime() < deadline)
+            SystemClock.sleep(50)
+        }
+    }
+    private fun alarmOnScreen(): Boolean {
+        var shown = false
+        onMain {
+            val registry = ActivityLifecycleMonitorRegistry.getInstance()
+            shown = (Stage.entries - Stage.STOPPED - Stage.DESTROYED)
+                .any { stage -> registry.getActivitiesInStage(stage).any { it is PomodoroAlarmActivity } }
+        }
+        return shown
     }
     private fun assertKeepsRinging(before: PomodoroRingingState, due: HeldTimerState) {
         val after = app.pomodoroRinging.state.value
