@@ -1,3 +1,10 @@
+## [0.8.2](https://github.com/e0ipso/tokkl-android/compare/v0.8.1...v0.8.2) (2026-11-10)
+
+### Bug Fixes
+
+* preserve preferences after offline retries ([05ffbe6](https://github.com/e0ipso/tokkl-android/commit/05ffbe663b985be91ec1cabd236b1faf73d54b85))
+* publish curated kenkeep knowledge ([#40](https://github.com/e0ipso/tokkl-android/issues/40)) ([b2c316e](https://github.com/e0ipso/tokkl-android/commit/b2c316e4b05243a507ceaa678dde715affcd3b4d))
+
 ## [0.8.1](https://github.com/e0ipso/tokkl-android/compare/v0.8.0...v0.8.1) (2026-11-10)
 
 ### Bug Fixes
