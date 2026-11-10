@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Days and date ranges, as the history, the calendar, the reports and the changes the server
+    refused write them.
+-->
+<resources>
+    <!-- A day's header, as the web app's dayLabel: Mon, 13 Oct -->
+    <string name="history_day">%1$s, %2$s</string>
+    <!-- 13 Oct to 19 Oct -->
+    <string name="reports_range">%1$s to %2$s</string>
+</resources>

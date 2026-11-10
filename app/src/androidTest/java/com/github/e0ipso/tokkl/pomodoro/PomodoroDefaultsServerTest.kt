@@ -8,26 +8,32 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.core.app.ActivityScenario
-import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.awaitTimerPage
-import com.github.e0ipso.tokkl.openBarPage
-import com.github.e0ipso.tokkl.settings.PomodoroDefaultField
-import com.github.e0ipso.tokkl.settings.cardLabel
-import com.github.e0ipso.tokkl.settings.label
-import com.github.e0ipso.tokkl.accessibility.checkAccessibility
-import com.github.e0ipso.tokkl.accessibility.createEmptyComposeRule
-
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.LoopbackRelay
+import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.accessibility.checkAccessibility
+import com.github.e0ipso.tokkl.accessibility.createEmptyComposeRule
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.ServerUrl
+import com.github.e0ipso.tokkl.api.api
+import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.pomodoroDefaults
+import com.github.e0ipso.tokkl.feature.settings.R
+import com.github.e0ipso.tokkl.openBarPage
 import com.github.e0ipso.tokkl.orFail
+import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
+import com.github.e0ipso.tokkl.preferences.StoredPomodoroDefaults
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.settings.PomodoroDefaultField
+import com.github.e0ipso.tokkl.settings.cardLabel
+import com.github.e0ipso.tokkl.settings.label
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
@@ -44,6 +50,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * The Pomodoro defaults against the real Tokkl container, which keeps them in the account's four
@@ -85,39 +92,52 @@ class PomodoroDefaultsServerTest {
     /** The Tokkl release scripts/instrumented-tests.sh pins as IMAGE serves this Settings-to-server round trip. */
     @Test
     fun settingsEditsReadAndWriteReleasedPreferencesAndPopulateTheNextSessionForm() {
-        setOnTheServer(buildJsonObject {
-            put(WORK, 50); put(SHORT_REST, 10); put(LONG_REST, 30); put(LONG_REST_EVERY, 3)
-            put("timerView", "list")
-        })
+        setOnTheServer(
+            buildJsonObject {
+                put(WORK, 50)
+                put(SHORT_REST, 10)
+                put(LONG_REST, 30)
+                put(LONG_REST_EVERY, 3)
+                put("timerView", "list")
+            },
+        )
         signIn(TokklTestServer.url)
         refresh()
         assertEquals(PomodoroDefaults(50, 10, 30, 3), app.pomodoroDefaults.defaults.value)
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             compose.awaitTimerPage(TIMEOUT_MS)
             compose.openBarPage(R.string.settings, TIMEOUT_MS)
-            compose.onNode(hasText(context.getString(R.string.settings_pomodoro_shared))).performScrollTo().assertIsDisplayed()
+            compose.onNode(
+                hasText(context.getString(R.string.settings_pomodoro_shared)),
+            ).performScrollTo().assertIsDisplayed()
             val inputs = listOf(
-                PomodoroDefaultField.WORK to "40", PomodoroDefaultField.SHORT_REST to "8",
-                PomodoroDefaultField.LONG_REST to "20", PomodoroDefaultField.EVERY to "5",
+                PomodoroDefaultField.WORK to "40",
+                PomodoroDefaultField.SHORT_REST to "8",
+                PomodoroDefaultField.LONG_REST to "20",
+                PomodoroDefaultField.EVERY to "5",
             )
             val original = listOf("50", "10", "30", "3")
             for ((index, pair) in inputs.withIndex()) {
                 val (field, value) = pair
                 val card = context.getString(field.cardLabel)
-                compose.onNode(hasText(context.getString(field.label)) and hasClickAction()).performScrollTo().performClick()
+                compose.onNode(
+                    hasText(context.getString(field.label)) and hasClickAction(),
+                ).performScrollTo().performClick()
                 compose.lengthValue(card).assertTextEquals(original[index])
                 compose.lengthValue(card).performTextReplacement(value)
-                compose.onNode(hasText(context.getString(R.string.settings_pomodoro_save)) and hasClickAction()).performClick()
+                compose.onNode(
+                    hasText(context.getString(R.string.settings_pomodoro_save)) and hasClickAction(),
+                ).performClick()
             }
             val expected = PomodoroDefaults(40, 8, 20, 5)
             compose.waitUntil("Tokkl accepts the four Settings defaults", TIMEOUT_MS) {
-                PomodoroDefaultsStore(context).load() == StoredPomodoroDefaults(expected, unsent = false)
+                storedDefaults() == StoredPomodoroDefaults(expected, unsent = false)
             }
             val saved = preferences()
             assertEquals(expected, saved.pomodoroDefaults())
             assertEquals(JsonPrimitive("list"), saved["timerView"])
             scenario.recreate()
-            compose.openBarPage(R.string.pomodoro_title, TIMEOUT_MS)
+            compose.openBarPage(UiR.string.pomodoro_title, TIMEOUT_MS)
             for ((field, value) in inputs) {
                 val card = context.getString(field.cardLabel)
                 compose.lengthCard(card).performScrollTo()
@@ -144,24 +164,41 @@ class PomodoroDefaultsServerTest {
         )
         val sent = StringBuffer()
         val target = TokklTestServer.url.toString().toHttpUrl()
-        LoopbackRelay(target.host, target.port, watchConnections = { LoopbackRelay.ConnectionWatcher { bytes, count -> sent.append(String(bytes, 0, count, Charsets.ISO_8859_1)) } }).use { relay ->
+        LoopbackRelay(
+            target.host,
+            target.port,
+            watchConnections = {
+                LoopbackRelay.ConnectionWatcher { bytes, count ->
+                    sent.append(
+                        String(bytes, 0, count, Charsets.ISO_8859_1),
+                    )
+                }
+            },
+        ).use { relay ->
             signIn(ServerUrl.parse("http://127.0.0.1:${relay.localPort}") ?: error("not a URL"))
 
             refresh()
             assertEquals(PomodoroDefaults(50, 10, 30, 3), app.pomodoroDefaults.defaults.value)
-            assertEquals(StoredPomodoroDefaults(PomodoroDefaults(50, 10, 30, 3), unsent = false), PomodoroDefaultsStore(context).load())
+            assertEquals(
+                StoredPomodoroDefaults(PomodoroDefaults(50, 10, 30, 3), unsent = false),
+                storedDefaults(),
+            )
 
             // The guard lets the app reach only the relay now, so the phone's sent mark, which
             // only a 200 sets, shows that the server took each change.
             change(PomodoroDefaults(40, 8, 20, 5))
             waitUntil("the server takes the change") {
-                PomodoroDefaultsStore(context).load() == StoredPomodoroDefaults(PomodoroDefaults(40, 8, 20, 5), unsent = false)
+                storedDefaults() == StoredPomodoroDefaults(PomodoroDefaults(40, 8, 20, 5), unsent = false)
             }
 
             change(PomodoroDefaults(0, 61, 100, 13))
-            assertEquals("the change shows clamped", PomodoroDefaults(1, 60, 60, 12), app.pomodoroDefaults.defaults.value)
+            assertEquals(
+                "the change shows clamped",
+                PomodoroDefaults(1, 60, 60, 12),
+                app.pomodoroDefaults.defaults.value,
+            )
             waitUntil("the server takes the clamped change") {
-                PomodoroDefaultsStore(context).load() == StoredPomodoroDefaults(PomodoroDefaults(1, 60, 60, 12), unsent = false)
+                storedDefaults() == StoredPomodoroDefaults(PomodoroDefaults(1, 60, 60, 12), unsent = false)
             }
 
             assertEquals(emptyList<String>(), relay.failures)
@@ -175,22 +212,29 @@ class PomodoroDefaultsServerTest {
         assertEquals(PomodoroDefaults(1, 60, 60, 12), posts[1].pomodoroDefaults())
         signIn(TokklTestServer.url)
         val preferences = preferences()
-        assertEquals("the server keeps the last change", PomodoroDefaults(1, 60, 60, 12), preferences.pomodoroDefaults())
+        assertEquals(
+            "the server keeps the last change",
+            PomodoroDefaults(1, 60, 60, 12),
+            preferences.pomodoroDefaults(),
+        )
         assertEquals("other preferences stay", JsonPrimitive("calendar"), preferences["timerView"])
     }
 
-    /** Offline, a change stays on the phone, marked unsent, until the next refresh sends it. */
     @Test
     fun anOfflineChangeStaysOnThePhoneUntilTheNextRefreshSendsIt() {
         signIn(TokklTestServer.url)
         refresh()
-        assertEquals("a new account has Tokkl's defaults", PomodoroDefaults(25, 5, 15, 4), app.pomodoroDefaults.defaults.value)
+        assertEquals(
+            "a new account has Tokkl's defaults",
+            PomodoroDefaults(25, 5, 15, 4),
+            app.pomodoroDefaults.defaults.value,
+        )
         // A closed loopback port makes only this app session offline on every API level.
         signIn(checkNotNull(ServerUrl.parse("http://127.0.0.1:1")))
 
         change(PomodoroDefaults(40, 8, 20, 5))
         waitUntil("the phone keeps it unsent") {
-            PomodoroDefaultsStore(context).load() == StoredPomodoroDefaults(PomodoroDefaults(40, 8, 20, 5), unsent = true)
+            storedDefaults() == StoredPomodoroDefaults(PomodoroDefaults(40, 8, 20, 5), unsent = true)
         }
 
         signIn(TokklTestServer.url)
@@ -198,23 +242,26 @@ class PomodoroDefaultsServerTest {
         assertEquals(
             "the phone still keeps it unsent",
             StoredPomodoroDefaults(PomodoroDefaults(40, 8, 20, 5), unsent = true),
-            PomodoroDefaultsStore(context).load(),
+            storedDefaults(),
         )
 
         refresh()
         waitUntil("the server has the change") { serverDefaults() == PomodoroDefaults(40, 8, 20, 5) }
         waitUntil("the phone marks it sent") {
-            PomodoroDefaultsStore(context).load() == StoredPomodoroDefaults(PomodoroDefaults(40, 8, 20, 5), unsent = false)
+            storedDefaults() == StoredPomodoroDefaults(PomodoroDefaults(40, 8, 20, 5), unsent = false)
         }
         assertEquals(PomodoroDefaults(40, 8, 20, 5), app.pomodoroDefaults.defaults.value)
     }
 
+    /** What the phone keeps of the defaults, read as the app reads them. */
+    private fun storedDefaults() = runBlocking { PomodoroDefaultsStore(context, Dispatchers.IO).load() }
+
     private fun signIn(server: ServerUrl) {
-        ServerTrustStore(context).confirmCleartext(server)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(server)
         Session(context).save(server, account.apiToken)
     }
 
-    private fun refresh() = runBlocking { app.accountSettings.refresh().join() }
+    private fun refresh() = runBlocking { app.accountRefresh.refresh().join() }
 
     private fun change(defaults: PomodoroDefaults) {
         lateinit var sending: Job
@@ -223,12 +270,23 @@ class PomodoroDefaultsServerTest {
     }
 
     private fun setOnTheServer(body: JsonObject) {
-        account.client.send("POST", account.client.server.api("me", "preferences"), body, JsonObject.serializer())
+        runBlocking {
+            account.client.send(
+                HttpMethod.POST,
+                account.client.server.api("me", "preferences"),
+                body,
+                JsonObject.serializer(),
+            )
+        }
             .orFail("POST /api/v9/me/preferences")
     }
 
-    private fun preferences(): JsonObject =
-        account.client.get(account.client.server.api("me", "preferences"), JsonObject.serializer()).orFail("GET /api/v9/me/preferences")
+    private fun preferences(): JsonObject = runBlocking {
+        account.client.get(
+            account.client.server.api("me", "preferences"),
+            JsonObject.serializer(),
+        )
+    }.orFail("GET /api/v9/me/preferences")
 
     private fun serverDefaults(): PomodoroDefaults = preferences().pomodoroDefaults()
 
@@ -249,11 +307,20 @@ class PomodoroDefaultsServerTest {
             val headersEnd = stream.indexOf("\r\n\r\n", start)
             check(headersEnd > 0) { "a post without the end of its headers" }
             val length = stream.substring(start, headersEnd).lineSequence()
-                .firstNotNullOfOrNull { line -> line.trim().takeIf { it.startsWith("Content-Length:", ignoreCase = true) } }
+                .firstNotNullOfOrNull { line ->
+                    line.trim().takeIf {
+                        it.startsWith(
+                            "Content-Length:",
+                            ignoreCase = true,
+                        )
+                    }
+                }
                 ?.substringAfter(':')?.trim()?.toInt()
                 ?: error("a post without a Content-Length")
             val bodyStart = headersEnd + 4
-            posts += Json.parseToJsonElement(String(stream.substring(bodyStart, bodyStart + length).toByteArray(Charsets.ISO_8859_1))).jsonObject
+            posts += Json.parseToJsonElement(
+                String(stream.substring(bodyStart, bodyStart + length).toByteArray(Charsets.ISO_8859_1)),
+            ).jsonObject
             from = bodyStart + length
         }
     }

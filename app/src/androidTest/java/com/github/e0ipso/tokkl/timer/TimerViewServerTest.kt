@@ -13,14 +13,18 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.api.HttpMethod
+import com.github.e0ipso.tokkl.api.api
 import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.Session
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -72,13 +76,13 @@ class TimerViewServerTest {
     @Test
     fun aColdStartOpensTheServersCalendar() {
         setOnTheServer("calendar")
-        assertNull("nothing stored on the phone", TimerViewStore(context).load())
+        assertNull("nothing stored on the phone", storedView())
 
         launch {
             awaitSelected(R.string.timer_view_calendar)
             awaitCalendar()
             composeRule.waitUntil("the phone keeps it", TIMEOUT_MS) {
-                TimerViewStore(context).load() == StoredTimerView(TimerView.CALENDAR, unsent = false)
+                storedView() == StoredTimerView(TimerView.CALENDAR, unsent = false)
             }
         }
     }
@@ -107,14 +111,19 @@ class TimerViewServerTest {
      */
     @Test
     fun aViewMissingOnTheServerOpensListOverTheStoredOne() {
-        TimerViewStore(context).save(StoredTimerView(TimerView.CALENDAR, unsent = false))
+        runBlocking {
+            TimerViewStore(
+                context,
+                Dispatchers.IO,
+            ).save(StoredTimerView(TimerView.CALENDAR, unsent = false))
+        }
 
         launch {
             refresh()
 
             awaitSelected(R.string.timer_view_list)
             composeRule.waitUntil("the phone keeps List", TIMEOUT_MS) {
-                TimerViewStore(context).load() == StoredTimerView(TimerView.LIST, unsent = false)
+                storedView() == StoredTimerView(TimerView.LIST, unsent = false)
             }
         }
     }
@@ -134,22 +143,29 @@ class TimerViewServerTest {
             segment(R.string.timer_view_calendar).performSemanticsAction(SemanticsActions.OnClick)
             awaitSelected(R.string.timer_view_calendar)
             composeRule.waitUntil("the phone keeps it unsent", TIMEOUT_MS) {
-                TimerViewStore(context).load() == StoredTimerView(TimerView.CALENDAR, unsent = true)
+                storedView() == StoredTimerView(TimerView.CALENDAR, unsent = true)
             }
 
             scenario.moveToState(Lifecycle.State.CREATED)
             AirplaneMode.set(false, account.client)
             assertEquals("nothing reached the server", null, serverView())
-            assertEquals("the phone still keeps it unsent", StoredTimerView(TimerView.CALENDAR, unsent = true), TimerViewStore(context).load())
+            assertEquals(
+                "the phone still keeps it unsent",
+                StoredTimerView(TimerView.CALENDAR, unsent = true),
+                storedView(),
+            )
 
             scenario.moveToState(Lifecycle.State.RESUMED)
             composeRule.waitUntil("the server has calendar", TIMEOUT_MS) { serverView() == "calendar" }
             composeRule.waitUntil("the phone marks it sent", TIMEOUT_MS) {
-                TimerViewStore(context).load() == StoredTimerView(TimerView.CALENDAR, unsent = false)
+                storedView() == StoredTimerView(TimerView.CALENDAR, unsent = false)
             }
             awaitSelected(R.string.timer_view_calendar)
         }
     }
+
+    /** What the phone keeps of the view, read as the app reads it. */
+    private fun storedView() = runBlocking { TimerViewStore(context, Dispatchers.IO).load() }
 
     private fun launch(steps: (ActivityScenario<MainActivity>) -> Unit) {
         ActivityScenario.launch(MainActivity::class.java).use {
@@ -158,15 +174,26 @@ class TimerViewServerTest {
         }
     }
 
-    private fun refresh() = runBlocking { app.accountSettings.refresh().join() }
+    private fun refresh() = runBlocking { app.accountRefresh.refresh().join() }
 
     private fun setOnTheServer(view: String) {
-        account.client.send("POST", account.client.server.api("me", "preferences"), buildJsonObject { put("timerView", view) }, JsonObject.serializer())
+        runBlocking {
+            account.client.send(
+                HttpMethod.POST,
+                account.client.server.api("me", "preferences"),
+                buildJsonObject { put("timerView", view) },
+                JsonObject.serializer(),
+            )
+        }
             .orFail("POST /api/v9/me/preferences")
     }
 
-    private fun preferences(): JsonObject =
-        account.client.get(account.client.server.api("me", "preferences"), JsonObject.serializer()).orFail("GET /api/v9/me/preferences")
+    private fun preferences(): JsonObject = runBlocking {
+        account.client.get(
+            account.client.server.api("me", "preferences"),
+            JsonObject.serializer(),
+        )
+    }.orFail("GET /api/v9/me/preferences")
 
     private fun serverView(): String? = preferences()["timerView"]?.jsonPrimitive?.content
 
@@ -174,14 +201,18 @@ class TimerViewServerTest {
 
     private fun awaitSelected(@StringRes label: Int) {
         composeRule.waitUntil("${string(label)} is chosen", TIMEOUT_MS) {
-            composeRule.onAllNodes(hasText(string(label)) and isSelectable() and isSelected()).fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodes(
+                hasText(string(label)) and isSelectable() and isSelected(),
+            ).fetchSemanticsNodes().isNotEmpty()
         }
     }
 
     /** The Calendar view shows: its toolbar's arrows are there. */
     private fun awaitCalendar() {
         composeRule.waitUntil("the calendar shows", TIMEOUT_MS) {
-            composeRule.onAllNodes(hasContentDescription(string(R.string.calendar_previous_day))).fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodes(
+                hasContentDescription(string(R.string.calendar_previous_day)),
+            ).fetchSemanticsNodes().isNotEmpty()
         }
     }
 

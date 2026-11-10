@@ -15,7 +15,6 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.HangingRelay
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.RequestCounter
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
@@ -26,13 +25,23 @@ import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.api
+import com.github.e0ipso.tokkl.api.app
 import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.cache.ChangeSender
+import com.github.e0ipso.tokkl.cache.UndoOutcome
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.capabilities
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.deleteUndo
+import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.feature.timer.R
+import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
-import java.time.Instant
-import java.time.temporal.ChronoUnit
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.builtins.ListSerializer
@@ -47,6 +56,9 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.Instant
+import java.time.temporal.ChronoUnit
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * Delete with Undo against the real Tokkl container (docs/PRD.md H3). A delete the server has gets
@@ -66,7 +78,12 @@ class DeleteUndoServerTest {
 
     /** The web app: the same account, straight to the server and past the app's guard. */
     private val web by lazy {
-        TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(account.apiToken), httpClient = OkHttpClient())
+        TogglApiClient(
+            TokklTestServer.url,
+            ApiCredentials.ApiToken(account.apiToken),
+            httpClient = OkHttpClient(),
+            io = Dispatchers.IO,
+        )
     }
 
     @Before
@@ -91,25 +108,29 @@ class DeleteUndoServerTest {
         refresh()
         assertTrue("the server offers restore", app.capabilities.state.value.restore)
 
-        assertTrue(runBlocking { app.changes.delete(id) })
+        assertTrue(runBlocking { app.changes.delete(EntryId(id)) })
         sendTheQueue()
         assertEquals("the server deleted it", 404, (serverEntry(id) as? ApiResult.Failure)?.error?.status())
         assertEquals("into the trash", listOf(id), trash())
 
         val outcome = RequestCounter(TokklTestServer.url, "/api/app/time_entries/$id/restore HTTP/1.1").use { counter ->
             signIn(counter.url)
-            runBlocking { app.sender.undoDelete(id) }.also {
+            runBlocking { app.deleteUndo.undoDelete(EntryId(id)) }.also {
                 assertEquals("one restore request", 1, counter.count)
                 assertEquals(emptyList<String>(), counter.failures)
             }
         }
 
-        assertEquals(ChangeSender.UndoOutcome.Restored, outcome)
+        assertEquals(UndoOutcome.Restored, outcome)
         val restored = (serverEntry(id) as ApiResult.Success).value
         assertEquals("Deleted by mistake", restored.getValue("description").jsonPrimitive.content)
         assertEquals("out of the trash", emptyList<Long>(), trash())
-        val cached = runBlocking { app.cache.entries.first() }.single { it.entry.id == id }
-        assertEquals("the phone shows it again, sent", "Deleted by mistake" to false, cached.entry.description to cached.unsent)
+        val cached = runBlocking { app.cache.entries.first() }.single { it.entry.id.value == id }
+        assertEquals(
+            "the phone shows it again, sent",
+            "Deleted by mistake" to false,
+            cached.entry.description to cached.unsent,
+        )
     }
 
     @Test
@@ -118,25 +139,33 @@ class DeleteUndoServerTest {
         refresh()
         // Nothing listens there, so the sender's try fails before any request reaches a server.
         signIn(NO_ROUTE)
-        assertTrue(runBlocking { app.changes.delete(id) })
-        runBlocking { app.sender.send().join() }
+        assertTrue(runBlocking { app.changes.delete(EntryId(id)) })
+        runBlocking { app.sender.sendAndWait() }
         assertEquals("the delete waits in the queue", 1, unsentCount())
-        assertTrue("gone from the phone", runBlocking { app.cache.entries.first() }.none { it.entry.id == id })
+        assertTrue("gone from the phone", runBlocking { app.cache.entries.first() }.none { it.entry.id.value == id })
 
         val outcome = RequestCounter(TokklTestServer.url, " HTTP/1.1").use { counter ->
             signIn(counter.url)
-            runBlocking { app.sender.undoDelete(id) }.also {
+            runBlocking { app.deleteUndo.undoDelete(EntryId(id)) }.also {
                 // The counter sees every request the app sends while signed in to it, not only
                 // the undo's. Only a request for this entry would be the undo's.
-                assertEquals("no request for the entry", emptyList<String>(), counter.lines.filter { "time_entries/$id" in it })
+                assertEquals(
+                    "no request for the entry",
+                    emptyList<String>(),
+                    counter.lines.filter { "time_entries/$id" in it },
+                )
                 assertEquals(emptyList<String>(), counter.failures)
             }
         }
 
-        assertEquals(ChangeSender.UndoOutcome.Cancelled, outcome)
+        assertEquals(UndoOutcome.Cancelled, outcome)
         assertEquals("the queue is empty", 0, unsentCount())
-        val cached = runBlocking { app.cache.entries.first() }.single { it.entry.id == id }
-        assertEquals("the phone shows it again, as sent", "Kept after all" to false, cached.entry.description to cached.unsent)
+        val cached = runBlocking { app.cache.entries.first() }.single { it.entry.id.value == id }
+        assertEquals(
+            "the phone shows it again, as sent",
+            "Kept after all" to false,
+            cached.entry.description to cached.unsent,
+        )
         signIn(TokklTestServer.url)
         assertTrue("the server never deleted it", serverEntry(id) is ApiResult.Success)
         assertEquals(emptyList<Long>(), trash())
@@ -157,7 +186,7 @@ class DeleteUndoServerTest {
         HangingRelay(TokklTestServer.url).use { relay ->
             signIn(relay.url)
             relay.holdAnswerTo(DELETE)
-            assertTrue(runBlocking { app.changes.delete(id) })
+            assertTrue(runBlocking { app.changes.delete(EntryId(id)) })
             waitUntil("the server deleted the entry and its answer is held") { relay.holdsAnswer }
             assertEquals("the server put it in the trash", listOf(id), trash())
             // The connection drops before the answer reaches the phone, and the network stays quiet.
@@ -174,20 +203,24 @@ class DeleteUndoServerTest {
 
         val outcome = RequestCounter(TokklTestServer.url, "/api/app/time_entries/$id/restore HTTP/1.1").use { counter ->
             signIn(counter.url)
-            runBlocking { app.sender.undoDelete(id) }.also {
+            runBlocking { app.deleteUndo.undoDelete(EntryId(id)) }.also {
                 assertEquals("one restore request", 1, counter.count)
                 assertEquals(emptyList<String>(), counter.failures)
             }
         }
 
-        assertEquals(ChangeSender.UndoOutcome.Restored, outcome)
+        assertEquals(UndoOutcome.Restored, outcome)
         signIn(TokklTestServer.url)
         val restored = serverEntry(id)
         assertTrue("the server has it again: $restored", restored is ApiResult.Success)
         assertEquals("Answer lost", (restored as ApiResult.Success).value.getValue("description").jsonPrimitive.content)
         assertEquals("out of the trash", emptyList<Long>(), trash())
-        val cached = runBlocking { app.cache.entries.first() }.single { it.entry.id == id }
-        assertEquals("the phone shows it again, sent", "Answer lost" to false, cached.entry.description to cached.unsent)
+        val cached = runBlocking { app.cache.entries.first() }.single { it.entry.id.value == id }
+        assertEquals(
+            "the phone shows it again, sent",
+            "Answer lost" to false,
+            cached.entry.description to cached.unsent,
+        )
     }
 
     /**
@@ -209,7 +242,7 @@ class DeleteUndoServerTest {
                 // A read right before, so the delete goes out on a pooled connection.
                 refresh()
                 relay.dropAnswerTo(DELETE)
-                assertTrue(runBlocking { app.changes.delete(id) })
+                assertTrue(runBlocking { app.changes.delete(EntryId(id)) })
                 sendTheQueue()
 
                 assertEquals("the relay dropped the delete's answer", 1, relay.droppedAnswers)
@@ -220,10 +253,13 @@ class DeleteUndoServerTest {
         signIn(TokklTestServer.url)
         assertEquals("the server put it in the trash", listOf(id), trash())
 
-        assertEquals(ChangeSender.UndoOutcome.Restored, runBlocking { app.sender.undoDelete(id) })
+        assertEquals(UndoOutcome.Restored, runBlocking { app.deleteUndo.undoDelete(EntryId(id)) })
         val restored = serverEntry(id)
         assertTrue("the server has it again: $restored", restored is ApiResult.Success)
-        assertEquals("Connection dropped", (restored as ApiResult.Success).value.getValue("description").jsonPrimitive.content)
+        assertEquals(
+            "Connection dropped",
+            (restored as ApiResult.Success).value.getValue("description").jsonPrimitive.content,
+        )
         assertEquals("out of the trash", emptyList<Long>(), trash())
     }
 
@@ -240,12 +276,14 @@ class DeleteUndoServerTest {
         ActivityScenario.launch(MainActivity::class.java).use {
             composeRule.awaitTimerPage(LOAD_TIMEOUT_MS)
             composeRule.waitUntil("the entry shows", LOAD_TIMEOUT_MS) { inList("Menu entry") }
-            composeRule.onNode(hasContentDescription(more) and hasClickAction()).performSemanticsAction(SemanticsActions.OnClick)
+            composeRule.onNode(
+                hasContentDescription(more) and hasClickAction(),
+            ).performSemanticsAction(SemanticsActions.OnClick)
             composeRule.onNode(hasText(context.getString(R.string.history_delete)) and hasClickAction())
                 .performSemanticsAction(SemanticsActions.OnClick)
 
             composeRule.waitUntil("the entry goes", LOAD_TIMEOUT_MS) { !inList("Menu entry") }
-            val undo = hasText(context.getString(R.string.history_undo)) and hasClickAction()
+            val undo = hasText(context.getString(UiR.string.history_undo)) and hasClickAction()
             val message = SemanticsMatcher.keyIsDefined(SemanticsProperties.LiveRegion) and
                 hasAnyDescendant(hasText(context.getString(R.string.history_deleted))) and hasAnyDescendant(undo)
             composeRule.waitUntil("the message and its Undo show in a live region", LOAD_TIMEOUT_MS) {
@@ -266,16 +304,20 @@ class DeleteUndoServerTest {
     }
 
     private fun serverEntry(id: Long): ApiResult<JsonObject> =
-        web.get(web.server.api("me", "time_entries", id.toString()), JsonObject.serializer())
+        runBlocking { web.get(web.server.api("me", "time_entries", id.toString()), JsonObject.serializer()) }
 
     /** The ids in the account's trash, Tokkl's `GET /api/app/trash`. */
-    private fun trash(): List<Long> =
-        web.get(web.server.app("trash"), ListSerializer(JsonObject.serializer())).orFail("GET /api/app/trash")
-            .map { it.getValue("id").jsonPrimitive.long }
+    private fun trash(): List<Long> = runBlocking {
+        web.get(
+            web.server.app("trash"),
+            ListSerializer(JsonObject.serializer()),
+        )
+    }.orFail("GET /api/app/trash")
+        .map { it.getValue("id").jsonPrimitive.long }
 
     private fun ApiError.status(): Int? = (this as? ApiError.Http)?.status
 
-    private fun refresh() = runBlocking { app.accountSettings.refresh().join() }
+    private fun refresh() = runBlocking { app.accountRefresh.refresh().join() }
 
     private fun unsentCount(): Int = runBlocking { app.changes.unsentCount.first() }
 
@@ -284,12 +326,12 @@ class DeleteUndoServerTest {
         val deadline = System.nanoTime() + LOAD_TIMEOUT_MS * 1_000_000
         while (unsentCount() > 0) {
             check(System.nanoTime() < deadline) { "the queue did not empty" }
-            runBlocking { app.sender.send().join() }
+            runBlocking { app.sender.sendAndWait() }
         }
     }
 
     private fun signIn(server: ServerUrl) {
-        ServerTrustStore(context).confirmCleartext(server)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(server)
         Session(context).save(server, account.apiToken)
     }
 

@@ -3,7 +3,7 @@ package com.github.e0ipso.tokkl
 import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.timerstate.TimerActionResult
+import com.github.e0ipso.tokkl.core.timersync.R as TimerNoticeR
 
 /**
  * Reads the toast in which the native timer surfaces say that a server action did not go through.
@@ -16,7 +16,7 @@ object TimerActionToasts {
 
     /** The offline message every timer action uses. */
     @get:StringRes
-    val offline: Int get() = TimerActionResult.Offline.message
+    val offline: Int get() = TimerNoticeR.string.timer_action_offline
 
     /**
      * Runs [action] and waits until the platform holds this app's long text toast [text]. A toast
@@ -39,8 +39,11 @@ object TimerActionToasts {
         throw AssertionError("Expected the toast '$expected'; platform toasts: ${toasts()}")
     }
 
-    private fun shows(expected: String): Boolean =
-        toasts().any { it.contains(":${context.packageName}/") && it.contains(" text=$expected duration=${Toast.LENGTH_LONG}}") }
+    private fun shows(expected: String): Boolean = toasts().any {
+        it.contains(
+            ":${context.packageName}/",
+        ) && it.contains(" text=$expected duration=${Toast.LENGTH_LONG}}")
+    }
 
     private fun toasts(): List<String> =
         DeviceShell.run("dumpsys notification").lineSequence().filter { it.contains("TextToastRecord{") }.toList()

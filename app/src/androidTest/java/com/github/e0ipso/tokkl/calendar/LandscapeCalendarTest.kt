@@ -28,36 +28,41 @@ import androidx.compose.ui.unit.DpRect
 import androidx.core.view.WindowCompat
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
-import com.github.e0ipso.tokkl.SignedInFrame
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.accessibility.createEmptyComposeRule
 import com.github.e0ipso.tokkl.awaitText
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.entry.EntryLabels
-import com.github.e0ipso.tokkl.navigation.TopLevelPage
+import com.github.e0ipso.tokkl.entries.WeekSource
+import com.github.e0ipso.tokkl.entryfields.EntryLabels
+import com.github.e0ipso.tokkl.feature.timer.R
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
+import com.github.e0ipso.tokkl.model.WorkspaceId
+import com.github.e0ipso.tokkl.navhost.SignedInFrame
+import com.github.e0ipso.tokkl.navigation.Route
+import com.github.e0ipso.tokkl.navigation.topLevelPages
 import com.github.e0ipso.tokkl.session.AccountSettings
-import com.github.e0ipso.tokkl.timer.TimerTotals
-import kotlinx.coroutines.flow.MutableStateFlow
-import java.time.Clock
 import com.github.e0ipso.tokkl.timer.TimerBarContent
 import com.github.e0ipso.tokkl.timer.TimerScreen
 import com.github.e0ipso.tokkl.timer.TimerState
+import com.github.e0ipso.tokkl.timer.TimerTotalsOf
 import com.github.e0ipso.tokkl.timer.TimerView
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklSpacing
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import java.time.DayOfWeek
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneOffset
-import kotlin.math.abs
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.Clock
+import java.time.DayOfWeek
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
+import kotlin.math.abs
 
 /**
  * The Timer page's Calendar view on a phone held sideways, a window of compact height (docs/PRD.md
@@ -137,7 +142,9 @@ abstract class LandscapeCalendarTest(
                 )
             }
             // The page's column, which holds the view switch, ends right above the bottom bar.
-            val page = composeRule.onNode(hasScrollAction() and hasAnyDescendant(hasText(string(R.string.timer_view_list)) and isSelectable()))
+            val page = composeRule.onNode(
+                hasScrollAction() and hasAnyDescendant(hasText(string(R.string.timer_view_list)) and isSelectable()),
+            )
             val pageBottom = page.fetchSemanticsNode().boundsInRoot.bottom
             // From the bottom of the calendar up the window, as a thumb scrolls on through the day.
             composeRule.onRoot().performTouchInput {
@@ -147,7 +154,8 @@ abstract class LandscapeCalendarTest(
 
             val shown = grid.getBoundsInRoot()
             assertTrue(
-                "the grid shows $hourRows whole hour rows: ${shown.height()} tall after the scroll, ${before.height()} before",
+                "the grid shows $hourRows whole hour rows: ${shown.height()} tall after the scroll, " +
+                    "${before.height()} before",
                 shown.height() >= HOUR_ROW * hourRows,
             )
             val head = composeRule.onNode(dayHead)
@@ -171,7 +179,10 @@ abstract class LandscapeCalendarTest(
             string(label) to composeRule.onNode(hasContentDescription(string(label)) and hasClickAction())
         }
         val current = string(thisWeek).let { it to composeRule.onNode(hasText(it) and hasClickAction()) }
-        val totals = listOf("timer_totals_today", "timer_totals_week").map { tag -> tag to composeRule.onNodeWithTag(tag) }
+        val totals = listOf(
+            "timer_totals_today",
+            "timer_totals_week",
+        ).map { tag -> tag to composeRule.onNodeWithTag(tag) }
         return segments + arrows + current + totals
     }
 
@@ -212,7 +223,12 @@ class LargestFontLandscapeCalendarTest : LandscapeCalendarTest(fontScale = Syste
  * sideways, so the title, the timer, the switch and the toolbar scroll away there too, and the grid
  * shows eight hour rows.
  */
-class LargestFontUprightCalendarTest : LandscapeCalendarTest(fontScale = SystemFontScale.LARGEST, hourRows = 8, landscape = false)
+class LargestFontUprightCalendarTest :
+    LandscapeCalendarTest(
+        fontScale = SystemFontScale.LARGEST,
+        hourRows = 8,
+        landscape = false,
+    )
 
 /**
  * On a phone held upright at the usual font scale, the title, the timer and the switch scroll
@@ -226,17 +242,17 @@ class UsualFontUprightCalendarTest : LandscapeCalendarTest(fontScale = 1f, hourR
  */
 @Composable
 private fun CalendarPage() {
-    SignedInFrame(current = TopLevelPage.TIMER, onOpen = {}) {
+    SignedInFrame(pages = topLevelPages, current = Route.Timer, onOpen = {}) {
         TimerScreen(
             view = TimerView.CALENDAR,
             onViewChange = {},
             timer = {
                 Column {
                     TimerBarContent(
-                        state = TimerState.Idle(EntryFields(), EntryLabels(), workspaceId = 1),
+                        state = TimerState.Idle(EntryFields(), EntryLabels(), workspaceId = WorkspaceId(1)),
                         elapsedSeconds = 0,
                         onDescriptionChange = {},
-                        onDescriptionDone = {},
+                        onDescriptionFinish = {},
                         onPick = {},
                         onBillableChange = {},
                         onStart = {},
@@ -244,7 +260,7 @@ private fun CalendarPage() {
                         onAddEntry = {},
                         picker = { _, _, _, _, _ -> },
                     )
-                    TimerTotals(
+                    TimerTotalsOf(
                         entries = TOTAL_ROWS,
                         settings = TOTAL_SETTINGS,
                         clock = Clock.fixed(NOON, ZoneOffset.UTC),
@@ -253,7 +269,15 @@ private fun CalendarPage() {
             },
             listContent = {},
             calendarContent = {
-                CalendarContent(state = WEEK, now = NOON, onStep = {}, onSelect = {}, onToday = {}, onRetry = {}, editing = INERT_EDITING)
+                CalendarContent(
+                    state = WEEK,
+                    now = NOON,
+                    onStep = {},
+                    onSelect = {},
+                    onToday = {},
+                    onRetry = {},
+                    editing = INERT_EDITING,
+                )
             },
         )
     }
@@ -291,20 +315,22 @@ private val WEEK = CalendarState.Shown(
 )
 
 private fun entry(id: Long, description: String, start: String, stop: String, allDay: Boolean = false) = CalendarEntry(
-    id = id,
+    id = EntryId(id),
     description = description,
     project = "Tokkl for Android",
     projectColor = "#0b83d9",
     task = null,
-    start = Instant.parse(start),
-    stop = Instant.parse(stop),
+    timing = EntryTiming.of(
+        Instant.parse(start),
+        Instant.parse(stop),
+        allDay,
+        if (allDay) LocalDate.parse(start.substringBefore('T')) else null,
+    ),
     unsent = false,
-    allDay = allDay,
-    day = if (allDay) LocalDate.parse(start.substringBefore('T')) else null,
 )
 
 // Keep the real totals in every usual/large-font calendar positioning regression.
-private val TOTAL_ROWS = MutableStateFlow(emptyList<com.github.e0ipso.tokkl.cache.CachedTimeEntry>())
+private val TOTAL_ROWS = MutableStateFlow(emptyList<com.github.e0ipso.tokkl.model.TimeEntry>())
 private val TOTAL_SETTINGS = MutableStateFlow<AccountSettings?>(
     AccountSettings("UTC", DayOfWeek.MONDAY, null),
 )

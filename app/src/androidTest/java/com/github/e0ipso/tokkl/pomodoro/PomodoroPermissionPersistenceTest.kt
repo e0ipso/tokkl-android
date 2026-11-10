@@ -6,6 +6,8 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.notification.NotificationPermissionAsk
 import com.github.e0ipso.tokkl.notification.NotificationPermissionStore
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -33,22 +35,24 @@ class PomodoroPermissionPersistenceTest {
         assertTrue(editor.commit())
     }
 
-    @Test fun diskRecordSurvivesFreshStoreAndCoordinatorInstances() {
+    @Test fun diskRecordSurvivesFreshStoreAndCoordinatorInstances() = runBlocking<Unit> {
         // Explicit API value exercises durable request history even on the API 31 test device.
-        val first = NotificationPermissionAsk(33, NotificationPermissionStore(context)) { false }
+        val first = ask(NotificationPermissionStore(context, Dispatchers.IO))
         assertTrue(first.atStartInApp())
         first.requested()
         val recreatedContext = context.createPackageContext(context.packageName, 0)
-        val restarted = NotificationPermissionAsk(33, NotificationPermissionStore(recreatedContext)) { false }
+        val restarted = ask(NotificationPermissionStore(recreatedContext, Dispatchers.IO))
         assertFalse(restarted.atStartInApp())
-        assertTrue(NotificationPermissionStore(recreatedContext).asked())
+        assertTrue(NotificationPermissionStore(recreatedContext, Dispatchers.IO).asked())
     }
 
-    @Test fun signOutKeepsTheDevicePermissionHistoryForTheNextAccount() {
-        NotificationPermissionStore(context).markAsked()
+    @Test fun signOutKeepsTheDevicePermissionHistoryForTheNextAccount() = runBlocking<Unit> {
+        NotificationPermissionStore(context, Dispatchers.IO).markAsked()
         SessionRule.signOut()
-        assertTrue(NotificationPermissionStore(context).asked())
-        assertFalse(NotificationPermissionAsk(33, NotificationPermissionStore(context)) { false }.atStartInApp())
+        assertTrue(NotificationPermissionStore(context, Dispatchers.IO).asked())
+        assertFalse(ask(NotificationPermissionStore(context, Dispatchers.IO)).atStartInApp())
     }
 
+    /** The question on Android 13, before notifications are allowed, with its record in [store]. */
+    private fun ask(store: NotificationPermissionStore) = NotificationPermissionAsk(33, store, Dispatchers.IO) { false }
 }

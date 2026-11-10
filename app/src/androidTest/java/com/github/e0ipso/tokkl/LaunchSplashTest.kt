@@ -9,13 +9,14 @@ import android.graphics.Color
 import android.util.TypedValue
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.test.platform.app.InstrumentationRegistry
-import kotlin.math.abs
-import kotlin.math.hypot
+import com.github.e0ipso.tokkl.core.ui.R
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import kotlin.math.abs
+import kotlin.math.hypot
 
 /**
  * The launch splash (docs/PRD.md, Visual direction, Wordmark): Android 12 and later draw it from
@@ -53,11 +54,25 @@ class LaunchSplashTest {
             val shown = Bounds.of(icon) { alpha(it) > 0 }
             val mode = if (dark) "dark" else "light"
             val wordmark = if (dark) Bounds.of(render(dark = false)) { alpha(it) > 0 } else shown
-            assertEquals("$mode: the wordmark's share of the square", WORDMARK_SHARE, wordmark.width / SIZE.toFloat(), SHARE_SLACK)
-            assertEquals("$mode: the wordmark keeps its shape", WORDMARK_ASPECT_RATIO, wordmark.width / wordmark.height, 0.03f)
+            assertEquals(
+                "$mode: the wordmark's share of the square",
+                WORDMARK_SHARE,
+                wordmark.width / SIZE.toFloat(),
+                SHARE_SLACK,
+            )
+            assertEquals(
+                "$mode: the wordmark keeps its shape",
+                WORDMARK_ASPECT_RATIO,
+                wordmark.width / wordmark.height,
+                0.03f,
+            )
             val radius = CIRCLE_SHARE * SIZE / 2
             val outside = (shown.top..shown.bottom).flatMap { y -> (shown.left..shown.right).map { x -> x to y } }
-                .filter { (x, y) -> alpha(icon.getPixel(x, y)) > 0 && hypot(x + 0.5f - SIZE / 2f, y + 0.5f - SIZE / 2f) > radius }
+                .filter { (x, y) ->
+                    alpha(
+                        icon.getPixel(x, y),
+                    ) > 0 && hypot(x + 0.5f - SIZE / 2f, y + 0.5f - SIZE / 2f) > radius
+                }
             assertTrue("$mode: the icon draws outside the circle at ${outside.take(5)}", outside.isEmpty())
         }
     }
@@ -78,7 +93,11 @@ class LaunchSplashTest {
                 if (alpha(light.getPixel(x, y)) > 0) continue
                 val pixel = dark.getPixel(x, y)
                 if (alpha(pixel) == 0) continue
-                if (near(pixel, halo)) ring++ else if (alpha(pixel) == 255) stray++
+                if (near(pixel, halo)) {
+                    ring++
+                } else if (alpha(pixel) == 255) {
+                    stray++
+                }
             }
         }
         assertTrue("only $ring pixels of halo around the wordmark", ring > MIN_HALO_PIXELS)
@@ -89,17 +108,29 @@ class LaunchSplashTest {
         val theme = inMode(dark).apply { setTheme(R.style.Theme_Tokkl) }.theme
         val value = TypedValue()
 
-        assertTrue("the theme sets a splash icon", theme.resolveAttribute(android.R.attr.windowSplashScreenAnimatedIcon, value, true))
+        assertTrue(
+            "the theme sets a splash icon",
+            theme.resolveAttribute(android.R.attr.windowSplashScreenAnimatedIcon, value, true),
+        )
         assertEquals("the splash icon", R.drawable.splash_wordmark, value.resourceId)
 
-        assertTrue("the theme sets a splash background", theme.resolveAttribute(android.R.attr.windowSplashScreenBackground, value, true))
+        assertTrue(
+            "the theme sets a splash background",
+            theme.resolveAttribute(android.R.attr.windowSplashScreenBackground, value, true),
+        )
         assertEquals("the splash background", hex(inMode(dark).getColor(R.color.window_background)), hex(value.data))
 
         val branded = theme.resolveAttribute(android.R.attr.windowSplashScreenBrandingImage, value, true) &&
             value.type != TypedValue.TYPE_NULL && value.resourceId != 0
         assertTrue("the splash has a branding image", !branded)
-        val iconBackground = theme.resolveAttribute(android.R.attr.windowSplashScreenIconBackgroundColor, value, true) &&
-            value.type in TypedValue.TYPE_FIRST_COLOR_INT..TypedValue.TYPE_LAST_COLOR_INT && Color.alpha(value.data) != 0
+        val iconBackground = theme.resolveAttribute(
+            android.R.attr.windowSplashScreenIconBackgroundColor,
+            value,
+            true,
+        ) &&
+            value.type in TypedValue.TYPE_FIRST_COLOR_INT..TypedValue.TYPE_LAST_COLOR_INT && Color.alpha(
+                value.data,
+            ) != 0
         assertTrue("the splash icon has a background", !iconBackground)
     }
 

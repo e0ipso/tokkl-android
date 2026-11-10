@@ -15,7 +15,7 @@ acceptance, rendered contrast and actual TalkBack observations all await the fin
 
 ## Maintained checks
 
-`AccessibilityTestRunner` enables Espresso's accessibility checks from the root View.
+`AccessibilityTestRunner` in `:core:testing` enables Espresso's accessibility checks from the root View. The app's `TokklTestRunner` extends it, and every feature module's instrumented tests run it.
 The audit tests import factories from `accessibility/AccessibilityComposeRules.kt`. They
 retain the v2 Compose rules and enable the maintained Compose ATF integration. Actions run
 checks before changing the UI. Explicit `checkAccessibility()` calls also cover static and
@@ -85,12 +85,12 @@ that it displays that state. Verify only states actually presented there.
 | State and every identified presentation | Source cue and audit location |
 | --- | --- |
 | Running: Timer bar | `timer/TimerBar.kt` `RunningLabel`: running text, Stop action and elapsed clock |
-| Running: bar and rail | `navigation/AppNavigation.kt`: badge shape and Timer `stateDescription` |
+| Running: bar and rail | `navhost/AppNavigation.kt`: badge shape and Timer `stateDescription` |
 | Running: calendar block/day | `calendar/WeekCalendar.kt`: dashed outline and `spokenBlock` running words; check narrow blocks too |
 | Running: notification/reminder | `notification/RunningNotifier.kt`: stopwatch notification, elapsed clock, Stop; `reminder/ReminderNotifier.kt`: running reminder text and Stop/Keep running actions |
 | Running: widget | `widget/TokklWidget.kt`: idle/running words and play/stop controls; verify signed-out/no-favourite states too |
 | Running: tile | `tile/RunningTileLook.kt`: state-specific label/subtitle/icon/content description for running, continue and unavailable |
-| Billable: timer and entry field editors | `entry/EntryFieldsEditor.kt` `BillableToggle`: check/dollar icon, Billable label, checkbox role and checked state |
+| Billable: timer and entry field editors | `entryfields/EntryFieldButtons.kt` `BillableToggle`: check/dollar icon, Billable label, checkbox role and checked state |
 | Billable: history individual/group/member | `history/HistoryList.kt`: Billable words on the presented entry; inspect expanded and collapsed groups |
 | Billable: project list and form | `projects/ProjectsScreen.kt`: Billable text; `projects/ProjectForm.kt`: labelled checked option row |
 | Billable: report totals/chart/filter | `reports/SummaryContent.kt`: Billable time text and striped non-billable chart portion; `reports/FilterControl.kt`: named radio choices and textual active-filter summary |

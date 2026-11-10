@@ -19,9 +19,9 @@ kk_relates_to:
 kk_depends_on: []
 kk_confidence: high
 ---
-Every run goes in one piece. A Gradle pass does not prove the tests ran. With the emulator killed a second into a run, Gradle printed BUILD SUCCESSFUL and had run none of its 32 tests. With another copy of the app on the device, signed with another key, AGP logged `AndroidTestRunner failed` and `INSTALL_FAILED_UPDATE_INCOMPATIBLE`, ran nothing and still passed. So after Gradle the script fails the run when `adb get-state` shows a test device went away, when the Gradle log holds `AndroidTestRunner failed`, and when `app/build/outputs/androidTest-results/connected/debug` holds fewer JUnit XML files than there are devices or one of them reports zero tests. It deletes that directory before Gradle starts, so an old run's results never count. Outside the script, read the test count, not the BUILD line.
+Every run goes in one piece. A Gradle pass does not prove the tests ran. With the emulator killed a second into a run, Gradle printed BUILD SUCCESSFUL and had run none of its 32 tests. With another copy of the app on the device, signed with another key, AGP logged `AndroidTestRunner failed` and `INSTALL_FAILED_UPDATE_INCOMPATIBLE`, ran nothing and still passed. So after Gradle the script fails the run when `adb get-state` shows a test device went away, when the Gradle log holds `AndroidTestRunner failed`, and when a test module's `build/outputs/androidTest-results/connected/debug` holds fewer JUnit XML files than there are devices, or, outside a sharded run, one of them reports zero tests. A shard can hold none of a small feature module's tests, so a sharded run only needs tests in the run as a whole. It deletes those directories before Gradle starts, so an old run's results never count. Outside the script, read the test count, not the BUILD line.
 
-`app/build.gradle.kts` sets `execution = "ANDROIDX_TEST_ORCHESTRATOR"`, so every test runs in a new app process. The `*RestartTest` classes need that to prove state survives a process restart.
+`app/build.gradle.kts` sets `execution = "ANDROIDX_TEST_ORCHESTRATOR"`, and the feature convention sets it for the feature modules, so every test runs in a new process. The `*RestartTest` classes need that to prove state survives a process restart.
 
 <!-- kk:related:start -->
 # Related

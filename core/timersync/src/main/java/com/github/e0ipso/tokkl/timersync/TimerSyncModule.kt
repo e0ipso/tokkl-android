@@ -1,0 +1,62 @@
+package com.github.e0ipso.tokkl.timersync
+
+import android.os.SystemClock
+import com.github.e0ipso.tokkl.cache.ChangeSender
+import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
+import com.github.e0ipso.tokkl.platform.AppHook
+import com.github.e0ipso.tokkl.platform.DefaultDispatcher
+import com.github.e0ipso.tokkl.platform.io
+import com.github.e0ipso.tokkl.session.AccountDataOwner
+import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.plus
+import org.koin.android.ext.koin.androidContext
+import org.koin.dsl.bind
+import org.koin.dsl.module
+
+val timerSyncModule = module {
+    single {
+        TimerEventConnections(
+            session = get(),
+            scope = CoroutineScope(SupervisorJob() + get<CoroutineDispatcher>(DefaultDispatcher)),
+            io = io(),
+        )
+    }
+
+    // Its state changes one at a time on a view of [DefaultDispatcher] that runs one task at a
+    // time, not on the main thread, with its reconnect delays. Its clock is elapsedRealtime,
+    // which counts deep sleep too, so a stream that went quiet while the phone slept counts as
+    // silent for all of it once the phone wakes.
+    single {
+        val oneAtATime = get<CoroutineDispatcher>(DefaultDispatcher).limitedParallelism(1)
+        TimerSync(
+            scope = CoroutineScope(SupervisorJob() + oneAtATime),
+            now = SystemClock::elapsedRealtime,
+            connections = get<TimerEventConnections>()::open,
+        )
+    }
+
+    single {
+        val context = androidContext()
+        TimerSyncFollower(
+            startService = { TimerSyncService.start(context) },
+            signedIn = get<Session>()::isSignedIn,
+            timerState = get<AccountTimerStates>()::intake,
+            timerSync = get(),
+            timerApi = get<CapabilitiesSource>()::offersTimerApi,
+            signInNeeded = get<ChangeSender>().signInNeeded,
+            syncWatcher = get(),
+            // A refused credential on the stream pauses the queue, as the queue's own refusal does.
+            refusal = get<ChangeSender>()::signInRefused,
+            scope = get<CoroutineScope>() + io(),
+        )
+    } bind AccountDataOwner::class
+    // Every start of MainActivity, a rotation's too, starts the timer sync service when it should
+    // run, since the app is on screen and the platform lets it start, also offline.
+    single { TimerSyncHook(inject()) } bind AppHook::class
+
+    single { CapabilitiesSignOut(get<CapabilitiesSource>()::forget, get(), get()) } bind AccountDataOwner::class
+}

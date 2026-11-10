@@ -8,19 +8,20 @@ import androidx.test.runner.lifecycle.Stage
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.Until
-import androidx.work.testing.WorkManagerTestInitHelper
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.components.heldTimerState
+import com.github.e0ipso.tokkl.components.initializeTestWorkManager
+import com.github.e0ipso.tokkl.components.pomodoroSessionNotification
+import com.github.e0ipso.tokkl.components.signOut
+import com.github.e0ipso.tokkl.model.PhaseTransition
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
-import com.github.e0ipso.tokkl.timerstate.PhaseTransition
 import com.github.e0ipso.tokkl.timerstate.TimerStateStore
-import java.io.File
-import java.time.Duration
-import java.util.Properties
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -30,6 +31,9 @@ import org.junit.Assert.assertTrue
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
+import java.io.File
+import java.time.Duration
+import java.util.Properties
 
 /**
  * The session notification across a process restart, from the stored timer state rather than any
@@ -44,36 +48,40 @@ class PomodoroSessionNotificationRestartTest {
     private val manager = context.getSystemService(NotificationManager::class.java)
     private val handover = File(context.cacheDir, "PomodoroSessionNotificationRestartTest.properties")
 
-    @Test fun step1PostsAHeldSessionAndLeavesItsImmutableTapForTheNextProcess() {
+    @Test fun step1PostsAHeldSessionAndLeavesItsImmutableTapForTheNextProcess() = runBlocking<Unit> {
         SessionRule.signOut()
-        ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(TokklTestServer.url)
         Session(context).save(TokklTestServer.url, TokklTestServer.apiToken)
         HeldPhases.learnTheTimerApi()
         RunningNotifications.allow()
         // Two hours of a three-hour work phase are left, so nothing rings across the restart.
-        val held = HeldPhases.hold(PhaseTransition.WORK_TO_SHORT_REST, overtime = Duration.ofHours(-2), length = Duration.ofHours(3))
-        runBlocking { app.pomodoroSessionNotification.refresh(force = true) }
+        val held = HeldPhases.hold(
+            PhaseTransition.WORK_TO_SHORT_REST,
+            overtime = Duration.ofHours(-2),
+            length = Duration.ofHours(3),
+        )
+        app.pomodoroSessionNotification.refresh(force = true)
         val posted = manager.activeNotifications.single { it.id == PomodoroSessionNotifier.NOTIFICATION_ID }
-        val identity = checkNotNull(PomodoroSessionNotificationStore(context).load()).account
+        val identity = checkNotNull(PomodoroSessionNotificationStore(context, Dispatchers.IO).load()).account
         Properties().apply {
             setProperty("process", processIdentity())
             setProperty("account", identity)
             setProperty("posted", posted.postTime.toString())
             setProperty("phase", HeldPhases.key(held).start.toEpochMilli().toString())
-            setProperty("revision", held.state.revision.toString())
+            setProperty("revision", held.revision.toString())
             handover.outputStream().use { store(it, null) }
         }
     }
 
     @Test fun step2TheStoredStateKeepsTheNotificationAndItsTapOpensPomodoroThenSignOutErasesIt() {
         assertTrue("step 1 must precede step 2", handover.exists())
-        WorkManagerTestInitHelper.initializeTestWorkManager(context)
+        initializeTestWorkManager(context)
         val saved = Properties().apply { handover.inputStream().use { load(it) } }
         try {
             assertNotEquals(saved.getProperty("process"), processIdentity())
             // The new process holds the stored state, with no request for it.
-            val held = checkNotNull(app.timerState.state.value)
-            assertEquals(saved.getProperty("revision").toLong(), held.state.revision)
+            val held = checkNotNull(app.heldTimerState)
+            assertEquals(saved.getProperty("revision").toLong(), held.revision)
             val phase = HeldPhases.key(held)
             assertEquals(saved.getProperty("phase").toLong(), phase.start.toEpochMilli())
             assertTrue(runBlocking { app.pomodoroSessionNotification.acceptsTap(saved.getProperty("account"), phase) })
@@ -90,9 +98,9 @@ class PomodoroSessionNotificationRestartTest {
                     .filterIsInstance<MainActivity>().forEach { it.finish() }
             }
             runBlocking { app.signOut.run() }
-            assertNull(PomodoroSessionNotificationStore(context).load())
-            assertNull(TimerStateStore(context).load())
-            assertNull(app.timerState.state.value)
+            runBlocking { assertNull(PomodoroSessionNotificationStore(context, Dispatchers.IO).load()) }
+            assertNull(TimerStateStore(context, Dispatchers.IO).load())
+            assertNull(app.heldTimerState)
             assertFalse(manager.activeNotifications.any { it.id == PomodoroSessionNotifier.NOTIFICATION_ID })
             assertTrue(handover.delete())
             assertFalse(handover.exists())

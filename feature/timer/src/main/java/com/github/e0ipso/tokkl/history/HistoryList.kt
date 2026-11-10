@@ -1,0 +1,325 @@
+package com.github.e0ipso.tokkl.history
+
+import android.content.res.Resources
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
+import com.github.e0ipso.tokkl.entries.OlderDays
+import com.github.e0ipso.tokkl.favorites.FavoritesState
+import com.github.e0ipso.tokkl.feature.timer.R
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.ui.DateWords
+import com.github.e0ipso.tokkl.ui.daySticker
+import com.github.e0ipso.tokkl.ui.spokenDuration
+import com.github.e0ipso.tokkl.ui.theme.TokklTheme
+import java.time.LocalDate
+import com.github.e0ipso.tokkl.core.ui.R as UiR
+
+/**
+ * The history in the Timer page's List view, for [state]: the days with entries, newest first,
+ * and at the end the older days, which [onLoadOlder] loads from the server as the end shows
+ * (docs/PRD.md H2, H3, H5, H6, T2). With [pin], when the server keeps Tokkl's timer templates, an
+ * entry's menu also saves it as one (T5).
+ */
+@Composable
+fun HistoryList(
+    state: HistoryState,
+    onLoadOlder: () -> Unit,
+    onEdit: (EntryId) -> Unit,
+    onContinue: (EntryId) -> Unit,
+    onDuplicate: (EntryId) -> Unit,
+    onSplit: (EntryId) -> Unit,
+    onDelete: (EntryId) -> Unit,
+    modifier: Modifier = Modifier,
+    pin: PinAction? = null,
+) {
+    Box(modifier.fillMaxSize()) {
+        HistoryContent(
+            state = state,
+            onLoadOlder = onLoadOlder,
+            onEdit = onEdit,
+            onContinue = onContinue,
+            onDuplicate = onDuplicate,
+            onSplit = onSplit,
+            onDelete = onDelete,
+            pin = pin,
+        )
+    }
+}
+
+/**
+ * The menu's Save as template: [onPin] gets the entry's id, and [enabled] is false while another
+ * change to the templates is on its way to the server.
+ */
+class PinAction(val enabled: Boolean, val onPin: (EntryId) -> Unit)
+
+/** Save as template through [onPin], or null when the server keeps no timer [templates]. */
+fun pinAction(templates: FavoritesState, onPin: (EntryId) -> Unit): PinAction? =
+    if (templates.available) PinAction(enabled = !templates.saving, onPin = onPin) else null
+
+/** [HistoryList] without its models. Without [pin], the menu offers no Save as template. */
+@Composable
+fun HistoryContent(
+    state: HistoryState,
+    onLoadOlder: () -> Unit,
+    modifier: Modifier = Modifier,
+    onEdit: (EntryId) -> Unit = {},
+    onContinue: (EntryId) -> Unit = {},
+    onDuplicate: (EntryId) -> Unit = {},
+    onSplit: (EntryId) -> Unit = {},
+    onDelete: (EntryId) -> Unit = {},
+    pin: PinAction? = null,
+) {
+    when (state) {
+        // The cache reads in moments, so this shows nothing rather than a flash of a spinner.
+        HistoryState.Loading -> Unit
+
+        is HistoryState.NoAccountTime -> Column(modifier.fillMaxSize()) {
+            Text(
+                stringResource(R.string.history_unknown_time_zone, state.timeZone),
+                style = MaterialTheme.typography.bodyLarge,
+            )
+        }
+
+        is HistoryState.Shown -> Days(
+            state,
+            onLoadOlder,
+            EntryCallbacks(onEdit, onContinue, onDuplicate, onSplit, onDelete, pin),
+            modifier,
+        )
+    }
+}
+
+internal class EntryCallbacks(
+    val onEdit: (EntryId) -> Unit,
+    val onContinue: (EntryId) -> Unit,
+    val onDuplicate: (EntryId) -> Unit,
+    val onSplit: (EntryId) -> Unit,
+    val onDelete: (EntryId) -> Unit,
+    val pin: PinAction?,
+)
+
+@Composable
+private fun Days(
+    state: HistoryState.Shown,
+    onLoadOlder: () -> Unit,
+    callbacks: EntryCallbacks,
+    modifier: Modifier = Modifier,
+) {
+    val resources = LocalResources.current
+    val locale = LocalConfiguration.current.locales[0]
+    val words = remember(resources) { DateWords(resources) }
+    val listState = rememberLazyListState()
+    val olderShows by remember(listState) {
+        derivedStateOf { listState.layoutInfo.visibleItemsInfo.any { it.key == OLDER_KEY } }
+    }
+    val older = state.older
+    // Scrolling to the end is the event that loads older days. A page that leaves the end in
+    // view loads the next one, until the server has no more or a page comes back empty.
+    LaunchedEffect(olderShows, older) {
+        if (olderShows && older is OlderDays.More && older.auto) onLoadOlder()
+    }
+    LazyColumn(state = listState, modifier = modifier.fillMaxSize()) {
+        if (state.days.isEmpty()) {
+            item(key = EMPTY_KEY) { Empty() }
+        }
+        for (day in state.days) {
+            item(key = "day-${day.date}", contentType = DAY_TYPE) {
+                DayHeader(dayLabel(day.date, state.today, resources, words), day.totalSeconds, state.settings)
+            }
+            for (row in day.rows) {
+                if (row.grouped) {
+                    item(key = "group-${row.key}", contentType = GROUP_TYPE) {
+                        GroupRow(row, state.zone, state.settings, locale, callbacks)
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    }
+                } else {
+                    item(key = "entry-${row.newest.id}", contentType = ENTRY_TYPE) {
+                        EntryRow(row.newest, state.zone, state.settings, locale, callbacks)
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    }
+                }
+            }
+        }
+        item(key = OLDER_KEY) { OlderRow(older, onLoadOlder) }
+        item(key = BOTTOM_KEY) { Spacer(Modifier.navigationBarsPadding()) }
+    }
+}
+
+/**
+ * Today, Yesterday, or the weekday and date, with the year when it is not this year's, as
+ * dayLabel in the web app's lib/settings.ts.
+ */
+private fun dayLabel(date: LocalDate, today: LocalDate, resources: Resources, words: DateWords): String = when (date) {
+    today -> resources.getString(R.string.history_today)
+
+    today.minusDays(1) -> resources.getString(R.string.history_yesterday)
+
+    else -> resources.getString(
+        UiR.string.history_day,
+        words.weekday(date),
+        if (date.year == today.year) words.short(date) else words.shortWithYear(date),
+    )
+}
+
+/**
+ * The day and its total, one heading to TalkBack, on a day sticker: a pill in the section's hue
+ * with the text in the hue's text colour, as `.day-header` in styles.css since tokkl d012228. The
+ * day stickers take the section's hue rather than one per day, as the web app's do.
+ */
+@Composable
+private fun DayHeader(label: String, totalSeconds: Long, settings: AccountSettings) {
+    val locale = LocalConfiguration.current.locales[0]
+    val spoken = stringResource(
+        R.string.history_day_spoken,
+        label,
+        spokenDuration(LocalResources.current, totalSeconds),
+    )
+    val hue = TokklTheme.sectionHue
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = TokklTheme.spacing.betweenGroups, bottom = TokklTheme.spacing.inGroup)
+            .daySticker(hue, CircleShape, TokklTheme.extraColors.stickerOutline)
+            .padding(
+                start = TokklTheme.spacing.space3,
+                end = TokklTheme.spacing.space4,
+                top = TokklTheme.spacing.space2,
+                bottom = TokklTheme.spacing.space2,
+            )
+            .semantics(mergeDescendants = true) {
+                heading()
+                contentDescription = spoken
+            },
+    ) {
+        Text(
+            label.uppercase(locale),
+            style = TokklTheme.dayHeaderTextStyle,
+            color = hue.onFill,
+            modifier = Modifier.weight(1f),
+        )
+        Spacer(Modifier.width(TokklTheme.spacing.space3))
+        Text(settings.formatDuration(totalSeconds), style = TokklTheme.dayTotalTextStyle, color = hue.onFill)
+    }
+}
+
+/** The end of the list: what loads, or why nothing more does. */
+@Composable
+private fun OlderRow(older: OlderDays, onLoadOlder: () -> Unit) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = TokklTheme.spacing.betweenGroups),
+    ) {
+        when (older) {
+            is OlderDays.More -> OutlinedButton(
+                onClick = onLoadOlder,
+            ) { Text(stringResource(R.string.history_load_older)) }
+
+            OlderDays.Loading -> Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
+            ) {
+                CircularProgressIndicator(Modifier.size(TokklTheme.spacing.space6))
+                Spacer(Modifier.width(TokklTheme.spacing.space3))
+                Text(stringResource(R.string.history_loading_older), style = MaterialTheme.typography.bodyLarge)
+            }
+
+            OlderDays.End -> Text(
+                stringResource(R.string.history_no_older),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+
+            OlderDays.Unreachable -> Problem(
+                title = stringResource(R.string.history_offline_title),
+                message = stringResource(R.string.history_offline_message),
+                onRetry = onLoadOlder,
+            )
+
+            OlderDays.AuthFailed -> Problem(
+                title = null,
+                message = stringResource(R.string.history_error_auth),
+                onRetry = onLoadOlder,
+            )
+
+            OlderDays.TrustRefused -> Problem(
+                title = null,
+                message = stringResource(R.string.history_error_trust),
+                onRetry = onLoadOlder,
+            )
+
+            is OlderDays.Failed -> Problem(
+                title = null,
+                message = older.status?.let { stringResource(R.string.history_error_status, it) }
+                    ?: stringResource(R.string.history_error_unreadable),
+                onRetry = onLoadOlder,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ColumnScope.Problem(title: String?, message: String, onRetry: () -> Unit) {
+    Column(Modifier.semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite }) {
+        if (title != null) {
+            Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
+        }
+        Text(message, style = MaterialTheme.typography.bodyLarge)
+    }
+    OutlinedButton(onClick = onRetry) { Text(stringResource(R.string.history_retry)) }
+}
+
+/** No entry in the days shown, as the web app's empty list. */
+@Composable
+private fun Empty() {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup),
+        modifier = Modifier.semantics(mergeDescendants = true) {},
+    ) {
+        Text(stringResource(R.string.history_empty_title), style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.history_empty_message), style = MaterialTheme.typography.bodyLarge)
+    }
+}
+
+private const val EMPTY_KEY = "empty"
+private const val OLDER_KEY = "older"
+private const val BOTTOM_KEY = "bottom"
+private const val DAY_TYPE = "day"
+private const val ENTRY_TYPE = "entry"
+private const val GROUP_TYPE = "group"

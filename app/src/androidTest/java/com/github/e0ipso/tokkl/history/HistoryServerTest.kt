@@ -17,7 +17,6 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.HangingRelay
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
@@ -25,17 +24,20 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.api
 import com.github.e0ipso.tokkl.awaitTimerPage
-import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.feature.timer.R
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryTiming
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
-import java.time.Instant
-import java.time.LocalDate
-import java.time.OffsetDateTime
-import java.time.ZoneId
-import java.time.temporal.ChronoUnit
-import java.util.Locale
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
@@ -49,6 +51,12 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.Instant
+import java.time.LocalDate
+import java.time.OffsetDateTime
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
+import java.util.Locale
 
 /**
  * The history on the Timer page against the real Tokkl container, in the real activity (docs/PRD.md
@@ -72,7 +80,12 @@ class HistoryServerTest {
      * app's configured server is a relay, as the app's shared client would not.
      */
     private val direct by lazy {
-        TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(account.apiToken), httpClient = OkHttpClient())
+        TogglApiClient(
+            TokklTestServer.url,
+            ApiCredentials.ApiToken(account.apiToken),
+            httpClient = OkHttpClient(),
+            io = Dispatchers.IO,
+        )
     }
 
     @Before
@@ -115,8 +128,14 @@ class HistoryServerTest {
             val start = now.minus(days, ChronoUnit.DAYS)
             account.createEntry("Filler $days", start, start.plusSeconds(1800))
         }
-        val twenty = now.minus(20, ChronoUnit.DAYS).let { account.createEntry("Twenty days ago", it, it.plusSeconds(3600)) }
-        val forty = now.minus(40, ChronoUnit.DAYS).let { account.createEntry("Forty days ago", it, it.plusSeconds(5400)) }
+        val twenty = now.minus(
+            20,
+            ChronoUnit.DAYS,
+        ).let { account.createEntry("Twenty days ago", it, it.plusSeconds(3600)) }
+        val forty = now.minus(
+            40,
+            ChronoUnit.DAYS,
+        ).let { account.createEntry("Forty days ago", it, it.plusSeconds(5400)) }
         refresh()
         val stored = account.entry(snapped)
         val start = stored.instant("start")
@@ -126,7 +145,13 @@ class HistoryServerTest {
         ActivityScenario.launch(MainActivity::class.java).use {
             composeRule.awaitTimerPage(LOAD_TIMEOUT_MS)
             val settings = app.accountSettings.state.value!!
-            awaitText(context.getString(R.string.history_time_range, settings.formatTime(start, zone), settings.formatTime(stop, zone)))
+            awaitText(
+                context.getString(
+                    R.string.history_time_range,
+                    settings.formatTime(start, zone),
+                    settings.formatTime(stop, zone),
+                ),
+            )
             awaitText(settings.formatDuration(stop.epochSecond - start.epochSecond))
             // The timer above the list shows the running entry, and the list leaves it out.
             composeRule.waitUntil("the timer shows the running entry", LOAD_TIMEOUT_MS) {
@@ -150,8 +175,8 @@ class HistoryServerTest {
 
     /**
      * When the server cannot be reached while the phone keeps its network, the older days say
-     * that they need the server, and Try again loads them once it can be reached. The network
-     * never changes, so only the tap loads them.
+     * that they need the server. The relay keeps failing requests, including any retry after a
+     * network change, until that error shows. Try again then loads them once it can be reached.
      */
     @Test
     fun unreachableOlderDaysNeedTheServerAndTryAgainLoadsThem() {
@@ -169,11 +194,14 @@ class HistoryServerTest {
             awaitText("Recent")
             list().performScrollToKey(OLDER_KEY)
             awaitText(context.getString(R.string.history_loading_older))
-            // The hung request fails as a network failure would, and the relay reaches the server again.
-            relay.release()
+            // Keep retries unreachable too, until the error shows: Android may change networks.
+            relay.refuse()
             awaitText(context.getString(R.string.history_offline_title))
 
-            composeRule.onNode(hasText(string(R.string.history_retry)) and hasClickAction()).performSemanticsAction(SemanticsActions.OnClick)
+            relay.release()
+            composeRule.onNode(
+                hasText(string(R.string.history_retry)) and hasClickAction(),
+            ).performSemanticsAction(SemanticsActions.OnClick)
 
             awaitKey("entry-$older")
             awaitText("Older offline")
@@ -188,7 +216,10 @@ class HistoryServerTest {
     fun offlineOlderDaysLoadOnceTheNetworkComesBack() {
         val now = Instant.now().truncatedTo(ChronoUnit.SECONDS)
         account.createEntry("Recent", now.minus(1, ChronoUnit.HOURS), now.minus(50, ChronoUnit.MINUTES))
-        val older = now.minus(20, ChronoUnit.DAYS).let { account.createEntry("Older on reconnect", it, it.plusSeconds(600)) }
+        val older = now.minus(
+            20,
+            ChronoUnit.DAYS,
+        ).let { account.createEntry("Older on reconnect", it, it.plusSeconds(600)) }
         refresh()
         AirplaneMode.set(true, direct)
 
@@ -218,10 +249,20 @@ class HistoryServerTest {
         relay.hang()
         val start = Instant.now().minus(2, ChronoUnit.HOURS).truncatedTo(ChronoUnit.MINUTES).plusMillis(451_500)
         val stop = start.plusMillis(3_125_250)
-        val id = runBlocking { app.changes.create(workspace, EntryFields(description = "Logged offline"), start, stop) }
+        val id = runBlocking {
+            app.changes.create(
+                WorkspaceId(workspace),
+                EntryFields(description = "Logged offline"),
+                EntryTiming.Stopped(start, stop),
+            )
+        }
         val settings = app.accountSettings.state.value!!
         val snapped = settings.time()!!.snapUnsent(start, stop)!!
-        val range = context.getString(R.string.history_time_range, settings.formatTime(snapped.start, zone), settings.formatTime(snapped.stop, zone))
+        val range = context.getString(
+            R.string.history_time_range,
+            settings.formatTime(snapped.start, zone),
+            settings.formatTime(snapped.stop, zone),
+        )
         val unsent = string(R.string.history_unsent).uppercase(Locale.ROOT)
 
         ActivityScenario.launch(MainActivity::class.java).use {
@@ -232,7 +273,12 @@ class HistoryServerTest {
             relay.release()
             sendTheQueue()
 
-            val stored = direct.get(direct.server.api("me", "time_entries", runBlocking { app.changes.currentId(id) }.toString()), JsonObject.serializer())
+            val stored = runBlocking {
+                direct.get(
+                    direct.server.api("me", "time_entries", runBlocking { app.changes.currentId(id) }.toString()),
+                    JsonObject.serializer(),
+                )
+            }
                 .orFail("GET /api/v9/me/time_entries/<id>")
             assertEquals(snapped.start, stored.instant("start"))
             assertEquals(snapped.stop, stored.instant("stop"))
@@ -257,7 +303,11 @@ class HistoryServerTest {
         ActivityScenario.launch(MainActivity::class.java).use {
             composeRule.awaitTimerPage(LOAD_TIMEOUT_MS)
             val settings = app.accountSettings.state.value!!
-            val range = context.getString(R.string.history_time_range, settings.formatTime(start, zone), settings.formatTime(stop, zone))
+            val range = context.getString(
+                R.string.history_time_range,
+                settings.formatTime(start, zone),
+                settings.formatTime(stop, zone),
+            )
 
             val meeting = awaitRow("Meeting")
             assertTrue("a timed row has its range: $meeting", range in meeting)
@@ -271,21 +321,23 @@ class HistoryServerTest {
      * Tokkl writes times with an offset, such as +00:00. Instant.parse refused that on API 31 and
      * took only a Z, so the offset goes through OffsetDateTime, as in the app's ServerReader.
      */
-    private fun JsonObject.instant(key: String): Instant = OffsetDateTime.parse(getValue(key).jsonPrimitive.content).toInstant()
+    private fun JsonObject.instant(key: String): Instant = OffsetDateTime.parse(
+        getValue(key).jsonPrimitive.content,
+    ).toInstant()
 
-    private fun refresh() = runBlocking { app.accountSettings.refresh().join() }
+    private fun refresh() = runBlocking { app.accountRefresh.refresh().join() }
 
     /** Sends the queue until it is empty, as the next refresh would. */
     private fun sendTheQueue() {
         val deadline = System.nanoTime() + LOAD_TIMEOUT_MS * 1_000_000
         while (runBlocking { app.changes.unsentCount.first() } > 0) {
             check(System.nanoTime() < deadline) { "the queue did not empty" }
-            runBlocking { app.sender.send().join() }
+            runBlocking { app.sender.sendAndWait() }
         }
     }
 
     private fun signIn(server: ServerUrl) {
-        ServerTrustStore(context).confirmCleartext(server)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(server)
         Session(context).save(server, account.apiToken)
     }
 
@@ -295,15 +347,22 @@ class HistoryServerTest {
         composeRule.waitUntil("the row of $description shows", LOAD_TIMEOUT_MS) {
             composeRule.onAllNodes(row).fetchSemanticsNodes().isNotEmpty()
         }
-        return composeRule.onNode(row).fetchSemanticsNode().config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text }
+        return composeRule.onNode(
+            row,
+        ).fetchSemanticsNode().config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text }
     }
 
     private fun list() = composeRule.onNode(hasScrollToKeyAction())
 
-    private fun exists(text: String) = composeRule.onAllNodes(hasText(text), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+    private fun exists(text: String) = composeRule.onAllNodes(
+        hasText(text),
+        useUnmergedTree = true,
+    ).fetchSemanticsNodes().isNotEmpty()
 
-    private fun inList(text: String) =
-        composeRule.onAllNodes(hasText(text) and hasAnyAncestor(hasScrollToKeyAction()), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+    private fun inList(text: String) = composeRule.onAllNodes(
+        hasText(text) and hasAnyAncestor(hasScrollToKeyAction()),
+        useUnmergedTree = true,
+    ).fetchSemanticsNodes().isNotEmpty()
 
     private fun awaitText(text: String) = composeRule.waitUntil("\"$text\" shows", LOAD_TIMEOUT_MS) { exists(text) }
 
@@ -312,7 +371,7 @@ class HistoryServerTest {
         try {
             list().performScrollToKey(key)
             true
-        } catch (e: IllegalArgumentException) {
+        } catch (_: IllegalArgumentException) {
             false
         }
     }

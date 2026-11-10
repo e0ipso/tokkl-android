@@ -17,7 +17,7 @@ kk_relates_to:
 kk_depends_on: []
 kk_confidence: high
 ---
-`credentials/ApiTokenStore` keeps the API token encrypted with AES-256-GCM under a key in the Android Keystore, which never exports key material. It writes the ciphertext through `AtomicFile` in the app's files directory, and `clear()` deletes both the file and the key.
+`credentials/ApiTokenStore` keeps the API token encrypted with AES-256-GCM under a key in the Android Keystore, which never exports key material. It writes the ciphertext through `AtomicFile` in the app's files directory, and `clear()` deletes both the file and the key. `Session` decrypts it on its first read and keeps the signed-in client in memory until sign-in or sign-out changes the account; a read that fails on the Keystore keeps nothing, and the plain token is never written anywhere.
 
 The manifest sets `android:allowBackup="false"` and points `android:dataExtractionRules` at `res/xml/data_extraction_rules.xml`, which Android 12 and later read. The app runs on nothing older since `minSdk` went to 31, so `backup_rules.xml` and `fullBackupContent`, which only Android 11 and earlier read, are gone. The file excludes all nine domains. A missing section leaves that transfer mode on for everything, so `cloud-backup`, `device-transfer` and `cross-platform-transfer platform="ios"` each list every domain. A new store therefore needs no backup rules of its own. `BackupRulesTest` (JVM) checks the merged manifest and that file. Sign-out deletes the token and its Keystore key.
 

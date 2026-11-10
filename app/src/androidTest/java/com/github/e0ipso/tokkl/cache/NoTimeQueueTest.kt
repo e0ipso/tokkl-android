@@ -3,24 +3,28 @@ package com.github.e0ipso.tokkl.cache
 import androidx.room.Room
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.SessionRule
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.time.AccountTime
-import java.time.Clock
-import java.time.DayOfWeek
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
-import java.time.ZoneOffset
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.time.Clock
+import java.time.DayOfWeek
+import java.time.Duration
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.ZoneOffset
 
 /**
  * A no-time entry keeps its flag and day through every change the queue makes to it, in the
@@ -38,7 +42,13 @@ class NoTimeQueueTest {
     @Before
     fun open() {
         database = Room.inMemoryDatabaseBuilder(context, CacheDatabase::class.java).build()
-        queue = ChangeQueue(database, Dispatchers.IO, onQueued = {}, clock = Clock.fixed(NOW, ZoneOffset.UTC))
+        queue = ChangeQueue(
+            RoomChangeStore(database),
+            Dispatchers.IO,
+            onQueued = {},
+            clock = Clock.fixed(NOW, ZoneOffset.UTC),
+            spans = object : ServerSpans {},
+        )
     }
 
     @After
@@ -53,15 +63,19 @@ class NoTimeQueueTest {
             dao.upsertEntry(timed(NEAR, MIDNIGHT.minusSeconds(1_800), MIDNIGHT.minusSeconds(60)))
             dao.upsertEntry(timed(FAR, MIDNIGHT.plusSeconds(3 * 3_600), MIDNIGHT.plusSeconds(4 * 3_600)))
 
-            val id = queue.create(WORKSPACE, EntryFields("Planning"), MIDNIGHT, MIDNIGHT.plusSeconds(5_400), DAY)
+            val id = queue.create(
+                WorkspaceId(WORKSPACE),
+                EntryFields("Planning"),
+                EntryTiming.AllDay(DAY, MIDNIGHT, Duration.ofSeconds(5_400)),
+            )
 
-            val create = dao.changesFor(id).single()
+            val create = dao.changesFor(id.value).single()
             assertEquals(ChangeKind.CREATE, create.kind)
             assertNoTime(DAY, create.entry())
             assertEquals(MIDNIGHT, create.start)
             assertEquals(MIDNIGHT.plusSeconds(5_400), create.stop)
             assertEquals("the lost-post lookup skips the entries around midnight", listOf(NEAR), create.existingIds)
-            assertNoTime(DAY, dao.entry(id)!!)
+            assertNoTime(DAY, dao.entry(id.value)!!)
         }
     }
 
@@ -71,7 +85,13 @@ class NoTimeQueueTest {
             // A server row has no day of its own; the form passes the one its midnight falls on.
             dao.upsertEntry(serverNoTime(SERVER_ID, day = null))
 
-            assertTrue(queue.update(SERVER_ID, EntryFields("Renamed"), MIDNIGHT, MIDNIGHT.plusSeconds(7_200), DAY))
+            assertTrue(
+                queue.update(
+                    EntryId(SERVER_ID),
+                    EntryFields("Renamed"),
+                    EntryTiming.AllDay(DAY, MIDNIGHT, Duration.ofSeconds(7_200)),
+                ),
+            )
 
             val update = dao.changesFor(SERVER_ID).single()
             assertEquals(ChangeKind.UPDATE, update.kind)
@@ -87,7 +107,12 @@ class NoTimeQueueTest {
     @Test
     fun olderEntryEditKeepsTheFlagAndDay() {
         runBlocking {
-            queue.updateOlder(OLDER_ID, WORKSPACE, EntryFields("Older"), MIDNIGHT, MIDNIGHT.plusSeconds(3_600), DAY)
+            queue.updateOlder(
+                EntryId(OLDER_ID),
+                WorkspaceId(WORKSPACE),
+                EntryFields("Older"),
+                EntryTiming.AllDay(DAY, MIDNIGHT, Duration.ofSeconds(3_600)),
+            )
 
             val update = dao.changesFor(OLDER_ID).single()
             assertEquals(ChangeKind.UPDATE, update.kind)
@@ -100,66 +125,74 @@ class NoTimeQueueTest {
     @Test
     fun editFoldedIntoAHeldCreateKeepsTheFlagAndTakesTheNewDay() {
         runBlocking {
-            val id = queue.create(WORKSPACE, EntryFields("Refused"), MIDNIGHT, MIDNIGHT.plusSeconds(5_400), DAY)
-            val create = dao.changesFor(id).single()
+            val id = queue.create(
+                WorkspaceId(WORKSPACE),
+                EntryFields("Refused"),
+                EntryTiming.AllDay(DAY, MIDNIGHT, Duration.ofSeconds(5_400)),
+            )
+            val create = dao.changesFor(id.value).single()
             dao.hold(create.sequence, "No-time entries can be at most 24 hours")
 
             val earlier = AT.instantAt(EARLIER_DAY, 0)
-            assertTrue(queue.update(id, EntryFields("Fixed"), earlier, earlier.plusSeconds(3_600), EARLIER_DAY))
+            assertTrue(
+                queue.update(
+                    id,
+                    EntryFields("Fixed"),
+                    EntryTiming.AllDay(EARLIER_DAY, earlier, Duration.ofSeconds(3_600)),
+                ),
+            )
 
-            val folded = dao.changesFor(id).single()
+            val folded = dao.changesFor(id.value).single()
             assertEquals("the fix replaces the held create", create.sequence, folded.sequence)
             assertEquals(ChangeKind.CREATE, folded.kind)
             assertFalse("the fix lets the create go out again", folded.held)
             assertEquals("Fixed", folded.description)
             assertEquals(earlier, folded.start)
             assertNoTime(EARLIER_DAY, folded.entry())
-            assertNoTime(EARLIER_DAY, dao.entry(id)!!)
+            assertNoTime(EARLIER_DAY, dao.entry(id.value)!!)
         }
     }
 
     @Test
     fun deleteCarriesTheFlagAndDayForUndo() {
         runBlocking {
-            val id = queue.create(WORKSPACE, EntryFields("Gone"), MIDNIGHT, MIDNIGHT.plusSeconds(1_800), DAY)
+            val id = queue.create(
+                WorkspaceId(WORKSPACE),
+                EntryFields("Gone"),
+                EntryTiming.AllDay(DAY, MIDNIGHT, Duration.ofSeconds(1_800)),
+            )
 
             assertTrue(queue.delete(id))
 
-            val delete = dao.changesFor(id).last()
+            val delete = dao.changesFor(id.value).last()
             assertEquals(ChangeKind.DELETE, delete.kind)
             assertNoTime(DAY, delete.entry())
-            assertNull(dao.entry(id))
+            assertNull(dao.entry(id.value))
         }
     }
 
     @Test
     fun editWithoutADayTurnsTheEntryTimed() {
         runBlocking {
-            val id = queue.create(WORKSPACE, EntryFields("Was all day"), MIDNIGHT, MIDNIGHT.plusSeconds(3_600), DAY)
+            val id = queue.create(
+                WorkspaceId(WORKSPACE),
+                EntryFields("Was all day"),
+                EntryTiming.AllDay(DAY, MIDNIGHT, Duration.ofSeconds(3_600)),
+            )
             val start = AT.instantAt(DAY, 9 * 60)
 
-            assertTrue(queue.update(id, EntryFields("Was all day"), start, start.plusSeconds(3_600)))
+            assertTrue(
+                queue.update(id, EntryFields("Was all day"), EntryTiming.Stopped(start, start.plusSeconds(3_600))),
+            )
 
-            val update = dao.changesFor(id).last()
+            val update = dao.changesFor(id.value).last()
             assertEquals(ChangeKind.UPDATE, update.kind)
             assertTimed(update.entry())
             assertEquals(start, update.start)
-            val row = dao.entry(id)!!
+            val row = dao.entry(id.value)!!
             assertTimed(row)
             assertEquals(start, row.start)
         }
-    }
-
-    @Test
-    fun noTimeEditRefusesARunningEntry() {
-        runBlocking { dao.upsertEntry(serverNoTime(SERVER_ID, day = null)) }
-
-        assertThrows(IllegalArgumentException::class.java) {
-            runBlocking { queue.update(SERVER_ID, EntryFields("Running"), MIDNIGHT, stop = null, noTimeDay = DAY) }
-        }
-
-        assertTrue("nothing is queued", dao.changesFor(SERVER_ID).isEmpty())
-        assertEquals(serverNoTime(SERVER_ID, day = null), dao.entry(SERVER_ID))
     }
 
     private fun assertNoTime(day: LocalDate, entry: CachedTimeEntry) {
@@ -175,11 +208,14 @@ class NoTimeQueueTest {
     private fun timed(id: Long, start: Instant, stop: Instant) =
         CachedTimeEntry(id, WORKSPACE, null, null, "Server", start, stop, false, emptyList(), emptyList())
 
-    private fun serverNoTime(id: Long, day: LocalDate?) =
-        CachedTimeEntry(
-            id, WORKSPACE, null, null, "Server all day", MIDNIGHT, MIDNIGHT.plusSeconds(7_200), false, emptyList(), emptyList(),
-            allDay = true, day = day,
-        )
+    private fun serverNoTime(id: Long, day: LocalDate?) = CachedTimeEntry(
+        id, WORKSPACE, null, null, "Server all day", MIDNIGHT,
+        MIDNIGHT.plusSeconds(
+            7_200,
+        ),
+        false, emptyList(), emptyList(),
+        allDay = true, day = day,
+    )
 
     private companion object {
         const val WORKSPACE = 20L

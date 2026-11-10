@@ -4,89 +4,91 @@ import android.view.KeyEvent
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.annotation.StringRes
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.DeviceConfigurationOverride
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.WindowSize
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
-import androidx.compose.ui.test.hasScrollAction
-import androidx.compose.ui.test.isSelectable
-import androidx.compose.ui.test.performImeAction
-import androidx.compose.ui.unit.DpSize
-import androidx.compose.ui.unit.dp
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.lifecycle.ViewModelProvider
-import com.github.e0ipso.tokkl.TokklNavHost
-import com.github.e0ipso.tokkl.calendar.CalendarViewModel
-import com.github.e0ipso.tokkl.clients.ClientsViewModel
-import com.github.e0ipso.tokkl.history.HistoryViewModel
-import com.github.e0ipso.tokkl.projects.ProjectsViewModel
-import com.github.e0ipso.tokkl.reports.ReportsViewModel
-import com.github.e0ipso.tokkl.signin.SignInViewModel
-import com.github.e0ipso.tokkl.tags.TagsViewModel
-import com.github.e0ipso.tokkl.timer.TimerViewModel
-import com.github.e0ipso.tokkl.trash.TrashViewModel
-import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import androidx.annotation.StringRes
-import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasScrollToKeyAction
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasSetTextAction
-import androidx.compose.ui.test.hasScrollToKeyAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isHeading
+import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToKey
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
+import com.github.e0ipso.tokkl.AppNavHost
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
-import com.github.e0ipso.tokkl.cache.toCached
-import com.github.e0ipso.tokkl.api.ServerTimeEntry
-import kotlinx.serialization.json.Json
-import com.github.e0ipso.tokkl.time.SnappedSpan
 import com.github.e0ipso.tokkl.api.ApiCredentials
+import com.github.e0ipso.tokkl.api.HttpMethod
+import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.api
+import com.github.e0ipso.tokkl.api.app
 import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.cache.toTimeEntry
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.entries.OlderPages
+import com.github.e0ipso.tokkl.entries.ServerWeeks
+import com.github.e0ipso.tokkl.entries.SessionEntries
+import com.github.e0ipso.tokkl.entryfields.resolveRange
+import com.github.e0ipso.tokkl.feature.timer.R
+import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.orFail
+import com.github.e0ipso.tokkl.picker.PickerSource
+import com.github.e0ipso.tokkl.platform.AppForeground
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
-import java.time.Duration
-import java.time.Instant
-import java.time.LocalDate
-import java.time.LocalTime
-import java.time.OffsetDateTime
-import java.time.ZoneId
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
+import com.github.e0ipso.tokkl.time.SnappedSpan
+import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.boolean
@@ -105,13 +107,23 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.Clock
+import java.time.Duration
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.OffsetDateTime
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import com.github.e0ipso.tokkl.core.entryfields.R as FieldsR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
- * The entry form against the real Tokkl container: an entry the web app made, opened from the
- * history, edited and saved through the change queue (docs/PRD.md H2), also from an older day than
- * the phone keeps, and past entries added
- * from the Timer page (M1), online and in airplane mode. The test's own requests stand in for the web app and go straight to the server. Each test
- * signs in to an account of its own, in Madrid, and deletes it after.
+ * The entry form against the real Tokkl container: an entry the web app made, opened from the history, edited and saved
+ * through the change queue (docs/PRD.md H2), also from an older day than the phone keeps, and past entries added from
+ * the Timer page (M1), online and in airplane mode. The test's own requests stand in for the web app and go straight to
+ * the server. Each test signs in to an account of its own, in Madrid, and deletes it after.
  */
 class EntryFormServerTest {
     private val composeRule = createEmptyComposeRule()
@@ -127,7 +139,12 @@ class EntryFormServerTest {
 
     /** The web app: the same account, straight to the server and past the app's guard. */
     private val web by lazy {
-        TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(account.apiToken), httpClient = OkHttpClient())
+        TogglApiClient(
+            TokklTestServer.url,
+            ApiCredentials.ApiToken(account.apiToken),
+            httpClient = OkHttpClient(),
+            io = Dispatchers.IO,
+        )
     }
 
     /** Two days ago in Madrid, inside the two weeks the phone keeps. */
@@ -139,7 +156,7 @@ class EntryFormServerTest {
     @Before
     fun signIn() {
         account = TestAccounts.create(timezone = MADRID.id)
-        workspace = web.get(web.server.api("me"), JsonObject.serializer()).orFail("GET /api/v9/me")
+        workspace = runBlocking { web.get(web.server.api("me"), JsonObject.serializer()) }.orFail("GET /api/v9/me")
             .getValue("default_workspace_id").jsonPrimitive.long
         signIn(TokklTestServer.url, account.apiToken)
     }
@@ -149,7 +166,12 @@ class EntryFormServerTest {
         try {
             // off() returns before connectivity recovers. Probe as the administrator even if
             // setup failed before creating this test's account.
-            val admin = TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(TokklTestServer.apiToken), httpClient = OkHttpClient())
+            val admin = TogglApiClient(
+                TokklTestServer.url,
+                ApiCredentials.ApiToken(TokklTestServer.apiToken),
+                httpClient = OkHttpClient(),
+                io = Dispatchers.IO,
+            )
             AirplaneMode.set(false, admin)
             try {
                 originalResolution?.let { setResolution(it) }
@@ -172,20 +194,26 @@ class EntryFormServerTest {
         launch {
             openEntry("Fix the report")
 
-            field(R.string.entry_description).performTextClearance()
-            field(R.string.entry_description).performTextInput("Fix the weekly report")
+            field(FieldsR.string.entry_description).performTextClearance()
+            field(FieldsR.string.entry_description).performTextInput("Fix the weekly report")
             projectButton(null).performClick()
             option("Form project").performClick()
-            composeRule.onNode(hasSetTextAction() and hasText(string(R.string.picker_search))).performTextInput("call")
-            option(string(R.string.picker_add_tag, "call")).performClick()
-            composeRule.onNode(hasText(string(R.string.entry_picker_done)) and hasClickAction()).performClick()
+            composeRule.onNode(
+                hasSetTextAction() and hasText(string(FieldsR.string.picker_search)),
+            ).performTextInput("call")
+            option(string(FieldsR.string.picker_add_tag, "call")).performClick()
+            composeRule.onNode(hasText(string(FieldsR.string.entry_picker_done)) and hasClickAction()).performClick()
             awaitShows("the project shows") { projectButton("Form project") }
-            composeRule.onNode(hasText(string(R.string.entry_billable)) and isToggleable()).performClick()
+            composeRule.onNode(hasText(string(FieldsR.string.entry_billable)) and isToggleable()).performClick()
 
             dateButton().performScrollTo().performClick()
             dayInPicker(newDay).performClick()
-            composeRule.onNode(hasText(string(R.string.entry_picker_done)) and hasClickAction() and hasAnyAncestor(isDialog())).performClick()
-            awaitShows("the new date shows") { composeRule.onNode(hasContentDescription(spokenDate(newDay)) and hasClickAction()) }
+            composeRule.onNode(
+                hasText(string(FieldsR.string.entry_picker_done)) and hasClickAction() and hasAnyAncestor(isDialog()),
+            ).performClick()
+            awaitShows(
+                "the new date shows",
+            ) { composeRule.onNode(hasContentDescription(spokenDate(newDay)) and hasClickAction()) }
 
             replace(R.string.entry_start, "930")
             replace(R.string.entry_end, "11")
@@ -193,7 +221,12 @@ class EntryFormServerTest {
             drainUntilEmpty()
         }
 
-        val saved = web.get(web.server.api("me", "time_entries", entry.toString()), JsonObject.serializer()).orFail("GET the entry")
+        val saved = runBlocking {
+            web.get(
+                web.server.api("me", "time_entries", entry.toString()),
+                JsonObject.serializer(),
+            )
+        }.orFail("GET the entry")
         assertEquals("Fix the weekly report", saved.string("description"))
         assertEquals(project, saved.getValue("project_id").jsonPrimitive.long)
         assertEquals(listOf("call"), saved.getValue("tags").jsonArray.map { it.jsonPrimitive.content })
@@ -208,19 +241,26 @@ class EntryFormServerTest {
         launch {
             AirplaneMode.set(true, web)
             openEntry("Offline edit")
-            field(R.string.entry_description).performTextClearance()
-            field(R.string.entry_description).performTextInput("Offline edit, saved")
+            field(FieldsR.string.entry_description).performTextClearance()
+            field(FieldsR.string.entry_description).performTextInput("Offline edit, saved")
             replace(R.string.entry_end, "16:15")
             save()
             awaitShows("the history says the server lacks it") {
-                composeRule.onNode(hasText("Offline edit, saved") and hasText(string(R.string.history_unsent), ignoreCase = true))
+                composeRule.onNode(
+                    hasText("Offline edit, saved") and hasText(string(R.string.history_unsent), ignoreCase = true),
+                )
             }
 
             AirplaneMode.set(false, web)
             drainUntilEmpty()
         }
 
-        val saved = web.get(web.server.api("me", "time_entries", entry.toString()), JsonObject.serializer()).orFail("GET the entry")
+        val saved = runBlocking {
+            web.get(
+                web.server.api("me", "time_entries", entry.toString()),
+                JsonObject.serializer(),
+            )
+        }.orFail("GET the entry")
         assertEquals("Offline edit, saved", saved.string("description"))
         assertEquals(at(day, 14, 0), instant(saved.string("start")))
         assertEquals(at(day, 16, 15), instant(saved.string("stop")))
@@ -237,8 +277,8 @@ class EntryFormServerTest {
         launch {
             showOlderEntry(entry)
             openEntry("Old plan")
-            field(R.string.entry_description).performTextClearance()
-            field(R.string.entry_description).performTextInput("Old plan, fixed")
+            field(FieldsR.string.entry_description).performTextClearance()
+            field(FieldsR.string.entry_description).performTextInput("Old plan, fixed")
             replace(R.string.entry_end, "10:45")
             save()
 
@@ -246,12 +286,26 @@ class EntryFormServerTest {
             composeRule.waitUntil("the history shows the edit after the refresh", NETWORK_TIMEOUT.toMillis()) {
                 shows(composeRule.onNode(hasText("Old plan, fixed") and hasClickAction()))
             }
-            assertTrue("the refresh dropped it from the phone", runBlocking { app.cache.entries.first() }.none { it.entry.id == entry })
-            assertFalse("the server has it", shows(composeRule.onNode(hasText(string(R.string.history_unsent), ignoreCase = true))))
-            assertFalse("the older page's copy is gone", shows(composeRule.onNode(hasText("Old plan") and hasClickAction())))
+            assertTrue(
+                "the refresh dropped it from the phone",
+                runBlocking { app.cache.entries.first() }.none { it.entry.id.value == entry },
+            )
+            assertFalse(
+                "the server has it",
+                shows(composeRule.onNode(hasText(string(R.string.history_unsent), ignoreCase = true))),
+            )
+            assertFalse(
+                "the older page's copy is gone",
+                shows(composeRule.onNode(hasText("Old plan") and hasClickAction())),
+            )
         }
 
-        val saved = web.get(web.server.api("me", "time_entries", entry.toString()), JsonObject.serializer()).orFail("GET the entry")
+        val saved = runBlocking {
+            web.get(
+                web.server.api("me", "time_entries", entry.toString()),
+                JsonObject.serializer(),
+            )
+        }.orFail("GET the entry")
         assertEquals("Old plan, fixed", saved.string("description"))
         assertEquals(at(olderDay, 9, 0), instant(saved.string("start")))
         assertEquals(at(olderDay, 10, 45), instant(saved.string("stop")))
@@ -264,18 +318,25 @@ class EntryFormServerTest {
             showOlderEntry(entry)
             AirplaneMode.set(true, web)
             openEntry("Old call")
-            field(R.string.entry_description).performTextClearance()
-            field(R.string.entry_description).performTextInput("Old call, noted")
+            field(FieldsR.string.entry_description).performTextClearance()
+            field(FieldsR.string.entry_description).performTextInput("Old call, noted")
             save()
             awaitShows("the history says the server lacks it") {
-                composeRule.onNode(hasText("Old call, noted") and hasText(string(R.string.history_unsent), ignoreCase = true))
+                composeRule.onNode(
+                    hasText("Old call, noted") and hasText(string(R.string.history_unsent), ignoreCase = true),
+                )
             }
 
             AirplaneMode.set(false, web)
             drainUntilEmpty()
         }
 
-        val saved = web.get(web.server.api("me", "time_entries", entry.toString()), JsonObject.serializer()).orFail("GET the entry")
+        val saved = runBlocking {
+            web.get(
+                web.server.api("me", "time_entries", entry.toString()),
+                JsonObject.serializer(),
+            )
+        }.orFail("GET the entry")
         assertEquals("Old call, noted", saved.string("description"))
         assertEquals(at(olderDay, 14, 0), instant(saved.string("start")))
         assertEquals(at(olderDay, 15, 0), instant(saved.string("stop")))
@@ -292,19 +353,27 @@ class EntryFormServerTest {
             showOlderEntry(entry)
             AirplaneMode.set(true, web)
             openEntry("Old review")
-            replace(R.string.entry_description, "Old review, first")
+            replace(FieldsR.string.entry_description, "Old review, first")
             save()
             openEntry("Old review, first")
 
             AirplaneMode.set(false, web)
             drainUntilEmpty()
-            assertTrue("the refresh dropped it from the phone", runBlocking { app.cache.entries.first() }.none { it.entry.id == entry })
-            replace(R.string.entry_description, "Old review, second")
+            assertTrue(
+                "the refresh dropped it from the phone",
+                runBlocking { app.cache.entries.first() }.none { it.entry.id.value == entry },
+            )
+            replace(FieldsR.string.entry_description, "Old review, second")
             save()
             drainUntilEmpty()
         }
 
-        val saved = web.get(web.server.api("me", "time_entries", entry.toString()), JsonObject.serializer()).orFail("GET the entry")
+        val saved = runBlocking {
+            web.get(
+                web.server.api("me", "time_entries", entry.toString()),
+                JsonObject.serializer(),
+            )
+        }.orFail("GET the entry")
         assertEquals("Old review, second", saved.string("description"))
         assertEquals(at(olderDay, 11, 0), instant(saved.string("start")))
         assertEquals(at(olderDay, 12, 0), instant(saved.string("stop")))
@@ -316,14 +385,19 @@ class EntryFormServerTest {
         launch {
             openEntry("Wrong times")
             replace(R.string.entry_start, "soon")
-            composeRule.onNode(hasText(string(R.string.entry_save)) and hasClickAction()).performScrollTo().performClick()
+            composeRule.onNode(
+                hasText(string(R.string.entry_save)) and hasClickAction(),
+            ).performScrollTo().performClick()
 
             awaitShows("the start says what is wrong, in words") {
                 composeRule.onNode(isField(R.string.entry_start) and hasText(string(R.string.entry_mistake_times)))
             }
             assertTrue("the start field is marked as an error", field(R.string.entry_start).isError())
             assertEquals("nothing queued", 0, runBlocking { app.changes.unsentCount.first() })
-            assertTrue("the form stays open", shows(composeRule.onNode(hasText(string(R.string.entry_form_edit)) and isHeading())))
+            assertTrue(
+                "the form stays open",
+                shows(composeRule.onNode(hasText(string(R.string.entry_form_edit)) and isHeading())),
+            )
         }
     }
 
@@ -334,12 +408,14 @@ class EntryFormServerTest {
         launch {
             openEntry("Labelled")
             val controls = listOf(
-                "back" to composeRule.onNode(hasContentDescription(string(R.string.back)) and hasClickAction()),
+                "back" to composeRule.onNode(hasContentDescription(string(UiR.string.back)) and hasClickAction()),
                 "heading" to composeRule.onNode(hasText(string(R.string.entry_form_edit)) and isHeading()),
-                "description" to field(R.string.entry_description),
+                "description" to field(FieldsR.string.entry_description),
                 "project" to projectButton(null),
-                "tags" to composeRule.onNode(hasContentDescription(string(R.string.entry_no_tags_spoken)) and hasClickAction()),
-                "billable" to composeRule.onNode(hasText(string(R.string.entry_billable)) and isToggleable()),
+                "tags" to composeRule.onNode(
+                    hasContentDescription(string(FieldsR.string.entry_no_tags_spoken)) and hasClickAction(),
+                ),
+                "billable" to composeRule.onNode(hasText(string(FieldsR.string.entry_billable)) and isToggleable()),
                 "date" to composeRule.onNode(hasContentDescription(spokenDate(day)) and hasClickAction()),
                 "start" to field(R.string.entry_start),
                 "end" to field(R.string.entry_end),
@@ -390,7 +466,9 @@ class EntryFormServerTest {
             makeUnsavedEdits("Plan the sprint, half typed")
             composeRule.onNode(historyRow("Write the notes")).performClick()
 
-            awaitShows("the other entry opens in the form") { composeRule.onNode(formDescription() and hasText("Write the notes")) }
+            awaitShows(
+                "the other entry opens in the form",
+            ) { composeRule.onNode(formDescription() and hasText("Write the notes")) }
             assertDroppedWithoutAWord()
             composeRule.onNode(historyRow("Plan the sprint")).performClick()
             assertOpensAsItWas("Plan the sprint")
@@ -424,7 +502,9 @@ class EntryFormServerTest {
             AirplaneMode.set(true, web)
             addPastEntry("Offline past entry", start = "8", end = "9:15")
             awaitShows("the history says the server lacks it") {
-                composeRule.onNode(hasText("Offline past entry") and hasText(string(R.string.history_unsent), ignoreCase = true))
+                composeRule.onNode(
+                    hasText("Offline past entry") and hasText(string(R.string.history_unsent), ignoreCase = true),
+                )
             }
 
             AirplaneMode.set(false, web)
@@ -445,12 +525,30 @@ class EntryFormServerTest {
             listOf("Europe/Madrid", "2026-10-14", "14:00", "15:20", "2026-10-14T12:00:00Z", "2026-10-14T13:00:00Z"),
             listOf("Asia/Kathmandu", "2026-10-14", "10:05", "10:45", "2026-10-14T04:15:00Z", "2026-10-14T05:15:00Z"),
             // Lord Howe's spring gap leaves a 90-minute span between adjacent hourly grid points.
-            listOf("Australia/Lord_Howe", "2026-10-04", "01:40", "03:10", "2026-10-03T14:30:00Z", "2026-10-03T16:00:00Z"),
+            listOf(
+                "Australia/Lord_Howe",
+                "2026-10-04",
+                "01:40",
+                "03:10",
+                "2026-10-03T14:30:00Z",
+                "2026-10-03T16:00:00Z",
+            ),
         )
         for ((index, case) in cases.withIndex()) {
-            val changed = web.send("PUT", web.server.api("me"), buildJsonObject { put("timezone", case[0]) }, JsonObject.serializer()).orFail("set account zone")
-            runBlocking { app.accountSettings.refreshAfterChange().join() }
-            assertEquals("the refreshed account zone", changed.string("timezone"), app.accountSettings.state.value!!.timeZone)
+            val changed = runBlocking {
+                web.send(
+                    HttpMethod.PUT,
+                    web.server.api("me"),
+                    buildJsonObject { put("timezone", case[0]) },
+                    JsonObject.serializer(),
+                )
+            }.orFail("set account zone")
+            runBlocking { app.accountRefresh.refreshAfterChange().join() }
+            assertEquals(
+                "the refreshed account zone",
+                changed.string("timezone"),
+                app.accountSettings.state.value!!.timeZone,
+            )
             val time = app.accountSettings.state.value!!.time()!!
             val date = LocalDate.parse(case[1])
             val raw = resolveRange(date, case[2], case[3], time, false, 0)!!
@@ -459,13 +557,13 @@ class EntryFormServerTest {
             val description = "Typed snap $index"
             withModel { model ->
                 model.new(date)
-                model.state.first { it is EntryFormState.Open }
+                model.page.map { it.form }.first { it is EntryFormState.Open }
                 model.setDescription(description)
                 model.setStart(case[2])
                 model.setEnd(case[3])
                 model.timesDone()
                 model.save()
-                model.state.first { it == EntryFormState.Saved }
+                model.page.map { it.form }.first { it == EntryFormState.Saved }
             }
             drainUntilEmpty()
             val created = serverEntry(description, date)
@@ -473,18 +571,29 @@ class EntryFormServerTest {
             assertEquals(expected.stop, instant(created.string("stop")))
             val id = created.getValue("id").jsonPrimitive.long
             withModel { model ->
-                model.edit(id, Json { ignoreUnknownKeys = true }.decodeFromJsonElement(ServerTimeEntry.serializer(), created).toCached())
-                model.state.first { it is EntryFormState.Open }
+                model.edit(
+                    EntryId(id),
+                    Json { ignoreUnknownKeys = true }.decodeFromJsonElement(
+                        ServerTimeEntry.serializer(),
+                        created,
+                    ).toTimeEntry(),
+                )
+                model.page.map { it.form }.first { it is EntryFormState.Open }
                 model.setDescription("$description edited")
                 model.setStart(case[2])
                 model.setDuration(Duration.between(raw.start, raw.stop).seconds.toString() + "s")
                 model.durationDone()
                 model.durationDone()
                 model.save()
-                model.state.first { it == EntryFormState.Saved }
+                model.page.map { it.form }.first { it == EntryFormState.Saved }
             }
             drainUntilEmpty()
-            val edited = web.get(web.server.api("me", "time_entries", id.toString()), JsonObject.serializer()).orFail("GET edited span")
+            val edited = runBlocking {
+                web.get(
+                    web.server.api("me", "time_entries", id.toString()),
+                    JsonObject.serializer(),
+                )
+            }.orFail("GET edited span")
             assertEquals("edit start", expected.start, instant(edited.string("start")))
             assertEquals("edit stop", expected.stop, instant(edited.string("stop")))
         }
@@ -497,7 +606,9 @@ class EntryFormServerTest {
         launch {
             openEntry("Short typed edit")
             replace(R.string.entry_end, "08:10")
-            composeRule.onNode(hasText(string(R.string.entry_save)) and hasClickAction()).performScrollTo().performClick()
+            composeRule.onNode(
+                hasText(string(R.string.entry_save)) and hasClickAction(),
+            ).performScrollTo().performClick()
             awaitShows("the end explains the short span") {
                 composeRule.onNode(isField(R.string.entry_end) and hasText(string(R.string.entry_mistake_too_short)))
             }
@@ -506,12 +617,16 @@ class EntryFormServerTest {
         }
         withModel { model ->
             model.new(day)
-            model.state.first { it is EntryFormState.Open }
+            model.page.map { it.form }.first { it is EntryFormState.Open }
             model.setStart("12:00")
             model.setDuration("10m")
             model.durationDone()
             model.save()
-            model.state.first { it is EntryFormState.Open && it.mistakes == mapOf(TimeField.DURATION to TimeMistake.TOO_SHORT) }
+            model.page.map { it.form }.first {
+                it is EntryFormState.Open && it.mistakes == mapOf(
+                    TimeField.DURATION to TimeMistake.TOO_SHORT,
+                )
+            }
         }
         assertEquals("no pending create", 0, runBlocking { app.changes.unsentCount.first() })
     }
@@ -523,33 +638,76 @@ class EntryFormServerTest {
         // now after 23:30 would round into tomorrow, outside today's exclusive cache end.
         // The real server stops and restores a zero-length row at the explicit fixture time.
         val fixtureStart = day.atTime(23, 31).atZone(MADRID).toInstant()
-        val running = web.send("POST", web.server.api("workspaces", workspace.toString(), "time_entries"), buildJsonObject {
-            put("workspace_id", workspace)
-            put("created_with", "typed snap fixture")
-            put("description", "Legacy zero")
-            put("start", fixtureStart.toString())
-            put("duration", -1)
-        }, JsonObject.serializer()).orFail("create fixture timer")
+        val running = runBlocking {
+            web.send(
+                HttpMethod.POST,
+                web.server.api(
+                    "workspaces",
+                    workspace.toString(),
+                    "time_entries",
+                ),
+                buildJsonObject {
+                    put("workspace_id", workspace)
+                    put("created_with", "typed snap fixture")
+                    put("description", "Legacy zero")
+                    put("start", fixtureStart.toString())
+                    put("duration", -1)
+                },
+                JsonObject.serializer(),
+            )
+        }.orFail("create fixture timer")
         val id = running.getValue("id").jsonPrimitive.long
-        web.send("PATCH", web.server.api("workspaces", workspace.toString(), "time_entries", id.toString(), "stop"), buildJsonObject {
-            put("stop", fixtureStart.toString())
-        }, JsonObject.serializer()).orFail("stop fixture timer")
-        val legacy = web.send("POST", web.server.app("time_entries", id.toString(), "restore"), buildJsonObject {}, JsonObject.serializer()).orFail("restore legacy fixture")
+        runBlocking {
+            web.send(
+                HttpMethod.PATCH,
+                web.server.api(
+                    "workspaces",
+                    workspace.toString(),
+                    "time_entries",
+                    id.toString(),
+                    "stop",
+                ),
+                buildJsonObject {
+                    put("stop", fixtureStart.toString())
+                },
+                JsonObject.serializer(),
+            )
+        }.orFail("stop fixture timer")
+        val legacy = runBlocking {
+            web.send(
+                HttpMethod.POST,
+                web.server.app("time_entries", id.toString(), "restore"),
+                buildJsonObject {},
+                JsonObject.serializer(),
+            )
+        }.orFail("restore legacy fixture")
         assertEquals(legacy.string("start"), legacy.string("stop"))
-        assertEquals("the fixture snaps across midnight", day.plusDays(1).atStartOfDay(MADRID).toInstant(), java.time.OffsetDateTime.parse(legacy.string("start")).toInstant())
+        assertEquals(
+            "the fixture snaps across midnight",
+            day.plusDays(1).atStartOfDay(MADRID).toInstant(),
+            java.time.OffsetDateTime.parse(legacy.string("start")).toInstant(),
+        )
         // A refresh already in flight may have read before the restore. Read after it so
         // model.edit opens the restored entry rather than observing a missing cache row.
-        runBlocking { app.accountSettings.refreshAfterChange().join() }
-        assertTrue("the restored fixture is in the cache", runBlocking { app.cache.entries.first() }.any { it.entry.id == id })
+        runBlocking { app.accountRefresh.refreshAfterChange().join() }
+        assertTrue(
+            "the restored fixture is in the cache",
+            runBlocking { app.cache.entries.first() }.any { it.entry.id.value == id },
+        )
         withModel { model ->
-            model.edit(id)
-            model.state.first { it is EntryFormState.Open }
+            model.edit(EntryId(id))
+            model.page.map { it.form }.first { it is EntryFormState.Open }
             model.setDescription("Legacy zero renamed")
             model.save()
-            model.state.first { it == EntryFormState.Saved }
+            model.page.map { it.form }.first { it == EntryFormState.Saved }
         }
         drainUntilEmpty()
-        val saved = web.get(web.server.api("me", "time_entries", id.toString()), JsonObject.serializer()).orFail("GET legacy entry")
+        val saved = runBlocking {
+            web.get(
+                web.server.api("me", "time_entries", id.toString()),
+                JsonObject.serializer(),
+            )
+        }.orFail("GET legacy entry")
         assertEquals("Legacy zero renamed", saved.string("description"))
         assertEquals(legacy.string("start"), saved.string("start"))
         assertEquals(legacy.string("stop"), saved.string("stop"))
@@ -577,18 +735,27 @@ class EntryFormServerTest {
             openEntry("Plan the offsite", noTimes = true)
             composeRule.onNode(noTimesSwitch()).assertIsOn()
             assertFalse("a no-time entry has no start field", shows(field(R.string.entry_start)))
-            replace(R.string.entry_description, "Plan the offsite, moved")
+            replace(FieldsR.string.entry_description, "Plan the offsite, moved")
             dateButton().performScrollTo().performClick()
             dayInPicker(newDay).performClick()
-            composeRule.onNode(hasText(string(R.string.entry_picker_done)) and hasClickAction() and hasAnyAncestor(isDialog())).performClick()
-            awaitShows("the new date shows") { composeRule.onNode(hasContentDescription(spokenDate(newDay)) and hasClickAction()) }
+            composeRule.onNode(
+                hasText(string(FieldsR.string.entry_picker_done)) and hasClickAction() and hasAnyAncestor(isDialog()),
+            ).performClick()
+            awaitShows(
+                "the new date shows",
+            ) { composeRule.onNode(hasContentDescription(spokenDate(newDay)) and hasClickAction()) }
             replace(R.string.entry_duration, "2h")
             save()
             drainUntilEmpty()
             assertNothingHeld()
         }
 
-        val saved = web.get(web.server.api("me", "time_entries", id.toString()), JsonObject.serializer()).orFail("GET the entry")
+        val saved = runBlocking {
+            web.get(
+                web.server.api("me", "time_entries", id.toString()),
+                JsonObject.serializer(),
+            )
+        }.orFail("GET the entry")
         assertEquals("Plan the offsite, moved", saved.string("description"))
         assertNoTimeEntry(saved, newDay, 7_200)
     }
@@ -616,7 +783,12 @@ class EntryFormServerTest {
             assertNothingHeld()
         }
 
-        val saved = web.get(web.server.api("me", "time_entries", entry.toString()), JsonObject.serializer()).orFail("GET the entry")
+        val saved = runBlocking {
+            web.get(
+                web.server.api("me", "time_entries", entry.toString()),
+                JsonObject.serializer(),
+            )
+        }.orFail("GET the entry")
         assertFalse("the entry has times now", saved.getValue("all_day").jsonPrimitive.boolean)
         assertEquals(at(day, 9, 0), instant(saved.string("start")))
         assertEquals(at(day, 10, 30), instant(saved.string("stop")))
@@ -624,18 +796,63 @@ class EntryFormServerTest {
     }
 
     private fun setResolution(minutes: Long) {
-        val admin = TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(TokklTestServer.apiToken), httpClient = OkHttpClient())
+        val admin = TogglApiClient(
+            TokklTestServer.url,
+            ApiCredentials.ApiToken(TokklTestServer.apiToken),
+            httpClient = OkHttpClient(),
+            io = Dispatchers.IO,
+        )
         val url = admin.server.app("admin", "settings")
-        if (originalResolution == null) originalResolution = admin.get(url, JsonObject.serializer()).orFail("GET settings").getValue("time_resolution_minutes").jsonPrimitive.long
-        admin.send("PUT", url, buildJsonObject { put("time_resolution_minutes", minutes) }, JsonObject.serializer()).orFail("set resolution")
-        runBlocking { app.accountSettings.refreshAfterChange().join() }
+        if (originalResolution == null) {
+            originalResolution = runBlocking {
+                admin.get(
+                    url,
+                    JsonObject.serializer(),
+                )
+            }.orFail("GET settings").getValue("time_resolution_minutes").jsonPrimitive.long
+        }
+        runBlocking {
+            admin.send(
+                HttpMethod.PUT,
+                url,
+                buildJsonObject { put("time_resolution_minutes", minutes) },
+                JsonObject.serializer(),
+            )
+        }.orFail("set resolution")
+        runBlocking { app.accountRefresh.refreshAfterChange().join() }
     }
 
     /** The actual form and Room queue, with collection and handlers on the main dispatcher. */
-    private fun withModel(steps: suspend (EntryFormModel) -> Unit) = runBlocking {
+    private fun withModel(steps: suspend (EntryFormViewModel) -> Unit) = runBlocking {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-        val model = EntryFormModel(app.cache.entries, app.cache.projects, app.cache.tasks, app.accountSettings.state, app.changes, scope)
-        val collector = scope.launch { model.state.collect {} }
+        val model = EntryFormViewModel(
+            app.cache.entries,
+            app.cache.projects,
+            app.cache.tasks,
+            app.accountSettings.state,
+            app.changes,
+            app.changes,
+            SessionEntries(
+                app.cache.entries,
+                app.accountSettings.state,
+                app.changes,
+                OlderPages { null },
+                ServerWeeks { null },
+                Clock.systemUTC(),
+                AppForeground(MutableStateFlow(true), emptyFlow()),
+                emptyFlow(),
+                scope,
+                Dispatchers.IO,
+                Dispatchers.Default,
+            ),
+            scope,
+            clock = Clock.systemUTC(),
+            allDay = flowOf(false),
+            picker = flowOf(PickerSource()),
+            offline = MutableStateFlow(false),
+            saved = SavedStateHandle(),
+        )
+        val collector = scope.launch { model.page.collect {} }
         try {
             withTimeout(NETWORK_TIMEOUT.toMillis()) { withContext(Dispatchers.Main) { steps(model) } }
         } finally {
@@ -648,13 +865,13 @@ class EntryFormServerTest {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             composeRule.awaitTimerPage(NETWORK_TIMEOUT.toMillis())
             // The refresh the launch started, so the cache holds what the server has.
-            runBlocking { app.accountSettings.refresh().join() }
+            runBlocking { app.accountRefresh.refresh().join() }
             steps(scenario)
         }
     }
 
     /**
-     * The app's navigation host, with MainActivity's view models, in a window forced to
+     * The app's navigation host, as MainActivity shows it, in a window forced to
      * [EXPANDED_WINDOW], where the entry form shows beside the Timer page's history. The phone's
      * own window is too narrow for that.
      */
@@ -663,45 +880,23 @@ class EntryFormServerTest {
             scenario.onActivity { activity ->
                 WindowCompat.enableEdgeToEdge(activity.window)
                 activity.window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
-                val models = ViewModelProvider(activity)
-                val history = models[HistoryViewModel::class.java]
-                val timer = models[TimerViewModel::class.java]
                 activity.setContent {
                     DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(EXPANDED_WINDOW)) {
                         TokklTheme(darkTheme = false) {
-                            TokklNavHost(
-                                signInModel = models[SignInViewModel::class.java].model,
-                                themeSettings = app.themeSettings,
-                                signOut = app.signOutModel,
-                                sessionTrust = app.sessionTrust,
-                                reports = models[ReportsViewModel::class.java].model,
-                                history = history.model,
-                                entryActions = history.actions,
-                                calendar = models[CalendarViewModel::class.java].model,
-                                projects = models[ProjectsViewModel::class.java].model,
-                                clients = models[ClientsViewModel::class.java].model,
-                                tags = models[TagsViewModel::class.java].model,
-                                timerView = app.timerView,
-                                timer = timer.model,
-                                entryForm = models[EntryFormViewModel::class.java].model,
-                                cache = app.cache,
-                                trash = models[TrashViewModel::class.java].model,
-                                capabilities = app.capabilities.state,
-                                favorites = timer.favorites,
-                            )
+                            AppNavHost()
                         }
                     }
                 }
             }
             composeRule.awaitTimerPage(NETWORK_TIMEOUT.toMillis())
-            // MainActivity refreshes on sign-in; this host does not, so the test fills the cache.
-            runBlocking { app.accountSettings.refresh().join() }
+            // The host opens signed in, with no sign-in or foreground refresh, so the test fills the cache.
+            runBlocking { app.accountRefresh.refresh().join() }
             steps()
         }
     }
 
     private fun signIn(server: ServerUrl, token: String) {
-        ServerTrustStore(context).confirmCleartext(server)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(server)
         Session(context).save(server, token)
     }
 
@@ -711,7 +906,10 @@ class EntryFormServerTest {
      */
     private fun openEntry(description: String, noTimes: Boolean = false) {
         val row = historyRow(description)
-        composeRule.waitUntil("the entry shows in the history", NETWORK_TIMEOUT.toMillis()) { shows(composeRule.onNode(row)) }
+        composeRule.waitUntil(
+            "the entry shows in the history",
+            NETWORK_TIMEOUT.toMillis(),
+        ) { shows(composeRule.onNode(row)) }
         composeRule.onNode(row).performClick()
         awaitShows("the form opens") { field(if (noTimes) R.string.entry_duration else R.string.entry_start) }
     }
@@ -724,7 +922,7 @@ class EntryFormServerTest {
             try {
                 list.performScrollToKey("entry-$entryId")
                 true
-            } catch (e: IllegalArgumentException) {
+            } catch (_: IllegalArgumentException) {
                 false
             }
         }
@@ -736,9 +934,14 @@ class EntryFormServerTest {
      */
     private fun addPastEntry(description: String, start: String, end: String? = null, duration: String? = null) {
         composeRule.onNode(hasText(string(R.string.timer_add_entry)) and hasClickAction()).performClick()
-        awaitShows("the form for a past entry opens") { composeRule.onNode(hasText(string(R.string.entry_form_new)) and isHeading()) }
-        composeRule.waitUntil("the account's workspace is known", NETWORK_TIMEOUT.toMillis()) { field(R.string.entry_description).isEnabled() }
-        field(R.string.entry_description).performTextInput(description)
+        awaitShows(
+            "the form for a past entry opens",
+        ) { composeRule.onNode(hasText(string(R.string.entry_form_new)) and isHeading()) }
+        composeRule.waitUntil(
+            "the account's workspace is known",
+            NETWORK_TIMEOUT.toMillis(),
+        ) { field(FieldsR.string.entry_description).isEnabled() }
+        field(FieldsR.string.entry_description).performTextInput(description)
         replace(R.string.entry_start, start)
         end?.let { replace(R.string.entry_end, it) }
         duration?.let { replace(R.string.entry_duration, it) }
@@ -751,12 +954,17 @@ class EntryFormServerTest {
      */
     private fun addNoTimeEntry(description: String, duration: String) {
         composeRule.onNode(hasText(string(R.string.timer_add_entry)) and hasClickAction()).performClick()
-        awaitShows("the form for a past entry opens") { composeRule.onNode(hasText(string(R.string.entry_form_new)) and isHeading()) }
-        composeRule.waitUntil("the account's workspace is known", NETWORK_TIMEOUT.toMillis()) { field(R.string.entry_description).isEnabled() }
+        awaitShows(
+            "the form for a past entry opens",
+        ) { composeRule.onNode(hasText(string(R.string.entry_form_new)) and isHeading()) }
+        composeRule.waitUntil(
+            "the account's workspace is known",
+            NETWORK_TIMEOUT.toMillis(),
+        ) { field(FieldsR.string.entry_description).isEnabled() }
         composeRule.onNode(noTimesSwitch()).performScrollTo().performClick()
         awaitShows("the duration is the only time field") { field(R.string.entry_duration) }
         assertFalse("a no-time entry has no start field", shows(field(R.string.entry_start)))
-        field(R.string.entry_description).performTextInput(description)
+        field(FieldsR.string.entry_description).performTextInput(description)
         replace(R.string.entry_duration, duration)
         save(R.string.entry_form_new)
     }
@@ -789,9 +997,9 @@ class EntryFormServerTest {
         field(label).performTextInput(text)
     }
 
-    private fun createEntry(description: String, start: Instant, stop: Instant): Long =
+    private fun createEntry(description: String, start: Instant, stop: Instant): Long = runBlocking {
         web.send(
-            "POST",
+            HttpMethod.POST,
             web.server.api("workspaces", workspace.toString(), "time_entries"),
             buildJsonObject {
                 put("workspace_id", workspace)
@@ -801,23 +1009,24 @@ class EntryFormServerTest {
                 put("stop", stop.toString())
             },
             JsonObject.serializer(),
-        ).orFail("POST an entry").getValue("id").jsonPrimitive.long
+        )
+    }.orFail("POST an entry").getValue("id").jsonPrimitive.long
 
-    private fun createProject(name: String): Long =
+    private fun createProject(name: String): Long = runBlocking {
         web.send(
-            "POST",
+            HttpMethod.POST,
             web.server.api("workspaces", workspace.toString(), "projects"),
             buildJsonObject { put("name", name) },
             JsonObject.serializer(),
-        ).orFail("POST a project").getValue("id").jsonPrimitive.long
+        )
+    }.orFail("POST a project").getValue("id").jsonPrimitive.long
 
     private fun field(@StringRes label: Int): SemanticsNodeInteraction = composeRule.onNode(isField(label))
 
     /** The text field labelled [label]. */
     private fun isField(@StringRes label: Int): SemanticsMatcher = hasSetTextAction() and hasText(string(label))
 
-    private fun SemanticsNodeInteraction.isError(): Boolean =
-        SemanticsProperties.Error in fetchSemanticsNode().config
+    private fun SemanticsNodeInteraction.isError(): Boolean = SemanticsProperties.Error in fetchSemanticsNode().config
 
     private fun SemanticsNodeInteraction.isEnabled(): Boolean =
         SemanticsProperties.Disabled !in fetchSemanticsNode().config
@@ -826,21 +1035,28 @@ class EntryFormServerTest {
      * The history row of the entry described as [description]. The form's description field holds
      * the same text and takes clicks too, so the row is what is clickable and not a text field.
      */
-    private fun historyRow(description: String): SemanticsMatcher = hasText(description) and hasClickAction() and !hasSetTextAction()
+    private fun historyRow(description: String): SemanticsMatcher = hasText(
+        description,
+    ) and hasClickAction() and !hasSetTextAction()
 
     /** The Timer page's List and Calendar switch, which shows only while the page does. */
-    private fun listSwitch(): SemanticsNodeInteraction = composeRule.onNode(hasText(string(R.string.timer_view_list)) and isSelectable())
+    private fun listSwitch(): SemanticsNodeInteraction = composeRule.onNode(
+        hasText(string(R.string.timer_view_list)) and isSelectable(),
+    )
 
     /**
      * In the form, not the timer beside it, which has a description field and billable too. The
      * form is the scrolling column with Save in it.
      */
-    private fun inForm(): SemanticsMatcher = hasAnyAncestor(hasScrollAction() and hasAnyDescendant(hasText(string(R.string.entry_save))))
+    private fun inForm(): SemanticsMatcher = hasAnyAncestor(
+        hasScrollAction() and hasAnyDescendant(hasText(string(R.string.entry_save))),
+    )
 
-    private fun formDescription(): SemanticsMatcher = isField(R.string.entry_description) and inForm()
+    private fun formDescription(): SemanticsMatcher = isField(FieldsR.string.entry_description) and inForm()
 
-    private fun formBillable(): SemanticsNodeInteraction =
-        composeRule.onNode(hasText(string(R.string.entry_billable)) and isToggleable() and inForm()).performScrollTo()
+    private fun formBillable(): SemanticsNodeInteraction = composeRule.onNode(
+        hasText(string(FieldsR.string.entry_billable)) and isToggleable() and inForm(),
+    ).performScrollTo()
 
     /**
      * Changes the open form's description to [description] and hands it to the form with the
@@ -872,21 +1088,35 @@ class EntryFormServerTest {
 
     /** The open form shows the entry described as [description] as the server has it, unbillable. */
     private fun assertOpensAsItWas(description: String) {
-        awaitShows("the form shows the entry as it was") { composeRule.onNode(formDescription() and hasText(description)) }
+        awaitShows(
+            "the form shows the entry as it was",
+        ) { composeRule.onNode(formDescription() and hasText(description)) }
         formBillable().assertIsOff()
     }
 
     /** The server still has the entry described as [description], unbillable. */
     private fun assertServerKept(description: String) {
-        assertFalse("the server's entry stays unbillable", serverEntry(description).getValue("billable").jsonPrimitive.boolean)
+        assertFalse(
+            "the server's entry stays unbillable",
+            serverEntry(description).getValue("billable").jsonPrimitive.boolean,
+        )
     }
 
     /** Hides the keyboard and waits until it is gone, so the next Back reaches the app. */
     private fun hideKeyboard(scenario: ActivityScenario<MainActivity>) {
-        scenario.onActivity { WindowCompat.getInsetsController(it.window, it.window.decorView).hide(WindowInsetsCompat.Type.ime()) }
+        scenario.onActivity {
+            WindowCompat.getInsetsController(
+                it.window,
+                it.window.decorView,
+            ).hide(WindowInsetsCompat.Type.ime())
+        }
         composeRule.waitUntil("the keyboard hides", NETWORK_TIMEOUT.toMillis()) {
             var shown = true
-            scenario.onActivity { shown = ViewCompat.getRootWindowInsets(it.window.decorView)?.isVisible(WindowInsetsCompat.Type.ime()) ?: false }
+            scenario.onActivity {
+                shown = ViewCompat.getRootWindowInsets(
+                    it.window.decorView,
+                )?.isVisible(WindowInsetsCompat.Type.ime()) ?: false
+            }
             !shown
         }
     }
@@ -909,13 +1139,14 @@ class EntryFormServerTest {
                 addQueryParameter("end_date", date.plusDays(2).toString() + "T00:00:00Z")
             }
         }.build()
-        return web.get(url, JsonArray.serializer()).orFail("GET /api/v9/me/time_entries")
+        return runBlocking { web.get(url, JsonArray.serializer()) }.orFail("GET /api/v9/me/time_entries")
             .map { it.jsonObject }
             .single { it.string("description") == description }
     }
 
-    private fun dateButton(): SemanticsNodeInteraction =
-        composeRule.onNode(hasContentDescription(string(R.string.entry_date_spoken, ""), substring = true) and hasClickAction())
+    private fun dateButton(): SemanticsNodeInteraction = composeRule.onNode(
+        hasContentDescription(string(R.string.entry_date_spoken, ""), substring = true) and hasClickAction(),
+    )
 
     /**
      * The day [date] in Material's date picker, which shows its number and gives TalkBack the
@@ -930,34 +1161,42 @@ class EntryFormServerTest {
 
     /** What TalkBack reads for the date button on [date]: Date: Mon, 19 Oct 2026. */
     private fun spokenDate(date: LocalDate): String {
-        val weekday = context.resources.getStringArray(R.array.reports_weekdays_short)[date.dayOfWeek.value - 1]
-        val month = context.resources.getStringArray(R.array.reports_months_short)[date.monthValue - 1]
-        val value = string(R.string.entry_date_value, weekday, string(R.string.reports_date_year, date.dayOfMonth, month, date.year))
+        val weekday = context.resources.getStringArray(UiR.array.reports_weekdays_short)[date.dayOfWeek.value - 1]
+        val month = context.resources.getStringArray(UiR.array.reports_months_short)[date.monthValue - 1]
+        val value = string(
+            R.string.entry_date_value,
+            weekday,
+            string(UiR.string.reports_date_year, date.dayOfMonth, month, date.year),
+        )
         return string(R.string.entry_date_spoken, value)
     }
 
     /** The project button, as TalkBack reads it for [name], or for no project. */
     private fun projectButton(name: String?): SemanticsNodeInteraction {
-        val spoken = name?.let { string(R.string.entry_project_spoken, it) } ?: string(R.string.entry_no_project_spoken)
+        val spoken = name?.let {
+            string(
+                FieldsR.string.entry_project_spoken,
+                it,
+            )
+        } ?: string(FieldsR.string.entry_no_project_spoken)
         return composeRule.onNode(hasContentDescription(spoken) and hasClickAction())
     }
 
     /** A row of the picker, scrolled into view. */
     private fun option(text: String): SemanticsNodeInteraction {
         val matcher = hasText(text) and hasClickAction()
-        val list = hasScrollToNodeAction() and hasAnyDescendant(hasText(string(R.string.picker_project)))
+        val list = hasScrollToNodeAction() and hasAnyDescendant(hasText(string(FieldsR.string.picker_project)))
         composeRule.onNode(list).performScrollToNode(matcher)
         return composeRule.onNode(matcher)
     }
 
     /** Whether exactly one node matches. */
-    private fun shows(node: SemanticsNodeInteraction): Boolean =
-        try {
-            node.fetchSemanticsNode()
-            true
-        } catch (e: AssertionError) {
-            false
-        }
+    private fun shows(node: SemanticsNodeInteraction): Boolean = try {
+        node.fetchSemanticsNode()
+        true
+    } catch (_: AssertionError) {
+        false
+    }
 
     private fun awaitShows(what: String, node: () -> SemanticsNodeInteraction) {
         composeRule.waitUntil("$what within $AT_ONCE", AT_ONCE.toMillis()) { shows(node()) }
@@ -968,12 +1207,16 @@ class EntryFormServerTest {
         val deadline = System.nanoTime() + NETWORK_TIMEOUT.toNanos()
         while (runBlocking { app.changes.unsentCount.first() } > 0) {
             if (System.nanoTime() > deadline) throw AssertionError("the queue is not empty")
-            runBlocking { app.sender.send().join() }
+            runBlocking { app.sender.sendAndWait() }
         }
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
     }
 
-    private fun at(date: LocalDate, hour: Int, minute: Int): Instant = ZonedDateTime.of(date, LocalTime.of(hour, minute), MADRID).toInstant()
+    private fun at(date: LocalDate, hour: Int, minute: Int): Instant = ZonedDateTime.of(
+        date,
+        LocalTime.of(hour, minute),
+        MADRID,
+    ).toInstant()
 
     private fun instant(text: String): Instant = OffsetDateTime.parse(text).toInstant()
 

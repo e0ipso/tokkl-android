@@ -1,0 +1,94 @@
+# Detekt's defaults apply (buildUponDefaultConfig); this file holds only what differs, each with
+# its reason. Test code means src/test, src/androidTest, src/testFixtures,
+# app/src/notificationPermissionTest and :core:testing, which only instrumented tests use.
+
+complexity:
+  # A test is one scenario, step after step, and splitting it hides the order of its steps. The
+  # size and nesting limits apply to production code only.
+  #
+  # A composable's body is the layout it draws, written as one call per element. With ktlint's
+  # one argument per line, its length counts arguments, and its branches choose what to show.
+  # Compose splits a screen into composables by the parts of the layout, not by size.
+  LongMethod:
+    excludes: &tests ['**/test/**', '**/androidTest/**', '**/testFixtures/**', '**/notificationPermissionTest/**', '**/core/testing/**']
+    ignoreAnnotated: ['Composable']
+  LargeClass:
+    excludes: *tests
+  NestedBlockDepth:
+    excludes: *tests
+  ComplexCondition:
+    excludes: *tests
+  # A when whose branches are one expression each maps cases to results, as a table does.
+  CyclomaticComplexMethod:
+    excludes: *tests
+    ignoreAnnotated: ['Composable']
+    ignoreSimpleWhenEntries: true
+  # A view model has one public function for each event its screen sends, and a queue or a time
+  # API one for each operation it offers; splitting them by count would scatter one screen's
+  # state. A Room DAO has one function for each query, which the Room annotations mark. A Compose
+  # screen file holds its screen's private composables beside the public one.
+  TooManyFunctions:
+    excludes: *tests
+    allowedFunctionsPerClass: 20
+    ignorePrivate: true
+    ignoreAnnotatedFunctions: ['Composable', 'Preview', 'Query', 'Insert', 'Update', 'Delete', 'Upsert', 'Transaction']
+
+exceptions:
+  # The defaults leave test code out of these too.
+  TooGenericExceptionCaught:
+    excludes: *tests
+  ThrowingExceptionFromFinally:
+    excludes: *tests
+
+naming:
+  # Composables are named like types, as Compose's API guidelines ask.
+  FunctionNaming:
+    excludes: *tests
+    ignoreAnnotated: ['Composable']
+
+style:
+  # The defaults, plus test fixtures and the permission probes, which are test code too. In a
+  # composable, numbers are its dimensions and weights, which Compose writes inline.
+  MagicNumber:
+    excludes: ['**/test/**', '**/androidTest/**', '**/testFixtures/**', '**/notificationPermissionTest/**', '**/core/testing/**', '**/*.kts']
+    ignoreAnnotated: ['Composable']
+  # Kotlin states each way out of a function where it happens, with `?: return` and early
+  # returns, and its coding conventions set no limit on them. A limit would nest these functions,
+  # or split them into helpers that each still return early.
+  ReturnCount:
+    active: false
+  # A throw that guards a function's preconditions, like an early return, is idiomatic Kotlin.
+  ThrowsCount:
+    excludeGuardClauses: true
+  LoopWithTooManyJumpStatements:
+    excludes: *tests
+  # A test destructures the rows of a fixture into their named fields.
+  DestructuringDeclarationWithTooManyEntries:
+    excludes: *tests
+
+ktlint:
+  # The same check as style>MaxLineLength, which reports it once.
+  MaximumLineLength:
+    active: false
+  # The same check as style>WildcardImport, which reports it once.
+  NoWildcardImports:
+    active: false
+
+Compose:
+  # Glance draws the home screen widgets with GlanceModifier in place of Modifier.
+  ModifierMissing:
+    customModifiers: ['GlanceModifier']
+  ModifierWithoutDefault:
+    customModifiers: ['GlanceModifier']
+  ModifierNaming:
+    customModifiers: ['GlanceModifier']
+  ModifierNotUsedAtRoot:
+    customModifiers: ['GlanceModifier']
+  # The app's own CompositionLocals: the theme's values, the section hue, the scroll-away header
+  # and the signed-in session's view model store. Each carries what a whole subtree shares.
+  CompositionLocalAllowlist:
+    allowedCompositionLocals:
+      - LocalSignedInSession
+      - LocalSectionHue
+      - LocalTokklExtraColors
+      - LocalOuterTopGone

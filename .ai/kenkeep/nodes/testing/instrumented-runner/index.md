@@ -14,8 +14,8 @@ _None._
 - Open [**Use the pinned test server and TLS proxies**](practice-use-the-pinned-test-server-and-tls-proxies.md) to learn about: Disposable Tokkl, prefixed HTTP and independent TLS keys provide real endpoint and trust fixtures. #testing #android #docker #api
 - Open [**Pass class and package lists through runner filter files**](practice-pass-class-and-package-lists-through-runner-filter-files.md) to learn about: The script preserves comma-separated test selection despite AGP argument splitting. #testing #android #gradle
 - Open [**Keep instrumented credentials out of process arguments**](practice-keep-instrumented-credentials-out-of-process-arguments.md) to learn about: Private device credential files and durable cleanup prevent passwords and tokens leaking through ps. #testing #android #security
-- Open [**Run native permission probes alone with a fresh notification permission**](practice-run-native-permission-probes-alone-with-a-fresh-permission.md) to learn about: TOKKL_TEST_FRESH_NOTIFICATION_PERMISSION=1 resets POST_NOTIFICATIONS before one probe method starts, on an API 33+ emulator the script boots. #testing #android #emulator #notification
 - Open [**Verify device test results and process isolation receipts**](practice-verify-device-test-results-and-process-isolation-receipts.md) to learn about: Device liveness, nonempty JUnit XML and orchestrated processes matter beyond Gradle success. #testing #android #emulator
+- Open [**Run native permission probes alone with a fresh notification permission**](practice-run-native-permission-probes-alone-with-a-fresh-permission.md) to learn about: TOKKL_TEST_FRESH_NOTIFICATION_PERMISSION=1 resets POST_NOTIFICATIONS before one probe method starts, on an API 33+ emulator the script boots. #testing #android #emulator #notification
 
 ## Components (what exists)
 _None yet._
@@ -23,9 +23,9 @@ _None yet._
 ## By topic
 
 ### #android
+- Open [**Wait on the app's own handlers, never on a latch in production code**](../instrumented-test-authoring/practice-wait-on-the-apps-handlers-not-production-latches.md) — Device tests wait for receiver and service work by wrapping the handler in the Koin graph, or on an effect the app already shows. Production has no test latches or test-only branches.
 - Open [**Let the runner own emulator boot and settings**](../emulator-runtime/practice-let-the-runner-own-emulator-boot-and-settings.md) — The runner owns adb startup, emulator readiness and temporary device settings.
 - Open [**Choose plain AOSP images and compatible renderers**](../emulator-runtime/practice-choose-plain-aosp-images-and-compatible-renderers.md) — API 36 references and API 31 compatibility use launcher-capable AOSP images and bounded renderers.
-- Open [**Account for emulator recording and screenshot quirks**](../emulator-runtime/practice-account-for-emulator-recording-and-screenshot-quirks.md) — Hold the final video frame and distinguish framebuffer captures from launch splash failures.
 ### #testing
 - Open [**Let the runner own emulator boot and settings**](../emulator-runtime/practice-let-the-runner-own-emulator-boot-and-settings.md) — The runner owns adb startup, emulator readiness and temporary device settings.
 - Open [**Choose plain AOSP images and compatible renderers**](../emulator-runtime/practice-choose-plain-aosp-images-and-compatible-renderers.md) — API 36 references and API 31 compatibility use launcher-capable AOSP images and bounded renderers.
@@ -40,10 +40,10 @@ _None yet._
 ### #api
 - Open [**Trash capability and server operations**](../../screens/session-and-navigation/map-trash-capability-and-server-operations.md) — Tokkl-only Trash routes, cached rows and explicit unsupported-endpoint handling.
 - Open [**Never make Start or Stop wait for the server**](../../data-and-offline/practice-never-wait-for-server-on-start-stop.md) — Start and Stop change state on the phone at once and queue the change. Pause, Resume and session actions wait for the server. No sync engine.
-- Open [**Ordered entry sending and refusals**](../../data-and-offline/change-queue/map-ordered-entry-sending-and-refusals.md) — Oldest-first HTTP delivery, retry boundaries, held refusals and reauthentication.
+- Open [**Match Tokkl web app behavior in the account timezone**](../../data-and-offline/practice-match-web-app-behavior-account-timezone.md) — Use the web app's time parsing, favorites, grouping and undo, in the account timezone read from GET /api/v9/me.
 ### #gradle
 - Open [**Gradle build settings: SDK levels, Kotlin version, memory and build cache**](../../build-and-tooling/map-gradle-build-sdk-levels-kotlin-and-memory.md) — minSdk 31, compileSdk from the dependencies, targetSdk from the emulator, Kotlin from the catalog, a small heap and the local build cache.
-- Open [**Pass class and package lists through runner filter files**](practice-pass-class-and-package-lists-through-runner-filter-files.md) — The script preserves comma-separated test selection despite AGP argument splitting.
+- Open [**Fix detekt findings in code, and baseline only a fix that changes behaviour**](../../build-and-tooling/practice-fix-detekt-findings-in-code.md) — check runs detekt 2 with ktlint's intellij_idea rules and the Compose rules on every module. Fix findings in code; a baseline entry needs a behaviour change as its reason.
 - Open [**Build with --no-daemon in parallel worktrees and never run --stop**](../../build-and-tooling/practice-gradle-no-daemon-in-parallel-worktrees.md) — ./gradlew --stop ends every daemon of that Gradle version for the user, including one serving a build in another worktree.
 ### #notification
 - Open [**Running timer notification follows the cache's running entry**](../../data-and-offline/map-running-timer-notification-follows-the-cache.md) — notification/RunningNotificationSync posts, replaces and removes the ongoing notification from the cache and the held timer state. Stop works offline, Pause needs the server.

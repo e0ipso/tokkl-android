@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+        DefaultNetwork reads the default network for NetworkWatch, the picker and the timer sync
+        service. The app's manifest declares this permission too and says why the app needs it.
+    -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+</manifest>

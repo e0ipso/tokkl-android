@@ -17,8 +17,8 @@ import androidx.compose.ui.test.WindowSize
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.isEnabled
+import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.v2.createComposeRule
@@ -33,15 +33,15 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
 import androidx.test.runner.lifecycle.Stage
-import com.github.e0ipso.tokkl.Destination
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
-import com.github.e0ipso.tokkl.SignedInFrame
-import com.github.e0ipso.tokkl.SignedInPanes
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitTimerPage
-import com.github.e0ipso.tokkl.timer.TimerView
+import com.github.e0ipso.tokkl.feature.timer.R
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.navhost.SignedInFrame
+import com.github.e0ipso.tokkl.navhost.SignedInPanes
+import com.github.e0ipso.tokkl.navhost.showsEntryBeside
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.windowWidth
 import org.junit.Assert.assertEquals
@@ -49,7 +49,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
-import com.github.e0ipso.tokkl.showsEntryBeside as entryBeside
+import com.github.e0ipso.tokkl.core.entryfields.R as FieldsR
 
 /**
  * The entry form and the Timer page keep their state when a fold or a rotation moves them between
@@ -65,7 +65,7 @@ class AdaptiveStateTest {
 
     @Test
     fun aFoldKeepsTheFormAndThePageBesideIt() {
-        var stack by mutableStateOf(listOf(Destination.TIMER, Destination.ENTRY))
+        var stack by mutableStateOf(listOf(Route.Timer, FORM_ROUTE))
         StateRestorationTester(composeRule).apply {
             setContent {
                 DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(window)) {
@@ -91,7 +91,7 @@ class AdaptiveStateTest {
             composeRule.onNodeWithText("$PAGE 1").performClick()
 
             // Closing the form leaves the page with its state, and so does a fold after that.
-            composeRule.runOnIdle { stack = listOf(Destination.TIMER) }
+            composeRule.runOnIdle { stack = listOf(Route.Timer) }
             assertShows("$PAGE 2")
             assertGone(FORM)
             window = MEDIUM_WINDOW
@@ -102,13 +102,13 @@ class AdaptiveStateTest {
 
     /** What TokklNavHost draws for [stack] at the window's width, with a saved counter for each screen. */
     @Composable
-    private fun Panes(stack: List<Destination>) {
+    private fun Panes(stack: List<Route>) {
         val width = windowWidth()
-        SignedInFrame(current = TopLevelPage.TIMER, onOpen = {}, width = width) {
-            SignedInPanes(destination = stack.last(), entryBeside = entryBeside(width, TimerView.LIST, stack), entryKey = 0) { shown ->
+        SignedInFrame(pages = topLevelPages, current = Route.Timer, onOpen = {}, width = width) {
+            SignedInPanes(top = stack.last(), entryBeside = showsEntryBeside(width, listView = true, stack)) { shown ->
                 when (shown) {
-                    Destination.TIMER -> Counter(PAGE)
-                    Destination.ENTRY -> Counter(FORM)
+                    Route.Timer -> Counter(PAGE)
+                    is Route.Entry -> Counter(FORM)
                     else -> error("$shown is not on this stack")
                 }
             }
@@ -129,12 +129,17 @@ class AdaptiveStateTest {
     }
 
     private fun assertGone(prefix: String) {
-        assertEquals("nothing of $prefix shows", 0, composeRule.onAllNodes(hasText(prefix, substring = true)).fetchSemanticsNodes().size)
+        assertEquals(
+            "nothing of $prefix shows",
+            0,
+            composeRule.onAllNodes(hasText(prefix, substring = true)).fetchSemanticsNodes().size,
+        )
     }
 
     private companion object {
         const val PAGE = "Timer page"
         const val FORM = "Entry form"
+        val FORM_ROUTE = Route.Entry(EntryOpening.Edit(EntryId(1)), id = "form")
         val COMPACT_WINDOW = DpSize(411.dp, 891.dp)
         val MEDIUM_WINDOW = DpSize(700.dp, 1000.dp)
         val EXPANDED_WINDOW = DpSize(1280.dp, 800.dp)
@@ -172,27 +177,49 @@ class AdaptiveRotationTest {
                 val before = resumedActivity()
                 scenario.onActivity { it.requestedOrientation = requested }
                 composeRule.waitUntil("the activity is recreated", TIMEOUT_MS) {
-                    resumedActivity()?.let { it !== before && it.resources.configuration.orientation == orientation } == true
+                    resumedActivity()?.let { it !== before && it.resources.configuration.orientation == orientation } ==
+                        true
                 }
                 composeRule.waitForIdle()
                 val expanded = resumedActivity()!!.let { activity ->
-                    activity.windowManager.currentWindowMetrics.bounds.width() / activity.resources.displayMetrics.density >= EXPANDED_DP
+                    activity.windowManager.currentWindowMetrics.bounds.width() /
+                        activity.resources.displayMetrics.density >=
+                        EXPANDED_DP
                 }
 
-                assertEquals("the form keeps its heading", 1, composeRule.onAllNodes(hasText(string(R.string.entry_form_new)) and isHeading()).fetchSemanticsNodes().size)
-                assertTrue("the form keeps what was typed", composeRule.onAllNodes(descriptionField() and hasText(TYPED)).fetchSemanticsNodes().isNotEmpty())
-                val listSwitch = composeRule.onAllNodes(hasText(string(R.string.timer_view_list)) and isSelectable()).fetchSemanticsNodes()
-                assertEquals("the Timer page shows beside the form only when expanded", expanded, listSwitch.isNotEmpty())
+                assertEquals(
+                    "the form keeps its heading",
+                    1,
+                    composeRule.onAllNodes(
+                        hasText(string(R.string.entry_form_new)) and isHeading(),
+                    ).fetchSemanticsNodes().size,
+                )
+                assertTrue(
+                    "the form keeps what was typed",
+                    composeRule.onAllNodes(descriptionField() and hasText(TYPED)).fetchSemanticsNodes().isNotEmpty(),
+                )
+                val listSwitch = composeRule.onAllNodes(
+                    hasText(string(R.string.timer_view_list)) and isSelectable(),
+                ).fetchSemanticsNodes()
+                assertEquals(
+                    "the Timer page shows beside the form only when expanded",
+                    expanded,
+                    listSwitch.isNotEmpty(),
+                )
             }
         }
     }
 
-    private fun descriptionField(): SemanticsMatcher = hasSetTextAction() and hasText(string(R.string.entry_description))
+    private fun descriptionField(): SemanticsMatcher = hasSetTextAction() and hasText(
+        string(FieldsR.string.entry_description),
+    )
 
     private fun resumedActivity(): MainActivity? {
         var resumed: MainActivity? = null
         instrumentation.runOnMainSync {
-            resumed = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED).filterIsInstance<MainActivity>().singleOrNull()
+            resumed = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(
+                Stage.RESUMED,
+            ).filterIsInstance<MainActivity>().singleOrNull()
         }
         return resumed
     }

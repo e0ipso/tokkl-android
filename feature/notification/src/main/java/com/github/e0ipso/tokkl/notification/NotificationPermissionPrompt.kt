@@ -1,0 +1,100 @@
+package com.github.e0ipso.tokkl.notification
+
+import android.Manifest
+import android.content.Context
+import android.content.Intent
+import android.os.Build
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
+import com.github.e0ipso.tokkl.feature.notification.R
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
+
+/**
+ * Asks for the notification permission at the first timer or Pomodoro start made in the app
+ * (docs/PRD.md N5), as [ask] decides, for each item [starts] gives after the start. Neither start
+ * waits for the answer. Explicit [retries] ask or open settings using the same request history.
+ * A refusal shows a snackbar that says what is lost and offers the app's notification
+ * settings through [openSettings]. The snackbar is a polite live region, as Material's
+ * SnackbarHost makes each one, so TalkBack reads it, and it stays for Material's long duration.
+ */
+@Composable
+fun NotificationPermissionPrompt(
+    starts: Flow<Unit>,
+    ask: NotificationPermissionAsk,
+    modifier: Modifier = Modifier,
+    openSettings: (Context) -> Unit = ::openNotificationSettings,
+    onAllow: () -> Unit = {},
+    retries: Flow<Unit> = emptyFlow(),
+    onResult: (Boolean) -> Unit = {},
+) {
+    val context = LocalContext.current
+    val host = remember { SnackbarHostState() }
+    var refused by rememberSaveable { mutableStateOf(false) }
+    val allowedNow by rememberUpdatedState(onAllow)
+    val resultNow by rememberUpdatedState(onResult)
+    val request = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { allowed ->
+        resultNow(allowed)
+        if (allowed) allowedNow() else refused = true
+    }
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val settings by rememberUpdatedState(openSettings)
+    LaunchedEffect(starts, retries, ask, lifecycle) {
+        // A start finishing as the app goes to the background waits until it is on screen again.
+        lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            // One collector serializes timer and Pomodoro starts, including explicit retries.
+            merge(starts.map { false }, retries.map { true }).collect { retry ->
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && ask.askAtStart()) {
+                    request.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    // Once launched, persist even if a rotation or a background trip cancels collection.
+                    ask.recordRequest()
+                } else if (retry) {
+                    // Settings also works after Android stops displaying a repeatedly denied dialog.
+                    settings(context)
+                }
+            }
+        }
+    }
+    val message = stringResource(R.string.notification_permission_refused)
+    val settingsLabel = stringResource(R.string.notification_permission_settings)
+    LaunchedEffect(refused) {
+        if (!refused) return@LaunchedEffect
+        val result = host.showSnackbar(
+            message = message,
+            actionLabel = settingsLabel,
+            withDismissAction = true,
+            duration = SnackbarDuration.Long,
+        )
+        if (result == SnackbarResult.ActionPerformed) settings(context)
+        refused = false
+    }
+    SnackbarHost(host, modifier)
+}
+
+fun openNotificationSettings(context: Context) {
+    context.startActivity(notificationSettingsIntent(context))
+}
+
+fun notificationSettingsIntent(context: Context): Intent =
+    Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)

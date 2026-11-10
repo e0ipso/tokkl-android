@@ -25,28 +25,37 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.core.view.WindowCompat
+import androidx.lifecycle.SavedStateHandle
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.HangingRelay
-import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
-import com.github.e0ipso.tokkl.cache.CachedTag
-import com.github.e0ipso.tokkl.cache.CachedTimeEntry
+import com.github.e0ipso.tokkl.api.HttpMethod
+import com.github.e0ipso.tokkl.api.api
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.feature.tags.R
+import com.github.e0ipso.tokkl.model.Tag
+import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.orFail
+import com.github.e0ipso.tokkl.platform.AppForeground
+import com.github.e0ipso.tokkl.platform.DefaultNetwork
+import com.github.e0ipso.tokkl.platform.offlineIn
+import com.github.e0ipso.tokkl.session.CacheRefresh
+import com.github.e0ipso.tokkl.session.ServerChanges
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import java.time.Duration
-import java.time.Instant
-import java.time.temporal.ChronoUnit
-import java.util.concurrent.CopyOnWriteArrayList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.builtins.ListSerializer
@@ -65,6 +74,12 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import org.koin.core.context.GlobalContext
+import java.time.Duration
+import java.time.Instant
+import java.time.temporal.ChronoUnit
+import java.util.concurrent.CopyOnWriteArrayList
+import com.github.e0ipso.tokkl.core.catalog.R as CatalogR
 
 /**
  * The tags page against the real Tokkl container, wired as TagsViewModel wires it, on an account
@@ -83,21 +98,32 @@ class TagsServerTest {
     private val refreshes = CopyOnWriteArrayList<Job>()
     private lateinit var account: TestAccounts.Account
     private var workspace = 0L
-    private lateinit var model: TagsModel
+    private lateinit var model: TagsViewModel
 
     @Before
     fun seedTheServerAndRefresh() {
         account = TestAccounts.create(timezone = "Europe/Madrid")
         Session(context).save(TokklTestServer.url, account.apiToken)
         workspace = account.workspaceId
-        runBlocking { app.accountSettings.refresh().join() }
-        model = TagsModel(
-            client = Session(context)::client,
-            workspaceId = { app.accountSettings.state.value?.defaultWorkspaceId },
-            refreshCache = { refreshes += app.accountSettings.refreshAfterChange() },
+        runBlocking { app.accountRefresh.refresh().join() }
+        model = TagsViewModel(
+            repository = ServerTagsRepository(Session(context).api),
+            settings = app.accountSettings,
+            changes = ServerChanges(
+                scope = scope,
+                io = Dispatchers.IO,
+                refreshes = object : CacheRefresh {
+                    override fun refresh() = app.accountRefresh.refresh().also { refreshes += it }
+
+                    override fun refreshAfterChange() = app.accountRefresh.refreshAfterChange().also { refreshes += it }
+                },
+            ),
             scope = scope,
             io = Dispatchers.IO,
             cachedTags = app.cache.tags,
+            offline = GlobalContext.get().get<DefaultNetwork>().offlineIn(scope),
+            app = AppForeground(MutableStateFlow(true), emptyFlow()),
+            saved = SavedStateHandle(),
         )
     }
 
@@ -123,37 +149,43 @@ class TagsServerTest {
         field(R.string.tags_new_name).type("focus")
         button(R.string.tags_add).tap()
 
-        awaitText(string(R.string.catalog_created, "focus"))
-        awaitMessageGone(string(R.string.catalog_created, "focus"))
+        awaitText(string(CatalogR.string.catalog_created, "focus"))
+        awaitMessageGone(string(CatalogR.string.catalog_created, "focus"))
         val id = tag("focus")!!.getValue("id").jsonPrimitive.long
-        awaitCache("the cache holds the new tag") { tags, _ -> tags.any { it.id == id && it.name == "focus" } }
-        field(R.string.tags_new_name).assert(SemanticsMatcher("an empty field") { it.config.getOrNull(SemanticsProperties.EditableText)?.text == "" })
+        awaitCache("the cache holds the new tag") { tags, _ -> tags.any { it.id.value == id && it.name == "focus" } }
+        field(
+            R.string.tags_new_name,
+        ).assert(
+            SemanticsMatcher("an empty field") { it.config.getOrNull(SemanticsProperties.EditableText)?.text == "" },
+        )
 
         entry("focus")
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
 
         row("focus").tap(scroll = false)
         awaitText(string(R.string.tags_rename_title, "focus"))
         field(R.string.tags_rename_field).clear()
         field(R.string.tags_rename_field).type("deep work")
-        composeRule.onNode(hasText(string(R.string.tags_rename_save)) and hasClickAction() and hasAnyAncestor(isDialog())).tap(scroll = false)
+        composeRule.onNode(
+            hasText(string(R.string.tags_rename_save)) and hasClickAction() and hasAnyAncestor(isDialog()),
+        ).tap(scroll = false)
 
-        awaitText(string(R.string.catalog_renamed, "deep work"))
-        awaitMessageGone(string(R.string.catalog_renamed, "deep work"))
+        awaitText(string(CatalogR.string.catalog_renamed, "deep work"))
+        awaitMessageGone(string(CatalogR.string.catalog_renamed, "deep work"))
         assertEquals(null, tag("focus"))
         assertEquals(id, tag("deep work")!!.getValue("id").jsonPrimitive.long)
         awaitCache("the cache and the history hold the new name") { tags, entries ->
-            tags.any { it.id == id && it.name == "deep work" } && entries.single().tags == listOf("deep work")
+            tags.any { it.id.value == id && it.name == "deep work" } && entries.single().tags == listOf("deep work")
         }
 
         composeRule.onNode(hasContentDescription(string(R.string.tags_delete_named, "deep work"))).tap()
         awaitText(string(R.string.tags_delete_title, "deep work"))
         composeRule.onNode(hasText(string(R.string.tags_delete_confirm)) and hasClickAction()).tap(scroll = false)
 
-        awaitText(string(R.string.catalog_deleted, "deep work"))
+        awaitText(string(CatalogR.string.catalog_deleted, "deep work"))
         assertEquals(null, tag("deep work"))
         awaitCache("the tag left the cache and the entry") { tags, entries ->
-            tags.none { it.id == id } && entries.single().tags.isEmpty()
+            tags.none { it.id.value == id } && entries.single().tags.isEmpty()
         }
     }
 
@@ -171,7 +203,7 @@ class TagsServerTest {
             field(R.string.tags_new_name).type("focus")
             button(R.string.tags_add).tap()
 
-            awaitText(string(R.string.catalog_created, "focus"))
+            awaitText(string(CatalogR.string.catalog_created, "focus"))
             assertEquals("the relay dropped the create's answer", 1, relay.droppedAnswers)
             row("focus").assertExists()
             assertNoText("A tag with the same name already exists")
@@ -197,7 +229,7 @@ class TagsServerTest {
         awaitText("keep")
         composeRule.onNode(hasContentDescription(string(R.string.tags_delete_named, "keep"))).tap()
         awaitText(string(R.string.tags_delete_title, "keep"))
-        composeRule.onNode(hasText(string(R.string.catalog_cancel)) and hasClickAction()).tap(scroll = false)
+        composeRule.onNode(hasText(string(CatalogR.string.catalog_cancel)) and hasClickAction()).tap(scroll = false)
         composeRule.waitUntil(NETWORK_TIMEOUT.toMillis()) {
             composeRule.onAllNodesWithText(string(R.string.tags_delete_title, "keep")).fetchSemanticsNodes().isEmpty()
         }
@@ -214,7 +246,9 @@ class TagsServerTest {
         row("two").tap(scroll = false)
         field(R.string.tags_rename_field).clear()
         field(R.string.tags_rename_field).type("one")
-        composeRule.onNode(hasText(string(R.string.tags_rename_save)) and hasClickAction() and hasAnyAncestor(isDialog())).tap(scroll = false)
+        composeRule.onNode(
+            hasText(string(R.string.tags_rename_save)) and hasClickAction() and hasAnyAncestor(isDialog()),
+        ).tap(scroll = false)
         awaitText("A tag with the same name already exists")
         assertTrue(tag("two") != null)
     }
@@ -230,7 +264,9 @@ class TagsServerTest {
         awaitText(string(R.string.tags_server_needed_message))
         button(R.string.tags_add).assertIsNotEnabled()
         // A disabled field takes no text, so it has no SetText action.
-        composeRule.onNode(hasText(string(R.string.tags_new_name)) and SemanticsMatcher.keyIsDefined(SemanticsProperties.EditableText))
+        composeRule.onNode(
+            hasText(string(R.string.tags_new_name)) and SemanticsMatcher.keyIsDefined(SemanticsProperties.EditableText),
+        )
             .assertIsNotEnabled()
         composeRule.onNode(hasContentDescription(string(R.string.tags_delete_named, "focus"))).assertIsNotEnabled()
         row("focus").assertIsNotEnabled()
@@ -245,7 +281,7 @@ class TagsServerTest {
     @Test
     fun theServerOutOfReachListsThePhonesTags() {
         create("cached")
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         AirplaneMode.set(true, account.client)
         show()
         awaitText(string(R.string.tags_server_needed_title))
@@ -282,12 +318,12 @@ class TagsServerTest {
     private fun throughARelay(block: (HangingRelay) -> Unit) {
         val relay = HangingRelay(TokklTestServer.url)
         try {
-            ServerTrustStore(context).confirmCleartext(relay.url)
+            ServerTrustStore(context, Dispatchers.IO).confirmCleartext(relay.url)
             Session(context).save(relay.url, account.apiToken)
             block(relay)
         } finally {
             relay.close()
-            ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
+            ServerTrustStore(context, Dispatchers.IO).confirmCleartext(TokklTestServer.url)
             Session(context).save(TokklTestServer.url, account.apiToken)
         }
     }
@@ -300,7 +336,11 @@ class TagsServerTest {
     }
 
     private fun assertNoText(text: String) {
-        assertEquals("\"$text\" shows", 0, composeRule.onAllNodesWithText(text, substring = true).fetchSemanticsNodes().size)
+        assertEquals(
+            "\"$text\" shows",
+            0,
+            composeRule.onAllNodesWithText(text, substring = true).fetchSemanticsNodes().size,
+        )
     }
 
     /**
@@ -316,7 +356,7 @@ class TagsServerTest {
             WindowCompat.enableEdgeToEdge(window)
             window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
         }
-        composeRule.setContent { TokklTheme { TagsScreen(model) } }
+        composeRule.setContent { TokklTheme { TagsPage(model) } }
     }
 
     /** Types [text] into the field, as a user does. */
@@ -364,24 +404,39 @@ class TagsServerTest {
      */
     private fun awaitMessageGone(text: String) {
         composeRule.mainClock.advanceTimeBy(SNACKBAR_MS)
-        composeRule.waitUntil(NETWORK_TIMEOUT.toMillis()) { composeRule.onAllNodesWithText(text).fetchSemanticsNodes().isEmpty() }
+        composeRule.waitUntil(
+            NETWORK_TIMEOUT.toMillis(),
+        ) { composeRule.onAllNodesWithText(text).fetchSemanticsNodes().isEmpty() }
     }
 
     private fun button(id: Int) = composeRule.onNode(hasText(string(id)) and hasClickAction())
 
     private fun field(id: Int) = composeRule.onNode(hasText(string(id)) and hasSetTextAction())
 
-    private fun row(name: String) =
-        composeRule.onNode(hasText(name) and hasClickAction() and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
+    private fun row(name: String) = composeRule.onNode(
+        hasText(name) and hasClickAction() and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button),
+    )
 
-    private fun awaitCache(message: String, check: (List<CachedTag>, List<CachedTimeEntry>) -> Boolean) {
+    private fun awaitCache(message: String, check: (List<Tag>, List<TimeEntry>) -> Boolean) {
         runBlocking { refreshes.forEach { it.join() } }
-        assertTrue(message, check(runBlocking { app.cache.tags.first() }, runBlocking { app.cache.timeEntries.first() }))
+        assertTrue(
+            message,
+            check(runBlocking { app.cache.tags.first() }, runBlocking { app.cache.timeEntries.first() }),
+        )
     }
 
-    private fun tag(name: String): JsonObject? = tags().singleOrNull { it.getValue("name").jsonPrimitive.content == name }
+    private fun tag(name: String): JsonObject? = tags().singleOrNull {
+        it.getValue(
+            "name",
+        ).jsonPrimitive.content == name
+    }
 
-    private fun tags(): List<JsonObject> = account.client.get(url("tags"), ListSerializer(JsonObject.serializer())).orFail("GET tags")
+    private fun tags(): List<JsonObject> = runBlocking {
+        account.client.get(
+            url("tags"),
+            ListSerializer(JsonObject.serializer()),
+        )
+    }.orFail("GET tags")
 
     private fun entry(tag: String) {
         val start = Instant.now().minus(2, ChronoUnit.HOURS).truncatedTo(ChronoUnit.MINUTES)
@@ -393,19 +448,35 @@ class TagsServerTest {
             put("duration", 1800)
             put("tags", buildJsonArray { add(JsonPrimitive(tag)) })
         }
-        account.client.send("POST", url("time_entries"), body, JsonObject.serializer()).orFail("POST time_entries")
+        runBlocking {
+            account.client.send(
+                HttpMethod.POST,
+                url("time_entries"),
+                body,
+                JsonObject.serializer(),
+            )
+        }.orFail("POST time_entries")
     }
 
     private fun url(vararg path: String) = account.client.server.api("workspaces", workspace.toString(), *path)
 
     private fun create(name: String) {
-        account.client.send("POST", url("tags"), buildJsonObject { put("name", name) }, JsonObject.serializer()).orFail("POST tags")
+        runBlocking {
+            account.client.send(
+                HttpMethod.POST,
+                url("tags"),
+                buildJsonObject { put("name", name) },
+                JsonObject.serializer(),
+            )
+        }.orFail("POST tags")
     }
 
     private fun string(id: Int, vararg args: Any): String = context.getString(id, *args)
 
     private fun awaitText(text: String) {
-        composeRule.waitUntil(NETWORK_TIMEOUT.toMillis()) { composeRule.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
+        composeRule.waitUntil(
+            NETWORK_TIMEOUT.toMillis(),
+        ) { composeRule.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
     }
 
     private companion object {

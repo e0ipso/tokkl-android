@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The prompts and notices about the server's connection: plain http, and a certificate no
+    authority vouches for or that changed.
+-->
+<resources>
+    <string name="sign_in_warning_cancel">Cancel</string>
+    <string name="sign_in_http_warning_title">Unencrypted connection</string>
+    <string name="sign_in_http_warning_body">%1$s uses plain http. Your API token or password would travel unencrypted, so anyone on the network between this phone and the server could read it. Continue only if the network encrypts the traffic, as Tailscale does.</string>
+    <string name="sign_in_http_warning_understood">I understand that my API token or password travels unencrypted</string>
+    <string name="sign_in_http_warning_continue">Continue without encryption</string>
+    <string name="sign_in_certificate_title">Trust this certificate?</string>
+    <string name="sign_in_certificate_changed_title">The server\'s certificate changed</string>
+    <string name="sign_in_certificate_body">No certificate authority on this phone vouches for %1$s, so the app sent nothing. Trust the certificate only if its fingerprint matches the one on your server. The app will then accept this certificate, and no other, from that server.</string>
+    <string name="sign_in_certificate_changed_body">%1$s presents a different certificate from the one you trusted, so the app sent nothing. If you didn\'t replace it, someone may be intercepting the connection. Trust the new certificate only if its fingerprint matches the one on your server.</string>
+    <string name="sign_in_certificate_fingerprint">SHA-256 fingerprint</string>
+    <string name="sign_in_certificate_subject">Subject</string>
+    <string name="sign_in_certificate_trust">Trust this certificate</string>
+    <string name="trust_refused_certificate">The app sends nothing to the server until you review its certificate.</string>
+    <string name="trust_refused_certificate_host">The server\'s certificate doesn\'t cover %1$s, so the app sends nothing to it. Add %1$s to the certificate\'s subjectAltName, as a DNS name or an IP address, and reissue it.</string>
+    <string name="trust_refused_http">The app sends nothing to the server until you review its unencrypted connection.</string>
+    <string name="trust_refused_review">Review connection</string>
+</resources>

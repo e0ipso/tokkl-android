@@ -6,11 +6,15 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
-import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.api
+import com.github.e0ipso.tokkl.appApiClient
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.capabilities
+import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
-import java.io.File
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import org.junit.Assert.assertEquals
@@ -20,6 +24,7 @@ import org.junit.Assert.assertTrue
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
+import java.io.File
 
 /**
  * Against the real Tokkl container every capability is on, also favorites on the fresh account
@@ -39,17 +44,22 @@ class CapabilitiesServerTest {
     @Test
     fun step1RefreshTurnsEveryCapabilityOnForAFreshTokklAccount() {
         SessionRule.signOut()
-        ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(TokklTestServer.url)
         Session(context).save(TokklTestServer.url, TokklTestServer.apiToken)
-        val api = TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(TokklTestServer.apiToken))
-        val preferences = api.get(api.server.api("me", "preferences"), JsonObject.serializer()).orFail("GET /api/v9/me/preferences")
+        val api = appApiClient(TokklTestServer.url, ApiCredentials.ApiToken(TokklTestServer.apiToken))
+        val preferences = runBlocking {
+            api.get(
+                api.server.api("me", "preferences"),
+                JsonObject.serializer(),
+            )
+        }.orFail("GET /api/v9/me/preferences")
         assertFalse("the account has saved no favorites", "favorites" in preferences)
         assertEquals("nothing is stored before the refresh", Capabilities.NONE, app.capabilities.state.value)
 
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
 
         assertEquals(ALL, app.capabilities.state.value)
-        assertEquals("the stored flags", ALL, CapabilitiesStore(context).load())
+        runBlocking { assertEquals("the stored flags", ALL, CapabilitiesStore(context, Dispatchers.IO).load()) }
         previousStep.writeText(currentProcess())
     }
 

@@ -24,7 +24,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.DeviceShell
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.TokklApplication
@@ -33,18 +32,21 @@ import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.api
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
+import com.github.e0ipso.tokkl.feature.signin.R
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.ui.assertBrandReadsOnce
-import java.io.File
-import java.security.KeyStore
-import java.time.DayOfWeek
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
@@ -56,6 +58,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.io.File
+import java.security.KeyStore
+import java.time.DayOfWeek
+import com.github.e0ipso.tokkl.core.trust.R as TrustR
 
 /**
  * Signs in through the screen against the real Tokkl container. No assertion
@@ -70,7 +76,6 @@ class SignInScreenTest {
     fun auditFinalAccessibilityState() {
         composeRule.checkAccessibility()
     }
-
 
     @get:Rule(order = 0)
     val session = SessionRule()
@@ -92,7 +97,7 @@ class SignInScreenTest {
     }
 
     @Test
-    fun apiTokenSignInOpensTheAppAndStoresTheTokenOnlyInTheTokenStore() {
+    fun apiTokenSignInOpensTheAppAndStoresTheTokenOnlyInTheTokenStore() = runBlocking<Unit> {
         enterServerUrl()
         field(R.string.sign_in_api_token).performTextInput(TokklTestServer.apiToken)
 
@@ -100,11 +105,20 @@ class SignInScreenTest {
         confirmHttpWarning()
 
         awaitHome()
-        assertEquals(TokklTestServer.url, ServerConfigStore(context).load())
-        assertTrue("the token store holds the API token", ApiTokenStore(context).load() == TokklTestServer.apiToken)
+        assertEquals(TokklTestServer.url, ServerConfigStore(context, Dispatchers.IO).load())
+        assertTrue(
+            "the token store holds the API token",
+            ApiTokenStore(context, io = Dispatchers.IO).load() == TokklTestServer.apiToken,
+        )
         // The test account is in UTC (scripts/instrumented-tests.sh), with Tokkl's other defaults.
-        val settings = AccountSettings("UTC", DayOfWeek.MONDAY, timeResolutionMinutes = 5.0, defaultWorkspaceId = serverId("default_workspace_id"), userId = serverId("id"))
-        assertEquals(settings, AccountSettingsStore(context).load())
+        val settings = AccountSettings(
+            "UTC",
+            DayOfWeek.MONDAY,
+            timeResolutionMinutes = 5.0,
+            defaultWorkspaceId = WorkspaceId(serverId("default_workspace_id")),
+            userId = serverId("id"),
+        )
+        assertEquals(settings, AccountSettingsStore(context, Dispatchers.IO).load())
         assertEquals(settings, (context.applicationContext as TokklApplication).accountSettings.state.value)
         assertStoredNowhere(TokklTestServer.apiToken, "the API token in plain text")
     }
@@ -120,15 +134,18 @@ class SignInScreenTest {
         confirmHttpWarning()
 
         awaitHome()
-        assertEquals(TokklTestServer.url, ServerConfigStore(context).load())
+        runBlocking { assertEquals(TokklTestServer.url, ServerConfigStore(context, Dispatchers.IO).load()) }
         // scripts/instrumented-tests.sh read tokklApiToken from GET /api/v9/me.
-        assertTrue("the stored token is the api_token from GET /api/v9/me", ApiTokenStore(context).load() == TokklTestServer.apiToken)
+        assertTrue(
+            "the stored token is the api_token from GET /api/v9/me",
+            runBlocking { ApiTokenStore(context, io = Dispatchers.IO).load() } == TokklTestServer.apiToken,
+        )
         assertStoredNowhere(TokklTestServer.password, "the password")
         assertStoredNowhere(TokklTestServer.apiToken, "the API token in plain text")
     }
 
     @Test
-    fun wrongApiTokenShowsTheBadCredentialsMessageAndStoresNothing() {
+    fun wrongApiTokenShowsTheBadCredentialsMessageAndStoresNothing() = runBlocking<Unit> {
         enterServerUrl()
         field(R.string.sign_in_api_token).performTextInput("not-the-api-token")
 
@@ -139,9 +156,11 @@ class SignInScreenTest {
         composeRule.waitUntil("the wrong token message shows", NETWORK_TIMEOUT_MS) { exists(message) }
         composeRule.onNode(message).assertIsDisplayed()
         // Still there for another try. With the keyboard open it can sit below the keyboard's edge.
-        composeRule.onNode(hasText(string(R.string.sign_in_submit)) and hasClickAction()).performScrollTo().assertIsDisplayed()
-        assertNull(ServerConfigStore(context).load())
-        assertNull(ApiTokenStore(context).load())
+        composeRule.onNode(
+            hasText(string(R.string.sign_in_submit)) and hasClickAction(),
+        ).performScrollTo().assertIsDisplayed()
+        assertNull(ServerConfigStore(context, Dispatchers.IO).load())
+        assertNull(ApiTokenStore(context, io = Dispatchers.IO).load())
     }
 
     @Test
@@ -150,7 +169,7 @@ class SignInScreenTest {
         field(R.string.sign_in_api_token).performTextInput(TokklTestServer.apiToken)
         submit()
         awaitHttpWarning()
-        val body = string(R.string.sign_in_http_warning_body, TokklTestServer.url.toString())
+        val body = string(TrustR.string.sign_in_http_warning_body, TokklTestServer.url.toString())
         assertTrue("the warning names the token or password", "API token or password" in body)
         assertTrue("the warning names Tailscale", "Tailscale" in body)
         composeRule.onNode(hasText(body)).assertIsDisplayed()
@@ -161,11 +180,13 @@ class SignInScreenTest {
         DeviceShell.run("input tap 4 ${screen.heightPixels / 2}")
         DeviceShell.run("input keyevent KEYCODE_BACK")
         composeRule.waitForIdle()
-        composeRule.onNode(hasText(string(R.string.sign_in_http_warning_title))).assertIsDisplayed()
+        composeRule.onNode(hasText(string(TrustR.string.sign_in_http_warning_title))).assertIsDisplayed()
         assertNothingStored()
 
-        composeRule.onNode(hasText(string(R.string.sign_in_warning_cancel)) and hasClickAction()).performClick()
-        composeRule.waitUntil("the warning closes") { !exists(hasText(string(R.string.sign_in_http_warning_title))) }
+        composeRule.onNode(hasText(string(TrustR.string.sign_in_warning_cancel)) and hasClickAction()).performClick()
+        composeRule.waitUntil(
+            "the warning closes",
+        ) { !exists(hasText(string(TrustR.string.sign_in_http_warning_title))) }
         assertNothingStored()
 
         submit()
@@ -174,12 +195,15 @@ class SignInScreenTest {
         continueButton().assertIsEnabled().performClick()
 
         awaitHome()
-        assertTrue("the confirmation is stored", ServerTrustStore(context).isCleartextConfirmed(TokklTestServer.url))
+        assertTrue(
+            "the confirmation is stored",
+            ServerTrustStore(context, Dispatchers.IO).isCleartextConfirmed(TokklTestServer.url),
+        )
     }
 
     @Test
     fun confirmedUrlSignsInWithoutTheWarning() {
-        ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(TokklTestServer.url)
         enterServerUrl()
         field(R.string.sign_in_api_token).performTextInput(TokklTestServer.apiToken)
 
@@ -275,12 +299,14 @@ class SignInScreenTest {
 
     /** The brand above the form can push the button below the screen's or the keyboard's edge. */
     private fun submit() {
-        composeRule.onNode(hasText(string(R.string.sign_in_submit)) and hasClickAction()).performScrollTo().performClick()
+        composeRule.onNode(
+            hasText(string(R.string.sign_in_submit)) and hasClickAction(),
+        ).performScrollTo().performClick()
     }
 
     private fun awaitHttpWarning() {
         composeRule.waitUntil("the http warning shows", NETWORK_TIMEOUT_MS) {
-            exists(hasText(string(R.string.sign_in_http_warning_title)))
+            exists(hasText(string(TrustR.string.sign_in_http_warning_title)))
         }
     }
 
@@ -292,15 +318,18 @@ class SignInScreenTest {
     }
 
     private fun understood(): SemanticsNodeInteraction =
-        composeRule.onNode(hasText(string(R.string.sign_in_http_warning_understood)) and isToggleable())
+        composeRule.onNode(hasText(string(TrustR.string.sign_in_http_warning_understood)) and isToggleable())
 
     private fun continueButton(): SemanticsNodeInteraction =
-        composeRule.onNode(hasText(string(R.string.sign_in_http_warning_continue)) and hasClickAction())
+        composeRule.onNode(hasText(string(TrustR.string.sign_in_http_warning_continue)) and hasClickAction())
 
     private fun assertNothingStored() {
-        assertNull(ServerConfigStore(context).load())
-        assertNull(ApiTokenStore(context).load())
-        assertFalse("no confirmation is stored", ServerTrustStore(context).isCleartextConfirmed(TokklTestServer.url))
+        runBlocking { assertNull(ServerConfigStore(context, Dispatchers.IO).load()) }
+        runBlocking { assertNull(ApiTokenStore(context, io = Dispatchers.IO).load()) }
+        assertFalse(
+            "no confirmation is stored",
+            ServerTrustStore(context, Dispatchers.IO).isCleartextConfirmed(TokklTestServer.url),
+        )
     }
 
     private fun awaitHome() {
@@ -309,8 +338,13 @@ class SignInScreenTest {
 
     /** The test account's default workspace, read straight from the server, past the app's guard. */
     private fun serverId(field: String): Long {
-        val api = TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(TokklTestServer.apiToken), httpClient = OkHttpClient())
-        return api.get(api.server.api("me"), JsonObject.serializer()).orFail("GET /api/v9/me")
+        val api = TogglApiClient(
+            TokklTestServer.url,
+            ApiCredentials.ApiToken(TokklTestServer.apiToken),
+            httpClient = OkHttpClient(),
+            io = Dispatchers.IO,
+        )
+        return runBlocking { api.get(api.server.api("me"), JsonObject.serializer()) }.orFail("GET /api/v9/me")
             .getValue(field).jsonPrimitive.long
     }
 
@@ -323,14 +357,17 @@ class SignInScreenTest {
 
     /** TalkBack reads [shown] with the email field, and never [not], which the line only reserves room for. */
     private fun assertEmailFieldReads(@StringRes shown: Int, @StringRes not: Int) {
-        val read = field(R.string.sign_in_email).fetchSemanticsNode().config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text }
+        val read = field(
+            R.string.sign_in_email,
+        ).fetchSemanticsNode().config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text }
         assertTrue("the email field does not read \"${string(shown)}\"", string(shown) in read)
         assertFalse("the email field reads \"${string(not)}\"", string(not) in read)
     }
 
     /** How far below the email field's top the password field's top is. */
-    private fun passwordOffset(): Dp =
-        field(R.string.sign_in_password).getUnclippedBoundsInRoot().top - field(R.string.sign_in_email).getUnclippedBoundsInRoot().top
+    private fun passwordOffset(): Dp = field(
+        R.string.sign_in_password,
+    ).getUnclippedBoundsInRoot().top - field(R.string.sign_in_email).getUnclippedBoundsInRoot().top
 
     /**
      * No file in the app's storage and no Keystore alias holds [secret], in

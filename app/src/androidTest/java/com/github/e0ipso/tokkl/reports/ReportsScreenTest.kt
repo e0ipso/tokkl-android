@@ -15,12 +15,10 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.text.TextLayoutResult
-import androidx.lifecycle.ViewModelProvider
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.DeviceShell
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
@@ -29,19 +27,23 @@ import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createEmptyComposeRule
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.api
+import com.github.e0ipso.tokkl.api.app
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.reportsViewModel
+import com.github.e0ipso.tokkl.feature.reports.R
 import com.github.e0ipso.tokkl.finishWithin
 import com.github.e0ipso.tokkl.openMorePage
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.tokklApi
+import com.github.e0ipso.tokkl.ui.DateWords
+import com.github.e0ipso.tokkl.ui.spokenDuration
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
-import java.time.DayOfWeek
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.time.temporal.TemporalAdjusters
-import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -63,6 +65,13 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestRule
 import org.junit.rules.Timeout
+import java.time.DayOfWeek
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.temporal.TemporalAdjusters
+import java.util.concurrent.TimeUnit
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * The reports screen against the real Tokkl container (docs/PRD.md R1 and R5), for an account at
@@ -101,7 +110,7 @@ class ReportsScreenTest {
         account = TestAccounts.create(timezone = ZONE)
         seed = Seed(account.client)
         Session(context).save(TokklTestServer.url, account.apiToken)
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         val settings = settings()
         assertEquals(ZONE, settings.timeZone)
         assertEquals(DayOfWeek.WEDNESDAY, settings.beginningOfWeek)
@@ -130,7 +139,11 @@ class ReportsScreenTest {
         assertNotEquals("the account's zone has to differ from the emulator's", ZoneId.systemDefault(), ZoneId.of(ZONE))
         val report = openReports()
 
-        assertEquals("this week in the account's zone and week start", ReportRange(seed.weekStart, seed.weekStart.plusDays(6)), report.range)
+        assertEquals(
+            "this week in the account's zone and week start",
+            ReportRange(seed.weekStart, seed.weekStart.plusDays(6)),
+            report.range,
+        )
         assertMatchesTheWebApp(report)
         // Four entries this week, each rounded up to 15 minutes, in two currencies.
         assertEquals(4, report.totals.entryCount)
@@ -140,31 +153,51 @@ class ReportsScreenTest {
         assertTrue("the entry at 00:10 counts on today in the account's zone: $today", today.seconds >= 900)
 
         val settings = settings()
-        compose.onNode(hasText(DateWords(context.resources).range(report.range, seed.today), substring = true)).assertExists()
+        compose.onNode(
+            hasText(DateWords(context.resources).range(report.range, seed.today), substring = true),
+        ).assertExists()
         compose.onNode(hasText(settings.formatDuration(report.totals.seconds))).assertExists()
         for (project in report.projects) {
-            compose.onNode(hasText(project.title.ifBlank { string(R.string.reports_without_project) }, substring = true)).performScrollTo()
+            compose.onNode(
+                hasText(project.title.ifBlank { string(R.string.reports_without_project) }, substring = true),
+            ).performScrollTo()
         }
         compose.onNode(hasText(string(R.string.reports_mixed_currencies))).performScrollTo()
     }
 
     @Test
     fun summaryUsesCurrentServerRoundingEvenWithAnAlreadyReadWorkspace() {
-        val server = ReportsServer(account.client)
-        val old = server.workspace().orFail("read workspace before changing rounding")
+        val server = ServerReportsRepository { account.client.tokklApi() }
+        val old = runBlocking { server.workspace() }.orFail("read workspace before changing rounding")
         assertTrue(old.appSummaryCandidate)
         assertEquals(15, old.roundingMinutes)
         seed.setRoundingMinutes(60)
         val range = ReportRange(seed.weekStart, seed.weekStart.plusDays(6))
         val filters = ReportFilters(projects = listOf(seed.website), billable = BillableFilter.BILLABLE)
-        val report = server.summary(old, range, seed.zone, DayOfWeek.WEDNESDAY, filters).orFail("app summary with current rounding")
+        val report = runBlocking {
+            server.summary(
+                old,
+                range,
+                seed.zone,
+                DayOfWeek.WEDNESDAY,
+                filters,
+            )
+        }.orFail("app summary with current rounding")
         // One 20-minute Website entry this week, rounded up to an hour at EUR 40/hour.
         // The other Website entry lies before the range and must not count.
         assertEquals(ReportTotals(3600, 3600, 1, listOf(Amount("EUR", 4000))), report.totals)
         assertEquals(listOf(seed.website), report.projects.map { it.id })
         assertEquals(4000L, report.projects.single().amountCents)
-        val current = server.workspace().orFail("read updated workspace")
-        val fallback = server.summary(current.copy(appSummaryCandidate = false), range, seed.zone, DayOfWeek.WEDNESDAY, filters)
+        val current = runBlocking { server.workspace() }.orFail("read updated workspace")
+        val fallback = runBlocking {
+            server.summary(
+                current.copy(appSummaryCandidate = false),
+                range,
+                seed.zone,
+                DayOfWeek.WEDNESDAY,
+                filters,
+            )
+        }
             .orFail("compatibility summary with current rounding")
         assertEquals(3600L, fallback.totals.seconds)
         assertEquals(listOf(Amount("EUR", 4000)), fallback.totals.amounts)
@@ -185,10 +218,17 @@ class ReportsScreenTest {
         assertEquals(50L, report.projects.single { it.id == project }.amountCents)
         val money = formatMoney(50, "GBP", context.resources.configuration.locales[0])
         compose.onNode(hasText(money)).performScrollTo().assertExists()
-        val server = ReportsServer(account.client)
-        val workspace = server.workspace().orFail("read workspace")
-        val filtered = server.summary(workspace, report.range, seed.zone, DayOfWeek.WEDNESDAY,
-            ReportFilters(projects = listOf(project))).orFail("filtered fractional-rate summary")
+        val server = ServerReportsRepository { account.client.tokklApi() }
+        val workspace = runBlocking { server.workspace() }.orFail("read workspace")
+        val filtered = runBlocking {
+            server.summary(
+                workspace,
+                report.range,
+                seed.zone,
+                DayOfWeek.WEDNESDAY,
+                ReportFilters(projects = listOf(project)),
+            )
+        }.orFail("filtered fractional-rate summary")
         assertEquals(ReportTotals(1800, 1800, 2, listOf(Amount("GBP", 50))), filtered.totals)
     }
 
@@ -202,16 +242,25 @@ class ReportsScreenTest {
         val words = DateWords(context.resources)
         assertEquals(7, report.series.size)
         for (point in report.series) {
-            val day = "${words.bucket(point.start, Resolution.DAY)}: ${spokenDuration(context.resources, point.seconds)}"
+            val day = "${words.bucket(
+                point.start,
+                Resolution.DAY,
+            )}: ${spokenDuration(context.resources, point.seconds)}"
             assertTrue("the chart reads \"$day\": $description", description.contains(day))
         }
-        assertTrue("an empty day reads as no time: $description", report.series.none { it.seconds == 0L } || description.contains(string(R.string.reports_spoken_no_time)))
+        assertTrue(
+            "an empty day reads as no time: $description",
+            report.series.none { it.seconds == 0L } || description.contains(string(UiR.string.reports_spoken_no_time)),
+        )
     }
 
     @Test
     fun offlineTheScreenSaysSoAndShowsNoNumbers() {
         val report = openReports()
-        assertTrue("the total shows", hasNode(hasText(settings().formatDuration(report.totals.seconds), substring = true)))
+        assertTrue(
+            "the total shows",
+            hasNode(hasText(settings().formatDuration(report.totals.seconds), substring = true)),
+        )
 
         DeviceShell.run("cmd connectivity airplane-mode enable")
         awaitServer(answers = false)
@@ -238,12 +287,16 @@ class ReportsScreenTest {
         assertTextsFit()
         assertControlsLabelled()
 
-        compose.onNode(hasText(string(R.string.reports_preset_this_week)) and hasClickAction()).performScrollTo().performClick()
+        compose.onNode(
+            hasText(string(R.string.reports_preset_this_week)) and hasClickAction(),
+        ).performScrollTo().performClick()
         awaitText(string(R.string.reports_range_title))
         assertTextsFit()
         assertControlsLabelled()
 
-        compose.onNode(hasText(string(R.string.reports_custom_range)) and hasClickAction()).performScrollTo().performClick()
+        compose.onNode(
+            hasText(string(R.string.reports_custom_range)) and hasClickAction(),
+        ).performScrollTo().performClick()
         awaitText(string(R.string.reports_custom_range_title))
         assertTextsFit()
         assertControlsLabelled()
@@ -253,13 +306,20 @@ class ReportsScreenTest {
 
         compose.onNode(hasText(string(R.string.reports_filters)) and hasClickAction()).performScrollTo().performClick()
         compose.waitUntil("the filter sheet opens", LOAD_TIMEOUT_MS) { hasNode(isDialog()) }
-        compose.waitUntil("the sheet offers the cached projects", LOAD_TIMEOUT_MS) { hasNode(hasText("Consulting") and hasAnyAncestor(isDialog())) }
+        compose.waitUntil(
+            "the sheet offers the cached projects",
+            LOAD_TIMEOUT_MS,
+        ) { hasNode(hasText("Consulting") and hasAnyAncestor(isDialog())) }
         assertTextsFit()
         assertControlsLabelled()
-        compose.onNode(hasScrollToIndexAction() and hasAnyAncestor(isDialog())).performScrollToNode(hasText(string(R.string.reports_filters_clear)))
+        compose.onNode(
+            hasScrollToIndexAction() and hasAnyAncestor(isDialog()),
+        ).performScrollToNode(hasText(string(R.string.reports_filters_clear)))
         assertTextsFit()
         assertControlsLabelled()
-        compose.onNode(hasContentDescription(string(R.string.reports_cancel)) and hasAnyAncestor(isDialog())).performClick()
+        compose.onNode(
+            hasContentDescription(string(R.string.reports_cancel)) and hasAnyAncestor(isDialog()),
+        ).performClick()
         compose.waitUntil("the filter sheet closes", LOAD_TIMEOUT_MS) { !hasNode(isDialog()) }
     }
 
@@ -270,20 +330,34 @@ class ReportsScreenTest {
             put("grouping", "projects")
             put("sub_grouping", "projects")
         }
-        val web = account.client.send("POST", TokklTestServer.url.app("report"), body, JsonObject.serializer()).orFail("POST /api/app/report")
+        val web = runBlocking {
+            account.client.send(
+                HttpMethod.POST,
+                TokklTestServer.url.app("report"),
+                body,
+                JsonObject.serializer(),
+            )
+        }.orFail("POST /api/app/report")
         assertEquals(web["resolution"]!!.jsonPrimitive.content, report.resolution.name.lowercase())
         val totals = web["totals"]!!.jsonObject
         assertEquals(totals["seconds"]!!.jsonPrimitive.long, report.totals.seconds)
         assertEquals(totals["billable_seconds"]!!.jsonPrimitive.long, report.totals.billableSeconds)
         assertEquals(totals["entry_count"]!!.jsonPrimitive.long, report.totals.entryCount.toLong())
         assertEquals(
-            totals["amounts"]!!.jsonArray.map { it.jsonObject["currency"]!!.jsonPrimitive.content to it.jsonObject["cents"]!!.jsonPrimitive.long },
+            totals["amounts"]!!.jsonArray.map {
+                it.jsonObject["currency"]!!.jsonPrimitive.content to
+                    it.jsonObject["cents"]!!.jsonPrimitive.long
+            },
             report.totals.amounts.map { it.currency to it.cents },
         )
         assertEquals(
             web["series"]!!.jsonArray.map {
                 val point = it.jsonObject
-                Triple(point["start"]!!.jsonPrimitive.content, point["seconds"]!!.jsonPrimitive.long, point["billable_seconds"]!!.jsonPrimitive.long)
+                Triple(
+                    point["start"]!!.jsonPrimitive.content,
+                    point["seconds"]!!.jsonPrimitive.long,
+                    point["billable_seconds"]!!.jsonPrimitive.long,
+                )
             },
             report.series.map { Triple(it.start.toString(), it.seconds, it.billableSeconds) },
         )
@@ -312,7 +386,10 @@ class ReportsScreenTest {
         compose.checkAccessibility()
         compose.waitForIdle()
         val screenWidth = context.resources.displayMetrics.widthPixels
-        val texts = compose.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.Text), useUnmergedTree = true).fetchSemanticsNodes()
+        val texts = compose.onAllNodes(
+            SemanticsMatcher.keyIsDefined(SemanticsProperties.Text),
+            useUnmergedTree = true,
+        ).fetchSemanticsNodes()
         assertTrue("no text found", texts.isNotEmpty())
         for (node in texts) {
             val text = node.config.getOrNull(SemanticsProperties.Text)?.joinToString() ?: continue
@@ -320,7 +397,10 @@ class ReportsScreenTest {
             if (scrollsSideways(node)) continue
             val left = node.positionOnScreen.x
             val right = left + node.size.width
-            assertTrue("leaves the screen's width, $left to $right of $screenWidth: $text", left >= -1 && right <= screenWidth + 1)
+            assertTrue(
+                "leaves the screen's width, $left to $right of $screenWidth: $text",
+                left >= -1 && right <= screenWidth + 1,
+            )
         }
     }
 
@@ -344,12 +424,18 @@ class ReportsScreenTest {
 
     private fun assertNoNumbers(report: SummaryReport) {
         val settings = settings()
-        val durations = listOf(report.totals.seconds, report.totals.billableSeconds) + report.series.map { it.seconds }.filter { it > 0 }
+        val durations = listOf(
+            report.totals.seconds,
+            report.totals.billableSeconds,
+        ) + report.series.map { it.seconds }.filter { it > 0 }
         for (seconds in durations) {
             val shown = settings.formatDuration(seconds)
             assertFalse("$shown shows offline", hasNode(hasText(shown, substring = true)))
         }
-        assertFalse("the totals show offline", hasNode(hasText(string(R.string.reports_total_time), substring = true, ignoreCase = true)))
+        assertFalse(
+            "the totals show offline",
+            hasNode(hasText(string(R.string.reports_total_time), substring = true, ignoreCase = true)),
+        )
         assertFalse("the chart shows offline", hasNode(hasContentDescription(CHART_DESCRIPTION, substring = true)))
     }
 
@@ -357,7 +443,10 @@ class ReportsScreenTest {
     private fun openReports(): SummaryReport {
         scenario = ActivityScenario.launch(MainActivity::class.java)
         compose.openMorePage(R.string.reports, LOAD_TIMEOUT_MS)
-        compose.waitUntil("a report loads", LOAD_TIMEOUT_MS) { modelState().let { it !is ReportsState.Loading && it != ReportsState.Closed } }
+        compose.waitUntil(
+            "a report loads",
+            LOAD_TIMEOUT_MS,
+        ) { modelState().let { it !is ReportsState.Loading && it != ReportsState.Closed } }
         val state = modelState()
         assertTrue("a report loads: $state", state is ReportsState.Loaded)
         compose.waitForIdle()
@@ -367,23 +456,30 @@ class ReportsScreenTest {
     private fun modelState(): ReportsState {
         var state: ReportsState? = null
         finishWithin("reading the report's state") {
-            scenario!!.onActivity { state = ViewModelProvider(it)[ReportsViewModel::class.java].model.state.value }
+            scenario!!.onActivity { state = reportsViewModel(it).page.value.report }
         }
         return state!!
     }
 
-    private fun settings(): AccountSettings = app.accountSettings.state.value ?: throw AssertionError("no account settings")
+    private fun settings(): AccountSettings = app.accountSettings.state.value ?: throw AssertionError(
+        "no account settings",
+    )
 
-    private fun hasNode(matcher: SemanticsMatcher): Boolean = compose.onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty()
+    private fun hasNode(matcher: SemanticsMatcher): Boolean = compose.onAllNodes(
+        matcher,
+    ).fetchSemanticsNodes().isNotEmpty()
 
-    private fun awaitText(text: String) = compose.waitUntil("\"$text\" shows", LOAD_TIMEOUT_MS) { hasNode(hasText(text, substring = true)) }
+    private fun awaitText(text: String) = compose.waitUntil(
+        "\"$text\" shows",
+        LOAD_TIMEOUT_MS,
+    ) { hasNode(hasText(text, substring = true)) }
 
     /** Waits until requests to the test server get through, or fail for want of a network. */
     private fun awaitServer(answers: Boolean) {
         if (!::account.isInitialized) return
         val deadline = System.nanoTime() + LOAD_TIMEOUT_MS * 1_000_000
         while (true) {
-            val result = account.client.get(account.client.server.api("me"), JsonObject.serializer())
+            val result = runBlocking { account.client.get(account.client.server.api("me"), JsonObject.serializer()) }
             if (((result as? ApiResult.Failure)?.error !is ApiError.Network) == answers) return
             check(System.nanoTime() < deadline) { "the server ${if (answers) "does not answer" else "still answers"}" }
             Thread.sleep(POLL_MS)
@@ -401,24 +497,70 @@ class ReportsScreenTest {
         val today: LocalDate = LocalDate.now(zone)
         val weekStart: LocalDate = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.WEDNESDAY))
         val website: Long
-        private val workspace = api.get(api.server.api("me"), MeIds.serializer()).orFail("GET /api/v9/me").defaultWorkspaceId
+        private val workspace = runBlocking {
+            api.get(
+                api.server.api("me"),
+                MeIds.serializer(),
+            )
+        }.orFail("GET /api/v9/me").defaultWorkspaceId
 
         init {
-            api.send("PUT", api.server.api("me"), buildJsonObject { put("beginning_of_week", 3) }, JsonObject.serializer()).orFail("PUT /me")
+            runBlocking {
+                api.send(
+                    HttpMethod.PUT,
+                    api.server.api("me"),
+                    buildJsonObject { put("beginning_of_week", 3) },
+                    JsonObject.serializer(),
+                )
+            }.orFail("PUT /me")
             val rounding = buildJsonObject {
                 put("rounding", 1)
                 put("rounding_minutes", 15)
                 put("default_hourly_rate", 40)
                 put("default_currency", "EUR")
             }
-            api.send("PUT", api.server.api("workspaces", workspace.toString()), rounding, JsonObject.serializer()).orFail("PUT the workspace")
-            api.send("POST", api.server.api("me", "preferences"), buildJsonObject { put("duration_format", "classic") }, JsonObject.serializer())
+            runBlocking {
+                api.send(
+                    HttpMethod.PUT,
+                    api.server.api("workspaces", workspace.toString()),
+                    rounding,
+                    JsonObject.serializer(),
+                )
+            }.orFail("PUT the workspace")
+            runBlocking {
+                api.send(
+                    HttpMethod.POST,
+                    api.server.api("me", "preferences"),
+                    buildJsonObject { put("duration_format", "classic") },
+                    JsonObject.serializer(),
+                )
+            }
                 .orFail("POST /me/preferences")
-            website = project(buildJsonObject { put("name", "Website"); put("color", "#06aaf5"); put("billable", true) })
-            val consulting = project(
-                buildJsonObject { put("name", "Consulting"); put("color", "#c7af14"); put("billable", true); put("rate", 100); put("currency", "USD") },
+            website = project(
+                buildJsonObject {
+                    put("name", "Website")
+                    put("color", "#06aaf5")
+                    put("billable", true)
+                },
             )
-            val internal = project(buildJsonObject { put("name", "Internal"); put("color", "#990099") })
+            val consulting = project(
+                buildJsonObject {
+                    put(
+                        "name",
+                        "Consulting",
+                    )
+                    put("color", "#c7af14")
+                    put("billable", true)
+                    put("rate", 100)
+                    put("currency", "USD")
+                },
+            )
+            val internal = project(
+                buildJsonObject {
+                    put("name", "Internal")
+                    put("color", "#990099")
+                },
+            )
             // Keep stored spans on Tokkl's five-minute grid. Report rounding then still raises
             // 20 to 30 minutes and 65 to 75, independently of the latest write-time snapping.
             entry(day(0).atTime(9, 0), 1200, website, billable = true)
@@ -429,16 +571,30 @@ class ReportsScreenTest {
         }
 
         fun setRoundingMinutes(minutes: Int) {
-            api.send("PUT", api.server.api("workspaces", workspace.toString()),
-                buildJsonObject { put("rounding", 1); put("rounding_minutes", minutes) }, JsonObject.serializer())
+            runBlocking {
+                api.send(
+                    HttpMethod.PUT,
+                    api.server.api("workspaces", workspace.toString()),
+                    buildJsonObject {
+                        put("rounding", 1)
+                        put("rounding_minutes", minutes)
+                    },
+                    JsonObject.serializer(),
+                )
+            }
                 .orFail("set report rounding")
         }
 
         fun addFractionalRateEntries(): Long {
-            val id = project(buildJsonObject {
-                put("name", "Fractional cents"); put("color", "#123456"); put("billable", true)
-                put("rate", 1.01); put("currency", "GBP")
-            })
+            val id = project(
+                buildJsonObject {
+                    put("name", "Fractional cents")
+                    put("color", "#123456")
+                    put("billable", true)
+                    put("rate", 1.01)
+                    put("currency", "GBP")
+                },
+            )
             entry(weekStart.atTime(1, 0), 900, id, billable = true)
             entry(weekStart.atTime(2, 0), 900, id, billable = true)
             return id
@@ -447,8 +603,14 @@ class ReportsScreenTest {
         /** The week's [index]th day, or today when that day is still to come. */
         private fun day(index: Long): LocalDate = minOf(weekStart.plusDays(index), today)
 
-        private fun project(body: JsonObject): Long =
-            api.send("POST", api.server.api("workspaces", workspace.toString(), "projects"), body, Created.serializer()).orFail("POST a project").id
+        private fun project(body: JsonObject): Long = runBlocking {
+            api.send(
+                HttpMethod.POST,
+                api.server.api("workspaces", workspace.toString(), "projects"),
+                body,
+                Created.serializer(),
+            )
+        }.orFail("POST a project").id
 
         private fun entry(start: LocalDateTime, seconds: Int, project: Long?, billable: Boolean) {
             val body = buildJsonObject {
@@ -460,7 +622,14 @@ class ReportsScreenTest {
                 if (project != null) put("project_id", project)
                 put("billable", billable)
             }
-            api.send("POST", api.server.api("workspaces", workspace.toString(), "time_entries"), body, Created.serializer()).orFail("POST a time entry")
+            runBlocking {
+                api.send(
+                    HttpMethod.POST,
+                    api.server.api("workspaces", workspace.toString(), "time_entries"),
+                    body,
+                    Created.serializer(),
+                )
+            }.orFail("POST a time entry")
         }
     }
 

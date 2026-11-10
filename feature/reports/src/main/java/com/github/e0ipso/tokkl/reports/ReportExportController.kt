@@ -1,0 +1,247 @@
+package com.github.e0ipso.tokkl.reports
+
+import androidx.compose.runtime.Immutable
+import com.github.e0ipso.tokkl.api.ApiCallCancellation
+import com.github.e0ipso.tokkl.api.ApiClientProvider
+import com.github.e0ipso.tokkl.api.ApiError
+import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.ReportCsvBody
+import com.github.e0ipso.tokkl.capabilities.ReportCsvKind
+import com.github.e0ipso.tokkl.capabilities.csvEndpointAbsent
+import com.github.e0ipso.tokkl.session.AccountContext
+import com.github.e0ipso.tokkl.session.CurrentAccount
+import com.github.e0ipso.tokkl.time.DurationFormat
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import kotlin.coroutines.CoroutineContext
+
+@Immutable
+sealed interface ReportExportState {
+    data object Idle : ReportExportState
+    data object Preparing : ReportExportState
+    data class Ready(val file: File) : ReportExportState
+    data object Sharing : ReportExportState
+    data class Failed(val error: ApiError? = null, val noTargets: Boolean = false) : ReportExportState
+}
+
+/**
+ * One export at a time, independent of report pagination. Each export belongs to the account
+ * context it began in: the end of that account cancels its download, and from then on it
+ * publishes, shows and shares nothing.
+ */
+class ReportExportController(
+    private val client: ApiClientProvider,
+    private val files: ReportExportFiles,
+    private val account: CurrentAccount,
+    private val csvMissing: suspend (ReportCsvKind) -> Unit,
+    private val scope: CoroutineScope,
+    private val io: CoroutineContext,
+) {
+    private val mutableState = MutableStateFlow<ReportExportState>(ReportExportState.Idle)
+    val state: StateFlow<ReportExportState> = mutableState.asStateFlow()
+    private var job: Job? = null
+    private var cancellation: ApiCallCancellation? = null
+    private var lease: ExportLease? = null
+
+    /**
+     * One export's hold on the account context it began in, until [close]. [cancel] runs once that
+     * account ends.
+     */
+    private class ExportLease(private val context: AccountContext, cancel: () -> Unit) {
+        private val ending = context.onEnd(cancel)
+        private var closed = false
+
+        // A JVM lock, not a Mutex: the export runs its step inside the lease without suspending,
+        // on the IO and main threads, and no end of the account may come in between.
+        @Synchronized
+        fun <T> current(action: () -> T): T? = if (closed) null else context.ifCurrent(action)
+
+        @Synchronized
+        fun close() {
+            closed = true
+            ending.dispose()
+        }
+    }
+
+    /** Main thread only. Failed attempts may be retried, but pending exports cannot be duplicated. */
+    fun start(request: ReportCsvRequest) {
+        if (state.value !is ReportExportState.Idle && state.value !is ReportExportState.Failed) return
+        val cancellation = ApiCallCancellation()
+        val lease = ExportLease(account.context.value) { cancellation.cancel() }
+        this.cancellation = cancellation
+        this.lease = lease
+        mutableState.value = ReportExportState.Preparing
+        job = scope.launch {
+            val attempt = AttemptFiles()
+            var retained = false
+            try {
+                val outcome = withContext(io) { download(request, lease, cancellation, attempt) }
+                lease.current {
+                    mutableState.value = outcome
+                    retained = outcome is ReportExportState.Ready
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: IOException) {
+                lease.current { mutableState.value = ReportExportState.Failed() }
+            } catch (_: SecurityException) {
+                lease.current { mutableState.value = ReportExportState.Failed() }
+            } finally {
+                cancellation.cancel()
+                withContext(NonCancellable + io) {
+                    attempt.pending?.close()
+                    if (!retained) attempt.completed?.let(files::discard)
+                }
+                if (!retained) release(lease)
+            }
+        }
+    }
+
+    /** The staged and the published file of one export, for [start] to clean up after it. */
+    private class AttemptFiles {
+        var pending: ReportExportFiles.Pending? = null
+        var completed: File? = null
+    }
+
+    /**
+     * Downloads [request] into a staged file and publishes it, on the IO dispatcher. [attempt]
+     * records the files as they are made.
+     */
+    private suspend fun download(
+        request: ReportCsvRequest,
+        lease: ExportLease,
+        cancellation: ApiCallCancellation,
+        attempt: AttemptFiles,
+    ): ReportExportState {
+        val staged = lease.current { files.prepare(request.filename) } ?: return ReportExportState.Idle
+        attempt.pending = staged
+        cancellation.check()
+        val api = client() ?: return ReportExportState.Failed(ApiError.AuthFailed)
+        val answer = FileOutputStream(staged.staging).use { output ->
+            val result = api.reports.exportCsv(
+                request.kind.path,
+                request.body(),
+                output,
+                ReportExportFiles.MAX_BYTES,
+                cancellation,
+            )
+            if (result is ApiResult.Success) {
+                output.flush()
+                output.fd.sync()
+            }
+            result
+        }
+        return when (answer) {
+            is ApiResult.Failure -> {
+                // Only for the account the export began with: sign-out forgets the flags after it ends that account.
+                if (answer.error.csvEndpointAbsent() && lease.current { true } == true) {
+                    csvMissing(request.kind)
+                }
+                ReportExportState.Failed(answer.error)
+            }
+
+            is ApiResult.Success -> {
+                cancellation.check()
+                val completed = lease.current { files.publish(staged, answer.value) }
+                attempt.completed = completed
+                completed?.let { ReportExportState.Ready(it) } ?: ReportExportState.Idle
+            }
+        }
+    }
+
+    /** Lets go of [lease] once its export is over and nothing keeps its file. */
+    private fun release(lease: ExportLease) {
+        lease.close()
+        if (this.lease === lease) {
+            this.lease = null
+            if (state.value == ReportExportState.Preparing) mutableState.value = ReportExportState.Idle
+        }
+    }
+
+    /**
+     * Claims the ready result before launching, so rotation cannot reopen the chooser. The
+     * launch and account mutation are serialized. A former account's file never reaches Android.
+     */
+    fun launchShare(launch: (File) -> Unit) {
+        val ready = state.value as? ReportExportState.Ready ?: return
+        val current = lease ?: return
+        val launched = current.current {
+            mutableState.value = ReportExportState.Sharing
+            launch(ready.file)
+            true
+        } ?: false
+        if (!launched) cancel()
+    }
+
+    /** Chooser cancellation is ordinary completion. Keep its file for asynchronous receivers. */
+    fun shareFinished() {
+        lease?.close()
+        lease = null
+        mutableState.value = ReportExportState.Idle
+    }
+
+    fun shareFailed() {
+        lease?.close()
+        lease = null
+        mutableState.value = ReportExportState.Failed()
+    }
+
+    fun noShareTarget() {
+        lease?.close()
+        lease = null
+        mutableState.value = ReportExportState.Failed(noTargets = true)
+    }
+
+    fun cancel() {
+        cancellation?.cancel()
+        job?.cancel()
+        lease?.close()
+        lease = null
+        val ready = state.value as? ReportExportState.Ready
+        if (ready != null) scope.launch(io) { files.discard(ready.file) }
+        mutableState.value = ReportExportState.Idle
+    }
+}
+
+fun ReportTab.csvKind(): ReportCsvKind? = when (this) {
+    ReportTab.SUMMARY -> ReportCsvKind.SUMMARY
+    ReportTab.DETAILED -> ReportCsvKind.DETAILED
+    ReportTab.WEEKLY -> null
+}
+
+/** Immutable settings captured when Share is pressed. Dates remain inclusive account dates. */
+data class ReportCsvRequest(
+    val kind: ReportCsvKind,
+    val range: ReportRange,
+    val filters: ReportFilters,
+    val workspace: ReportWorkspace,
+    val durationFormat: DurationFormat,
+) {
+    val filename: String get() = "tokkl-${kind.path}-${range.from}-to-${range.to}.csv"
+
+    /** The export's body: the summary groups by project, and the detailed export lists the newest first. */
+    fun body(): ReportCsvBody {
+        val body = ReportCsvBody(
+            startDate = range.from,
+            endDate = range.to,
+            filter = filters.apiFilter(),
+            rounding = workspace.rounding,
+            roundingMinutes = workspace.roundingMinutes,
+            durationFormat = durationFormat.togglName,
+        )
+        return when (kind) {
+            ReportCsvKind.SUMMARY -> body.copy(grouping = "projects", subGrouping = "projects")
+            ReportCsvKind.DETAILED -> body.copy(sort = "date", dir = "desc")
+        }
+    }
+}

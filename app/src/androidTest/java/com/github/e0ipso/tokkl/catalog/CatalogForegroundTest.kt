@@ -24,10 +24,15 @@ import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.api
+import com.github.e0ipso.tokkl.appApiClient
+import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -40,6 +45,9 @@ import org.junit.Assert.assertFalse
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import com.github.e0ipso.tokkl.feature.clients.R as ClientsR
+import com.github.e0ipso.tokkl.feature.projects.R as ProjectsR
+import com.github.e0ipso.tokkl.feature.tags.R as TagsR
 
 /**
  * The projects, clients and tags pages load their list again when the app comes back to the
@@ -79,7 +87,7 @@ class CatalogForegroundTest {
                 // The counter's relay replaced the stored server and its cleartext confirmation,
                 // and the app's client reaches the test server only with both.
                 if (::account.isInitialized && counter != null) {
-                    ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
+                    ServerTrustStore(context, Dispatchers.IO).confirmCleartext(TokklTestServer.url)
                     Session(context).save(TokklTestServer.url, account.apiToken)
                 }
             } finally {
@@ -99,17 +107,20 @@ class CatalogForegroundTest {
     @Test
     fun aProjectRenamedElsewhereShowsAfterTheForegroundAndARotationLoadsNothing() {
         val id = create("projects", "Website")
-        val counter = RequestCounter(TokklTestServer.url, "/workspaces/${account.workspaceId}/projects HTTP/1.1").also { this.counter = it }
-        ServerTrustStore(context).confirmCleartext(counter.url)
+        val counter = RequestCounter(
+            TokklTestServer.url,
+            "/workspaces/${account.workspaceId}/projects HTTP/1.1",
+        ).also { this.counter = it }
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(counter.url)
         Session(context).save(counter.url, account.apiToken)
 
         launch()
-        barItem(R.string.nav_projects).performClick()
+        barItem(ProjectsR.string.nav_projects).performClick()
         awaitText("Website")
         assertEquals("opening loads once", 1, counter.count)
 
         val activity = BackgroundTrip.leave()
-        rename("projects", id, "Web site", api = TogglApiClient(counter.url, ApiCredentials.ApiToken(account.apiToken)))
+        rename("projects", id, "Web site", api = appApiClient(counter.url, ApiCredentials.ApiToken(account.apiToken)))
         BackgroundTrip.comeBack(activity)
 
         awaitText("Web site")
@@ -119,7 +130,10 @@ class CatalogForegroundTest {
 
         scenario!!.onActivity { it.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE }
         awaitCondition("the activity is recreated in landscape") {
-            resumedActivity()?.takeIf { it !== activity && it.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE }
+            resumedActivity()?.takeIf {
+                it !== activity &&
+                    it.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+            }
         }
         compose.waitForIdle()
         Thread.sleep(SETTLE_MS)
@@ -134,14 +148,14 @@ class CatalogForegroundTest {
         val tag = create("tags", "urgent")
         launch()
 
-        openFromMore(R.string.nav_clients)
+        openFromMore(ClientsR.string.nav_clients)
         awaitText("Acme")
         var activity = BackgroundTrip.leave()
         rename("clients", client, "Acme Inc")
         BackgroundTrip.comeBack(activity)
         awaitText("Acme Inc")
 
-        openFromMore(R.string.nav_tags)
+        openFromMore(TagsR.string.nav_tags)
         awaitText("urgent")
         activity = BackgroundTrip.leave()
         rename("tags", tag, "later")
@@ -152,10 +166,10 @@ class CatalogForegroundTest {
 
     /** Launches the app on the Timer page with the account's settings read. */
     private fun launch() {
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         scenario = ActivityScenario.launch(MainActivity::class.java)
         compose.waitUntil("the bottom bar shows", TIMEOUT_MS) {
-            compose.onAllNodes(barItemMatcher(R.string.nav_projects)).fetchSemanticsNodes().isNotEmpty()
+            compose.onAllNodes(barItemMatcher(ProjectsR.string.nav_projects)).fetchSemanticsNodes().isNotEmpty()
         }
     }
 
@@ -182,16 +196,29 @@ class CatalogForegroundTest {
     private fun shows(text: String): Boolean = compose.onAllNodes(hasText(text)).fetchSemanticsNodes().isNotEmpty()
 
     /** Creates an item named [name] in the workspace's [collection] and returns its id. */
-    private fun create(collection: String, name: String): Long =
-        account.client.send("POST", url(collection), buildJsonObject { put("name", name) }, JsonObject.serializer())
-            .orFail("POST $collection").getValue("id").jsonPrimitive.long
+    private fun create(collection: String, name: String): Long = runBlocking {
+        account.client.send(
+            HttpMethod.POST,
+            url(collection),
+            buildJsonObject { put("name", name) },
+            JsonObject.serializer(),
+        )
+    }
+        .orFail("POST $collection").getValue("id").jsonPrimitive.long
 
     /**
      * Renames an item through [api]. While the app's stored server is the counter's relay, the
      * shared HTTP client sends only there, so the rename goes through the relay too.
      */
     private fun rename(collection: String, id: Long, name: String, api: TogglApiClient = account.client) {
-        api.send("PUT", url(collection, id.toString(), api = api), buildJsonObject { put("name", name) }, JsonObject.serializer())
+        runBlocking {
+            api.send(
+                HttpMethod.PUT,
+                url(collection, id.toString(), api = api),
+                buildJsonObject { put("name", name) },
+                JsonObject.serializer(),
+            )
+        }
             .orFail("PUT $collection/$id")
     }
 
@@ -201,12 +228,16 @@ class CatalogForegroundTest {
     private fun resumedActivity(): MainActivity? {
         var resumed: MainActivity? = null
         instrumentation.runOnMainSync {
-            resumed = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED).filterIsInstance<MainActivity>().singleOrNull()
+            resumed = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(
+                Stage.RESUMED,
+            ).filterIsInstance<MainActivity>().singleOrNull()
         }
         return resumed
     }
 
-    /** Polls [value] until it is not null. Works while the activity is being recreated, unlike the compose rule's waits. */
+    /**
+     * Polls [value] until it is not null. Works while the activity is being recreated, unlike the compose rule's waits.
+     */
     private fun <T : Any> awaitCondition(what: String, value: () -> T?): T {
         val deadline = System.nanoTime() + TIMEOUT_MS * 1_000_000
         while (true) {

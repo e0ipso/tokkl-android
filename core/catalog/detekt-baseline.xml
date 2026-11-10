@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<!-- Findings whose fix would change behaviour. config/detekt/detekt.yml says how the rest is fixed. -->
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <!-- The fix, rememberUpdatedState, makes the effect call the newest lambda instead of the one it started with. That changes behaviour. -->
+    <ID>LambdaParameterInRestartableEffect:CatalogPage.kt:onDoneShow: () -&gt; Unit</ID>
+    <!-- ActiveThenArchived emits two groups into the caller's column. A modifier needs one root, and a wrapper column would change the caller's spacing. -->
+    <ID>ModifierMissing:CatalogRows.kt:@Composable fun &lt;T&gt; ActiveThenArchived</ID>
+  </CurrentIssues>
+</SmellBaseline>

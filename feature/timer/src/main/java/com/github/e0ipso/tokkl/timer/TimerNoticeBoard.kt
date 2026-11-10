@@ -1,0 +1,54 @@
+package com.github.e0ipso.tokkl.timer
+
+import com.github.e0ipso.tokkl.model.DiscardedPomodoro
+import com.github.e0ipso.tokkl.timernotice.TimerNotice
+import com.github.e0ipso.tokkl.timerstate.DiscardNotices
+import com.github.e0ipso.tokkl.timerstate.TimerActionResult
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
+
+/**
+ * The timer's notices: failed pause chain actions, and the too-short pomodoro a screen claims
+ * before it shows it.
+ */
+internal class TimerNoticeBoard(private val discards: DiscardNotices) {
+
+    private val failures = MutableStateFlow<TimerNotice.ActionFailed?>(null)
+    private var failureCount = 0L
+
+    /** The too-short pomodoro notice a screen has claimed and not finished showing. */
+    private val claimedDiscard = MutableStateFlow<TimerNotice.PomodoroDiscarded?>(null)
+
+    fun notices(discardNotices: Flow<DiscardedPomodoro?>): Flow<TimerNotice?> =
+        combine(claimedDiscard, failures, discardNotices) { claimed, failure, discarded ->
+            claimed ?: failure ?: discarded?.let { TimerNotice.PomodoroDiscarded(it.entryId.value) }
+        }
+
+    /** A pause chain action ended with [result], which is not done. */
+    fun failed(result: TimerActionResult) {
+        failures.value = TimerNotice.ActionFailed(result, ++failureCount)
+    }
+
+    /** See [TimerFrameSource.claim]. */
+    suspend fun claim(notice: TimerNotice): TimerNotice? = when (notice) {
+        is TimerNotice.ActionFailed -> notice.takeIf { failures.value == it }
+
+        is TimerNotice.PomodoroDiscarded ->
+            if (claimedDiscard.value == notice) {
+                notice
+            } else {
+                discards.takeDiscardNotice()?.let { taken ->
+                    TimerNotice.PomodoroDiscarded(taken.entryId.value).also { claimedDiscard.value = it }
+                }
+            }
+    }
+
+    /** The screen has shown [notice], or stopped showing it. */
+    fun shown(notice: TimerNotice) {
+        when (notice) {
+            is TimerNotice.ActionFailed -> failures.compareAndSet(notice, null)
+            is TimerNotice.PomodoroDiscarded -> claimedDiscard.compareAndSet(notice, null)
+        }
+    }
+}

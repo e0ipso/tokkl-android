@@ -19,7 +19,7 @@ kk_relates_to:
 kk_depends_on: []
 kk_confidence: high
 ---
-Probe optional Tokkl features by capability, without a server-version selector. Snapping follows the latest supported Tokkl contract, the 1.6.1+ independent-endpoint rules; older snapping contracts are unsupported and have no compatibility probe. Device verification pins Tokkl 1.10.0, whose PATCH Stop accepts the captured timestamp and moves a short Stop to Trash for Undo, and also starts Tokkl 1.8.1 as a server without the timer API. Missing `time_resolution_minutes`, as on Toggl Track, keeps the no-resolution behavior.
+Probe optional Tokkl features by capability, without a server-version selector. Snapping follows the latest supported Tokkl contract, the 1.6.1+ independent-endpoint rules; older snapping contracts are unsupported and have no compatibility probe. Device verification pins Tokkl 2.1.0, whose PATCH Stop accepts the captured timestamp and moves a short Stop to Trash for Undo. Unsupported timer behavior is covered by account fixtures without the timer capability. Missing `time_resolution_minutes`, as on Toggl Track, keeps the no-resolution behavior.
 
 A missing `time_resolution_minutes` in `GET /api/v9/me` means there is no snapping to show. A 404 from a Tokkl-only endpoint such as `/api/app/trash` hides the features that use it. The `timerState` flag, decided by `GET /api/app/timer`, hides Pomodoro and Pause the same way, and keeps the sync service off, on Toggl Track and on Tokkl before 1.10.0 (see the cache node).
 

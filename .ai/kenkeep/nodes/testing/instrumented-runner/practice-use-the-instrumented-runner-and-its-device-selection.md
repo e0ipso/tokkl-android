@@ -21,7 +21,7 @@ kk_relates_to:
 kk_depends_on: []
 kk_confidence: high
 ---
-Run the instrumented tests with `scripts/instrumented-tests.sh`. A plain `./gradlew connectedDebugAndroidTest` fails every test that reads `TokklTestServer`, on purpose: the server URLs and the account come from instrumentation arguments, and only the script passes them.
+Run the instrumented tests with `scripts/instrumented-tests.sh`. It runs `connectedDebugAndroidTest` of the app and of every feature or core module with a `src/androidTest` directory, with two Gradle workers. With eight, merging the dex files of seven test APKs at once ran the 2 GB Gradle heap out of memory. A plain `./gradlew connectedDebugAndroidTest` fails every test that reads `TokklTestServer`, on purpose: the server URLs and the account come from instrumentation arguments, and only the script passes them.
 
 The tests run on the attached device or on `ANDROID_SERIAL`. With neither, apart from the emulators of other runs, the script boots the AVD named by `TOKKL_TEST_AVD`, by default `tokkl-api36`, or `tokkl-api31` for Android 12, sets it up as the emulator node describes, and kills it at the end. It changes no setting on a device it did not boot.
 

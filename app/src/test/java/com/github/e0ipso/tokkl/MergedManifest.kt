@@ -1,10 +1,10 @@
 package com.github.e0ipso.tokkl
 
+import org.junit.Assert.assertTrue
+import org.w3c.dom.Element
 import java.io.File
 import java.util.Properties
 import javax.xml.parsers.DocumentBuilderFactory
-import org.junit.Assert.assertTrue
-import org.w3c.dom.Element
 
 /**
  * Reads the manifest that the Android Gradle plugin merged for the variant

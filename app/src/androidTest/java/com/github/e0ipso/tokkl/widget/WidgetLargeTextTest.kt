@@ -5,13 +5,21 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.ServerUrl
-import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.api.api
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.signOut
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.ui.theme.SystemDisplaySize
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -46,27 +54,47 @@ class WidgetLargeTextTest {
         }
         SystemDisplaySize().apply(
             body,
-            Description.createTestDescription(javaClass, "theRunningClockControlsAndFavoriteTextFitAtLargestFontAndDisplaySize"),
+            Description.createTestDescription(
+                javaClass,
+                "theRunningClockControlsAndFavoriteTextFitAtLargestFontAndDisplaySize",
+            ),
         ).evaluate()
     }
 
     private fun assertWidgetFits(combinedSizes: Boolean) {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("the widget uses the largest system font", SystemFontScale.LARGEST, context.resources.configuration.fontScale)
+        assertEquals(
+            "the widget uses the largest system font",
+            SystemFontScale.LARGEST,
+            context.resources.configuration.fontScale,
+        )
         val app = context.applicationContext as TokklApplication
         val account = TestAccounts.create(timezone = "Europe/Madrid")
         try {
             val api = account.client
             val workspace = account.workspaceId
-            val project = api.send("POST", api.server.api("workspaces", "$workspace", "projects"),
-                buildJsonObject { put("name", "Demo") }, JsonObject.serializer()).orFail("create project")["id"]!!.jsonPrimitive.long
-            api.sendNoContent("POST", api.server.api("me", "preferences"), Json.parseToJsonElement(
-                """{"favorites":[{"description":"Read","project_id":$project,"task_id":null,"tags":[],"billable":false}]}""",
-            )).orFail("save favorite")
+            val project = runBlocking {
+                api.send(
+                    HttpMethod.POST,
+                    api.server.api("workspaces", "$workspace", "projects"),
+                    buildJsonObject { put("name", "Demo") },
+                    JsonObject.serializer(),
+                )
+            }.orFail("create project")["id"]!!.jsonPrimitive.long
+            runBlocking {
+                api.sendNoContent(
+                    HttpMethod.POST,
+                    api.server.api("me", "preferences"),
+                    Json.parseToJsonElement(
+                        """{"favorites":[{"description":"Read","project_id":$project,"task_id":null,"tags":[]""" +
+                            ""","billable":false}]}""",
+                    ),
+                )
+            }.orFail("save favorite")
             Session(context).save(TokklTestServer.url, account.apiToken)
-            runBlocking { app.accountSettings.refresh().join() }
+            runBlocking { app.accountRefresh.refresh().join() }
             val offline = checkNotNull(ServerUrl.parse("http://127.0.0.1:9"))
-            ServerTrustStore(context).confirmCleartext(offline)
+            ServerTrustStore(context, Dispatchers.IO).confirmCleartext(offline)
             Session(context).save(offline, account.apiToken)
             NativeWidget().use { widget ->
                 if (combinedSizes) {
@@ -76,8 +104,16 @@ class WidgetLargeTextTest {
                     assertTrue("the minimum widget width fits this display", width >= 240)
                     widget.resize(width, 320)
                 }
-                if (!combinedSizes) { widget.resize(375, 338); widget.awaitText("Read") }
-                runBlocking { app.changes.start(workspace, EntryFields("Work", projectId = project)) }
+                if (!combinedSizes) {
+                    widget.resize(375, 338)
+                    widget.awaitText("Read")
+                }
+                runBlocking {
+                    app.changes.start(
+                        WorkspaceId(workspace),
+                        EntryFields("Work", projectId = ProjectId(project)),
+                    )
+                }
                 widget.awaitText("Work")
                 widget.awaitDescription("Stop the timer")
                 widget.assertTextFitsVertically()
@@ -92,14 +128,19 @@ class WidgetLargeTextTest {
                 widget.checkAccessibility()
                 widget.resize(240, 152)
                 widget.await("the minimum size leaves favorites out at the largest font") { !widget.hasText("Read") }
-                runBlocking { app.changes.start(workspace, EntryFields("Work", projectId = project)) }
+                runBlocking {
+                    app.changes.start(
+                        WorkspaceId(workspace),
+                        EntryFields("Work", projectId = ProjectId(project)),
+                    )
+                }
                 widget.awaitText("Work")
                 widget.assertTextFitsVertically()
                 widget.checkAccessibility()
             }
         } finally {
             assertTrue("sign-out clears the fixture", runBlocking { app.signOut.run() })
-            ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
+            ServerTrustStore(context, Dispatchers.IO).confirmCleartext(TokklTestServer.url)
             Session(context).save(TokklTestServer.url, TokklTestServer.apiToken)
             TestAccounts.delete(account)
             SessionRule.signOut()

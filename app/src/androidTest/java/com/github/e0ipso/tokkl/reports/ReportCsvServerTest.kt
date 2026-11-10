@@ -2,17 +2,19 @@ package com.github.e0ipso.tokkl.reports
 
 import android.content.Intent
 import android.net.Uri
+import androidx.core.content.IntentCompat
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCallCancellation
+import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
+import com.github.e0ipso.tokkl.capabilities.ReportCsvKind
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.session.SignOut
 import com.github.e0ipso.tokkl.time.DurationFormat
-import java.io.ByteArrayOutputStream
-import java.io.File
-import java.io.FileNotFoundException
+import com.github.e0ipso.tokkl.tokklApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
@@ -27,6 +29,11 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.koin.core.context.GlobalContext
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileNotFoundException
+import java.time.Clock
 
 /** Real server CSV bytes through publication and Android's actual read-only content provider. */
 class ReportCsvServerTest {
@@ -34,7 +41,7 @@ class ReportCsvServerTest {
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val context = instrumentation.targetContext
     private val scope = MainScope()
-    private val files = ReportExportFiles(File(context.cacheDir, ReportExportFiles.DIRECTORY))
+    private val files = ReportExportFiles(File(context.cacheDir, ReportExportFiles.DIRECTORY), Clock.systemUTC())
     private lateinit var fixture: ReportAccount
     private lateinit var exporter: ReportExportController
 
@@ -43,9 +50,12 @@ class ReportCsvServerTest {
         fixture = ReportAccount.create()
         Session(context).save(TokklTestServer.url, fixture.account.apiToken)
         exporter = ReportExportController(
-            client = { fixture.account.client }, files = files, account = Session.exports,
-            csvMissing = {},
-            scope = scope, io = Dispatchers.IO,
+            client = { fixture.account.client.tokklApi() },
+            files = files,
+            account = GlobalContext.get().get(),
+            csvMissing = GlobalContext.get().get<CapabilitiesSource>()::csvMissing,
+            scope = scope,
+            io = Dispatchers.IO,
         )
     }
 
@@ -80,14 +90,24 @@ class ReportCsvServerTest {
         fixture.entry(fixture.today.atTime(9, 0), 901, "Résumé, \"quoted\"\nsecond line", selected)
         fixture.entry(fixture.today.atTime(10, 0), 901, "Excluded description", excluded)
         val request = ReportCsvRequest(
-            kind, ReportRange(fixture.today, fixture.today), ReportFilters(projects = listOf(selected)),
-            ReportsServer(fixture.account.client).workspace().orFail("read report workspace"), DurationFormat.DECIMAL,
+            kind,
+            ReportRange(fixture.today, fixture.today),
+            ReportFilters(projects = listOf(selected)),
+            runBlocking {
+                ServerReportsRepository { fixture.account.client.tokklApi() }.workspace()
+            }.orFail("read report workspace"),
+            DurationFormat.DECIMAL,
         )
         val expected = ByteArrayOutputStream().use { output ->
-            fixture.account.client.downloadCsv(
-                fixture.account.client.server.app("report", "${kind.path}.csv"), request.body(),
-                output, ReportExportFiles.MAX_BYTES, ApiCallCancellation(),
-            ).orFail("read the web app's ${kind.path} CSV")
+            runBlocking {
+                fixture.account.client.tokklApi().reports.exportCsv(
+                    kind.path,
+                    request.body(),
+                    output,
+                    ReportExportFiles.MAX_BYTES,
+                    ApiCallCancellation(),
+                )
+            }.orFail("read the web app's ${kind.path} CSV")
             output.toByteArray()
         }
         val text = expected.toString(Charsets.UTF_8)
@@ -106,7 +126,10 @@ class ReportCsvServerTest {
         var shares = 0
         lateinit var send: Intent
         instrumentation.runOnMainSync {
-            val launch: (File) -> Unit = { shares++; send = ReportCsvShare.intent(context, it) }
+            val launch: (File) -> Unit = {
+                shares++
+                send = ReportCsvShare.intent(context, it)
+            }
             exporter.launchShare(launch)
             exporter.launchShare(launch)
         }
@@ -114,8 +137,7 @@ class ReportCsvServerTest {
         assertEquals(Intent.ACTION_SEND, send.action)
         assertEquals("text/csv", send.type)
         assertEquals(Intent.FLAG_GRANT_READ_URI_PERMISSION, send.flags)
-        @Suppress("DEPRECATION")
-        val uri = checkNotNull(send.getParcelableExtra<Uri>(Intent.EXTRA_STREAM))
+        val uri = checkNotNull(IntentCompat.getParcelableExtra(send, Intent.EXTRA_STREAM, Uri::class.java))
         assertEquals("content", uri.scheme)
         assertEquals(uri, send.clipData!!.getItemAt(0).uri)
         assertEquals("text/csv", context.contentResolver.getType(uri))
@@ -126,14 +148,18 @@ class ReportCsvServerTest {
         instrumentation.runOnMainSync { exporter.shareFinished() }
         // Chooser completion retains the file for an asynchronous receiver; sign-out removes it.
         assertTrue(file.isFile)
-        Session(context).clear()
+        assertTrue("production sign-out succeeds", runBlocking { GlobalContext.get().get<SignOut>().run() })
         assertFalse(file.exists())
         assertFileRejected { context.contentResolver.openInputStream(uri)?.close() }
     }
 
     private fun assertFileRejected(open: () -> Unit) {
         var rejected = false
-        try { open() } catch (_: FileNotFoundException) { rejected = true }
+        try {
+            open()
+        } catch (_: FileNotFoundException) {
+            rejected = true
+        }
         assertTrue("the content provider must reject this read or write", rejected)
     }
 }

@@ -7,10 +7,14 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.HttpMethod
+import com.github.e0ipso.tokkl.api.api
+import com.github.e0ipso.tokkl.appApiClient
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.orFail
-import java.time.DayOfWeek
-import java.time.ZoneId
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -21,6 +25,8 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
+import java.time.DayOfWeek
+import java.time.ZoneId
 
 /**
  * The app's own settings source reads the account settings from the real Tokkl container. The
@@ -34,34 +40,41 @@ class AccountSettingsServerTest {
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
-    private val client = TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(TokklTestServer.apiToken))
+    private val client = appApiClient(TokklTestServer.url, ApiCredentials.ApiToken(TokklTestServer.apiToken))
 
     @After
     fun restoreTheAccount() {
         try {
             putMe(timezone = "UTC", beginningOfWeek = 1)
         } finally {
-            AccountSettingsStore(context).clear()
+            runBlocking { AccountSettingsStore(context, Dispatchers.IO).clear() }
         }
     }
 
     @Test
-    fun refreshReadsTheSettingsFromTheServerAndKeepsThem() {
+    fun refreshReadsTheSettingsFromTheServerAndKeepsThem() = runBlocking<Unit> {
         // Tokkl 1.5.0 stores the name Intl resolves, which accepts it in any case.
         putMe(timezone = "america/sao_paulo", beginningOfWeek = 0)
-        val source = (context.applicationContext as TokklApplication).accountSettings
+        val app = context.applicationContext as TokklApplication
+        val source = app.accountSettings
 
-        runBlocking { source.refresh().join() }
+        app.accountRefresh.refresh().join()
 
         // Tokkl's instance time resolution is 5 minutes unless an admin changes it.
-        val expected = AccountSettings("America/Sao_Paulo", DayOfWeek.SUNDAY, timeResolutionMinutes = 5.0, defaultWorkspaceId = serverId("default_workspace_id"), userId = serverId("id"))
+        val expected = AccountSettings(
+            "America/Sao_Paulo",
+            DayOfWeek.SUNDAY,
+            timeResolutionMinutes = 5.0,
+            defaultWorkspaceId = WorkspaceId(serverId("default_workspace_id")),
+            userId = serverId("id"),
+        )
         assertEquals(expected, source.state.value)
-        assertEquals("the stored settings", expected, AccountSettingsStore(context).load())
+        assertEquals("the stored settings", expected, AccountSettingsStore(context, Dispatchers.IO).load())
         assertEquals(ZoneId.of("America/Sao_Paulo"), expected.time()?.zone)
     }
 
     private fun serverId(field: String): Long =
-        client.get(client.server.api("me"), JsonObject.serializer()).orFail("GET /api/v9/me")
+        runBlocking { client.get(client.server.api("me"), JsonObject.serializer()) }.orFail("GET /api/v9/me")
             .getValue(field).jsonPrimitive.long
 
     private fun putMe(timezone: String, beginningOfWeek: Int) {
@@ -70,7 +83,7 @@ class AccountSettingsServerTest {
             put("beginning_of_week", beginningOfWeek)
         }
         // Fails with the error alone, so neither a response body nor a secret lands in the message.
-        val result = client.send("PUT", client.server.api("me"), body, JsonObject.serializer())
+        val result = runBlocking { client.send(HttpMethod.PUT, client.server.api("me"), body, JsonObject.serializer()) }
         if (result is ApiResult.Failure) {
             val error = result.error
             val reason = if (error is ApiError.Http) "HTTP ${error.status}" else error::class.simpleName

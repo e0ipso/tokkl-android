@@ -11,9 +11,9 @@ import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.click
+import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
-import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
@@ -25,7 +25,6 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
-import androidx.lifecycle.ViewModelProvider
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
@@ -34,39 +33,48 @@ import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.BlackholeDiagnostics
 import com.github.e0ipso.tokkl.HangingRelay
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
-import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TapToVisibleDeadline
+import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.api
+import com.github.e0ipso.tokkl.api.app
 import com.github.e0ipso.tokkl.awaitTimerPage
-import com.github.e0ipso.tokkl.followNoTimerEvents
-import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.cache.CacheDatabase
 import com.github.e0ipso.tokkl.cache.CachedTimeEntry
 import com.github.e0ipso.tokkl.cache.ChangeKind
-import com.github.e0ipso.tokkl.cache.EntryFields
 import com.github.e0ipso.tokkl.cache.PendingChange
 import com.github.e0ipso.tokkl.cache.ShortStopUndo
-import com.github.e0ipso.tokkl.entry.fields
+import com.github.e0ipso.tokkl.cache.modelOf
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.cacheDatabase
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.components.sessionViewModels
+import com.github.e0ipso.tokkl.core.entryfields.R
+import com.github.e0ipso.tokkl.followNoTimerEvents
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.fields
+import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
-import java.time.Duration
-import java.time.Instant
-import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
@@ -89,6 +97,11 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.Duration
+import java.time.Instant
+import java.time.temporal.ChronoUnit
+import com.github.e0ipso.tokkl.core.ui.R as UiR
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 
 /**
  * The timer on the Timer page against the real Tokkl container (docs/PRD.md T1). The app talks
@@ -113,13 +126,18 @@ class TimerServerTest {
 
     /** The web app: the same account, straight to the server and past the app's guard. */
     private val web by lazy {
-        TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(account.apiToken), httpClient = OkHttpClient())
+        TogglApiClient(
+            TokklTestServer.url,
+            ApiCredentials.ApiToken(account.apiToken),
+            httpClient = OkHttpClient(),
+            io = Dispatchers.IO,
+        )
     }
 
     @Before
     fun signInThroughTheRelay() {
         account = TestAccounts.create(timezone = "Europe/Madrid")
-        workspace = web.get(web.server.api("me"), JsonObject.serializer()).orFail("GET /api/v9/me")
+        workspace = runBlocking { web.get(web.server.api("me"), JsonObject.serializer()) }.orFail("GET /api/v9/me")
             .getValue("default_workspace_id").jsonPrimitive.long
         relay = HangingRelay(TokklTestServer.url)
         signIn(relay.url, account.apiToken)
@@ -156,14 +174,19 @@ class TimerServerTest {
                 click()
             }
             started.await("Stop shows") { displayedAfterNextFrame(stopMatcher()) }
-            started.await("the running state shows in words") { displayedAfterNextFrame(hasText(string(R.string.timer_running))) }
+            started.await(
+                "the running state shows in words",
+            ) { displayedAfterNextFrame(hasText(string(UiR.string.timer_running))) }
             assertEquals("Start stays queued unsent", 1, runBlocking { app.changes.unsentCount.first() })
             assertTrue("the clock starts at zero: ${clockText()}", clockText().startsWith("0:00:0"))
-            composeRule.waitUntil("Start reaches the hanging connection", NETWORK_TIMEOUT.toMillis()) { relay.hungConnections > 0 }
+            composeRule.waitUntil(
+                "Start reaches the hanging connection",
+                NETWORK_TIMEOUT.toMillis(),
+            ) { relay.hungConnections > 0 }
 
             val database = CacheDatabase.open(context)
             try {
-                val running = queueRead { database.changes().runningEntries().single() }
+                val running = modelOf(queueRead { database.changes().runningEntries().single() })
                 var fields = EntryFields(description = "Write the timer")
                 billable().performClick()
                 awaitAtOnce("billable is on") { billableState() == ToggleableState.On }
@@ -172,12 +195,16 @@ class TimerServerTest {
 
                 projectButton(null).performClick()
                 option("Timer project").performClick()
-                composeRule.onNode(hasSetTextAction() and hasText(string(R.string.picker_search))).performTextInput("call")
+                composeRule.onNode(
+                    hasSetTextAction() and hasText(string(R.string.picker_search)),
+                ).performTextInput("call")
                 option(string(R.string.picker_add_tag, "call")).performClick()
                 composeRule.onNode(hasText(string(R.string.entry_picker_done)) and hasClickAction()).performClick()
                 awaitAtOnce("the project shows") { shows(projectButton("Timer project")) }
-                awaitAtOnce("the tag shows") { shows(composeRule.onNode(hasContentDescription(string(R.string.entry_tags_spoken, "call")))) }
-                fields = fields.copy(projectId = project, tags = listOf("call"))
+                awaitAtOnce(
+                    "the tag shows",
+                ) { shows(composeRule.onNode(hasContentDescription(string(R.string.entry_tags_spoken, "call")))) }
+                fields = fields.copy(projectId = ProjectId(project), tags = listOf("call"))
                 awaitPersistedFields(database, running, fields, "picker")
 
                 description().performTextClearance()
@@ -199,10 +226,10 @@ class TimerServerTest {
                 stopped.await("Stop reaches the cache") { runBlocking { app.cache.running.first() } == null }
                 lateinit var stoppedQueue: TimerQueueSnapshot
                 stopped.await("Stop has its own captured queued operation") {
-                    stoppedQueue = queueRead { timerQueueSnapshot(database, running.id) }
+                    stoppedQueue = queueRead { timerQueueSnapshot(database, running.id.value) }
                     val previous = baseline.changes.map { it.sequence }.toSet()
                     stoppedQueue.changes.filter { it.sequence !in previous }.singleOrNull()?.let {
-                        it.kind == ChangeKind.STOP && it.entryId == running.id &&
+                        it.kind == ChangeKind.STOP && it.entryId == running.id.value &&
                             it.capturedStop != null && it.cachedEntry() == stoppedQueue.entry
                     } == true
                 }
@@ -235,7 +262,7 @@ class TimerServerTest {
             start().performClick()
             awaitAtOnce("Stop shows") { shows(stopButton()) }
             awaitAtOnce("the timer says the server lacks it") {
-                shows(composeRule.onNode(hasText(string(R.string.history_unsent), ignoreCase = true)))
+                shows(composeRule.onNode(hasText(string(TimerR.string.history_unsent), ignoreCase = true)))
             }
             billable().performClick()
             awaitAtOnce("billable is on") { billableState() == ToggleableState.On }
@@ -272,7 +299,10 @@ class TimerServerTest {
             relay.hang()
             start().performClick()
             awaitAtOnce("Stop shows") { shows(stopButton()) }
-            composeRule.waitUntil("Start's request reaches the network", NETWORK_TIMEOUT.toMillis()) { relay.hungConnections > 0 }
+            composeRule.waitUntil(
+                "Start's request reaches the network",
+                NETWORK_TIMEOUT.toMillis(),
+            ) { relay.hungConnections > 0 }
             // A pooled connection that the hang cut makes OkHttp retry on a new one at once.
             Thread.sleep(SETTLE.toMillis())
             val requests = relay.hungConnections
@@ -297,18 +327,20 @@ class TimerServerTest {
             // the page would then offer Stop for it. This test is about a start the phone has not
             // seen, as on Toggl Track or while the stream is down, so it runs without the stream.
             app.followNoTimerEvents()
-            val fromTheWeb = web.send(
-                "POST",
-                web.server.api("workspaces", workspace.toString(), "time_entries"),
-                buildJsonObject {
-                    put("workspace_id", workspace)
-                    put("created_with", "tokkl-android tests")
-                    put("description", "Started on the web")
-                    put("start", Instant.now().minus(1, ChronoUnit.HOURS).toString())
-                    put("duration", -1)
-                },
-                JsonObject.serializer(),
-            ).orFail("POST a running entry").getValue("id").jsonPrimitive.long
+            val fromTheWeb = runBlocking {
+                web.send(
+                    HttpMethod.POST,
+                    web.server.api("workspaces", workspace.toString(), "time_entries"),
+                    buildJsonObject {
+                        put("workspace_id", workspace)
+                        put("created_with", "tokkl-android tests")
+                        put("description", "Started on the web")
+                        put("start", Instant.now().minus(1, ChronoUnit.HOURS).toString())
+                        put("duration", -1)
+                    },
+                    JsonObject.serializer(),
+                )
+            }.orFail("POST a running entry").getValue("id").jsonPrimitive.long
             AirplaneMode.set(true, web)
             description().performTextInput("Started on the phone")
             start().performClick()
@@ -318,19 +350,32 @@ class TimerServerTest {
             drainUntilEmpty()
 
             val running = runBlocking { app.cache.timeEntries.first() }.filter { it.stop == null }
-            assertEquals("one running entry on the phone", listOf("Started on the phone"), running.map { it.description })
-            awaitAtOnce("the phone's entry shows running") { shows(composeRule.onNode(hasText("Started on the phone") and hasSetTextAction())) }
+            assertEquals(
+                "one running entry on the phone",
+                listOf("Started on the phone"),
+                running.map { it.description },
+            )
+            awaitAtOnce(
+                "the phone's entry shows running",
+            ) { shows(composeRule.onNode(hasText("Started on the phone") and hasSetTextAction())) }
             assertTrue("the web's timer stopped", serverEntry(fromTheWeb)["stop"] !is JsonNull)
-            val current = web.get(web.server.api("me", "time_entries", "current"), JsonElement.serializer()).orFail("GET the running entry")
+            val current = runBlocking {
+                web.get(
+                    web.server.api("me", "time_entries", "current"),
+                    JsonElement.serializer(),
+                )
+            }.orFail("GET the running entry")
             assertEquals("Started on the phone", current.jsonObject.string("description"))
         }
     }
 
     private fun launch(diagnose: Boolean = false, steps: () -> Unit) {
+        // The page's view model takes its trace when it is made, so the trace goes in first.
+        if (diagnose) BlackholeDiagnostics.traceTimerTaps()
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             composeRule.awaitTimerPage(NETWORK_TIMEOUT.toMillis())
             // The refresh the launch started, so the cache holds what the server has.
-            runBlocking { app.accountSettings.refresh().join() }
+            runBlocking { app.accountRefresh.refresh().join() }
             composeRule.waitUntil("Start can start", NETWORK_TIMEOUT.toMillis()) { shows(startButton()) }
             if (diagnose) diagnoseTimer(scenario, steps) else steps()
         }
@@ -341,7 +386,7 @@ class TimerServerTest {
         BlackholeDiagnostics.begin("timer-hang")
         try {
             scenario.onActivity { activity ->
-                val model = ViewModelProvider(activity)[TimerViewModel::class.java].model
+                val model = sessionViewModels(activity)[TimerViewModel::class.java]
                 observations.launch {
                     model.state.map { it.javaClass.simpleName }.distinctUntilChanged().collect {
                         BlackholeDiagnostics.record("model.state kind=$it drawn=UNKNOWN")
@@ -370,17 +415,18 @@ class TimerServerTest {
     }
 
     private fun signIn(server: ServerUrl, token: String) {
-        ServerTrustStore(context).confirmCleartext(server)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(server)
         Session(context).save(server, token)
     }
 
-    private fun createProject(name: String): Long =
+    private fun createProject(name: String): Long = runBlocking {
         web.send(
-            "POST",
+            HttpMethod.POST,
             web.server.api("workspaces", workspace.toString(), "projects"),
             buildJsonObject { put("name", name) },
             JsonObject.serializer(),
-        ).orFail("POST a project").getValue("id").jsonPrimitive.long
+        )
+    }.orFail("POST a project").getValue("id").jsonPrimitive.long
 
     private fun description(): SemanticsNodeInteraction =
         composeRule.onNode(hasSetTextAction() and hasText(string(R.string.entry_description)))
@@ -388,9 +434,13 @@ class TimerServerTest {
     private fun descriptionText(): String =
         description().fetchSemanticsNode().config.getOrNull(SemanticsProperties.EditableText)?.text.orEmpty()
 
-    private fun startMatcher(): SemanticsMatcher = hasContentDescription(string(R.string.timer_start_spoken)) and hasClickAction()
+    private fun startMatcher(): SemanticsMatcher = hasContentDescription(
+        string(TimerR.string.timer_start_spoken),
+    ) and hasClickAction()
 
-    private fun stopMatcher(): SemanticsMatcher = hasContentDescription(string(R.string.timer_stop_spoken)) and hasClickAction()
+    private fun stopMatcher(): SemanticsMatcher = hasContentDescription(
+        string(UiR.string.timer_stop_spoken),
+    ) and hasClickAction()
 
     private fun startButton(): SemanticsNodeInteraction = composeRule.onNode(startMatcher())
 
@@ -465,13 +515,12 @@ class TimerServerTest {
             .config[SemanticsProperties.Text].joinToString("") { it.text }
 
     /** Whether exactly one node matches. */
-    private fun shows(node: SemanticsNodeInteraction): Boolean =
-        try {
-            node.fetchSemanticsNode()
-            true
-        } catch (e: AssertionError) {
-            false
-        }
+    private fun shows(node: SemanticsNodeInteraction): Boolean = try {
+        node.fetchSemanticsNode()
+        true
+    } catch (_: AssertionError) {
+        false
+    }
 
     private fun awaitAtOnce(what: String, condition: () -> Boolean) {
         composeRule.waitUntil("$what within $AT_ONCE", AT_ONCE.toMillis(), condition)
@@ -502,7 +551,7 @@ class TimerServerTest {
     /** Observe the app connection's invalidations; a separate Room instance has no shared tracker. */
     private fun awaitPersistedFields(
         database: CacheDatabase,
-        running: CachedTimeEntry,
+        running: TimeEntry,
         fields: EntryFields,
         stage: String,
     ): TimerQueueSnapshot {
@@ -511,14 +560,16 @@ class TimerServerTest {
         val snapshot = runBlocking {
             withTimeout(AT_ONCE.toMillis()) {
                 app.changes.unsentCount.map {
-                    withContext(Dispatchers.IO) { timerQueueSnapshot(database, running.id) }
+                    withContext(Dispatchers.IO) { timerQueueSnapshot(database, running.id.value) }
                 }.first { snapshot ->
                     val entry = snapshot.entry
                     val update = snapshot.changes.lastOrNull()
-                    entry != null && entry.id == running.id && entry.workspaceId == running.workspaceId &&
-                        entry.start == running.start && entry.stop == null && entry.fields() == fields &&
-                        update != null && update.kind == ChangeKind.UPDATE && update.entryId == running.id &&
-                        update.start == running.start && update.stop == null && update.entry().fields() == fields
+                    entry != null && entry.id == running.id.value && entry.workspaceId == running.workspaceId.value &&
+                        entry.start == running.start && entry.stop == null && modelOf(entry).fields() == fields &&
+                        update != null && update.kind == ChangeKind.UPDATE && update.entryId == running.id.value &&
+                        update.start == running.start && update.stop == null && modelOf(
+                            update.entry(),
+                        ).fields() == fields
                 }
             }
         }
@@ -535,19 +586,23 @@ class TimerServerTest {
     private fun assertQueuedStop(
         before: TimerQueueSnapshot,
         after: TimerQueueSnapshot,
-        running: CachedTimeEntry,
+        running: TimeEntry,
         fields: EntryFields,
     ) {
         val previous = before.changes.map { it.sequence }.toSet()
-        assertEquals("prior target operations remain queued unsent", previous, after.changes.filter { it.sequence in previous }.map { it.sequence }.toSet())
+        assertEquals(
+            "prior target operations remain queued unsent",
+            previous,
+            after.changes.filter { it.sequence in previous }.map { it.sequence }.toSet(),
+        )
         val added = after.changes.filter { it.sequence !in previous }
         assertEquals("one new target operation is queued", 1, added.size)
         val stop = added.single()
         assertTrue("Stop has a new queue sequence", stop.sequence > previous.max())
         assertEquals("the target operation is Stop", ChangeKind.STOP, stop.kind)
-        assertEquals("Stop belongs to the running entry", running.id, stop.entryId)
-        assertEquals("Stop keeps the workspace", running.workspaceId, stop.workspaceId)
-        assertEquals("Stop keeps all persisted edited fields", fields, stop.entry().fields())
+        assertEquals("Stop belongs to the running entry", running.id.value, stop.entryId)
+        assertEquals("Stop keeps the workspace", running.workspaceId.value, stop.workspaceId)
+        assertEquals("Stop keeps all persisted edited fields", fields, modelOf(stop.entry()).fields())
         assertTrue("Stop retains its captured tap instant", stop.capturedStop != null)
         assertEquals("Stop and cache committed together", stop.cachedEntry(), after.entry)
         if (stop.shortStop) {
@@ -564,14 +619,18 @@ class TimerServerTest {
         val deadline = System.nanoTime() + NETWORK_TIMEOUT.toNanos()
         while (runBlocking { app.changes.unsentCount.first() } > 0) {
             if (System.nanoTime() > deadline) throw AssertionError("the queue is not empty")
-            runBlocking { app.sender.send().join() }
+            runBlocking { app.sender.sendAndWait() }
         }
-        runBlocking { app.accountSettings.refreshAfterChange().join() }
+        runBlocking { app.accountRefresh.refreshAfterChange().join() }
     }
 
-    private fun serverEntries(): List<JsonObject> =
-        web.get(web.server.api("me", "time_entries"), JsonArray.serializer()).orFail("GET /api/v9/me/time_entries")
-            .map { it.jsonObject }
+    private fun serverEntries(): List<JsonObject> = runBlocking {
+        web.get(
+            web.server.api("me", "time_entries"),
+            JsonArray.serializer(),
+        )
+    }.orFail("GET /api/v9/me/time_entries")
+        .map { it.jsonObject }
 
     private fun localShortStop(): Boolean {
         val undo = runBlocking { app.changes.shortStopUndo.first() }
@@ -579,7 +638,8 @@ class TimerServerTest {
         if (undo == null) {
             assertTrue("a kept Stop remains in history", entries.any { it.stop != null })
         } else {
-            assertEquals("the short Stop holds a zero span for Undo", undo.entry.start, undo.entry.stop)
+            val stopped = checkNotNull(app.cacheDatabase.changes().shortStop(undo.entryId.value)).entry
+            assertEquals("the short Stop holds a zero span for Undo", stopped.start, stopped.stop)
             assertTrue("the short Stop leaves history", entries.none { it.id == undo.entryId })
         }
         return undo != null
@@ -587,7 +647,12 @@ class TimerServerTest {
 
     private fun stoppedEntry(shortStop: Boolean): JsonObject {
         val kept = serverEntries()
-        val trashed = web.get(web.server.app("trash"), JsonArray.serializer()).orFail("GET /api/app/trash")
+        val trashed = runBlocking {
+            web.get(
+                web.server.app("trash"),
+                JsonArray.serializer(),
+            )
+        }.orFail("GET /api/app/trash")
             .map { it.jsonObject }
         assertEquals("the server has exactly one stopped entry", 1, kept.size + trashed.size)
         assertEquals("the server follows the offline short Stop prediction", shortStop, trashed.isNotEmpty())
@@ -603,8 +668,12 @@ class TimerServerTest {
         return entry
     }
 
-    private fun serverEntry(id: Long): JsonObject =
-        web.get(web.server.api("me", "time_entries", id.toString()), JsonObject.serializer()).orFail("GET a time entry")
+    private fun serverEntry(id: Long): JsonObject = runBlocking {
+        web.get(
+            web.server.api("me", "time_entries", id.toString()),
+            JsonObject.serializer(),
+        )
+    }.orFail("GET a time entry")
 
     private fun JsonObject.string(key: String): String = getValue(key).jsonPrimitive.content
 

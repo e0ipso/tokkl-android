@@ -23,7 +23,6 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
@@ -34,6 +33,11 @@ import com.github.e0ipso.tokkl.cache.CachedClient
 import com.github.e0ipso.tokkl.cache.CachedProject
 import com.github.e0ipso.tokkl.cache.CachedTag
 import com.github.e0ipso.tokkl.cache.CachedTask
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.defaultNetwork
+import com.github.e0ipso.tokkl.core.entryfields.R
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.TaskId
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import org.junit.Assert.assertEquals
@@ -51,7 +55,6 @@ class EntityPickerFontScaleTest {
     fun auditFinalAccessibilityState() {
         composeRule.checkAccessibility()
     }
-
 
     private val composeRule = createComposeRule()
 
@@ -74,12 +77,13 @@ class EntityPickerFontScaleTest {
                 close()
             }
         }
-        val original = Picked(OLD_SITE, OLD_TASK, listOf("legacy"))
+        val original = Picked(ProjectId(OLD_SITE), TaskId(OLD_TASK), listOf("legacy"))
         picked = original
         composeRule.setContent {
             TokklTheme {
-                EntityPicker(
+                CachedEntityPicker(
                     cache = app.cache,
+                    network = app.defaultNetwork,
                     workspaceId = WORKSPACE,
                     original = original,
                     picked = picked,
@@ -91,16 +95,18 @@ class EntityPickerFontScaleTest {
 
         val archived = context.getString(R.string.picker_archived)
         option("A project with a long name that wraps at large sizes").assertHeightIsAtLeast(48.dp).performClick()
-        assertEquals(Picked(LONG_NAME, null, listOf("legacy")), picked)
+        assertEquals(Picked(ProjectId(LONG_NAME), null, listOf("legacy")), picked)
         option("Old site").assert(hasText(archived)).assertIsDisplayed()
         option("Old task").assert(hasText(archived)).assertIsDisplayed().performClick()
-        assertEquals(Picked(OLD_SITE, OLD_TASK, listOf("legacy")), picked)
+        assertEquals(Picked(ProjectId(OLD_SITE), TaskId(OLD_TASK), listOf("legacy")), picked)
         option("Old task").assertIsSelected()
         option("zeta").assertIsDisplayed().performClick()
         option("zeta").assertIsOn()
 
         composeRule.onNode(hasSetTextAction()).performTextInput("client call")
-        scrolledTo(hasText(context.getString(R.string.picker_add_tag, "client call"))).assertIsDisplayed().performClick()
+        scrolledTo(
+            hasText(context.getString(R.string.picker_add_tag, "client call")),
+        ).assertIsDisplayed().performClick()
         assertEquals(listOf("legacy", "zeta", "client call"), picked.tags)
     }
 
@@ -123,7 +129,15 @@ class EntityPickerFontScaleTest {
 
         val ROWS = CacheContents(
             projects = listOf(
-                CachedProject(LONG_NAME, WORKSPACE, ACME, "A project with a long name that wraps at large sizes", "#0b83d9", true, false),
+                CachedProject(
+                    LONG_NAME,
+                    WORKSPACE,
+                    ACME,
+                    "A project with a long name that wraps at large sizes",
+                    "#0b83d9",
+                    true,
+                    false,
+                ),
                 CachedProject(OLD_SITE, WORKSPACE, ACME, "Old site", "#e36a00", active = false, billable = false),
             ) + (1L..8L).map { CachedProject(100 + it, WORKSPACE, null, "Project $it", "#2da608", true, false) },
             clients = listOf(CachedClient(ACME, WORKSPACE, "Acme", archived = false)),

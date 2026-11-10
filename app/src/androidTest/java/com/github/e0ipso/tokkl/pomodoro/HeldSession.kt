@@ -1,12 +1,13 @@
 package com.github.e0ipso.tokkl.pomodoro
 
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
+import com.github.e0ipso.tokkl.api.TimerPomodoro
+import com.github.e0ipso.tokkl.api.TimerPomodoroPhase
+import com.github.e0ipso.tokkl.api.TimerState
+import com.github.e0ipso.tokkl.model.PhaseKind
+import com.github.e0ipso.tokkl.model.PhaseTransition
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
-import com.github.e0ipso.tokkl.timerstate.PhaseKind
-import com.github.e0ipso.tokkl.timerstate.PhaseTransition
-import com.github.e0ipso.tokkl.timerstate.TimerPomodoro
-import com.github.e0ipso.tokkl.timerstate.TimerPomodoroPhase
-import com.github.e0ipso.tokkl.timerstate.TimerState
+import com.github.e0ipso.tokkl.timerstate.held
 import java.time.Instant
 
 /**
@@ -28,7 +29,12 @@ fun heldSession(
     val work = kind == PhaseKind.WORK
     val session = TimerPomodoro(
         workMinutes = 25, shortRestMinutes = 5, longRestMinutes = 15, longRestEvery = longRestEvery,
-        phase = TimerPomodoroPhase(kind, phaseStart, completed = if (work) number - 1 else number, plannedEnd = phaseStart.plusSeconds(phaseSeconds)),
+        phase = TimerPomodoroPhase(
+            kind,
+            phaseStart,
+            completed = if (work) number - 1 else number,
+            plannedEnd = phaseStart.plusSeconds(phaseSeconds),
+        ),
         upcomingPhase = when {
             !work -> PhaseKind.WORK
             number % longRestEvery == 0 -> PhaseKind.LONG_REST
@@ -42,9 +48,18 @@ fun heldSession(
         },
         number = number, entryId = entryId, pomodoroStart = phaseStart,
     )
-    val entry = ServerTimeEntry(id = entryId, workspaceId = workspaceId, description = description, start = phaseStart.toString())
-    return HeldTimerState(
-        TimerState(revision, phaseStart, entry, pause = null, pomodoro = session, discardedPomodoro = null),
-        receivedAt = phaseStart,
+    val entry = ServerTimeEntry(
+        id = entryId,
+        workspaceId = workspaceId,
+        description = description,
+        start = phaseStart.toString(),
     )
+    return TimerState(
+        revision,
+        phaseStart,
+        entry,
+        pause = null,
+        pomodoro = session,
+        discardedPomodoro = null,
+    ).held(phaseStart)
 }

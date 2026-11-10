@@ -13,24 +13,27 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.text.TextLayoutResult
-import androidx.lifecycle.ViewModelProvider
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createEmptyComposeRule
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.reportsViewModel
+import com.github.e0ipso.tokkl.feature.reports.R
 import com.github.e0ipso.tokkl.finishWithin
 import com.github.e0ipso.tokkl.openMorePage
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.ui.DateWords
+import com.github.e0ipso.tokkl.ui.spokenDuration
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
-import java.time.DayOfWeek
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonArray
@@ -47,6 +50,8 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.DayOfWeek
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * The reports screen's Weekly tab against the real Tokkl container, in the real activity, on a
@@ -84,7 +89,7 @@ class WeeklyReportServerTest {
         report.entry(report.today.atTime(0, 10), 600, "Midnight", website)
         report.entry(report.weekStart.minusDays(1).atTime(12, 0), 3600, "Outside", website)
         Session(context).save(TokklTestServer.url, report.account.apiToken)
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         assertEquals(DayOfWeek.WEDNESDAY, settings().beginningOfWeek)
     }
 
@@ -115,7 +120,10 @@ class WeeklyReportServerTest {
     fun theGridMatchesTheWebAppInTheAccountsWeek() {
         val weekly = openWeekly()
         assertEquals("the account's week from Wednesday", report.weekStart, weekly.weekStart)
-        assertEquals(ReportRange(report.weekStart, report.weekStart.plusDays(6)), (state() as ReportsState.Loaded).selection.range)
+        assertEquals(
+            ReportRange(report.weekStart, report.weekStart.plusDays(6)),
+            (state() as ReportsState.Loaded).selection.range,
+        )
         val web = report.webReport(
             "weekly",
             buildJsonObject {
@@ -136,7 +144,10 @@ class WeeklyReportServerTest {
         assertEquals(webRows, weekly.rows.map { listOf(it.id, it.title, it.seconds, it.total) })
         assertEquals(web.getValue("column_totals").jsonArray.map { it.jsonPrimitive.long }, weekly.dayTotals)
         assertEquals(web.getValue("total").jsonPrimitive.long, weekly.total)
-        assertEquals(web.getValue("columns").jsonArray.map { it.jsonObject.getValue("start").jsonPrimitive.content }, weekly.days.map { it.toString() })
+        assertEquals(
+            web.getValue("columns").jsonArray.map { it.jsonObject.getValue("start").jsonPrimitive.content },
+            weekly.days.map { it.toString() },
+        )
 
         val words = DateWords(context.resources)
         val row = weekly.rows.first()
@@ -154,7 +165,7 @@ class WeeklyReportServerTest {
             R.string.reports_weekly_cell_description,
             sparse.title.ifBlank { string(R.string.reports_without_project) },
             words.bucket(weekly.days[emptyDay], Resolution.DAY),
-            string(R.string.reports_spoken_no_time),
+            string(UiR.string.reports_spoken_no_time),
         )
         assertTrue("an empty cell reads \"$empty\"", exists(hasContentDescription(empty)))
         assertTrue(exists(hasContentDescription(weekTotal(weekly))))
@@ -163,10 +174,17 @@ class WeeklyReportServerTest {
         composeRule.waitUntil("last week loads", LOAD_TIMEOUT_MS) {
             ((state() as? ReportsState.Loaded)?.report as? WeeklyReport)?.weekStart == report.weekStart.minusDays(7)
         }
-        assertEquals("the entry the day before the week", listOf(3600L), ((state() as ReportsState.Loaded).report as WeeklyReport).rows.map { it.total })
+        assertEquals(
+            "the entry the day before the week",
+            listOf(3600L),
+            ((state() as ReportsState.Loaded).report as WeeklyReport).rows.map { it.total },
+        )
 
         composeRule.onNode(hasText(string(R.string.reports_tab_summary)) and hasClickAction()).performClick()
-        composeRule.waitUntil("the summary loads", LOAD_TIMEOUT_MS) { (state() as? ReportsState.Loaded)?.report is SummaryReport }
+        composeRule.waitUntil(
+            "the summary loads",
+            LOAD_TIMEOUT_MS,
+        ) { (state() as? ReportsState.Loaded)?.report is SummaryReport }
         assertEquals(report.weekStart.minusDays(7), (state() as ReportsState.Loaded).selection.range.from)
     }
 
@@ -175,16 +193,31 @@ class WeeklyReportServerTest {
     fun aLongerRangeShowsTodaysWeekAndOnlyWeekPresets() {
         openReports()
         composeRule.onNode(hasText(string(R.string.reports_preset_this_week)) and hasClickAction()).performClick()
-        composeRule.waitUntil("the range dialog opens", LOAD_TIMEOUT_MS) { exists(hasText(string(R.string.reports_range_title))) }
+        composeRule.waitUntil(
+            "the range dialog opens",
+            LOAD_TIMEOUT_MS,
+        ) { exists(hasText(string(R.string.reports_range_title))) }
         composeRule.onNode(hasText(string(R.string.reports_preset_this_month))).performClick()
-        composeRule.waitUntil("this month loads", LOAD_TIMEOUT_MS) { (state() as? ReportsState.Loaded)?.selection?.preset == RangePreset.THIS_MONTH }
+        composeRule.waitUntil(
+            "this month loads",
+            LOAD_TIMEOUT_MS,
+        ) { (state() as? ReportsState.Loaded)?.selection?.preset == RangePreset.THIS_MONTH }
 
         composeRule.onNode(hasText(string(R.string.reports_tab_weekly)) and hasClickAction()).performClick()
-        composeRule.waitUntil("the Weekly tab loads", LOAD_TIMEOUT_MS) { (state() as? ReportsState.Loaded)?.report is WeeklyReport }
-        assertEquals(ReportRange(report.weekStart, report.weekStart.plusDays(6)), (state() as ReportsState.Loaded).selection.range)
+        composeRule.waitUntil(
+            "the Weekly tab loads",
+            LOAD_TIMEOUT_MS,
+        ) { (state() as? ReportsState.Loaded)?.report is WeeklyReport }
+        assertEquals(
+            ReportRange(report.weekStart, report.weekStart.plusDays(6)),
+            (state() as ReportsState.Loaded).selection.range,
+        )
 
         composeRule.onNode(hasText(string(R.string.reports_preset_this_week)) and hasClickAction()).performClick()
-        composeRule.waitUntil("the range dialog opens", LOAD_TIMEOUT_MS) { exists(hasText(string(R.string.reports_range_title))) }
+        composeRule.waitUntil(
+            "the range dialog opens",
+            LOAD_TIMEOUT_MS,
+        ) { exists(hasText(string(R.string.reports_range_title))) }
         assertFalse("no month preset", exists(hasText(string(R.string.reports_preset_this_month))))
         assertTrue(exists(hasText(string(R.string.reports_preset_last_week))))
     }
@@ -197,7 +230,10 @@ class WeeklyReportServerTest {
         AirplaneMode.set(true, report.account.client)
 
         composeRule.onNode(hasContentDescription(string(R.string.reports_next_period))).performClick()
-        composeRule.waitUntil("the offline message shows", LOAD_TIMEOUT_MS) { exists(hasText(string(R.string.reports_offline_title))) }
+        composeRule.waitUntil(
+            "the offline message shows",
+            LOAD_TIMEOUT_MS,
+        ) { exists(hasText(string(R.string.reports_offline_title))) }
         assertEquals(ReportFailure.Unreachable, (state() as ReportsState.Failed).failure)
         assertNoNumbers(weekly)
 
@@ -223,14 +259,26 @@ class WeeklyReportServerTest {
         composeRule.waitForIdle()
         val node = total.fetchSemanticsNode()
         val width = context.resources.displayMetrics.widthPixels
-        assertTrue("the week's total is on screen: ${node.positionOnScreen.x}", node.positionOnScreen.x >= 0 && node.positionOnScreen.x + node.size.width <= width)
+        assertTrue(
+            "the week's total is on screen: ${node.positionOnScreen.x}",
+            node.positionOnScreen.x >= 0 && node.positionOnScreen.x + node.size.width <= width,
+        )
         // The tab row scrolls sideways too, so it is left out.
-        val scrollers = composeRule.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.HorizontalScrollAxisRange)).fetchSemanticsNodes()
+        val scrollers = composeRule.onAllNodes(
+            SemanticsMatcher.keyIsDefined(SemanticsProperties.HorizontalScrollAxisRange),
+        ).fetchSemanticsNodes()
             .filterNot { it.holdsATab() }
-        assertEquals("a scroller for the head row, each project's row and the totals", weekly.rows.size + 2, scrollers.size)
+        assertEquals(
+            "a scroller for the head row, each project's row and the totals",
+            weekly.rows.size + 2,
+            scrollers.size,
+        )
         val range = scrollers.first().config[SemanticsProperties.HorizontalScrollAxisRange]
         assertTrue("the grid is wider than the screen", range.maxValue() > 0f)
-        assertTrue("every row scrolled with the first", scrollers.all { it.config[SemanticsProperties.HorizontalScrollAxisRange].value() == range.value() })
+        assertTrue(
+            "every row scrolled with the first",
+            scrollers.all { it.config[SemanticsProperties.HorizontalScrollAxisRange].value() == range.value() },
+        )
         assertTextsFitHeight()
         for (control in composeRule.onAllNodes(hasClickAction()).fetchSemanticsNodes()) {
             val text = control.config.getOrNull(SemanticsProperties.Text)?.joinToString().orEmpty()
@@ -250,21 +298,34 @@ class WeeklyReportServerTest {
     private fun assertNoNumbers(weekly: WeeklyReport) {
         val settings = settings()
         for (seconds in weekly.dayTotals.filter { it > 0 } + weekly.total + weekly.rows.map { it.total }) {
-            assertFalse("${settings.formatDuration(seconds)} shows offline", exists(hasText(settings.formatDuration(seconds), substring = true)))
+            assertFalse(
+                "${settings.formatDuration(seconds)} shows offline",
+                exists(hasText(settings.formatDuration(seconds), substring = true)),
+            )
             assertFalse(
                 "${spokenDuration(context.resources, seconds)} reads offline",
                 exists(hasContentDescription(spokenDuration(context.resources, seconds), substring = true)),
             )
         }
         assertFalse(exists(hasText(string(R.string.reports_weekly_title))))
-        for (row in weekly.rows) if (row.title.isNotBlank()) assertFalse("${row.title} shows offline", exists(hasText(row.title)))
+        for (row in weekly.rows) {
+            if (row.title.isNotBlank()) {
+                assertFalse(
+                    "${row.title} shows offline",
+                    exists(hasText(row.title)),
+                )
+            }
+        }
     }
 
     /** No text is cut off in height. The grid may run off the side, where it scrolls. */
     private fun assertTextsFitHeight() {
         composeRule.checkAccessibility()
         composeRule.waitForIdle()
-        for (node in composeRule.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.Text), useUnmergedTree = true).fetchSemanticsNodes()) {
+        for (node in composeRule.onAllNodes(
+            SemanticsMatcher.keyIsDefined(SemanticsProperties.Text),
+            useUnmergedTree = true,
+        ).fetchSemanticsNodes()) {
             val text = node.config.getOrNull(SemanticsProperties.Text)?.joinToString() ?: continue
             layout(node)?.let { assertFalse("cut off: $text", it.didOverflowHeight) }
         }
@@ -287,7 +348,10 @@ class WeeklyReportServerTest {
     private fun openWeekly(): WeeklyReport {
         openReports()
         composeRule.onNode(hasText(string(R.string.reports_tab_weekly)) and hasClickAction()).performClick()
-        composeRule.waitUntil("the Weekly tab loads", LOAD_TIMEOUT_MS) { (state() as? ReportsState.Loaded)?.report is WeeklyReport }
+        composeRule.waitUntil(
+            "the Weekly tab loads",
+            LOAD_TIMEOUT_MS,
+        ) { (state() as? ReportsState.Loaded)?.report is WeeklyReport }
         composeRule.waitForIdle()
         return (state() as ReportsState.Loaded).report as WeeklyReport
     }
@@ -295,7 +359,9 @@ class WeeklyReportServerTest {
     private fun state(): ReportsState {
         var state: ReportsState? = null
         finishWithin("reading the reports state") {
-            checkNotNull(scenario).onActivity { state = ViewModelProvider(it)[ReportsViewModel::class.java].model.state.value }
+            checkNotNull(
+                scenario,
+            ).onActivity { state = reportsViewModel(it).page.value.report }
         }
         return checkNotNull(state)
     }

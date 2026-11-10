@@ -14,7 +14,7 @@ okf_version: '0.1'
 - Load [`design/`](design/index.md) for more information on Tokkl's theme, palette, brand rules and shared UI components; read before changing how anything looks or reads to TalkBack.
 - Load [`release/`](release/index.md) for more information on the app ID, versioning, reproducible signed builds, CI jobs and F-Droid metadata; read before touching versions, signing, CI or store text.
 - Load [`screens/`](screens/index.md) for more information on sign-in and sign-out, the navigation host with its bar, rail and window sizes, the Timer page, the timer and entry form, Reports, Trash and the catalog pages; read before changing a screen, its model or navigation.
-- Load [`testing/`](testing/index.md) for more information on instrumented, screenshot and real-server tests on the plain AOSP emulators; read before writing or running any test on a device or emulator.
+- Load [`testing/`](testing/index.md) for more information on JVM coroutine tests in virtual time, and instrumented, screenshot and real-server tests on the plain AOSP emulators; read before writing or running any test.
 
 ## Conventions (how we build)
 - Open [**Isolate all known failing tests before full-suite validation**](practice-isolate-all-known-failing-tests-before-full-suite-validation.md) to learn about: Inventory every failure, reproduce it in a focused run, and iterate there before validating the full suite. #testing #ci #agents

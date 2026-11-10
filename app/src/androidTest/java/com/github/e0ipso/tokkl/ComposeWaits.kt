@@ -8,20 +8,22 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.isSelected
-import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.isHeading
-import androidx.compose.ui.test.performScrollTo
-import com.github.e0ipso.tokkl.navigation.TopLevelPage
+import androidx.compose.ui.test.isSelectable
+import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.platform.app.InstrumentationRegistry
+import com.github.e0ipso.tokkl.navigation.topLevelPages
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.FutureTask
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import kotlin.concurrent.thread
+import com.github.e0ipso.tokkl.core.ui.R as UiR
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 
 /**
  * Waits until a node with [text] exists. The first screen appears only after
@@ -30,7 +32,10 @@ import kotlin.concurrent.thread
  * no Compose root, which these wait predicates treat as not ready.
  */
 fun ComposeTestRule.awaitText(text: String, timeoutMillis: Long = START_TIMEOUT_MS) {
-    waitUntil("\"$text\" shows", timeoutMillis) { onAllNodesWithText(text).fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty() }
+    waitUntil(
+        "\"$text\" shows",
+        timeoutMillis,
+    ) { onAllNodesWithText(text).fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty() }
 }
 
 /**
@@ -38,7 +43,7 @@ fun ComposeTestRule.awaitText(text: String, timeoutMillis: Long = START_TIMEOUT_
  * its Timer item as selected.
  */
 fun ComposeTestRule.awaitTimerPage(timeoutMillis: Long = START_TIMEOUT_MS) {
-    val timer = InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.nav_timer)
+    val timer = InstrumentationRegistry.getInstrumentation().targetContext.getString(TimerR.string.nav_timer)
     waitUntil("the Timer page shows", timeoutMillis) {
         onAllNodes(hasText(timer) and isSelected()).fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
     }
@@ -50,7 +55,9 @@ fun ComposeTestRule.awaitTimerPage(timeoutMillis: Long = START_TIMEOUT_MS) {
  */
 fun ComposeTestRule.awaitPomodoroOffered(timeoutMillis: Long = START_TIMEOUT_MS) {
     waitUntil("the bar offers Pomodoro", timeoutMillis) {
-        onAllNodes(bottomBarItem(R.string.pomodoro_title)).fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
+        onAllNodes(
+            bottomBarItem(UiR.string.pomodoro_title),
+        ).fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
     }
 }
 
@@ -65,12 +72,15 @@ fun bottomBarItem(@StringRes label: Int): SemanticsMatcher {
 
 /** Opens a top-level page, using More for pages that live on its sheet. */
 fun ComposeTestRule.openBarPage(@StringRes label: Int, timeoutMillis: Long = START_TIMEOUT_MS) {
-    if (TopLevelPage.entries.any { it.label == label && it.inMore }) {
+    if (topLevelPages.all.any { it.label == label && it.inMore }) {
         openMorePage(label, timeoutMillis)
         return
     }
     val item = bottomBarItem(label)
-    waitUntil("the bar item shows", timeoutMillis) { onAllNodes(item).fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty() }
+    waitUntil(
+        "the bar item shows",
+        timeoutMillis,
+    ) { onAllNodes(item).fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty() }
     onNode(item).performClick()
 }
 
@@ -79,10 +89,16 @@ fun ComposeTestRule.openMorePage(@StringRes label: Int, timeoutMillis: Long = ST
     openBarPage(R.string.nav_more, timeoutMillis)
     val context = InstrumentationRegistry.getInstrumentation().targetContext
     val choice = hasText(context.getString(label)) and isSelectable()
-    waitUntil("the More choice shows", timeoutMillis) { onAllNodes(choice).fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty() }
+    waitUntil(
+        "the More choice shows",
+        timeoutMillis,
+    ) { onAllNodes(choice).fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty() }
     onNode(choice).performScrollTo().performClick()
     val sheet = hasText(context.getString(R.string.nav_more)) and isHeading()
-    waitUntil("the More sheet closes", timeoutMillis) { onAllNodes(sheet).fetchSemanticsNodes(atLeastOneRootRequired = false).isEmpty() }
+    waitUntil(
+        "the More sheet closes",
+        timeoutMillis,
+    ) { onAllNodes(sheet).fetchSemanticsNodes(atLeastOneRootRequired = false).isEmpty() }
 }
 
 /**

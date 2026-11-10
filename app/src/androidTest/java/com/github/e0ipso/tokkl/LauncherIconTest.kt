@@ -11,6 +11,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /** The icon a launcher gets for the installed app, through the same API launchers use. */
 class LauncherIconTest {
@@ -28,7 +29,7 @@ class LauncherIconTest {
         assertTrue("the icon is a ${icon.javaClass.name}", icon is AdaptiveIconDrawable)
         icon as AdaptiveIconDrawable
         // The app's own layers, not a platform wrapper around a legacy icon.
-        assertEquals(context.getColor(R.color.ic_launcher_background), (icon.background as? ColorDrawable)?.color)
+        assertEquals(context.getColor(UiR.color.ic_launcher_background), (icon.background as? ColorDrawable)?.color)
         val artwork = (context.getDrawable(R.mipmap.ic_launcher_foreground) as BitmapDrawable).bitmap
         val foreground = (icon.foreground as? BitmapDrawable)?.bitmap
         assertTrue("the foreground is not Tokkl's artwork", foreground?.sameAs(artwork) == true)

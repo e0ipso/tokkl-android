@@ -1,0 +1,33 @@
+package com.github.e0ipso.tokkl.trash
+
+import com.github.e0ipso.tokkl.capabilities.CapabilitiesSource
+import com.github.e0ipso.tokkl.navigation.FeatureRoutes
+import com.github.e0ipso.tokkl.platform.DefaultNetwork
+import com.github.e0ipso.tokkl.platform.io
+import com.github.e0ipso.tokkl.platform.offlineIn
+import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
+import com.github.e0ipso.tokkl.session.AccountSettingsSource
+import org.koin.core.module.dsl.singleOf
+import org.koin.core.module.dsl.viewModel
+import org.koin.dsl.bind
+import org.koin.dsl.module
+
+val trashFeatureModule = module {
+    singleOf(::ServerTrashRepository)
+
+    viewModel {
+        val scope = viewModelCoroutineScope()
+        TrashViewModel(
+            repository = get(),
+            changes = get(),
+            trashMissing = get<CapabilitiesSource>()::trashMissing,
+            scope = scope,
+            io = io(),
+            settings = get<AccountSettingsSource>(),
+            offline = get<DefaultNetwork>().offlineIn(scope),
+            app = get(),
+        )
+    }
+
+    single { TrashEntries } bind FeatureRoutes::class
+}

@@ -6,6 +6,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.ComposeTimeoutException
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.TouchInjectionScope
 import androidx.compose.ui.test.assertIsOn
@@ -25,36 +27,41 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
-import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
+import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModelProvider
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.BackgroundTrip
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
-import com.github.e0ipso.tokkl.awaitTimerPage
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.EntryWithSendState
+import com.github.e0ipso.tokkl.api.HttpMethod
+import com.github.e0ipso.tokkl.api.api
+import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.capabilities
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.components.timerPageViewModels
+import com.github.e0ipso.tokkl.entries.WeekSource
+import com.github.e0ipso.tokkl.feature.timer.R
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryTiming
+import com.github.e0ipso.tokkl.model.EntryWithSendState
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.orFail
-import com.github.e0ipso.tokkl.reports.DateWords
-import com.github.e0ipso.tokkl.reports.spokenDuration
 import com.github.e0ipso.tokkl.session.Session
-import java.time.Instant
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.OffsetDateTime
-import java.time.ZoneId
-import java.time.temporal.ChronoUnit
+import com.github.e0ipso.tokkl.ui.DateWords
+import com.github.e0ipso.tokkl.ui.spokenDuration
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonArray
@@ -72,6 +79,14 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
+import com.github.e0ipso.tokkl.core.entryfields.R as FieldsR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * The Calendar view against the real Tokkl container, in the real activity, on an upright phone,
@@ -102,7 +117,14 @@ class CalendarServerTest {
         // Toggl numbers the days from 0 for Sunday. A week that starts tomorrow ends today.
         val beginningOfWeek = today.plusDays(1).dayOfWeek.value % 7
         val me = buildJsonObject { put("beginning_of_week", beginningOfWeek) }
-        account.client.send("PUT", account.client.server.api("me"), me, JsonObject.serializer()).orFail("PUT /api/v9/me")
+        runBlocking {
+            account.client.send(
+                HttpMethod.PUT,
+                account.client.server.api("me"),
+                me,
+                JsonObject.serializer(),
+            )
+        }.orFail("PUT /api/v9/me")
         Session(context).save(TokklTestServer.url, account.apiToken)
     }
 
@@ -158,26 +180,32 @@ class CalendarServerTest {
                     .performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
                 composeRule.waitUntil("Delete closes the editor and removes the calendar block", LOAD_TIMEOUT_MS) {
                     !exists(hasText(string(R.string.entry_save))) && !exists(blockOf(description)) &&
-                        runBlocking { app.cache.entries.first() }.none { it.entry.id == id }
+                        runBlocking { app.cache.entries.first() }.none { it.entry.id.value == id }
                 }
                 assertEquals(1, runBlocking { app.changes.unsentCount.first() })
             }
 
             deleteFromEditor()
-            composeRule.onNode(hasText(string(R.string.history_undo)) and hasClickAction())
+            composeRule.onNode(hasText(string(UiR.string.history_undo)) and hasClickAction())
                 .performSemanticsAction(SemanticsActions.OnClick)
             awaitBlock(label)
             assertEquals("Undo cancels the offline delete", 0, runBlocking { app.changes.unsentCount.first() })
-            assertEquals(id, runBlocking { app.cache.entries.first() }.single().entry.id)
+            assertEquals(id, runBlocking { app.cache.entries.first() }.single().entry.id.value)
 
             deleteFromEditor()
             AirplaneMode.set(false, account.client)
             sendTheQueue()
-            val answer = account.client.get(
-                account.client.server.api("me", "time_entries", id.toString()), JsonObject.serializer(),
+            val answer = runBlocking {
+                account.client.get(
+                    account.client.server.api("me", "time_entries", id.toString()),
+                    JsonObject.serializer(),
+                )
+            }
+            assertEquals(
+                "the editor's queued delete reaches the server",
+                404,
+                ((answer as? ApiResult.Failure)?.error as? ApiError.UnexpectedStatus)?.status,
             )
-            assertEquals("the editor's queued delete reaches the server", 404,
-                ((answer as? ApiResult.Failure)?.error as? ApiError.UnexpectedStatus)?.status)
         }
     }
 
@@ -193,7 +221,13 @@ class CalendarServerTest {
         val workspace = account.workspaceId
         refresh()
         AirplaneMode.set(true, account.client)
-        runBlocking { app.changes.create(workspace, EntryFields(description = "Logged offline"), start.atZone(zone).toInstant(), stop.atZone(zone).toInstant()) }
+        runBlocking {
+            app.changes.create(
+                WorkspaceId(workspace),
+                EntryFields(description = "Logged offline"),
+                EntryTiming.Stopped(start.atZone(zone).toInstant(), stop.atZone(zone).toInstant()),
+            )
+        }
 
         withCalendar { model ->
             show(model, day)
@@ -226,7 +260,10 @@ class CalendarServerTest {
             awaitBlock(spoken("Kept on the phone", lastWeek.atTime(14, 0), lastWeek.atTime(15, 0)))
 
             show(model, older)
-            composeRule.waitUntil("the week says it needs the server", LOAD_TIMEOUT_MS) { exists(hasText(string(R.string.calendar_offline_title))) }
+            composeRule.waitUntil(
+                "the week says it needs the server",
+                LOAD_TIMEOUT_MS,
+            ) { exists(hasText(string(R.string.calendar_offline_title))) }
             assertTrue("no block before the week loads", !exists(blockOf("Kept on the server")))
             assertTrue("Try again shows", exists(hasText(string(R.string.history_retry)) and hasClickAction()))
 
@@ -315,11 +352,12 @@ class CalendarServerTest {
             show(model, cacheStart)
             assertEquals(WeekSource.Cached, (model.state.value as CalendarState.Shown).week)
 
-            awaitBlock(spoken("From the evening before", cacheStart.minusDays(1).atTime(23, 0), cacheStart.atTime(1, 0)))
+            awaitBlock(
+                spoken("From the evening before", cacheStart.minusDays(1).atTime(23, 0), cacheStart.atTime(1, 0)),
+            )
         }
     }
 
-    /** An entry that starts two days before an older week and runs into it shows in that week. */
     @Test
     fun anEntryFromTwoDaysBeforeAnOlderWeekShowsInIt() {
         val start = olderWeek.minusDays(2).atTime(23, 0)
@@ -350,7 +388,10 @@ class CalendarServerTest {
             account.deleteEntry(id)
             BackgroundTrip.comeBack(activity)
 
-            composeRule.waitUntil("the deleted entry goes", LOAD_TIMEOUT_MS) { !exists(blockOf("Deleted in the web app")) }
+            composeRule.waitUntil(
+                "the deleted entry goes",
+                LOAD_TIMEOUT_MS,
+            ) { !exists(blockOf("Deleted in the web app")) }
             assertEquals(WeekSource.Loaded, (model.state.value as CalendarState.Shown).week)
         }
     }
@@ -372,16 +413,26 @@ class CalendarServerTest {
             awaitBlock(spoken("Moved offline", day.atTime(9, 0), day.atTime(10, 0)))
             dragOnGrid(blockOf("Moved offline"), from = { center }, dy = { HOUR.toPx() })
 
-            val moved = awaitCached("the moved entry") { it.entry.id == id && it.entry.start == instant(day.atTime(10, 0)) }
+            val moved = awaitCached(
+                "the moved entry",
+            ) { it.entry.id.value == id && it.entry.start == instant(day.atTime(10, 0)) }
             assertTrue("unsent offline", moved.unsent)
             assertEquals(instant(day.atTime(11, 0)), moved.entry.stop)
-            awaitBlock("${spoken("Moved offline", day.atTime(10, 0), day.atTime(11, 0))}, ${string(R.string.history_unsent)}")
+            awaitBlock(
+                "${spoken("Moved offline", day.atTime(10, 0), day.atTime(11, 0))}, ${string(R.string.history_unsent)}",
+            )
 
             AirplaneMode.set(false, account.client)
             sendTheQueue()
             val stored = account.entry(id)
-            assertEquals(instant(day.atTime(10, 0)), OffsetDateTime.parse(stored.getValue("start").jsonPrimitive.content).toInstant())
-            assertEquals(instant(day.atTime(11, 0)), OffsetDateTime.parse(stored.getValue("stop").jsonPrimitive.content).toInstant())
+            assertEquals(
+                instant(day.atTime(10, 0)),
+                OffsetDateTime.parse(stored.getValue("start").jsonPrimitive.content).toInstant(),
+            )
+            assertEquals(
+                instant(day.atTime(11, 0)),
+                OffsetDateTime.parse(stored.getValue("stop").jsonPrimitive.content).toInstant(),
+            )
         }
     }
 
@@ -403,7 +454,10 @@ class CalendarServerTest {
             dragOnGrid(blockOf(description), from = { center }, dy = { HOUR.toPx() })
             awaitStoredAndDropped(id, day.atTime(10, 0), day.atTime(11, 0))
             awaitBlock(spoken(description, day.atTime(10, 0), day.atTime(11, 0)))
-            assertTrue("the server week's old copy is gone", !exists(hasContentDescription(spoken(description, day.atTime(9, 0), day.atTime(10, 0)))))
+            assertTrue(
+                "the server week's old copy is gone",
+                !exists(hasContentDescription(spoken(description, day.atTime(9, 0), day.atTime(10, 0)))),
+            )
 
             dragOnGrid(blockOf(description), from = { center }, dy = { HOUR.toPx() })
             awaitStoredAndDropped(id, day.atTime(11, 0), day.atTime(12, 0))
@@ -441,7 +495,10 @@ class CalendarServerTest {
             val created = awaitCached("the created entry") { it.entry.start == instant(start) }
             assertTrue("unsent offline", created.unsent)
             assertEquals(instant(start.plusMinutes(30)), created.entry.stop)
-            composeRule.waitUntil("the entry form opens", LOAD_TIMEOUT_MS) { exists(hasText(string(R.string.entry_save))) }
+            composeRule.waitUntil(
+                "the entry form opens",
+                LOAD_TIMEOUT_MS,
+            ) { exists(hasText(string(R.string.entry_save))) }
         }
     }
 
@@ -492,7 +549,10 @@ class CalendarServerTest {
             show(model, day)
 
             awaitBlock("Team offsite, ${spokenDuration(context.resources, 7_200)}")
-            assertTrue("no block of it in the hour grid", !exists(hasContentDescription("Team offsite, from ", substring = true)))
+            assertTrue(
+                "no block of it in the hour grid",
+                !exists(hasContentDescription("Team offsite, from ", substring = true)),
+            )
 
             composeRule.onNode(allDayPlus(day)).performScrollTo().performClick()
             composeRule.waitUntil("the form opens for a new entry", LOAD_TIMEOUT_MS) {
@@ -500,14 +560,25 @@ class CalendarServerTest {
             }
             composeRule.onNode(hasText(string(R.string.entry_no_times)) and isToggleable()).assertIsOn()
             assertTrue("the form is on $day", exists(hasContentDescription(spokenDate(day)) and hasClickAction()))
-            assertTrue("a no-time entry has no start", !exists(hasSetTextAction() and hasText(string(R.string.entry_start))))
+            assertTrue(
+                "a no-time entry has no start",
+                !exists(hasSetTextAction() and hasText(string(R.string.entry_start))),
+            )
             composeRule.waitUntil("the account's workspace is known", LOAD_TIMEOUT_MS) {
-                composeRule.onAllNodes(hasSetTextAction() and hasText(string(R.string.entry_description))).fetchSemanticsNodes()
+                composeRule.onAllNodes(
+                    hasSetTextAction() and hasText(string(FieldsR.string.entry_description)),
+                ).fetchSemanticsNodes()
                     .singleOrNull()?.config?.contains(SemanticsProperties.Disabled) == false
             }
-            composeRule.onNode(hasSetTextAction() and hasText(string(R.string.entry_description))).performTextInput("Added from the plus")
-            composeRule.onNode(hasSetTextAction() and hasText(string(R.string.entry_duration))).performScrollTo().performTextInput("90m")
-            composeRule.onNode(hasText(string(R.string.entry_save)) and hasClickAction()).performScrollTo().performClick()
+            composeRule.onNode(
+                hasSetTextAction() and hasText(string(FieldsR.string.entry_description)),
+            ).performTextInput("Added from the plus")
+            composeRule.onNode(
+                hasSetTextAction() and hasText(string(R.string.entry_duration)),
+            ).performScrollTo().performTextInput("90m")
+            composeRule.onNode(
+                hasText(string(R.string.entry_save)) and hasClickAction(),
+            ).performScrollTo().performClick()
             composeRule.waitUntil("the form closes", LOAD_TIMEOUT_MS) {
                 !exists(hasText(string(R.string.entry_form_new)) and isHeading())
             }
@@ -516,11 +587,15 @@ class CalendarServerTest {
             val stored = serverEntry("Added from the plus", day)
             assertTrue("the server stores a no-time entry", stored.getValue("all_day").jsonPrimitive.boolean)
             assertEquals(5_400L, stored.getValue("duration").jsonPrimitive.long)
-            assertEquals("from midnight of the day it was added on", instant(day.atStartOfDay()), OffsetDateTime.parse(stored.getValue("start").jsonPrimitive.content).toInstant())
+            assertEquals(
+                "from midnight of the day it was added on",
+                instant(day.atStartOfDay()),
+                OffsetDateTime.parse(stored.getValue("start").jsonPrimitive.content).toInstant(),
+            )
         }
     }
 
-    private fun refresh() = runBlocking { app.accountSettings.refresh().join() }
+    private fun refresh() = runBlocking { app.accountRefresh.refresh().join() }
 
     /**
      * Scrolls the Timer page's top away and the grid until [anchor]'s block shows, then holds and
@@ -537,7 +612,9 @@ class CalendarServerTest {
         // As under a thumb, the Timer page's title, timer, favorites and switch scroll away first,
         // so the grid gets the page's height. A semantics scroll alone would spend part of the
         // grid's scroll on the page's top and leave the block off the screen.
-        composeRule.onNode(hasScrollAction() and hasAnyDescendant(hasText(string(R.string.timer_view_list)) and isSelectable()))
+        composeRule.onNode(
+            hasScrollAction() and hasAnyDescendant(hasText(string(R.string.timer_view_list)) and isSelectable()),
+        )
             .performTouchInput { swipeUp(startY = bottom - 1f, endY = top, durationMillis = SWIPE_MS) }
         composeRule.waitForIdle()
         val block = composeRule.onNode(anchor)
@@ -549,7 +626,9 @@ class CalendarServerTest {
         block.performTouchInput {
             val press = from((grid.top - shown.top)..(grid.bottom - shown.top))
             val y = shown.top + press.y
-            check(y in grid.top..grid.bottom) { "the press at $y px is off the grid on screen, ${grid.top} to ${grid.bottom} px" }
+            check(
+                y in grid.top..grid.bottom,
+            ) { "the press at $y px is off the grid on screen, ${grid.top} to ${grid.bottom} px" }
             holdAndDrag(press, dy())
         }
     }
@@ -582,11 +661,14 @@ class CalendarServerTest {
         composeRule.waitUntil("the server stores the entry from $start to $stop", LOAD_TIMEOUT_MS) {
             sendTheQueue()
             val stored = account.entry(id)
-            val times = listOf("start", "stop").map { OffsetDateTime.parse(stored.getValue(it).jsonPrimitive.content).toInstant() }
+            val times = listOf(
+                "start",
+                "stop",
+            ).map { OffsetDateTime.parse(stored.getValue(it).jsonPrimitive.content).toInstant() }
             times == span.toList()
         }
         composeRule.waitUntil("the refresh drops the entry from the phone", LOAD_TIMEOUT_MS) {
-            runBlocking { app.cache.entries.first() }.none { it.entry.id == id }
+            runBlocking { app.cache.entries.first() }.none { it.entry.id.value == id }
         }
     }
 
@@ -596,7 +678,7 @@ class CalendarServerTest {
             .addQueryParameter("start_date", day.minusDays(2).toString() + "T00:00:00Z")
             .addQueryParameter("end_date", day.plusDays(2).toString() + "T00:00:00Z")
             .build()
-        return account.client.get(url, JsonArray.serializer()).orFail("GET /api/v9/me/time_entries")
+        return runBlocking { account.client.get(url, JsonArray.serializer()) }.orFail("GET /api/v9/me/time_entries")
             .map { it.jsonObject }
             .single { it.getValue("description").jsonPrimitive.content == description }
     }
@@ -604,15 +686,19 @@ class CalendarServerTest {
     /** The + of [day]'s All day cell, named by the day as TalkBack reads it. */
     private fun allDayPlus(day: LocalDate): SemanticsMatcher {
         val words = DateWords(context.resources)
-        val label = context.getString(R.string.history_day, words.weekday(day), words.short(day))
+        val label = context.getString(UiR.string.history_day, words.weekday(day), words.short(day))
         return hasContentDescription(context.getString(R.string.calendar_add_all_day_on, label)) and hasClickAction()
     }
 
     /** What TalkBack reads for the form's date button on [date]: Date: Mon, 19 Oct 2026. */
     private fun spokenDate(date: LocalDate): String {
-        val weekday = context.resources.getStringArray(R.array.reports_weekdays_short)[date.dayOfWeek.value - 1]
-        val month = context.resources.getStringArray(R.array.reports_months_short)[date.monthValue - 1]
-        val value = context.getString(R.string.entry_date_value, weekday, context.getString(R.string.reports_date_year, date.dayOfMonth, month, date.year))
+        val weekday = context.resources.getStringArray(UiR.array.reports_weekdays_short)[date.dayOfWeek.value - 1]
+        val month = context.resources.getStringArray(UiR.array.reports_months_short)[date.monthValue - 1]
+        val value = context.getString(
+            R.string.entry_date_value,
+            weekday,
+            context.getString(UiR.string.reports_date_year, date.dayOfMonth, month, date.year),
+        )
         return context.getString(R.string.entry_date_spoken, value)
     }
 
@@ -623,7 +709,7 @@ class CalendarServerTest {
         val deadline = SystemClock.uptimeMillis() + LOAD_TIMEOUT_MS
         while (runBlocking { app.changes.unsentCount.first() } > 0) {
             check(SystemClock.uptimeMillis() < deadline) { "the queue did not empty" }
-            runBlocking { app.sender.send().join() }
+            runBlocking { app.sender.sendAndWait() }
         }
     }
 
@@ -638,25 +724,29 @@ class CalendarServerTest {
         val to = stop.atZone(zone).toInstant()
         return listOf(
             description,
-            context.getString(R.string.history_time_range_spoken, settings.formatTime(from, zone), settings.formatTime(to, zone)),
+            context.getString(
+                R.string.history_time_range_spoken,
+                settings.formatTime(from, zone),
+                settings.formatTime(to, zone),
+            ),
             spokenDuration(context.resources, to.epochSecond - from.epochSecond),
         ).joinToString(", ")
     }
 
     /** Starts the app, shows the Calendar view and runs [steps] with the activity's calendar model. */
-    private fun withCalendar(steps: (CalendarModel) -> Unit) {
+    private fun withCalendar(steps: (CalendarViewModel) -> Unit) {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             composeRule.awaitTimerPage(LOAD_TIMEOUT_MS)
             composeRule.onNode(hasText(string(R.string.timer_view_calendar)) and isSelectable())
                 .performSemanticsAction(SemanticsActions.OnClick)
-            var model: CalendarModel? = null
-            scenario.onActivity { model = ViewModelProvider(it)[CalendarViewModel::class.java].model }
+            var model: CalendarViewModel? = null
+            scenario.onActivity { model = timerPageViewModels(it)[CalendarViewModel::class.java] }
             steps(checkNotNull(model))
         }
     }
 
     /** Shows [day], as the arrows would. */
-    private fun show(model: CalendarModel, day: LocalDate) {
+    private fun show(model: CalendarViewModel, day: LocalDate) {
         instrumentation.runOnMainSync {
             model.showToday()
             model.step(ChronoUnit.DAYS.between(today, day))
@@ -667,21 +757,44 @@ class CalendarServerTest {
     }
 
     private fun awaitBlock(spoken: String) {
-        composeRule.waitUntil("a block reads \"$spoken\"", LOAD_TIMEOUT_MS) { exists(hasContentDescription(spoken)) }
+        try {
+            composeRule.waitUntil(
+                "a block reads \"$spoken\"",
+                LOAD_TIMEOUT_MS,
+            ) { exists(hasContentDescription(spoken)) }
+        } catch (failure: ComposeTimeoutException) {
+            val descriptions = composeRule.onAllNodes(SemanticsMatcher("any node") { true }, useUnmergedTree = true)
+                .fetchSemanticsNodes().mapNotNull { it.config.getOrNull(SemanticsProperties.ContentDescription) }
+            val cached = runBlocking { app.cache.entries.first() }
+            throw AssertionError(
+                "${failure.message}\nDescriptions=$descriptions\nCache=$cached\n" +
+                    "Settings=${app.accountSettings.state.value}",
+                failure,
+            )
+        }
     }
 
     /** The day of the week's strip that TalkBack reads as [day] with [minutes] in total, once the week has loaded. */
     private fun stripDay(day: LocalDate, minutes: Long): SemanticsMatcher {
         val words = DateWords(context.resources)
-        val label = context.getString(R.string.history_day, words.weekday(day), words.short(day))
-        val spoken = context.getString(R.string.history_day_spoken, label, spokenDuration(context.resources, minutes * 60))
+        val label = context.getString(UiR.string.history_day, words.weekday(day), words.short(day))
+        val spoken = context.getString(
+            R.string.history_day_spoken,
+            label,
+            spokenDuration(context.resources, minutes * 60),
+        )
         return hasContentDescription(spoken) and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab)
     }
 
     /** The block of the entry described [description], which TalkBack reads first. */
-    private fun blockOf(description: String): SemanticsMatcher = hasContentDescription("$description, ", substring = true)
+    private fun blockOf(description: String): SemanticsMatcher = hasContentDescription(
+        "$description, ",
+        substring = true,
+    )
 
-    private fun exists(matcher: SemanticsMatcher): Boolean = composeRule.onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty()
+    private fun exists(matcher: SemanticsMatcher): Boolean = composeRule.onAllNodes(
+        matcher,
+    ).fetchSemanticsNodes().isNotEmpty()
 
     private fun string(@StringRes id: Int): String = context.getString(id)
 

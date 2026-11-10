@@ -13,25 +13,26 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.text.TextLayoutResult
-import androidx.lifecycle.ViewModelProvider
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createEmptyComposeRule
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.reportsViewModel
+import com.github.e0ipso.tokkl.feature.reports.R
 import com.github.e0ipso.tokkl.finishWithin
 import com.github.e0ipso.tokkl.openMorePage
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.ui.DateWords
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
-import java.time.DayOfWeek
-import java.time.OffsetDateTime
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
@@ -49,6 +50,8 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.DayOfWeek
+import java.time.OffsetDateTime
 
 /**
  * The reports screen's Detailed tab against the real Tokkl container, in the real activity, on a
@@ -85,7 +88,7 @@ class DetailedReportServerTest {
         report.entry(report.today.atTime(0, 10), 600, "Midnight", website)
         report.entry(report.weekStart.minusDays(1).atTime(12, 0), 3600, "Outside", website)
         Session(context).save(TokklTestServer.url, report.account.apiToken)
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         assertEquals(DayOfWeek.WEDNESDAY, settings().beginningOfWeek)
         assertTrue("the 12-hour clock", settings().twelveHour)
     }
@@ -127,7 +130,10 @@ class DetailedReportServerTest {
         while (shown.nextRow != null) {
             val before = shown.entries.size
             list().performScrollToIndex(shown.entries.size + 1)
-            composeRule.waitUntil("the next page loads", LOAD_TIMEOUT_MS) { detailed().let { !it.loadingMore && it.entries.size > before } }
+            composeRule.waitUntil(
+                "the next page loads",
+                LOAD_TIMEOUT_MS,
+            ) { detailed().let { !it.loadingMore && it.entries.size > before } }
             shown = detailed()
             pages++
         }
@@ -140,7 +146,10 @@ class DetailedReportServerTest {
         list().performScrollToIndex(shown.entries.indexOf(midnight) + 1)
         composeRule.waitForIdle()
         assertTrue("12:10 AM shows", exists(hasText("12:10 AM", substring = true)))
-        assertTrue("today's date shows", exists(hasText(DateWords(context.resources).day(report.today, report.today), substring = true)))
+        assertTrue(
+            "today's date shows",
+            exists(hasText(DateWords(context.resources).day(report.today, report.today), substring = true)),
+        )
 
         val web = report.webReport(
             "entries",
@@ -164,11 +173,23 @@ class DetailedReportServerTest {
                 it.getValue("task_name").jsonPrimitive.contentOrNull,
             )
         }
-        val phoneRows = shown.entries.map { listOf(it.id, it.start.toInstant(), it.stop?.toInstant(), it.seconds, it.description, it.projectName, it.taskName) }
+        val phoneRows = shown.entries.map {
+            listOf(
+                it.id,
+                it.start.toInstant(),
+                it.stop?.toInstant(),
+                it.seconds,
+                it.description,
+                it.projectName,
+                it.taskName,
+            )
+        }
         assertEquals(webRows, phoneRows)
     }
 
-    /** Offline, a page that cannot load shows the summary's message and no rows, and so do Try again and another week. */
+    /**
+     * Offline, a page that cannot load shows the summary's message and no rows, and so do Try again and another week.
+     */
     @Test
     fun offlineShowsTheSummarysMessageAndNoRows() {
         openDetailed()
@@ -176,7 +197,10 @@ class DetailedReportServerTest {
         AirplaneMode.set(true, report.account.client)
 
         list().performScrollToIndex(51)
-        composeRule.waitUntil("the offline message shows", LOAD_TIMEOUT_MS) { exists(hasText(string(R.string.reports_offline_title))) }
+        composeRule.waitUntil(
+            "the offline message shows",
+            LOAD_TIMEOUT_MS,
+        ) { exists(hasText(string(R.string.reports_offline_title))) }
         assertEquals(ReportFailure.Unreachable, (state() as ReportsState.Failed).failure)
         assertNoRows()
 
@@ -215,7 +239,10 @@ class DetailedReportServerTest {
         composeRule.checkAccessibility()
         composeRule.waitForIdle()
         val width = context.resources.displayMetrics.widthPixels
-        for (node in composeRule.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.Text), useUnmergedTree = true).fetchSemanticsNodes()) {
+        for (node in composeRule.onAllNodes(
+            SemanticsMatcher.keyIsDefined(SemanticsProperties.Text),
+            useUnmergedTree = true,
+        ).fetchSemanticsNodes()) {
             val text = node.config.getOrNull(SemanticsProperties.Text)?.joinToString() ?: continue
             layout(node)?.let { assertFalse("cut off: $text", it.didOverflowHeight) }
             // The report tabs scroll sideways once a label no longer fits its share, as on the summary.
@@ -240,7 +267,10 @@ class DetailedReportServerTest {
         composeRule.openMorePage(R.string.reports, LOAD_TIMEOUT_MS)
         composeRule.waitUntil("the summary loads", LOAD_TIMEOUT_MS) { state() is ReportsState.Loaded }
         composeRule.onNode(hasText(string(R.string.reports_tab_detailed)) and hasClickAction()).performClick()
-        composeRule.waitUntil("the Detailed tab loads", LOAD_TIMEOUT_MS) { (state() as? ReportsState.Loaded)?.report is DetailedReport }
+        composeRule.waitUntil(
+            "the Detailed tab loads",
+            LOAD_TIMEOUT_MS,
+        ) { (state() as? ReportsState.Loaded)?.report is DetailedReport }
         composeRule.waitForIdle()
         return detailed()
     }
@@ -252,7 +282,9 @@ class DetailedReportServerTest {
     private fun state(): ReportsState {
         var state: ReportsState? = null
         finishWithin("reading the reports state") {
-            checkNotNull(scenario).onActivity { state = ViewModelProvider(it)[ReportsViewModel::class.java].model.state.value }
+            checkNotNull(
+                scenario,
+            ).onActivity { state = reportsViewModel(it).page.value.report }
         }
         return checkNotNull(state)
     }

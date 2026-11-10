@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The history on the Timer page's List view (docs/PRD.md H1). -->
+<resources>
+    <string name="history_today">Today</string>
+    <string name="history_yesterday">Yesterday</string>
+    <!-- What TalkBack reads for a day's header: Today, 3 hours, 20 minutes in total -->
+    <string name="history_day_spoken">%1$s, %2$s in total</string>
+    <string name="history_no_description">No description</string>
+    <!-- A project and one of its tasks: Tokkl for Android · Design -->
+    <string name="history_project_task">%1$s · %2$s</string>
+    <!-- An entry's start and stop: 09:00 – 10:30 -->
+    <string name="history_time_range">%1$s – %2$s</string>
+    <!-- What TalkBack reads for an entry's start and stop: from 09:00 to 10:30 -->
+    <string name="history_time_range_spoken">from %1$s to %2$s</string>
+    <string name="history_billable">Billable</string>
+    <!-- On an entry with a change the server hasn't received yet. -->
+    <string name="history_unsent">Not sent</string>
+    <string name="history_empty_title">No time entries in this period</string>
+    <string name="history_empty_message">Entries you track show here, grouped by day.</string>
+    <string name="history_load_older">Show older days</string>
+    <string name="history_loading_older">Loading older days…</string>
+    <string name="history_no_older">No older entries.</string>
+    <string name="history_offline_title">Older days need the server</string>
+    <string name="history_offline_message">This phone keeps the last two weeks. Older days load from the server once it can be reached.</string>
+    <string name="history_error_auth">The server didn\'t accept this phone\'s API token, so older days can\'t load. Sign in again.</string>
+    <string name="history_error_trust">The app sends nothing to the server until you review its connection, so older days can\'t load.</string>
+    <string name="history_error_status">The server answered with HTTP %d, so older days can\'t load.</string>
+    <string name="history_error_unreadable">The server\'s answer wasn\'t a list of time entries the app can read.</string>
+    <string name="history_retry">Try again</string>
+    <!-- The button on an entry that starts a new timer with its description, project, task, tags and billable (docs/PRD.md T2), with its description or history_no_description. -->
+    <string name="history_continue">Continue %1$s</string>
+    <!-- The button that opens the actions on an entry, with its description or history_no_description. -->
+    <string name="history_more_actions">More actions for %1$s</string>
+    <string name="history_duplicate">Duplicate</string>
+    <string name="history_duplicated">Entry duplicated</string>
+    <string name="history_split">Split</string>
+    <!-- The dialog that splits an entry in two at a clock time (docs/PRD.md H6), as the web app's editor does. -->
+    <string name="history_split_title">Split entry</string>
+    <!-- The entry the dialog splits: Code review, 09:00 – 10:30 -->
+    <string name="history_split_entry">%1$s, %2$s</string>
+    <string name="history_split_field">Split at</string>
+    <string name="history_split_placeholder">e.g. 10:30</string>
+    <!-- The durations of the two halves: Splits into 0:30:00 and 1:00:00. -->
+    <string name="history_split_preview">Splits into %1$s and %2$s.</string>
+    <string name="history_split_confirm">Split</string>
+    <string name="history_split_unreadable">Enter a split time like 10:30</string>
+    <string name="history_split_outside">The split time must fall inside the entry</string>
+    <string name="history_split_clock_change">The clocks change during this entry, so it can\'t be split at that time</string>
+    <string name="history_split_done">Entry split in two</string>
+    <!-- Saves an entry's description, project, task, tags and billable as a timer template (docs/PRD.md T5). -->
+    <string name="history_pin">Save as template</string>
+    <string name="history_pinned">Saved as a template</string>
+    <string name="history_pin_needs_server">Saving a timer template needs the server, which can\'t be reached now.</string>
+    <string name="history_delete">Delete</string>
+    <string name="history_deleted">Entry deleted</string>
+    <string name="history_undo_needs_server">Undo needs the server. Tap Undo again once this phone can reach it.</string>
+    <string name="history_undo_failed">The server didn\'t restore the entry.</string>
+    <string name="history_undo_failed_status">The server answered with HTTP %d, so the entry wasn\'t restored.</string>
+    <!-- Asked before a delete on a server that can't restore deleted entries, such as Toggl Track. -->
+    <string name="history_delete_confirm_title">Delete this entry?</string>
+    <string name="history_delete_confirm_message">This server can\'t restore deleted entries, so the delete can\'t be undone.</string>
+    <string name="history_delete_confirm">Delete entry</string>
+    <!-- A group of similar entries (docs/PRD.md H4): what TalkBack reads for its count badge. -->
+    <plurals name="history_group_entries">
+        <item quantity="one">%d entry</item>
+        <item quantity="other">%d entries</item>
+    </plurals>
+    <!-- The state TalkBack reads for a group, and announces when it changes. -->
+    <string name="history_group_expanded">Expanded</string>
+    <string name="history_group_collapsed">Collapsed</string>
+    <!-- What a tap on a group does, as TalkBack reads it: double tap to show entries. -->
+    <string name="history_group_show">Show entries</string>
+    <string name="history_group_hide">Hide entries</string>
+    <string name="history_unknown_time_zone">This phone doesn\'t know the account\'s timezone, %1$s, so it can\'t group entries by day.</string>
+</resources>

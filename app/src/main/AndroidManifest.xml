@@ -87,7 +87,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Tokkl">
         <!--
-            The app gives Android its night mode (settings/ApplicationNightMode.kt), which
+            The app gives Android its night mode (syncApplicationNightMode in core/ui ThemeSettings.kt), which
             changes the activity's configuration. Compose redraws in place, so choosing a theme
             keeps the activity and the screen it shows instead of restarting it.
 
@@ -105,153 +105,25 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <!-- The alarm has its own task so Back/Home leave playback with the service. -->
-        <activity
-            android:name=".pomodoro.PomodoroAlarmActivity"
-            android:exported="false"
-            android:excludeFromRecents="true"
-            android:launchMode="singleTask"
-            android:taskAffinity="${applicationId}.pomodoroAlarm"
-            android:showWhenLocked="true"
-            android:turnScreenOn="true"
-            android:theme="@style/Theme.Tokkl" />
-        <!-- Only completed report CSV files, with per-URI temporary read grants. -->
-        <provider
-            android:name=".reports.ReportExportProvider"
-            android:authorities="${applicationId}.report-exports"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths" />
-        </provider>
-        <!-- One mediaPlayback service for the Pomodoro alarm, never a WorkManager worker. -->
-        <service
-            android:name=".pomodoro.PomodoroRingingService"
-            android:exported="false"
-            android:stopWithTask="false"
-            android:foregroundServiceType="mediaPlayback" />
-        <!--
-            The timer sync service holds GET /api/app/timer/events while signed in to a Tokkl
-            server with the timer API. It keeps running when the app's task is removed.
-        -->
-        <service
-            android:name=".timerstate.TimerSyncService"
-            android:exported="false"
-            android:stopWithTask="false"
-            android:foregroundServiceType="specialUse">
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Keeps the user's self-hosted Tokkl server's timer event stream (Server-Sent Events) open, so a Pomodoro session or pause started on another device reaches the phone before its phase ends and every device rings together. The app ships on F-Droid without a push service, and the stream is the server's only way to reach the phone." />
-        </service>
-        <receiver
-            android:name=".pomodoro.PomodoroSessionActionReceiver"
-            android:exported="false" />
-        <receiver
-            android:name=".pomodoro.PomodoroRingingActionReceiver"
-            android:exported="false" />
         <!-- No worker runs in the foreground. -->
         <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"
             tools:node="remove" />
-        <receiver android:name=".reminder.ReminderActionReceiver" android:exported="false" />
-
-        <!-- The running timer notification's Stop action. Only its own PendingIntent reaches it. -->
-        <receiver
-            android:name=".notification.StopTimerReceiver"
-            android:exported="false" />
         <!--
-            The Pomodoro phase's exact alarm. Not exported: only its own PendingIntent reaches it.
-            It records that the phase reached its planned end and does not start the next phase.
+            TokklApplication starts WorkManager with Koin's worker factory, which gives the workers
+            their dependencies, so WorkManager's own startup initializer stays out.
         -->
-        <receiver
-            android:name=".pomodoro.PomodoroPhaseAlarmReceiver"
-            android:exported="false" />
-        <!--
-            Arms that alarm again from the stored session after boot, an update, or a clock or
-            timezone change, and when the exact-alarm permission is granted. After boot and an
-            update it also starts the timer sync service. Disabled until a session is running or
-            the account's server has the timer API, so a reboot with neither does not start the
-            app. The system sends these protected broadcasts, so the receiver is exported.
-        -->
-        <receiver
-            android:name=".pomodoro.PomodoroAlarmRearmReceiver"
-            android:enabled="false"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
-                <action android:name="android.intent.action.TIME_SET" />
-                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
-                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
-            </intent-filter>
-        </receiver>
-        <!--
-            The Quick Settings tile (docs/PRD.md N4). Only the system, which holds
-            BIND_QUICK_SETTINGS_TILE, can bind it. No ACTIVE_TILE meta-data: the system binds it
-            each time the panel shows it (see RunningTileService).
-        -->
-        <service
-            android:name=".tile.RunningTileService"
-            android:exported="true"
-            android:icon="@drawable/ic_play"
-            android:label="@string/tile_name"
-            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
-            <intent-filter>
-                <action android:name="android.service.quicksettings.action.QS_TILE" />
-            </intent-filter>
-        </service>
-        <!--
-            A long press on the tile. SystemUI, another app, sends QS_TILE_PREFERENCES, so the
-            activity is exported. It reads the queue and ignores the intent's extras. The
-            translucent theme lets it draw a dialog over the shade and leave no recents entry.
-        -->
-        <activity
-            android:name=".tile.TileControlsActivity"
-            android:excludeFromRecents="true"
-            android:exported="true"
-            android:noHistory="true"
-            android:taskAffinity=""
-            android:theme="@style/Theme.Tokkl.TileControls">
-            <intent-filter>
-                <action android:name="android.service.quicksettings.action.QS_TILE_PREFERENCES" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
-        <!--
-            The home screen widget (docs/PRD.md N3). Exported, since the launcher's widget service
-            sends it the widget's updates. Its taps go to Glance's receiver, which is not exported.
-        -->
-        <receiver
-            android:name=".widget.TokklWidgetReceiver"
-            android:exported="true"
-            android:label="@string/widget_name">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/tokkl_widget_info" />
-        </receiver>
-        <receiver
-            android:name=".widget.PomodoroWidgetReceiver"
-            android:exported="true"
-            android:label="@string/pomodoro_widget_name">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/pomodoro_widget_info" />
-        </receiver>
-        <!-- A launcher shortcut queues its favorite and shows a toast without opening an app screen. -->
-        <activity
-            android:name=".shortcuts.StartFavoriteActivity"
-            android:excludeFromRecents="true"
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
             android:exported="false"
-            android:noHistory="true"
-            android:taskAffinity=""
-            android:theme="@style/Theme.Tokkl.Shortcut" />
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
+
     </application>
 
 </manifest>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    How a timer template is named, on the Timer page and in its launcher shortcut.
+-->
+<resources>
+    <!-- A template with neither a description nor a project, as the web app names a favorite. -->
+    <string name="favorites_untitled">Untitled</string>
+    <!-- A template's description and its project: Write the report, Website -->
+    <string name="favorites_with_project">%1$s, %2$s</string>
+</resources>

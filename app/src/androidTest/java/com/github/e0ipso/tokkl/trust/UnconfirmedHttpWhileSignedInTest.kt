@@ -14,15 +14,18 @@ import androidx.compose.ui.test.performClick
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.DeviceShell
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.api
 import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.core.trust.R
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -68,7 +71,10 @@ class UnconfirmedHttpWhileSignedInTest {
         continueButton().assertIsEnabled().performClick()
 
         awaitGone(hasText(string(R.string.sign_in_http_warning_title)), "the warning closes")
-        assertTrue("the confirmation is stored", ServerTrustStore(context).isCleartextConfirmed(TokklTestServer.url))
+        assertTrue(
+            "the confirmation is stored",
+            ServerTrustStore(context, Dispatchers.IO).isCleartextConfirmed(TokklTestServer.url),
+        )
         assertTrue("requests reach the server", me() is ApiResult.Success)
     }
 
@@ -81,7 +87,7 @@ class UnconfirmedHttpWhileSignedInTest {
 
         awaitNode(hasText(string(R.string.trust_refused_http)), "the notice shows")
         assertEquals(ApiError.CleartextNotConfirmed(TokklTestServer.url), (me() as? ApiResult.Failure)?.error)
-        assertFalse(ServerTrustStore(context).isCleartextConfirmed(TokklTestServer.url))
+        assertFalse(ServerTrustStore(context, Dispatchers.IO).isCleartextConfirmed(TokklTestServer.url))
 
         composeRule.onNode(hasText(string(R.string.trust_refused_review)) and hasClickAction()).performClick()
 
@@ -94,15 +100,21 @@ class UnconfirmedHttpWhileSignedInTest {
     /** `GET /api/v9/me` with the stored session's client, as the app sends it. */
     private fun me(): ApiResult<JsonObject> {
         val client = Session(context).client() ?: throw AssertionError("no stored session")
-        return client.get(client.server.api("me"), JsonObject.serializer())
+        return runBlocking { client.get(client.server.api("me"), JsonObject.serializer()) }
     }
 
     private fun awaitGone(matcher: SemanticsMatcher, what: String) {
-        composeRule.waitUntil(what, NETWORK_TIMEOUT_MS) { composeRule.onAllNodes(matcher).fetchSemanticsNodes().isEmpty() }
+        composeRule.waitUntil(
+            what,
+            NETWORK_TIMEOUT_MS,
+        ) { composeRule.onAllNodes(matcher).fetchSemanticsNodes().isEmpty() }
     }
 
     private fun awaitNode(matcher: SemanticsMatcher, what: String) {
-        composeRule.waitUntil(what, NETWORK_TIMEOUT_MS) { composeRule.onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty() }
+        composeRule.waitUntil(
+            what,
+            NETWORK_TIMEOUT_MS,
+        ) { composeRule.onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty() }
     }
 
     private fun string(@StringRes id: Int): String = context.getString(id)

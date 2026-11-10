@@ -1,0 +1,241 @@
+package com.github.e0ipso.tokkl.tile
+
+import android.service.quicksettings.TileService
+import com.github.e0ipso.tokkl.cache.RunningEntryChanges
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
+import com.github.e0ipso.tokkl.model.RunningEntryIdentity
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
+import com.github.e0ipso.tokkl.timerstate.FixedTimerState
+import com.github.e0ipso.tokkl.timerstate.PauseActions
+import com.github.e0ipso.tokkl.timerstate.ServerTimerStates
+import com.github.e0ipso.tokkl.timerstate.SurfaceTap
+import com.github.e0ipso.tokkl.timerstate.TimerActionResult
+import com.github.e0ipso.tokkl.timerstate.TimerControls
+import com.github.e0ipso.tokkl.timerstate.TimerSurfaceAction
+import com.github.e0ipso.tokkl.timerstate.TimerSurfaceActions
+import com.github.e0ipso.tokkl.timerstate.TimerTarget
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import org.w3c.dom.Element
+import java.io.File
+import java.time.Instant
+import javax.xml.parsers.DocumentBuilderFactory
+
+/**
+ * The compact controls a long press on the Quick Settings tile opens, and the subtitle that
+ * points at them. The activity draws [tileControlsPanel] and sends each button's action and
+ * target through [TimerSurfaceActions.tap].
+ */
+class TileControlsTest {
+
+    private val start = Instant.parse("2026-10-19T12:00:00Z")
+    private val calls = mutableListOf<String>()
+
+    /** What the phone shows when a button is pressed. */
+    private var now: TimerControls = TimerControls.Idle
+
+    @Test
+    fun aRunningTimerOffersPauseAndStopForTheTargetItShows() = runTest {
+        now = ServerTimerStates.controls(entry(4))
+        val panel = tileControlsPanel(now)!!
+
+        assertEquals("Design review", panel.description)
+        assertFalse(panel.paused)
+        assertEquals(listOf(TimerSurfaceAction.Pause, TimerSurfaceAction.Stop), panel.buttons.map { it.action })
+        assertTrue(
+            panel.buttons.all {
+                it.target == TimerTarget.Running(EntryId(4), ServerTimerStates.ACCOUNT)
+            },
+        )
+
+        val pause = press(panel.buttons[0]) as SurfaceTap.Request
+        assertTrue("Pause waits for the server, and queues nothing", calls.isEmpty())
+        run { pause.send() }
+        assertEquals(SurfaceTap.Queued, press(panel.buttons[1]))
+        assertEquals(listOf("pause", "stop 4"), calls)
+    }
+
+    @Test
+    fun pauseIsLeftOutWithoutTheTimerApiAndDuringAPomodoroSession() {
+        val session = ServerTimerStates.held(
+            5,
+            start,
+            pomodoro = ServerTimerStates.session(entryId = EntryId(4), at = start),
+        )
+
+        for (controls in listOf(
+            ServerTimerStates.controls(entry(4), timerApi = false),
+            ServerTimerStates.controls(entry(4), session),
+        )) {
+            assertEquals(listOf(TimerSurfaceAction.Stop), tileControlsPanel(controls)!!.buttons.map { it.action })
+        }
+    }
+
+    @Test
+    fun aPausedTimerOffersResumeAndStopOnTheServerAtTheRevisionItShows() = runTest {
+        now = ServerTimerStates.controls(
+            null,
+            ServerTimerStates.held(3, start, ServerTimerStates.paused(600, EntryFields("Paused work"))),
+        )
+        val panel = tileControlsPanel(now)!!
+
+        assertEquals("Paused work", panel.description)
+        assertTrue(panel.paused)
+        assertEquals(listOf(TimerSurfaceAction.Resume, TimerSurfaceAction.Stop), panel.buttons.map { it.action })
+        assertTrue(
+            panel.buttons.all { it.target == TimerTarget.Paused(3, ServerTimerStates.ACCOUNT) },
+        )
+        run { panel.buttons.forEach { (press(it) as SurfaceTap.Request).send() } }
+        assertEquals(listOf("resume 3", "discard 3"), calls)
+    }
+
+    @Test
+    fun anIdleTimerOffersNoCompactControls() {
+        assertNull(tileControlsPanel(TimerControls.Idle))
+    }
+
+    @Test
+    fun aButtonKeepsTheTargetItWasDrawnWithAfterTheTimerMovesOn() {
+        now = ServerTimerStates.controls(entry(4))
+        val drawn = tileControlsPanel(now)!!
+        now = ServerTimerStates.controls(entry(9))
+
+        assertEquals(
+            TimerTarget.Running(EntryId(9), ServerTimerStates.ACCOUNT),
+            tileControlsPanel(now)!!.buttons.first().target,
+        )
+        assertNull("the drawn Pause acts on nothing once another entry runs", press(drawn.buttons.first()))
+        assertTrue(calls.isEmpty())
+    }
+
+    @Test
+    fun theLongPressRegistersADialogActivityForTilePreferences() {
+        val activity = preferencesActivity()
+
+        assertTrue(activity.androidAttribute("name").endsWith(".tile.TileControlsActivity"))
+        assertEquals("true", activity.androidAttribute("exported"))
+        assertEquals("true", activity.androidAttribute("excludeFromRecents"))
+        assertEquals("true", activity.androidAttribute("noHistory"))
+        assertEquals("", activity.androidAttribute("taskAffinity"))
+        assertEquals("@style/Theme.Tokkl.TileControls", activity.androidAttribute("theme"))
+        val categories = activity.childElements()
+            .filter { it.tagName == "intent-filter" }
+            .flatMap { it.childElements() }
+            .filter { it.tagName == "category" }
+            .map { it.androidAttribute("name") }
+        assertEquals(listOf("android.intent.category.DEFAULT"), categories)
+
+        val style = style("Theme.Tokkl.TileControls")
+        assertEquals("android:style/Theme.Translucent.NoTitleBar", style.getAttribute("parent"))
+        val items = style.childElements().associate { it.getAttribute("name") to it.textContent.trim() }
+        assertEquals("@android:color/transparent", items["android:windowBackground"])
+        assertEquals("true", items["android:backgroundDimEnabled"])
+    }
+
+    private fun press(control: TileControl): SurfaceTap? = runBlocking {
+        TimerSurfaceActions(
+            FixedTimerState(controls = { now }),
+            RecordingChanges(),
+            RecordingServer(),
+            sender = {},
+        ).tap(control.action, control.target)
+    }
+
+    private fun entry(id: Long) = TimeEntry(
+        id = EntryId(id),
+        workspaceId = WorkspaceId(10),
+        projectId = null,
+        taskId = null,
+        description = "Design review",
+        timing = EntryTiming.Running(start),
+        billable = false,
+        tags = emptyList(),
+        tagIds = emptyList(),
+    )
+
+    private fun preferencesActivity(): Element {
+        val application = parse(
+            File("src/main/AndroidManifest.xml"),
+        ).childElements().single { it.tagName == "application" }
+        val match = application.childElements()
+            .filter { it.tagName == "activity" }
+            .filter { activity ->
+                activity.childElements()
+                    .filter { it.tagName == "intent-filter" }
+                    .flatMap { it.childElements() }
+                    .any {
+                        it.tagName == "action" && it.androidAttribute(
+                            "name",
+                        ) == TileService.ACTION_QS_TILE_PREFERENCES
+                    }
+            }
+        assertEquals("activities for QS_TILE_PREFERENCES", 1, match.size)
+        return match.single()
+    }
+
+    private fun style(name: String): Element {
+        val styles = parse(File("src/main/res/values/tile_styles.xml")).childElements()
+            .filter { it.tagName == "style" && it.getAttribute("name") == name }
+        assertEquals("styles named $name", 1, styles.size)
+        return styles.single()
+    }
+
+    /** Gradle runs unit tests with the module's directory as the working directory. */
+    private fun parse(file: File): Element = DocumentBuilderFactory.newInstance()
+        .apply { isNamespaceAware = true }
+        .newDocumentBuilder()
+        .parse(file)
+        .documentElement
+
+    private fun Element.androidAttribute(name: String): String {
+        assertTrue("<$tagName> has no android:$name", hasAttributeNS(ANDROID_NS, name))
+        return getAttributeNS(ANDROID_NS, name)
+    }
+
+    private fun Element.childElements(): List<Element> =
+        (0 until childNodes.length).map { childNodes.item(it) }.filterIsInstance<Element>()
+
+    private inner class RecordingServer : PauseActions {
+        override suspend fun pause(): TimerActionResult = TimerActionResult.Done.also { calls += "pause" }
+        override suspend fun resume(revision: Long): TimerActionResult = TimerActionResult.Done.also {
+            calls +=
+                "resume $revision"
+        }
+        override suspend fun discard(revision: Long): TimerActionResult = TimerActionResult.Done.also {
+            calls +=
+                "discard $revision"
+        }
+    }
+
+    private inner class RecordingChanges : RunningEntryChanges {
+        override suspend fun start(workspaceId: WorkspaceId, fields: EntryFields): EntryId = throw AssertionError(
+            "nothing starts",
+        )
+
+        override suspend fun stop(entryId: EntryId, fields: EntryFields?): Boolean {
+            calls += "stop $entryId"
+            return true
+        }
+
+        override suspend fun runningEntry(identity: RunningEntryIdentity): TimeEntry? =
+            throw AssertionError("unexpected runningEntry")
+
+        override suspend fun updateRunning(
+            identity: RunningEntryIdentity,
+            fields: EntryFields,
+            start: Instant,
+        ): Boolean = throw AssertionError("unexpected updateRunning")
+
+        override suspend fun currentId(entryId: EntryId): EntryId = entryId
+    }
+}
+
+private const val ANDROID_NS = "http://schemas.android.com/apk/res/android"

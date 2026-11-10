@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Timer templates (docs/PRD.md T5). The server still stores them under the favorites key. -->
+<resources>
+    <!-- The timer panel's icon, and what TalkBack reads for it. -->
+    <string name="favorites_open">Timer templates</string>
+    <string name="favorites_empty">No timer templates yet.</string>
+    <!-- What TalkBack reads for a template in the popup: Start Write the report, Website -->
+    <string name="favorites_start_spoken">Start %1$s</string>
+    <string name="favorites_save">Save as template</string>
+    <string name="favorites_manage">Manage templates</string>
+    <string name="favorites_new">New template</string>
+    <!-- What TalkBack reads for Edit on a row: Edit Write the report -->
+    <string name="favorites_edit_spoken">Edit %1$s</string>
+    <string name="favorites_save_action">Save</string>
+    <string name="favorites_cancel">Cancel</string>
+    <string name="favorites_saved">Template saved</string>
+    <string name="favorites_description_hint">What this template starts</string>
+    <!-- What TalkBack reads for the buttons on a row: Move Write the report up -->
+    <string name="favorites_move_up">Move %1$s up</string>
+    <string name="favorites_move_down">Move %1$s down</string>
+    <string name="favorites_delete">Delete %1$s</string>
+    <plurals name="favorites_full">
+        <item quantity="one">You can save up to %d timer template</item>
+        <item quantity="other">You can save up to %d timer templates</item>
+    </plurals>
+    <string name="favorites_offline">Changing timer templates needs the server, which can\'t be reached now. Saved templates still start offline.</string>
+</resources>

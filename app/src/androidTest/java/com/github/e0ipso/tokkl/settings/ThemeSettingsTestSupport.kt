@@ -14,10 +14,16 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.awaitText
-import java.io.File
+import com.github.e0ipso.tokkl.feature.settings.R
+import com.github.e0ipso.tokkl.ui.theme.ThemeMode
+import com.github.e0ipso.tokkl.ui.theme.ThemeSettings
+import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.junit.rules.ExternalResource
+import org.koin.core.context.GlobalContext
+import java.io.File
 
 private val targetContext get() = InstrumentationRegistry.getInstrumentation().targetContext
 
@@ -33,12 +39,22 @@ class DefaultThemeSettings : ExternalResource() {
     override fun after() = reset()
 
     private fun reset() {
-        ThemeSettingsStore(targetContext).clear()
+        setTestTheme(ThemeSettings())
+        runBlocking { ThemeSettingsStore(targetContext, Dispatchers.IO).clear() }
         followTheSystemNightMode()
     }
 }
 
-/** Hands the app's night mode back to the system. */
+/** Changes the shared theme through the same repository as Settings, after its startup read. */
+fun setTestTheme(settings: ThemeSettings) {
+    val repository = GlobalContext.get().get<ThemeSettingsRepository>()
+    runBlocking { repository.ready() }
+    InstrumentationRegistry.getInstrumentation().runOnMainSync {
+        repository.onModeChange(settings.mode)
+        repository.onDynamicColorChange(settings.dynamicColor)
+    }
+}
+
 fun followTheSystemNightMode() {
     targetContext.getSystemService(UiModeManager::class.java).setApplicationNightMode(UiModeManager.MODE_NIGHT_AUTO)
 }
@@ -73,7 +89,10 @@ fun ComposeTestRule.shownTheme(activity: Activity): ShownTheme {
     var lightStatusBar = false
     InstrumentationRegistry.getInstrumentation().runOnMainSync {
         window = (activity.window.decorView.background as? ColorDrawable)?.color
-        lightStatusBar = WindowInsetsControllerCompat(activity.window, activity.window.decorView).isAppearanceLightStatusBars
+        lightStatusBar = WindowInsetsControllerCompat(
+            activity.window,
+            activity.window.decorView,
+        ).isAppearanceLightStatusBars
     }
     return ShownTheme(hex(content), window?.let(::hex), lightStatusBar)
 }
@@ -103,7 +122,8 @@ fun ComposeTestRule.awaitNightModeFor(mode: ThemeMode, activity: Activity, syste
  * choice for the next process to read.
  */
 fun awaitModeOnDisk(mode: ThemeMode, timeoutMillis: Long = 5_000) {
-    val file = File(targetContext.dataDir, "shared_prefs/${ThemeSettingsStore.FILE_NAME}.xml")
+    // ThemeSettingsStore's file, named here because a choice an earlier version stored must still load.
+    val file = File(targetContext.dataDir, "shared_prefs/theme_settings.xml")
     val deadline = System.nanoTime() + timeoutMillis * 1_000_000
     while (!(file.exists() && file.readText().contains(">${mode.name}<"))) {
         check(System.nanoTime() < deadline) { "$file does not hold $mode" }

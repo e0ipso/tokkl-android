@@ -4,7 +4,9 @@ import android.content.Intent
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
 import androidx.test.runner.lifecycle.Stage
+import com.github.e0ipso.tokkl.platform.AppForeground
 import org.junit.Assert.assertSame
+import org.koin.core.context.GlobalContext
 
 /**
  * Sends MainActivity to the background with the home key and brings the same activity back, as a
@@ -15,11 +17,15 @@ object BackgroundTrip {
 
     private val instrumentation get() = InstrumentationRegistry.getInstrumentation()
 
-    /** Presses the home key and waits until the activity has stopped. Returns that activity. */
+    /** Presses Home and waits for both the activity and the app's foreground state to stop. */
     fun leave(): MainActivity {
         val activity = checkNotNull(resumedActivity()) { "no MainActivity in the foreground" }
         DeviceShell.run("input keyevent KEYCODE_HOME")
         await("the app is in the background") { activity.takeIf { inStage(it, Stage.STOPPED) } }
+        // ProcessLifecycleOwner delays its stop to suppress configuration changes. Returning
+        // before that transition would make this a foreground interruption rather than a trip.
+        val foreground = GlobalContext.get().get<AppForeground>().foreground
+        await("the process has entered the background") { Unit.takeIf { !foreground.value } }
         return activity
     }
 
@@ -28,7 +34,9 @@ object BackgroundTrip {
         // ActivityScenario matches lifecycle events against the original launch intent. Keep
         // its action and categories too, or it ignores RESUMED and close() fails during teardown.
         // Replace launch-only flags such as CLEAR_TASK so this returns the existing activity.
-        val intent = Intent(activity.intent).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+        val intent = Intent(
+            activity.intent,
+        ).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
         // UiAutomation passes arguments directly; the URI already escapes its own values.
         val uri = intent.toUri(Intent.URI_INTENT_SCHEME)
         val result = DeviceShell.run("am start -W $uri")
@@ -40,14 +48,21 @@ object BackgroundTrip {
     private fun resumedActivity(): MainActivity? {
         var resumed: MainActivity? = null
         instrumentation.runOnMainSync {
-            resumed = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED).filterIsInstance<MainActivity>().singleOrNull()
+            resumed = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(
+                Stage.RESUMED,
+            ).filterIsInstance<MainActivity>().singleOrNull()
         }
         return resumed
     }
 
     private fun inStage(activity: MainActivity, stage: Stage): Boolean {
         var found = false
-        instrumentation.runOnMainSync { found = activity in ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(stage) }
+        instrumentation.runOnMainSync {
+            found =
+                activity in ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(
+                    stage,
+                )
+        }
         return found
     }
 

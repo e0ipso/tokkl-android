@@ -2,8 +2,11 @@ package com.github.e0ipso.tokkl.api
 
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.appApiClient
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.junit.After
@@ -22,27 +25,27 @@ import org.junit.Test
 class PinnedCertificateTest {
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
-    private val servers = ServerConfigStore(context)
-    private val trust = ServerTrustStore(context)
+    private val servers = ServerConfigStore(context, Dispatchers.IO)
+    private val trust = ServerTrustStore(context, Dispatchers.IO)
     private val server = TokklTestServer.tlsUrl
     private val me = server.api("me")
-    private val client = TogglApiClient(server, ApiCredentials.ApiToken(TokklTestServer.apiToken))
+    private val client = appApiClient(server, ApiCredentials.ApiToken(TokklTestServer.apiToken))
 
     @Before
     fun configureTheServer() {
-        servers.save(server)
+        runBlocking { servers.save(server) }
         trust.clear()
     }
 
     @After
     fun forgetTheServer() {
         trust.clear()
-        servers.clear()
+        runBlocking { servers.clear() }
     }
 
     @Test
     fun unpinnedCertificateFailsTheHandshakeWithItsFingerprint() {
-        val refusal = refusal(client.get(me, JsonObject.serializer()))
+        val refusal = refusal(runBlocking { client.get(me, JsonObject.serializer()) })
 
         assertEquals(TokklTestServer.tlsFingerprint, refusal.certificate.displaySha256)
         assertEquals(me.host to me.port, refusal.certificate.host to refusal.certificate.port)
@@ -53,9 +56,11 @@ class PinnedCertificateTest {
     fun pinnedCertificateReachesTokkl() {
         trust.pinCertificate(pin(TokklTestServer.tlsFingerprint.replace(":", "").lowercase()))
 
-        val result = client.get(me, JsonObject.serializer())
+        val result = runBlocking { client.get(me, JsonObject.serializer()) }
 
-        val body = (result as? ApiResult.Success)?.value ?: throw AssertionError("GET /api/v9/me failed: ${(result as ApiResult.Failure).error.javaClass.simpleName}")
+        val body = (result as? ApiResult.Success)?.value ?: throw AssertionError(
+            "GET /api/v9/me failed: ${(result as ApiResult.Failure).error.javaClass.simpleName}",
+        )
         assertEquals(TokklTestServer.email, body.getValue("email").jsonPrimitive.content)
     }
 
@@ -63,7 +68,7 @@ class PinnedCertificateTest {
     fun anotherPinnedCertificateFailsAsAChangedCertificate() {
         trust.pinCertificate(pin("00".repeat(32)))
 
-        val refusal = refusal(client.get(me, JsonObject.serializer()))
+        val refusal = refusal(runBlocking { client.get(me, JsonObject.serializer()) })
 
         assertTrue(refusal.changed)
         assertEquals(TokklTestServer.tlsFingerprint, refusal.certificate.displaySha256)
@@ -74,6 +79,8 @@ class PinnedCertificateTest {
     /** The pinning trust manager's refusal, which the client reports as its own error. */
     private fun refusal(result: ApiResult<*>): ApiError.UntrustedCertificate {
         val error = (result as? ApiResult.Failure)?.error
-        return error as? ApiError.UntrustedCertificate ?: throw AssertionError("expected a refused certificate, got ${error ?: "a success"}")
+        return error as? ApiError.UntrustedCertificate ?: throw AssertionError(
+            "expected a refused certificate, got ${error ?: "a success"}",
+        )
     }
 }

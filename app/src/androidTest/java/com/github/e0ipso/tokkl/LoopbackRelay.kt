@@ -22,13 +22,11 @@ import kotlin.concurrent.thread
  *
  * While [holdNewConnections] is set, the relay accepts each new connection and answers nothing, as
  * a network that has gone quiet does. [dropHeld] closes those, and [cutRelayed] closes the ones
- * it is passing on. [relayTo] sends new connections to another server at the same local port.
+ * it is passing on. [dropNewConnections] keeps all new connections failing too. [relayTo] sends
+ * new connections to another server at the same local port.
  */
-class LoopbackRelay(
-    host: String,
-    port: Int,
-    private val watchConnections: () -> ConnectionWatcher? = { null },
-) : Closeable {
+class LoopbackRelay(host: String, port: Int, private val watchConnections: () -> ConnectionWatcher? = { null }) :
+    Closeable {
 
     /** Sees one connection's bytes as the relay passes them on. */
     fun interface ConnectionWatcher {
@@ -62,6 +60,10 @@ class LoopbackRelay(
     @Volatile
     var holdNewConnections = false
 
+    /** Whether every accepted connection is closed immediately, including while holding. */
+    @Volatile
+    var dropNewConnections = false
+
     /** How many connections the relay holds now. */
     val heldConnections: Int get() = held.size
 
@@ -70,10 +72,12 @@ class LoopbackRelay(
             while (true) {
                 val app = try {
                     listener.accept()
-                } catch (e: IOException) {
+                } catch (_: IOException) {
                     return@thread
                 }
-                if (holdNewConnections) {
+                if (dropNewConnections) {
+                    app.close()
+                } else if (holdNewConnections) {
                     held += app
                 } else {
                     relay(app)
@@ -92,12 +96,18 @@ class LoopbackRelay(
 
     /** Cuts the connections the relay is passing on, on both sides. */
     fun cutRelayed() {
-        relayed.removeIf { it.close(); true }
+        relayed.removeIf {
+            it.close()
+            true
+        }
     }
 
     /** Closes the connections the relay holds, which the app sees as a network failure. */
     fun dropHeld() {
-        held.removeIf { it.close(); true }
+        held.removeIf {
+            it.close()
+            true
+        }
     }
 
     private fun relay(app: Socket) {
@@ -134,7 +144,12 @@ class LoopbackRelay(
     }
 
     /** Copies [input] to [output] until either side closes, showing each chunk to [beforeWrite] first. */
-    private fun pipe(input: InputStream, output: OutputStream, beforeWrite: ((ByteArray, Int) -> Unit)?, vararg ends: Socket) {
+    private fun pipe(
+        input: InputStream,
+        output: OutputStream,
+        beforeWrite: ((ByteArray, Int) -> Unit)?,
+        vararg ends: Socket,
+    ) {
         val buffer = ByteArray(BUFFER_SIZE)
         try {
             while (true) {
@@ -144,7 +159,7 @@ class LoopbackRelay(
                 output.write(buffer, 0, read)
                 output.flush()
             }
-        } catch (e: IOException) {
+        } catch (_: IOException) {
             // A side closed its connection.
         } finally {
             ends.forEach { it.close() }

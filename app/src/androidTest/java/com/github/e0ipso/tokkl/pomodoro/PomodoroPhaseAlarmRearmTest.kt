@@ -7,18 +7,20 @@ import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
-import com.github.e0ipso.tokkl.timerstate.PhaseTransition
-import java.time.Duration
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
+import com.github.e0ipso.tokkl.components.heldTimerState
+import com.github.e0ipso.tokkl.components.pomodoroAlarmRearm
+import com.github.e0ipso.tokkl.components.pomodoroAlarms
+import com.github.e0ipso.tokkl.model.PhaseTransition
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import java.time.Duration
 
 /**
- * A boot broadcast arms the held phase's exact alarm again from the stored timer state, with no
- * connection to the server. The phase stays where it was.
+ * After boot, the held phase's exact alarm is armed again from the stored timer state, with no
+ * connection to the server. The phase stays where it was. Only the system sends BOOT_COMPLETED, so
+ * the test hands it to [PomodoroAlarmRearm] as the receiver does.
  */
 class PomodoroPhaseAlarmRearmTest {
 
@@ -30,26 +32,26 @@ class PomodoroPhaseAlarmRearmTest {
     @Test
     fun bootBroadcastArmsTheHeldPhaseAgainWithoutTheServer() {
         HeldPhases.learnTheTimerApi()
-        val latch = CountDownLatch(1)
-        PomodoroAlarmRearmReceiver.completed = latch
         try {
             // Twenty minutes of the work phase are left.
-            val held = HeldPhases.hold(PhaseTransition.WORK_TO_SHORT_REST, overtime = Duration.ofMinutes(-20), length = Duration.ofMinutes(25))
+            val held = HeldPhases.hold(
+                PhaseTransition.WORK_TO_SHORT_REST,
+                overtime = Duration.ofMinutes(-20),
+                length = Duration.ofMinutes(25),
+            )
             val end = checkNotNull(held.ring()).end
             // The held state arms the alarm; take it away as a reboot does.
             awaitNextAlarm(end.toEpochMilli())
-            alarms.cancel(checkNotNull((app.pomodoroAlarms as AlarmClockPomodoroScheduler).operation(create = true)))
+            app.pomodoroAlarms.cancel()
             awaitNextAlarm(null)
             AirplaneMode.set(true, TokklTestServer.url)
 
-            PomodoroAlarmRearmReceiver().onReceive(context, Intent(Intent.ACTION_BOOT_COMPLETED))
+            runBlocking { app.pomodoroAlarmRearm.rearm(Intent.ACTION_BOOT_COMPLETED) }
 
-            assertTrue("the boot re-arm did not finish", latch.await(5, TimeUnit.SECONDS))
             val next = checkNotNull(alarms.nextAlarmClock) { "boot did not schedule the phase alarm" }
             assertEquals(end.toEpochMilli(), next.triggerTime)
-            assertEquals(held, app.timerState.state.value)
+            assertEquals(held, app.heldTimerState)
         } finally {
-            PomodoroAlarmRearmReceiver.completed = null
             try {
                 AirplaneMode.set(false, TokklTestServer.url)
             } finally {
@@ -63,7 +65,11 @@ class PomodoroPhaseAlarmRearmTest {
 
     private fun awaitNextAlarm(triggerTime: Long?) {
         val deadline = System.currentTimeMillis() + 5_000
-        while (alarms.nextAlarmClock?.triggerTime != triggerTime && System.currentTimeMillis() < deadline) Thread.sleep(50)
+        while (alarms.nextAlarmClock?.triggerTime != triggerTime && System.currentTimeMillis() < deadline) {
+            Thread.sleep(
+                50,
+            )
+        }
         assertEquals(triggerTime, alarms.nextAlarmClock?.triggerTime)
     }
 }

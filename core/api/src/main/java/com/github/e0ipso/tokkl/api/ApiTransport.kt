@@ -1,0 +1,406 @@
+package com.github.e0ipso.tokkl.api
+
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonPrimitive
+import okhttp3.Call
+import okhttp3.Headers
+import okhttp3.HttpUrl
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
+import java.io.IOException
+import java.io.InputStream
+import java.io.InterruptedIOException
+import java.io.OutputStream
+import java.util.concurrent.TimeUnit
+import kotlin.coroutines.CoroutineContext
+
+/**
+ * The transport under [TokklApi], for the Toggl Track API v9 and Reports API v3, as served by
+ * Tokkl or by Toggl Track. The app's other code calls [TokklApi] and never this class. Each call
+ * suspends while OkHttp runs it on [io], so call it from any thread. Cancelling the caller cancels
+ * the OkHttp call, which then ends at once instead of waiting for the server: the call fails with
+ * the coroutine's cancellation, not with an [ApiResult]. A call cancelled after its request left
+ * the phone may still reach the server.
+ */
+internal class ApiTransport(
+    val server: ServerUrl,
+    private val credentials: ApiCredentials,
+    private val httpClient: OkHttpClient,
+    private val trustListener: TrustListener? = null,
+    private val successListener: SuccessListener? = null,
+    private val io: CoroutineContext,
+) {
+
+    /** [httpClient] for calls with `resend` false. */
+    private val sendingOnce: OkHttpClient by lazy { SharedHttpClient.sendingOnce(httpClient) }
+
+    suspend fun <T> get(url: HttpUrl, deserializer: DeserializationStrategy<T>): ApiResult<T> =
+        send(HttpMethod.GET, url, body = null, deserializer)
+
+    /**
+     * Sends [body] as JSON, or no body when it is null, and decodes the 2xx response body. An empty
+     * body does not decode, so use [sendNoContent] for calls that answer without one. OkHttp refuses
+     * a null body for POST, PUT and PATCH.
+     *
+     * When a connection fails after the request went out, such as a pooled one that drops before
+     * the answer arrives, OkHttp sends the request again on a new one. So a POST whose answer was
+     * lost can create its object twice, and a DELETE gets the 404 for the object it deleted. With
+     * [resend] false the request goes out once, through [SharedHttpClient.sendingOnce], and the
+     * caller gets the failure.
+     */
+    suspend fun <T> send(
+        method: HttpMethod,
+        url: HttpUrl,
+        body: JsonElement?,
+        deserializer: DeserializationStrategy<T>,
+        resend: Boolean = true,
+    ): ApiResult<T> = execute(method, url, body, resend) { decode(it.body.string(), deserializer) }
+
+    /**
+     * Like [send] with `resend` false, for Tokkl calls that answer a refusal with 409 and a body of
+     * the same type as their 2xx answer, as the timer actions answer with the timer state either
+     * way. A 409 whose body is a JSON string is [ApiError.UnexpectedStatus] with that reason, and
+     * one whose body is neither is [ApiError.InvalidResponse].
+     */
+    suspend fun <T> sendRefusable(
+        method: HttpMethod,
+        url: HttpUrl,
+        body: JsonElement,
+        deserializer: DeserializationStrategy<T>,
+    ): ApiResult<Refusable<T>> = execute(
+        method,
+        url,
+        body,
+        resend = false,
+        onConflict = { response -> refusal(response.body.string(), deserializer) },
+    ) { response ->
+        decode(response.body.string(), deserializer).map { Refusable(it, refused = false) }
+    }
+
+    /**
+     * Like [send], and keeps the response's headers too, for calls that put values in them, such as
+     * the Reports API's `X-Next-Row-Number`, the row the next page of a detailed report starts at.
+     */
+    suspend fun <T> sendWithHeaders(
+        method: HttpMethod,
+        url: HttpUrl,
+        body: JsonElement?,
+        deserializer: DeserializationStrategy<T>,
+    ): ApiResult<WithHeaders<T>> = execute(method, url, body, resend = true) { response ->
+        decode(response.body.string(), deserializer).map { WithHeaders(it, response.headers) }
+    }
+
+    /**
+     * Like [send], for calls whose response body the caller does not need, such as Tokkl's DELETE
+     * of a time entry, task, client or tag, which answer 200 with an empty body. Tokkl's project
+     * DELETE answers with the project id as JSON, which this method ignores too. Any 2xx is a
+     * success.
+     */
+    suspend fun sendNoContent(
+        method: HttpMethod,
+        url: HttpUrl,
+        body: JsonElement? = null,
+        resend: Boolean = true,
+    ): ApiResult<Unit> = execute(method, url, body, resend) { ApiResult.Success(Unit) }
+
+    /**
+     * Streams CSV bytes unchanged through the shared transport. The caller owns the private
+     * staging stream and publishes it only after success. Content length and the byte limit are
+     * checked while reading, including for chunked responses. No error body reaches the stream.
+     */
+    suspend fun downloadCsv(
+        url: HttpUrl,
+        body: JsonElement,
+        output: OutputStream,
+        maxBytes: Long,
+        cancellation: ApiCallCancellation,
+    ): ApiResult<Long> {
+        require(maxBytes > 0)
+        return execute(HttpMethod.POST, url, body, resend = true, cancellation = cancellation) { response ->
+            val content = response.body
+            val type = content.contentType()
+            val length = content.contentLength()
+            val csv = type != null && type.type == "text" && type.subtype == "csv"
+            if (response.code != HttpStatus.OK || !csv || length > maxBytes) {
+                return@execute ApiResult.Failure(
+                    ApiError.InvalidResponse(IllegalArgumentException("Expected a bounded CSV response")),
+                )
+            }
+            var total = 0L
+            content.byteStream().use { input ->
+                val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+                while (true) {
+                    cancellation.check()
+                    val read = input.read(buffer)
+                    if (read == -1) break
+                    total += read
+                    if (total > maxBytes) {
+                        return@execute ApiResult.Failure(
+                            ApiError.InvalidResponse(IllegalArgumentException("CSV exceeds the export limit")),
+                        )
+                    }
+                    output.write(buffer, 0, read)
+                }
+            }
+            cancellation.check()
+            if (length >= 0 && length != total) {
+                ApiResult.Failure(ApiError.InvalidResponse(IllegalArgumentException("Incomplete CSV response")))
+            } else {
+                ApiResult.Success(total)
+            }
+        }
+    }
+
+    /**
+     * Opens a Server-Sent Events stream with `GET [url]`. A stream waits for events by design, so
+     * its reads have no timeout: the caller watches for silence itself and cancels the call through
+     * [cancellation]. A 2xx answer that is not `text/event-stream` is [ApiError.InvalidResponse]. An
+     * [IOException] while reading, as when the connection drops or the call is cancelled, is
+     * [ApiError.Network].
+     */
+    suspend fun <T> stream(url: HttpUrl, cancellation: ApiCallCancellation, read: (InputStream) -> T): ApiResult<T> =
+        execute(
+            HttpMethod.GET,
+            url,
+            body = null,
+            resend = true,
+            cancellation = cancellation,
+            streaming = true,
+        ) { response ->
+            val type = response.body.contentType()
+            if (type == null || type.type != "text" || type.subtype != "event-stream") {
+                ApiResult.Failure(ApiError.InvalidResponse(IllegalArgumentException("Expected an event stream")))
+            } else {
+                ApiResult.Success(response.body.byteStream().use(read))
+            }
+        }
+
+    @Suppress("LongParameterList")
+    private suspend fun <T> execute(
+        method: HttpMethod,
+        url: HttpUrl,
+        body: JsonElement?,
+        resend: Boolean,
+        cancellation: ApiCallCancellation? = null,
+        streaming: Boolean = false,
+        onConflict: ((Response) -> ApiResult<T>)? = null,
+        onSuccess: (Response) -> ApiResult<T>,
+    ): ApiResult<T> = withContext(io) {
+        val json = body?.let { Wire.encodeToString(JsonElement.serializer(), it).toRequestBody(JSON) }
+        val request = Request.Builder()
+            .url(url)
+            .header("Authorization", credentials.authorizationHeader)
+            .method(method.name, json)
+            .apply { if (streaming) tag(StreamingRead::class.java, StreamingRead) }
+            .build()
+        val call = (if (resend) httpClient else sendingOnce).newCall(request)
+        // Exports have a finite whole-call deadline as well as the shared connect/read timeouts.
+        // A stream lasts as long as it is open, so it has none.
+        if (cancellation != null && !streaming) call.timeout().timeout(CALL_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        cancellation?.attach(call)
+        try {
+            cancellation?.check()
+            call.executeCancellable { response ->
+                // The server answered, so it passed the trust checks.
+                trustListener?.answered()
+                when {
+                    response.isSuccessful -> {
+                        successListener?.succeeded()
+                        onSuccess(response)
+                    }
+
+                    response.code == CONFLICT && onConflict != null -> onConflict(response)
+
+                    else -> ApiResult.Failure(httpError(response))
+                }
+            }
+        } catch (e: HostNotAllowedException) {
+            ApiResult.Failure(ApiError.HostNotAllowed(e.origin))
+        } catch (e: CleartextNotConfirmedException) {
+            refused(ApiError.CleartextNotConfirmed(e.server))
+        } catch (e: IOException) {
+            val untrusted = e.untrustedCertificate()
+            when {
+                untrusted != null -> refused(
+                    ApiError.UntrustedCertificate(untrusted.certificate, changed = untrusted.pinChanged),
+                )
+
+                e.certificateHostMismatch() -> refused(ApiError.CertificateHostMismatch(url.host))
+
+                else -> ApiResult.Failure(ApiError.Network(e))
+            }
+        } finally {
+            cancellation?.detach(call)
+        }
+    }
+
+    private fun refused(refusal: ApiError.TrustRefused): ApiResult.Failure {
+        trustListener?.refused(refusal)
+        return ApiResult.Failure(refusal)
+    }
+
+    private fun httpError(response: Response): ApiError.Http = when (response.code) {
+        HttpStatus.FORBIDDEN -> ApiError.AuthFailed
+        HttpStatus.TOO_MANY_REQUESTS -> ApiError.RateLimited(retryAfterSeconds(response.header("Retry-After")))
+        else -> ApiError.UnexpectedStatus(response.code, reason(response))
+    }
+
+    /**
+     * The error body when it is one JSON string, as Tokkl's errors are, read up to
+     * [MAX_REASON_BYTES]. Null for any other body, such as a proxy's HTML page, which is cut
+     * there and so never parses.
+     */
+    private fun reason(response: Response): String? {
+        val text = try {
+            response.peekBody(MAX_REASON_BYTES).string()
+        } catch (_: IOException) {
+            return null
+        }
+        return reasonIn(text)
+    }
+
+    private fun reasonIn(text: String): String? {
+        val element = try {
+            Wire.parseToJsonElement(text)
+        } catch (_: IllegalArgumentException) {
+            // kotlinx.serialization's SerializationException is an IllegalArgumentException.
+            return null
+        }
+        return (element as? JsonPrimitive)?.takeIf { it.isString }?.content?.trim()?.takeIf { it.isNotEmpty() }
+    }
+
+    /** A 409 [text] for [sendRefusable]: the refusal's body, the server's reason, or an invalid response. */
+    private fun <T> refusal(text: String, deserializer: DeserializationStrategy<T>): ApiResult<Refusable<T>> =
+        decode(text, deserializer).fold(
+            onSuccess = { ApiResult.Success(Refusable(it, refused = true)) },
+            onFailure = { error ->
+                ApiResult.Failure(reasonIn(text)?.let { ApiError.UnexpectedStatus(CONFLICT, it) } ?: error)
+            },
+        )
+
+    private fun <T> decode(text: String, deserializer: DeserializationStrategy<T>): ApiResult<T> = try {
+        ApiResult.Success(Wire.decodeFromString(deserializer, text))
+    } catch (e: IllegalArgumentException) {
+        // kotlinx.serialization's SerializationException is an IllegalArgumentException.
+        ApiResult.Failure(ApiError.InvalidResponse(e))
+    }
+
+    private companion object {
+        val JSON = "application/json; charset=utf-8".toMediaType()
+
+        /** Tokkl's reasons are one short sentence. */
+        const val MAX_REASON_BYTES = 2048L
+
+        const val CONFLICT = 409
+
+        const val CALL_TIMEOUT_SECONDS = 60L
+
+        /** Tokkl sends whole seconds. An HTTP date or a negative number counts as missing. */
+        fun retryAfterSeconds(value: String?): Long? = value?.trim()?.toLongOrNull()?.takeIf { it >= 0 }
+    }
+}
+
+class WithHeaders<out T> internal constructor(val value: T, private val headers: Headers) {
+
+    fun header(name: String): String? = headers[name]
+}
+
+/** A decoded answer to [ApiTransport.sendRefusable]. [refused] is true for a 409. */
+data class Refusable<out T>(val value: T, val refused: Boolean)
+
+/**
+ * Hears how the signed-in session's requests fare with the trust checks, so the app can show the
+ * matching prompt from any screen. Called on the thread that made the request.
+ */
+interface TrustListener {
+
+    /** A request was refused for [refusal] before anything was sent. */
+    fun refused(refusal: ApiError.TrustRefused)
+
+    /** The server answered a request, so it passes the trust checks again. */
+    fun answered()
+}
+
+/**
+ * Hears each 2xx answer to the signed-in session's requests, so the app can say when the server
+ * last answered (docs/PRD.md O5). Called on the request's thread, before the body is read.
+ */
+fun interface SuccessListener {
+    fun succeeded()
+}
+
+enum class HttpMethod {
+    GET,
+    POST,
+    PUT,
+    PATCH,
+    DELETE,
+}
+
+object HttpStatus {
+    const val OK = 200
+    const val FORBIDDEN = 403
+    const val NOT_FOUND = 404
+    const val GONE = 410
+    const val TOO_MANY_REQUESTS = 429
+    const val BAD_GATEWAY = 502
+    const val SERVICE_UNAVAILABLE = 503
+    const val GATEWAY_TIMEOUT = 504
+
+    val CLIENT_ERRORS = 400..499
+
+    const val FIRST_SERVER_ERROR = 500
+}
+
+/** Cancels just this operation's calls, including a call registered after cancellation. */
+class ApiCallCancellation {
+    private var cancelled = false
+    private val calls = mutableSetOf<Call>()
+
+    // A JVM lock, not a Mutex: OkHttp's threads and the cancelling coroutine call these without
+    // suspending.
+    @Synchronized
+    internal fun attach(call: Call) {
+        if (cancelled) call.cancel() else calls.add(call)
+    }
+
+    @Synchronized
+    internal fun detach(call: Call) {
+        calls.remove(call)
+    }
+
+    @Synchronized
+    fun cancel() {
+        cancelled = true
+        calls.forEach { it.cancel() }
+        calls.clear()
+    }
+
+    @Synchronized
+    fun check() {
+        if (cancelled) throw InterruptedIOException("Export cancelled")
+    }
+}
+
+/**
+ * Runs this call on the calling thread, as [Call.execute] does, and hands the response to [read]
+ * before it closes. Cancelling the coroutine cancels the call, which then fails at once on that
+ * thread, and this function throws the cancellation. The thread blocks until the call ends, so run
+ * it on the IO dispatcher.
+ *
+ * The call runs on the calling thread rather than OkHttp's dispatcher, so the dispatcher's limit
+ * of five calls to one host never holds a request back behind an open event stream, and OkHttp's
+ * retry and failure rules stay those of [Call.execute].
+ */
+internal suspend fun <T> Call.executeCancellable(read: (Response) -> T): T =
+    suspendCancellableCoroutine { continuation ->
+        continuation.invokeOnCancellation { cancel() }
+        // After a cancellation the continuation ignores this result and throws the cancellation.
+        continuation.resumeWith(runCatching { execute().use(read) })
+    }

@@ -10,7 +10,7 @@
 _None._
 
 ## Conventions (how we build)
-- Open [**Honor account clock formatting in time ports**](practice-honor-account-clock-formatting-in-time-ports.md) to learn about: FormatTime matches the account 12-hour or 24-hour preference and server value semantics. #time #formatting #tokkl
+- Open [**Honor account clock formatting in time ports**](practice-honor-account-clock-formatting-in-time-ports.md) to learn about: formatTime matches the account 12-hour or 24-hour preference and server value semantics. #time #formatting #tokkl
 - Open [**Keep upstream golden cases with source-pinned ports**](practice-keep-upstream-golden-cases-with-source-pinned-ports.md) to learn about: Replay upstream fixtures and preserve source-specific stop, calendar and history semantics. #time #testing #tokkl
 - Open [**Match JavaScript decimal and percentage formatting**](practice-match-javascript-decimal-and-percentage-formatting.md) to learn about: Binary toFixed and shortest-decimal Intl formatting require separate helpers. #time #formatting #tokkl
 - Open [**Preserve JavaScript parsing and numeric boundaries**](practice-preserve-javascript-parsing-and-numeric-boundaries.md) to learn about: Match JavaScript whitespace and rounding while representing invalid numeric results safely. #time #parsing #tokkl
@@ -22,15 +22,15 @@ _None yet._
 ## By topic
 
 ### #time
-- Open [**Honor account clock formatting in time ports**](practice-honor-account-clock-formatting-in-time-ports.md) — FormatTime matches the account 12-hour or 24-hour preference and server value semantics.
+- Open [**Honor account clock formatting in time ports**](practice-honor-account-clock-formatting-in-time-ports.md) — formatTime matches the account 12-hour or 24-hour preference and server value semantics.
 - Open [**Match JavaScript decimal and percentage formatting**](practice-match-javascript-decimal-and-percentage-formatting.md) — Binary toFixed and shortest-decimal Intl formatting require separate helpers.
 - Open [**Preserve JavaScript parsing and numeric boundaries**](practice-preserve-javascript-parsing-and-numeric-boundaries.md) — Match JavaScript whitespace and rounding while representing invalid numeric results safely.
 ### #tokkl
-- Open [**Honor account clock formatting in time ports**](practice-honor-account-clock-formatting-in-time-ports.md) — FormatTime matches the account 12-hour or 24-hour preference and server value semantics.
+- Open [**Honor account clock formatting in time ports**](practice-honor-account-clock-formatting-in-time-ports.md) — formatTime matches the account 12-hour or 24-hour preference and server value semantics.
 - Open [**Match JavaScript decimal and percentage formatting**](practice-match-javascript-decimal-and-percentage-formatting.md) — Binary toFixed and shortest-decimal Intl formatting require separate helpers.
 - Open [**Preserve JavaScript parsing and numeric boundaries**](practice-preserve-javascript-parsing-and-numeric-boundaries.md) — Match JavaScript whitespace and rounding while representing invalid numeric results safely.
 ### #formatting
-- Open [**Honor account clock formatting in time ports**](practice-honor-account-clock-formatting-in-time-ports.md) — FormatTime matches the account 12-hour or 24-hour preference and server value semantics.
+- Open [**Honor account clock formatting in time ports**](practice-honor-account-clock-formatting-in-time-ports.md) — formatTime matches the account 12-hour or 24-hour preference and server value semantics.
 - Open [**Match JavaScript decimal and percentage formatting**](practice-match-javascript-decimal-and-percentage-formatting.md) — Binary toFixed and shortest-decimal Intl formatting require separate helpers.
 ### #parsing
 - Open [**Preserve JavaScript parsing and numeric boundaries**](practice-preserve-javascript-parsing-and-numeric-boundaries.md) — Match JavaScript whitespace and rounding while representing invalid numeric results safely.

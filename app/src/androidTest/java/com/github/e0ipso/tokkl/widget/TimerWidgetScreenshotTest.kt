@@ -12,23 +12,25 @@ import androidx.glance.appwidget.provideContent
 import androidx.glance.material3.ColorProviders
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.TimerTarget
+import com.github.e0ipso.tokkl.feature.widget.R
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.time.DurationFormat
+import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import com.github.e0ipso.tokkl.ui.screenshot.ReferenceImages
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklDarkColorScheme
 import com.github.e0ipso.tokkl.ui.theme.TokklLightColorScheme
-import java.time.Instant
-import java.time.LocalDate
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert.*
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.Instant
+import java.time.LocalDate
 
 /** Fixed cached inputs, real Glance RemoteViews, and the same platform host as the action tests. */
 @SignedOut
@@ -52,16 +54,41 @@ abstract class TimerWidgetScreenshotTest(private val dark: Boolean, private val 
                     val views = runBlocking { Fixture(state).compose(themed, size = DpSize(width.dp, height.dp)) }
                     // Glance chooses its night colours at application time, in the host's context.
                     host.showInConfiguration(views, configuration)
-                    host.await("the $name fixture is laid out") { host.hasDescription(if (state == WidgetState.NoAccount) context.getString(R.string.widget_sign_in) else context.getString(R.string.widget_start_description).let {
-                        when (name) { "running" -> context.getString(R.string.widget_stop_description); "paused" -> context.getString(R.string.widget_resume_description); else -> it }
-                    }) }
-                    val file = "timer_widget_${if (dark) "dark" else "light"}_${if (scale == 1f) "normal" else "largest"}_${width}x${height}_$name"
+                    host.await(
+                        "the $name fixture is laid out",
+                    ) {
+                        host.hasDescription(
+                            if (state == WidgetState.NoAccount) {
+                                context.getString(
+                                    R.string.widget_sign_in,
+                                )
+                            } else {
+                                context.getString(R.string.widget_start_description).let {
+                                    when (name) {
+                                        "running" -> context.getString(
+                                            R.string.widget_stop_description,
+                                        )
+
+                                        "paused" -> context.getString(R.string.widget_resume_description)
+
+                                        else -> it
+                                    }
+                                }
+                            },
+                        )
+                    }
+                    val theme = if (dark) "dark" else "light"
+                    val text = if (scale == 1f) "normal" else "largest"
+                    val file = "timer_widget_${theme}_${text}_${width}x${height}_$name"
                     runCatching {
                         host.assertTextFitsVertically()
                         if (width >= 196) host.checkAccessibility()
                         if (name == "running" && width >= 260) {
                             val bases = host.clockBaseValues()
-                            assertTrue("the day clock adds stopped time, excluding the pause-chain accumulation: $bases", kotlin.math.abs(bases[0] - bases[1] - 3600_000L) <= 150L)
+                            assertTrue(
+                                "the day clock adds stopped time, excluding the pause-chain accumulation: $bases",
+                                kotlin.math.abs(bases[0] - bases[1] - 3600_000L) <= 150L,
+                            )
                         }
                     }.exceptionOrNull()?.let { errors += AssertionError("$file layout: ${it.message}", it) }
                     val capture = host.capture(clockTexts = listOf("1:12:34", "2:12:34", "1:12:34"))
@@ -69,13 +96,20 @@ abstract class TimerWidgetScreenshotTest(private val dark: Boolean, private val 
                 }
             }
         }
-        if (errors.isNotEmpty()) throw AssertionError("${errors.size} Timer widget references need review", errors.first()).apply { errors.drop(1).forEach(::addSuppressed) }
+        if (errors.isNotEmpty()) {
+            throw AssertionError(
+                "${errors.size} Timer widget references need review",
+                errors.first(),
+            ).apply { errors.drop(1).forEach(::addSuppressed) }
+        }
     }
 
     private class Fixture(private val state: WidgetState) : GlanceAppWidget() {
         override suspend fun provideGlance(context: Context, id: GlanceId) {
             provideContent {
-                GlanceTheme(colors = ColorProviders(light = TokklLightColorScheme, dark = TokklDarkColorScheme)) { TimerWidgetContent(state) }
+                GlanceTheme(
+                    colors = ColorProviders(light = TokklLightColorScheme, dark = TokklDarkColorScheme),
+                ) { TimerWidgetContent(state) }
             }
         }
     }
@@ -83,20 +117,49 @@ abstract class TimerWidgetScreenshotTest(private val dark: Boolean, private val 
     private fun fixtures(): List<Pair<String, WidgetState>> {
         val now = Instant.now()
         val start = now.minusSeconds(754)
-        val target = TimerTarget.server(1, 42, "screenshot")
+        val target = TimerTarget.Running(EntryId(42), "screenshot")
         val projects = listOf(
-            WidgetDayProject(1, "Tokkl for Android", "#0b83d9", 3600, "1:00", true),
-            WidgetDayProject(2, "Client site", "#9e5bd9", 1800, "0:30", false),
-            WidgetDayProject(3, "Admin", "#d94182", 900, "0:15", false),
+            WidgetDayProject(ProjectId(1), "Tokkl for Android", "#0b83d9", 3600, "1:00", true),
+            WidgetDayProject(ProjectId(2), "Client site", "#9e5bd9", 1800, "0:30", false),
+            WidgetDayProject(ProjectId(3), "Admin", "#d94182", 900, "0:15", false),
             WidgetDayProject(null, null, null, 900, "0:15", false),
         )
-        val day = WidgetDayReport(LocalDate.of(2026, 10, 28), 7200, 3600, 7, projects, WidgetDayRunning(42, start, true), DurationFormat.IMPROVED)
-        val favorites = listOf("Standup", "Code review", "Client call").map { WidgetFavorite(EntryFields(it), null, null) }
-        val running = WidgetRunning(42, "Widget mock-ups", "Tokkl for Android", "Design", start, 3600, target, true, "#0b83d9")
-        val ready = WidgetState.Ready(running, favorites, day = day)
+        val day = WidgetDayReport(
+            LocalDate.of(2026, 10, 28),
+            7200,
+            3600,
+            7,
+            projects,
+            WidgetDayRunning(EntryId(42), start, true),
+            DurationFormat.IMPROVED,
+        )
+        val favorites = listOf(
+            "Standup",
+            "Code review",
+            "Client call",
+        ).map { WidgetFavorite(EntryFields(it), null, null) }
+        val running =
+            WidgetRunning(
+                EntryId(
+                    42,
+                ),
+                "Widget mock-ups", "Tokkl for Android", "Design", start, 3600, target, true, "#0b83d9",
+            )
+        val ready = WidgetState.Ready(running, favorites, day = day, account = "account")
         return listOf(
             "running" to ready,
-            "paused" to ready.copy(running = null, paused = WidgetPaused("Widget mock-ups", "Tokkl for Android", "Design", 754, target, "#0b83d9"), day = day.copy(running = null)),
+            "paused" to ready.copy(
+                running = null,
+                paused = WidgetPaused(
+                    "Widget mock-ups",
+                    "Tokkl for Android",
+                    "Design",
+                    754,
+                    TimerTarget.Paused(1, "screenshot"),
+                    "#0b83d9",
+                ),
+                day = day.copy(running = null),
+            ),
             "idle" to ready.copy(running = null, day = day.copy(running = null)),
             "signed_out" to WidgetState.NoAccount,
         )
@@ -106,12 +169,15 @@ abstract class TimerWidgetScreenshotTest(private val dark: Boolean, private val 
 @SignedOut
 @SdkSuppress(minSdkVersion = 36, maxSdkVersion = 36)
 class LightTimerWidgetScreenshotTest : TimerWidgetScreenshotTest(false, 1f)
+
 @SignedOut
 @SdkSuppress(minSdkVersion = 36, maxSdkVersion = 36)
 class DarkTimerWidgetScreenshotTest : TimerWidgetScreenshotTest(true, 1f)
+
 @SignedOut
 @SdkSuppress(minSdkVersion = 36, maxSdkVersion = 36)
 class LightLargestTimerWidgetScreenshotTest : TimerWidgetScreenshotTest(false, SystemFontScale.LARGEST)
+
 @SignedOut
 @SdkSuppress(minSdkVersion = 36, maxSdkVersion = 36)
 class DarkLargestTimerWidgetScreenshotTest : TimerWidgetScreenshotTest(true, SystemFontScale.LARGEST)

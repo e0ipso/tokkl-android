@@ -17,7 +17,7 @@ kk_relates_to:
 kk_depends_on: []
 kk_confidence: high
 ---
-Host a screen in a window set up as `MainActivity`'s: call `WindowCompat.enableEdgeToEdge` and set `SOFT_INPUT_ADJUST_RESIZE` on the test activity's window before `setContent`, as `ProjectsServerTest.show()` does. On tokkl-api31, `createComposeRule`'s plain `ComponentActivity` kept the keyboard's insets from the page, so `imePadding` never shrank it. `performScrollTo` then left Save at the bottom of the window, under the snackbar of the step before, and a touch went to the snackbar. A semantics click skips hit testing, so it hid the bug. On such a page, wait until the keyboard takes up room before typing, wait for a control to keep still before tapping it, and wait out a snackbar (about 4 s) that covers the next control. `ClientsServerTest` and `TagsServerTest` still use a plain `createComposeRule` host.
+Host a screen in a window set up as `MainActivity`'s: call `WindowCompat.enableEdgeToEdge` and set `SOFT_INPUT_ADJUST_RESIZE` on the test activity's window before `setContent`, as `ProjectsServerTest.show()` does. On tokkl-api31, `createComposeRule`'s plain `ComponentActivity` kept the keyboard's insets from the page, so `imePadding` never shrank it. `performScrollTo` then left Save at the bottom of the window, under the snackbar of the step before, and a touch went to the snackbar. A semantics click skips hit testing, so it hid the bug. On such a page, wait until the keyboard takes up room before typing, wait for a control to keep still before tapping it, and wait out a snackbar (about 4 s) that covers the next control. `ClientsServerTest` and `TagsServerTest` host their pages the same way.
 
 Reuse the helpers in `app/src/androidTest/java/com/github/e0ipso/tokkl/`:
 

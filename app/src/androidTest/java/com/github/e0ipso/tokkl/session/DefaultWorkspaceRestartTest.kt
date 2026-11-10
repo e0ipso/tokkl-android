@@ -8,9 +8,15 @@ import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.TogglApiClient
-import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.api.api
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.orFail
-import java.io.File
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonNull
@@ -23,6 +29,7 @@ import org.junit.Assert.assertTrue
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
+import java.io.File
 
 /**
  * The account's default workspace survives a restart of the app process, so a timer started
@@ -43,20 +50,23 @@ class DefaultWorkspaceRestartTest {
     private val client: TogglApiClient get() = checkNotNull(Session(context).client()) { "signed out" }
 
     @Test
-    fun step1OneRefreshStoresTheDefaultWorkspace() {
+    fun step1OneRefreshStoresTheDefaultWorkspace() = runBlocking<Unit> {
         SessionRule.signOut()
         state.delete()
         // The admin creates the account through the app's client, which sends only to the stored server.
-        ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(TokklTestServer.url)
         Session(context).save(TokklTestServer.url, TokklTestServer.apiToken)
         val account = TestAccounts.create(timezone = "UTC")
         try {
             Session(context).save(TokklTestServer.url, account.apiToken)
 
-            runBlocking { app.accountSettings.refresh().join() }
+            app.accountRefresh.refresh().join()
 
-            assertEquals(account.workspaceId, app.accountSettings.state.value?.defaultWorkspaceId)
-            assertEquals(account.workspaceId, AccountSettingsStore(context).load()?.defaultWorkspaceId)
+            assertEquals(account.workspaceId, app.accountSettings.state.value?.defaultWorkspaceId?.value)
+            assertEquals(
+                account.workspaceId,
+                AccountSettingsStore(context, Dispatchers.IO).load()?.defaultWorkspaceId?.value,
+            )
             state.writeText(listOf(currentProcess(), account.id, account.email, account.workspaceId).joinToString("\n"))
         } catch (e: Throwable) {
             TestAccounts.delete(account)
@@ -72,13 +82,21 @@ class DefaultWorkspaceRestartTest {
         assertNotEquals("the step before ran in this same process", previous, currentProcess())
         try {
             AirplaneMode.set(true, client)
-            assertEquals("read from the phone", workspace.toLong(), app.accountSettings.state.value?.defaultWorkspaceId)
-            runBlocking { app.accountSettings.refresh().join() }
-            assertEquals("a failed refresh keeps it", workspace.toLong(), app.accountSettings.state.value?.defaultWorkspaceId)
+            assertEquals(
+                "read from the phone",
+                workspace.toLong(),
+                app.accountSettings.state.value?.defaultWorkspaceId?.value,
+            )
+            runBlocking { app.accountRefresh.refresh().join() }
+            assertEquals(
+                "a failed refresh keeps it",
+                workspace.toLong(),
+                app.accountSettings.state.value?.defaultWorkspaceId?.value,
+            )
 
             val stored = checkNotNull(app.accountSettings.state.value?.defaultWorkspaceId)
             val id = runBlocking { app.changes.start(stored, EntryFields(description = "Started offline")) }
-            runBlocking { app.sender.send().join() }
+            runBlocking { app.sender.sendAndWait() }
 
             assertEquals("the start waits in the queue", 1, runBlocking { app.changes.unsentCount.first() })
             state.writeText(listOf(currentProcess(), accountId, email, workspace, id).joinToString("\n"))
@@ -95,16 +113,25 @@ class DefaultWorkspaceRestartTest {
         try {
             assertNotEquals("the step before ran in this same process", previous, currentProcess())
             assertTrue("the step before queued an entry", lines.size == 5)
-            assertEquals("read after a second restart", workspace.toLong(), app.accountSettings.state.value?.defaultWorkspaceId)
+            assertEquals(
+                "read after a second restart",
+                workspace.toLong(),
+                app.accountSettings.state.value?.defaultWorkspaceId?.value,
+            )
             AirplaneMode.set(false, client)
             val deadline = System.nanoTime() + SEND_TIMEOUT_NANOS
             while (runBlocking { app.changes.unsentCount.first() } > 0) {
                 check(System.nanoTime() < deadline) { "the queue did not empty" }
-                runBlocking { app.sender.send().join() }
+                runBlocking { app.sender.sendAndWait() }
             }
 
-            val serverId = runBlocking { app.changes.currentId(lines[4].toLong()) }
-            val entry = client.get(client.server.api("me", "time_entries", serverId.toString()), JsonObject.serializer())
+            val serverId = runBlocking { app.changes.currentId(EntryId(lines[4].toLong())) }
+            val entry = runBlocking {
+                client.get(
+                    client.server.api("me", "time_entries", serverId.toString()),
+                    JsonObject.serializer(),
+                )
+            }
                 .orFail("GET /api/v9/me/time_entries/<id>")
             assertEquals("Started offline", entry.getValue("description").jsonPrimitive.content)
             assertEquals("the default workspace", workspace.toLong(), entry.getValue("workspace_id").jsonPrimitive.long)

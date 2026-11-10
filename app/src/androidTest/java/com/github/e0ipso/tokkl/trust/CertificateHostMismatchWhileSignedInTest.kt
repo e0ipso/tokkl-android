@@ -9,16 +9,19 @@ import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.LoopbackRelay
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerUrl
+import com.github.e0ipso.tokkl.api.api
 import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.core.trust.R
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -64,18 +67,24 @@ class CertificateHostMismatchWhileSignedInTest {
         val notice = context.getString(R.string.trust_refused_certificate_host, HOST)
         composeRule.waitUntil("the host name notice shows", NETWORK_TIMEOUT_MS) { exists(hasText(notice)) }
         composeRule.onNode(hasText(notice)).assertIsDisplayed()
-        assertFalse("the notice offers to review the connection", exists(hasText(string(R.string.trust_refused_review))))
+        assertFalse(
+            "the notice offers to review the connection",
+            exists(hasText(string(R.string.trust_refused_review))),
+        )
         assertFalse("a certificate prompt shows", exists(hasText(string(R.string.sign_in_certificate_title))))
         assertFalse("a certificate prompt shows", exists(hasText(string(R.string.sign_in_certificate_changed_title))))
         assertEquals(ApiError.CertificateHostMismatch(HOST), (me() as? ApiResult.Failure)?.error)
-        assertNull("a pin for $HOST", ServerTrustStore(context).pinnedSha256(HOST, relay.localPort))
-        assertNull("a pin for the proxy", ServerTrustStore(context).pinnedSha256(proxy.host, proxy.port))
+        assertNull("a pin for $HOST", ServerTrustStore(context, Dispatchers.IO).pinnedSha256(HOST, relay.localPort))
+        assertNull(
+            "a pin for the proxy",
+            ServerTrustStore(context, Dispatchers.IO).pinnedSha256(proxy.host, proxy.port),
+        )
     }
 
     /** `GET /api/v9/me` with the stored session's client, as the app sends it. */
     private fun me(): ApiResult<JsonObject> {
         val client = Session(context).client() ?: throw AssertionError("no stored session")
-        return client.get(server.api("me"), JsonObject.serializer())
+        return runBlocking { client.get(server.api("me"), JsonObject.serializer()) }
     }
 
     private fun exists(matcher: SemanticsMatcher): Boolean =

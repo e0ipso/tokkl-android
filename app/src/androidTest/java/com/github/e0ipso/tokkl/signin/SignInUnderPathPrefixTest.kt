@@ -14,22 +14,25 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitTimerPage
-import com.github.e0ipso.tokkl.tapWhenStill
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
+import com.github.e0ipso.tokkl.feature.signin.R
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
+import com.github.e0ipso.tokkl.tapWhenStill
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import com.github.e0ipso.tokkl.core.trust.R as TrustR
 
 /**
  * Signs in through the screen to the real Tokkl container under the path
@@ -102,10 +105,16 @@ class SignInUnderPathPrefixTest {
      * password.
      */
     private fun assertSignedInThroughThePrefix() {
-        assertEquals(server, ServerConfigStore(context).load())
-        assertTrue("the token store holds the API token from /me", ApiTokenStore(context).load() == TokklTestServer.apiToken)
-        assertEquals("UTC", AccountSettingsStore(context).load()?.timeZone)
-        assertTrue("the confirmation names the prefixed URL", ServerTrustStore(context).isCleartextConfirmed(server))
+        runBlocking { assertEquals(server, ServerConfigStore(context, Dispatchers.IO).load()) }
+        assertTrue(
+            "the token store holds the API token from /me",
+            runBlocking { ApiTokenStore(context, io = Dispatchers.IO).load() } == TokklTestServer.apiToken,
+        )
+        runBlocking { assertEquals("UTC", AccountSettingsStore(context, Dispatchers.IO).load()?.timeZone) }
+        assertTrue(
+            "the confirmation names the prefixed URL",
+            ServerTrustStore(context, Dispatchers.IO).isCleartextConfirmed(server),
+        )
     }
 
     /**
@@ -124,11 +133,15 @@ class SignInUnderPathPrefixTest {
      */
     private fun confirmHttpWarning() {
         composeRule.waitUntil("the http warning shows", NETWORK_TIMEOUT_MS) {
-            exists(hasText(string(R.string.sign_in_http_warning_title)))
+            exists(hasText(string(TrustR.string.sign_in_http_warning_title)))
         }
-        composeRule.onNode(hasText(string(R.string.sign_in_http_warning_body, server.toString()))).assertExists()
-        composeRule.onNode(hasText(string(R.string.sign_in_http_warning_understood)) and isToggleable()).performClick()
-        composeRule.onNode(hasText(string(R.string.sign_in_http_warning_continue)) and hasClickAction()).performClick()
+        composeRule.onNode(hasText(string(TrustR.string.sign_in_http_warning_body, server.toString()))).assertExists()
+        composeRule.onNode(
+            hasText(string(TrustR.string.sign_in_http_warning_understood)) and isToggleable(),
+        ).performClick()
+        composeRule.onNode(
+            hasText(string(TrustR.string.sign_in_http_warning_continue)) and hasClickAction(),
+        ).performClick()
     }
 
     private fun exists(matcher: SemanticsMatcher): Boolean =

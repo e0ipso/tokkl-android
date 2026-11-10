@@ -12,7 +12,11 @@ kk_schema_version: 3
 kk_id: practice-reuse-drain-checks-by-content-and-test-configuration
 kk_derived_from: []
 kk_relates_to:
-  - practice-run-instrumented-tests-only-through-the-script
+  - practice-use-the-instrumented-runner-and-its-device-selection
+  - practice-use-the-pinned-test-server-and-tls-proxies
+  - practice-keep-instrumented-credentials-out-of-process-arguments
+  - practice-pass-class-and-package-lists-through-runner-filter-files
+  - practice-verify-device-test-results-and-process-isolation-receipts
 kk_depends_on: []
 kk_confidence: high
 ---
@@ -23,9 +27,9 @@ Reuse passing evidence after a cherry-pick or documentation-only commit only whe
 <!-- kk:related:start -->
 # Related
 
-- Related: [practice-run-instrumented-tests-only-through-the-script → practice-keep-instrumented-credentials-out-of-process-arguments](instrumented-runner/practice-keep-instrumented-credentials-out-of-process-arguments.md)
-- Related: [practice-run-instrumented-tests-only-through-the-script → practice-pass-class-and-package-lists-through-runner-filter-files](instrumented-runner/practice-pass-class-and-package-lists-through-runner-filter-files.md)
-- Related: [practice-run-instrumented-tests-only-through-the-script → practice-use-the-instrumented-runner-and-its-device-selection](instrumented-runner/practice-use-the-instrumented-runner-and-its-device-selection.md)
-- Related: [practice-run-instrumented-tests-only-through-the-script → practice-use-the-pinned-test-server-and-tls-proxies](instrumented-runner/practice-use-the-pinned-test-server-and-tls-proxies.md)
-- Related: [practice-run-instrumented-tests-only-through-the-script → practice-verify-device-test-results-and-process-isolation-receipts](instrumented-runner/practice-verify-device-test-results-and-process-isolation-receipts.md)
+- Related: [practice-use-the-instrumented-runner-and-its-device-selection](instrumented-runner/practice-use-the-instrumented-runner-and-its-device-selection.md)
+- Related: [practice-use-the-pinned-test-server-and-tls-proxies](instrumented-runner/practice-use-the-pinned-test-server-and-tls-proxies.md)
+- Related: [practice-keep-instrumented-credentials-out-of-process-arguments](instrumented-runner/practice-keep-instrumented-credentials-out-of-process-arguments.md)
+- Related: [practice-pass-class-and-package-lists-through-runner-filter-files](instrumented-runner/practice-pass-class-and-package-lists-through-runner-filter-files.md)
+- Related: [practice-verify-device-test-results-and-process-isolation-receipts](instrumented-runner/practice-verify-device-test-results-and-process-isolation-receipts.md)
 <!-- kk:related:end -->

@@ -3,14 +3,17 @@ package com.github.e0ipso.tokkl.session
 import android.os.Process
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.TokklApplication
-import java.io.File
-import java.time.DayOfWeek
+import com.github.e0ipso.tokkl.components.accountSettings
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
+import java.io.File
+import java.time.DayOfWeek
 
 /**
  * The account settings survive a restart of the app process, so screens have them offline. The
@@ -29,8 +32,8 @@ class AccountSettingsRestartTest {
     private val previousStep = File(context.cacheDir, "AccountSettingsRestartTest.process")
 
     @Test
-    fun step1StoresSettingsWithATimeResolution() {
-        AccountSettingsStore(context).clear()
+    fun step1StoresSettingsWithATimeResolution() = runBlocking<Unit> {
+        AccountSettingsStore(context, Dispatchers.IO).clear()
         source.store(WITH_RESOLUTION)
         previousStep.writeText(currentProcess())
     }
@@ -39,7 +42,7 @@ class AccountSettingsRestartTest {
     fun step2KeepsThemAndStoresSettingsWithout() {
         assertNewProcess()
         assertEquals(WITH_RESOLUTION, source.state.value)
-        source.store(WITHOUT_RESOLUTION)
+        runBlocking { source.store(WITHOUT_RESOLUTION) }
         previousStep.writeText(currentProcess())
     }
 
@@ -49,7 +52,7 @@ class AccountSettingsRestartTest {
             assertNewProcess()
             assertEquals(WITHOUT_RESOLUTION, source.state.value)
         } finally {
-            AccountSettingsStore(context).clear()
+            runBlocking { AccountSettingsStore(context, Dispatchers.IO).clear() }
             previousStep.delete()
         }
     }

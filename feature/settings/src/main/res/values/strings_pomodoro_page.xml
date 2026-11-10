@@ -1,0 +1,6 @@
+<resources>
+    <string name="pomodoro_work_minutes">Work minutes</string>
+    <string name="pomodoro_short_rest_minutes">Short rest minutes</string>
+    <string name="pomodoro_long_rest_minutes">Long rest minutes</string>
+    <string name="pomodoro_long_rest_every">Long rest every N work phases</string>
+</resources>

@@ -1,0 +1,66 @@
+package com.github.e0ipso.tokkl.tile
+
+import com.github.e0ipso.tokkl.cache.RunningEntryChanges
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.timerstate.SurfaceTap
+import com.github.e0ipso.tokkl.timerstate.TimerControls
+import com.github.e0ipso.tokkl.timerstate.TimerSurfaceAction
+import com.github.e0ipso.tokkl.timerstate.TimerSurfaceActions
+import com.github.e0ipso.tokkl.timerstate.TimerTarget
+import com.github.e0ipso.tokkl.timerstate.continueEntry
+import com.github.e0ipso.tokkl.timerstate.lastStopped
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+
+/**
+ * What the Quick Settings tile shows (docs/PRD.md N4), read from the phone's cache and the
+ * server's timer state it last received, and so what a tap on it does.
+ */
+sealed interface RunningTileContent {
+
+    /** A timer runs: the tile is active, and a tap stops [entry], as [target] shows it, which ends a pause chain. */
+    data class Running(val entry: TimeEntry, val target: TimerTarget.Running) : RunningTileContent
+
+    /** Paused (docs/PRD.md T1): the tile is inactive, says so, and a tap resumes [description] as [target] shows it. */
+    data class Paused(val description: String, val target: TimerTarget.Paused) : RunningTileContent
+
+    /** No timer runs: the tile is inactive, and a tap continues [last], the stopped entry that started last. */
+    data class Continue(val last: TimeEntry) : RunningTileContent
+
+    /** No timer runs and no entry is cached to continue, as after sign-out: the tile is unavailable. */
+    data object Nothing : RunningTileContent
+}
+
+class RunningTileContents(controls: Flow<TimerControls>, entries: Flow<List<TimeEntry>>) {
+    val content: Flow<RunningTileContent> = combine(controls, entries, ::runningTileContent)
+}
+
+fun runningTileContent(controls: TimerControls, entries: List<TimeEntry>): RunningTileContent = when (controls) {
+    is TimerControls.Running -> RunningTileContent.Running(controls.entry, controls.target)
+    is TimerControls.Paused -> RunningTileContent.Paused(controls.fields.description, controls.target)
+    TimerControls.Idle -> lastStopped(entries)?.let { RunningTileContent.Continue(it) } ?: RunningTileContent.Nothing
+}
+
+/**
+ * A tap on the tile while it shows [shown]. It acts on what the tile shows, not on what the cache
+ * holds by now. Stop and Continue go through the change queue, so they are on the phone at once
+ * and never wait for the network. Resume goes through [surface] to the server, and comes back as
+ * the request for the caller to send. A stop of an entry that no longer runs, or a Resume of a
+ * timer no longer paused as shown, does nothing.
+ */
+suspend fun tapTile(
+    shown: RunningTileContent,
+    surface: TimerSurfaceActions,
+    changes: RunningEntryChanges,
+): SurfaceTap? = when (shown) {
+    is RunningTileContent.Running -> surface.tap(TimerSurfaceAction.Stop, shown.target)
+
+    is RunningTileContent.Paused -> surface.tap(TimerSurfaceAction.Resume, shown.target)
+
+    is RunningTileContent.Continue -> {
+        changes.continueEntry(shown.last)
+        null
+    }
+
+    RunningTileContent.Nothing -> null
+}

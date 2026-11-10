@@ -19,18 +19,22 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import androidx.core.view.WindowCompat
-import androidx.lifecycle.ViewModelProvider
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
-import com.github.e0ipso.tokkl.Destination
-import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
-import com.github.e0ipso.tokkl.SignedInPanes
+import com.github.e0ipso.tokkl.api.HttpMethod
+import com.github.e0ipso.tokkl.api.TimerState
+import com.github.e0ipso.tokkl.api.api
+import com.github.e0ipso.tokkl.api.app
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.koinViewModels
+import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.core.ui.R
+import com.github.e0ipso.tokkl.model.PhaseKind
+import com.github.e0ipso.tokkl.navhost.SignedInPanes
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.timer.TimerAcceptanceFixture
-import com.github.e0ipso.tokkl.timerstate.PhaseKind
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
-import com.github.e0ipso.tokkl.timerstate.TimerState
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -46,6 +50,9 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import com.github.e0ipso.tokkl.core.entryfields.R as FieldsR
+import com.github.e0ipso.tokkl.core.timersync.R as TimerNoticeR
+import com.github.e0ipso.tokkl.feature.pomodoro.R as PomodoroR
 
 /**
  * The Pomodoro page against the real Tokkl server, which owns the session: Start, Next phase and
@@ -54,28 +61,40 @@ import org.junit.rules.RuleChain
  */
 class PomodoroPageServerTest {
     private val compose = createAndroidComposeRule<ComponentActivity>()
+
     @get:Rule val rules: RuleChain = RuleChain.outerRule(SessionRule()).around(compose)
     private val fixture = TimerAcceptanceFixture()
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private val app get() = fixture.app
-    private lateinit var model: PomodoroScreenModel
+    private lateinit var model: PomodoroViewModel
 
     @Before
     fun prepareAnAccountWithItsOwnDefaults() {
         fixture.prepare()
         val client = fixture.account.client
-        client.send("POST", client.server.api("me", "preferences"), buildJsonObject {
-            put("pomodoro_focus_interval_in_minutes", 40)
-            put("pomodoro_break_interval_in_minutes", 8)
-            put("pomodoro_long_break_interval_in_minutes", 20)
-            put("pomodoro_long_break_every", 3)
-        }, JsonObject.serializer()).orFail("set Pomodoro defaults")
+        runBlocking {
+            client.send(
+                HttpMethod.POST,
+                client.server.api("me", "preferences"),
+                buildJsonObject {
+                    put("pomodoro_focus_interval_in_minutes", 40)
+                    put("pomodoro_break_interval_in_minutes", 8)
+                    put("pomodoro_long_break_interval_in_minutes", 20)
+                    put("pomodoro_long_break_every", 3)
+                },
+                JsonObject.serializer(),
+            )
+        }.orFail("set Pomodoro defaults")
         fixture.refresh()
     }
 
     @After
     fun cleanup() {
-        try { AirplaneMode.off() } finally { fixture.cleanup() }
+        try {
+            AirplaneMode.off()
+        } finally {
+            fixture.cleanup()
+        }
     }
 
     @Test
@@ -89,28 +108,37 @@ class PomodoroPageServerTest {
         typeLength(R.string.pomodoro_card_short_rest, "5")
         typeLength(R.string.pomodoro_card_long_rest, "12")
         typeLength(R.string.pomodoro_card_long_rest_every, "2")
-        type(R.string.entry_description, "First work")
+        type(FieldsR.string.entry_description, "First work")
         tap(R.string.pomodoro_start)
-        await { model.state.value.pomodoro != null && !model.state.value.busy }
+        await { model.page.value.pomodoro != null && !model.page.value.busy }
 
         val started = serverTimer()
         val session = started.pomodoro!!
-        assertEquals(listOf(30, 5, 12, 2), listOf(session.workMinutes, session.shortRestMinutes, session.longRestMinutes, session.longRestEvery))
+        assertEquals(
+            listOf(30, 5, 12, 2),
+            listOf(session.workMinutes, session.shortRestMinutes, session.longRestMinutes, session.longRestEvery),
+        )
         assertEquals("First work", started.runningEntry!!.description)
-        assertEquals("the page holds the server's state", started.revision, model.state.value.held!!.state.revision)
-        compose.onNode(hasText(context.getString(R.string.pomodoro_work)) and isHeading()).performScrollTo().assertIsDisplayed()
+        assertEquals("the page holds the server's state", started.revision, model.page.value.held!!.revision)
+        compose.onNode(
+            hasText(context.getString(R.string.pomodoro_work)) and isHeading(),
+        ).performScrollTo().assertIsDisplayed()
         compose.onNodeWithText(context.getString(R.string.pomodoro_number, 1, 2)).performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText(context.getString(R.string.pomodoro_up_next, context.getString(R.string.pomodoro_short_rest)))
+        compose.onNodeWithText(
+            context.getString(PomodoroR.string.pomodoro_up_next, context.getString(R.string.pomodoro_short_rest)),
+        )
             .performScrollTo().assertIsDisplayed()
 
         tap(R.string.pomodoro_start_short_rest)
-        await { model.state.value.pomodoro?.phase?.kind == PhaseKind.SHORT_REST && !model.state.value.busy }
+        await { model.page.value.pomodoro?.phase?.kind == PhaseKind.SHORT_REST && !model.page.value.busy }
         assertEquals(PhaseKind.SHORT_REST, serverTimer().pomodoro!!.phase.kind)
-        compose.onNode(hasText(context.getString(R.string.pomodoro_short_rest)) and isHeading()).performScrollTo().assertIsDisplayed()
+        compose.onNode(
+            hasText(context.getString(R.string.pomodoro_short_rest)) and isHeading(),
+        ).performScrollTo().assertIsDisplayed()
         compose.onNodeWithText(context.getString(R.string.pomodoro_number, 1, 2)).performScrollTo().assertIsDisplayed()
 
         tap(R.string.pomodoro_end)
-        await { model.state.value.pomodoro == null && !model.state.value.busy }
+        await { model.page.value.pomodoro == null && !model.page.value.busy }
         assertNull(serverTimer().pomodoro)
         // The form is back, on the account's defaults again.
         compose.lengthCard(context.getString(R.string.pomodoro_card_work)).performScrollTo()
@@ -121,19 +149,28 @@ class PomodoroPageServerTest {
     fun aTapDrawnBeforeAnotherDeviceMovedTheTimerOnIsRefusedAndTheServersStateShows() {
         show()
         tap(R.string.pomodoro_start)
-        await { model.state.value.pomodoro != null && !model.state.value.busy }
-        val drawn = model.state.value.shown!!
+        await { model.page.value.pomodoro != null && !model.page.value.busy }
+        val drawn = model.page.value.shown!!
         // Another device confirms the phase first.
         val client = fixture.account.client
-        client.send("POST", client.server.app("pomodoro", "next"), buildJsonObject { put("revision", drawn.revision) }, TimerState.serializer())
+        runBlocking {
+            client.send(
+                HttpMethod.POST,
+                client.server.app("pomodoro", "next"),
+                buildJsonObject { put("revision", drawn.revision) },
+                TimerState.serializer(),
+            )
+        }
             .orFail("POST /api/app/pomodoro/next")
 
         compose.runOnIdle { model.next(drawn) }
-        await { model.state.value.problem != null && !model.state.value.busy }
-        assertEquals(PomodoroProblem(PomodoroAction.NEXT, TimerActionResult.Refused), model.state.value.problem)
-        compose.onNodeWithText(context.getString(TimerActionResult.Refused.message)).performScrollTo().assertIsDisplayed()
+        await { model.page.value.problem != null && !model.page.value.busy }
+        assertEquals(PomodoroProblem(PomodoroAction.NEXT, TimerActionResult.Refused), model.page.value.problem)
+        compose.onNodeWithText(
+            context.getString(TimerNoticeR.string.timer_action_refused),
+        ).performScrollTo().assertIsDisplayed()
         // The refusal carried the server's state, and the old tap advanced nothing a second time.
-        assertEquals(PhaseKind.SHORT_REST, model.state.value.pomodoro!!.phase.kind)
+        assertEquals(PhaseKind.SHORT_REST, model.page.value.pomodoro!!.phase.kind)
         val server = serverTimer()
         assertEquals(PhaseKind.SHORT_REST, server.pomodoro!!.phase.kind)
         assertEquals(drawn.revision + 1, server.revision)
@@ -142,18 +179,18 @@ class PomodoroPageServerTest {
     @Test
     fun aDescriptionTypedJustBeforeNextPhaseReachesTheServerAndCarriesToTheNextPhase() {
         show()
-        type(R.string.entry_description, "Before")
+        type(FieldsR.string.entry_description, "Before")
         tap(R.string.pomodoro_start)
-        await { model.state.value.pomodoro != null && !model.state.value.busy }
+        await { model.page.value.pomodoro != null && !model.page.value.busy }
 
-        type(R.string.entry_description, "After the edit")
+        type(FieldsR.string.entry_description, "After the edit")
         tap(R.string.pomodoro_start_short_rest)
-        await { model.state.value.pomodoro?.phase?.kind == PhaseKind.SHORT_REST && !model.state.value.busy }
-        assertNull("the user's own edit is not another device's change", model.state.value.problem)
+        await { model.page.value.pomodoro?.phase?.kind == PhaseKind.SHORT_REST && !model.page.value.busy }
+        assertNull("the user's own edit is not another device's change", model.page.value.problem)
         val server = serverTimer()
         assertEquals(PhaseKind.SHORT_REST, server.pomodoro!!.phase.kind)
         assertEquals("After the edit", server.runningEntry!!.description)
-        compose.onNode(hasText(context.getString(R.string.entry_description)) and hasSetTextAction())
+        compose.onNode(hasText(context.getString(FieldsR.string.entry_description)) and hasSetTextAction())
             .performScrollTo().assert(hasText("After the edit"))
     }
 
@@ -161,10 +198,12 @@ class PomodoroPageServerTest {
     fun billableChangedOnThePageUpdatesTheServersRunningEntry() {
         show()
         tap(R.string.pomodoro_start)
-        await { model.state.value.pomodoro != null && !model.state.value.busy }
+        await { model.page.value.pomodoro != null && !model.page.value.busy }
         assertTrue(serverTimer().runningEntry!!.billable != true)
-        compose.onNode(hasText(context.getString(R.string.entry_billable)) and isToggleable()).performScrollTo().performClick()
-        await { model.state.value.fields.billable }
+        compose.onNode(
+            hasText(context.getString(FieldsR.string.entry_billable)) and isToggleable(),
+        ).performScrollTo().performClick()
+        await { model.page.value.fields.billable }
         // The page shows the switch at once and queues the edit a moment later. Send once the
         // queue has it, which the cache's running entry shows.
         await { runBlocking { app.cache.running.first() }?.entry?.billable == true }
@@ -176,14 +215,16 @@ class PomodoroPageServerTest {
     @Test
     fun withoutAConnectionStartKeepsTheFormAndSaysSo() {
         show()
-        type(R.string.entry_description, "Offline start")
+        type(FieldsR.string.entry_description, "Offline start")
         AirplaneMode.set(true, fixture.account.client)
         tap(R.string.pomodoro_start)
-        await { model.state.value.problem != null && !model.state.value.busy }
-        assertEquals(PomodoroProblem(PomodoroAction.START, TimerActionResult.Offline), model.state.value.problem)
-        compose.onNodeWithText(context.getString(TimerActionResult.Offline.message)).performScrollTo().assertIsDisplayed()
-        assertNull(model.state.value.pomodoro)
-        field(R.string.entry_description).performScrollTo().assert(hasText("Offline start"))
+        await { model.page.value.problem != null && !model.page.value.busy }
+        assertEquals(PomodoroProblem(PomodoroAction.START, TimerActionResult.Offline), model.page.value.problem)
+        compose.onNodeWithText(
+            context.getString(TimerNoticeR.string.timer_action_offline),
+        ).performScrollTo().assertIsDisplayed()
+        assertNull(model.page.value.pomodoro)
+        field(FieldsR.string.entry_description).performScrollTo().assert(hasText("Offline start"))
         button(R.string.pomodoro_start).performScrollTo().assertIsEnabled()
         AirplaneMode.set(false, fixture.account.client)
         assertNull("the failed start reached no server", serverTimer().pomodoro)
@@ -191,30 +232,37 @@ class PomodoroPageServerTest {
 
     private fun serverTimer(): TimerState {
         val client = fixture.account.client
-        return client.get(client.server.app("timer"), TimerState.serializer()).orFail("GET /api/app/timer")
+        return runBlocking {
+            client.get(
+                client.server.app("timer"),
+                TimerState.serializer(),
+            )
+        }.orFail("GET /api/app/timer")
     }
 
     private fun show() {
         compose.activityRule.scenario.onActivity { activity ->
             WindowCompat.enableEdgeToEdge(activity.window)
             activity.window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
-            model = ViewModelProvider(activity)[PomodoroViewModel::class.java].model
+            model = koinViewModels(activity)[PomodoroViewModel::class.java]
         }
         compose.setContent {
             TokklTheme {
-                SignedInPanes(Destination.POMODORO, entryBeside = false, entryKey = 0) { destination ->
-                    check(destination == Destination.POMODORO)
-                    PomodoroScreen(model, app.cache)
+                SignedInPanes(PomodoroRoute, entryBeside = false) { route ->
+                    check(route == PomodoroRoute)
+                    PomodoroScreen(model)
                 }
             }
         }
-        await { !model.state.value.loading }
+        await { !model.page.value.loading }
     }
 
     private fun await(condition: () -> Boolean) = compose.waitUntil(15_000, condition)
     private fun field(label: Int) = compose.onNode(hasText(context.getString(label)) and hasSetTextAction())
     private fun button(label: Int) = compose.onNode(hasText(context.getString(label)) and hasClickAction())
-    private fun type(label: Int, value: String) { field(label).performScrollTo().performTextReplacement(value) }
+    private fun type(label: Int, value: String) {
+        field(label).performScrollTo().performTextReplacement(value)
+    }
 
     private fun typeLength(label: Int, value: String) {
         val name = context.getString(label)

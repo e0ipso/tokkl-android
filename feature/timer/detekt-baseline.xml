@@ -1,0 +1,17 @@
+<?xml version="1.0" ?>
+<!-- Findings whose fix would change behaviour. config/detekt/detekt.yml says how the rest is fixed. -->
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <!-- The fix, movableContentOf, keeps the slot's state when the layout switches branches, where it now starts again. That changes behaviour. -->
+    <ID>ContentSlotReused:CalendarBlock.kt:line: @Composable () -&gt; Unit</ID>
+    <!-- The fix, movableContentOf, keeps the slot's state when the layout switches branches, where it now starts again. That changes behaviour. -->
+    <ID>ContentSlotReused:CalendarBlock.kt:text: @Composable (mark: Boolean) -&gt; Unit</ID>
+    <!-- The fix, rememberUpdatedState, makes the effect call the newest lambda instead of the one it started with. That changes behaviour. -->
+    <ID>LambdaParameterInRestartableEffect:EntryFormScreen.kt:onClose: () -&gt; Unit</ID>
+    <!-- The fix, rememberUpdatedState, makes the effect call the newest lambda instead of the one it started with. That changes behaviour. -->
+    <ID>LambdaParameterInRestartableEffect:HistoryList.kt:onLoadOlder: () -&gt; Unit</ID>
+    <!-- The gesture handlers read the drag while it happens. Passing a value and a callback instead changes when each column reads it. -->
+    <ID>MutableStateParam:CalendarGrid.kt:drag: MutableState&lt;CalendarDrag?&gt;</ID>
+  </CurrentIssues>
+</SmellBaseline>

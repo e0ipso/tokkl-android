@@ -47,19 +47,19 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
-import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createComposeRule
-import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaults
+import com.github.e0ipso.tokkl.core.ui.R
+import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import java.util.concurrent.CopyOnWriteArrayList
-import kotlin.math.abs
-import kotlin.math.roundToInt
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import java.util.concurrent.CopyOnWriteArrayList
+import kotlin.math.abs
+import kotlin.math.roundToInt
 
 /**
  * The stepper card on its own, with Pomodoro's work and long-rest-every ranges: typing keeps any
@@ -206,7 +206,11 @@ class StepperCardTest {
             Triple("", "enter 1–180", "Work, empty, enter 1 to 180"),
             Triple("2x", "enter 1–180", "Work, not a whole number, enter 1 to 180"),
             Triple("240", "max 180", "Work, 240 minutes, over the maximum of 180"),
-            Triple("99999999999999999999999", "max 180", "Work, 99999999999999999999999 minutes, over the maximum of 180"),
+            Triple(
+                "99999999999999999999999",
+                "max 180",
+                "Work, 99999999999999999999999 minutes, over the maximum of 180",
+            ),
             Triple("0", "min 1", "Work, 0 minutes, under the minimum of 1"),
         )
         for ((typed, line, spoken) in drafts) {
@@ -261,7 +265,11 @@ class StepperCardTest {
                     inputTypes += info.inputType
                     next.startInputMethod(request)
                 }) {
-                    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(TokklTheme.spacing.space4)) {
+                    Box(
+                        Modifier.fillMaxSize().background(
+                            MaterialTheme.colorScheme.background,
+                        ).padding(TokklTheme.spacing.space4),
+                    ) {
                         StepperCard(
                             label = stringResource(field.label),
                             value = draft,
@@ -318,7 +326,11 @@ class StepperCardTest {
 
     private companion object {
         val WORK = Field(R.string.pomodoro_card_work, PomodoroDefaults.WORK_MINUTES, StepperUnit.MINUTES)
-        val EVERY = Field(R.string.pomodoro_card_long_rest_every, PomodoroDefaults.LONG_REST_EVERY, StepperUnit.WORK_PHASES)
+        val EVERY = Field(
+            R.string.pomodoro_card_long_rest_every,
+            PomodoroDefaults.LONG_REST_EVERY,
+            StepperUnit.WORK_PHASES,
+        )
 
         /** A card in the narrower column of the two-column Pomodoro grid at 360dp. */
         val CARD_WIDTH = 176.dp

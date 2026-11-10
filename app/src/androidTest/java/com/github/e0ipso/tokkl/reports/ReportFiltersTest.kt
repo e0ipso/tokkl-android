@@ -23,22 +23,26 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
-import androidx.lifecycle.ViewModelProvider
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.RequestCounter
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.api.HttpMethod
+import com.github.e0ipso.tokkl.api.app
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.capabilities
+import com.github.e0ipso.tokkl.components.reportsViewModel
+import com.github.e0ipso.tokkl.feature.reports.R
 import com.github.e0ipso.tokkl.finishWithin
 import com.github.e0ipso.tokkl.openMorePage
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
-import java.time.LocalDate
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonNull
@@ -60,6 +64,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.LocalDate
 
 /**
  * The report filters against the real Tokkl container (docs/PRD.md R4), in the real activity, on
@@ -96,10 +101,17 @@ class ReportFiltersTest {
         report.entry(day(1).atTime(2, 0), 1800, "Standup", internal, listOf(meeting), billable = false)
         report.entry(day(2).atTime(3, 0), 1200, "Email", null, billable = false)
         report.entry(day(3).atTime(4, 0), 900, "Review", website, listOf(deep, meeting), billable = false)
-        report.entry(report.weekStart.minusDays(1).atTime(12, 0), 3600, "Outside", website, listOf(deep), billable = true)
+        report.entry(
+            report.weekStart.minusDays(1).atTime(12, 0),
+            3600,
+            "Outside",
+            website,
+            listOf(deep),
+            billable = true,
+        )
         Session(context).save(TokklTestServer.url, report.account.apiToken)
         // Fills the cache, where the sheet's choices come from.
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
     }
 
     @After
@@ -110,7 +122,7 @@ class ReportFiltersTest {
         } finally {
             try {
                 // The relay replaced the stored server and its cleartext confirmation.
-                ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
+                ServerTrustStore(context, Dispatchers.IO).confirmCleartext(TokklTestServer.url)
                 Session(context).save(TokklTestServer.url, report.account.apiToken)
                 relay?.close()
             } finally {
@@ -160,7 +172,10 @@ class ReportFiltersTest {
             entries = 1,
             lines = listOf(line(R.string.reports_filter_client, "Acme"), string(R.string.reports_filter_billable_only)),
         )
-        val last = listOf(line(R.string.reports_filter_project, "Website"), string(R.string.reports_filter_non_billable_only))
+        val last = listOf(
+            line(R.string.reports_filter_project, "Website"),
+            string(R.string.reports_filter_non_billable_only),
+        )
         checkFilter(
             picks = listOf("Website"),
             billable = R.string.reports_filter_non_billable_only,
@@ -174,7 +189,10 @@ class ReportFiltersTest {
             picks = listOf("Acme", withoutTags),
             web = filter("client_ids" to ids(acme), "tag_ids" to ids(null)),
             entries = 0,
-            lines = listOf(line(R.string.reports_filter_client, "Acme"), line(R.string.reports_filter_tag, withoutTags)),
+            lines = listOf(
+                line(R.string.reports_filter_client, "Acme"),
+                line(R.string.reports_filter_tag, withoutTags),
+            ),
         )
         assertTrue("the empty report names the filters", exists(hasText(string(R.string.reports_empty_title_filtered))))
         assertTrue(exists(hasText(string(R.string.reports_empty_message_filtered))))
@@ -229,11 +247,14 @@ class ReportFiltersTest {
             negate = listOf(R.string.reports_filter_tag),
             web = filter("project_ids" to ids(website), "exclude_tag_ids" to ids(meeting)),
             entries = 1,
-            lines = listOf(line(R.string.reports_filter_project, "Website"), notLine(R.string.reports_filter_tag, "meeting")),
+            lines = listOf(
+                line(R.string.reports_filter_project, "Website"),
+                notLine(R.string.reports_filter_tag, "meeting"),
+            ),
         )
 
         checkFilter(picks = emptyList(), web = JsonObject(emptyMap()), entries = 4, lines = emptyList())
-        assertEquals("Clear filters turns \"Is not\" off too", ReportFilters(), model().filters.value)
+        assertEquals("Clear filters turns \"Is not\" off too", ReportFilters(), model().page.value.filters)
     }
 
     /** Against a server that cannot negate, such as Toggl Track, the sheet offers no "Is not". */
@@ -243,17 +264,26 @@ class ReportFiltersTest {
         val project = string(R.string.reports_filter_project)
         openSheet()
         sheet().performScrollToNode(inSheet(modeSwitch(R.string.reports_filter_mode_not_description, project)))
-        composeRule.onNode(inSheet(hasContentDescription(string(R.string.reports_cancel)) and hasClickAction())).performClick()
+        composeRule.onNode(
+            inSheet(hasContentDescription(string(R.string.reports_cancel)) and hasClickAction()),
+        ).performClick()
         composeRule.waitUntil("the sheet closes", LOAD_TIMEOUT_MS) { !exists(sheetTitle()) }
 
         // The refreshes as the app starts are over, so nothing turns the flag back on.
         Thread.sleep(SETTLE_MS)
-        app.capabilities.forget()
+        runBlocking { app.capabilities.forget() }
         assertFalse(app.capabilities.state.value.negatedFilters)
         openSheet()
         sheet().performScrollToNode(inSheet(hasText("Website") and isToggleable()))
-        for (filter in listOf(R.string.reports_filter_project, R.string.reports_filter_client, R.string.reports_filter_tag)) {
-            assertFalse("no \"Is not\" for ${string(filter)}", exists(inSheet(modeSwitch(R.string.reports_filter_mode_not_description, string(filter)))))
+        for (filter in listOf(
+            R.string.reports_filter_project,
+            R.string.reports_filter_client,
+            R.string.reports_filter_tag,
+        )) {
+            assertFalse(
+                "no \"Is not\" for ${string(filter)}",
+                exists(inSheet(modeSwitch(R.string.reports_filter_mode_not_description, string(filter)))),
+            )
         }
     }
 
@@ -265,7 +295,7 @@ class ReportFiltersTest {
     @Test
     fun theSearchNarrowsTheChoicesAndAsksNothing() {
         val relay = RequestCounter(TokklTestServer.url, " HTTP/1.1").also { this.relay = it }
-        ServerTrustStore(context).confirmCleartext(relay.url)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(relay.url)
         Session(context).save(relay.url, report.account.apiToken)
         openReports()
         Thread.sleep(SETTLE_MS)
@@ -280,8 +310,11 @@ class ReportFiltersTest {
         composeRule.waitForIdle()
 
         val shown = listOf(
-            string(R.string.reports_without_project), "Website", "Internal",
-            string(R.string.reports_filter_without_client), string(R.string.reports_filter_without_tags),
+            string(R.string.reports_without_project),
+            "Website",
+            "Internal",
+            string(R.string.reports_filter_without_client),
+            string(R.string.reports_filter_without_tags),
         )
         for (choice in shown) sheet().performScrollToNode(inSheet(hasText(choice) and isToggleable()))
         for (hidden in listOf("Acme", "deep", "meeting")) {
@@ -290,14 +323,26 @@ class ReportFiltersTest {
 
         composeRule.onNode(search).performTextReplacement("me")
         composeRule.waitForIdle()
-        for (choice in listOf("Acme", "meeting", "Internal")) sheet().performScrollToNode(inSheet(hasText(choice) and isToggleable()))
+        for (choice in listOf(
+            "Acme",
+            "meeting",
+            "Internal",
+        )) {
+            sheet().performScrollToNode(inSheet(hasText(choice) and isToggleable()))
+        }
         for (hidden in listOf("Website", "deep")) {
             assertFalse("$hidden does not match", exists(inSheet(hasText(hidden) and isToggleable())))
         }
 
         composeRule.onNode(search).performTextClearance()
         composeRule.waitForIdle()
-        for (choice in listOf("Website", "Acme", "deep")) sheet().performScrollToNode(inSheet(hasText(choice) and isToggleable()))
+        for (choice in listOf(
+            "Website",
+            "Acme",
+            "deep",
+        )) {
+            sheet().performScrollToNode(inSheet(hasText(choice) and isToggleable()))
+        }
         Thread.sleep(SETTLE_MS)
         assertEquals("searching asks nothing", before, relay.count)
         assertEquals("the relay reached the server each time", emptyList<String>(), relay.failures)
@@ -307,7 +352,7 @@ class ReportFiltersTest {
     @Test
     fun theSheetOffersTheCachedChoicesAndAsksNothing() {
         val relay = RequestCounter(TokklTestServer.url, " HTTP/1.1").also { this.relay = it }
-        ServerTrustStore(context).confirmCleartext(relay.url)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(relay.url)
         Session(context).save(relay.url, report.account.apiToken)
         openReports()
         // The refresh as the app starts, and the report.
@@ -317,19 +362,26 @@ class ReportFiltersTest {
 
         openSheet()
         val choices = listOf(
-            string(R.string.reports_without_project), "Website", "Internal",
-            string(R.string.reports_filter_without_client), "Acme",
-            string(R.string.reports_filter_without_tags), "deep", "meeting",
+            string(R.string.reports_without_project),
+            "Website",
+            "Internal",
+            string(R.string.reports_filter_without_client),
+            "Acme",
+            string(R.string.reports_filter_without_tags),
+            "deep",
+            "meeting",
         )
         for (choice in choices) sheet().performScrollToNode(inSheet(hasText(choice) and isToggleable()))
         Thread.sleep(SETTLE_MS)
         assertEquals("opening the sheet asks nothing", before, relay.count)
 
-        composeRule.onNode(inSheet(hasContentDescription(string(R.string.reports_cancel)) and hasClickAction())).performClick()
+        composeRule.onNode(
+            inSheet(hasContentDescription(string(R.string.reports_cancel)) and hasClickAction()),
+        ).performClick()
         composeRule.waitUntil("the sheet closes", LOAD_TIMEOUT_MS) { !exists(sheetTitle()) }
         Thread.sleep(SETTLE_MS)
         assertEquals("closing it asks nothing", before, relay.count)
-        assertEquals(ReportFilters(), model().filters.value)
+        assertEquals(ReportFilters(), model().page.value.filters)
         assertEquals("the relay reached the server each time", emptyList<String>(), relay.failures)
     }
 
@@ -366,7 +418,11 @@ class ReportFiltersTest {
         assertEquals(totals.getValue("billable_seconds").jsonPrimitive.long, summary.totals.billableSeconds)
         assertEquals(
             webSummary.getValue("groups").jsonArray.map { it.jsonObject }.map {
-                listOf(it.getValue("id").jsonPrimitive.longOrNull, it.getValue("title").jsonPrimitive.content, it.getValue("seconds").jsonPrimitive.long)
+                listOf(
+                    it.getValue("id").jsonPrimitive.longOrNull,
+                    it.getValue("title").jsonPrimitive.content,
+                    it.getValue("seconds").jsonPrimitive.long,
+                )
             },
             summary.projects.map { listOf(it.id, it.title, it.seconds) },
         )
@@ -382,7 +438,10 @@ class ReportFiltersTest {
                 put("page_size", 500)
             },
         )
-        assertEquals(webEntries.getValue("entries").jsonArray.map { it.jsonObject.getValue("id").jsonPrimitive.long }, detailed.entries.map { it.id })
+        assertEquals(
+            webEntries.getValue("entries").jsonArray.map { it.jsonObject.getValue("id").jsonPrimitive.long },
+            detailed.entries.map { it.id },
+        )
         assertEquals(entries, detailed.entries.size)
 
         selectTab(R.string.reports_tab_weekly)
@@ -405,12 +464,19 @@ class ReportFiltersTest {
         awaitReport<SummaryReport>()
     }
 
-    /** Opens the sheet, clears it, picks [picks], "Is not" on each filter of [negate] and [billable], and applies them. */
+    /**
+     * Opens the sheet, clears it, picks [picks], "Is not" on each filter of [negate] and [billable], and applies them.
+     */
     private fun pickInTheSheet(picks: List<String>, @StringRes billable: Int?, negate: List<Int>) {
         openSheet()
         val clear = inSheet(hasText(string(R.string.reports_filters_clear)) and hasClickAction())
         sheet().performScrollToNode(clear)
-        if (SemanticsProperties.Disabled !in composeRule.onNode(clear).fetchSemanticsNode().config) composeRule.onNode(clear).performClick()
+        if (SemanticsProperties.Disabled !in composeRule.onNode(
+                clear,
+            ).fetchSemanticsNode().config
+        ) {
+            composeRule.onNode(clear).performClick()
+        }
         for (filter in negate) {
             val mode = inSheet(modeSwitch(R.string.reports_filter_mode_not_description, string(filter)))
             sheet().performScrollToNode(mode)
@@ -465,43 +531,61 @@ class ReportFiltersTest {
         return (state() as ReportsState.Loaded).report as T
     }
 
-    private fun state(): ReportsState = model().state.value
+    private fun state(): ReportsState = model().page.value.report
 
-    private fun model(): ReportsModel {
-        var model: ReportsModel? = null
+    private fun model(): ReportsViewModel {
+        var model: ReportsViewModel? = null
         finishWithin("reading the reports model") {
-            checkNotNull(scenario).onActivity { model = ViewModelProvider(it)[ReportsViewModel::class.java].model }
+            checkNotNull(scenario).onActivity { model = reportsViewModel(it) }
         }
         return checkNotNull(model)
     }
 
     /** The web app's filter fields: each of [fields] with its ids, and billable when given. */
-    private fun filter(vararg fields: Pair<String, JsonArray>, billable: Boolean? = null): JsonObject = buildJsonObject {
-        for ((field, ids) in fields) put(field, ids)
-        if (billable != null) put("billable", billable)
-    }
+    private fun filter(vararg fields: Pair<String, JsonArray>, billable: Boolean? = null): JsonObject =
+        buildJsonObject {
+            for ((field, ids) in fields) put(field, ids)
+            if (billable != null) put("billable", billable)
+        }
 
     /** [ids] as a JSON array, null for "without". */
-    private fun ids(vararg ids: Long?): JsonArray = JsonArray(ids.map { if (it == null) JsonNull else JsonPrimitive(it) })
+    private fun ids(vararg ids: Long?): JsonArray = JsonArray(
+        ids.map { if (it == null) JsonNull else JsonPrimitive(it) },
+    )
 
     /** A body for the web app's report endpoints: [range], the [filter] fields and [more]. */
-    private fun webBody(filter: JsonObject, range: ReportRange, more: JsonObjectBuilder.() -> Unit): JsonObject = buildJsonObject {
-        put("start_date", range.from.toString())
-        put("end_date", range.to.toString())
-        for ((key, value) in filter) put(key, value)
-        more()
-    }
+    private fun webBody(filter: JsonObject, range: ReportRange, more: JsonObjectBuilder.() -> Unit): JsonObject =
+        buildJsonObject {
+            put("start_date", range.from.toString())
+            put("end_date", range.to.toString())
+            for ((key, value) in filter) put(key, value)
+            more()
+        }
 
     /** POSTs [body] to `/api/app/report`, the web app's summary, a path [ReportAccount.webReport] does not reach. */
-    private fun webSummary(body: JsonObject): JsonObject =
-        report.account.client.send("POST", TokklTestServer.url.app("report"), body, JsonObject.serializer()).orFail("POST /api/app/report")
+    private fun webSummary(body: JsonObject): JsonObject = runBlocking {
+        report.account.client.send(
+            HttpMethod.POST,
+            TokklTestServer.url.app("report"),
+            body,
+            JsonObject.serializer(),
+        )
+    }.orFail("POST /api/app/report")
 
     /** The week's [index]th day, or today when that day is still to come. */
     private fun day(index: Long): LocalDate = minOf(report.weekStart.plusDays(index), report.today)
 
-    private fun line(@StringRes filter: Int, values: String): String = context.getString(R.string.reports_filter_line, string(filter), values)
+    private fun line(@StringRes filter: Int, values: String): String = context.getString(
+        R.string.reports_filter_line,
+        string(filter),
+        values,
+    )
 
-    private fun notLine(@StringRes filter: Int, values: String): String = context.getString(R.string.reports_filter_line_not, string(filter), values)
+    private fun notLine(@StringRes filter: Int, values: String): String = context.getString(
+        R.string.reports_filter_line_not,
+        string(filter),
+        values,
+    )
 
     /** The "Is" or "Is not" segment, by [description], of the filter named [filter]. */
     private fun modeSwitch(@StringRes description: Int, filter: String): SemanticsMatcher =

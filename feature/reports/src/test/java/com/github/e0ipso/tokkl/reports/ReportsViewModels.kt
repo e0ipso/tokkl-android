@@ -1,0 +1,111 @@
+package com.github.e0ipso.tokkl.reports
+
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.github.e0ipso.tokkl.model.Capabilities
+import com.github.e0ipso.tokkl.platform.AppForeground
+import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.session.CurrentAccount
+import com.github.e0ipso.tokkl.session.capabilitiesOf
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.emptyFlow
+import java.io.File
+import java.time.Clock
+import kotlin.coroutines.CoroutineContext
+
+/**
+ * A Reports view model for tests that leave the filter sheet and the CSV export alone: no filter
+ * options, no export capability, and an export that no test starts and so writes no file. The app
+ * stays in the foreground with no network returns unless a test passes its own [app].
+ */
+internal fun reportsViewModel(
+    accountSettings: StateFlow<AccountSettings?>,
+    repository: ServerReportsRepository,
+    scope: CoroutineScope,
+    io: CoroutineContext,
+    clock: Clock = Clock.systemUTC(),
+    app: AppForeground = AppForeground(MutableStateFlow(true), emptyFlow()),
+    choices: ReportChoices = ReportChoices(),
+    saved: SavedStateHandle = SavedStateHandle(),
+) = ReportsViewModel(
+    choices = choices,
+    accountSettings = accountSettings,
+    repository = repository,
+    scope = scope,
+    io = io,
+    clock = clock,
+    filterOptions = MutableStateFlow(FilterOptions.NONE),
+    exportCapabilities = MutableStateFlow(Capabilities.NONE),
+    exporter = ReportExportFiles(File("unused-report-exports"), clock).let { files ->
+        ReportExportController(
+            client = { null },
+            files = files,
+            account = CurrentAccount(scope),
+            csvMissing = capabilitiesOf(Capabilities.NONE)::csvMissing,
+            scope = scope,
+            io = io,
+        )
+    },
+    app = app,
+    saved = saved,
+)
+
+/**
+ * The Reports route on the back stack in a test, as the navigation host keeps it: the route's own
+ * store holds [model], which [make] builds in a scope of its own under [scope] with the route's
+ * saved state, and the session's [choices] outlive it. [reopen] takes the route off the stack,
+ * which clears the model and its saved state, and opens it again with a new one. [restart] is a new process that
+ * restores the route: new choices, and a new model over what the route's saved state kept.
+ */
+internal class TestReportsRoute(
+    private val scope: CoroutineScope,
+    private val make: (ReportChoices, SavedStateHandle, CoroutineScope) -> ReportsViewModel,
+) {
+    var choices = ReportChoices()
+        private set
+    private var saved = SavedStateHandle()
+    private val store = ViewModelStore()
+
+    var model: ReportsViewModel = open()
+        private set
+
+    /**
+     * The route leaves the back stack and comes back: the model is a new one over a new saved
+     * state, as the route's saved state goes with it, and the choices are the same.
+     */
+    fun reopen(): ReportsViewModel {
+        store.clear()
+        saved = SavedStateHandle()
+        model = open()
+        return model
+    }
+
+    /** Takes the route off the back stack, which clears its model. */
+    fun leave() = store.clear()
+
+    /**
+     * The process died with the route on the back stack and a new one restores it. [before] runs
+     * on the new choices before the route's model is made, as a widget's tap can.
+     */
+    fun restart(before: (ReportChoices) -> Unit = {}): ReportsViewModel {
+        store.clear()
+        saved = SavedStateHandle(saved.keys().associateWith { saved.get<Any?>(it) })
+        choices = ReportChoices().also(before)
+        model = open()
+        return model
+    }
+
+    private fun open(): ReportsViewModel {
+        val own = CoroutineScope(scope.coroutineContext + SupervisorJob(scope.coroutineContext[Job]))
+        return ViewModelProvider.create(store, viewModelFactory { initializer { make(choices, saved, own) } })[
+            ReportsViewModel::class,
+        ]
+    }
+}

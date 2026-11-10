@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <!--
+            The home screen widget (docs/PRD.md N3). Exported, since the launcher's widget service
+            sends it the widget's updates. Its taps go to Glance's receiver, which is not exported.
+        -->
+        <receiver
+            android:name="com.github.e0ipso.tokkl.widget.TokklWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/tokkl_widget_info" />
+        </receiver>
+        <receiver
+            android:name="com.github.e0ipso.tokkl.widget.PomodoroWidgetReceiver"
+            android:exported="true"
+            android:label="@string/pomodoro_widget_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/pomodoro_widget_info" />
+        </receiver>
+    </application>
+</manifest>

@@ -1,0 +1,124 @@
+package com.github.e0ipso.tokkl.reports
+
+import com.github.e0ipso.tokkl.api.ReportFilter
+import com.github.e0ipso.tokkl.model.Client
+import com.github.e0ipso.tokkl.model.ClientId
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.Tag
+import com.github.e0ipso.tokkl.model.TagId
+import com.github.e0ipso.tokkl.model.WorkspaceId
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+class ReportFiltersTest {
+
+    /** As the web app's Filters: the default workspace only, archived ones too, active projects first. */
+    @Test
+    fun theOptionsAreTheWorkspacesWithActiveProjectsFirst() {
+        // The cache lists each table by name.
+        val projects = listOf(
+            Project(ProjectId(1), WorkspaceId(WORKSPACE), null, "Archive", null, active = false, billable = false),
+            Project(ProjectId(2), WorkspaceId(WORKSPACE), ClientId(5), "Beta", null, active = true, billable = true),
+            Project(ProjectId(3), WorkspaceId(OTHER_WORKSPACE), null, "Other", null, active = true, billable = false),
+            Project(ProjectId(4), WorkspaceId(WORKSPACE), null, "Zed", null, active = true, billable = false),
+        )
+        val clients = listOf(
+            Client(ClientId(5), WorkspaceId(WORKSPACE), "Acme", archived = true),
+            Client(ClientId(6), WorkspaceId(OTHER_WORKSPACE), "Elsewhere", archived = false),
+        )
+        val tags = listOf(
+            Tag(TagId(7), WorkspaceId(WORKSPACE), "deep"),
+            Tag(TagId(8), WorkspaceId(OTHER_WORKSPACE), "other"),
+        )
+
+        val options = FilterOptions.of(projects, clients, tags, WorkspaceId(WORKSPACE), negation = true)
+
+        assertEquals(listOf(2L to "Beta", 4L to "Zed", 1L to "Archive"), options.projects.map { it.id to it.name })
+        assertEquals(listOf(5L to "Acme"), options.clients.map { it.id to it.name })
+        assertEquals(listOf(7L to "deep"), options.tags.map { it.id to it.name })
+        assertTrue(options.negation)
+        assertEquals(
+            "every workspace while the default one is unknown",
+            4,
+            FilterOptions.of(projects, clients, tags, null, negation = false).projects.size,
+        )
+    }
+
+    @Test
+    fun aToggleAddsOrRemovesOneIdAndKeepsTheOrderPicked() {
+        assertEquals(listOf(3L, null), listOf<Long?>(3L).toggled(null))
+        assertEquals(listOf<Long?>(null), listOf(3L, null).toggled(3L))
+        assertEquals(emptyList<Long?>(), listOf<Long?>(null).toggled(null))
+    }
+
+    /** As the web app's filter menus: the name holds the text, ignoring case, and a ticked option always stays. */
+    @Test
+    fun aSearchKeepsTheNamesHoldingItAndThePickedOnes() {
+        val options = listOf(FilterOption(1, "Website"), FilterOption(2, "Internal"), FilterOption(3, "Web shop"))
+
+        assertEquals(listOf(1L, 3L), options.matching("WEB", picked = emptyList()).map { it.id })
+        assertEquals(listOf(1L, 2L), options.matching("site", picked = listOf(null, 2L)).map { it.id })
+        assertEquals(emptyList<Long>(), options.matching("zzz", picked = listOf(null)).map { it.id })
+        assertEquals("a blank search keeps them all", options, options.matching("", picked = emptyList()))
+    }
+
+    /** Toggl's Reports API v3 takes the same fields, with null for "without". TokklApiTest pins their bytes. */
+    @Test
+    fun theFieldsAreTheWebAppsAndOnlyForFiltersInUse() {
+        assertTrue(ReportFilters().isEmpty)
+        assertEquals(ReportFilter(), ReportFilters().apiFilter())
+
+        val filters = ReportFilters(
+            projects = listOf(null, 9L),
+            tags = listOf(4L, 2L),
+            billable = BillableFilter.NON_BILLABLE,
+        )
+        assertFalse(filters.isEmpty)
+        assertEquals(
+            ReportFilter(projectIds = listOf(null, 9), tagIds = listOf(4, 2), billable = false),
+            filters.apiFilter(),
+        )
+        assertFalse(ReportFilters(billable = BillableFilter.BILLABLE).isEmpty)
+        assertEquals(ReportFilter(billable = true), ReportFilters(billable = BillableFilter.BILLABLE).apiFilter())
+    }
+
+    /** As the web app's idFilter: "Is not" sends a list in its exclude field instead, null still for "without". */
+    @Test
+    fun aNegatedFilterSendsItsExcludeField() {
+        val filters = ReportFilters(
+            projects = listOf(9L),
+            clients = listOf(null, 5L),
+            tags = listOf(4L),
+            projectsNot = true,
+            clientsNot = true,
+        )
+        assertEquals(
+            ReportFilter(
+                projectIds = listOf(9),
+                excludeProjects = true,
+                clientIds = listOf(null, 5),
+                excludeClients = true,
+                tagIds = listOf(4),
+            ),
+            filters.apiFilter(),
+        )
+        assertEquals(
+            "a negated filter with nothing picked filters nothing, as in the web app",
+            ReportFilter(excludeProjects = true, excludeClients = true, excludeTags = true),
+            ReportFilters(projectsNot = true, clientsNot = true, tagsNot = true).apiFilter(),
+        )
+        assertTrue(ReportFilters(tagsNot = true).isEmpty)
+        assertEquals(
+            ReportFilter(projectIds = listOf(9), clientIds = listOf(null, 5), tagIds = listOf(4)),
+            filters.withoutNegation().apiFilter(),
+        )
+    }
+
+    private companion object {
+        const val WORKSPACE = 10L
+        const val OTHER_WORKSPACE = 11L
+    }
+}

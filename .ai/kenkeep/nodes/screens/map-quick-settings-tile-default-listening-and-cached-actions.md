@@ -20,7 +20,7 @@ kk_relates_to:
 kk_depends_on: []
 kk_confidence: high
 ---
-`app/src/main/java/com/github/e0ipso/tokkl/tile/RunningTileService.kt` is a default, non-active Quick Settings tile. Each `onStartListening` starts a fresh cache collection, and `onStopListening` cancels it. Android binds it when the shade shows it. `requestListeningState` is for active tiles and does not refresh this listening mode.
+`feature/tile/src/main/java/com/github/e0ipso/tokkl/tile/RunningTileService.kt` is a default, non-active Quick Settings tile. Each `onStartListening` starts a fresh collection of what the tile shows, `RunningTileContents.content`, and `onStopListening` cancels it. `tileFeatureModule` builds `RunningTileContents` from the timer controls (`AccountTimerStates.controls`) and the cache's entries, so the service injects that and the queue as `RunningEntryChanges`, not the whole cache or timer state. Android binds it when the shade shows it. `requestListeningState` is for active tiles and does not refresh this listening mode.
 
 The tile stops its displayed running entry, or continues the latest stopped entry when idle, through the offline change queue. The tap uses the displayed state rather than guessing from a newer cache value; before the first emission it takes no action. The action has its own scope, so stopping the listening interval does not cancel a queued write.
 

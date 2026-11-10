@@ -2,11 +2,18 @@ package com.github.e0ipso.tokkl.pomodoro
 
 import android.app.AlarmManager
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.*
-import com.github.e0ipso.tokkl.widget.*
+import com.github.e0ipso.tokkl.DeviceShell
+import com.github.e0ipso.tokkl.SessionRule
+import com.github.e0ipso.tokkl.TokklApplication
+import com.github.e0ipso.tokkl.components.pomodoroAlarms
+import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Rule
+import org.junit.Test
 import java.time.Instant
-import org.junit.*
-import org.junit.Assert.*
 
 /** API36 cannot revoke USE_EXACT_ALARM: inject denial into the production native scheduler. */
 class PomodoroDeniedAlarmWidgetTest {
@@ -17,7 +24,7 @@ class PomodoroDeniedAlarmWidgetTest {
 
     @Test fun deniedExactAccessArmsOneNativeRedrawAndExactReplacementAndCancelRemoveIt() {
         var allowed = false
-        val scheduler = AlarmClockPomodoroScheduler(context, exactAlarmsAllowed = { allowed })
+        val scheduler = AlarmClockPomodoroScheduler(context, timerSyncStarts = { false }, exactAlarms = { !allowed })
         val start = Instant.now()
         try {
             app.pomodoroAlarms.cancel()
@@ -38,14 +45,20 @@ class PomodoroDeniedAlarmWidgetTest {
             assertEquals(1, pendingRedraws())
             scheduler.cancel()
             assertEquals("idle cancellation removes the one-shot", 0, pendingRedraws())
-            assertFalse(app.pomodoroRinging.state.value.serviceRunning)
-        } finally { scheduler.cancel() }
+            assertFalse(PomodoroRingObservation.now().serviceRunning)
+        } finally {
+            scheduler.cancel()
+        }
     }
 
     private fun pendingRedraws(): Int {
         val dump = DeviceShell.run("dumpsys alarm")
         // Only pending alarm batches, excluding delivery history and per-package statistics.
         val pending = dump.substringBefore("Past-due non-wakeup alarms:").substringBefore("Past-due non-wakeup alarms")
-        return pending.lineSequence().count { it.contains("tag=*") && it.contains(PomodoroPhaseAlarmReceiver.ACTION_WIDGET_REDRAW) }
+        return pending.lineSequence().count {
+            it.contains(
+                "tag=*",
+            ) && it.contains(PomodoroPhaseAlarmReceiver.ACTION_WIDGET_REDRAW)
+        }
     }
 }

@@ -1,14 +1,33 @@
 package com.github.e0ipso.tokkl.timer
 
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.*
-import com.github.e0ipso.tokkl.cache.*
+import com.github.e0ipso.tokkl.AirplaneMode
+import com.github.e0ipso.tokkl.SessionRule
+import com.github.e0ipso.tokkl.TestAccounts
+import com.github.e0ipso.tokkl.TokklApplication
+import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.components.storeSignIn
+import com.github.e0ipso.tokkl.components.timerActions
+import com.github.e0ipso.tokkl.components.timerControls
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.RunningEntryIdentity
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
-import java.time.Instant
+import com.github.e0ipso.tokkl.timerstate.TimerControls
+import com.github.e0ipso.tokkl.timerstate.seconds
+import com.github.e0ipso.tokkl.timerstate.target
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import java.time.Instant
 
 /** Disposable account and real Room/queue shared by the normal timer acceptance tests. */
 internal class TimerAcceptanceFixture {
@@ -30,14 +49,18 @@ internal class TimerAcceptanceFixture {
         refresh()
     }
     fun cleanup() {
-        try { AirplaneMode.set(false, account.client) }
-        finally {
-            try { TestAccounts.delete(account) }
-            finally { SessionRule.signOut() }
+        try {
+            AirplaneMode.set(false, account.client)
+        } finally {
+            try {
+                TestAccounts.delete(account)
+            } finally {
+                SessionRule.signOut()
+            }
         }
     }
-    fun refresh() = runBlocking { app.accountSettings.refresh().join() }
-    fun rows(): List<CachedTimeEntry> = runBlocking { app.cache.timeEntries.first() }
+    fun refresh() = runBlocking { app.accountRefresh.refresh().join() }
+    fun rows(): List<TimeEntry> = runBlocking { app.cache.timeEntries.first() }
 
     /** What every timer surface shows: the cache's running entry and the server's pause chain. */
     fun shown(): TimerControls = runBlocking { app.timerControls.first() }
@@ -49,21 +72,25 @@ internal class TimerAcceptanceFixture {
      */
     fun startOnServer(description: String, seconds: Long = 600): TimerControls.Running {
         account.createEntry(description, Instant.now().minusSeconds(seconds))
-        runBlocking { app.accountSettings.refreshAfterChange().join() }
+        runBlocking { app.accountRefresh.refreshAfterChange().join() }
         return shown() as TimerControls.Running
     }
     fun start(description: String = "Focused work"): TimerControls.Running {
-        runBlocking { app.changes.start(account.workspaceId, EntryFields(description)) }
+        runBlocking { app.changes.start(WorkspaceId(account.workspaceId), EntryFields(description)) }
         return shown() as TimerControls.Running
     }
     fun ageRunning(seconds: Long = 600): TimerControls.Running {
         val active = shown() as TimerControls.Running
         val row = active.entry
-        assertTrue(runBlocking { app.changes.updateRunning(
-            RunningEntryIdentity(row.id, row.workspaceId, row.start),
-            EntryFields(row.description, row.projectId, row.taskId, row.tags, row.billable),
-            Instant.now().minusSeconds(seconds),
-        ) })
+        assertTrue(
+            runBlocking {
+                app.changes.updateRunning(
+                    RunningEntryIdentity(row.id, row.workspaceId, row.start),
+                    EntryFields(row.description, row.projectId, row.taskId, row.tags, row.billable),
+                    Instant.now().minusSeconds(seconds),
+                )
+            },
+        )
         return shown() as TimerControls.Running
     }
 
@@ -71,7 +98,12 @@ internal class TimerAcceptanceFixture {
     fun stop() {
         when (val active = shown()) {
             is TimerControls.Running -> assertTrue(runBlocking { app.changes.stop(active.entry.id) })
-            is TimerControls.Paused -> assertEquals(TimerActionResult.Done, runBlocking { app.timerActions.discard(active.target.revision) })
+
+            is TimerControls.Paused -> assertEquals(
+                TimerActionResult.Done,
+                runBlocking { app.timerActions.discard(active.target.revision) },
+            )
+
             TimerControls.Idle -> Unit
         }
     }
@@ -80,6 +112,6 @@ internal class TimerAcceptanceFixture {
         assertEquals("all local mutations sent", 0, runBlocking { app.changes.unsentCount.first() })
         // A send ends with a refresh of its own that nobody waits for. Join that one, so a later
         // request count does not catch it.
-        runBlocking { app.accountSettings.refreshAfterChange().join() }
+        runBlocking { app.accountRefresh.refreshAfterChange().join() }
     }
 }

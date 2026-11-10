@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.cache
 
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.work.Configuration
 import androidx.work.NetworkType
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
@@ -16,16 +17,24 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.api
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.backgroundSendRuns
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.reminder
+import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.reminder.ReminderWork
 import com.github.e0ipso.tokkl.reminder.ReminderWorker
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
-import com.github.e0ipso.tokkl.trash.TrashServer
-import java.time.Duration
-import java.time.Instant
-import java.time.temporal.ChronoUnit
-import java.util.UUID
+import com.github.e0ipso.tokkl.tokklApi
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -44,6 +53,11 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.koin.androidx.workmanager.factory.KoinWorkerFactory
+import java.time.Duration
+import java.time.Instant
+import java.time.temporal.ChronoUnit
+import java.util.UUID
 
 /**
  * The queue's background send against the real Tokkl container, with the app closed: no activity
@@ -60,23 +74,30 @@ class BackgroundSendServerTest {
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private val app get() = context.applicationContext as TokklApplication
     private val workManager get() = WorkManager.getInstance(context)
-    private val driver: TestDriver get() = checkNotNull(WorkManagerTestInitHelper.getTestDriver(context)) { "no test WorkManager" }
+    private val driver: TestDriver get() = checkNotNull(
+        WorkManagerTestInitHelper.getTestDriver(context),
+    ) { "no test WorkManager" }
     private lateinit var account: TestAccounts.Account
     private var workspace = 0L
     private var relay: HangingRelay? = null
 
     /** The web app: the same account, straight to the server and past the app's guard. */
     private val web by lazy {
-        TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(account.apiToken), httpClient = OkHttpClient())
+        TogglApiClient(
+            TokklTestServer.url,
+            ApiCredentials.ApiToken(account.apiToken),
+            httpClient = OkHttpClient(),
+            io = Dispatchers.IO,
+        )
     }
 
     @Before
     fun signInToTheServer() {
         account = TestAccounts.create(timezone = "Europe/Madrid")
-        workspace = web.get(web.server.api("me"), JsonObject.serializer()).orFail("GET /api/v9/me")
+        workspace = runBlocking { web.get(web.server.api("me"), JsonObject.serializer()) }.orFail("GET /api/v9/me")
             .getValue("default_workspace_id").jsonPrimitive.long
         signIn(TokklTestServer.url, account.apiToken)
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         assertNotNull("the refresh stored the settings", app.accountSettings.state.value)
     }
 
@@ -101,21 +122,28 @@ class BackgroundSendServerTest {
         assertEquals("no work before anything is queued", emptyList<WorkInfo>(), allWork())
 
         AirplaneMode.set(true, web)
-        val id = runBlocking { app.changes.start(workspace, EntryFields(description = "Queued offline")) }
+        val id = runBlocking { app.changes.start(WorkspaceId(workspace), EntryFields(description = "Queued offline")) }
         assertTrue(runBlocking { app.changes.stop(id) })
         val shortStop = runBlocking { app.changes.shortStopUndo.first() }?.also {
             assertEquals("the offline Undo targets this entry", id, it.entryId)
         } != null
         // The app's own send of both changes, which fails for want of a network.
-        runBlocking { app.sender.send().join() }
+        runBlocking { app.sender.sendAndWait() }
         assertEquals(2, unsentCount())
         val work = queueWork().single()
         // Start also scheduled the running check and reminder; Stop must cancel the reminder.
         runBlocking { app.reminder.reconcile() }
-        assertTrue("no reminder waits after Stop", workManager.getWorkInfosForUniqueWork(ReminderWork.NAME).get().all { it.state.isFinished })
-        assertEquals("one send work for both changes", listOf(work.id), allWork().filter {
-            RunningCheckWorker::class.java.name !in it.tags && ReminderWorker::class.java.name !in it.tags
-        }.map { it.id })
+        assertTrue(
+            "no reminder waits after Stop",
+            workManager.getWorkInfosForUniqueWork(ReminderWork.NAME).get().all { it.state.isFinished },
+        )
+        assertEquals(
+            "one send work for both changes",
+            listOf(work.id),
+            allWork().filter {
+                RunningCheckWorker::class.java.name !in it.tags && ReminderWorker::class.java.name !in it.tags
+            }.map { it.id },
+        )
         assertEquals(WorkInfo.State.ENQUEUED, work.state)
         assertEquals("the work waits for a network", NetworkType.CONNECTED, work.constraints.requiredNetworkType)
         assertNull("one-time work", work.periodicityInfo)
@@ -126,9 +154,11 @@ class BackgroundSendServerTest {
 
         assertEquals(WorkInfo.State.SUCCEEDED, awaitWork(work.id) { it.state.isFinished }.state)
         assertEquals(0, unsentCount())
-        val sentId = serverId(id)
+        val sentId = serverId(id.value)
         if (shortStop) {
-            val trashed = TrashServer(web).list().orFail("GET /api/app/trash").single { it.id == sentId }
+            val trashed = runBlocking {
+                web.tokklApi().trash.list()
+            }.orFail("GET /api/app/trash").single { it.id.value == sentId }
             assertEquals("Queued offline", trashed.description)
             assertEquals("the short Stop reached Trash", trashed.start, trashed.stop)
             assertEquals("the short Stop has zero duration", 0L, trashed.duration)
@@ -149,9 +179,17 @@ class BackgroundSendServerTest {
         val fields = EntryFields(description = "Not cached")
         val now = Instant.now()
 
-        assertFalse(runBlocking { app.changes.stop(NOT_CACHED) })
-        assertFalse(runBlocking { app.changes.update(NOT_CACHED, fields, now.minusSeconds(60), now) })
-        assertFalse(runBlocking { app.changes.delete(NOT_CACHED) })
+        assertFalse(runBlocking { app.changes.stop(EntryId(NOT_CACHED)) })
+        assertFalse(
+            runBlocking {
+                app.changes.update(
+                    EntryId(NOT_CACHED),
+                    fields,
+                    EntryTiming.Stopped(now.minusSeconds(60), now),
+                )
+            },
+        )
+        assertFalse(runBlocking { app.changes.delete(EntryId(NOT_CACHED)) })
 
         assertEquals(0, unsentCount())
         assertEquals("no work while the queue is empty", emptyList<WorkInfo>(), allWork())
@@ -168,11 +206,21 @@ class BackgroundSendServerTest {
      */
     @Test
     fun theRetryAfterTheBackoffSendsTheQueue() {
-        WorkManagerTestInitHelper.initializeTestWorkManager(context, WorkManagerTestInitHelper.ExecutorsMode.USE_TIME_BASED_SCHEDULING)
+        WorkManagerTestInitHelper.initializeTestWorkManager(
+            context,
+            Configuration.Builder().setWorkerFactory(KoinWorkerFactory()).build(),
+            WorkManagerTestInitHelper.ExecutorsMode.USE_TIME_BASED_SCHEDULING,
+        )
         signIn(NO_ROUTE, account.apiToken)
         val stop = Instant.now().truncatedTo(ChronoUnit.SECONDS)
-        val id = runBlocking { app.changes.create(workspace, EntryFields(description = "Sent by the retry"), stop.minusSeconds(600), stop) }
-        runBlocking { app.sender.send().join() }
+        val id = runBlocking {
+            app.changes.create(
+                WorkspaceId(workspace),
+                EntryFields(description = "Sent by the retry"),
+                EntryTiming.Stopped(stop.minusSeconds(600), stop),
+            )
+        }
+        runBlocking { app.sender.sendAndWait() }
         val work = queueWork().single()
 
         val ran = System.currentTimeMillis()
@@ -187,9 +235,12 @@ class BackgroundSendServerTest {
 
         assertEquals(WorkInfo.State.SUCCEEDED, done.state)
         assertEquals("two runs: the one that failed and the retry", 2, done.runAttemptCount)
-        assertTrue("the retry waited out the backoff: ${finished - ran} ms", finished - ran >= BackgroundSend.BACKOFF.toMillis())
+        assertTrue(
+            "the retry waited out the backoff: ${finished - ran} ms",
+            finished - ran >= BackgroundSend.BACKOFF.toMillis(),
+        )
         assertEquals(0, unsentCount())
-        assertEquals("Sent by the retry", serverEntry(serverId(id)).string("description"))
+        assertEquals("Sent by the retry", serverEntry(serverId(id.value)).string("description"))
         assertEquals("still one work", listOf(work.id), allWork().map { it.id })
     }
 
@@ -202,18 +253,28 @@ class BackgroundSendServerTest {
     fun anAppDrainThatEmptiesTheQueueCancelsTheWaitingRetry() {
         signIn(NO_ROUTE, account.apiToken)
         val stop = Instant.now().truncatedTo(ChronoUnit.SECONDS)
-        val id = runBlocking { app.changes.create(workspace, EntryFields(description = "Sent by the app"), stop.minusSeconds(600), stop) }
-        runBlocking { app.sender.send().join() }
+        val id = runBlocking {
+            app.changes.create(
+                WorkspaceId(workspace),
+                EntryFields(description = "Sent by the app"),
+                EntryTiming.Stopped(stop.minusSeconds(600), stop),
+            )
+        }
+        runBlocking { app.sender.sendAndWait() }
         val work = queueWork().single()
         driver.setAllConstraintsMet(work.id)
         awaitWork(work.id) { it.runAttemptCount == 1 && it.state == WorkInfo.State.ENQUEUED }
 
         signIn(TokklTestServer.url, account.apiToken)
-        runBlocking { app.sender.send().join() }
+        runBlocking { app.sender.sendAndWait() }
 
         assertEquals(0, unsentCount())
-        assertEquals("Sent by the app", serverEntry(serverId(id)).string("description"))
-        assertEquals("no work waits once the app has sent the queue", WorkInfo.State.CANCELLED, queueWork().single().state)
+        assertEquals("Sent by the app", serverEntry(serverId(id.value)).string("description"))
+        assertEquals(
+            "no work waits once the app has sent the queue",
+            WorkInfo.State.CANCELLED,
+            queueWork().single().state,
+        )
     }
 
     /**
@@ -226,18 +287,39 @@ class BackgroundSendServerTest {
         signIn(relay.url, account.apiToken)
         relay.holdAnswerTo(CREATE)
         val stop = Instant.now().truncatedTo(ChronoUnit.SECONDS)
-        runBlocking { app.changes.create(workspace, EntryFields(description = "Joined"), stop.minusSeconds(600), stop) }
+        runBlocking {
+            app.changes.create(
+                WorkspaceId(workspace),
+                EntryFields(description = "Joined"),
+                EntryTiming.Stopped(stop.minusSeconds(600), stop),
+            )
+        }
         awaitCondition("the server stored the entry and its answer is held") { relay.holdsAnswer }
         val work = queueWork().single()
 
         driver.setAllConstraintsMet(work.id)
         awaitWork(work.id) { it.state == WorkInfo.State.RUNNING }
-        awaitCondition("the worker registered with the drain") { BackgroundSend.runs.hasJoined(work.id) }
+        awaitCondition("the worker registered with the drain") { aWorkerHasJoined() }
         relay.releaseAnswer()
 
         assertEquals(WorkInfo.State.SUCCEEDED, awaitWork(work.id) { it.state.isFinished }.state)
         assertEquals(0, unsentCount())
         assertEquals("one run", 1, queueWork().single().runAttemptCount)
+    }
+
+    /**
+     * Whether a worker has joined the app's drain, as the app's own [BackgroundSendRuns] shows it:
+     * a cancellation of waiting work then cancels nothing.
+     */
+    private fun aWorkerHasJoined(): Boolean {
+        var cancelled = false
+        app.backgroundSendRuns.cancelWaiting(
+            waiting = { true },
+            cancel = { cancelled = true },
+            queueEmpty = { true },
+            schedule = {},
+        )
+        return !cancelled
     }
 
     private fun awaitCondition(what: String, condition: () -> Boolean) {
@@ -249,14 +331,20 @@ class BackgroundSendServerTest {
     }
 
     private fun signIn(server: ServerUrl, token: String) {
-        ServerTrustStore(context).confirmCleartext(server)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(server)
         Session(context).save(server, token)
     }
 
     /** Tokkl's work in any state; Glance owns its independent widget sessions. */
-    private fun allWork(): List<WorkInfo> = workManager.getWorkInfos(WorkQuery.fromTags(listOf(
-        BackgroundSendWorker::class.java.name, RunningCheckWorker::class.java.name, ReminderWorker::class.java.name,
-    ))).get()
+    private fun allWork(): List<WorkInfo> = workManager.getWorkInfos(
+        WorkQuery.fromTags(
+            listOf(
+                BackgroundSendWorker::class.java.name,
+                RunningCheckWorker::class.java.name,
+                ReminderWorker::class.java.name,
+            ),
+        ),
+    ).get()
 
     private fun queueWork(): List<WorkInfo> = workManager.getWorkInfosForUniqueWork(BackgroundSend.WORK_NAME).get()
 
@@ -268,11 +356,18 @@ class BackgroundSendServerTest {
 
     private fun unsentCount(): Int = runBlocking { app.changes.unsentCount.first() }
 
-    private fun serverId(localId: Long): Long =
-        runBlocking { app.changes.currentId(localId) }.also { check(it > 0) { "no server id for $localId" } }
+    private fun serverId(localId: Long): Long = runBlocking {
+        app.changes.currentId(
+            EntryId(localId),
+        )
+    }.value.also { check(it > 0) { "no server id for $localId" } }
 
-    private fun serverEntry(id: Long): JsonObject =
-        web.get(web.server.api("me", "time_entries", id.toString()), JsonObject.serializer()).orFail("GET a time entry")
+    private fun serverEntry(id: Long): JsonObject = runBlocking {
+        web.get(
+            web.server.api("me", "time_entries", id.toString()),
+            JsonObject.serializer(),
+        )
+    }.orFail("GET a time entry")
 
     private fun JsonObject.string(key: String): String = getValue(key).jsonPrimitive.content
 

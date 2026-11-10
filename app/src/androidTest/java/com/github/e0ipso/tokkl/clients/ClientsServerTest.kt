@@ -26,26 +26,37 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.core.view.WindowCompat
+import androidx.lifecycle.SavedStateHandle
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.HangingRelay
-import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
-import com.github.e0ipso.tokkl.cache.CachedClient
-import com.github.e0ipso.tokkl.cache.CachedProject
+import com.github.e0ipso.tokkl.api.HttpMethod
+import com.github.e0ipso.tokkl.api.api
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.feature.clients.R
+import com.github.e0ipso.tokkl.model.Client
+import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.orFail
+import com.github.e0ipso.tokkl.platform.AppForeground
+import com.github.e0ipso.tokkl.platform.DefaultNetwork
+import com.github.e0ipso.tokkl.platform.offlineIn
+import com.github.e0ipso.tokkl.session.CacheRefresh
+import com.github.e0ipso.tokkl.session.ServerChanges
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import java.time.Duration
-import java.util.concurrent.CopyOnWriteArrayList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.builtins.ListSerializer
@@ -63,6 +74,10 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import org.koin.core.context.GlobalContext
+import java.time.Duration
+import java.util.concurrent.CopyOnWriteArrayList
+import com.github.e0ipso.tokkl.core.catalog.R as CatalogR
 
 /**
  * The clients page against the real Tokkl container, wired as ClientsViewModel wires it, on an
@@ -81,21 +96,32 @@ class ClientsServerTest {
     private val refreshes = CopyOnWriteArrayList<Job>()
     private lateinit var account: TestAccounts.Account
     private var workspace = 0L
-    private lateinit var model: ClientsModel
+    private lateinit var model: ClientsViewModel
 
     @Before
     fun seedTheServerAndRefresh() {
         account = TestAccounts.create(timezone = "Europe/Madrid")
         Session(context).save(TokklTestServer.url, account.apiToken)
         workspace = account.workspaceId
-        runBlocking { app.accountSettings.refresh().join() }
-        model = ClientsModel(
-            client = Session(context)::client,
-            workspaceId = { app.accountSettings.state.value?.defaultWorkspaceId },
-            refreshCache = { refreshes += app.accountSettings.refreshAfterChange() },
+        runBlocking { app.accountRefresh.refresh().join() }
+        model = ClientsViewModel(
+            repository = ServerClientsRepository(Session(context).api),
+            settings = app.accountSettings,
+            changes = ServerChanges(
+                scope = scope,
+                io = Dispatchers.IO,
+                refreshes = object : CacheRefresh {
+                    override fun refresh() = app.accountRefresh.refresh().also { refreshes += it }
+
+                    override fun refreshAfterChange() = app.accountRefresh.refreshAfterChange().also { refreshes += it }
+                },
+            ),
             scope = scope,
             io = Dispatchers.IO,
             cachedClients = app.cache.clients,
+            offline = GlobalContext.get().get<DefaultNetwork>().offlineIn(scope),
+            app = AppForeground(MutableStateFlow(true), emptyFlow()),
+            saved = SavedStateHandle(),
         )
     }
 
@@ -122,15 +148,23 @@ class ClientsServerTest {
         field(R.string.client_notes).type("Pays late")
         button(R.string.client_create).tap()
 
-        awaitText(string(R.string.catalog_created, "Acme"))
-        awaitMessageGone(string(R.string.catalog_created, "Acme"))
+        awaitText(string(CatalogR.string.catalog_created, "Acme"))
+        awaitMessageGone(string(CatalogR.string.catalog_created, "Acme"))
         var server = client("Acme")
         assertEquals("Pays late", server.string("notes"))
         val id = server.id()
-        awaitCache("the cache holds the new client") { clients, _ -> clients.any { it.id == id && it.name == "Acme" && !it.archived } }
+        awaitCache(
+            "the cache holds the new client",
+        ) { clients, _ -> clients.any { it.id.value == id && it.name == "Acme" && !it.archived } }
 
-        val project = create("projects", buildJsonObject { put("name", "Website"); put("client_id", id) })
-        runBlocking { app.accountSettings.refresh().join() }
+        val project = create(
+            "projects",
+            buildJsonObject {
+                put("name", "Website")
+                put("client_id", id)
+            },
+        )
+        runBlocking { app.accountRefresh.refresh().join() }
         // The page counts projects when it loads, as opening it again would.
         composeRule.runOnUiThread { model.retry() }
         awaitText(context.resources.getQuantityString(R.plurals.clients_projects, 1, 1))
@@ -142,17 +176,21 @@ class ClientsServerTest {
         field(R.string.client_notes).clear()
         button(R.string.client_save).tap()
 
-        awaitText(string(R.string.catalog_saved, "Acme Inc"))
-        awaitMessageGone(string(R.string.catalog_saved, "Acme Inc"))
+        awaitText(string(CatalogR.string.catalog_saved, "Acme Inc"))
+        awaitMessageGone(string(CatalogR.string.catalog_saved, "Acme Inc"))
         server = client("Acme Inc")
         assertEquals(id, server.id())
         assertEquals(null, server.string("notes"))
-        awaitCache("the cache holds the new name") { clients, _ -> clients.any { it.id == id && it.name == "Acme Inc" } }
+        awaitCache(
+            "the cache holds the new name",
+        ) { clients, _ -> clients.any { it.id.value == id && it.name == "Acme Inc" } }
 
         composeRule.onNode(hasContentDescription(string(R.string.clients_archive_named, "Acme Inc"))).tap()
         awaitText(string(R.string.clients_archive_title, "Acme Inc"))
         awaitText(context.resources.getQuantityString(R.plurals.clients_archive_projects, 1, 1))
-        composeRule.onNode(hasText(string(R.string.clients_archive)) and hasClickAction() and hasAnyAncestor(isDialog())).tap(scroll = false)
+        composeRule.onNode(
+            hasText(string(R.string.clients_archive)) and hasClickAction() and hasAnyAncestor(isDialog()),
+        ).tap(scroll = false)
 
         awaitText(string(R.string.clients_archived_done, "Acme Inc"))
         awaitMessageGone(string(R.string.clients_archived_done, "Acme Inc"))
@@ -160,14 +198,14 @@ class ClientsServerTest {
         composeRule.onNode(hasText(string(R.string.clients_archived)) and isHeading()).assertExists()
         composeRule.onNode(hasText("Acme Inc") and hasClickAction()).assert(hasText(string(R.string.clients_archived)))
         awaitCache("the cache holds the archived client, and its project is archived") { clients, projects ->
-            clients.any { it.id == id && it.archived } && projects.none { it.id == project && it.active }
+            clients.any { it.id.value == id && it.archived } && projects.none { it.id.value == project && it.active }
         }
 
         composeRule.onNode(hasContentDescription(string(R.string.clients_restore_named, "Acme Inc"))).tap()
         awaitText(string(R.string.clients_restored_done, "Acme Inc"))
         assertEquals("false", client("Acme Inc").getValue("archived").jsonPrimitive.content)
         awaitCache("the cache holds the restored client and project") { clients, projects ->
-            clients.any { it.id == id && !it.archived } && projects.any { it.id == project && it.active }
+            clients.any { it.id.value == id && !it.archived } && projects.any { it.id.value == project && it.active }
         }
     }
 
@@ -187,12 +225,16 @@ class ClientsServerTest {
             field(R.string.client_name).type("Acme")
             button(R.string.client_create).tap()
 
-            awaitText(string(R.string.catalog_created, "Acme"))
+            awaitText(string(CatalogR.string.catalog_created, "Acme"))
             assertEquals("the relay dropped the create's answer", 1, relay.droppedAnswers)
             row("Acme").assertExists()
             assertNoText("Name has already been taken")
         }
-        assertEquals("one copy on the server", 1, clients().count { it.getValue("name").jsonPrimitive.content == "Acme" })
+        assertEquals(
+            "one copy on the server",
+            1,
+            clients().count { it.getValue("name").jsonPrimitive.content == "Acme" },
+        )
     }
 
     @Test
@@ -207,7 +249,11 @@ class ClientsServerTest {
 
         awaitText("Name has already been taken")
         composeRule.onNode(hasText(string(R.string.client_form_new))).assertExists()
-        assertEquals("one copy on the server", 1, clients().count { it.getValue("name").jsonPrimitive.content == "Acme" })
+        assertEquals(
+            "one copy on the server",
+            1,
+            clients().count { it.getValue("name").jsonPrimitive.content == "Acme" },
+        )
     }
 
     @Test
@@ -217,7 +263,7 @@ class ClientsServerTest {
         awaitText("Keep")
         composeRule.onNode(hasContentDescription(string(R.string.clients_archive_named, "Keep"))).tap()
         awaitText(string(R.string.clients_archive_no_projects))
-        composeRule.onNode(hasText(string(R.string.catalog_cancel)) and hasClickAction()).tap(scroll = false)
+        composeRule.onNode(hasText(string(CatalogR.string.catalog_cancel)) and hasClickAction()).tap(scroll = false)
         composeRule.waitForIdle()
         assertEquals("false", client("Keep").getValue("archived").jsonPrimitive.content)
     }
@@ -237,7 +283,9 @@ class ClientsServerTest {
 
         AirplaneMode.set(false, account.client)
         composeRule.waitUntil(NETWORK_TIMEOUT.toMillis()) {
-            composeRule.onAllNodesWithText(string(R.string.clients_server_needed_message)).fetchSemanticsNodes().isEmpty()
+            composeRule.onAllNodesWithText(
+                string(R.string.clients_server_needed_message),
+            ).fetchSemanticsNodes().isEmpty()
         }
         button(R.string.clients_new).assertIsEnabled()
     }
@@ -245,8 +293,14 @@ class ClientsServerTest {
     @Test
     fun theServerOutOfReachListsThePhonesClientsWithTheArchivedOnesMarked() {
         val gone = create("clients", buildJsonObject { put("name", "Gone") })
-        account.client.sendNoContent("POST", url("clients", gone.toString(), "archive"), buildJsonObject {}).orFail("archive")
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking {
+            account.client.sendNoContent(
+                HttpMethod.POST,
+                url("clients", gone.toString(), "archive"),
+                buildJsonObject {},
+            )
+        }.orFail("archive")
+        runBlocking { app.accountRefresh.refresh().join() }
         AirplaneMode.set(true, account.client)
         show()
 
@@ -285,12 +339,12 @@ class ClientsServerTest {
     private fun throughARelay(block: (HangingRelay) -> Unit) {
         val relay = HangingRelay(TokklTestServer.url)
         try {
-            ServerTrustStore(context).confirmCleartext(relay.url)
+            ServerTrustStore(context, Dispatchers.IO).confirmCleartext(relay.url)
             Session(context).save(relay.url, account.apiToken)
             block(relay)
         } finally {
             relay.close()
-            ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
+            ServerTrustStore(context, Dispatchers.IO).confirmCleartext(TokklTestServer.url)
             Session(context).save(TokklTestServer.url, account.apiToken)
         }
     }
@@ -303,7 +357,11 @@ class ClientsServerTest {
     }
 
     private fun assertNoText(text: String) {
-        assertEquals("\"$text\" shows", 0, composeRule.onAllNodesWithText(text, substring = true).fetchSemanticsNodes().size)
+        assertEquals(
+            "\"$text\" shows",
+            0,
+            composeRule.onAllNodesWithText(text, substring = true).fetchSemanticsNodes().size,
+        )
     }
 
     /**
@@ -319,7 +377,7 @@ class ClientsServerTest {
             WindowCompat.enableEdgeToEdge(window)
             window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
         }
-        composeRule.setContent { TokklTheme { ClientsScreen(model) } }
+        composeRule.setContent { TokklTheme { ClientsPage(model) } }
     }
 
     /** Types [text] into the field, as a user does. */
@@ -367,28 +425,38 @@ class ClientsServerTest {
      */
     private fun awaitMessageGone(text: String) {
         composeRule.mainClock.advanceTimeBy(SNACKBAR_MS)
-        composeRule.waitUntil(NETWORK_TIMEOUT.toMillis()) { composeRule.onAllNodesWithText(text).fetchSemanticsNodes().isEmpty() }
+        composeRule.waitUntil(
+            NETWORK_TIMEOUT.toMillis(),
+        ) { composeRule.onAllNodesWithText(text).fetchSemanticsNodes().isEmpty() }
     }
 
     private fun button(id: Int) = composeRule.onNode(hasText(string(id)) and hasClickAction())
 
     private fun field(id: Int) = composeRule.onNode(hasText(string(id)) and hasSetTextAction())
 
-    private fun row(name: String) =
-        composeRule.onNode(hasText(name) and hasClickAction() and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
+    private fun row(name: String) = composeRule.onNode(
+        hasText(name) and hasClickAction() and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button),
+    )
 
     private fun hasAnyAncestor(matcher: SemanticsMatcher) = androidx.compose.ui.test.hasAnyAncestor(matcher)
 
-    private fun awaitCache(message: String, check: (List<CachedClient>, List<CachedProject>) -> Boolean) {
+    private fun awaitCache(message: String, check: (List<Client>, List<Project>) -> Boolean) {
         runBlocking { refreshes.forEach { it.join() } }
-        assertTrue(message, check(runBlocking { app.cache.clients.first() }, runBlocking { app.cache.projects.first() }))
+        assertTrue(
+            message,
+            check(runBlocking { app.cache.clients.first() }, runBlocking { app.cache.projects.first() }),
+        )
     }
 
-    private fun client(name: String): JsonObject = clients().single { it.getValue("name").jsonPrimitive.content == name }
+    private fun client(name: String): JsonObject = clients().single {
+        it.getValue(
+            "name",
+        ).jsonPrimitive.content == name
+    }
 
     private fun clients(): List<JsonObject> {
         val url = url("clients").newBuilder().addQueryParameter("status", "both").build()
-        return account.client.get(url, ListSerializer(JsonObject.serializer())).orFail("GET clients")
+        return runBlocking { account.client.get(url, ListSerializer(JsonObject.serializer())) }.orFail("GET clients")
     }
 
     private fun JsonObject.id() = getValue("id").jsonPrimitive.long
@@ -397,16 +465,27 @@ class ClientsServerTest {
 
     private fun url(vararg path: String) = account.client.server.api("workspaces", workspace.toString(), *path)
 
-    private fun create(collection: String, body: JsonObject): Long =
-        account.client.send("POST", url(collection), body, JsonObject.serializer()).orFail("POST $collection").getValue("id").jsonPrimitive.long
+    private fun create(collection: String, body: JsonObject): Long = runBlocking {
+        account.client.send(
+            HttpMethod.POST,
+            url(collection),
+            body,
+            JsonObject.serializer(),
+        )
+    }.orFail("POST $collection").getValue("id").jsonPrimitive.long
 
     private fun string(id: Int, vararg args: Any): String = context.getString(id, *args)
 
     private fun awaitText(text: String) {
         try {
-            composeRule.waitUntil(NETWORK_TIMEOUT.toMillis()) { composeRule.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
+            composeRule.waitUntil(
+                NETWORK_TIMEOUT.toMillis(),
+            ) { composeRule.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
         } catch (e: ComposeTimeoutException) {
-            val shown = composeRule.onAllNodes(SemanticsMatcher("any") { true }, useUnmergedTree = true).fetchSemanticsNodes()
+            val shown = composeRule.onAllNodes(
+                SemanticsMatcher("any") { true },
+                useUnmergedTree = true,
+            ).fetchSemanticsNodes()
                 .flatMap { node -> node.config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text } }
             throw AssertionError("\"$text\" never showed. Shown: $shown", e)
         }

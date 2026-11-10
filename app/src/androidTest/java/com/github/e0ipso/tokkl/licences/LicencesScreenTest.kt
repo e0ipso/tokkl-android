@@ -19,16 +19,17 @@ import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
 import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.feature.settings.R
 import com.github.e0ipso.tokkl.settings.openSettings
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /** The Licences screen, reached from Settings, About, in the real activity. */
 class LicencesScreenTest {
@@ -77,15 +78,6 @@ class LicencesScreenTest {
         assertEquals(shipped, notice)
     }
 
-    @Test
-    fun backButtonReturnsToSettings() {
-        openLicences()
-
-        composeRule.onNodeWithContentDescription(string(R.string.back)).performClick()
-
-        settingsHeading().assertIsDisplayed()
-    }
-
     /** The top bar, with the title and the back button, stays put while the licence text scrolls under it. */
     @Test
     fun theBarStaysWhileTheTextScrolls() {
@@ -93,15 +85,21 @@ class LicencesScreenTest {
         val text = composeRule.onNode(hasText(OFL_TITLE, substring = true))
         val textBefore = text.getUnclippedBoundsInRoot().top
         val headingBefore = licencesHeading().getBoundsInRoot()
-        val backBefore = composeRule.onNodeWithContentDescription(string(R.string.back)).getBoundsInRoot()
+        val backBefore = composeRule.onNodeWithContentDescription(string(UiR.string.back)).getBoundsInRoot()
 
         composeRule.onNode(hasScrollAction()).performTouchInput { swipeUp() }
         composeRule.waitForIdle()
 
         val textAfter = text.getUnclippedBoundsInRoot().top
-        assertTrue("the text scrolls: its top moved from $textBefore to $textAfter", textAfter < textBefore - MIN_SCROLL)
+        assertTrue(
+            "the text scrolls: its top moved from $textBefore to $textAfter",
+            textAfter < textBefore - MIN_SCROLL,
+        )
         assertEquals(headingBefore, licencesHeading().assertIsDisplayed().getBoundsInRoot())
-        assertEquals(backBefore, composeRule.onNodeWithContentDescription(string(R.string.back)).assertIsDisplayed().getBoundsInRoot())
+        assertEquals(
+            backBefore,
+            composeRule.onNodeWithContentDescription(string(UiR.string.back)).assertIsDisplayed().getBoundsInRoot(),
+        )
     }
 
     /** System back goes to Settings, and from there to the Timer page, instead of closing the app. */

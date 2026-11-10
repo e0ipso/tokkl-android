@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <!--
+            The Quick Settings tile (docs/PRD.md N4). Only the system, which holds
+            BIND_QUICK_SETTINGS_TILE, can bind it. No ACTIVE_TILE meta-data: the system binds it
+            each time the panel shows it (see RunningTileService).
+        -->
+        <service
+            android:name="com.github.e0ipso.tokkl.tile.RunningTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_play"
+            android:label="@string/tile_name"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+        <!--
+            A long press on the tile. SystemUI, another app, sends QS_TILE_PREFERENCES, so the
+            activity is exported. It reads the queue and ignores the intent's extras. The
+            translucent theme lets it draw a dialog over the shade and leave no recents entry.
+        -->
+        <activity
+            android:name="com.github.e0ipso.tokkl.tile.TileControlsActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Tokkl.TileControls">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE_PREFERENCES" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

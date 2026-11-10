@@ -12,10 +12,10 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertIsSelected
-import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
@@ -28,21 +28,29 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.DeviceShell
-import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.TogglApiClient
-import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.api.api
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.defaultNetwork
+import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.core.entryfields.R
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryTiming
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.TaskId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import java.time.Duration
-import java.time.Instant
-import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.builtins.ListSerializer
@@ -61,6 +69,9 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.Duration
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 /**
  * The picker on a host made for the test, since no timer or entry edit screen exists yet, over
@@ -86,7 +97,7 @@ class EntityPickerServerTest {
         account = TestAccounts.create(timezone = "Europe/Madrid")
         Session(context).save(TokklTestServer.url, account.apiToken)
         seed = Seed(account.client)
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
     }
 
     @After
@@ -104,16 +115,26 @@ class EntityPickerServerTest {
 
     @Test
     fun theOldEntrysArchivedItemsStaySelectedWithALabelAndNoOtherArchivedItemIsOffered() {
-        show(Picked(seed.oldSite, seed.oldTask, listOf("legacy")))
+        show(Picked(ProjectId(seed.oldSite), TaskId(seed.oldTask), listOf("legacy")))
 
         option("Old site").assertIsSelected().assert(hasText(string(R.string.picker_archived)))
         option("Old task").assertIsSelected().assert(hasText(string(R.string.picker_archived)))
         option("legacy").assertIsOn()
         option("Website").assert(SemanticsMatcher.expectValue(SemanticsProperties.Selected, false))
-        assertEquals("the active projects and tasks are on offer", 1, composeRule.onAllNodesWithText("Design").fetchSemanticsNodes().size)
+        assertEquals(
+            "the active projects and tasks are on offer",
+            1,
+            composeRule.onAllNodesWithText("Design").fetchSemanticsNodes().size,
+        )
 
-        assertTrue("the cache holds Retired, archived", runBlocking { app.cache.projects.first() }.any { it.name == "Retired" && !it.active })
-        assertTrue("the cache holds Dropped, done", runBlocking { app.cache.tasks.first() }.any { it.name == "Dropped" && !it.active })
+        assertTrue(
+            "the cache holds Retired, archived",
+            runBlocking { app.cache.projects.first() }.any { it.name == "Retired" && !it.active },
+        )
+        assertTrue(
+            "the cache holds Dropped, done",
+            runBlocking { app.cache.tasks.first() }.any { it.name == "Dropped" && !it.active },
+        )
         for (unused in listOf("Retired", "Dropped")) {
             search(unused)
             composeRule.onAllNodesWithText(unused).assertCountEquals(1) // The search field.
@@ -133,7 +154,7 @@ class EntityPickerServerTest {
         search("des")
         composeRule.onAllNodesWithText("Internal").assertCountEquals(0)
         option("Design").performClick()
-        assertEquals(Picked(seed.website, seed.design), picked)
+        assertEquals(Picked(ProjectId(seed.website), TaskId(seed.design)), picked)
         option("Design").assertIsSelected()
         option("Website").assertIsSelected()
 
@@ -157,10 +178,14 @@ class EntityPickerServerTest {
         val start = Instant.now().minus(1, ChronoUnit.HOURS).truncatedTo(ChronoUnit.MINUTES)
         val id = runBlocking {
             app.changes.create(
-                seed.workspace,
-                EntryFields(description = "Picked offline", projectId = picked.projectId, taskId = picked.taskId, tags = picked.tags),
-                start = start,
-                stop = start.plus(Duration.ofMinutes(30)),
+                WorkspaceId(seed.workspace),
+                EntryFields(
+                    description = "Picked offline",
+                    projectId = picked.projectId,
+                    taskId = picked.taskId,
+                    tags = picked.tags,
+                ),
+                EntryTiming.Stopped(start, start.plus(Duration.ofMinutes(30))),
             )
         }
         val row = runBlocking { app.cache.entries.first() }.single { it.entry.id == id }
@@ -171,14 +196,24 @@ class EntityPickerServerTest {
         val deadline = System.nanoTime() + NETWORK_TIMEOUT.toNanos()
         while (runBlocking { app.changes.unsentCount.first() } > 0) {
             if (System.nanoTime() > deadline) throw AssertionError("the queue did not empty")
-            runBlocking { app.sender.send().join() }
+            runBlocking { app.sender.sendAndWait() }
         }
 
         val api = account.client
         val serverId = runBlocking { app.changes.currentId(id) }
-        val entry = api.get(api.server.api("me", "time_entries", serverId.toString()), JsonObject.serializer()).orFail("GET the entry")
+        val entry = runBlocking {
+            api.get(
+                api.server.api("me", "time_entries", serverId.toString()),
+                JsonObject.serializer(),
+            )
+        }.orFail("GET the entry")
         assertEquals(listOf("typed offline"), entry.getValue("tags").jsonArray.map { it.jsonPrimitive.content })
-        val tags = api.get(api.server.api("me", "tags"), ListSerializer(JsonObject.serializer())).orFail("GET /api/v9/me/tags")
+        val tags = runBlocking {
+            api.get(
+                api.server.api("me", "tags"),
+                ListSerializer(JsonObject.serializer()),
+            )
+        }.orFail("GET /api/v9/me/tags")
         assertTrue("the server made the tag", tags.any { it.getValue("name").jsonPrimitive.content == "typed offline" })
     }
 
@@ -186,8 +221,9 @@ class EntityPickerServerTest {
         picked = original
         composeRule.setContent {
             TokklTheme {
-                EntityPicker(
+                CachedEntityPicker(
                     cache = app.cache,
+                    network = app.defaultNetwork,
                     workspaceId = seed.workspace,
                     original = original,
                     picked = picked,
@@ -207,7 +243,9 @@ class EntityPickerServerTest {
     }
 
     /** The option row for [name], scrolled into view: one TalkBack item with a radio button or checkbox role. */
-    private fun option(name: String): SemanticsNodeInteraction = scrolledTo(hasText(name) and (hasRole(Role.RadioButton) or hasRole(Role.Checkbox)))
+    private fun option(name: String): SemanticsNodeInteraction = scrolledTo(
+        hasText(name) and (hasRole(Role.RadioButton) or hasRole(Role.Checkbox)),
+    )
 
     private fun scrolledTo(matcher: SemanticsMatcher): SemanticsNodeInteraction {
         composeRule.onNode(hasScrollToNodeAction()).performScrollToNode(matcher)
@@ -223,7 +261,9 @@ class EntityPickerServerTest {
         for (node in options) {
             val text = node.config.getOrNull(SemanticsProperties.Text).orEmpty().joinToString { it.text }
             assertTrue("an option without a label", text.isNotBlank())
-            val state = node.config.getOrNull(SemanticsProperties.Selected) ?: node.config.getOrNull(SemanticsProperties.ToggleableState)
+            val state = node.config.getOrNull(
+                SemanticsProperties.Selected,
+            ) ?: node.config.getOrNull(SemanticsProperties.ToggleableState)
             assertTrue("$text has no selected or checked state", state != null)
         }
     }
@@ -235,13 +275,17 @@ class EntityPickerServerTest {
         DeviceShell.run("cmd connectivity airplane-mode ${if (on) "enable" else "disable"}")
         val deadline = System.nanoTime() + NETWORK_TIMEOUT.toNanos()
         while (serverAnswers() == on) {
-            if (System.nanoTime() > deadline) throw AssertionError("the network did not ${if (on) "go" else "come back"}")
+            if (System.nanoTime() > deadline) {
+                throw AssertionError(
+                    "the network did not ${if (on) "go" else "come back"}",
+                )
+            }
             Thread.sleep(200)
         }
     }
 
     private fun serverAnswers(): Boolean {
-        val result = account.client.get(account.client.server.api("me"), JsonObject.serializer())
+        val result = runBlocking { account.client.get(account.client.server.api("me"), JsonObject.serializer()) }
         return (result as? ApiResult.Failure)?.error !is ApiError.Network
     }
 
@@ -251,12 +295,30 @@ class EntityPickerServerTest {
      * uses Old site, Old task and the tag legacy; two newer ones keep Retired and Dropped cached.
      */
     private class Seed(private val api: TogglApiClient) {
-        val workspace = api.get(api.server.api("me"), JsonObject.serializer()).orFail("GET /api/v9/me")
+        val workspace = runBlocking { api.get(api.server.api("me"), JsonObject.serializer()) }.orFail("GET /api/v9/me")
             .getValue("default_workspace_id").jsonPrimitive.long
         private val client = create("clients", buildJsonObject { put("name", "Acme") })
-        val website = create("projects", buildJsonObject { put("name", "Website"); put("client_id", client) })
-        val oldSite = create("projects", buildJsonObject { put("name", "Old site"); put("client_id", client) })
-        private val retired = create("projects", buildJsonObject { put("name", "Retired"); put("client_id", client) })
+        val website = create(
+            "projects",
+            buildJsonObject {
+                put("name", "Website")
+                put("client_id", client)
+            },
+        )
+        val oldSite = create(
+            "projects",
+            buildJsonObject {
+                put("name", "Old site")
+                put("client_id", client)
+            },
+        )
+        private val retired = create(
+            "projects",
+            buildJsonObject {
+                put("name", "Retired")
+                put("client_id", client)
+            },
+        )
         private val internal = create("projects", buildJsonObject { put("name", "Internal") })
         val design = create("projects/$website/tasks", buildJsonObject { put("name", "Design") })
         private val dropped = create("projects/$website/tasks", buildJsonObject { put("name", "Dropped") })
@@ -294,13 +356,20 @@ class EntityPickerServerTest {
 
         private fun update(path: String, body: JsonObject) {
             val url = api.server.api("workspaces", workspace.toString(), *path.split('/').toTypedArray())
-            api.send("PUT", url, body, JsonObject.serializer()).orFail("PUT $path")
+            runBlocking { api.send(HttpMethod.PUT, url, body, JsonObject.serializer()) }.orFail("PUT $path")
         }
 
         /** POSTs [body] to a workspace collection such as `clients` and returns the new id. */
         private fun create(collection: String, body: JsonObject): Long {
             val url = api.server.api("workspaces", workspace.toString(), *collection.split('/').toTypedArray())
-            return api.send("POST", url, body, JsonObject.serializer()).orFail("POST $collection").getValue("id").jsonPrimitive.long
+            return runBlocking {
+                api.send(
+                    HttpMethod.POST,
+                    url,
+                    body,
+                    JsonObject.serializer(),
+                )
+            }.orFail("POST $collection").getValue("id").jsonPrimitive.long
         }
     }
 

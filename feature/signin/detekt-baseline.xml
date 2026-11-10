@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<!-- Findings whose fix would change behaviour. config/detekt/detekt.yml says how the rest is fixed. -->
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <!-- The fix, rememberUpdatedState, makes the effect call the newest lambda instead of the one it started with. That changes behaviour. -->
+    <ID>LambdaParameterInRestartableEffect:SignInScreen.kt:onSignedIn: () -&gt; Unit</ID>
+  </CurrentIssues>
+</SmellBaseline>

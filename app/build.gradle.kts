@@ -1,15 +1,11 @@
-import com.android.build.gradle.internal.lint.AndroidLintAnalysisTask
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier
 import org.gradle.api.artifacts.result.ResolvedComponentResult
 import org.gradle.api.artifacts.result.ResolvedDependencyResult
 import java.util.Properties
 
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.tokkl.android.application)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.ksp)
-    alias(libs.plugins.room)
 }
 
 // The app version lives in gradle/version.properties, which the release step
@@ -88,25 +84,17 @@ val releaseSigning: Map<String, String>? = run {
 
 android {
     namespace = "com.github.e0ipso.tokkl"
-    // Compose UI 1.12 and androidx.core 1.19 need compileSdk 37.
-    compileSdk = 37
-    // Pinned so that F-Droid builds with the same build-tools as CI, which
-    // installs this version. 36.0.0 is both the default and the minimum of AGP
-    // 9.4.1, so check this pin whenever AGP changes.
-    buildToolsVersion = "36.0.0"
+    // compileSdk, buildToolsVersion, minSdk, targetSdk, Java 17 and Compose come
+    // from the tokkl.android.application plugin in build-logic.
 
     defaultConfig {
         // The ID F-Droid lists the app under. The code keeps the namespace's
         // package, so only installed-app lookups use this one.
         applicationId = "com.canpicasoft.tokkl"
-        // Android 12 (docs/PRD.md, Compatibility).
-        minSdk = 31
-        // The API level of the test emulator.
-        targetSdk = 36
         versionCode = appVersionCode
         versionName = appVersionName
 
-        testInstrumentationRunner = "com.github.e0ipso.tokkl.accessibility.AccessibilityTestRunner"
+        testInstrumentationRunner = "com.github.e0ipso.tokkl.TokklTestRunner"
     }
 
     signingConfigs {
@@ -141,15 +129,6 @@ android {
         includeInBundle = false
     }
 
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    buildFeatures {
-        compose = true
-    }
-
     // These probes need the script to revoke permission before instrumentation starts. Revoking
     // it inside a test kills that test's process; ordinary suites keep their restart fixtures.
     if (providers.gradleProperty("tokklFreshNotificationPermission").orNull == "true") {
@@ -166,32 +145,64 @@ android {
     }
 }
 
-// Room writes the schema of each database version here. The files are tracked,
-// so a later version can be checked against them and migrated.
-room {
-    schemaDirectory("$projectDir/schemas")
-}
-
 dependencies {
-    implementation(platform(libs.androidx.compose.bom))
+    implementation(project(":core:api"))
+    implementation(project(":core:ui"))
+    implementation(project(":core:platform"))
+    implementation(project(":core:session"))
+    implementation(project(":core:cache"))
+    implementation(project(":core:timerstate"))
+    implementation(project(":core:timersync"))
+    implementation(project(":core:trust"))
+    implementation(project(":core:navigation"))
+    implementation(project(":feature:signin"))
+    implementation(project(":feature:timer"))
+    implementation(project(":feature:pomodoro"))
+    implementation(project(":feature:reports"))
+    implementation(project(":feature:projects"))
+    implementation(project(":feature:clients"))
+    implementation(project(":feature:tags"))
+    implementation(project(":feature:trash"))
+    implementation(project(":feature:settings"))
+    implementation(project(":feature:sync"))
+    implementation(project(":feature:notification"))
+    implementation(project(":feature:shortcuts"))
+    implementation(project(":feature:tile"))
+    implementation(project(":feature:widget"))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
-    implementation(libs.androidx.compose.material3.adaptive)
     implementation(libs.androidx.compose.ui)
-    implementation(libs.okhttp)
-    implementation(libs.kotlinx.serialization.json)
-    implementation(libs.androidx.room.runtime)
-    ksp(libs.androidx.room.compiler)
-    implementation(libs.androidx.work.runtime)
-    implementation(libs.androidx.glance.appwidget)
-    implementation(libs.androidx.glance.material3)
+    // Navigation 3 keeps the back stack and gives each screen its own view model store.
+    implementation(libs.androidx.navigation3.runtime)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.navigation3)
+    // Dependency injection. Koin is Apache-2.0.
+    implementation(platform(libs.koin.bom))
+    implementation(libs.koin.android)
+    implementation(libs.koin.androidx.compose)
+    implementation(libs.koin.androidx.workmanager)
 
     // Declares the empty activity that createComposeRule() starts, in debug builds only.
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
     testImplementation(libs.junit)
+    testImplementation(testFixtures(project(":core:api")))
+    testImplementation(testFixtures(project(":core:ui")))
     testImplementation(libs.mockwebserver3)
+    testImplementation(platform(libs.koin.bom))
+    testImplementation(libs.koin.test)
+    testImplementation(libs.koin.test.junit4)
+    // AppModulesTest names the workers' parameters.
+    testImplementation(libs.androidx.work.runtime)
 
+    // The test runner, the compose rules with their accessibility checks and the device rules.
+    androidTestImplementation(project(":core:testing"))
+    androidTestImplementation(testFixtures(project(":core:session")))
+    // The test server's own requests, sent over the app's HTTP client with JSON bodies.
+    androidTestImplementation(testFixtures(project(":core:api")))
+    // The instrumented tests read the shared parts' strings and classes too.
+    androidTestImplementation(project(":core:catalog"))
+    androidTestImplementation(project(":core:entryfields"))
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4.accessibility)
@@ -200,6 +211,11 @@ dependencies {
     // Exercises the actual launcher menu and shortcut tap.
     androidTestImplementation(libs.androidx.test.uiautomator)
     androidTestImplementation(libs.androidx.work.testing)
+    // The device tests read the cache database, the queue's work and the widgets themselves.
+    androidTestImplementation(libs.androidx.room.runtime)
+    androidTestImplementation(libs.androidx.work.runtime)
+    androidTestImplementation(libs.androidx.glance.appwidget)
+    androidTestImplementation(libs.androidx.glance.material3)
     androidTestUtil(libs.androidx.test.orchestrator)
 }
 
@@ -281,16 +297,4 @@ val checkDeniedDependencies = tasks.register("checkDeniedDependencies") {
 
 tasks.named("check") {
     dependsOn(checkDeniedDependencies)
-}
-
-// Lint's analysis stores the files of this module relative to path variables,
-// but files outside it, such as gradle/libs.versions.toml and
-// gradle/wrapper/gradle-wrapper.properties, by absolute path: lint has no
-// variable for the root project, and AGP 9.4.1 passes it no --path-variables.
-// From the build cache, one checkout's analysis made another checkout's lint
-// report cite the first checkout's files. With the checkout's path as an
-// input, the analysis comes from the cache only for the checkout that ran it.
-val checkoutDir: String = rootDir.absolutePath
-tasks.withType<AndroidLintAnalysisTask>().configureEach {
-    inputs.property("checkoutDir", checkoutDir)
 }

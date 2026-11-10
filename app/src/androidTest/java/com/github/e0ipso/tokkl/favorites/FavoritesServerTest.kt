@@ -22,21 +22,25 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.api
 import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
-import java.time.Duration
-import java.time.Instant
-import java.time.temporal.ChronoUnit
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
@@ -60,6 +64,11 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.Duration
+import java.time.Instant
+import java.time.temporal.ChronoUnit
+import com.github.e0ipso.tokkl.core.entryfields.R as FieldsR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * Timer templates against the real Tokkl container (docs/PRD.md T5), saved from the timer's popup
@@ -80,7 +89,12 @@ class FavoritesServerTest {
 
     /** The web app: the same account, straight to the server and past the app's guard. */
     private val web by lazy {
-        TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(account.apiToken), httpClient = OkHttpClient())
+        TogglApiClient(
+            TokklTestServer.url,
+            ApiCredentials.ApiToken(account.apiToken),
+            httpClient = OkHttpClient(),
+            io = Dispatchers.IO,
+        )
     }
 
     @Before
@@ -146,7 +160,10 @@ class FavoritesServerTest {
      */
     @Test
     fun aFavoriteTappedWhileADescriptionIsTypedRunsWithItsOwnDescription() {
-        saveOnTheWeb("""{"favorites": [{"description": "Report", "project_id": null, "task_id": null, "tags": [], "billable": false}]}""")
+        saveOnTheWeb(
+            """{"favorites": [{"description": "Report", "project_id": null, "task_id": null, "tags": [],""" +
+                """ "billable": false}]}""",
+        )
         launch {
             description().performTextInput("Draft")
             openTemplates()
@@ -206,9 +223,17 @@ class FavoritesServerTest {
             }
         }
 
-        val preferences = web.get(web.server.api("me", "preferences"), JsonObject.serializer()).orFail("GET /api/v9/me/preferences")
+        val preferences = runBlocking {
+            web.get(
+                web.server.api("me", "preferences"),
+                JsonObject.serializer(),
+            )
+        }.orFail("GET /api/v9/me/preferences")
         assertEquals(
-            Json.parseToJsonElement("""[{"description": "Pinned on the phone", "project_id": null, "task_id": null, "tags": [], "billable": false}]"""),
+            Json.parseToJsonElement(
+                """[{"description": "Pinned on the phone", "project_id": null, "task_id": null, "tags": [],""" +
+                    """ "billable": false}]""",
+            ),
             preferences.getValue("favorites"),
         )
         assertTrue("pomodoro_enabled stays", preferences.getValue("pomodoro_enabled").jsonPrimitive.boolean)
@@ -217,11 +242,16 @@ class FavoritesServerTest {
 
     @Test
     fun editingOfflineSaysItNeedsTheServer() {
-        saveOnTheWeb("""{"favorites": [{"description": "Write the report", "project_id": null, "task_id": null, "tags": [], "billable": false}]}""")
+        saveOnTheWeb(
+            """{"favorites": [{"description": "Write the report", "project_id": null, "task_id": null, "tags": [],""" +
+                """ "billable": false}]}""",
+        )
         launch {
             openTemplates()
             tapMenu(R.string.favorites_manage)
-            awaitShown("the management page") { composeRule.onNode(hasText(string(R.string.nav_templates)) and isHeading()) }
+            awaitShown(
+                "the management page",
+            ) { composeRule.onNode(hasText(string(R.string.nav_templates)) and isHeading()) }
             AirplaneMode.set(true, web)
             awaitShown("the offline notice") { composeRule.onNode(hasText(string(R.string.favorites_offline))) }
             control(R.string.favorites_delete, "Write the report").assertIsNotEnabled()
@@ -238,16 +268,27 @@ class FavoritesServerTest {
     fun pinningAHistoryEntryReachesTheWebInItsFormat() {
         val project = createProject("Pinned project")
         createEntry("Pin me", project)
-        saveOnTheWeb("""{"favorites": [{"description": "Write the report", "project_id": null, "task_id": null, "tags": [], "billable": false}]}""")
+        saveOnTheWeb(
+            """{"favorites": [{"description": "Write the report", "project_id": null, "task_id": null, "tags": [],""" +
+                """ "billable": false}]}""",
+        )
         launch {
             pinFromHistory("Pin me")
             awaitShown("the message") { composeRule.onNode(hasText(string(R.string.history_pinned))) }
             composeRule.waitUntil("the phone caches what it stored", NETWORK_TIMEOUT.toMillis()) {
-                runBlocking { app.cache.favorites.first() }.map { it.description } == listOf("Write the report", "Pin me")
+                runBlocking { app.cache.favorites.first() }.map { it.description } == listOf(
+                    "Write the report",
+                    "Pin me",
+                )
             }
         }
 
-        val preferences = web.get(web.server.api("me", "preferences"), JsonObject.serializer()).orFail("GET /api/v9/me/preferences")
+        val preferences = runBlocking {
+            web.get(
+                web.server.api("me", "preferences"),
+                JsonObject.serializer(),
+            )
+        }.orFail("GET /api/v9/me/preferences")
         assertEquals(
             Json.parseToJsonElement(
                 """
@@ -274,14 +315,22 @@ class FavoritesServerTest {
             val full = context.resources.getQuantityString(R.plurals.favorites_full, MAX_FAVORITES, MAX_FAVORITES)
             awaitShown("the message") { composeRule.onNode(hasText(full)) }
         }
-        val stored = web.get(web.server.api("me", "preferences"), JsonObject.serializer()).orFail("GET /api/v9/me/preferences")
+        val stored = runBlocking {
+            web.get(
+                web.server.api("me", "preferences"),
+                JsonObject.serializer(),
+            )
+        }.orFail("GET /api/v9/me/preferences")
         assertEquals(MAX_FAVORITES, stored.getValue("favorites").jsonArray.size)
     }
 
     @Test
     fun pinningAHistoryEntryOfflineSaysItNeedsTheServer() {
         createEntry("Pin me", project = null)
-        saveOnTheWeb("""{"favorites": [{"description": "Write the report", "project_id": null, "task_id": null, "tags": [], "billable": false}]}""")
+        saveOnTheWeb(
+            """{"favorites": [{"description": "Write the report", "project_id": null, "task_id": null, "tags": [],""" +
+                """ "billable": false}]}""",
+        )
         launch {
             composeRule.waitUntil("the template is cached", NETWORK_TIMEOUT.toMillis()) {
                 runBlocking { app.cache.favorites.first() }.any { it.description == "Write the report" }
@@ -291,8 +340,16 @@ class FavoritesServerTest {
             awaitShown("the message") { composeRule.onNode(hasText(string(R.string.history_pin_needs_server))) }
             AirplaneMode.set(false, web)
         }
-        val stored = web.get(web.server.api("me", "preferences"), JsonObject.serializer()).orFail("GET /api/v9/me/preferences")
-        assertEquals(listOf("Write the report"), stored.getValue("favorites").jsonArray.map { it.jsonObject.getValue("description").jsonPrimitive.content })
+        val stored = runBlocking {
+            web.get(
+                web.server.api("me", "preferences"),
+                JsonObject.serializer(),
+            )
+        }.orFail("GET /api/v9/me/preferences")
+        assertEquals(
+            listOf("Write the report"),
+            stored.getValue("favorites").jsonArray.map { it.jsonObject.getValue("description").jsonPrimitive.content },
+        )
     }
 
     private fun count(matcher: SemanticsMatcher): Int = composeRule.onAllNodes(matcher).fetchSemanticsNodes().size
@@ -301,55 +358,71 @@ class FavoritesServerTest {
         ActivityScenario.launch(MainActivity::class.java).use {
             composeRule.awaitTimerPage(NETWORK_TIMEOUT.toMillis())
             // The refresh the launch started, so the cache holds what the server has.
-            runBlocking { app.accountSettings.refresh().join() }
+            runBlocking { app.accountRefresh.refresh().join() }
             composeRule.waitUntil("Start can start", NETWORK_TIMEOUT.toMillis()) {
-                shows(composeRule.onNode(hasContentDescription(string(R.string.timer_start_spoken)) and hasClickAction() and isEnabled()))
+                shows(
+                    composeRule.onNode(
+                        hasContentDescription(string(R.string.timer_start_spoken)) and hasClickAction() and isEnabled(),
+                    ),
+                )
             }
             steps()
         }
     }
 
     private fun saveOnTheWeb(json: String) {
-        web.send("POST", web.server.api("me", "preferences"), Json.parseToJsonElement(json), JsonElement.serializer())
+        runBlocking {
+            web.send(
+                HttpMethod.POST,
+                web.server.api("me", "preferences"),
+                Json.parseToJsonElement(json),
+                JsonElement.serializer(),
+            )
+        }
             .orFail("POST /api/v9/me/preferences")
     }
 
     private fun signIn(server: ServerUrl) {
-        ServerTrustStore(context).confirmCleartext(server)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(server)
         Session(context).save(server, account.apiToken)
     }
 
-    private fun createProject(name: String): Long =
+    private fun createProject(name: String): Long = runBlocking {
         web.send(
-            "POST",
+            HttpMethod.POST,
             web.server.api("workspaces", workspace.toString(), "projects"),
             buildJsonObject { put("name", name) },
             JsonObject.serializer(),
-        ).orFail("POST a project").getValue("id").jsonPrimitive.long
+        )
+    }.orFail("POST a project").getValue("id").jsonPrimitive.long
 
     /** A stopped entry an hour ago with [description], [project], the tag `call` and billable. */
     private fun createEntry(description: String, project: Long?) {
         val stop = Instant.now().truncatedTo(ChronoUnit.MINUTES).minus(1, ChronoUnit.HOURS)
-        web.send(
-            "POST",
-            web.server.api("workspaces", workspace.toString(), "time_entries"),
-            buildJsonObject {
-                put("workspace_id", workspace)
-                put("created_with", "tokkl-android tests")
-                put("description", description)
-                if (project != null) put("project_id", project)
-                put("tags", JsonArray(listOf(JsonPrimitive("call"))))
-                put("billable", true)
-                put("start", stop.minus(30, ChronoUnit.MINUTES).toString())
-                put("stop", stop.toString())
-            },
-            JsonObject.serializer(),
-        ).orFail("POST an entry")
+        runBlocking {
+            web.send(
+                HttpMethod.POST,
+                web.server.api("workspaces", workspace.toString(), "time_entries"),
+                buildJsonObject {
+                    put("workspace_id", workspace)
+                    put("created_with", "tokkl-android tests")
+                    put("description", description)
+                    if (project != null) put("project_id", project)
+                    put("tags", JsonArray(listOf(JsonPrimitive("call"))))
+                    put("billable", true)
+                    put("start", stop.minus(30, ChronoUnit.MINUTES).toString())
+                    put("stop", stop.toString())
+                },
+                JsonObject.serializer(),
+            )
+        }.orFail("POST an entry")
     }
 
     /** Opens the menu of the history entry [description] and taps Save as template. */
     private fun pinFromHistory(description: String) {
-        val more = composeRule.onNode(hasContentDescription(string(R.string.history_more_actions, description)) and hasClickAction())
+        val more = composeRule.onNode(
+            hasContentDescription(string(R.string.history_more_actions, description)) and hasClickAction(),
+        )
         awaitShown("the entry's menu button") { more }
         more.performSemanticsAction(SemanticsActions.OnClick)
         val pin = composeRule.onNode(hasText(string(R.string.history_pin)) and hasClickAction())
@@ -372,18 +445,19 @@ class FavoritesServerTest {
     }
 
     /** A template's start item, as TalkBack reads it for [spokenName]. */
-    private fun favorite(spokenName: String): SemanticsNodeInteraction =
-        composeRule.onNode(hasContentDescription(string(R.string.favorites_start_spoken, spokenName)) and hasClickAction())
+    private fun favorite(spokenName: String): SemanticsNodeInteraction = composeRule.onNode(
+        hasContentDescription(string(R.string.favorites_start_spoken, spokenName)) and hasClickAction(),
+    )
 
     /** A button on the management row [name]. */
     private fun control(@StringRes label: Int, name: String): SemanticsNodeInteraction =
         composeRule.onNode(hasContentDescription(string(label, name)) and hasClickAction())
 
     private fun description(): SemanticsNodeInteraction =
-        composeRule.onNode(hasSetTextAction() and hasText(string(R.string.entry_description)))
+        composeRule.onNode(hasSetTextAction() and hasText(string(FieldsR.string.entry_description)))
 
     private fun stopButton(): SemanticsNodeInteraction =
-        composeRule.onNode(hasContentDescription(string(R.string.timer_stop_spoken)) and hasClickAction())
+        composeRule.onNode(hasContentDescription(string(UiR.string.timer_stop_spoken)) and hasClickAction())
 
     private fun isEnabled(): SemanticsMatcher = SemanticsMatcher.keyNotDefined(SemanticsProperties.Disabled)
 
@@ -400,13 +474,12 @@ class FavoritesServerTest {
     }
 
     /** Whether exactly one node matches. */
-    private fun shows(node: SemanticsNodeInteraction): Boolean =
-        try {
-            node.fetchSemanticsNode()
-            true
-        } catch (e: AssertionError) {
-            false
-        }
+    private fun shows(node: SemanticsNodeInteraction): Boolean = try {
+        node.fetchSemanticsNode()
+        true
+    } catch (_: AssertionError) {
+        false
+    }
 
     private fun awaitAtOnce(what: String, condition: () -> Boolean) {
         composeRule.waitUntil("$what within $AT_ONCE", AT_ONCE.toMillis(), condition)
@@ -417,14 +490,18 @@ class FavoritesServerTest {
         val deadline = System.nanoTime() + NETWORK_TIMEOUT.toNanos()
         while (runBlocking { app.changes.unsentCount.first() } > 0) {
             if (System.nanoTime() > deadline) throw AssertionError("the queue is not empty")
-            runBlocking { app.sender.send().join() }
+            runBlocking { app.sender.sendAndWait() }
         }
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
     }
 
-    private fun serverEntries(): List<JsonObject> =
-        web.get(web.server.api("me", "time_entries"), JsonArray.serializer()).orFail("GET /api/v9/me/time_entries")
-            .map { it.jsonObject }
+    private fun serverEntries(): List<JsonObject> = runBlocking {
+        web.get(
+            web.server.api("me", "time_entries"),
+            JsonArray.serializer(),
+        )
+    }.orFail("GET /api/v9/me/time_entries")
+        .map { it.jsonObject }
 
     private fun string(@StringRes id: Int, vararg args: Any): String = context.getString(id, *args)
 

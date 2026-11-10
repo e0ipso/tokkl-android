@@ -8,10 +8,10 @@ on:
 permissions: {}
 
 jobs:
-  # The debug build, then `check`: lint, the JVM unit tests and
-  # :app:checkDeniedDependencies, which fails when Play Services, Firebase or
-  # another denied group reaches the release runtime classpath. Instrumented
-  # tests on an emulator get their own job.
+  # The debug build, then `check`: lint, detekt and the JVM unit tests of
+  # every module, and :app:checkDeniedDependencies, which fails when Play
+  # Services, Firebase or another denied group reaches the release runtime
+  # classpath. Instrumented tests on an emulator get their own job.
   gradle:
     runs-on: ubuntu-latest
     permissions:
@@ -34,17 +34,38 @@ jobs:
       # Caches Gradle's files and checks the wrapper jar.
       - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
       - run: ./gradlew assembleDebug check --stacktrace
-      # check writes the debug JVM JUnit XML under
-      # app/build/test-results/testDebugUnitTest/ and the debug lint reports
-      # as lint-results-debug.html, .sarif, .txt and .xml. Keep those files
-      # when check fails after writing them. An empty match fails the upload,
-      # so a missing report is not a passing suite. The rest of build/ stays out.
+      # check runs the unit tests, lint and detekt of the app and of every
+      # core and feature module.
+      # Each Android module writes its debug JVM JUnit XML under
+      # <module>/build/test-results/testDebugUnitTest/ and its debug lint
+      # reports as lint-results-debug.html, .sarif, .txt and .xml. The
+      # Kotlin/JVM core modules, core:model, core:api and core:time, write
+      # theirs under build/test-results/test/ (core:model has no tests) and
+      # as lint-results.html, .sarif, .txt and
+      # .xml. Keep those files when check fails after writing them. An empty match fails the
+      # upload, so a missing report is not a passing suite. The rest of build/
+      # stays out.
       - name: Preserve JVM JUnit reports
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: gradle-jvm-junit
-          path: app/build/test-results/testDebugUnitTest/TEST-*.xml
+          path: |
+            app/build/test-results/testDebugUnitTest/TEST-*.xml
+            core/*/build/test-results/testDebugUnitTest/TEST-*.xml
+            core/*/build/test-results/test/TEST-*.xml
+            feature/*/build/test-results/testDebugUnitTest/TEST-*.xml
+          if-no-files-found: error
+          retention-days: 90
+      - name: Preserve detekt reports
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: gradle-detekt
+          path: |
+            app/build/reports/detekt/
+            core/*/build/reports/detekt/
+            feature/*/build/reports/detekt/
           if-no-files-found: error
           retention-days: 90
       - name: Preserve lint reports
@@ -57,6 +78,18 @@ jobs:
             app/build/reports/lint-results-debug.sarif
             app/build/reports/lint-results-debug.txt
             app/build/reports/lint-results-debug.xml
+            core/*/build/reports/lint-results-debug.html
+            core/*/build/reports/lint-results-debug.sarif
+            core/*/build/reports/lint-results-debug.txt
+            core/*/build/reports/lint-results-debug.xml
+            core/*/build/reports/lint-results.html
+            core/*/build/reports/lint-results.sarif
+            core/*/build/reports/lint-results.txt
+            core/*/build/reports/lint-results.xml
+            feature/*/build/reports/lint-results-debug.html
+            feature/*/build/reports/lint-results-debug.sarif
+            feature/*/build/reports/lint-results-debug.txt
+            feature/*/build/reports/lint-results-debug.xml
           if-no-files-found: error
           retention-days: 90
 
@@ -96,9 +129,13 @@ jobs:
   # supports, so it catches a call to an API newer than the device. The
   # screenshot tests do not run there, since their references come from API 36.
   #
+  # The script runs the app's tests and those of every feature or core module
+  # with a src/androidTest directory, each module in a test APK of its own.
+  #
   # One emulator running every test was about 74 minutes of device time and
   # the whole CI critical path. AndroidJUnitRunner's numShards splits it
-  # across six emulators per API level, and every test runs once. A name hash puts at most about 16 minutes of tests on one shard,
+  # across six emulators per API level, and every test runs once. Each module
+  # splits its own tests, so a shard can hold none of a small module's. A name hash puts at most about 16 minutes of tests on one shard,
   # and booting the emulator plus starting the server adds about 15, so a
   # shard finishes near 35 minutes.
   instrumented-tests:
@@ -167,6 +204,10 @@ jobs:
             app/build/outputs/androidTest-results/connected/
             app/build/reports/androidTests/connected/
             app/build/outputs/connected_android_test_additional_output/
+            core/*/build/outputs/androidTest-results/connected/
+            core/*/build/reports/androidTests/connected/
+            feature/*/build/outputs/androidTest-results/connected/
+            feature/*/build/reports/androidTests/connected/
           if-no-files-found: ignore
 
   # Lints the commit messages and runs the tests of the commitlint rules. The

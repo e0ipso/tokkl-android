@@ -107,10 +107,16 @@ class MergedPermissionsTest {
 
         assertFalse(services.toString(), "androidx.work.impl.foreground.SystemForegroundService" in services)
         val foreground = MergedManifest.application().childElements().filter {
-            it.tagName == "service" && it.getAttributeNS("http://schemas.android.com/apk/res/android", "foregroundServiceType").isNotEmpty()
+            it.tagName == "service" && it.getAttributeNS(
+                "http://schemas.android.com/apk/res/android",
+                "foregroundServiceType",
+            ).isNotEmpty()
         }
         assertEquals(
-            listOf("com.github.e0ipso.tokkl.pomodoro.PomodoroRingingService", "com.github.e0ipso.tokkl.timerstate.TimerSyncService"),
+            listOf(
+                "com.github.e0ipso.tokkl.pomodoro.PomodoroRingingService",
+                "com.github.e0ipso.tokkl.timersync.TimerSyncService",
+            ),
             foreground.map { it.androidAttribute("name") }.sorted(),
         )
         val ringing = foreground.single { it.androidAttribute("name").endsWith(".PomodoroRingingService") }
@@ -133,7 +139,7 @@ class MergedPermissionsTest {
                 "androidx.work.impl.background.systemjob.SystemJobService",
                 "com.github.e0ipso.tokkl.pomodoro.PomodoroRingingService",
                 "com.github.e0ipso.tokkl.tile.RunningTileService",
-                "com.github.e0ipso.tokkl.timerstate.TimerSyncService",
+                "com.github.e0ipso.tokkl.timersync.TimerSyncService",
             ),
             services.sorted(),
         )

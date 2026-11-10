@@ -1,7 +1,7 @@
 ---
 schema_version: 3
-nodes_hash: 'sha256:aca2caf204f7865d1c7426d6d6d155a32e50b2afb78caa8dd56462bb33de8944'
-node_count: 91
+nodes_hash: 'sha256:4643618d400722acc30de91950f23eebb7371be5dea0a58434c74c2f90e24b82'
+node_count: 96
 ---
 # kenkeep
 
@@ -14,7 +14,7 @@ node_count: 91
 - Load [`design/`](nodes/design/index.md) for more information on Tokkl's theme, palette, brand rules and shared UI components; read before changing how anything looks or reads to TalkBack.
 - Load [`release/`](nodes/release/index.md) for more information on the app ID, versioning, reproducible signed builds, CI jobs and F-Droid metadata; read before touching versions, signing, CI or store text.
 - Load [`screens/`](nodes/screens/index.md) for more information on sign-in and sign-out, the navigation host with its bar, rail and window sizes, the Timer page, the timer and entry form, Reports, Trash and the catalog pages; read before changing a screen, its model or navigation.
-- Load [`testing/`](nodes/testing/index.md) for more information on instrumented, screenshot and real-server tests on the plain AOSP emulators; read before writing or running any test on a device or emulator.
+- Load [`testing/`](nodes/testing/index.md) for more information on JVM coroutine tests in virtual time, and instrumented, screenshot and real-server tests on the plain AOSP emulators; read before writing or running any test.
 
 ## Conventions (how we build)
 - Open [**Isolate all known failing tests before full-suite validation**](nodes/practice-isolate-all-known-failing-tests-before-full-suite-validation.md) to learn about: Inventory every failure, reproduce it in a focused run, and iterate there before validating the full suite. #testing #ci #agents

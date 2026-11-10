@@ -8,7 +8,7 @@ import android.os.Build
 import android.service.notification.StatusBarNotification
 import androidx.annotation.StringRes
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.feature.notification.R
 import org.junit.Assert.assertNull
 
 /** Reads the running timer's notification as the system holds it, for the tests. */
@@ -75,7 +75,6 @@ object RunningNotifications {
         awaitGone("the dismissed notification")
     }
 
-    /** The app's services that run in the foreground. */
     @Suppress("DEPRECATION") // Still returns the caller's own services.
     fun foregroundServices(): List<String> =
         context.getSystemService(ActivityManager::class.java).getRunningServices(Int.MAX_VALUE)

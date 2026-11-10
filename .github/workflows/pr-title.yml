@@ -1,11 +1,7 @@
 name: PR title
-# A squash merge writes the pull request's title and " (#<number>)" as the
-# commit's subject on main, once the repository's squash_merge_commit_title is
-# PR_TITLE. CI's commitlint job lints the branch's commits, which never carry
-# that subject, so a title that is too long or not Conventional only failed
-# on main after the merge, as #36's did. This lints it on the pull request,
-# with the same commitlint.config.js. It runs on its own, because editing the
-# title should not start the emulator jobs again.
+# GitHub can use either the PR title or the sole commit's subject for a squash.
+# Validate both with the PR-number suffix, so the check covers either setting.
+# Title edits run this check without restarting the emulator jobs.
 on:
   pull_request:
     branches: [main]
@@ -21,6 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
       # commitlint 21 needs Node 22.12 or later.
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -33,4 +30,10 @@ jobs:
         env:
           TITLE: ${{ github.event.pull_request.title }}
           NUMBER: ${{ github.event.pull_request.number }}
-        run: printf '%s (#%s)\n' "$TITLE" "$NUMBER" | npx --no -- commitlint --verbose
+          COMMITS: ${{ github.event.pull_request.commits }}
+        run: |
+          printf '%s (#%s)\n' "$TITLE" "$NUMBER" | npx --no -- commitlint --verbose
+          if [ "$COMMITS" = 1 ]; then
+            subject=$(git log -1 --format=%s)
+            printf '%s (#%s)\n' "$subject" "$NUMBER" | npx --no -- commitlint --verbose
+          fi

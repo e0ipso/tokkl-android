@@ -4,19 +4,23 @@ import android.app.Notification
 import android.os.Process
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
-import androidx.work.testing.WorkManagerTestInitHelper
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklApplication
-import com.github.e0ipso.tokkl.awaitControls
 import com.github.e0ipso.tokkl.api.ServerUrl
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.TimerControls
+import com.github.e0ipso.tokkl.awaitControls
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.initializeTestWorkManager
+import com.github.e0ipso.tokkl.components.timerControls
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
-import java.io.File
-import java.time.Instant
-import java.util.Properties
+import com.github.e0ipso.tokkl.timerstate.TimerControls
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertNotEquals
@@ -24,6 +28,9 @@ import org.junit.Assert.assertTrue
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
+import java.io.File
+import java.time.Instant
+import java.util.Properties
 
 /**
  * A notification swiped away stays away when the app opens in a new process, which is how the
@@ -46,16 +53,21 @@ class RunningNotificationRestartTest {
         signIn()
         RunningNotifications.allow()
 
-        val id = runBlocking { app.changes.start(WORKSPACE, EntryFields(description = "Dismissed before the restart")) }
+        val id = runBlocking {
+            app.changes.start(
+                WorkspaceId(WORKSPACE),
+                EntryFields(description = "Dismissed before the restart"),
+            )
+        }
         val start = runBlocking { app.cache.running.first() }!!.entry.start
         val controls = app.awaitControls<TimerControls.Running>("the new running entry") { it.entry.id == id }
         val content = checkNotNull(runningNotificationContent(controls, emptyList(), emptyList()))
-        val store = RunningNotificationStore(context)
+        val store = RunningNotificationStore(context, Dispatchers.IO)
         // Process-start observers may still be retiring the previous test's notification.
         // Dismiss this start only once its notification and restart record both reached it.
         RunningNotifications.awaitShown("the persisted start") {
             it.notification.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString() == content.description &&
-                store.load() == FollowedEntry(content.key, id)
+                runBlocking { store.load() == FollowedEntry(content.key, id) }
         }
         RunningNotifications.dismiss()
 
@@ -63,6 +75,8 @@ class RunningNotificationRestartTest {
             setProperty("process", currentProcess())
             setProperty("id", id.toString())
             setProperty("start", start.toString())
+            setProperty("key", content.key)
+            setProperty("trace", RunningNotificationRestartTrace.report())
             handOver.outputStream().use { store(it, null) }
         }
     }
@@ -71,8 +85,9 @@ class RunningNotificationRestartTest {
     fun step2OpensTheAppInANewProcessAndAnEditPostsTheNotificationAgain() {
         assertTrue("step 1 did not run before step 2", handOver.exists())
         // As SessionRule does: the work step 1 queued must never send in another test.
-        WorkManagerTestInitHelper.initializeTestWorkManager(context)
+        initializeTestWorkManager(context)
         val saved = Properties().apply { handOver.inputStream().use { load(it) } }
+        val atStartup = runBlocking { RunningNotificationStore(context, Dispatchers.IO).load() }
         try {
             assertNotEquals("step 1 ran in this same process", saved.getProperty("process"), currentProcess())
 
@@ -81,11 +96,33 @@ class RunningNotificationRestartTest {
 
                 val edited = EntryFields(description = "Edited after the restart")
                 val start = Instant.parse(saved.getProperty("start"))
-                assertTrue(runBlocking { app.changes.update(saved.getProperty("id").toLong(), edited, start, stop = null) })
+                assertTrue(
+                    runBlocking {
+                        app.changes.update(
+                            EntryId(saved.getProperty("id").toLong()),
+                            edited,
+                            EntryTiming.Running(start),
+                        )
+                    },
+                )
                 RunningNotifications.awaitShown("the edit") {
                     it.notification.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString() == edited.description
                 }
             }
+        } catch (failure: AssertionError) {
+            val now = runBlocking { RunningNotificationStore(context, Dispatchers.IO).load() }
+            val controls = runBlocking { app.timerControls.first() }
+            val notification = RunningNotifications.shown()?.notification
+            val title = notification?.extras?.getCharSequence(Notification.EXTRA_TITLE)
+            throw AssertionError(
+                "${failure.message}\n" +
+                    "Expected id=${saved.getProperty("id")} key=${saved.getProperty("key")}\n" +
+                    "Record at startup=$atStartup, now=$now\n" +
+                    "Controls=$controls\nNotification title=$title extras=${notification?.extras}\n" +
+                    "Previous process:\n${saved.getProperty("trace")}\n" +
+                    "Current process:\n${RunningNotificationRestartTrace.report()}",
+                failure,
+            )
         } finally {
             SessionRule.signOut()
             handOver.delete()
@@ -96,7 +133,7 @@ class RunningNotificationRestartTest {
     /** Nothing listens on this port, so every request fails for want of a route. */
     private fun signIn() {
         val server = checkNotNull(ServerUrl.parse("http://127.0.0.1:9"))
-        ServerTrustStore(context).confirmCleartext(server)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(server)
         Session(context).save(server, "not a token")
     }
 

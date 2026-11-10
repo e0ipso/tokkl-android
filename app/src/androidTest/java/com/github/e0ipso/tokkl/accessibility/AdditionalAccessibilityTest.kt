@@ -9,6 +9,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
@@ -16,27 +17,41 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
-import androidx.compose.ui.test.click
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.core.view.WindowCompat
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.SignedInFrame
 import com.github.e0ipso.tokkl.bottomBarItem
 import com.github.e0ipso.tokkl.cache.ChangeKind
-import com.github.e0ipso.tokkl.cache.PendingChange
-import com.github.e0ipso.tokkl.navigation.TopLevelPage
+import com.github.e0ipso.tokkl.cache.HeldChange
+import com.github.e0ipso.tokkl.cache.HeldChanges
+import com.github.e0ipso.tokkl.clients.ClientsRoute
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
+import com.github.e0ipso.tokkl.navhost.SignedInFrame
+import com.github.e0ipso.tokkl.navhost.runningBadges
+import com.github.e0ipso.tokkl.navigation.Route
+import com.github.e0ipso.tokkl.navigation.label
+import com.github.e0ipso.tokkl.navigation.topLevelPages
+import com.github.e0ipso.tokkl.pomodoro.PomodoroRoute
+import com.github.e0ipso.tokkl.reports.ReportsRoute
 import com.github.e0ipso.tokkl.session.AccountSettings
-import com.github.e0ipso.tokkl.sync.NeedsAttentionModel
+import com.github.e0ipso.tokkl.session.CountingRefresh
+import com.github.e0ipso.tokkl.sync.NeedsAttention
 import com.github.e0ipso.tokkl.sync.NeedsAttentionScreen
+import com.github.e0ipso.tokkl.sync.NeedsAttentionViewModel
+import com.github.e0ipso.tokkl.tags.TagsRoute
+import com.github.e0ipso.tokkl.timer.TemplatesRoute
+import com.github.e0ipso.tokkl.trash.TrashRoute
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import java.time.Instant
-import java.time.DayOfWeek
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -44,6 +59,11 @@ import org.junit.Assert.assertFalse
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.DayOfWeek
+import java.time.Instant
+import com.github.e0ipso.tokkl.core.ui.R as UiR
+import com.github.e0ipso.tokkl.feature.pomodoro.R as PomodoroR
+import com.github.e0ipso.tokkl.feature.sync.R as SyncR
 
 /** More and the actual Needs attention screen, without server or account fixtures. */
 abstract class AdditionalAccessibilityTest(private val dark: Boolean) {
@@ -65,29 +85,48 @@ abstract class AdditionalAccessibilityTest(private val dark: Boolean) {
     fun pomodoroAndItsSpokenRunningMarkFitAtMaximumSizes() {
         val running = mutableStateOf(true)
         show {
-            SignedInFrame(current = TopLevelPage.POMODORO, onOpen = {}, pomodoroRunning = running.value) {
-                Text(context.getString(R.string.pomodoro_title))
+            SignedInFrame(
+                pages = topLevelPages,
+                current = PomodoroRoute,
+                onOpen = {},
+                badges = runningBadges(pomodoro = running.value),
+            ) {
+                Text(context.getString(UiR.string.pomodoro_title))
             }
         }
-        val marker = bottomBarItem(R.string.pomodoro_title) and
-            SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, context.getString(R.string.nav_pomodoro_running))
+        val marker = bottomBarItem(UiR.string.pomodoro_title) and
+            SemanticsMatcher.expectValue(
+                SemanticsProperties.StateDescription,
+                context.getString(PomodoroR.string.nav_pomodoro_running),
+            )
         compose.onNode(marker).assertIsDisplayed()
         assertVisibleTextFits()
         compose.runOnIdle { running.value = false }
         assertEquals(0, compose.onAllNodes(marker).fetchSemanticsNodes().size)
-        compose.onNode(bottomBarItem(R.string.pomodoro_title)).assertIsDisplayed()
+        compose.onNode(bottomBarItem(UiR.string.pomodoro_title)).assertIsDisplayed()
         compose.checkAccessibility()
     }
 
     @Test
     fun everyMoreChoiceIsReachableAtMaximumSizes() {
-        val current = mutableStateOf(TopLevelPage.TIMER)
+        val current = mutableStateOf<Route>(Route.Timer)
         show {
-            SignedInFrame(current = current.value, onOpen = { current.value = it }, timerRunning = true) {
+            SignedInFrame(
+                pages = topLevelPages,
+                current = current.value,
+                onOpen = { current.value = it },
+                badges = runningBadges(timer = true),
+            ) {
                 Text(context.getString(current.value.label))
             }
         }
-        for (page in listOf(TopLevelPage.REPORTS, TopLevelPage.TEMPLATES, TopLevelPage.CLIENTS, TopLevelPage.TAGS, TopLevelPage.TRASH)) {
+        for (page in listOf(
+            ReportsRoute,
+            TemplatesRoute,
+            ClientsRoute,
+            TagsRoute,
+            TrashRoute,
+        )) {
             compose.onNode(bottomBarItem(R.string.nav_more)).performClick()
             val choice = compose.onNode(hasText(context.getString(page.label)) and hasClickAction())
             choice.performScrollTo().assertIsDisplayed()
@@ -100,47 +139,69 @@ abstract class AdditionalAccessibilityTest(private val dark: Boolean) {
 
     @Test
     fun refusedChangesExposeTheirReasonAndReachableActionsAtMaximumSizes() {
-        val held = MutableStateFlow(emptyList<PendingChange>())
-        val settings = MutableStateFlow<AccountSettings?>(AccountSettings(timeZone = "UTC", beginningOfWeek = DayOfWeek.MONDAY, timeResolutionMinutes = null))
-        var edited: Long? = null
+        val held = MutableStateFlow(emptyList<HeldChange>())
+        val settings = MutableStateFlow<AccountSettings?>(
+            AccountSettings(timeZone = "UTC", beginningOfWeek = DayOfWeek.MONDAY, timeResolutionMinutes = null),
+        )
+        var edited: EntryId? = null
         var resent: Long? = null
-        val model = NeedsAttentionModel(
-            held = held,
-            release = { resent = it; true },
-            drop = { sequence -> held.value = held.value.filterNot { it.sequence == sequence }; true },
-            afterDiscard = {},
+        val refused = held
+        val attention = NeedsAttention(
+            changes = object : HeldChanges {
+                override val held: Flow<List<HeldChange>> = refused
+
+                override suspend fun sendAgain(sequence: Long): Boolean {
+                    resent = sequence
+                    return true
+                }
+
+                override suspend fun discard(sequence: Long): Boolean {
+                    refused.value = refused.value.filterNot { it.sequence == sequence }
+                    return true
+                }
+            },
+            refreshes = CountingRefresh(),
             scope = scope,
         )
+        val model = NeedsAttentionViewModel(attention, settings, scope)
         show {
-            NeedsAttentionScreen(model, settings, onEdit = { edited = it }, onBack = {})
+            NeedsAttentionScreen(model, onEdit = { edited = it }, onBack = {})
         }
-        compose.onNodeWithText(context.getString(R.string.needs_attention_empty)).assertIsDisplayed()
+        compose.onNodeWithText(context.getString(SyncR.string.needs_attention_empty)).assertIsDisplayed()
         assertVisibleTextFits()
         for (kind in ChangeKind.entries) {
-            val change = PendingChange(
-                sequence = 1, kind = kind, entryId = 42, workspaceId = 7,
-                projectId = null, taskId = null, description = "A refused change with a long description",
-                start = Instant.parse("2026-10-19T07:00:00Z"), stop = null, billable = true,
-                tags = emptyList(), tagIds = emptyList(), held = true,
+            val change = HeldChange(
+                sequence = 1,
+                kind = kind,
+                entry = TimeEntry(
+                    id = EntryId(42), workspaceId = WorkspaceId(7),
+                    projectId = null, taskId = null, description = "A refused change with a long description",
+                    timing = EntryTiming.Running(Instant.parse("2026-10-19T07:00:00Z")), billable = true,
+                    tags = emptyList(), tagIds = emptyList(),
+                ),
                 refusal = "Time entries can not be longer than 999 hours",
             )
             held.value = listOf(change)
-            val reason = context.getString(R.string.needs_attention_reason, checkNotNull(change.refusal))
+            val reason = context.getString(SyncR.string.needs_attention_reason, checkNotNull(change.refusal))
             compose.onNodeWithText(reason).performScrollTo().assertIsDisplayed()
             assertVisibleTextFits()
-            val edit = compose.onNode(hasContentDescription(context.getString(R.string.needs_attention_edit_named, change.description)) and hasClickAction())
+            val edit = compose.onNode(
+                hasContentDescription(
+                    context.getString(SyncR.string.needs_attention_edit_named, change.entry.description),
+                ) and hasClickAction(),
+            )
             if (kind != ChangeKind.DELETE) {
                 edit.performScrollTo().assertIsDisplayed().performTouchInput { click() }
-                assertEquals(42L, edited)
+                assertEquals(EntryId(42), edited)
             } else {
                 edit.assertDoesNotExist()
             }
             resent = null
-            action(R.string.needs_attention_send_again)
+            action(SyncR.string.needs_attention_send_again)
             compose.waitUntil("Send again was reachable", 5_000) { resent == change.sequence }
-            action(R.string.needs_attention_discard)
-            compose.onNodeWithText(context.getString(R.string.needs_attention_empty)).assertIsDisplayed()
-            assertEquals(emptyList<PendingChange>(), held.value)
+            action(SyncR.string.needs_attention_discard)
+            compose.onNodeWithText(context.getString(SyncR.string.needs_attention_empty)).assertIsDisplayed()
+            assertEquals(emptyList<HeldChange>(), held.value)
             compose.checkAccessibility()
         }
     }
@@ -161,7 +222,8 @@ abstract class AdditionalAccessibilityTest(private val dark: Boolean) {
     private fun assertVisibleTextFits() {
         compose.checkAccessibility()
         val nodes = compose.onAllNodes(
-            SemanticsMatcher.keyIsDefined(SemanticsActions.GetTextLayoutResult), useUnmergedTree = true,
+            SemanticsMatcher.keyIsDefined(SemanticsActions.GetTextLayoutResult),
+            useUnmergedTree = true,
         ).fetchSemanticsNodes()
         for (node in nodes) {
             val layouts = mutableListOf<TextLayoutResult>()

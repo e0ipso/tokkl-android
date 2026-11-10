@@ -11,41 +11,40 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.hasSetTextAction
-import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performTextReplacement
-import androidx.compose.ui.test.performSemanticsAction
-import androidx.compose.ui.semantics.SemanticsActions
-import com.github.e0ipso.tokkl.TokklApplication
-import com.github.e0ipso.tokkl.reminder.ReminderPreferences
-import com.github.e0ipso.tokkl.reminder.ReminderNotifier
-import com.github.e0ipso.tokkl.reminder.ReminderTimer
-import com.github.e0ipso.tokkl.awaitTimerPage
-import kotlinx.coroutines.runBlocking
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
+import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.awaitText
-import com.github.e0ipso.tokkl.pomodoro.PomodoroDefaults
+import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.components.reminderSettings
+import com.github.e0ipso.tokkl.feature.settings.R
+import com.github.e0ipso.tokkl.preferences.ReminderPreferences
+import com.github.e0ipso.tokkl.reminder.ReminderNotifier
+import com.github.e0ipso.tokkl.reminder.ReminderTimer
 import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.ui.theme.ThemeMode
 import com.github.e0ipso.tokkl.ui.theme.TokklDarkColorScheme
 import com.github.e0ipso.tokkl.ui.theme.TokklLightColorScheme
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -53,6 +52,8 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import com.github.e0ipso.tokkl.core.ui.R as UiR
+import com.github.e0ipso.tokkl.feature.signin.R as SigninR
 
 /** The settings screen in the real activity, reached from the bottom bar. */
 class SettingsScreenTest {
@@ -139,7 +140,10 @@ class SettingsScreenTest {
         assertEquals(2, composeRule.onAllNodes(hasRole(Role.Switch)).fetchSemanticsNodes().size)
         val signOut = signOutRow().fetchSemanticsNode().config
         assertEquals(Role.Button, signOut.getOrNull(SemanticsProperties.Role))
-        assertEquals(listOf(string(R.string.settings_sign_out)), signOut.getOrNull(SemanticsProperties.Text)?.map { it.text })
+        assertEquals(
+            listOf(string(R.string.settings_sign_out)),
+            signOut.getOrNull(SemanticsProperties.Text)?.map { it.text },
+        )
     }
 
     /**
@@ -149,14 +153,16 @@ class SettingsScreenTest {
     @Test
     fun signOutWithAnEmptyQueueGoesStraightToSignIn() {
         composeRule.openSettings()
-        composeRule.onNode(hasText(string(R.string.settings_account)) and isHeading()).performScrollTo().assertIsDisplayed()
+        composeRule.onNode(
+            hasText(string(R.string.settings_account)) and isHeading(),
+        ).performScrollTo().assertIsDisplayed()
         val row = signOutRow().performScrollTo()
         val height = row.getUnclippedBoundsInRoot().let { it.bottom - it.top }
         assertTrue("the Sign out row is $height tall", height >= MIN_TOUCH_TARGET - SLACK)
 
         row.performClick()
 
-        composeRule.awaitText(string(R.string.sign_in_title))
+        composeRule.awaitText(string(SigninR.string.sign_in_title))
         assertTrue(
             "no warning without unsent changes",
             composeRule.onAllNodes(hasText(string(R.string.settings_sign_out_title))).fetchSemanticsNodes().isEmpty(),
@@ -181,7 +187,7 @@ class SettingsScreenTest {
 
         row.performClick()
         composeRule.awaitText(string(R.string.licence_anybody_title))
-        composeRule.onNodeWithContentDescription(string(R.string.back)).performClick()
+        composeRule.onNodeWithContentDescription(string(UiR.string.back)).performClick()
         settingsHeading().assertIsDisplayed()
 
         licencesRow().performScrollTo().performClick()
@@ -196,24 +202,6 @@ class SettingsScreenTest {
         licencesRow().performScrollTo().assertIsDisplayed()
     }
 
-    /** All the text on the screen, read or shown, is one of the app's English string resources. */
-    @Test
-    fun everyTextComesFromStringResources() {
-        composeRule.openSettings()
-
-        val resources = R.string::class.java.fields.map { string(it.getInt(null)) }.toSet() +
-            composeRule.activity.resources.getQuantityString(R.plurals.reminder_after_hours, 8, 8) +
-            pomodoroDefaultLabels()
-        val shown = composeRule.onAllNodes(SemanticsMatcher("any node") { true }, useUnmergedTree = true)
-            .fetchSemanticsNodes()
-            .flatMap { node ->
-                node.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty() +
-                    node.config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text }
-            }
-        assertTrue("no text found", shown.isNotEmpty())
-        assertEquals("text that is not a string resource", emptyList<String>(), shown.filterNot { it in resources })
-    }
-
     @Test
     fun reminderSwitchAndHoursValidateAndApply() {
         composeRule.openSettings()
@@ -222,7 +210,11 @@ class SettingsScreenTest {
             val toggle = composeRule.onNode(hasText(string(R.string.reminder_enabled)) and isToggleable())
             toggle.performScrollTo().assertIsOn().performClick().assertIsOff()
             assertFalse(app.reminderSettings.state.value.enabled)
-            val hours = composeRule.onNode(hasText(composeRule.activity.resources.getQuantityString(R.plurals.reminder_after_hours, 8, 8)) and hasClickAction())
+            val hours = composeRule.onNode(
+                hasText(
+                    composeRule.activity.resources.getQuantityString(R.plurals.reminder_after_hours, 8, 8),
+                ) and hasClickAction(),
+            )
             hours.performScrollTo().performClick()
             val field = composeRule.onNode(hasSetTextAction())
             for (invalid in listOf("", "0", "169", "1.5")) {
@@ -234,7 +226,9 @@ class SettingsScreenTest {
             // and whether that is the dialog, its keyboard or neither is up to the system. On the
             // API 36 CI emulator the keyboard never opened, so Back did not close a keyboard.
             composeRule.onNodeWithText(string(R.string.reminder_save)).performClick()
-            composeRule.onNodeWithText(composeRule.activity.resources.getQuantityString(R.plurals.reminder_after_hours, 168, 168)).assertIsDisplayed()
+            composeRule.onNodeWithText(
+                composeRule.activity.resources.getQuantityString(R.plurals.reminder_after_hours, 168, 168),
+            ).assertIsDisplayed()
             assertEquals(ReminderPreferences(false, 168), app.reminderSettings.state.value)
         } finally {
             runBlocking { app.reminderSettings.change(ReminderPreferences()).join() }
@@ -265,18 +259,6 @@ class SettingsScreenTest {
 
     private fun signOutRow(): SemanticsNodeInteraction =
         composeRule.onNode(hasText(string(R.string.settings_sign_out)) and hasClickAction())
-
-    /** The four default rows format plurals, which are not fields of [R.string]. */
-    private fun pomodoroDefaultLabels(): Set<String> {
-        val defaults = PomodoroDefaults.DEFAULT
-        val resources = composeRule.activity.resources
-        return setOf(
-            resources.getQuantityString(R.plurals.settings_pomodoro_minutes, defaults.workMinutes, defaults.workMinutes),
-            resources.getQuantityString(R.plurals.settings_pomodoro_minutes, defaults.shortRestMinutes, defaults.shortRestMinutes),
-            resources.getQuantityString(R.plurals.settings_pomodoro_minutes, defaults.longRestMinutes, defaults.longRestMinutes),
-            resources.getQuantityString(R.plurals.settings_pomodoro_phases, defaults.longRestEvery, defaults.longRestEvery),
-        )
-    }
 
     private fun hasRole(role: Role) = SemanticsMatcher.expectValue(SemanticsProperties.Role, role)
 

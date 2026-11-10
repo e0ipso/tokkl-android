@@ -27,16 +27,29 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.api.HttpMethod
+import com.github.e0ipso.tokkl.api.api
 import com.github.e0ipso.tokkl.awaitPomodoroOffered
 import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.clients.ClientsRoute
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.capabilities
+import com.github.e0ipso.tokkl.components.heldTimerState
+import com.github.e0ipso.tokkl.components.timerActions
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.openMorePage
-import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.orFail
+import com.github.e0ipso.tokkl.pomodoro.PomodoroRoute
+import com.github.e0ipso.tokkl.projects.ProjectsRoute
+import com.github.e0ipso.tokkl.reports.ReportsRoute
+import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.settings.SettingsRoute
+import com.github.e0ipso.tokkl.tags.TagsRoute
+import com.github.e0ipso.tokkl.timer.TemplatesRoute
 import com.github.e0ipso.tokkl.timerstate.SessionLengths
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
-import com.github.e0ipso.tokkl.orFail
-import com.github.e0ipso.tokkl.session.Session
-import java.time.Instant
-import java.time.temporal.ChronoUnit
+import com.github.e0ipso.tokkl.trash.TrashRoute
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -46,6 +59,16 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.Instant
+import java.time.temporal.ChronoUnit
+import com.github.e0ipso.tokkl.core.ui.R as UiR
+import com.github.e0ipso.tokkl.feature.clients.R as ClientsR
+import com.github.e0ipso.tokkl.feature.pomodoro.R as PomodoroR
+import com.github.e0ipso.tokkl.feature.projects.R as ProjectsR
+import com.github.e0ipso.tokkl.feature.reports.R as ReportsR
+import com.github.e0ipso.tokkl.feature.tags.R as TagsR
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
+import com.github.e0ipso.tokkl.feature.trash.R as TrashR
 
 /**
  * The bottom bar in the real activity (docs/PRD.md B1 to B3): each item opens its page, Back goes
@@ -77,11 +100,11 @@ class BottomBarTest {
     fun eachBarItemOpensItsPageAndBackGoesToTimer() {
         launch { scenario ->
             composeRule.awaitPomodoroOffered(NETWORK_TIMEOUT_MS)
-            for (page in listOf(TopLevelPage.POMODORO, TopLevelPage.PROJECTS, TopLevelPage.SETTINGS)) {
+            for (page in listOf(PomodoroRoute, ProjectsRoute, SettingsRoute)) {
                 barItem(page.label).performClick()
                 heading(page.label).assertIsDisplayed()
                 barItem(page.label).assertIsSelected()
-                barItem(R.string.nav_timer).assertIsNotSelected()
+                barItem(TimerR.string.nav_timer).assertIsNotSelected()
 
                 pressBack(scenario)
 
@@ -94,10 +117,10 @@ class BottomBarTest {
     @Test
     fun aPageOpenedFromAnotherGoesBackToTimer() {
         launch { scenario ->
-            composeRule.openMorePage(R.string.reports, NETWORK_TIMEOUT_MS)
-            heading(R.string.reports).assertIsDisplayed()
-            barItem(R.string.nav_projects).performClick()
-            heading(R.string.nav_projects).assertIsDisplayed()
+            composeRule.openMorePage(ReportsR.string.reports, NETWORK_TIMEOUT_MS)
+            heading(ReportsR.string.reports).assertIsDisplayed()
+            barItem(ProjectsR.string.nav_projects).performClick()
+            heading(ProjectsR.string.nav_projects).assertIsDisplayed()
 
             pressBack(scenario)
 
@@ -124,15 +147,36 @@ class BottomBarTest {
     fun theMoreSheetListsReportsTemplatesClientsTagsAndTrashAndOpensEach() {
         launch { scenario ->
             // The sheet lists Trash and Timer templates once the refresh's probe has found them.
-            composeRule.waitUntil("the refresh finds the trash", NETWORK_TIMEOUT_MS) { app.capabilities.state.value.trash }
-            composeRule.waitUntil("the refresh finds timer templates", NETWORK_TIMEOUT_MS) { app.capabilities.state.value.favorites }
-            for (page in listOf(TopLevelPage.REPORTS, TopLevelPage.TEMPLATES, TopLevelPage.CLIENTS, TopLevelPage.TAGS, TopLevelPage.TRASH)) {
+            composeRule.waitUntil(
+                "the refresh finds the trash",
+                NETWORK_TIMEOUT_MS,
+            ) { app.capabilities.state.value.trash }
+            composeRule.waitUntil(
+                "the refresh finds timer templates",
+                NETWORK_TIMEOUT_MS,
+            ) { app.capabilities.state.value.favorites }
+            for (page in listOf(
+                ReportsRoute,
+                TemplatesRoute,
+                ClientsRoute,
+                TagsRoute,
+                TrashRoute,
+            )) {
                 openMore()
                 val items = composeRule.onAllNodes(sheetItem())
                     .fetchSemanticsNodes()
                     .sortedBy { it.boundsInRoot.top }
                     .map { node -> node.config[SemanticsProperties.Text].joinToString(" ") { it.text } }
-                assertEquals(listOf(R.string.reports, R.string.nav_templates, R.string.nav_clients, R.string.nav_tags, R.string.nav_trash).map(::string), items)
+                assertEquals(
+                    listOf(
+                        ReportsR.string.reports,
+                        TimerR.string.nav_templates,
+                        ClientsR.string.nav_clients,
+                        TagsR.string.nav_tags,
+                        TrashR.string.nav_trash,
+                    ).map(::string),
+                    items,
+                )
 
                 composeRule.onNode(sheetItem() and hasText(string(page.label))).performScrollTo().performClick()
 
@@ -149,14 +193,16 @@ class BottomBarTest {
     fun theMoreSheetClosesOnCloseAndOnBack() {
         launch { scenario ->
             openMore()
-            composeRule.onNode(hasContentDescription(string(R.string.nav_more_close)) and hasClickAction()).performClick()
+            composeRule.onNode(
+                hasContentDescription(string(R.string.nav_more_close)) and hasClickAction(),
+            ).performClick()
             awaitSheetClosed()
-            barItem(R.string.nav_timer).assertIsSelected()
+            barItem(TimerR.string.nav_timer).assertIsSelected()
 
             openMore()
             InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
             awaitSheetClosed()
-            barItem(R.string.nav_timer).assertIsSelected()
+            barItem(TimerR.string.nav_timer).assertIsSelected()
             assertEquals("Back closed the sheet, not the app", Lifecycle.State.RESUMED, scenario.state)
         }
     }
@@ -169,17 +215,17 @@ class BottomBarTest {
     fun thePageTheStackTheViewAndTheSheetSurviveRecreation() {
         signInToNewAccount()
         launch { scenario ->
-            composeRule.onNode(hasText(string(R.string.timer_view_calendar)) and isSelectable()).performClick()
-            composeRule.openMorePage(R.string.reports, NETWORK_TIMEOUT_MS)
-            heading(R.string.reports).assertIsDisplayed()
+            composeRule.onNode(hasText(string(TimerR.string.timer_view_calendar)) and isSelectable()).performClick()
+            composeRule.openMorePage(ReportsR.string.reports, NETWORK_TIMEOUT_MS)
+            heading(ReportsR.string.reports).assertIsDisplayed()
 
             scenario.recreate()
 
-            heading(R.string.reports).assertIsDisplayed()
+            heading(ReportsR.string.reports).assertIsDisplayed()
             barItem(R.string.nav_more).assertIsSelected()
             pressBack(scenario)
             composeRule.awaitTimerPage()
-            composeRule.onNode(hasText(string(R.string.timer_view_calendar)) and isSelectable()).assertIsSelected()
+            composeRule.onNode(hasText(string(TimerR.string.timer_view_calendar)) and isSelectable()).assertIsSelected()
 
             openMore()
             scenario.recreate()
@@ -196,24 +242,43 @@ class BottomBarTest {
     @Test
     fun theTimerItemSaysWhenATimerRuns() {
         val account = signInToNewAccount()
-        val running = account.createEntry("Running", Instant.now().minus(5, ChronoUnit.MINUTES).truncatedTo(ChronoUnit.SECONDS))
+        val running = account.createEntry(
+            "Running",
+            Instant.now().minus(5, ChronoUnit.MINUTES).truncatedTo(ChronoUnit.SECONDS),
+        )
         launch {
-            val runningItem = barItemMatcher(R.string.nav_timer) and
-                SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, string(R.string.nav_timer_running))
+            val runningItem = barItemMatcher(TimerR.string.nav_timer) and
+                SemanticsMatcher.expectValue(
+                    SemanticsProperties.StateDescription,
+                    string(TimerR.string.nav_timer_running),
+                )
             composeRule.waitUntil("the Timer item says a timer runs", NETWORK_TIMEOUT_MS) {
                 composeRule.onAllNodes(runningItem).fetchSemanticsNodes().isNotEmpty()
             }
-            composeRule.openMorePage(R.string.reports, NETWORK_TIMEOUT_MS)
+            composeRule.openMorePage(ReportsR.string.reports, NETWORK_TIMEOUT_MS)
             composeRule.onNode(runningItem).assertIsDisplayed()
 
-            val stop = account.client.server.api("workspaces", account.workspaceId.toString(), "time_entries", running.toString(), "stop")
-            account.client.send("PATCH", stop, buildJsonObject {}, JsonObject.serializer()).orFail("PATCH .../time_entries/<id>/stop")
-            runBlocking { app.accountSettings.refresh().join() }
+            val stop = account.client.server.api(
+                "workspaces",
+                account.workspaceId.toString(),
+                "time_entries",
+                running.toString(),
+                "stop",
+            )
+            runBlocking {
+                account.client.send(
+                    HttpMethod.PATCH,
+                    stop,
+                    buildJsonObject {},
+                    JsonObject.serializer(),
+                )
+            }.orFail("PATCH .../time_entries/<id>/stop")
+            runBlocking { app.accountRefresh.refresh().join() }
 
             composeRule.waitUntil("the Timer item drops its state", NETWORK_TIMEOUT_MS) {
                 composeRule.onAllNodes(runningItem).fetchSemanticsNodes().isEmpty()
             }
-            barItem(R.string.nav_timer).assertIsDisplayed().assertIsNotSelected()
+            barItem(TimerR.string.nav_timer).assertIsDisplayed().assertIsNotSelected()
         }
     }
 
@@ -223,37 +288,47 @@ class BottomBarTest {
         val account = signInToNewAccount()
         launch { scenario ->
             composeRule.awaitPomodoroOffered(NETWORK_TIMEOUT_MS)
-            val marker = barItemMatcher(R.string.pomodoro_title) and
-                SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, string(R.string.nav_pomodoro_running))
+            val marker = barItemMatcher(UiR.string.pomodoro_title) and
+                SemanticsMatcher.expectValue(
+                    SemanticsProperties.StateDescription,
+                    string(PomodoroR.string.nav_pomodoro_running),
+                )
             assertEquals(0, composeRule.onAllNodes(marker).fetchSemanticsNodes().size)
-            barItem(R.string.pomodoro_title).performClick()
-            heading(R.string.pomodoro_title).assertIsDisplayed()
-            barItem(R.string.pomodoro_title).assertIsSelected()
+            barItem(UiR.string.pomodoro_title).performClick()
+            heading(UiR.string.pomodoro_title).assertIsDisplayed()
+            barItem(UiR.string.pomodoro_title).assertIsSelected()
             // Another device starts the session; the phone's own action answers go to the same holder.
-            assertEquals(TimerActionResult.Done, runBlocking {
-                app.timerActions.startSession(account.workspaceId, EntryFields(description = "Navigation session"), SessionLengths(25, 5, 15, 4))
-            })
+            assertEquals(
+                TimerActionResult.Done,
+                runBlocking {
+                    app.timerActions.startSession(
+                        WorkspaceId(account.workspaceId),
+                        EntryFields(description = "Navigation session"),
+                        SessionLengths(25, 5, 15, 4),
+                    )
+                },
+            )
             composeRule.waitUntil("Pomodoro has its running state", TIMEOUT_MS) {
                 composeRule.onAllNodes(marker).fetchSemanticsNodes().isNotEmpty()
             }
             pressBack(scenario)
             composeRule.awaitTimerPage()
             composeRule.onNode(marker).assertIsDisplayed()
-            barItem(R.string.nav_projects).performClick()
+            barItem(ProjectsR.string.nav_projects).performClick()
             assertEquals(TimerActionResult.Done, runBlocking { app.timerActions.nextPhase(heldRevision()) })
             composeRule.onNode(marker).assertIsDisplayed()
             scenario.recreate()
-            heading(R.string.nav_projects).assertIsDisplayed()
+            heading(ProjectsR.string.nav_projects).assertIsDisplayed()
             composeRule.onNode(marker).assertIsDisplayed()
             assertEquals(TimerActionResult.Done, runBlocking { app.timerActions.endSession(heldRevision()) })
             composeRule.waitUntil("Pomodoro drops its running state", TIMEOUT_MS) {
                 composeRule.onAllNodes(marker).fetchSemanticsNodes().isEmpty()
             }
-            barItem(R.string.pomodoro_title).assertIsDisplayed().assertIsNotSelected()
+            barItem(UiR.string.pomodoro_title).assertIsDisplayed().assertIsNotSelected()
         }
     }
 
-    private fun heldRevision(): Long = app.timerState.state.value!!.state.revision
+    private fun heldRevision(): Long = app.heldTimerState!!.revision
 
     /** Signs in to a new account of the test server, which the test deletes at its end. */
     private fun signInToNewAccount(): TestAccounts.Account {
@@ -298,13 +373,16 @@ class BottomBarTest {
         hasText(string(label)) and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab)
 
     /** The sheet's page items. No item of the bar has their labels. */
-    private fun sheetItem(): SemanticsMatcher =
-        isSelectable() and (
-            hasText(string(R.string.reports)) or hasText(string(R.string.nav_templates)) or hasText(string(R.string.nav_clients)) or
-                hasText(string(R.string.nav_tags)) or hasText(string(R.string.nav_trash))
-            )
+    private fun sheetItem(): SemanticsMatcher = isSelectable() and (
+        hasText(
+            string(ReportsR.string.reports),
+        ) or hasText(string(TimerR.string.nav_templates)) or hasText(string(ClientsR.string.nav_clients)) or
+            hasText(string(TagsR.string.nav_tags)) or hasText(string(TrashR.string.nav_trash))
+        )
 
-    private fun heading(@StringRes label: Int): SemanticsNodeInteraction = composeRule.onNode(hasText(string(label)) and isHeading())
+    private fun heading(@StringRes label: Int): SemanticsNodeInteraction = composeRule.onNode(
+        hasText(string(label)) and isHeading(),
+    )
 
     private fun string(@StringRes id: Int): String = context.getString(id)
 

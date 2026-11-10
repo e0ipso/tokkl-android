@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- The app's manifest declares these permissions too and says why the app needs them. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+
+    <application>
+        <!--
+            The timer sync service holds GET /api/app/timer/events while signed in to a Tokkl
+            server with the timer API. It keeps running when the app's task is removed.
+        -->
+        <service
+            android:name="com.github.e0ipso.tokkl.timersync.TimerSyncService"
+            android:exported="false"
+            android:stopWithTask="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Keeps the user's self-hosted Tokkl server's timer event stream (Server-Sent Events) open, so a Pomodoro session or pause started on another device reaches the phone before its phase ends and every device rings together. The app ships on F-Droid without a push service, and the stream is the server's only way to reach the phone." />
+        </service>
+    </application>
+</manifest>

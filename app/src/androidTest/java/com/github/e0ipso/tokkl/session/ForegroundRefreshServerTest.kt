@@ -12,7 +12,6 @@ import androidx.test.runner.lifecycle.Stage
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.BackgroundTrip
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.RequestCounter
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
@@ -21,7 +20,10 @@ import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.TogglApiClient
 import com.github.e0ipso.tokkl.bottomBarItem
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.followNoTimerEvents
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import org.junit.After
@@ -56,7 +58,12 @@ class ForegroundRefreshServerTest {
 
     /** The account straight on the server, past the app's guard and the counters. */
     private val direct by lazy {
-        TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(account.apiToken), httpClient = OkHttpClient())
+        TogglApiClient(
+            TokklTestServer.url,
+            ApiCredentials.ApiToken(account.apiToken),
+            httpClient = OkHttpClient(),
+            io = Dispatchers.IO,
+        )
     }
 
     @Before
@@ -73,7 +80,7 @@ class ForegroundRefreshServerTest {
         account = TestAccounts.create(timezone = "Europe/Madrid")
         val all = RequestCounter(TokklTestServer.url, " HTTP/1.1\r\n").also { this.all = it }
         val me = RequestCounter(all.url, "GET /api/v9/me?with_related_data=true HTTP/1.1").also { this.me = it }
-        ServerTrustStore(context).confirmCleartext(me.url)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(me.url)
         Session(context).save(me.url, account.apiToken)
     }
 
@@ -88,7 +95,7 @@ class ForegroundRefreshServerTest {
                 try {
                     // TestAccounts talks to the server through the app's guard, which follows the session.
                     if (::account.isInitialized) {
-                        ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
+                        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(TokklTestServer.url)
                         Session(context).save(TokklTestServer.url, account.apiToken)
                     }
                 } finally {
@@ -112,7 +119,7 @@ class ForegroundRefreshServerTest {
         val all = checkNotNull(all)
         val me = checkNotNull(me)
         // The settings the Timer page needs, read before the app opens, as after a sign-in.
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         val beforeOpen = me.count
 
         launch()
@@ -134,7 +141,10 @@ class ForegroundRefreshServerTest {
 
         scenario!!.onActivity { it.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE }
         awaitCondition("the activity is recreated in landscape") {
-            resumedActivity()?.takeIf { it !== activity && it.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE }
+            resumedActivity()?.takeIf {
+                it !== activity &&
+                    it.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+            }
         }
         settle()
         assertEquals("a rotation refreshes nothing", beforeOpen + 2, me.count)
@@ -171,12 +181,16 @@ class ForegroundRefreshServerTest {
     private fun resumedActivity(): MainActivity? {
         var resumed: MainActivity? = null
         instrumentation.runOnMainSync {
-            resumed = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED).filterIsInstance<MainActivity>().singleOrNull()
+            resumed = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(
+                Stage.RESUMED,
+            ).filterIsInstance<MainActivity>().singleOrNull()
         }
         return resumed
     }
 
-    /** Polls [value] until it is not null. Works while the app is in the background, unlike the compose rule's waits. */
+    /**
+     * Polls [value] until it is not null. Works while the app is in the background, unlike the compose rule's waits.
+     */
     private fun <T : Any> awaitCondition(what: String, value: () -> T?): T {
         val deadline = System.nanoTime() + TIMEOUT_MS * 1_000_000
         while (true) {

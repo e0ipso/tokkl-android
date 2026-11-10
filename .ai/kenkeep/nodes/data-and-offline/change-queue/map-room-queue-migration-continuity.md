@@ -18,7 +18,7 @@ kk_relates_to:
 kk_depends_on: []
 kk_confidence: high
 ---
-Version 5 adds `pending_changes.held` and `pending_changes.refusal`; version 6 adds `capturedStop`, `shortStop` and `short_stop_undo` without rewriting older queued requests. Versions 1 through 6 each have an exported schema in `app/schemas/`, with consecutive Room `AutoMigration` steps. Never drop the database file, since that loses queued changes. `CacheDatabaseMigrationTest` opens files written by earlier schema versions under the current version without room-testing, relying on Room's exported-schema validation.
+Version 5 adds `pending_changes.held` and `pending_changes.refusal`; version 6 adds `capturedStop`, `shortStop` and `short_stop_undo` without rewriting older queued requests. Versions 7 and 8 added `pause_chain`, `timer_session` and `pomodoro_session`, and version 9 drops those three tables, since the server keeps the pause chain and the session. Version 10, the current one, adds `allDay` and `day` to time entries, queued changes and short Stop Undo records; older rows read as timed. Versions 1 through 10 each have an exported schema in `core/cache/schemas/`, with consecutive Room `AutoMigration` steps, the one to 9 with a spec that deletes the three tables. Never drop the database file, since that loses queued changes. `CacheDatabaseMigrationTest` opens files written by earlier schema versions under the current version without room-testing, relying on Room's exported-schema validation.
 
 <!-- kk:related:start -->
 # Related

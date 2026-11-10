@@ -11,16 +11,20 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createComposeRule
 import com.github.e0ipso.tokkl.api.ServerCertificate
-import com.github.e0ipso.tokkl.api.SharedHttpClient
+import com.github.e0ipso.tokkl.api.api
+import com.github.e0ipso.tokkl.api.apiConnector
+import com.github.e0ipso.tokkl.api.instance
+import com.github.e0ipso.tokkl.appConfiguredServer
+import com.github.e0ipso.tokkl.appHttp
+import com.github.e0ipso.tokkl.feature.signin.R
+import com.github.e0ipso.tokkl.session.CountingRefresh
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import java.net.InetAddress
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
@@ -31,6 +35,9 @@ import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.net.InetAddress
+import java.time.Clock
+import com.github.e0ipso.tokkl.core.trust.R as TrustR
 
 /**
  * Signs in through the screen to the TLS proxy of scripts/instrumented-tests.sh under a host
@@ -53,26 +60,36 @@ class CertificateHostMismatchTest {
     @Before
     fun showTheSignInScreen() {
         SessionRule.signOut()
-        val client = SharedHttpClient.instance.newBuilder()
+        val client = appHttp.instance.newBuilder()
             .dns(object : Dns {
                 override fun lookup(hostname: String): List<InetAddress> =
                     if (hostname == HOST) InetAddress.getAllByName(proxy.host).toList() else Dns.SYSTEM.lookup(hostname)
             })
             .build()
-        val model = SignInModel(
-            signIn = SignIn(session = { _, _, _ -> saved = true }, httpClient = client),
-            trust = ServerTrustStore(context),
-            cooldowns = SignInCooldownStore(context),
+        val model = SignInViewModel(
+            signIn = ServerSignIn(
+                storeSignIn = { _, _, _ -> saved = true },
+                connector = apiConnector(client),
+                configured = appConfiguredServer,
+                scope = scope,
+                io = Dispatchers.IO,
+                signedInAccount = { null },
+            ),
+            trust = ServerTrustStore(context, Dispatchers.IO),
+            cooldowns = SignInCooldownStore(context, Dispatchers.IO),
             scope = scope,
             io = Dispatchers.IO,
-            clock = System::currentTimeMillis,
+            clock = Clock.systemUTC(),
+            refreshes = CountingRefresh(),
         )
         composeRule.setContent { TokklTheme { SignInScreen(model, onSignedIn = {}) } }
     }
 
     @After
     fun forgetTheServer() {
-        try { composeRule.checkAccessibility() } finally {
+        try {
+            composeRule.checkAccessibility()
+        } finally {
             scope.cancel()
             SessionRule.signOut()
         }
@@ -84,8 +101,8 @@ class CertificateHostMismatchTest {
         signIn()
 
         awaitHostMessage()
-        assertFalse("the trust prompt shows", exists(hasText(string(R.string.sign_in_certificate_title))))
-        assertNull(ServerTrustStore(context).pinnedSha256(HOST, proxy.port))
+        assertFalse("the trust prompt shows", exists(hasText(string(TrustR.string.sign_in_certificate_title))))
+        assertNull(ServerTrustStore(context, Dispatchers.IO).pinnedSha256(HOST, proxy.port))
         assertFalse("the session was stored", saved)
     }
 
@@ -96,7 +113,10 @@ class CertificateHostMismatchTest {
     @Test
     fun aPinnedCertificateStillFailsTheHostNameCheck() {
         val sha256 = TokklTestServer.tlsFingerprint.replace(":", "").lowercase()
-        ServerTrustStore(context).pinCertificate(ServerCertificate(HOST, proxy.port, sha256, subject = ""))
+        ServerTrustStore(
+            context,
+            Dispatchers.IO,
+        ).pinCertificate(ServerCertificate(HOST, proxy.port, sha256, subject = ""))
 
         signIn()
 
@@ -110,7 +130,9 @@ class CertificateHostMismatchTest {
         composeRule.onNode(hasSetTextAction() and hasText(string(R.string.sign_in_api_token)))
             .performTextInput(TokklTestServer.apiToken)
         // The brand above the form can push the button below the screen's or the keyboard's edge.
-        composeRule.onNode(hasText(string(R.string.sign_in_submit)) and hasClickAction()).performScrollTo().performClick()
+        composeRule.onNode(
+            hasText(string(R.string.sign_in_submit)) and hasClickAction(),
+        ).performScrollTo().performClick()
     }
 
     private fun awaitHostMessage() {

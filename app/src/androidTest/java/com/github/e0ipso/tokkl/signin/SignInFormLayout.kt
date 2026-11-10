@@ -14,7 +14,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Dp
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.feature.signin.R
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 
@@ -45,10 +45,30 @@ internal fun ComposeTestRule.assertFieldErrorsLeaveTheFormInPlace() {
 
         for ((index, label) in fields.map { it.first }.withIndex()) {
             val name = "${string(label)} with ${string(method)}"
-            assertEquals("$name changed height when its error showed", before[index].height.value, withErrors[index].height.value, SLACK_DP)
-            assertEquals("$name moved when the errors showed", before[index].top.value, withErrors[index].top.value, SLACK_DP)
-            assertEquals("$name changed height when its error cleared", before[index].height.value, cleared[index].height.value, SLACK_DP)
-            assertEquals("$name moved when the errors cleared", before[index].top.value, cleared[index].top.value, SLACK_DP)
+            assertEquals(
+                "$name changed height when its error showed",
+                before[index].height.value,
+                withErrors[index].height.value,
+                SLACK_DP,
+            )
+            assertEquals(
+                "$name moved when the errors showed",
+                before[index].top.value,
+                withErrors[index].top.value,
+                SLACK_DP,
+            )
+            assertEquals(
+                "$name changed height when its error cleared",
+                before[index].height.value,
+                cleared[index].height.value,
+                SLACK_DP,
+            )
+            assertEquals(
+                "$name moved when the errors cleared",
+                before[index].top.value,
+                cleared[index].top.value,
+                SLACK_DP,
+            )
         }
     }
 }
@@ -99,7 +119,9 @@ private fun ComposeTestRule.field(@StringRes label: Int) = onNode(hasSetTextActi
 private fun ComposeTestRule.shows(@StringRes text: Int): Boolean =
     onAllNodes(hasText(string(text)), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
 
-private fun string(@StringRes id: Int): String = InstrumentationRegistry.getInstrumentation().targetContext.getString(id)
+private fun string(@StringRes id: Int): String = InstrumentationRegistry.getInstrumentation().targetContext.getString(
+    id,
+)
 
 /** Each method's fields, top to bottom, with a value that clears its error. */
 private val METHODS = listOf(

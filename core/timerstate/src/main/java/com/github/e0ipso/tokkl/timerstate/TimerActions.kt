@@ -1,0 +1,193 @@
+package com.github.e0ipso.tokkl.timerstate
+
+import com.github.e0ipso.tokkl.api.ApiClientProvider
+import com.github.e0ipso.tokkl.api.ApiError
+import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.Refusable
+import com.github.e0ipso.tokkl.api.SessionStartBody
+import com.github.e0ipso.tokkl.api.TimerState
+import com.github.e0ipso.tokkl.api.TokklApi
+import com.github.e0ipso.tokkl.api.fold
+import com.github.e0ipso.tokkl.api.map
+import com.github.e0ipso.tokkl.cache.CREATED_WITH
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.WorkspaceId
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.CoroutineContext
+
+/**
+ * The Tokkl server's timer actions under `/api/app`: Pause, Resume and Discard of the pause chain,
+ * and Start, Next phase and End of a Pomodoro session, with the timer read they share. Each one
+ * goes to the server at once and is never queued, so without a connection it fails and the phone
+ * keeps what it showed. The state the server answers with, also in a 409 refusal, goes to the
+ * account's [TimerStateSource], which every surface reads. Start, Stop and edits of a running
+ * entry stay with the change queue, and no phase rule runs here: the server applies them all.
+ *
+ * Each action goes out once. A request whose answer was lost may have reached the server, so it
+ * is not sent again; the next read or timer event shows what it did. An action runs in [scope],
+ * the application's, so it reaches the server and its answer reaches the holder also when its
+ * caller goes meanwhile, as a screen does. The read runs in the caller's coroutine and stops
+ * with it.
+ *
+ * Resume, Discard, Next phase and End take the revision of the state the surface showed, not the
+ * holder's latest, so a tap on an older notification or widget gets a refusal instead of acting
+ * on a phase the user never saw.
+ *
+ * @param states gives the intake where the account's timer state takes answers. Each call takes
+ *   the intake once and gives the answer to it, so an answer for an account that signed out
+ *   meanwhile changes nothing.
+ */
+class TimerActions(
+    private val client: ApiClientProvider,
+    private val states: () -> TimerStateSource,
+    private val scope: CoroutineScope,
+    private val io: CoroutineContext,
+) : PauseActions,
+    SessionActions {
+
+    override suspend fun read(): TimerActionResult = withContext(io) {
+        exchange { api -> api.timer.state().map { Refusable(it, refused = false) } }
+    }
+
+    /** Pause reads no field, so it sends an empty object. */
+    override suspend fun pause(): TimerActionResult = send { it.timer.pause() }
+
+    override suspend fun resume(revision: Long): TimerActionResult = send { it.timer.resume(revision) }
+
+    override suspend fun discard(revision: Long): TimerActionResult = send { it.timer.discard(revision) }
+
+    override suspend fun startSession(
+        workspaceId: WorkspaceId,
+        fields: EntryFields,
+        lengths: SessionLengths,
+    ): TimerActionResult = send { it.timer.startSession(sessionStart(workspaceId, fields, lengths)) }
+
+    override suspend fun nextPhase(revision: Long): TimerActionResult = send { it.timer.nextPhase(revision) }
+
+    override suspend fun endSession(revision: Long): TimerActionResult = send { it.timer.endSession(revision) }
+
+    private suspend fun send(request: suspend (TokklApi) -> ApiResult<Refusable<TimerState>>): TimerActionResult =
+        scope.async(io) { exchange(request) }.await()
+
+    /** Sends [request] and gives its answer to the account's timer state. Blocks on disk I/O. */
+    private suspend fun exchange(request: suspend (TokklApi) -> ApiResult<Refusable<TimerState>>): TimerActionResult {
+        val api = client() ?: return TimerActionResult.Failed(ApiError.AuthFailed)
+        val holder = states()
+        // Before the request, so its answer cannot undo a change the phone makes meanwhile.
+        val read = holder.begin()
+        return request(api).fold(
+            onSuccess = { answer ->
+                holder.accept(read, answer.value)
+                if (answer.refused) TimerActionResult.Refused else TimerActionResult.Done
+            },
+            onFailure = { if (it is ApiError.Network) TimerActionResult.Offline else TimerActionResult.Failed(it) },
+        )
+    }
+}
+
+/** The pause chain's actions on the server, which the Timer page and the full-screen timer send. */
+interface PauseActions {
+
+    /** Pauses the running entry. The server refuses it during a session and while nothing runs. */
+    suspend fun pause(): TimerActionResult
+
+    /** Resumes the paused chain shown at [revision], with a clone of its fields. */
+    suspend fun resume(revision: Long): TimerActionResult
+
+    /** Ends the paused chain shown at [revision], which is Stop while paused. */
+    suspend fun discard(revision: Long): TimerActionResult
+}
+
+/**
+ * A Pomodoro session's actions on the server, which the Pomodoro page sends, and the timer read it
+ * uses to learn the revision after its own edits reach the server.
+ */
+interface SessionActions {
+
+    /** Reads the state with `GET /api/app/timer`. */
+    suspend fun read(): TimerActionResult
+
+    /**
+     * The server refuses it while a session runs, and otherwise stops the running entry and ends
+     * any pause chain.
+     */
+    suspend fun startSession(workspaceId: WorkspaceId, fields: EntryFields, lengths: SessionLengths): TimerActionResult
+
+    /** Confirms the phase shown at [revision] and starts the next one. */
+    suspend fun nextPhase(revision: Long): TimerActionResult
+
+    suspend fun endSession(revision: Long): TimerActionResult
+}
+
+/** What a timer action, or the timer read, came to. The surfaces put it into words. */
+sealed interface TimerActionResult {
+
+    /** The server answered with its state, which the holder took unless it held a newer one. */
+    data object Done : TimerActionResult
+
+    /**
+     * 409: the timer was no longer as the surface showed it, and the server refused the action.
+     * The holder took the server's state from the refusal, unless it held a newer one.
+     */
+    data object Refused : TimerActionResult
+
+    /**
+     * No answer came. The phone changed nothing and queued nothing. The action may still have
+     * reached the server, and then the next read or timer event shows it.
+     */
+    data object Offline : TimerActionResult
+
+    /**
+     * Any other failure, for the surface's existing error path: a refused token, a trust check the
+     * user has not answered, a status with the server's reason, or a body that is not a state.
+     */
+    data class Failed(val error: ApiError) : TimerActionResult
+}
+
+/**
+ * The lengths a session starts with, which the start form sends in place of the account's
+ * defaults. Tokkl answers a length outside its range with 400, so these refuse one first.
+ *
+ * @property workMinutes the work phase, in minutes, as are the two rests.
+ * @property longRestEvery a long rest follows every this many work phases.
+ */
+data class SessionLengths(
+    val workMinutes: Int,
+    val shortRestMinutes: Int,
+    val longRestMinutes: Int,
+    val longRestEvery: Int,
+) {
+    init {
+        require(workMinutes in WORK_MINUTES) { "workMinutes must be in $WORK_MINUTES" }
+        require(shortRestMinutes in REST_MINUTES) { "shortRestMinutes must be in $REST_MINUTES" }
+        require(longRestMinutes in REST_MINUTES) { "longRestMinutes must be in $REST_MINUTES" }
+        require(longRestEvery in LONG_REST_EVERY) { "longRestEvery must be in $LONG_REST_EVERY" }
+    }
+
+    companion object {
+        /** The ranges Tokkl 1.10.0 checks in `readSessionConfig`. */
+        val WORK_MINUTES = 1..180
+        val REST_MINUTES = 1..60
+        val LONG_REST_EVERY = 1..12
+    }
+}
+
+/**
+ * The body of `POST /api/app/pomodoro`: the first pomodoro's fields as a v9 start sends them, tags
+ * by name and the app's `created_with`, and the four lengths.
+ */
+private fun sessionStart(workspaceId: WorkspaceId, fields: EntryFields, lengths: SessionLengths) = SessionStartBody(
+    workspaceId = workspaceId.value,
+    createdWith = CREATED_WITH,
+    description = fields.description,
+    projectId = fields.projectId?.value,
+    taskId = fields.taskId?.value,
+    tags = fields.tags,
+    billable = fields.billable,
+    workMinutes = lengths.workMinutes,
+    shortRestMinutes = lengths.shortRestMinutes,
+    longRestMinutes = lengths.longRestMinutes,
+    longRestEvery = lengths.longRestEvery,
+)

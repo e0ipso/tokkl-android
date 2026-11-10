@@ -15,18 +15,21 @@ import androidx.compose.ui.test.performTextInput
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.DeviceShell
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
 import com.github.e0ipso.tokkl.api.ServerCertificate
+import com.github.e0ipso.tokkl.api.api
 import com.github.e0ipso.tokkl.awaitText
 import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.core.trust.R
 import com.github.e0ipso.tokkl.credentials.ApiTokenStore
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.ServerTrustStore
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -34,6 +37,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import com.github.e0ipso.tokkl.feature.signin.R as SigninR
 
 /**
  * Signs in through the screen to the real Tokkl container behind the TLS
@@ -47,7 +51,6 @@ class CertificatePromptTest {
         composeRule.checkAccessibility()
     }
 
-
     @get:Rule(order = 0)
     val session = SessionRule()
 
@@ -60,19 +63,19 @@ class CertificatePromptTest {
 
     @Before
     fun awaitSignInScreen() {
-        composeRule.awaitText(string(R.string.sign_in_server_url))
+        composeRule.awaitText(string(SigninR.string.sign_in_server_url))
     }
 
     @Test
-    fun untrustedCertificateShowsItsFingerprintAndSignsInOnceTrusted() {
+    fun untrustedCertificateShowsItsFingerprintAndSignsInOnceTrusted() = runBlocking<Unit> {
         signIn()
 
         awaitPrompt(R.string.sign_in_certificate_title)
         composeRule.onNode(hasText(TokklTestServer.tlsFingerprint)).performScrollTo().assertIsDisplayed()
         composeRule.onNode(hasText("CN=Tokkl instrumented tests")).performScrollTo().assertIsDisplayed()
         assertFalse("https shows no http warning", exists(hasText(string(R.string.sign_in_http_warning_title))))
-        assertNull(ServerConfigStore(context).load())
-        assertNull(ApiTokenStore(context).load())
+        assertNull(ServerConfigStore(context, Dispatchers.IO).load())
+        assertNull(ApiTokenStore(context, io = Dispatchers.IO).load())
         for (node in composeRule.onAllNodes(hasClickAction()).fetchSemanticsNodes()) {
             val description = node.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty().joinToString(" ")
             val text = node.config.getOrNull(SemanticsProperties.Text).orEmpty().joinToString(" ") { it.text }
@@ -82,14 +85,17 @@ class CertificatePromptTest {
         composeRule.onNode(hasText(string(R.string.sign_in_certificate_trust)) and hasClickAction()).performClick()
 
         composeRule.awaitTimerPage(NETWORK_TIMEOUT_MS)
-        assertEquals(sha256, ServerTrustStore(context).pinnedSha256(endpoint.host, endpoint.port))
-        assertEquals(TokklTestServer.tlsUrl, ServerConfigStore(context).load())
+        assertEquals(sha256, ServerTrustStore(context, Dispatchers.IO).pinnedSha256(endpoint.host, endpoint.port))
+        assertEquals(TokklTestServer.tlsUrl, ServerConfigStore(context, Dispatchers.IO).load())
     }
 
     @Test
     fun changedCertificatePromptsAgainAndCancelKeepsTheOldPin() {
         val old = "00".repeat(32)
-        ServerTrustStore(context).pinCertificate(ServerCertificate(endpoint.host, endpoint.port, old, subject = ""))
+        ServerTrustStore(
+            context,
+            Dispatchers.IO,
+        ).pinCertificate(ServerCertificate(endpoint.host, endpoint.port, old, subject = ""))
 
         signIn()
 
@@ -97,9 +103,11 @@ class CertificatePromptTest {
         composeRule.onNode(hasText(TokklTestServer.tlsFingerprint)).performScrollTo().assertIsDisplayed()
         composeRule.onNode(hasText(string(R.string.sign_in_warning_cancel)) and hasClickAction()).performClick()
 
-        composeRule.waitUntil("the prompt closes") { !exists(hasText(string(R.string.sign_in_certificate_changed_title))) }
-        assertEquals(old, ServerTrustStore(context).pinnedSha256(endpoint.host, endpoint.port))
-        assertNull(ServerConfigStore(context).load())
+        composeRule.waitUntil(
+            "the prompt closes",
+        ) { !exists(hasText(string(R.string.sign_in_certificate_changed_title))) }
+        assertEquals(old, ServerTrustStore(context, Dispatchers.IO).pinnedSha256(endpoint.host, endpoint.port))
+        runBlocking { assertNull(ServerConfigStore(context, Dispatchers.IO).load()) }
     }
 
     @Test
@@ -112,16 +120,18 @@ class CertificatePromptTest {
         composeRule.waitForIdle()
 
         composeRule.onNode(hasText(string(R.string.sign_in_certificate_title))).assertIsDisplayed()
-        assertNull(ServerTrustStore(context).pinnedSha256(endpoint.host, endpoint.port))
+        assertNull(ServerTrustStore(context, Dispatchers.IO).pinnedSha256(endpoint.host, endpoint.port))
     }
 
     private fun signIn() {
-        composeRule.onNode(hasSetTextAction() and hasText(string(R.string.sign_in_server_url)))
+        composeRule.onNode(hasSetTextAction() and hasText(string(SigninR.string.sign_in_server_url)))
             .performTextInput(TokklTestServer.tlsUrl.toString())
-        composeRule.onNode(hasSetTextAction() and hasText(string(R.string.sign_in_api_token)))
+        composeRule.onNode(hasSetTextAction() and hasText(string(SigninR.string.sign_in_api_token)))
             .performTextInput(TokklTestServer.apiToken)
         // The brand above the form can push the button below the screen's or the keyboard's edge.
-        composeRule.onNode(hasText(string(R.string.sign_in_submit)) and hasClickAction()).performScrollTo().performClick()
+        composeRule.onNode(
+            hasText(string(SigninR.string.sign_in_submit)) and hasClickAction(),
+        ).performScrollTo().performClick()
     }
 
     private fun awaitPrompt(@StringRes title: Int) {

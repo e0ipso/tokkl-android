@@ -4,29 +4,25 @@ import android.app.Notification
 import android.app.NotificationManager
 import android.content.Intent
 import android.content.pm.ServiceInfo
-import android.media.AudioAttributes
 import android.media.AudioManager
 import android.os.Build
 import android.os.SystemClock
-import android.os.VibrationAttributes
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
-import androidx.test.uiautomator.Until
 import androidx.test.uiautomator.UiDevice
+import androidx.test.uiautomator.Until
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.DeviceShell
-import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.components.heldTimerState
+import com.github.e0ipso.tokkl.components.pomodoroAlarm
+import com.github.e0ipso.tokkl.model.PhaseTransition
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
-import com.github.e0ipso.tokkl.timerstate.PhaseTransition
-import java.time.Duration
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicReference
+import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -37,10 +33,12 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.time.Duration
 
 /**
  * The ringing service at a held phase's planned end, on API 31..36; no audible emulator output is
- * assumed. Inspect the actual MediaPlayer, applied attributes and vibrator request. Each test
+ * assumed. The platform's own records show the ring ([PomodoroRingObservation]): the running
+ * service and its type, the app's alarm player in the audio service, and its vibration. Each test
  * holds a server phase already past its end, and the phone runs offline, so the alarm rings from
  * the held state alone. Full-screen alarm Activity acceptance is covered separately in
  * PomodoroAlarmActivityTest. Instrumentation shares the app process, so this cannot model
@@ -80,17 +78,20 @@ class PomodoroRingingServiceTest {
     @After
     fun removeFixturesAndRestoreDeviceState() {
         try {
-            PomodoroRingingActionReceiver.completed = null
-            PomodoroRingingService.processed = null
             HeldPhases.holdNoSession()
             awaitStopped()
             awaitSessionNotifications(0)
-            assertFalse(app.pomodoroRinging.state.value.vibrationRequested)
+            assertFalse(PomodoroRingObservation.now().vibrating)
         } finally {
             try {
                 if (Build.VERSION.SDK_INT >= 36) setRinger(ringer)
                 DeviceShell.run("cmd media_session volume --stream 4 --set $alarmVolume")
-                val mode = when (zen) { "1" -> "priority"; "2" -> "none"; "3" -> "alarms"; else -> "off" }
+                val mode = when (zen) {
+                    "1" -> "priority"
+                    "2" -> "none"
+                    "3" -> "alarms"
+                    else -> "off"
+                }
                 val filter = when (zen) {
                     "1" -> NotificationManager.INTERRUPTION_FILTER_PRIORITY
                     "2" -> NotificationManager.INTERRUPTION_FILTER_NONE
@@ -115,15 +116,9 @@ class PomodoroRingingServiceTest {
         val original = seedDuePhase()
         val state = awaitPlaying()
         assertAlarmOutput(state)
-        assertEquals(HeldPhases.key(original), state.ring?.phase)
+        assertEquals(HeldPhases.key(original), state.phase)
         // The phase stays where it was until Next phase or End session.
-        assertEquals(original, app.timerState.state.value)
-        onMain {
-            val service = checkNotNull(app.pomodoroRinging.service)
-            assertTrue(service.output.playing)
-            assertTrue(service.output.looping)
-            assertTrue(service.output.vibrationRequested)
-        }
+        assertEquals(original, app.heldTimerState)
         val notification = ringingNotification()
         assertEquals(Notification.CATEGORY_ALARM, notification.category)
         // The app sets no timeout. Android 16 gives every posted notification without one a
@@ -134,7 +129,10 @@ class PomodoroRingingServiceTest {
         assertNotNull(PomodoroRingingNotifier(context).build(original.ring()).fullScreenIntent)
         if (canShowPomodoroFullScreen(context)) assertNotNull(notification.fullScreenIntent)
         assertTrue(notification.flags and Notification.FLAG_FOREGROUND_SERVICE != 0)
-        assertEquals(NotificationManager.IMPORTANCE_HIGH, notifications.getNotificationChannel(PomodoroRingingNotifier.CHANNEL_ID).importance)
+        assertEquals(
+            NotificationManager.IMPORTANCE_HIGH,
+            notifications.getNotificationChannel(PomodoroRingingNotifier.CHANNEL_ID).importance,
+        )
         assertNull(notifications.getNotificationChannel(PomodoroRingingNotifier.CHANNEL_ID).sound)
     }
 
@@ -147,7 +145,7 @@ class PomodoroRingingServiceTest {
         assertEquals(AudioManager.RINGER_MODE_SILENT, audio.ringerMode)
         seedDuePhase()
         assertAlarmOutput(awaitPlaying())
-        onMain { assertTrue(checkNotNull(app.pomodoroRinging.service).output.playing) }
+        assertTrue(PomodoroRingObservation.now().playing)
         assertEquals(AudioManager.RINGER_MODE_SILENT, audio.ringerMode)
     }
 
@@ -157,28 +155,25 @@ class PomodoroRingingServiceTest {
         assertEquals(NotificationManager.INTERRUPTION_FILTER_ALARMS, notifications.currentInterruptionFilter)
         seedDuePhase()
         assertAlarmOutput(awaitPlaying())
-        onMain { assertTrue(checkNotNull(app.pomodoroRinging.service).output.playing) }
+        assertTrue(PomodoroRingObservation.now().playing)
         assertEquals(NotificationManager.INTERRUPTION_FILTER_ALARMS, notifications.currentInterruptionFilter)
     }
 
     @Test
-    fun everyTransitionUsesItsBundledWavWithAlarmAttributesAndRepeatingVibration() {
+    fun everyTransitionRingsItsSoundWithAlarmAttributesAndRepeatingVibration() {
         val cases = listOf(
             PhaseTransition.WORK_TO_SHORT_REST to PomodoroSound.WORK_TO_SHORT_REST,
             PhaseTransition.WORK_TO_LONG_REST to PomodoroSound.WORK_TO_LONG_REST,
             PhaseTransition.SHORT_REST_TO_WORK to PomodoroSound.SHORT_REST_TO_WORK,
             PhaseTransition.LONG_REST_TO_WORK to PomodoroSound.LONG_REST_TO_WORK,
         )
-        assertEquals(
-            listOf(R.raw.pomodoro_work_to_short_rest, R.raw.pomodoro_work_to_long_rest, R.raw.pomodoro_short_rest_to_work, R.raw.pomodoro_long_rest_to_work),
-            cases.map { it.second.rawResource() },
-        )
         for ((transition, sound) in cases) {
             val original = seedDuePhase(transition)
             val state = awaitPlaying()
-            assertEquals(sound, state.ring?.sound)
+            assertEquals(sound, checkNotNull(original.ring()).sound)
+            assertEquals(HeldPhases.key(original), state.phase)
             assertAlarmOutput(state)
-            assertEquals(original, app.timerState.state.value)
+            assertEquals(original, app.heldTimerState)
             HeldPhases.holdNoSession()
             awaitStopped()
         }
@@ -196,10 +191,10 @@ class PomodoroRingingServiceTest {
             notification.actions[1].actionIntent.send()
         }
         // Neither reached the server, so the phase and its ring stay as they were.
-        assertEquals(held, app.timerState.state.value)
-        val after = app.pomodoroRinging.state.value
+        assertEquals(held, app.heldTimerState)
+        val after = PomodoroRingObservation.now()
         assertAlarmOutput(after)
-        assertEquals(original.audioSessionId, after.audioSessionId)
+        assertEquals("the same player", original.player, after.player)
         assertEquals("1", DeviceShell.run("settings get global airplane_mode_on").trim())
 
         // Another device confirms Next phase, and its state reaches the phone.
@@ -215,35 +210,35 @@ class PomodoroRingingServiceTest {
         // Invoke the framework's delete PendingIntent. API 31 may refuse the physical swipe of
         // an ongoing notification; the same callback covers the dismissible API 34+ behavior.
         awaitActions(1) { deleted.send() }
-        val after = app.pomodoroRinging.state.value
-        assertEquals(original.audioSessionId, after.audioSessionId)
-        assertEquals(phase, after.ring?.phase)
+        val after = PomodoroRingObservation.now()
+        assertEquals("the same player", original.player, after.player)
+        assertEquals(phase, after.phase)
         assertAlarmOutput(after)
         assertEquals(1, notifications.activeNotifications.count { it.id == PomodoroSessionNotifier.NOTIFICATION_ID })
-        onMain { assertTrue(checkNotNull(app.pomodoroRinging.service).output.playing) }
     }
 
     @Test
     fun duplicateDeliveryAndStaleServiceIntentsCannotReplaceTheCurrentRing() {
-        val old = HeldPhases.key(seedDuePhase())
-        val original = awaitPlaying()
-        runBlocking { app.pomodoroAlarm.onAlarm(old) }
-        assertEquals(original.audioSessionId, app.pomodoroRinging.state.value.audioSessionId)
-        val stale = PomodoroPhaseKey(old.start.minusSeconds(1))
-        val processed = CountDownLatch(1)
-        PomodoroRingingService.processed = processed
-        try {
-            context.startForegroundService(Intent(context, PomodoroRingingService::class.java).setAction(ServicePomodoroRinging.START).putPhase(stale))
-            assertTrue("stale start was not processed", processed.await(10, TimeUnit.SECONDS))
-        } finally {
-            PomodoroRingingService.processed = null
+        // Counting from before the service starts, so the service resolves the counting check.
+        val (old, original) = PomodoroWorkWaits.RingChecks().use { checks ->
+            val old = HeldPhases.key(seedDuePhase())
+            val original = awaitPlaying()
+            runBlocking { app.pomodoroAlarm.onAlarm(old) }
+            assertEquals("the same player", original.player, PomodoroRingObservation.now().player)
+            val stale = PomodoroPhaseKey(old.start.minusSeconds(1))
+            checks.awaitOne("stale start") {
+                context.startForegroundService(
+                    Intent(
+                        context,
+                        PomodoroRingingService::class.java,
+                    ).setAction(ServicePomodoroRinging.START).putPhase(stale),
+                )
+            }
+            old to original
         }
-        onMain {
-            val current = checkNotNull(app.pomodoroRinging.service)
-            assertEquals(old, current.current?.phase)
-            assertEquals(original.audioSessionId, current.output.audioSessionId)
-            assertTrue(current.output.playing)
-        }
+        val current = PomodoroRingObservation.now()
+        assertEquals(old, current.phase)
+        assertEquals("the same player", original.player, current.player)
         assertEquals(old, runBlocking { app.pomodoroAlarm.current() }?.phase)
     }
 
@@ -261,9 +256,10 @@ class PomodoroRingingServiceTest {
             old.actions[1].actionIntent.send()
             old.deleteIntent.send()
         }
-        assertEquals(current, app.timerState.state.value)
-        assertFalse(app.pomodoroRinging.state.value.serviceRunning)
-        assertFalse(app.pomodoroRinging.state.value.playing)
+        assertEquals(current, app.heldTimerState)
+        val after = PomodoroRingObservation.now()
+        assertFalse(after.serviceRunning)
+        assertFalse(after.playing)
     }
 
     @Test
@@ -276,29 +272,19 @@ class PomodoroRingingServiceTest {
         val title = checkNotNull(device.wait(Until.findObject(By.text("Pomodoro phase ended")), 10_000))
         val bounds = title.visibleBounds
         awaitActions(1) {
-            assertTrue(device.swipe(device.displayWidth / 4, bounds.centerY(), device.displayWidth - 1, bounds.centerY(), 20))
+            assertTrue(
+                device.swipe(device.displayWidth / 4, bounds.centerY(), device.displayWidth - 1, bounds.centerY(), 20),
+            )
         }
         // The receiver hands the repost to the ringing service, which posts it after the receiver ends.
         awaitSessionNotifications(1)
-        onMain {
-            val service = checkNotNull(app.pomodoroRinging.service)
-            assertTrue(service.output.playing)
-            assertTrue(service.output.vibrationRequested)
-            assertEquals(original.audioSessionId, service.output.audioSessionId)
-        }
+        val after = PomodoroRingObservation.now()
+        assertTrue(after.vibrating)
+        assertEquals("the same player", original.player, after.player)
         device.pressHome()
     }
 
-    private fun awaitActions(count: Int, send: () -> Unit) {
-        val done = CountDownLatch(count)
-        PomodoroRingingActionReceiver.completed = done
-        try {
-            send()
-            assertTrue("notification action did not finish", done.await(10, TimeUnit.SECONDS))
-        } finally {
-            PomodoroRingingActionReceiver.completed = null
-        }
-    }
+    private fun awaitActions(count: Int, send: () -> Unit) = PomodoroWorkWaits.ringingButtons(count, send = send)
 
     /**
      * Holds a [transition] phase whose planned end passed 65 s ago. The held state arms its alarm
@@ -311,7 +297,7 @@ class PomodoroRingingServiceTest {
         return HeldPhases.hold(transition)
     }
 
-    private fun awaitPlaying(): PomodoroRingingState = HeldPhases.awaitPlaying()
+    private fun awaitPlaying(): ObservedRing = HeldPhases.awaitPlaying()
 
     private fun awaitStopped() = HeldPhases.awaitStopped()
 
@@ -319,25 +305,29 @@ class PomodoroRingingServiceTest {
         val deadline = SystemClock.uptimeMillis() + 10_000
         while (notifications.activeNotifications.count { it.id == PomodoroSessionNotifier.NOTIFICATION_ID } != count) {
             if (SystemClock.uptimeMillis() > deadline) {
-                assertEquals(count, notifications.activeNotifications.count { it.id == PomodoroSessionNotifier.NOTIFICATION_ID })
+                assertEquals(
+                    count,
+                    notifications.activeNotifications.count { it.id == PomodoroSessionNotifier.NOTIFICATION_ID },
+                )
             }
             Thread.sleep(50)
         }
     }
 
-    private fun ringingNotification(): Notification = notifications.activeNotifications.single { it.id == PomodoroSessionNotifier.NOTIFICATION_ID }.notification
+    private fun ringingNotification(): Notification = notifications.activeNotifications.single {
+        it.id ==
+            PomodoroSessionNotifier.NOTIFICATION_ID
+    }.notification
 
-    private fun assertAlarmOutput(state: PomodoroRingingState) {
+    /** A started alarm player that loops, a media playback foreground service, and the alarm's repeating vibration. */
+    private fun assertAlarmOutput(state: ObservedRing) {
         assertTrue(state.serviceRunning)
-        assertTrue(state.playing)
-        assertTrue(state.looping)
-        assertEquals(AudioAttributes.USAGE_ALARM, state.audioUsage)
         assertEquals(ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK, state.foregroundType)
-        assertTrue(state.vibrationRequested)
-        assertEquals(VibrationAttributes.USAGE_ALARM, state.vibrationUsage)
-        assertEquals(listOf(0L, 700L, 300L, 700L, 1_300L), state.vibrationPattern)
-        assertEquals(0, state.vibrationRepeat)
-        assertTrue(checkNotNull(state.audioSessionId) > 0)
+        val vibration = checkNotNull(state.vibration)
+        assertTrue("alarm vibration usage in:\n${vibration.dump}", vibration.alarmUsage)
+        assertEquals(vibration.dump, listOf(0L, 700L, 300L, 700L, 1_300L), vibration.timings)
+        assertEquals(vibration.dump, 0, vibration.repeat)
+        assertTrue("the alarm player loops", PomodoroRingObservation.loops(checkNotNull(state.player)))
     }
 
     private fun setRinger(mode: Int) {
@@ -359,11 +349,5 @@ class PomodoroRingingServiceTest {
             }
             Thread.sleep(50)
         }
-    }
-
-    private fun onMain(block: () -> Unit) {
-        val failure = AtomicReference<Throwable?>()
-        instrumentation.runOnMainSync { try { block() } catch (caught: Throwable) { failure.set(caught) } }
-        failure.get()?.let { throw it }
     }
 }

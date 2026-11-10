@@ -1,6 +1,15 @@
 package com.github.e0ipso.tokkl
 
 import com.github.e0ipso.tokkl.api.SharedHttpClient
+import com.github.e0ipso.tokkl.cache.AccountCache
+import com.github.e0ipso.tokkl.navigation.Navigator
+import com.github.e0ipso.tokkl.platform.ConnectivityDefaultNetwork
+import com.github.e0ipso.tokkl.session.Session
+import com.github.e0ipso.tokkl.time.AccountTime
+import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
+import com.github.e0ipso.tokkl.timersync.TimerSync
+import com.github.e0ipso.tokkl.trust.SessionTrust
+import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.io.ByteArrayInputStream
 import java.io.DataInputStream
 import java.io.File
@@ -27,14 +36,64 @@ internal object ClassReferences {
         val names: Set<String> by lazy { classes + members.map { "${it.owner}.${it.name}" } }
     }
 
-    /** Every compiled app class, by name such as `com/github/e0ipso/tokkl/MainActivity`. */
-    val app: Map<String, References> by lazy {
-        read(SharedHttpClient::class.java).filterKeys { it.startsWith(APP_PACKAGE) }
+    /** The Koin module file of each feature module, whose class shows where the module's classes sit. */
+    private val FEATURE_MODULES = listOf(
+        "signin.SignInFeatureModuleKt",
+        "timer.TimerFeatureModuleKt",
+        "pomodoro.PomodoroFeatureModuleKt",
+        "reports.ReportsFeatureModuleKt",
+        "projects.ProjectsFeatureModuleKt",
+        "clients.ClientsFeatureModuleKt",
+        "tags.TagsFeatureModuleKt",
+        "trash.TrashFeatureModuleKt",
+        "settings.SettingsFeatureModuleKt",
+        "sync.SyncFeatureModuleKt",
+        "notification.NotificationFeatureModuleKt",
+        "shortcuts.ShortcutsFeatureModuleKt",
+        "tile.TileFeatureModuleKt",
+        "widget.WidgetFeatureModuleKt",
+    ).map { "com.github.e0ipso.tokkl.$it" }
+
+    /**
+     * A class of each core module that the app's main sources do not depend on, by name, since
+     * only the runtime classpath holds them.
+     */
+    private val CORE_MODULES = listOf(
+        "catalog.CatalogModel",
+        "model.EntryId",
+        "picker.PickerOptionsKt",
+    ).map { "com.github.e0ipso.tokkl.$it" }
+
+    /**
+     * One class of each Gradle module of the app. Each module's classes sit in a directory or jar
+     * of their own on the test classpath, and the class shows where.
+     */
+    private val MODULE_CLASSES: List<Class<*>> = listOf(
+        MainActivity::class.java,
+        SharedHttpClient::class.java,
+        AccountTime::class.java,
+        TokklTheme::class.java,
+        ConnectivityDefaultNetwork::class.java,
+        Session::class.java,
+        AccountCache::class.java,
+        AccountTimerStates::class.java,
+        TimerSync::class.java,
+        SessionTrust::class.java,
+        Navigator::class.java,
+    ) + (CORE_MODULES + FEATURE_MODULES).map { Class.forName(it) }
+
+    /** The directory or jar of each module's compiled classes. */
+    val moduleLocations: List<File> by lazy {
+        MODULE_CLASSES.map { File(it.protectionDomain!!.codeSource.location.toURI()) }
     }
 
-    /** Every class in the directory or jar that [type] was loaded from. */
-    fun read(type: Class<*>): Map<String, References> {
-        val location = File(type.protectionDomain!!.codeSource.location.toURI())
+    /** Every compiled app class, by name such as `com/github/e0ipso/tokkl/MainActivity`. */
+    val app: Map<String, References> by lazy {
+        moduleLocations.map(::read).reduce { all, module -> all + module }.filterKeys { it.startsWith(APP_PACKAGE) }
+    }
+
+    /** Every class in the directory or jar at [location]. */
+    fun read(location: File): Map<String, References> {
         val classFiles: Map<String, ByteArray> = if (location.isDirectory) {
             location.walkTopDown()
                 .filter { it.isFile && it.name.endsWith(".class") }
@@ -65,30 +124,39 @@ internal object ClassReferences {
         while (index < count) {
             when (val tag = input.readUnsignedByte()) {
                 TAG_UTF8 -> utf8[index] = input.readUTF()
+
                 TAG_INTEGER, TAG_FLOAT -> input.readInt()
+
                 TAG_LONG, TAG_DOUBLE -> {
                     input.readLong()
                     index++ // Takes two entries.
                 }
+
                 TAG_CLASS -> {
                     classNameIndex[index] = input.readUnsignedShort()
                     classEntries += index
                 }
+
                 TAG_STRING, TAG_METHOD_TYPE, TAG_MODULE, TAG_PACKAGE -> input.readUnsignedShort()
+
                 TAG_FIELD_REF, TAG_METHOD_REF, TAG_INTERFACE_METHOD_REF ->
                     memberEntries += input.readUnsignedShort() to input.readUnsignedShort()
+
                 TAG_NAME_AND_TYPE -> {
                     nameAndTypeNameIndex[index] = input.readUnsignedShort()
                     nameAndTypeDescriptorIndex[index] = input.readUnsignedShort()
                 }
+
                 TAG_METHOD_HANDLE -> {
                     input.readUnsignedByte()
                     input.readUnsignedShort()
                 }
+
                 TAG_DYNAMIC, TAG_INVOKE_DYNAMIC -> {
                     input.readUnsignedShort()
                     input.readUnsignedShort()
                 }
+
                 else -> error("unknown constant pool tag $tag")
             }
             index++

@@ -1,0 +1,126 @@
+package com.github.e0ipso.tokkl.pomodoro
+
+import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
+import com.github.e0ipso.tokkl.feature.pomodoro.R
+import com.github.e0ipso.tokkl.timernotice.TimerNotice
+import com.github.e0ipso.tokkl.timernotice.timerNoticeText
+import com.github.e0ipso.tokkl.ui.ErrorBanner
+import com.github.e0ipso.tokkl.ui.TokklButton
+import com.github.e0ipso.tokkl.ui.TokklGhostButton
+import com.github.e0ipso.tokkl.ui.theme.TokklTheme
+import com.github.e0ipso.tokkl.ui.theme.screenContent
+import kotlinx.coroutines.delay
+import java.time.Clock
+import java.util.Locale
+import com.github.e0ipso.tokkl.core.ui.R as UiR
+
+/**
+ * Scrolling keeps both actions reachable at the largest system font scale. A Next phase or End
+ * session that did not go through shows the standard message, and the alarm keeps ringing.
+ */
+@Composable
+fun PomodoroAlarmContent(
+    state: PomodoroAlarmState,
+    onNext: () -> Unit,
+    onEnd: () -> Unit,
+    modifier: Modifier = Modifier,
+    clock: Clock = Clock.systemUTC(),
+) {
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val ring = state.ring
+    Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        Column(
+            modifier = Modifier.fillMaxSize().safeDrawingPadding().verticalScroll(rememberScrollState())
+                .screenContent().padding(vertical = TokklTheme.spacing.betweenGroups),
+            verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.betweenGroups),
+        ) {
+            Text(
+                stringResource(R.string.pomodoro_alarm_title),
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.semantics { heading() },
+            )
+            state.problem?.let { problem ->
+                ErrorBanner(timerNoticeText(LocalResources.current, TimerNotice.ActionFailed(problem, 0)))
+            }
+            if (ring != null) {
+                Text(stringResource(alarmTransitionLabel(ring.sound)), style = MaterialTheme.typography.titleLarge)
+                Text(stringResource(UiR.string.pomodoro_number, ring.number, ring.longRestEvery))
+                var now by remember(clock, ring.phase) { mutableStateOf(clock.instant()) }
+                LaunchedEffect(clock, ring.phase, lifecycle) {
+                    lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                        while (true) {
+                            now = clock.instant()
+                            delay(1000L - Math.floorMod(now.toEpochMilli(), 1000L))
+                        }
+                    }
+                }
+                val reading = ring.clockAt(now)
+                val duration = String.format(Locale.ROOT, "%d:%02d", reading.seconds / 60, reading.seconds % 60)
+                val spoken = stringResource(
+                    if (reading.overtime) R.string.pomodoro_overtime_clock else R.string.pomodoro_remaining_clock,
+                    duration,
+                )
+                Text(
+                    stringResource(
+                        if (reading.overtime) UiR.string.pomodoro_overtime else UiR.string.pomodoro_remaining,
+                    ),
+                )
+                Text(
+                    duration,
+                    style = TokklTheme.clockTextStyle,
+                    modifier = Modifier.fillMaxWidth().semantics { contentDescription = spoken },
+                )
+            }
+            TokklButton(
+                onClick = onNext,
+                enabled = ring != null && !state.busy,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp),
+            ) {
+                Text(stringResource(R.string.pomodoro_alarm_next))
+            }
+            TokklGhostButton(
+                onClick = onEnd,
+                enabled = ring != null && !state.busy,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp),
+            ) {
+                Text(stringResource(R.string.pomodoro_alarm_end))
+            }
+        }
+    }
+}
+
+@StringRes
+internal fun alarmTransitionLabel(sound: PomodoroSound): Int = when (sound) {
+    PomodoroSound.WORK_TO_SHORT_REST -> R.string.pomodoro_fullscreen_work_short
+    PomodoroSound.WORK_TO_LONG_REST -> R.string.pomodoro_fullscreen_work_long
+    PomodoroSound.SHORT_REST_TO_WORK -> R.string.pomodoro_fullscreen_short_work
+    PomodoroSound.LONG_REST_TO_WORK -> R.string.pomodoro_fullscreen_long_work
+}

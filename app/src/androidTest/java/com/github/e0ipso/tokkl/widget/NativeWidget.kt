@@ -1,6 +1,5 @@
 package com.github.e0ipso.tokkl.widget
 
-import androidx.compose.ui.graphics.asImageBitmap
 import android.Manifest
 import android.appwidget.AppWidgetHost
 import android.appwidget.AppWidgetHostView
@@ -17,15 +16,16 @@ import android.widget.FrameLayout
 import android.widget.RemoteViews
 import android.widget.TextView
 import androidx.activity.ComponentActivity
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.accessibility.AccessibilityChecks
 import androidx.test.platform.app.InstrumentationRegistry
+import org.junit.Assert.assertTrue
 import java.io.File
 import java.io.RandomAccessFile
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
-import org.junit.Assert.assertTrue
 
 /** A real platform widget host. Glance renders RemoteViews and its real PendingIntents handle taps. */
 class NativeWidget(
@@ -51,6 +51,7 @@ class NativeWidget(
             super.onProviderChanged(appWidgetId, appWidget)
         }
     }
+
     /** Provider resets the host has applied, on the main thread like [updates]. */
     val resets = AtomicInteger()
     val updates = AtomicInteger()
@@ -65,7 +66,10 @@ class NativeWidget(
             instrumentation.uiAutomation.adoptShellPermissionIdentity(Manifest.permission.BIND_APPWIDGET)
             try {
                 id = host.allocateAppWidgetId()
-                assertTrue("the installed provider can be bound", manager.bindAppWidgetIdIfAllowed(id, component, options(375, 338)))
+                assertTrue(
+                    "the installed provider can be bound",
+                    manager.bindAppWidgetIdIfAllowed(id, component, options(375, 338)),
+                )
                 provider = checkNotNull(manager.getAppWidgetInfo(id))
             } finally {
                 instrumentation.uiAutomation.dropShellPermissionIdentity()
@@ -78,13 +82,19 @@ class NativeWidget(
             }
             resize(375, 338)
         } catch (failure: Throwable) {
-            try { close() } catch (cleanup: Throwable) { failure.addSuppressed(cleanup) }
+            try {
+                close()
+            } catch (cleanup: Throwable) {
+                failure.addSuppressed(cleanup)
+            }
             throw failure
         }
     }
 
     /** Apply a composed fixture through the same native host used for real provider tests. */
-    fun show(views: RemoteViews) { onMain { view.updateAppWidget(views) } }
+    fun show(views: RemoteViews) {
+        onMain { view.updateAppWidget(views) }
+    }
 
     /** Reinflate fixture views with the launcher's light/dark configuration. */
     fun showInConfiguration(views: RemoteViews, configuration: android.content.res.Configuration) {
@@ -96,7 +106,9 @@ class NativeWidget(
                 setPadding(0, 0, 0, 0)
                 updateAppWidget(views)
             }
-            activity.setContentView(FrameLayout(activity).apply { addView(view, FrameLayout.LayoutParams(width, height)) })
+            activity.setContentView(
+                FrameLayout(activity).apply { addView(view, FrameLayout.LayoutParams(width, height)) },
+            )
         }
     }
 
@@ -110,11 +122,25 @@ class NativeWidget(
     }
 
     /** Capture only the widget; stop clock text at known values to keep references deterministic. */
-    fun capture(clockText: Map<String, String> = emptyMap(), clockTexts: List<String> = emptyList()): androidx.compose.ui.graphics.ImageBitmap = onMain {
+    fun capture(
+        clockText: Map<String, String> = emptyMap(),
+        clockTexts: List<String> = emptyList(),
+    ): androidx.compose.ui.graphics.ImageBitmap = onMain {
         descendants().filterIsInstance<Chronometer>().forEachIndexed { index, clock ->
-            (clockTexts.getOrNull(index) ?: clockText[clockDescription(clock)])?.let { text -> clock.stop(); clock.text = text }
+            (
+                clockTexts.getOrNull(
+                    index,
+                ) ?: clockText[clockDescription(clock)]
+                )?.let { text ->
+                clock.stop()
+                clock.text = text
+            }
         }
-        val bitmap = android.graphics.Bitmap.createBitmap(view.width, view.height, android.graphics.Bitmap.Config.ARGB_8888)
+        val bitmap = android.graphics.Bitmap.createBitmap(
+            view.width,
+            view.height,
+            android.graphics.Bitmap.Config.ARGB_8888,
+        )
         view.draw(android.graphics.Canvas(bitmap))
         bitmap.asImageBitmap()
     }
@@ -141,7 +167,9 @@ class NativeWidget(
         descendants().any { it.contentDescription?.toString() == label }
     }
 
-    fun hasDescription(label: String): Boolean = onMain { descendants().any { it.contentDescription?.toString() == label } }
+    fun hasDescription(label: String): Boolean = onMain {
+        descendants().any { it.contentDescription?.toString() == label }
+    }
 
     /** Reads the rendered control without starting another timeout after a measured tap. */
     fun hasVisibleDescription(label: String): Boolean = onMain {
@@ -185,19 +213,33 @@ class NativeWidget(
         val texts = descendants().filterIsInstance<TextView>().filter { it.text.isNotEmpty() }
         // RemoteViews can install text before Android's next measure/layout pass. Check
         // readiness and geometry in the same main-thread task so no update can replace it.
-        if (texts.isEmpty() || texts.any { !it.isLaidOut || it.isLayoutRequested || it.layout == null }) return@await false
+        if (texts.isEmpty() ||
+            texts.any { !it.isLaidOut || it.isLayoutRequested || it.layout == null }
+        ) {
+            return@await false
+        }
         texts.forEach { text ->
             val visible = android.graphics.Rect()
             assertTrue("${text.text} is visible", text.getGlobalVisibleRect(visible))
-            assertTrue("${text.text} is not clipped by its row: ${visible.height()} / ${text.height}; " +
-                generateSequence<View>(text) { it.parent as? View }.joinToString(" <- ") {
-                    "${it.javaClass.simpleName}[${it.width}x${it.height}, y=${it.y}, ${it.contentDescription}]"
-                }, visible.height() >= text.height - 1)
-            assertTrue("${text.text} fits its TextView: layout ${text.layout?.height}, view ${text.height}, padding ${text.compoundPaddingTop + text.compoundPaddingBottom}", checkNotNull(text.layout).height <= text.height - text.compoundPaddingTop - text.compoundPaddingBottom)
+            assertTrue(
+                "${text.text} is not clipped by its row: ${visible.height()} / ${text.height}; " +
+                    generateSequence<View>(text) { it.parent as? View }.joinToString(" <- ") {
+                        "${it.javaClass.simpleName}[${it.width}x${it.height}, y=${it.y}, ${it.contentDescription}]"
+                    },
+                visible.height() >= text.height - 1,
+            )
+            assertTrue(
+                "${text.text} fits its TextView: layout ${text.layout?.height}, view ${text.height}, padding " +
+                    "${text.compoundPaddingTop + text.compoundPaddingBottom}",
+                checkNotNull(text.layout).height <= text.height - text.compoundPaddingTop - text.compoundPaddingBottom,
+            )
             if (text is Chronometer) {
                 assertTrue("the elapsed clock is fully visible", visible.width() >= text.width - 1)
                 assertTrue("the elapsed clock never wraps", text.layout.lineCount == 1)
-                assertTrue("the elapsed clock fits horizontally", text.layout.getLineWidth(0) <= text.width - text.compoundPaddingLeft - text.compoundPaddingRight)
+                assertTrue(
+                    "the elapsed clock fits horizontally",
+                    text.layout.getLineWidth(0) <= text.width - text.compoundPaddingLeft - text.compoundPaddingRight,
+                )
             }
         }
         true
@@ -263,7 +305,16 @@ class NativeWidget(
         val ticked = done.await(4, TimeUnit.SECONDS)
         return onMain {
             clock.onChronometerTickListener = null
-            ClockWindow(ticked, ticks, first, last, before, if (ticked) after else updates.get(), resets.get() - resetsBefore, clock.isAttachedToWindow)
+            ClockWindow(
+                ticked,
+                ticks,
+                first,
+                last,
+                before,
+                if (ticked) after else updates.get(),
+                resets.get() - resetsBefore,
+                clock.isAttachedToWindow,
+            )
         }
     }
 
@@ -284,7 +335,13 @@ class NativeWidget(
     fun await(what: String, timeout: Long = 15_000, condition: () -> Boolean) {
         val deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeout)
         while (!onMain(condition)) {
-            if (System.nanoTime() >= deadline) throw AssertionError("$what; native text: ${onMain { descendants().filterIsInstance<TextView>().map { it.text.toString() } }}")
+            if (System.nanoTime() >= deadline) {
+                throw AssertionError(
+                    "$what; native text: ${onMain {
+                        descendants().filterIsInstance<TextView>().map { it.text.toString() }
+                    }}",
+                )
+            }
             Thread.sleep(20)
         }
     }
@@ -292,7 +349,11 @@ class NativeWidget(
     override fun close() {
         try {
             onMain {
-                try { host.stopListening() } finally { host.deleteHost() }
+                try {
+                    host.stopListening()
+                } finally {
+                    host.deleteHost()
+                }
             }
         } finally {
             if (::scenario.isInitialized) scenario.close()
@@ -302,7 +363,9 @@ class NativeWidget(
     }
 
     private fun descendants(): List<View> {
-        fun walk(node: View): List<View> = listOf(node) + if (node is ViewGroup) (0 until node.childCount).flatMap { walk(node.getChildAt(it)) } else emptyList()
+        fun walk(node: View): List<View> = listOf(
+            node,
+        ) + if (node is ViewGroup) (0 until node.childCount).flatMap { walk(node.getChildAt(it)) } else emptyList()
         return walk(view)
     }
 
@@ -321,7 +384,10 @@ class NativeWidget(
         putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, height)
         putInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, height)
         putInt(AppWidgetManager.OPTION_APPWIDGET_HOST_CATEGORY, AppWidgetProviderInfo.WIDGET_CATEGORY_HOME_SCREEN)
-        putParcelableArrayList(AppWidgetManager.OPTION_APPWIDGET_SIZES, arrayListOf(SizeF(width.toFloat(), height.toFloat())))
+        putParcelableArrayList(
+            AppWidgetManager.OPTION_APPWIDGET_SIZES,
+            arrayListOf(SizeF(width.toFloat(), height.toFloat())),
+        )
     }
 
     private companion object {

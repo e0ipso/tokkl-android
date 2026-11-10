@@ -31,61 +31,75 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.Destination
 import com.github.e0ipso.tokkl.R
-import com.github.e0ipso.tokkl.SignedInFrame
-import com.github.e0ipso.tokkl.SignedInPanes
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createComposeRule
-import com.github.e0ipso.tokkl.api.SharedHttpClient
-import com.github.e0ipso.tokkl.cache.EntryFields
+import com.github.e0ipso.tokkl.appConfiguredServer
+import com.github.e0ipso.tokkl.appHttp
 import com.github.e0ipso.tokkl.calendar.CalendarContent
 import com.github.e0ipso.tokkl.catalog.CatalogSamples
 import com.github.e0ipso.tokkl.clients.ClientsActions
-import com.github.e0ipso.tokkl.clients.ClientsContent
 import com.github.e0ipso.tokkl.clients.ClientsOverlay
+import com.github.e0ipso.tokkl.clients.ClientsPageState
+import com.github.e0ipso.tokkl.clients.ClientsRoute
+import com.github.e0ipso.tokkl.clients.ClientsScreen
 import com.github.e0ipso.tokkl.entry.EntryFormActions
 import com.github.e0ipso.tokkl.entry.EntryFormContent
 import com.github.e0ipso.tokkl.entry.EntryFormState
-import com.github.e0ipso.tokkl.entry.EntryLabels
+import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.history.HistoryContent
 import com.github.e0ipso.tokkl.licences.LicencesScreen
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.WorkspaceId
+import com.github.e0ipso.tokkl.navhost.SignedInFrame
+import com.github.e0ipso.tokkl.navhost.SignedInPanes
+import com.github.e0ipso.tokkl.navhost.runningBadges
+import com.github.e0ipso.tokkl.navhost.showsEntryBeside
+import com.github.e0ipso.tokkl.navhost.syncBand
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.projects.ProjectForm
 import com.github.e0ipso.tokkl.projects.ProjectsActions
-import com.github.e0ipso.tokkl.projects.ProjectsContent
+import com.github.e0ipso.tokkl.projects.ProjectsPageState
+import com.github.e0ipso.tokkl.projects.ProjectsRoute
+import com.github.e0ipso.tokkl.projects.ProjectsScreen
 import com.github.e0ipso.tokkl.reports.FilterOptions
 import com.github.e0ipso.tokkl.reports.RangePreset
 import com.github.e0ipso.tokkl.reports.RangeSelection
 import com.github.e0ipso.tokkl.reports.ReportFilters
 import com.github.e0ipso.tokkl.reports.ReportTab
-import com.github.e0ipso.tokkl.reports.ReportsContent
+import com.github.e0ipso.tokkl.reports.ReportsRoute
+import com.github.e0ipso.tokkl.reports.ReportsScreen
 import com.github.e0ipso.tokkl.reports.ReportsState
+import com.github.e0ipso.tokkl.session.CountingRefresh
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.settings.SettingsContent
-import com.github.e0ipso.tokkl.settings.SignOutModel
-import com.github.e0ipso.tokkl.settings.ThemeSettings
-import com.github.e0ipso.tokkl.showsEntryBeside
-import com.github.e0ipso.tokkl.signin.SignIn
+import com.github.e0ipso.tokkl.settings.SettingsRoute
+import com.github.e0ipso.tokkl.settings.SignOutConfirmation
+import com.github.e0ipso.tokkl.signin.ServerSignIn
 import com.github.e0ipso.tokkl.signin.SignInCooldownStore
-import com.github.e0ipso.tokkl.signin.SignInModel
 import com.github.e0ipso.tokkl.signin.SignInScreen
+import com.github.e0ipso.tokkl.signin.SignInViewModel
 import com.github.e0ipso.tokkl.tags.TagsActions
-import com.github.e0ipso.tokkl.tags.TagsContent
+import com.github.e0ipso.tokkl.tags.TagsPageState
+import com.github.e0ipso.tokkl.tags.TagsRoute
+import com.github.e0ipso.tokkl.tags.TagsScreen
 import com.github.e0ipso.tokkl.timer.TimerBarContent
 import com.github.e0ipso.tokkl.timer.TimerScreen
 import com.github.e0ipso.tokkl.timer.TimerState
 import com.github.e0ipso.tokkl.timer.TimerView
+import com.github.e0ipso.tokkl.trash.DeletedEntry
 import com.github.e0ipso.tokkl.trash.TrashActions
-import com.github.e0ipso.tokkl.trash.TrashContent
-import com.github.e0ipso.tokkl.trash.TrashEntry
+import com.github.e0ipso.tokkl.trash.TrashPageState
+import com.github.e0ipso.tokkl.trash.TrashRoute
+import com.github.e0ipso.tokkl.trash.TrashScreen
 import com.github.e0ipso.tokkl.trash.TrashState
 import com.github.e0ipso.tokkl.ui.WindowWidth
 import com.github.e0ipso.tokkl.ui.screenshot.ScreenshotTest
+import com.github.e0ipso.tokkl.ui.theme.ThemeSettings
 import com.github.e0ipso.tokkl.ui.theme.TokklSpacing
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import java.time.LocalDate
-import kotlin.math.abs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -95,6 +109,16 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import java.time.Clock
+import java.time.Duration
+import java.time.Instant
+import java.time.LocalDate
+import kotlin.math.abs
+import com.github.e0ipso.tokkl.core.ui.R as UiR
+import com.github.e0ipso.tokkl.feature.pomodoro.R as PomodoroR
+import com.github.e0ipso.tokkl.feature.projects.R as ProjectsR
+import com.github.e0ipso.tokkl.feature.settings.R as SettingsR
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 
 /**
  * Every screen at one window size, [window], of the width class [width] (docs/PRD.md, Devices):
@@ -124,7 +148,11 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
 
     @After
     fun cancelTheScope() {
-        try { if (shown) composeRule.checkAccessibility() } finally { scope.cancel() }
+        try {
+            if (shown) composeRule.checkAccessibility()
+        } finally {
+            scope.cancel()
+        }
     }
 
     /** Both navigation layouts expose independent, changing spoken running marks. */
@@ -133,15 +161,20 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
         var timerRunning by mutableStateOf(false)
         var sessionRunning by mutableStateOf(true)
         show {
-            SignedInFrame(current = TopLevelPage.PROJECTS, onOpen = {}, timerRunning = timerRunning, pomodoroRunning = sessionRunning) {
+            SignedInFrame(
+                pages = topLevelPages,
+                current = ProjectsRoute,
+                onOpen = {},
+                badges = runningBadges(timer = timerRunning, pomodoro = sessionRunning),
+            ) {
                 Box(Modifier.fillMaxSize())
             }
         }
         fun marked(label: Int, state: Int) = navigationItem(label) and
             SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, string(state))
         fun count(matcher: SemanticsMatcher) = composeRule.onAllNodes(matcher).fetchSemanticsNodes().size
-        val pomodoro = marked(R.string.pomodoro_title, R.string.nav_pomodoro_running)
-        val timer = marked(R.string.nav_timer, R.string.nav_timer_running)
+        val pomodoro = marked(UiR.string.pomodoro_title, PomodoroR.string.nav_pomodoro_running)
+        val timer = marked(TimerR.string.nav_timer, TimerR.string.nav_timer_running)
         assertEquals(1, count(pomodoro))
         assertEquals(0, count(timer))
         composeRule.runOnIdle { timerRunning = true }
@@ -157,25 +190,43 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
     /** Compact windows put the five items in a row at the bottom, wider ones in a column at the start. */
     @Test
     fun theNavigationFollowsTheWidth() {
-        show { SignedInFrame(current = TopLevelPage.TIMER, onOpen = {}) { Box(Modifier.fillMaxSize()) } }
+        show {
+            SignedInFrame(pages = topLevelPages, current = Route.Timer, onOpen = {}) { Box(Modifier.fillMaxSize()) }
+        }
 
         val windowBounds = windowBounds()
         val items = navigationItems()
-        assertEquals("the items: ${items.map { it.label() }}", NAVIGATION_LABELS.map(::string), items.map { it.label() })
+        assertEquals(
+            "the items: ${items.map { it.label() }}",
+            NAVIGATION_LABELS.map(::string),
+            items.map { it.label() },
+        )
         for (item in items) assertShownWhole("the ${item.label()} item", item)
         val bounds = items.map { it.boundsInRoot }
         if (width == WindowWidth.COMPACT) {
             for ((before, after) in bounds.zipWithNext()) {
                 assertEquals("the bar's items share a top", before.top, after.top, TOLERANCE_PX)
-                assertTrue("the bar's items run from the start: $before, then $after", before.right <= after.left + TOLERANCE_PX)
+                assertTrue(
+                    "the bar's items run from the start: $before, then $after",
+                    before.right <= after.left + TOLERANCE_PX,
+                )
             }
-            assertTrue("the bar sits at the bottom: ${bounds.first()} in $windowBounds", bounds.first().bottom >= windowBounds.bottom - windowBounds.height / 4)
+            assertTrue(
+                "the bar sits at the bottom: ${bounds.first()} in $windowBounds",
+                bounds.first().bottom >= windowBounds.bottom - windowBounds.height / 4,
+            )
         } else {
             for ((before, after) in bounds.zipWithNext()) {
                 assertEquals("the rail's items share a centre", before.center.x, after.center.x, TOLERANCE_PX)
-                assertTrue("the rail's items run from the top: $before, then $after", before.bottom <= after.top + TOLERANCE_PX)
+                assertTrue(
+                    "the rail's items run from the top: $before, then $after",
+                    before.bottom <= after.top + TOLERANCE_PX,
+                )
             }
-            assertTrue("the rail sits at the start: ${bounds.first()} in $windowBounds", bounds.first().right <= windowBounds.left + windowBounds.width / 4)
+            assertTrue(
+                "the rail sits at the start: ${bounds.first()} in $windowBounds",
+                bounds.first().right <= windowBounds.left + windowBounds.width / 4,
+            )
         }
     }
 
@@ -184,7 +235,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
     fun theRailScrollsWhereTheWindowIsShort() {
         if (width == WindowWidth.COMPACT) return
         show(size = DpSize(window.width, SHORT_HEIGHT), fontScale = LARGEST_FONT_SCALE) {
-            SignedInFrame(current = TopLevelPage.TIMER, onOpen = {}) { Box(Modifier.fillMaxSize()) }
+            SignedInFrame(pages = topLevelPages, current = Route.Timer, onOpen = {}) { Box(Modifier.fillMaxSize()) }
         }
 
         for (label in NAVIGATION_LABELS) {
@@ -197,10 +248,10 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
 
     @Test
     fun everyScreenFits() {
-        var screen by mutableStateOf(SCREENS.first())
+        var screen by mutableStateOf(screens.first())
         show { screen.content(this) }
 
-        for (next in SCREENS) {
+        for (next in screens) {
             composeRule.runOnIdle { screen = next }
             composeRule.waitForIdle()
             assertNothingCutOffAtTheSides(next.name)
@@ -210,37 +261,46 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
     /** On an expanded window the form shares the width with the history, which stays in sight. */
     @Test
     fun theEntryFormShowsBesideTheHistoryOnlyWhenExpanded() {
-        val beside = showsEntryBeside(width, TimerView.LIST, listOf(Destination.TIMER, Destination.ENTRY))
+        val formRoute = Route.Entry(EntryOpening.Edit(EntryId(1)), id = "form")
+        val beside = showsEntryBeside(width, listView = true, listOf(Route.Timer, formRoute))
         assertEquals(width == WindowWidth.EXPANDED, beside)
         show {
-            SignedInFrame(current = TopLevelPage.TIMER, onOpen = {}) {
-                SignedInPanes(destination = Destination.ENTRY, entryBeside = beside, entryKey = 0) { shown ->
+            SignedInFrame(pages = topLevelPages, current = Route.Timer, onOpen = {}) {
+                SignedInPanes(top = formRoute, entryBeside = beside) { shown ->
                     when (shown) {
-                        Destination.TIMER -> SampleTimerPage(TimerView.LIST)
-                        Destination.ENTRY -> SampleEntryForm()
+                        Route.Timer -> SampleTimerPage(TimerView.LIST)
+                        is Route.Entry -> SampleEntryForm()
                         else -> error("$shown is not on this stack")
                     }
                 }
             }
         }
 
-        val form = composeRule.onNode(hasText(string(R.string.entry_form_edit)) and isHeading()).fetchSemanticsNode()
+        val form = composeRule.onNode(
+            hasText(string(TimerR.string.entry_form_edit)) and isHeading(),
+        ).fetchSemanticsNode()
         val history = composeRule.onAllNodes(hasText(HISTORY_ENTRY), useUnmergedTree = true).fetchSemanticsNodes()
         if (beside) {
             assertTrue("the history shows beside the form", history.isNotEmpty())
             val historyRight = history.maxOf { it.boundsInRoot.right }
-            assertTrue("the history ends where the form starts: $historyRight, ${form.boundsInRoot}", historyRight <= form.boundsInRoot.left)
+            assertTrue(
+                "the history ends where the form starts: $historyRight, ${form.boundsInRoot}",
+                historyRight <= form.boundsInRoot.left,
+            )
         } else {
             assertTrue("the form shows alone", history.isEmpty())
         }
         assertNothingCutOffAtTheSides("the entry form ${if (beside) "beside the history" else "alone"}")
     }
 
-    /** On an expanded window the Calendar view, the timer and the switch included, grows past a phone's column; the List view does not. */
+    /**
+     * On an expanded window the Calendar view, the timer and the switch included, grows past a phone's column; the List
+     * view does not.
+     */
     @Test
     fun theCalendarTakesTheExtraWidthOnlyWhenExpanded() {
         var view by mutableStateOf(TimerView.CALENDAR)
-        show { Framed(TopLevelPage.TIMER) { SampleTimerPage(view) } }
+        show { Framed(Route.Timer) { SampleTimerPage(view) } }
 
         val calendar = switchWidth()
         composeRule.runOnIdle { view = TimerView.LIST }
@@ -258,7 +318,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
 
     /** The width of the List and Calendar switch, which spans the page's column, in the window's dp. */
     private fun switchWidth(): Float {
-        val segments = listOf(R.string.timer_view_list, R.string.timer_view_calendar).map { label ->
+        val segments = listOf(TimerR.string.timer_view_list, TimerR.string.timer_view_calendar).map { label ->
             composeRule.onNode(hasText(string(label)) and isSelectable()).fetchSemanticsNode().boundsInRoot
         }
         return (segments.maxOf { it.right } - segments.minOf { it.left }) / density
@@ -297,14 +357,22 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
             )
             val shown = node.boundsInRoot
             if (shown.height > 0f) {
-                assertEquals("$screen: ${node.describe()} shows its whole width", whole.width, shown.width, TOLERANCE_PX)
+                assertEquals(
+                    "$screen: ${node.describe()} shows its whole width",
+                    whole.width,
+                    shown.width,
+                    TOLERANCE_PX,
+                )
             }
         }
     }
 
     private fun assertShownWhole(what: String, node: SemanticsNode) {
         val shown = node.boundsInRoot
-        assertTrue("$what shows whole: $shown of ${node.size}", abs(shown.width - node.size.width) <= TOLERANCE_PX && abs(shown.height - node.size.height) <= TOLERANCE_PX)
+        assertTrue(
+            "$what shows whole: $shown of ${node.size}",
+            abs(shown.width - node.size.width) <= TOLERANCE_PX && abs(shown.height - node.size.height) <= TOLERANCE_PX,
+        )
     }
 
     private fun windowBounds(): Rect = composeRule.onNodeWithTag(WINDOW).fetchSemanticsNode().boundsInRoot
@@ -316,9 +384,12 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
     private fun navigationItem(label: Int): SemanticsMatcher =
         hasText(string(label)) and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab)
 
-    private fun SemanticsNode.label(): String =
-        (config.getOrNull(SemanticsProperties.Text) ?: children.flatMap { it.config.getOrNull(SemanticsProperties.Text).orEmpty() })
-            .joinToString { it.text }
+    private fun SemanticsNode.label(): String = (
+        config.getOrNull(
+            SemanticsProperties.Text,
+        ) ?: children.flatMap { it.config.getOrNull(SemanticsProperties.Text).orEmpty() }
+        )
+        .joinToString { it.text }
 
     private fun SemanticsNode.describe(): String {
         val text = config.getOrNull(SemanticsProperties.Text)?.joinToString { it.text }
@@ -337,13 +408,21 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
     /** The screens, each with fixed data, inside the signed-in frame where they have one. */
     private inner class ScreenScope {
         private val signInModel by lazy {
-            SignInModel(
-                signIn = SignIn(session = { _, _, _ -> }, httpClient = SharedHttpClient.instance),
-                trust = ServerTrustStore(context),
-                cooldowns = SignInCooldownStore(context),
+            SignInViewModel(
+                signIn = ServerSignIn(
+                    storeSignIn = { _, _, _ -> },
+                    connector = appHttp,
+                    configured = appConfiguredServer,
+                    scope = scope,
+                    io = Dispatchers.IO,
+                    signedInAccount = { null },
+                ),
+                trust = ServerTrustStore(context, Dispatchers.IO),
+                cooldowns = SignInCooldownStore(context, Dispatchers.IO),
                 scope = scope,
                 io = Dispatchers.IO,
-                clock = System::currentTimeMillis,
+                clock = Clock.systemUTC(),
+                refreshes = CountingRefresh(),
             )
         }
 
@@ -351,59 +430,90 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
         fun SignInPage() = SignInScreen(signInModel, onSignedIn = {})
 
         @Composable
-        fun Framed(page: TopLevelPage, content: @Composable () -> Unit) =
-            SignedInFrame(current = page, onOpen = {}, syncStatus = ScreenshotTest.SYNC_STATUS, syncStatusClock = ScreenshotTest.TODAY) { content() }
+        fun Framed(page: Route, content: @Composable () -> Unit) = SignedInFrame(
+            pages = topLevelPages,
+            current = page,
+            onOpen = {},
+            band = syncBand(ScreenshotTest.SYNC_STATUS, ScreenshotTest.TODAY),
+        ) { content() }
     }
 
-    private val SCREENS: List<Screen> = listOf(
+    private val screens: List<Screen> = listOf(
         Screen("sign-in") { SignInPage() },
-        Screen("the Timer page's List view") { Framed(TopLevelPage.TIMER) { SampleTimerPage(TimerView.LIST) } },
-        Screen("the Timer page's Calendar view") { Framed(TopLevelPage.TIMER) { SampleTimerPage(TimerView.CALENDAR) } },
-        Screen("the entry form") { Framed(TopLevelPage.TIMER) { SampleEntryForm() } },
-        Screen("the Summary report") { Framed(TopLevelPage.REPORTS) { Reports(ReportTab.SUMMARY) } },
-        Screen("the Detailed report") { Framed(TopLevelPage.REPORTS) { Reports(ReportTab.DETAILED) } },
-        Screen("the Weekly report") { Framed(TopLevelPage.REPORTS) { Reports(ReportTab.WEEKLY) } },
+        Screen("the Timer page's List view") { Framed(Route.Timer) { SampleTimerPage(TimerView.LIST) } },
+        Screen("the Timer page's Calendar view") { Framed(Route.Timer) { SampleTimerPage(TimerView.CALENDAR) } },
+        Screen("the entry form") { Framed(Route.Timer) { SampleEntryForm() } },
+        Screen("the Summary report") { Framed(ReportsRoute) { Reports(ReportTab.SUMMARY) } },
+        Screen("the Detailed report") { Framed(ReportsRoute) { Reports(ReportTab.DETAILED) } },
+        Screen("the Weekly report") { Framed(ReportsRoute) { Reports(ReportTab.WEEKLY) } },
         Screen("Projects") {
-            Framed(TopLevelPage.PROJECTS) {
-                ProjectsContent(CatalogSamples.PROJECTS_LOADED, offline = false, cachedProjects = emptyList(), clients = CatalogSamples.CACHED_CLIENTS, actions = ProjectsActions())
+            Framed(ProjectsRoute) {
+                ProjectsScreen(
+                    ProjectsPageState(
+                        CatalogSamples.PROJECTS_LOADED,
+                        false,
+                        emptyList(),
+                        CatalogSamples.CACHED_CLIENTS,
+                    ),
+                    actions = ProjectsActions(),
+                )
             }
         },
         Screen("the project form") {
-            Framed(TopLevelPage.PROJECTS) {
-                ProjectsContent(
-                    CatalogSamples.PROJECTS_LOADED.copy(overlay = ProjectForm.New),
-                    offline = false,
-                    cachedProjects = emptyList(),
-                    clients = CatalogSamples.CACHED_CLIENTS,
+            Framed(ProjectsRoute) {
+                ProjectsScreen(
+                    ProjectsPageState(
+                        CatalogSamples.PROJECTS_LOADED.copy(
+                            overlay = ProjectForm.of(null, CatalogSamples.PROJECTS.size),
+                        ),
+                        false,
+                        emptyList(),
+                        CatalogSamples.CACHED_CLIENTS,
+                    ),
                     actions = ProjectsActions(),
                 )
             }
         },
         Screen("Clients") {
-            Framed(TopLevelPage.CLIENTS) {
-                ClientsContent(CatalogSamples.CLIENTS_LOADED, offline = false, cachedClients = emptyList(), actions = ClientsActions())
+            Framed(ClientsRoute) {
+                ClientsScreen(
+                    ClientsPageState(CatalogSamples.CLIENTS_LOADED, false, emptyList()),
+                    actions = ClientsActions(),
+                )
             }
         },
         Screen("the client form") {
-            Framed(TopLevelPage.CLIENTS) {
-                ClientsContent(CatalogSamples.CLIENTS_LOADED.copy(overlay = ClientsOverlay.New), offline = false, cachedClients = emptyList(), actions = ClientsActions())
+            Framed(ClientsRoute) {
+                ClientsScreen(
+                    ClientsPageState(
+                        CatalogSamples.CLIENTS_LOADED.copy(overlay = ClientsOverlay.New()),
+                        false,
+                        emptyList(),
+                    ),
+                    actions = ClientsActions(),
+                )
             }
         },
         Screen("Tags") {
-            Framed(TopLevelPage.TAGS) {
-                TagsContent(CatalogSamples.TAGS_LOADED, offline = false, cachedTags = emptyList(), actions = TagsActions())
+            Framed(TagsRoute) {
+                TagsScreen(
+                    TagsPageState(CatalogSamples.TAGS_LOADED, false, emptyList()),
+                    actions = TagsActions(),
+                )
             }
         },
         Screen("Trash") {
-            Framed(TopLevelPage.TRASH) { TrashContent(TRASH, offline = false, settings = ScreenshotTest.ACCOUNT, actions = TrashActions()) }
+            Framed(
+                TrashRoute,
+            ) { TrashScreen(TrashPageState(TRASH, false, ScreenshotTest.ACCOUNT), actions = TrashActions()) }
         },
         Screen("Settings") {
-            Framed(TopLevelPage.SETTINGS) {
+            Framed(SettingsRoute) {
                 SettingsContent(
                     settings = ThemeSettings(),
                     onModeChange = {},
                     onDynamicColorChange = {},
-                    signOut = SignOutModel.State(),
+                    signOut = SignOutConfirmation.State(),
                     onSignOut = {},
                     onConfirmSignOut = {},
                     onCancelSignOut = {},
@@ -411,7 +521,7 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
                 )
             }
         },
-        Screen("Licences") { Framed(TopLevelPage.SETTINGS) { LicencesScreen(onBack = {}) } },
+        Screen("Licences") { Framed(SettingsRoute) { LicencesScreen(onBack = {}) } },
     )
 
     private companion object {
@@ -423,33 +533,38 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
         /** Pixel rounding in the window's dp, at a density that may be scaled down. */
         const val TOLERANCE_DP = 2f
 
-        /** Android's largest font scale. */
         const val LARGEST_FONT_SCALE = 2f
 
         /** A phone held sideways, short of room for the rail's items at the largest font scale. */
         val SHORT_HEIGHT = 360.dp
 
         /** The bar's and the rail's items, in order. */
-        val NAVIGATION_LABELS = listOf(R.string.nav_timer, R.string.pomodoro_title, R.string.nav_projects, R.string.settings, R.string.nav_more)
+        val NAVIGATION_LABELS = listOf(
+            TimerR.string.nav_timer,
+            UiR.string.pomodoro_title,
+            ProjectsR.string.nav_projects,
+            SettingsR.string.settings,
+            R.string.nav_more,
+        )
 
         /** Anything a person reads or uses. */
-        val CONTROL_OR_TEXT: SemanticsMatcher = hasClickAction() or hasSetTextAction() or isToggleable() or isSelectable() or
-            SemanticsMatcher.keyIsDefined(SemanticsProperties.Text)
+        val CONTROL_OR_TEXT: SemanticsMatcher =
+            hasClickAction() or hasSetTextAction() or isToggleable() or isSelectable() or
+                SemanticsMatcher.keyIsDefined(SemanticsProperties.Text)
 
         /** Today's first entry in ScreenshotTest's history, not the one the form edits. */
         const val HISTORY_ENTRY = "Code review"
 
         val TRASH = TrashState(
-            entries = listOf(
-                TrashEntry(
-                    id = 1,
+            data = listOf(
+                DeletedEntry(
+                    id = EntryId(1),
                     description = "Review the quarterly report with the whole team",
-                    start = "2026-10-12T07:00:00+00:00",
-                    stop = "2026-10-12T08:30:00+00:00",
-                    duration = 5400,
-                    projectId = 3,
+                    projectId = ProjectId(3),
                     projectName = "Website redesign for the new brand",
-                    deletedAt = "2026-10-14T08:00:00+00:00",
+                    start = Instant.parse("2026-10-12T07:00:00Z"),
+                    duration = Duration.ofSeconds(5400),
+                    deletedAt = Instant.parse("2026-10-14T08:00:00Z"),
                 ),
             ),
         )
@@ -464,10 +579,10 @@ internal fun SampleTimerPage(view: TimerView) {
         onViewChange = {},
         timer = {
             TimerBarContent(
-                state = TimerState.Idle(EntryFields(), EntryLabels(), workspaceId = 1),
+                state = TimerState.Idle(EntryFields(), EntryLabels(), workspaceId = WorkspaceId(1)),
                 elapsedSeconds = 0,
                 onDescriptionChange = {},
-                onDescriptionDone = {},
+                onDescriptionFinish = {},
                 onPick = {},
                 onBillableChange = {},
                 onStart = {},
@@ -496,10 +611,10 @@ internal fun SampleEntryForm() {
     EntryFormContent(
         state = EntryFormState.Open(
             editing = true,
-            workspaceId = 1,
-            fields = EntryFields(description = "Sprint planning", projectId = ScreenshotTest.APP.id),
+            workspaceId = WorkspaceId(1),
+            fields = EntryFields(description = "Sprint planning", projectId = ProjectId(ScreenshotTest.APP.id)),
             labels = EntryLabels(project = ScreenshotTest.APP.name, projectColor = ScreenshotTest.APP.colour),
-            original = Picked(projectId = ScreenshotTest.APP.id),
+            original = Picked(projectId = ProjectId(ScreenshotTest.APP.id)),
             date = LocalDate.of(2026, 10, 14),
             start = "08:30",
             end = "12:00",
@@ -522,7 +637,7 @@ private fun Reports(tab: ReportTab) {
         ReportTab.DETAILED -> ScreenshotTest.DETAILED
         ReportTab.WEEKLY -> ScreenshotTest.WEEKLY
     }
-    ReportsContent(
+    ReportsScreen(
         state = ReportsState.Loaded(RangeSelection(ScreenshotTest.WEEK, RangePreset.THIS_WEEK), report),
         tab = tab,
         settings = ScreenshotTest.ACCOUNT,

@@ -15,8 +15,8 @@ _None yet._
 ## Components (what exists)
 - Open [**Offline entry mutations and local ID mapping**](map-offline-entry-mutations-and-local-id-mapping.md) to learn about: Atomic local entry changes, full pending snapshots and negative-ID remapping. #offline #cache #room #queue
 - Open [**Ordered entry sending and refusals**](map-ordered-entry-sending-and-refusals.md) to learn about: Oldest-first HTTP delivery, retry boundaries, held refusals and reauthentication. #offline #api #queue
-- Open [**Background queue work and empty-queue cancellation**](map-background-queue-work-and-empty-queue-cancellation.md) to learn about: Connected WorkManager delivery and serialized cancellation when the queue empties. #offline #queue #android
 - Open [**Cached entity picker and offline creation**](map-cached-entity-picker-and-offline-creation.md) to learn about: Shared project, task and tag selection uses cached data and explicit offline creation limits. #offline #cache #ui
+- Open [**Background queue work and empty-queue cancellation**](map-background-queue-work-and-empty-queue-cancellation.md) to learn about: Connected WorkManager delivery and serialized cancellation when the queue empties. #offline #queue #android
 - Open [**Queued delete and short-stop Undo**](map-queued-delete-and-short-stop-undo.md) to learn about: Undo operations preserve ordering and restore stopped zero-length entries. #offline #queue #cache
 - Open [**Remote running conflicts and lost create responses**](map-remote-running-conflicts-and-lost-create-responses.md) to learn about: Captured start conflict handling and duplicate prevention after uncertain POST delivery. #offline #api #queue
 - Open [**Room queue migration continuity**](map-room-queue-migration-continuity.md) to learn about: Exported schemas and consecutive migrations preserve pending requests and Undo state. #offline #room #queue
@@ -38,16 +38,16 @@ _None yet._
 ### #api
 - Open [**Trash capability and server operations**](../../screens/session-and-navigation/map-trash-capability-and-server-operations.md) — Tokkl-only Trash routes, cached rows and explicit unsupported-endpoint handling.
 - Open [**Never make Start or Stop wait for the server**](../practice-never-wait-for-server-on-start-stop.md) — Start and Stop change state on the phone at once and queue the change. Pause, Resume and session actions wait for the server. No sync engine.
-- Open [**Ordered entry sending and refusals**](map-ordered-entry-sending-and-refusals.md) — Oldest-first HTTP delivery, retry boundaries, held refusals and reauthentication.
+- Open [**Match Tokkl web app behavior in the account timezone**](../practice-match-web-app-behavior-account-timezone.md) — Use the web app's time parsing, favorites, grouping and undo, in the account timezone read from GET /api/v9/me.
 ### #room
 - Open [**Offline entry mutations and local ID mapping**](map-offline-entry-mutations-and-local-id-mapping.md) — Atomic local entry changes, full pending snapshots and negative-ID remapping.
-- Open [**Room queue migration continuity**](map-room-queue-migration-continuity.md) — Exported schemas and consecutive migrations preserve pending requests and Undo state.
 - Open [**Offline cache and capabilities: AccountCache, HistoryWindow, CapabilitiesSource**](../map-account-cache-and-capabilities.md) — One refresh reads /me with related data and /me/preferences, then fills the Room cache and the capability flags that screens read offline.
+- Open [**Room queue migration continuity**](map-room-queue-migration-continuity.md) — Exported schemas and consecutive migrations preserve pending requests and Undo state.
 ### #android
+- Open [**Wait on the app's own handlers, never on a latch in production code**](../../testing/instrumented-test-authoring/practice-wait-on-the-apps-handlers-not-production-latches.md) — Device tests wait for receiver and service work by wrapping the handler in the Koin graph, or on an effect the app already shows. Production has no test latches or test-only branches.
 - Open [**Let the runner own emulator boot and settings**](../../testing/emulator-runtime/practice-let-the-runner-own-emulator-boot-and-settings.md) — The runner owns adb startup, emulator readiness and temporary device settings.
 - Open [**Choose plain AOSP images and compatible renderers**](../../testing/emulator-runtime/practice-choose-plain-aosp-images-and-compatible-renderers.md) — API 36 references and API 31 compatibility use launcher-capable AOSP images and bounded renderers.
-- Open [**Account for emulator recording and screenshot quirks**](../../testing/emulator-runtime/practice-account-for-emulator-recording-and-screenshot-quirks.md) — Hold the final video frame and distinguish framebuffer captures from launch splash failures.
 ### #ui
 - Open [**Timer page layout and scroll-away header**](../../screens/timer-history-calendar/map-timer-page-layout-and-scroll-away-header.md) — Bounded Timer content and the shared scroll-away header adapt to short and wide windows.
-- Open [**Timer List and Calendar preference sync**](../../screens/timer-history-calendar/map-timer-list-and-calendar-preference-sync.md) — View selection persists locally and writes the supported server preference without blocking navigation.
 - Open [**Tokkl favorites storage and capability**](../../screens/timer-and-entry-editing/map-tokkl-favorites-storage-and-capability.md) — Favorite starts share cached fields while preference writes use supported server capabilities.
+- Open [**Timer List and Calendar preference sync**](../../screens/timer-history-calendar/map-timer-list-and-calendar-preference-sync.md) — View selection persists locally and writes the supported server preference without blocking navigation.

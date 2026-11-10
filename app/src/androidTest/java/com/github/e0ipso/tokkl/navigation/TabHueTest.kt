@@ -6,29 +6,34 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.test.SemanticsNodeInteraction
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.assertIsSelected
-import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.performClick
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.clients.ClientsRoute
+import com.github.e0ipso.tokkl.navhost.AppNavigationBar
+import com.github.e0ipso.tokkl.navhost.AppNavigationRail
+import com.github.e0ipso.tokkl.navhost.runningBadges
 import com.github.e0ipso.tokkl.ui.theme.SectionHue
 import com.github.e0ipso.tokkl.ui.theme.SectionHues
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import kotlin.math.abs
-import kotlin.math.roundToInt
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import kotlin.math.abs
+import kotlin.math.roundToInt
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 
 /**
- * The active tab's indicator takes its page's hue, in the bar and the rail, light and dark, as
- * the web app's active nav item since tokkl d012228 (TT-0299): Timer orange, Reports sky, Projects
- * violet, Settings yellow, and More pink while a page on the More sheet shows. With the timer idle, the other tabs
- * draw no hue at all. The running-dot checks cover its separate pink fill. TopLevelPageHueTest checks which hue each page has.
+ * The active tab's indicator takes its page's hue, in the bar and the rail, light and dark, as the web app's active nav
+ * item since tokkl d012228 (TT-0299): Timer orange, Reports sky, Projects violet, Settings yellow, and More pink while
+ * a page on the More sheet shows. With the timer idle, the other tabs draw no hue at all. The running-dot checks cover
+ * its separate pink fill. TopLevelPageHueTest checks which hue each page has.
  */
 class TabHueTest {
     @get:Rule
@@ -67,71 +72,116 @@ class TabHueTest {
     fun inDarkTheRailKeepsTheRunningDotVisible() = assertRunningDot(dark = true, rail = true)
 
     private fun assertRunningDot(dark: Boolean, rail: Boolean) {
-        var current by mutableStateOf(TopLevelPage.TIMER)
+        var current by mutableStateOf<Route>(Route.Timer)
         var running by mutableStateOf(false)
         var unselectedDot = Color.Unspecified
         composeRule.setContent {
             TokklTheme(darkTheme = dark) {
                 unselectedDot = TokklTheme.extraColors.running
-                if (rail) AppNavigationRail(current = current, onOpen = {}, timerRunning = running)
-                else AppNavigationBar(current = current, onOpen = {}, timerRunning = running)
+                if (rail) {
+                    AppNavigationRail(
+                        pages = topLevelPages,
+                        current = current,
+                        onOpen = {},
+                        badges = runningBadges(timer = running),
+                    )
+                } else {
+                    AppNavigationBar(
+                        pages = topLevelPages,
+                        current = current,
+                        onOpen = {},
+                        badges = runningBadges(timer = running),
+                    )
+                }
             }
         }
-        val timer = tab(context.getString(R.string.nav_timer))
+        val timer = tab(context.getString(TimerR.string.nav_timer))
         val density = context.resources.displayMetrics.density
         // At least half the 6dp badge's area must visibly change to its expected colour.
         val minimumDotPixels = (kotlin.math.PI * 3 * 3 * density * density / 2).roundToInt()
-        for (page in TopLevelPage.entries) {
-            composeRule.runOnIdle { current = page; running = false }
+        for (page in topLevelPages.all) {
+            composeRule.runOnIdle {
+                current = page.route
+                running = false
+            }
             val idle = timer.captureToImage().toPixelMap()
             composeRule.runOnIdle { running = true }
             val active = timer.captureToImage().toPixelMap()
-            val expected = if (page == TopLevelPage.TIMER) page.hue.onFill else unselectedDot
+            val expected = if (page.route == Route.Timer) page.hue.onFill else unselectedDot
             var dotPixels = 0
             for (x in 0 until active.width) {
                 for (y in 0 until active.height) {
                     if (active[x, y].near(expected) && !idle[x, y].near(expected)) dotPixels++
                 }
             }
-            assertTrue("the running dot remains visible while $page shows: $dotPixels pixels", dotPixels >= minimumDotPixels)
+            assertTrue(
+                "the running dot remains visible while ${page.route} shows: $dotPixels pixels",
+                dotPixels >= minimumDotPixels,
+            )
         }
     }
 
     private fun assertMoreSheet(dark: Boolean) {
-        var current by mutableStateOf(TopLevelPage.CLIENTS)
+        var current by mutableStateOf<Route>(ClientsRoute)
         composeRule.setContent {
-            TokklTheme(darkTheme = dark) { AppNavigationBar(current = current, onOpen = {}) }
+            TokklTheme(darkTheme = dark) { AppNavigationBar(pages = topLevelPages, current = current, onOpen = {}) }
         }
         tab(context.getString(R.string.nav_more)).performClick()
-        for (page in TopLevelPage.entries.filter { it.inMore }) {
-            composeRule.runOnIdle { current = page }
+        for (page in topLevelPages.all.filter { it.inMore }) {
+            composeRule.runOnIdle { current = page.route }
             val item = tab(context.getString(page.label))
             item.assertIsSelected()
-            assertTrue("the selected $page sheet item fills with More's hue", huePixels(item, page.hue) >= minimumIndicatorPixels(rail = false))
+            assertTrue(
+                "the selected ${page.route} sheet item fills with More's hue",
+                huePixels(item, page.hue) >= minimumIndicatorPixels(rail = false),
+            )
         }
     }
 
-    /** For each page, shown as the current one: its own tab fills with its hue. A More-sheet page marks More in More's pink, and no other tab takes that fill. */
+    /**
+     * For each page, shown as the current one: its own tab fills with its hue. A More-sheet page marks More in More's
+     * pink, and no other tab takes that fill.
+     */
     private fun assertEveryTab(dark: Boolean, rail: Boolean) {
-        var current by mutableStateOf(TopLevelPage.TIMER)
+        var current by mutableStateOf<Route>(Route.Timer)
         composeRule.setContent {
             TokklTheme(darkTheme = dark) {
-                if (rail) AppNavigationRail(current = current, onOpen = {}, timerRunning = false)
-                else AppNavigationBar(current = current, onOpen = {}, timerRunning = false)
+                if (rail) {
+                    AppNavigationRail(
+                        pages = topLevelPages,
+                        current = current,
+                        onOpen = {},
+                        badges = runningBadges(timer = false),
+                    )
+                } else {
+                    AppNavigationBar(
+                        pages = topLevelPages,
+                        current = current,
+                        onOpen = {},
+                        badges = runningBadges(timer = false),
+                    )
+                }
             }
         }
-        val tabs = TopLevelPage.entries.filterNot { it.inMore }.map { context.getString(it.label) } + context.getString(R.string.nav_more)
-        for (page in TopLevelPage.entries) {
-            current = page
+        val tabs = topLevelPages.all.filterNot { it.inMore }.map {
+            context.getString(
+                it.label,
+            )
+        } + context.getString(R.string.nav_more)
+        for (page in topLevelPages.all) {
+            current = page.route
             composeRule.waitForIdle()
             val marked = if (page.inMore) context.getString(R.string.nav_more) else context.getString(page.label)
             val markedHue = if (page.inMore) SectionHues.more else page.hue
             for (label in tabs) {
                 val pixels = huePixels(tab(label), markedHue)
                 if (label == marked) {
-                    assertTrue("the $label tab shows $pixels pixels of its hue while $page shows", pixels >= minimumIndicatorPixels(rail))
+                    assertTrue(
+                        "the $label tab shows $pixels pixels of its hue while ${page.route} shows",
+                        pixels >= minimumIndicatorPixels(rail),
+                    )
                 } else {
-                    assertEquals("the $label tab shows $page's hue while $page shows", 0, pixels)
+                    assertEquals("the $label tab shows ${page.route}'s hue while ${page.route} shows", 0, pixels)
                 }
             }
         }
@@ -162,8 +212,11 @@ class TabHueTest {
         return (width * density * INDICATOR_HEIGHT * density / 2).roundToInt()
     }
 
-    private fun Color.near(other: Color): Boolean =
-        listOf(red to other.red, green to other.green, blue to other.blue).all { (a, b) -> abs(a - b) * 255 <= TOLERANCE }
+    private fun Color.near(other: Color): Boolean = listOf(
+        red to other.red,
+        green to other.green,
+        blue to other.blue,
+    ).all { (a, b) -> abs(a - b) * 255 <= TOLERANCE }
 
     private companion object {
         const val BAR_INDICATOR_WIDTH = 64f

@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="reports">Reports</string>
+    <string name="reports_tab_summary">Summary</string>
+    <string name="reports_previous_period">Previous period</string>
+    <string name="reports_next_period">Next period</string>
+    <string name="reports_range_change">change the date range</string>
+    <string name="reports_range_title">Date range</string>
+    <string name="reports_preset_today">Today</string>
+    <string name="reports_preset_yesterday">Yesterday</string>
+    <string name="reports_preset_this_week">This week</string>
+    <string name="reports_preset_last_week">Last week</string>
+    <string name="reports_preset_this_month">This month</string>
+    <string name="reports_preset_last_month">Last month</string>
+    <string name="reports_preset_last_30_days">Last 30 days</string>
+    <string name="reports_preset_this_year">This year</string>
+    <string name="reports_preset_last_year">Last year</string>
+    <string name="reports_custom_range">Custom range…</string>
+    <string name="reports_custom_range_title">Custom range</string>
+    <string name="reports_custom_range_pick_start">Pick the first day</string>
+    <!-- %1$s is the first day, such as 14 Oct 2026. -->
+    <string name="reports_custom_range_pick_end">From %1$s. Pick the last day.</string>
+    <plurals name="reports_custom_range_too_long">
+        <item quantity="one">Pick %d day at most. The server reports on a year at most.</item>
+        <item quantity="other">Pick %d days at most. The server reports on a year at most.</item>
+    </plurals>
+    <string name="reports_apply">Apply</string>
+    <string name="reports_cancel">Cancel</string>
+    <!-- The report filters, with the web app's words. -->
+    <string name="reports_filters">Filters</string>
+    <string name="reports_filters_change">change the filters</string>
+    <string name="reports_filters_clear">Clear filters</string>
+    <string name="reports_filter_project">Project</string>
+    <string name="reports_filter_client">Client</string>
+    <string name="reports_filter_tag">Tag</string>
+    <string name="reports_filter_billable">Billable</string>
+    <string name="reports_filter_without_client">Without client</string>
+    <string name="reports_filter_without_tags">Without tags</string>
+    <string name="reports_filter_billable_all">Billable and non-billable</string>
+    <string name="reports_filter_billable_only">Billable only</string>
+    <string name="reports_filter_non_billable_only">Non-billable only</string>
+    <!-- An active filter: %1$s is the filter, such as Project, and %2$s its values, such as Website, Internal. -->
+    <string name="reports_filter_line">%1$s: %2$s</string>
+    <!-- An active "Is not" filter, as the web app's "not Website": Project: not Website, Internal. -->
+    <string name="reports_filter_line_not">%1$s: not %2$s</string>
+    <!-- The web app's choice between keeping the entries that match a filter and dropping them. -->
+    <!-- The field that narrows the sheet's projects, clients and tags by name. -->
+    <string name="reports_filter_search">Find a project, client or tag</string>
+    <string name="reports_filter_mode_is">Is</string>
+    <string name="reports_filter_mode_not">Is not</string>
+    <!-- What TalkBack reads for each mode: %1$s is the filter, such as Project. -->
+    <string name="reports_filter_mode_is_description">%1$s is</string>
+    <string name="reports_filter_mode_not_description">%1$s is not</string>
+    <!-- The values of a filter that holds one the phone no longer knows. -->
+    <plurals name="reports_filter_selected">
+        <item quantity="one">%d selected</item>
+        <item quantity="other">%d selected</item>
+    </plurals>
+    <string name="reports_bucket_week">Week of %1$s</string>
+    <!-- Oct 2026: a month's short name and the year. -->
+    <string name="reports_bucket_month">%1$s %2$d</string>
+    <string name="reports_loading">Loading the report…</string>
+    <string name="reports_offline_title">Reports need the server</string>
+    <string name="reports_offline_message">The server can\'t be reached, so there are no numbers to show. The app keeps no copy of reports on this phone. Check the connection and try again.</string>
+    <string name="reports_error_auth">The server didn\'t accept this phone\'s API token, so there is no report. Sign in again.</string>
+    <string name="reports_error_trust">The app sends nothing to the server until you review its connection, so there is no report.</string>
+    <string name="reports_error_status">The server answered with HTTP %d, so there is no report.</string>
+    <string name="reports_error_unreadable">The server\'s answer wasn\'t a report the app can read.</string>
+    <string name="reports_no_account_settings">The account\'s timezone and week start haven\'t loaded yet, so the app can\'t pick the days of a report.</string>
+    <string name="reports_unknown_time_zone">This phone doesn\'t know the account\'s timezone, %1$s, so it can\'t pick the days of a report.</string>
+    <string name="reports_retry">Try again</string>
+    <string name="reports_empty_title">No time tracked in this range</string>
+    <string name="reports_empty_message">Pick another range with the arrows or the date range button.</string>
+    <string name="reports_empty_title_filtered">No time tracked in this range with these filters</string>
+    <string name="reports_empty_message_filtered">Loosen a filter, or pick another range with the arrows or the date range button.</string>
+    <string name="reports_total_time">Total time</string>
+    <string name="reports_billable_time">Billable time</string>
+    <!-- 45.0% of the total -->
+    <string name="reports_share_of_total">%1$s%% of the total</string>
+    <string name="reports_entries">Entries</string>
+    <string name="reports_amount">Amount</string>
+    <string name="reports_chart_title_day">Time per day</string>
+    <string name="reports_chart_title_week">Time per week</string>
+    <string name="reports_chart_title_month">Time per month</string>
+    <string name="reports_billable">Billable</string>
+    <string name="reports_non_billable">Non-billable</string>
+    <!-- What TalkBack reads for the chart: the total, then each bar as reports_chart_bar_description. -->
+    <string name="reports_chart_description_day">Bar chart of time per day, %1$s in total. %2$s.</string>
+    <string name="reports_chart_description_week">Bar chart of time per week, %1$s in total. %2$s.</string>
+    <string name="reports_chart_description_month">Bar chart of time per month, %1$s in total. %2$s.</string>
+    <!-- Mon 13 Oct: 2 hours, 30 minutes -->
+    <string name="reports_chart_bar_description">%1$s: %2$s</string>
+    <string name="reports_projects">Projects</string>
+    <string name="reports_without_project">Without project</string>
+    <string name="reports_mixed_currencies">Amounts per project are hidden because this report mixes currencies.</string>
+    <!-- 45.0% -->
+    <string name="reports_percent">%1$s%%</string>
+    <string name="reports_share">Share CSV</string>
+    <string name="reports_export_preparing">Preparing CSV…</string>
+    <string name="reports_export_no_targets">No app can receive a CSV file. Install a compatible app and try again.</string>
+    <string name="reports_export_failed">The CSV could not be prepared or shared. Try again.</string>
+    <string name="reports_additional_data">Additional report data</string>
+    <string name="reports_extra_report">Report</string>
+    <string name="reports_extra_totals">Totals</string>
+    <string name="reports_extra_currency">Currency: %1$s</string>
+    <string name="reports_extra_project">Project: %1$s</string>
+    <string name="reports_extra_bucket">Bucket starting %1$s</string>
+    <string name="reports_extra_truncated">Some additional data was shortened for display.</string>
+</resources>

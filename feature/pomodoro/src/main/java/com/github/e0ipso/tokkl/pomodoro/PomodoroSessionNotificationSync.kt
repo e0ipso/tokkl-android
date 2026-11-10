@@ -1,0 +1,233 @@
+package com.github.e0ipso.tokkl.pomodoro
+
+import android.content.Context
+import com.github.e0ipso.tokkl.platform.AppHook
+import com.github.e0ipso.tokkl.platform.SingleFlight
+import com.github.e0ipso.tokkl.platform.collectDurably
+import com.github.e0ipso.tokkl.session.AccountDataOwner
+import com.github.e0ipso.tokkl.session.SignOutPhase
+import com.github.e0ipso.tokkl.session.SignedInListener
+import com.github.e0ipso.tokkl.storage.PreferencesFile
+import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
+import com.github.e0ipso.tokkl.timerstate.SessionActions
+import com.github.e0ipso.tokkl.timerstate.TimerActionResult
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import java.io.IOException
+import java.util.UUID
+import kotlin.coroutines.CoroutineContext
+
+/** Keeps which account the session notification was last shown to, and what it showed. */
+interface PomodoroNotificationMemory {
+    suspend fun load(): PomodoroNotificationDisplay?
+
+    @Throws(IOException::class)
+    suspend fun save(display: PomodoroNotificationDisplay?)
+}
+
+interface PomodoroSessionPoster {
+
+    /** Posts [content] for [account], and returns false when notifications are off. */
+    fun post(content: PomodoroSessionNotificationContent, account: String): Boolean
+
+    fun remove()
+}
+
+/**
+ * The session notification of the server's Pomodoro session, from the held timer state, and its
+ * buttons. It posts the held phase with its countdown, number and upcoming phase, replaces it on
+ * each new revision, and removes it when the session ends, the server loses the timer API or the
+ * account signs out. Once the phase's planned end has come, the ringing notification owns the
+ * shared id.
+ *
+ * Next phase and End session go to the server with the revision the notification showed, and
+ * only for the account and the phase it was posted for. Publication and actions belong to the
+ * account signed in: sign-out [forget]s it, after which it shows and sends nothing until the next
+ * account [signedIn], which it follows under a new identity, so no button of the account before
+ * acts on it.
+ *
+ * @param changes emits on every change of the held state, the capability or the ringing service.
+ * @param serviceRunning whether the ringing service runs, which then owns the shared id.
+ */
+class PomodoroSessionNotificationSync internal constructor(
+    private val alarm: PomodoroPhaseAlarm,
+    private val actions: SessionActions,
+    private val changes: Flow<Unit>,
+    private val isSignedIn: suspend () -> Boolean,
+    private val serviceRunning: () -> Boolean,
+    private val memory: PomodoroNotificationMemory,
+    private val notifications: PomodoroSessionPoster,
+    private val scope: CoroutineScope,
+    private val io: CoroutineContext,
+) : SignedInListener {
+    private val lock = Mutex()
+    private var display: PomodoroNotificationDisplay? = null
+    private var loaded = false
+    private val observing = SingleFlight(scope, io)
+
+    @Volatile private var retired = false
+
+    // A JVM lock, not a Mutex: process start and sign-in call these without suspending; lock orders
+    // the suspending work.
+    @Synchronized fun start() {
+        if (retired) return
+        observing.launch { changes.collectDurably("PomodoroSessionNotificationSync") { refresh() } }
+    }
+
+    /**
+     * Starts following the account that has just signed in. After a sign-out it shows nothing
+     * yet and makes a new identity on first use, as the first process after a sign-out does.
+     */
+    @Synchronized override fun signedIn() {
+        if (retired) {
+            display = null
+            loaded = true
+            retired = false
+        }
+        start()
+    }
+
+    private suspend fun readDisplay(): PomodoroNotificationDisplay {
+        if (!loaded) {
+            display = memory.load()
+            loaded = true
+        }
+        return display ?: PomodoroNotificationDisplay(UUID.randomUUID().toString()).also { display = it }
+    }
+
+    private suspend fun remember(next: PomodoroNotificationDisplay) {
+        display = next
+        try {
+            memory.save(next)
+        } catch (_: IOException) {
+            // Keep observing; the next ordinary emission can persist the shown state again.
+            // Forget uses the throwing save directly so sign-out reports a failed cleanup.
+        }
+    }
+
+    /**
+     * Posts, replaces or removes the notification for the held state now. It reads that state
+     * under the alarm's lock, so it never posts over a ring that starts meanwhile. [force] posts
+     * again what was shown, as after a notification permission grant.
+     */
+    suspend fun refresh(force: Boolean = false) = lock.withLock {
+        if (retired) return@withLock
+        alarm.withState { held, ringing ->
+            if (retired) return@withState
+            if (!isSignedIn()) {
+                display = null
+                loaded = true
+                notifications.remove()
+                try {
+                    memory.save(null)
+                } catch (_: IOException) { /* Try again on an ordinary emission. */ }
+                return@withState
+            }
+            val state = readDisplay()
+            val content = held?.notificationContent()
+            if (content == null) {
+                notifications.remove()
+                remember(state.copy(shown = null))
+            } else if (ringing || serviceRunning()) {
+                // ID 3 is now owned by the ring, including a service still stopping. Never
+                // cancel it here. The service-state emission republishes after onDestroy.
+                remember(state.copy(shown = null))
+            } else if (force || state.shown != content.key) {
+                // A denied permission leaves this eligible for the next permission grant.
+                if (notifications.post(content, state.account)) remember(state.copy(shown = content.key))
+            } else {
+                remember(state)
+            }
+        }
+    }
+
+    /** A button of another account, or of a phase that is no longer the held one, sends nothing and returns null. */
+    suspend fun act(account: String, phase: PomodoroPhaseKey, revision: Long, end: Boolean): TimerActionResult? {
+        val accepted = lock.withLock { !retired && isSignedIn() && account == readDisplay().account }
+        if (!accepted) return null
+        return alarm.sendPhaseAction(actions, phase, revision, end)
+    }
+
+    /** Whether a tap on the notification of [account] and [phase] may open the Pomodoro page. */
+    suspend fun acceptsTap(account: String, phase: PomodoroPhaseKey): Boolean = lock.withLock {
+        if (retired || !isSignedIn() || account != readDisplay().account) return@withLock false
+        alarm.current()?.phase == phase
+    }
+
+    /** Fence first, await collectors, and erase display identity before cache clearing. */
+    suspend fun forget() {
+        val observer = synchronized(this) {
+            retired = true
+            observing.running()
+        }
+        observer?.cancelAndJoin()
+        lock.withLock {
+            display = null
+            loaded = true
+            try {
+                notifications.remove()
+            } finally {
+                memory.save(null)
+            }
+        }
+    }
+}
+
+/** After the phase alarm, before the reminder: the session notification, from process start and after a grant. */
+class PomodoroNotificationHook(private val sync: Lazy<PomodoroSessionNotificationSync>) : AppHook {
+    override fun processStart() = sync.value.start()
+
+    override suspend fun notificationsAllowed() = sync.value.refresh(force = true)
+}
+
+/** What the session notification showed: the random identity of its [account] and the hash of what it [shown]. */
+data class PomodoroNotificationDisplay(val account: String, val shown: String? = null)
+
+/** Persists only a random account identity and a content hash, never entry fields. */
+class PomodoroSessionNotificationStore(context: Context, private val io: CoroutineContext) :
+    PomodoroNotificationMemory {
+    private val file = PreferencesFile(context, "pomodoro_notification", io)
+
+    override suspend fun load(): PomodoroNotificationDisplay? = file.read {
+        getString("account", null)?.let { PomodoroNotificationDisplay(it, getString("shown", null)) }
+    }
+
+    override suspend fun save(display: PomodoroNotificationDisplay?) {
+        file.commit("Could not save the Pomodoro notification state.") {
+            clear()
+            if (display != null) putString("account", display.account).putString("shown", display.shown)
+        }
+    }
+}
+
+/**
+ * The Pomodoro feature's part of sign-out, once the held timer state is retired: the phase alarm
+ * drops its alarm and ring, so nothing arms or rings the account's phase again, the session
+ * notification stops following the held state and erases what it showed, and notification ID 3
+ * goes. That ID is shared by the ring and the session notification, a non-ringing form included,
+ * so it is cancelled on its own too, through [sharedId]: a failed stop of the ring or the session
+ * notification still removes it. A part that fails does not stop the ones after it.
+ */
+internal class PomodoroSignOut(
+    private val alarm: PomodoroPhaseAlarm,
+    private val notification: PomodoroSessionNotificationSync,
+    private val sharedId: PomodoroSessionPoster,
+) : AccountDataOwner {
+
+    override val signOutPhase = SignOutPhase.STOP_WORK
+
+    override suspend fun forgetAccount() {
+        try {
+            alarm.release()
+        } finally {
+            try {
+                notification.forget()
+            } finally {
+                sharedId.remove()
+            }
+        }
+    }
+}

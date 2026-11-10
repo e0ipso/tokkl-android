@@ -9,30 +9,40 @@ import androidx.work.testing.WorkManagerTestInitHelper
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.HangingRelay
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
-import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TapToVisibleDeadline
+import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TimerActionToasts
-import com.github.e0ipso.tokkl.awaitControls
-import com.github.e0ipso.tokkl.timerState
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.api
+import com.github.e0ipso.tokkl.awaitControls
 import com.github.e0ipso.tokkl.cache.BackgroundSend
-import com.github.e0ipso.tokkl.cache.RunningEntryIdentity
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.cache.TimerControls
-import com.github.e0ipso.tokkl.cache.countsFrom
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.cache
+import com.github.e0ipso.tokkl.components.cacheDatabase
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.components.timerControls
+import com.github.e0ipso.tokkl.feature.notification.R
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryTiming
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.RunningEntryIdentity
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
-import com.github.e0ipso.tokkl.timerstate.TimerSyncService
-import com.github.e0ipso.tokkl.trash.TrashServer
-import java.time.Instant
-import java.time.temporal.ChronoUnit
+import com.github.e0ipso.tokkl.timerState
+import com.github.e0ipso.tokkl.timerstate.TimerControls
+import com.github.e0ipso.tokkl.timerstate.countsFrom
+import com.github.e0ipso.tokkl.timersync.TimerSyncService
+import com.github.e0ipso.tokkl.tokklApi
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -56,12 +66,14 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 /**
- * The running timer's notification (docs/PRD.md N1) against the real Tokkl container. Each test
- * starts and stops through the phone's running-entry state, [TokklApplication.changes], which the
- * app, the widget, the tile and the shortcuts all write, never through a screen. Each test seeds
- * its own account and deletes it after.
+ * The running timer's notification (docs/PRD.md N1) against the real Tokkl container. Each test starts and stops
+ * through the phone's running-entry state, the app's [com.github.e0ipso.tokkl.cache.ChangeQueue], which the app, the
+ * widget, the tile and the shortcuts all write, never through a screen. Each test seeds its own account and deletes it
+ * after.
  */
 class RunningNotificationServerTest {
 
@@ -76,22 +88,29 @@ class RunningNotificationServerTest {
 
     /** The web app: the same account, straight to the server and past the app's guard. */
     private val web by lazy {
-        TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(account.apiToken), httpClient = OkHttpClient())
+        TogglApiClient(
+            TokklTestServer.url,
+            ApiCredentials.ApiToken(account.apiToken),
+            httpClient = OkHttpClient(),
+            io = Dispatchers.IO,
+        )
     }
 
     @Before
     fun signInToTheServer() {
         account = TestAccounts.create(timezone = "Europe/Madrid")
-        workspace = web.get(web.server.api("me"), JsonObject.serializer()).orFail("GET /api/v9/me")
+        workspace = runBlocking { web.get(web.server.api("me"), JsonObject.serializer()) }.orFail("GET /api/v9/me")
             .getValue("default_workspace_id").jsonPrimitive.long
-        project = web.send(
-            "POST",
-            web.server.api("workspaces", workspace.toString(), "projects"),
-            buildJsonObject { put("name", "Notifications") },
-            Created.serializer(),
-        ).orFail("POST a project").id
+        project = runBlocking {
+            web.send(
+                HttpMethod.POST,
+                web.server.api("workspaces", workspace.toString(), "projects"),
+                buildJsonObject { put("name", "Notifications") },
+                Created.serializer(),
+            )
+        }.orFail("POST a project").id
         signIn(TokklTestServer.url, account.apiToken)
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
         RunningNotifications.allow()
         RunningNotifications.awaitGone("no notification before a timer starts")
     }
@@ -114,7 +133,12 @@ class RunningNotificationServerTest {
     @Test
     fun anOfflineStartShowsTheEntryWithAClockTheSystemTicks() {
         AirplaneMode.set(true, web)
-        runBlocking { app.changes.start(workspace, EntryFields(description = "Started offline", projectId = project)) }
+        runBlocking {
+            app.changes.start(
+                WorkspaceId(workspace),
+                EntryFields(description = "Started offline", projectId = ProjectId(project)),
+            )
+        }
         val start = runBlocking { app.cache.running.first() }!!.entry.start
 
         val shown = RunningNotifications.awaitShown("the offline start")
@@ -122,7 +146,10 @@ class RunningNotificationServerTest {
         assertEquals("Started offline", notification.extras.getCharSequence(Notification.EXTRA_TITLE).toString())
         assertEquals("Notifications", notification.extras.getCharSequence(Notification.EXTRA_TEXT).toString())
         assertEquals("the clock counts from the start", start.toEpochMilli(), notification.`when`)
-        assertTrue("the system ticks a chronometer", notification.extras.getBoolean(Notification.EXTRA_SHOW_CHRONOMETER))
+        assertTrue(
+            "the system ticks a chronometer",
+            notification.extras.getBoolean(Notification.EXTRA_SHOW_CHRONOMETER),
+        )
         assertTrue("ongoing", notification.flags and Notification.FLAG_ONGOING_EVENT != 0)
         assertEquals(
             "Pause and Stop",
@@ -130,8 +157,14 @@ class RunningNotificationServerTest {
             notification.actions.map { it.title.toString() },
         )
         assertTrue("tapping opens the app", notification.contentIntent.isActivity)
-        assertEquals(context.getString(R.string.notification_channel_running), RunningNotifications.channelName().toString())
-        assertEquals(context.getString(R.string.notification_channel_running_description), RunningNotifications.channelDescription())
+        assertEquals(
+            context.getString(R.string.notification_channel_running),
+            RunningNotifications.channelName().toString(),
+        )
+        assertEquals(
+            context.getString(R.string.notification_channel_running_description),
+            RunningNotifications.channelDescription(),
+        )
 
         // Nothing posts it again to tick the clock, and the timer adds no foreground service. The
         // one that runs is the timer sync service, which a Tokkl server with the timer API keeps
@@ -144,8 +177,8 @@ class RunningNotificationServerTest {
     @Test
     fun anOfflineStartCorrectionMovesTheNotificationsChronometerToTheCachedStart() {
         AirplaneMode.set(true, web)
-        val fields = EntryFields(description = "Corrected offline", projectId = project)
-        val id = runBlocking { app.changes.start(workspace, fields) }
+        val fields = EntryFields(description = "Corrected offline", projectId = ProjectId(project))
+        val id = runBlocking { app.changes.start(WorkspaceId(workspace), fields) }
         val original = runBlocking { app.cache.running.first() }!!.entry
         val before = RunningNotifications.awaitShown("the original offline start") {
             it.notification.`when` == original.start.toEpochMilli()
@@ -153,15 +186,19 @@ class RunningNotificationServerTest {
         val corrected = original.start.minusSeconds(3607)
         assertEquals("only the offline Start is queued", 1, unsentCount())
 
-        assertTrue(runBlocking {
-            app.changes.updateRunning(
-                RunningEntryIdentity(id, workspace, original.start), fields, corrected,
-            )
-        })
+        assertTrue(
+            runBlocking {
+                app.changes.updateRunning(
+                    RunningEntryIdentity(id, WorkspaceId(workspace), original.start),
+                    fields,
+                    corrected,
+                )
+            },
+        )
 
         val cached = runBlocking { app.cache.running.first() }!!.entry
         assertEquals("correction keeps the running identity", id, cached.id)
-        assertEquals(workspace, cached.workspaceId)
+        assertEquals(workspace, cached.workspaceId.value)
         assertEquals("cached start is unsnapped", corrected, cached.start)
         assertNull("correction does not stop the entry", cached.stop)
         assertEquals("Start and corrected UPDATE wait offline", 2, unsentCount())
@@ -170,14 +207,25 @@ class RunningNotificationServerTest {
         }
         assertEquals(original.start.toEpochMilli(), before.notification.`when`)
         assertEquals("posted clock follows the corrected cache", cached.start.toEpochMilli(), shown.notification.`when`)
-        assertTrue("the system still ticks the corrected clock", shown.notification.extras.getBoolean(Notification.EXTRA_SHOW_CHRONOMETER))
-        assertTrue("the corrected notification stays ongoing", shown.notification.flags and Notification.FLAG_ONGOING_EVENT != 0)
+        assertTrue(
+            "the system still ticks the corrected clock",
+            shown.notification.extras.getBoolean(Notification.EXTRA_SHOW_CHRONOMETER),
+        )
+        assertTrue(
+            "the corrected notification stays ongoing",
+            shown.notification.flags and Notification.FLAG_ONGOING_EVENT != 0,
+        )
         assertEquals(context.getString(R.string.notification_stop), shown.notification.stopAction().title.toString())
     }
 
     @Test
     fun aStopRemovesTheNotification() {
-        val id = runBlocking { app.changes.start(workspace, EntryFields(description = "Stopped in the app")) }
+        val id = runBlocking {
+            app.changes.start(
+                WorkspaceId(workspace),
+                EntryFields(description = "Stopped in the app"),
+            )
+        }
         RunningNotifications.awaitShown("the start")
 
         assertTrue(runBlocking { app.changes.stop(id) })
@@ -187,19 +235,26 @@ class RunningNotificationServerTest {
 
     @Test
     fun aStartStopsTheRunningEntryAndShowsTheNewOne() {
-        runBlocking { app.changes.start(workspace, EntryFields(description = "First")) }
+        runBlocking { app.changes.start(WorkspaceId(workspace), EntryFields(description = "First")) }
         RunningNotifications.awaitShown("the first start") { it.title() == "First" }
 
-        runBlocking { app.changes.start(workspace, EntryFields(description = "")) }
+        runBlocking { app.changes.start(WorkspaceId(workspace), EntryFields(description = "")) }
 
-        val shown = RunningNotifications.awaitShown("the second start") { it.title() == context.getString(R.string.notification_no_description) }
+        val shown = RunningNotifications.awaitShown(
+            "the second start",
+        ) { it.title() == context.getString(R.string.notification_no_description) }
         assertNull("no project", shown.notification.extras.getCharSequence(Notification.EXTRA_TEXT))
     }
 
     @Test
     fun stopFromTheNotificationWorksOfflineAndTheQueueSendsItWhenTheNetworkReturns() {
-        val id = runBlocking { app.changes.start(workspace, EntryFields(description = "Stopped from the notification")) }
-        runBlocking { app.sender.send().join() }
+        val id = runBlocking {
+            app.changes.start(
+                WorkspaceId(workspace),
+                EntryFields(description = "Stopped from the notification"),
+            )
+        }
+        runBlocking { app.sender.sendAndWait() }
         assertEquals("the start reached the server", 0, unsentCount())
         val serverId = runBlocking { app.changes.currentId(id) }
         val shown = RunningNotifications.awaitShown("the start")
@@ -226,32 +281,52 @@ class RunningNotificationServerTest {
         AirplaneMode.set(false, web)
         checkNotNull(WorkManagerTestInitHelper.getTestDriver(context)).setAllConstraintsMet(work.id)
         val done = runBlocking {
-            withTimeout(TIMEOUT_MS) { WorkManager.getInstance(context).getWorkInfoByIdFlow(work.id).filterNotNull().first { it.state.isFinished } }
+            withTimeout(
+                TIMEOUT_MS,
+            ) {
+                WorkManager.getInstance(
+                    context,
+                ).getWorkInfoByIdFlow(work.id).filterNotNull().first { it.state.isFinished }
+            }
         }
 
         assertEquals(WorkInfo.State.SUCCEEDED, done.state)
         assertEquals(0, unsentCount())
         if (shortStop) {
-            val trashed = TrashServer(web).list().orFail("GET /api/app/trash").single { it.id == serverId }
+            val trashed = runBlocking {
+                web.tokklApi().trash.list()
+            }.orFail("GET /api/app/trash").single { it.id == serverId }
             assertEquals("Stopped from the notification", trashed.description)
             assertEquals("the notification's short Stop reached Trash", trashed.start, trashed.stop)
             assertEquals(0L, trashed.duration)
             assertNotNull("the server deleted the short entry", trashed.deletedAt)
         } else {
-            val sent = web.get(web.server.api("me", "time_entries", serverId.toString()), JsonObject.serializer()).orFail("GET the entry")
+            val sent = runBlocking {
+                web.get(
+                    web.server.api("me", "time_entries", serverId.toString()),
+                    JsonObject.serializer(),
+                )
+            }.orFail("GET the entry")
             assertTrue("the stop reached the server", sent["stop"] !is JsonNull)
         }
     }
 
     @Test
     fun pauseResumeAndStopWhilePausedFromTheNotificationGoToTheServer() {
-        val first = account.createEntry("Paused from the notification", Instant.now().minusSeconds(600).truncatedTo(ChronoUnit.SECONDS))
-        runBlocking { app.accountSettings.refresh().join() }
-        val running = RunningNotifications.awaitShown("the server's timer") { it.title() == "Paused from the notification" }
+        val first = account.createEntry(
+            "Paused from the notification",
+            Instant.now().minusSeconds(600).truncatedTo(ChronoUnit.SECONDS),
+        )
+        runBlocking { app.accountRefresh.refresh().join() }
+        val running = RunningNotifications.awaitShown(
+            "the server's timer",
+        ) { it.title() == "Paused from the notification" }
 
         running.notification.action(R.string.notification_pause).actionIntent.send()
 
-        val paused = RunningNotifications.awaitShown("the paused notification") { it.notification.flags and Notification.FLAG_ONGOING_EVENT == 0 }
+        val paused = RunningNotifications.awaitShown(
+            "the paused notification",
+        ) { it.notification.flags and Notification.FLAG_ONGOING_EVENT == 0 }
         val chain = app.awaitControls<TimerControls.Paused>("the notification's Pause")
         assertEquals("the server's frozen total", checkNotNull(web.timerState().pause).seconds, chain.seconds)
         assertEquals(
@@ -259,18 +334,31 @@ class RunningNotificationServerTest {
             listOf(context.getString(R.string.notification_resume), context.getString(R.string.notification_stop)),
             paused.notification.actions.map { it.title.toString() },
         )
-        assertFalse("the paused total stands still", paused.notification.extras.getBoolean(Notification.EXTRA_SHOW_CHRONOMETER))
+        assertFalse(
+            "the paused total stands still",
+            paused.notification.extras.getBoolean(Notification.EXTRA_SHOW_CHRONOMETER),
+        )
 
         paused.notification.action(R.string.notification_resume).actionIntent.send()
 
-        val resumed = app.awaitControls<TimerControls.Running>("the notification's Resume") { it.accumulatedSeconds == chain.seconds }
-        val clock = RunningNotifications.awaitShown("the resumed timer") { it.notification.flags and Notification.FLAG_ONGOING_EVENT != 0 }
-        assertNotEquals("Resume starts a new entry", first, resumed.entry.id)
-        assertEquals("the server's clone", web.timerState().pause?.cloneEntryId, resumed.entry.id)
-        assertEquals("the clock counts on from the chain's total", resumed.countsFrom.toEpochMilli() - chain.seconds * 1_000, clock.notification.`when`)
+        val resumed = app.awaitControls<TimerControls.Running>(
+            "the notification's Resume",
+        ) { it.accumulatedSeconds == chain.seconds }
+        val clock = RunningNotifications.awaitShown(
+            "the resumed timer",
+        ) { it.notification.flags and Notification.FLAG_ONGOING_EVENT != 0 }
+        assertNotEquals("Resume starts a new entry", first, resumed.entry.id.value)
+        assertEquals("the server's clone", web.timerState().pause?.cloneEntryId, resumed.entry.id.value)
+        assertEquals(
+            "the clock counts on from the chain's total",
+            resumed.countsFrom.toEpochMilli() - chain.seconds * 1_000,
+            clock.notification.`when`,
+        )
 
         clock.notification.action(R.string.notification_pause).actionIntent.send()
-        val again = RunningNotifications.awaitShown("paused again") { it.notification.flags and Notification.FLAG_ONGOING_EVENT == 0 }
+        val again = RunningNotifications.awaitShown(
+            "paused again",
+        ) { it.notification.flags and Notification.FLAG_ONGOING_EVENT == 0 }
         app.awaitControls<TimerControls.Paused>("the notification's second Pause")
         again.notification.stopAction().actionIntent.send()
         RunningNotifications.awaitGone("the notification after Stop while paused")
@@ -281,13 +369,27 @@ class RunningNotificationServerTest {
     @Test
     fun anOfflinePauseFromTheNotificationSaysWhyAndChangesNothing() {
         AirplaneMode.set(true, web)
-        val id = runBlocking { app.changes.start(workspace, EntryFields(description = "Paused offline", projectId = project)) }
+        val id = runBlocking {
+            app.changes.start(
+                WorkspaceId(workspace),
+                EntryFields(description = "Paused offline", projectId = ProjectId(project)),
+            )
+        }
         val running = RunningNotifications.awaitShown("the offline start")
 
-        TimerActionToasts.await(TimerActionToasts.offline) { running.notification.action(R.string.notification_pause).actionIntent.send() }
+        TimerActionToasts.await(
+            TimerActionToasts.offline,
+        ) { running.notification.action(R.string.notification_pause).actionIntent.send() }
 
-        assertEquals("the timer runs on", id, (runBlocking { app.timerControls.first() } as TimerControls.Running).entry.id)
-        assertTrue("the notification still runs", RunningNotifications.shown()!!.notification.flags and Notification.FLAG_ONGOING_EVENT != 0)
+        assertEquals(
+            "the timer runs on",
+            id,
+            (runBlocking { app.timerControls.first() } as TimerControls.Running).entry.id,
+        )
+        assertTrue(
+            "the notification still runs",
+            RunningNotifications.shown()!!.notification.flags and Notification.FLAG_ONGOING_EVENT != 0,
+        )
         assertEquals("only the Start is queued", 1, unsentCount())
     }
 
@@ -298,13 +400,13 @@ class RunningNotificationServerTest {
         val serverId = account.createEntry(description, Instant.now().minusSeconds(600))
         HangingRelay(TokklTestServer.url).use { relay ->
             signIn(relay.url, account.apiToken)
-            runBlocking { app.accountSettings.refresh().join() }
-            runBlocking { withTimeout(TIMEOUT_MS) { app.cache.running.first { it?.entry?.id == serverId } } }
+            runBlocking { app.accountRefresh.refresh().join() }
+            runBlocking { withTimeout(TIMEOUT_MS) { app.cache.running.first { it?.entry?.id?.value == serverId } } }
             val shown = RunningNotifications.awaitShown("the existing entry") { it.title() == description }
             assertEquals("the fixture has no queued changes", 0, unsentCount())
 
             relay.hang()
-            val refresh = app.accountSettings.refresh()
+            val refresh = app.accountRefresh.refresh()
             try {
                 runBlocking {
                     withTimeout(TIMEOUT_MS) {
@@ -325,7 +427,12 @@ class RunningNotificationServerTest {
 
             runBlocking { app.sender.sendAndWait() }
             assertEquals("Stop eventually reaches the server", 0, unsentCount())
-            val sent = web.get(web.server.api("me", "time_entries", serverId.toString()), JsonObject.serializer())
+            val sent = runBlocking {
+                web.get(
+                    web.server.api("me", "time_entries", serverId.toString()),
+                    JsonObject.serializer(),
+                )
+            }
                 .orFail("GET the notification's stopped entry")
             assertEquals(serverId, sent.getValue("id").jsonPrimitive.long)
             assertEquals(description, sent.getValue("description").jsonPrimitive.content)
@@ -335,7 +442,7 @@ class RunningNotificationServerTest {
 
     @Test
     fun aDismissedNotificationStaysGoneWhenTheAppOpensAndTheNextEditOrStartPostsItAgain() {
-        val id = runBlocking { app.changes.start(workspace, EntryFields(description = "Dismissed")) }
+        val id = runBlocking { app.changes.start(WorkspaceId(workspace), EntryFields(description = "Dismissed")) }
         val start = runBlocking { app.cache.running.first() }!!.entry.start
         RunningNotifications.awaitShown("the start")
         RunningNotifications.dismiss()
@@ -343,11 +450,13 @@ class RunningNotificationServerTest {
         ActivityScenario.launch(MainActivity::class.java).use {
             RunningNotifications.assertStaysGone("the app opened")
 
-            assertTrue(runBlocking { app.changes.update(id, EntryFields(description = "Edited"), start, stop = null) })
+            assertTrue(
+                runBlocking { app.changes.update(id, EntryFields(description = "Edited"), EntryTiming.Running(start)) },
+            )
             RunningNotifications.awaitShown("the edit") { it.title() == "Edited" }
 
             RunningNotifications.dismiss()
-            runBlocking { app.changes.start(workspace, EntryFields(description = "Started again")) }
+            runBlocking { app.changes.start(WorkspaceId(workspace), EntryFields(description = "Started again")) }
             RunningNotifications.awaitShown("the next start") { it.title() == "Started again" }
         }
     }
@@ -355,14 +464,14 @@ class RunningNotificationServerTest {
     @Test
     fun twoStartsWithinOneSecondLeaveTheStopOnTheNewerEntry() {
         AirplaneMode.set(true, web)
-        val fields = EntryFields(description = "Started twice", projectId = project)
+        val fields = EntryFields(description = "Started twice", projectId = ProjectId(project))
         // Just as a second begins, so both starts fall in it.
         Thread.sleep(1_000 - System.currentTimeMillis() % 1_000)
-        val first = runBlocking { app.changes.start(workspace, fields) }
+        val first = runBlocking { app.changes.start(WorkspaceId(workspace), fields) }
         val firstShown = RunningNotifications.awaitShown("the first start")
         // Read before the second start stops the first entry and puts its start on the grid.
         val firstStart = runBlocking { app.cache.running.first() }!!.entry.start
-        val second = runBlocking { app.changes.start(workspace, fields) }
+        val second = runBlocking { app.changes.start(WorkspaceId(workspace), fields) }
         val secondStart = runBlocking { app.cache.running.first() }!!.entry.start
         assertEquals("both starts fall in one second", firstStart.epochSecond, secondStart.epochSecond)
 
@@ -374,9 +483,16 @@ class RunningNotificationServerTest {
         assertNotNull("the newer entry has a short Stop Undo", undo)
         val shortStop = checkNotNull(undo)
         assertEquals("Undo targets the newer start, not the first", second, shortStop.entryId)
-        assertEquals("the newer entry stopped at zero duration", shortStop.entry.start, shortStop.entry.stop)
-        assertTrue("the short Stop removed the newer entry from history", runBlocking { app.cache.timeEntries.first() }.none { it.id == second })
-        assertTrue("the older entry is not running", runBlocking { app.cache.timeEntries.first() }.none { it.id == first && it.stop == null })
+        val stopped = checkNotNull(app.cacheDatabase.changes().shortStop(shortStop.entryId.value)).entry
+        assertEquals("the newer entry stopped at zero duration", stopped.start, stopped.stop)
+        assertTrue(
+            "the short Stop removed the newer entry from history",
+            runBlocking { app.cache.timeEntries.first() }.none { it.id == second },
+        )
+        assertTrue(
+            "the older entry is not running",
+            runBlocking { app.cache.timeEntries.first() }.none { it.id == first && it.stop == null },
+        )
         RunningNotifications.awaitGone("the notification after its Stop")
 
         AirplaneMode.set(false, web)
@@ -384,27 +500,39 @@ class RunningNotificationServerTest {
         assertEquals("both starts and Stops reached the server", 0, unsentCount())
         val firstServerId = runBlocking { app.changes.currentId(first) }
         val secondServerId = runBlocking { app.changes.currentId(second) }
-        assertTrue("the starts have distinct server ids", firstServerId > 0 && secondServerId > 0 && firstServerId != secondServerId)
-        val trashed = TrashServer(web).list().orFail("GET /api/app/trash")
+        assertTrue(
+            "the starts have distinct server ids",
+            firstServerId.value > 0 && secondServerId.value > 0 && firstServerId != secondServerId,
+        )
+        val trashed = runBlocking { web.tokklApi().trash.list() }.orFail("GET /api/app/trash")
         assertTrue("the first start was also short", trashed.any { it.id == firstServerId })
         val secondTrash = trashed.single { it.id == secondServerId }
-        assertEquals("the notification stopped the newer entry", shortStop.entry.start.epochSecond, java.time.OffsetDateTime.parse(secondTrash.start).toEpochSecond())
+        assertEquals(
+            "the notification stopped the newer entry",
+            stopped.start.epochSecond,
+            java.time.OffsetDateTime.parse(secondTrash.start).toEpochSecond(),
+        )
         assertEquals(secondTrash.start, secondTrash.stop)
         assertEquals(0L, secondTrash.duration)
 
         AirplaneMode.set(true, web)
         assertTrue("Undo restores the newer stopped entry offline", runBlocking { app.changes.undoShortStop(second) })
         val restored = runBlocking { app.cache.timeEntries.first() }.single { it.id == secondServerId }
-        assertEquals(shortStop.entry.start, restored.start)
-        assertEquals(shortStop.entry.stop, restored.stop)
+        assertEquals(stopped.start, restored.start)
+        assertEquals(stopped.stop, restored.stop)
         assertNull("Undo must not restart the notification", runBlocking { app.cache.running.first() })
         AirplaneMode.set(false, web)
         runBlocking { app.sender.sendAndWait() }
         assertEquals("Undo reached the server", 0, unsentCount())
-        val remainingTrash = TrashServer(web).list().orFail("GET /api/app/trash")
+        val remainingTrash = runBlocking { web.tokklApi().trash.list() }.orFail("GET /api/app/trash")
         assertTrue("Undo left the older entry in Trash", remainingTrash.any { it.id == firstServerId })
         assertTrue("Undo restored only the newer entry", remainingTrash.none { it.id == secondServerId })
-        val restoredOnServer = web.get(web.server.api("me", "time_entries", secondServerId.toString()), JsonObject.serializer())
+        val restoredOnServer = runBlocking {
+            web.get(
+                web.server.api("me", "time_entries", secondServerId.toString()),
+                JsonObject.serializer(),
+            )
+        }
             .orFail("GET the restored newer entry")
         assertEquals(restoredOnServer.getValue("start"), restoredOnServer.getValue("stop"))
     }
@@ -412,7 +540,12 @@ class RunningNotificationServerTest {
     @Test
     fun aDismissedNotificationStaysGoneWhenTheServerAnswersAnOfflineStart() {
         AirplaneMode.set(true, web)
-        val id = runBlocking { app.changes.start(workspace, EntryFields(description = "Answered later", projectId = project)) }
+        val id = runBlocking {
+            app.changes.start(
+                WorkspaceId(workspace),
+                EntryFields(description = "Answered later", projectId = ProjectId(project)),
+            )
+        }
         RunningNotifications.awaitShown("the offline start")
         RunningNotifications.dismiss()
 
@@ -420,7 +553,7 @@ class RunningNotificationServerTest {
         runBlocking { app.sender.sendAndWait() }
         assertEquals("the start reached the server", 0, unsentCount())
         val serverId = runBlocking { app.changes.currentId(id) }
-        assertTrue("the server gave the entry its id", serverId > 0)
+        assertTrue("the server gave the entry its id", serverId.value > 0)
         runBlocking { withTimeout(TIMEOUT_MS) { app.cache.running.first { it?.entry?.id == serverId } } }
 
         RunningNotifications.assertStaysGone("the server's answer to the start")
@@ -431,10 +564,8 @@ class RunningNotificationServerTest {
 
     private fun unsentCount(): Int = runBlocking { app.changes.unsentCount.first() }
 
-
-
     private fun signIn(server: ServerUrl, token: String) {
-        ServerTrustStore(context).confirmCleartext(server)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(server)
         Session(context).save(server, token)
     }
 

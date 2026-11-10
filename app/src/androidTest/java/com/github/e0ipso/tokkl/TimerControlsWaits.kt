@@ -1,8 +1,14 @@
 package com.github.e0ipso.tokkl
 
+import com.github.e0ipso.tokkl.api.TimerState
 import com.github.e0ipso.tokkl.api.TogglApiClient
-import com.github.e0ipso.tokkl.cache.TimerControls
-import com.github.e0ipso.tokkl.timerstate.TimerState
+import com.github.e0ipso.tokkl.api.app
+import com.github.e0ipso.tokkl.components.capabilities
+import com.github.e0ipso.tokkl.components.followTimerSync
+import com.github.e0ipso.tokkl.components.heldTimerState
+import com.github.e0ipso.tokkl.components.timerControls
+import com.github.e0ipso.tokkl.components.timerSyncServiceRuns
+import com.github.e0ipso.tokkl.timerstate.TimerControls
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
@@ -19,13 +25,23 @@ inline fun <reified T : TimerControls> TokklApplication.awaitControls(
 ): T {
     var last: TimerControls? = null
     val reached = runBlocking {
-        withTimeoutOrNull(timeoutMs) { timerControls.first { last = it; it is T && done(it) } }
+        withTimeoutOrNull(timeoutMs) {
+            timerControls.first {
+                last = it
+                it is T && done(it)
+            }
+        }
     }
-    return reached as? T ?: throw AssertionError("$what: last controls $last; held ${timerState.state.value?.state}")
+    return reached as? T ?: throw AssertionError("$what: last controls $last; held $heldTimerState")
 }
 
 /** The server's timer state, read with [client]'s own token, past the app. */
-fun TogglApiClient.timerState(): TimerState = get(server.app("timer"), TimerState.serializer()).orFail("GET /api/app/timer")
+fun TogglApiClient.timerState(): TimerState = runBlocking {
+    get(
+        server.app("timer"),
+        TimerState.serializer(),
+    )
+}.orFail("GET /api/app/timer")
 
 /**
  * Treats the server as one without the timer API, as Toggl Track or an older Tokkl release does,
@@ -34,11 +50,11 @@ fun TogglApiClient.timerState(): TimerState = get(server.app("timer"), TimerStat
  * the stream first. The next account refresh learns the capability again. Blocks on disk I/O.
  */
 fun TokklApplication.followNoTimerEvents() {
-    capabilities.forget()
+    runBlocking { capabilities.forget() }
     followTimerSync()
     // A start still on its way decides for itself, against the forgotten capability, and stops.
     val deadline = System.nanoTime() + 10_000_000_000L
-    while (timerSyncService != null) {
+    while (timerSyncServiceRuns) {
         if (System.nanoTime() > deadline) throw AssertionError("the timer sync service did not stop")
         Thread.sleep(50)
     }

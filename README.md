@@ -1,4 +1,4 @@
-<h1><img src="app/src/main/res/drawable-nodpi/tokkl_wordmark_520px.png" alt="Tokkl" width="320"></h1>
+<h1><img src="core/ui/src/main/res/drawable-nodpi/tokkl_wordmark_520px.png" alt="Tokkl" width="320"></h1>
 
 Track time on your phone against your own [Tokkl](https://github.com/e0ipso/tokkl) server. Tokkl is a self-hosted time tracker modeled on Toggl Track. This is its Android app.
 

@@ -1,0 +1,33 @@
+package com.github.e0ipso.tokkl.timerstate
+
+import com.github.e0ipso.tokkl.cache.RunningEntryChanges
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.fields
+
+// Continue (docs/PRD.md T2), as continueEntry and the "c" shortcut in
+// ../tokkl/packages/web/src/pages/TimerPage.tsx at tokkl commit 0031de3: a new running entry with
+// the source's description, project, task, tags and billable.
+
+/**
+ * The entry that continue-last continues: the stopped entry that started last, as the web app's
+ * "c" shortcut takes the first stopped one of its newest-first list. Tied starts prefer local
+ * creates over server entries, then the newest create: smaller negative queue IDs or larger
+ * server IDs. Null when none is stopped.
+ */
+fun lastStopped(entries: List<TimeEntry>): TimeEntry? =
+    entries.filter { it.stop != null }.maxWithOrNull(stoppedEntryOrder)
+
+private val stoppedEntryOrder = compareBy<TimeEntry> { it.start }
+    .thenBy { it.id.local != null }
+    .thenComparator { a, b ->
+        // Local IDs are negative queue sequences, so smaller means newer.
+        if (a.id.local != null) b.id.value.compareTo(a.id.value) else a.id.value.compareTo(b.id.value)
+    }
+
+/**
+ * Starts a timer with [source]'s description, project, task, tags and billable, in [source]'s
+ * workspace, where its project and tags are. It goes through [RunningEntryChanges.start], so it is on the
+ * phone at once, works offline, and stops a running entry at the new one's start.
+ */
+suspend fun RunningEntryChanges.continueEntry(source: TimeEntry): EntryId = start(source.workspaceId, source.fields())

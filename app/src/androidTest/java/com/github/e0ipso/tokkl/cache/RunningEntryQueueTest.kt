@@ -4,13 +4,18 @@ import androidx.room.Room
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
-import com.github.e0ipso.tokkl.timerstate.HeldTimerState
-import com.github.e0ipso.tokkl.timerstate.TimerPause
-import com.github.e0ipso.tokkl.timerstate.TimerState
-import java.time.Clock
-import java.time.Instant
-import java.time.ZoneOffset
-import java.time.temporal.ChronoUnit
+import com.github.e0ipso.tokkl.api.TimerPause
+import com.github.e0ipso.tokkl.api.TimerState
+import com.github.e0ipso.tokkl.cache.RoomCurrentEntries
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.RunningEntryIdentity
+import com.github.e0ipso.tokkl.model.WorkspaceId
+import com.github.e0ipso.tokkl.time.SnappedSpan
+import com.github.e0ipso.tokkl.timerstate.TimerControls
+import com.github.e0ipso.tokkl.timerstate.held
+import com.github.e0ipso.tokkl.timerstate.seconds
+import com.github.e0ipso.tokkl.timerstate.serverTimerControls
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -22,6 +27,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
+import java.time.temporal.ChronoUnit
 
 /** The real Room transaction and durable ID mapping, in a disposable database. No sender runs. */
 class RunningEntryQueueTest {
@@ -49,34 +58,36 @@ class RunningEntryQueueTest {
     @Test
     fun runningUpdateQueuesExactUnsnappedStartAndNullStop() {
         runBlocking {
-            val id = queue.start(WORKSPACE, EntryFields("Running"))
+            val id = queue.start(WorkspaceId(WORKSPACE), EntryFields("Running"))
             val corrected = START.minusSeconds(793)
-            assertTrue(queue.updateRunning(identity(id), EntryFields("Corrected", tags = listOf("offline")), corrected))
-            val changes = database.changes().changesFor(id)
+            assertTrue(
+                queue.updateRunning(identity(id.value), EntryFields("Corrected", tags = listOf("offline")), corrected),
+            )
+            val changes = database.changes().changesFor(id.value)
             assertEquals(listOf(ChangeKind.CREATE, ChangeKind.UPDATE), changes.map { it.kind })
             val update = changes.last()
-            assertEquals(id, update.entryId)
+            assertEquals(id.value, update.entryId)
             assertEquals(WORKSPACE, update.workspaceId)
             assertEquals(corrected, update.start)
             assertNull(update.stop)
-            assertEquals("Corrected", database.changes().entry(id)!!.description)
-            assertEquals(listOf(id), database.changes().runningEntries().map { it.id })
+            assertEquals("Corrected", database.changes().entry(id.value)!!.description)
+            assertEquals(listOf(id.value), database.changes().runningEntries().map { it.id })
         }
     }
 
     @Test
     fun originalLocalIdentityResolvesAfterRemapAndDatabaseReopen() {
         runBlocking {
-            val id = queue.start(WORKSPACE, EntryFields("Running"))
-            val identity = identity(id)
-            val create = database.changes().changesFor(id).single()
+            val id = queue.start(WorkspaceId(WORKSPACE), EntryFields("Running"))
+            val identity = identity(id.value)
+            val create = database.changes().changesFor(id.value).single()
             val answer = create.entry().copy(id = 201, start = START.truncatedTo(ChronoUnit.SECONDS))
             RoomChangeStore(database).sent(create, serverId = 201, answer = answer)
             database.close()
             reopen()
-            assertEquals(201L, queue.runningEntry(identity)!!.id)
+            assertEquals(201L, queue.runningEntry(identity)!!.id.value)
             assertTrue(queue.updateRunning(identity, EntryFields("Offline correction"), START.minusSeconds(793)))
-            assertNull(database.changes().entry(id))
+            assertNull(database.changes().entry(id.value))
             val update = database.changes().changesFor(201).single()
             assertEquals(ChangeKind.UPDATE, update.kind)
             assertEquals(WORKSPACE, update.workspaceId)
@@ -88,62 +99,76 @@ class RunningEntryQueueTest {
     @Test
     fun stoppedEntryRejectsStaleSaveWithoutAnotherQueuedChange() {
         runBlocking {
-            val id = queue.start(WORKSPACE, EntryFields("Running"))
+            val id = queue.start(WorkspaceId(WORKSPACE), EntryFields("Running"))
             assertTrue(queue.stop(id))
-            val before = database.changes().changesFor(id)
-            assertFalse(queue.updateRunning(identity(id), EntryFields("Stale"), START.minusSeconds(793)))
-            assertEquals(before, database.changes().changesFor(id))
-            assertNotNull(database.changes().entry(id)!!.stop)
+            val before = database.changes().changesFor(id.value)
+            assertFalse(queue.updateRunning(identity(id.value), EntryFields("Stale"), START.minusSeconds(793)))
+            assertEquals(before, database.changes().changesFor(id.value))
+            assertNotNull(database.changes().entry(id.value)!!.stop)
         }
     }
 
     @Test
     fun sameInstantReplacementRejectsTheOriginalIdentity() {
         runBlocking {
-            val id = queue.start(WORKSPACE, EntryFields("Original"))
-            val replacement = queue.start(WORKSPACE, EntryFields("Replacement"))
-            val before = database.changes().changesFor(id)
-            assertFalse(queue.updateRunning(identity(id), EntryFields("Stale"), START.minusSeconds(793)))
-            assertEquals(before, database.changes().changesFor(id))
-            assertEquals(listOf(replacement), database.changes().runningEntries().map { it.id })
-            assertEquals("Replacement", database.changes().entry(replacement)!!.description)
+            val id = queue.start(WorkspaceId(WORKSPACE), EntryFields("Original"))
+            val replacement = queue.start(WorkspaceId(WORKSPACE), EntryFields("Replacement"))
+            val before = database.changes().changesFor(id.value)
+            assertFalse(queue.updateRunning(identity(id.value), EntryFields("Stale"), START.minusSeconds(793)))
+            assertEquals(before, database.changes().changesFor(id.value))
+            assertEquals(listOf(replacement.value), database.changes().runningEntries().map { it.id })
+            assertEquals("Replacement", database.changes().entry(replacement.value)!!.description)
         }
     }
 
     @Test
     fun workspaceMismatchCannotWrite() {
         runBlocking {
-            val id = queue.start(WORKSPACE, EntryFields("Running"))
-            val before = database.changes().changesFor(id)
-            assertFalse(queue.updateRunning(identity(id).copy(workspaceId = 999), EntryFields("Wrong workspace"), START))
-            assertEquals(before, database.changes().changesFor(id))
+            val id = queue.start(WorkspaceId(WORKSPACE), EntryFields("Running"))
+            val before = database.changes().changesFor(id.value)
+            assertFalse(
+                queue.updateRunning(
+                    identity(id.value).copy(workspaceId = WorkspaceId(999)),
+                    EntryFields("Wrong workspace"),
+                    START,
+                ),
+            )
+            assertEquals(before, database.changes().changesFor(id.value))
         }
     }
 
     @Test
     fun competingStartCorrectionInvalidatesAnOlderEditor() {
         runBlocking {
-            val id = queue.start(WORKSPACE, EntryFields("Running"))
-            assertTrue(queue.updateRunning(identity(id), EntryFields("First edit"), START.minusSeconds(793)))
-            val before = database.changes().changesFor(id)
-            assertFalse(queue.updateRunning(identity(id), EntryFields("Stale"), START.minusSeconds(100)))
-            assertEquals(before, database.changes().changesFor(id))
-            assertEquals(START.minusSeconds(793), database.changes().entry(id)!!.start)
+            val id = queue.start(WorkspaceId(WORKSPACE), EntryFields("Running"))
+            assertTrue(queue.updateRunning(identity(id.value), EntryFields("First edit"), START.minusSeconds(793)))
+            val before = database.changes().changesFor(id.value)
+            assertFalse(queue.updateRunning(identity(id.value), EntryFields("Stale"), START.minusSeconds(100)))
+            assertEquals(before, database.changes().changesFor(id.value))
+            assertEquals(START.minusSeconds(793), database.changes().entry(id.value)!!.start)
         }
     }
 
     @Test
     fun shortStopAndItsUndoCannotReviveTheRunningEditor() {
         runBlocking {
-            queue = ChangeQueue(database, Dispatchers.IO, onQueued = {}, clock = clock, capturedStopSpan = { _, _ -> null })
-            val id = queue.start(WORKSPACE, EntryFields("Short"))
+            queue = ChangeQueue(
+                RoomChangeStore(database),
+                Dispatchers.IO,
+                onQueued = {},
+                clock = clock,
+                spans = object : ServerSpans {
+                    override fun capturedStop(start: Instant, at: Instant): SnappedSpan? = null
+                },
+            )
+            val id = queue.start(WorkspaceId(WORKSPACE), EntryFields("Short"))
             assertTrue(queue.stop(id))
-            assertFalse(queue.updateRunning(identity(id), EntryFields("Stale"), START))
+            assertFalse(queue.updateRunning(identity(id.value), EntryFields("Stale"), START))
             assertTrue(queue.undoShortStop(id))
-            val before = database.changes().changesFor(id)
-            assertFalse(queue.updateRunning(identity(id), EntryFields("Stale after undo"), START))
-            assertEquals(before, database.changes().changesFor(id))
-            assertNotNull(database.changes().entry(id)!!.stop)
+            val before = database.changes().changesFor(id.value)
+            assertFalse(queue.updateRunning(identity(id.value), EntryFields("Stale after undo"), START))
+            assertEquals(before, database.changes().changesFor(id.value))
+            assertNotNull(database.changes().entry(id.value)!!.stop)
         }
     }
 
@@ -153,23 +178,50 @@ class RunningEntryQueueTest {
             val resumedAt = START.plusSeconds(900)
             // The server resumed the chain with this clone, and its state keeps 600 s from before.
             database.changes().upsertEntry(
-                CachedTimeEntry(CLONE, WORKSPACE, null, null, "Pause chain", resumedAt, null, false, emptyList(), emptyList()),
+                CachedTimeEntry(
+                    CLONE,
+                    WORKSPACE,
+                    null,
+                    null,
+                    "Pause chain",
+                    resumedAt,
+                    null,
+                    false,
+                    emptyList(),
+                    emptyList(),
+                ),
             )
             val pause = TimerPause(
                 paused = false, seconds = 600, workspaceId = WORKSPACE, description = "Pause chain", projectId = null,
                 taskId = null, tagIds = emptyList(), tags = emptyList(), billable = false, cloneEntryId = CLONE,
             )
-            val clone = ServerTimeEntry(id = CLONE, workspaceId = WORKSPACE, description = "Pause chain", start = resumedAt.toString())
-            val held = HeldTimerState(TimerState(4, resumedAt, clone, pause, pomodoro = null, discardedPomodoro = null), receivedAt = resumedAt)
-            fun controls() = serverTimerControls(database.changes().latestRunning(), held, timerApi = true) as TimerControls.Running
+            val clone = ServerTimeEntry(
+                id = CLONE,
+                workspaceId = WORKSPACE,
+                description = "Pause chain",
+                start = resumedAt.toString(),
+            )
+            val held = TimerState(4, resumedAt, clone, pause, pomodoro = null, discardedPomodoro = null).held(resumedAt)
+            fun controls() = serverTimerControls(
+                RoomCurrentEntries(database).latestRunning(),
+                held,
+                timerApi = true,
+                account = ACCOUNT,
+            ) as TimerControls.Running
             val before = controls()
             val corrected = resumedAt.minusSeconds(61)
-            assertTrue(queue.updateRunning(RunningEntryIdentity(CLONE, WORKSPACE, resumedAt), EntryFields("Pause chain"), corrected))
+            assertTrue(
+                queue.updateRunning(
+                    RunningEntryIdentity(EntryId(CLONE), WorkspaceId(WORKSPACE), resumedAt),
+                    EntryFields("Pause chain"),
+                    corrected,
+                ),
+            )
 
             val after = controls()
             assertEquals("the server's stored seconds stay", 600L, after.accumulatedSeconds)
             assertEquals(before.seconds(resumedAt.plusSeconds(60)) + 61, after.seconds(resumedAt.plusSeconds(60)))
-            assertEquals(CLONE, after.entry.id)
+            assertEquals(CLONE, after.entry.id.value)
             assertEquals(corrected, after.entry.start)
             assertNull(after.entry.stop)
             assertTrue("the edit waits for the sender", after.unsent)
@@ -180,34 +232,44 @@ class RunningEntryQueueTest {
     @Test
     fun aRunningEntryAnswerKeepsAStartAndAnEditSentDuringItsRead() {
         runBlocking {
-            val cache = AccountCache(database, clock)
+            val cache = RoomCurrentEntries(database)
             val store = RoomChangeStore(database)
-            val local = queue.start(WORKSPACE, EntryFields("Running"))
+            val local = queue.start(WorkspaceId(WORKSPACE), EntryFields("Running"))
             val startRead = cache.runningCheckStart()
-            store.sent(database.changes().changesFor(local).single(), serverId = 501, answer = null)
+            store.sent(database.changes().changesFor(local.value).single(), serverId = 501, answer = null)
 
             cache.checkedRunning(startRead, server = null)
             assertEquals("the sent start stays", listOf(501L), database.changes().runningEntries().map { it.id })
 
             assertTrue(queue.updateRunning(identity(501), EntryFields("Edited on the phone"), START))
             val editRead = cache.runningCheckStart()
-            val stale = database.changes().entry(501)!!.copy(description = "Running")
+            val stale = modelOf(database.changes().entry(501)!!).copy(description = "Running")
             store.sent(database.changes().changesFor(501).single(), serverId = 501, answer = null)
 
             cache.checkedRunning(editRead, server = stale)
             assertEquals("Edited on the phone", database.changes().entry(501)!!.description)
 
             cache.checkedRunning(cache.runningCheckStart(), server = stale)
-            assertEquals("a read begun after the send takes the server's values", "Running", database.changes().entry(501)!!.description)
+            assertEquals(
+                "a read begun after the send takes the server's values",
+                "Running",
+                database.changes().entry(501)!!.description,
+            )
         }
     }
 
     private fun reopen() {
         database = Room.databaseBuilder(context, CacheDatabase::class.java, FILE).build()
-        queue = ChangeQueue(database, Dispatchers.IO, onQueued = {}, clock = clock)
+        queue = ChangeQueue(
+            RoomChangeStore(database),
+            Dispatchers.IO,
+            onQueued = {},
+            clock = clock,
+            spans = object : ServerSpans {},
+        )
     }
 
-    private fun identity(id: Long) = RunningEntryIdentity(id, WORKSPACE, START)
+    private fun identity(id: Long) = RunningEntryIdentity(EntryId(id), WorkspaceId(WORKSPACE), START)
 
     private companion object {
         const val FILE = "running-entry-editor-test.db"
@@ -216,3 +278,6 @@ class RunningEntryQueueTest {
         val START: Instant = Instant.parse("2026-10-22T22:03:41.123Z")
     }
 }
+
+/** The name the timer controls of these tests carry for the signed-in account. */
+private const val ACCOUNT = "account"

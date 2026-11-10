@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- What TalkBack reads for the frozen clock: 1 hour, 5 minutes elapsed, paused -->
+    <string name="timer_paused_elapsed_spoken">%1$s elapsed, paused</string>
+</resources>

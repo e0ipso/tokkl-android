@@ -19,6 +19,10 @@ import androidx.compose.ui.text.TextLayoutResult
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
+import com.github.e0ipso.tokkl.core.ui.R as UiR
+import com.github.e0ipso.tokkl.feature.projects.R as ProjectsR
+import com.github.e0ipso.tokkl.feature.settings.R as SettingsR
+import com.github.e0ipso.tokkl.feature.timer.R as TimerR
 
 /** The first screen of a signed-in session, the Timer page, with the bottom bar. */
 class LaunchScreenTest {
@@ -37,23 +41,30 @@ class LaunchScreenTest {
         composeRule.awaitTimerPage()
         composeRule.awaitPomodoroOffered()
 
-        composeRule.onNode(hasText(string(R.string.nav_timer)) and isHeading()).assertIsDisplayed()
-        composeRule.onNode(hasText(string(R.string.timer_view_list)) and isSelectable()).assertIsSelected()
-        composeRule.onNode(hasText(string(R.string.timer_view_calendar)) and isSelectable()).assertIsDisplayed()
+        composeRule.onNode(hasText(string(TimerR.string.nav_timer)) and isHeading()).assertIsDisplayed()
+        composeRule.onNode(hasText(string(TimerR.string.timer_view_list)) and isSelectable()).assertIsSelected()
+        composeRule.onNode(hasText(string(TimerR.string.timer_view_calendar)) and isSelectable()).assertIsDisplayed()
 
         val tabs = composeRule.onAllNodes(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab))
             .fetchSemanticsNodes()
             .sortedBy { it.boundsInRoot.left }
-        val labels = tabs.map { node -> node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { text -> text.text } }
+        val labels = tabs.map { node ->
+            node.config.getOrNull(
+                SemanticsProperties.Text,
+            )?.joinToString(" ") { text -> text.text }
+        }
         val expected = listOf(
-            R.string.nav_timer,
-            R.string.pomodoro_title,
-            R.string.nav_projects,
-            R.string.settings,
+            TimerR.string.nav_timer,
+            UiR.string.pomodoro_title,
+            ProjectsR.string.nav_projects,
+            SettingsR.string.settings,
             R.string.nav_more,
         )
         assertEquals(expected.map(::string), labels)
-        assertEquals(listOf(true, false, false, false, false), tabs.map { it.config.getOrNull(SemanticsProperties.Selected) })
+        assertEquals(
+            listOf(true, false, false, false, false),
+            tabs.map { it.config.getOrNull(SemanticsProperties.Selected) },
+        )
     }
 
     /**
@@ -64,15 +75,18 @@ class LaunchScreenTest {
     fun theTitleIsOneTalkBackHeadingAndNoWordmarkShows() {
         composeRule.awaitTimerPage()
 
-        val title = string(R.string.nav_timer)
+        val title = string(TimerR.string.nav_timer)
         val headings = composeRule.onAllNodes(hasText(title) and isHeading())
         headings.assertCountEquals(1)
         val heading = headings[0]
-        assertEquals(listOf(title), heading.fetchSemanticsNode().config.getOrNull(SemanticsProperties.Text)?.map { it.text })
+        assertEquals(
+            listOf(title),
+            heading.fetchSemanticsNode().config.getOrNull(SemanticsProperties.Text)?.map { it.text },
+        )
         val drawn = mutableListOf<TextLayoutResult>()
         heading.performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(drawn) }
         assertEquals(title.uppercase(), drawn.single().layoutInput.text.text)
-        composeRule.onAllNodes(hasContentDescription(string(R.string.app_name))).assertCountEquals(0)
+        composeRule.onAllNodes(hasContentDescription(string(UiR.string.app_name))).assertCountEquals(0)
     }
 
     private fun string(@StringRes id: Int): String = composeRule.activity.getString(id)

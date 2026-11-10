@@ -11,16 +11,19 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ServerCertificate
+import com.github.e0ipso.tokkl.api.api
 import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.core.trust.R
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.junit.Assert.assertEquals
@@ -46,7 +49,10 @@ class ChangedCertificateWhileSignedInTest {
     val rules: RuleChain = RuleChain.outerRule(SessionRule())
         .around(object : ExternalResource() {
             override fun before() {
-                ServerTrustStore(context).pinCertificate(ServerCertificate(endpoint.host, endpoint.port, OLD_SHA256, subject = ""))
+                ServerTrustStore(
+                    context,
+                    Dispatchers.IO,
+                ).pinCertificate(ServerCertificate(endpoint.host, endpoint.port, OLD_SHA256, subject = ""))
                 Session(context).save(TokklTestServer.tlsUrl, TokklTestServer.apiToken)
             }
         })
@@ -65,8 +71,10 @@ class ChangedCertificateWhileSignedInTest {
         composeRule.onNode(hasText(string(R.string.sign_in_certificate_trust)) and hasClickAction()).performClick()
 
         awaitGone(hasText(string(R.string.sign_in_certificate_changed_title)), "the prompt closes")
-        assertEquals(newSha256, ServerTrustStore(context).pinnedSha256(endpoint.host, endpoint.port))
-        val body = (me() as? ApiResult.Success)?.value ?: throw AssertionError("GET /api/v9/me still fails after the user trusted the certificate")
+        assertEquals(newSha256, ServerTrustStore(context, Dispatchers.IO).pinnedSha256(endpoint.host, endpoint.port))
+        val body = (me() as? ApiResult.Success)?.value ?: throw AssertionError(
+            "GET /api/v9/me still fails after the user trusted the certificate",
+        )
         assertEquals(TokklTestServer.email, body.getValue("email").jsonPrimitive.content)
     }
 
@@ -79,10 +87,13 @@ class ChangedCertificateWhileSignedInTest {
 
         awaitNode(hasText(string(R.string.trust_refused_certificate)), "the notice shows")
         assertEquals(
-            ApiError.UntrustedCertificate(ServerCertificate(endpoint.host, endpoint.port, newSha256, SUBJECT), changed = true),
+            ApiError.UntrustedCertificate(
+                ServerCertificate(endpoint.host, endpoint.port, newSha256, SUBJECT),
+                changed = true,
+            ),
             (me() as? ApiResult.Failure)?.error,
         )
-        assertEquals(OLD_SHA256, ServerTrustStore(context).pinnedSha256(endpoint.host, endpoint.port))
+        assertEquals(OLD_SHA256, ServerTrustStore(context, Dispatchers.IO).pinnedSha256(endpoint.host, endpoint.port))
 
         composeRule.onNode(hasText(string(R.string.trust_refused_review)) and hasClickAction()).performClick()
 
@@ -92,15 +103,21 @@ class ChangedCertificateWhileSignedInTest {
     /** `GET /api/v9/me` with the stored session's client, as the app sends it. */
     private fun me(): ApiResult<JsonObject> {
         val client = Session(context).client() ?: throw AssertionError("no stored session")
-        return client.get(endpoint, JsonObject.serializer())
+        return runBlocking { client.get(endpoint, JsonObject.serializer()) }
     }
 
     private fun awaitGone(matcher: SemanticsMatcher, what: String) {
-        composeRule.waitUntil(what, NETWORK_TIMEOUT_MS) { composeRule.onAllNodes(matcher).fetchSemanticsNodes().isEmpty() }
+        composeRule.waitUntil(
+            what,
+            NETWORK_TIMEOUT_MS,
+        ) { composeRule.onAllNodes(matcher).fetchSemanticsNodes().isEmpty() }
     }
 
     private fun awaitNode(matcher: SemanticsMatcher, what: String) {
-        composeRule.waitUntil(what, NETWORK_TIMEOUT_MS) { composeRule.onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty() }
+        composeRule.waitUntil(
+            what,
+            NETWORK_TIMEOUT_MS,
+        ) { composeRule.onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty() }
     }
 
     private fun string(@StringRes id: Int): String = context.getString(id)

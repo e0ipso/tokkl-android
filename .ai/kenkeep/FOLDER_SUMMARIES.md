@@ -39,8 +39,9 @@ summaries:
     Timer layout, cached totals, history and calendar; read before changing
     timer totals, entry browsing or saved view state
   testing: >-
-    instrumented, screenshot and real-server tests on the plain AOSP emulators;
-    read before writing or running any test on a device or emulator
+    JVM coroutine tests in virtual time, and instrumented, screenshot and
+    real-server tests on the plain AOSP emulators; read before writing or
+    running any test
   testing/emulator-runtime: >-
     AOSP emulator images, ownership, rendering and capture; read before
     preparing a device run or investigating emulator resource use
@@ -64,7 +65,7 @@ summaries:
 - `screens/session-and-navigation`: sign-in, account lifetime, navigation and adaptive chrome; read before changing authentication, sign-out or page routing
 - `screens/timer-and-entry-editing`: timer controls, shared fields, entry forms and menus; read before changing entry editing or local start and stop behavior
 - `screens/timer-history-calendar`: Timer layout, cached totals, history and calendar; read before changing timer totals, entry browsing or saved view state
-- `testing`: instrumented, screenshot and real-server tests on the plain AOSP emulators; read before writing or running any test on a device or emulator
+- `testing`: JVM coroutine tests in virtual time, and instrumented, screenshot and real-server tests on the plain AOSP emulators; read before writing or running any test
 - `testing/emulator-runtime`: AOSP emulator images, ownership, rendering and capture; read before preparing a device run or investigating emulator resource use
 - `testing/instrumented-runner`: instrumented server setup, credentials, selectors and run receipts; read before invoking or modifying the device test script
 - `testing/instrumented-test-authoring`: portable device tests, shared helpers and UI assertions; read before adding or changing Android regression and acceptance tests

@@ -4,8 +4,6 @@ import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
-import androidx.compose.ui.test.performClick
-import androidx.lifecycle.ViewModelProvider
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
@@ -13,7 +11,6 @@ import androidx.test.runner.lifecycle.Stage
 import com.github.e0ipso.tokkl.BackgroundTrip
 import com.github.e0ipso.tokkl.DeviceShell
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.RequestCounter
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
@@ -21,13 +18,18 @@ import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.api
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.accountSettings
+import com.github.e0ipso.tokkl.components.reportsViewModel
+import com.github.e0ipso.tokkl.feature.reports.R
 import com.github.e0ipso.tokkl.openMorePage
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
-import java.time.LocalDate
-import java.time.ZoneId
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -42,6 +44,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.time.LocalDate
+import java.time.ZoneId
 
 /**
  * A report loaded before the app went to the background is asked for again when the app comes
@@ -82,7 +86,7 @@ class ReportsForegroundTest {
                 // The relay replaced the stored server and its cleartext confirmation, and the
                 // app's client reaches the test server, where the account is deleted, only with both.
                 if (::account.isInitialized) {
-                    ServerTrustStore(context).confirmCleartext(TokklTestServer.url)
+                    ServerTrustStore(context, Dispatchers.IO).confirmCleartext(TokklTestServer.url)
                     Session(context).save(TokklTestServer.url, account.apiToken)
                     DeviceShell.run("cmd connectivity airplane-mode disable")
                     awaitServer(answers = true)
@@ -116,12 +120,22 @@ class ReportsForegroundTest {
         BackgroundTrip.comeBack(activity)
 
         val offline = runCatching {
-            compose.waitUntil("the offline message shows", LOAD_TIMEOUT_MS) { hasNode(string(R.string.reports_offline_title)) }
+            compose.waitUntil(
+                "the offline message shows",
+                LOAD_TIMEOUT_MS,
+            ) { hasNode(string(R.string.reports_offline_title)) }
         }
-        assertTrue("the offline message shows; state ${model.state.value}, old total shows: ${hasNode(total)}", offline.isSuccess)
+        assertTrue(
+            "the offline message shows; state ${model.page.value.report}, old total shows: ${hasNode(total)}",
+            offline.isSuccess,
+        )
         assertTrue("the offline explanation shows", hasNode(string(R.string.reports_offline_message)))
-        val state = model.state.value
-        assertEquals("failed for want of the server", ReportsState.Failed(loaded.selection, ReportFailure.Unreachable), state)
+        val state = model.page.value.report
+        assertEquals(
+            "failed for want of the server",
+            ReportsState.Failed(loaded.selection, ReportFailure.Unreachable),
+            state,
+        )
         assertFalse("no total $total offline", hasNode(total))
         assertFalse("no totals offline", hasNode(string(R.string.reports_total_time).uppercase()))
     }
@@ -129,7 +143,7 @@ class ReportsForegroundTest {
     @Test
     fun theForegroundAsksOnceAndARotationAsksNothing() {
         val relay = RequestCounter(TokklTestServer.url, SEARCH).also { this.relay = it }
-        ServerTrustStore(context).confirmCleartext(relay.url)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(relay.url)
         Session(context).save(relay.url, account.apiToken)
 
         val model = openReports()
@@ -145,19 +159,22 @@ class ReportsForegroundTest {
         val portrait = resumedActivity()!!
         scenario!!.onActivity { it.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE }
         val landscape = awaitCondition("the activity is recreated in landscape") {
-            resumedActivity()?.takeIf { it !== portrait && it.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE }
+            resumedActivity()?.takeIf {
+                it !== portrait &&
+                    it.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+            }
         }
         compose.waitForIdle()
         Thread.sleep(SETTLE_MS)
         assertSame("the rotation keeps the model", model, modelOf(landscape))
-        assertSame("the rotation keeps the report", second, model.state.value)
+        assertSame("the rotation keeps the report", second, model.page.value.report)
         assertEquals("the rotation asks nothing", 2, relay.count)
         assertEquals("the relay reached the server each time", emptyList<String>(), relay.failures)
     }
 
     /** Launches the app on the Timer page, opens the reports and returns the screen's model. */
-    private fun openReports(): ReportsModel {
-        runBlocking { app.accountSettings.refresh().join() }
+    private fun openReports(): ReportsViewModel {
+        runBlocking { app.accountRefresh.refresh().join() }
         scenario = ActivityScenario.launch(MainActivity::class.java)
         compose.openMorePage(R.string.reports, LOAD_TIMEOUT_MS)
         return modelOf(resumedActivity()!!)
@@ -167,37 +184,43 @@ class ReportsForegroundTest {
      * Waits for a report other than [after] and returns it. The compose rule's wait lets the
      * screen recompose, which a plain sleep does not.
      */
-    private fun awaitLoaded(model: ReportsModel, after: ReportsState.Loaded?): ReportsState.Loaded {
+    private fun awaitLoaded(model: ReportsViewModel, after: ReportsState.Loaded?): ReportsState.Loaded {
         compose.waitUntil("a report loads", LOAD_TIMEOUT_MS) {
-            when (val state = model.state.value) {
+            when (val state = model.page.value.report) {
                 is ReportsState.Loaded -> state !== after
                 is ReportsState.Failed, is ReportsState.NoAccountTime -> true
                 ReportsState.Closed, is ReportsState.Loading -> false
             }
         }
         compose.waitForIdle()
-        val state = model.state.value
+        val state = model.page.value.report
         assertTrue("a report loads: $state", state is ReportsState.Loaded && state !== after)
         return state as ReportsState.Loaded
     }
 
-    private fun modelOf(activity: MainActivity): ReportsModel {
-        var model: ReportsModel? = null
-        instrumentation.runOnMainSync { model = ViewModelProvider(activity)[ReportsViewModel::class.java].model }
+    private fun modelOf(activity: MainActivity): ReportsViewModel {
+        var model: ReportsViewModel? = null
+        instrumentation.runOnMainSync { model = reportsViewModel(activity) }
         return model!!
     }
 
     private fun resumedActivity(): MainActivity? {
         var resumed: MainActivity? = null
         instrumentation.runOnMainSync {
-            resumed = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED).filterIsInstance<MainActivity>().singleOrNull()
+            resumed = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(
+                Stage.RESUMED,
+            ).filterIsInstance<MainActivity>().singleOrNull()
         }
         return resumed
     }
 
-    private fun hasNode(text: String): Boolean = compose.onAllNodes(hasText(text, substring = true)).fetchSemanticsNodes().isNotEmpty()
+    private fun hasNode(text: String): Boolean = compose.onAllNodes(
+        hasText(text, substring = true),
+    ).fetchSemanticsNodes().isNotEmpty()
 
-    /** Polls [value] until it is not null. Works while the app is in the background, unlike the compose rule's waits. */
+    /**
+     * Polls [value] until it is not null. Works while the app is in the background, unlike the compose rule's waits.
+     */
     private fun <T : Any> awaitCondition(what: String, value: () -> T?): T {
         val deadline = System.nanoTime() + LOAD_TIMEOUT_MS * 1_000_000
         while (true) {
@@ -210,7 +233,7 @@ class ReportsForegroundTest {
     /** Waits until requests to the test server get through, or fail for want of a network. */
     private fun awaitServer(answers: Boolean) {
         awaitCondition("the server ${if (answers) "answers" else "is out of reach"}") {
-            val result = account.client.get(account.client.server.api("me"), JsonObject.serializer())
+            val result = runBlocking { account.client.get(account.client.server.api("me"), JsonObject.serializer()) }
             ((result as? ApiResult.Failure)?.error !is ApiError.Network).takeIf { it == answers }
         }
     }
@@ -221,7 +244,12 @@ class ReportsForegroundTest {
 
     /** Puts 25 minutes at the start of today in the account's timezone, which is always in this week. */
     private fun seedTimeToday(api: TogglApiClient) {
-        val workspace = api.get(api.server.api("me"), Me.serializer()).orFail("GET /api/v9/me").defaultWorkspaceId
+        val workspace = runBlocking {
+            api.get(
+                api.server.api("me"),
+                Me.serializer(),
+            )
+        }.orFail("GET /api/v9/me").defaultWorkspaceId
         val body = buildJsonObject {
             put("workspace_id", workspace)
             put("created_with", "tokkl-android tests")
@@ -229,7 +257,14 @@ class ReportsForegroundTest {
             put("start", LocalDate.now(ZoneId.of(ZONE)).atStartOfDay(ZoneId.of(ZONE)).toInstant().toString())
             put("duration", SEEDED_SECONDS)
         }
-        api.send("POST", api.server.api("workspaces", workspace.toString(), "time_entries"), body, JsonObject.serializer())
+        runBlocking {
+            api.send(
+                HttpMethod.POST,
+                api.server.api("workspaces", workspace.toString(), "time_entries"),
+                body,
+                JsonObject.serializer(),
+            )
+        }
             .orFail("POST a time entry")
     }
 
@@ -244,7 +279,6 @@ class ReportsForegroundTest {
 
         /** Long enough for a request the app would send at once to reach the relay. */
         const val SETTLE_MS = 2_000L
-
 
         /** Summary now reads the app report. Keep the once-per-foreground assertion on that request. */
         const val SEARCH = "/api/app/report HTTP/1.1"

@@ -12,23 +12,24 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.AirplaneMode
 import com.github.e0ipso.tokkl.MainActivity
-import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.TokklTestServer
 import com.github.e0ipso.tokkl.api.ApiCredentials
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.api
 import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.components.accountRefresh
+import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.sender
+import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.session.ServerTrustStore
 import com.github.e0ipso.tokkl.session.Session
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
-import java.time.OffsetDateTime
-import java.time.temporal.ChronoUnit
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.builtins.ListSerializer
@@ -49,6 +50,11 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.Instant
+import java.time.LocalDate
+import java.time.OffsetDateTime
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 
 /**
  * Duplicate against the real Tokkl container, in the real activity (docs/PRD.md H5). The copy
@@ -67,7 +73,12 @@ class DuplicateServerTest {
 
     /** The web app: the same account, straight to the server and past the app's guard. */
     private val web by lazy {
-        TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(account.apiToken), httpClient = OkHttpClient())
+        TogglApiClient(
+            TokklTestServer.url,
+            ApiCredentials.ApiToken(account.apiToken),
+            httpClient = OkHttpClient(),
+            io = Dispatchers.IO,
+        )
     }
 
     @Before
@@ -93,39 +104,50 @@ class DuplicateServerTest {
     @Test
     fun aDuplicateMadeInAirplaneModeReachesTheServerWhenTheNetworkReturns() {
         val workspace = account.workspaceId
-        val project = web.send(
-            "POST",
-            web.server.api("workspaces", workspace.toString(), "projects"),
-            buildJsonObject { put("name", "Mural") },
-            JsonObject.serializer(),
-        ).orFail("POST a project").getValue("id").jsonPrimitive.long
-        val task = web.send(
-            "POST",
-            web.server.api("workspaces", workspace.toString(), "projects", project.toString(), "tasks"),
-            buildJsonObject { put("name", "Outline") },
-            JsonObject.serializer(),
-        ).orFail("POST a task").getValue("id").jsonPrimitive.long
+        val project = runBlocking {
+            web.send(
+                HttpMethod.POST,
+                web.server.api("workspaces", workspace.toString(), "projects"),
+                buildJsonObject { put("name", "Mural") },
+                JsonObject.serializer(),
+            )
+        }.orFail("POST a project").getValue("id").jsonPrimitive.long
+        val task = runBlocking {
+            web.send(
+                HttpMethod.POST,
+                web.server.api("workspaces", workspace.toString(), "projects", project.toString(), "tasks"),
+                buildJsonObject { put("name", "Outline") },
+                JsonObject.serializer(),
+            )
+        }.orFail("POST a task").getValue("id").jsonPrimitive.long
         val stop = Instant.now().truncatedTo(ChronoUnit.MINUTES).minus(1, ChronoUnit.HOURS)
         val start = stop.minus(45, ChronoUnit.MINUTES)
-        val source = web.send(
-            "POST",
-            web.server.api("workspaces", workspace.toString(), "time_entries"),
-            buildJsonObject {
-                put("workspace_id", workspace)
-                put("created_with", "tokkl-android tests")
-                put("description", "Paint the wall")
-                put("project_id", project)
-                put("task_id", task)
-                put("tags", JsonArray(listOf(JsonPrimitive("outdoor"), JsonPrimitive("spray"))))
-                put("billable", true)
-                put("start", start.toString())
-                put("stop", stop.toString())
-            },
-            JsonObject.serializer(),
-        ).orFail("POST an entry").getValue("id").jsonPrimitive.long
+        val source = runBlocking {
+            web.send(
+                HttpMethod.POST,
+                web.server.api("workspaces", workspace.toString(), "time_entries"),
+                buildJsonObject {
+                    put("workspace_id", workspace)
+                    put("created_with", "tokkl-android tests")
+                    put("description", "Paint the wall")
+                    put("project_id", project)
+                    put("task_id", task)
+                    put("tags", JsonArray(listOf(JsonPrimitive("outdoor"), JsonPrimitive("spray"))))
+                    put("billable", true)
+                    put("start", start.toString())
+                    put("stop", stop.toString())
+                },
+                JsonObject.serializer(),
+            )
+        }.orFail("POST an entry").getValue("id").jsonPrimitive.long
         // The server snaps the times to the account's resolution, and the copy takes them as stored.
-        val stored = web.get(web.server.api("me", "time_entries", source.toString()), JsonObject.serializer()).orFail("GET the source")
-        runBlocking { app.accountSettings.refresh().join() }
+        val stored = runBlocking {
+            web.get(
+                web.server.api("me", "time_entries", source.toString()),
+                JsonObject.serializer(),
+            )
+        }.orFail("GET the source")
+        runBlocking { app.accountRefresh.refresh().join() }
         val unsent = context.getString(R.string.history_unsent)
 
         ActivityScenario.launch(MainActivity::class.java).use {
@@ -133,7 +155,11 @@ class DuplicateServerTest {
             composeRule.waitUntil("the entry shows", LOAD_TIMEOUT_MS) { rowsIn("Paint the wall") == 1 }
             AirplaneMode.set(true, web)
 
-            composeRule.onNode(hasContentDescription(context.getString(R.string.history_more_actions, "Paint the wall")) and hasClickAction())
+            composeRule.onNode(
+                hasContentDescription(
+                    context.getString(R.string.history_more_actions, "Paint the wall"),
+                ) and hasClickAction(),
+            )
                 .performSemanticsAction(SemanticsActions.OnClick)
             composeRule.onNode(hasText(context.getString(R.string.history_duplicate)) and hasClickAction())
                 .performSemanticsAction(SemanticsActions.OnClick)
@@ -145,7 +171,9 @@ class DuplicateServerTest {
                 rowsIn("Paint the wall") == 1 && composeRule.onAllNodes(group).fetchSemanticsNodes().size == 1
             }
             composeRule.waitUntil("the message says so", LOAD_TIMEOUT_MS) {
-                composeRule.onAllNodes(hasText(context.getString(R.string.history_duplicated))).fetchSemanticsNodes().isNotEmpty()
+                composeRule.onAllNodes(
+                    hasText(context.getString(R.string.history_duplicated)),
+                ).fetchSemanticsNodes().isNotEmpty()
             }
 
             AirplaneMode.set(false, web)
@@ -157,7 +185,10 @@ class DuplicateServerTest {
         val copy = entries.single { it.getValue("id").jsonPrimitive.long != source }
         assertEquals(project, copy.getValue("project_id").jsonPrimitive.long)
         assertEquals(task, copy.getValue("task_id").jsonPrimitive.long)
-        assertEquals(setOf("outdoor", "spray"), copy.getValue("tags").jsonArray.map { it.jsonPrimitive.content }.toSet())
+        assertEquals(
+            setOf("outdoor", "spray"),
+            copy.getValue("tags").jsonArray.map { it.jsonPrimitive.content }.toSet(),
+        )
         assertEquals("true", copy.getValue("billable").jsonPrimitive.content)
         assertEquals("the source's start", stored.instant("start"), copy.instant("start"))
         assertEquals("the source's stop", stored.instant("stop"), copy.instant("stop"))
@@ -171,22 +202,35 @@ class DuplicateServerTest {
     fun aNoTimeEntryDuplicatesAsANoTimeEntryAndItsMenuHasNoSplit() {
         val day = LocalDate.now(MADRID).minusDays(1)
         val source = account.createNoTimeEntry("Team offsite", day, 7_200)
-        runBlocking { app.accountSettings.refresh().join() }
+        runBlocking { app.accountRefresh.refresh().join() }
 
         ActivityScenario.launch(MainActivity::class.java).use {
             composeRule.awaitTimerPage(LOAD_TIMEOUT_MS)
             composeRule.waitUntil("the entry shows", LOAD_TIMEOUT_MS) { rowsIn("Team offsite") == 1 }
 
-            composeRule.onNode(hasContentDescription(context.getString(R.string.history_more_actions, "Team offsite")) and hasClickAction())
+            composeRule.onNode(
+                hasContentDescription(
+                    context.getString(R.string.history_more_actions, "Team offsite"),
+                ) and hasClickAction(),
+            )
                 .performSemanticsAction(SemanticsActions.OnClick)
             composeRule.waitUntil("the menu shows Duplicate", LOAD_TIMEOUT_MS) {
-                composeRule.onAllNodes(hasText(context.getString(R.string.history_duplicate))).fetchSemanticsNodes().isNotEmpty()
+                composeRule.onAllNodes(
+                    hasText(context.getString(R.string.history_duplicate)),
+                ).fetchSemanticsNodes().isNotEmpty()
             }
-            assertTrue("a no-time entry cannot be split", composeRule.onAllNodes(hasText(context.getString(R.string.history_split))).fetchSemanticsNodes().isEmpty())
+            assertTrue(
+                "a no-time entry cannot be split",
+                composeRule.onAllNodes(
+                    hasText(context.getString(R.string.history_split)),
+                ).fetchSemanticsNodes().isEmpty(),
+            )
             composeRule.onNode(hasText(context.getString(R.string.history_duplicate)) and hasClickAction())
                 .performSemanticsAction(SemanticsActions.OnClick)
             composeRule.waitUntil("the message says so", LOAD_TIMEOUT_MS) {
-                composeRule.onAllNodes(hasText(context.getString(R.string.history_duplicated))).fetchSemanticsNodes().isNotEmpty()
+                composeRule.onAllNodes(
+                    hasText(context.getString(R.string.history_duplicated)),
+                ).fetchSemanticsNodes().isNotEmpty()
             }
 
             sendTheQueue()
@@ -196,7 +240,12 @@ class DuplicateServerTest {
             .addQueryParameter("start_date", day.minusDays(1).toString() + "T00:00:00Z")
             .addQueryParameter("end_date", day.plusDays(2).toString() + "T00:00:00Z")
             .build()
-        val entries = web.get(url, ListSerializer(JsonObject.serializer())).orFail("GET /api/v9/me/time_entries")
+        val entries = runBlocking {
+            web.get(
+                url,
+                ListSerializer(JsonObject.serializer()),
+            )
+        }.orFail("GET /api/v9/me/time_entries")
             .filter { it.string("description") == "Team offsite" }
         assertEquals("the source and its copy", 2, entries.size)
         val copy = entries.single { it.getValue("id").jsonPrimitive.long != source }
@@ -211,7 +260,12 @@ class DuplicateServerTest {
             .addQueryParameter("start_date", start.minus(1, ChronoUnit.DAYS).toString())
             .addQueryParameter("end_date", start.plus(1, ChronoUnit.DAYS).toString())
             .build()
-        return web.get(url, ListSerializer(JsonObject.serializer())).orFail("GET /api/v9/me/time_entries")
+        return runBlocking {
+            web.get(
+                url,
+                ListSerializer(JsonObject.serializer()),
+            )
+        }.orFail("GET /api/v9/me/time_entries")
     }
 
     /** Sends the queue until it is empty, as the next refresh would. */
@@ -219,12 +273,12 @@ class DuplicateServerTest {
         val deadline = System.nanoTime() + LOAD_TIMEOUT_MS * 1_000_000
         while (runBlocking { app.changes.unsentCount.first() } > 0) {
             check(System.nanoTime() < deadline) { "the queue did not empty" }
-            runBlocking { app.sender.send().join() }
+            runBlocking { app.sender.sendAndWait() }
         }
     }
 
     private fun signIn(server: ServerUrl) {
-        ServerTrustStore(context).confirmCleartext(server)
+        ServerTrustStore(context, Dispatchers.IO).confirmCleartext(server)
         Session(context).save(server, account.apiToken)
     }
 

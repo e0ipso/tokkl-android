@@ -26,37 +26,44 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.SignedOut
-import com.github.e0ipso.tokkl.cache.EntryFields
-import com.github.e0ipso.tokkl.timerstate.TimerActionResult
+import com.github.e0ipso.tokkl.core.entryfields.R
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
-import java.time.Clock
-import java.time.DayOfWeek
-import java.time.Instant
-import java.time.ZoneOffset
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.Clock
+import java.time.DayOfWeek
+import java.time.Instant
+import java.time.ZoneOffset
+import com.github.e0ipso.tokkl.core.timersync.R as TimerNoticeR
+import com.github.e0ipso.tokkl.core.ui.R as UiR
+import com.github.e0ipso.tokkl.feature.pomodoro.R as PomodoroR
 
 /** Dedicated page coverage, leaving the shared accessibility infrastructure unchanged. */
 @SignedOut
 class PomodoroPageFontScaleTest {
     private val compose = createAndroidComposeRule<ComponentActivity>()
+
     @get:Rule val rules: RuleChain = RuleChain.outerRule(SessionRule())
         .around(SystemFontScale(SystemFontScale.LARGEST)).around(compose)
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private val at = Instant.parse("2026-10-24T09:00:00Z")
-    private var state by mutableStateOf(PomodoroPageState(
-        loading = false,
-        account = AccountSettings("europe/madrid", DayOfWeek.MONDAY, null, defaultWorkspaceId = 1),
-    ))
+    private var state by mutableStateOf(
+        PomodoroPageState(
+            loading = false,
+            account = AccountSettings("europe/madrid", DayOfWeek.MONDAY, null, defaultWorkspaceId = WorkspaceId(1)),
+        ),
+    )
     private var starts = 0
     private var nexts = 0
     private var ends = 0
@@ -64,10 +71,12 @@ class PomodoroPageFontScaleTest {
     @Test
     fun allFourLabelledLengthInputsAndEntryControlsAreReachableWithTheKeyboard() {
         show()
-        compose.onNode(hasText(context.getString(R.string.pomodoro_title)) and isHeading()).assertIsDisplayed()
+        compose.onNode(hasText(context.getString(UiR.string.pomodoro_title)) and isHeading()).assertIsDisplayed()
         for ((label, value) in listOf(
-            R.string.pomodoro_card_work to "180", R.string.pomodoro_card_short_rest to "60",
-            R.string.pomodoro_card_long_rest to "60", R.string.pomodoro_card_long_rest_every to "12",
+            UiR.string.pomodoro_card_work to "180",
+            UiR.string.pomodoro_card_short_rest to "60",
+            UiR.string.pomodoro_card_long_rest to "60",
+            UiR.string.pomodoro_card_long_rest_every to "12",
         )) {
             val name = context.getString(label)
             compose.lengthCard(name).performScrollTo().assertIsDisplayed().assertIsEnabled()
@@ -86,7 +95,7 @@ class PomodoroPageFontScaleTest {
         compose.onNode(hasText(context.getString(R.string.entry_billable)) and isToggleable())
             .performScrollTo().assertHeightIsAtLeast(48.dp).performClick()
         assertTrue(state.fields.billable)
-        button(R.string.pomodoro_start).performScrollTo().assertIsDisplayed().assertHeightIsAtLeast(48.dp)
+        button(UiR.string.pomodoro_start).performScrollTo().assertIsDisplayed().assertHeightIsAtLeast(48.dp)
             .assertIsEnabled().performClick()
         assertEquals(1, starts)
         assertEquals(PomodoroLengths("180", "60", "60", "12"), state.lengths)
@@ -94,14 +103,17 @@ class PomodoroPageFontScaleTest {
 
     @Test
     fun runningOvertimeHasASpokenClockAndBothActionsFitAtTheLargestFontScale() {
-        state = state.copy(held = heldSession(phaseStart = at, description = "Current work"), fields = EntryFields(description = "Current work"))
+        state = state.copy(
+            held = heldSession(phaseStart = at, description = "Current work"),
+            fields = EntryFields(description = "Current work"),
+        )
         show(Clock.fixed(at.plusSeconds(25 * 60 + 65), ZoneOffset.UTC))
-        compose.onNodeWithText(context.getString(R.string.pomodoro_overtime)).performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText(context.getString(UiR.string.pomodoro_overtime)).performScrollTo().assertIsDisplayed()
         val duration = state.account!!.formatDuration(65)
-        compose.onNode(hasContentDescription(context.getString(R.string.pomodoro_overtime_clock, duration)))
+        compose.onNode(hasContentDescription(context.getString(PomodoroR.string.pomodoro_overtime_clock, duration)))
             .performScrollTo().assertIsDisplayed()
         readable(compose.onNodeWithText(duration, useUnmergedTree = true))
-        for (label in listOf(R.string.pomodoro_start_short_rest, R.string.pomodoro_end)) {
+        for (label in listOf(UiR.string.pomodoro_start_short_rest, UiR.string.pomodoro_end)) {
             val action = button(label)
             action.performScrollTo().assertIsDisplayed().assertHeightIsAtLeast(48.dp).performClick()
             readable(compose.onNodeWithText(context.getString(label), useUnmergedTree = true))
@@ -113,19 +125,21 @@ class PomodoroPageFontScaleTest {
     @Test
     fun alarmDenialAndTheNoConnectionMessageAreReadableAndDoNotHideStart() {
         state = state.copy(
-            alarmDenied = true, problem = PomodoroProblem(PomodoroAction.END, TimerActionResult.Offline), unsentCount = 2,
+            alarmDenied = true,
+            problem = PomodoroProblem(PomodoroAction.END, TimerActionResult.Offline),
+            unsentCount = 2,
         )
         show()
         for (text in listOf(
-            context.getString(R.string.pomodoro_alarm_denied),
-            context.getString(TimerActionResult.Offline.message),
-            context.resources.getQuantityString(R.plurals.pomodoro_unsent, 2, 2),
+            context.getString(PomodoroR.string.pomodoro_alarm_denied),
+            context.getString(TimerNoticeR.string.timer_action_offline),
+            context.resources.getQuantityString(PomodoroR.plurals.pomodoro_unsent, 2, 2),
         )) {
             val notice = compose.onNodeWithText(text)
             notice.performScrollTo().assertIsDisplayed()
             readable(notice)
         }
-        button(R.string.pomodoro_start).performScrollTo().assertIsDisplayed().assertIsEnabled()
+        button(UiR.string.pomodoro_start).performScrollTo().assertIsDisplayed().assertIsEnabled()
     }
 
     private fun show(clock: Clock = Clock.fixed(at, ZoneOffset.UTC)) {
@@ -139,8 +153,9 @@ class PomodoroPageFontScaleTest {
                     state,
                     onLengths = { state = state.copy(lengths = it) },
                     onFields = { state = state.copy(fields = it) },
+                    onPick = { _, _ -> },
                     onDescription = { state = state.copy(fields = it) },
-                    onDescriptionDone = {},
+                    onDescriptionFinish = {},
                     onStart = { starts++ }, onNext = { nexts++ }, onEnd = { ends++ }, clock = clock,
                 )
             }

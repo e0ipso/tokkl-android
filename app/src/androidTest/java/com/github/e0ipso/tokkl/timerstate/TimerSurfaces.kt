@@ -9,14 +9,13 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasText
-import androidx.lifecycle.ViewModelProvider
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
 import androidx.test.runner.lifecycle.Stage
-import com.github.e0ipso.tokkl.R
+import com.github.e0ipso.tokkl.components.koinViewModels
+import com.github.e0ipso.tokkl.feature.pomodoro.R
 import com.github.e0ipso.tokkl.notification.RunningNotifier
 import com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmActivity
-import com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmModel
 import com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmViewModel
 import com.github.e0ipso.tokkl.pomodoro.PomodoroRingingNotifier
 import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotifier
@@ -31,7 +30,14 @@ internal object TimerSurfaces {
     private val context get() = instrumentation.targetContext
     private val notifications get() = context.getSystemService(NotificationManager::class.java)
 
-    private val OPEN_STAGES = listOf(Stage.PRE_ON_CREATE, Stage.CREATED, Stage.STARTED, Stage.RESUMED, Stage.PAUSED, Stage.STOPPED)
+    private val OPEN_STAGES = listOf(
+        Stage.PRE_ON_CREATE,
+        Stage.CREATED,
+        Stage.STARTED,
+        Stage.RESUMED,
+        Stage.PAUSED,
+        Stage.STOPPED,
+    )
 
     /**
      * Waits for the running timer's notification, running or paused as [ongoing] says: the one
@@ -48,10 +54,14 @@ internal object TimerSurfaces {
                     (it.notification.flags and Notification.FLAG_ONGOING_EVENT != 0) == ongoing
             }?.let { return it.notification }
             if (SystemClock.elapsedRealtime() > deadline) {
-                throw AssertionError("no running notification with ongoing=$ongoing: " + withId.joinToString {
-                    "${it.key} tag=${it.tag} flags=${it.notification.flags} channel=${it.notification.channelId} " +
-                        "group=${it.notification.group} actions=${it.notification.actions?.map { action -> action.title }}"
-                })
+                throw AssertionError(
+                    "no running notification with ongoing=$ongoing: " + withId.joinToString {
+                        "${it.key} tag=${it.tag} flags=${it.notification.flags} channel=${it.notification.channelId} " +
+                            "group=${it.notification.group} actions=${it.notification.actions?.map { action ->
+                                action.title
+                            }}"
+                    },
+                )
             }
             SystemClock.sleep(POLL_MS)
         }
@@ -71,13 +81,13 @@ internal object TimerSurfaces {
     fun noOpenAlarm(): Boolean = openAlarms().all { it.isFinishing }
 
     /** Waits until a full-screen alarm is open and not finishing, and returns its model. */
-    fun awaitAlarm(): PomodoroAlarmModel {
+    fun awaitAlarm(): PomodoroAlarmViewModel {
         val deadline = SystemClock.elapsedRealtime() + TIMEOUT_MS
         while (true) {
             val open = openAlarms().singleOrNull { !it.isFinishing }
             if (open != null) {
-                var model: PomodoroAlarmModel? = null
-                instrumentation.runOnMainSync { model = ViewModelProvider(open)[PomodoroAlarmViewModel::class.java].model }
+                var model: PomodoroAlarmViewModel? = null
+                instrumentation.runOnMainSync { model = koinViewModels(open)[PomodoroAlarmViewModel::class.java] }
                 return checkNotNull(model)
             }
             if (SystemClock.elapsedRealtime() > deadline) throw AssertionError("no full-screen alarm opened")

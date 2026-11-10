@@ -1,0 +1,456 @@
+package com.github.e0ipso.tokkl.entry
+
+import androidx.lifecycle.SavedStateHandle
+import com.github.e0ipso.tokkl.cache.EntryChanges
+import com.github.e0ipso.tokkl.cache.RunningEntryChanges
+import com.github.e0ipso.tokkl.entries.sessionEntries
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
+import com.github.e0ipso.tokkl.model.EntryWithSendState
+import com.github.e0ipso.tokkl.model.Project
+import com.github.e0ipso.tokkl.model.ProjectId
+import com.github.e0ipso.tokkl.model.RunningEntryIdentity
+import com.github.e0ipso.tokkl.model.Task
+import com.github.e0ipso.tokkl.model.TaskId
+import com.github.e0ipso.tokkl.model.TimeEntry
+import com.github.e0ipso.tokkl.model.WorkspaceId
+import com.github.e0ipso.tokkl.picker.Picked
+import com.github.e0ipso.tokkl.picker.PickerSource
+import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.timer.TapTrace
+import com.github.e0ipso.tokkl.timer.TimerState
+import com.github.e0ipso.tokkl.timer.TimerView
+import com.github.e0ipso.tokkl.timer.TimerViewModel
+import com.github.e0ipso.tokkl.timer.discardNotices
+import com.github.e0ipso.tokkl.timerstate.serverTimerControls
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
+import java.time.Clock
+import java.time.DayOfWeek
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
+import java.time.temporal.ChronoUnit
+import java.util.concurrent.Executors
+
+/** The running editor and its local-write boundary, without a device timezone or network. */
+class RunningEntryEditorTest {
+    private val dispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+    private val scope = CoroutineScope(SupervisorJob() + dispatcher)
+    private val rows = MutableStateFlow(listOf(EntryWithSendState(ENTRY, unsent = true)))
+    private val settings = MutableStateFlow<AccountSettings?>(
+        AccountSettings(
+            timeZone = "Europe/Madrid",
+            beginningOfWeek = DayOfWeek.MONDAY,
+            timeResolutionMinutes = 15.0,
+            defaultWorkspaceId = WorkspaceId(10),
+        ),
+    )
+    private val projects = MutableStateFlow(emptyList<Project>())
+    private val tasks = MutableStateFlow(emptyList<Task>())
+    private val clock = Clock.fixed(Instant.parse("2026-10-22T22:10:00Z"), ZoneOffset.UTC)
+    private val changes = Changes()
+    private val form = EntryFormViewModel(
+        rows,
+        projects,
+        tasks,
+        settings,
+        changes,
+        changes,
+        sessionEntries(rows, settings, scope, clock, changes = changes),
+        scope,
+        clock,
+        allDay = flowOf(false),
+        picker = flowOf(PickerSource()),
+        offline = MutableStateFlow(false),
+        saved = SavedStateHandle(),
+    )
+    private val timer = TimerViewModel(
+        rows.map { entries ->
+            serverTimerControls(
+                entries.firstOrNull { it.entry.stop == null },
+                held = null,
+                timerApi = true,
+                account = ACCOUNT,
+            )
+        },
+        projects,
+        tasks,
+        settings,
+        changes,
+        scope,
+        clock,
+        trace = TapTrace { {} },
+        pauseChain = null,
+        sender = {},
+        discards = discardNotices(),
+        timerApi = flowOf(true),
+        view = MutableStateFlow(TimerView.LIST),
+    )
+
+    @Before
+    fun collect() {
+        scope.launch { form.state.collect {} }
+        scope.launch { timer.state.collect {} }
+        timerState { it is TimerState.Running }
+    }
+
+    @After
+    fun close() {
+        scope.cancel()
+        dispatcher.close()
+    }
+
+    @Test
+    fun opensRunningModeInAccountDateAndKeepsSecondsOnMetadataSave() {
+        val opened = open()
+        assertTrue(opened.editing)
+        assertTrue(opened.running)
+        assertEquals(LocalDate.parse("2026-10-23"), opened.date)
+        assertEquals("00:03", opened.start)
+        assertEquals("", opened.end)
+        assertEquals("", opened.duration)
+        onMain {
+            form.setDescription("Correct the start")
+            form.pick(Picked(projectId = ProjectId(12), taskId = TaskId(15), tags = listOf("offline")))
+            form.setBillable(true)
+            form.save()
+        }
+        saved()
+        val update = changes.updates.single()
+        assertEquals(ENTRY.start, update.start)
+        assertNull(update.stop)
+        assertEquals(ENTRY.id, update.id)
+        assertEquals(ENTRY.workspaceId, update.workspaceId)
+        assertEquals("Correct the start", update.description)
+        assertEquals(ProjectId(12), update.projectId)
+        assertEquals(TaskId(15), update.taskId)
+        assertEquals(listOf("offline"), update.tags)
+        assertTrue(update.billable)
+    }
+
+    @Test
+    fun backdatesAcrossMidnightWithoutSnappingRunningStart() {
+        open()
+        onMain {
+            form.setDate(LocalDate.parse("2026-10-22"))
+            form.setStart("23:53")
+            form.timesDone()
+            form.save()
+        }
+        saved()
+        assertEquals(Instant.parse("2026-10-22T21:53:00Z"), changes.updates.single().start)
+        assertNull(changes.updates.single().stop)
+        assertEquals(1, rows.value.count { it.entry.stop == null })
+    }
+
+    @Test
+    fun parsesTwelveHourStartAgainstTheAccountClock() {
+        onMain { settings.value = settings.value!!.copy(twelveHour = true) }
+        open()
+        onMain {
+            form.setDate(LocalDate.parse("2026-10-22"))
+            form.setStart("11:53pm")
+            form.save()
+        }
+        saved()
+        assertEquals(Instant.parse("2026-10-22T21:53:00Z"), changes.updates.single().start)
+    }
+
+    @Test
+    fun ignoresHiddenEndAndDurationInRunningMode() {
+        open()
+        onMain {
+            form.setEnd("invalid")
+            form.setDuration("invalid")
+            form.durationDone()
+            form.save()
+        }
+        saved()
+        assertEquals(ENTRY.start, changes.updates.single().start)
+        assertNull(changes.updates.single().stop)
+    }
+
+    @Test
+    fun invalidStartDoesNotFlushMetadataOrQueueAnything() {
+        open()
+        onMain {
+            form.setDescription("Unsaved")
+            form.setStart("invalid")
+            form.save()
+        }
+        val invalid = state { it is EntryFormState.Open && it.mistakes.isNotEmpty() } as EntryFormState.Open
+        assertEquals(mapOf(TimeField.START to TimeMistake.TIMES), invalid.mistakes)
+        assertTrue(changes.updates.isEmpty())
+        assertEquals(ENTRY, rows.value.single().entry)
+    }
+
+    @Test
+    fun cancelDiscardsUnsavedDateStartAndMetadata() {
+        open()
+        onMain {
+            form.setDate(LocalDate.parse("2026-10-21"))
+            form.setStart("23:53")
+            form.setDescription("Discard")
+            form.close()
+        }
+        state { it == EntryFormState.Closed }
+        assertEquals(ENTRY.description, open().fields.description)
+        assertTrue(changes.updates.isEmpty())
+    }
+
+    @Test
+    fun stoppedSegmentCannotBeRevivedByStaleSave() {
+        open()
+        onMain {
+            rows.value = listOf(
+                EntryWithSendState(
+                    ENTRY.copy(timing = EntryTiming.Stopped(ENTRY.start, clock.instant())),
+                    unsent = true,
+                ),
+            )
+            form.save()
+        }
+        state { it == EntryFormState.Missing }
+        assertTrue(changes.updates.isEmpty())
+        assertNotNull(rows.value.single().entry.stop)
+    }
+
+    @Test
+    fun openingWaitsForInitialStartAndUsesItsAssignedId() {
+        onMain { rows.value = emptyList() }
+        timerState { it is TimerState.Idle }
+        val gate = CompletableDeferred<Unit>()
+        val opening = onMain {
+            changes.startGate = gate
+            timer.start()
+            scope.async(start = CoroutineStart.UNDISPATCHED) { timer.runningForEdit() }
+        }
+        assertFalse(opening.isCompleted)
+        gate.complete(Unit)
+        val identity = runBlocking { withTimeout(TIMEOUT) { opening.await() } }!!
+        assertEquals(EntryId(-2), identity.entryId)
+        assertEquals(WorkspaceId(10), identity.workspaceId)
+        assertEquals(clock.instant(), identity.start)
+    }
+
+    @Test
+    fun openingWaitsForPendingDescriptionBeforeReadingTheForm() {
+        val gate = CompletableDeferred<Unit>()
+        val opening = onMain {
+            changes.updateGate = gate
+            timer.editDescription("Latest typing")
+            scope.async(start = CoroutineStart.UNDISPATCHED) { timer.runningForEdit() }
+        }
+        runBlocking { withTimeout(TIMEOUT) { changes.updateEntered.await() } }
+        assertFalse(opening.isCompleted)
+        gate.complete(Unit)
+        val identity = runBlocking { withTimeout(TIMEOUT) { opening.await() } }!!
+        onMain { form.editRunning(identity) }
+        val opened = state { it is EntryFormState.Open } as EntryFormState.Open
+        assertEquals("Latest typing", opened.fields.description)
+        assertEquals(1, changes.updates.size)
+    }
+
+    @Test
+    fun pendingDescriptionSurvivesServerIdAndWholeSecondRemapping() {
+        onMain {
+            timer.editDescription("Typed before reconnect")
+            changes.remap[ENTRY.id] = EntryId(201)
+            rows.value = listOf(
+                EntryWithSendState(
+                    ENTRY.copy(
+                        id = EntryId(201),
+                        timing = EntryTiming.Running(ENTRY.start.truncatedTo(ChronoUnit.SECONDS)),
+                    ),
+                    unsent = false,
+                ),
+            )
+        }
+        val shown = timerState { it is TimerState.Running && it.entryId?.value == 201L } as TimerState.Running
+        assertEquals("Typed before reconnect", shown.fields.description)
+        val identity = onMain { timer.runningForEdit() }!!
+        onMain { form.editRunning(identity) }
+        val opened = state { it is EntryFormState.Open } as EntryFormState.Open
+        assertEquals("Typed before reconnect", opened.fields.description)
+        assertEquals(EntryId(201), changes.updates.single().id)
+        assertEquals(ENTRY.start.truncatedTo(ChronoUnit.SECONDS), changes.updates.single().start)
+    }
+
+    @Test
+    fun sameInstantReplacementDoesNotInheritPendingTimerText() {
+        onMain {
+            timer.editDescription("Text for original")
+            rows.value = listOf(
+                EntryWithSendState(ENTRY.copy(id = EntryId(202), description = "Replacement"), unsent = false),
+            )
+        }
+        val shown = timerState { it is TimerState.Running && it.entryId?.value == 202L } as TimerState.Running
+        assertEquals("Replacement", shown.fields.description)
+        val identity = onMain { timer.runningForEdit() }!!
+        onMain { form.editRunning(identity) }
+        val opened = state { it is EntryFormState.Open } as EntryFormState.Open
+        assertEquals("Replacement", opened.fields.description)
+        assertTrue(changes.updates.isEmpty())
+    }
+
+    @Test
+    fun stopDuringDescriptionSettlementDoesNotReviveOrOpenTheEntry() {
+        val gate = CompletableDeferred<Unit>()
+        val opening = onMain {
+            changes.updateGate = gate
+            timer.editDescription("Latest typing")
+            scope.async(start = CoroutineStart.UNDISPATCHED) { timer.runningForEdit() }
+        }
+        runBlocking { withTimeout(TIMEOUT) { changes.updateEntered.await() } }
+        onMain {
+            rows.value = listOf(
+                EntryWithSendState(
+                    ENTRY.copy(timing = EntryTiming.Stopped(ENTRY.start, clock.instant())),
+                    unsent = true,
+                ),
+            )
+        }
+        timerState { it is TimerState.Idle }
+        gate.complete(Unit)
+        assertNull(runBlocking { withTimeout(TIMEOUT) { opening.await() } })
+        assertTrue(changes.updates.isEmpty())
+        assertNotNull(rows.value.single().entry.stop)
+    }
+
+    private fun open(): EntryFormState.Open {
+        onMain { form.editRunning(RunningEntryIdentity(ENTRY.id, ENTRY.workspaceId, ENTRY.start)) }
+        return state { it is EntryFormState.Open } as EntryFormState.Open
+    }
+
+    private fun saved() = state { it == EntryFormState.Saved }
+
+    private fun state(predicate: (EntryFormState) -> Boolean): EntryFormState = runBlocking {
+        withTimeout(TIMEOUT) { form.state.first(predicate) }
+    }
+
+    private fun timerState(predicate: (TimerState) -> Boolean): TimerState = runBlocking {
+        withTimeout(TIMEOUT) { timer.state.first(predicate) }
+    }
+
+    private fun <T> onMain(block: suspend () -> T): T = runBlocking(dispatcher) { block() }
+
+    private inner class Changes :
+        EntryChanges,
+        RunningEntryChanges {
+        val remap = mutableMapOf<EntryId, EntryId>()
+        val updates = mutableListOf<TimeEntry>()
+        var startGate = CompletableDeferred(Unit)
+        var updateGate = CompletableDeferred(Unit)
+        val updateEntered = CompletableDeferred<Unit>()
+
+        override suspend fun start(workspaceId: WorkspaceId, fields: EntryFields): EntryId {
+            startGate.await()
+            rows.value = listOf(
+                EntryWithSendState(
+                    ENTRY.copy(
+                        id = EntryId(-2),
+                        workspaceId = workspaceId,
+                        timing = EntryTiming.Running(clock.instant()),
+                    ),
+                    unsent = true,
+                ),
+            )
+            return EntryId(-2)
+        }
+
+        override suspend fun currentId(entryId: EntryId): EntryId = remap[entryId] ?: entryId
+
+        override suspend fun runningEntry(identity: RunningEntryIdentity): TimeEntry? {
+            val id = remap[identity.entryId] ?: identity.entryId
+            val current = rows.value.singleOrNull()?.entry ?: return null
+            val sameStart = current.start == identity.start ||
+                (id != identity.entryId && current.start == identity.start.truncatedTo(ChronoUnit.SECONDS))
+            return current.takeIf {
+                it.id == id && it.workspaceId == identity.workspaceId && it.stop == null &&
+                    sameStart
+            }
+        }
+
+        override suspend fun updateRunning(
+            identity: RunningEntryIdentity,
+            fields: EntryFields,
+            start: Instant,
+        ): Boolean {
+            updateEntered.complete(Unit)
+            updateGate.await()
+            val current = runningEntry(identity) ?: return false
+            val updated = current.copy(
+                description = fields.description,
+                projectId = fields.projectId,
+                taskId = fields.taskId,
+                tags = fields.tags,
+                billable = fields.billable,
+                timing = EntryTiming.Running(start),
+            )
+            updates += updated
+            rows.value = listOf(EntryWithSendState(updated, unsent = true))
+            return true
+        }
+
+        override suspend fun update(entryId: EntryId, fields: EntryFields, timing: EntryTiming): Boolean =
+            throw AssertionError("A running editor must use the guarded update")
+
+        override suspend fun split(
+            entryId: EntryId,
+            fields: EntryFields,
+            first: EntryTiming.Stopped,
+            second: EntryTiming.Stopped,
+        ): Boolean = throw AssertionError("A running editor splits nothing")
+
+        override suspend fun updateOlder(
+            entryId: EntryId,
+            workspaceId: WorkspaceId,
+            fields: EntryFields,
+            timing: EntryTiming.Ended,
+        ) = throw AssertionError("A running editor cannot fall back to an older-entry PUT")
+        override suspend fun create(
+            workspaceId: WorkspaceId,
+            fields: EntryFields,
+            timing: EntryTiming.Ended,
+        ): EntryId = throw AssertionError("A running editor cannot create an entry")
+        override suspend fun stop(entryId: EntryId, fields: EntryFields?): Boolean = throw AssertionError(
+            "Unexpected stop",
+        )
+        override suspend fun delete(entryId: EntryId): Boolean = throw AssertionError("Unexpected delete")
+
+        override suspend fun delete(entry: TimeEntry): TimeEntry? = throw AssertionError("unexpected delete")
+    }
+
+    private companion object {
+        const val TIMEOUT = 5_000L
+        val ENTRY = TimeEntry(
+            EntryId(-1), WorkspaceId(20), null, null, "Running",
+            EntryTiming.Running(Instant.parse("2026-10-22T22:03:41.123Z")), false, emptyList(), emptyList(),
+        )
+    }
+}
+
+/** The name the timer controls of these tests carry for the signed-in account. */
+private const val ACCOUNT = "account"

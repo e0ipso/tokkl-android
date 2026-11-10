@@ -1,14 +1,15 @@
 package com.github.e0ipso.tokkl
 
 import com.github.e0ipso.tokkl.api.ServerUrl
-import com.github.e0ipso.tokkl.api.SharedHttpClient
 import com.github.e0ipso.tokkl.api.TogglApiClient
-import java.io.IOException
-import java.util.concurrent.TimeUnit
-import javax.net.ssl.SSLException
+import com.github.e0ipso.tokkl.api.api
+import com.github.e0ipso.tokkl.api.instance
 import okhttp3.ConnectionPool
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import java.io.IOException
+import java.util.concurrent.TimeUnit
+import javax.net.ssl.SSLException
 
 /**
  * Puts the phone in airplane mode, or takes it out, through the shell user, the only user who may
@@ -28,7 +29,11 @@ object AirplaneMode {
         DeviceShell.run("cmd connectivity airplane-mode ${if (on) "enable" else "disable"}")
         val deadline = System.nanoTime() + TIMEOUT_NANOS
         while (serverAnswers(server) == on) {
-            if (System.nanoTime() > deadline) throw AssertionError("the network did not ${if (on) "go" else "come back"}")
+            if (System.nanoTime() > deadline) {
+                throw AssertionError(
+                    "the network did not ${if (on) "go" else "come back"}",
+                )
+            }
             Thread.sleep(POLL_MS)
         }
         if (on) awaitNoIdleAppConnection(deadline)
@@ -44,9 +49,11 @@ object AirplaneMode {
      * later.
      */
     private fun awaitNoIdleAppConnection(deadline: Long) {
-        val pool = SharedHttpClient.instance.connectionPool
+        val pool = appHttp.instance.connectionPool
         while (pool.idleConnectionCount() > 0) {
-            if (System.nanoTime() > deadline) throw AssertionError("the app kept ${pool.idleConnectionCount()} idle connections offline")
+            if (System.nanoTime() > deadline) {
+                throw AssertionError("the app kept ${pool.idleConnectionCount()} idle connections offline")
+            }
             Thread.sleep(POLL_MS)
         }
     }

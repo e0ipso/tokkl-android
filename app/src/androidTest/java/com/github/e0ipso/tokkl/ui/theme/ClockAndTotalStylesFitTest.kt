@@ -122,7 +122,11 @@ class ClockAndTotalStylesFitTest {
         )
 
         val bands = inkedRows.bands().map { (first, last) -> host.top + first..host.top + last + 1f }
-        val lines = (0 until layout.lineCount).map { box.top + layout.getLineTop(it)..box.top + layout.getLineBottom(it) }
+        val lines = (0 until layout.lineCount).map {
+            box.top + layout.getLineTop(
+                it,
+            )..box.top + layout.getLineBottom(it)
+        }
         assertEquals("$sample glyph rows $bands for lines $lines", lines.size, bands.size)
         for ((i, band) in bands.withIndex()) {
             val line = lines[i]
@@ -134,12 +138,11 @@ class ClockAndTotalStylesFitTest {
     }
 
     /** Runs of consecutive row numbers, as first and last row. */
-    private fun List<Int>.bands(): List<Pair<Int, Int>> =
-        fold(mutableListOf<Pair<Int, Int>>()) { runs, row ->
-            val last = runs.lastOrNull()
-            if (last != null && last.second == row - 1) runs[runs.lastIndex] = last.first to row else runs += row to row
-            runs
-        }
+    private fun List<Int>.bands(): List<Pair<Int, Int>> = fold(mutableListOf<Pair<Int, Int>>()) { runs, row ->
+        val last = runs.lastOrNull()
+        if (last != null && last.second == row - 1) runs[runs.lastIndex] = last.first to row else runs += row to row
+        runs
+    }
 
     private fun bounds(tag: String): Rect =
         composeRule.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().boundsInWindow

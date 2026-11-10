@@ -67,8 +67,10 @@ chmod +x /home/e0ipso/workspace/apps/tokkl-android/.ai/sift/drain/mem-gate.sh
 ```
 
 Rollback copies `mem-gate.before-activation.sh` back to the shared shim path.
-Keep the `systemd-run`/`choom` prefix unchanged after activation. Start only one
-owned build/device call at a time. Admission is a startup check, not an allocation
+Keep the `systemd-run`/`choom` prefix unchanged after activation, and run Gradle
+at the lowest CPU priority inside it (owner rule of 2026-11-08):
+`systemd-run --user --scope --quiet -p OOMPolicy=continue -- choom -n 1000 -- nice -n 19 ./gradlew --no-daemon <tasks>`.
+Start only one owned build/device call at a time. Admission is a startup check, not an allocation
 reservation; serialize owned runs and observe ancestors and emulator scopes
 throughout device verification.
 

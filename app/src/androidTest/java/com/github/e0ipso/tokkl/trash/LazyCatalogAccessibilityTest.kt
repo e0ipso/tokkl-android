@@ -14,14 +14,19 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.core.view.WindowCompat
 import androidx.test.platform.app.InstrumentationRegistry
-import com.github.e0ipso.tokkl.R
 import com.github.e0ipso.tokkl.accessibility.checkAccessibility
 import com.github.e0ipso.tokkl.accessibility.createAndroidComposeRule
-import com.github.e0ipso.tokkl.tags.Tag
+import com.github.e0ipso.tokkl.feature.trash.R
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.Tag
+import com.github.e0ipso.tokkl.model.TagId
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.tags.TagsActions
-import com.github.e0ipso.tokkl.tags.TagsContent
 import com.github.e0ipso.tokkl.tags.TagsData
+import com.github.e0ipso.tokkl.tags.TagsPageState
+import com.github.e0ipso.tokkl.tags.TagsScreen
 import com.github.e0ipso.tokkl.tags.TagsState
+import com.github.e0ipso.tokkl.trash.DeletedEntry
 import com.github.e0ipso.tokkl.ui.theme.SystemFontScale
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import org.junit.Assert.assertEquals
@@ -29,6 +34,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
+import java.time.Duration
+import java.time.Instant
+import com.github.e0ipso.tokkl.feature.tags.R as TagsR
 
 /** Stable row identity and reading order deep in both lists at Android's largest font scale. */
 class LazyCatalogAccessibilityTest {
@@ -40,18 +48,34 @@ class LazyCatalogAccessibilityTest {
     private val compose = createAndroidComposeRule<ComponentActivity>()
 
     @get:Rule
-    val rules: RuleChain = RuleChain.outerRule(SystemFontScale(SystemFontScale.LARGEST, largestDisplaySize = true)).around(compose)
+    val rules: RuleChain = RuleChain.outerRule(
+        SystemFontScale(SystemFontScale.LARGEST, largestDisplaySize = true),
+    ).around(compose)
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
     @Test
     fun trashKeepsItsVisibleEntryAndReadingOrderAfterRemovingAnEarlierEntry() {
-        val entries = mutableStateOf(List(1000) { index ->
-            TrashEntry(index.toLong(), "Trash $index", "2026-10-19T08:00:00Z", "2026-10-19T08:01:00Z", 60)
-        })
+        val entries = mutableStateOf(
+            List(1000) { index ->
+                DeletedEntry(
+                    EntryId(index.toLong()),
+                    "Trash $index",
+                    start = Instant.parse("2026-10-19T08:00:00Z"),
+                    duration = Duration.ofSeconds(60),
+                )
+            },
+        )
         compose.activityRule.scenario.onActivity { WindowCompat.enableEdgeToEdge(it.window) }
         compose.setContent {
-            TokklTheme(darkTheme = false) { TrashContent(TrashState(entries = entries.value), false, null, TrashActions()) }
+            TokklTheme(
+                darkTheme = false,
+            ) {
+                TrashScreen(
+                    TrashPageState(TrashState(data = entries.value), offline = false),
+                    actions = TrashActions(),
+                )
+            }
         }
         compose.onNode(hasScrollAction()).performScrollToIndex(242)
         val row = compose.onNode(hasText("Trash 240", substring = true))
@@ -68,15 +92,22 @@ class LazyCatalogAccessibilityTest {
 
     @Test
     fun tagsKeepTheirVisibleTagAndReadingOrderAfterRemovingAnEarlierTag() {
-        val tags = mutableStateOf(List(500) { index -> Tag(index.toLong(), 7, "Tag $index") })
+        val tags = mutableStateOf(List(500) { index -> Tag(TagId(index.toLong()), WorkspaceId(7), "Tag $index") })
         compose.activityRule.scenario.onActivity { WindowCompat.enableEdgeToEdge(it.window) }
         compose.setContent {
-            TokklTheme(darkTheme = false) { TagsContent(TagsState(data = TagsData(tags.value)), false, emptyList(), TagsActions()) }
+            TokklTheme(
+                darkTheme = false,
+            ) {
+                TagsScreen(
+                    TagsPageState(TagsState(data = TagsData(tags.value)), offline = false),
+                    actions = TagsActions(),
+                )
+            }
         }
         compose.onNode(hasScrollAction()).performScrollToIndex(242)
         val row = compose.onNode(hasText("Tag 240"))
         val before = row.assertIsDisplayed().getBoundsInRoot()
-        val delete = context.getString(R.string.tags_delete_named, "Tag 240")
+        val delete = context.getString(TagsR.string.tags_delete_named, "Tag 240")
         compose.onNode(hasContentDescription(delete)).assertIsDisplayed()
         assertReadingOrder("Tag 240", delete)
         compose.runOnUiThread { tags.value = tags.value.drop(1) }

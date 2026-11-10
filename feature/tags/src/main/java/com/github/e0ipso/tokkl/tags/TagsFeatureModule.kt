@@ -1,0 +1,35 @@
+package com.github.e0ipso.tokkl.tags
+
+import com.github.e0ipso.tokkl.cache.AccountCache
+import com.github.e0ipso.tokkl.navigation.FeatureRoutes
+import com.github.e0ipso.tokkl.platform.DefaultNetwork
+import com.github.e0ipso.tokkl.platform.io
+import com.github.e0ipso.tokkl.platform.offlineIn
+import com.github.e0ipso.tokkl.platform.viewModelCoroutineScope
+import com.github.e0ipso.tokkl.session.AccountSettingsSource
+import org.koin.core.module.dsl.singleOf
+import org.koin.core.module.dsl.viewModel
+import org.koin.dsl.bind
+import org.koin.dsl.module
+
+val tagsFeatureModule = module {
+    singleOf(::ServerTagsRepository)
+
+    viewModel {
+        val accountSettings = get<AccountSettingsSource>()
+        val scope = viewModelCoroutineScope()
+        TagsViewModel(
+            repository = get(),
+            settings = accountSettings,
+            changes = get(),
+            scope = scope,
+            io = io(),
+            cachedTags = get<AccountCache>().tags,
+            offline = get<DefaultNetwork>().offlineIn(scope),
+            app = get(),
+            saved = get(),
+        )
+    }
+
+    single { TagsEntries } bind FeatureRoutes::class
+}

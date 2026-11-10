@@ -3,12 +3,13 @@ package com.github.e0ipso.tokkl
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ApiError
 import com.github.e0ipso.tokkl.api.ApiResult
-import com.github.e0ipso.tokkl.api.SharedHttpClient
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.TogglApiClient
-import java.security.SecureRandom
-import java.time.Instant
-import java.time.LocalDate
-import java.util.concurrent.TimeUnit
+import com.github.e0ipso.tokkl.api.api
+import com.github.e0ipso.tokkl.api.app
+import com.github.e0ipso.tokkl.api.instance
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
@@ -21,6 +22,10 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import java.security.SecureRandom
+import java.time.Instant
+import java.time.LocalDate
+import java.util.concurrent.TimeUnit
 
 /**
  * Extra accounts on the Tokkl test server, for a test that fills an account with data. The
@@ -37,7 +42,7 @@ object TestAccounts {
      * [create] made in this process.
      */
     class Account(val id: Long, val email: String, val apiToken: String, private val password: String? = null) {
-        val client: TogglApiClient get() = TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(apiToken))
+        val client: TogglApiClient get() = appApiClient(TokklTestServer.url, ApiCredentials.ApiToken(apiToken))
 
         /**
          * Another device of the same user, such as the web app or a desktop client: it signs in
@@ -52,12 +57,13 @@ object TestAccounts {
                 TokklTestServer.url,
                 ApiCredentials.EmailPassword(email, secret),
                 httpClient = OkHttpClient.Builder().connectionPool(ConnectionPool(0, 1, TimeUnit.SECONDS)).build(),
+                io = Dispatchers.IO,
             )
         }
 
         /** The account's default workspace, where [createEntry] puts entries. */
         val workspaceId: Long by lazy {
-            client.get(client.server.api("me"), JsonObject.serializer()).orFail("GET /api/v9/me")
+            runBlocking { client.get(client.server.api("me"), JsonObject.serializer()) }.orFail("GET /api/v9/me")
                 .getValue("default_workspace_id").jsonPrimitive.long
         }
 
@@ -70,7 +76,7 @@ object TestAccounts {
                 put("start", start.toString())
                 if (stop == null) put("duration", -1) else put("stop", stop.toString())
             }
-            return client.send("POST", entries(), body, JsonObject.serializer())
+            return runBlocking { client.send(HttpMethod.POST, entries(), body, JsonObject.serializer()) }
                 .orFail("POST /api/v9/workspaces/<id>/time_entries")
                 .getValue("id").jsonPrimitive.long
         }
@@ -88,18 +94,23 @@ object TestAccounts {
                 put("start_date", day.toString())
                 put("duration", seconds)
             }
-            return client.send("POST", entries(), body, JsonObject.serializer())
+            return runBlocking { client.send(HttpMethod.POST, entries(), body, JsonObject.serializer()) }
                 .orFail("POST /api/v9/workspaces/<id>/time_entries")
                 .getValue("id").jsonPrimitive.long
         }
 
         /** The entry [id] as the server keeps it. */
         fun entry(id: Long): JsonObject =
-            client.get(client.server.api("me", "time_entries", id.toString()), JsonObject.serializer())
+            runBlocking { client.get(client.server.api("me", "time_entries", id.toString()), JsonObject.serializer()) }
                 .orFail("GET /api/v9/me/time_entries/<id>")
 
         fun deleteEntry(id: Long) {
-            client.sendNoContent("DELETE", entries(id.toString())).orFail("DELETE /api/v9/workspaces/<id>/time_entries/<id>")
+            runBlocking {
+                client.sendNoContent(
+                    HttpMethod.DELETE,
+                    entries(id.toString()),
+                )
+            }.orFail("DELETE /api/v9/workspaces/<id>/time_entries/<id>")
         }
 
         private fun entries(vararg path: String) =
@@ -109,13 +120,23 @@ object TestAccounts {
     }
 
     private val admin by lazy {
-        TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(TokklTestServer.apiToken), httpClient = OkHttpClient())
+        TogglApiClient(
+            TokklTestServer.url,
+            ApiCredentials.ApiToken(TokklTestServer.apiToken),
+            httpClient = OkHttpClient(),
+            io = Dispatchers.IO,
+        )
     }
 
     fun create(timezone: String): Account {
-        val invite = admin
-            .send("POST", TokklTestServer.url.app("admin", "invites"), buildJsonObject { put("role", "user") }, JsonObject.serializer())
-            .orFail("POST /api/app/admin/invites")
+        val invite = runBlocking {
+            admin.send(
+                HttpMethod.POST,
+                TokklTestServer.url.app("admin", "invites"),
+                buildJsonObject { put("role", "user") },
+                JsonObject.serializer(),
+            )
+        }.orFail("POST /api/app/admin/invites")
         val token = invite.getValue("url").jsonPrimitive.content.substringAfterLast('/')
         val email = "cache-${hex(8)}@example.com"
         val password = hex(16)
@@ -131,19 +152,30 @@ object TestAccounts {
             .header("X-Tokkl-Csrf", "1")
             .post(account.toString().toRequestBody("application/json".toMediaType()))
             .build()
-        SharedHttpClient.instance.newCall(accept).execute().use { response ->
-            if (!response.isSuccessful) throw AssertionError("POST /api/app/invites/<token> failed: HTTP ${response.code}")
+        appHttp.instance.newCall(accept).execute().use { response ->
+            if (!response.isSuccessful) {
+                throw AssertionError(
+                    "POST /api/app/invites/<token> failed: HTTP ${response.code}",
+                )
+            }
         }
-        val me = TogglApiClient(TokklTestServer.url, ApiCredentials.EmailPassword(email, password))
-            .get(TokklTestServer.url.api("me"), NewMe.serializer())
-            .orFail("GET /api/v9/me")
+        val me = runBlocking {
+            appApiClient(TokklTestServer.url, ApiCredentials.EmailPassword(email, password))
+                .get(TokklTestServer.url.api("me"), NewMe.serializer())
+        }.orFail("GET /api/v9/me")
         return Account(me.id, email, me.apiToken, password)
     }
 
     /** Deletes [account] with its workspace and everything in it. */
     fun delete(account: Account) {
         val confirm = buildJsonObject { put("email", account.email) }
-        admin.sendNoContent("DELETE", TokklTestServer.url.app("admin", "users", account.id.toString()), confirm)
+        runBlocking {
+            admin.sendNoContent(
+                HttpMethod.DELETE,
+                TokklTestServer.url.app("admin", "users", account.id.toString()),
+                confirm,
+            )
+        }
             .orFail("DELETE /api/app/admin/users/<id>")
     }
 
@@ -155,12 +187,12 @@ object TestAccounts {
 }
 
 /** The value, or an error that names [call] and the failure alone, so no body or secret lands in it. */
-fun <T> ApiResult<T>.orFail(call: String): T =
-    when (this) {
-        is ApiResult.Success -> value
-        is ApiResult.Failure -> {
-            val error = error
-            val reason = if (error is ApiError.Http) "HTTP ${error.status}" else error::class.simpleName
-            throw AssertionError("$call failed: $reason")
-        }
+fun <T> ApiResult<T>.orFail(call: String): T = when (this) {
+    is ApiResult.Success -> value
+
+    is ApiResult.Failure -> {
+        val error = error
+        val reason = if (error is ApiError.Http) "HTTP ${error.status}" else error::class.simpleName
+        throw AssertionError("$call failed: $reason")
     }
+}

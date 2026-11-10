@@ -5,18 +5,29 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TestAccounts
 import com.github.e0ipso.tokkl.TokklTestServer
+import com.github.e0ipso.tokkl.api.ApiClientProvider
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ApiError
+import com.github.e0ipso.tokkl.api.HttpMethod
 import com.github.e0ipso.tokkl.api.ServerTimeEntry
 import com.github.e0ipso.tokkl.api.TogglApiClient
+import com.github.e0ipso.tokkl.api.api
+import com.github.e0ipso.tokkl.appApiClient
+import com.github.e0ipso.tokkl.appConfiguredServer
+import com.github.e0ipso.tokkl.appHttp
+import com.github.e0ipso.tokkl.model.Capabilities
+import com.github.e0ipso.tokkl.model.EntryFields
+import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
+import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.orFail
-import com.github.e0ipso.tokkl.signin.SignIn
+import com.github.e0ipso.tokkl.session.AccountRefreshRequests
+import com.github.e0ipso.tokkl.session.capabilitiesOf
+import com.github.e0ipso.tokkl.signin.ServerSignIn
 import com.github.e0ipso.tokkl.signin.SignInAgain
 import com.github.e0ipso.tokkl.signin.SignInCredentials
 import com.github.e0ipso.tokkl.signin.SignInResult
-import java.time.Duration
-import java.time.Instant
-import java.time.temporal.ChronoUnit
+import com.github.e0ipso.tokkl.tokklApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -28,13 +39,17 @@ import kotlinx.serialization.json.JsonObject
 import okhttp3.OkHttpClient
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.time.Clock
+import java.time.Duration
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 /** Every refusal comes from the real Tokkl container, with throwaway accounts and a Room queue. */
 class ChangeRejectionServerTest {
@@ -55,7 +70,13 @@ class ChangeRejectionServerTest {
         account = TestAccounts.create("Europe/Madrid")
         token = account.apiToken
         database = Room.inMemoryDatabaseBuilder(context, CacheDatabase::class.java).build()
-        queue = ChangeQueue(database, Dispatchers.IO, onQueued = {})
+        queue = ChangeQueue(
+            RoomChangeStore(database),
+            Dispatchers.IO,
+            onQueued = {},
+            clock = Clock.systemUTC(),
+            spans = object : ServerSpans {},
+        )
         sender = sender()
     }
 
@@ -66,7 +87,6 @@ class ChangeRejectionServerTest {
         } finally {
             if (::account.isInitialized) {
                 TestAccounts.delete(account)
-
             }
         }
     }
@@ -74,11 +94,11 @@ class ChangeRejectionServerTest {
     @Test fun a404DropsChangesToTheDeletedEntryAndAggregatesTheNotice() {
         val id = cachedEntry("Deleted elsewhere")
         runBlocking {
-            queue.update(id, EntryFields(description = "First edit"), start, stop)
-            queue.update(id, EntryFields(description = "Second edit"), start, stop)
+            queue.update(EntryId(id), EntryFields(description = "First edit"), EntryTiming.Stopped(start, stop))
+            queue.update(EntryId(id), EntryFields(description = "Second edit"), EntryTiming.Stopped(start, stop))
         }
         account.deleteEntry(id)
-        assertEquals(ChangeSender.Outcome.Empty(2), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(2), runBlocking { sender.sendAndWait() })
         assertEquals(0, count())
         assertEquals(2, discarded)
         assertNull(database.changes().entry(id))
@@ -86,12 +106,22 @@ class ChangeRejectionServerTest {
 
     @Test fun a400HoldsItsEntryWhileOthersSendAndAFixResendsIt() {
         val tooLong = start.plus(Duration.ofHours(1000))
-        val id = runBlocking { queue.create(account.workspaceId, EntryFields(description = "Invalid span"), start, tooLong) }
-        runBlocking {
-            queue.update(id, EntryFields(description = "Later change"), start, tooLong)
-            queue.create(account.workspaceId, EntryFields(description = "Unrelated"), start, stop)
+        val id = runBlocking {
+            queue.create(
+                WorkspaceId(account.workspaceId),
+                EntryFields(description = "Invalid span"),
+                EntryTiming.Stopped(start, tooLong),
+            )
         }
-        assertEquals(ChangeSender.Outcome.Empty(1), sender.drain())
+        runBlocking {
+            queue.update(id, EntryFields(description = "Later change"), EntryTiming.Stopped(start, tooLong))
+            queue.create(
+                WorkspaceId(account.workspaceId),
+                EntryFields(description = "Unrelated"),
+                EntryTiming.Stopped(start, stop),
+            )
+        }
+        assertEquals(ChangeSender.Outcome.Empty(1), runBlocking { sender.sendAndWait() })
         val held = runBlocking { queue.held.first() }.single()
         assertEquals("Time entries can not be longer than 999 hours", held.refusal)
         assertEquals(2, count())
@@ -99,11 +129,13 @@ class ChangeRejectionServerTest {
 
         // The entry form uses the same update operation. It replaces the refused draft and
         // its dependent changes with the edited draft, keeping a local create a create.
-        assertTrue(runBlocking { queue.update(id, EntryFields(description = "Fixed"), start, stop) })
-        assertEquals(ChangeSender.Outcome.Empty(1), sender.drain())
+        assertTrue(
+            runBlocking { queue.update(id, EntryFields(description = "Fixed"), EntryTiming.Stopped(start, stop)) },
+        )
+        assertEquals(ChangeSender.Outcome.Empty(1), runBlocking { sender.sendAndWait() })
         assertEquals(0, count())
         val serverId = runBlocking { queue.currentId(id) }
-        assertEquals("Fixed", account.entry(serverId).getValue("description").toString().trim('"'))
+        assertEquals("Fixed", account.entry(serverId.value).getValue("description").toString().trim('"'))
         assertEquals(0, discarded)
     }
 
@@ -111,76 +143,177 @@ class ChangeRejectionServerTest {
         val fixedStart = start.minus(Duration.ofHours(4)).truncatedTo(ChronoUnit.HOURS)
         val fixedStop = fixedStart.plusSeconds(1800)
         val existing = account.createEntry("Fixed", fixedStart, fixedStop)
-        database.changes().upsertEntry(web.get(web.server.api("me", "time_entries", existing.toString()), ServerTimeEntry.serializer())
-            .orFail("GET existing entry").toCached()!!)
+        database.changes().upsertEntry(
+            cachedRowOf(
+                runBlocking {
+                    web.get(
+                        web.server.api("me", "time_entries", existing.toString()),
+                        ServerTimeEntry.serializer(),
+                    )
+                }
+                    .orFail("GET existing entry").toTimeEntry()!!,
+            ),
+        )
         val local = runBlocking {
-            queue.create(account.workspaceId, EntryFields(description = "Invalid"), start, start.plus(Duration.ofHours(1000)))
+            queue.create(
+                WorkspaceId(account.workspaceId),
+                EntryFields(description = "Invalid"),
+                EntryTiming.Stopped(start, start.plus(Duration.ofHours(1000))),
+            )
         }
-        assertEquals(ChangeSender.Outcome.Empty(0), sender.drain())
-        assertTrue(runBlocking { queue.update(local, EntryFields(description = "Fixed"), fixedStart, fixedStop) })
+        assertEquals(ChangeSender.Outcome.Empty(0), runBlocking { sender.sendAndWait() })
+        assertTrue(
+            runBlocking {
+                queue.update(
+                    local,
+                    EntryFields(description = "Fixed"),
+                    EntryTiming.Stopped(fixedStart, fixedStop),
+                )
+            },
+        )
         // A request that never reached the server can still lose its answer. Before retrying,
         // its lookup must exclude the entry that existed before this edit moved the start.
         val store = RoomChangeStore(database)
         assertTrue(store.maybeSent(checkNotNull(store.first()), true))
-        assertEquals(ChangeSender.Outcome.Empty(1), sender.drain())
-        assertNotEquals("the retry must create its own entry", existing, runBlocking { queue.currentId(local) })
+        assertEquals(ChangeSender.Outcome.Empty(1), runBlocking { sender.sendAndWait() })
+        assertNotEquals("the retry must create its own entry", existing, runBlocking { queue.currentId(local) }.value)
         assertEquals(0, count())
     }
 
     @Test fun aHeldChangeCanBeSentAgainOrDiscardedWithItsCachedDraft() {
         val id = runBlocking {
-            queue.create(account.workspaceId, EntryFields(description = "Discard me"), start, start.plus(Duration.ofHours(1000)))
+            queue.create(
+                WorkspaceId(account.workspaceId),
+                EntryFields(description = "Discard me"),
+                EntryTiming.Stopped(start, start.plus(Duration.ofHours(1000))),
+            )
         }
-        assertEquals(ChangeSender.Outcome.Empty(0), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(0), runBlocking { sender.sendAndWait() })
         val held = runBlocking { queue.held.first() }.single()
         assertTrue(runBlocking { queue.sendAgain(held.sequence) })
-        assertEquals(ChangeSender.Outcome.Empty(0), sender.drain())
+        assertEquals(ChangeSender.Outcome.Empty(0), runBlocking { sender.sendAndWait() })
         assertEquals(held.refusal, runBlocking { queue.held.first() }.single().refusal)
         assertTrue(runBlocking { queue.discard(held.sequence) })
         assertEquals(0, count())
-        assertNull(database.changes().entry(id))
+        assertNull(database.changes().entry(id.value))
         assertFalse(runBlocking { queue.discard(held.sequence) })
     }
 
     @Test fun resetToken403PausesEverythingUntilTheSameAccountSignsInAgain() {
         val id = cachedEntry("Before reset")
         runBlocking {
-            queue.update(id, EntryFields(description = "After reset"), start, stop)
-            queue.create(account.workspaceId, EntryFields(description = "Waiting create"), start, stop)
+            queue.update(EntryId(id), EntryFields(description = "After reset"), EntryTiming.Stopped(start, stop))
+            queue.create(
+                WorkspaceId(account.workspaceId),
+                EntryFields(description = "Waiting create"),
+                EntryTiming.Stopped(start, stop),
+            )
         }
-        val newToken = web.send("POST", web.server.api("me", "reset_token"), JsonObject(emptyMap()), String.serializer())
+        val newToken = runBlocking {
+            web.send(
+                HttpMethod.POST,
+                web.server.api("me", "reset_token"),
+                JsonObject(emptyMap()),
+                String.serializer(),
+            )
+        }
             .orFail("POST /me/reset_token")
-        assertEquals(ChangeSender.Outcome.Stopped(0, ApiError.AuthFailed), sender.drain())
+        assertEquals(ChangeSender.Outcome.Stopped(0, ApiError.AuthFailed), runBlocking { sender.sendAndWait() })
         assertTrue(sender.signInNeeded.value)
         assertEquals(2, count())
         // Even a valid token cannot lift the pause without the explicit successful sign-in.
         token = newToken
-        assertEquals(ChangeSender.Outcome.Stopped(0, ApiError.AuthFailed), sender.drain())
+        assertEquals(ChangeSender.Outcome.Stopped(0, ApiError.AuthFailed), runBlocking { sender.sendAndWait() })
         assertEquals(2, count())
-        val signIn = SignIn(session = { _, accepted, _ -> token = accepted })
-        assertEquals(SignInResult.SignedIn, signIn.attempt(TokklTestServer.url, SignInCredentials.ApiToken(newToken),
-            SignInAgain(TokklTestServer.url, account.id)))
-        runBlocking { sender.resume().join() }
+        val signIn = ServerSignIn(
+            storeSignIn = { _, accepted, _ -> token = accepted },
+            connector = appHttp,
+            configured = appConfiguredServer,
+            scope = scope,
+            io = Dispatchers.IO,
+            signedInAccount = { null },
+        )
+        assertEquals(
+            SignInResult.SignedIn,
+            runBlocking {
+                signIn.attempt(
+                    TokklTestServer.url,
+                    SignInCredentials.ApiToken(newToken),
+                    SignInAgain(TokklTestServer.url, account.id),
+                )
+            },
+        )
+        sender.resume()
+        runBlocking { sender.sendAndWait() }
         assertFalse(sender.signInNeeded.value)
         assertEquals(0, count())
         assertEquals(0, discarded)
-        val accepted = TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(newToken))
-        assertEquals("After reset", accepted.get(accepted.server.api("me", "time_entries", id.toString()), JsonObject.serializer())
-            .orFail("GET edited entry").getValue("description").toString().trim('"'))
+        val accepted = appApiClient(TokklTestServer.url, ApiCredentials.ApiToken(newToken))
+        assertEquals(
+            "After reset",
+            runBlocking {
+                accepted.get(
+                    accepted.server.api("me", "time_entries", id.toString()),
+                    JsonObject.serializer(),
+                )
+            }
+                .orFail("GET edited entry").getValue("description").toString().trim('"'),
+        )
     }
 
-    private fun sender(http: OkHttpClient? = null): ChangeSender = ChangeSender(
-        RoomChangeStore(database),
-        client = { if (http == null) TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(token))
-            else TogglApiClient(TokklTestServer.url, ApiCredentials.ApiToken(token), httpClient = http) },
-        scope = scope, io = Dispatchers.IO, onDiscarded = { discarded += it },
+    private fun sender(http: OkHttpClient? = null): ChangeSender {
+        val store = RoomChangeStore(database)
+        val client = ApiClientProvider {
+            if (http == null) {
+                appApiClient(TokklTestServer.url, ApiCredentials.ApiToken(token)).tokklApi()
+            } else {
+                TogglApiClient(
+                    TokklTestServer.url,
+                    ApiCredentials.ApiToken(token),
+                    httpClient = http,
+                    io = Dispatchers.IO,
+                ).tokklApi()
+            }
+        }
+        return sender(store, client)
+    }
+
+    private fun sender(store: ChangeStore, client: ApiClientProvider): ChangeSender = ChangeSender(
+        store,
+        entries = { client() },
+        scope = scope,
+        io = Dispatchers.IO,
+        events = object : ChangeSenderEvents {
+            override fun sent() = Unit
+
+            override fun emptied() = Unit
+
+            override fun discarded(count: Int) {
+                discarded += count
+            }
+        },
+        clock = Clock.systemUTC(),
+        spans = object : ServerSpans {},
+        capabilities = capabilitiesOf(Capabilities.NONE),
+        undo = DeleteUndoer(
+            store,
+            { client() },
+            Dispatchers.IO,
+            AccountRefreshRequests(),
+            scope,
+        ),
     )
 
     private fun cachedEntry(description: String): Long {
         val id = account.createEntry(description, start, stop)
-        val entry = web.get(web.server.api("me", "time_entries", id.toString()), ServerTimeEntry.serializer())
-            .orFail("GET cached entry").toCached()!!
-        database.changes().upsertEntry(entry)
+        val entry = runBlocking {
+            web.get(
+                web.server.api("me", "time_entries", id.toString()),
+                ServerTimeEntry.serializer(),
+            )
+        }
+            .orFail("GET cached entry").toTimeEntry()!!
+        database.changes().upsertEntry(cachedRowOf(entry))
         return id
     }
 

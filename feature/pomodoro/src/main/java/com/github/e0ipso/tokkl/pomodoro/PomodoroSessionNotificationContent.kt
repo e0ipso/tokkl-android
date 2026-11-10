@@ -1,0 +1,39 @@
+package com.github.e0ipso.tokkl.pomodoro
+
+import com.github.e0ipso.tokkl.model.PhaseKind
+import com.github.e0ipso.tokkl.timerstate.HeldTimerState
+import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
+import java.security.MessageDigest
+import java.time.Instant
+
+/** @property end the phone's time of the planned end, corrected by the state's clock offset. */
+data class PomodoroSessionNotificationContent(
+    val phase: PomodoroPhaseKey,
+    val kind: PhaseKind,
+    val upcoming: PhaseKind,
+    val number: Int,
+    val longRestEvery: Int,
+    val description: String,
+    val end: Instant,
+    val revision: Long,
+) {
+    // No entry description is written to the preferences file.
+    val key: String get() = MessageDigest.getInstance("SHA-256")
+        .digest(toString().toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }
+}
+
+fun HeldTimerState.notificationContent(): PomodoroSessionNotificationContent? {
+    val session = pomodoro ?: return null
+    val ring = ring() ?: return null
+    val open = runningEntry?.takeIf { it.id == session.entryId }
+    return PomodoroSessionNotificationContent(
+        phase = ring.phase,
+        kind = session.phase.kind,
+        upcoming = session.upcomingPhase,
+        number = session.number,
+        longRestEvery = session.longRestEvery,
+        description = open?.description.orEmpty(),
+        end = ring.end,
+        revision = revision,
+    )
+}

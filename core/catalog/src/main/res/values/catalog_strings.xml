@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- What the projects, clients and tags pages share: their changes go to the server at once and are never queued. -->
+<resources>
+    <string name="catalog_retry">Try again</string>
+    <string name="catalog_cancel">Cancel</string>
+    <!-- Between an item's details, such as its client and the word Archived. -->
+    <string name="catalog_detail_separator">·</string>
+    <!-- The message after the server accepted a change: Created Website -->
+    <string name="catalog_created">Created %1$s</string>
+    <string name="catalog_saved">Saved %1$s</string>
+    <string name="catalog_archived">Archived %1$s</string>
+    <string name="catalog_restored">Restored %1$s</string>
+    <string name="catalog_renamed">Renamed to %1$s</string>
+    <string name="catalog_deleted">Deleted %1$s</string>
+</resources>

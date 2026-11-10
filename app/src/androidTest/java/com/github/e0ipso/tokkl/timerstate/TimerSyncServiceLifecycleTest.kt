@@ -13,13 +13,23 @@ import com.github.e0ipso.tokkl.BackgroundTrip
 import com.github.e0ipso.tokkl.MainActivity
 import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklApplication
+import com.github.e0ipso.tokkl.api.HttpMethod
+import com.github.e0ipso.tokkl.api.TimerPomodoro
+import com.github.e0ipso.tokkl.api.TimerState
+import com.github.e0ipso.tokkl.api.api
+import com.github.e0ipso.tokkl.api.app
 import com.github.e0ipso.tokkl.awaitTimerPage
+import com.github.e0ipso.tokkl.components.heldTimerState
+import com.github.e0ipso.tokkl.components.signOut
+import com.github.e0ipso.tokkl.components.timerSyncServiceRuns
 import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.orFail
 import com.github.e0ipso.tokkl.pomodoro.PomodoroAlarmRearmReceiver
 import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotifier
 import com.github.e0ipso.tokkl.timer.TimerAcceptanceFixture
 import com.github.e0ipso.tokkl.timerState
+import com.github.e0ipso.tokkl.timersync.TimerSyncService
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -51,6 +61,7 @@ import org.junit.rules.RuleChain
  */
 class TimerSyncServiceLifecycleTest {
     private val compose = createEmptyComposeRule()
+
     @get:Rule val rules: RuleChain = RuleChain.outerRule(SessionRule()).around(compose)
     private val fixture = TimerAcceptanceFixture()
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
@@ -82,8 +93,8 @@ class TimerSyncServiceLifecycleTest {
         runBlocking { app.signOut.run() }
 
         awaitEverythingStopped("sign-out")
-        assertNull("sign-out clears the held state", app.timerState.state.value)
-        assertNull("sign-out clears the stored state", TimerStateStore(context).load())
+        assertNull("sign-out clears the held state", app.heldTimerState)
+        assertNull("sign-out clears the stored state", TimerStateStore(context, Dispatchers.IO).load())
         val kept = other.timerState().pomodoro
         assertEquals("the other devices keep the server's session", session.phase.start, kept?.phase?.start)
 
@@ -91,8 +102,8 @@ class TimerSyncServiceLifecycleTest {
         val next = postTimer("pomodoro", "next", revision = other.timerState().revision)
         assertNotNull(next.pomodoro)
         SystemClock.sleep(AT_ONCE_MS)
-        assertNull(app.timerSyncService)
-        assertNull(app.timerState.state.value)
+        assertFalse(app.timerSyncServiceRuns)
+        assertNull(app.heldTimerState)
         assertFalse(notifications.activeNotifications.any { it.id == PomodoroSessionNotifier.NOTIFICATION_ID })
         assertNull(alarms.nextAlarmClock)
     }
@@ -104,14 +115,17 @@ class TimerSyncServiceLifecycleTest {
     private fun openTheAppAndReceiveASessionInTheBackground(): TimerPomodoro {
         ActivityScenario.launch(MainActivity::class.java).use {
             compose.awaitTimerPage()
-            val service = await("the timer sync service runs", STREAM_CONNECT_MS) { app.timerSyncService }
-            assertEquals(ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE, service.foregroundServiceType)
+            await("the timer sync service runs", STREAM_CONNECT_MS) { app.timerSyncServiceRuns.takeIf { it } }
+            assertTrue(TimerSyncService::class.java.name in RunningNotifications.foregroundServices())
+            val service = ComponentName(context, TimerSyncService::class.java)
+            val declared = context.packageManager.getServiceInfo(service, 0)
+            assertEquals(ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE, declared.foregroundServiceType)
             val shown = await("the sync notification", FGS_NOTIFICATION_DEFERRAL_MS) {
-                notifications.activeNotifications.singleOrNull { it.id == TimerSyncNotification.ID }
+                notifications.activeNotifications.singleOrNull { it.id == SYNC_NOTIFICATION_ID }
             }
-            assertEquals(TimerSyncNotification.CHANNEL_ID, shown.notification.channelId)
+            assertEquals(SYNC_CHANNEL_ID, shown.notification.channelId)
             assertTrue("the sync notification stays", shown.isOngoing)
-            val channel = checkNotNull(notifications.getNotificationChannel(TimerSyncNotification.CHANNEL_ID))
+            val channel = checkNotNull(notifications.getNotificationChannel(SYNC_CHANNEL_ID))
             assertEquals(NotificationManager.IMPORTANCE_LOW, channel.importance)
             assertNull("the channel makes no sound", channel.sound)
             assertFalse("the channel does not vibrate", channel.shouldVibrate())
@@ -120,19 +134,19 @@ class TimerSyncServiceLifecycleTest {
             // Wait out the stream's connection with a running entry only the stream can bring.
             val entry = postEntry()
             await("the stream brings the other device's entry", STREAM_CONNECT_MS) {
-                app.timerState.state.value?.state?.runningEntry?.id?.takeIf { it == entry }
+                app.heldTimerState?.runningEntry?.id?.takeIf { it.value == entry }
             }
             val session = checkNotNull(postTimer("pomodoro", body = sessionBody()).pomodoro)
             await("the backgrounded phone holds the session", AT_ONCE_MS) {
-                app.timerState.state.value?.takeIf { it.state.pomodoro?.phase?.start == session.phase.start }
+                app.heldTimerState?.takeIf { it.pomodoro?.phase?.start == session.phase.start }
             }
             await("the session notification", AT_ONCE_MS) {
                 notifications.activeNotifications.singleOrNull { it.id == PomodoroSessionNotifier.NOTIFICATION_ID }
             }
             // A later delivery of this phase can refresh its clock offset and rearm the alarm.
             await("the phase alarm at the corrected planned end", AT_ONCE_MS) {
-                val latest = app.timerState.state.value
-                    ?.takeIf { it.state.pomodoro?.phase?.start == session.phase.start }
+                val latest = app.heldTimerState
+                    ?.takeIf { it.pomodoro?.phase?.start == session.phase.start }
                     ?: return@await null
                 val end = session.phase.plannedEnd.minus(latest.clockOffset).toEpochMilli()
                 alarms.nextAlarmClock?.takeIf { it.triggerTime == end }
@@ -143,18 +157,23 @@ class TimerSyncServiceLifecycleTest {
     }
 
     private fun awaitEverythingStopped(after: String) {
-        await("the timer sync service stops after $after", AT_ONCE_MS) { (app.timerSyncService == null).takeIf { it } }
+        await("the timer sync service stops after $after", AT_ONCE_MS) { (!app.timerSyncServiceRuns).takeIf { it } }
         await("the notifications go after $after", AT_ONCE_MS) {
             notifications.activeNotifications
-                .none { it.id == TimerSyncNotification.ID || it.id == PomodoroSessionNotifier.NOTIFICATION_ID }
+                .none { it.id == SYNC_NOTIFICATION_ID || it.id == PomodoroSessionNotifier.NOTIFICATION_ID }
                 .takeIf { it }
         }
         await("the phase alarm goes after $after", AT_ONCE_MS) { (alarms.nextAlarmClock == null).takeIf { it } }
-        assertEquals("boot and updates no longer start the app", PackageManager.COMPONENT_ENABLED_STATE_DISABLED, rearmReceiverState())
+        assertEquals(
+            "boot and updates no longer start the app",
+            PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+            rearmReceiverState(),
+        )
     }
 
-    private fun rearmReceiverState(): Int =
-        context.packageManager.getComponentEnabledSetting(ComponentName(context, PomodoroAlarmRearmReceiver::class.java))
+    private fun rearmReceiverState(): Int = context.packageManager.getComponentEnabledSetting(
+        ComponentName(context, PomodoroAlarmRearmReceiver::class.java),
+    )
 
     private fun <T : Any> await(what: String, timeoutMs: Long, value: () -> T?): T {
         val deadline = SystemClock.elapsedRealtime() + timeoutMs
@@ -171,10 +190,20 @@ class TimerSyncServiceLifecycleTest {
             put("workspace_id", workspace)
             put("created_with", "tokkl-android tests, another device")
             put("description", "Before the session")
-            put("start", java.time.Instant.now().minusSeconds(60).truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString())
+            put(
+                "start",
+                java.time.Instant.now().minusSeconds(60).truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString(),
+            )
             put("duration", -1)
         }
-        val created = other.send("POST", other.server.api("workspaces", "$workspace", "time_entries"), body, JsonObject.serializer())
+        val created = runBlocking {
+            other.send(
+                HttpMethod.POST,
+                other.server.api("workspaces", "$workspace", "time_entries"),
+                body,
+                JsonObject.serializer(),
+            )
+        }
             .orFail("POST a running entry")
         return (created.getValue("id") as JsonPrimitive).content.toLong()
     }
@@ -193,7 +222,14 @@ class TimerSyncServiceLifecycleTest {
     }
 
     private fun postTimer(vararg path: String, revision: Long? = null, body: JsonObject? = null): TimerState =
-        other.send("POST", other.server.app(*path), body ?: buildJsonObject { if (revision != null) put("revision", revision) }, TimerState.serializer())
+        runBlocking {
+            other.send(
+                HttpMethod.POST,
+                other.server.app(*path),
+                body ?: buildJsonObject { if (revision != null) put("revision", revision) },
+                TimerState.serializer(),
+            )
+        }
             .orFail("POST /api/app/${path.joinToString("/")}")
 
     private companion object {
@@ -208,6 +244,13 @@ class TimerSyncServiceLifecycleTest {
          * notification, and the sync notification asks for no exception, so allow a little more.
          */
         const val FGS_NOTIFICATION_DEFERRAL_MS = 12_000L
+
+        /**
+         * The sync notification's id and channel. A channel's id outlives the app's updates, as the
+         * user's settings for it do, so it is spelled out here.
+         */
+        const val SYNC_NOTIFICATION_ID = 4
+        const val SYNC_CHANNEL_ID = "timer_sync"
 
         const val POLL_MS = 50L
     }
