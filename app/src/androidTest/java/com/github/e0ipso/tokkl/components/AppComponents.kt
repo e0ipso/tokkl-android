@@ -55,7 +55,6 @@ import com.github.e0ipso.tokkl.timersync.PomodoroAlarmScheduler
 import com.github.e0ipso.tokkl.timersync.TimerSync
 import com.github.e0ipso.tokkl.timersync.TimerSyncFollower
 import com.github.e0ipso.tokkl.trust.SessionTrust
-import com.github.e0ipso.tokkl.ui.theme.ThemeSettingsRepository
 import com.github.e0ipso.tokkl.widget.PomodoroWidgetState
 import com.github.e0ipso.tokkl.widget.PomodoroWidgetStateSource
 import com.github.e0ipso.tokkl.widget.WidgetState
@@ -83,7 +82,6 @@ val TokklApplication.accountSettings: AccountSettingsSource get() = component()
 val TokklApplication.accountRefresh: AccountRefresh get() = component()
 val TokklApplication.capabilities: CapabilitiesSource get() = component()
 val TokklApplication.timerView: TimerViewSetting get() = component()
-val TokklApplication.themeSettings: ThemeSettingsRepository get() = component()
 val TokklApplication.pomodoroDefaults: PomodoroDefaultsSetting get() = component()
 val TokklApplication.reminderSettings: ReminderSetting get() = component()
 val TokklApplication.reminder: ReminderSync get() = component()

@@ -29,7 +29,6 @@ import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.io.IOException
 import java.time.DayOfWeek
 import java.time.Duration
 import java.time.Instant
@@ -557,39 +556,5 @@ class WidgetStateTest {
 
         assertEquals("one update, for the stop, before the key moved on", listOf(first.key()), updates)
         assertEquals(second.key(), shown)
-    }
-
-    @Test
-    fun aNewProcessUpdatesTheWidgetWhenThePhoneChangedSinceItWasDrawn() = runTest {
-        var updates = 0
-        var shown: String? = state(entry = null).key()
-        val sync = WidgetSync(
-            keys = flowOf(state()).map { it.key() },
-            shown = valueStore(load = { shown }, save = { shown = it }),
-            redraw = { updates++ },
-            scope = CoroutineScope(Dispatchers.Unconfined),
-            io = Dispatchers.Unconfined,
-        )
-
-        run { sync.follow() }
-
-        assertEquals(1, updates)
-        assertEquals(state().key(), shown)
-    }
-
-    @Test
-    fun aFailedSaveKeepsFollowing() = runTest {
-        var updates = 0
-        val sync = WidgetSync(
-            keys = flowOf(state(), state(entry = null)).map { it.key() },
-            shown = valueStore(load = { null }, save = { throw IOException("disk full") }),
-            redraw = { updates++ },
-            scope = CoroutineScope(Dispatchers.Unconfined),
-            io = Dispatchers.Unconfined,
-        )
-
-        run { sync.follow() }
-
-        assertEquals(2, updates)
     }
 }

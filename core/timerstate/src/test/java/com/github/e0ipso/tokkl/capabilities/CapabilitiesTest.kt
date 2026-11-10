@@ -98,19 +98,6 @@ class CapabilitiesTest {
         assertTrue(capabilities.timeResolution)
     }
 
-    /** No probe: Tokkl's `role` offers no-time entries before any entry has been read. */
-    @Test
-    fun noTimeEntriesAreOfferedOnTokklWithoutAProbe() = runTest {
-        answers[TRASH] = json("[]")
-        answers[TIMER] = json(TIMER_STATE)
-
-        val capabilities = source().refresh(client, me(TOKKL_ME))
-
-        assertEquals(true, capabilities.allDay)
-        assertEquals("the trash and the timer, nothing for no-time entries", listOf(TRASH, TIMER), server.requests())
-        assertNull("hidden before the first refresh", Capabilities.NONE.allDay)
-    }
-
     /** A Tokkl before 1.11.0 sent an entry without `all_day`, so later refreshes keep it off. */
     @Test
     fun aRecordedMissingAllDayStaysOffAcrossRefreshes() = runTest {

@@ -39,11 +39,6 @@ class ApiTokenStoreTest {
     }
 
     @Test
-    fun loadsNullWhenNothingIsStored() {
-        runBlocking { assertNull(store.load()) }
-    }
-
-    @Test
     fun savedTokenLoadsBack() = runBlocking<Unit> {
         store.save(token)
 

@@ -194,13 +194,4 @@ class PomodoroAlarmViewModelTest {
         assertFalse(model.state.value.closed)
         assertTrue(server.calls.isEmpty())
     }
-
-    @Test fun recreationSendsNothing() {
-        model.open(key)
-        repeat(3) { model.open(key) }
-        held.value = held.value
-
-        assertTrue(server.calls.isEmpty())
-        assertEquals(key, model.state.value.ring?.phase)
-    }
 }

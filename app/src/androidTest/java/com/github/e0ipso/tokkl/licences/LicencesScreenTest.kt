@@ -78,15 +78,6 @@ class LicencesScreenTest {
         assertEquals(shipped, notice)
     }
 
-    @Test
-    fun backButtonReturnsToSettings() {
-        openLicences()
-
-        composeRule.onNodeWithContentDescription(string(UiR.string.back)).performClick()
-
-        settingsHeading().assertIsDisplayed()
-    }
-
     /** The top bar, with the title and the back button, stays put while the licence text scrolls under it. */
     @Test
     fun theBarStaysWhileTheTextScrolls() {

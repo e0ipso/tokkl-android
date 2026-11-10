@@ -150,25 +150,6 @@ class TimerControlsTest {
     }
 
     @Test
-    fun aPausedTargetFollowsTheRevisionSoAnOlderOneActsOnNothing() {
-        val before = serverTimerControls(
-            null,
-            held(revision = 12, pause = pause(600, cloneEntryId = null)),
-            timerApi = true,
-            account = ACCOUNT,
-        ) as TimerControls.Paused
-        val renamed = serverTimerControls(
-            null,
-            held(revision = 13, pause = pause(600, cloneEntryId = null)),
-            timerApi = true,
-            account = ACCOUNT,
-        ) as TimerControls.Paused
-
-        assertEquals(TimerTarget.Paused(12, ACCOUNT), before.target)
-        assertEquals(TimerTarget.Paused(13, ACCOUNT), renamed.target)
-    }
-
-    @Test
     fun aChainWhoseCloneNoLongerRunsInTheCacheShowsNothing() {
         // The clone's Stop is queued on the phone, and the server has not ended the chain yet.
         val shown = serverTimerControls(

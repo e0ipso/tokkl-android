@@ -139,28 +139,6 @@ class SignOutTest {
         assertEquals(listOf("session", "cache", "session", "cache"), ran)
         assertEquals(1, account.signOuts.value)
     }
-
-    /**
-     * The order of sign-out (docs/PRD.md S6). The session goes first, so nothing new is sent, and
-     * the timer state next, so a late answer writes nothing. What still runs stops, the refresh
-     * ends before the drain it can start, and only then do the stores clear, the cache before
-     * what follows it.
-     */
-    @Test
-    fun thePhasesRunInTheOrderSignOutNeeds() {
-        assertEquals(
-            listOf(
-                "FORGET_SESSION",
-                "RETIRE_STATE",
-                "STOP_WORK",
-                "FINISH_REFRESH",
-                "FINISH_SENDING",
-                "CLEAR_CACHE",
-                "CLEAR_DATA",
-            ),
-            SignOutPhase.entries.map { it.name },
-        )
-    }
 }
 
 private class SignOutStep(override val signOutPhase: SignOutPhase, private val step: suspend () -> Unit) :

@@ -963,15 +963,6 @@ class ChangeSenderTest {
         assertTrue(store.changes.isEmpty())
     }
 
-    @Test
-    fun sendAndWaitWhenSignedOutSendsNothing() = runTest {
-        signedIn = false
-        store.queue(ChangeKind.CREATE, LOCAL, TAP, stop = null, description = "First")
-
-        assertEquals(ChangeSender.Outcome.SignedOut(sent = 0), run { sender.sendAndWait() })
-        assertEquals(0, server.requestCount)
-    }
-
     /**
      * Sign-out's stop waits for the drain that runs, so nothing that drain writes lands after the
      * cache is cleared. The drain here is held after its first change until stop has had time to

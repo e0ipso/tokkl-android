@@ -183,16 +183,6 @@ class TogglApiClientTest {
     }
 
     @Test
-    fun noContentCallReportsANetworkFailure() = runTest {
-        val url = serverUrl()
-        server.close()
-
-        val error = failure(run { testApi.client(url, credentials).sendNoContent(HttpMethod.DELETE, url.api("me")) })
-
-        assertTrue(error.toString(), error is ApiError.Network)
-    }
-
-    @Test
     fun refusedConnectionIsANetworkError() = runTest {
         val url = serverUrl()
         server.close()

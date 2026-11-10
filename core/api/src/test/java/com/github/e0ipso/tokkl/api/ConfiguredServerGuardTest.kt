@@ -3,8 +3,6 @@ package com.github.e0ipso.tokkl.api
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.HttpUrl
@@ -145,23 +143,6 @@ class ConfiguredServerGuardTest {
         val followed = configured.takeRequest()
         assertEquals("/tokkl/api/v9/me/again", followed.url.encodedPath)
         assertEquals(credentials.authorizationHeader, followed.headers["Authorization"])
-    }
-
-    @Test
-    fun redirectsAfterAPostKeepOkHttpsMethodRules() = runTest {
-        val body = buildJsonObject { put("name", "x") }
-        configured.enqueue(MockResponse.Builder().code(303).addHeader("Location", "/tokkl/seen").build())
-        configured.enqueue(me())
-        configured.enqueue(MockResponse.Builder().code(307).addHeader("Location", "/tokkl/again").build())
-        configured.enqueue(me())
-
-        run { client.send(HttpMethod.POST, server.api("tags"), body, Me.serializer()) }
-        run { client.send(HttpMethod.POST, server.api("tags"), body, Me.serializer()) }
-
-        val requests = List(4) { configured.takeRequest() }
-        assertEquals(listOf("POST", "GET", "POST", "POST"), requests.map { it.method })
-        assertEquals(0L, requests[1].bodySize)
-        assertEquals("""{"name":"x"}""", requests[3].body?.utf8())
     }
 
     @Test

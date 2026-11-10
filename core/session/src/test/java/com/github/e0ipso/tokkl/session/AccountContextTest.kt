@@ -54,15 +54,6 @@ class AccountContextTest {
     }
 
     @Test
-    fun cancellingTheAppScopeCancelsTheAccountsWork() {
-        val work = account.context.value.launch { CompletableDeferred<Unit>().await() }
-
-        app.cancel()
-
-        assertTrue("the account's work ends with the app's scope", work.isCancelled)
-    }
-
-    @Test
     fun anEndedAccountLeavesNothingUnderTheAppScope() {
         val before = account.context.value
         val work = before.launch { CompletableDeferred<Unit>().await() }

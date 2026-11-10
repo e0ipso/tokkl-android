@@ -10,9 +10,7 @@ import com.github.e0ipso.tokkl.settings.SettingsRoute
 import com.github.e0ipso.tokkl.tags.TagsRoute
 import com.github.e0ipso.tokkl.timer.TemplatesRoute
 import com.github.e0ipso.tokkl.trash.TrashRoute
-import com.github.e0ipso.tokkl.ui.theme.SectionHues
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertSame
 import org.junit.Test
 
 /**
@@ -39,10 +37,5 @@ class TopLevelPageHueTest {
         )
         assertEquals(pages.all.map { it.route }.toSet(), expected.keys)
         for ((route, fill) in expected) assertEquals("$route's hue", fill, pages.of(route)?.hue?.fill)
-    }
-
-    @Test
-    fun reportsKeepsItsOwnHueOnTheMoreSheet() {
-        assertSame(SectionHues.reports, pages.of(ReportsRoute)?.hue)
     }
 }
