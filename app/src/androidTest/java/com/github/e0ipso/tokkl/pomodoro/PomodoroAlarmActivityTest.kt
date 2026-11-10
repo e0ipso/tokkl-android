@@ -10,6 +10,8 @@ import android.provider.Settings
 import android.view.WindowManager
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
@@ -337,8 +339,8 @@ class PomodoroAlarmActivityTest {
         }
     }
     private fun click(text: String) {
-        val button = checkNotNull(device.wait(Until.findObject(By.text(text)), 10_000))
-        button.click()
+        awaitAlarmText(text, shown = true)
+        compose.onNodeWithText(text).performClick()
     }
     private fun resumedAlarm(): PomodoroAlarmActivity {
         var activity: PomodoroAlarmActivity? = null

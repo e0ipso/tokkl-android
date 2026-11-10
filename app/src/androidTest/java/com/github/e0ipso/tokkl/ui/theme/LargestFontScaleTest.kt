@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.ui.theme
 
 import android.os.SystemClock
+import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -383,8 +384,9 @@ class LargestFontScaleTest {
         val before = password.bottomInWindow()
 
         password.performClick()
-        val keyboardTop = awaitKeyboardTop()
-        val after = awaitStill(password)
+        val settled = awaitKeyboardAndFieldStill(password)
+        val keyboardTop = settled.keyboardTop
+        val after = settled.fieldBottom
         val rootTop = composeRule.onRoot().fetchSemanticsNode().positionInWindow.y
         val formBottom = composeRule.onNode(hasScrollAction()).fetchSemanticsNode().boundsInWindow.bottom
 
@@ -451,12 +453,12 @@ class LargestFontScaleTest {
         assertEquals("how far above the form's bottom edge the password field ends, in px", pixels.toFloat(), gap, EDGE_SLACK_PX)
 
         password.performClick()
-        val keyboardTop = awaitKeyboardTop()
-        val after = awaitStill(password)
+        val settled = awaitKeyboardAndFieldStill(password)
 
         assertTrue(
-            "the focused password field, $pixels px above the form's edge before, ends at $after px, under the keyboard's top at $keyboardTop px",
-            after <= keyboardTop,
+            "the focused password field, $pixels px above the form's edge before, ends at ${settled.fieldBottom} px, " +
+                "under the keyboard's top at ${settled.keyboardTop} px (tops seen: ${settled.keyboardTops})",
+            settled.fieldBottom <= settled.keyboardTop,
         )
     }
 
@@ -664,41 +666,42 @@ class LargestFontScaleTest {
         composeRule.waitForIdle()
     }
 
-    /**
-     * Waits until the keyboard takes up room and returns its top edge, in window pixels. Visible
-     * is not enough: with show_ime_with_hard_keyboard at 0, tokkl-api36 reported the keyboard as
-     * visible with a height of 0.
-     */
-    private fun awaitKeyboardTop(): Int {
-        val decor = composeRule.activity.window.decorView
-        var height = 0
-        var top = 0
-        composeRule.waitUntil("the keyboard shows", KEYBOARD_TIMEOUT_MS) {
-            InstrumentationRegistry.getInstrumentation().runOnMainSync {
-                height = ViewCompat.getRootWindowInsets(decor)?.getInsets(WindowInsetsCompat.Type.ime())?.bottom ?: 0
-                top = decor.height - height
-            }
-            height > 0
-        }
-        return top
-    }
+    /** Where the open keyboard and a field ended up, in window pixels, and every keyboard top seen. */
+    private class Settled(val keyboardTop: Int, val fieldBottom: Float, val keyboardTops: List<Int>)
 
     /**
-     * Waits until [node] has kept still for [STILL_MS], once the keyboard's animation and the
-     * scroll it starts are over, and returns its bottom edge in window pixels.
+     * Waits until the keyboard takes up room, and then until its top edge and [node]'s bottom
+     * edge have both kept still for [STILL_MS], once the keyboard's animation and the scroll it
+     * starts are over. Visible is not enough: with show_ime_with_hard_keyboard at 0, tokkl-api36
+     * reported the keyboard as visible with a height of 0. The first height is not enough either:
+     * on tokkl-api31 at the largest display size the first inset after the tap put the keyboard's
+     * top at 63 px, the status bar's edge, before the keyboard settled lower, so a field that
+     * ended above the keyboard read as under it.
      */
-    private fun awaitStill(node: SemanticsNodeInteraction): Float {
+    private fun awaitKeyboardAndFieldStill(node: SemanticsNodeInteraction): Settled {
+        val decor = composeRule.activity.window.decorView
+        val tops = mutableListOf<Int>()
+        var top = -1
         var bottom = Float.NaN
         var since = SystemClock.uptimeMillis()
-        composeRule.waitUntil("the sign-in form stops moving", KEYBOARD_TIMEOUT_MS) {
-            val now = node.bottomInWindow()
-            if (now != bottom) {
-                bottom = now
+        composeRule.waitUntil("the keyboard shows and the sign-in form stops moving", KEYBOARD_TIMEOUT_MS) {
+            var height = 0
+            var nowTop = 0
+            InstrumentationRegistry.getInstrumentation().runOnMainSync {
+                height = ViewCompat.getRootWindowInsets(decor)?.getInsets(WindowInsetsCompat.Type.ime())?.bottom ?: 0
+                nowTop = decor.height - height
+            }
+            val nowBottom = node.bottomInWindow()
+            if (height > 0 && tops.lastOrNull() != nowTop) tops += nowTop
+            if (height == 0 || nowTop != top || nowBottom != bottom) {
+                top = nowTop
+                bottom = nowBottom
                 since = SystemClock.uptimeMillis()
             }
-            SystemClock.uptimeMillis() - since >= STILL_MS
+            height > 0 && SystemClock.uptimeMillis() - since >= STILL_MS
         }
-        return bottom
+        Log.i(TAG, "keyboard tops seen after the tap: $tops; field bottom $bottom px")
+        return Settled(top, bottom, tops)
     }
 
     /** The node's bottom edge in window pixels, also when its scrolling parent clips it. */
@@ -990,6 +993,8 @@ class LargestFontScaleTest {
         const val NETWORK_TIMEOUT_MS = 15_000L
 
         const val KEYBOARD_TIMEOUT_MS = 10_000L
+
+        const val TAG = "LargestFontScaleTest"
 
         /** Longer than the keyboard's animation, so a field still moving does not count as still. */
         const val STILL_MS = 1_000L
