@@ -12,7 +12,6 @@ import java.time.temporal.ChronoUnit
 // c8dd0fd9bf5f9f67ccbf59079dacbf43c94c480f, and snappedSeconds ports snappedSeconds in
 // ../tokkl/packages/web/src/lib/settings.ts at tokkl commit e3f15ff628d88a476b77e51ef77c9172903d6db4.
 
-/** A stopped entry's span. */
 data class TimeRange(val start: Instant, val stop: Instant)
 
 /**

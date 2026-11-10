@@ -63,7 +63,6 @@ data class FavoriteBody(
     val billable: Boolean,
 )
 
-/** The signed-in user, their preferences and their workspaces. */
 class AccountApi internal constructor(private val client: ApiTransport) {
 
     /** `GET /api/v9/me`, the whole [Me] that sign-in reads. */

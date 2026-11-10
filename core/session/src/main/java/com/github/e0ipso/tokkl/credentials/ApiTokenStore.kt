@@ -20,13 +20,12 @@ import javax.crypto.spec.GCMParameterSpec
 import kotlin.coroutines.CoroutineContext
 
 /**
- * Keeps the API token encrypted with an AES-GCM key in the Android Keystore
- * (docs/PRD.md S5). The key never leaves the Keystore. The app-private file
- * holds the IV and the ciphertext, never the plain token.
+ * Keeps the API token encrypted with an AES-GCM key in the Android Keystore (docs/PRD.md S5). The
+ * key never leaves the Keystore. The app-private file holds the IV and the ciphertext, never the
+ * plain token.
  *
- * The store has no backup rules of its own: the app keeps all of its data out
- * of backup and device transfer, and another phone could not decrypt the file
- * anyway.
+ * The store has no backup rules of its own: the app keeps all of its data out of backup and device
+ * transfer, and another phone could not decrypt the file anyway.
  *
  * Each call does its disk and Keystore work on [io].
  */
@@ -34,7 +33,6 @@ class ApiTokenStore(context: Context, private val io: CoroutineContext) : Cleara
 
     private val file = AtomicFile(File(context.filesDir, FILE_NAME))
 
-    /** Encrypts the token [value] and replaces the stored one. */
     @Throws(GeneralSecurityException::class, IOException::class)
     override suspend fun save(value: String) {
         locked {
@@ -48,9 +46,8 @@ class ApiTokenStore(context: Context, private val io: CoroutineContext) : Cleara
     }
 
     /**
-     * The stored token, or null when there is none or it no longer decrypts,
-     * for example because the key is gone or the file was changed. Either way
-     * the user has to sign in again.
+     * The stored token, or null when there is none or it no longer decrypts, for example because the
+     * key is gone or the file was changed. Either way the user has to sign in again.
      */
     @Throws(GeneralSecurityException::class, IOException::class)
     override suspend fun load(): String? = locked {

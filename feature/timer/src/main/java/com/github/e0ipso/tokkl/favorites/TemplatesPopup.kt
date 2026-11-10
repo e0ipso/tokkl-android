@@ -36,11 +36,9 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
- * The timer panel's timer-templates icon (docs/PRD.md T5). It opens a popup of the cached
- * templates in [state], in saved order. Choosing one dismisses the popup and calls [onStart].
- * Save as template stores [timerFields]. Manage templates calls [onManage]. Without the
- * capability, nothing shows. [onSave]'s callback hears how the save went, as [FavoritesViewModel.add]
- * reports it. While [offline], saving says that it needs the server.
+ * The timer panel's timer-templates icon (docs/PRD.md T5), which opens a popup of the cached
+ * templates in [state], in saved order. Without the capability, nothing shows. While [offline],
+ * saving says that it needs the server.
  */
 @Composable
 fun TemplatesPopup(
@@ -133,7 +131,6 @@ internal fun templateName(template: FavoriteItem): String =
 internal fun templateSpoken(name: String, project: String?): String =
     project?.let { stringResource(UiR.string.favorites_with_project, name, it) } ?: name
 
-/** What TalkBack reads for starting [template]. */
 @Composable
 internal fun templateStartSpoken(template: FavoriteItem): String {
     val name = templateName(template)

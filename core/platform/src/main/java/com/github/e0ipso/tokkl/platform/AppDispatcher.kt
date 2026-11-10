@@ -21,16 +21,12 @@ sealed interface AppDispatcher {
     data object Default : AppDispatcher
 }
 
-/** [Dispatchers.Main.immediate], the main thread, which runs at once when already on it. */
 val MainDispatcher: Qualifier = named<AppDispatcher.Main>()
 
-/** [Dispatchers.IO], for disk and network work. */
 val IoDispatcher: Qualifier = named<AppDispatcher.Io>()
 
-/** [Dispatchers.Default], for computation, such as the timer event stream's clock and the history's grouping. */
 val DefaultDispatcher: Qualifier = named<AppDispatcher.Default>()
 
-/** The IO dispatcher, for the Koin definitions of the app and its features. */
 fun Scope.io(): CoroutineDispatcher = get(IoDispatcher)
 
 /** The dispatcher for work that keeps the CPU busy, such as grouping a list of entries. */
@@ -50,5 +46,4 @@ fun Scope.viewModelCoroutineScope(): CoroutineScope =
  */
 val whileShown: SharingStarted = SharingStarted.WhileSubscribed(stopTimeoutMillis = SHOWN_TIMEOUT_MILLIS)
 
-/** How long a view model keeps sharing a screen's state after the screen stops reading it. */
 private const val SHOWN_TIMEOUT_MILLIS = 5_000L

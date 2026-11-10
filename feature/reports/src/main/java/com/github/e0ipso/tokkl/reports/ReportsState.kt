@@ -39,7 +39,6 @@ sealed interface ReportsState {
     data class Failed(val selection: RangeSelection, val failure: ReportFailure) : ReportsState
 }
 
-/** The range this state is about, or null when there is none. */
 internal fun ReportsState.selection(): RangeSelection? = when (this) {
     is ReportsState.Loading -> selection
     is ReportsState.Loaded -> selection
@@ -47,7 +46,6 @@ internal fun ReportsState.selection(): RangeSelection? = when (this) {
     ReportsState.Closed, is ReportsState.NoAccountTime -> null
 }
 
-/** Why there is no report. */
 sealed interface ReportFailure {
 
     /** No answer: the phone is offline, or the server or the proxy in front of it is down. */
@@ -63,7 +61,6 @@ sealed interface ReportFailure {
     data class Unexpected(val status: Int?) : ReportFailure
 }
 
-/** How [error] shows on the reports screen. */
 internal fun reportFailureOf(error: ApiError): ReportFailure = when (error) {
     is ApiError.Network -> ReportFailure.Unreachable
 
@@ -87,10 +84,8 @@ private val PROXY_ANSWERS_SERVER_DOWN =
     setOf(HttpStatus.BAD_GATEWAY, HttpStatus.SERVICE_UNAVAILABLE, HttpStatus.GATEWAY_TIMEOUT)
 
 /**
- * Everything the reports screen shows: the [report] of the [tab] on screen, the account
- * [settings] and their [time], null when the phone cannot resolve the account's timezone, the
- * [filters] and what the filter sheet offers in [filterOptions], and the CSV export, which shows
- * only where the server offers the tab's export ([exportSupported]).
+ * Everything the reports screen shows. [time] is null when the phone cannot resolve the account's
+ * timezone, and the CSV export shows only where the server offers the tab's export.
  */
 @Immutable
 data class ReportsPageState(

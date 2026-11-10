@@ -28,8 +28,7 @@ private val stoppedEntryOrder = compareBy<TimeEntry> { it.start }
 /**
  * Starts a timer with [source]'s description, project, task, tags and billable, in [source]'s
  * workspace, where its project and tags are. It goes through [RunningEntryChanges.start], so it is on the
- * phone at once, works offline, and stops a running entry at the new one's start. Returns the new
- * entry's local id.
+ * phone at once, works offline, and stops a running entry at the new one's start.
  */
 suspend fun RunningEntryChanges.continueEntry(source: TimeEntry): EntryId = start(source.workspaceId, source.fields())
 

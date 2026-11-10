@@ -6,15 +6,13 @@ import java.io.IOException
 import kotlin.coroutines.CoroutineContext
 
 /**
- * Where the 429 deadlines of sign-in persist, by server origin
- * (`scheme://host:port`), so a new process still waits them out. A deadline
- * is a wall-clock time in milliseconds: Tokkl's lockout runs on the server's
- * clock, so a reboot of the phone does not lift it. Holds nothing else. Calls
+ * Where the 429 deadlines of sign-in persist, by server origin (`scheme://host:port`), so a new
+ * process still waits them out. A deadline is a wall-clock time in milliseconds: Tokkl's lockout
+ * runs on the server's clock, so a reboot of the phone does not lift it. Holds nothing else. Calls
  * do disk I/O.
  */
 interface SignInCooldowns {
 
-    /** Every stored deadline, by origin. */
     suspend fun load(): Map<String, Long>
 
     @Throws(IOException::class)
@@ -25,10 +23,9 @@ interface SignInCooldowns {
 }
 
 /**
- * The sign-in cooldowns in the app's private preferences file
- * `sign_in_cooldown`: one entry per server origin, holding the wall-clock
- * time at which that server's 429 stops blocking sign-in. The file holds
- * nothing else, and the backup rules exclude it with every other file.
+ * The sign-in cooldowns in the app's private preferences file `sign_in_cooldown`: one entry per
+ * server origin, holding the wall-clock time at which that server's 429 stops blocking sign-in. The
+ * file holds nothing else, and the backup rules exclude it with every other file.
  *
  * Each call reads or writes the file on the I/O dispatcher.
  */

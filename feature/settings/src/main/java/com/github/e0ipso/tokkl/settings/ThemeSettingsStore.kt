@@ -44,7 +44,6 @@ class ThemeSettingsStore(context: Context, private val io: CoroutineContext) : T
         }
     }
 
-    /** Goes back to the defaults. */
     @Throws(IOException::class)
     suspend fun clear() {
         file.commit { clear() }

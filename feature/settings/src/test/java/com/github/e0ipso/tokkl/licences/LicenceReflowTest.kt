@@ -67,7 +67,6 @@ class LicenceReflowTest {
         assertTrue(disclaimer.endsWith("OTHER DEALINGS IN THE FONT SOFTWARE."))
     }
 
-    /** A line ends before the next one only at a paragraph's end, after a heading or before a condition. */
     @Test
     fun breaksALineOnlyAtAParagraphEndAHeadingOrACondition() {
         for (block in blocks) {

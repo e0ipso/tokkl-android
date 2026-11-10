@@ -30,13 +30,12 @@ enum class SignInMethod { API_TOKEN, EMAIL_PASSWORD }
 enum class InputError { SERVER_URL, API_TOKEN, EMAIL, EMAIL_COLON, PASSWORD }
 
 /**
- * What the sign-in screen shows. The secrets live in memory only, never in
- * saved instance state, and `toString` leaves them out.
+ * What the sign-in screen shows. The secrets live in memory only, never in saved instance state,
+ * and `toString` leaves them out.
  *
- * [retryAt] is the [SignInViewModel] clock time at which a 429 from the server in
- * [serverUrl] stops blocking sign-in, or null when nothing blocks it. [again] is the signed-in
- * account while the user signs in again after the server refused its token, and null for a
- * first sign-in.
+ * [retryAt] is the [SignInViewModel] clock time at which a 429 from the server in [serverUrl] stops
+ * blocking sign-in, or null when nothing blocks it. [again] is the signed-in account while the user
+ * signs in again after the server refused its token, and null for a first sign-in.
  */
 @Immutable
 data class SignInState(
@@ -58,36 +57,25 @@ data class SignInState(
 }
 
 /**
- * The sign-in form and its attempts. Each submit sends one request, and only
- * when the user asks: after a 429 the view model refuses to submit to that server
- * until `Retry-After` has passed, and it never retries on its own. The
- * deadline persists in [cooldowns] by server origin, so a view model in a new
- * process keeps the button disabled too. It goes once it passes or a sign-in
- * to that server succeeds.
+ * The sign-in form and its attempts. Each submit sends one request, and only when the user asks:
+ * after a 429 the view model refuses to submit to that server until `Retry-After` has passed, and
+ * it never retries on its own. The deadline persists in [cooldowns] by server origin, so a view
+ * model in a new process keeps the button disabled too. It goes once it passes or a sign-in to that
+ * server succeeds.
  *
- * The form and an attempt in flight outlive a configuration change. The
- * secrets stay in this object's memory: nothing here goes into saved
- * instance state.
+ * A plain `http://` server gets nothing until the user confirms the warning that the token or
+ * password travels unencrypted. The shared client refuses the request, the attempt ends with
+ * [SignInResult.CleartextNotConfirmed], and [confirmCleartext] records the confirmation in [trust]
+ * and sends it again. A certificate that no system or user CA trusts ends the attempt with
+ * [SignInResult.UntrustedCertificate] before any credential is sent, and [trustCertificate] pins
+ * the certificate the prompt showed and sends it again.
  *
- * A plain `http://` server gets nothing until the user confirms the warning
- * that the token or password travels unencrypted. The shared client refuses
- * the request, the attempt ends with [SignInResult.CleartextNotConfirmed], and
- * [confirmCleartext] records the confirmation in [trust] and sends it again.
- * A certificate that no system or user CA trusts ends the attempt with
- * [SignInResult.UntrustedCertificate] before any credential is sent, and
- * [trustCertificate] pins the certificate the prompt showed and sends it again.
- *
- * @param trust where the user's answers go. The shared client checks it
- *   before every request and in every TLS handshake.
- * @param cooldowns where the 429 deadlines persist.
- * @param clock the wall clock, since a deadline has to outlast the process and a
- *   reboot.
- * @param scope runs the view model's coroutines on one thread, the main thread in
- *   the app.
- * @param io where the writes to [trust] run.
- * @param refreshes loads the account settings and the cache once the server
- *   has accepted the credentials and the app has stored them, as coming to the
- *   foreground does.
+ * @param trust where the user's answers go. The shared client checks it before every request and in
+ *   every TLS handshake.
+ * @param clock the wall clock, since a deadline has to outlast the process and a reboot.
+ * @param scope runs the view model's coroutines on one thread, the main thread in the app.
+ * @param refreshes loads the account settings and the cache once the server has accepted the
+ *   credentials and the app has stored them, as coming to the foreground does.
  */
 class SignInViewModel(
     private val signIn: SignIn,
@@ -180,10 +168,7 @@ class SignInViewModel(
         }
     }
 
-    /**
-     * The countdown reached zero. Forgets every deadline that has passed, on
-     * the phone too.
-     */
+    /** The countdown reached zero. Forgets every deadline that has passed, on the phone too. */
     fun cooldownEnded() {
         val now = clock.millis()
         deadlines.filterValues { it <= now }.keys.forEach(::forget)
@@ -191,8 +176,8 @@ class SignInViewModel(
     }
 
     /**
-     * The user confirmed the warning about a plain `http://` server. Records
-     * the confirmation for that URL, then sends the attempt.
+     * The user confirmed the warning about a plain `http://` server. Records the confirmation for
+     * that URL, then sends the attempt.
      */
     fun confirmCleartext() {
         val warning = mutableState.value.failure as? SignInResult.CleartextNotConfirmed ?: return
@@ -200,9 +185,9 @@ class SignInViewModel(
     }
 
     /**
-     * The user trusts the certificate that the prompt showed. Pins exactly
-     * that certificate, by its SHA-256, then sends the attempt. A server that
-     * now presents another certificate fails the handshake and prompts again.
+     * The user trusts the certificate that the prompt showed. Pins exactly that certificate, by its
+     * SHA-256, then sends the attempt. A server that now presents another certificate fails the
+     * handshake and prompts again.
      */
     fun trustCertificate() {
         val prompt = mutableState.value.failure as? SignInResult.UntrustedCertificate ?: return
@@ -261,7 +246,6 @@ class SignInViewModel(
         else -> copy(submitting = false, failure = result, retryAt = retryAt)
     }
 
-    /** The deadline for the server in the form, or null when none blocks it. */
     private fun deadlineFor(serverUrl: String): Long? = ServerUrl.parse(serverUrl.trim())?.let { deadlines[it.origin] }
 
     private fun remember(origin: String, deadline: Long) {
@@ -275,9 +259,9 @@ class SignInViewModel(
     }
 
     /**
-     * Writes to [cooldowns], which write off the main thread, one at a time
-     * and in call order: each call takes the lock before it first suspends. A
-     * failed write leaves the deadline in memory, so this process still waits.
+     * Writes to [cooldowns], which write off the main thread, one at a time and in call order: each
+     * call takes the lock before it first suspends. A failed write leaves the deadline in memory,
+     * so this process still waits.
      */
     private fun writeCooldowns(write: suspend SignInCooldowns.() -> Unit) {
         viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {

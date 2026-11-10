@@ -13,9 +13,6 @@ import java.time.DayOfWeek
 import java.time.Instant
 import java.time.ZoneOffset
 
-// Design-time previews of the Pomodoro start form and the full-screen alarm, with sample states at
-// a fixed noon.
-
 @PreviewLightDark
 @Composable
 private fun PomodoroStartPreview() {

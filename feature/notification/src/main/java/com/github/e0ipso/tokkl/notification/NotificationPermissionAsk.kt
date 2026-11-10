@@ -44,13 +44,11 @@ class NotificationPermissionAsk(
     /** Records that the platform request launched, whatever the eventual answer. */
     suspend fun requested() = record.markAsked()
 
-    /** [atStartInApp] on [io]. */
     suspend fun askAtStart(): Boolean = withContext(io) { atStartInApp() }
 
     /** [requested] on [io], also when the caller is cancelled meanwhile, as by a rotation. */
     suspend fun recordRequest() = withContext(NonCancellable + io) { requested() }
 
-    /** Whether the app has asked for the notification permission. */
     interface AskRecord {
         suspend fun asked(): Boolean
 

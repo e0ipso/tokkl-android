@@ -10,10 +10,7 @@ import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
-/**
- * The ringing notification's buttons and its swipe. This reads the button's phase and revision
- * and hands them to [PomodoroRingingButtons].
- */
+/** The ringing notification's buttons and its swipe. */
 class PomodoroRingingActionReceiver :
     BroadcastReceiver(),
     KoinComponent {

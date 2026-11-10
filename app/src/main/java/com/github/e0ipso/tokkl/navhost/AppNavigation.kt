@@ -56,9 +56,9 @@ import com.github.e0ipso.tokkl.core.ui.R as UiR
 /**
  * The bottom bar of a signed-in screen on a compact window: the [pages] outside More, which are
  * Timer, Pomodoro, Projects and Settings, then More, with the page of the route [current] marked.
- * More opens a sheet with the other pages, and is marked while one of them shows. [onOpen] opens a
- * page by its route. A 1dp line in the border colour sits above the bar, as the
- * web app draws it. Wider windows get [AppNavigationRail] with the same items.
+ * More opens a sheet with the other pages, and is marked while one of them shows. A 1dp line in
+ * the border colour sits above the bar, as the web app draws it. Wider windows get
+ * [AppNavigationRail] with the same items.
  *
  * The item of each page in [badges] carries a dot, as the web app's `.running-dot`, such as Timer
  * while a time entry runs, and TalkBack reads the page's label in [badges] as its state, such as
@@ -142,10 +142,7 @@ fun AppNavigationRail(
     if (moreOpen) MoreSheet(pages, current, hidden, onOpen, onClose = { moreOpen = false })
 }
 
-/**
- * An item of the bar or the rail: a [page], or More when [page] is null. While [runningLabel] is
- * not null, the item carries the running dot, and TalkBack reads the label as its state.
- */
+/** An item of the bar or the rail: a [page], or More when [page] is null. */
 private class NavigationItem(
     val page: TopLevelDestination?,
     val label: String,
@@ -159,18 +156,12 @@ private class NavigationItem(
     fun selected(current: TopLevelDestination?): Boolean =
         if (page == null) current?.inMore == true else page == current
 
-    /** Whether the item carries the running dot. */
     val dot: Boolean get() = runningLabel != null
 }
 
-/** TalkBack's running state on [item], while it carries the dot. */
 private fun Modifier.runningState(item: NavigationItem): Modifier =
     item.runningLabel?.let { label -> semantics { stateDescription = label } } ?: this
 
-/**
- * The [pages] outside More, less those whose routes are in [hidden], then More. The pages in
- * [badges] carry the running dot, with their labels.
- */
 @Composable
 private fun navigationItems(pages: TopLevelPages, hidden: Set<Route>, badges: Map<Route, Int>): List<NavigationItem> {
     val items = pages.all.filterNot { it.inMore || it.route in hidden }
@@ -185,7 +176,6 @@ private fun navigationItems(pages: TopLevelPages, hidden: Set<Route>, badges: Ma
     return items + NavigationItem(null, stringResource(R.string.nav_more), UiR.drawable.ic_nav_more, null)
 }
 
-/** The [item]'s icon, with its running dot while it carries one. */
 @Composable
 private fun ItemIcon(item: NavigationItem, current: TopLevelDestination?) {
     val icon = @Composable { Icon(painterResource(item.icon), contentDescription = null) }

@@ -163,7 +163,6 @@ class SignOutTest {
     }
 }
 
-/** A sign-out step that runs [step] in [signOutPhase]. */
 private class SignOutStep(override val signOutPhase: SignOutPhase, private val step: suspend () -> Unit) :
     AccountDataOwner {
     override suspend fun forgetAccount() = step()

@@ -39,10 +39,7 @@ class TimerApi internal constructor(private val client: ApiTransport) {
     /** `GET /api/app/timer`. */
     suspend fun state(): ApiResult<TimerState> = client.get(client.server.appUrl("timer"), TimerState.serializer())
 
-    /**
-     * `GET /api/app/timer/events`, the Server-Sent Events stream, read by [read] until it ends, as
-     * [ApiTransport.stream] describes. [cancellation] ends it from outside.
-     */
+    /** `GET /api/app/timer/events`, the Server-Sent Events stream, as [ApiTransport.stream] describes. */
     suspend fun <T> events(cancellation: ApiCallCancellation, read: (InputStream) -> T): ApiResult<T> =
         client.stream(client.server.appUrl("timer", "events"), cancellation, read)
 

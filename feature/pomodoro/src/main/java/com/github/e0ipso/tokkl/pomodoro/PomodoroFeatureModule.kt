@@ -35,7 +35,6 @@ import org.koin.dsl.bind
 import org.koin.dsl.binds
 import org.koin.dsl.module
 
-/** The Pomodoro defaults, the phase alarm, its ring, the session notification and the Pomodoro page. */
 val pomodoroFeatureModule = module {
     single { PomodoroDefaultsStore(androidContext(), io()) }
 
@@ -53,10 +52,6 @@ val pomodoroFeatureModule = module {
         )
     } binds arrayOf(AccountDataOwner::class, StartupLoad::class)
 
-    // The exact alarm at a running Pomodoro phase's planned end.
-    // [PomodoroAlarmScheduler.permissionDenied] is what the Pomodoro page reads when that alarm
-    // cannot be set, from the platform. Its boot and update receiver also starts the timer sync
-    // service.
     single<ExactAlarmAccess> {
         PlatformExactAlarms(androidContext().getSystemService(AlarmManager::class.java))
     }
@@ -68,8 +63,6 @@ val pomodoroFeatureModule = module {
         )
     } binds arrayOf(PomodoroAlarmScheduler::class, TimerSyncWatcher::class)
 
-    // The ringing service at a Pomodoro phase's planned end, as [PomodoroPhaseAlarm] drives it and the Pomodoro widget
-    // reads it.
     single {
         ServicePomodoroRinging(
             androidContext(),
@@ -92,8 +85,6 @@ val pomodoroFeatureModule = module {
     } bind PomodoroRingCheck::class
     single { PomodoroAlarmHook(inject(), inject(), inject(), get(), io()) } bind AppHook::class
 
-    // What the boot, update, clock and exact-alarm broadcasts do: arm the held phase again, and
-    // start the timer sync service after boot and an update.
     singleOf(::PomodoroAlarmRearm)
 
     singleOf(::AlarmRingingButtons) bind PomodoroRingingButtons::class
@@ -122,7 +113,6 @@ val pomodoroFeatureModule = module {
 
     singleOf(::SessionNotificationButtons) bind PomodoroSessionButtons::class
 
-    // Sign-out: the alarm, the session notification and the notification ID they share.
     single {
         PomodoroSignOut(alarm = get(), notification = get(), sharedId = PomodoroSessionNotifier(androidContext()))
     } bind AccountDataOwner::class
@@ -164,6 +154,5 @@ val pomodoroFeatureModule = module {
     single { PomodoroEntries } bind FeatureRoutes::class
     single { PomodoroRequests(notification = inject(), io = io()) } bind FeatureRequests::class
 
-    // The bar's running dot on Pomodoro while the server's session runs.
     single { PomodoroBadge(get<AccountTimerStates>().held) } bind PageBadge::class
 }

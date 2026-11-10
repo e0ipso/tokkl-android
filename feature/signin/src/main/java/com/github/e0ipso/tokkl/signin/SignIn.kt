@@ -43,31 +43,30 @@ sealed interface SignInResult {
     data class RateLimited(val retryAfterSeconds: Long?) : SignInResult
 
     /**
-     * The TLS handshake failed because no system or user CA trusts the
-     * server's [certificate], and the user has not pinned it. [changed] is
-     * true when the user pinned another certificate for that server. No
-     * request was sent, so no credential left the phone. The screen asks
-     * whether to trust the certificate by its fingerprint.
+     * The TLS handshake failed because no system or user CA trusts the server's [certificate], and
+     * the user has not pinned it. [changed] is true when the user pinned another certificate for
+     * that server. No request was sent, so no credential left the phone. The screen asks whether to
+     * trust the certificate by its fingerprint.
      */
     data class UntrustedCertificate(val certificate: ServerCertificate, val changed: Boolean) : SignInResult
 
     /**
-     * The server's certificate does not name [host], the host of the URL the
-     * user entered, so the host name check refused it and nothing was sent.
-     * The screen says how to fix the certificate and never offers to trust it.
+     * The server's certificate does not name [host], the host of the URL the user entered, so the
+     * host name check refused it and nothing was sent. The screen says how to fix the certificate
+     * and never offers to trust it.
      */
     data class CertificateHostMismatch(val host: String) : SignInResult
 
     /**
-     * The server redirected to [origin] (`scheme://host:port`), and the app
-     * talks only to the server the user entered.
+     * The server redirected to [origin] (`scheme://host:port`), and the app talks only to the
+     * server the user entered.
      */
     data class HostNotAllowed(val origin: String) : SignInResult
 
     /**
-     * [server] is a plain `http://` URL the user has not confirmed, so nothing
-     * was sent. The screen warns that the token or password would travel
-     * unencrypted, and the attempt goes ahead only once the user confirms.
+     * [server] is a plain `http://` URL the user has not confirmed, so nothing was sent. The screen
+     * warns that the token or password would travel unencrypted, and the attempt goes ahead only
+     * once the user confirms.
      */
     data class CleartextNotConfirmed(val server: ServerUrl) : SignInResult
 
@@ -110,18 +109,16 @@ interface SignIn {
 }
 
 /**
- * One sign-in attempt: `GET /api/v9/me` with HTTP Basic auth, then the server,
- * the token and the account settings from that response go to [storeSignIn]. With
- * email and password, the token kept is the `api_token` from that response;
- * the password is used for this one request and never written anywhere.
+ * One sign-in attempt: `GET /api/v9/me` with HTTP Basic auth, then the server, the token and the
+ * account settings from that response go to [storeSignIn]. With email and password, the token kept
+ * is the `api_token` from that response; the password is used for this one request and never
+ * written anywhere.
  *
  * An attempt runs in [scope], the application's, on [io]: once sent, a sign-in the server accepts
  * is stored also when the form that sent it goes meanwhile.
  *
  * @param connector opens the API of the server tried over the shared HTTP client, whose guard lets
  *   the request through to [configured]'s sign-in candidate.
- * @param scope the application's scope, where each attempt runs.
- * @param io where the request and the stores' disk work run.
  */
 class ServerSignIn(
     private val storeSignIn: suspend (server: ServerUrl, token: String, settings: AccountSettings) -> Unit,
@@ -183,10 +180,7 @@ private fun ApiError.toSignInResult(): SignInResult = when (this) {
     is ApiError.Network -> SignInResult.Unreachable
 }
 
-/**
- * The account signed in now, which a sign-in may only sign in again, or null while signed out.
- * [StoredSignInAccount] reads it from the disk; the view model's tests answer in memory.
- */
+/** The account signed in now, which a sign-in may only sign in again, or null while signed out. */
 fun interface SignedInAccount {
     suspend fun current(): SignInAgain?
 }
@@ -194,8 +188,7 @@ fun interface SignedInAccount {
 /**
  * The account a sign-in would replace, read from the stores on each call: the stored server and
  * the stored settings' user. Sign-in rechecks it on every submit, including a form restored after
- * the process died, whose in-memory reauthentication marker may be gone. The stores read the
- * disk on the I/O dispatcher.
+ * the process died, whose in-memory reauthentication marker may be gone.
  */
 internal class StoredSignInAccount(
     private val servers: ServerConfigStore,

@@ -40,51 +40,38 @@ import java.time.LocalDate
 
 /**
  * The form that edits a running segment, every field of a stopped entry (docs/PRD.md H2), or adds
- * a past entry by hand (M1), as the web app's EntryEditor.tsx and the manual mode of its TimerBar.tsx do: the
- * description, the project, task and tags, billable, the date, the start, and the end or the
- * duration. Times are read with the ports of Tokkl's parsers in the account's timezone (S7), and
- * an end earlier than the start falls on the next day.
+ * a past entry by hand (M1), as the web app's EntryEditor.tsx and the manual mode of its
+ * TimerBar.tsx do. Times are read with the ports of Tokkl's parsers in the account's timezone
+ * (S7), and an end earlier than the start falls on the next day.
  *
  * Leaving the start or the end fills in the duration, and leaving the duration fills in the end,
- * as start plus that many seconds, as in the web app's editor. On the edit screen a time field
- * left as it opened keeps the entry's own instant, with its seconds, and the duration counts only
- * once it differs from what the form last derived.
+ * as in the web app's editor. On the edit screen a time field left as it opened keeps the entry's
+ * own instant, with its seconds, and the duration counts only once it differs from what the form
+ * last derived.
  *
- * The form opens on the cache's copy of an entry, or on the copy the history holds of an entry from
- * the older days the server sent, which the phone does not keep. The cache holds an older entry
- * edited on the phone only until the send and the refresh after it, so a form opened on that copy
- * saves as on the older days' copy once the cache has dropped it.
+ * The form can open on the history's copy of an entry from the older days, which the phone does
+ * not keep. The cache holds an older entry edited on the phone only until the send and the
+ * refresh after it, so a form opened on that copy saves as on the older days' copy once the
+ * cache has dropped it.
  *
- * With No times on, the entry is a no-time one, as in the web app's EntryEditor.tsx: a date and a
- * duration. The server stores it from midnight on that date in the account's timezone, with the
- * duration rounded to the time resolution. A no-time entry opens with No times on, and
- * [newAllDay] opens a new one for the calendar's All day row.
+ * A no-time entry is a date and a duration, as in the web app's EntryEditor.tsx. The server
+ * stores it from midnight on that date in the account's timezone, with the duration rounded to
+ * the time resolution.
  *
- * Save checks the times. A field that cannot be read, or a span the server would refuse, gets a
- * [TimeMistake] and nothing is queued. Otherwise the change goes to [changes], the change queue,
- * with every field, so it is on the phone at once, works offline, and the last write to reach the
- * server wins (O3). Call everything on the main thread.
+ * Save queues every field, or nothing while a [TimeMistake] remains, so the change is on the
+ * phone at once, works offline, and the last write to reach the server wins (O3). As in the web
+ * app's editor, closing the form discards unsaved fields without asking, and Delete queues the
+ * stored entry, ignoring them. Call everything on the main thread.
  *
- * Like ../tokkl/packages/web/src/components/EntryEditor.tsx, closing or replacing the editor
- * discards unsaved fields without asking or keeping a draft. Save queues the draft; Delete
- * queues the current stored entry and ignores unsaved fields.
+ * [saved] keeps the copy the form opened on and the fields typed ([SavedEntryForm]), so a new
+ * process reopens the form after the old one died with it on screen: it reads the entry from the
+ * cache again and puts what was typed over it.
  *
- * The form keeps in [saved] what a new process needs to open it again after the old one died
- * with it on screen ([SavedEntryForm]): the copy it opened on of an entry the cache lacked, and
- * the fields typed. The first opening after that takes them: it reads the entry from the cache
- * again, or a missing one is missing, and puts what was typed over it.
- *
- * @param entries the cached entries with their send state, as AccountCache.entries gives them.
- * @param changes the change queue, which a new or edited stopped entry goes to.
- * @param running the change queue's edits of the running segment, which the form opens and saves.
  * @param pastEdits the session's entries, which save an edit whether the cache holds the entry or
  *   an older page or a server week does.
  * @param clock where now comes from, which a start without AM or PM is guessed against.
  * @param allDay whether the server stores no-time entries, as `Capabilities.allDay` says, which
  *   decides whether the form offers the No times switch.
- * @param picker the cached projects, clients, tasks and tags, which the form's picker offers.
- * @param offline whether the phone is offline, which the picker says.
- * @param saved the form's saved state, which outlives the process.
  */
 class EntryFormViewModel(
     private val entries: Flow<List<EntryWithSendState>>,
@@ -114,7 +101,6 @@ class EntryFormViewModel(
     private val catalog: StateFlow<Catalog> = combine(projects, tasks, ::Catalog)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), Catalog())
 
-    /** The form, before the picker and the network join it in [page]. */
     internal val state: StateFlow<EntryFormState> = combine(
         phase,
         catalog,
@@ -124,7 +110,6 @@ class EntryFormViewModel(
         current.shown(names, settings, offered)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), EntryFormState.Closed)
 
-    /** What the form's screen draws: the form, what its picker offers, and whether the phone is offline. */
     val page: StateFlow<EntryFormPage> = combine(
         state,
         picker.stateIn(viewModelScope, whileShown, PickerSource()),
@@ -150,7 +135,6 @@ class EntryFormViewModel(
     /** Opens the form for a manual entry on [date], or on today's date in the account's timezone. */
     fun new(date: LocalDate? = null) = open(Opening.New(date))
 
-    /** Opens the form for a no-time entry on [day], as the calendar's All day row adds one. */
     fun newAllDay(day: LocalDate) = open(Opening.New(day, noTimes = true))
 
     fun close() {
@@ -236,7 +220,6 @@ class EntryFormViewModel(
         }
     }
 
-    /** Checks the times and queues the entry, or marks what keeps it from saving. */
     fun save() {
         val form = (phase.value as? Phase.Open)?.form?.takeIf { !it.saving } ?: return
         val settings = accountSettings.value ?: return
@@ -270,10 +253,7 @@ class EntryFormViewModel(
         }
     }
 
-    /**
-     * Queues [form] with its checked [timing]: a new entry in [workspaceId], the running segment, or
-     * an edit. Returns false when the entry it edits has gone.
-     */
+    /** Queues [form] with its checked [timing]; returns false when the entry it edits has gone. */
     private suspend fun write(form: EntryDraft, timing: EntryTiming, workspaceId: WorkspaceId) =
         when (val target = form.target) {
             DraftTarget.New -> {
@@ -390,7 +370,6 @@ class EntryFormViewModel(
         }
     }
 
-    /** What the form keeps for a new process while it is [phase]. */
     private fun keptFor(phase: Phase): SavedEntryForm? = when (phase) {
         is Phase.Waiting -> SavedEntryForm((phase.opening as? Opening.Edit)?.older?.let(::SavedEntry), phase.typed)
 
@@ -477,12 +456,10 @@ class EntryFormViewModel(
     private companion object {
         const val STOP_TIMEOUT_MS = 5_000L
 
-        /** The key of the form's [SavedEntryForm] in its saved state. */
         const val SAVED_FORM = "entry-form"
     }
 }
 
-/** Opens [form] on what this request asks for. */
 internal fun EntryFormRequest.openIn(form: EntryFormViewModel) {
     when (val opening = opening) {
         is EntryOpening.Edit -> form.edit(opening.entryId, older)

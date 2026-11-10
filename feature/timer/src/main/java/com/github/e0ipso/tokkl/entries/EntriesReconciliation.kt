@@ -139,7 +139,6 @@ internal fun Reconciliation.weekEntry(id: EntryId, weeks: WeeksState, clock: Clo
     return edits[id]?.entry ?: server
 }
 
-/** [entry] was deleted on the phone. The history and the calendar leave it out from now on. */
 internal fun Reconciliation.deleted(entry: TimeEntry): Reconciliation =
     overridden(entry.id, null).copy(deleted = deleted + (entry.id to entry))
 
@@ -165,7 +164,6 @@ internal fun Reconciliation.weekLoaded(week: ServerWeek, sent: Map<EntryId, Kept
     return copy(weekEdits = weekEdits.filterNot { (id, edit) -> id in ids && sent[id] == edit })
 }
 
-/** Drops the copies kept of what the server sent, for the account signing in. */
 internal fun Reconciliation.forgotServer(): Reconciliation =
     copy(lastRows = emptyList(), dropped = emptyList(), pageEdits = emptyMap(), weekEdits = emptyMap())
 

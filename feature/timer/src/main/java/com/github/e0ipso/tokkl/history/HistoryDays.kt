@@ -20,7 +20,6 @@ import java.time.LocalDate
  * @property timing the server's times for an entry the server has, or for one with a change it
  *   has not received, the times the server will store, snapped on the phone. A no-time entry's
  *   [EntryTiming.AllDay] carries only its duration, so the history shows no clock times for it.
- * @property unsent the queue holds a change to the entry that the server has not received.
  * @property cached the phone holds the entry in its two weeks, so the menu's actions can change
  *   it. The older days that the server sent, and the days the cache dropped since, are not on the
  *   phone, and an entry from before the two weeks that the cache holds only until its next refresh
@@ -137,7 +136,6 @@ fun historyDays(
         .sortedByDescending { it.date }
 }
 
-/** An entry the history shows, from the phone's cache or from the older days. */
 private class Row(val entry: TimeEntry, val unsent: Boolean, val cached: Boolean)
 
 /** The day of an entry as the cache holds it: a no-time entry's stored day, else the day of its start. */

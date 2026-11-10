@@ -16,21 +16,14 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
 
 /**
- * A Pomodoro session's commands to the server and the edits of its open pomodoro, apart from what
- * the page shows. Start, Next phase and End go to the server through [actions]. Field edits of
- * the open pomodoro go to the running entry through [changes], the queue every running-entry
- * edit uses, as [RunningEntryEdits] writes them for the timer too, and the server carries them to
- * the later pomodoros.
+ * Field edits of the open pomodoro go through the running entry's queue, as [RunningEntryEdits]
+ * writes them for the timer too, and the server carries them to the later pomodoros.
  *
  * Every edit of the running entry moves the server's revision. So when edits made here may not
  * have reached the server, Next phase and End first wait for the edits still being queued, send
  * the queue through [sender], read the state and wait for the revision the edits produced, and
  * send it only while the phase is the one the page showed. Otherwise the server would refuse the
  * revision the page showed, and the edits would land after the phase they belong to.
- *
- * The Pomodoro page's view model holds one and maps each result to what the page says.
- *
- * @param held the account's held timer state.
  */
 class PomodoroSessionEdits(
     private val held: Flow<HeldTimerState?>,
@@ -49,14 +42,11 @@ class PomodoroSessionEdits(
     suspend fun editOpenPomodoro(entry: TimeEntry, fields: EntryFields, running: Flow<TimeEntry?>): Boolean =
         edits.write(RunningEntryIdentity(entry.id, entry.workspaceId, entry.start), fields, entry.fields(), running)
 
-    /** Starts a session in [workspaceId] whose first pomodoro has [fields], with [lengths]. */
     suspend fun start(workspaceId: WorkspaceId, fields: EntryFields, lengths: SessionLengths): TimerActionResult =
         actions.startSession(workspaceId, fields, lengths)
 
-    /** Confirms the phase [shown] and starts the next one, after this page's own edits. */
     suspend fun next(shown: PomodoroShown): TimerActionResult = finish(shown, actions::nextPhase)
 
-    /** Ends the session [shown], after this page's own edits. */
     suspend fun end(shown: PomodoroShown): TimerActionResult = finish(shown, actions::endSession)
 
     private suspend fun finish(shown: PomodoroShown, send: suspend (Long) -> TimerActionResult): TimerActionResult {

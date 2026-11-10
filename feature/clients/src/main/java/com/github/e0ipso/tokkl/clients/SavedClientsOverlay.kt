@@ -54,7 +54,6 @@ internal data class SavedClientsOverlay(
     }
 }
 
-/** A [Client] as the saved state keeps it. */
 @Serializable
 internal data class SavedClient(
     val id: ClientId,

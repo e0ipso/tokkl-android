@@ -43,11 +43,9 @@ interface Route : NavKey {
     data class Entry(val opening: EntryOpening, val id: String) : Route
 }
 
-/** What the entry form opens on. */
 @Serializable
 sealed interface EntryOpening {
 
-    /** The past entry [entryId]. */
     @Serializable
     data class Edit(val entryId: EntryId) : EntryOpening
 

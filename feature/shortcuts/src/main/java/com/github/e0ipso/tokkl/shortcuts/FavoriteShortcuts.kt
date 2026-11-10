@@ -20,7 +20,6 @@ import java.security.MessageDigest
  */
 data class FavoriteShortcut(val id: String, val shortLabel: String, val longLabel: String)
 
-/** The fixed words in a favorite's label, from the string resources. */
 class FavoriteNames(val untitled: String, val withProject: (name: String, project: String) -> String)
 
 /**
@@ -42,7 +41,6 @@ fun favoriteShortcuts(
         .map { fields -> fields.shortcut(projects, names) }
 }
 
-/** The favorite among [favorites] that the shortcut [id] starts, or null when the list has none. */
 fun favoriteForShortcut(id: String, favorites: List<Favorite>): Favorite? =
     favorites.firstOrNull { favoriteShortcutId(it.fields()) == id }
 
@@ -83,10 +81,7 @@ private fun field(value: String): String = "${value.length}:$value"
 
 private const val ID_PREFIX = "favorite-"
 
-/**
- * The launcher shortcuts of the cached favorites as they, the projects and the capabilities change.
- * The lists start once the capabilities have loaded.
- */
+/** The lists start once the capabilities have loaded. */
 internal fun favoriteShortcutLists(
     context: Context,
     launcher: LauncherShortcuts,

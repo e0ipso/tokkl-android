@@ -79,7 +79,6 @@ internal fun startPomodoroWidget(state: PomodoroWidgetState.Idle): Action =
         ),
     )
 
-/** [entry]'s workspace and fields for [account], as the Start of the widget and its work carry them. */
 internal fun rememberedFieldsJson(account: String, entry: PomodoroWidgetEntry): String {
     val fields = entry.fields
     val saved = RememberedPomodoroFields(

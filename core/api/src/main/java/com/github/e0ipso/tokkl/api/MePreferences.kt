@@ -16,16 +16,12 @@ import java.time.format.DateTimeParseException
  */
 class MePreferences internal constructor(private val body: JsonObject) {
 
-    /** Whether the answer holds [key], whatever its value. */
     fun has(key: String): Boolean = key in body
 
-    /** [key]'s value when it is a JSON string. */
     fun string(key: String): String? = (body[key] as? JsonPrimitive)?.takeIf { it.isString }?.content
 
-    /** [key]'s value when it is a JSON number. */
     fun number(key: String): Double? = (body[key] as? JsonPrimitive)?.takeUnless { it.isString }?.doubleOrNull
 
-    /** [key]'s value when it is a JSON boolean. */
     fun boolean(key: String): Boolean? = (body[key] as? JsonPrimitive)?.takeUnless { it.isString }?.booleanOrNull
 
     /**

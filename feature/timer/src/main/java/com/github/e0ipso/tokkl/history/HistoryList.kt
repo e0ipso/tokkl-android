@@ -50,12 +50,9 @@ import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * The history in the Timer page's List view, for [state]: the days with entries, newest first,
- * each with its total, and at the end the older days, which [onLoadOlder] loads from the server
- * as the end shows. A tap on an entry hands its id to [onEdit] (docs/PRD.md H2), also on the older
- * days. The menu of an entry the phone holds duplicates, splits or deletes it through
- * [onDuplicate], [onSplit] and [onDelete] (H3, H5, H6). With [pin], when the server keeps Tokkl's
- * timer templates, the menu also saves the entry as one (T5). Its Continue button, on every entry
- * and group, hands the entry's id to [onContinue] (T2).
+ * and at the end the older days, which [onLoadOlder] loads from the server as the end shows
+ * (docs/PRD.md H2, H3, H5, H6, T2). With [pin], when the server keeps Tokkl's timer templates, an
+ * entry's menu also saves it as one (T5).
  */
 @Composable
 fun HistoryList(
@@ -126,7 +123,6 @@ fun HistoryContent(
     }
 }
 
-/** What a tap on an entry, or on one of its actions, does with the entry's id. */
 internal class EntryCallbacks(
     val onEdit: (EntryId) -> Unit,
     val onContinue: (EntryId) -> Unit,

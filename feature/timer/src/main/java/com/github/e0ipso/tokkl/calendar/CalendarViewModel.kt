@@ -39,35 +39,28 @@ import kotlin.coroutines.CoroutineContext
  *
  * The server finds entries by their start, and an entry can start up to [LONGEST_ENTRY] before a
  * week and still run into it. So a week outside the cache asks for the entries that start from
- * that long before it, and keeps those that run into it. When a cached week shows, the entries
- * that start in that time before the cache and run into it load the same way, once for both
- * cached weeks; offline, the week shows what the phone keeps. What the server sends lives in
- * memory while the view model does, and nothing of it is written to the phone. Nothing loads on a
- * timer.
+ * that long before it, and a cached week for those that start that long before the cache, once
+ * for both cached weeks. What the server sends lives only in memory. Nothing loads on a timer.
  *
  * Anything may change on the server while the app is in the background, so coming back to the
  * foreground makes every loaded week load again the next time it shows, and [foregrounds] tells
- * the calendar on screen to load its week at once. The old entries show until the new ones come,
- * and stay when the phone is offline. When the network comes back, [reconnected] loads the week on
- * screen again if it failed or kept old entries.
+ * the calendar on screen to load its week at once. When the network comes back, the week on
+ * screen loads again if it failed or kept old entries. The old entries show until the new ones
+ * come, and stay when the phone is offline.
  *
- * The calendar's drags create, move and resize entries (K2) through [changes], the change queue,
- * so they show at once and work offline on the weeks the phone keeps. An entry from a week the
- * server sent goes to the queue whole, whether the phone keeps it or not. The cache keeps one from
- * before its window only until the send and the refresh after it, and the week then shows the copy
- * the cache last held, until the week loads again.
+ * The calendar's drags create, move and resize entries (K2) through [changes], so they show at
+ * once and work offline on the weeks the phone keeps. An entry from a week the server sent goes
+ * to the queue whole. The cache keeps one from before its window only until the send and the
+ * refresh after it, and the week then shows the copy the cache last held, until the week loads
+ * again.
  *
- * [entries], the session's one owner of the entries, loads the server's weeks, keeps them and
- * merges them with the cache's; this model picks the week to show and lays out its blocks.
+ * [entries] loads, keeps and merges the server's weeks; this model picks the week to show and
+ * lays out its blocks.
  *
  * Call [step], [showToday], [loadWeek], [create], [move] and [resize] on the main thread.
  *
- * @param computation where the week's blocks are laid out from the entries.
- * @param clock where today comes from, in the account's timezone.
  * @param allDayOffered whether the server stores no-time entries (`Capabilities.allDay == true`),
  *   which [CalendarState.Shown.allDayOffered] reports for the All day row.
- * @param saved the route's saved state, which keeps the chosen day for a new process that
- *   restores the page.
  */
 class CalendarViewModel(
     private val entries: SessionEntries,
@@ -126,7 +119,6 @@ class CalendarViewModel(
         choose((selected.value ?: time.today()).plusDays(days))
     }
 
-    /** Shows [day], as a tap on it in the week's strip does. */
     fun select(day: LocalDate) = choose(day)
 
     /** Shows today, and follows it from then on. */
@@ -177,7 +169,6 @@ class CalendarViewModel(
     fun move(entry: CalendarEntry, day: LocalDate, deltaMinutes: Int, dayMode: Boolean) =
         change(entry) { stop, time, _ -> movedRange(entry.start, stop, deltaMinutes, day, dayMode, time) }
 
-    /** Queues the stopped [entry] with its [edge] moved [deltaMinutes] on the account's clock. */
     fun resize(entry: CalendarEntry, edge: ResizeEdge, deltaMinutes: Int) = change(entry) { stop, time, step ->
         when (edge) {
             ResizeEdge.START -> startResizedRange(entry.start, stop, deltaMinutes, step, time)

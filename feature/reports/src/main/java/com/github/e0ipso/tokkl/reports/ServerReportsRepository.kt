@@ -34,10 +34,7 @@ data class ReportWorkspace(
     val appSummaryCandidate: Boolean = false,
 )
 
-/**
- * The Reports API v3 calls behind the reports, on the signed-in account's server. Each call
- * suspends while its request runs. Nothing here stores what the server sends.
- */
+/** The Reports API v3 calls. Nothing here stores what the server sends. */
 class ServerReportsRepository(private val client: ApiClientProvider) {
 
     /** The account's default workspace from `GET /api/v9/me`, with its rounding from `GET /api/v9/workspaces/{id}`. */

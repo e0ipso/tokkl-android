@@ -48,13 +48,10 @@ sealed interface EntryNotice {
     /** The server did not restore the entry. [status] is its HTTP status, or null without one. */
     data class UndoFailed(override val serial: Long, val status: Int?) : EntryNotice
 
-    /** A copy of an entry is on the phone and queued for the server. */
     data class Duplicated(override val serial: Long) : EntryNotice
 
-    /** An entry is split in two on the phone, and both changes are queued for the server. */
     data class Split(override val serial: Long) : EntryNotice
 
-    /** The server stored an entry's fields as a new favorite. */
     data class Pinned(override val serial: Long) : EntryNotice
 
     /** Nothing was pinned, because the favorites already hold the most there can be. */
@@ -63,16 +60,13 @@ sealed interface EntryNotice {
     /** Nothing was pinned, because pinning needs the server, which the phone cannot reach. */
     data class PinNeedsServer(override val serial: Long) : EntryNotice
 
-    /** The server did not store the new favorite, for [problem]. */
     data class PinFailed(override val serial: Long, val problem: ServerProblem) : EntryNotice
 }
 
 /**
  * The dialog that splits the stopped [source] at a clock time (docs/PRD.md H6).
  *
- * @property source the cached entry as the dialog opened on it.
  * @property whole its span as the server stores it, which the split time must fall inside.
- * @property zone the account's timezone, which the dialog shows times in.
  * @property text the split time as typed, such as `10:30` or `1030`.
  * @property halves the halves [text] cuts the entry into, which the dialog previews, or null.
  * @property problem why Split did not split, until the time changes.
@@ -92,7 +86,6 @@ data class SplitDialog(
  * @property confirmDelete the entry whose delete waits for the user's yes, on a server that
  *   cannot restore a deleted entry.
  * @property notice the message to show, until it is dismissed or acted on.
- * @property split the open split dialog.
  */
 @Immutable
 data class EntryActionsState(
@@ -112,12 +105,7 @@ data class EntryActionsState(
  * favorite (T5) needs the server, as the web app's does, so offline it pins nothing and says so.
  * Call everything on the main thread.
  *
- * @param entries the cached entries, as AccountCache.entries gives them, which Duplicate copies
- *   and Split cuts.
- * @param accountSettings the account's timezone, time resolution and clock format, which Split
- *   reads the time with.
  * @param removals the session's entries, which leave a deleted entry out and show a restored one again.
- * @param undoDelete takes back the delete of an entry, as `DeleteUndoer` does.
  * @param capabilities whether the server restores deleted entries, `Capabilities.restore`, read
  *   at a tap on a screen, which shows once the capabilities have loaded.
  */
@@ -158,7 +146,6 @@ class EntryActionsViewModel(
         }
     }
 
-    /** The user said yes to the delete that [EntryActionsState.confirmDelete] asks about. */
     fun confirmDelete() {
         val entryId = mutableState.value.confirmDelete ?: return
         mutableState.update { it.copy(confirmDelete = null) }
@@ -194,13 +181,11 @@ class EntryActionsViewModel(
     }
 
     /**
-     * Copies the cached stopped entry [entryId]: a new entry with its description, project, task,
-     * tags and billable, from its start to its stop. That is the web app's duplicate rule, in
-     * `duplicate` of ../tokkl/packages/web/src/components/EntryList.tsx and of EntryEditor.tsx,
-     * which post the source's own start and stop. The copy goes to the source's workspace through
-     * the change queue, so it shows at once, also offline. A running entry or one the cache no
-     * longer holds makes no copy, as the web app duplicates only a stopped one. A no-time source
-     * makes a no-time copy on its day; without an account timezone to read that day in, it makes none.
+     * Copies the cached stopped entry [entryId] from its start to its stop, as `duplicate` in the
+     * web app's EntryList.tsx and EntryEditor.tsx does, into the source's workspace through the
+     * change queue. A running entry or one the cache no longer holds makes no copy. A no-time
+     * source makes a no-time copy on its day; without an account timezone to read that day in, it
+     * makes none.
      */
     fun duplicate(entryId: EntryId) {
         viewModelScope.launch {
@@ -236,12 +221,9 @@ class EntryActionsViewModel(
     }
 
     /**
-     * Saves the cached entry [entryId] as a timer template through [templates]: its description,
-     * project, task, tags and billable, as `pin` in ../tokkl/packages/web/src/components/EntryList.tsx
-     * does. Templates live on the server, so when the phone is [offline] nothing is tried and the
-     * message says the server is needed. A full list, or a server that cannot be reached or does
-     * not store the list, says why nothing was saved. An entry the cache no longer holds saves
-     * nothing.
+     * Saves the cached entry [entryId] as a timer template through [templates], as `pin` in the web
+     * app's EntryList.tsx does. Templates live on the server, so when the phone is [offline] nothing
+     * is tried and the message says the server is needed.
      */
     fun pin(entryId: EntryId, templates: FavoritesViewModel, offline: Boolean) {
         if (offline) {
@@ -283,9 +265,8 @@ class EntryActionsViewModel(
 
     /**
      * Splits the entry at the dialog's time, as split in the web app's EntryEditor.tsx does: the
-     * original ends at the split, and a new entry with its description, project, task, tags and
-     * billable runs from there to the original stop. Both go to the change queue, the new entry
-     * first, as the web app posts it first, so the split works offline. A time that cuts nowhere
+     * original ends there, and a copy of its fields runs on to the original stop. Both go to the
+     * change queue, the new entry first, as the web app posts it first. A time that cuts nowhere
      * keeps the dialog open with its problem. An entry that has left the cache closes the dialog.
      */
     fun confirmSplit() {

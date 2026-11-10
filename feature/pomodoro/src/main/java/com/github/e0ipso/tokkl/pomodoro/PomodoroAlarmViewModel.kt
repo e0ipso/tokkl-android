@@ -18,8 +18,6 @@ import kotlinx.coroutines.launch
 import java.time.Clock
 
 /**
- * What the full-screen alarm shows.
- *
  * @property ring the phase it is bound to, at the newest revision held, or null before it opens.
  * @property problem why the last Next phase or End session did not go through, or null.
  * @property closed the screen has nothing to show and finishes.
@@ -33,7 +31,7 @@ data class PomodoroAlarmState(
 )
 
 /**
- * The full-screen alarm's view model, bound to one phase of the server's session. It opens only
+ * Bound to one phase of the server's session. The full-screen alarm opens only
  * for the held phase its intent names, once that phase's planned end has come, and closes as soon
  * as the held state has another phase or none, whichever device moved it on. A new revision of
  * the same phase keeps it open with that revision. Next phase and End session go to the server
@@ -62,14 +60,13 @@ class PomodoroAlarmViewModel(
     /** The phase an intent asked for that waits for the held state to load. */
     private var requested: Request? = null
 
-    /** The phase this screen is bound to. */
     private var target: PomodoroPhaseKey? = null
 
     init {
         viewModelScope.launch { held.collect(::accept) }
     }
 
-    /** An intent asks for the alarm of [expected]. A stale one never replaces an alarm on screen. */
+    /** A stale [expected] never replaces an alarm on screen. */
     fun open(expected: PomodoroPhaseKey?) {
         requested = Request(expected)
         if (loaded) resolve()
@@ -100,7 +97,6 @@ class PomodoroAlarmViewModel(
         }
     }
 
-    /** Keeps the screen on its phase at the newest revision, or closes it once the phase has gone. */
     private fun follow() {
         val bound = target ?: return
         val ring = latest?.ring()?.takeIf { it.phase == bound }

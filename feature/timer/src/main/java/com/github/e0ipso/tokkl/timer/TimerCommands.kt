@@ -35,13 +35,11 @@ import java.time.Clock
 import java.time.temporal.ChronoUnit
 
 /**
- * The timer's commands (docs/PRD.md T1, T2, T5): Start, Continue, a favorite, Stop, Pause and
- * Resume, in the order they may go, which [TimerViewModel] adapts for its screens. It is the one
- * owner of [taps], what the taps did that the cache or the server may not show yet, and changes it
- * only by dispatching a [TapEvent] through [reduce]. A tap decides from [now], dispatches its event,
- * and launches its effect, a queue write or a server action, which dispatches the event that ends
- * it. What the screens show, [state], is the projection [timerState] of [taps] over the cached
- * controls. The field edits are [edits], which read and change the taps through the same events.
+ * The timer's commands (docs/PRD.md T1, T2, T5), which [TimerViewModel] adapts for its screens.
+ * It is the one owner of [taps] and changes it only by dispatching a [TapEvent] through [reduce].
+ * A tap decides from [now], dispatches its event, and launches its effect, a queue write or a
+ * server action, which dispatches the event that ends it. [state] projects [taps] over the cached
+ * controls ([timerState]).
  *
  * Start, Stop of a running entry, Continue and favorites go to [changes], the change queue, so they
  * never wait for the network (docs/PRD.md principle 2). From such a tap until the cache shows it,
@@ -53,19 +51,13 @@ import java.time.temporal.ChronoUnit
  *
  * A queue write the phone's storage refuses ([LocalWrite.Failed]) gives the timer back as it was
  * before the tap, as the entry form gives its form back: Start brings its draft back and Stop
- * leaves the entry running, with the edit it took.
+ * leaves the entry running, with the edit it took. Call everything on the main thread.
  *
- * Call everything on the main thread.
- *
- * @param controls the running entry or paused chain, as the app's shared timer controls give them.
- * @param settings for the default workspace, where Start and a favorite start.
  * @param timerApi whether the server offers the timer API, which decides whether a timer that the
  *   cache does not show yet offers Pause.
  * @param sender sends the queue now and waits for it, so a description typed before Pause reaches
  *   the server before the Pause does.
- * @param sections marks each Start and Stop tap in the system trace.
  * @param clock the time a Start tap shows until the cache has the queue's own tap time.
- * @param scope the view model's scope.
  */
 internal class TimerCommands(
     controls: Flow<TimerControls>,
@@ -84,7 +76,6 @@ internal class TimerCommands(
 
     private val mutableTaps = MutableStateFlow(TimerTaps())
 
-    /** What the taps did that the cache or the server may not show yet. */
     val taps: StateFlow<TimerTaps> = mutableTaps.asStateFlow()
 
     /** The timer controls as the cache gives them, with the id the cache holds an edit's entry under. */
@@ -95,14 +86,12 @@ internal class TimerCommands(
         }
         .stateIn(scope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), CachedControls.Unread)
 
-    /** The cached projects and tasks. */
     val catalog: StateFlow<Catalog> = combine(projects, tasks, ::Catalog)
         .stateIn(scope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), Catalog())
 
     private val pauseOffered: StateFlow<Boolean> =
         timerApi.stateIn(scope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), false)
 
-    /** What the timer shows: [taps] over the cached controls, with the names of its project, task and tags. */
     val state: StateFlow<TimerState> = combine(
         cached,
         catalog,
@@ -123,13 +112,11 @@ internal class TimerCommands(
      */
     val starts: SharedFlow<Unit> = queuedStarts.asSharedFlow()
 
-    /** The idle timer's draft and the running entry's fields, and the editor's opening. */
     val edits = RunningFieldEdits(this, changes, scope)
 
     /** The timer state as of now, without labels, which the taps and the field edits act on. */
     fun now(): TimerState = timerState(cached.value, settings.value?.defaultWorkspaceId, taps.value, pauseOffered.value)
 
-    /** Runs [event] through [reduce]: the one way [taps] change, for the taps here and for [edits]. */
     fun dispatch(event: TapEvent) = mutableTaps.update { it.reduce(event) }
 
     /** Starts a timer with the idle timer's fields, unless one runs or no workspace is known yet. */
@@ -290,7 +277,6 @@ internal class TimerCommands(
         }
     }
 
-    /** Ends the paused chain on the server, at the revision it was shown at. */
     private fun discard() {
         val actions = pauseChain ?: return
         val paused = cached.value.controls() as? TimerControls.Paused ?: return

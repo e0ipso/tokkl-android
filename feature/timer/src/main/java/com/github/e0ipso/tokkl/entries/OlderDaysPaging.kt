@@ -27,7 +27,6 @@ import kotlin.coroutines.CoroutineContext
  * commands, so a call on the main thread and an answer on [scope] never lose each other's change.
  *
  * @param olderPages the server's days before the cache. Runs on [io].
- * @param clock where today comes from, in the account's timezone.
  */
 internal class OlderDaysPaging(
     private val olderPages: OlderPages,
@@ -38,7 +37,6 @@ internal class OlderDaysPaging(
 ) {
     private val mutableState = MutableStateFlow(OlderDaysState())
 
-    /** The older days loaded so far, and what comes next. */
     val state: StateFlow<OlderDaysState> = mutableState.asStateFlow()
 
     /**

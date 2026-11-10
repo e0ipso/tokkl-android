@@ -30,10 +30,7 @@ private val JS_DATE_RANGE =
 
 data class SnappedSpan(val start: Instant, val stop: Instant)
 
-/**
- * True for the resolutions that divide an hour evenly: 1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30 and
- * 60.
- */
+/** True for the resolutions that divide an hour evenly: 1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30 and 60. */
 fun isTimeResolution(minutes: Double): Boolean =
     minutes.isFinite() && floor(minutes) == minutes && minutes >= 1 && MINUTES_PER_HOUR % minutes == 0.0
 
@@ -123,11 +120,9 @@ fun stopSpan(start: Instant, at: Instant, minutes: Double, timeZone: ZoneId, one
 }
 
 /**
- * The existing Android Stop prediction, retained pending TKA-0259/TKA-0261 (docs/PRD.md T3).
- * This is [stopSpan] with
- * the account's [timeResolutionMinutes]. A server without Tokkl's `time_resolution_minutes`, or
- * with a value that is not a resolution, does not snap, so the span stops at [at] as tapped, or at
- * [start] when the tap came earlier.
+ * The existing Android Stop prediction, retained pending TKA-0259/TKA-0261 (docs/PRD.md T3). A
+ * server without Tokkl's `time_resolution_minutes`, or with a value that is not a resolution, does
+ * not snap, so the span stops at [at] as tapped, or at [start] when the tap came earlier.
  */
 fun snapStop(
     start: Instant,
@@ -151,9 +146,7 @@ private fun startGridPoint(at: Instant, minutes: Double, timeZone: ZoneId): Inst
     return snapInstant(time, minutes, timeZone)
 }
 
-/**
- * The last instant at or before `time` whose wall-clock time is a multiple of `step` at `offset`.
- */
+/** The last instant at or before `time` whose wall-clock time is a multiple of `step` at `offset`. */
 private fun gridFloor(time: Double, step: Double, offset: Double): Double =
     floor((time + offset) / step) * step - offset
 

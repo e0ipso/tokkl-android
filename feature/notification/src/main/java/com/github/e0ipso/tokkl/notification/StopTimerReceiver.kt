@@ -29,13 +29,12 @@ import kotlin.coroutines.CoroutineContext
 
 /**
  * The notification's Stop, Pause and Resume actions (docs/PRD.md N1, T1), for what the
- * notification showed, without opening the app. [TimerSurfaceActions] decides
- * each one. Stop of a running entry changes the phone and queues the change while the broadcast
- * lasts, so it works offline, and [RunningNotificationSync] shows the result; one the phone's storage
- * refuses says so in a toast ([runFromSurface]). Pause, Resume and
- * Stop while paused need the server, so they go to WorkManager ([sendTimerAction]); one that fails,
- * offline included, changes nothing and says why in a toast. An action shown for a state the phone
- * no longer holds, such as a second tap or a tap after sign-out, does nothing.
+ * notification showed, without opening the app. Stop of a running entry changes the phone and
+ * queues the change while the broadcast lasts, so it works offline; one the phone's storage
+ * refuses says so in a toast. Pause, Resume and Stop while paused need the server, so they go to
+ * WorkManager; one that fails, offline included, changes nothing and says why in a toast. An
+ * action shown for a state the phone no longer holds, such as a second tap or a tap after
+ * sign-out, does nothing.
  *
  * Declared in the manifest and not exported: only the notification's own PendingIntents reach it.
  */
@@ -83,7 +82,6 @@ class StopTimerReceiver :
     }
 }
 
-/** Puts [target] in this intent's extras, for [timerTarget] to read back. */
 fun Intent.putTarget(target: TimerTarget): Intent = putExtra(StopTimerReceiver.EXTRA_ACCOUNT, target.account)
     .putExtra(StopTimerReceiver.EXTRA_REVISION, target.flatRevision)
     .putExtra(StopTimerReceiver.EXTRA_ENTRY_ID, target.flatEntryId)

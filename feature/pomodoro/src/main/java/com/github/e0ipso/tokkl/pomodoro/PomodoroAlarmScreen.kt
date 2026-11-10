@@ -43,10 +43,8 @@ import java.util.Locale
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
- * The held phase's alarm: its transition, "Pomodoro N of M" from the server's number and the
- * overtime since its planned end, with exactly two actions. Scrolling keeps both reachable at the
- * largest system font scale. A Next phase or End session that did not go through shows the
- * standard message, and the alarm keeps ringing.
+ * Scrolling keeps both actions reachable at the largest system font scale. A Next phase or End
+ * session that did not go through shows the standard message, and the alarm keeps ringing.
  */
 @Composable
 fun PomodoroAlarmContent(

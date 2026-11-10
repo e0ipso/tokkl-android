@@ -22,14 +22,11 @@ import kotlin.coroutines.CoroutineContext
 
 /**
  * The transport under [TokklApi], for the Toggl Track API v9 and Reports API v3, as served by
- * Tokkl or by Toggl Track. [TokklApi] builds each endpoint URL with [server] and calls [get],
- * [send], [sendRefusable], [sendWithHeaders], [sendNoContent], [downloadCsv] or [stream]; the
- * app's other code calls [TokklApi] and never this class. Each call suspends
- * while OkHttp runs it on [io], so call it from any thread. Cancelling the
- * caller cancels the OkHttp call, which then ends at once instead of waiting
- * for the server: the call fails with the coroutine's cancellation, not with
- * an [ApiResult]. A call cancelled after its request left the phone may still
- * reach the server.
+ * Tokkl or by Toggl Track. The app's other code calls [TokklApi] and never this class. Each call
+ * suspends while OkHttp runs it on [io], so call it from any thread. Cancelling the caller cancels
+ * the OkHttp call, which then ends at once instead of waiting for the server: the call fails with
+ * the coroutine's cancellation, not with an [ApiResult]. A call cancelled after its request left
+ * the phone may still reach the server.
  */
 internal class ApiTransport(
     val server: ServerUrl,
@@ -47,17 +44,15 @@ internal class ApiTransport(
         send(HttpMethod.GET, url, body = null, deserializer)
 
     /**
-     * Sends [body] as JSON, or no body when it is null, and decodes the 2xx
-     * response body. An empty body does not decode, so use [sendNoContent]
-     * for calls that answer without one. OkHttp refuses a null body for POST,
-     * PUT and PATCH.
+     * Sends [body] as JSON, or no body when it is null, and decodes the 2xx response body. An empty
+     * body does not decode, so use [sendNoContent] for calls that answer without one. OkHttp refuses
+     * a null body for POST, PUT and PATCH.
      *
-     * When a connection fails after the request went out, such as a pooled
-     * one that drops before the answer arrives, OkHttp sends the request
-     * again on a new one. So a POST whose answer was lost can create its
-     * object twice, and a DELETE gets the 404 for the object it deleted. With
-     * [resend] false the request goes out once, through
-     * [SharedHttpClient.sendingOnce], and the caller gets the failure.
+     * When a connection fails after the request went out, such as a pooled one that drops before
+     * the answer arrives, OkHttp sends the request again on a new one. So a POST whose answer was
+     * lost can create its object twice, and a DELETE gets the 404 for the object it deleted. With
+     * [resend] false the request goes out once, through [SharedHttpClient.sendingOnce], and the
+     * caller gets the failure.
      */
     suspend fun <T> send(
         method: HttpMethod,
@@ -70,10 +65,8 @@ internal class ApiTransport(
     /**
      * Like [send] with `resend` false, for Tokkl calls that answer a refusal with 409 and a body of
      * the same type as their 2xx answer, as the timer actions answer with the timer state either
-     * way. A 2xx body is [Refusable] with `refused` false, and a 409 body that decodes with
-     * [deserializer] is one with `refused` true. A 409 whose body is a JSON string is
-     * [ApiError.UnexpectedStatus] with that reason, as any other status is, and one whose body is
-     * neither is [ApiError.InvalidResponse]. Other statuses fail as in [send].
+     * way. A 409 whose body is a JSON string is [ApiError.UnexpectedStatus] with that reason, and
+     * one whose body is neither is [ApiError.InvalidResponse].
      */
     suspend fun <T> sendRefusable(
         method: HttpMethod,
@@ -91,9 +84,8 @@ internal class ApiTransport(
     }
 
     /**
-     * Like [send], and keeps the response's headers too, for calls that put
-     * values in them, such as the Reports API's `X-Next-Row-Number`, the row
-     * the next page of a detailed report starts at.
+     * Like [send], and keeps the response's headers too, for calls that put values in them, such as
+     * the Reports API's `X-Next-Row-Number`, the row the next page of a detailed report starts at.
      */
     suspend fun <T> sendWithHeaders(
         method: HttpMethod,
@@ -105,11 +97,10 @@ internal class ApiTransport(
     }
 
     /**
-     * Like [send], for calls whose response body the caller does not need,
-     * such as Tokkl's DELETE of a time entry, task, client or tag, which
-     * answer 200 with an empty body. Tokkl's project DELETE answers with the
-     * project id as JSON, which this method ignores too. Any 2xx is a success.
-     * [resend] works as in [send].
+     * Like [send], for calls whose response body the caller does not need, such as Tokkl's DELETE
+     * of a time entry, task, client or tag, which answer 200 with an empty body. Tokkl's project
+     * DELETE answers with the project id as JSON, which this method ignores too. Any 2xx is a
+     * success.
      */
     suspend fun sendNoContent(
         method: HttpMethod,
@@ -167,12 +158,11 @@ internal class ApiTransport(
     }
 
     /**
-     * Opens a Server-Sent Events stream with `GET [url]` and hands the 2xx body to [read], which
-     * reads it until the stream ends, and returns what [read] returns. A stream waits for events by
-     * design, so its reads have no timeout: the caller watches for silence itself and cancels the
-     * call through [cancellation]. A 2xx answer that is not `text/event-stream` is
-     * [ApiError.InvalidResponse]. An [IOException] while reading, as when the connection drops or
-     * the call is cancelled, is [ApiError.Network]. Other statuses fail as in [send].
+     * Opens a Server-Sent Events stream with `GET [url]`. A stream waits for events by design, so
+     * its reads have no timeout: the caller watches for silence itself and cancels the call through
+     * [cancellation]. A 2xx answer that is not `text/event-stream` is [ApiError.InvalidResponse]. An
+     * [IOException] while reading, as when the connection drops or the call is cancelled, is
+     * [ApiError.Network].
      */
     suspend fun <T> stream(url: HttpUrl, cancellation: ApiCallCancellation, read: (InputStream) -> T): ApiResult<T> =
         execute(
@@ -275,7 +265,6 @@ internal class ApiTransport(
         return reasonIn(text)
     }
 
-    /** The reason [text] holds when it is one non-blank JSON string, or null. */
     private fun reasonIn(text: String): String? {
         val element = try {
             Wire.parseToJsonElement(text)
@@ -308,10 +297,8 @@ internal class ApiTransport(
         /** Tokkl's reasons are one short sentence. */
         const val MAX_REASON_BYTES = 2048L
 
-        /** What [sendRefusable] reads a body for. */
         const val CONFLICT = 409
 
-        /** How long a call that is not a stream may take before OkHttp gives up on it. */
         const val CALL_TIMEOUT_SECONDS = 60L
 
         /** Tokkl sends whole seconds. An HTTP date or a negative number counts as missing. */
@@ -319,10 +306,8 @@ internal class ApiTransport(
     }
 }
 
-/** A decoded response body and the headers it came with. */
 class WithHeaders<out T> internal constructor(val value: T, private val headers: Headers) {
 
-    /** The answer's header [name], or null when it has none. */
     fun header(name: String): String? = headers[name]
 }
 
@@ -330,9 +315,8 @@ class WithHeaders<out T> internal constructor(val value: T, private val headers:
 data class Refusable<out T>(val value: T, val refused: Boolean)
 
 /**
- * Hears how the signed-in session's requests fare with the trust checks, so
- * the app can show the matching prompt from any screen. Called on the thread
- * that made the request.
+ * Hears how the signed-in session's requests fare with the trust checks, so the app can show the
+ * matching prompt from any screen. Called on the thread that made the request.
  */
 interface TrustListener {
 
@@ -345,14 +329,12 @@ interface TrustListener {
 
 /**
  * Hears each 2xx answer to the signed-in session's requests, so the app can say when the server
- * last answered (docs/PRD.md O5). Called on the thread that made the request, before the body is
- * read.
+ * last answered (docs/PRD.md O5). Called on the request's thread, before the body is read.
  */
 fun interface SuccessListener {
     fun succeeded()
 }
 
-/** The HTTP methods the Toggl and Tokkl APIs use, as [ApiTransport] sends them. */
 enum class HttpMethod {
     GET,
     POST,
@@ -361,7 +343,6 @@ enum class HttpMethod {
     DELETE,
 }
 
-/** The HTTP status codes the app tells apart. */
 object HttpStatus {
     const val OK = 200
     const val FORBIDDEN = 403
@@ -372,10 +353,8 @@ object HttpStatus {
     const val SERVICE_UNAVAILABLE = 503
     const val GATEWAY_TIMEOUT = 504
 
-    /** The 4xx codes: the server refused the request as it was sent. */
     val CLIENT_ERRORS = 400..499
 
-    /** The first 5xx code: the server failed. */
     const val FIRST_SERVER_ERROR = 500
 }
 

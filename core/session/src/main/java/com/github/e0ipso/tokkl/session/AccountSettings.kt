@@ -25,22 +25,16 @@ import java.time.ZoneId
  * @property timeResolutionMinutes Tokkl's `time_resolution_minutes`, which the server snaps
  *   stopped entries to. Null when `/me` leaves it out. Toggl Track and older Tokkl servers leave
  *   it out, and they do not snap.
- * @property durationFormat the preferences' `duration_format`. Improved until a refresh reads
- *   the preferences, and when they leave it out, as in the web app.
- * @property defaultWorkspaceId the account's `default_workspace_id` from `/me`, the workspace
- *   that the timer and manual entry pass to `ChangeQueue.start` and `ChangeQueue.create`. It is
- *   stored, so a timer started offline has one. A refresh whose `/me` leaves it out keeps the
- *   stored one. Null until a `/me` sends it, so settings that an older app version stored have
- *   none until the next refresh.
- * @property twelveHour the preferences' `timeofday_format` asks for the 12-hour clock, as `h:mm A`
- *   does. False, the 24-hour clock, until a refresh reads the preferences, and when they leave it
- *   out, as in the web app.
+ * @property durationFormat the preferences' `duration_format`; improved until a refresh reads it.
+ * @property defaultWorkspaceId the account's `default_workspace_id` from `/me`. It is stored, so a
+ *   timer started offline has one. A refresh whose `/me` leaves it out keeps the stored one. Null
+ *   until a `/me` sends it.
+ * @property twelveHour the preferences' `timeofday_format` asks for the 12-hour clock. False until
+ *   a refresh reads it.
  * @property collapseSimilar the preferences' `collapseTimeEntries`: the history groups similar
- *   entries of a day, as the web app's timer list does. True until a refresh reads the
- *   preferences, and when they leave it out, as in the web app.
+ *   entries of a day, as the web app's timer list does. True until a refresh reads it.
  * @property userId the account's `id` from `/me`, so signing in again after a refused token
- *   (docs/PRD.md O6) can tell the same account from another one. Null until a `/me` sends it, so
- *   settings that an older app version stored have none until the next refresh.
+ *   (docs/PRD.md O6) can tell the same account from another one. Null until a `/me` sends it.
  */
 data class AccountSettings(
     val timeZone: String,

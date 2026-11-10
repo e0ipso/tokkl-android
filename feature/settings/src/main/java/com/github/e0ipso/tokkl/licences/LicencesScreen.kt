@@ -86,11 +86,9 @@ fun LicencesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 }
 
 /**
- * [text] in the body size, with each line made only of dashes drawn as a rule. A line of dashes
- * set as text wraps onto a second line wherever the screen is narrower than it. Each paragraph's
- * hard-wrapped lines are joined, so it wraps at the screen's width instead of breaking early
- * ([licenceBlocks]). Semantics keeps the whole text as it ships, dashes included, as one node,
- * as the single Text did before.
+ * [text] in the body size, with each line made only of dashes drawn as a rule: a line of dashes set
+ * as text wraps onto a second line wherever the screen is narrower than it. Semantics keeps the
+ * whole text as it ships, dashes included, as one node.
  */
 @Composable
 private fun LicenceText(text: String) {

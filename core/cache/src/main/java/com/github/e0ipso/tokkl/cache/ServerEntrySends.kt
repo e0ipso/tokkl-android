@@ -32,15 +32,12 @@ class ServerEntrySends(private val api: TokklApi) {
      */
     suspend fun restore(id: EntryId, resend: Boolean): ApiResult<ServerTimeEntry> = api.entries.restore(id, resend)
 
-    /** The running entry, or null when none runs. */
     suspend fun current(): ApiResult<ServerTimeEntry?> = api.entries.current()
 
     suspend fun get(id: EntryId): ApiResult<ServerTimeEntry> = api.entries.get(id)
 
-    /** The entries that start from [startDate] to [endDate]. */
     suspend fun list(startDate: Instant, endDate: Instant): ApiResult<List<ServerTimeEntry>> =
         api.entries.list(startDate, endDate)
 
-    /** Tokkl's deleted entries. */
     suspend fun trash(): ApiResult<List<TrashEntry>> = api.trash.list()
 }

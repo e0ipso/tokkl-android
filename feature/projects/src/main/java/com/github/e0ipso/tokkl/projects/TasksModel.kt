@@ -22,14 +22,12 @@ sealed interface TaskOverlay {
     /** The form that renames [task] and marks it done or not done. */
     data class Edit(val task: Task) : TaskOverlay
 
-    /** The question whether to delete [task]. */
     data class ConfirmDelete(val task: Task) : TaskOverlay
 }
 
 /** The project's tasks, open ones first and done ones after them, each part sorted as Tokkl sorts them. */
 data class TasksData(val tasks: List<Task>) {
 
-    /** With [task] as the server sent it after a change, in its place in the order. */
     fun with(task: Task): TasksData = TasksData((without(task.id).tasks + task).sortedForList())
 
     fun without(id: TaskId): TasksData = TasksData(tasks.filterNot { it.id == id })
@@ -42,8 +40,6 @@ typealias TasksState = CatalogState<TasksData, TaskOverlay>
  * each time a project's form opens or the app comes back to the page, and the changes the list
  * sends at once, as [CatalogModel] describes. Nothing is queued, and after each change the server accepts,
  * [changes] reloads the offline cache, so the entry editor's picker offers the change.
- *
- * @param repository the project's tasks on the server.
  */
 class TasksModel(
     private val repository: ServerTasksRepository,
@@ -84,7 +80,6 @@ class TasksModel(
         if (project != null) catalog.shown()
     }
 
-    /** Closes the list, as its form closes. */
     fun close() {
         catalog.close()
         project = null

@@ -23,7 +23,6 @@ data class TimerPeriodTotals(val todaySeconds: Long, val weekSeconds: Long) {
     )
 }
 
-/** [TimerPeriodTotals] written for the screen. */
 data class FormattedTimerTotals(val today: String, val week: String)
 
 /**
@@ -93,7 +92,6 @@ fun timerEntrySeconds(start: Instant, stop: Instant?, now: Instant): Long {
     return Duration.between(start, end).seconds.coerceAtLeast(0L)
 }
 
-/** One effective cached segment, its account-local start day, and its nonnegative elapsed seconds. */
 data class CountedTimerEntry(val entry: TimeEntry, val day: LocalDate, val seconds: Long)
 
 /** Shared by the Timer page and widget so remaps, start days and elapsed time cannot drift. */

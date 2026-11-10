@@ -59,7 +59,6 @@ internal class ReportExtraProjection {
         }
     }
 
-    /** Each of [items] as [part] renders it, until the budget or [MAX_ENTRIES] runs out. */
     private fun <T> renderParts(items: Iterable<T>, part: (T) -> String): List<String> {
         val parts = mutableListOf<String>()
         for (item in items) {

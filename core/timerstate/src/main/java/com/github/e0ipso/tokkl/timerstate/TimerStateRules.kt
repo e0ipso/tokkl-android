@@ -42,7 +42,6 @@ internal fun RunningCheckStart.withWrites(writes: List<RunningCheckWrites>): Run
 internal class RecentWrites(private val limit: Int) {
     private val writes = ArrayDeque<Pair<Long, RunningCheckWrites>>()
 
-    /** How many writes were added. */
     var count = 0L
         private set
 

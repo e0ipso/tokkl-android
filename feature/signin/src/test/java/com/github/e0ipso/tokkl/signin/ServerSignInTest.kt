@@ -272,9 +272,9 @@ class ServerSignInTest {
     }
 
     /**
-     * The shared client with a step that stands in for its trust manager: the
-     * handshake with a server presenting [certificate] fails unless the user
-     * pinned it, as PinningTrustManager makes it fail.
+     * The shared client with a step that stands in for its trust manager: the handshake with a
+     * server presenting [certificate] fails unless the user pinned it, as PinningTrustManager makes
+     * it fail.
      */
     private fun handshakeAsIfServing(certificate: ServerCertificate): OkHttpClient = testApi.http.instance.newBuilder()
         .addInterceptor { chain ->

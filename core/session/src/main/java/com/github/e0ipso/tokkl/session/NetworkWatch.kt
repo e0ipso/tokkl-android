@@ -9,11 +9,11 @@ import kotlin.coroutines.CoroutineContext
 
 /**
  * Follows whether the phone's default network reaches the internet, from [start] to [stop], and
- * reports each relevant change ([changes]) to [listener] on the main thread. The activity
- * watches only while it is started, so in the background no network change reaches the app. A network that has no
- * internet but reaches a Tokkl server on the local network counts as offline, as in the picker.
+ * reports each relevant change ([changes]) to [listener] on the main thread. The activity watches
+ * only while it is started, so in the background no network change reaches the app. A network that
+ * has no internet but reaches a Tokkl server on the local network counts as offline, as in the
+ * picker.
  *
- * @param scope where the watch runs between [start] and [stop].
  * @param main the main thread, where the watch starts at once, so the callback is registered
  *   before [start] returns and each report reaches [listener] as it arrives.
  */

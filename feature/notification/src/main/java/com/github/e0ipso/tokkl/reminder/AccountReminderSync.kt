@@ -43,12 +43,7 @@ internal fun accountReminderSync(
     )
 }
 
-/**
- * The reminder's view of the signed-in account: its running entry, its Stop in the queue and its
- * Pause.
- *
- * @param running the cache's running entry, or null while none runs.
- */
+/** @param running the cache's running entry, or null while none runs. */
 internal class AccountReminder(
     private val session: Session,
     private val running: Flow<EntryWithSendState?>,

@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.transformLatest
 import java.time.Clock
 import java.time.Instant
 
-/** What the Timer page's Today and This week row shows. */
 @Immutable
 sealed interface TimerTotalsState {
 

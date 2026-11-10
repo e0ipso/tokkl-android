@@ -42,7 +42,6 @@ import com.github.e0ipso.tokkl.ui.theme.screenContent
 /** The top bar's height, from its top to the bottom of its border, at the usual font scale. */
 val TopBarHeight: Dp = 64.dp
 
-/** The border under the top bar. */
 private val TopBarBorder: Dp = 1.dp
 
 /**

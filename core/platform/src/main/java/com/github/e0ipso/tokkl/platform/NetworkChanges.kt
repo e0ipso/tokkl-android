@@ -27,9 +27,8 @@ fun DefaultNetwork.changes(): Flow<Boolean> = channelFlow {
 }
 
 /**
- * Relevant default-network changes. Initial and unchanged capability reports ask nothing. A new
- * default or newly validated route may recover a failed request even while INTERNET stays true.
- * Validation is a change signal, not a requirement for reaching a server on a local network.
+ * Relevant default-network changes. Validation is a change signal, not a requirement for reaching
+ * a server on a local network.
  */
 internal class NetworkWatchState<N : Any>(
     initial: N?,

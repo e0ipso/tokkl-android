@@ -15,9 +15,7 @@ import java.security.MessageDigest
 import java.time.Instant
 
 /**
- * What the running timer's notification shows (docs/PRD.md N1): the entry's description, its
- * project and task, and the start the system chronometer counts from. While the server's pause
- * chain is paused (T1), what Resume starts and the paused total.
+ * What the running timer's notification shows (docs/PRD.md N1, T1).
  *
  * @param entryId the id the cache held the entry under, which the Stop action stops, or 0 while
  *   [paused].
@@ -34,7 +32,6 @@ import java.time.Instant
  *   description or name.
  * @param accumulatedSeconds what the chain's stopped segments store, which the chronometer adds
  *   to the time since [start], or the paused total while [paused].
- * @param target what the actions act on.
  * @param pausable whether the running entry offers Pause, which needs the server's timer API and
  *   no Pomodoro session.
  */
@@ -149,19 +146,16 @@ fun runningNotificationContent(
     )
 }
 
-/** What to do with the notification. */
 sealed interface RunningNotificationChange {
-    /** Post it, or replace the one on show. */
     data class Post(val content: RunningNotificationContent) : RunningNotificationChange
 
-    /** Take it away: no entry runs. */
+    /** No entry runs. */
     data object Remove : RunningNotificationChange
 }
 
 /**
  * The running entry the notification last followed.
  *
- * @param key the entry's [RunningNotificationContent.key].
  * @param entryId the id the cache held the entry under. Null for a key kept before the store kept
  *   the id too, which then matches any entry with that key.
  */
@@ -198,10 +192,6 @@ private fun field(value: String): String = "${value.length}:$value"
 private fun tagKey(name: String): String =
     name.trim().map { if (it in 'A'..'Z') it + ('a' - 'A') else it }.joinToString("")
 
-/**
- * The running notification's content as the timer controls and the cached projects and tasks
- * change, null while nothing runs.
- */
 internal fun runningNotificationContents(
     controls: Flow<TimerControls>,
     projects: Flow<List<Project>>,

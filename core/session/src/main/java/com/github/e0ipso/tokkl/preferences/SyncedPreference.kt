@@ -32,7 +32,6 @@ interface PreferenceCodec<T : Any> {
     /** The stored [value] as the phone shows it, such as moved into its range. */
     fun loaded(value: T): T = value
 
-    /** The value in a refresh's [preferences]. */
     fun fromServer(preferences: MePreferences): T
 
     /** The change that posts [value], with its keys and nothing else. */
@@ -60,24 +59,17 @@ fun interface PreferenceSharing {
  * One account preference that Tokkl keeps in `/api/v9/me/preferences` and the phone keeps in
  * [store], so a cold start has it before the refresh answers, and offline.
  *
- * A [change] shows at once and goes to `POST /api/v9/me/preferences` with [body], without waiting
- * for the answer, when [sharing] says the server keeps it. When that fails, as offline, the value
- * stays on the phone, marked unsent, and goes to the server with the next refresh, so the change
- * that reaches the server last wins, as for time entries (docs/PRD.md O3). Each refresh otherwise
- * takes the server's value through [fromServer], except the one refresh right after a change,
- * whose preferences may predate it. A server without Tokkl's preferences, such as Toggl Track,
- * gets nothing: the value stays on the phone. A change made before a refresh found the server
- * keeping it goes there with that refresh.
+ * A change that fails to reach the server, as offline, stays on the phone, marked unsent, and goes
+ * with the next refresh, so the change that reaches the server last wins, as for time entries
+ * (docs/PRD.md O3). Each refresh otherwise takes the server's value, except the one refresh right
+ * after a change, whose preferences may predate it. A server without Tokkl's preferences, such as
+ * Toggl Track, gets nothing: the value stays on the phone.
  *
  * @param store keeps the value on the phone. It loads from it as this is made, off the main thread.
- * @param client the signed-in account's API client, or null when signed out.
  * @param account the account each change, refresh and send belongs to: once its context has
  *   ended, which sign-out does first, they show, store and send nothing more.
  * @param scope outlives every screen, so leaving the app does not cancel a write.
- * @param io where the stored value loads.
  * @param default the value before one is stored, and after [forget].
- * @param codec how the value reads from the server's preferences and posts back.
- * @param sharing whether the server keeps the preference, from the capabilities or from its keys.
  */
 class SyncedPreference<T : Any>(
     private val store: ClearableStore<StoredPreference<T>>,
@@ -107,7 +99,6 @@ class SyncedPreference<T : Any>(
         } ?: default
     }
 
-    /** The value on show. */
     val value: StateFlow<T> = held.state
 
     /** [value] once loaded, for readers that may run before the load ends. */
@@ -127,9 +118,8 @@ class SyncedPreference<T : Any>(
     private val storing = Mutex()
 
     /**
-     * Shows [value] at once, keeps it on the phone and then, in the background, sends it to the
-     * server when [sharing] says so, marked unsent until it has. Call it on the main thread: once
-     * the value has loaded, as it has for every screen, it shows before this returns.
+     * Call it on the main thread: once the value has loaded, as it has for every screen, it shows
+     * before this returns.
      */
     fun change(value: T): Job {
         val context = account.context.value
@@ -203,16 +193,12 @@ class SyncedPreference<T : Any>(
         }
     }
 
-    /** Deletes the stored value. */
     @Throws(IOException::class)
     suspend fun clear() {
         store.clear()
     }
 
-    /**
-     * Posts the value on show while it is unsent, for the account of [context]. A failure leaves
-     * it unsent for the next refresh.
-     */
+    /** A failure leaves the value unsent for the next refresh. */
     private suspend fun send(context: AccountContext) = sending.withLock {
         val value = memory.withLock { held.value.takeIf { unsent && context.isCurrent } } ?: return@withLock
         val api = client() ?: return@withLock
@@ -225,7 +211,6 @@ class SyncedPreference<T : Any>(
         persist(context)
     }
 
-    /** Writes the value on show, while [context] is the account's. */
     private suspend fun persist(context: AccountContext) = storing.withLock {
         val stored = memory.withLock { StoredPreference(held.value, unsent, shared).takeIf { context.isCurrent } }
             ?: return@withLock

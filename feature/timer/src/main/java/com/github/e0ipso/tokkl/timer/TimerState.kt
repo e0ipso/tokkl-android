@@ -10,7 +10,6 @@ import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import java.time.Duration
 import java.time.Instant
 
-/** What the timer shows. */
 @Immutable
 sealed interface TimerState {
 
@@ -35,7 +34,6 @@ sealed interface TimerState {
      * @property entryId the cached entry's id, or null from a Start tap until the cache shows the entry.
      * @property original the project, task and tags the cache has, which the picker keeps on offer
      *   when they are archived.
-     * @property unsent the server has not received every change to the entry.
      * @property accumulatedSeconds what the server's pause chain stored before this entry, its
      *   resumed clone, which the clock adds to the time since [start] (docs/PRD.md T1), or 0
      *   outside a chain.

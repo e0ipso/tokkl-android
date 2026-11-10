@@ -70,7 +70,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    /** What each feature reads of the taps from outside the app. */
     private val links by lazy { DeepLinks(features.requests) }
 
     /** Whether the screens are composed, which they are once every store has loaded. */
@@ -78,7 +77,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Keeps the splash screen up, and draws no frame, until the screens are composed.
         findViewById<View>(android.R.id.content).holdDrawingUntil { composed }
         drawEdgeToEdge()
         intent?.takeDeepLinks(links)?.forEach(requests::request)
@@ -170,7 +168,6 @@ class MainActivity : ComponentActivity() {
         WindowCompat.enableEdgeToEdge(window)
     }
 
-    /** Dark status and navigation bar icons on a light theme, light icons on a dark one. */
     private fun showSystemBarIconsFor(darkTheme: Boolean) {
         WindowCompat.getInsetsController(window, window.decorView).apply {
             isAppearanceLightStatusBars = !darkTheme

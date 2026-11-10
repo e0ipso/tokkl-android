@@ -11,12 +11,10 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
 
-/** What [DeleteUndoer.undoDelete] did. */
 sealed interface UndoOutcome {
     /** The delete had not gone out. It left the queue and the entry is back, with no request. */
     data object Cancelled : UndoOutcome
 
-    /** The server restored the entry. */
     data object Restored : UndoOutcome
 
     /**
@@ -42,7 +40,6 @@ sealed interface UndoOutcome {
  *
  * @param entries opens the entry calls of the signed-in account, or gives null when signed out.
  *   Runs on [io].
- * @param refreshes asked for a refresh after the server restored an entry.
  * @param scope the application's scope, where each Undo runs on [io].
  */
 class DeleteUndoer(
@@ -56,14 +53,11 @@ class DeleteUndoer(
     /** Held while a delete goes out and while [undoDelete] takes one back, so the two never overlap. */
     private val deletes = Mutex()
 
-    /** Runs [send], the sender's try at a delete, so that no Undo decides meanwhile. */
     internal suspend fun <T> sendingDelete(send: suspend () -> T): T = deletes.withLock { send() }
 
     /**
-     * Takes back the delete of the entry [entryId], the id the phone deleted it under. A delete
-     * the sender has not sent leaves the queue, with no request. Otherwise the server restores the
-     * entry. Blocks the sender's deletes meanwhile. Once started, the Undo reaches the server and
-     * the queue also when the caller is cancelled: it runs in the application's scope.
+     * [entryId] is the id the phone deleted the entry under. Once started, the Undo reaches the
+     * server and the queue also when the caller is cancelled: it runs in the application's scope.
      */
     suspend fun undoDelete(entryId: EntryId): UndoOutcome {
         val outcome = scope.async(io) {
@@ -79,7 +73,6 @@ class DeleteUndoer(
         return outcome
     }
 
-    /** Asks the server to restore its entry [serverId], and records the answer. */
     private suspend fun restore(serverId: Long): UndoOutcome {
         val server = entries() ?: return UndoOutcome.NeedsServer
         return when (val result = server.restore(EntryId(serverId), resend = true)) {

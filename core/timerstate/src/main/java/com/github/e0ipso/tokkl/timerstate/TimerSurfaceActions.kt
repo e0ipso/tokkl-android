@@ -53,8 +53,6 @@ sealed interface SurfaceTap {
  *
  * @param state what the phone shows now, read at the tap, and the signed-in account's name, as
  *   the targets of its controls carry it.
- * @param changes the change queue, which Stop of a running entry goes to.
- * @param server the server's Pause, Resume and Discard.
  * @param sender sends the queue and waits for it, so a Start the server has not had yet reaches
  *   it before the Pause that follows it.
  */
@@ -85,7 +83,6 @@ class TimerSurfaceActions(
         }
     }
 
-    /** A request for [action] on the paused chain, while a chain is paused. */
     private suspend fun whilePaused(action: suspend () -> TimerActionResult): SurfaceTap? {
         val paused = state.currentControls() as? TimerControls.Paused ?: return null
         return request(paused.target, action)
@@ -100,7 +97,6 @@ class TimerSurfaceActions(
         }
     }
 
-    /** Ignore duplicate taps; serialize actions on newly published states and recheck them. */
     private fun request(expected: TimerTarget, action: suspend () -> TimerActionResult): SurfaceTap.Request? {
         if (expected in sending) return null
         return SurfaceTap.Request {

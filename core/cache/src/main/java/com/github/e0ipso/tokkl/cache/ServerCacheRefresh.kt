@@ -11,9 +11,6 @@ import java.time.Clock
  * The refresh of the cache from the server: it reads the server's snapshot and writes it over the
  * rows [AccountCache] reads, with the queued changes on top. The account refresh runs it once per
  * answer.
- *
- * @param allDayMissing turns no-time entries off in the capabilities, as
- *   `CapabilitiesSource.allDayMissing` does.
  */
 class ServerCacheRefresh(
     private val database: CacheDatabase,
@@ -27,8 +24,6 @@ class ServerCacheRefresh(
      * Reads the server with [api] and replaces the cached rows, as [refreshedWith] describes, with
      * the queued changes applied on top. Entries changed during the read, or pending when it
      * began, keep their current cached state even if their changes have since left the queue.
-     * [me] is the refresh's `GET /api/v9/me` with related data, [preferences] its
-     * `GET /api/v9/me/preferences`, null when that failed, and [capabilities] the flags they set.
      * A server without favorites gets none cached. A failed request keeps its rows, and a failed
      * write keeps the whole cache as it was. When Tokkl lists an entry without `all_day`, as
      * [readServerSnapshot] describes, [allDayMissing] tells the capabilities that the server

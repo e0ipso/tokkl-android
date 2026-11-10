@@ -17,7 +17,6 @@ enum class ThemeMode {
     DARK,
     ;
 
-    /** Whether the app draws in dark colours, given whether the system is dark now. */
     fun isDark(systemIsDark: Boolean): Boolean = when (this) {
         SYSTEM -> systemIsDark
         LIGHT -> false

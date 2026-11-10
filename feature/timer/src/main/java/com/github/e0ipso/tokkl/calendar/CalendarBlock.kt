@@ -133,7 +133,6 @@ internal fun Block(
     }
 }
 
-/** The tint and the start bar of an entry's block or chip. */
 internal data class EntryColours(val tint: Color, val bar: Color)
 
 /** [entry]'s project colour over surface, and its bar: the running colour while it runs, else the project's mark. */
@@ -265,9 +264,7 @@ internal fun UnsentBlockText(text: @Composable (mark: Boolean) -> Unit) {
     }
 }
 
-/**
- * What TalkBack reads for a block: description, project and task, times, duration, and whether it runs or is unsent.
- */
+/** What TalkBack reads for a block: description, project and task, times, duration, and running or unsent. */
 private fun spokenBlock(
     resources: Resources,
     entry: CalendarEntry,

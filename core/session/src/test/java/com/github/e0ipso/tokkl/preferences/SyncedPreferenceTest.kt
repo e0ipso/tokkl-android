@@ -179,7 +179,6 @@ class SyncedPreferenceTest {
         preference.clear()
     }
 
-    /** Posts the value as one key. */
     private object Sent : PreferenceCodec<Int> {
         override fun fromServer(preferences: MePreferences): Int = 0
 

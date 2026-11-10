@@ -38,11 +38,10 @@ import java.time.Instant
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
- * The trash page (docs/PRD.md H7), as the web app's TrashPage: the deleted entries from the
- * server, the most recently deleted first, each with Restore and Delete forever, and Empty trash,
- * which asks first. Every change goes to the server at once. The trash lives only on the server,
- * so while the phone is offline or the server out of reach, the page says it needs the server and
- * every action is off. Coming back online, or to the foreground, loads the trash again.
+ * The trash page (docs/PRD.md H7), as the web app's TrashPage: the most recently deleted entries
+ * first, each with Restore and Delete forever, and Empty trash, which asks first. The trash lives
+ * only on the server, so while the phone is offline or the server out of reach, the page says it
+ * needs the server and every action is off.
  */
 @Composable
 fun TrashScreen(page: TrashPageState, actions: TrashActions, modifier: Modifier = Modifier) {
@@ -146,7 +145,6 @@ fun TrashScreen(page: TrashPageState, actions: TrashActions, modifier: Modifier 
     }
 }
 
-/** What the page's controls do. */
 class TrashActions(
     val onRetry: () -> Unit = {},
     val onRestore: (EntryId) -> Unit = {},
@@ -166,10 +164,8 @@ private fun changeText(change: TrashChange): String = when (change) {
 }
 
 /**
- * One deleted entry: its description, then its project, when it started, how long it lasted and
- * when it was deleted, in words, which TalkBack reads as one item. Without [time], the account's
- * timezone, the dates and times stay out. Under them Restore and Delete forever, which name the
- * entry to TalkBack and on long press.
+ * One deleted entry, which TalkBack reads as one item. Without [time], the account's timezone, the
+ * dates and times stay out. Restore and Delete forever name the entry to TalkBack and on long press.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable

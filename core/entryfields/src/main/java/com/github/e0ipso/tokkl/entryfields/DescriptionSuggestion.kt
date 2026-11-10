@@ -68,11 +68,9 @@ class DescriptionSuggestions private constructor(private val candidates: List<Ca
         }
     }
 
-    /** An entry that may become a suggestion, with the text the query searches. */
     private class Candidate(val entry: TimeEntry, val haystack: String, val suggestion: DescriptionSuggestion)
 }
 
-/** The suggestions for [query] among the cached [entries], as [DescriptionSuggestions.forQuery] ranks them. */
 fun descriptionSuggestions(
     entries: List<TimeEntry>,
     projects: List<Project>,

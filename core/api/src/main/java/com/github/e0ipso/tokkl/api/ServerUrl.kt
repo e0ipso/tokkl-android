@@ -34,11 +34,9 @@ class ServerUrl private constructor(private val base: HttpUrl) {
     val origin: String
         get() = base.origin()
 
-    /** Whether requests to this server travel unencrypted, over plain `http://`. */
     val isCleartext: Boolean
         get() = !base.isHttps
 
-    /** Whether [url] has this server's scheme, host and port. */
     internal fun isSameOrigin(url: HttpUrl): Boolean =
         url.scheme == base.scheme && url.host == base.host && url.port == base.port
 
@@ -54,13 +52,11 @@ class ServerUrl private constructor(private val base: HttpUrl) {
         private val APP = listOf("api", "app")
 
         /**
-         * Returns null unless [url] is an absolute `http` or `https` URL with
-         * no user name or password. The app stores the URL in plain text, so it
-         * must not carry credentials. The base URL keeps only the scheme, host,
-         * port and path, so a query or fragment, as in a URL copied from the
-         * browser's address bar, is dropped. Empty path segments are dropped
-         * too, so `https://example.com/tokkl/` and `https://example.com/tokkl`
-         * are the same server.
+         * Returns null unless [url] is an absolute `http` or `https` URL with no user name or
+         * password. The app stores the URL in plain text, so it must not carry credentials. The base
+         * URL keeps only the scheme, host, port and path, so a query or fragment, as in a URL copied
+         * from the browser's address bar, is dropped. Empty path segments are dropped too, so
+         * `https://example.com/tokkl/` and `https://example.com/tokkl` are the same server.
          */
         fun parse(url: String): ServerUrl? {
             val parsed = url.toHttpUrlOrNull() ?: return null

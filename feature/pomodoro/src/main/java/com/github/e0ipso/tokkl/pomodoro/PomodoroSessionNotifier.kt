@@ -54,7 +54,6 @@ class PomodoroSessionNotifier(private val context: Context) : PomodoroSessionPos
         manager.cancel(NOTIFICATION_ID)
     }
 
-    /** The session notification for [content], whose buttons carry [account], without posting it. */
     fun build(content: PomodoroSessionNotificationContent, account: String): Notification {
         val label = phaseLabel(content.kind)
         val open = PendingIntent.getActivity(
@@ -139,7 +138,6 @@ class PomodoroSessionNotifier(private val context: Context) : PomodoroSessionPos
 /** The action of a session notification's tap, which opens MainActivity on the Pomodoro page. */
 const val SHOW_POMODORO = "com.github.e0ipso.tokkl.action.SHOW_POMODORO_SESSION"
 
-/** The extra that holds the account a session notification was shown for. */
 const val POMODORO_NOTIFICATION_ACCOUNT = "pomodoro_notification_account"
 
 /**

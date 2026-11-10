@@ -110,7 +110,6 @@ class ReportTabsViewModelTest {
         assertTrue("nothing more to load", io.isEmpty())
     }
 
-    /** A next page that fails shows why, with no rows, and Try again starts the tab over. */
     @Test
     fun aFailedNextPageShowsWhyAndTryAgainLoadsTheFirstPage() {
         model.selectTab(ReportTab.DETAILED)
@@ -229,10 +228,6 @@ class ReportTabsViewModelTest {
         assertEquals("no filters", ReportFilters(), server.weeklies.last().filters)
     }
 
-    /**
-     * The process died with Reports on the back stack: the page it restores opens on the tab and
-     * the filters it had, and asks for them.
-     */
     @Test
     fun theTabAndTheFiltersComeBackWhenANewProcessRestoresThePage() {
         screen.show()
@@ -253,10 +248,6 @@ class ReportTabsViewModelTest {
         assertEquals(filters, server.weeklies.last().filters)
     }
 
-    /**
-     * The process died with Reports on the back stack: the page it restores opens on the range it
-     * showed, with the preset it came from, and asks for it.
-     */
     @Test
     fun theRangeComesBackWhenANewProcessRestoresThePage() {
         screen.show()
@@ -279,7 +270,6 @@ class ReportTabsViewModelTest {
         assertEquals(shown.range, server.summaries.last().range)
     }
 
-    /** A widget's day tap that waits when the new process restores the page shows today, not the saved range. */
     @Test
     fun aDayTapWaitingAtTheRestoreWinsOverTheSavedRange() {
         screen.show()
@@ -296,7 +286,6 @@ class ReportTabsViewModelTest {
         assertEquals(RangePreset.TODAY, model.state.value.selection()?.preset)
     }
 
-    /** A widget's day tap that waits when the new process restores the page wins over what it saved. */
     @Test
     fun aDayTapWaitingAtTheRestoreWinsOverTheSavedFilters() {
         screen.show()
@@ -312,7 +301,6 @@ class ReportTabsViewModelTest {
         assertEquals(ReportTab.SUMMARY, model.chosen.value.tab)
     }
 
-    /** A weekly answer that is not a week shows as an unexpected answer. */
     @Test
     fun aWeeklyAnswerThatIsNotAWeekIsAnUnexpectedAnswer() {
         // A row of two days.

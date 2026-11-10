@@ -94,7 +94,6 @@ data class ProjectDraft(
 
     companion object {
 
-        /** The form for [project] as the server sent it, or for a new project in [newColor]. */
         fun of(project: ProjectDetails?, newColor: ProjectPalette): ProjectDraft = if (project == null) {
             ProjectDraft(
                 "",
@@ -121,7 +120,6 @@ data class ProjectDraft(
     }
 }
 
-/** What [ProjectDraft.check] found. */
 sealed interface DraftCheck {
     data class Valid(val fields: ProjectFields) : DraftCheck
 

@@ -37,11 +37,8 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 /**
- * The Pomodoro page's view of the server's session. The server owns the session: this view model
- * shows the held timer state, hands Start, Next phase and End and the open pomodoro's field edits
- * to [session], which sends them, and applies no phase rule of its own. It maps each result to
- * what the page shows: a refused Next phase or End, as after another device changed the timer,
- * says so.
+ * The server owns the session: this view model applies no phase rule of its own, and a refused
+ * Next phase or End, as after another device changed the timer, says so.
  *
  * All public methods are called on the main thread, as for the other screens' view models. The
  * start form's draft and the typed fields outlive a rotation, until the account signs out, and the
@@ -50,11 +47,9 @@ import kotlinx.coroutines.sync.withLock
  *
  * @param held the account's held timer state, null before the first one.
  * @param controls what the shared timer controls show: the cache's running entry, with queued edits.
- * @param session sends the session's commands and the open pomodoro's edits.
  * @param exactAlarms whether exact alarms are refused, until the page reports the grants itself.
  * @param picker the cached projects, clients, tasks and tags, which the page's picker offers and
  *   its project and task are named from.
- * @param offline whether the phone is offline, which the picker says.
  * @param saved the route's saved state, which keeps the start form ([SavedPomodoroForm]).
  */
 class PomodoroViewModel(
@@ -75,7 +70,6 @@ class PomodoroViewModel(
         viewModelScope.coroutineContext + SupervisorJob(viewModelScope.coroutineContext[Job]),
     )
 
-    /** The start form a new process restored from the route's saved state, if any. */
     private val restored = saved.get<String>(SAVED_FORM)?.let(SavedPomodoroForm::decode)
 
     private val mutableState = MutableStateFlow(
@@ -85,16 +79,12 @@ class PomodoroViewModel(
         ),
     )
 
-    /** What the page's picker offers, while the page reads it. */
     private val pickerShown: StateFlow<PickerSource> = picker.stateIn(viewModelScope, whileShown, PickerSource())
 
     /** The page's state, before the picker and the network join it in [page]. */
     internal val state: StateFlow<PomodoroPageState> = mutableState.asStateFlow()
 
-    /**
-     * What the page draws: [state], with its fields' project and task named from the picker's rows,
-     * what the picker offers, and whether the phone is offline.
-     */
+    /** [state] with the picker's rows, which name its fields' project and task, and the network. */
     val page: StateFlow<PomodoroPageState> = combine(state, pickerShown, offline) { shown, source, isOffline ->
         shown.copy(
             labels = entryLabels(shown.fields, source.projects, source.tasks),
@@ -188,7 +178,6 @@ class PomodoroViewModel(
         keepForm()
     }
 
-    /** Keeps the start form's fields and typed lengths in the route's saved state. */
     private fun keepForm() {
         val lengths = state.value.lengths.takeIf { lengthsEdited }
         saved[SAVED_FORM] = SavedPomodoroForm.of(draft, lengths).encode()
@@ -238,10 +227,7 @@ class PomodoroViewModel(
         return if (send) write(change) else null
     }
 
-    /**
-     * Gives [fields], which the page drew, the project, task and tags in [picked], as
-     * [editFields] does. Picking a billable project makes them billable.
-     */
+    /** Picking a billable project makes the fields billable. */
     fun pick(fields: EntryFields, picked: Picked, entryId: EntryId?): Job? =
         editFields(fields.withPicked(picked, pickerShown.value.projects), entryId)
 
@@ -286,9 +272,8 @@ class PomodoroViewModel(
     }
 
     /**
-     * Starts a session with the form's fields and lengths. Nothing starts on the phone: the
-     * server answers with the session, which the page then shows. [onStarted] runs only once the
-     * server has started it, to ask for the notification permission.
+     * Nothing starts on the phone: the server answers with the session, which the page then shows.
+     * [onStarted] runs only once the server has started it, to ask for the notification permission.
      */
     fun start(onStarted: () -> Unit = {}): Job? {
         val before = state.value
@@ -339,7 +324,6 @@ class PomodoroViewModel(
     }
 
     private companion object {
-        /** The key of the start form's [SavedPomodoroForm] in the route's saved state. */
         const val SAVED_FORM = "pomodoro-form"
     }
 }

@@ -14,15 +14,12 @@ import kotlin.coroutines.EmptyCoroutineContext
  *
  * The new job starts after [launch] has recorded it, so a job that calls [launch] itself, or runs
  * at once on an unconfined dispatcher, gets itself back. Any thread may call it.
- *
- * @param context what each job runs in, on top of [scope]'s context.
  */
 class SingleFlight(private val scope: CoroutineScope, private val context: CoroutineContext = EmptyCoroutineContext) {
 
     /** The last job [launch] made, which runs until it completes. */
     private val current = AtomicReference<Job?>(null)
 
-    /** The job that runs now, or null when none does. */
     fun running(): Job? = current.get()?.takeUnless { it.isCompleted }
 
     /**
@@ -46,7 +43,6 @@ class SingleFlight(private val scope: CoroutineScope, private val context: Corou
         }
     }
 
-    /** Cancels the job that runs now, if any, so the next [launch] starts a new one. */
     fun cancel() {
         current.getAndSet(null)?.cancel()
     }

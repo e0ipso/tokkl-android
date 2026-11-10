@@ -75,7 +75,6 @@ object RunningNotifications {
         awaitGone("the dismissed notification")
     }
 
-    /** The app's services that run in the foreground. */
     @Suppress("DEPRECATION") // Still returns the caller's own services.
     fun foregroundServices(): List<String> =
         context.getSystemService(ActivityManager::class.java).getRunningServices(Int.MAX_VALUE)

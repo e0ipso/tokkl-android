@@ -139,7 +139,6 @@ private fun PomodoroWidgetEntry.keyContent() = buildJsonObject {
     put("task", task?.let(::JsonPrimitive) ?: JsonNull)
 }
 
-/** Every value of the session the widget draws or acts on, for [key]. */
 private fun PomodoroSession.keyContent() = buildJsonObject {
     put("work_minutes", workMinutes)
     put("short_rest_minutes", shortRestMinutes)

@@ -19,7 +19,6 @@ import kotlin.concurrent.thread
 /** What work started for an account can still do once the account has gone. */
 class AccountContextTest {
 
-    /** The application's scope. */
     private val app = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
     private val account = CurrentAccount(app)
 

@@ -10,7 +10,6 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
 
-/** A phone clock the test moves. */
 internal class MovableClock(var now: Instant = T0) : Clock() {
     override fun instant(): Instant = now
 
@@ -41,7 +40,6 @@ internal class FakeAlarms : PomodoroAlarmScheduler {
     }
 }
 
-/** The ringing service's sound, vibration and notification, recorded. */
 internal class FakeOutput : PomodoroRingOutput {
     var audio = false
     var vibrating = false
@@ -110,7 +108,6 @@ internal class ServiceLikeRinging(private val controller: PomodoroRingController
     }
 }
 
-/** A phase alarm over a held state, a capability flag, fake alarms and a ringing service with fake output. */
 internal class AlarmFixture(initial: HeldTimerState? = heldState(revision = 3)) {
     var held: HeldTimerState? = initial
     var available = true
@@ -128,7 +125,6 @@ internal class AlarmFixture(initial: HeldTimerState? = heldState(revision = 3)) 
         clock,
     )
 
-    /** The ring of the held phase, as the alarm derives it. */
     val ring: PomodoroRing get() = checkNotNull(held?.ring())
 
     /** Arms the held phase and lets its alarm go off once its planned end has come. */

@@ -53,12 +53,10 @@ fun routeSerializers(features: List<FeatureRoutes>): SerializersModule = Seriali
  */
 class NavigationHost(val navigator: Navigator, val prompts: NotificationPrompts)
 
-/** The entry of the object route [route], under its [contentKey]. */
 fun <R : Route> EntryProviderScope<Route>.route(route: R, content: @Composable (R) -> Unit) {
     entry(route, contentKey = route.contentKey, content = content)
 }
 
-/** The entries of every route of class [R], each under its own [contentKey]. */
 inline fun <reified R : Route> EntryProviderScope<Route>.routes(noinline content: @Composable (R) -> Unit) {
     entry<R>(clazzContentKey = { it.contentKey }, content = content)
 }

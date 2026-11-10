@@ -30,7 +30,7 @@ class NeedsAttentionViewModel(
     scope: CoroutineScope,
 ) : ViewModel(scope) {
 
-    /** What the screen shows, while it reads it. The list is empty until the queue is read. */
+    /** The list is empty until the queue is read. */
     val state: StateFlow<NeedsAttentionState> = combine(
         attention.held.onStart { emit(emptyList()) },
         settings,

@@ -533,7 +533,6 @@ abstract class AdaptiveLayoutTest(private val window: DpSize, private val width:
         /** Pixel rounding in the window's dp, at a density that may be scaled down. */
         const val TOLERANCE_DP = 2f
 
-        /** Android's largest font scale. */
         const val LARGEST_FONT_SCALE = 2f
 
         /** A phone held sideways, short of room for the rail's items at the largest font scale. */

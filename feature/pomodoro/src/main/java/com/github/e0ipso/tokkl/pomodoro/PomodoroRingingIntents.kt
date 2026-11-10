@@ -8,7 +8,6 @@ import java.time.Instant
 /** The extra that holds the start of the phase an intent is about, in epoch milliseconds. */
 const val EXTRA_PHASE_START = "pomodoro_phase_start"
 
-/** The extra that holds the revision a button was shown at. */
 const val EXTRA_REVISION = "pomodoro_revision"
 
 /**
@@ -30,7 +29,6 @@ internal fun phaseUri(phase: PomodoroPhaseKey, revision: Long?): Uri {
     return uri.build()
 }
 
-/** The phase this intent carries, or null without one. */
 fun Intent.phaseKey(): PomodoroPhaseKey? = if (hasExtra(
         EXTRA_PHASE_START,
     )
@@ -40,6 +38,5 @@ fun Intent.phaseKey(): PomodoroPhaseKey? = if (hasExtra(
     null
 }
 
-/** The revision this intent's button was shown at, or null without one. */
 internal fun Intent.shownRevision(): Long? =
     if (hasExtra(EXTRA_REVISION)) getLongExtra(EXTRA_REVISION, 0).takeIf { it >= 0 } else null

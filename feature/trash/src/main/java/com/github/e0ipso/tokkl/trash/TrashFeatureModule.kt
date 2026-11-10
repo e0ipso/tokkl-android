@@ -12,7 +12,6 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
-/** The Trash page: its repository, its view model and its screen. */
 val trashFeatureModule = module {
     singleOf(::ServerTrashRepository)
 

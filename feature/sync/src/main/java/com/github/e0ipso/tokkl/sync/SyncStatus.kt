@@ -20,13 +20,10 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * What the status element above the bottom bar says (docs/PRD.md O5).
  *
- * @property unsent how many changes the queue holds that the server has not received.
- * @property lastAnswered when the server last gave a 2xx answer, or null when it has not since
- *   sign-in.
+ * @property lastAnswered null when the server has not given a 2xx answer since sign-in.
  * @property needsAttention how many changes the server refused, which the "needs attention" list
  *   holds until the user sends them again or discards them (docs/PRD.md O6).
- * @property settings the account's settings, for the timezone and the clock format, or null
- *   before they load.
+ * @property settings null before they load.
  * @property signInNeeded the server refused the phone's API token, so the queue waits until the
  *   user signs in again (docs/PRD.md O6).
  */

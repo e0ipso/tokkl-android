@@ -144,7 +144,6 @@ internal sealed interface ReportCall {
 
 private fun JsonObject.int(key: String): Int = getValue(key).jsonPrimitive.int
 
-/** The dates a report request asked for. */
 private fun JsonObject.dates() =
     range(getValue("start_date").jsonPrimitive.content, getValue("end_date").jsonPrimitive.content)
 
@@ -215,7 +214,6 @@ internal fun detailedPage(rows: List<String>, nextRow: Int?) = MockResponse.Buil
     .body(rows.joinToString(",", "[", "]"))
     .build()
 
-/** An answer with [status] and no body. */
 internal fun status(status: Int, vararg headers: Pair<String, String>): MockResponse = MockResponse.Builder()
     .code(status)
     .apply { for ((name, value) in headers) addHeader(name, value) }

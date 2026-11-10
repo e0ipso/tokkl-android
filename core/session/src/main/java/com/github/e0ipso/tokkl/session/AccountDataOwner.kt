@@ -9,7 +9,6 @@ import com.github.e0ipso.tokkl.api.SharedHttpClient
  */
 interface AccountDataOwner {
 
-    /** The phase of sign-out this owner's step runs in. */
     val signOutPhase: SignOutPhase
 
     /** Forgets this owner's part of the account. A failure leaves it for the next sign-out. */
@@ -50,7 +49,6 @@ enum class SignOutPhase {
     CLEAR_DATA,
 }
 
-/** Sign-out's cancel of every call in flight on the shared HTTP client. */
 class CallsSignOut(private val http: SharedHttpClient) : AccountDataOwner {
     override val signOutPhase = SignOutPhase.STOP_WORK
 

@@ -10,8 +10,6 @@ import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.LocalDate
 
-// Design-time previews of the entry form, with a sample entry.
-
 @PreviewLightDark
 @Composable
 private fun EntryFormPreview() {

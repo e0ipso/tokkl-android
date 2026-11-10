@@ -17,7 +17,6 @@ import org.koin.dsl.bind
 import org.koin.dsl.binds
 import org.koin.dsl.module
 
-/** The Timer and Pomodoro home screen widgets: what they show, the fields they remember and their redraws. */
 val widgetFeatureModule = module {
     single {
         PomodoroWidgetFieldsStore(
@@ -61,8 +60,6 @@ val widgetFeatureModule = module {
     factory<PomodoroWidgetRedraw> { PomodoroWidgetRedrawer(androidContext(), get(), get()) }
     single { PomodoroWidgetHook(inject(), inject(), get(), io()) } bind AppHook::class
 
-    // The Pomodoro widget's Start, Next phase and End session, as expedited work that outlives
-    // the widget's broadcast.
     worker { params ->
         PomodoroWidgetActionWorker(
             androidContext(),

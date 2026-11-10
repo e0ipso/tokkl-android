@@ -65,7 +65,6 @@ private sealed interface BoundsAnswer {
     data class Failed(val status: OlderDays) : BoundsAnswer
 }
 
-/** The history's days before the cache, from the signed-in account's server. */
 class OlderPages(private val client: ApiClientProvider) {
 
     companion object {

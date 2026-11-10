@@ -183,7 +183,6 @@ private fun TimerPage(navigator: Navigator) {
     )
 }
 
-/** What the Timer page's timer does: [timer]'s taps, [favorites]' templates, and the screens it opens. */
 private fun timerBarActions(
     timer: TimerViewModel,
     favorites: FavoritesViewModel,
@@ -274,11 +273,9 @@ val templatesPage = TopLevelDestination(
     isAvailable = { it.favorites },
 )
 
-/** A Timer widget's tap. */
 @Serializable
 data object TimerWidgetTap : NavigationRequest
 
-/** A reminder notification's tap. */
 @Serializable
 data object ReminderTap : NavigationRequest
 
@@ -291,7 +288,6 @@ data object FullscreenTimerRoute : Route {
     override val showsTimerNotices: Boolean get() = true
 }
 
-/** The Timer templates page. */
 @Serializable
 @SerialName("com.github.e0ipso.tokkl.navigation.Route.Templates")
 data object TemplatesRoute : Route

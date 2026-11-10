@@ -35,15 +35,9 @@ class TimerStateRead internal constructor(
  * Starts, Stops and edits keep showing until the server has them.
  *
  * One source serves one account. Sign-out [retire]s it before clearing the cache and the store,
- * and sign-in makes a new one, so an answer that kept a retired source changes nothing. Only
- * [AccountTimerStates] holds a source: readers take [CurrentTimerState], and what feeds it takes
- * the source from [AccountTimerStates.intake]: [begin] before a timer request goes out or a stream
- * waits for its next event, and [accept] with what came back.
+ * and sign-in makes a new one, so an answer that kept a retired source changes nothing.
  *
- * @param initial what the store held at process start, or null.
  * @param store writes each accepted state to disk, and may throw an [IOException].
- * @param cache the cache's current-entry reconciliation.
- * @param clock the phone's clock. Arrival times come from it.
  * @param runningEnded asked for a refresh after an accepted state removed a running entry from
  *   the cache. The state does not say when that entry stopped, and only a refresh brings it back
  *   with its stop, so the day's totals keep counting it.
@@ -90,8 +84,7 @@ class TimerStateSource(
     /**
      * Takes [state], read through [read], unless this source is retired, [read] belongs to
      * another source, or [acceptsRevision] refuses it. An accepted state is stored, published and
-     * its running entry written to the cache, in that order and under one lock. Returns whether
-     * it took the state. Blocks on disk I/O.
+     * its running entry written to the cache, in that order and under one lock. Blocks on disk I/O.
      */
     override fun accept(read: TimerStateRead, state: TimerState): Boolean {
         // Taken before waiting for the lock, so a wait does not skew the clock offset.
@@ -197,7 +190,6 @@ private class DiscardNoticeSlot(initial: StoredTimerState?) {
     private val mutable = MutableStateFlow(initial?.held?.unshownDiscard(acknowledged))
     val notice: StateFlow<DiscardedPomodoro?> = mutable.asStateFlow()
 
-    /** Shows the notice of [held], unless it was taken. */
     fun follow(held: HeldTimerState?) {
         mutable.value = held?.unshownDiscard(acknowledged)
     }

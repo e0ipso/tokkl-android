@@ -66,7 +66,7 @@ import com.github.e0ipso.tokkl.core.ui.R as UiR
  * button names the preset the range matches today, when it matches one.
  *
  * [selection] is null while there is no range, and then every control is off. [time] gives
- * today and the week start in the account's timezone. [presets] are the ones the dialog offers.
+ * today and the week start in the account's timezone.
  */
 @Composable
 internal fun RangeControl(
@@ -216,10 +216,9 @@ private fun PresetDialog(
  * Material's date range picker, full screen as Material lays it out, since a dialog leaves its
  * month grid no room at large font scales. Where seven 48dp days do not fit across the window,
  * as at the largest display size, it opens on the picker's date fields; its mode switch still
- * offers the grid. The headline names the range in the screen's words.
- * Dates go in and out as UTC midnights, the picker's own convention, so no zone of the phone
- * touches them. Apply is off until the range has both ends and spans at most [MAX_RANGE_DAYS]
- * days.
+ * offers the grid. Dates go in and out as UTC midnights, the picker's own convention, so no zone
+ * of the phone touches them. Apply is off until the range has both ends and spans at most
+ * [MAX_RANGE_DAYS] days.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

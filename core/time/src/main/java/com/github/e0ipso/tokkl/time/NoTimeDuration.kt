@@ -13,8 +13,7 @@ private const val TOO_LONG = "No-time entries can be at most 24 hours"
 /**
  * What a no-time entry would store for typed text, and what to fix when it cannot be added.
  *
- * @property seconds the duration snapped to the time resolution, or null when the text is
- * unreadable.
+ * @property seconds the duration snapped to the time resolution, or null when the text is unreadable.
  * @property error the message to show, or null when the entry can be added.
  */
 data class NoTimeDuration(val seconds: Long?, val error: String?)

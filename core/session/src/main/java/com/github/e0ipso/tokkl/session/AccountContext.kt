@@ -25,16 +25,13 @@ import kotlinx.coroutines.launch
  */
 class AccountContext internal constructor(val number: Int, app: CoroutineScope) {
 
-    /** The parent of the account's work, a child of [app]'s job, cancelled when the account ends. */
     private val job = SupervisorJob(app.coroutineContext.job)
 
-    /** Where the account's work runs: [app] with [job] as the parent. */
     private val scope = CoroutineScope(app.coroutineContext + job)
 
     @Volatile
     private var ended = false
 
-    /** False once the account has ended. */
     val isCurrent: Boolean get() = !ended
 
     /**
@@ -65,8 +62,6 @@ class AccountContext internal constructor(val number: Int, app: CoroutineScope) 
  * The account signed in now, as an [AccountContext], and the count of the sign-outs that finished.
  * Each sign-in begins a context, also a sign-in again over a refused token, and sign-out ends it as
  * it starts, before its first step.
- *
- * @param app the application's scope, which each account's work runs in, as [AccountContext] says.
  */
 class CurrentAccount(private val app: CoroutineScope) {
 

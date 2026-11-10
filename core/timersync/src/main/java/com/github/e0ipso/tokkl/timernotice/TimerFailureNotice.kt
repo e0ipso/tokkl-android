@@ -59,7 +59,6 @@ suspend fun runSurfaceCommand(
     }
 }
 
-/** [TimerSurfaceActions.tap], and the server action it asks for, under [runSurfaceCommand]. */
 suspend fun TimerSurfaceActions.runFromSurface(
     action: TimerSurfaceAction,
     target: TimerTarget,

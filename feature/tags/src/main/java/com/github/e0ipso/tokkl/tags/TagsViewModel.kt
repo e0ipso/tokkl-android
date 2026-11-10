@@ -28,17 +28,14 @@ import kotlin.coroutines.CoroutineContext
 /** What the tags page opens over its list. */
 sealed interface TagsOverlay {
 
-    /** The form that renames [tag]. */
     data class Rename(val tag: Tag) : TagsOverlay
 
-    /** The question whether to delete [tag]. */
     data class ConfirmDelete(val tag: Tag) : TagsOverlay
 }
 
 /** Every tag of the workspace, sorted as Tokkl sorts them. */
 data class TagsData(val tags: List<Tag>) {
 
-    /** With [tag] as the server sent it after a change, in its place in the order. */
     fun with(tag: Tag): TagsData = TagsData((without(tag.id).tags + tag).sortedForList())
 
     fun without(id: TagId): TagsData = TagsData(tags.filterNot { it.id == id })
@@ -46,11 +43,7 @@ data class TagsData(val tags: List<Tag>) {
 
 typealias TagsState = CatalogState<TagsData, TagsOverlay>
 
-/**
- * The tags page: what the server sent and what is open over it in [catalog], whether the phone
- * is [offline], and the tags on the phone of the page's workspace, which the page lists while
- * the server's do not load.
- */
+/** The tags on the phone, of the page's workspace, are what the page lists while the server's do not load. */
 @Immutable
 data class TagsPageState(
     val catalog: TagsState = TagsState(),
@@ -60,7 +53,6 @@ data class TagsPageState(
     /** Whether the page says that changing the tags needs the server. */
     val serverNeeded: Boolean get() = offline || catalog.loadProblem == ServerProblem.Unreachable
 
-    /** Whether a change can go to the server now. */
     val canChange: Boolean get() = catalog.canChange && !offline
 
     /** The server's tags once loaded, the phone's until then. */
@@ -68,7 +60,6 @@ data class TagsPageState(
         get() = catalog.data?.tags?.map { TagRow(it, fromServer = true) }
             ?: cachedTags.map { TagRow(it, fromServer = false) }
 
-    /** Whether a notice shows above the list. */
     val hasNotices: Boolean
         get() = serverNeeded || catalog.loadProblem != null || (catalog.loading && catalog.data == null) ||
             (catalog.changeProblem != null && catalog.overlay == null)
@@ -79,9 +70,6 @@ data class TagsPageState(
  * the page opens or the app comes back to it, and the changes the page sends at once, as
  * [CatalogModel] describes.
  *
- * @param repository the workspace's tags on the server.
- * @param cachedTags the tags on the phone, which the page lists while the server's do not load.
- * @param offline whether the phone is offline, when nothing can change.
  * @param app the app's trips to the background and the network's returns, which load the page again
  *   while it shows ([stateInPage]).
  * @param saved the route's saved state, which keeps the open rename form or delete question for a
@@ -111,7 +99,7 @@ class TagsViewModel(
     /** The list and what is open over it, before the cache and the network join them in [page]. */
     internal val state: StateFlow<TagsState> = catalog.state
 
-    /** What the page shows, while it reads it. The cached rows are empty until the cache is read. */
+    /** The cached rows are empty until the cache is read. */
     val page: StateFlow<TagsPageState> = combine(
         state,
         offline,
@@ -176,7 +164,6 @@ class TagsViewModel(
     }
 
     private companion object {
-        /** The key of the open form's or question's [SavedTagsOverlay] in the route's saved state. */
         const val SAVED_OVERLAY = "tag-overlay"
     }
 }

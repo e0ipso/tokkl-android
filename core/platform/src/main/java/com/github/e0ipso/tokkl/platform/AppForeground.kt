@@ -20,7 +20,6 @@ import kotlinx.coroutines.flow.stateIn
  * activity of the app and waits a moment after the last one stops, so a configuration change is no
  * trip to the background.
  *
- * @property foreground true while one of the app's activities is started.
  * @property reconnects one item each time the default network reaches the internet anew while the
  *   app is in the foreground ([foregroundReconnects]).
  */
@@ -39,10 +38,6 @@ class AppForeground(val foreground: StateFlow<Boolean>, val reconnects: Flow<Uni
 fun foregroundReconnects(foreground: StateFlow<Boolean>, network: DefaultNetwork): Flow<Unit> =
     foreground.flatMapLatest { shown -> if (shown) network.changes().filter { it }.map { } else emptyFlow() }
 
-/**
- * The process's [AppForeground]: whether one of its activities is started, as ProcessLifecycleOwner
- * says, kept in [scope] from the state it has now, and [network]'s returns while it is.
- */
 fun processForeground(scope: CoroutineScope, network: DefaultNetwork): AppForeground {
     val lifecycle = ProcessLifecycleOwner.get().lifecycle
     val started = lifecycle.currentStateFlow

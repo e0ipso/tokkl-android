@@ -19,7 +19,6 @@ class CapabilitiesStore(context: Context, private val io: CoroutineContext) : Va
 
     private val file = PreferencesFile(context, FILE_NAME, io)
 
-    /** The stored capabilities, or null when none are stored. */
     override suspend fun load(): Capabilities? = file.read {
         if (!contains(KEY_TRASH)) return@read null
         Capabilities(
@@ -39,7 +38,6 @@ class CapabilitiesStore(context: Context, private val io: CoroutineContext) : Va
     private fun SharedPreferences.readOptional(key: String): Boolean? =
         if (contains(key)) getBoolean(key, false) else null
 
-    /** Replaces the stored capabilities in one write. */
     @Throws(IOException::class)
     override suspend fun save(value: Capabilities) {
         file.commit {

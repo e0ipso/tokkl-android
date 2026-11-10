@@ -23,7 +23,6 @@ class ServerConfigStore(context: Context, private val io: CoroutineContext) :
 
     private val file = PreferencesFile(context, FILE_NAME, io)
 
-    /** The stored server, or null when there is none or it no longer parses. */
     override suspend fun load(): ServerUrl? = file.read { storedServer() }
 
     /** [load] on OkHttp's thread, which every request's guard reads it from without suspending. */

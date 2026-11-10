@@ -91,14 +91,13 @@ internal fun SignedInPanes(top: Route, entryBeside: Boolean, screen: @Composable
 }
 
 /**
- * A signed-in screen, [content], with the navigation that fits [width]: above the bottom bar on a compact window,
- * beside the navigation rail on wider ones. The bar or the rail shows the [pages], marks the page of the route
- * [current] and opens pages with [onOpen], leaves out the pages whose routes are in [hidden], and puts a dot on the
- * pages in [badges]. Right above the bar, or at the bottom of the screen beside the rail, shows [band] when it is not
- * null, such as the sync status. Above both shows [notice], when there is one, and the
- * screens end at its top, so it covers none of them. The bar's height, status and system navigation bar included, is
- * padding the screens consume, so their own navigation bar padding adds nothing above the bar. Beside the rail, which
- * keeps clear of the system bars at its side, the screens consume that side's insets.
+ * A signed-in screen, [content], above the bottom bar on a compact window and beside the
+ * navigation rail on wider ones. Right above the bar, or at the bottom of the screen beside the
+ * rail, shows [band], such as the sync status. Above both shows [notice], and the screens end at
+ * its top, so it covers none of them. The bar's height, status and system navigation bar included,
+ * is padding the screens consume, so their own navigation bar padding adds nothing above the bar.
+ * Beside the rail, which keeps clear of the system bars at its side, the screens consume that
+ * side's insets.
  */
 @Composable
 internal fun SignedInFrame(

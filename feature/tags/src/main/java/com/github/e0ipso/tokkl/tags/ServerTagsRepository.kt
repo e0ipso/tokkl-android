@@ -13,10 +13,7 @@ import com.github.e0ipso.tokkl.model.TagId
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.signedIn
 
-/**
- * The workspace's tags on the signed-in account's server, from the API v9 tag calls, read as the
- * model's [Tag]. Each call suspends while its request runs.
- */
+/** The workspace's tags on the signed-in account's server, from the API v9 tag calls. */
 class ServerTagsRepository(private val client: ApiClientProvider) : CatalogRepository<TagsData> {
 
     override suspend fun workspace(stored: WorkspaceId?): ApiResult<WorkspaceId> = client.managedWorkspace(stored)
@@ -49,7 +46,6 @@ class ServerTagsRepository(private val client: ApiClientProvider) : CatalogRepos
         client.signedIn { it.tags.delete(workspace, id) }
 }
 
-/** Every tag of [workspace]. */
 private suspend fun TokklApi.tagsOf(workspace: WorkspaceId): ApiResult<List<Tag>> =
     tags.list(workspace).map { tags -> tags.map { it.toTag() } }
 

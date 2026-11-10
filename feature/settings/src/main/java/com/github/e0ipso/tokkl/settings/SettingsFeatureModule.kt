@@ -13,7 +13,6 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
-/** Settings and Licences: the theme settings, the sign-out confirmation and the Settings page's view model. */
 val settingsFeatureModule = module {
     single { ThemeSettingsStore(androidContext(), io()) } bind ThemeSettingsDisk::class
 

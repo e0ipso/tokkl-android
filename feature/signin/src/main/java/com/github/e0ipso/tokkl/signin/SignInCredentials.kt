@@ -93,9 +93,8 @@ internal fun Credentials(
 }
 
 /**
- * A masked field for the API token or the password. The password
- * transformation also turns off copy and cut and marks the field as a password
- * for accessibility services.
+ * A masked field for the API token or the password. The password transformation also turns off copy
+ * and cut and marks the field as a password for accessibility services.
  */
 @Composable
 private fun SecretField(

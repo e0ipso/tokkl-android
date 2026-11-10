@@ -120,7 +120,6 @@ class SplitEntryTest {
         )
     }
 
-    /** Overnight entries split at a clock time before their start, on the nights the clocks change. */
     @Test
     fun anOvernightSplitUsesTheNextDaysClockTimeOnTheNightsTheClocksChange() {
         val madrid = zone("Europe/Madrid", 15.0)

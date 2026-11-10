@@ -18,7 +18,6 @@ import org.koin.dsl.bind
 import org.koin.dsl.binds
 import org.koin.dsl.module
 
-/** What the sync status shows, the changes the server refused and their screen. */
 val syncFeatureModule = module {
     single { LastAnswerStore(androidContext(), io()) }
 
@@ -59,8 +58,6 @@ val syncFeatureModule = module {
         )
     }
 
-    // The sync status band and the discarded changes' notice in the signed-in frame, in the
-    // session's store.
     viewModel {
         SyncFrameViewModel(
             status = get<SyncStatusSource>().status,

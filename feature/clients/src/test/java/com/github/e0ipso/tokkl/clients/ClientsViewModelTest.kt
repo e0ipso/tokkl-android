@@ -193,7 +193,6 @@ class ClientsViewModelTest {
         assertEquals(listOf("""PUT /api/v9/workspaces/7/clients/1 {"name":"Acme Corp","notes":"Pays late"}"""), changes)
     }
 
-    /** A new client's form comes back with what was typed, and a closed form stays closed. */
     @Test
     fun aNewProcessOpensTheNewClientFormAsItWasTypedAndNoClosedOne() {
         screen.show()
@@ -206,7 +205,6 @@ class ClientsViewModelTest {
         assertNull(clientsModelAfterProcessDeath().state.value.overlay)
     }
 
-    /** The question whether to archive a client comes back after process death, and archives it. */
     @Test
     fun aNewProcessAsksAgainWhetherToArchiveTheClient() {
         screen.show()

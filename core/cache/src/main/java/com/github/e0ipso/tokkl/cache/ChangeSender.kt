@@ -46,36 +46,22 @@ interface ChangeSenderEvents {
  * is lost: no network, a 5xx, a 408 or a 429. After a 429 the next try waits as [RetryAfter]
  * says.
  *
- * Each other refusal has its own outcome, as [refusal] describes (docs/PRD.md O6). An entry the
- * server no longer has takes every queued change to it out of the queue and the entry out of the
- * cache, and [ChangeSenderEvents.discarded] counts them for the discard notice. A 404 on a
- * delete that may already have reached the server counts as sent. A held change waits for the
- * user with the server's message ([ChangeStore.hold]); later changes to the same entry wait behind
- * it, and the rest of the queue goes on. A 403, or a 401, pauses the whole queue and discards
- * nothing: [signInNeeded] turns true, and no drain sends anything until [resume], which signing
- * in again calls.
+ * Each other refusal has its own outcome, as [refusal] describes (docs/PRD.md O6). A 403, or a
+ * 401, pauses the whole queue and discards nothing until [resume], which signing in again calls.
  *
- * [ChangeTries] sends each change once and says how a queued start goes when a later timer runs
- * (O3) and how a create that may have reached the server is found instead of posted again. When a
- * try's connection fails after the request left the phone ([worthAnotherTryAtOnce]), such as a
- * pooled connection the server had closed while it sat idle, the drain tries that change once
- * more at once, on a new connection, before it stops. The sender's reads may still go out again.
+ * When a try's connection fails after the request left the phone ([worthAnotherTryAtOnce]), such
+ * as a pooled connection the server had closed while it sat idle, the drain tries that change once
+ * more at once, on a new connection, before it stops.
  *
  * One coroutine owns the drains and the 429 wait: it takes the requests from a channel, drains,
- * and drains again while more requests came meanwhile. [send] runs when a change is queued and
- * after each refresh, and once more when a 429's wait ends. When the network returns,
- * [BackgroundSend]'s worker calls [sendAndWait], also with the app closed. Each delete goes out
- * through [undo], so an Undo never decides while a delete is on its way.
+ * and drains again while more requests came meanwhile. Each delete goes out through [undo], so an
+ * Undo never decides while a delete is on its way.
  *
  * @param entries opens the entry calls of the signed-in account, or gives null when signed out.
  *   Runs on [io].
  * @param scope outlives every screen, so leaving the app does not cancel a drain.
- * @param events hears on [io] what the drains did, as [ChangeSenderEvents] says.
- * @param spans where the server puts a start once the entry is stopped, which finds the entry a
- *   lost create made, and the span of a queued start ended before a later timer.
  * @param capabilities whether the server stores no-time entries (`Capabilities.allDay`), read for
  *   each request. While it is false no request carries `all_day`, as Toggl Track needs.
- * @param undo takes deletes back; the sender sends each delete through it.
  */
 class ChangeSender(
     private val store: ChangeStore,
@@ -95,7 +81,6 @@ class ChangeSender(
 
     private val tries = ChangeTries(store, spans, capabilities)
 
-    /** What one [drain] did. */
     sealed interface Outcome {
         /**
          * How many changes left the queue because the server answered them: it stored them, it
@@ -115,11 +100,9 @@ class ChangeSender(
         /** A 429 asked the phone to wait until [until] before the next try. */
         data class Waiting(override val sent: Int, val until: Instant) : Outcome
 
-        /** Signed out: nothing goes anywhere. */
         data class SignedOut(override val sent: Int) : Outcome
     }
 
-    /** What the drain coroutine is asked to do. */
     private sealed interface Request {
         /** Drain until quiet. [done] hears how the last pass ended, or null when it failed on the disk. */
         class Drain(val done: CompletableDeferred<Outcome?>?) : Request
@@ -158,7 +141,6 @@ class ChangeSender(
         mutableSignInNeeded.value = true
     }
 
-    /** Lifts the pause after a refused token, once the user has signed in again, and drains the queue. */
     fun resume() {
         mutableSignInNeeded.value = false
         send()
@@ -183,7 +165,6 @@ class ChangeSender(
         return done.await()
     }
 
-    /** Drains the queue as [sendAndWait] does, for a caller that needs no outcome. */
     suspend fun sendQueued() {
         sendAndWait()
     }
@@ -199,7 +180,6 @@ class ChangeSender(
         done.await()
     }
 
-    /** The drain coroutine: serves each request in turn, for as long as [scope] lives. */
     private suspend fun serveRequests() {
         var next: Request? = null
         while (true) {
@@ -282,10 +262,9 @@ class ChangeSender(
 
     /**
      * Sends the queued changes in order until nothing is left to send or one fails in a way the
-     * phone can wait out. Each sent change leaves the queue as [ChangeStore.sent] describes, and
-     * each refused one as [ChangeSender] describes. Blocks on the disk, so call it on the IO
-     * dispatcher, and from one coroutine at a time: the drain coroutine. Callers outside it go
-     * through [send] or [sendAndWait]; this module's tests call it directly.
+     * phone can wait out. Blocks on the disk, so call it on the IO dispatcher, and from one
+     * coroutine at a time: the drain coroutine. Callers outside it go through [send] or
+     * [sendAndWait]; this module's tests call it directly.
      */
     internal suspend fun drain(): Outcome {
         var sent = 0
@@ -322,15 +301,12 @@ class ChangeSender(
         }
     }
 
-    /** What [drain] does after it settled a refused change: go on, or stop with [Stop.outcome]. */
     private sealed interface RefusalStep {
-        /** Go on with the next change. [left] changes left the queue. */
         data class Next(val left: Int) : RefusalStep
 
         data class Stop(val outcome: Outcome) : RefusalStep
     }
 
-    /** Settles [queued], which the server refused with [error], after [sent] changes went out. */
     private suspend fun settleRefused(
         server: ServerEntrySends,
         queued: PendingChange,
@@ -366,11 +342,9 @@ class ChangeSender(
         }
     }
 
-    /** Waits out the server's rate limit [error] before the next send. */
     private fun waitOut(sent: Int, error: ApiError.RateLimited): Outcome =
         Outcome.Waiting(sent, retryAfter.start(error))
 
-    /** Drains again once [until] has passed. One wait at a time. */
     private fun retryAfterWait(until: Instant) {
         if (retry?.isActive == true) return
         retry = scope.launch(io) {
@@ -444,7 +418,6 @@ internal class RetryAfter(private val clock: Clock) {
         return null
     }
 
-    /** Starts the wait that [error] asks for and returns when it ends. */
     fun start(error: ApiError.RateLimited): Instant =
         clock.instant().plusSeconds(error.retryAfterSeconds ?: DEFAULT.seconds).also { until = it }
 

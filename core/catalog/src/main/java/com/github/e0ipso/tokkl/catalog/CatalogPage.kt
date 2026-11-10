@@ -95,11 +95,6 @@ fun CatalogPage(
     }
 }
 
-/**
- * Why the page cannot change anything now, or that it is loading: [ServerNeededNotice] while
- * [serverNeeded], else [loadProblem] with Try again, else [loadingText] while [loading]. Then the
- * reason the server refused the last change, [changeProblem]. Nothing when all is well.
- */
 @Composable
 fun CatalogNotices(
     serverNeeded: Boolean,

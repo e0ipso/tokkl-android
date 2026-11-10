@@ -6,7 +6,6 @@ import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import kotlinx.coroutines.flow.map
 import org.koin.dsl.module
 
-/** What the Quick Settings tile shows, and its refreshes. */
 val tileFeatureModule = module {
     single {
         RunningTileContents(

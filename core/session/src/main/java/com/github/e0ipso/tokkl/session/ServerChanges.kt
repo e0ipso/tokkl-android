@@ -11,9 +11,6 @@ import kotlin.coroutines.CoroutineContext
  * restored entry. Each one runs in the application's [scope], so once sent it reaches the server,
  * and the cache refresh that follows an accepted change still starts, also when the page that sent
  * it goes meanwhile. The page awaits the answer and shows it while it is still there.
- *
- * @param io where each request runs.
- * @param refreshes reads the account again after a change the server accepted.
  */
 class ServerChanges(
     private val scope: CoroutineScope,

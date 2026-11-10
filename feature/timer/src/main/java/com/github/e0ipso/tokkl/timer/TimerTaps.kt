@@ -22,7 +22,6 @@ import kotlinx.coroutines.withTimeoutOrNull
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
-/** The controls, once read. */
 internal sealed interface CachedControls {
     data object Unread : CachedControls
 
@@ -69,7 +68,6 @@ internal sealed interface TapEvent {
         val typed: FieldEdit? = null,
     ) : TapEvent
 
-    /** Stop was tapped: [tap] waits for the queue. */
     data class StopTapped(val tap: PendingTap.Stopping) : TapEvent
 
     /** Pause, Resume or Stop while paused was tapped: [tap] waits for the server. */
@@ -78,10 +76,8 @@ internal sealed interface TapEvent {
     /** The Stop or pause chain [tap] ended. A Stop the storage refused brings back the edit it took, [restored]. */
     data class TapEnded(val tap: PendingTap, val restored: FieldEdit? = null) : TapEvent
 
-    /** The idle timer's draft is now [draft]. */
     data class Drafted(val draft: EntryFields) : TapEvent
 
-    /** [edit] shows over the running entry. */
     data class Edited(val edit: FieldEdit) : TapEvent
 
     /**
@@ -215,7 +211,6 @@ internal fun timerState(
     }
 }
 
-/** This state with the labels of its project, task and tags, named from [projects] and [tasks]. */
 internal fun TimerState.labelled(projects: List<Project>, tasks: List<Task>): TimerState = when (this) {
     TimerState.Loading -> this
     is TimerState.Idle -> copy(labels = entryLabels(fields, projects, tasks))
@@ -231,13 +226,10 @@ internal fun FieldEdit.matches(entry: TimeEntry, read: CachedControls.Read): Boo
         (start == entry.start || (remapped && start.truncatedTo(ChronoUnit.SECONDS) == entry.start))
 }
 
-/** The running entry, or null while idle or paused. */
 internal fun TimerControls.runningEntry(): TimeEntry? = (this as? TimerControls.Running)?.entry
 
-/** The controls, or null while unread. */
 internal fun CachedControls.controls(): TimerControls? = (this as? CachedControls.Read)?.controls
 
-/** The cached projects and tasks, for the timer's labels and its picks. */
 internal data class Catalog(val projects: List<Project> = emptyList(), val tasks: List<Task> = emptyList())
 
 /**

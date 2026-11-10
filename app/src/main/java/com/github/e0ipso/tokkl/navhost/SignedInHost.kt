@@ -88,7 +88,6 @@ internal fun SignedInHost(
     }
     val listView by timer.listView.collectAsStateWithLifecycle()
     val shortUndo = state.shortStopUndo
-    // The short Stop's Undo and the timer's notices share one host, so they queue, never overlap.
     val shortHost = remember { SnackbarHostState() }
     val shortMessage = stringResource(R.string.timer_short_stop_trashed)
     val undoLabel = stringResource(UiR.string.history_undo)
@@ -175,7 +174,6 @@ private fun TimerNotices(notices: TimerFrame, host: SnackbarHostState) {
     }
 }
 
-/** Draws the back stack entry of [route]. */
 @Composable
 internal fun List<NavEntry<Route>>.Show(route: Route) {
     firstOrNull { it.contentKey == route.contentKey }?.Content()
@@ -188,7 +186,6 @@ internal fun List<NavEntry<Route>>.Show(route: Route) {
  */
 fun Route.orTimerIfUnavailable(unavailable: Set<Route>): Route = if (this in unavailable) Route.Timer else this
 
-/** Whether the stack holds a page in [unavailable]. */
 internal fun List<Route>.holdsAnyOf(unavailable: Set<Route>): Boolean = any { it in unavailable }
 
 /**

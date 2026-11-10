@@ -36,7 +36,6 @@ fun <K> PendingEdit<K>?.afterWrite(written: PendingEdit<K>, refused: Boolean): P
  */
 class RunningEntryEdits(private val changes: RunningEntryChanges) {
 
-    /** How many edits are on their way into the queue. */
     private val writing = MutableStateFlow(0)
 
     /** Whether an edit reached the queue that the server may not have yet. */

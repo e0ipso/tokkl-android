@@ -73,26 +73,19 @@ import kotlin.math.sign
 
 /**
  * The calendar in the Timer page's Calendar view (docs/PRD.md K1): the week from the account's
- * first day of the week, with an hour row for each hour of the day, and each entry as a block as
- * long as it lasts, in the account's timezone. On a compact window, a phone held upright, it
- * shows the chosen day alone under a strip of its week's days and their totals, a tap on a day
- * of the strip shows it, and the arrows and a swipe move a day instead of a week. On a
- * window of compact height, a phone held sideways, the toolbar scrolls away as the grid scrolls
- * on, after the Timer page's top bar, timer and switch, and the day heads stay. When the page
- * opens with those scrolled away, the toolbar starts scrolled away too. The running entry's block
- * grows with the phone's clock, once a minute while the page shows, and sends no request.
+ * first day of the week, in the account's timezone. On a compact window, a phone held upright, it
+ * shows the chosen day alone under a strip of its week's days, and the arrows and a swipe move a
+ * day instead of a week. On a window of compact height the toolbar scrolls away with the Timer
+ * page's top bar, and the day heads stay. The running entry's block grows with the phone's clock,
+ * once a minute while the page shows, and sends no request.
  *
  * A tap on a stopped entry's block calls [onEdit] with its id, and with the server's copy when
- * the phone does not keep it, so the entry form opens on it. In both views a long press then a
- * drag on empty space creates an entry (K2), which then opens in the form; on a block it moves
- * the entry, and on the block's top or bottom edge it moves that end. Each change goes to the
- * change queue through [model]. TalkBack gets the form instead: a block's click opens it, and each
- * day's head has an action that calls [onAdd] with the day for a new entry.
+ * the phone does not keep it. A long press then a drag creates (K2), moves or resizes an entry
+ * through [model]. TalkBack gets the form instead: a block's click opens it, and each day's head
+ * has an action that calls [onAdd].
  *
- * Where the server stores no-time entries, an All day row sits between the heads, or the strip,
- * and the hour grid, with a chip for each day's no-time entries. A tap on a chip calls [onEdit]
- * as a block's does. The + in each day's cell, and TalkBack's action on the cell, call
- * [onAddAllDay] with the day for a new no-time entry.
+ * Where the server stores no-time entries, an All day row sits above the hour grid, with a chip
+ * for each day's no-time entries; a chip calls [onEdit], and the + in each cell [onAddAllDay].
  */
 @Composable
 fun WeekCalendar(
@@ -160,13 +153,10 @@ fun WeekCalendar(
 }
 
 /**
- * [WeekCalendar] without its model, at [now]. [onStep] moves the chosen day by the days it gets,
- * [onSelect] chooses a day of the week, [onToday] goes back to today, and [onRetry] loads the
- * shown week again after it failed. With [dayMode], the grid shows the chosen day alone, under a
- * strip of the seven days of its week in place of the day heads, and the day slides in from the
- * side it comes from, unless the system asks for reduced motion. With [editing], taps, drags
- * and TalkBack actions change entries, while the week's entries are known; without it the
- * calendar only shows them.
+ * [WeekCalendar] without its model, at [now]. With [dayMode], the grid shows the chosen day alone
+ * under a strip of its week, and the day slides in from the side it comes from, unless the system
+ * asks for reduced motion. With [editing], taps, drags and TalkBack actions change entries, while
+ * the week's entries are known; without it the calendar only shows them.
  */
 @Composable
 fun CalendarContent(
@@ -354,7 +344,6 @@ private fun rememberDaySlide(day: LocalDate, dayMode: Boolean): Animatable<Float
     return slide
 }
 
-/** The day the calendar last showed. */
 private class ShownDay(var day: LocalDate)
 
 /** Whether the system asks for reduced motion: Remove animations sets the animator duration scale to 0. */

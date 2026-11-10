@@ -220,7 +220,6 @@ class PomodoroDefaultsServerTest {
         assertEquals("other preferences stay", JsonPrimitive("calendar"), preferences["timerView"])
     }
 
-    /** Offline, a change stays on the phone, marked unsent, until the next refresh sends it. */
     @Test
     fun anOfflineChangeStaysOnThePhoneUntilTheNextRefreshSendsIt() {
         signIn(TokklTestServer.url)

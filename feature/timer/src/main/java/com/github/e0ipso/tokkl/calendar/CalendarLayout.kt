@@ -17,7 +17,6 @@ import java.time.ZoneId
  *   received, the times the server will store, snapped on the phone, as the history shows them. A
  *   no-time entry, an [EntryTiming.AllDay] with its day, sits in the All day row, never in the
  *   hour grid.
- * @property unsent the queue holds a change to the entry that the server has not received.
  */
 @Immutable
 data class CalendarEntry(
@@ -31,7 +30,6 @@ data class CalendarEntry(
 ) {
     val start: Instant get() = timing.start
 
-    /** Where the entry ends, or null while it runs. */
     val stop: Instant? get() = (timing as? EntryTiming.Ended)?.stop
 
     val running: Boolean get() = timing is EntryTiming.Running

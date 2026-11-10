@@ -3,7 +3,6 @@ package com.github.e0ipso.tokkl.timer
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.cache.RunningEntryChanges
-import com.github.e0ipso.tokkl.entryfields.withPicked
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.model.RunningEntryIdentity
@@ -28,30 +27,15 @@ import java.time.Clock
 
 /**
  * The timer on the Timer page (docs/PRD.md T1): Start, Pause, Resume, Stop and the running entry's
- * fields. The commands are [TimerCommands], which owns what the taps did that the cache or the
- * server may not show yet and changes it only through the events in TimerTaps.kt, and the field
- * edits are its [RunningFieldEdits].
- * The trace of each Start and Stop is [TapSections], and what the signed-in frame reads of the
- * timer, with its notices, is [frame].
+ * fields, through [TimerCommands] and its [RunningFieldEdits]. Call the tap handlers on the main
+ * thread. The running clock counts from [TimerState.Running.start] on the phone and never asks
+ * the server (principle 3).
  *
- * Call the tap handlers on the main thread. The running clock counts from
- * [TimerState.Running.start] on the phone and never asks the server (principle 3).
- *
- * @param controls the running entry or paused chain, as the app's shared timer controls give them.
- * @param accountSettings for the default workspace, where Start starts, and for the Today and
- *   This week totals.
- * @param changes the change queue, which Start, Stop and the field edits go to.
- * @param clock the time a Start tap shows until the cache has the queue's own tap time.
  * @param trace marks each Start and Stop tap until the screen reports with [shown] that it drew
  *   what the tap did.
  * @param pauseChain the server's Pause, Resume and Discard, or null where the app sends none.
- * @param sender sends the queue now and waits for it, so a description typed before Pause
- *   reaches the server before the Pause does.
  * @param discards the too-short pomodoro whose notice no screen has shown, from the account's
  *   timer state, which a screen takes when it shows it.
- * @param timerApi whether the server offers the timer API, which decides whether a timer that
- *   the cache does not show yet offers Pause.
- * @param view the Timer page's view, List or Calendar, as the Timer view setting keeps it.
  */
 class TimerViewModel(
     controls: Flow<TimerControls>,
@@ -90,10 +74,8 @@ class TimerViewModel(
 
     private val edits = commands.edits
 
-    /** What the timer shows, as [TimerCommands.state] projects it. */
     val state: StateFlow<TimerState> = commands.state
 
-    /** What the signed-in frame reads of the timer: whether it is idle, the page's view, the starts and the notices. */
     val frame: TimerFrame = TimerFrameSource(
         settledIdle = state.map { (it as? TimerState.Idle)?.authoritative == true },
         // Kept up to date while the view model lives, so the frame's first frame back reads it.
@@ -105,7 +87,6 @@ class TimerViewModel(
         scope = viewModelScope,
     )
 
-    /** Starts a timer with the idle timer's fields, unless one runs or no workspace is known yet. */
     fun start() = commands.start()
 
     /**
@@ -114,22 +95,17 @@ class TimerViewModel(
      */
     fun shown(state: TimerState) = sections.shown(state)
 
-    /** Continues [source], as [TimerCommands.continueEntry] does. */
     fun continueEntry(source: TimeEntry) = commands.continueEntry(source)
 
-    /** Starts a timer with [fields] at once, as a favorite does: [TimerCommands.startFrom]. */
     fun startFrom(fields: EntryFields) = commands.startFrom(fields)
 
     /** Stops the running entry through the queue, or ends the paused chain on the server. */
     fun stop() = commands.stop()
 
-    /** Pauses the running entry on the server, after a description still being typed. */
     fun pause() = commands.pause()
 
-    /** Resumes the paused chain on the server, at the revision it was shown at. */
     fun resume() = commands.resume()
 
-    /** A focused control keeps the durable target that supplied its displayed context. */
     fun isShown(target: TimerTarget): Boolean = commands.isShown(target)
 
     fun pauseShown(target: TimerTarget) {
@@ -161,7 +137,6 @@ class TimerViewModel(
      */
     suspend fun runningForEdit(): RunningEntryIdentity? = edits.runningForEdit()
 
-    /** Sets the project, task and tags, as [EntryFields.withPicked] says. */
     fun pick(picked: Picked) = edits.pick(picked)
 
     fun setBillable(billable: Boolean) = edits.setBillable(billable)

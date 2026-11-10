@@ -16,10 +16,7 @@ import kotlin.coroutines.CoroutineContext
  * The account settings for the whole process, and the one place screens read them from.
  * Sign-in stores the settings from its own `GET /api/v9/me`, and [AccountRefresh] reads them
  * again, so a change made in the web app reaches the phone. They persist, so screens have them
- * offline and after a restart. Screens take their zone, clock and week start from
- * [AccountSettings.time], never from the device, write durations with
- * [AccountSettings.formatDuration] and clock times with [AccountSettings.formatTime]. The timer
- * and manual entry take the workspace of a new entry from [AccountSettings.defaultWorkspaceId].
+ * offline and after a restart.
  *
  * @param disk keeps the settings on the phone. They load from it as this is made, in [scope] on
  *   [io], off the main thread.
@@ -42,7 +39,6 @@ class AccountSettingsSource(
 
     override suspend fun ready() = held.ready()
 
-    /** The stored settings, once loaded. */
     suspend fun current(): AccountSettings? = held.current()
 
     /** The account's default workspace, for the screens, which show once the settings have loaded. */
@@ -54,10 +50,7 @@ class AccountSettingsSource(
     /** Counts the writes, so a refresh drops an answer that a newer write has replaced. */
     private var writes = 0L
 
-    /**
-     * Writes [settings] and shows them in [state]. Sign-in calls this with the settings from its
-     * own `GET /api/v9/me`.
-     */
+    /** Sign-in calls this with the settings from its own `GET /api/v9/me`. */
     @Throws(IOException::class)
     suspend fun store(settings: AccountSettings) {
         ready()

@@ -41,9 +41,7 @@ import kotlin.coroutines.CoroutineContext
  * ([OlderDaysPaging]) and the calendar's weeks ([WeekLoading]), which live in memory and are never
  * written to the phone. It keeps the copies of those entries edited on the phone, which the cache
  * holds only until the send and the refresh after it, and the history's deletes and restores until
- * the cache shows them. The history and the calendar select and format what [history] and [week]
- * give, the entry form saves an edit through [saveEdit], and the entry actions report deletes and
- * restores through [deleted] and [restored].
+ * the cache shows them.
  *
  * What it keeps beside the cache, a [Reconciliation], changes only through
  * [MutableStateFlow.update] in its commands: a read of the cache, a delete, a restore, a week that
@@ -54,16 +52,11 @@ import kotlin.coroutines.CoroutineContext
  * A sign-in again over a refused token, which can be another account, drops what the server sent.
  * Sign-out forgets everything ([forgetAccount]).
  *
- * @param cached the cached entries with their send state, as AccountCache.entries gives them.
- * @param changes the change queue: where the cache holds an entry now, and where edits go.
  * @param olderPages the history's days before the cache, from the server. Runs on [io].
  * @param serverWeeks the calendar's weeks outside the cache, from the server. Runs on [io].
- * @param clock where today comes from, in the account's timezone.
- * @param app the app's trips to the background and back, and the network's returns.
  * @param accounts the number of the account context signed in now. Each sign-in changes it,
  *   which drops what the server sent.
  * @param scope the session's scope, on the main thread, where the loads start.
- * @param computation where the entries are merged.
  */
 class SessionEntries(
     private val cached: Flow<List<EntryWithSendState>>,
@@ -89,15 +82,10 @@ class SessionEntries(
         state.collect { send(it) }
     }.flowOn(computation).shareIn(scope, SharingStarted.WhileSubscribed(), replay = 1)
 
-    /** The history's entries: the cache's, and the older days' that the cache does not hold. */
     val history: StateFlow<HistoryEntries> = combine(followed, paging.state) { kept, older ->
         kept.history(older, resolveEntryOverrides(kept.overrides, changes), clock)
     }.flowOn(computation).stateIn(scope, SharingStarted.WhileSubscribed(), HistoryEntries.Loading)
 
-    /**
-     * How many times the app came back to the foreground or the network came back; the calendar
-     * on screen loads its week again on each when the week is due.
-     */
     val foregrounds: StateFlow<Int> = weeks.foregrounds
 
     override val signOutPhase: SignOutPhase get() = SignOutPhase.CLEAR_DATA
@@ -195,7 +183,6 @@ class SessionEntries(
         return true
     }
 
-    /** Forgets the account's entries: what the server sent, the copies kept, the deletes and restores. */
     override suspend fun forgetAccount() {
         paging.forget()
         weeks.forget()
@@ -209,7 +196,6 @@ class SessionEntries(
         state.update { it.cacheRead(rows, settings, clock, paging.state.value, weeks.state.value, restoredIds) }
     }
 
-    /** Drops what the server sent, and the copies kept of its entries, for the account signing in. */
     private fun forgetServer() {
         paging.forget()
         weeks.forget()

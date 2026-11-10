@@ -15,10 +15,6 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
-/**
- * What spans the modules: what each account refresh does after its answer, how a sign-in moves
- * the phone to its account, and MainActivity's lifecycle observer.
- */
 internal val lifecycleModule = module {
     // A sign-in's account transition, in core:session, with the steps of the modules above it.
     single {

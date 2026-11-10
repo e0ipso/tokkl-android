@@ -20,8 +20,8 @@ import kotlin.coroutines.CoroutineContext
 /**
  * The server's capabilities for the whole process, and the one place features read them from.
  * They refresh with each `GET /api/v9/me` of the account settings refresh, and persist. They load
- * from [store], a file of a few flags, as this is made, in [scope] on [io]. Code
- * that may run before that load ends reads them through the suspending calls or [loaded].
+ * from [store], a file of a few flags, as this is made. Code that may run before that load ends
+ * reads them through the suspending calls or [loaded].
  */
 class CapabilitiesSource(private val store: ValueStore<Capabilities>, scope: CoroutineScope, io: CoroutineContext) :
     StartupLoad {
@@ -49,29 +49,24 @@ class CapabilitiesSource(private val store: ValueStore<Capabilities>, scope: Cor
 
     override suspend fun ready() = held.ready()
 
-    /** The capabilities, once loaded. */
     suspend fun current(): Capabilities = held.current()
 
     /** Whether the server keeps Tokkl's preferences, which only Tokkl offers, as it does favorites. */
     suspend fun keepsPreferences(): Boolean = current().favorites
 
-    /** Whether the server offers Tokkl's timer API ([Capabilities.timerState]). */
     suspend fun offersTimerApi(): Boolean = current().timerState
 
-    /** Whether the server stores no-time entries ([Capabilities.allDay]). */
     suspend fun offersAllDay(): Boolean = current().allDay == true
 
-    /** Whether the server restores deleted entries ([Capabilities.restore]). */
     suspend fun offersRestore(): Boolean = current().restore
 
-    /** [offersAllDay] as it changes, from the loaded capabilities. */
     fun allDayOffers(): Flow<Boolean> = loaded.map { it.allDay == true }.distinctUntilChanged()
 
     /**
      * Sets the flags from [me], the refresh's `GET /api/v9/me`, one `GET /api/app/trash` and one
      * `GET /api/app/timer`, and stores them. A timer state the probe read goes to [timerState], so
      * the refresh sends no second request for it. A failed write keeps the new flags for this
-     * process. Waits while another change runs. Returns the new flags.
+     * process.
      */
     suspend fun <R> refresh(api: TokklApi, me: Me, timerState: ProbedTimerState<R>): Capabilities = change {
         val trash = probeTrash(api)
@@ -137,7 +132,6 @@ class CapabilitiesSource(private val store: ValueStore<Capabilities>, scope: Cor
         stored = null
     }
 
-    /** Runs [block] once the flags have loaded and no other change of them runs. */
     private suspend fun <T> change(block: suspend () -> T): T {
         ready()
         return changing.withLock { block() }

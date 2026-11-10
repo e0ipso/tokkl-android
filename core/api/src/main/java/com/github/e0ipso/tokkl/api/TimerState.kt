@@ -29,10 +29,8 @@ import java.time.format.DateTimeParseException
  *   including a v9 edit of the running entry and a rename of its project, task or tags. 0 for a
  *   user who has never changed the timer.
  * @property serverTime the server's clock when it built this state.
- * @property runningEntry the running entry in the v9 shape, or null when none runs.
  * @property pause the pause chain, from Pause until Discard, a start that is not a resume, or a
  *   stop of the resumed clone. Null without one.
- * @property pomodoro the Pomodoro session, or null without one.
  * @property discardedPomodoro the pomodoro that the change which produced this revision discarded
  *   as too short. It repeats in every state at that revision, so its notice must be shown once.
  */
@@ -54,7 +52,6 @@ data class TimerState(
  *   pause that rounded to zero added none.
  * @property tagIds the tags a resumed clone gets, in name order.
  * @property tags the names of [tagIds], in the same order, for display.
- * @property cloneEntryId the running clone, or null while paused.
  */
 @Serializable
 data class TimerPause(
@@ -121,7 +118,6 @@ data class DiscardedPomodoro(
     @Serializable(with = IsoInstantSerializer::class) val stop: Instant,
 )
 
-/** A phase of a Pomodoro session, as the server names it. */
 object IsoInstantSerializer : KSerializer<Instant> {
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("tokkl.IsoInstant", PrimitiveKind.STRING)
 

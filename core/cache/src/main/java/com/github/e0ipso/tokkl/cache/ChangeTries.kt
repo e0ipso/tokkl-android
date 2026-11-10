@@ -12,7 +12,6 @@ import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import java.time.temporal.ChronoUnit
 
-/** The change as it went to the server, the server's id for its entry, and the entry as the server stored it. */
 internal class SentChange(val change: PendingChange, val serverId: Long, val entry: CachedTimeEntry?)
 
 /**
@@ -24,7 +23,6 @@ internal class SentChange(val change: PendingChange, val serverId: Long, val ent
  *
  * @param spans where the server puts a start once the entry is stopped, which finds the entry a
  *   lost create made, and the span of a queued start ended before a later timer.
- * @param capabilities whether the server stores no-time entries, read for each request.
  */
 internal class ChangeTries(
     private val store: ChangeStore,
@@ -32,7 +30,6 @@ internal class ChangeTries(
     private val capabilities: CapabilitiesSource,
 ) {
 
-    /** Sends an update, a legacy stop or a restore, as [sendOnce] does. */
     suspend fun update(server: ServerEntrySends, change: PendingChange): ApiResult<SentChange> =
         sendOnce(server, change).map { SentChange(change, it.id, it.toCached()) }
 
@@ -54,8 +51,7 @@ internal class ChangeTries(
     /**
      * Sends [change] once: an update as a PUT with every field, as [body] gives them; a Stop with
      * its captured instant as a PATCH, and a legacy one without it as a PUT, which ends a running
-     * entry, never a no-time one; and a restore as a POST that Tokkl reads nothing from. Creates
-     * and deletes go through [create] and [delete].
+     * entry, never a no-time one; and a restore as a POST that Tokkl reads nothing from.
      */
     private suspend fun sendOnce(server: ServerEntrySends, change: PendingChange): ApiResult<ServerTimeEntry> =
         when (change.kind) {
@@ -119,6 +115,8 @@ internal class ChangeTries(
         }
     }
 
+    private val PendingChange.workspace get() = WorkspaceId(workspaceId)
+
     /**
      * The queued [start] as it goes to the server (docs/PRD.md O3). A queued start is the exception
      * to "the change that reaches the server last wins", because Tokkl stops the running entry when
@@ -127,8 +125,6 @@ internal class ChangeTries(
      * the later timer keeps running ([ChangeStore.endBefore]). Otherwise the start goes as queued,
      * and the server stops an earlier timer itself.
      */
-    private val PendingChange.workspace get() = WorkspaceId(workspaceId)
-
     private suspend fun endBeforeALaterTimer(server: ServerEntrySends, start: PendingChange): ApiResult<PendingChange> {
         val running = server.current().getOrElse { return it }?.toCached()
         val later = running?.takeIf { it.stop == null && it.start.isAfter(start.start.truncatedTo(ChronoUnit.SECONDS)) }

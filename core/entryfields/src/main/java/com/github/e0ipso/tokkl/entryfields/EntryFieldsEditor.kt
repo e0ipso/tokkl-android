@@ -82,7 +82,6 @@ typealias EntryPicker = @Composable (
  * while it has focus, under it, and a pick hands the suggestion to [onSuggestion].
  *
  * @param original what the entry had when editing started, for the picker's archived items.
- * @param descriptionHint the description field's placeholder.
  * @param enabled false while the entry cannot change yet.
  */
 @OptIn(ExperimentalLayoutApi::class)
@@ -219,10 +218,6 @@ private fun DescriptionField(
     }
 }
 
-/**
- * The suggestions under the description, in Tokkl's frame: how many there are, in a polite live
- * region, then one row each, which a tap picks.
- */
 @Composable
 private fun SuggestionList(suggestions: List<DescriptionSuggestion>, onPick: (DescriptionSuggestion) -> Unit) {
     Surface(

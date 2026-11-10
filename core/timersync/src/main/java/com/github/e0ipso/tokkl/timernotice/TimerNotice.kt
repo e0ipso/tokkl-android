@@ -22,7 +22,6 @@ sealed interface TimerNotice {
      */
     data class ActionFailed(val result: TimerActionResult, val number: Long) : TimerNotice
 
-    /** The server discarded the pomodoro [entryId] as too short to save. */
     data class PomodoroDiscarded(val entryId: Long) : TimerNotice
 }
 
@@ -51,12 +50,7 @@ fun timerNoticeText(resources: Resources, notice: TimerNotice): String = when (n
  */
 fun timerNotStoredText(resources: Resources): String = resources.getString(R.string.timer_action_not_stored)
 
-/**
- * What the signed-in frame reads of the timer, which the Timer feature's view model gives it: when
- * the timer has settled idle, which closes the fullscreen timer, whether the Timer page shows its
- * List view, the starts that may ask for the notification permission, and the [notice] the timer's
- * pages show.
- */
+/** What the signed-in frame reads of the timer, which the Timer feature's view model gives it. */
 interface TimerFrame {
 
     /** True while no entry runs, by the cache's word, and no tap of the timer's own is on its way. */

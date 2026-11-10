@@ -36,28 +36,18 @@ import kotlinx.serialization.PolymorphicSerializer
 /**
  * The app's navigation host: a Navigation 3 back stack of [Route]s that survives configuration
  * changes and process death. It starts at sign-in until a server and its token are stored, and at
- * the Timer page after that, as [signIns] says. A restored signed-in back stack goes to sign-in
- * when nobody is signed in any more, and a sign-out starts the navigation over at sign-in, with
- * new view models.
+ * the Timer page after that. A restored signed-in back stack goes to sign-in when nobody is signed
+ * in any more, and a sign-out starts the navigation over at sign-in, with new view models.
  *
- * Every signed-in screen has the bottom bar ([AppNavigationBar]), or on a medium or expanded
- * window the navigation rail ([AppNavigationRail]) with the same items. Opening a page from it puts
- * that page right above Timer, so Back from any page in the bar or the More sheet goes to Timer,
- * and Back from Timer closes the app (docs/PRD.md B3). A screen opened from a page, such as Licences from
- * Settings, stacks above that page, and the bar keeps marking the page. A page shows only while
- * the server's [capabilities] offer what it needs ([TopLevelPages.unavailable]), such as Trash, Timer
- * templates and Pomodoro: when the server loses it, the page goes back to Timer, the page opens
- * nowhere, and a back stack restored from before shows Timer. [requests] opens the pages that
- * taps from outside the app ask for, through the features that read them.
+ * Opening a page from the bar or the rail puts it right above Timer, so Back from any top-level
+ * page goes to Timer, and Back from Timer closes the app (docs/PRD.md B3). A screen opened from a
+ * page, such as Licences from Settings, stacks above that page, and the bar keeps marking the page.
+ * A page shows only while the server's [capabilities] offer what it needs
+ * ([TopLevelPages.unavailable]): when the server loses it, the page goes back to Timer, and a back
+ * stack restored from before shows Timer.
  *
- * Each feature declares its routes, adds their entries ([FeatureNavigation.routes]) and names its top-level
- * pages, which the bar, the rail and the More sheet show in order ([TopLevelPages]). The back stack
- * is saved with the serializers of every feature's routes ([routeSerializers]). Each route's screen takes its
- * own view models, which go when the route leaves the stack. The ones that several screens share
- * live in the signed-in session's store ([NavigationStores]). MainActivity hands over what the
- * app's Koin graph holds: [signOuts] counts the sign-outs that finished, [signIns] reads the
- * stored session off the main thread, [timerFrame] gives what the frame reads of the timer, and
- * [notificationPrompt] asks for the notification permission.
+ * Each route's screen takes its own view models, which go when the route leaves the stack. The
+ * ones that several screens share live in the signed-in session's store ([NavigationStores]).
  */
 @Composable
 internal fun TokklNavHost(
@@ -79,7 +69,6 @@ internal fun TokklNavHost(
         // A tap from before the sign-out opens nothing for the next account.
         if (discarded) requests.clear()
     }
-    // A sign-out starts the navigation over, at sign-in, with a back stack of its own.
     key(signOutCount) {
         CompositionLocalProvider(LocalSignedInSession provides stores.session) {
             Navigation(

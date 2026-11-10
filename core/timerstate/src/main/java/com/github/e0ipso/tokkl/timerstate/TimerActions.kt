@@ -35,12 +35,9 @@ import kotlin.coroutines.CoroutineContext
  * holder's latest, so a tap on an older notification or widget gets a refusal instead of acting
  * on a phase the user never saw.
  *
- * @param client the signed-in account's API client, or null when signed out.
  * @param states gives the intake where the account's timer state takes answers. Each call takes
  *   the intake once and gives the answer to it, so an answer for an account that signed out
  *   meanwhile changes nothing.
- * @param scope the application's scope, where the actions run.
- * @param io where requests run, off the main thread.
  */
 class TimerActions(
     private val client: ApiClientProvider,
@@ -50,42 +47,27 @@ class TimerActions(
 ) : PauseActions,
     SessionActions {
 
-    /** Reads the state with `GET /api/app/timer`. */
     override suspend fun read(): TimerActionResult = withContext(io) {
         exchange { api -> api.timer.state().map { Refusable(it, refused = false) } }
     }
 
-    /**
-     * Pauses the running entry. The server refuses it during a session and while nothing runs.
-     * Pause reads no field, so it sends an empty object.
-     */
+    /** Pause reads no field, so it sends an empty object. */
     override suspend fun pause(): TimerActionResult = send { it.timer.pause() }
 
-    /** Resumes the paused chain shown at [revision], with a clone of its fields. */
     override suspend fun resume(revision: Long): TimerActionResult = send { it.timer.resume(revision) }
 
-    /** Ends the paused chain shown at [revision], which is Stop while paused. */
     override suspend fun discard(revision: Long): TimerActionResult = send { it.timer.discard(revision) }
 
-    /**
-     * Starts a session in [workspaceId] whose first pomodoro has [fields], with [lengths] in place
-     * of the account's defaults. The server refuses it while a session runs, and otherwise stops
-     * the running entry and ends any pause chain.
-     */
     override suspend fun startSession(
         workspaceId: WorkspaceId,
         fields: EntryFields,
         lengths: SessionLengths,
     ): TimerActionResult = send { it.timer.startSession(sessionStart(workspaceId, fields, lengths)) }
 
-    /** Confirms the phase shown at [revision] and starts the next one. */
     override suspend fun nextPhase(revision: Long): TimerActionResult = send { it.timer.nextPhase(revision) }
 
-    /** Ends the session shown at [revision]. */
     override suspend fun endSession(revision: Long): TimerActionResult = send { it.timer.endSession(revision) }
 
-    // A tap's action reaches the server and its answer reaches the holder also when the caller is
-    // cancelled meanwhile, as when the screen that sent it goes: the application's scope owns it.
     private suspend fun send(request: suspend (TokklApi) -> ApiResult<Refusable<TimerState>>): TimerActionResult =
         scope.async(io) { exchange(request) }.await()
 
@@ -105,10 +87,7 @@ class TimerActions(
     }
 }
 
-/**
- * The pause chain's actions on the server, which the Timer page and the full-screen timer send.
- * [TimerActions] sends them.
- */
+/** The pause chain's actions on the server, which the Timer page and the full-screen timer send. */
 interface PauseActions {
 
     /** Pauses the running entry. The server refuses it during a session and while nothing runs. */
@@ -123,20 +102,22 @@ interface PauseActions {
 
 /**
  * A Pomodoro session's actions on the server, which the Pomodoro page sends, and the timer read it
- * uses to learn the revision after its own edits reach the server. [TimerActions] sends them.
+ * uses to learn the revision after its own edits reach the server.
  */
 interface SessionActions {
 
     /** Reads the state with `GET /api/app/timer`. */
     suspend fun read(): TimerActionResult
 
-    /** Starts a session in [workspaceId] whose first pomodoro has [fields], with [lengths]. */
+    /**
+     * The server refuses it while a session runs, and otherwise stops the running entry and ends
+     * any pause chain.
+     */
     suspend fun startSession(workspaceId: WorkspaceId, fields: EntryFields, lengths: SessionLengths): TimerActionResult
 
     /** Confirms the phase shown at [revision] and starts the next one. */
     suspend fun nextPhase(revision: Long): TimerActionResult
 
-    /** Ends the session shown at [revision]. */
     suspend fun endSession(revision: Long): TimerActionResult
 }
 

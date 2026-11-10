@@ -9,9 +9,7 @@ import java.time.LocalDate
 
 // The rows of the offline cache (docs/PRD.md O2): what the app last loaded from the server. The
 // server is the source of truth, and a refresh replaces these rows with its values. Ids are the
-// server's. The account settings are not here: AccountSettingsStore keeps them, and
-// AccountSettingsSource is the one place to read them. The rest of the app reads and writes the
-// model's types, which CacheModels.kt maps to and from these rows.
+// server's.
 
 /**
  * A time entry that started within the cached history. [stop] is null while it runs.

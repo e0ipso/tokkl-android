@@ -34,7 +34,6 @@ interface CurrentTimerState {
     /** The name the signed-in account's timer controls carry in their targets. */
     fun account(): String
 
-    /** What the timer controls show now. */
     suspend fun currentControls(): TimerControls
 }
 
@@ -55,14 +54,12 @@ interface HeldFieldsMemory {
 /** The too-short pomodoro notice of the signed-in account, such as [AccountTimerStates] keeps. */
 interface DiscardNotices {
 
-    /** The too-short pomodoro of the account's timer state that no screen has shown yet. */
     val discardNotice: Flow<DiscardedPomodoro?>
 
     /** Takes the [discardNotice] on show, or returns null when none is left to show. */
     suspend fun takeDiscardNotice(): DiscardedPomodoro?
 }
 
-/** The account's [TimerStateSource], and the name its timer controls carry in their targets. */
 private class AccountTimerState(val source: TimerStateSource, val account: String)
 
 /**
@@ -72,11 +69,6 @@ private class AccountTimerState(val source: TimerStateSource, val account: Strin
  * a small file, and each one after a sign-in from nothing. Sign-out retires it. Take it once per
  * request or stream and give its answer to the same source: an answer kept for a retired source
  * changes nothing.
- *
- * It is the one owner of the account's [TimerStateSource]: readers see the state as
- * [CurrentTimerState] and the flows here, the timer actions, the event stream and the account
- * refresh feed it through [intake], and only this class retires a source, at sign-out and before
- * a sign-in.
  *
  * The flows follow the signed-in account across sign-ins and load the stored state off the main
  * thread, on [io].
@@ -103,7 +95,6 @@ class AccountTimerStates(
 
     override suspend fun forgetAccount() = current().source.retire()
 
-    /** The timer state of one account context of [account], made on first use. */
     private class ForAccount(val account: Int, val state: Lazy<AccountTimerState>)
 
     // A JVM lock, not a Mutex: current() is read from any thread without suspending.
@@ -132,7 +123,6 @@ class AccountTimerStates(
         return owner.source.withState { held -> read(owner.account, held) }
     }
 
-    /** The source and the account name of the account signed in now, read together. */
     private fun current(): AccountTimerState {
         val account = account.context.value.number
         val state = synchronized(lock) {
@@ -148,7 +138,6 @@ class AccountTimerStates(
      */
     private val states: Flow<AccountTimerState> = account.context.map { current() }
 
-    /** The signed-in account's held timer state, or null without one. */
     val held: Flow<HeldTimerState?> = states.flatMapLatest { it.source.state }.flowOn(io)
 
     /**
@@ -186,7 +175,6 @@ class AccountTimerStates(
         }
     }.flowOn(io).distinctUntilChanged()
 
-    /** What [controls] holds now. */
     override suspend fun currentControls(): TimerControls = controls.first()
 
     /**

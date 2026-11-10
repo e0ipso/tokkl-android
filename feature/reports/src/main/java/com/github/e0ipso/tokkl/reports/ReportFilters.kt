@@ -42,7 +42,6 @@ data class ReportFilters(
     val tagsNot: Boolean = false,
 ) {
 
-    /** True when no filter is set, so a report covers every entry of its range. */
     val isEmpty: Boolean get() = projects.isEmpty() && clients.isEmpty() && tags.isEmpty() &&
         billable == BillableFilter.ALL
 
@@ -70,7 +69,6 @@ data class ReportFilters(
     )
 }
 
-/** [this] with [id] added when it was not in it, or without it when it was. */
 fun List<Long?>.toggled(id: Long?): List<Long?> = if (id in this) this - id else this + id
 
 /** One choice of a filter: a project, a client or a tag of the workspace. */
@@ -127,11 +125,7 @@ data class FilterOptions(
     }
 }
 
-/**
- * The options of the filter sheet as the cache, the settings and the capabilities change: the
- * projects, clients and tags of the default workspace, and negation where the server offers it.
- * From the Room cache, never from the server.
- */
+/** The filter sheet's options as the cache, settings and capabilities change; from Room, never from the server. */
 internal fun reportFilterOptions(
     cache: AccountCache,
     settings: Flow<AccountSettings?>,

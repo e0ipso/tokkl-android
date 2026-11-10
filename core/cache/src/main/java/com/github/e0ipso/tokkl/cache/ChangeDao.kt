@@ -30,15 +30,12 @@ abstract class ChangeDao : QueueTables {
     )
     abstract override fun first(): PendingChange?
 
-    /** How many changes the server refused wait for the user. */
     @Query("SELECT COUNT(*) FROM pending_changes WHERE held")
     abstract fun heldCount(): Flow<Int>
 
-    /** The changes the server refused that wait for the user, oldest first. */
     @Query("SELECT * FROM pending_changes WHERE held ORDER BY sequence")
     abstract fun held(): Flow<List<PendingChange>>
 
-    /** The held change to the entry [entryId], or null when it has none. */
     @Query("SELECT * FROM pending_changes WHERE entryId = :entryId AND held ORDER BY sequence LIMIT 1")
     abstract override fun heldFor(entryId: Long): PendingChange?
 
@@ -48,11 +45,9 @@ abstract class ChangeDao : QueueTables {
     @Query("UPDATE pending_changes SET held = 1, refusal = :refusal WHERE sequence = :sequence")
     abstract fun hold(sequence: Long, refusal: String?)
 
-    /** Lets a held change go out again. Returns how many it let go: none when it is not held. */
     @Query("UPDATE pending_changes SET held = 0, refusal = NULL WHERE sequence = :sequence AND held")
     abstract override fun release(sequence: Long): Int
 
-    /** Deletes the queued changes to the entry [entryId] from [sequence] on. Returns how many. */
     @Query("DELETE FROM pending_changes WHERE entryId = :entryId AND sequence >= :sequence")
     abstract override fun deleteFrom(entryId: Long, sequence: Long): Int
 
@@ -63,7 +58,6 @@ abstract class ChangeDao : QueueTables {
     @Query("SELECT DISTINCT entryId FROM pending_changes")
     abstract fun pendingEntryIds(): List<Long>
 
-    /** The queued changes to the entry [entryId], oldest first. */
     @Query("SELECT * FROM pending_changes WHERE entryId = :entryId ORDER BY sequence")
     abstract override fun changesFor(entryId: Long): List<PendingChange>
 
@@ -91,7 +85,6 @@ abstract class ChangeDao : QueueTables {
     @Query("UPDATE pending_changes SET maybeSent = :maybeSent WHERE sequence = :sequence")
     abstract fun setMaybeSent(sequence: Long, maybeSent: Boolean): Int
 
-    /** The queued delete of the entry [entryId], or null when the queue holds none. */
     @Query("SELECT * FROM pending_changes WHERE entryId = :entryId AND kind = 'DELETE' ORDER BY sequence DESC LIMIT 1")
     abstract override fun queuedDelete(entryId: Long): PendingChange?
 
@@ -113,7 +106,6 @@ abstract class ChangeDao : QueueTables {
     @Query("SELECT * FROM time_entries WHERE id = :id")
     abstract override fun entry(id: Long): CachedTimeEntry?
 
-    /** The ids of the cached entries from the server, not made on the phone, that start from [from] to [to]. */
     @Query("SELECT id FROM time_entries WHERE id > 0 AND start BETWEEN :from AND :to")
     abstract override fun serverEntryIds(from: Instant, to: Instant): List<Long>
 

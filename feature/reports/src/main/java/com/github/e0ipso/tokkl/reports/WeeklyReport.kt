@@ -17,7 +17,6 @@ data class WeeklyRow(val id: Long?, val title: String, val color: String?, val s
         require(seconds.size == DAYS_IN_WEEK) { "a week has $DAYS_IN_WEEK days" }
     }
 
-    /** The project's time over the whole week. */
     val total: Long get() = seconds.sum()
 }
 
@@ -28,13 +27,10 @@ data class WeeklyRow(val id: Long?, val title: String, val color: String?, val s
  */
 data class WeeklyReport(val weekStart: LocalDate, val rows: List<WeeklyRow>) : Report {
 
-    /** The week's days, in order. */
     val days: List<LocalDate> get() = (0 until DAYS_IN_WEEK).map { weekStart.plusDays(it.toLong()) }
 
-    /** Each day's time over every project. */
     val dayTotals: List<Long> get() = (0 until DAYS_IN_WEEK).map { day -> rows.sumOf { it.seconds[day] } }
 
-    /** The week's time over every project. */
     val total: Long get() = rows.sumOf { it.total }
 
     companion object {

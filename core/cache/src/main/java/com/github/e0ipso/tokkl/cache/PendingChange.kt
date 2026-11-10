@@ -12,7 +12,6 @@ import java.time.LocalDate
 // database, so a change and its effect on the cached rows commit together, and both survive the
 // process. Only time entries go in the queue.
 
-/** What a [PendingChange] does to its entry. */
 enum class ChangeKind {
     /** Creates the entry: a timer started on the phone, or a stopped entry made by hand. */
     CREATE,
@@ -41,12 +40,11 @@ enum class ChangeKind {
  * @property stop the stop the user gave or the tap time of Stop, or null while the entry runs.
  * @property tags tag names. The server creates any it does not know.
  * @property tagIds the cached ids of [tags], for the cache row only. The server gets the names.
- * @property maybeSent the sender sent this create, captured Stop or delete and the server may have stored it,
- *   because no answer came back that rules it out: the connection dropped, the read timed out, the
- *   app died mid-request, the server answered 5xx or the phone could not read its 2xx. Before
- *   posting a create again the sender looks for the entry that post made. Undo of a marked delete
- *   asks the server to restore the entry, since the server may have deleted it. Only a create and
- *   a delete set it.
+ * @property maybeSent the sender sent this create, captured Stop or delete and the server may have
+ *   stored it, because no answer came back that rules it out: the connection dropped, the read
+ *   timed out, the app died mid-request, the server answered 5xx or the phone could not read its
+ *   2xx. Before posting a create again the sender looks for the entry that post made. Undo of a
+ *   marked delete asks the server to restore the entry, since the server may have deleted it.
  * @property existingIds for a create, the ids of the server's entries the phone held within
  *   [ChangeSender.LOOKUP_MARGIN] of its start when it was queued. None of them can be the entry a
  *   post of this create made, so the sender never takes one for it, as it would take the source
@@ -59,7 +57,6 @@ enum class ChangeKind {
  *   not be longer than 999 hours", or null when its answer gave none.
  * @property allDay the change leaves a no-time entry, as [CachedTimeEntry.allDay]. Changes queued
  *   before database version 10 read false.
- * @property day the no-time entry's day, as [CachedTimeEntry.day].
  */
 @Entity(tableName = "pending_changes", indices = [Index("entryId")])
 data class PendingChange(
@@ -112,7 +109,6 @@ data class PendingChange(
     )
 
     companion object {
-        /** A change of [kind] that leaves [entry] as it is given. */
         fun of(kind: ChangeKind, entry: CachedTimeEntry) = PendingChange(
             kind = kind,
             entryId = entry.id,

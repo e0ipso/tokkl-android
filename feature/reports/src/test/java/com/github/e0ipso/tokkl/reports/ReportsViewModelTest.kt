@@ -311,7 +311,6 @@ class ReportsViewModelTest {
         return state as ReportsState.Loaded
     }
 
-    /** The latest summary asked for [from] to [to]. */
     private fun assertSearched(from: String, to: String) {
         assertEquals(range(from, to), server.summaries.last().range)
     }

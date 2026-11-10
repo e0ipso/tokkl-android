@@ -30,13 +30,9 @@ import kotlin.coroutines.CoroutineContext
  * disk or the Keystore keeps nothing, and the next call tries again. Reads, saves and clears take
  * turns, so a read never keeps what a change of account replaced.
  *
- * @param servers the configured server, a [ServerConfigStore] in the app.
- * @param tokens the API token, an [ApiTokenStore] in the app.
- * @param http the shared HTTP client, which every [api] sends through.
  * @param io where the stores are read and written, and where every [api] runs its calls.
- * @param trustListener hears every request of [api] that the trust checks
- *   refuse, so the app can prompt from any screen.
- * @param successListener hears every 2xx answer to [api]'s requests.
+ * @param trustListener hears every request of [api] that the trust checks refuse, so the app can
+ *   prompt from any screen.
  */
 class Session(
     private val servers: ClearableStore<ServerUrl>,
@@ -83,15 +79,10 @@ class Session(
      */
     suspend fun isSignedIn(): Boolean = read()?.signedIn == true
 
-    /**
-     * The API of the signed-in account, or null when signed out. A Keystore or disk failure
-     * counts as signed out, as in [isSignedIn].
-     */
     suspend fun api(): TokklApi? = read()?.api()
 
     override suspend fun invoke(): TokklApi? = api()
 
-    /** The kept read, or a new one, which is kept. Null on a failure. */
     private suspend fun read(): Read? = kept.value ?: stores.withLock {
         kept.value ?: withContext(io) {
             try {
@@ -106,9 +97,8 @@ class Session(
     }
 
     /**
-     * Stores [server] as the configured server and [token] as its API token.
-     * The server is cleared first and written last, so a failure part way
-     * leaves the app signed out instead of pairing a token with another server.
+     * The server is cleared first and written last, so a failure part way leaves the app signed
+     * out instead of pairing a token with another server.
      */
     @Throws(GeneralSecurityException::class, IOException::class)
     suspend fun save(server: ServerUrl, token: String) = change {
@@ -127,7 +117,6 @@ class Session(
         tokens.clear()
     }
 
-    /** Runs [write] on [io] with the kept read dropped before and after it. */
     private suspend fun change(write: suspend () -> Unit) = stores.withLock {
         kept.value = null
         try {

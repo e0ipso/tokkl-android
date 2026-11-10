@@ -41,7 +41,6 @@ class DefaultThemeSettings : ExternalResource() {
     }
 }
 
-/** Hands the app's night mode back to the system. */
 fun followTheSystemNightMode() {
     targetContext.getSystemService(UiModeManager::class.java).setApplicationNightMode(UiModeManager.MODE_NIGHT_AUTO)
 }

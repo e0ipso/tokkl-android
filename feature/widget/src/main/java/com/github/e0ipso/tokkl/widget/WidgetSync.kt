@@ -35,7 +35,6 @@ import kotlin.coroutines.CoroutineContext
  *
  * @param keys keys of what one widget provider shows. Collected on [io], since they read the disk.
  * @param shown the key of what the widget last showed, null for none.
- * @param redraw draws every placed widget again from the phone's state.
  */
 class WidgetSync(
     private val keys: Flow<String>,
@@ -45,15 +44,13 @@ class WidgetSync(
     private val io: CoroutineContext,
 ) {
 
-    /** Follows the phone's state until the scope ends. Call once, at process start. */
+    /** Call once, at process start. */
     fun start(): Job = scope.launch(io) { follow() }
 
-    /** Follows the phone's state until it ends, reading it again after a failed read or draw. */
     suspend fun follow() {
         keys.distinctUntilChanged().collectDurably("WidgetSync", latestOnly = true, action = ::apply)
     }
 
-    /** Updates the widgets unless they already show what [key] stands for. */
     suspend fun apply(key: String) {
         if (key == shown.load()) return
         redraw.redraw()
@@ -73,7 +70,6 @@ fun interface WidgetRedraw {
     suspend fun redraw()
 }
 
-/** Redraws every placed [widget] through Glance. */
 class GlanceRedraw(private val context: Context, private val widget: GlanceAppWidget) : WidgetRedraw {
     override suspend fun redraw() = widget.updateAll(context)
 }

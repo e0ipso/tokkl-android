@@ -56,7 +56,6 @@ class ReminderSyncTest {
         notice = notice(onRemove = {}),
     )
 
-    /** The reminder notification as a list of posts, with [onRemove] for its removals. */
     private fun notice(onRemove: () -> Unit) = object : ReminderNotice {
         override suspend fun post(timer: ReminderTimer) {
             posted += timer
@@ -258,7 +257,6 @@ class ReminderSyncTest {
         notice = notice(onRemove = { removals++ }),
     )
 
-    /** The account as the test sets [input], with [stop] and [pause]. */
     private fun account(stop: suspend (EntryId) -> Boolean, pause: suspend (EntryId) -> SurfaceTap.Request?) =
         object : ReminderAccount {
             override suspend fun input() = input

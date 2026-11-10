@@ -22,10 +22,7 @@ data class TileControl(val action: TimerSurfaceAction, val target: TimerTarget)
  */
 data class TileControlsPanel(val description: String, val paused: Boolean, val buttons: List<TileControl>)
 
-/**
- * The compact controls for [controls], or null when the timer is idle. Pause shows only where the
- * controls offer it: with the server's timer API and outside a Pomodoro session.
- */
+/** Pause shows only where the controls offer it: with the server's timer API and outside a Pomodoro session. */
 fun tileControlsPanel(controls: TimerControls): TileControlsPanel? = when (controls) {
     is TimerControls.Running -> TileControlsPanel(
         description = controls.entry.description,

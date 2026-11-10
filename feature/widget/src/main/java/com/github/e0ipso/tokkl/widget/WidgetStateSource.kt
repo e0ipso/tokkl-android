@@ -21,15 +21,12 @@ import java.time.Clock
 import kotlin.coroutines.CoroutineContext
 
 /**
- * What the home screen widget shows (docs/PRD.md N3): the running entry or paused timer (T1)
- * of [timerControls], the favorites from the cache, the favorites capability and the account's
- * default workspace, all from the phone. Cached history and ID mappings share the Timer
- * page's day rule. App opens and the existing running check reread the day even offline or
+ * What the home screen widget shows (docs/PRD.md N3, T1), all from the phone. Cached history and
+ * ID mappings share the Timer page's day rule. App opens and the existing running check reread the day even offline or
  * when an unchanged current entry produces no Room write. No widget work is scheduled.
  *
  * @param account the name the signed-in account's timer controls carry, read with each state.
  *   A sign-in changes [timerControls], so the state reads the new name.
- * @param clock the clock read on each widget event.
  */
 class WidgetStateSource(
     application: Application,

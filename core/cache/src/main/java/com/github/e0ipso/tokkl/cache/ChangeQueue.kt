@@ -14,7 +14,6 @@ import java.time.Clock
 import java.time.Instant
 import kotlin.coroutines.CoroutineContext
 
-/** The changes the server refused, which wait for the user, as [ChangeQueue] keeps them. */
 interface HeldChanges {
 
     /** The held changes, oldest first. */
@@ -33,7 +32,6 @@ interface HeldChanges {
  */
 data class HeldChange(val sequence: Long, val kind: ChangeKind, val entry: TimeEntry, val refusal: String?)
 
-/** The latest short Stop, which Undo can take back, of the entry [entryId] at [capturedAt]. */
 data class ShortStopOffer(val entryId: EntryId, val capturedAt: Instant)
 
 /**
@@ -41,8 +39,7 @@ data class ShortStopOffer(val entryId: EntryId, val capturedAt: Instant)
  * changes the cached entry at once and queues the change, in one transaction, then asks [onQueued]
  * to send the queue while it holds a change. No call waits for the network. The cache marks the
  * entry unsent until the server has every queued change to it, and keeps showing the change over
- * refreshed rows until then. The notification, widget and tile read the running entry from the
- * cache, so they follow at once.
+ * refreshed rows until then.
  *
  * Start and Stop use the tap time, which each call reads from [clock] before anything else, so
  * call them from the tap's handler. A timer started offline keeps that start on the server. A
@@ -53,9 +50,6 @@ data class ShortStopOffer(val entryId: EntryId, val capturedAt: Instant)
  * An entry created on the phone gets a negative local id. The calls take it, before and after the
  * server has answered the create with its own id.
  *
- * A no-time entry's change carries its flag and day ([EntryTiming.AllDay]), and so does every
- * cache row or queued change rebuilt from it.
- *
  * Pause, Resume and Pomodoro sessions belong to the server's timer state and never pass through
  * the queue (docs/PRD.md T1). A queued Stop of the server's resumed clone or of its open pomodoro
  * is an ordinary Stop, and the server ends the chain or the session when it gets it.
@@ -64,13 +58,11 @@ data class ShortStopOffer(val entryId: EntryId, val capturedAt: Instant)
  * docs/PRD.md O6), and later changes to its entry wait behind it. A change made to that entry
  * meanwhile, such as the user's fix in the entry form, folds into the held change and lets it go
  * out again: every change carries all of the entry's fields, so the newest one says everything the
- * server needs. [sendAgain] lets a held change go out as it is, and [discard] drops it.
+ * server needs.
  *
  * The decisions each call makes live in [QueueEdits], over the [QueueTables] that [storage] hands
  * it inside one transaction, so they hold no Room code and run in JVM tests over tables in memory.
  *
- * @param storage the queue's tables, which [ChangeSender] reads through the same database.
- * @param io where the database writes run.
  * @param spans the spans the server stores for a Stop: [ServerSpans.capturedStop] for a Stop now,
  *   and [ServerSpans.stopped] for a short Stop's snapped zero point.
  */
@@ -87,13 +79,10 @@ class ChangeQueue(
     /** How many changes the server has not received (docs/PRD.md O5), held ones included. */
     val unsentCount: Flow<Int> = storage.unsentCount
 
-    /** How many changes the server has not received, held ones included: [unsentCount] now. */
     suspend fun unsentNow(): Int = unsentCount.first()
 
-    /** The changes the server refused, which wait for the user, oldest first (docs/PRD.md O6). */
     override val held: Flow<List<HeldChange>> = storage.heldChanges.map { changes -> changes.map { it.toHeld() } }
 
-    /** How many changes the server refused wait for the user. */
     val heldCount: Flow<Int> = storage.heldCount
 
     /** Latest short Stop, retained across process death until Undo or dismissal. */
@@ -123,7 +112,6 @@ class ChangeQueue(
         return queue { stop(entryId, fields, at) }
     }
 
-    /** Queues a restore behind the short Stop and shows its zero-length row immediately offline. */
     suspend fun undoShortStop(entryId: EntryId): Boolean = queue { undoShortStop(entryId) }
 
     /** Dismisses only the offer; the queued Stop and server trash remain intact. */
@@ -161,11 +149,9 @@ class ChangeQueue(
 
     /**
      * Sets every field of the stopped entry [entryId] in [workspaceId], which the cache need not
-     * hold, such as an entry from the older days the history pages from the server. The change
-     * goes to the queue with every field, so the sender's PUT sends it as it is, and the cache
-     * holds the entry from now on, marked unsent until the server has it. A refresh drops it again
-     * when it starts before the cache's window. The workspace of a cached entry wins over
-     * [workspaceId]. [timing] is as for [update].
+     * hold, such as an entry from the older days the history pages from the server. The cache holds
+     * the entry from now on, marked unsent until the server has it; a refresh drops it again when
+     * it starts before the cache's window. The workspace of a cached entry wins over [workspaceId].
      */
     override suspend fun updateOlder(
         entryId: EntryId,
@@ -191,10 +177,7 @@ class ChangeQueue(
         EntryId(storage.transaction { resolve(entryId) })
     }
 
-    /**
-     * Deletes the cached entry [entryId]. Returns false when it is missing or a delete is already
-     * queued.
-     */
+    /** Returns false when [entryId] is not cached or a delete is already queued. */
     override suspend fun delete(entryId: EntryId): Boolean = queue { delete(entryId) }
 
     /**
@@ -204,25 +187,15 @@ class ChangeQueue(
      */
     override suspend fun delete(entry: TimeEntry): TimeEntry? = queue { delete(entry) }
 
-    /**
-     * Lets the held change [sequence] go out again as it is, such as after the cause of its
-     * refusal was fixed on the server. Returns false when it is not held.
-     */
     override suspend fun sendAgain(sequence: Long): Boolean = queue { sendAgain(sequence) }
 
     /**
-     * Drops the held change [sequence] and the later changes to its entry that wait behind it,
-     * since each of them builds on it. An entry the phone created goes from the cache with them;
-     * any other keeps its row until the next refresh brings the server's. Returns false when the
-     * change is not held.
+     * The later changes to the entry go too, since each builds on the held one. An entry the phone
+     * created leaves the cache with them; any other keeps its row until the next refresh.
      */
     override suspend fun discard(sequence: Long): Boolean = queue { discard(sequence) }
 
-    /**
-     * Runs [change] in one transaction on [io], then asks for the queue to be sent while it holds
-     * a change that can go out. A call that queued nothing, such as a stop of an entry that does
-     * not run, leaves an empty queue alone.
-     */
+    /** A call that queued nothing, such as a stop of an entry that does not run, leaves an empty queue alone. */
     private suspend fun <T> queue(change: QueueEdits.() -> T): T {
         // A Stop at process start, as from the notification, snaps to the account's grid.
         spans.ready()

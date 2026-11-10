@@ -27,17 +27,12 @@ import kotlin.coroutines.CoroutineContext
  * The history on the Timer page (docs/PRD.md H1): the cached two weeks from the phone, which
  * show offline, and older days that [loadOlder] pages from the configured server,
  * [OlderPages.PAGE_DAYS] at a time, when the list's end shows. Nothing loads on a timer.
- * [entries], the session's one owner of the entries, merges the cache's with the older days and
- * keeps them in memory; this model groups them into days with the names of their projects and
- * tasks.
+ * [entries] merges the cache's entries with the older days; this model groups them into days.
  *
  * A tap on any entry opens the entry form, also on the older days, whose entries the form edits
  * through the queue as the history holds them. Such an edit sits in the cache until the send and
- * the refresh after it, and the history then keeps showing the edited entry.
- *
- * Call [loadOlder] on the main thread.
- *
- * @param computation where the days are grouped from the entries.
+ * the refresh after it, and the history then keeps showing the edited entry. Call [loadOlder] on
+ * the main thread.
  */
 class HistoryViewModel(
     private val entries: SessionEntries,
@@ -73,10 +68,8 @@ class HistoryViewModel(
         .flowOn(computation)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), HistoryState.Loading)
 
-    /** The entry [entryId] as the history last showed it, as [SessionEntries.entry] keeps it. */
     fun entry(entryId: EntryId): TimeEntry? = entries.entry(entryId)
 
-    /** Loads the days before the oldest day loaded, as [SessionEntries.loadOlder] does. */
     fun loadOlder() = entries.loadOlder()
 
     private companion object {
@@ -85,7 +78,6 @@ class HistoryViewModel(
     }
 }
 
-/** What the history shows. */
 @Immutable
 sealed interface HistoryState {
 

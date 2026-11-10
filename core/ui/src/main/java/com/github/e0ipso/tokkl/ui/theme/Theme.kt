@@ -56,20 +56,17 @@ fun TokklTheme(
     }
 }
 
-/** What [TokklTheme] provides beyond [MaterialTheme]. */
 object TokklTheme {
     val extraColors: TokklExtraColors
         @Composable
         @ReadOnlyComposable
         get() = LocalTokklExtraColors.current
 
-    /** The hue of the section that shows, [LocalSectionHue]. */
     val sectionHue: SectionHue
         @Composable
         @ReadOnlyComposable
         get() = LocalSectionHue.current
 
-    /** Tokkl's spacing scale, rhythm, screen margin and content width. */
     val spacing: TokklSpacing get() = TokklSpacing
 
     // Tokkl's named type roles (docs/PRD.md, Visual direction, Spacing and type scale). Compose's
@@ -137,7 +134,6 @@ val TokklShapes = Shapes(
 /** `--radius-sm` in styles.css: the corners of the calendar's blocks. */
 val SmallCorner: Dp = 6.dp
 
-/** [SmallCorner] on every corner. */
 val SmallCornerShape: Shape = RoundedCornerShape(SmallCorner)
 
 /** The frame around a card, a dialog or a sticker, `border-width: 2px` on Tokkl's cards in styles.css. */

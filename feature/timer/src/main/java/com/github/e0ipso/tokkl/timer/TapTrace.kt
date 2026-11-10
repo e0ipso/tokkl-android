@@ -62,6 +62,5 @@ internal class TapSections(private val trace: TapTrace) {
         }
     }
 
-    /** A tap's open trace section, which [end] closes once the screen shows a state that is [done]. */
     private class OpenTap(val end: () -> Unit, val done: (TimerState) -> Boolean)
 }

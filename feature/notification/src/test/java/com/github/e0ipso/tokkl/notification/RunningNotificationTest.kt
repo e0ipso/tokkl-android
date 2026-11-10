@@ -429,7 +429,6 @@ class RunningNotificationTest {
         )
     }
 
-    /** The notification for the cache's [entry] and the server's [held] state, as the app builds it. */
     private fun controlled(entry: TimeEntry = running, held: HeldTimerState? = null, timerApi: Boolean = true) =
         runningNotificationContent(ServerTimerStates.controls(entry, held, timerApi), listOf(project), listOf(task))
 

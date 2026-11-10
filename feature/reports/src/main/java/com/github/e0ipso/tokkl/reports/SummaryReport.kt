@@ -72,10 +72,7 @@ data class SummaryReport(
     val currency: String? get() = totals.amounts.singleOrNull()?.currency
 
     companion object {
-        /**
-         * The summary of [entries], oldest first as the server sorts them, for [range] with weeks
-         * that start on [firstDayOfWeek].
-         */
+        /** [entries] come oldest first, as the server sorts them. */
         fun of(entries: List<ReportEntry>, range: ReportRange, firstDayOfWeek: DayOfWeek): SummaryReport {
             val resolution = range.resolution
             return SummaryReport(

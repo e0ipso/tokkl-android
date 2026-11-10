@@ -19,7 +19,6 @@ import com.github.e0ipso.tokkl.api.DiscardedPomodoro as ServerDiscardedPomodoro
 // The one mapping from the server's timer state to the model's types. The holder keeps and stores
 // the server's state as it came; everything above core:timerstate reads these.
 
-/** This state from the server, as the phone holds it once it arrived at [receivedAt]. */
 fun TimerState.held(receivedAt: Instant): HeldTimerState = HeldTimerState(
     revision = revision,
     serverTime = serverTime,

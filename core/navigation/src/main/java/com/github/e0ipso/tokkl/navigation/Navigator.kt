@@ -22,20 +22,16 @@ class Navigator(private val stack: MutableList<Route>, val openings: EntryFormOp
      */
     fun open(route: Route) = replace(stackOpening(route))
 
-    /** As [open], but a page in [unavailable] opens Timer instead. */
     fun open(route: Route, unavailable: Set<Route>) = open(if (route in unavailable) Route.Timer else route)
 
-    /** Puts [route] above the screen on top. */
     fun push(route: Route) {
         stack.add(route)
     }
 
-    /** Closes [route] when it is on top. */
     fun close(route: Route) {
         if (stack.lastOrNull() == route) stack.removeAt(stack.lastIndex)
     }
 
-    /** Back: closes the screen on top, when one is below it. */
     fun back() {
         if (stack.size > 1) stack.removeAt(stack.lastIndex)
     }
@@ -44,10 +40,8 @@ class Navigator(private val stack: MutableList<Route>, val openings: EntryFormOp
     fun openEntry(opening: EntryOpening, older: TimeEntry? = null) =
         replace(stack.withEntry(openings.route(opening, older)))
 
-    /** Starts over with [route] alone, as sign-in does. */
     fun startOver(route: Route) = replace(listOf(route))
 
-    /** Closes the focused timer and what stands above it, down to Timer ([downToTimer]). */
     fun downToTimer() = replace(stack.downToTimer())
 
     private fun replace(routes: List<Route>) {
@@ -98,7 +92,6 @@ internal fun List<Route>.downToTimer(): List<Route> {
 class EntryFormOpenings {
     private val waiting = mutableMapOf<String, TimeEntry?>()
 
-    /** A new form's route for [opening], on [older] when the cache does not hold the entry. */
     fun route(opening: EntryOpening, older: TimeEntry?): Route.Entry {
         val route = Route.Entry(opening, UUID.randomUUID().toString())
         waiting[route.id] = older
@@ -114,5 +107,4 @@ class EntryFormOpenings {
     fun clear() = waiting.clear()
 }
 
-/** What a new entry form opens on: [opening], with [older] for an entry the cache lacks. */
 class EntryFormRequest(val opening: EntryOpening, val older: TimeEntry?)

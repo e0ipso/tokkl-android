@@ -14,7 +14,6 @@ import kotlinx.serialization.Serializable
 @JvmInline
 value class EntryId(val value: Long) {
 
-    /** This id as a local id, or null for a server id. */
     val local: LocalEntryId? get() = if (value < 0) LocalEntryId(value) else null
 
     override fun toString(): String = value.toString()

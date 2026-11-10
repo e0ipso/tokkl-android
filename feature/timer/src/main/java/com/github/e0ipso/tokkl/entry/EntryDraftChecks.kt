@@ -197,6 +197,5 @@ private fun NoTimeDuration.mistake(minutes: Double?): TimeMistake {
     }
 }
 
-/** True when [form] edits a no-time entry and leaves its day and duration as they were. */
 private fun DraftTarget.Edit.keepsNoTime(form: EntryDraft): Boolean =
     noTime && form.date == date && !form.durationChanged()

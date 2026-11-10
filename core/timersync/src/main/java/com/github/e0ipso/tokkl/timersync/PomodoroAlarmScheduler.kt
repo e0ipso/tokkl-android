@@ -19,7 +19,6 @@ interface PomodoroAlarmScheduler {
      */
     fun schedule(triggerAt: Instant, phase: PomodoroPhaseKey): Boolean
 
-    /** Drops the armed alarm. Does nothing when none is armed. */
     fun cancel()
 }
 

@@ -113,7 +113,6 @@ class WeekStripFitTest {
         }
     }
 
-    /** The strip's seven days. */
     private fun days(): List<SemanticsNode> =
         composeRule.onAllNodes(stripDay).fetchSemanticsNodes().also { assertEquals("the strip's days", 7, it.size) }
 

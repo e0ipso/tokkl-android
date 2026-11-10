@@ -39,11 +39,8 @@ import com.github.e0ipso.tokkl.ui.theme.screenContent
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
- * The "needs attention" list (docs/PRD.md O6), opened from the status band. Each change the server
- * refused shows what it does, its entry's description and times in the account's zone and clock
- * format, and the server's reason. Edit entry opens the entry form through [onEdit] with the
- * entry's id, and saving it sends the fix. Send again and Discard go to [model]. A delete has no
- * entry left to edit.
+ * The "needs attention" list (docs/PRD.md O6), opened from the status band. Edit entry opens the
+ * entry form through [onEdit], and saving it sends the fix. A delete has no entry left to edit.
  */
 @Composable
 fun NeedsAttentionScreen(

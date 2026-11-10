@@ -36,18 +36,14 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
 
 /**
- * The reports screen (docs/PRD.md R1 to R5): a tab per report, the summary, the detailed list and
- * the weekly grid, under the range and the filters they share. On the weekly tab the range is
- * always a week from the account's week start, and the range button offers only the week presets.
- * Opening the screen asks the server for this week, and coming back to the foreground asks again
- * for the range on screen; leaving it forgets the report, while a configuration change keeps it
- * and asks nothing. Offline, it says that reports need the server and shows no numbers or entries,
- * and once the network comes back with the app on screen it asks again.
- * It is a page of the bottom bar, so it has no back button; system Back goes to Timer.
+ * The reports screen (docs/PRD.md R1 to R5). On the weekly tab the range is always a week from the
+ * account's week start, and the range button offers only the week presets. A configuration change
+ * keeps the report and asks nothing. It is a page of the bottom bar, so it has no back button;
+ * system Back goes to Timer.
  *
- * [time] is null when the phone cannot resolve the account's timezone. [filterOptions] are what
- * the filter sheet offers. A detailed report with entries scrolls as a lazy list, so a long range
- * composes only the rows in view; everything else scrolls as one column.
+ * [time] is null when the phone cannot resolve the account's timezone. A detailed report with
+ * entries scrolls as a lazy list, so a long range composes only the rows in view; everything else
+ * scrolls as one column.
  */
 @Composable
 fun ReportsScreen(
@@ -129,7 +125,6 @@ fun ReportsScreen(
     }
 }
 
-/** The tabs and the range, above the filters and every tab's report. */
 @Composable
 private fun Header(
     state: ReportsState,

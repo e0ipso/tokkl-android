@@ -13,10 +13,6 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
-/**
- * Sign-in: the cooldowns after failed sign-ins, the view model, which takes the account to sign in
- * again to and hands what the server accepted to the session's [AccountTransition], and the screen.
- */
 val signInFeatureModule = module {
     single { SignInCooldownStore(androidContext(), io()) } bind SignInCooldowns::class
 

@@ -12,7 +12,6 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
-/** The Projects page: its repositories, its view model and its screen. */
 val projectsFeatureModule = module {
     singleOf(::ServerProjectsRepository)
     singleOf(::ServerTasksRepository)

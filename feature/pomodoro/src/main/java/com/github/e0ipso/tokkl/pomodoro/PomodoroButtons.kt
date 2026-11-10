@@ -13,7 +13,6 @@ import com.github.e0ipso.tokkl.timerstate.SessionActions
  */
 interface PomodoroSessionButtons {
 
-    /** Next phase, or End session when [end], of [phase] at [revision], from [account]'s notification. */
     suspend fun press(account: String, phase: PomodoroPhaseKey, revision: Long, end: Boolean)
 }
 
@@ -25,14 +24,12 @@ interface PomodoroSessionButtons {
  */
 interface PomodoroRingingButtons {
 
-    /** Next phase, or End session when [end], of [phase] at [revision]. */
     suspend fun press(phase: PomodoroPhaseKey, revision: Long, end: Boolean)
 
     /** Posts the ringing notification of [phase] again after a swipe, while it still rings. */
     suspend fun repost(phase: PomodoroPhaseKey)
 }
 
-/** The session notification's buttons, through [notification], which knows the account it showed. */
 internal class SessionNotificationButtons(
     private val failures: TimerFailureNotice,
     private val notification: PomodoroSessionNotificationSync,
@@ -43,7 +40,6 @@ internal class SessionNotificationButtons(
     }
 }
 
-/** The ringing notification's buttons, through the phase [alarm] and the server's session [actions]. */
 internal class AlarmRingingButtons(
     private val failures: TimerFailureNotice,
     private val alarm: PomodoroPhaseAlarm,

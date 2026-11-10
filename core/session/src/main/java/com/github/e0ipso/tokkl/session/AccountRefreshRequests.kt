@@ -19,12 +19,10 @@ class AccountRefreshRequests {
 
     private val requests = Channel<Request>(Channel.UNLIMITED)
 
-    /** Asks for [AccountRefresh.refresh]. */
     fun refresh() {
         requests.trySend(Request.REFRESH)
     }
 
-    /** Asks for [AccountRefresh.refreshAfterChange]. */
     fun refreshAfterChange() {
         requests.trySend(Request.AFTER_CHANGE)
     }

@@ -147,11 +147,8 @@ private fun Gutter(labels: List<String>, style: TextStyle, modifier: Modifier = 
 }
 
 /**
- * One day: its hour lines, today's tint and now line, and its blocks side by side where they
- * overlap. With [drags], a tap on a stopped entry's block opens it, and a long press starts a
- * drag that [drag] holds for every column: on empty space a new entry, on a block a move, and on
- * its own top or bottom edge a resize of that end. The dragged block, or the new entry's outline,
- * shows where the drag would save it.
+ * One day's column. With [drags], [drag] holds the drag in progress for every column, and the
+ * dragged block, or the new entry's outline, shows where the drag would save it.
  */
 @Composable
 private fun DayColumn(

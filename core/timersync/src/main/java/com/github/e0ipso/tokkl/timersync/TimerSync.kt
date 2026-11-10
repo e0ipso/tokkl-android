@@ -33,12 +33,9 @@ internal data class StreamTermination<A : Any>(val account: A, val end: StreamEn
  *
  * Every method may be called from any thread and returns at once: it hands its work to [scope],
  * whose dispatcher runs one task at a time, in the order the calls came. That dispatcher alone
- * reads and changes the stream's state, so it needs no lock. The watchdog and the reconnects are
- * delays in [scope].
+ * reads and changes the stream's state, so it needs no lock.
  *
  * @param A what tells accounts apart. The app uses the account's [TimerStateSource].
- * @param scope runs every change of the stream's state, one at a time, such as a scope on
- *   `Dispatchers.Default.limitedParallelism(1)`.
  * @param now milliseconds on a clock that never goes back, such as `SystemClock.elapsedRealtime`,
  *   for the watchdog and the backoff.
  * @param connections starts holding the stream for an account over a link, such as
@@ -60,18 +57,15 @@ class TimerSync<A : Any> internal constructor(
      */
     internal val terminations: Flow<StreamTermination<A>> = ended.receiveAsFlow()
 
-    /** The account the stream is held for, or null while stopped. */
     private var account: A? = null
 
     /** The account whose credential the server refused, which [run] does not retry. */
     private var refused: A? = null
 
-    /** The open or opening call, or null while none is. */
     private var link: TimerSyncLink? = null
 
     private var watchdog: Job? = null
 
-    /** The scheduled reconnect. */
     private var reconnect: Job? = null
 
     /** Failures since the last healthy stream, which set the next delay. */
@@ -162,7 +156,6 @@ class TimerSync<A : Any> internal constructor(
         }
     }
 
-    /** A new link, watched for silence from now. */
     private fun connect(): TimerSyncLink {
         val next = TimerSyncLink(::connected, ::alive, ::ended)
         link = next
@@ -185,7 +178,6 @@ class TimerSync<A : Any> internal constructor(
         if (silent >= SILENCE_MILLIS) retry() else watch(watched, SILENCE_MILLIS - silent)
     }
 
-    /** Closes the call, if any, and schedules the next connection. */
     private fun retry() {
         val healthy = connectedAt?.let { now() - it >= HEALTHY_MILLIS } == true
         drop()
@@ -200,7 +192,6 @@ class TimerSync<A : Any> internal constructor(
         }
     }
 
-    /** Cancels the call, its watchdog and the scheduled reconnect. */
     private fun drop() {
         link?.cancel()
         link = null
@@ -221,7 +212,6 @@ class TimerSync<A : Any> internal constructor(
         const val FIRST_DELAY_MILLIS = 1_000L
         const val MAX_DELAY_MILLIS = 120_000L
 
-        /** The wait before the next connection after [failures] failures in a row. */
         internal fun delayAfter(failures: Int): Long =
             minOf(MAX_DELAY_MILLIS, FIRST_DELAY_MILLIS shl minOf(failures, MAX_SHIFT))
 
@@ -233,10 +223,7 @@ class TimerSync<A : Any> internal constructor(
 /**
  * Opens the timer event stream's calls for [TimerSync], which hands them the account's timer
  * state. Each call takes the signed-in client and feeds the intake it was opened for, so a stream
- * of a retired account changes nothing. How a call ends goes back through its link; what decides
- * whether the service runs hears the ends no reconnect fixes from [TimerSync.terminations].
- *
- * @param scope where the calls run, on [io].
+ * of a retired account changes nothing.
  */
 internal class TimerEventConnections(
     private val session: ApiClientProvider,
@@ -274,7 +261,6 @@ internal class TimerSyncLink(
     /** An event or a comment arrived. */
     fun alive() = onAlive(this)
 
-    /** The stream is over, as [end] says. */
     fun ended(end: StreamEnd) = onEnded(this, end)
 
     internal fun cancel() {

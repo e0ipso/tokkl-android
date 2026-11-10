@@ -241,7 +241,6 @@ private fun StepButton(@DrawableRes icon: Int, tag: String, enabled: Boolean, on
     }
 }
 
-/** The line under the number: its unit and the range, or the limit a draft misses. */
 @Composable
 private fun unitLine(draft: StepperDraft, range: IntRange, unit: StepperUnit): String = when (draft) {
     is StepperDraft.InRange ->
@@ -259,7 +258,6 @@ private fun unitLine(draft: StepperDraft, range: IntRange, unit: StepperUnit): S
     StepperDraft.Empty, StepperDraft.NotANumber -> stringResource(R.string.stepper_limit_range, range.first, range.last)
 }
 
-/** What TalkBack reads for the card: its label, the number with its unit, and the range or the limit missed. */
 @Composable
 private fun spokenCard(label: String, value: String, draft: StepperDraft, range: IntRange, unit: StepperUnit): String =
     when (draft) {
@@ -336,11 +334,7 @@ internal sealed interface StepperDraft {
     }
 }
 
-/**
- * The number a step of [delta] lands on, always in [range]: one more or less from a number in
- * range, stopping at the ends, the range's end from a number past it, and its start from any
- * other draft. The sum is a Long, so a range ending at Int.MAX_VALUE cannot overflow.
- */
+/** The sum is a Long, so a range ending at Int.MAX_VALUE cannot overflow. */
 internal fun StepperDraft.stepped(range: IntRange, delta: Int): Int = when (this) {
     is StepperDraft.InRange -> (number.toLong() + delta).coerceIn(range.first.toLong(), range.last.toLong()).toInt()
     is StepperDraft.AboveMax -> range.last

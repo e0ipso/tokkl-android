@@ -7,7 +7,6 @@ package com.github.e0ipso.tokkl.history
 import com.github.e0ipso.tokkl.model.EntryTiming
 import java.time.Instant
 
-/** The clock range a row spans, from [start] to [stop]. */
 data class HistoryRange(val start: Instant, val stop: Instant)
 
 /**
@@ -24,7 +23,6 @@ data class HistoryRow(val key: Long, val entries: List<HistoryEntry>) {
     /** The newest member, whose fields the row shows, `row.entries[0]` in EntryList.tsx. */
     val newest: HistoryEntry get() = entries.first()
 
-    /** The oldest member. */
     val oldest: HistoryEntry get() = entries.last()
 
     /**

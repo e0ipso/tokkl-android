@@ -40,9 +40,7 @@ import kotlin.coroutines.CoroutineContext
  * check and a state change never act on different phases.
  *
  * @param timerStates the account's held timer state now: after a process restart, the stored one.
- * @param available whether the account's server offers the timer API.
  * @param io where calls run: the first read of the held state loads it from disk.
- * @param clock the phone's clock.
  */
 class PomodoroPhaseAlarm(
     private val timerStates: CurrentTimerState,
@@ -61,22 +59,17 @@ class PomodoroPhaseAlarm(
     /** The phase this process asked to ring. Its alarm has gone off. */
     private var rung: PomodoroPhaseKey? = null
 
-    /** True when the exact-alarm permission is denied. The Pomodoro page reads this. */
     val permissionDenied: Boolean get() = alarms.permissionDenied
 
-    /**
-     * [follow]s after each of [changes], the held state's and the capability's, until they end. A
-     * failed read or follow tries again after a wait, as [collectDurably] does.
-     */
+    /** A failed read or follow tries again after a wait, as [collectDurably] does. */
     suspend fun followChanges(changes: Flow<*>) {
         changes.collectDurably("PomodoroPhaseAlarm") { follow() }
     }
 
     /**
-     * Arms, moves or drops the alarm and the ring for the held state now. Every state change and
-     * every change of the capability calls it. [rearm] arms the alarm again even where this
-     * process already armed it, as after boot, an app update, a clock or timezone change or an
-     * exact-alarm grant.
+     * Arms, moves or drops the alarm and the ring for the held state now. [rearm] arms the alarm
+     * again even where this process already armed it, as after boot, an app update, a clock or
+     * timezone change or an exact-alarm grant.
      */
     suspend fun follow(rearm: Boolean = false) = locked {
         val ring = currentLocked()
@@ -116,7 +109,6 @@ class PomodoroPhaseAlarm(
             true
         }
 
-    /** Posts the ringing notification of [phase] again after a swipe, while it still rings. */
     suspend fun repost(phase: PomodoroPhaseKey) = locked {
         val ring = currentLocked()?.takeIf { it.phase == phase && rung == phase } ?: return@locked
         ringing.start(ring)
@@ -145,7 +137,7 @@ class PomodoroPhaseAlarm(
 
     private suspend fun currentLocked(): PomodoroRing? = heldLocked()?.ring()
 
-    /** Arms [ring]'s planned end. Returns false when no exact alarm can be set. */
+    /** Returns false when no exact alarm can be set. */
     private fun arm(ring: PomodoroRing): Boolean {
         val scheduled = alarms.schedule(ring.end, ring.phase)
         armed = if (scheduled) ring.phase to ring.end else null
@@ -184,7 +176,6 @@ suspend fun PomodoroPhaseAlarm.sendPhaseAction(
     return if (end) actions.endSession(revision) else actions.nextPhase(revision)
 }
 
-/** The check the ringing service makes before it plays, which [PomodoroPhaseAlarm] answers. */
 interface PomodoroRingCheck {
 
     /**

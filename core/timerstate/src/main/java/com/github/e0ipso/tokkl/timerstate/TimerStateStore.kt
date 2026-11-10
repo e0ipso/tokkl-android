@@ -20,10 +20,8 @@ import java.util.UUID
 import kotlin.coroutines.CoroutineContext
 
 /**
- * A timer state as the phone holds it, in the model's types: the server's [revision], its clock
- * [serverTime] when it sent the state, the [runningEntry], the [pause] chain, the [pomodoro]
- * session and the [discardedPomodoro], and the phone's clock when the state arrived, [receivedAt].
- * [held] makes one from the server's answer.
+ * A timer state as the phone holds it, in the model's types, with the server's clock [serverTime]
+ * when it sent the state and the phone's clock when it arrived, [receivedAt].
  */
 data class HeldTimerState(
     val revision: Long,
@@ -38,7 +36,6 @@ data class HeldTimerState(
     val clockOffset: Duration get() = Duration.between(receivedAt, serverTime)
 }
 
-/** A timer state as [TimerStateStore] writes it: the server's [state] and when it arrived, [receivedAt]. */
 @Serializable
 internal data class StoredHeld(
     val state: TimerState,
@@ -55,7 +52,6 @@ class StoredTimerState internal constructor(
     @SerialName("held") internal val wire: StoredHeld,
     @SerialName("acknowledged_discard") internal val acknowledgedDiscard: Long?,
 ) {
-    /** The stored state as the phone holds it. */
     val held: HeldTimerState get() = wire.toHeld()
 }
 
@@ -82,7 +78,6 @@ class TimerStateStore(context: Context, private val io: CoroutineContext) : Acco
     /** The stored state, or null when none is stored or the file does not decode. */
     fun load(): StoredTimerState? = preferences.getString(KEY_STATE, null)?.let(::decodeStoredTimerState)
 
-    /** Replaces the stored state in one write. */
     @Throws(IOException::class)
     fun save(stored: StoredTimerState) {
         file.commitHere { putString(KEY_STATE, encodeStoredTimerState(stored)) }
@@ -118,7 +113,6 @@ class TimerStateStore(context: Context, private val io: CoroutineContext) : Acco
     }
 }
 
-/** [stored] as the text [TimerStateStore] writes. */
 internal fun encodeStoredTimerState(stored: StoredTimerState): String =
     ApiJson.encodeToString(StoredTimerState.serializer(), stored)
 

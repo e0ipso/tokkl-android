@@ -50,9 +50,9 @@ import com.github.e0ipso.tokkl.ui.theme.screenContent
 import kotlinx.coroutines.delay
 
 /**
- * Sign-in with a server URL, which may carry a path, and the API token by
- * default or email and password. [onSignedIn] runs once the server has
- * accepted the credentials and the app has stored the server and the token.
+ * Sign-in with a server URL, which may carry a path, and the API token by default or email and
+ * password. [onSignedIn] runs once the server has accepted the credentials and the app has stored
+ * the server and the token.
  */
 @Composable
 fun SignInScreen(model: SignInViewModel, onSignedIn: () -> Unit, modifier: Modifier = Modifier) {
@@ -91,7 +91,6 @@ fun SignInScreen(model: SignInViewModel, onSignedIn: () -> Unit, modifier: Modif
     )
 }
 
-/** What the sign-in form and its prompts do. */
 internal class SignInActions(
     val onServerUrlChange: (String) -> Unit,
     val onMethodChange: (SignInMethod) -> Unit,
@@ -242,11 +241,7 @@ private fun SignInForm(
     }
 }
 
-/**
- * The form on a surface card in Tokkl's frame, so no texture sits behind a field. Its parts are
- * the title and the groups: the server URL, the sign-in method, the credentials and the actions,
- * each the spacing between groups apart.
- */
+/** The form on a surface card in Tokkl's frame, so no texture sits behind a field. */
 @Composable
 private fun FormCard(content: @Composable ColumnScope.() -> Unit) {
     StickerCard(modifier = Modifier.fillMaxWidth()) {
@@ -258,7 +253,6 @@ private fun FormCard(content: @Composable ColumnScope.() -> Unit) {
     }
 }
 
-/** One group of the form, its parts the spacing inside a group apart. */
 @Composable
 private fun Group(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup), content = content)

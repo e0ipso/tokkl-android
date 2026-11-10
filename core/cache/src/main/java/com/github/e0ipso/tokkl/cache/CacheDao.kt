@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 abstract class CacheDao {
 
-    /** The newest entry first. */
     @Query("SELECT * FROM time_entries ORDER BY start DESC, id DESC")
     abstract fun timeEntries(): Flow<List<CachedTimeEntry>>
 
@@ -21,7 +20,6 @@ abstract class CacheDao {
     @Query("SELECT time_entries.*, $UNSENT FROM time_entries ORDER BY start DESC, id DESC")
     abstract fun timeEntriesWithSendState(): Flow<List<CachedEntryWithSendState>>
 
-    /** The running entry that started last, or null when none runs. */
     @Query("SELECT time_entries.*, $UNSENT FROM time_entries WHERE stop IS NULL ORDER BY start DESC, id DESC LIMIT 1")
     abstract fun runningEntry(): Flow<CachedEntryWithSendState?>
 
@@ -37,7 +35,6 @@ abstract class CacheDao {
     @Query("SELECT * FROM tasks ORDER BY name COLLATE NOCASE, id")
     abstract fun tasks(): Flow<List<CachedTask>>
 
-    /** In the user's order. */
     @Query("SELECT * FROM favorites ORDER BY position")
     abstract fun favorites(): Flow<List<CachedFavorite>>
 

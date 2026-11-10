@@ -26,7 +26,6 @@ import kotlin.coroutines.CoroutineContext
  * commands.
  *
  * @param serverWeeks the server's weeks. Runs on [io].
- * @param clock where today comes from, in the account's timezone.
  */
 internal class WeekLoading(
     private val serverWeeks: ServerWeeks,
@@ -37,7 +36,6 @@ internal class WeekLoading(
 ) {
     private val mutableState = MutableStateFlow(WeeksState())
 
-    /** What the server sent, by the span it covers, as far as it has loaded. */
     val state: StateFlow<WeeksState> = mutableState.asStateFlow()
 
     private val foregroundCount = MutableStateFlow(0)
@@ -82,7 +80,6 @@ internal class WeekLoading(
         }
     }
 
-    /** Loads the week of [span] again while [selected] still shows it. */
     private fun loadAgainIfShown(span: WeekSpan, selected: StateFlow<LocalDate?>, fresh: (ServerWeek) -> Unit) {
         val time = accountSettings.value?.time(clock) ?: return
         val currentWeek = time.startOfWeek(selected.value ?: time.today())
@@ -135,7 +132,6 @@ internal data class WeeksState(
         backgrounded = false,
     )
 
-    /** The entry [id] as the server sent it, in any week. */
     fun entry(id: EntryId): TimeEntry? =
         weeks.values.firstNotNullOfOrNull { week -> week.entries.firstOrNull { it.id == id } }
 }

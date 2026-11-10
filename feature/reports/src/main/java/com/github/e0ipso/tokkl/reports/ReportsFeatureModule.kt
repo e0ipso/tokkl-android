@@ -21,10 +21,6 @@ import org.koin.dsl.binds
 import org.koin.dsl.module
 import java.io.File
 
-/**
- * Reports: the Reports API repository, the report CSV files and their account, which each sign-in
- * and sign-out invalidates, the choices that outlive the page, the view model and the screen.
- */
 val reportsFeatureModule = module {
     singleOf(::ServerReportsRepository)
     single {

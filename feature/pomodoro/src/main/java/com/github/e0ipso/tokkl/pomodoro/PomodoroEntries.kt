@@ -32,8 +32,8 @@ import kotlin.coroutines.CoroutineContext
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
- * The Pomodoro page. Its view model is the signed-in session's, and its starts and retries may ask
- * for the notification permission through the frame's prompt.
+ * The page's view model is the signed-in session's, and its starts and retries may ask for the
+ * notification permission through the frame's prompt.
  */
 internal object PomodoroEntries : FeatureRoutes {
     override val pages get() = listOf(pomodoroPage)
@@ -55,11 +55,7 @@ internal object PomodoroEntries : FeatureRoutes {
     }
 }
 
-/**
- * The taps that open the Pomodoro page: the Pomodoro widget's, and a session notification's while
- * that notification still belongs to the signed-in account and its phase, which [notification]
- * says on [io]. The notification is made on the first tap, so listing the features makes nothing.
- */
+/** [notification] is made on the first tap, so listing the features makes nothing. */
 internal class PomodoroRequests(
     private val notification: Lazy<PomodoroSessionNotificationSync>,
     private val io: CoroutineContext,
@@ -109,14 +105,10 @@ internal class PomodoroRequests(
     }
 }
 
-/** The Pomodoro widget's tap. */
 @Serializable
 data object PomodoroWidgetTap : NavigationRequest
 
-/**
- * A Pomodoro session notification's tap, for [account]'s phase that started at [phaseStart], in
- * epoch milliseconds.
- */
+/** A session notification's tap; [phaseStart] is in epoch milliseconds. */
 @Serializable
 data class PomodoroSessionTap(val account: String, val phaseStart: Long) : NavigationRequest {
     val tap: PomodoroNotificationTap
@@ -133,13 +125,11 @@ val pomodoroPage = TopLevelDestination(
     isAvailable = { it.timerState },
 )
 
-/** The Pomodoro page. */
 @Serializable
 @SerialName("com.github.e0ipso.tokkl.navigation.Route.Pomodoro")
 data object PomodoroRoute : Route {
     override val showsTimerNotices: Boolean get() = true
 }
 
-/** The Pomodoro page's running dot, while a session runs. */
 class PomodoroBadge(held: Flow<HeldTimerState?>) :
     PageBadge(PomodoroRoute, R.string.nav_pomodoro_running, held.map { it?.pomodoro != null })

@@ -606,7 +606,6 @@ class TimerViewModelTest {
         } ?: throw AssertionError("timed out waiting until $what; the last state was $last, after ${changes.calls}")
     }
 
-    /** Waits until the running entry the cache shows passes [condition]. */
     private fun awaitCache(what: String, condition: (TimeEntry?) -> Boolean) {
         var waited = 0L
         while (!condition(running.value?.entry)) {
@@ -695,7 +694,6 @@ class TimerViewModelTest {
             return true
         }
 
-        /** An edit of the running entry, as the queue's update of its row. */
         private suspend fun update(entryId: EntryId, fields: EntryFields, start: Instant, stop: Instant?): Boolean {
             calls += "update $entryId $fields"
             gate.await()

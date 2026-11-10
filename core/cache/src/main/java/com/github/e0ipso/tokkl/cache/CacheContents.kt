@@ -3,7 +3,6 @@ package com.github.e0ipso.tokkl.cache
 import com.github.e0ipso.tokkl.time.AccountTime
 import java.time.Instant
 
-/** Every cached row. */
 data class CacheContents(
     val timeEntries: List<CachedTimeEntry> = emptyList(),
     val projects: List<CachedProject> = emptyList(),
@@ -43,7 +42,6 @@ data class HistoryWindow(val start: Instant, val end: Instant) {
     companion object {
         const val DAYS = 14L
 
-        /** The window that ends with today in [time]'s zone. */
         fun endingToday(time: AccountTime): HistoryWindow {
             val today = time.today()
             return HistoryWindow(

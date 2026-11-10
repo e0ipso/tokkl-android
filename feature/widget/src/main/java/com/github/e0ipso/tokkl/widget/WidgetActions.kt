@@ -55,7 +55,6 @@ class StartTimerAction :
     }
 }
 
-/** A Start or a template's start, with the [account] the widget drew it for and the [fields] it starts. */
 internal data class WidgetStart(val account: String, val fields: EntryFields)
 
 /**
@@ -112,13 +111,7 @@ class ResumeTimerAction :
     }
 }
 
-/**
- * Runs [action] for the target [parameters] carry, as the notification's actions run. A Stop of a
- * running entry is changed on the phone and queued before this returns, so it works offline. Pause,
- * Resume and Stop while paused need the server, so they go to WorkManager ([sendTimerAction]),
- * which checks them against the timer when it runs and sends each once; one that fails, offline
- * included, says why in a toast while the widget keeps showing what it showed.
- */
+/** Runs [action] for the target [parameters] carry, as the notification's actions run. */
 private suspend fun KoinComponent.tapTimer(action: TimerSurfaceAction, parameters: ActionParameters) {
     val target = parameters.target() ?: return
     if (action != TimerSurfaceAction.Stop || target !is TimerTarget.Running) {
@@ -129,20 +122,15 @@ private suspend fun KoinComponent.tapTimer(action: TimerSurfaceAction, parameter
     get<TimerSurfaceActions>().runFromSurface(action, target, get<TimerFailureNotice>())
 }
 
-/**
- * Starts a timer with [fields], the empty ones for Start and a template's for that template, for
- * [account], the account the widget was drawn for.
- */
+/** [fields] are empty for Start and a template's for that template; [account] is the one the widget was drawn for. */
 fun startTimer(account: String, fields: EntryFields = EntryFields()): Action =
     actionRunCallback<StartTimerAction>(fields.toParameters(account))
 
 /** Stops what [target] shows: the running entry or the paused timer. */
 fun stopTimer(target: TimerTarget): Action = actionRunCallback<StopTimerAction>(target.toParameters())
 
-/** Pauses the running entry [target] shows. */
 fun pauseTimer(target: TimerTarget): Action = actionRunCallback<PauseTimerAction>(target.toParameters())
 
-/** Resumes the paused timer [target] shows. */
 fun resumeTimer(target: TimerTarget): Action = actionRunCallback<ResumeTimerAction>(target.toParameters())
 
 private fun TimerTarget.toParameters(): ActionParameters = actionParametersOf(

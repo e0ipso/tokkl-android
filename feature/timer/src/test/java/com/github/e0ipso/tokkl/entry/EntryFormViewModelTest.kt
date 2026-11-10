@@ -60,12 +60,10 @@ class EntryFormViewModelTest {
     )
     private val settings = MutableStateFlow<AccountSettings?>(SETTINGS)
 
-    /** Whether the server stores no-time entries, as on Tokkl. */
     private val allDay = MutableStateFlow(true)
     private val changes = FakeChanges()
     private lateinit var model: EntryFormViewModel
 
-    /** The form's saved state, which outlives the process. */
     private var saved = SavedStateHandle()
 
     @Before
@@ -612,7 +610,6 @@ class EntryFormViewModelTest {
         assertEquals("nothing queued", emptyList<String>(), changes.calls)
     }
 
-    /** The calendar's action on a day's head opens the form for a past entry on that day. */
     @Test
     fun aNewEntryOpensOnTheDayItIsGiven() {
         val day = LocalDate.of(2026, 9, 2)
@@ -730,7 +727,6 @@ class EntryFormViewModelTest {
         }
     }
 
-    /** The calendar's All day row opens the form without times, on the day of its + button. */
     @Test
     fun anAllDayEntryOpensWithoutTimesOnTheDayItIsGiven() {
         val day = LocalDate.of(2026, 9, 2)
@@ -1052,7 +1048,6 @@ class EntryFormViewModelTest {
         return awaitOpen("the form for a past entry opens") { !it.editing && it.start.isEmpty() }
     }
 
-    /** What a test types into the form, and the span it saves. */
     @Test
     fun anEntryFromTheOlderDaysOpensAsTheHistoryHoldsItAndSavesWithEveryField() {
         onMain { model.edit(OLDER.id, older = OLDER) }
@@ -1125,7 +1120,6 @@ class EntryFormViewModelTest {
         assertEquals(WorkspaceId(OLDER_WORKSPACE), form.workspaceId)
     }
 
-    /** The cache no longer holds the entry the restored form was on, so the form says it is gone. */
     @Test
     fun aFormANewProcessRestoresOnAnEntryThatHasGoneIsMissing() {
         openEntry()
@@ -1238,7 +1232,6 @@ class EntryFormViewModelTest {
 
         override suspend fun delete(entryId: EntryId): Boolean = throw AssertionError("the form deletes nothing")
 
-        /** The running entry the timer holds, if any. */
         @Volatile
         var running: TimeEntry? = null
 

@@ -11,14 +11,12 @@ import com.github.e0ipso.tokkl.picker.Picked
  */
 data class EntryLabels(val project: String? = null, val projectColor: String? = null, val task: String? = null)
 
-/** The labels of [fields]'s project and task among the cached [projects] and [tasks]. */
 fun entryLabels(fields: EntryFields, projects: List<Project>, tasks: List<Task>): EntryLabels {
     val project = fields.projectId?.let { id -> projects.firstOrNull { it.id == id } }
     val task = fields.taskId?.let { id -> tasks.firstOrNull { it.id == id } }
     return EntryLabels(project = project?.name, projectColor = project?.color, task = task?.name)
 }
 
-/** The project, task and tags of these fields, as the picker shows them. */
 val EntryFields.picked: Picked get() = Picked(projectId = projectId, taskId = taskId, tags = tags)
 
 /**

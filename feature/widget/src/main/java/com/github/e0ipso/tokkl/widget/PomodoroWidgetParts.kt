@@ -44,9 +44,6 @@ import java.time.Instant
 import com.github.e0ipso.tokkl.core.entryfields.R as FieldsR
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
-// The parts of the Pomodoro widget that its strips and cards share: the phase band, the cycle dots,
-// the entry chips, the native countdown, the labels and their text.
-
 // The light secondary fill is 3.06:1 on white. Use a darker teal for small text (4.9:1).
 private val RestText = ColorProvider(Color(0xFF007A7A), TokklDarkColorScheme.secondary)
 

@@ -18,12 +18,9 @@ import java.time.temporal.ChronoUnit
 @Suppress("TooManyFunctions") // One function per query, as the Room DAO that implements it has.
 interface QueueTables {
 
-    // The queued changes, and the server ids of the entries the phone created.
-
     /** The oldest change that can go out, or null when none can: held ones wait (docs/PRD.md O6). */
     fun first(): PendingChange?
 
-    /** The held change to the entry [entryId], or null when it has none. */
     fun heldFor(entryId: Long): PendingChange?
 
     fun change(sequence: Long): PendingChange?
@@ -44,13 +41,10 @@ interface QueueTables {
 
     fun delete(sequence: Long)
 
-    /** The queued delete of the entry [entryId], or null when the queue holds none. */
     fun queuedDelete(entryId: Long): PendingChange?
 
     /** The server's id for the entry the phone created under [localId], once the server answered. */
     fun serverId(localId: Long): Long?
-
-    // The cached time entries, and the cached tags a change names by id.
 
     fun entry(id: Long): CachedTimeEntry?
 
@@ -64,8 +58,6 @@ interface QueueTables {
     fun deleteEntry(id: Long)
 
     fun tags(workspaceId: Long): List<CachedTag>
-
-    // The Undo offers of short Stops.
 
     fun shortStop(entryId: Long): ShortStopUndo?
 
@@ -87,7 +79,6 @@ interface QueueStorage {
     /** The changes the server refused that wait for the user, oldest first. */
     val heldChanges: Flow<List<PendingChange>>
 
-    /** How many changes the server refused wait for the user. */
     val heldCount: Flow<Int>
 
     /** The latest short Stop that Undo can take back, or null. */
@@ -104,8 +95,6 @@ internal fun QueueTables.resolve(entryId: EntryId): Long = entryId.local?.let { 
  * What one change does to the queue and the cached rows, as [ChangeQueue] describes each one: the
  * queue's decisions, written against [tables] and free of Room, so the caller decides how they
  * commit. [ChangeQueue] runs each inside one transaction.
- *
- * @param spans where the server puts a Stop's span, as [ChangeQueue] takes them.
  */
 internal class QueueEdits(private val tables: QueueTables, private val spans: ServerSpans) {
 
@@ -134,7 +123,6 @@ internal class QueueEdits(private val tables: QueueTables, private val spans: Se
         return true
     }
 
-    /** Queues a restore behind the short Stop of [entryId] and shows its zero-length row. */
     fun undoShortStop(entryId: EntryId): Boolean {
         val id = tables.resolve(entryId)
         val undo = tables.shortStop(id) ?: return false
@@ -144,17 +132,11 @@ internal class QueueEdits(private val tables: QueueTables, private val spans: Se
         return true
     }
 
-    /** Drops the Undo offer of [entryId]; the queued Stop stays. */
     fun dismissShortStop(entryId: EntryId) = tables.deleteShortStop(tables.resolve(entryId))
 
-    /** Queues a stopped entry or a no-time one. Returns its local id. */
     fun create(workspaceId: WorkspaceId, fields: EntryFields, timing: EntryTiming.Ended) =
         EntryId(queueCreate(workspaceId.value, fields, timing))
 
-    /**
-     * Sets every field of the cached entry [entryId], stopping the running one at the start first
-     * when a stopped entry is made to run. Returns false when the entry is not cached.
-     */
     fun update(entryId: EntryId, fields: EntryFields, timing: EntryTiming): Boolean {
         val current = tables.entry(tables.resolve(entryId)) ?: return false
         if (current.stop != null && timing is EntryTiming.Running) {
@@ -187,14 +169,12 @@ internal class QueueEdits(private val tables: QueueTables, private val spans: Se
         return current.takeIf { sameStart }
     }
 
-    /** Sets every field of the ended entry [entryId], which the cache need not hold. */
     fun updateOlder(entryId: EntryId, workspaceId: WorkspaceId, fields: EntryFields, timing: EntryTiming.Ended) {
         val id = tables.resolve(entryId)
         val workspace = tables.entry(id)?.workspaceId ?: workspaceId.value
         enqueue(ChangeKind.UPDATE, entry(id, workspace, fields, timing))
     }
 
-    /** Queues the delete of the cached entry [entryId]. False when it is missing or one is queued. */
     fun delete(entryId: EntryId): Boolean {
         val id = tables.resolve(entryId)
         if (tables.queuedDelete(id) != null) return false
@@ -203,10 +183,6 @@ internal class QueueEdits(private val tables: QueueTables, private val spans: Se
         return true
     }
 
-    /**
-     * Queues the delete of [entry], from the cache row when there is one, else from [entry] for a
-     * server entry. Returns the deleted fields, or null when a delete is queued or nothing is left.
-     */
     fun delete(entry: TimeEntry): TimeEntry? {
         val id = tables.resolve(entry.id)
         if (tables.queuedDelete(id) != null) return null
@@ -215,13 +191,8 @@ internal class QueueEdits(private val tables: QueueTables, private val spans: Se
         return current.toModel()
     }
 
-    /** Lets the held change [sequence] go out again. False when it is not held. */
     fun sendAgain(sequence: Long): Boolean = tables.release(sequence) > 0
 
-    /**
-     * Drops the held change [sequence] and the changes behind it. An entry the phone created goes
-     * from the cache with them. False when the change is not held.
-     */
     fun discard(sequence: Long): Boolean {
         val held = tables.change(sequence)?.takeIf { it.held } ?: return false
         tables.deleteFrom(held.entryId, held.sequence)

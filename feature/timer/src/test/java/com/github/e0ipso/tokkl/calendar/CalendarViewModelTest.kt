@@ -65,11 +65,9 @@ class CalendarViewModelTest {
     /** Each request's `start_date` and `end_date`. */
     private val requests = CopyOnWriteArrayList<String>()
 
-    /** The body of every answer. */
     @Volatile
     private var answer: String = "[]"
 
-    /** The status of every answer. */
     @Volatile
     private var status: Int = 200
 
@@ -399,7 +397,6 @@ class CalendarViewModelTest {
         assertEquals("the calendar still takes drags", listOf(EntryId(LOCAL_ID)), created)
     }
 
-    /** A move the phone's storage refuses leaves the entry where it was. */
     @Test
     fun aMoveTheStorageRefusesLeavesTheEntry() {
         val cached = entry(4, "2026-10-20T09:00:00Z", "2026-10-20T10:00:00Z")
@@ -624,7 +621,6 @@ class CalendarViewModelTest {
         assertEquals(emptyList<String>(), changes.calls)
     }
 
-    /** A drag that creates an entry still makes a timed one. */
     @Test
     fun aCreateDragStaysTimedWhenAllDayIsOffered() {
         val model = model(cached = emptyList(), settings = DRAG_SETTINGS, allDayOffered = true)
@@ -727,7 +723,6 @@ class CalendarViewModelTest {
             ""","tag_ids":[],"billable":false}"""
     }
 
-    /** Records what the calendar queues. */
     private class RecordingChanges : EntryChanges {
         val calls = CopyOnWriteArrayList<String>()
 

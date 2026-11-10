@@ -67,7 +67,6 @@ data class PomodoroPageState(
     val fields: EntryFields = EntryFields(),
     /** The names of [fields]'s project and task, from the cached rows the picker offers. */
     val labels: EntryLabels = EntryLabels(),
-    /** The server's timer state with the time the phone got it. */
     val held: HeldTimerState? = null,
     val account: AccountSettings? = null,
     val alarmDenied: Boolean = false,
@@ -76,12 +75,9 @@ data class PomodoroPageState(
     val unsentCount: Int? = null,
     val refused: List<HeldChange> = emptyList(),
     val problem: PomodoroProblem? = null,
-    /** What the fields' picker offers, from the cache. */
     val picker: PickerSource = PickerSource(),
-    /** Whether the phone is offline, which the picker says. */
     val offline: Boolean = false,
 ) {
-    /** The server's session, or null without one. */
     val pomodoro: PomodoroSession? get() = held?.pomodoro
 
     val shown: PomodoroShown? get() = held?.shown()

@@ -52,12 +52,7 @@ internal object SyncEntries : FeatureRoutes {
     }
 }
 
-/**
- * What the signed-in frame shows around every page: the sync status band while changes wait to
- * reach the server (docs/PRD.md O5, O6), whose buttons open the refused changes and, after a
- * refused token, sign-in again for the account, and the notice that says how many changes were
- * discarded.
- */
+/** The sync status band and the discarded changes' notice around every signed-in page (docs/PRD.md O5, O6). */
 internal object SyncFrameContributions : FrameContributions {
     @Composable
     override fun frameBand(host: NavigationHost): (@Composable () -> Unit)? {
@@ -85,7 +80,6 @@ internal object SyncFrameContributions : FrameContributions {
     }
 }
 
-/** The changes the server refused. */
 @Serializable
 @SerialName("com.github.e0ipso.tokkl.navigation.Route.NeedsAttention")
 data object NeedsAttentionRoute : Route
@@ -95,15 +89,10 @@ fun Navigator.openNeedsAttention() {
     if (top != NeedsAttentionRoute) push(NeedsAttentionRoute)
 }
 
-/** What the sync feature shows in the signed-in frame: the sync [status] band and the [discardedCount] notice. */
 @Immutable
 internal data class SyncFrame(val status: SyncStatus? = null, val discardedCount: Int = 0)
 
-/**
- * The sync status band and the discarded changes' notice that the signed-in frame shows around
- * every page, in the signed-in session's store, so a sign-out drops it with the session. After the
- * server refused the token, the band's sign-in opens sign-in again for the account ([signIns]).
- */
+/** Lives in the signed-in session's store, so a sign-out drops it with the session. */
 internal class SyncFrameViewModel(
     status: StateFlow<SyncStatus?>,
     private val discarded: DiscardedChanges,
@@ -111,7 +100,6 @@ internal class SyncFrameViewModel(
     scope: CoroutineScope,
 ) : ViewModel(scope) {
 
-    /** What the frame shows, while it reads it. */
     val state: StateFlow<SyncFrame> = combine(status, discarded.state, ::SyncFrame)
         .stateIn(viewModelScope, whileShown, SyncFrame(status.value, discarded.state.value))
 

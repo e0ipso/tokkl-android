@@ -9,7 +9,6 @@ import java.time.Instant
 // the server decides the phase, its planned end, the transition and the pomodoro number. Pass the
 // phone's own clock reading as `deviceNow`.
 
-/** The server's clock at the phone's [deviceNow]. */
 fun HeldTimerState.serverNow(deviceNow: Instant): Instant = deviceNow.plus(clockOffset)
 
 /** Time left before the phase's planned end at [deviceNow], zero after it. Null without a session. */

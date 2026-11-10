@@ -35,7 +35,6 @@ interface ThemeSettingsDisk {
  * back to what the disk holds, unless a newer change has replaced it, so the screen never shows a
  * choice that would be gone after a restart.
  *
- * @param store reads and writes the stored settings.
  * @param scope outlives every screen, so leaving the app does not cancel a pending write.
  * @param loadContext where the stored settings load, the I/O dispatcher in the app, so the load
  *   never waits for the main thread.
@@ -66,10 +65,8 @@ class ThemeSettingsRepository(
         }
     }
 
-    /** Whether the stored settings have loaded. */
     val isReady: Boolean get() = loading.isCompleted
 
-    /** Waits for the stored settings to load. */
     suspend fun ready() = loading.join()
 
     /** [state] once the stored settings have loaded. */

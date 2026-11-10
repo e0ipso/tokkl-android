@@ -30,14 +30,10 @@ val sessionModule = module {
     single { ApiTokenStore(androidContext(), io()) }
     single { ServerTrustStore(androidContext(), io()) } binds arrayOf(ServerTrust::class, AccountDataOwner::class)
 
-    // Every process sends requests only to the stored server, and to a plain http:// server only
-    // once the user has confirmed it, through the one HTTP client and its connection pool.
     singleOf(::ConfiguredServer)
     singleOf(::SharedHttpClient)
-    // Sign-out cancels every call in flight.
     singleOf(::CallsSignOut) bind AccountDataOwner::class
 
-    // Reports trust refusals to the session's trust prompt, and answers to the last answer's time.
     single {
         Session(
             servers = get<ServerConfigStore>(),
@@ -51,10 +47,8 @@ val sessionModule = module {
 
     single { AccountSettingsStore(androidContext(), io()) } bind AccountDataOwner::class
     single { CapabilitiesStore(androidContext(), io()) }
-    // The account settings. They load at process start from a file of a few short values.
     single { AccountSettingsSource(get<AccountSettingsStore>(), get(), io()) } bind StartupLoad::class
 
-    // What the server offers. It loads at process start from a file of a few flags.
     single { CapabilitiesSource(get<CapabilitiesStore>(), get(), io()) } bind StartupLoad::class
 
     singleOf(::AccountRefreshRequests)
@@ -71,12 +65,9 @@ val sessionModule = module {
         )
     } binds arrayOf(AccountDataOwner::class, CacheRefresh::class)
 
-    // The changes the pages send at once, which outlive the page with the cache refresh after them.
     single { ServerChanges(scope = get(), io = io(), refreshes = get()) }
 
-    // Where each account begins and ends, which the timer state and the navigation follow.
     singleOf(::CurrentAccount)
 
-    // Sign-out (docs/PRD.md S6): every [AccountDataOwner], phase by phase in [SignOutPhase] order.
     single { SignOut(owners = getAll(), account = get(), io = io()) }
 }

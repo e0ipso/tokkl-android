@@ -9,7 +9,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 
-/** The tab on screen and the filters every tab's report applies, chosen together. */
 @Serializable
 data class ReportChoice(val tab: ReportTab = ReportTab.SUMMARY, val filters: ReportFilters = ReportFilters())
 
@@ -25,7 +24,6 @@ class ReportChoices : ViewModel() {
 
     private val mutableChosen = MutableStateFlow(ReportChoice())
 
-    /** The tab and the filters on screen. */
     val chosen: StateFlow<ReportChoice> = mutableChosen.asStateFlow()
 
     /** A widget's day tap asked for today's summary, until the page takes it ([takeToday]). */
@@ -34,10 +32,10 @@ class ReportChoices : ViewModel() {
     /** Whether a widget's day tap waits for the page, as it changes. */
     internal val todayAsked: StateFlow<Boolean> = today.asStateFlow()
 
-    /** Shows [tab], with the filters as they are. Returns whether the choice changed. */
+    /** Returns whether the choice changed. */
     internal fun selectTab(tab: ReportTab): Boolean = change { it.copy(tab = tab) }
 
-    /** Applies [filters] to every tab. Returns whether the choice changed. */
+    /** Returns whether the choice changed. */
     internal fun applyFilters(filters: ReportFilters): Boolean = change { it.copy(filters = filters) }
 
     /** Asks for the widget's day report: the summary of today, with no filters. */
@@ -50,7 +48,6 @@ class ReportChoices : ViewModel() {
     /** Takes the widget's ask, so the page shows today's summary once. Returns whether one waited. */
     internal fun takeToday(): Boolean = today.compareAndSet(expect = true, update = false)
 
-    /** The choice as the page keeps it in its saved state. */
     internal fun saved(): String = json.encodeToString(ReportChoice.serializer(), chosen.value)
 
     /**

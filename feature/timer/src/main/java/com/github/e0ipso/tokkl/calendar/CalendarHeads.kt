@@ -46,7 +46,6 @@ import java.time.Instant
 import java.time.LocalDate
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
-/** The arrows, the way back to today, the week or day shown and the week's total. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun Toolbar(

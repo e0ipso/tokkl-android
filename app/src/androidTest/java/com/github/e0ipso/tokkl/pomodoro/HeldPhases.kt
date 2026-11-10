@@ -108,7 +108,6 @@ internal object HeldPhases {
         return checkNotNull(app.heldTimerState)
     }
 
-    /** The phase key of [held]. */
     fun key(held: HeldTimerState): PomodoroPhaseKey = checkNotNull(held.ring()).phase
 
     /** Waits until the ringing service plays and vibrates. */

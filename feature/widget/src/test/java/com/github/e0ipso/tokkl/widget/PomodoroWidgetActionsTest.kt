@@ -41,7 +41,6 @@ class PomodoroWidgetActionsTest {
     private val start = PomodoroWidgetTap.Start(idle.account, idle.entry, idle.defaults)
     private val server = RecordingActions()
 
-    /** The work that sends a tap gets the account, fields, lengths, phase and revision the widget drew. */
     @Test fun theWorkSendsTheTapTheWidgetDrew() {
         val started = start.toData().pomodoroWidgetTap() as PomodoroWidgetTap.Start
         assertEquals(start.account, started.account)

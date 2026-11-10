@@ -85,7 +85,6 @@ class WidgetStateTest {
         ),
     )
 
-    /** The widget for the cache's running [entry] and the server's [held] timer state. */
     private fun state(
         workspaceId: WorkspaceId? = WorkspaceId(1),
         entry: TimeEntry? = running,

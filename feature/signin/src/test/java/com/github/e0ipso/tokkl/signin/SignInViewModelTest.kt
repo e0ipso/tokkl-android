@@ -99,7 +99,6 @@ class SignInViewModelTest {
         is SignInCredentials.EmailPassword -> "email $email password $password"
     }
 
-    /** The deadlines a [SignInCooldownStore] would hold, in memory. */
     private class InMemoryCooldowns : SignInCooldowns {
         val stored = mutableMapOf<String, Long>()
 
@@ -233,7 +232,6 @@ class SignInViewModelTest {
         assertTrue(model.state.value.signedIn)
     }
 
-    /** A new model, as after process death, for the same server still waits out the 429. */
     @Test
     fun recreatedModelWithinTheCooldownStillBlocksSignIn() {
         signIn.answer = { SignInResult.RateLimited(60) }

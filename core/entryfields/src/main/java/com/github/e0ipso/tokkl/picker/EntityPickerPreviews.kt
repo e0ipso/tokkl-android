@@ -54,7 +54,6 @@ private val SAMPLE_WORKSPACE = WorkspaceId(1)
 private fun project(id: Long, clientId: Long?, name: String, color: String) =
     Project(ProjectId(id), SAMPLE_WORKSPACE, clientId?.let(::ClientId), name, color, active = true, billable = false)
 
-/** Two clients' projects, one without a client, a task and two tags. */
 private val SAMPLE_SOURCE = PickerSource(
     projects = listOf(
         project(1, clientId = 7, name = "Website", color = "#0b83d9"),

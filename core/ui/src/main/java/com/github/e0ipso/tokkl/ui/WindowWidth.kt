@@ -22,7 +22,6 @@ enum class WindowWidth {
     EXPANDED,
 }
 
-/** The width class of the app's window, from the Compose Material 3 adaptive library. */
 @Composable
 fun windowWidth(): WindowWidth {
     val sizeClass = currentWindowAdaptiveInfoV2().windowSizeClass

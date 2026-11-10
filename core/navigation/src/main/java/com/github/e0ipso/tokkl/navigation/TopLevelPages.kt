@@ -34,7 +34,6 @@ data class TopLevelDestination(
 @Immutable
 class TopLevelPages(destinations: List<TopLevelDestination>) {
 
-    /** Every page, in order. */
     val all: List<TopLevelDestination> = destinations.sortedBy { it.position }
 
     init {

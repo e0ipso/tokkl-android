@@ -41,8 +41,6 @@ sealed interface TrashChange {
  * @property entries the deleted entries from the server, or null until they load.
  * @property loadProblem why [entries] did not load, or why the server could not be reached for
  *   the last change. While it is set, nothing can be changed.
- * @property confirmingEmpty the question whether to empty the trash is open.
- * @property sending a change is on its way to the server.
  * @property changeProblem why the server refused the last change, or null.
  * @property done the change the server last accepted, until the page has said so.
  */
@@ -56,14 +54,9 @@ data class TrashState(
     val changeProblem: ServerProblem? = null,
     val done: TrashChange? = null,
 ) {
-    /** Whether a change can go to the server now, as far as the page knows. */
     val canChange: Boolean get() = entries != null && loadProblem == null && !sending
 }
 
-/**
- * The trash page: what the server sent and what is open over it in [trash], whether the phone is
- * [offline], and the account [settings] that its times, dates and durations follow.
- */
 @Immutable
 data class TrashPageState(
     val trash: TrashState = TrashState(),
@@ -73,13 +66,11 @@ data class TrashPageState(
     /** Whether the page says that the trash needs the server. */
     val serverNeeded: Boolean get() = offline || trash.loadProblem == ServerProblem.Unreachable
 
-    /** Whether a change can go to the server now. */
     val canChange: Boolean get() = trash.canChange && !offline
 
     /** The deleted entries once loaded, and none while the server is needed: the phone keeps no copy. */
     val entries: List<DeletedEntry>? get() = trash.entries.takeUnless { serverNeeded }
 
-    /** Whether a notice shows above the list. */
     val hasNotices: Boolean
         get() = serverNeeded || trash.loadProblem != null || (trash.loading && trash.entries == null) ||
             (trash.changeProblem != null && !trash.confirmingEmpty)
@@ -87,12 +78,10 @@ data class TrashPageState(
 
 /**
  * The trash page's state (docs/PRD.md H7): the deleted entries from `GET /api/app/trash`, loaded
- * each time the page opens and each time the app comes back to it, and the restores and purges the
- * page sends at once. A load keeps the list and the question open over it until the answer comes;
- * they go with the view model, when the page's route leaves the back stack. Nothing is queued, so
- * offline nothing changes, as on the catalog pages.
- * Each change goes through [changes], which after a restore reloads the offline cache, so the
- * history shows the entry again.
+ * each time the page opens and each time the app comes back to it. A load keeps the list and the
+ * question open over it until the answer comes. Nothing is queued, so offline nothing changes, as
+ * on the catalog pages. After a restore, [changes] reloads the offline cache, so the history shows
+ * the entry again.
  *
  * A server without the trash answers the list with a 404, or with something that is not a list.
  * Then the page tells the [capabilities], on [io], which hide the page, rather than the page
@@ -102,8 +91,6 @@ data class TrashPageState(
  *
  * @param repository the account's trash on the server. Runs on [io].
  * @param changes sends each change in the application's scope.
- * @param settings the account settings, for the times, dates and durations the page shows.
- * @param offline whether the phone is offline, when nothing can change.
  * @param app the app's trips to the background and the network's returns, which load the page again
  *   while it shows ([stateInPage]).
  */
@@ -127,13 +114,11 @@ class TrashViewModel(
     private var opened = false
     private var loading: Job? = null
 
-    /** What the page shows, while it reads it. */
     val page: StateFlow<TrashPageState> = combine(state, offline, settings, ::TrashPageState).stateInPage(
         viewModelScope,
         TrashPageState(state.value, offline.value, settings.value),
         app,
         object : PageLoads {
-            /** The page shows: loads the trash. */
             override fun shown() {
                 opened = true
                 load()
@@ -172,7 +157,6 @@ class TrashViewModel(
         mutableState.update { it.copy(confirmingEmpty = false, changeProblem = null) }
     }
 
-    /** Puts entry [id] back among the time entries. */
     fun restore(id: EntryId) {
         send(
             request = { it.restore(id) },

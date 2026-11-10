@@ -47,9 +47,6 @@ import com.github.e0ipso.tokkl.ui.theme.screenContent
 import java.time.LocalDate
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
-/**
- * The project, task and tag picker for an entry in [workspaceId], as [EntityPicker] takes it.
- */
 typealias EntryFormPicker =
     @Composable (
         workspaceId: WorkspaceId,
@@ -104,7 +101,6 @@ fun EntryFormScreen(
     )
 }
 
-/** What the form's controls do. */
 class EntryFormActions(
     val onDescriptionChange: (String) -> Unit = {},
     val onPick: (Picked) -> Unit = {},
@@ -124,10 +120,9 @@ class EntryFormActions(
 )
 
 /**
- * [EntryFormScreen] without its model: the top bar with the back button and the title, then the
- * fields as the web app's EntryEditor.tsx lists them, then Cancel and Save. With No times on, the
- * date and the duration take the place of the times. It scrolls under the bar, and makes room for
- * the keyboard, so every field can be reached at the largest font scale.
+ * [EntryFormScreen] without its model, with the fields as the web app's EntryEditor.tsx lists
+ * them. It scrolls under the bar and makes room for the keyboard, so every field can be reached
+ * at the largest font scale.
  */
 @Composable
 fun EntryFormContent(

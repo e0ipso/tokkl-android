@@ -292,7 +292,6 @@ class ReportsServerTest {
 
     private fun JsonObject.strings(vararg keys: String): Map<String, String> = keys.associateWith { string(it) }
 
-    /** The filter fields of a request body, as JSON text. */
     private fun JsonObject.filterFields(): Map<String, String> = FILTER_KEYS
         .mapNotNull { key -> this[key]?.let { key to it.toString() } }
         .toMap()

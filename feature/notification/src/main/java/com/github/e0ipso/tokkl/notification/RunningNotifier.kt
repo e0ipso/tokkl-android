@@ -53,10 +53,7 @@ class RunningNotifier(context: Context) : RunningNotice {
     )
         .apply { description = context.getString(R.string.notification_channel_running_description) }
 
-    /**
-     * The running notification for [content], without posting it. [requestPromotion] asks Android
-     * 16 and later to show it as a Live Update, where the user allows that.
-     */
+    /** [requestPromotion] asks Android 16 and later to show it as a Live Update, where the user allows that. */
     fun build(
         content: RunningNotificationContent,
         requestPromotion: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA &&
@@ -160,7 +157,6 @@ class RunningNotifier(context: Context) : RunningNotice {
     }
 
     companion object {
-        /** The id of the one notification the app posts. */
         const val NOTIFICATION_ID = 1
 
         const val CHANNEL_ID = "running_timer"

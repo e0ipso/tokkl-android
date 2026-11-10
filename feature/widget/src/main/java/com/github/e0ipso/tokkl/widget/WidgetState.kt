@@ -87,7 +87,6 @@ data class WidgetPaused(
     val projectColor: String? = null,
 )
 
-/** One favorite: what a tap starts, and the names of its project and task. */
 data class WidgetFavorite(val fields: EntryFields, val project: String?, val task: String?)
 
 /**
@@ -130,12 +129,10 @@ data class WidgetDayProject(
 )
 
 /**
- * The widget for an account whose default workspace is [workspaceId], null when the phone has no
- * account, and whose timer controls carry the name [account], with what the timer [controls] show
- * and the cached [favorites]. [favoritesAvailable]
- * is the favorites capability: without it, as on Toggl Track, the widget shows none.
- * [entries], [settings], [now] and [serverIdOf] supply the day report using the Timer page's
- * start-day rule. The clock snapshot selects the day; it is not part of the redraw key.
+ * [workspaceId] is null when the phone has no account. [favoritesAvailable] is the favorites
+ * capability: without it, as on Toggl Track, the widget shows none. [entries], [settings], [now]
+ * and [serverIdOf] supply the day report using the Timer page's start-day rule. The clock snapshot
+ * selects the day; it is not part of the redraw key.
  */
 fun widgetState(
     workspaceId: WorkspaceId?,

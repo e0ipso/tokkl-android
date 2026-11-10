@@ -12,7 +12,6 @@ import org.koin.dsl.bind
 import org.koin.dsl.binds
 import org.koin.dsl.module
 
-/** The server's timer state, its actions, and the controls every timer surface shows. */
 val timerStateModule = module {
     single { TimerStateStore(androidContext(), io()) } bind AccountDataOwner::class
 
@@ -34,9 +33,6 @@ val timerStateModule = module {
         CurrentTimerState::class,
     )
 
-    // Pause, Resume and Discard, and a Pomodoro session's Start, Next phase and End, sent to the
-    // server at once and never queued. Each answer, refusals included, goes to the account's
-    // timer state.
     single {
         TimerActions(
             client = get<Session>(),
@@ -46,10 +42,6 @@ val timerStateModule = module {
         )
     } binds arrayOf(PauseActions::class, SessionActions::class)
 
-    // The Pause, Resume and Stop of the running notification, the widget, the Quick Settings tile
-    // and its long press, and the reminder's Pause, checked against the timer controls at each
-    // tap. Stop of a running entry goes to the [ChangeQueue]; the rest go to the server through
-    // [TimerActions].
     single {
         TimerSurfaceActions(
             state = get(),

@@ -30,7 +30,6 @@ private const val SECOND_MS = 1_000L
 fun zonedToUtc(year: Int, month: Int, day: Int, hour: Int, minute: Int, second: Int, zone: ZoneId): Instant {
     val wall = utcMillis(year, month, day, hour.toLong(), minute.toLong(), second.toLong())
     var guess = wall - offsetMillis(wall, zone)
-    // A second pass settles guesses that landed on the other side of a DST change.
     guess = wall - offsetMillis(guess, zone)
     return Instant.ofEpochMilli(guess)
 }

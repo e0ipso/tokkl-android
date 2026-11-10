@@ -119,7 +119,6 @@ class TimerCommandsTest {
         assertEquals(emptyList<Throwable>(), escaped.toList())
     }
 
-    /** A stop the storage refuses leaves the entry running, for another tap. */
     @Test
     fun aStopTheStorageRefusesLeavesTheEntryRunningAndThrowsNothing() {
         controls.value = running()

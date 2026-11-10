@@ -19,9 +19,6 @@ import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
 
-// Design-time previews of the timer, its totals and the fullscreen timer, with sample states at a
-// fixed noon.
-
 @PreviewLightDark
 @Composable
 private fun IdleTimerPreview() {

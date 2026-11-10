@@ -31,7 +31,6 @@ sealed interface NetworkReport {
         override val id: Long get() = state.id
     }
 
-    /** The default network went. */
     data class Lost(override val id: Long) : NetworkReport
 }
 
@@ -42,10 +41,8 @@ sealed interface NetworkReport {
  */
 interface DefaultNetwork {
 
-    /** The default network now, or null when there is none. */
     fun current(): NetworkState?
 
-    /** True while the default network reaches the internet. */
     fun reachesInternet(): Boolean = current()?.internet == true
 
     /** The callback's reports, delivered on the main thread. */
@@ -75,7 +72,6 @@ interface DefaultNetwork {
 fun DefaultNetwork.offlineIn(scope: CoroutineScope): StateFlow<Boolean> =
     online.map { !it }.stateIn(scope, whileShown, !reachesInternet())
 
-/** [DefaultNetwork] from [connectivity]'s default network callback. */
 class ConnectivityDefaultNetwork(private val connectivity: ConnectivityManager) : DefaultNetwork {
 
     override fun current(): NetworkState? {

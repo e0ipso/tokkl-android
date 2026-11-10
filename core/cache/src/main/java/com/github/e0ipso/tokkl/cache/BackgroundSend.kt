@@ -26,8 +26,6 @@ import kotlin.coroutines.CoroutineContext
  * calls [schedule] from [ChangeQueue]'s onQueued, which runs only while the queue holds a change, and [cancelWaiting]
  * once a drain has emptied the queue. The work runs once, so nothing wakes the phone while the queue is empty, and no
  * periodic work comes from here: the only periodic job in the app is the running entry's check (TKA-0074).
- *
- * @param runs the workers that joined a drain, which [BackgroundSendWorker] registers with.
  */
 class BackgroundSend(private val workManager: CurrentWorkManager, private val runs: BackgroundSendRuns) :
     AccountDataOwner {
@@ -37,8 +35,7 @@ class BackgroundSend(private val workManager: CurrentWorkManager, private val ru
     override suspend fun forgetAccount() = cancel()
 
     /**
-     * Enqueues a one-time send that waits for a connected network. Work already waiting or running
-     * stays, and this call adds none: that work drains the whole queue, this change included.
+     * Work already waiting or running stays: it drains the whole queue, this change included.
      * Returns at once; WorkManager writes the work on its own thread.
      */
     fun schedule() {
@@ -84,7 +81,6 @@ class BackgroundSend(private val workManager: CurrentWorkManager, private val ru
     }
 
     companion object {
-        /** The unique work's name. One work by this name waits or runs at a time. */
         const val WORK_NAME = "send-queue"
 
         /**
@@ -133,7 +129,6 @@ class BackgroundSendWorker(
     }
 }
 
-/** What the background send does after a drain. */
 internal enum class AfterBackgroundSend {
     /** The queue is empty, or signed out, so there is nothing to send. */
     DONE,

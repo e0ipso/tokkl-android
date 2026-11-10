@@ -25,7 +25,6 @@ sealed interface WeekSource {
     /** The week is not on the phone, and its entries load from the server. */
     data object Loading : WeekSource
 
-    /** The server sent the week's entries. */
     data object Loaded : WeekSource
 
     /** No answer: the phone is offline, or the server or the proxy in front of it is down. */

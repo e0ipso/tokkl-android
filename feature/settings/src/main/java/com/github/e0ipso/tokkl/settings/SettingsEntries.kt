@@ -42,7 +42,6 @@ val settingsPage = TopLevelDestination(
     position = 80,
 )
 
-/** The Settings page. */
 @Serializable
 @SerialName("com.github.e0ipso.tokkl.navigation.Route.Settings")
 data object SettingsRoute : Route

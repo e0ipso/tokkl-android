@@ -34,9 +34,6 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.Clock
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
-/**
- * The project, task and tag picker for an entry in [workspaceId], as [EntityPicker] takes it.
- */
 typealias WorkspacePicker =
     @Composable (
         workspaceId: WorkspaceId,
@@ -71,14 +68,10 @@ class TimerBarActions(
 )
 
 /**
- * The timer at the top of the Timer page (docs/PRD.md T1) for [state], with [page]'s cached
- * projects, tasks and tags in its picker and its description suggestions, and the Today and This
+ * The timer at the top of the Timer page (docs/PRD.md T1) for [state], with the Today and This
  * week [totals] under it. While an entry runs, the clock counts from its start on the phone, a
  * tick at each whole second while the screen shows, and asks the server nothing (principle 3).
- * Its clock opens [TimerBarActions.onEditRunning]. Its button for a past entry calls
- * [TimerBarActions.onAddEntry] (M1). Its timer-templates icon, when [templates] has them, opens a
- * popup of cached templates (T5). Choosing one starts it through the timer. Save as template
- * stores what the timer shows, and Manage templates calls [TimerBarActions.onManageTemplates].
+ * Its timer-templates icon, when [templates] has them, opens a popup of cached templates (T5).
  */
 @Composable
 fun TimerBar(
@@ -159,17 +152,13 @@ fun TimerBar(
 fun settleDescription(focusManager: FocusManager) = focusManager.clearFocus()
 
 /**
- * The timer as the web app's TimerBar.tsx draws it, for [state]: the entry's fields, then the
- * clock and Start, or while an entry runs, the "Running" label, the clock at [elapsedSeconds],
- * Pause where the running state offers it, and Stop. While paused (docs/PRD.md T1) come the
- * "Paused" label, the paused total, which stands still, Resume and Stop, and the fields that
- * Resume starts, which are read-only. The frame takes the running colour while an entry runs, and
- * the label and the Stop button's square say so too, so colour is never the only sign. Until the
- * phone knows the account's workspace, which the first account settings bring, the fields and
- * Start are disabled. After the timer's buttons comes the one that adds a past entry by hand, as
- * the web app's bar holds its manual mode (M1), whatever the timer does. With [suggestions], the
- * description field suggests recent entries as it is typed in (T4), and a pick goes to
- * [onSuggestion].
+ * The timer as the web app's TimerBar.tsx draws it, for [state]. While paused (docs/PRD.md T1)
+ * the paused total stands still, and the fields that Resume starts are read-only. The frame takes
+ * the running colour while an entry runs, and the label and the Stop button's square say so too,
+ * so colour is never the only sign. Until the phone knows the account's workspace, which the
+ * first account settings bring, the fields and Start are disabled. The button that adds a past
+ * entry by hand shows whatever the timer does, as the web app's bar holds its manual mode (M1).
+ * With [suggestions], the description field suggests recent entries as it is typed in (T4).
  */
 @Composable
 fun TimerBarContent(

@@ -223,7 +223,6 @@ class TrashViewModelTest {
         ""","start":"2026-10-19T09:00:00+00:00","stop":"2026-10-19T10:30:00+00:00","duration":5400,""" +
         """"project_id":3,"project_name":"Website","server_deleted_at":"2026-10-20T08:00:00Z"}"""
 
-    /** The trash holding [entries]. */
     private fun list(vararg entries: String) = json(entries.joinToString(",", "[", "]"))
 
     /**

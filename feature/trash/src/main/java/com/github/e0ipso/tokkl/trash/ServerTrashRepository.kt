@@ -9,8 +9,7 @@ import com.github.e0ipso.tokkl.session.signedIn
 
 /**
  * Tokkl's trash calls on the signed-in account's server, outside the Toggl API (docs/PRD.md
- * section 6). The trash belongs to the user, not to a workspace. Each call suspends while its
- * request runs.
+ * section 6). The trash belongs to the user, not to a workspace.
  */
 class ServerTrashRepository(private val client: ApiClientProvider) {
 

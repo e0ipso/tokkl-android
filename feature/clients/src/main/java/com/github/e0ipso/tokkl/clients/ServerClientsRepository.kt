@@ -15,10 +15,7 @@ import com.github.e0ipso.tokkl.model.ClientId
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.signedIn
 
-/**
- * The workspace's clients on the signed-in account's server, from the API v9 client calls, read
- * as the model's [Client]. Each call suspends while its request runs.
- */
+/** The workspace's clients on the signed-in account's server, from the API v9 client calls. */
 class ServerClientsRepository(private val client: ApiClientProvider) : CatalogRepository<ClientsData> {
 
     override suspend fun workspace(stored: WorkspaceId?): ApiResult<WorkspaceId> = client.managedWorkspace(stored)

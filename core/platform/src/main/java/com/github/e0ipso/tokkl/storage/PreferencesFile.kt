@@ -19,7 +19,6 @@ class PreferencesFile(context: Context, private val name: String, private val io
      */
     val preferences: SharedPreferences by lazy { context.getSharedPreferences(name, Context.MODE_PRIVATE) }
 
-    /** What [read] takes from the file. */
     suspend fun <T> read(read: SharedPreferences.() -> T): T = withContext(io) { preferences.read() }
 
     /** Applies [change] and commits it, or throws [IOException] with [failure] when the commit fails. */

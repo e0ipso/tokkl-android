@@ -15,8 +15,6 @@ enum class PomodoroSound(val transition: PhaseTransition) {
 }
 
 /**
- * The held session's phase as its alarm, its ring and the alarm screen show it.
- *
  * @property end the phone's time of the phase's planned end: the server's `planned_end` less the
  *   held state's clock offset.
  * @property sound what the phase end plays, from the server's `transition`.
@@ -32,7 +30,6 @@ data class PomodoroRing(
     val revision: Long,
 )
 
-/** The phase this state's session is in, or null without a session. */
 fun HeldTimerState.ring(): PomodoroRing? {
     val session = pomodoro ?: return null
     return PomodoroRing(

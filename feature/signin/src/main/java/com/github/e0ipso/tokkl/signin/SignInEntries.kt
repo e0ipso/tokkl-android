@@ -23,7 +23,6 @@ import kotlin.coroutines.CoroutineContext
 
 /** Sign-in, plain or again to the account the route names. A sign-in opens Timer. */
 internal object SignInEntries : FeatureRoutes {
-    /** Sign-in is no page of the bar. */
     override val pages get() = emptyList<TopLevelDestination>()
 
     override fun PolymorphicModuleBuilder<Route>.registerRoutes() {

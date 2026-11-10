@@ -59,7 +59,6 @@ internal data class EntryDraft(
     }
 }
 
-/** What the draft saves to. */
 internal sealed interface DraftTarget {
     /** The active segment only. A later Start or Resume must have a different identity. */
     data class Running(
@@ -91,12 +90,10 @@ internal sealed interface DraftTarget {
         val onPhone: Boolean,
         val snapshot: TimeEntry,
     ) : DraftTarget {
-        /** Whether the entry opened as a no-time entry. */
         val noTime: Boolean get() = snapshot.timing is EntryTiming.AllDay
     }
 }
 
-/** The timing a draft saves, or the mistakes that keep it from saving. */
 internal sealed interface CheckedTimes {
     data class Valid(val timing: EntryTiming) : CheckedTimes
 
@@ -117,7 +114,6 @@ internal fun newForm(time: AccountTime, date: LocalDate?, noTimes: Boolean): Ent
     noTimes = noTimes,
 )
 
-/** The draft of the running segment [entry], captured as [identity]. */
 internal fun runningForm(
     entry: TimeEntry,
     identity: RunningEntryIdentity,

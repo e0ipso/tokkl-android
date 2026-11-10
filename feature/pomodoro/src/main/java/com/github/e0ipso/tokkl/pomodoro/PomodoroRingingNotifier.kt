@@ -32,9 +32,6 @@ class PomodoroRingingNotifier(private val context: Context) {
     }
 
     /**
-     * The ringing notification of [ring]: its transition, "Pomodoro N of M" and the overtime since
-     * its planned end, with Next phase and End session for its phase at its revision.
-     *
      * While the service still checks the held state, [ring] is null and the notification has no
      * actions. It still opens the alarm of [phase], the phase the alarm delivered, over the lock
      * screen: Android launches a full-screen intent only when the notification is first posted,
@@ -116,7 +113,6 @@ fun pomodoroAlarmIntent(context: Context, phase: PomodoroPhaseKey): Intent =
         .putPhase(phase, unique = true)
         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
 
-/** The full-screen alarm of [phase] as a ringing notification opens it. */
 fun pomodoroAlarmPendingIntent(context: Context, phase: PomodoroPhaseKey): PendingIntent = PendingIntent.getActivity(
     context,
     0,

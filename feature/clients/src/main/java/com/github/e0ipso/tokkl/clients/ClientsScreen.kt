@@ -32,13 +32,11 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
- * The clients page (docs/PRD.md P3): the workspace's clients from the server, archived ones in a
- * section of their own and each marked Archived in words, with New client, and Archive or Restore
- * on each row. Archiving asks first, since it archives the client's projects too; restoring
- * brings them back. A tap on a row opens its form. Each change goes to the server at once. While
- * the phone is offline or the server out of reach, the page lists the clients on the phone and
- * says that changing them needs the server, with every action off. Coming back online, or to the
- * foreground, loads the clients again.
+ * The clients page (docs/PRD.md P3): archived clients in a section of their own, each marked
+ * Archived in words, with New client, and Archive or Restore on each row. Archiving asks first,
+ * since it archives the client's projects too. A tap on a row opens its form. While the phone is
+ * offline or the server out of reach, the page lists the clients on the phone and says that
+ * changing them needs the server, with every action off.
  */
 @Composable
 fun ClientsScreen(page: ClientsPageState, actions: ClientsActions, modifier: Modifier = Modifier) {
@@ -97,7 +95,6 @@ fun ClientsScreen(page: ClientsPageState, actions: ClientsActions, modifier: Mod
     }
 }
 
-/** What the page's controls do. */
 class ClientsActions(
     val onRetry: () -> Unit = {},
     val onNew: () -> Unit = {},
@@ -161,9 +158,8 @@ private fun ClientList(
 }
 
 /**
- * One client: its name, then its notes, its number of projects and, when archived, the word
- * Archived. The name side opens the form, and a button archives or restores it. Both stay off for
- * a row from the phone and while nothing can change.
+ * One client: its name, notes, number of projects and, when archived, the word Archived. Its
+ * actions stay off for a row from the phone and while nothing can change.
  */
 @Composable
 private fun ClientListRow(row: ClientRow, canChange: Boolean, actions: ClientsActions) {

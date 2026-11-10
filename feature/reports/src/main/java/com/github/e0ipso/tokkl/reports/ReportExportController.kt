@@ -213,7 +213,6 @@ class ReportExportController(
     }
 }
 
-/** The CSV route of [this] tab, or null for a tab without one. */
 fun ReportTab.csvKind(): ReportCsvKind? = when (this) {
     ReportTab.SUMMARY -> ReportCsvKind.SUMMARY
     ReportTab.DETAILED -> ReportCsvKind.DETAILED

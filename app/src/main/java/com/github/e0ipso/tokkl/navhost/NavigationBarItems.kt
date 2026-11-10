@@ -88,7 +88,6 @@ internal fun navigationRailItemColors(scheme: ColorScheme, hue: SectionHue) = na
  */
 internal class NavigationIndicator(val fill: Color, val outline: Color)
 
-/** The indicator of an item whose page has [hue]. */
 internal fun navigationIndicator(scheme: ColorScheme, hue: SectionHue) = NavigationIndicator(hue.fill, scheme.outline)
 
 /**
@@ -97,16 +96,11 @@ internal fun navigationIndicator(scheme: ColorScheme, hue: SectionHue) = Navigat
  */
 internal fun navigationBarLabelWeight(selected: Boolean): FontWeight? = if (selected) FontWeight.Bold else null
 
-/**
- * What a screen needs to build a bar or rail item from [NavigationBarItem] or [NavigationRailItem] in Tokkl's colours.
- */
 internal object TokklNavigationBarDefaults {
-    /** The colours of [NavigationBarItem] for a page with [hue], in the current theme. */
     @Composable
     @ReadOnlyComposable
     fun itemColors(hue: SectionHue): NavigationBarItemColors = navigationBarItemColors(MaterialTheme.colorScheme, hue)
 
-    /** The colours of [NavigationRailItem] for a page with [hue], in the current theme, the bar's colours. */
     @Composable
     @ReadOnlyComposable
     fun railItemColors(hue: SectionHue): NavigationRailItemColors = navigationRailItemColors(
@@ -227,10 +221,6 @@ private val BarIndicatorSize = DpSize(64.dp, 32.dp)
 /** Material 3's active indicator on a rail item, NavigationRailTokens' 56 by 32dp. */
 private val RailIndicatorSize = DpSize(56.dp, 32.dp)
 
-/**
- * The [label] of a bar or rail item, bold while [selected], on one line, at the size at which all
- * of [labels] fit ([SharedLabelSize]).
- */
 @Composable
 private fun ItemLabel(label: String, selected: Boolean, labels: List<String>) {
     // Every label is measured in the bolder of its two weights, so selecting an item

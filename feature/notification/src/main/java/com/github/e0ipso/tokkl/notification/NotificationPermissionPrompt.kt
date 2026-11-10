@@ -92,11 +92,9 @@ fun NotificationPermissionPrompt(
     SnackbarHost(host, modifier)
 }
 
-/** Opens the system's notification settings for this app. */
 fun openNotificationSettings(context: Context) {
     context.startActivity(notificationSettingsIntent(context))
 }
 
-/** The intent that opens this app's page of the system notification settings. */
 fun notificationSettingsIntent(context: Context): Intent =
     Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)

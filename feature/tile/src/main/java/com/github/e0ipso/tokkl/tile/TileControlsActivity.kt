@@ -46,12 +46,10 @@ import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * The Quick Settings tile's long press (docs/PRD.md N4, T1). SystemUI starts it with
- * [TileService.ACTION_QS_TILE_PREFERENCES]. It reads [AccountTimerStates.controls] and offers
- * Stop while a timer runs, with Pause where the server's timer offers it, or Resume and Stop while
- * one is paused. Each button keeps the [com.github.e0ipso.tokkl.timerstate.TimerTarget] it was drawn
- * with. The intent's extras are ignored, so the caller cannot name a timer. With nothing running
- * or paused, it closes. The window is translucent and Compose draws the dialog, so the shade stays
- * behind it.
+ * [TileService.ACTION_QS_TILE_PREFERENCES]. Each button keeps the
+ * [com.github.e0ipso.tokkl.timerstate.TimerTarget] it was drawn with. The intent's extras are
+ * ignored, so the caller cannot name a timer. With nothing running or paused, it closes. The
+ * window is translucent and Compose draws the dialog, so the shade stays behind it.
  */
 class TileControlsActivity : ComponentActivity() {
 
@@ -99,7 +97,6 @@ class TileControlsActivity : ComponentActivity() {
     }
 }
 
-/** True when SystemUI started this activity for the tile's long press. */
 internal fun isTilePreferencesIntent(action: String?): Boolean = action == TileService.ACTION_QS_TILE_PREFERENCES
 
 /**
@@ -131,7 +128,6 @@ private fun TileControlsDialog(panel: TileControlsPanel, onPress: (TileControl) 
     )
 }
 
-/** One control: its icon and word, and the whole action for TalkBack. */
 @Composable
 private fun TileControlButton(action: TimerSurfaceAction, onClick: () -> Unit) {
     @StringRes val label: Int

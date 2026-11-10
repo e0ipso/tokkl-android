@@ -79,7 +79,6 @@ internal class FullscreenTimerActions(
     val onExit: () -> Unit,
 )
 
-/** [FullscreenTimerScreen] without its model. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun FullscreenTimerContent(state: TimerState, actions: FullscreenTimerActions, clock: Clock) {

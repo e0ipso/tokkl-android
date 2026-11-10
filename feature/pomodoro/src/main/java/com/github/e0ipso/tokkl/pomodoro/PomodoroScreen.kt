@@ -59,7 +59,6 @@ import kotlinx.coroutines.delay
 import java.time.Clock
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
-/** The destination can be opened directly; the navigation item is added separately. */
 @Composable
 fun PomodoroScreen(
     model: PomodoroViewModel,
@@ -288,7 +287,6 @@ fun PomodoroContent(
 /** The form's width from which its cards sit two to a row, measured on the form and not the window. */
 private val TwoColumnFormWidth = 360.dp
 
-/** One stepper card of the length form: its short [label], [range], [unit], the raw draft and the change to it. */
 private class LengthCard(
     @StringRes val label: Int,
     val range: IntRange,

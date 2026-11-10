@@ -65,11 +65,7 @@ fun ConfirmDialog(
     )
 }
 
-/**
- * A dialog's Cancel and [confirmLabel] in one slot, stacked at full width, so they cannot overlap
- * at any font scale. [enabled] turns the confirm button off; a [danger] confirm gets the danger
- * colours.
- */
+/** [enabled] turns the confirm button off; a [danger] confirm gets the danger colours. */
 @Composable
 fun CancelAndConfirm(
     confirmLabel: String,

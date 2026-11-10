@@ -32,11 +32,7 @@ internal class AppHooks(val inOrder: List<AppHook>, bound: List<AppHook>) {
     }
 }
 
-/**
- * What every process does when it starts, whatever starts it: the [AppHook.processStart] of every
- * hook, in the order of [hooks]. Each hook loads its component at its own step, so the steps keep
- * their order and their threads.
- */
+/** Each hook loads its component at its own step, so the steps keep their order and their threads. */
 internal class AppStartup(private val hooks: AppHooks) {
 
     fun run() {

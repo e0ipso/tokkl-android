@@ -90,7 +90,6 @@ sealed interface TimerControls {
     ) : TimerControls
 }
 
-/** The target these controls were drawn with, or null while idle. */
 val TimerControls.target: TimerTarget?
     get() = when (this) {
         is TimerControls.Running -> target
@@ -99,11 +98,8 @@ val TimerControls.target: TimerTarget?
     }
 
 /**
- * The controls for the cache's [running] entry and the server's timer state [held], as every
- * timer surface shows them: the Timer page, the full-screen timer, the running notification, the
- * widget, the Quick Settings tile and the reminder. [timerApi] is whether the server offers the
- * timer API: without it the held state counts for nothing, so no chain shows and Pause is not
- * offered. Every target names [account].
+ * The controls for the cache's [running] entry and the server's timer state [held]. Without
+ * [timerApi] the held state counts for nothing, so no chain shows and Pause is not offered.
  *
  * The cache's running entry always shows, as it carries the queued Starts and Stops the server
  * may not have yet. It adds the chain's stored seconds only while it is the chain's clone, and

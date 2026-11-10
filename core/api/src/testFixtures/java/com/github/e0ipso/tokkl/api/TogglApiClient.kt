@@ -63,7 +63,6 @@ val SharedHttpClient.instance: OkHttpClient get() = client
 /** A Toggl API v9 endpoint of this server, such as `api("me")` for `GET /api/v9/me`. */
 fun ServerUrl.api(vararg segments: String): HttpUrl = apiUrl(*segments)
 
-/** A Reports API v3 endpoint of this server. */
 fun ServerUrl.reports(vararg segments: String): HttpUrl = reportsUrl(*segments)
 
 /** A Tokkl endpoint of this server outside the Toggl API, such as `app("trash")`. */

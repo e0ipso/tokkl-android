@@ -12,7 +12,6 @@ import androidx.compose.ui.graphics.Color
 // name, not by line. res/values/colors.xml and res/values-night/colors.xml repeat --bg for the
 // window behind Compose and --wordmark-halo for the splash; change them with it.
 
-/** One side, light or dark, of the styles.css colour tokens the app uses. */
 private class Tokens(
     val bg: Color,
     val surface: Color,
@@ -166,9 +165,6 @@ internal val TokklSpectrum: List<Color> = listOf(
  * Material 3 draws text in its primary role (text buttons, tabs, focused field labels), so the
  * role takes --primary-text, and the fills that styles.css paints in --primary take
  * [TokklExtraColors.primaryFill].
- *
- * [other] is the opposite scheme, for inversePrimary. [surfaceBright] and [surfaceDim] are the
- * lightest and darkest surface tokens, which differ between light and dark.
  */
 private fun colorScheme(t: Tokens, other: Tokens, surfaceBright: Color, surfaceDim: Color) = ColorScheme(
     primary = t.primaryText,
@@ -179,7 +175,6 @@ private fun colorScheme(t: Tokens, other: Tokens, surfaceBright: Color, surfaceD
     // on it.
     primaryContainer = t.stateSelected,
     onPrimaryContainer = t.text,
-    // The primary text colour of the opposite scheme, as Material 3 defines it.
     inversePrimary = other.primaryText,
     // A mark only, never text, and only on bg and surface: the light --secondary is 3.01:1 on bg
     // and under 3:1 on surface-2.
@@ -260,7 +255,6 @@ class TokklExtraColors(
      * Material primary role is `--primary-text`; see colorScheme in this file.
      */
     val primaryFill: Color,
-    /** `--on-primary`, the ink, for text and icons on [primaryFill]. */
     val onPrimaryFill: Color,
     /** A running time entry. Readable as text on surface, and as a mark on any surface. */
     val running: Color,
@@ -271,19 +265,12 @@ class TokklExtraColors(
      * and under 3:1 on bg and surface-2.
      */
     val accentLime: Color,
-    /** `--texture-glow`, the sunset glow over surface. */
     val textureGlow: Color,
-    /** `--texture-swell`, the striped swell's base over surface. */
     val textureSwell: Color,
-    /** `--texture-stripe`, the swell's stripes over surface. */
     val textureStripe: Color,
-    /** `--scene-glow`, the sunset glow over bg behind the sign-in scene and the splash. */
     val sceneGlow: Color,
-    /** `--scene-swell`, the swell's base over bg behind the sign-in scene and the splash. */
     val sceneSwell: Color,
-    /** `--scene-stripe`, the stripes over bg behind the sign-in scene and the splash. */
     val sceneStripe: Color,
-    /** `--wordmark-halo`, the 1dp outline around the wordmark. Transparent in light. */
     val wordmarkHalo: Color,
     /**
      * `--sticker-outline`, the 2dp outline of a hue-filled day sticker: the ink in light, where
@@ -295,7 +282,6 @@ class TokklExtraColors(
     val chartBillable: Color,
     /** `--chart-other`, the stripes of a report chart's non-billable time. A mark only, never text. */
     val chartOther: Color,
-    /** `--chart-other-wash`, the wash behind [chartOther]'s stripes. */
     val chartOtherWash: Color,
     /**
      * `--chart-band`, the faint track behind a report chart's bars. [chartBillable] and

@@ -33,7 +33,6 @@ data class ReportFilter(
     val billable: Boolean? = null,
 )
 
-/** The body of [ReportsApi.appSummary]: the range, the grouping and the filters. */
 data class AppSummaryBody(
     val startDate: LocalDate,
     val endDate: LocalDate,
@@ -42,7 +41,6 @@ data class AppSummaryBody(
     val filter: ReportFilter,
 )
 
-/** The body of [ReportsApi.search]: a page of [pageSize] rows from [firstRowNumber], in [orderDir]. */
 data class DetailedSearchBody(
     val startDate: LocalDate,
     val endDate: LocalDate,
@@ -81,10 +79,7 @@ data class ReportCsvBody(
     val dir: String? = null,
 )
 
-/**
- * One row of a detailed search. Tokkl sends one time entry per row; Toggl's grouped rows hold
- * several.
- */
+/** One row of a detailed search. Tokkl sends one time entry per row; Toggl's grouped rows hold several. */
 @Serializable
 class ReportSearchRow(
     val description: String? = null,
@@ -123,9 +118,8 @@ class ReportsApi internal constructor(private val client: ApiTransport) {
         client.send(HttpMethod.POST, client.server.appUrl("report"), body.json(), JsonObject.serializer())
 
     /**
-     * `POST /api/app/report/{report}.csv`, where [report] is `summary` or `detailed`, streamed
-     * into [output] as [ApiTransport.downloadCsv] describes: at most [maxBytes], cancelled
-     * through [cancellation]. Answers with the number of bytes written.
+     * `POST /api/app/report/{report}.csv`, where [report] is `summary` or `detailed`, streamed into
+     * [output]. Answers with the number of bytes written.
      */
     suspend fun exportCsv(
         report: String,

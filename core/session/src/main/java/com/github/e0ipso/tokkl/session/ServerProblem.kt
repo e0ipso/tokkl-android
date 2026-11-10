@@ -29,7 +29,6 @@ sealed interface ServerProblem {
     data class Unexpected(val status: Int?) : ServerProblem
 }
 
-/** The [ServerProblem] behind this error. */
 fun ApiError.toServerProblem(): ServerProblem = when (this) {
     is ApiError.Network -> ServerProblem.Unreachable
 
@@ -54,7 +53,6 @@ fun ApiError.toServerProblem(): ServerProblem = when (this) {
 /** Bad gateway, service unavailable and gateway timeout. */
 private val PROXY_UNREACHABLE = setOf(502, 503, 504)
 
-/** What [problem] means for the user, in a sentence, from [resources]. */
 fun problemText(resources: Resources, problem: ServerProblem): String = when (problem) {
     ServerProblem.Unreachable -> resources.getString(R.string.server_problem_unreachable)
 

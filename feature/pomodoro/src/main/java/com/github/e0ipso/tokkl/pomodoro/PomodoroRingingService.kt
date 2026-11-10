@@ -26,9 +26,8 @@ import org.koin.android.ext.android.inject
 import kotlin.coroutines.CoroutineContext
 
 /**
- * The ringing service as [PomodoroPhaseAlarm] drives it. Stop releases both outputs on the main
- * thread before returning, including when the phone has no network. A queued service start still
- * checks the held phase before it plays.
+ * Stop releases both outputs on the main thread before returning, including when the phone has no
+ * network. A queued service start still checks the held phase before it plays.
  *
  * It, [service], [state] and [PomodoroRingingState] are public for the app's device tests, which
  * observe the ring through them.

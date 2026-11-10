@@ -32,9 +32,6 @@ internal object ClientsEntries : FeatureRoutes {
     }
 }
 
-/**
- * The Clients page from its view model: hands its state and events to [ClientsScreen].
- */
 @Composable
 fun ClientsPage(model: ClientsViewModel, modifier: Modifier = Modifier) {
     val page by model.page.collectAsStateWithLifecycle()
@@ -70,7 +67,6 @@ val clientsPage = TopLevelDestination(
     inMore = true,
 )
 
-/** The Clients page. */
 @Serializable
 @SerialName("com.github.e0ipso.tokkl.navigation.Route.Clients")
 data object ClientsRoute : Route

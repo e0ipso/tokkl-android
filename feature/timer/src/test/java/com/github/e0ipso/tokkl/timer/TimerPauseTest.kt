@@ -532,7 +532,6 @@ class TimerPauseTest {
         offset: Duration = OFFSET,
     ): HeldTimerState = serverState(revision, pause, pomodoro, offset).held(TAP)
 
-    /** The server's state that [held] is. */
     private fun serverState(
         revision: Long,
         pause: TimerPause? = null,

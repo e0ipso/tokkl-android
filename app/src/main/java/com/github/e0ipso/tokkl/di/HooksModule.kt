@@ -42,7 +42,6 @@ private fun Scope.hooksInOrder(): List<AppHook> = listOf(
     get<TimerSyncHook>(),
 )
 
-/** The hooks in the order they run, which the process start and MainActivity's lifecycle share. */
 internal val hooksModule = module {
     single { AppHooks(inOrder = hooksInOrder(), bound = getAll()) }
 }

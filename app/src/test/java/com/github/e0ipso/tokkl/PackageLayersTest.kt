@@ -176,7 +176,6 @@ class PackageLayersTest {
         )
         private val VIEW_MODEL = Regex("""\)\s*:\s*ViewModel\(""")
 
-        /** The layer of the feature packages in [LAYERS]. */
         private const val FEATURE_LAYER = 3
 
         /** A feature module's R class. */

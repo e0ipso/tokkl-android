@@ -48,11 +48,7 @@ suspend fun startFavoriteShortcut(
     return ShortcutStart.Started(favoriteName(fields, projects, names))
 }
 
-/**
- * What a tap on a favorite's shortcut starts, read when the tap comes, as [startFavoriteShortcut]
- * takes it: whether the server keeps favorites, the cached favorites and projects, the account's
- * default workspace, and the queue's Start.
- */
+/** What a tap on a favorite's shortcut starts, read when the tap comes. */
 class FavoriteShortcutStarts(
     private val available: suspend () -> Boolean,
     private val favorites: Flow<List<Favorite>>,
@@ -61,7 +57,7 @@ class FavoriteShortcutStarts(
     private val changes: RunningEntryChanges,
 ) {
 
-    /** Starts the favorite the shortcut [id] names, with names in [names]. Blocks on disk I/O. */
+    /** Blocks on disk I/O. */
     suspend fun start(id: String, names: FavoriteNames): ShortcutStart = startFavoriteShortcut(
         id = id,
         available = available(),

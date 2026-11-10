@@ -36,12 +36,10 @@ internal fun CurrentWorkManager.sendPomodoroWidgetTap(tap: PomodoroWidgetTap) {
 }
 
 /**
- * Sends one Pomodoro widget tap: Start, Next phase or End session. It checks the account, the
- * phase and the revision the tap carries against the widget's state when it runs
- * ([sendPomodoroWidgetAction]), and sends with the account's timer state and API as they are
- * then, which it keeps together until the answer: a sign-out or another account meanwhile drops
- * the answer. One that fails, offline or refused by the phone's storage included, says why
- * through [failures] ([runSurfaceCommand]) and ends the work as failed.
+ * Checks the account, the phase and the revision the tap carries against the widget's state when
+ * it runs, and sends with the account's timer state and API as they are then, which it keeps
+ * together until the answer: a sign-out or another account meanwhile drops the answer. One that
+ * fails, offline or refused by the phone's storage included, says why and ends the work as failed.
  */
 class PomodoroWidgetActionWorker(
     context: Context,
@@ -69,7 +67,6 @@ class PomodoroWidgetActionWorker(
         // Keep the captured holder and credential together across sign-out/account replacement.
         val actions = TimerActions(
             client = { api.takeIf { timerStates.intake() === intake && signIn.isSignedIn() } },
-            // The captured holder, whichever account signs in meanwhile.
             states = { intake },
             scope = scope,
             io = io,

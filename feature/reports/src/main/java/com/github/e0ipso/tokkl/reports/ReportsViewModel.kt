@@ -34,31 +34,21 @@ import java.time.LocalDate
 import kotlin.coroutines.CoroutineContext
 
 /**
- * The reports screen's state. Each time the screen opens, the tab, the range or the filters change
- * or the app comes back to the foreground, it asks the configured server for the report, and it
- * never asks on a timer. Every tab's request carries the filters. The detailed tab asks for its
- * next page when the list nears its end, and the weekly tab always shows one whole week from the
- * account's week start. It is the Reports route's own view model: the range and the reports live
- * in memory while the route is on the back stack, and go with it, while the tab and the filters
- * stay in [choices] for the next visit. The route's saved state keeps the range too, so a new
- * process that restores the page asks for the range it showed. Explicit CSV sharing uses a separate bounded private
- * export area. When a request fails, the screen shows why and no numbers or entries, even those of
- * pages that loaded before. The screen reads one state, [page]; [state], [tab] and [filters] are
- * its parts, which the module's tests read too.
+ * Each time the screen opens, the tab, the range or the filters change or the app comes back to the
+ * foreground, it asks the configured server for the report, and it never asks on a timer. The
+ * weekly tab always shows one whole week from the account's week start. The range and the reports
+ * live in memory while the route is on the back stack, and go with it, while the tab and the
+ * filters stay in [choices] for the next visit. The route's saved state keeps the range too, so a
+ * new process that restores the page asks for the range it showed. When a request fails, the
+ * screen shows why and no numbers or entries, even those of pages that loaded before.
  *
  * Call every function on the main thread.
  *
- * @param choices the tab and the filters, which outlive the page, and a widget's ask for today.
- * @param accountSettings the account's timezone, week start and duration format.
  * @param repository the Reports API calls. Runs on [io].
- * @param clock where today comes from, in the account's timezone.
- * @param filterOptions the projects, clients and tags the filter sheet offers, from the phone's cache.
  * @param exporter the CSV export, which runs on [scope] and is cancelled when this view model is.
  * @param app the app's trips to the background, which ask again for the range on screen, and the
  *   network's returns, which ask again for a report that could not reach the server, while the
  *   screen shows ([stateInPage]).
- * @param saved the route's saved state, which keeps the tab and the filters ([ReportChoices.restore])
- *   and the range ([SavedRange]) for a new process that restores the page.
  */
 class ReportsViewModel(
     private val choices: ReportChoices,
@@ -92,7 +82,6 @@ class ReportsViewModel(
         )
     }
 
-    /** What happened to the share of the ready export, as the page reports it. */
     fun onExportShare(event: ExportShareEvent) = when (event) {
         is ExportShareEvent.Launch -> exporter.launchShare(event.launch)
         ExportShareEvent.Finished -> exporter.shareFinished()
@@ -107,13 +96,8 @@ class ReportsViewModel(
 
     private val mutableState = MutableStateFlow<ReportsState>(ReportsState.Closed)
 
-    /** The report on screen. */
     internal val state: StateFlow<ReportsState> = mutableState.asStateFlow()
 
-    /**
-     * The tab on screen and the filters every tab's report applies. They stay when the screen
-     * closes and opens again.
-     */
     internal val chosen: StateFlow<ReportChoice> = choices.chosen
 
     /** Whether the screen has opened: from its first show, or a widget's day tap. */
@@ -125,7 +109,6 @@ class ReportsViewModel(
     /** A widget's day tap asked for the report the screen is about to show, so that show asks nothing. */
     private var openedLoading = false
 
-    /** What the screen shows, while it reads it. */
     val page: StateFlow<ReportsPageState> = combine(
         combine(state, chosen, ::Pair),
         accountSettings,
@@ -216,10 +199,7 @@ class ReportsViewModel(
         load(RangeSelection(current.range.shift(direction), preset = null))
     }
 
-    /**
-     * Shows [tab] and asks for its report of the range on screen. The weekly tab takes the week
-     * that [ReportRange.week] picks from that range.
-     */
+    /** The weekly tab takes the week that [ReportRange.week] picks from the range on screen. */
     fun selectTab(tab: ReportTab) {
         if (choices.selectTab(tab)) selection()?.let(::load)
     }
@@ -313,7 +293,6 @@ class ReportsViewModel(
         return shownAs(selection, report) to workspace
     }
 
-    /** [report] with the page that starts at [next] added, or why there is none. */
     private suspend fun nextPage(
         selection: RangeSelection,
         workspace: ReportWorkspace,
@@ -326,7 +305,6 @@ class ReportsViewModel(
         return shownAs(selection, page.map { DetailedReport(report.entries + it.entries, it.nextRow) })
     }
 
-    /** The loaded [report] of [selection], or why it did not load. */
     private fun shownAs(selection: RangeSelection, report: ApiResult<Report>): ReportsState =
         report.fold({ ReportsState.Loaded(selection, it) }, { ReportsState.Failed(selection, failureOf(it)) })
 
@@ -347,7 +325,6 @@ class ReportsViewModel(
         }
     }
 
-    /** What [page] starts with, from the flows as they are now. */
     private fun pageNow() = ReportsPageState(
         report = state.value,
         tab = chosen.value.tab,
@@ -360,15 +337,12 @@ class ReportsViewModel(
     )
 
     private companion object {
-        /** The key of the tab and the filters in the route's saved state. */
         const val SAVED_CHOICES = "report-choices"
 
-        /** The key of the range's [SavedRange] in the route's saved state. */
         const val SAVED_RANGE = "report-range"
     }
 }
 
-/** What happened to the share of a ready CSV export, as the Reports page reports it. */
 sealed interface ExportShareEvent {
 
     /** The share chooser is about to open: [launch] opens it with the export's file. */
@@ -380,7 +354,6 @@ sealed interface ExportShareEvent {
     /** No app takes the file. */
     data object NoTarget : ExportShareEvent
 
-    /** The share could not open. */
     data object Failed : ExportShareEvent
 }
 

@@ -17,12 +17,7 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
-/**
- * The timer event stream, its service and what decides whether they run, and the sign-out of the
- * capabilities, which the decision follows.
- */
 val timerSyncModule = module {
-    // The calls of the timer event stream, which feed the account's timer state.
     single {
         TimerEventConnections(
             session = get(),
@@ -31,9 +26,6 @@ val timerSyncModule = module {
         )
     }
 
-    // The one owner of the timer event stream, which TimerSyncService runs for the account's
-    // timer state, with its calls from [TimerEventConnections].
-    //
     // Its state changes one at a time on a view of [DefaultDispatcher] that runs one task at a
     // time, not on the main thread, with its reconnect delays. Its clock is elapsedRealtime,
     // which counts deep sleep too, so a stream that went quiet while the phone slept counts as

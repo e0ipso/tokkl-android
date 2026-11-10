@@ -144,10 +144,6 @@ class RoomCurrentEntries(private val database: CacheDatabase) : CurrentEntryCach
     }
 }
 
-/**
- * What a running entry check read before its request: the [running] entries and the
- * [pendingIds] of the entries the queue held changes to.
- */
 class RunningCheckStart(val running: List<TimeEntry>, val pendingIds: Set<EntryId> = emptySet())
 
 /**
@@ -168,12 +164,10 @@ interface CurrentEntryCache {
     fun runningCheckStart(): RunningCheckStart
 
     /**
-     * Writes a running entry check's answer, [server], the entry the server runs or null when none
-     * runs, read after the cache held what [before] holds, in one transaction, as
-     * [runningCheckWrites] describes: entries with unsent changes, entries with changes queued at
-     * [before] that the sender may have sent since, and rows written since [before], stay as they
-     * are. A pending local id that the server has answered since protects its server id too.
-     * Returns what it wrote, or null when the write failed and the cache stays for the next check.
+     * Writes a running entry check's answer, [server], read after the cache held what [before]
+     * holds, in one transaction, as [runningCheckWrites] describes. A pending local id that the
+     * server has answered since protects its server id too. Returns what it wrote, or null when the
+     * write failed and the cache stays for the next check.
      */
     @WorkerThread
     fun checkedRunning(before: RunningCheckStart, server: TimeEntry?): RunningCheckWrites?

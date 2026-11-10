@@ -24,7 +24,6 @@ interface FeatureRequests {
     /** Every intent extra this feature's taps carry, which MainActivity removes once read. */
     val linkExtras: List<String>
 
-    /** The requests that one of MainActivity's intents, [intent], carries for this feature. */
     fun readLinks(intent: LinkIntent): List<NavigationRequest>
 
     /** Registers the serializer of each request this feature declares, so a waiting one outlives the process. */
@@ -38,7 +37,6 @@ interface FeatureRequests {
     fun OpenRequest(request: NavigationRequest, opening: RequestOpening)
 }
 
-/** The serializers of every request from outside the app that [features] declare. */
 fun requestSerializers(features: List<FeatureRequests>): SerializersModule = SerializersModule {
     polymorphic(NavigationRequest::class) {
         features.forEach { feature -> with(feature) { registerRequests() } }
@@ -52,7 +50,6 @@ interface LinkIntent {
     /** The boolean extra [key], false when absent. */
     fun flag(key: String): Boolean
 
-    /** The string extra [key], or null. */
     fun text(key: String): String?
 
     /** The long extra [key], or null when absent. */
@@ -74,7 +71,7 @@ class RequestOpening(
     /** The pages the server lacks now, which open Timer instead. */
     val unavailable: Set<Route> get() = unavailableNow()
 
-    /** Whether somebody is signed in. Reads the stores off the main thread. */
+    /** Reads the stores off the main thread. */
     suspend fun isSignedIn(): Boolean = signIns.isSignedIn()
 
     /**
@@ -97,13 +94,11 @@ class RequestOpening(
  * [into], and the feature that opens the page reads it with [isIn], so both read one name.
  */
 enum class PageTap(val extra: String) {
-    /** A Timer widget's tap, which opens Timer. */
     TIMER_WIDGET("open_timer_widget"),
 
     /** The Timer widget's day report tap, which opens today's report. */
     TODAY_REPORT("open_today_widget"),
 
-    /** The Pomodoro widget's tap, which opens Pomodoro. */
     POMODORO_WIDGET("open_pomodoro_widget"),
 
     /** A long-running timer reminder's tap, which opens Timer. */
@@ -118,7 +113,6 @@ enum class PageTap(val extra: String) {
         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
         .putExtra(extra, true)
 
-    /** Whether [intent] carries this tap. */
     fun isIn(intent: LinkIntent): Boolean = intent.flag(extra)
 }
 

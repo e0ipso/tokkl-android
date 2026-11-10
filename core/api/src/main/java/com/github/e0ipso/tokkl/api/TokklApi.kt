@@ -11,37 +11,26 @@ import kotlinx.serialization.json.JsonObject
  * whether OkHttp may send it twice, and the type its answer reads as; callers pass typed values,
  * ids among them, and never build a URL or a JSON body.
  *
- * Its transport holds the server, the credentials and the shared HTTP client: the signed-in
- * account's, or the one sign-in tries. [SharedHttpClient.api] makes one, and the transport stays
- * inside: callers send only the requests the resources here name.
+ * [SharedHttpClient.api] makes one, for the signed-in account or for the server sign-in tries.
  */
 class TokklApi internal constructor(client: ApiTransport) {
-    /** The signed-in user, their preferences and their workspaces. */
     val account = AccountApi(client)
 
-    /** The user's time entries. */
     val entries = TimeEntriesApi(client)
 
-    /** Tokkl's trash of deleted entries. */
     val trash = TrashApi(client)
 
-    /** A workspace's projects and their tasks. */
     val projects = ProjectsApi(client)
 
-    /** A workspace's clients. */
     val clients = ClientsApi(client)
 
-    /** A workspace's tags. */
     val tags = TagsApi(client)
 
-    /** The Reports API v3 and Tokkl's own report routes. */
     val reports = ReportsApi(client)
 
-    /** Tokkl's server-owned timer: the pause chain and the Pomodoro session. */
     val timer = TimerApi(client)
 }
 
-/** [body] as the JSON tree [ApiTransport] sends, encoded with [Wire]. */
 internal fun <T> json(serializer: SerializationStrategy<T>, body: T): JsonElement =
     Wire.encodeToJsonElement(serializer, body)
 

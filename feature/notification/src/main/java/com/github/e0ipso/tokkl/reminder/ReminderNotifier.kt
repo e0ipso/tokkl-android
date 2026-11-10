@@ -39,7 +39,6 @@ class ReminderNotifier(private val context: Context) {
         manager.notify(ID, build(timer, pausable))
     }
 
-    /** The reminder for [timer], without posting it. [pausable] adds its Pause button. */
     fun build(timer: ReminderTimer, pausable: Boolean): Notification = Notification.Builder(context, CHANNEL)
         .setSmallIcon(UiR.drawable.ic_nav_timer)
         .setContentTitle(context.getString(R.string.reminder_question))

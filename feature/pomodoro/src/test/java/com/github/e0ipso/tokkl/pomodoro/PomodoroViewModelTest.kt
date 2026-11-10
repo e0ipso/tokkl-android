@@ -275,7 +275,6 @@ class PomodoroViewModelTest {
         assertEquals("Focused work", f.page.state.value.fields.description)
     }
 
-    /** An edit the phone's storage refuses stays on screen as typed and goes again when the field is done. */
     @Test
     fun anEditTheStorageRefusesStaysAsTypedAndGoesAgainWhenTheFieldIsDone() = runTest {
         val f = running()

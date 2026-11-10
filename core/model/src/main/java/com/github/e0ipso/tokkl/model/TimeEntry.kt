@@ -17,17 +17,14 @@ sealed interface EntryTiming {
     /** Where the entry sits on the timeline: a no-time entry's is local midnight of its day. */
     val start: Instant
 
-    /** The timer runs from [start]. */
     data class Running(override val start: Instant) : EntryTiming
 
-    /** An entry that has ended: a [Stopped] one or an [AllDay] one. */
     sealed interface Ended : EntryTiming {
 
         /** Where the entry ends on the timeline: a no-time entry's start plus its duration. */
         val stop: Instant
     }
 
-    /** The entry ran from [start] to [stop]. */
     data class Stopped(override val start: Instant, override val stop: Instant) : Ended
 
     /**
@@ -43,7 +40,6 @@ sealed interface EntryTiming {
 
         override val stop: Instant get() = start + duration
 
-        /** The day: [day], or the date of [start] in the account's timezone [zone]. */
         fun dayIn(zone: ZoneId): LocalDate = day ?: start.atZone(zone).toLocalDate()
     }
 
@@ -64,9 +60,6 @@ sealed interface EntryTiming {
 }
 
 /**
- * A time entry.
- *
- * @property timing when it happened: running, stopped, or a no-time entry.
  * @property tags tag names. A name no cached tag has is kept, and the server creates the tag.
  * @property tagIds the cached ids of [tags].
  */
@@ -81,10 +74,8 @@ data class TimeEntry(
     val tags: List<String>,
     val tagIds: List<TagId>,
 ) {
-    /** [EntryTiming.start]. */
     val start: Instant get() = timing.start
 
-    /** Where the entry ended, as [EntryTiming.Ended.stop] says, or null while it runs. */
     val stop: Instant? get() = (timing as? EntryTiming.Ended)?.stop
 }
 
@@ -122,10 +113,8 @@ data class Favorite(
     val billable: Boolean,
 )
 
-/** The fields of [this] that the user picks. */
 fun TimeEntry.fields(): EntryFields =
     EntryFields(description = description, projectId = projectId, taskId = taskId, tags = tags, billable = billable)
 
-/** What a tap on this favorite starts. */
 fun Favorite.fields(): EntryFields =
     EntryFields(description = description, projectId = projectId, taskId = taskId, tags = tags, billable = billable)

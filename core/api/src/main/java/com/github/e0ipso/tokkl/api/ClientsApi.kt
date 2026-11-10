@@ -13,7 +13,6 @@ data class ClientBody(val name: String, val notes: String?)
 @Serializable
 private class RestoreBody(@SerialName("restore_all_projects") val restoreAllProjects: Boolean)
 
-/** A workspace's clients. */
 class ClientsApi internal constructor(private val client: ApiTransport) {
 
     /** `GET /api/v9/workspaces/{workspaceId}/clients?status=both`, archived clients included. */

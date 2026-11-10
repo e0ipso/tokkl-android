@@ -21,8 +21,7 @@ import com.github.e0ipso.tokkl.core.ui.R as UiR
 /**
  * A tap on a favorite's launcher shortcut (docs/PRD.md N6). It starts the favorite on the phone
  * and queues the start, as the Timer page's favorite does, without opening the app or waiting for
- * the network, and says so in a toast. The queue sends the start at once, or when the network
- * returns, and the running timer's notification follows the cache.
+ * the network, and says so in a toast.
  *
  * Its window is transparent and takes no input. It stays foreground until Android shows the
  * confirmation, then finishes: finishing before the toast can suppress a background toast when
@@ -84,7 +83,6 @@ class StartFavoriteActivity : Activity() {
     }
 }
 
-/** The fixed words in a favorite's label, in the app's language now. */
 internal fun favoriteNames(context: Context): FavoriteNames = FavoriteNames(
     untitled = context.getString(UiR.string.favorites_untitled),
     withProject = { name, project -> context.getString(UiR.string.favorites_with_project, name, project) },

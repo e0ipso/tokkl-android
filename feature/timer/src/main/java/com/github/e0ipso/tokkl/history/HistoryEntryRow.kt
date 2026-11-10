@@ -53,12 +53,9 @@ import java.util.Locale
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
- * One stopped entry, one item to TalkBack, and beside it the buttons that continue it and open its
- * actions, in the web app's order. Its marks are words, never a colour alone. A tap opens the entry
- * for editing, and the menu of an entry the phone holds duplicates, splits or deletes it, in the
- * order of the web app's editor. The older days the server sent are not on the phone, so their
- * rows have no menu, and the entry form edits them as the history holds them. Continue needs only
- * the entry's fields, so every row has it.
+ * One stopped entry, one item to TalkBack, with its Continue and menu buttons in the web app's
+ * order. Its marks are words, never a colour alone. The older days the server sent are not on
+ * the phone, so their rows have no menu, and the entry form edits them as the history holds them.
  */
 @Composable
 internal fun EntryRow(
@@ -91,12 +88,10 @@ internal fun EntryRow(
 
 /**
  * Similar entries of a day as one line, as the web app's timer list groups them (docs/PRD.md H4):
- * the newest member's fields, a badge with the count, the members' total, and the time from the
- * earliest timed member's start to the latest timed member's stop (none for a group of only
- * no-time entries), with a button that continues the newest
- * member. A tap shows or hides the members, each with its own tap, Continue and menu. TalkBack
- * reads the line as one button with the count, the total and the state, Expanded or Collapsed,
- * and says the new state after a tap. A chevron shows the state too, so it never rests on colour.
+ * the newest member's fields, a count badge, the members' total, and the span of the timed
+ * members. A tap shows or hides the members. TalkBack reads the line as one button with the
+ * count, the total and Expanded or Collapsed, and says the new state after a tap. A chevron
+ * shows the state too, so it never rests on colour.
  */
 @Composable
 internal fun GroupRow(
@@ -254,7 +249,7 @@ private class RowLine(
     )
 }
 
-/** The line's count, description, duration, project, times and marks. [modifier] takes its tap. */
+/** One line of the history. [modifier] takes its tap. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun EntryText(

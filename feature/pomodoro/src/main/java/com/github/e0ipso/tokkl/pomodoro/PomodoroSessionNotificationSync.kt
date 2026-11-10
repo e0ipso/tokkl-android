@@ -28,7 +28,6 @@ interface PomodoroNotificationMemory {
     suspend fun save(display: PomodoroNotificationDisplay?)
 }
 
-/** Posts the session notification for an account, or removes it. */
 interface PomodoroSessionPoster {
 
     /** Posts [content] for [account], and returns false when notifications are off. */
@@ -50,13 +49,8 @@ interface PomodoroSessionPoster {
  * account [signedIn], which it follows under a new identity, so no button of the account before
  * acts on it.
  *
- * @param alarm the phase alarm, which holds the held state and knows whether its phase rings.
- * @param actions the server's session actions.
  * @param changes emits on every change of the held state, the capability or the ringing service.
- * @param isSignedIn whether an account is signed in.
  * @param serviceRunning whether the ringing service runs, which then owns the shared id.
- * @param memory what the last process showed, for the account it showed it to.
- * @param notifications posts and removes the session notification.
  */
 class PomodoroSessionNotificationSync internal constructor(
     private val alarm: PomodoroPhaseAlarm,
@@ -150,11 +144,7 @@ class PomodoroSessionNotificationSync internal constructor(
         }
     }
 
-    /**
-     * Sends a button's Next phase, or End session when [end], at the [revision] it showed. A button
-     * of another account, or of a phase that is no longer the held one, sends nothing and returns
-     * null. Otherwise returns what the server action came to.
-     */
+    /** A button of another account, or of a phase that is no longer the held one, sends nothing and returns null. */
     suspend fun act(account: String, phase: PomodoroPhaseKey, revision: Long, end: Boolean): TimerActionResult? {
         val accepted = lock.withLock { !retired && isSignedIn() && account == readDisplay().account }
         if (!accepted) return null

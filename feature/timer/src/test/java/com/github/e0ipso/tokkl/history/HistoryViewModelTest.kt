@@ -76,7 +76,6 @@ class HistoryViewModelTest {
     private val scope = CoroutineScope(SupervisorJob() + mainDispatcher)
     private val reconnects = MutableSharedFlow<Unit>(extraBufferCapacity = 8)
 
-    /** The number of the account context signed in now. */
     private val accounts = MutableStateFlow(1)
     private lateinit var entries: SessionEntries
     private lateinit var client: TokklApi
@@ -186,7 +185,6 @@ class HistoryViewModelTest {
         assertEquals(OlderDays.More(auto = true), shown.older)
     }
 
-    /** Sign-out forgets what the session's entries held: the older days and the deletes. */
     @Test
     fun aSignOutForgetsTheOlderDaysAndTheDeletes() {
         cached.value = cachedDays(LocalDate.parse("2026-10-06"), LocalDate.parse("2026-10-19"))

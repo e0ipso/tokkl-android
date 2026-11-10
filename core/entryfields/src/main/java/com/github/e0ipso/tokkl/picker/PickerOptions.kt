@@ -17,10 +17,8 @@ import kotlinx.coroutines.flow.combine
  */
 data class Picked(val projectId: ProjectId? = null, val taskId: TaskId? = null, val tags: List<String> = emptyList()) {
 
-    /** The project alone, with no task. */
     fun withProject(projectId: ProjectId?): Picked = copy(projectId = projectId, taskId = null)
 
-    /** The task and its project. */
     fun withTask(task: Task): Picked = copy(projectId = task.projectId, taskId = task.id)
 
     /** The tags with [name] added, or taken out when picked already. Tag names ignore case, as on the server. */
@@ -43,7 +41,6 @@ data class PickerSource(
     val tags: List<Tag> = emptyList(),
 )
 
-/** The [projects], [clients], [tasks] and [tags], such as the cache's, each time one of them changes. */
 fun pickerSource(
     projects: Flow<List<Project>>,
     clients: Flow<List<Client>>,
@@ -68,8 +65,6 @@ data class TaskOption(val task: Task, val selected: Boolean, val archived: Boole
 data class TagOption(val name: String, val selected: Boolean, val cached: Boolean)
 
 /**
- * What the picker shows.
- *
  * @property noProject whether to offer "No project", which only an empty search does.
  * @property newTag the search as a new tag name, when no tag has that name.
  */

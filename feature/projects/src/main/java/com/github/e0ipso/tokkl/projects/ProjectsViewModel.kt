@@ -33,7 +33,6 @@ import kotlin.coroutines.CoroutineContext
 sealed interface ProjectForm {
     val draft: ProjectDraft
 
-    /** This form, holding [draft] instead. */
     fun holding(draft: ProjectDraft): ProjectForm
 
     data class New(override val draft: ProjectDraft) : ProjectForm {
@@ -62,7 +61,6 @@ sealed interface ProjectForm {
  */
 data class ProjectsData(val projects: List<ProjectDetails>, val defaults: WorkspaceDefaults?) {
 
-    /** With [project] as the server sent it after a change, in its place in the order. */
     fun with(project: ProjectDetails): ProjectsData = copy(
         projects = (projects.filterNot { it.id == project.id } + project).sortedForList(),
     )
@@ -71,10 +69,8 @@ data class ProjectsData(val projects: List<ProjectDetails>, val defaults: Worksp
 typealias ProjectsState = CatalogState<ProjectsData, ProjectForm>
 
 /**
- * The projects page: what the server sent and the form open over it in [catalog], whether the
- * phone is [offline], the projects and clients on the phone of the page's workspace, which the
- * page lists while the server's do not load and the form offers, and the [tasks] of the project
- * the form edits.
+ * The projects and clients on the phone, of the page's workspace, are what the page lists while
+ * the server's do not load, and what the form offers.
  */
 @Immutable
 data class ProjectsPageState(
@@ -87,7 +83,6 @@ data class ProjectsPageState(
     /** Whether the page says that changing the projects needs the server. */
     val serverNeeded: Boolean get() = offline || catalog.loadProblem == ServerProblem.Unreachable
 
-    /** Whether a change can go to the server now. */
     val canChange: Boolean get() = catalog.canChange && !offline
 
     /** The change the page says it made last: the open project's tasks' first. */
@@ -99,12 +94,6 @@ data class ProjectsPageState(
  * each time the page opens or the app comes back to it, and the changes the page sends at once,
  * as [CatalogModel] describes. The form of a project the server sent lists its [tasks] (P5).
  *
- * @param repository the workspace's projects on the server.
- * @param tasksRepository the tasks of the project the form edits, on the server.
- * @param cachedProjects the projects on the phone, which the page lists while the server's do not
- *   load.
- * @param cachedClients the clients on the phone, which the form offers and the list names.
- * @param offline whether the phone is offline, when nothing can change.
  * @param app the app's trips to the background and the network's returns, which load the page and
  *   the open form's tasks again while the page shows ([stateInPage]).
  * @param saved the route's saved state, which keeps the open form and what it holds for a new
@@ -136,13 +125,12 @@ class ProjectsViewModel(
     /** Whether the page has shown, so a form's task list may load. */
     private var pageShown = false
 
-    /** The task list of the project the form edits. */
     val tasks = TasksModel(tasksRepository, settings, changes, viewModelScope, io)
 
     /** The list and what is open over it, before the cache and the network join them in [page]. */
     internal val state: StateFlow<ProjectsState> = catalog.state
 
-    /** What the page shows, while it reads it. The cached rows are empty until the cache is read. */
+    /** The cached rows are empty until the cache is read. */
     val page: StateFlow<ProjectsPageState> = combine(
         state,
         offline,
@@ -212,7 +200,6 @@ class ProjectsViewModel(
 
     fun edit(project: ProjectDetails) = catalog.show(ProjectForm.of(project, projectCount()))
 
-    /** The open form now holds [draft]. */
     fun editDraft(draft: ProjectDraft) = catalog.change { it.holding(draft) }
 
     fun closeForm() = catalog.dismiss()
@@ -262,7 +249,6 @@ class ProjectsViewModel(
     private fun projectCount(): Int = state.value.data?.projects?.size ?: 0
 
     private companion object {
-        /** The key of the open form's [SavedProjectForm] in the route's saved state. */
         const val SAVED_FORM = "project-form"
     }
 }

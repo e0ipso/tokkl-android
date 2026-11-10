@@ -33,10 +33,9 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.core.catalog.R as CatalogR
 
 /**
- * The client form, as the web app's ClientEditor: name and notes, as [draft] holds them, which
- * the page's view model keeps and [onDraftChange] changes. Save with an empty name marks the
- * field with the web app's message and moves focus to it. While nothing can be changed, Save is
- * off and the form says why.
+ * The client form, as the web app's ClientEditor. Save with an empty name marks the field with the
+ * web app's message and moves focus to it. While nothing can be changed, Save is off and the form
+ * says why.
  */
 @Composable
 internal fun ClientFormContent(

@@ -90,7 +90,5 @@ internal fun Favorite.toCached() = CachedFavorite(
 
 internal fun PendingChange.toHeld() = HeldChange(sequence, kind, entry().toModel(), refusal)
 
-/**
- * The server's entry as the app models it, or null when its start is not an RFC 3339 timestamp.
- */
+/** The server's entry as the app models it, or null when its start is not an RFC 3339 timestamp. */
 fun ServerTimeEntry.toTimeEntry(): TimeEntry? = toCached()?.toModel()

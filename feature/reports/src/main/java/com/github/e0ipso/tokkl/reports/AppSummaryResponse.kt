@@ -138,7 +138,6 @@ private fun amountsOf(
     }
 }
 
-/** The series, one point for each day, week or month. */
 private fun pointsOf(response: AppSummaryResponse, body: JsonObject, extras: ReportExtraProjection): List<SeriesPoint> {
     val rawSeries = body.getValue("series") as JsonArray
     return response.series.mapIndexed { index, point ->
@@ -153,7 +152,6 @@ private fun pointsOf(response: AppSummaryResponse, body: JsonObject, extras: Rep
     }
 }
 
-/** The time per project, from the report's groups. */
 private fun projectsOf(
     response: AppSummaryResponse,
     body: JsonObject,

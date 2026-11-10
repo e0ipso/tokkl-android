@@ -39,7 +39,6 @@ fun changeText(change: CatalogChange): String = when (change) {
     is CatalogChange.Deleted -> stringResource(R.string.catalog_deleted, change.name)
 }
 
-/** What [problem] means for the user, in a sentence. */
 @Composable
 fun problemText(problem: ServerProblem): String = serverProblemText(LocalResources.current, problem)
 
@@ -79,10 +78,7 @@ fun ServerNeededNotice(title: String, message: String, onRetry: () -> Unit, modi
     }
 }
 
-/**
- * Why the page could not load or change something, other than an unreachable server, which
- * [ServerNeededNotice] covers: [problem] in an [ErrorBanner], with Try again when [onRetry] is set.
- */
+/** Any problem other than an unreachable server, which [ServerNeededNotice] covers. */
 @Composable
 fun ProblemBanner(problem: ServerProblem, modifier: Modifier = Modifier, onRetry: (() -> Unit)? = null) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.inGroup)) {

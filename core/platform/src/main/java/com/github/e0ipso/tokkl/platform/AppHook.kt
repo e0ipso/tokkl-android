@@ -30,7 +30,6 @@ interface AppHook {
  */
 interface MainActivityOwner {
 
-    /** The class of the activity the launcher opens. */
     val mainActivity: Class<out Activity>
 }
 

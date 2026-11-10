@@ -20,11 +20,9 @@ const val MAX_FAVORITES = 9
  * Saves the account's favorites on the server, then in the cache. Editing the list needs the
  * server: nothing is queued, and a failure leaves the server and the cache as they were.
  *
- * @param client the signed-in account's API client, or null when signed out.
  * @param account the account each save belongs to: the one signed in when it starts.
  * @param replaceFavorites replaces the cached favorites while the save's account is current, as
  *   `AccountCache.replaceFavorites` does, and returns false once that account has ended.
- * @param scope the application's scope, where each save runs.
  */
 class FavoritesServer(
     private val client: ApiClientProvider,

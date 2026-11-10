@@ -50,10 +50,6 @@ class RunningCheck(private val workManager: CurrentWorkManager) : AccountDataOwn
         followRunning(running, ::schedule, ::cancel)
     }
 
-    /**
-     * Enqueues the periodic check, which waits for a connected network. A check already waiting
-     * or running stays, and this call adds none. Returns at once.
-     */
     fun schedule() {
         val request = PeriodicWorkRequestBuilder<RunningCheckWorker>(INTERVAL)
             .setInitialDelay(INTERVAL)
@@ -62,7 +58,6 @@ class RunningCheck(private val workManager: CurrentWorkManager) : AccountDataOwn
         workManager.get().enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.KEEP, request)
     }
 
-    /** Cancels the check, waiting or running. Returns at once. */
     fun cancel() {
         workManager.get().cancelUniqueWork(WORK_NAME)
     }
@@ -77,7 +72,6 @@ class RunningCheck(private val workManager: CurrentWorkManager) : AccountDataOwn
     }
 
     companion object {
-        /** The unique work's name. One check by this name waits or runs at a time. */
         const val WORK_NAME = "running-check"
 
         /**
@@ -118,15 +112,11 @@ class RunningCheckWorker(
     }
 }
 
-/**
- * Calls [schedule] while [running] is true and [cancel] while it is false, until [running] ends. A
- * failed read tries again after a wait, as [collectDurably] does.
- */
+/** A failed read tries again after a wait, as [collectDurably] does. */
 internal suspend fun followRunning(running: Flow<Boolean>, schedule: () -> Unit, cancel: () -> Unit) {
     running.distinctUntilChanged().collectDurably("RunningCheck") { if (it) schedule() else cancel() }
 }
 
-/** What one running entry check writes to the cache. */
 data class RunningCheckWrites(
     /** The cached running entries the server no longer runs. */
     val delete: List<EntryId> = emptyList(),

@@ -25,8 +25,5 @@ private fun clockFor(remainingMillis: Long): PomodoroClock = if (remainingMillis
     PomodoroClock(true, -remainingMillis / MILLIS_PER_SECOND)
 }
 
-/**
- * The ringing phase's clock at the phone's [deviceNow]: time left before its planned end, or the
- * overtime since, rounded as [phaseClockAt] rounds them.
- */
+/** Time left before the planned end, or the overtime since, rounded as [phaseClockAt] rounds them. */
 fun PomodoroRing.clockAt(deviceNow: Instant): PomodoroClock = clockFor(Duration.between(deviceNow, end).toMillis())

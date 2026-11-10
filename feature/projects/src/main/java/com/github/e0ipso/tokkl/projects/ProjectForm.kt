@@ -37,13 +37,10 @@ import java.util.Locale
 import com.github.e0ipso.tokkl.core.catalog.R as CatalogR
 
 /**
- * The project form, as the web app's ProjectEditor: name, colour, client, hourly rate, currency,
- * estimated hours and billable by default, as the [form]'s draft holds them, which the page's view
- * model keeps and [onDraftChange] changes. The client list comes from the clients on the phone;
- * an archived client shows only when the project has it. Save checks the fields, marks each
+ * The project form, as the web app's ProjectEditor. The client list comes from the clients on the
+ * phone; an archived client shows only when the project has it. Save checks the fields, marks each
  * mistake under its field with the web app's message and moves focus to the first one. While
- * nothing can be changed, Save is off and the form says why. Under the form of a project the
- * server has come its [tasks].
+ * nothing can be changed, Save is off and the form says why.
  */
 @Composable
 internal fun ProjectFormContent(

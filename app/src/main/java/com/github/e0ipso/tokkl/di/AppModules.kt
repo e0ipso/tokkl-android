@@ -36,10 +36,6 @@ internal val startupModule = module {
     singleOf(::AppStartup)
 }
 
-/**
- * Every module of the app, for `startKoin`: each core module's and each feature's own, and the
- * shell's, which run the process start, join what spans the modules and host the navigation.
- */
 internal val appModules: List<Module> = listOf(
     platformModule,
     sessionModule,

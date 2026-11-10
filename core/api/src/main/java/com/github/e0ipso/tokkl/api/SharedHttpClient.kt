@@ -24,24 +24,18 @@ fun interface ApiConnector {
 }
 
 /**
- * The app's only [OkHttpClient]. Every request goes through it, or through
- * a client [sendingOnce] derives from it, so its connection pool, dispatcher
- * and security settings apply everywhere. SingleHttpClientTest fails when
- * other app code builds an HTTP client.
+ * The app's only [OkHttpClient]. Every request goes through it, or through a client [sendingOnce]
+ * derives from it, so its connection pool, dispatcher and security settings apply everywhere.
+ * SingleHttpClientTest fails when other app code builds an HTTP client.
  *
- * The app makes one, so every request shares one connection pool and one
- * dispatcher.
+ * Every request and redirect must stay on [server]'s current server, and a plain `http://` server
+ * needs the user's confirmation in [trust]; see [ConfiguredServerGuard]. TLS goes through
+ * [PinningTrustManager]: the platform's CAs first, then the certificate the user pinned. OkHttp's
+ * own host name check stays on. Later security settings go into [build], never into a second
+ * client.
  *
- * Every request and redirect must stay on [server]'s current server, and a
- * plain `http://` server needs the user's confirmation in [trust]; see
- * [ConfiguredServerGuard]. TLS goes through [PinningTrustManager]: the
- * platform's CAs first, then the certificate the user pinned. OkHttp's own
- * host name check stays on. Later security settings go into [build], never
- * into a second client.
- *
- * A request tagged [StreamingRead] reads its body with no read timeout, for
- * an event stream that waits between events by design. Every other setting
- * stays as it is for it.
+ * A request tagged [StreamingRead] reads its body with no read timeout, for an event stream that
+ * waits between events by design. Every other setting stays as it is for it.
  */
 class SharedHttpClient(private val server: ConfiguredServer, private val trust: ServerTrust) : ApiConnector {
 
@@ -54,10 +48,8 @@ class SharedHttpClient(private val server: ConfiguredServer, private val trust: 
         api(server, credentials, io, trustListener = null, successListener = null)
 
     /**
-     * The API of [server] with [credentials], sending through this client, whose calls run on
-     * [io]. [trustListener] and [successListener] hear how its requests fare with the trust
-     * checks and which get an answer. The first call builds the client: make it off the main
-     * thread.
+     * [trustListener] and [successListener] hear how its requests fare with the trust checks and
+     * which get an answer. The first call builds the client: make it off the main thread.
      */
     fun api(
         server: ServerUrl,
@@ -134,10 +126,7 @@ class SharedHttpClient(private val server: ConfiguredServer, private val trust: 
         }
     }
 
-    /**
-     * The platform's default trust manager. On Android it trusts the system
-     * and user CAs that res/xml/network_security_config.xml names.
-     */
+    /** On Android it trusts the system and user CAs that res/xml/network_security_config.xml names. */
     private fun platformTrustManager(): X509TrustManager =
         TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
             .apply { init(null as KeyStore?) }
@@ -164,13 +153,12 @@ val ApiJson: StringFormat get() = Wire
 internal val Wire: Json = Json { ignoreUnknownKeys = true }
 
 /**
- * HTTP Basic credentials for both APIs. Tokkl decodes the header as UTF-8 and
- * splits it at the first colon, so a password may contain colons and an email
- * may not. `toString` never prints a secret.
+ * HTTP Basic credentials for both APIs. Tokkl decodes the header as UTF-8 and splits it at the
+ * first colon, so a password may contain colons and an email may not. `toString` never prints a
+ * secret.
  */
 sealed class ApiCredentials {
 
-    /** The value of the `Authorization` header. */
     abstract val authorizationHeader: String
 
     /** Sends `<api_token>:api_token`. */
@@ -195,10 +183,9 @@ sealed class ApiCredentials {
 }
 
 /**
- * What the user has agreed to for a server: sending to a plain `http://` URL,
- * and trusting a self-signed certificate by its fingerprint. [SharedHttpClient]
- * checks it on every request and every TLS handshake, so no screen or
- * background job can skip the question.
+ * What the user has agreed to for a server: sending to a plain `http://` URL, and trusting a
+ * self-signed certificate by its fingerprint. [SharedHttpClient] checks it on every request and
+ * every TLS handshake, so no screen or background job can skip the question.
  */
 interface ServerTrust {
 
@@ -208,10 +195,7 @@ interface ServerTrust {
      */
     fun pinnedSha256(host: String, port: Int): String?
 
-    /**
-     * Whether the user confirmed that requests to [server], a plain `http://`
-     * URL, may carry the token or password unencrypted.
-     */
+    /** Whether the user confirmed that requests to [server], a plain `http://` URL, may go unencrypted. */
     fun isCleartextConfirmed(server: ServerUrl): Boolean
 
     /** Records the user's confirmation for [server]. Does disk I/O. */

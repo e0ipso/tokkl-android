@@ -107,10 +107,7 @@ class TimeEntriesApi internal constructor(private val client: ApiTransport) {
     suspend fun delete(workspaceId: WorkspaceId, id: EntryId): ApiResult<Unit> =
         client.sendNoContent(HttpMethod.DELETE, entries(workspaceId, id), body = null, resend = false)
 
-    /**
-     * `POST /api/app/time_entries/{id}/restore`, Tokkl's Undo of a delete, which answers with the
-     * entry. With [resend] false it goes out once, as [ApiTransport.send] describes.
-     */
+    /** `POST /api/app/time_entries/{id}/restore`, Tokkl's Undo of a delete, which answers with the entry. */
     suspend fun restore(id: EntryId, resend: Boolean): ApiResult<ServerTimeEntry> = client.send(
         HttpMethod.POST,
         client.server.appUrl("time_entries", id.toString(), "restore"),

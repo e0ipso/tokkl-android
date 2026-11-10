@@ -6,7 +6,6 @@ import com.github.e0ipso.tokkl.session.AccountSettings
 import java.time.LocalDate
 import java.time.ZoneId
 
-/** What the calendar shows. */
 @Immutable
 sealed interface CalendarState {
 
@@ -35,10 +34,8 @@ sealed interface CalendarState {
     ) : CalendarState {
         val allDay: Map<LocalDate, List<CalendarEntry>> = allDayEntries(entries, weekDays, zone)
 
-        /** The seven days of the week, from [weekStart]. */
         val weekDays: List<LocalDate> get() = (0L until 7L).map(weekStart::plusDays)
     }
 }
 
-/** The edge of a block that a resize drags. */
 enum class ResizeEdge { START, END }

@@ -34,7 +34,6 @@ interface CatalogRepository<D> {
     /** The workspace the page manages: [stored] from the account settings, or the server's default. */
     suspend fun workspace(stored: WorkspaceId?): ApiResult<WorkspaceId>
 
-    /** What the page lists in [workspace]. */
     suspend fun load(workspace: WorkspaceId): ApiResult<D>
 }
 
@@ -56,13 +55,8 @@ sealed interface CatalogChange {
 }
 
 /**
- * What a page that manages projects, clients or tags shows.
- *
- * @property data what the page loaded from the server, or null until it loads.
  * @property loadProblem why [data] did not load, or why the server could not be reached for the
  *   last change. While it is set, nothing can be changed.
- * @property overlay the form or question open over the list, or null.
- * @property sending a change is on its way to the server.
  * @property changeProblem why the server refused the last change, or null.
  * @property done the change the server last accepted, until the page has said so.
  */
@@ -85,17 +79,13 @@ data class CatalogState<D, O>(
  * clients or tags (docs/PRD.md P2 to P4). It loads them from [repository] each time the page shows
  * and each time the app comes back to the foreground with the page on screen, as its view model's
  * stateInPage tells it through [PageLoads], and sends each change at once. A load keeps the list
- * and the form or question open over it until the answer comes. They go with the view model, when
- * the page's route leaves the back stack. Nothing is queued: offline, or with the server out of
- * reach, nothing changes. Each change goes through [changes], which refreshes the offline cache after
- * the server accepts it, so the picker, the history and the reports show it.
+ * and the form or question open over it until the answer comes. Nothing is queued: offline, or
+ * with the server out of reach, nothing changes. Each change goes through [changes], which
+ * refreshes the offline cache after the server accepts it, so the picker, the history and the
+ * reports show it.
  *
  * Call every function on the main thread.
  *
- * @param repository finds the workspace and reads the page's data from it. Runs on [io].
- * @param settings the account's default workspace from the stored settings, or null when they
- *   do not have it.
- * @param changes sends each change in the application's scope and refreshes the cache after it.
  * @param restored the form or question a page kept in its saved state, open over the list from the
  *   start, as after a new process restored the page.
  */
@@ -130,22 +120,20 @@ class CatalogModel<D, O>(
      */
     private var accepted = 0
 
-    /** The workspace the data came from, once a load found it. */
     private var workspace: WorkspaceId? = null
 
     /** The workspace the page manages: the one the data came from, or else the stored one, or null. */
     fun workspace(): WorkspaceId? = workspace ?: settings.defaultWorkspaceId()
 
     /**
-     * The page shows: loads the data. A page that shows again after a trip to the background keeps
-     * what it shows until the answer comes, and an open form or question stays as it is.
+     * A page that shows again after a trip to the background keeps what it shows until the
+     * answer comes, and an open form or question stays as it is.
      */
     override fun shown() {
         opened = true
         load()
     }
 
-    /** Loads the data again, as after a failure. */
     fun retry() {
         if (opened) load()
     }
@@ -172,7 +160,6 @@ class CatalogModel<D, O>(
         mutableState.value = CatalogState()
     }
 
-    /** Opens [overlay] over the list, while a change can go to the server. */
     fun show(overlay: O) {
         if (opened && workspace != null && state.value.canChange) {
             mutableState.update { it.copy(overlay = overlay, changeProblem = null) }
@@ -187,21 +174,19 @@ class CatalogModel<D, O>(
         mutableState.update { it.copy(overlay = it.overlay?.let(edit)) }
     }
 
-    /** Closes the form or question over the list. */
     fun dismiss() {
         mutableState.update { it.copy(overlay = null, changeProblem = null) }
     }
 
-    /** The page has said that [CatalogState.done] happened. */
     fun doneShown() {
         mutableState.update { it.copy(done = null) }
     }
 
     /**
-     * Sends [request] to the workspace through [changes], unless a change cannot go now. Once the
-     * server accepts it, the cache refreshes, and while the list is open [apply] puts the answer
-     * into the data, the overlay closes and [done] says what happened. A refusal keeps the overlay
-     * open with the reason. An unreachable server turns every action off until a load gets through.
+     * Once the server accepts [request], the cache refreshes, and while the list is open [apply]
+     * puts the answer into the data, the overlay closes and [done] says what happened. A refusal
+     * keeps the overlay open with the reason. An unreachable server turns every action off until a
+     * load gets through.
      * Once sent, the change and the refresh after it outlive the page's scope. An answer that comes
      * after the list closed, also when it opened again since, as for another project, changes
      * nothing on the page.
@@ -297,6 +282,5 @@ suspend fun managedWorkspace(api: TokklApi, stored: WorkspaceId?): ApiResult<Wor
     }
 }
 
-/** The workspace the catalog pages manage, as [managedWorkspace] finds it with the signed-in account's API. */
 suspend fun ApiClientProvider.managedWorkspace(stored: WorkspaceId?): ApiResult<WorkspaceId> =
     signedIn { managedWorkspace(it, stored) }

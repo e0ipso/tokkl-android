@@ -25,7 +25,6 @@ class AccountSettingsStore(context: Context, private val io: CoroutineContext) :
 
     private val file = PreferencesFile(context, FILE_NAME, io)
 
-    /** The stored settings, or null when none are stored. */
     override suspend fun load(): AccountSettings? = file.read {
         val timeZone = getString(KEY_TIME_ZONE, null) ?: return@read null
         val beginningOfWeek = dayOfWeek(getInt(KEY_BEGINNING_OF_WEEK, -1)) ?: return@read null
@@ -52,7 +51,6 @@ class AccountSettingsStore(context: Context, private val io: CoroutineContext) :
         )
     }
 
-    /** Replaces the stored settings in one write. */
     @Throws(IOException::class)
     override suspend fun save(value: AccountSettings) {
         file.commit {

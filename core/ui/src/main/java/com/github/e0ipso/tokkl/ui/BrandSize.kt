@@ -14,6 +14,5 @@ import com.github.e0ipso.tokkl.core.ui.R
  * come from.
  */
 enum class BrandSize(internal val wordmarkWidth: Dp, @DrawableRes internal val wordmark: Int) {
-    /** Tokkl's lg, on its own above a screen's content, as on sign-in. */
     LARGE(260.dp, R.drawable.tokkl_wordmark_lg),
 }

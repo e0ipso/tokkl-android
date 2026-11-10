@@ -30,10 +30,6 @@ fun interface TimerSyncWatcher {
  *
  * @param startService starts [TimerSyncService] in the foreground, and returns false when the
  *   platform refuses, as it does for an app in the background.
- * @param signedIn whether an account is signed in, read from the session.
- * @param timerState gives where the signed-in account's timer state takes the stream's events.
- * @param timerApi whether the server offers the timer API.
- * @param signInNeeded whether the server refused the account's credential.
  * @param refusal hears a credential the stream's server refused. The app pauses the queue as its
  *   own refusal does, which shows the prompt to sign in again.
  * @param scope where it follows the ends of [timerSync]'s streams that no reconnect fixes, for as
@@ -133,7 +129,6 @@ class TimerSyncFollower internal constructor(
     /** A new instance of the service runs in the foreground. Returns its number. */
     internal fun serviceRuns(): Int = instances.incrementAndGet().also { running.value = it }
 
-    /** The service [instance] is gone. */
     internal fun serviceEnded(instance: Int) {
         running.compareAndSet(instance, null)
     }

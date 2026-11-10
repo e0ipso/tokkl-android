@@ -14,13 +14,11 @@ import java.time.ZoneId
 
 /** What the calendar's taps, drags and TalkBack actions do. Without it the calendar only shows entries. */
 interface CalendarEditing {
-    /** Creates the entry that a drag from clock minute [fromMinute] to [toMinute] on [day] makes. */
     fun create(day: LocalDate, fromMinute: Int, toMinute: Int)
 
     /** Moves the stopped [entry] [deltaMinutes] from its block on [day]; [dayMode] keeps it on that day. */
     fun move(entry: CalendarEntry, day: LocalDate, deltaMinutes: Int, dayMode: Boolean)
 
-    /** Moves the [edge] of the stopped [entry] [deltaMinutes]. */
     fun resize(entry: CalendarEntry, edge: ResizeEdge, deltaMinutes: Int)
 
     /** Opens the entry form on the stopped [entry], where its times change as a move or resize would. */
@@ -29,11 +27,9 @@ interface CalendarEditing {
     /** Opens the entry form for a new entry on [day], as a drag on empty space would make. */
     fun add(day: LocalDate)
 
-    /** Opens the entry form for a new no-time entry on [day], from the All day row. */
     fun addAllDay(day: LocalDate)
 }
 
-/** What a drag in progress does to a block. */
 internal enum class DragKind { MOVE, RESIZE_START, RESIZE_END }
 
 /** A drag in progress, from a long press until the finger lifts. */
@@ -239,10 +235,7 @@ internal suspend fun PointerInputScope.detectCalendarGestures(
         ) { awaitBeforeHold(down.id, down.position) }
         when (before) {
             BeforeHold.TAP -> if (target is DragTarget.OnBlock) onTap(target.block.entry)
-
             BeforeHold.LEFT -> Unit
-
-            // Held: the press is a drag now.
             null -> if (target != null) drag(down.id, down.position, target, onHold, onMove, onLift, onCancel)
         }
     }

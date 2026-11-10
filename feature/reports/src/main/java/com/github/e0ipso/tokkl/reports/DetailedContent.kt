@@ -40,10 +40,9 @@ import com.github.e0ipso.tokkl.ui.theme.screenContent
 import java.time.LocalDate
 
 /**
- * The detailed report as the web app's DetailedTab lists it: one row per entry, newest first,
- * with its day, times, description, project and duration, in the account's timezone and clock.
- * [header] scrolls away with the list. When the end of the list comes near, it asks for the next
- * page with [onLoadMore], so the phone never holds more than the pages scrolled to.
+ * The detailed report as the web app's DetailedTab lists it, newest first. [header] scrolls away
+ * with the list. Near the end of the list it asks for the next page with [onLoadMore], so the
+ * phone never holds more than the pages scrolled to.
  */
 @Composable
 internal fun DetailedContent(

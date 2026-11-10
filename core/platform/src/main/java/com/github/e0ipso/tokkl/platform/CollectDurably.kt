@@ -30,8 +30,6 @@ private fun logUnexpected(observer: String, failure: Exception) {
  *   other exception goes to [failures] before the wait.
  * - The waits start at one second and double after each failure in a row, up to two minutes.
  * - Cancellation ends it, as do errors, such as running out of memory.
- *
- * [observer] names the observer in [failures].
  */
 suspend fun <T> Flow<T>.collectDurably(
     observer: String,

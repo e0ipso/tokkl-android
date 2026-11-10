@@ -95,7 +95,6 @@ class TagsViewModelTest {
     private fun tagsModelAfterProcessDeath() =
         tagsModel(SavedStateHandle(saved.keys().associateWith { saved.get<Any?>(it) }))
 
-    /** The rename form and the delete question come back after process death, about the same tag. */
     @Test
     fun aNewProcessOpensTheRenameFormOrTheDeleteQuestionAgain() {
         screen.show()

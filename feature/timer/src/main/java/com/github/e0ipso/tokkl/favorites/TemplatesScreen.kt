@@ -34,12 +34,10 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
- * More > Timer templates (docs/PRD.md T5). Ordered rows, and New or Edit forms for the
- * description, project, task, tags and billable. Save and Cancel, Delete, and Move up and
- * down. Changes need the server: offline, or while a save is on its way, the actions are off.
- * Cancel drops the form and leaves the saved list as it was. A failed save leaves that list
- * too, and says why. The project picker offers the account's default workspace; a template does
- * not store a workspace of its own.
+ * More > Timer templates (docs/PRD.md T5). Changes need the server: offline, or while a save is
+ * on its way, the actions are off. A failed save leaves the list as it was and says why. The
+ * project picker offers the account's default workspace; a template does not store a workspace
+ * of its own.
  */
 @Composable
 fun TemplatesScreen(model: FavoritesViewModel, modifier: Modifier = Modifier) {

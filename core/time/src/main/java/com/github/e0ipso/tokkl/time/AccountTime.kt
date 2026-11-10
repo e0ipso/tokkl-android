@@ -30,7 +30,6 @@ class AccountTime(
 
     fun today(): LocalDate = LocalDate.now(clock)
 
-    /** [instant] on the account's wall clock, for display. */
     fun local(instant: Instant): ZonedDateTime = instant.atZone(zone)
 
     /**
@@ -48,8 +47,8 @@ class AccountTime(
     )
 
     /**
-     * Minutes after midnight on the account's wall clock at [instant], as minutesOfDay in the web app's
-     * lib/settings.ts.
+     * Minutes after midnight on the account's wall clock at [instant], as minutesOfDay in the web
+     * app's lib/settings.ts.
      */
     fun minutesOfDay(instant: Instant): Int = local(instant).let { it.hour * MINUTES_PER_HOUR + it.minute }
 
@@ -57,17 +56,15 @@ class AccountTime(
     fun startOfWeek(date: LocalDate): LocalDate = date.with(TemporalAdjusters.previousOrSame(firstDayOfWeek))
 
     /**
-     * The span the server will store for a stopped entry it has not received yet. This is
-     * [snapUnsent][com.github.e0ipso.tokkl.time.snapUnsent] in the account's zone with the
-     * account's time resolution. Without a resolution the span comes back unchanged. Never pass
-     * the running entry. Null means the server would reject a typed span as too short.
+     * The span the server will store for a stopped entry it has not received yet. Without a
+     * resolution the span comes back unchanged. Never pass the running entry. Null means the server
+     * would reject a typed span as too short.
      */
     fun snapUnsent(start: Instant, stop: Instant): SnappedSpan? = snapUnsent(start, stop, timeResolutionMinutes, zone)
 
     /**
-     * [seconds] rounded the way the server stores a no-time entry's duration, to the account's
-     * time resolution. Without a resolution, or with a value that is not one, it comes back
-     * unchanged.
+     * [seconds] rounded the way the server stores a no-time entry's duration, to the account's time
+     * resolution. Without a resolution, or with a value that is not one, it comes back unchanged.
      */
     fun snapDuration(seconds: Long): Long = snapDuration(seconds, timeResolutionMinutes?.takeIf(::isTimeResolution))
 
@@ -89,9 +86,7 @@ class AccountTime(
             snapInstant(at.truncatedTo(java.time.temporal.ChronoUnit.SECONDS), timeResolutionMinutes, zone)
         }
 
-    /**
-     * Legacy queued Stop and switch-span prediction. New captured Stops use [snapCapturedStop].
-     */
+    /** Legacy queued Stop and switch-span prediction. New captured Stops use [snapCapturedStop]. */
     fun snapStop(start: Instant, at: Instant, oneStep: Boolean): SnappedSpan =
         snapStop(start, at, timeResolutionMinutes, zone, oneStep)
 

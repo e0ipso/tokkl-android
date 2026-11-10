@@ -32,7 +32,6 @@ typealias StoredTimerView = StoredPreference<TimerView>
  * phone.
  *
  * @param store keeps the view on the phone. It loads from it as this is made, off the main thread.
- * @param client the signed-in account's API client, or null when signed out.
  * @param capabilities whether the server keeps Tokkl's preferences, read when a tap is sent.
  * @param account the account each change belongs to: once sign-out has ended it, nothing more is stored or sent.
  * @param scope outlives every screen, so leaving the app does not cancel a write.
@@ -69,7 +68,6 @@ class TimerViewSetting(
         sharing = { capabilities.keepsPreferences() },
     )
 
-    /** The view the Timer page shows. */
     val view: StateFlow<TimerView> get() = preference.value
 
     override val isReady: Boolean get() = preference.isReady
@@ -118,7 +116,6 @@ internal fun MePreferences.timerView(): TimerView {
  * the view's value in Tokkl's `timerView` preference.
  */
 enum class TimerView(@StringRes val label: Int, val preferenceValue: String) {
-    /** The entries, a day at a time. */
     LIST(R.string.timer_view_list, "list"),
 
     /** The calendar: the week, or the day on a phone held upright. */

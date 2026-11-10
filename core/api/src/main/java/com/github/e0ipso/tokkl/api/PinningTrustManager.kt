@@ -14,10 +14,9 @@ import javax.net.ssl.X509TrustManager
 import javax.security.auth.x500.X500Principal
 
 /**
- * A server's leaf certificate as the trust prompt shows it, and as a pin
- * stores it: the TLS server's [host] and [port], the SHA-256 of the
- * certificate's DER encoding as lowercase hex, and its subject. Public data
- * only.
+ * A server's leaf certificate as the trust prompt shows it, and as a pin stores it: the TLS
+ * server's [host] and [port], the SHA-256 of the certificate's DER encoding as lowercase hex, and
+ * its subject. Public data only.
  */
 data class ServerCertificate(val host: String, val port: Int, val sha256: String, val subject: String) {
 
@@ -40,11 +39,10 @@ data class ServerCertificate(val host: String, val port: Int, val sha256: String
 }
 
 /**
- * No system or user CA trusts the server's certificate, and the user has
- * not pinned it. [pinChanged] is true when the user pinned another
- * certificate for this host and port. The TLS handshake fails on this, before
- * any HTTP request, so no credential has left the phone. The message names
- * the host and port only.
+ * No system or user CA trusts the server's certificate, and the user has not pinned it.
+ * [pinChanged] is true when the user pinned another certificate for this host and port. The TLS
+ * handshake fails on this, before any HTTP request, so no credential has left the phone. The
+ * message names the host and port only.
  */
 class UntrustedCertificateException(
     val certificate: ServerCertificate,
@@ -56,26 +54,25 @@ class UntrustedCertificateException(
 )
 
 /**
- * No system or user CA trusts the server's certificate, and it does not name
- * [host], so pinning it could not work: OkHttp's host name check would refuse
- * it after the handshake. The handshake fails on this before any HTTP request.
+ * No system or user CA trusts the server's certificate, and it does not name [host], so pinning it
+ * could not work: OkHttp's host name check would refuse it after the handshake. The handshake
+ * fails on this before any HTTP request.
  */
 class CertificateHostMismatchException(val host: String, cause: CertificateException) :
     CertificateException("The certificate does not name $host", cause)
 
 /**
- * The [UntrustedCertificateException] among this exception's causes. The TLS
- * stack reports a certificate that [PinningTrustManager] refused as an
+ * The TLS stack reports a certificate that [PinningTrustManager] refused as an
  * `SSLHandshakeException` caused by it.
  */
 internal fun IOException.untrustedCertificate(): UntrustedCertificateException? =
     causes().filterIsInstance<UntrustedCertificateException>().firstOrNull()
 
 /**
- * Whether the server's certificate does not name the host: [PinningTrustManager]
- * refused it with a [CertificateHostMismatchException], or OkHttp's host name
- * check, which runs after the handshake and before any request, threw
- * `SSLPeerUnverifiedException` for a certificate that a CA or a pin trusts.
+ * Whether the server's certificate does not name the host: [PinningTrustManager] refused it with a
+ * [CertificateHostMismatchException], or OkHttp's host name check, which runs after the handshake
+ * and before any request, threw `SSLPeerUnverifiedException` for a certificate that a CA or a pin
+ * trusts.
  */
 internal fun IOException.certificateHostMismatch(): Boolean =
     causes().any { it is CertificateHostMismatchException || it is SSLPeerUnverifiedException }
@@ -86,22 +83,19 @@ private fun IOException.causes(): Sequence<Throwable> = generateSequence<Throwab
 private const val MAX_CAUSES = 8
 
 /**
- * The trust manager of [SharedHttpClient]. The [platform] trust manager
- * decides first, so a certificate that a system or user CA signed is trusted
- * as before and the network security config still applies. When the platform
- * refuses the chain, the leaf is trusted only if its SHA-256 matches the pin
- * the user stored for that host and port, read from [pins].
- * Anything else fails with [UntrustedCertificateException], which carries
- * the leaf for the trust prompt, or with [CertificateHostMismatchException]
- * when the leaf does not name the host, so the prompt never offers a
- * certificate that OkHttp's host name check would refuse.
+ * The trust manager of [SharedHttpClient]. The [platform] trust manager decides first, so a
+ * certificate that a system or user CA signed is trusted as before and the network security config
+ * still applies. When the platform refuses the chain, the leaf is trusted only if its SHA-256
+ * matches the pin the user stored for that host and port. Anything else fails with
+ * [UntrustedCertificateException], which carries the leaf for the trust prompt, or with
+ * [CertificateHostMismatchException] when the leaf does not name the host, so the prompt never
+ * offers a certificate that OkHttp's host name check would refuse.
  *
- * The pin covers the exact leaf certificate. The handshake proves the server
- * holds its private key, so a matching leaf is the certificate the user
- * trusted. OkHttp still checks the host name against the leaf afterwards.
+ * The pin covers the exact leaf certificate. The handshake proves the server holds its private
+ * key, so a matching leaf is the certificate the user trusted.
  *
- * Lint warns about any custom trust manager, since many skip the check. This
- * one calls the platform's first and adds only the exact pinned leaf.
+ * Lint warns about any custom trust manager, since many skip the check. This one calls the
+ * platform's first and adds only the exact pinned leaf.
  */
 @Suppress("CustomX509TrustManager")
 internal class PinningTrustManager(

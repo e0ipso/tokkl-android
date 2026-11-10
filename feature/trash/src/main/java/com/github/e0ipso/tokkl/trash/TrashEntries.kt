@@ -32,9 +32,6 @@ internal object TrashEntries : FeatureRoutes {
     }
 }
 
-/**
- * The Trash page from its view model: hands its state and events to [TrashScreen].
- */
 @Composable
 fun TrashPage(model: TrashViewModel, modifier: Modifier = Modifier) {
     val page by model.page.collectAsStateWithLifecycle()
@@ -64,7 +61,6 @@ val trashPage = TopLevelDestination(
     isAvailable = { it.trash },
 )
 
-/** The Trash page. */
 @Serializable
 @SerialName("com.github.e0ipso.tokkl.navigation.Route.Trash")
 data object TrashRoute : Route

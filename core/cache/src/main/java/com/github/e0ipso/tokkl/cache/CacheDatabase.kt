@@ -12,19 +12,12 @@ import androidx.room.migration.AutoMigrationSpec
 /**
  * The offline cache and the queue of unsent changes in the private database file [FILE_NAME]. It
  * stays on the phone, because the backup and data extraction rules leave out every domain. Room
- * exports each version's schema to core/cache/schemas, which git tracks, so a later version can migrate
- * from it. Every version migrates from the one before and never drops the file, because that
- * would lose the queued changes.
+ * exports each version's schema to core/cache/schemas, which git tracks, so a later version can
+ * migrate from it. Every version migrates from the one before and never drops the file, because
+ * that would lose the queued changes.
  *
- * Version 2 adds the queue: `pending_changes` and `entry_ids`. Version 3 adds
- * `pending_changes.maybeSent`, version 4 `pending_changes.existingIds`, and version 5
- * `pending_changes.held` and `pending_changes.refusal`. Version 6 keeps the immutable captured
- * Stop instant and short Stop Undo records without changing older queued requests. Version 7
- * added `pause_chain` and `timer_session` for the phone's own Pause and Resume, and version 8
- * `pomodoro_session` for the phone's own Pomodoro. Version 9 drops those three tables, as the
- * server now keeps the pause chain and the session, and carries nothing from them. It leaves the
- * queue, the id mappings and the short Stop Undo records as they are. Version 10 adds `allDay` and
- * `day` to time entries, queued changes and short Stop Undo records; existing rows read as timed.
+ * Version 9 drops the phone's own pause chain and session tables, as the server now keeps them,
+ * and carries nothing from them. Version 10 adds `allDay` and `day`; existing rows read as timed.
  */
 @Database(
     entities = [

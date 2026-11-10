@@ -13,9 +13,6 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 
-// Design-time previews of the calendar, one day and the whole week, with sample entries at a
-// fixed noon.
-
 @PreviewLightDark
 @Composable
 private fun CalendarDayPreview() {

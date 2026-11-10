@@ -17,10 +17,8 @@ import kotlin.coroutines.CoroutineContext
  */
 interface StartupLoad {
 
-    /** Whether the load has ended. */
     val isReady: Boolean
 
-    /** Waits for the load to end. */
     suspend fun ready()
 }
 
@@ -53,19 +51,16 @@ class LoadedState<T>(scope: CoroutineScope, initial: T, loadContext: CoroutineCo
 
     override suspend fun ready() = loading.join()
 
-    /** [state] once the load has ended. */
     val loaded: Flow<T> = flow {
         ready()
         emitAll(state)
     }
 
-    /** The value once the load has ended. */
     suspend fun current(): T {
         ready()
         return state.value
     }
 
-    /** The value now: [state]'s. */
     val value: T get() = mutable.value
 
     /**

@@ -56,7 +56,6 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
  *
  * @param original what the entry had when editing started. Its archived project and task, and
  *   its done task, stay on offer with an "Archived" label; no other archived item is offered.
- * @param picked what the entry has now.
  */
 @Composable
 fun EntityPicker(

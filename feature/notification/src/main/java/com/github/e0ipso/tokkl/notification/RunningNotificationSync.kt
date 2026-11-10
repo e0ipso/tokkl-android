@@ -16,10 +16,8 @@ import kotlinx.coroutines.sync.withLock
 import java.io.IOException
 import kotlin.coroutines.CoroutineContext
 
-/** The running timer's notification, such as [RunningNotifier]. */
 interface RunningNotice {
 
-    /** Shows the notification for [content], or replaces the one on show. */
     fun post(content: RunningNotificationContent)
 
     fun remove()
@@ -40,7 +38,6 @@ interface RunningNotice {
  * @param shown the entry last followed, null for none.
  * @param currentId the id the cache holds an entry under now, given the id it was followed under:
  *   the server's once the server has answered the phone's create (`ChangeQueue.currentId`).
- * @param notice shows, replaces and takes away the notification.
  * @param io where the store and the notification calls run.
  */
 class RunningNotificationSync(
@@ -59,7 +56,7 @@ class RunningNotificationSync(
     private val lock = Mutex()
     private var latest: RunningNotificationContent? = null
 
-    /** Follows the running entry until the scope ends. Call once, at process start. */
+    /** Call once, at process start. */
     fun start(): Job = scope.launch(io) { follow() }
 
     /** Follows the running entry until [running] ends, reading it again after a failure, as [collectDurably] does. */
@@ -67,10 +64,7 @@ class RunningNotificationSync(
         running.distinctUntilChanged().collectDurably("RunningNotificationSync", action = ::apply)
     }
 
-    /**
-     * Applies the running entry [content]. When the server has given the followed entry its id,
-     * nothing changes on show, and the new id is kept.
-     */
+    /** When the server has given the followed entry its id, nothing changes on show, and the new id is kept. */
     suspend fun apply(content: RunningNotificationContent?) {
         lock.withLock {
             latest = content

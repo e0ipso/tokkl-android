@@ -50,10 +50,10 @@ import java.time.ZoneOffset
 /**
  * The report filters at Android's largest font scale, 200%, with every kind of filter active, one
  * of them negated: the text on the reports screen that names each active filter, and the filter
- * sheet with its top row, its search field, its headings, "Is" and "Is not", every choice and
- * Clear filters. No text is cut off or leaves its control or
- * the screen, no two parts of the sheet's top row overlap, and every control keeps a 48dp touch
- * target. ReportFiltersTest checks what the filters do against the server.
+ * sheet with its top row, its search field, its headings, "Is" and "Is not", every choice and Clear
+ * filters. No text is cut off or leaves its control or the screen, no two parts of the sheet's top
+ * row overlap, and every control keeps a 48dp touch target. ReportFiltersTest checks what the
+ * filters do against the server.
  */
 class ReportFiltersFitTest {
     @org.junit.After

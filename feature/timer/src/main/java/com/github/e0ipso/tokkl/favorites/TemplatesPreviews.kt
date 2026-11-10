@@ -8,8 +8,6 @@ import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 
-// Design-time previews of the timer templates page, with two sample templates.
-
 @PreviewLightDark
 @Composable
 private fun TemplatesPreview() {

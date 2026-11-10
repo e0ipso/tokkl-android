@@ -35,8 +35,6 @@ internal data class SignedInState(
 /**
  * The signed-in frame's state and events, in the signed-in session's store, so a sign-out drops
  * it with the session.
- *
- * @param badges the running dots the features put on their pages' items.
  */
 internal class SignedInViewModel(
     badges: List<PageBadge>,
@@ -53,7 +51,6 @@ internal class SignedInViewModel(
         ::SignedInState,
     ).stateIn(viewModelScope, whileShown, SignedInState(trust = trust.state.value))
 
-    /** Takes back the short Stop of [entryId], as its snackbar's Undo does. */
     suspend fun undoShortStop(entryId: EntryId) {
         changes.undoShortStop(entryId)
     }

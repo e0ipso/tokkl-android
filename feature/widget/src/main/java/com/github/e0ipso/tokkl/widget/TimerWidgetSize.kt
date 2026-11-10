@@ -51,5 +51,4 @@ internal fun timerWidgetProjectRows(
     )
 }
 
-/** The most project rows a widget lists. */
 private const val MAX_PROJECT_ROWS = 5

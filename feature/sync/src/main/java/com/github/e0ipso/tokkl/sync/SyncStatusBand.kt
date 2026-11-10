@@ -25,15 +25,9 @@ import java.time.Clock
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
- * The status element above the bottom bar (docs/PRD.md O5): the unsent icon and how many changes
- * the server has not received, then when it last answered, in the account's timezone and clock
- * format. TalkBack reads both lines as one. The icon and the words mark the state, never colour
- * alone, and the text wraps at any font scale.
- *
- * While the server has refused changes, [SyncStatus.needsAttention], a button opens the "needs
- * attention" list through [onOpenNeedsAttention]. The element lists no change itself. While the
- * server refuses the phone's API token, [SyncStatus.signInNeeded], it says so, and a button signs
- * in again through [onSignInAgain] (docs/PRD.md O6).
+ * The status element above the bottom bar (docs/PRD.md O5, O6). TalkBack reads both lines as one.
+ * The icon and the words mark the state, never colour alone, and the text wraps at any font scale.
+ * The element lists no change itself; a button opens the "needs attention" list.
  *
  * @param clock where today comes from, which decides whether the time needs its day.
  */

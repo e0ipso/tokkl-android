@@ -1,7 +1,5 @@
 package com.github.e0ipso.tokkl.time
 
-// Clock and calendar arithmetic by name.
-
 const val SECONDS_PER_MINUTE = 60
 const val MINUTES_PER_HOUR = 60
 const val SECONDS_PER_HOUR = 3_600

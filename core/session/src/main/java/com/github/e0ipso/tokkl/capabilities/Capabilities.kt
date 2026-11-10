@@ -23,7 +23,6 @@ fun ApiError.csvEndpointAbsent(): Boolean = this is ApiError.UnexpectedStatus &&
     HttpStatus.GONE,
 )
 
-/** Whether the server offers the CSV of [kind] ([Capabilities.summaryCsv], [Capabilities.detailedCsv]). */
 fun Capabilities.supports(kind: ReportCsvKind): Boolean = when (kind) {
     ReportCsvKind.SUMMARY -> summaryCsv == true
     ReportCsvKind.DETAILED -> detailedCsv == true
@@ -106,7 +105,6 @@ internal suspend fun probeTrash(api: TokklApi): TrashProbe = when (val result = 
 
 /** What `GET /api/app/timer` said about the server-owned timer. */
 internal sealed interface TimerStateProbe {
-    /** It answered with a timer state, which is [state]. */
     data class Present(val state: TimerState) : TimerStateProbe
 
     /** 404, or a 2xx that is not a timer state, so the server has no timer API the app can read. */

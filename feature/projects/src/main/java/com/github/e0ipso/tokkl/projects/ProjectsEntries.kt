@@ -33,9 +33,6 @@ internal object ProjectsEntries : FeatureRoutes {
     }
 }
 
-/**
- * The Projects page from its view model: hands its state and events to [ProjectsScreen].
- */
 @Composable
 fun ProjectsPage(model: ProjectsViewModel, modifier: Modifier = Modifier) {
     val page by model.page.collectAsStateWithLifecycle()
@@ -76,7 +73,6 @@ val projectsPage = TopLevelDestination(
     position = 30,
 )
 
-/** The Projects page. */
 @Serializable
 @SerialName("com.github.e0ipso.tokkl.navigation.Route.Projects")
 data object ProjectsRoute : Route

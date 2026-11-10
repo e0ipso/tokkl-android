@@ -37,9 +37,7 @@ import com.github.e0ipso.tokkl.core.ui.R as UiR
  * service stays a separate `mediaPlayback` service.
  *
  * [TimerSync] owns the stream. The service gives it the foreground state it needs in the
- * background, and the default network's changes. [TimerSyncFollower.follow] starts it at app
- * open, after sign-in and from the boot and update receiver, and stops it at sign-out, when the
- * server loses the timer API and when the server refuses the credential.
+ * background, and the default network's changes.
  *
  * Every start promotes the service before anything else, as `startForegroundService` requires, and
  * only then checks that the stream is still wanted. While it runs in the foreground, the follower
@@ -164,7 +162,6 @@ class TimerSyncService : Service() {
     }
 }
 
-/** The timer sync service's notification: silent, low importance, on its own channel. */
 internal object TimerSyncNotification {
 
     /** After the running timer (1), the reminder (2) and the Pomodoro session and alarm (3). */

@@ -50,7 +50,6 @@ fun StickerCard(
     )
 }
 
-/** The hard offset shadow of a sticker in [shape], in [color], drawn behind what follows. */
 private fun Modifier.stickerShadow(shape: Shape, color: Color): Modifier = drawBehind {
     val outline = shape.createOutline(size, layoutDirection, this)
     val offset = StickerShadowOffset.toPx()

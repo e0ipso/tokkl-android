@@ -356,7 +356,6 @@ class CalendarServerTest {
         }
     }
 
-    /** An entry that starts two days before an older week and runs into it shows in that week. */
     @Test
     fun anEntryFromTwoDaysBeforeAnOlderWeekShowsInIt() {
         val start = olderWeek.minusDays(2).atTime(23, 0)

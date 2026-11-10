@@ -32,9 +32,6 @@ internal object TagsEntries : FeatureRoutes {
     }
 }
 
-/**
- * The Tags page from its view model: hands its state and events to [TagsScreen].
- */
 @Composable
 fun TagsPage(model: TagsViewModel, modifier: Modifier = Modifier) {
     val page by model.page.collectAsStateWithLifecycle()
@@ -64,7 +61,6 @@ val tagsPage = TopLevelDestination(
     inMore = true,
 )
 
-/** The Tags page. */
 @Serializable
 @SerialName("com.github.e0ipso.tokkl.navigation.Route.Tags")
 data object TagsRoute : Route

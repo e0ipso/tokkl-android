@@ -31,9 +31,6 @@ import kotlin.coroutines.CoroutineContext
  * prompt, since no answer fixes it: the host shows only its notice. The same
  * refusal again, as every refresh brings, leaves a closed prompt closed. Any
  * answer from the server clears the refusal.
- *
- * @param refreshes takes the account refresh that sends the refused request again.
- * @param io where the writes to [trust] run.
  */
 class SessionTrust(
     private val trust: ServerTrust,
@@ -112,7 +109,6 @@ class SessionTrust(
         mutableState.value = State()
     }
 
-    /** Opens the prompt again for the refusal the user cancelled. */
     fun reopen() {
         mutableState.update { if (it.refusal is ApiError.TrustQuestion) it.copy(promptOpen = true) else it }
     }

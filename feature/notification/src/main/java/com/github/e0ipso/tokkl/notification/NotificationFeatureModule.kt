@@ -27,13 +27,9 @@ import org.koin.dsl.bind
 import org.koin.dsl.binds
 import org.koin.dsl.module
 
-/** The running timer's notification and the reminder of a long-running timer, with its setting and its worker. */
 val notificationFeatureModule = module {
     single { RunningNotificationStore(androidContext(), io()) }
 
-    // The running timer's notification (docs/PRD.md N1), which follows the timer controls, the
-    // cache's running entry and the server's pause chain (T1), from process start, so every
-    // start, pause, resume, stop and edit from any surface or device reaches it.
     single {
         val notifier = RunningNotifier(androidContext())
         RunningNotificationSync(
@@ -58,7 +54,6 @@ val notificationFeatureModule = module {
     single { ReminderSetting(get<ReminderStore>(), get<Session>(), get(), get(), io()) } binds
         arrayOf(AccountDataOwner::class, StartupLoad::class)
 
-    // The running entry's reminder, followed independently of any screen, with its delay in WorkManager.
     singleOf(::ReminderWork) bind ReminderDelays::class
     single {
         AccountReminder(
@@ -74,6 +69,5 @@ val notificationFeatureModule = module {
     single { ReminderHook(inject(), inject(), inject(), get(), io()) } bind AppHook::class
 
     worker { params -> ReminderWorker(androidContext(), params.get(), get(), io()) }
-    // What a timer action sent from outside the screens says when it does not go through.
     single<TimerFailureNotice> { ToastTimerFailureNotice(androidContext(), get<CoroutineDispatcher>(MainDispatcher)) }
 }

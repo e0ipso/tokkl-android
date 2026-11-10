@@ -8,7 +8,6 @@ import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.picker.PickerSource
 import java.time.LocalDate
 
-/** A time field of the entry form. */
 enum class TimeField { START, END, DURATION }
 
 /**
@@ -24,7 +23,6 @@ sealed interface TimeMistake {
 
     data object DURATION : TimeMistake
 
-    /** The entry would stop before it starts. */
     data object END_BEFORE_START : TimeMistake
 
     /** The entry would be longer than the 999 hours Tokkl and Toggl store. */
@@ -43,11 +41,9 @@ sealed interface TimeMistake {
     data object NO_TIME_TOO_LONG : TimeMistake
 }
 
-/** What the entry form shows. */
 @Immutable
 sealed interface EntryFormState {
 
-    /** No form is open. */
     data object Closed : EntryFormState
 
     /** The form waits for the cache and the account settings. */
@@ -75,9 +71,7 @@ sealed interface EntryFormState {
      * @property duration what the duration field holds, such as `1h 30m`, `90` or `1,5h`.
      * @property endsOn the day the entry ends on, when that is not [date], as far as the fields can be read.
      *   Null for a no-time entry.
-     * @property saving the change is being written to the phone.
      * @property confirmDelete Delete is waiting for a yes, on a server that cannot restore.
-     * @property deleteFailed the last Delete could not be queued.
      * @property noTimes the entry is a no-time one, with [date] and [duration] and no start or end.
      * @property noTimesOffered the form shows the No times switch: the server stores no-time entries
      *   and the entry does not run.
@@ -106,7 +100,6 @@ sealed interface EntryFormState {
     }
 }
 
-/** What the entry form's screen draws: the [form], what its picker offers, and whether the phone is [offline]. */
 @Immutable
 data class EntryFormPage(
     val form: EntryFormState = EntryFormState.Closed,

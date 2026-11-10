@@ -53,11 +53,10 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
- * The tags page (docs/PRD.md P4): the workspace's tags from the server, with a field to add one,
- * and on each row a tap to rename it and Delete, which asks first and names the tag. Each change
- * goes to the server at once. While the phone is offline or the server out of reach, the page
- * lists the tags on the phone and says that changing them needs the server, with every action
- * off. Coming back online, or to the foreground, loads the tags again.
+ * The tags page (docs/PRD.md P4): a field to add a tag, and on each row a tap to rename it and
+ * Delete, which asks first and names the tag. While the phone is offline or the server out of
+ * reach, the page lists the tags on the phone and says that changing them needs the server, with
+ * every action off.
  */
 @Composable
 fun TagsScreen(page: TagsPageState, actions: TagsActions, modifier: Modifier = Modifier) {
@@ -155,7 +154,6 @@ fun TagsScreen(page: TagsPageState, actions: TagsActions, modifier: Modifier = M
     }
 }
 
-/** What the page's controls do. */
 class TagsActions(
     val onRetry: () -> Unit = {},
     val onCreate: (String) -> Unit = {},

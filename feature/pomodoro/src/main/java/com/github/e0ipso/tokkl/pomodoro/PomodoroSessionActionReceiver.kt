@@ -10,10 +10,7 @@ import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
-/**
- * The session notification's Next phase and End session. No activity is needed: this reads the
- * button's account, phase and revision and hands them to [PomodoroSessionButtons].
- */
+/** The session notification's Next phase and End session, which need no activity. */
 class PomodoroSessionActionReceiver :
     BroadcastReceiver(),
     KoinComponent {

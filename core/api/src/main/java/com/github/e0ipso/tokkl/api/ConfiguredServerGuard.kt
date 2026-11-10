@@ -24,17 +24,15 @@ class CleartextNotConfirmedException(val server: ServerUrl) :
     IOException("Refused a request to $server, a plain http server the user has not confirmed")
 
 /**
- * Lets requests reach the configured server only. It checks the request
- * before OkHttp connects, and it follows redirects itself: OkHttp would
- * follow them inside the call, past any application interceptor, so
- * [SharedHttpClient] turns automatic redirects off. A redirect to the same
- * origin is followed, with OkHttp's rules for the method and body. A redirect
- * anywhere else fails with [HostNotAllowedException].
+ * Lets requests reach the configured server only. It checks the request before OkHttp connects,
+ * and it follows redirects itself: OkHttp would follow them inside the call, past any application
+ * interceptor, so [SharedHttpClient] turns automatic redirects off. A redirect to the same origin
+ * is followed, with OkHttp's rules for the method and body. A redirect anywhere else fails with
+ * [HostNotAllowedException].
  *
- * A plain `http://` server gets no request until the user has confirmed its
- * URL in [trust], since every API call carries the token or password. The
- * guard refuses it with [CleartextNotConfirmedException]. A redirect stays on
- * the same origin, and so on the same scheme.
+ * A plain `http://` server gets no request until the user has confirmed its URL in [trust], since
+ * every API call carries the token or password. The guard refuses it with
+ * [CleartextNotConfirmedException]. A redirect stays on the same origin, and so on the same scheme.
  */
 internal class ConfiguredServerGuard(private val configured: ConfiguredServer, private val trust: ServerTrust) :
     Interceptor {

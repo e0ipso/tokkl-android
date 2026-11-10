@@ -89,7 +89,6 @@ class ReminderSetting(
 
     override suspend fun ready() = preference.ready()
 
-    /** The preferences, once loaded. */
     suspend fun current(): ReminderPreferences {
         ready()
         return state.value

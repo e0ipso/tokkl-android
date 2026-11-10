@@ -31,7 +31,6 @@ class ReminderStore(context: Context, private val io: CoroutineContext) : Cleara
         putBoolean("shared", value.shared)
     }
 
-    /** The reminder of the running timer, null for none. */
     val timers: ValueStore<ReminderTimer?> = object : ValueStore<ReminderTimer?> {
         override suspend fun load(): ReminderTimer? = loadTimer()
 

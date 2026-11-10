@@ -79,8 +79,6 @@ private fun withinLimit(seconds: Double): Long? =
 /**
  * The account's `duration_format` preference, which decides how [formatDuration] writes a
  * duration. Toggl Track and Tokkl name it in `GET /api/v9/me/preferences`.
- *
- * @property togglName the name the server sends.
  */
 enum class DurationFormat(val togglName: String) {
     /** Hours, minutes and seconds, as `1:05:06` or `0:05:06`. */

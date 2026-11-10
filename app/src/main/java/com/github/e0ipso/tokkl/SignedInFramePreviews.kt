@@ -65,7 +65,6 @@ private fun FramePreview(width: WindowWidth) {
     }
 }
 
-/** The pages the features bind, as Koin hands them to the navigation host. */
 private val previewPages = TopLevelPages(
     listOf(
         timerPage,

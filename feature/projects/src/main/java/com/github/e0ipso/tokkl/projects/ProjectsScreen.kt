@@ -36,7 +36,6 @@ import com.github.e0ipso.tokkl.ui.TokklIconButton
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
-/** What the page's controls do. */
 class ProjectsActions(
     val onRetry: () -> Unit = {},
     val onNew: () -> Unit = {},
@@ -49,12 +48,10 @@ class ProjectsActions(
 )
 
 /**
- * The projects page (docs/PRD.md P2): the workspace's projects from the server, archived ones in a
- * section of their own, with New project, and Archive or Restore on each row. A tap on a row opens
- * its form, which lists the project's tasks (P5). Each change goes to the server at once. While
- * the phone is offline or the server out of reach, the page lists the projects on the phone and
- * says that changing them needs the server, with every action off. Coming back online, or to the
- * foreground, loads the projects again.
+ * The projects page (docs/PRD.md P2): archived projects in a section of their own, with New
+ * project, and Archive or Restore on each row. A tap on a row opens its form, which lists the
+ * project's tasks (P5). While the phone is offline or the server out of reach, the page lists the
+ * projects on the phone and says that changing them needs the server, with every action off.
  */
 @Composable
 fun ProjectsScreen(
@@ -172,9 +169,8 @@ private fun ProjectList(
 }
 
 /**
- * One project: its colour beside its name, then its client and whether it is billable or
- * archived, in words. The name side opens the form, and a button archives or restores it. Both
- * stay off for a row from the phone and while nothing can change.
+ * One project: its colour beside its name, then its client and whether it is billable or archived,
+ * in words. Its actions stay off for a row from the phone and while nothing can change.
  */
 @Composable
 private fun ProjectListRow(row: ProjectRow, canChange: Boolean, actions: ProjectsActions) {

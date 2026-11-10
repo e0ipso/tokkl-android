@@ -6,14 +6,7 @@ import com.github.e0ipso.tokkl.timerstate.PomodoroPhaseKey
 import java.security.MessageDigest
 import java.time.Instant
 
-/**
- * What the session notification shows of the held session: the phase, "Pomodoro N of M" from the
- * server's number, the upcoming phase, the open pomodoro's description and the planned end that
- * its native clock counts down to, then past into overtime. Its buttons carry [phase] and
- * [revision].
- *
- * @property end the phone's time of the planned end, corrected by the state's clock offset.
- */
+/** @property end the phone's time of the planned end, corrected by the state's clock offset. */
 data class PomodoroSessionNotificationContent(
     val phase: PomodoroPhaseKey,
     val kind: PhaseKind,
@@ -29,7 +22,6 @@ data class PomodoroSessionNotificationContent(
         .digest(toString().toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }
 }
 
-/** The session notification of this state, or null without a session. */
 fun HeldTimerState.notificationContent(): PomodoroSessionNotificationContent? {
     val session = pomodoro ?: return null
     val ring = ring() ?: return null

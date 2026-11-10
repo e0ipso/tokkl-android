@@ -45,7 +45,6 @@ data class ProjectFields(
     val estimatedHours: Double?,
 )
 
-/** The project as the projects page shows it. */
 internal fun WorkspaceProject.toDetails() = ProjectDetails(
     id = id,
     workspaceId = workspaceId,

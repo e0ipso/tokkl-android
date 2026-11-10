@@ -37,14 +37,9 @@ enum class PhaseTransition {
     LONG_REST_TO_WORK,
 }
 
-/** The session's current phase: its [kind], from [start] to its [plannedEnd], after [completed] pomodoros. */
 data class PomodoroPhase(val kind: PhaseKind, val start: Instant, val completed: Int, val plannedEnd: Instant)
 
-/**
- * The server's Pomodoro session: its lengths in minutes, the [phase] it is in, the phase that
- * comes next and how, the pomodoro [number], and [entryId], the time entry its open pomodoro runs
- * as, which started at [pomodoroStart].
- */
+/** The server's Pomodoro session. Lengths are in minutes; [entryId] is the entry its open pomodoro runs as. */
 data class PomodoroSession(
     val workMinutes: Int,
     val shortRestMinutes: Int,
@@ -67,7 +62,6 @@ sealed interface PauseChain {
     val workspaceId: WorkspaceId
     val fields: EntryFields
 
-    /** The chain is paused: nothing of it runs. */
     data class Paused(
         override val seconds: Long,
         override val workspaceId: WorkspaceId,

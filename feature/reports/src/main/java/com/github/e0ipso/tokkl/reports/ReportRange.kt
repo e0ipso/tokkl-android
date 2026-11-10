@@ -112,7 +112,6 @@ enum class RangePreset {
     }
 }
 
-/** The length of the chart's buckets. */
 enum class Resolution {
     DAY,
     WEEK,

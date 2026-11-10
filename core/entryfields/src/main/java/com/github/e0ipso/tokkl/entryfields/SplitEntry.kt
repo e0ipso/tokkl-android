@@ -11,7 +11,6 @@ import java.time.temporal.ChronoUnit
 // e3f15ff628d88a476b77e51ef77c9172903d6db4. SplitEntryTest replays the cases from settings.test.ts and the overnight
 // splits of e2e/editor.spec.ts.
 
-/** What a split time gives: the two halves, or why it cuts nowhere. */
 sealed interface SplitResult
 
 /** The halves a split cuts a stopped entry into, as the server will store them. They meet at one instant. */
@@ -19,7 +18,6 @@ data class SplitHalves(val first: SnappedSpan, val second: SnappedSpan) : SplitR
 
 /** Why a split time cuts nowhere, as SPLIT_PROBLEMS in the web app's EntryEditor.tsx names it. */
 enum class SplitProblem : SplitResult {
-    /** The time cannot be read. */
     UNREADABLE,
 
     /** The time does not fall strictly inside the entry as the server stores it. */

@@ -213,7 +213,6 @@ class CalendarGesturesTest {
         composeRule.onNode(allDayChip).assertExists()
     }
 
-    /** A server that stores no time for an entry has no All day row. */
     @Test
     fun withoutTheCapabilityThereIsNoAllDayRow() {
         show(window = null, allDayOffered = false)
@@ -309,7 +308,6 @@ class CalendarGesturesTest {
         up()
     }
 
-    /** [count] hours of the grid in pixels. */
     private fun TouchInjectionScope.hours(count: Float): Float = count * HOUR.toPx()
 
     private fun awaitCalls(count: Int) = composeRule.waitUntil(TIMEOUT_MS) { changes.calls.size >= count }
@@ -329,7 +327,6 @@ class CalendarGesturesTest {
         substring = true,
     ) and hasClickAction()
 
-    /** The + of a day's All day cell. */
     private val allDayPlus: SemanticsMatcher = hasContentDescription(
         context.getString(R.string.calendar_add_all_day),
         substring = true,

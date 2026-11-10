@@ -46,9 +46,8 @@ import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
 
 /**
- * The app's settings: theme, Pomodoro defaults, reminders, the account's sign-out, then About,
- * which opens the licences through [onOpenLicences]. Every change applies at once. It is a page
- * of the bottom bar, so it has no back button; system Back goes to Timer.
+ * The app's settings. Every change applies at once. It is a page of the bottom bar, so it has no
+ * back button; system Back goes to Timer.
  */
 @Composable
 fun SettingsScreen(model: SettingsViewModel, onOpenLicences: () -> Unit, modifier: Modifier = Modifier) {

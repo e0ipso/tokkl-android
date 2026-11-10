@@ -16,10 +16,7 @@ import com.github.e0ipso.tokkl.model.TaskId
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.signedIn
 
-/**
- * The workspace's projects on the signed-in account's server, from the API v9 project calls. Each
- * call suspends while its request runs.
- */
+/** The workspace's projects on the signed-in account's server, from the API v9 project calls. */
 class ServerProjectsRepository(private val client: ApiClientProvider) : CatalogRepository<ProjectsData> {
 
     override suspend fun workspace(stored: WorkspaceId?): ApiResult<WorkspaceId> = client.managedWorkspace(stored)
@@ -68,10 +65,7 @@ class ServerProjectsRepository(private val client: ApiClientProvider) : CatalogR
 private suspend fun TokklApi.projectsOf(workspace: WorkspaceId): ApiResult<List<ProjectDetails>> =
     projects.list(workspace).map { projects -> projects.map { it.toDetails() } }
 
-/**
- * The tasks of a project on the signed-in account's server, from the API v9 task calls. Each call
- * suspends while its request runs.
- */
+/** The tasks of a project on the signed-in account's server, from the API v9 task calls. */
 class ServerTasksRepository(private val client: ApiClientProvider) {
 
     /** The workspace the list manages, as [CatalogRepository.workspace] finds it. */

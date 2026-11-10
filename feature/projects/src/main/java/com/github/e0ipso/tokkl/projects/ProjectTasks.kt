@@ -51,10 +51,9 @@ import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * The tasks of [project] in its form (docs/PRD.md P5), as the web app's ProjectTasks: a field to
- * add one while the project is active, then the open tasks and the done ones. A tap on a task
- * opens a form that renames it and marks it done, and Delete asks first and names the task. Each
- * change goes to the server at once. While the phone is [offline] or the server out of reach,
- * every action is off and the list says that changing tasks needs the server.
+ * add one while the project is active, then the open tasks and the done ones. A tap on a task opens
+ * a form that renames it and marks it done, and Delete asks first and names the task. While the
+ * phone is [offline] or the server out of reach, every action is off.
  */
 @Composable
 internal fun ProjectTasks(state: TasksState, project: ProjectDetails, offline: Boolean, actions: TaskActions) {
@@ -286,7 +285,6 @@ private fun TaskDialog(
 /** The web app's limit, which Tokkl enforces too. */
 private const val NAME_MAX = 255
 
-/** What the task list's controls do. */
 class TaskActions(
     val onRetry: () -> Unit = {},
     val onCreate: (String) -> Unit = {},

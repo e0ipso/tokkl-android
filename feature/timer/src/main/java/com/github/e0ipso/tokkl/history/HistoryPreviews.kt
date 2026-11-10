@@ -13,8 +13,6 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 
-// Design-time previews of the history, with two sample days.
-
 @PreviewLightDark
 @Composable
 private fun HistoryPreview() {

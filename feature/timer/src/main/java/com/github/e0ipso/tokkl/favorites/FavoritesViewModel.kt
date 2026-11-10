@@ -30,11 +30,7 @@ import kotlinx.coroutines.launch
 @Immutable
 data class FavoriteItem(val fields: EntryFields, val labels: EntryLabels)
 
-/**
- * The timer templates page: the templates in [favorites], what the form's picker offers in
- * [picker], whether the phone is [offline], and the account's default workspace, null until the
- * settings have it.
- */
+/** The timer templates page. The default workspace is null until the settings have it. */
 @Immutable
 data class TemplatesPageState(
     val favorites: FavoritesState = FavoritesState(),
@@ -49,7 +45,6 @@ sealed interface FavoritesProblem {
     /** The list already holds [MAX_FAVORITES]. */
     data object Full : FavoritesProblem
 
-    /** The server did not store the change. */
     data class Server(val problem: ServerProblem) : FavoritesProblem
 }
 
@@ -68,7 +63,6 @@ data class FavoritesState(
     val saving: Boolean = false,
     val problem: FavoritesProblem? = null,
 ) {
-    /** No favorite can be added. */
     val full: Boolean get() = favorites.size >= MAX_FAVORITES
 }
 
@@ -81,12 +75,8 @@ data class FavoritesState(
  *
  * Starting a template is the timer's: TimerViewModel.startFrom.
  *
- * @param available whether the server keeps Tokkl's favorites, from the capabilities.
  * @param store posts the list and caches it. The save reaches the server and the cache also when
  *   the view model is cleared meanwhile.
- * @param picker the cached projects, clients, tasks and tags, which the templates page's picker offers.
- * @param offline whether the phone is offline, when no change can reach the server.
- * @param workspaceId the account's default workspace, whose projects the templates page offers.
  */
 class FavoritesViewModel(
     favorites: Flow<List<Favorite>>,
@@ -124,7 +114,6 @@ class FavoritesViewModel(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), FavoritesState())
 
-    /** What the timer templates page shows: [state], the picker's rows, the network and the workspace. */
     val page: StateFlow<TemplatesPageState> = combine(state, picker, offline, workspaceId, ::TemplatesPageState)
         .stateIn(viewModelScope, whileShown, TemplatesPageState(offline = offline.value))
 
@@ -137,12 +126,10 @@ class FavoritesViewModel(
     fun add(fields: EntryFields, onDone: (FavoritesProblem?) -> Unit = {}) =
         change(onDone) { list -> if (list.size >= MAX_FAVORITES) null else list + fields }
 
-    /** Replaces the template at [index] with [fields]. [onDone] hears how the save went. */
     fun replace(index: Int, fields: EntryFields, onDone: (FavoritesProblem?) -> Unit = {}) = change(onDone) { list ->
         if (index !in list.indices) list else list.toMutableList().also { it[index] = fields }
     }
 
-    /** Removes the template at [index]. */
     fun remove(index: Int) = change { list -> list.filterIndexed { at, _ -> at != index } }
 
     /** Moves the favorite at [index] one place earlier, or with [later], one place later. */
@@ -158,7 +145,6 @@ class FavoritesViewModel(
         }
     }
 
-    /** Forgets the last change's problem. */
     fun dismissProblem() = local.update { it.copy(problem = null) }
 
     /**

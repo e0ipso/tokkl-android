@@ -14,10 +14,8 @@ class LauncherShortcuts(private val context: Context) : PublishedShortcuts {
 
     private val manager: ShortcutManager get() = context.getSystemService(ShortcutManager::class.java)
 
-    /** How many shortcuts the launcher takes. */
     val limit: Int by lazy { manager.maxShortcutCountPerActivity }
 
-    /** The shortcuts the launcher has, in their order. */
     override fun published(): List<FavoriteShortcut> = manager.dynamicShortcuts.sortedBy { it.rank }.map { info ->
         FavoriteShortcut(info.id, info.shortLabel.toString(), (info.longLabel ?: info.shortLabel).toString())
     }

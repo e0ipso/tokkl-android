@@ -35,10 +35,7 @@ data class TimerPageState(
  * [state], and the Today and This week [totals], which tick on their own so only their row
  * redraws each second. Both follow the cache while the page reads them.
  *
- * @param views the List or Calendar choice, which [chooseView] changes.
  * @param entries the cached entries with queued changes applied, newest first.
- * @param picker the cached projects, clients, tasks and tags.
- * @param clock what the totals tick on.
  */
 class TimerPageViewModel(
     private val views: TimerViewSetting,
@@ -71,6 +68,5 @@ class TimerPageViewModel(
     val totals: StateFlow<TimerTotalsState> = timerTotals(entries, settings, clock)
         .stateIn(viewModelScope, whileShown, TimerTotalsState.Hidden)
 
-    /** Shows [view] and keeps the choice. */
     fun chooseView(view: TimerView) = views.choose(view)
 }

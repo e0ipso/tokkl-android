@@ -17,10 +17,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 
-/**
- * What the Settings page shows: the [theme], the Pomodoro defaults in [pomodoro], which the web
- * app shares when [pomodoroSharedWithWeb], the [reminder], and how the sign-out goes.
- */
 @Immutable
 data class SettingsState(
     val theme: ThemeSettings,
@@ -31,9 +27,9 @@ data class SettingsState(
 )
 
 /**
- * The Settings page's state and events. Each setting keeps itself and applies a change at once;
- * the page only shows them and passes the user's changes on. The server keeps the Pomodoro
- * defaults where its [capabilities] have Tokkl's preferences, the same key that keeps favorites.
+ * Each setting keeps itself and applies a change at once; the page only shows them and passes the
+ * user's changes on. The server keeps the Pomodoro defaults where its [capabilities] have Tokkl's
+ * preferences, the same key that keeps favorites.
  */
 class SettingsViewModel(
     private val theme: ThemeSettingsRepository,

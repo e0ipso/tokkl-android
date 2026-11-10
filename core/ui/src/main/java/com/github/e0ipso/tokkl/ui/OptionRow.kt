@@ -46,7 +46,6 @@ fun RadioOptionRow(
     }
 }
 
-/** A choice that is on or off, with a checkbox. */
 @Composable
 fun CheckboxOptionRow(
     label: String,
@@ -65,7 +64,6 @@ fun CheckboxOptionRow(
     }
 }
 
-/** [selectionModifier] makes the row selectable or toggleable, with its role. */
 @Composable
 private fun OptionRow(
     label: String,

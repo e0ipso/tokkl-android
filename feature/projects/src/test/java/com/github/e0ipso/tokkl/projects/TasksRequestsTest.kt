@@ -71,7 +71,6 @@ class TasksRequestsTest {
         server.close()
     }
 
-    /** The list keeps the project's own tasks, open ones before done ones, each by name. */
     @Test
     fun theProjectsOpenTasksComeBeforeItsDoneOnesEachByName() = runTest {
         val loaded = repository.load(WorkspaceId(7), ProjectId(5))

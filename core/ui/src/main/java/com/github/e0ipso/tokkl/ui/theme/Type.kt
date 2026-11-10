@@ -40,10 +40,8 @@ internal val PageTitleTextStyle = anybodyStyle(28, FontWeight.Black).copy(letter
 /** The running clock, 36sp Anybody 800 with tabular digits, so it does not shift as it counts. */
 internal val ClockTextStyle = anybodyStyle(36, FontWeight.ExtraBold).copy(fontFeatureSettings = "tnum")
 
-/** Week and report totals, 28sp Anybody 800 with tabular digits. */
 internal val TotalTextStyle = anybodyStyle(28, FontWeight.ExtraBold).copy(fontFeatureSettings = "tnum")
 
-/** A day's total, 22sp Anybody 800 with tabular digits. */
 internal val DayTotalTextStyle = anybodyStyle(22, FontWeight.ExtraBold).copy(fontFeatureSettings = "tnum")
 
 /** The number on a stepper card, 44sp Anybody 900 with tabular digits, so stepping does not shift it. */
@@ -52,10 +50,8 @@ internal val StepperValueTextStyle = anybodyStyle(44, FontWeight.Black).copy(fon
 /** The header of a day in the history, 17sp Anybody 900. Uppercase the text where it is set. */
 internal val DayHeaderTextStyle = anybodyStyle(17, FontWeight.Black)
 
-/** A card's title, 18sp Anybody 800. */
 internal val CardTitleTextStyle = anybodyStyle(18, FontWeight.ExtraBold)
 
-/** A section heading inside a screen, 16sp Anybody 800. */
 internal val SectionHeadingTextStyle = anybodyStyle(16, FontWeight.ExtraBold)
 
 private val Default = Typography()
@@ -63,10 +59,8 @@ private val Default = Typography()
 /** Small-caps labels, 12sp system font 700 with 0.06em tracking. Uppercase the text where it is set. */
 internal val SmallCapsLabelTextStyle = Default.labelMedium.copy(fontWeight = FontWeight.Bold, letterSpacing = 0.06.em)
 
-/** Button labels, 14sp system font 700. */
 internal val ButtonLabelTextStyle = Default.labelLarge.copy(fontWeight = FontWeight.Bold)
 
-/** Certificate fingerprints and other codes, at the 14sp body size. */
 internal val MonospaceTextStyle = Default.bodyMedium.copy(fontFamily = FontFamily.Monospace)
 
 /**

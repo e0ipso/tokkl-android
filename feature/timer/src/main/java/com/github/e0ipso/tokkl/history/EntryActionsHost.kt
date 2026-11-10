@@ -21,10 +21,7 @@ import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
- * The messages, the question and the dialog of the history's entry actions: a snackbar for
- * [EntryActionsState.notice], such as "Entry deleted" with Undo, "Entry duplicated" or "Pinned to
- * favorites", the question before a delete that cannot be undone, and the split dialog, which
- * needs the account's [settings].
+ * The snackbar, the delete question and the split dialog of the history's entry actions.
  * The snackbar is a polite live region, as Material's SnackbarHost makes each one, so TalkBack
  * reads the message and its Undo button when it appears. A snackbar with Undo stays for
  * Material's long duration, which grows as Android's accessibility timeout asks. A restore

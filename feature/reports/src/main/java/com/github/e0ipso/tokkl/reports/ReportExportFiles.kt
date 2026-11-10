@@ -113,7 +113,6 @@ class ReportExportFiles(private val root: File, private val clock: Clock) {
     }
 }
 
-/** True when this is a directory, after making it if it was missing. */
 private fun File.madeDirectory(): Boolean = isDirectory || mkdirs()
 
 /** Reads an export one character at a time and fails on content that is not a CSV export. */
@@ -177,7 +176,7 @@ private class CsvChecker {
  * Deletes the finished report exports when the account changes, so no export outlives the account
  * it was made for, even when the next account has the same server, user id and credentials. Each
  * export belongs to the account context it began in, which ends before this runs and cancels its
- * download ([ReportExportController]). No token is kept.
+ * download ([ReportExportController]).
  *
  * Sign-out runs it with the session, in [SignOutPhase.FORGET_SESSION]. A sign-in runs it once the
  * new session is stored.

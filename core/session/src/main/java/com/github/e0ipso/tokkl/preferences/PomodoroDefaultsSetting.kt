@@ -15,10 +15,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlin.coroutines.CoroutineContext
 
-/**
- * The lengths a Pomodoro session starts with: [workMinutes] of work, [shortRestMinutes] of rest
- * after it, and [longRestMinutes] of rest instead after every [longRestEvery] work phases.
- */
+/** The lengths a Pomodoro session starts with, in minutes; a long rest follows every [longRestEvery] work phases. */
 data class PomodoroDefaults(
     val workMinutes: Int,
     val shortRestMinutes: Int,
@@ -60,8 +57,6 @@ typealias StoredPomodoroDefaults = StoredPreference<PomodoroDefaults>
  * as Toggl Track, gets nothing: the values stay on the phone, from 25, 5, 15 and 4.
  *
  * @param store keeps the values on the phone. They load from it as this is made, off the main thread.
- * @param client the signed-in account's API client, or null when signed out.
- * @param capabilities whether the server keeps Tokkl's preferences.
  * @param account the account each change belongs to: once sign-out has ended it, nothing more is stored or sent.
  * @param scope outlives every screen, so leaving the app does not cancel a write.
  */
@@ -109,17 +104,9 @@ class PomodoroDefaultsSetting(
 
     override suspend fun ready() = preference.ready()
 
-    /**
-     * Clamps [defaults] to their ranges, shows them at once, keeps them on the phone and sends
-     * them to the server in the background. Call it on the main thread.
-     */
+    /** Clamps [defaults] to their ranges first. Call it on the main thread. */
     fun change(defaults: PomodoroDefaults): Job = preference.change(defaults.clamped())
 
-    /**
-     * Takes the refresh's `GET /api/v9/me/preferences`, null when it failed, from a server that
-     * keeps Tokkl's preferences when `keepsPreferences`. Sends unsent values instead of reading
-     * the server's.
-     */
     suspend fun refreshed(preferences: MePreferences?, keepsPreferences: Boolean) {
         preference.refreshed(preferences, keepsPreferences)
     }

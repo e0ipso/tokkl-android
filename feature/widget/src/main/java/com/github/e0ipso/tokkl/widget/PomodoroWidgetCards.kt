@@ -35,8 +35,6 @@ import java.time.Duration
 import java.time.Instant
 import com.github.e0ipso.tokkl.core.ui.R as UiR
 
-// The Pomodoro widget's cards at medium and large sizes, with their action row and icon buttons.
-
 @Composable
 internal fun ColumnScope.IdleCard(
     context: Context,

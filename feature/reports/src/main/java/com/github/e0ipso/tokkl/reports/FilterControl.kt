@@ -55,8 +55,7 @@ import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * The Filters button under the range. It names every active filter in words, so the filters show
- * as text and not only as a changed control, and it opens the filter sheet. The sheet offers
- * [options], which come from the phone's cache, so opening it sends nothing.
+ * as text and not only as a changed control, and it opens the filter sheet.
  */
 @Composable
 internal fun FilterControl(
@@ -171,12 +170,9 @@ private fun idLine(
 }
 
 /**
- * The filters on a full screen, as the custom range, since a long list of projects needs the
- * room. Each list starts with its "without" choice, as in the web app, under the web app's "Is"
- * and "Is not" where the server honours them. The search field above the lists narrows the
- * projects, clients and tags by name, as the web app's "Find project…" does, and asks nothing.
- * Nothing applies until Apply, so the report is asked for once; the close button leaves the
- * filters as they were.
+ * The filters on a full screen, as the custom range, since a long list of projects needs the room.
+ * Nothing applies until Apply, so the report is asked for once; the close button leaves the filters
+ * as they were.
  */
 @Composable
 private fun FilterSheet(
@@ -287,10 +283,6 @@ private fun FilterSheet(
     }
 }
 
-/**
- * A heading, "Is" and "Is not" unless [negated] is null, the "without" choice and a checkbox for
- * each option, each ticked when [picked] holds its id.
- */
 private fun LazyListScope.idSection(
     key: String,
     @StringRes heading: Int,

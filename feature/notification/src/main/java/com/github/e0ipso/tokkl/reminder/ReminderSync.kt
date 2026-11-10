@@ -32,7 +32,6 @@ interface ReminderDelays {
     fun cancel()
 }
 
-/** The reminder notification. */
 interface ReminderNotice {
 
     /** Shows the reminder for [timer], deciding then whether it offers Pause. */
@@ -47,10 +46,8 @@ interface ReminderNotice {
  */
 interface ReminderAccount {
 
-    /** The running entry and the reminder settings now. */
     suspend fun input(): ReminderInput
 
-    /** Stops the running entry on the phone. */
     suspend fun stop(entryId: EntryId): Boolean
 
     /**
@@ -66,11 +63,6 @@ interface ReminderAccount {
  * The persisted handled flag survives process death, disable/enable and edits other than the start.
  * Pause (docs/PRD.md T1) goes to the server, which stops the entry, and that cancels its reminder.
  * Resume's new entry gets one from its own start.
- *
- * @param account the signed-in account's running entry and reminder settings now, and its Stop
- *   and Pause.
- * @param delays the delayed wakeup at a timer's reminder time.
- * @param notice shows the reminder for a timer, and decides then whether it offers Pause.
  */
 class ReminderSync(
     private val account: ReminderAccount,
@@ -86,10 +78,7 @@ class ReminderSync(
 
     private val lock = Mutex()
 
-    /**
-     * [reconcile]s after each of [changes], in [scope] on [io], until the scope ends. A failed read
-     * of the changes or a failed reconcile tries again after a wait, as [collectDurably] does.
-     */
+    /** A failed read of the changes or a failed reconcile tries again after a wait, as [collectDurably] does. */
     fun follow(changes: Flow<*>, scope: CoroutineScope, io: CoroutineContext) = scope.launch(io) {
         changes.collectDurably("ReminderSync") { reconcile() }
     }
@@ -175,7 +164,6 @@ class ReminderSync(
 
     /** The server has paused timer [id] from [start]: its reminder is handled, unless it ended already. */
     private suspend fun paused(id: Long, start: Long) {
-        // The server's paused state may have ended the reminder already.
         val timer = timers.load() ?: return
         if (timer.start == start && currentId(EntryId(timer.id)) == currentId(EntryId(id))) handled(timer)
     }

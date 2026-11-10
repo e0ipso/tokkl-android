@@ -36,7 +36,6 @@ internal sealed interface StreamEnd {
     /** 401 or 403: the server refuses the account's credential, and retrying cannot fix that. */
     data object Refused : StreamEnd
 
-    /** No account is signed in, so there is no stream to hold. */
     data object SignedOut : StreamEnd
 }
 
@@ -44,8 +43,6 @@ internal sealed interface StreamEnd {
  * Holds the timer event stream of [source]'s account through [api] until the stream ends or [link]
  * is cancelled, and gives each state it sends to [source]. Returns how it ended. Blocks on the
  * disk while it reads the stream, so call it on the IO dispatcher.
- *
- * @param api the signed-in account's client, or null when signed out.
  */
 internal suspend fun holdTimerEvents(api: TokklApi?, source: TimerStateSource, link: TimerSyncLink): StreamEnd {
     api ?: return StreamEnd.SignedOut
@@ -119,7 +116,6 @@ internal fun readTimerEvents(
     return StreamEnd.Ended
 }
 
-/** What a Server-Sent Events body holds, as [EventStreamParser] reads it. */
 internal sealed interface StreamItem {
 
     /**

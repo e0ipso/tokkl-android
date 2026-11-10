@@ -125,7 +125,6 @@ internal fun WeekStrip(
     }
 }
 
-/** Scrolls a sideways strip of days [dayWidth] wide, after [inset], so the day at [index] shows whole. */
 @Composable
 private fun KeepChosenDayInSight(scroll: ScrollState, index: Int, dayWidth: Dp, inset: Dp) {
     val density = LocalDensity.current

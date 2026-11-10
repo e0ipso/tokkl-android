@@ -11,14 +11,12 @@ fun interface SignedInListener {
 
 /**
  * Moves the phone to the account a sign-in got from the server: the configured server, its API
- * token and the account settings from the sign-in's own `GET /api/v9/me`. In this order: it stores the
- * account settings, clears the timer state and begins the account in [account], which ends every
- * piece of work the account before started and gives it a new, empty timer state, then stores the
- * server and its token and tells [signedIn]. If the session write fails, the app stays signed out
- * and the next sign-in replaces the settings. A sign-in again after a refused token then lifts the
- * queue's pause, and the changes that waited go out (docs/PRD.md O6). Last, the timer sync follows
- * the account. Blocks on disk I/O. The app assembles it, since the timer state, the queue and the
- * timer sync sit above this module.
+ * token and the account settings from the sign-in's own `GET /api/v9/me`. Beginning the account in
+ * [account] ends every piece of work the account before started. If the session write fails, the
+ * app stays signed out and the next sign-in replaces the settings. A sign-in again after a refused
+ * token then lifts the queue's pause, and the changes that waited go out (docs/PRD.md O6). Blocks
+ * on disk I/O. The app assembles it, since the timer state, the queue and the timer sync sit above
+ * this module.
  *
  * @param storeSettings stores the account settings, as `AccountSettingsSource.store` does, and
  *   throws [IOException] when it fails.
@@ -26,7 +24,6 @@ fun interface SignedInListener {
  *   signing in starts from nothing. Blocks on disk I/O and throws [IOException] when it fails.
  * @param storeSession stores the server and its token, as `Session.save` does, and throws
  *   [IOException] or [GeneralSecurityException] when it fails.
- * @param queuePaused whether the queue waits after a refused token, and [resumeQueue] lifts that.
  * @param followTimerSync lets the timer sync follow the account. Signing in again over a refused
  *   token keeps the capability, so the stream restarts for the new account at once; a first
  *   sign-in starts it once its refresh has learned the capability.

@@ -9,13 +9,11 @@ import java.io.IOException
 import kotlin.coroutines.CoroutineContext
 
 /**
- * The user's trust decisions, in the app's private preferences file
- * `server_trust`, next to the server configuration: the one plain `http://`
- * server URL the user confirmed, and the one pinned certificate, as the TLS
- * server's host and port and the SHA-256 of its leaf certificate. A new
- * confirmation or pin replaces the old one, so another URL or certificate
- * asks again. The file holds no credential and no private key, and the backup
- * rules exclude it with every other file. Sign-out removes it with [clear].
+ * The user's trust decisions, in the app's private preferences file `server_trust`, next to the
+ * server configuration: the one plain `http://` server URL the user confirmed, and the one pinned
+ * certificate, as the TLS server's host and port and the SHA-256 of its leaf certificate. A new
+ * confirmation or pin replaces the old one, so another URL or certificate asks again. The file
+ * holds no credential and no private key, and the backup rules exclude it with every other file.
  *
  * Every call reads or writes the file on the calling thread, since [ServerTrust] does not suspend:
  * OkHttp's trust checks read it on OkHttp's threads, and the decisions are written on the I/O
@@ -53,7 +51,6 @@ class ServerTrustStore(context: Context, private val io: CoroutineContext) :
         }
     }
 
-    /** Forgets every decision, so each server asks again. */
     @Throws(IOException::class)
     fun clear() {
         file.commitHere { clear() }

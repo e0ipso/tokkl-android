@@ -25,11 +25,9 @@ val cacheModule = module {
     single { CacheDatabase.open(androidContext()) }
 
     single { AccountCache(get(), io()) } bind AccountDataOwner::class
-    // The running entry, read and reconciled on a worker thread under the caller's lock.
     singleOf(::RoomCurrentEntries) bind CurrentEntryCache::class
     single { ServerCacheRefresh(get(), get(), allDayMissing = get<CapabilitiesSource>()::allDayMissing) }
 
-    // The queue's tables, which the queue writes and the sender reads.
     singleOf(::RoomChangeStore) binds arrayOf(ChangeStore::class, QueueStorage::class)
 
     single {
@@ -37,9 +35,6 @@ val cacheModule = module {
         AccountServerSpans(settings.state, settings)
     } bind ServerSpans::class
 
-    // Start, stop, create, edit and delete entries on the phone. The [ChangeSender] sends each
-    // change at once, and [BackgroundSend] sends what is left when the network returns, also with
-    // the app closed.
     singleOf(::BackgroundSendRuns)
     singleOf(::BackgroundSend) bind AccountDataOwner::class
     single {
@@ -59,8 +54,6 @@ val cacheModule = module {
         )
     } binds arrayOf(EntryChanges::class, RunningEntryChanges::class, HeldChanges::class)
 
-    // Sends the queued changes in order, and refreshes, cancels the background retry and counts
-    // the discarded changes as its drains end ([QueueDrainEvents]).
     singleOf(::QueueDrainEvents) bind ChangeSenderEvents::class
     single {
         val session = get<Session>()
@@ -77,8 +70,6 @@ val cacheModule = module {
         )
     } bind AccountDataOwner::class
 
-    // Takes a delete back, and refreshes once the server restored the entry. The sender sends each
-    // delete through it, so an Undo never decides while a delete is on its way.
     single {
         val session = get<Session>()
         DeleteUndoer(
@@ -90,15 +81,12 @@ val cacheModule = module {
         )
     }
 
-    // The running entry's check every 15 minutes while a timer runs.
     singleOf(::RunningCheck) bind AccountDataOwner::class
     single { RunningCheckHook(inject(), inject(), get(), io()) } bind AppHook::class
 
-    // Refreshes the account, and with it the running entry and the cache, each time the app comes
-    // to the foreground and each time the network comes back while it is there. MainActivity
-    // reports its starts, stops and network changes. Nothing refreshes on a timer. The queued
-    // changes go first, then the account refreshes. The send does not wait for the refresh, so an
-    // expired token still asks for sign-in when `/me` fails on opening the app with a saved queue.
+    // The queued changes go first, then the account refreshes. The send does not wait for the
+    // refresh, so an expired token still asks for sign-in when `/me` fails on opening the app with
+    // a saved queue.
     single {
         val sender = get<ChangeSender>()
         val account = get<AccountRefresh>()

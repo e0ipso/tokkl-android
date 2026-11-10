@@ -149,7 +149,6 @@ class ProjectsViewModelTest {
         assertEquals(ProjectForm.Edit(website, typed), restored.state.value.overlay)
     }
 
-    /** A new project's form comes back with what was typed, and a closed form stays closed. */
     @Test
     fun aNewProcessOpensTheNewProjectFormAsItWasTypedAndNoClosedOne() {
         screen.show()

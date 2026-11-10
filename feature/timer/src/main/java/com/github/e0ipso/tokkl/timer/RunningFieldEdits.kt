@@ -25,10 +25,6 @@ import kotlinx.coroutines.launch
  * phone's storage refuses leaves the edit on the timer as typed, not sent, for the next send to take.
  *
  * Call everything on the main thread.
- *
- * @param commands the owner of the taps, which these edits read and change through its events.
- * @param changes the change queue, which the running entry's fields go to.
- * @param scope the view model's scope, where each write runs.
  */
 internal class RunningFieldEdits(
     private val commands: TimerCommands,
@@ -36,13 +32,11 @@ internal class RunningFieldEdits(
     private val scope: CoroutineScope,
 ) {
 
-    /** The running entry's field writes on their way to the cache. */
     private val writes = RunningEntryEdits(changes)
     private var openingRunning = false
 
     fun editDescription(description: String) = edit(send = false) { it.copy(description = description) }
 
-    /** Sends a description typed for the running entry when it differs from the cache's. */
     fun descriptionDone() {
         if (commands.taps.value.pending != null) return
         val shown = commands.now() as? TimerState.Running ?: return

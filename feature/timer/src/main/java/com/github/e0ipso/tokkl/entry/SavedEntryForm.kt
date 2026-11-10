@@ -81,7 +81,6 @@ internal data class TypedDraft(
     }
 }
 
-/** [EntryFields] as the saved state keeps them. */
 @Serializable
 internal data class SavedFields(
     val description: String,

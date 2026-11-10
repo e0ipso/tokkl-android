@@ -11,8 +11,6 @@ import kotlinx.coroutines.flow.combine
 /**
  * The timer's notices: failed pause chain actions, and the too-short pomodoro a screen claims
  * before it shows it.
- *
- * @param discards the too-short pomodoro notice, which a screen takes when it shows it.
  */
 internal class TimerNoticeBoard(private val discards: DiscardNotices) {
 
@@ -22,11 +20,6 @@ internal class TimerNoticeBoard(private val discards: DiscardNotices) {
     /** The too-short pomodoro notice a screen has claimed and not finished showing. */
     private val claimedDiscard = MutableStateFlow<TimerNotice.PomodoroDiscarded?>(null)
 
-    /**
-     * What the timer's screens should say now, or null: a claimed notice until it has shown, then
-     * the latest failed pause chain action, then a too-short pomodoro from [discardNotices] no
-     * screen has shown yet.
-     */
     fun notices(discardNotices: Flow<DiscardedPomodoro?>): Flow<TimerNotice?> =
         combine(claimedDiscard, failures, discardNotices) { claimed, failure, discarded ->
             claimed ?: failure ?: discarded?.let { TimerNotice.PomodoroDiscarded(it.entryId.value) }

@@ -205,7 +205,6 @@ internal fun PendingChange.endedAt(laterStart: Instant, changes: List<PendingCha
     return copy(stop = if (queuedStop != null && queuedStop.isBefore(laterStart)) queuedStop else laterStart)
 }
 
-/** This stopped change, with its start and stop where [onGrid] puts them. */
 internal fun PendingChange.placed(onGrid: (start: Instant, stop: Instant) -> SnappedSpan): PendingChange {
     val span = onGrid(start, checkNotNull(stop) { "A running entry has no span to place." })
     return copy(start = span.start, stop = span.stop)

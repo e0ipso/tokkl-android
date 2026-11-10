@@ -39,9 +39,7 @@ import com.github.e0ipso.tokkl.ui.spokenDuration
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 
 /**
- * The weekly report as the web app's WeeklyTab shows a week: projects as rows, the week's days as
- * columns, and a total for each row, each day and the week. Durations follow the account's
- * format, and a day without time shows a dash, as in the web app.
+ * The weekly report as the web app's WeeklyTab shows a week, with a dash for a day without time.
  *
  * The project column stays put while the days scroll sideways under it, on any screen too narrow
  * for the whole week. Every row scrolls with one shared state, so the columns stay lined up, and
@@ -212,10 +210,6 @@ private class GridStyles(
     val name: TextStyle,
 )
 
-/**
- * One row of the grid: [name] in a column [nameWidth] wide that stays put, then a cell per column
- * of [columnWidths], which scroll sideways with [scroll].
- */
 @Composable
 private fun GridRow(
     nameWidth: Dp,
@@ -243,7 +237,6 @@ private fun GridRow(
     }
 }
 
-/** The project's dot and name, or the words for time without a project. */
 @Composable
 private fun ProjectName(row: WeeklyRow, name: String, style: TextStyle) {
     val muted = MaterialTheme.colorScheme.onSurfaceVariant

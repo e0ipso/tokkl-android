@@ -85,13 +85,9 @@ internal object ReportsRequests : FeatureRequests {
     }
 }
 
-/** The Timer widget's day report tap. */
 @Serializable
 data object TodayReportTap : NavigationRequest
 
-/**
- * The Reports page from its view model: hands its state and events to [ReportsScreen].
- */
 @Composable
 fun ReportsPage(model: ReportsViewModel, modifier: Modifier = Modifier) {
     val context = LocalContext.current
@@ -155,7 +151,6 @@ val reportsPage = TopLevelDestination(
     inMore = true,
 )
 
-/** The Reports page. */
 @Serializable
 @SerialName("com.github.e0ipso.tokkl.navigation.Route.Reports")
 data object ReportsRoute : Route

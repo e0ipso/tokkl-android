@@ -54,8 +54,6 @@ import org.koin.dsl.module
 val timerFeatureModule = module {
     single { TimerViewStore(androidContext(), io()) }
 
-    // The Timer page's List or Calendar choice, kept in Tokkl's `timerView` preference. It loads
-    // at process start from a file of two values.
     single {
         TimerViewSetting(
             store = get<TimerViewStore>(),
@@ -67,7 +65,6 @@ val timerFeatureModule = module {
         )
     } binds arrayOf(AccountDataOwner::class, StartupLoad::class)
 
-    // The system trace of each Start and Stop tap on the Timer page.
     single { TapTrace.System }
 
     single<FavoritesStore> {
@@ -79,12 +76,9 @@ val timerFeatureModule = module {
         )
     }
 
-    // The history's and the calendar's days outside the cache, from the server.
     singleOf(::OlderPages)
     singleOf(::ServerWeeks)
 
-    // The session's one owner of the entries the history, the calendar and the entry form show.
-    // Sign-out forgets them.
     single {
         SessionEntries(
             cached = get<AccountCache>().entries,
@@ -134,7 +128,6 @@ val timerFeatureModule = module {
             scope = viewModelCoroutineScope(),
             computation = computation(),
             clock = get(),
-            // From the capabilities once they have loaded.
             allDayOffered = capabilities.allDayOffers(),
             saved = get(),
         )
@@ -208,6 +201,5 @@ val timerFeatureModule = module {
     single { TimerEntries } bind FeatureRoutes::class
     single { TimerRequests } bind FeatureRequests::class
 
-    // The bar's running dot on Timer while an entry runs, by the cache's word.
     single { TimerBadge(get<AccountCache>().running.map { it != null }) } bind PageBadge::class
 }

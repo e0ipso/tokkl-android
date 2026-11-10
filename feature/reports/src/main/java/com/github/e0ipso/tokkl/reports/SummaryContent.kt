@@ -45,10 +45,7 @@ import com.github.e0ipso.tokkl.ui.theme.TokklExtraColors
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.text.NumberFormat
 
-/**
- * The summary of a range with time in it, as the web app's SummaryTab: the totals, the time per
- * day, week or month, and the time per project. Durations follow the account's format.
- */
+/** The summary of a range with time in it, as the web app's SummaryTab. */
 @Composable
 internal fun SummaryContent(report: SummaryReport, settings: AccountSettings) {
     Column(verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.betweenGroups)) {
@@ -59,7 +56,6 @@ internal fun SummaryContent(report: SummaryReport, settings: AccountSettings) {
     }
 }
 
-/** A report's card, a [StickerCard] on surface. */
 @Composable
 internal fun ReportCard(content: @Composable ColumnScope.() -> Unit) {
     StickerCard(modifier = Modifier.fillMaxWidth()) {
@@ -76,10 +72,7 @@ internal fun CardHeading(text: String) {
     Text(text = text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
 }
 
-/**
- * Total time, billable time with its share, the number of entries and the amount in each
- * currency. Each total wraps onto its own line when the next one does not fit beside it.
- */
+/** Each total wraps onto its own line when the next one does not fit beside it. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun Totals(totals: ReportTotals, settings: AccountSettings) {
@@ -144,10 +137,9 @@ private fun DurationText(seconds: Long, settings: AccountSettings, resources: Re
 }
 
 /**
- * The time per bucket as horizontal bars, one row each: the bucket and its total as text above
- * a bar. Billable time sits at the start as a solid bar and the rest follows in stripes, as in
- * the web app's chart, so the two differ by texture as well as colour. TalkBack reads the whole
- * chart as one description that names every bucket's total.
+ * The time per bucket as horizontal bars. Billable time sits at the start as a solid bar and the
+ * rest follows in stripes, as in the web app's chart, so the two differ by texture as well as
+ * colour. TalkBack reads the whole chart as one description that names every bucket's total.
  */
 @Composable
 private fun SeriesChart(report: SummaryReport, settings: AccountSettings) {
