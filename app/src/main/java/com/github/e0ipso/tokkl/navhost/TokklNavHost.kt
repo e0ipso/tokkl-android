@@ -119,8 +119,8 @@ private fun Navigation(
         entryProvider = entryProvider,
     )
     // A signed-in page restored from saved state can outlive its session: a sign-out that finished
-    // in the background before the process died, or a token that no longer decrypts. The page
-    // shows while the stores are read, once per composition of the host, so sign-in pays nothing.
+    // in the background before the process died, or a token that no longer decrypts. Check before
+    // restoring shared view models; a sign-in destination discards the saved session drafts.
     val restoredSignedIn = remember { backStack.lastOrNull().let { it != null && !signIns.isSignIn(it) } }
     var checked by remember { mutableStateOf(!restoredSignedIn) }
     if (!checked) {

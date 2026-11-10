@@ -1,6 +1,6 @@
 ---
 schema_version: 3
-nodes_hash: 'sha256:dae2086ddff0391b25e4d83fc842e700553382f4f589d9b4301f57e0f7b67de1'
+nodes_hash: 'sha256:e6190dbc56d62ae0ab047034862019e55b9d38b259af69082688e2aabdedb204'
 node_count: 96
 ---
 # kenkeep Graph
@@ -21,7 +21,7 @@ Total nodes: 96
 - **title:** Account settings: AccountSettingsSource, AccountTime and NoDeviceZoneTest
 - **path:** data-and-offline/map-account-settings-source-and-account-time.md
 - **tags:** time, api, android, settings
-- **relates_to:** practice-match-web-app-behavior-account-timezone, map-signin-session-settings-and-navigation-host, map-connection-trust-store-pinning-and-prompts, practice-refresh-on-events-no-polling, map-account-cache-and-capabilities
+- **relates_to:** practice-match-web-app-behavior-account-timezone, map-sign-in-request-and-credential-admission, map-session-stores-and-pre-frame-preferences, map-sign-out-ordering-and-account-cleanup, map-saveable-navigation-stack-and-session-guard, map-signed-in-navigation-chrome-and-adaptive-windows, map-trash-capability-and-server-operations, map-connection-trust-store-pinning-and-prompts, practice-refresh-on-events-no-polling, map-account-cache-and-capabilities
 
 ## map-api-client-shared-okhttp-serverurl-and-errors
 
@@ -81,7 +81,7 @@ Total nodes: 96
 - **title:** Catalog pages: projects, clients and tags changed on the server at once
 - **path:** screens/map-catalog-pages-projects-clients-tags.md
 - **tags:** ui, api, catalog
-- **relates_to:** map-api-client-shared-okhttp-serverurl-and-errors, map-account-cache-and-capabilities, map-change-queue-sends-entry-changes-in-order
+- **relates_to:** map-api-client-shared-okhttp-serverurl-and-errors, map-account-cache-and-capabilities, map-offline-entry-mutations-and-local-id-mapping, map-ordered-entry-sending-and-refusals, map-background-queue-work-and-empty-queue-cancellation, map-remote-running-conflicts-and-lost-create-responses, map-queued-delete-and-short-stop-undo, map-room-queue-migration-continuity, map-cached-entity-picker-and-offline-creation
 
 ## map-connection-trust-store-pinning-and-prompts
 
@@ -89,7 +89,7 @@ Total nodes: 96
 - **title:** Connection trust: ServerTrustStore, PinningTrustManager and the trust prompts
 - **path:** api-and-security/map-connection-trust-store-pinning-and-prompts.md
 - **tags:** security, network, ui, dialogs
-- **relates_to:** practice-pin-self-signed-certs-warn-on-http, map-api-client-shared-okhttp-serverurl-and-errors, map-signin-session-settings-and-navigation-host, map-account-settings-source-and-account-time
+- **relates_to:** practice-pin-self-signed-certs-warn-on-http, map-api-client-shared-okhttp-serverurl-and-errors, map-sign-in-request-and-credential-admission, map-session-stores-and-pre-frame-preferences, map-sign-out-ordering-and-account-cleanup, map-saveable-navigation-stack-and-session-guard, map-signed-in-navigation-chrome-and-adaptive-windows, map-trash-capability-and-server-operations, map-account-settings-source-and-account-time
 
 ## map-core-model-and-typed-ids
 
@@ -121,7 +121,7 @@ Total nodes: 96
 - **title:** Favorite launcher shortcuts: cache publication and tap handling
 - **path:** screens/map-favorite-launcher-shortcuts-cache-publication-and-tap-handling.md
 - **tags:** android, shortcuts, offline
-- **relates_to:** map-change-queue-sends-entry-changes-in-order, practice-never-wait-for-server-on-start-stop
+- **relates_to:** map-offline-entry-mutations-and-local-id-mapping, map-ordered-entry-sending-and-refusals, map-background-queue-work-and-empty-queue-cancellation, map-remote-running-conflicts-and-lost-create-responses, map-queued-delete-and-short-stop-undo, map-room-queue-migration-continuity, map-cached-entity-picker-and-offline-creation, practice-never-wait-for-server-on-start-stop
 - **derived_from:** 9c8de91d-411b-498c-b4ed-241fabaa877e:map:4
 
 ## map-fdroid-metadata-release-artifacts
@@ -139,7 +139,7 @@ Total nodes: 96
 - **title:** Gradle build settings: SDK levels, Kotlin version, memory and build cache
 - **path:** build-and-tooling/map-gradle-build-sdk-levels-kotlin-and-memory.md
 - **tags:** android, build, gradle
-- **relates_to:** map-planned-android-stack, practice-emulator-plain-aosp-image-headless, map-jdk-android-sdk-and-agent-shells
+- **relates_to:** map-planned-android-stack, practice-choose-plain-aosp-images-and-compatible-renderers, practice-respect-emulator-slots-and-resource-ownership, practice-let-the-runner-own-emulator-boot-and-settings, practice-clean-up-only-owned-emulator-resources, practice-account-for-emulator-recording-and-screenshot-quirks, map-jdk-android-sdk-and-agent-shells
 
 ## map-history-entry-menu-operations
 
@@ -180,7 +180,7 @@ Total nodes: 96
 - **title:** An OOM kill inside an agent session's scope ends the whole session
 - **path:** build-and-tooling/map-oom-kill-ends-agent-session.md
 - **tags:** agents, machine, memory, emulator
-- **relates_to:** map-t3-daily-restart-stops-agent-sessions, practice-emulator-plain-aosp-image-headless
+- **relates_to:** map-t3-daily-restart-stops-agent-sessions, practice-choose-plain-aosp-images-and-compatible-renderers, practice-respect-emulator-slots-and-resource-ownership, practice-let-the-runner-own-emulator-boot-and-settings, practice-clean-up-only-owned-emulator-resources, practice-account-for-emulator-recording-and-screenshot-quirks
 
 ## map-ordered-entry-sending-and-refusals
 
@@ -266,7 +266,7 @@ Total nodes: 96
 - **title:** Reports: Summary summed on the phone, Detailed paged, Weekly from v3
 - **path:** screens/map-reports-summary-from-detailed-search.md
 - **tags:** reports, api, toggl, ui
-- **relates_to:** map-tokkl-toggl-api, practice-match-web-app-behavior-account-timezone, practice-refresh-on-events-no-polling, practice-port-tokkl-typescript-with-javascript-semantics
+- **relates_to:** map-tokkl-toggl-api, practice-match-web-app-behavior-account-timezone, practice-refresh-on-events-no-polling, practice-preserve-javascript-parsing-and-numeric-boundaries, practice-keep-upstream-golden-cases-with-source-pinned-ports, practice-match-javascript-decimal-and-percentage-formatting, practice-honor-account-clock-formatting-in-time-ports, practice-preserve-tokkl-timezone-conversion-and-database-limits
 
 ## map-room-queue-migration-continuity
 
@@ -433,7 +433,7 @@ Total nodes: 96
 - **title:** UI components: TopBar, ErrorBanner, Scene, ScrollAwayColumn, and Compose layout gotchas
 - **path:** design/map-ui-components-and-compose-layout-gotchas.md
 - **tags:** ui, android, accessibility, compose
-- **relates_to:** map-design-foundation-spacing-shapes-type-brand, map-signin-session-settings-and-navigation-host
+- **relates_to:** map-design-foundation-spacing-shapes-type-brand, map-sign-in-request-and-credential-admission, map-session-stores-and-pre-frame-preferences, map-sign-out-ordering-and-account-cleanup, map-saveable-navigation-stack-and-session-guard, map-signed-in-navigation-chrome-and-adaptive-windows, map-trash-capability-and-server-operations
 
 ## map-week-calendar-layout-and-queued-dragging
 
@@ -537,7 +537,7 @@ Total nodes: 96
 - **title:** Isolate all known failing tests before full-suite validation
 - **path:** practice-isolate-all-known-failing-tests-before-full-suite-validation.md
 - **tags:** testing, ci, agents
-- **relates_to:** practice-run-instrumented-tests-only-through-the-script, practice-reuse-drain-checks-by-content-and-test-configuration
+- **relates_to:** practice-use-the-instrumented-runner-and-its-device-selection, practice-use-the-pinned-test-server-and-tls-proxies, practice-keep-instrumented-credentials-out-of-process-arguments, practice-pass-class-and-package-lists-through-runner-filter-files, practice-verify-device-test-results-and-process-isolation-receipts, practice-reuse-drain-checks-by-content-and-test-configuration
 
 ## practice-isolate-session-and-background-state-with-shared-rules
 
@@ -598,7 +598,7 @@ Total nodes: 96
 - **title:** Match Tokkl web app behavior in the account timezone
 - **path:** data-and-offline/practice-match-web-app-behavior-account-timezone.md
 - **tags:** api, ui, time
-- **relates_to:** practice-port-tokkl-typescript-with-javascript-semantics, map-account-settings-source-and-account-time
+- **relates_to:** practice-preserve-javascript-parsing-and-numeric-boundaries, practice-keep-upstream-golden-cases-with-source-pinned-ports, practice-match-javascript-decimal-and-percentage-formatting, practice-honor-account-clock-formatting-in-time-ports, practice-preserve-tokkl-timezone-conversion-and-database-limits, map-account-settings-source-and-account-time
 - **derived_from:** docs/PRD.md, 9c8de91d-411b-498c-b4ed-241fabaa877e:practice:1
 
 ## practice-never-wait-for-server-on-start-stop
@@ -678,7 +678,7 @@ Total nodes: 96
 - **title:** Keep release builds reproducible and signed with the project key
 - **path:** release/practice-reproducible-builds-project-key.md
 - **tags:** release, fdroid, security, ci
-- **relates_to:** map-fdroid-metadata-release-artifacts, practice-own-version-from-v0-1-0-tag, practice-run-instrumented-tests-only-through-the-script
+- **relates_to:** map-fdroid-metadata-release-artifacts, practice-own-version-from-v0-1-0-tag, practice-use-the-instrumented-runner-and-its-device-selection, practice-use-the-pinned-test-server-and-tls-proxies, practice-keep-instrumented-credentials-out-of-process-arguments, practice-pass-class-and-package-lists-through-runner-filter-files, practice-verify-device-test-results-and-process-isolation-receipts
 - **derived_from:** docs/PRD.md
 
 ## practice-respect-emulator-slots-and-resource-ownership
@@ -696,7 +696,7 @@ Total nodes: 96
 - **title:** Reuse drain checks by content and test configuration
 - **path:** testing/practice-reuse-drain-checks-by-content-and-test-configuration.md
 - **tags:** sift, testing, agents
-- **relates_to:** practice-run-instrumented-tests-only-through-the-script
+- **relates_to:** practice-use-the-instrumented-runner-and-its-device-selection, practice-use-the-pinned-test-server-and-tls-proxies, practice-keep-instrumented-credentials-out-of-process-arguments, practice-pass-class-and-package-lists-through-runner-filter-files, practice-verify-device-test-results-and-process-isolation-receipts
 
 ## practice-reuse-relays-and-throwaway-server-accounts
 
@@ -826,5 +826,5 @@ Total nodes: 96
 - **title:** Show the wordmark only on sign-in and the launch splash, never in a header
 - **path:** design/practice-wordmark-only-on-sign-in-and-splash.md
 - **tags:** ui, brand, design
-- **relates_to:** map-design-foundation-spacing-shapes-type-brand, map-tokkl-colour-tokens-and-font, map-timer-page-history-calendar-and-timer-view, map-ui-components-and-compose-layout-gotchas
+- **relates_to:** map-design-foundation-spacing-shapes-type-brand, map-tokkl-colour-tokens-and-font, map-timer-page-layout-and-scroll-away-header, map-timer-today-and-this-week-totals, map-timer-list-and-calendar-preference-sync, map-cached-history-days-and-grouping, map-week-calendar-layout-and-queued-dragging, map-ui-components-and-compose-layout-gotchas
 - **derived_from:** docs/PRD.md

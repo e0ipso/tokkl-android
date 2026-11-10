@@ -14,7 +14,12 @@ kk_id: map-account-settings-source-and-account-time
 kk_derived_from: []
 kk_relates_to:
   - practice-match-web-app-behavior-account-timezone
-  - map-signin-session-settings-and-navigation-host
+  - map-sign-in-request-and-credential-admission
+  - map-session-stores-and-pre-frame-preferences
+  - map-sign-out-ordering-and-account-cleanup
+  - map-saveable-navigation-stack-and-session-guard
+  - map-signed-in-navigation-chrome-and-adaptive-windows
+  - map-trash-capability-and-server-operations
   - map-connection-trust-store-pinning-and-prompts
   - practice-refresh-on-events-no-polling
   - map-account-cache-and-capabilities
@@ -35,12 +40,12 @@ kk_confidence: high
 # Related
 
 - Related: [practice-match-web-app-behavior-account-timezone](practice-match-web-app-behavior-account-timezone.md)
-- Related: [map-signin-session-settings-and-navigation-host → map-saveable-navigation-stack-and-session-guard](../screens/session-and-navigation/map-saveable-navigation-stack-and-session-guard.md)
-- Related: [map-signin-session-settings-and-navigation-host → map-session-stores-and-pre-frame-preferences](../screens/session-and-navigation/map-session-stores-and-pre-frame-preferences.md)
-- Related: [map-signin-session-settings-and-navigation-host → map-sign-in-request-and-credential-admission](../screens/session-and-navigation/map-sign-in-request-and-credential-admission.md)
-- Related: [map-signin-session-settings-and-navigation-host → map-sign-out-ordering-and-account-cleanup](../screens/session-and-navigation/map-sign-out-ordering-and-account-cleanup.md)
-- Related: [map-signin-session-settings-and-navigation-host → map-signed-in-navigation-chrome-and-adaptive-windows](../screens/session-and-navigation/map-signed-in-navigation-chrome-and-adaptive-windows.md)
-- Related: [map-signin-session-settings-and-navigation-host → map-trash-capability-and-server-operations](../screens/session-and-navigation/map-trash-capability-and-server-operations.md)
+- Related: [map-sign-in-request-and-credential-admission](../screens/session-and-navigation/map-sign-in-request-and-credential-admission.md)
+- Related: [map-session-stores-and-pre-frame-preferences](../screens/session-and-navigation/map-session-stores-and-pre-frame-preferences.md)
+- Related: [map-sign-out-ordering-and-account-cleanup](../screens/session-and-navigation/map-sign-out-ordering-and-account-cleanup.md)
+- Related: [map-saveable-navigation-stack-and-session-guard](../screens/session-and-navigation/map-saveable-navigation-stack-and-session-guard.md)
+- Related: [map-signed-in-navigation-chrome-and-adaptive-windows](../screens/session-and-navigation/map-signed-in-navigation-chrome-and-adaptive-windows.md)
+- Related: [map-trash-capability-and-server-operations](../screens/session-and-navigation/map-trash-capability-and-server-operations.md)
 - Related: [map-connection-trust-store-pinning-and-prompts](../api-and-security/map-connection-trust-store-pinning-and-prompts.md)
 - Related: [practice-refresh-on-events-no-polling](../api-and-security/practice-refresh-on-events-no-polling.md)
 - Related: [map-account-cache-and-capabilities](map-account-cache-and-capabilities.md)

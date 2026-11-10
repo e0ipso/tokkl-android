@@ -17,9 +17,7 @@ kk_relates_to:
 kk_depends_on: []
 kk_confidence: high
 ---
-`adb shell screenrecord` stopped with SIGINT has lost roughly the last 1 to 2 s of video. Hold the final screen at least that long before stopping a recording.
-
-For a still capture of the whole screen, use `adb exec-out screencap -p`. `UiAutomation.takeScreenshot` has come back black on `lavapipe` while `screencap` showed the screen. The launch splash is drawn by the system before the app runs, so no test can capture it. On tokkl-api31 the splash showed its icon only for a start from the launcher. `LaunchSplashTest` checks the theme and drawables Android draws it from instead.
+Use the Device panel tools for screenshots and recordings. The recording must retain the final screen long enough to include it in the video. The project runner owns test captures; a framework capture has returned black on `lavapipe` even when the framebuffer held the screen. The launch splash is drawn by the system before the app runs, so no test can capture it. On tokkl-api31 the splash showed its icon only for a start from the launcher. `LaunchSplashTest` checks the theme and drawables Android draws it from instead.
 
 <!-- kk:related:start -->
 # Related

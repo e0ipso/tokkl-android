@@ -12,7 +12,11 @@ kk_schema_version: 3
 kk_id: practice-isolate-all-known-failing-tests-before-full-suite-validation
 kk_derived_from: []
 kk_relates_to:
-  - practice-run-instrumented-tests-only-through-the-script
+  - practice-use-the-instrumented-runner-and-its-device-selection
+  - practice-use-the-pinned-test-server-and-tls-proxies
+  - practice-keep-instrumented-credentials-out-of-process-arguments
+  - practice-pass-class-and-package-lists-through-runner-filter-files
+  - practice-verify-device-test-results-and-process-isolation-receipts
   - practice-reuse-drain-checks-by-content-and-test-configuration
 kk_depends_on: []
 kk_confidence: high
@@ -28,10 +32,10 @@ Once the focused run is green, run the affected surrounding tests and required b
 <!-- kk:related:start -->
 # Related
 
-- Related: [practice-run-instrumented-tests-only-through-the-script → practice-keep-instrumented-credentials-out-of-process-arguments](testing/instrumented-runner/practice-keep-instrumented-credentials-out-of-process-arguments.md)
-- Related: [practice-run-instrumented-tests-only-through-the-script → practice-pass-class-and-package-lists-through-runner-filter-files](testing/instrumented-runner/practice-pass-class-and-package-lists-through-runner-filter-files.md)
-- Related: [practice-run-instrumented-tests-only-through-the-script → practice-use-the-instrumented-runner-and-its-device-selection](testing/instrumented-runner/practice-use-the-instrumented-runner-and-its-device-selection.md)
-- Related: [practice-run-instrumented-tests-only-through-the-script → practice-use-the-pinned-test-server-and-tls-proxies](testing/instrumented-runner/practice-use-the-pinned-test-server-and-tls-proxies.md)
-- Related: [practice-run-instrumented-tests-only-through-the-script → practice-verify-device-test-results-and-process-isolation-receipts](testing/instrumented-runner/practice-verify-device-test-results-and-process-isolation-receipts.md)
+- Related: [practice-use-the-instrumented-runner-and-its-device-selection](testing/instrumented-runner/practice-use-the-instrumented-runner-and-its-device-selection.md)
+- Related: [practice-use-the-pinned-test-server-and-tls-proxies](testing/instrumented-runner/practice-use-the-pinned-test-server-and-tls-proxies.md)
+- Related: [practice-keep-instrumented-credentials-out-of-process-arguments](testing/instrumented-runner/practice-keep-instrumented-credentials-out-of-process-arguments.md)
+- Related: [practice-pass-class-and-package-lists-through-runner-filter-files](testing/instrumented-runner/practice-pass-class-and-package-lists-through-runner-filter-files.md)
+- Related: [practice-verify-device-test-results-and-process-isolation-receipts](testing/instrumented-runner/practice-verify-device-test-results-and-process-isolation-receipts.md)
 - Related: [practice-reuse-drain-checks-by-content-and-test-configuration](testing/practice-reuse-drain-checks-by-content-and-test-configuration.md)
 <!-- kk:related:end -->

@@ -16,7 +16,11 @@ kk_relates_to:
   - map-tokkl-toggl-api
   - practice-match-web-app-behavior-account-timezone
   - practice-refresh-on-events-no-polling
-  - practice-port-tokkl-typescript-with-javascript-semantics
+  - practice-preserve-javascript-parsing-and-numeric-boundaries
+  - practice-keep-upstream-golden-cases-with-source-pinned-ports
+  - practice-match-javascript-decimal-and-percentage-formatting
+  - practice-honor-account-clock-formatting-in-time-ports
+  - practice-preserve-tokkl-timezone-conversion-and-database-limits
 kk_depends_on: []
 kk_confidence: high
 ---
@@ -40,9 +44,9 @@ Every page of the detailed search is one request. Against Toggl Track's hourly q
 - Related: [map-tokkl-toggl-api](../api-and-security/map-tokkl-toggl-api.md)
 - Related: [practice-match-web-app-behavior-account-timezone](../data-and-offline/practice-match-web-app-behavior-account-timezone.md)
 - Related: [practice-refresh-on-events-no-polling](../api-and-security/practice-refresh-on-events-no-polling.md)
-- Related: [practice-port-tokkl-typescript-with-javascript-semantics → practice-honor-account-clock-formatting-in-time-ports](../data-and-offline/typescript-time-ports/practice-honor-account-clock-formatting-in-time-ports.md)
-- Related: [practice-port-tokkl-typescript-with-javascript-semantics → practice-keep-upstream-golden-cases-with-source-pinned-ports](../data-and-offline/typescript-time-ports/practice-keep-upstream-golden-cases-with-source-pinned-ports.md)
-- Related: [practice-port-tokkl-typescript-with-javascript-semantics → practice-match-javascript-decimal-and-percentage-formatting](../data-and-offline/typescript-time-ports/practice-match-javascript-decimal-and-percentage-formatting.md)
-- Related: [practice-port-tokkl-typescript-with-javascript-semantics → practice-preserve-javascript-parsing-and-numeric-boundaries](../data-and-offline/typescript-time-ports/practice-preserve-javascript-parsing-and-numeric-boundaries.md)
-- Related: [practice-port-tokkl-typescript-with-javascript-semantics → practice-preserve-tokkl-timezone-conversion-and-database-limits](../data-and-offline/typescript-time-ports/practice-preserve-tokkl-timezone-conversion-and-database-limits.md)
+- Related: [practice-preserve-javascript-parsing-and-numeric-boundaries](../data-and-offline/typescript-time-ports/practice-preserve-javascript-parsing-and-numeric-boundaries.md)
+- Related: [practice-keep-upstream-golden-cases-with-source-pinned-ports](../data-and-offline/typescript-time-ports/practice-keep-upstream-golden-cases-with-source-pinned-ports.md)
+- Related: [practice-match-javascript-decimal-and-percentage-formatting](../data-and-offline/typescript-time-ports/practice-match-javascript-decimal-and-percentage-formatting.md)
+- Related: [practice-honor-account-clock-formatting-in-time-ports](../data-and-offline/typescript-time-ports/practice-honor-account-clock-formatting-in-time-ports.md)
+- Related: [practice-preserve-tokkl-timezone-conversion-and-database-limits](../data-and-offline/typescript-time-ports/practice-preserve-tokkl-timezone-conversion-and-database-limits.md)
 <!-- kk:related:end -->

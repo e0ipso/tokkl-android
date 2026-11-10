@@ -14,7 +14,11 @@ kk_derived_from:
   - docs/PRD.md
   - '9c8de91d-411b-498c-b4ed-241fabaa877e:practice:1'
 kk_relates_to:
-  - practice-port-tokkl-typescript-with-javascript-semantics
+  - practice-preserve-javascript-parsing-and-numeric-boundaries
+  - practice-keep-upstream-golden-cases-with-source-pinned-ports
+  - practice-match-javascript-decimal-and-percentage-formatting
+  - practice-honor-account-clock-formatting-in-time-ports
+  - practice-preserve-tokkl-timezone-conversion-and-database-limits
   - map-account-settings-source-and-account-time
 kk_depends_on: []
 kk_confidence: high
@@ -32,11 +36,11 @@ Write durations in the account's `duration_format` and clock times in its `timeo
 <!-- kk:related:start -->
 # Related
 
-- Related: [practice-port-tokkl-typescript-with-javascript-semantics → practice-honor-account-clock-formatting-in-time-ports](typescript-time-ports/practice-honor-account-clock-formatting-in-time-ports.md)
-- Related: [practice-port-tokkl-typescript-with-javascript-semantics → practice-keep-upstream-golden-cases-with-source-pinned-ports](typescript-time-ports/practice-keep-upstream-golden-cases-with-source-pinned-ports.md)
-- Related: [practice-port-tokkl-typescript-with-javascript-semantics → practice-match-javascript-decimal-and-percentage-formatting](typescript-time-ports/practice-match-javascript-decimal-and-percentage-formatting.md)
-- Related: [practice-port-tokkl-typescript-with-javascript-semantics → practice-preserve-javascript-parsing-and-numeric-boundaries](typescript-time-ports/practice-preserve-javascript-parsing-and-numeric-boundaries.md)
-- Related: [practice-port-tokkl-typescript-with-javascript-semantics → practice-preserve-tokkl-timezone-conversion-and-database-limits](typescript-time-ports/practice-preserve-tokkl-timezone-conversion-and-database-limits.md)
+- Related: [practice-preserve-javascript-parsing-and-numeric-boundaries](typescript-time-ports/practice-preserve-javascript-parsing-and-numeric-boundaries.md)
+- Related: [practice-keep-upstream-golden-cases-with-source-pinned-ports](typescript-time-ports/practice-keep-upstream-golden-cases-with-source-pinned-ports.md)
+- Related: [practice-match-javascript-decimal-and-percentage-formatting](typescript-time-ports/practice-match-javascript-decimal-and-percentage-formatting.md)
+- Related: [practice-honor-account-clock-formatting-in-time-ports](typescript-time-ports/practice-honor-account-clock-formatting-in-time-ports.md)
+- Related: [practice-preserve-tokkl-timezone-conversion-and-database-limits](typescript-time-ports/practice-preserve-tokkl-timezone-conversion-and-database-limits.md)
 - Related: [map-account-settings-source-and-account-time](map-account-settings-source-and-account-time.md)
 <!-- kk:related:end -->
 

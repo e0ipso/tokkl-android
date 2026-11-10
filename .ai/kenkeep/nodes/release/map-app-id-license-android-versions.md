@@ -22,7 +22,7 @@ The application ID is `com.canpicasoft.tokkl`, chosen on 2026-10-26 before the F
 
 The app supports Android 12 (API 31) and later. The owner raised `minSdk` from 26 to 31 on 2026-10-19, and the PRD's Compatibility row says the same. Code may use any API from Android 12 on without a version check, and the tests run on API 36 and API 31 only. Phones come first. Layouts adapt to tablets and foldables, with no separate design and no Wear OS app.
 
-The PRD plans the running-timer notification as a Live Update on Android 16 and later, and a regular ongoing notification elsewhere, which has to work without Live Updates because they depend on the device. The built notification is the regular one on every version; the Live Update is not built. On Android 13 and later the app is to ask for the notification permission when the first timer starts and say what is lost without it (TKA-0058); until then the notification shows only where the user allowed notifications in Settings.
+The running-timer notification requests Live Update promotion on Android 16 where allowed, with a regular ongoing notification as its fallback. The first timer or Pomodoro session start requests notification permission on Android 13 and later; denied access remains visible with an explicit retry control.
 
 The app signs in to one server and one account at a time. Tokkl's admin pages, Toggl CSV import, JSON export and restore, and bulk edit stay in the web app.
 

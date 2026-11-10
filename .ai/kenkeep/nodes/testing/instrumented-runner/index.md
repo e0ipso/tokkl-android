@@ -14,8 +14,8 @@ _None._
 - Open [**Use the pinned test server and TLS proxies**](practice-use-the-pinned-test-server-and-tls-proxies.md) to learn about: Disposable Tokkl, prefixed HTTP and independent TLS keys provide real endpoint and trust fixtures. #testing #android #docker #api
 - Open [**Pass class and package lists through runner filter files**](practice-pass-class-and-package-lists-through-runner-filter-files.md) to learn about: The script preserves comma-separated test selection despite AGP argument splitting. #testing #android #gradle
 - Open [**Keep instrumented credentials out of process arguments**](practice-keep-instrumented-credentials-out-of-process-arguments.md) to learn about: Private device credential files and durable cleanup prevent passwords and tokens leaking through ps. #testing #android #security
-- Open [**Run native permission probes alone with a fresh notification permission**](practice-run-native-permission-probes-alone-with-a-fresh-permission.md) to learn about: TOKKL_TEST_FRESH_NOTIFICATION_PERMISSION=1 resets POST_NOTIFICATIONS before one probe method starts, on an API 33+ emulator the script boots. #testing #android #emulator #notification
 - Open [**Verify device test results and process isolation receipts**](practice-verify-device-test-results-and-process-isolation-receipts.md) to learn about: Device liveness, nonempty JUnit XML and orchestrated processes matter beyond Gradle success. #testing #android #emulator
+- Open [**Run native permission probes alone with a fresh notification permission**](practice-run-native-permission-probes-alone-with-a-fresh-permission.md) to learn about: TOKKL_TEST_FRESH_NOTIFICATION_PERMISSION=1 resets POST_NOTIFICATIONS before one probe method starts, on an API 33+ emulator the script boots. #testing #android #emulator #notification
 
 ## Components (what exists)
 _None yet._

@@ -16,7 +16,12 @@ kk_id: map-ui-components-and-compose-layout-gotchas
 kk_derived_from: []
 kk_relates_to:
   - map-design-foundation-spacing-shapes-type-brand
-  - map-signin-session-settings-and-navigation-host
+  - map-sign-in-request-and-credential-admission
+  - map-session-stores-and-pre-frame-preferences
+  - map-sign-out-ordering-and-account-cleanup
+  - map-saveable-navigation-stack-and-session-guard
+  - map-signed-in-navigation-chrome-and-adaptive-windows
+  - map-trash-capability-and-server-operations
 kk_depends_on: []
 kk_confidence: high
 ---
@@ -30,7 +35,7 @@ On sign-in, each field's `SupportingLine` always takes the height of the tallest
 
 Compose keeps a focused field in view when the keyboard opens only if the field was wholly inside the scroll area before and no other scroll was running. On tokkl-api36 at font scale 2.0, a password field that ended within 1dp of the bottom edge stayed under the keyboard. `keptAboveKeyboard()` in `signin/SignInScreen.kt` brings the focused field and its supporting line into view one frame after each change of the keyboard's height. A form low on a scrolling screen needs the same.
 
-`ui/ScrollAwayColumn.kt` puts a top part over a body that takes the rest of the height. On a window of compact height the top scrolls away as soon as the body scrolls on and comes back once the body is back at its start. `compactHeightWindow()` decides that: the window's height divided by the font scale is under 480dp, Material's start of medium heights. So a phone held sideways counts, and so does a phone held upright at the largest font scale, where text takes twice the room. `shortWindow()` checks the height alone, for a phone held sideways only. The Timer page's top bar, timer and view switch use the column, and so does the week calendar inside the Calendar view. Nesting order matters: a `ScrollAwayColumn` inside the body goes after the outer top and comes back before it. With `startScrolledAway` the top starts scrolled away the first time the column shows, and a column in the body that first shows then starts with its own top scrolled away too.
+`ui/ScrollAwayColumn.kt` puts a top part over a body that takes the rest of the height. On a window of compact height the top scrolls away as soon as the body scrolls on and comes back once the body is back at its start. `compactHeightWindow()` decides that: the window's height divided by the font scale is under 480dp, Material's start of medium heights. So a phone held sideways counts, and so does a phone held upright at the largest font scale, where text takes twice the room. The Timer page's top bar, timer and view switch use the column, and so does the week calendar inside the Calendar view. Nesting order matters: a `ScrollAwayColumn` inside the body goes after the outer top and comes back before it. With `startScrolledAway` the top starts scrolled away the first time the column shows, and a column in the body that first shows then starts with its own top scrolled away too.
 
 A Compose `Dialog` with `usePlatformDefaultWidth = false` keeps its window at WRAP_CONTENT height. Android 11 measured it twice in every pass, at 1079 and at 1080 px on a 1080 px screen, and with the date range picker inside the dialog laid itself out on every frame and the main thread never went idle. Android 12 still never went idle there. `FillScreenWindow()` in `ui/FillScreenWindow.kt` sets the window to MATCH_PARENT, which ends it. Call it first inside any full-width dialog, as the reports' range and filter dialogs, the entry form's date dialog and the picker dialog of `EntryFieldsEditor` do.
 
@@ -42,10 +47,10 @@ The bottom bar's labels share one font size through `SharedLabelSize` in the app
 # Related
 
 - Related: [map-design-foundation-spacing-shapes-type-brand](map-design-foundation-spacing-shapes-type-brand.md)
-- Related: [map-signin-session-settings-and-navigation-host → map-saveable-navigation-stack-and-session-guard](../screens/session-and-navigation/map-saveable-navigation-stack-and-session-guard.md)
-- Related: [map-signin-session-settings-and-navigation-host → map-session-stores-and-pre-frame-preferences](../screens/session-and-navigation/map-session-stores-and-pre-frame-preferences.md)
-- Related: [map-signin-session-settings-and-navigation-host → map-sign-in-request-and-credential-admission](../screens/session-and-navigation/map-sign-in-request-and-credential-admission.md)
-- Related: [map-signin-session-settings-and-navigation-host → map-sign-out-ordering-and-account-cleanup](../screens/session-and-navigation/map-sign-out-ordering-and-account-cleanup.md)
-- Related: [map-signin-session-settings-and-navigation-host → map-signed-in-navigation-chrome-and-adaptive-windows](../screens/session-and-navigation/map-signed-in-navigation-chrome-and-adaptive-windows.md)
-- Related: [map-signin-session-settings-and-navigation-host → map-trash-capability-and-server-operations](../screens/session-and-navigation/map-trash-capability-and-server-operations.md)
+- Related: [map-sign-in-request-and-credential-admission](../screens/session-and-navigation/map-sign-in-request-and-credential-admission.md)
+- Related: [map-session-stores-and-pre-frame-preferences](../screens/session-and-navigation/map-session-stores-and-pre-frame-preferences.md)
+- Related: [map-sign-out-ordering-and-account-cleanup](../screens/session-and-navigation/map-sign-out-ordering-and-account-cleanup.md)
+- Related: [map-saveable-navigation-stack-and-session-guard](../screens/session-and-navigation/map-saveable-navigation-stack-and-session-guard.md)
+- Related: [map-signed-in-navigation-chrome-and-adaptive-windows](../screens/session-and-navigation/map-signed-in-navigation-chrome-and-adaptive-windows.md)
+- Related: [map-trash-capability-and-server-operations](../screens/session-and-navigation/map-trash-capability-and-server-operations.md)
 <!-- kk:related:end -->
