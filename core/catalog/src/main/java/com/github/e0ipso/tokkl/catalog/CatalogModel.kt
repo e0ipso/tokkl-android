@@ -120,6 +120,13 @@ class CatalogModel<D, O>(
      */
     private var accepted = 0
 
+    /**
+     * Counts the loads that put a list on the page. A load that lands while a change is on its way
+     * may have read the list with that change already in it, so [send] then reads the list again
+     * instead of putting the answer into it.
+     */
+    private var landed = 0
+
     private var workspace: WorkspaceId? = null
 
     /** The workspace the page manages: the one the data came from, or else the stored one, or null. */
@@ -184,7 +191,9 @@ class CatalogModel<D, O>(
 
     /**
      * Once the server accepts [request], the cache refreshes, and while the list is open [apply]
-     * puts the answer into the data, the overlay closes and [done] says what happened. A refusal
+     * puts the answer into the data, the overlay closes and [done] says what happened. When a load
+     * put a list on the page while the request ran, that list may already hold the change, so the
+     * page reads the list again instead of applying the answer to it. A refusal
      * keeps the overlay open with the reason. An unreachable server turns every action off until a
      * load gets through.
      * Once sent, the change and the refresh after it outlive the page's scope. An answer that comes
@@ -200,6 +209,7 @@ class CatalogModel<D, O>(
         if (!opened || !state.value.canChange) return
         mutableState.update { it.copy(sending = true, changeProblem = null) }
         val sentFrom = opening
+        val landedBefore = landed
         val sent = changes.send { request(workspace) }
         scope.launch {
             val answer = sent.await()
@@ -208,14 +218,17 @@ class CatalogModel<D, O>(
             when (answer) {
                 is ApiResult.Success -> {
                     accepted++
+                    // A list that landed meanwhile may already hold the change: read it again instead.
+                    val fresh = landed == landedBefore
                     mutableState.update { current ->
                         current.copy(
-                            data = current.data?.let { apply(it, answer.value) },
+                            data = if (fresh) current.data?.let { apply(it, answer.value) } else current.data,
                             sending = false,
                             overlay = null,
                             done = done(answer.value),
                         )
                     }
+                    if (!fresh && loading?.isActive != true) load()
                 }
 
                 is ApiResult.Failure -> {
@@ -248,6 +261,7 @@ class CatalogModel<D, O>(
             }
             when (answer) {
                 is Loaded -> {
+                    landed++
                     workspace = answer.workspace
                     mutableState.update { it.copy(data = answer.data, loading = false, loadProblem = null) }
                 }

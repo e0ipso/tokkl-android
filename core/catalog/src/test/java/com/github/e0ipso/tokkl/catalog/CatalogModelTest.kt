@@ -147,4 +147,29 @@ class CatalogModelTest {
         assertEquals("the page read the list again", 3, loads)
         assertEquals(false, model.state.value.loading)
     }
+
+    /**
+     * A reload that started after a create was sent and read the list with the new item answers
+     * before the create does: the item shows once, and the page reads the list again.
+     */
+    @Test
+    fun aReloadThatLandsBeforeTheCreatesAnswerShowsTheItemOnce() {
+        model.shown()
+        val created = CompletableDeferred<ApiResult<String>>()
+        model.send(
+            request = { created.await() },
+            apply = { list, item -> list + item },
+            done = { CatalogChange.Created(it) },
+        )
+        server = listOf("Website", "Intranet")
+        model.returned()
+        assertEquals(listOf("Website", "Intranet"), model.state.value.data)
+
+        created.complete(ApiResult.Success("Intranet"))
+
+        assertEquals("the item shows once", listOf("Website", "Intranet"), model.state.value.data)
+        assertEquals(CatalogChange.Created("Intranet"), model.state.value.done)
+        assertEquals(false, model.state.value.sending)
+        assertEquals("the page read the list again", 3, loads)
+    }
 }
