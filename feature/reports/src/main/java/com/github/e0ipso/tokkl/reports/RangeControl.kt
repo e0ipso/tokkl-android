@@ -21,7 +21,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDateRangePickerState
@@ -47,12 +46,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.github.e0ipso.tokkl.feature.reports.R
 import com.github.e0ipso.tokkl.time.AccountTime
 import com.github.e0ipso.tokkl.ui.DateWords
-import com.github.e0ipso.tokkl.ui.FillScreenWindow
 import com.github.e0ipso.tokkl.ui.RadioOptionRow
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import java.time.Instant
@@ -235,79 +231,58 @@ private fun CustomRangeDialog(
     val picked = if (start != null && end != null && !end.isBefore(start)) ReportRange(start, end) else null
     val tooLong = picked != null && picked.days > MAX_RANGE_DAYS
     val words = DateWords(LocalResources.current)
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        FillScreenWindow()
-        Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
-            Column {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(horizontal = TokklTheme.spacing.space1),
-                ) {
-                    IconButton(onClick = onDismiss) {
-                        Icon(
-                            painterResource(UiR.drawable.ic_close),
-                            contentDescription = stringResource(R.string.reports_cancel),
-                        )
-                    }
-                    Text(
-                        text = stringResource(R.string.reports_custom_range_title),
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier
-                            .weight(1f)
-                            .semantics { heading() },
-                    )
-                    TextButton(onClick = { picked?.let(onApply) }, enabled = picked != null && !tooLong) {
-                        Text(stringResource(R.string.reports_apply))
-                    }
-                }
-                // Seven 48dp day cells are wider than a 320dp window, so the last column
-                // draws past the screen. The picker's own date container is 40dp, which fits.
-                BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
-                    val day = if (maxWidth < 48.dp * 7) 40.dp else LocalMinimumInteractiveComponentSize.current
-                    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides day) {
-                        DateRangePicker(
-                            state = state,
-                            title = null,
-                            headline = {
-                                Column(
-                                    modifier = Modifier.padding(
-                                        start = TokklTheme.spacing.space6,
-                                        end = TokklTheme.spacing.space3,
-                                        bottom = TokklTheme.spacing.space3,
-                                    ),
-                                    verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space1),
-                                ) {
-                                    Text(
-                                        text = when {
-                                            start == null -> stringResource(R.string.reports_custom_range_pick_start)
+    ReportDialog(
+        title = R.string.reports_custom_range_title,
+        onApply = { picked?.let(onApply) },
+        onDismiss = onDismiss,
+        canApply = picked != null && !tooLong,
+    ) {
+        // Seven 48dp day cells are wider than a 320dp window, so the last column
+        // draws past the screen. The picker's own date container is 40dp, which fits.
+        BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
+            val day = if (maxWidth < 48.dp * 7) 40.dp else LocalMinimumInteractiveComponentSize.current
+            CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides day) {
+                DateRangePicker(
+                    state = state,
+                    title = null,
+                    headline = {
+                        Column(
+                            modifier = Modifier.padding(
+                                start = TokklTheme.spacing.space6,
+                                end = TokklTheme.spacing.space3,
+                                bottom = TokklTheme.spacing.space3,
+                            ),
+                            verticalArrangement = Arrangement.spacedBy(TokklTheme.spacing.space1),
+                        ) {
+                            Text(
+                                text = when {
+                                    start == null -> stringResource(R.string.reports_custom_range_pick_start)
 
-                                            picked == null -> stringResource(
-                                                R.string.reports_custom_range_pick_end,
-                                                words.shortWithYear(start),
-                                            )
-
-                                            else -> words.range(picked, today)
-                                        },
-                                        style = MaterialTheme.typography.titleMedium,
-                                        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                                    picked == null -> stringResource(
+                                        R.string.reports_custom_range_pick_end,
+                                        words.shortWithYear(start),
                                     )
-                                    if (tooLong) {
-                                        Text(
-                                            text = pluralStringResource(
-                                                R.plurals.reports_custom_range_too_long,
-                                                MAX_RANGE_DAYS,
-                                                MAX_RANGE_DAYS,
-                                            ),
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.error,
-                                        )
-                                    }
-                                }
-                            },
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                    }
-                }
+
+                                    else -> words.range(picked, today)
+                                },
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                            )
+                            if (tooLong) {
+                                Text(
+                                    text = pluralStringResource(
+                                        R.plurals.reports_custom_range_too_long,
+                                        MAX_RANGE_DAYS,
+                                        MAX_RANGE_DAYS,
+                                    ),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.error,
+                                )
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxSize(),
+                )
             }
         }
     }

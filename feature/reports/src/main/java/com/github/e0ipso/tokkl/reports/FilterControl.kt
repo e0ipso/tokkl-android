@@ -2,8 +2,6 @@ package com.github.e0ipso.tokkl.reports
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -12,8 +10,6 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -21,7 +17,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -33,7 +28,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -42,16 +36,12 @@ import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.github.e0ipso.tokkl.feature.reports.R
 import com.github.e0ipso.tokkl.time.jsTrim
 import com.github.e0ipso.tokkl.ui.CheckboxOptionRow
-import com.github.e0ipso.tokkl.ui.FillScreenWindow
 import com.github.e0ipso.tokkl.ui.RadioOptionRow
 import com.github.e0ipso.tokkl.ui.theme.TokklTheme
 import com.github.e0ipso.tokkl.ui.theme.screenContent
-import com.github.e0ipso.tokkl.core.ui.R as UiR
 
 /**
  * The Filters button under the range. It names every active filter in words, so the filters show
@@ -184,99 +174,77 @@ private fun FilterSheet(
     var draft by rememberSaveable(stateSaver = FILTERS_SAVER) { mutableStateOf(initial) }
     var query by rememberSaveable { mutableStateOf("") }
     val search = query.jsTrim()
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        FillScreenWindow()
-        Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
-            Column {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(horizontal = TokklTheme.spacing.space1),
-                ) {
-                    IconButton(onClick = onDismiss) {
-                        Icon(
-                            painterResource(UiR.drawable.ic_close),
-                            contentDescription = stringResource(R.string.reports_cancel),
-                        )
-                    }
-                    Text(
-                        text = stringResource(R.string.reports_filters),
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier
-                            .weight(1f)
-                            .semantics { heading() },
-                    )
-                    TextButton(onClick = { onApply(if (options.negation) draft else draft.withoutNegation()) }) {
-                        Text(stringResource(R.string.reports_apply))
+    ReportDialog(
+        title = R.string.reports_filters,
+        onApply = { onApply(if (options.negation) draft else draft.withoutNegation()) },
+        onDismiss = onDismiss,
+    ) {
+        OutlinedTextField(
+            value = query,
+            onValueChange = { query = it },
+            label = { Text(stringResource(R.string.reports_filter_search)) },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            modifier = Modifier
+                .screenContent()
+                .fillMaxWidth()
+                .padding(bottom = TokklTheme.spacing.inGroup),
+        )
+        LazyColumn(Modifier.weight(1f).fillMaxWidth()) {
+            idSection(
+                key = "project",
+                heading = R.string.reports_filter_project,
+                without = R.string.reports_without_project,
+                options = options.projects.matching(search, draft.projects),
+                picked = draft.projects,
+                negated = draft.projectsNot.takeIf { options.negation },
+                onNegatedChange = { draft = draft.copy(projectsNot = it) },
+                onToggle = { draft = draft.copy(projects = draft.projects.toggled(it)) },
+            )
+            idSection(
+                key = "client",
+                heading = R.string.reports_filter_client,
+                without = R.string.reports_filter_without_client,
+                options = options.clients.matching(search, draft.clients),
+                picked = draft.clients,
+                negated = draft.clientsNot.takeIf { options.negation },
+                onNegatedChange = { draft = draft.copy(clientsNot = it) },
+                onToggle = { draft = draft.copy(clients = draft.clients.toggled(it)) },
+            )
+            idSection(
+                key = "tag",
+                heading = R.string.reports_filter_tag,
+                without = R.string.reports_filter_without_tags,
+                options = options.tags.matching(search, draft.tags),
+                picked = draft.tags,
+                negated = draft.tagsNot.takeIf { options.negation },
+                onNegatedChange = { draft = draft.copy(tagsNot = it) },
+                onToggle = { draft = draft.copy(tags = draft.tags.toggled(it)) },
+            )
+            item(key = "billable") {
+                Column(Modifier.screenContent()) {
+                    SectionHeading(R.string.reports_filter_billable)
+                    // Radio buttons: the selected one differs in shape, not only in colour.
+                    Column(Modifier.selectableGroup()) {
+                        for (choice in BillableFilter.entries) {
+                            RadioOptionRow(
+                                label = stringResource(BILLABLE_LABELS.getValue(choice)),
+                                selected = draft.billable == choice,
+                                onSelect = { draft = draft.copy(billable = choice) },
+                            )
+                        }
                     }
                 }
-                OutlinedTextField(
-                    value = query,
-                    onValueChange = { query = it },
-                    label = { Text(stringResource(R.string.reports_filter_search)) },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            }
+            item(key = "clear") {
+                TextButton(
+                    onClick = { draft = ReportFilters() },
+                    enabled = draft != ReportFilters(),
                     modifier = Modifier
                         .screenContent()
-                        .fillMaxWidth()
-                        .padding(bottom = TokklTheme.spacing.inGroup),
-                )
-                LazyColumn(Modifier.weight(1f).fillMaxWidth()) {
-                    idSection(
-                        key = "project",
-                        heading = R.string.reports_filter_project,
-                        without = R.string.reports_without_project,
-                        options = options.projects.matching(search, draft.projects),
-                        picked = draft.projects,
-                        negated = draft.projectsNot.takeIf { options.negation },
-                        onNegatedChange = { draft = draft.copy(projectsNot = it) },
-                        onToggle = { draft = draft.copy(projects = draft.projects.toggled(it)) },
-                    )
-                    idSection(
-                        key = "client",
-                        heading = R.string.reports_filter_client,
-                        without = R.string.reports_filter_without_client,
-                        options = options.clients.matching(search, draft.clients),
-                        picked = draft.clients,
-                        negated = draft.clientsNot.takeIf { options.negation },
-                        onNegatedChange = { draft = draft.copy(clientsNot = it) },
-                        onToggle = { draft = draft.copy(clients = draft.clients.toggled(it)) },
-                    )
-                    idSection(
-                        key = "tag",
-                        heading = R.string.reports_filter_tag,
-                        without = R.string.reports_filter_without_tags,
-                        options = options.tags.matching(search, draft.tags),
-                        picked = draft.tags,
-                        negated = draft.tagsNot.takeIf { options.negation },
-                        onNegatedChange = { draft = draft.copy(tagsNot = it) },
-                        onToggle = { draft = draft.copy(tags = draft.tags.toggled(it)) },
-                    )
-                    item(key = "billable") {
-                        Column(Modifier.screenContent()) {
-                            SectionHeading(R.string.reports_filter_billable)
-                            // Radio buttons: the selected one differs in shape, not only in colour.
-                            Column(Modifier.selectableGroup()) {
-                                for (choice in BillableFilter.entries) {
-                                    RadioOptionRow(
-                                        label = stringResource(BILLABLE_LABELS.getValue(choice)),
-                                        selected = draft.billable == choice,
-                                        onSelect = { draft = draft.copy(billable = choice) },
-                                    )
-                                }
-                            }
-                        }
-                    }
-                    item(key = "clear") {
-                        TextButton(
-                            onClick = { draft = ReportFilters() },
-                            enabled = draft != ReportFilters(),
-                            modifier = Modifier
-                                .screenContent()
-                                .padding(vertical = TokklTheme.spacing.inGroup),
-                        ) {
-                            Text(stringResource(R.string.reports_filters_clear))
-                        }
-                    }
+                        .padding(vertical = TokklTheme.spacing.inGroup),
+                ) {
+                    Text(stringResource(R.string.reports_filters_clear))
                 }
             }
         }

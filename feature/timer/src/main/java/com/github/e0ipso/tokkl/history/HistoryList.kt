@@ -4,19 +4,16 @@ import android.content.res.Resources
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -31,11 +28,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import com.github.e0ipso.tokkl.entries.EntryLoadProblem
+import com.github.e0ipso.tokkl.entries.LoadingEntries
 import com.github.e0ipso.tokkl.entries.OlderDays
 import com.github.e0ipso.tokkl.favorites.FavoritesState
 import com.github.e0ipso.tokkl.feature.timer.R
@@ -251,14 +248,7 @@ private fun OlderRow(older: OlderDays, onLoadOlder: () -> Unit) {
                 onClick = onLoadOlder,
             ) { Text(stringResource(R.string.history_load_older)) }
 
-            OlderDays.Loading -> Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
-            ) {
-                CircularProgressIndicator(Modifier.size(TokklTheme.spacing.space6))
-                Spacer(Modifier.width(TokklTheme.spacing.space3))
-                Text(stringResource(R.string.history_loading_older), style = MaterialTheme.typography.bodyLarge)
-            }
+            OlderDays.Loading -> LoadingEntries(stringResource(R.string.history_loading_older))
 
             OlderDays.End -> Text(
                 stringResource(R.string.history_no_older),
@@ -266,25 +256,25 @@ private fun OlderRow(older: OlderDays, onLoadOlder: () -> Unit) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
-            OlderDays.Unreachable -> Problem(
+            OlderDays.Unreachable -> EntryLoadProblem(
                 title = stringResource(R.string.history_offline_title),
                 message = stringResource(R.string.history_offline_message),
                 onRetry = onLoadOlder,
             )
 
-            OlderDays.AuthFailed -> Problem(
+            OlderDays.AuthFailed -> EntryLoadProblem(
                 title = null,
                 message = stringResource(R.string.history_error_auth),
                 onRetry = onLoadOlder,
             )
 
-            OlderDays.TrustRefused -> Problem(
+            OlderDays.TrustRefused -> EntryLoadProblem(
                 title = null,
                 message = stringResource(R.string.history_error_trust),
                 onRetry = onLoadOlder,
             )
 
-            is OlderDays.Failed -> Problem(
+            is OlderDays.Failed -> EntryLoadProblem(
                 title = null,
                 message = older.status?.let { stringResource(R.string.history_error_status, it) }
                     ?: stringResource(R.string.history_error_unreadable),
@@ -292,17 +282,6 @@ private fun OlderRow(older: OlderDays, onLoadOlder: () -> Unit) {
             )
         }
     }
-}
-
-@Composable
-private fun ColumnScope.Problem(title: String?, message: String, onRetry: () -> Unit) {
-    Column(Modifier.semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite }) {
-        if (title != null) {
-            Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
-        }
-        Text(message, style = MaterialTheme.typography.bodyLarge)
-    }
-    OutlinedButton(onClick = onRetry) { Text(stringResource(R.string.history_retry)) }
 }
 
 /** No entry in the days shown, as the web app's empty list. */
