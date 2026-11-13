@@ -13,21 +13,15 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -37,7 +31,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerInputScope
@@ -46,11 +39,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.onClick
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
@@ -58,6 +46,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
+import com.github.e0ipso.tokkl.entries.EntryLoadProblem
+import com.github.e0ipso.tokkl.entries.LoadingEntries
 import com.github.e0ipso.tokkl.entries.WeekSource
 import com.github.e0ipso.tokkl.feature.timer.R
 import com.github.e0ipso.tokkl.model.EntryId
@@ -233,26 +223,19 @@ private fun WeekProblem(week: WeekSource, onRetry: () -> Unit, modifier: Modifie
         when (week) {
             WeekSource.Cached, WeekSource.Loaded -> Unit
 
-            WeekSource.Loading -> Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
-            ) {
-                CircularProgressIndicator(Modifier.size(TokklTheme.spacing.space6))
-                Spacer(Modifier.width(TokklTheme.spacing.space3))
-                Text(stringResource(R.string.calendar_loading), style = MaterialTheme.typography.bodyLarge)
-            }
+            WeekSource.Loading -> LoadingEntries(stringResource(R.string.calendar_loading))
 
-            WeekSource.Unreachable -> Problem(
+            WeekSource.Unreachable -> EntryLoadProblem(
                 title = stringResource(R.string.calendar_offline_title),
                 message = stringResource(R.string.calendar_offline_message),
                 onRetry = onRetry,
             )
 
-            WeekSource.AuthFailed -> Problem(null, stringResource(R.string.calendar_error_auth), onRetry)
+            WeekSource.AuthFailed -> EntryLoadProblem(null, stringResource(R.string.calendar_error_auth), onRetry)
 
-            WeekSource.TrustRefused -> Problem(null, stringResource(R.string.calendar_error_trust), onRetry)
+            WeekSource.TrustRefused -> EntryLoadProblem(null, stringResource(R.string.calendar_error_trust), onRetry)
 
-            is WeekSource.Failed -> Problem(
+            is WeekSource.Failed -> EntryLoadProblem(
                 title = null,
                 message = week.status?.let { stringResource(R.string.calendar_error_status, it) }
                     ?: stringResource(R.string.history_error_unreadable),
@@ -260,17 +243,6 @@ private fun WeekProblem(week: WeekSource, onRetry: () -> Unit, modifier: Modifie
             )
         }
     }
-}
-
-@Composable
-private fun ColumnScope.Problem(title: String?, message: String, onRetry: () -> Unit) {
-    Column(Modifier.semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite }) {
-        if (title != null) {
-            Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
-        }
-        Text(message, style = MaterialTheme.typography.bodyLarge)
-    }
-    OutlinedButton(onClick = onRetry) { Text(stringResource(R.string.history_retry)) }
 }
 
 /**
