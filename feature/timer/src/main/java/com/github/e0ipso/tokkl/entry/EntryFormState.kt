@@ -1,6 +1,7 @@
 package com.github.e0ipso.tokkl.entry
 
 import androidx.compose.runtime.Immutable
+import com.github.e0ipso.tokkl.entryfields.DescriptionSuggestions
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.WorkspaceId
@@ -100,9 +101,14 @@ sealed interface EntryFormState {
     }
 }
 
+/**
+ * The entry form's screen: the [form], the [picker]'s catalog, and the description [suggestions] of
+ * the cached entries in the open form's workspace, none while no form with a workspace is open.
+ */
 @Immutable
 data class EntryFormPage(
     val form: EntryFormState = EntryFormState.Closed,
     val picker: PickerSource = PickerSource(),
     val offline: Boolean = false,
+    val suggestions: DescriptionSuggestions = DescriptionSuggestions.NONE,
 )

@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.cache.HeldChange
 import com.github.e0ipso.tokkl.cache.PendingEdit
 import com.github.e0ipso.tokkl.cache.afterWrite
+import com.github.e0ipso.tokkl.entryfields.DescriptionSuggestions
+import com.github.e0ipso.tokkl.entryfields.descriptionSuggestions
 import com.github.e0ipso.tokkl.entryfields.entryLabels
 import com.github.e0ipso.tokkl.entryfields.withPicked
 import com.github.e0ipso.tokkl.model.EntryFields
@@ -30,6 +32,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -50,6 +54,7 @@ import kotlinx.coroutines.sync.withLock
  * @param exactAlarms whether exact alarms are refused, until the page reports the grants itself.
  * @param picker the cached projects, clients, tasks and tags, which the page's picker offers and
  *   its project and task are named from.
+ * @param entries the cached time entries, which the description field suggests from.
  * @param saved the route's saved state, which keeps the start form ([SavedPomodoroForm]).
  */
 class PomodoroViewModel(
@@ -63,6 +68,7 @@ class PomodoroViewModel(
     scope: CoroutineScope,
     private val exactAlarms: ExactAlarmAccess,
     picker: Flow<PickerSource>,
+    entries: Flow<List<TimeEntry>>,
     private val offline: StateFlow<Boolean>,
     private val saved: SavedStateHandle,
 ) : ViewModel(scope) {
@@ -84,14 +90,25 @@ class PomodoroViewModel(
     /** The page's state, before the picker and the network join it in [page]. */
     internal val state: StateFlow<PomodoroPageState> = mutableState.asStateFlow()
 
-    /** [state] with the picker's rows, which name its fields' project and task, and the network. */
-    val page: StateFlow<PomodoroPageState> = combine(state, pickerShown, offline) { shown, source, isOffline ->
-        shown.copy(
-            labels = entryLabels(shown.fields, source.projects, source.tasks),
-            picker = source,
-            offline = isOffline,
-        )
-    }.stateIn(viewModelScope, whileShown, state.value)
+    /**
+     * The description suggestions of the page's workspace. They are limited again only when the
+     * entries, the picker's rows or the workspace change, never for a typed letter.
+     */
+    private val suggestions: Flow<DescriptionSuggestions> = combine(
+        descriptionSuggestions(entries, pickerShown),
+        state.map { it.workspaceId }.distinctUntilChanged(),
+    ) { all, workspaceId -> all.inWorkspace(workspaceId) }
+
+    /** [state] with the picker's rows, which name its fields' project and task, the suggestions and the network. */
+    val page: StateFlow<PomodoroPageState> =
+        combine(state, pickerShown, suggestions, offline) { shown, source, suggested, isOffline ->
+            shown.copy(
+                labels = entryLabels(shown.fields, source.projects, source.tasks),
+                picker = source,
+                suggestions = suggested,
+                offline = isOffline,
+            )
+        }.stateIn(viewModelScope, whileShown, state.value)
 
     /** Commands to the server run one at a time, in tap order. */
     private val commands = Mutex()

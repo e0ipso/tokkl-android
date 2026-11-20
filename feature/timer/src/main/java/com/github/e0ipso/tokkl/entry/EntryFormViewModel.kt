@@ -8,7 +8,9 @@ import com.github.e0ipso.tokkl.cache.LocalWrite
 import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.cache.localWrite
 import com.github.e0ipso.tokkl.entries.SessionEntries
+import com.github.e0ipso.tokkl.entryfields.descriptionSuggestions
 import com.github.e0ipso.tokkl.entryfields.withPicked
+import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.EntryWithSendState
@@ -30,8 +32,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -110,10 +114,17 @@ class EntryFormViewModel(
         current.shown(names, settings, offered)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), EntryFormState.Closed)
 
+    // Limited to the form's workspace when the cache or that workspace changes, not at each letter typed.
+    private val suggestions = combine(
+        descriptionSuggestions(entries.map { rows -> rows.map { it.entry } }, picker),
+        state.map { (it as? EntryFormState.Open)?.workspaceId }.distinctUntilChanged(),
+    ) { all, workspaceId -> all.inWorkspace(workspaceId) }
+
     val page: StateFlow<EntryFormPage> = combine(
         state,
         picker.stateIn(viewModelScope, whileShown, PickerSource()),
         offline,
+        suggestions,
         ::EntryFormPage,
     ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), EntryFormPage())
 
@@ -145,6 +156,9 @@ class EntryFormViewModel(
 
     /** Sets the project, task and tags, as [withPicked] says, so a billable project makes the entry billable. */
     fun pick(picked: Picked) = change { it.copy(fields = it.fields.withPicked(picked, catalog.value.projects)) }
+
+    /** Puts a picked suggestion's [fields] in the form, all five of them. Only [save] queues them. */
+    fun fill(fields: EntryFields) = change { it.copy(fields = fields) }
 
     fun setBillable(billable: Boolean) = change { it.copy(fields = it.fields.copy(billable = billable)) }
 

@@ -4,11 +4,13 @@ import androidx.lifecycle.SavedStateHandle
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
+import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.Project
 import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.model.RunningEntryIdentity
 import com.github.e0ipso.tokkl.model.Task
 import com.github.e0ipso.tokkl.model.TaskId
+import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.picker.PickerSource
@@ -194,7 +196,8 @@ class PomodoroViewModelTest {
         val unread = PomodoroViewModel(
             emptyFlow(), emptyFlow(), PomodoroSessionEdits(emptyFlow(), f.server, f.changes, sender = {}), f.defaults,
             f.settings, f.unsent, f.refused, f.scope,
-            exactAlarms = { false }, picker = flowOf(PickerSource()), offline = MutableStateFlow(false),
+            exactAlarms = { false }, picker = flowOf(PickerSource()), entries = emptyFlow(),
+            offline = MutableStateFlow(false),
             saved = SavedStateHandle(),
         )
         assertTrue(unread.state.value.loading)
@@ -236,6 +239,54 @@ class PomodoroViewModelTest {
         // No session request: the server carries the fields to the later pomodoros.
         assertTrue(f.server.calls.isEmpty())
     }
+
+    @Test
+    fun aSuggestionPickedInTheStartFormFillsOnlyTheDraftFromThePagesWorkspace() {
+        val f = idle()
+        val drawn = f.scope.launch { f.page.page.collect {} }
+        f.entries.value = listOf(
+            pastEntry(ENTRY + 1, "Elsewhere", workspace = WORKSPACE + 1),
+            pastEntry(ENTRY + 2, "Write report"),
+        )
+
+        val suggestion = f.page.page.value.suggestions.forQuery("").single()
+        assertEquals("only the page's workspace suggests", "Write report", suggestion.fields.description)
+        assertNull(f.page.editFields(suggestion.fields, entryId = null))
+
+        assertEquals(suggestion.fields, f.page.state.value.fields)
+        assertTrue(f.changes.updates.isEmpty())
+        assertTrue(f.server.calls.isEmpty())
+        drawn.cancel()
+    }
+
+    @Test
+    fun aSuggestionPickedInASessionQueuesARunningEntryEditWithAllFiveFields() = runTest {
+        val f = running()
+        val drawn = f.scope.launch { f.page.page.collect {} }
+        f.entries.value = listOf(pastEntry(ENTRY + 2, "Write report"))
+        val suggestion = f.page.page.value.suggestions.forQuery("wri").single()
+
+        f.page.editFields(suggestion.fields, f.page.state.value.shown!!.entryId)!!.join()
+
+        val picked = EntryFields("Write report", ProjectId(7), TaskId(70), listOf("deep"), billable = true)
+        assertEquals(picked, f.changes.updates.single().second)
+        assertEquals(picked, f.page.state.value.fields)
+        assertTrue(f.server.calls.isEmpty())
+        drawn.cancel()
+    }
+
+    /** An ended entry with all five fields set, as the cache holds it. */
+    private fun pastEntry(id: Long, description: String, workspace: Long = WORKSPACE) = TimeEntry(
+        EntryId(id),
+        WorkspaceId(workspace),
+        ProjectId(7),
+        TaskId(70),
+        description,
+        EntryTiming.Stopped(T0.minusSeconds(3_600), T0.minusSeconds(1_800)),
+        billable = true,
+        tags = listOf("deep"),
+        tagIds = emptyList(),
+    )
 
     @Test
     fun aTypedDescriptionShowsAtOnceAndGoesToTheQueueWhenTheFieldIsDone() = runTest {
