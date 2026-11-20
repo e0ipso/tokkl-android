@@ -39,7 +39,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
@@ -65,7 +64,7 @@ typealias EntryPicker = @Composable (
 
 /**
  * The fields of one time entry that the user picks (docs/PRD.md T1, H2), as the web app's
- * TimerBar.tsx lays them out: the description, a button for the project and task and one for the
+ * EntryFields.tsx lays them out: the description, a button for the project and task and one for the
  * tags, which both open [picker] (P1), and billable. The timer edits its draft and the running
  * entry with it, and the manual entry and edit screens can share it.
  *
@@ -141,7 +140,7 @@ fun EntryFieldsEditor(
  * does not have yet.
  *
  * With [suggestions], a list under it shows what they give for the typed text while it has
- * focus, as the web app's TimerBar.tsx lists them under its field, until a pick closes it, and
+ * focus, as the web app's DescriptionCombobox.tsx lists them under its field, until a pick closes it, and
  * the next letter opens it again. The list is part of the page, not a popup over it, so it stays
  * in the same window as the field for TalkBack. It starts with how many there are, in a polite
  * live region, so TalkBack announces them. A pick
@@ -253,19 +252,11 @@ private fun SuggestionList(suggestions: List<DescriptionSuggestion>, onPick: (De
     }
 }
 
-/** A suggestion's description, or "(no description)", over its project's dot and name. */
+/** A suggestion's description over its project's dot and name. */
 @Composable
 private fun SuggestionText(suggestion: DescriptionSuggestion) {
     Column(Modifier.padding(vertical = TokklTheme.spacing.space1)) {
-        if (suggestion.fields.description.isEmpty()) {
-            Text(
-                text = stringResource(R.string.timer_suggestion_no_description),
-                style = MaterialTheme.typography.bodyLarge.copy(fontStyle = FontStyle.Italic),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        } else {
-            Text(suggestion.fields.description, style = MaterialTheme.typography.bodyLarge)
-        }
+        Text(suggestion.fields.description, style = MaterialTheme.typography.bodyLarge)
         if (suggestion.fields.projectId != null) {
             val muted = MaterialTheme.colorScheme.onSurfaceVariant
             val dot = projectMark(suggestion.projectColor, TokklTheme.extraColors.projectMix, muted)

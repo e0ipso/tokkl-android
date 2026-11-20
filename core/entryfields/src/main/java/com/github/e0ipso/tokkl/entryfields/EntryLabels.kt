@@ -22,7 +22,7 @@ val EntryFields.picked: Picked get() = Picked(projectId = projectId, taskId = ta
 /**
  * These fields with [picked]'s project, task and tags. Picking a project or task of a billable
  * project makes the entry billable, and a pick of tags alone leaves billable as it was, as the
- * web app's timer does (TimerBar.tsx in ../tokkl/packages/web).
+ * web app's `projectChanges` does (useEntryFields.ts in ../tokkl/packages/web).
  */
 fun EntryFields.withPicked(picked: Picked, projects: List<Project>): EntryFields {
     val projectPicked = picked.projectId != projectId || picked.taskId != taskId

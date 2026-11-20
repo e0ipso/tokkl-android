@@ -10,6 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
@@ -158,7 +159,8 @@ fun settleDescription(focusManager: FocusManager) = focusManager.clearFocus()
  * so colour is never the only sign. Until the phone knows the account's workspace, which the
  * first account settings bring, the fields and Start are disabled. The button that adds a past
  * entry by hand shows whatever the timer does, as the web app's bar holds its manual mode (M1).
- * With [suggestions], the description field suggests recent entries as it is typed in (T4).
+ * With [suggestions], the description field suggests recent entries of the timer's workspace as it is
+ * typed in (T4).
  */
 @Composable
 fun TimerBarContent(
@@ -185,6 +187,8 @@ fun TimerBarContent(
     val paused = state as? TimerState.Paused
     val idle = state as? TimerState.Idle
     val workspaceId = running?.workspaceId ?: paused?.workspaceId ?: idle?.workspaceId
+    // Only the timer's workspace's entries, filtered when the cache or the workspace changes, not per letter.
+    val shown = remember(suggestions, workspaceId) { suggestions?.inWorkspace(workspaceId) }
     val spacing = TokklTheme.spacing
     val focusManager = LocalFocusManager.current
     Surface(
@@ -218,7 +222,7 @@ fun TimerBarContent(
             },
             // The server keeps a paused chain's fields as they were at Pause.
             enabled = workspaceId != null && paused == null,
-            suggestions = suggestions,
+            suggestions = shown,
             onSuggestion = onSuggestion,
             modifier = Modifier.padding(spacing.space3),
         ) {

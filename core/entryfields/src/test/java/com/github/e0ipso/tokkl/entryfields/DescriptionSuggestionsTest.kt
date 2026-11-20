@@ -15,19 +15,21 @@ import org.junit.Test
 import java.time.Instant
 
 /**
- * The timer's suggestions, ranked as `suggestionsFrom` in
- * ../tokkl/packages/web/src/components/TimerBar.tsx ranks them.
+ * The description suggestions, ranked as `suggestionsFrom` in
+ * ../tokkl/packages/web/src/components/useEntryFields.ts ranks them, without entries that have
+ * no description, and limited to one workspace.
  */
 class DescriptionSuggestionsTest {
 
     @Test
-    fun anEmptyQuerySuggestsTheNewestDistinctEntries() {
+    fun anEmptyQuerySuggestsTheNewestDistinctEntriesWithADescription() {
         val entries = listOf(
             entry(1, "Write the report", WEBSITE.id, taskId = TaskId(5), tags = listOf("call"), billable = true),
             entry(2, "Write the report", WEBSITE.id, taskId = TaskId(5), tags = listOf("other"), billable = false),
             entry(3, "", projectId = null),
             entry(4, "", WEBSITE.id),
-            entry(5, "Write the report", projectId = null),
+            entry(5, "  ", WEBSITE.id),
+            entry(6, "Write the report", projectId = null),
         )
         assertEquals(
             listOf(
@@ -36,7 +38,6 @@ class DescriptionSuggestionsTest {
                     "Website",
                     "#0b83d9",
                 ),
-                DescriptionSuggestion(EntryFields("", WEBSITE.id), "Website", "#0b83d9"),
                 DescriptionSuggestion(EntryFields("Write the report"), null, null),
             ),
             DescriptionSuggestions.of(entries, PROJECTS, CLIENTS).forQuery("  "),
@@ -84,6 +85,25 @@ class DescriptionSuggestionsTest {
         )
     }
 
+    @Test
+    fun aWorkspaceLimitKeepsOnlyThatWorkspacesEntriesAndNoWorkspaceKeepsNone() {
+        val entries = listOf(
+            entry(1, "Here", projectId = null),
+            entry(2, "Elsewhere", projectId = null, workspace = OTHER_WORKSPACE),
+            entry(3, "Here too", WEBSITE.id),
+        )
+        val all = DescriptionSuggestions.of(entries, PROJECTS, CLIENTS)
+        assertEquals(
+            listOf("Here", "Here too"),
+            all.inWorkspace(WorkspaceId(WORKSPACE)).forQuery("").map { it.fields.description },
+        )
+        assertEquals(
+            listOf("Elsewhere"),
+            all.inWorkspace(WorkspaceId(OTHER_WORKSPACE)).forQuery("").map { it.fields.description },
+        )
+        assertEquals(emptyList<DescriptionSuggestion>(), all.inWorkspace(null).forQuery(""))
+    }
+
     private fun entry(
         id: Long,
         description: String,
@@ -91,8 +111,9 @@ class DescriptionSuggestionsTest {
         taskId: TaskId? = null,
         tags: List<String> = emptyList(),
         billable: Boolean = false,
+        workspace: Long = WORKSPACE,
     ) = TimeEntry(
-        EntryId(id), WorkspaceId(WORKSPACE), projectId, taskId, description,
+        EntryId(id), WorkspaceId(workspace), projectId, taskId, description,
         EntryTiming.Stopped(
             Instant.EPOCH.minusSeconds(
                 id,
@@ -104,6 +125,7 @@ class DescriptionSuggestionsTest {
 
     private companion object {
         const val WORKSPACE = 10L
+        const val OTHER_WORKSPACE = 11L
         val ACME = Client(ClientId(7), WorkspaceId(WORKSPACE), "Acme", archived = false)
         val WEBSITE = Project(
             ProjectId(1),

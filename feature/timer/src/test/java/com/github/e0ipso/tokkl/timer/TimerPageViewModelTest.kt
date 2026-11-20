@@ -1,5 +1,6 @@
 package com.github.e0ipso.tokkl.timer
 
+import com.github.e0ipso.tokkl.entryfields.DescriptionSuggestions
 import com.github.e0ipso.tokkl.model.Capabilities
 import com.github.e0ipso.tokkl.model.Client
 import com.github.e0ipso.tokkl.model.ClientId
@@ -69,7 +70,10 @@ class TimerPageViewModelTest {
 
     @Test
     fun theSuggestionsJoinTheCachedEntriesWithTheirProjectsAndClients() = runTest {
-        val shown = model.state.shownWhere { it.picker.projects.isNotEmpty() }
+        // The picker and the suggestions follow the cache apart, so wait for both.
+        val shown = model.state.shownWhere {
+            it.picker.projects.isNotEmpty() && it.suggestions != DescriptionSuggestions.NONE
+        }
 
         assertEquals(picker.value, shown.picker)
         assertEquals(listOf("Code review"), shown.suggestions.forQuery("acme").map { it.fields.description })

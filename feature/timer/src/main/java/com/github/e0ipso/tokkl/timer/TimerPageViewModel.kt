@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.entryfields.DescriptionSuggestions
+import com.github.e0ipso.tokkl.entryfields.descriptionSuggestions
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.picker.PickerSource
 import com.github.e0ipso.tokkl.platform.whileShown
@@ -47,19 +48,15 @@ class TimerPageViewModel(
     scope: CoroutineScope,
 ) : ViewModel(scope) {
 
-    // Empty until the cache is read, so the view and the network show without waiting for it.
-    private val catalog = combine(entries, picker) { rows, source ->
-        source to DescriptionSuggestions.of(rows, source.projects, source.clients)
-    }.onStart { emit(PickerSource() to DescriptionSuggestions.NONE) }
-
+    // Both are empty until the cache is read, so the view and the network show without waiting for it.
     val state: StateFlow<TimerPageState> = combine(
         views.view,
-        catalog,
+        picker.onStart { emit(PickerSource()) },
+        descriptionSuggestions(entries, picker),
         offline,
         settings,
-    ) { view, (source, suggestions), isOffline, account ->
-        TimerPageState(view, source, suggestions, isOffline, account)
-    }.stateIn(
+        ::TimerPageState,
+    ).stateIn(
         viewModelScope,
         whileShown,
         TimerPageState(view = views.view.value, offline = offline.value, settings = settings.value),
