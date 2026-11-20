@@ -70,6 +70,8 @@ class TimerPageViewModelTest {
 
     @Test
     fun theSuggestionsJoinTheCachedEntriesWithTheirProjectsAndClients() = runTest {
+        // Entries without a description, even with a project, give no suggestion.
+        entries.value += listOf(entry(2, "", WEBSITE.id), entry(3, "   ", WEBSITE.id))
         // The picker and the suggestions follow the cache apart, so wait for both.
         val shown = model.state.shownWhere {
             it.picker.projects.isNotEmpty() && it.suggestions != DescriptionSuggestions.NONE
@@ -77,6 +79,7 @@ class TimerPageViewModelTest {
 
         assertEquals(picker.value, shown.picker)
         assertEquals(listOf("Code review"), shown.suggestions.forQuery("acme").map { it.fields.description })
+        // The entries with an empty or a blank description are left out.
         assertEquals("Website", shown.suggestions.forQuery("").single().project)
     }
 

@@ -32,8 +32,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -90,22 +88,19 @@ class PomodoroViewModel(
     /** The page's state, before the picker and the network join it in [page]. */
     internal val state: StateFlow<PomodoroPageState> = mutableState.asStateFlow()
 
-    /**
-     * The description suggestions of the page's workspace. They are limited again only when the
-     * entries, the picker's rows or the workspace change, never for a typed letter.
-     */
-    private val suggestions: Flow<DescriptionSuggestions> = combine(
-        descriptionSuggestions(entries, pickerShown),
-        state.map { it.workspaceId }.distinctUntilChanged(),
-    ) { all, workspaceId -> all.inWorkspace(workspaceId) }
+    /** The description suggestions of every workspace, which [page] limits to the page's own. */
+    private val suggestions: Flow<DescriptionSuggestions> = descriptionSuggestions(entries, pickerShown)
 
-    /** [state] with the picker's rows, which name its fields' project and task, the suggestions and the network. */
+    /**
+     * [state] with the picker's rows, which name its fields' project and task, the suggestions of
+     * its workspace, limited in the same step so they always match it, and the network.
+     */
     val page: StateFlow<PomodoroPageState> =
-        combine(state, pickerShown, suggestions, offline) { shown, source, suggested, isOffline ->
+        combine(state, pickerShown, suggestions, offline) { shown, source, all, isOffline ->
             shown.copy(
                 labels = entryLabels(shown.fields, source.projects, source.tasks),
                 picker = source,
-                suggestions = suggested,
+                suggestions = all.inWorkspace(shown.workspaceId),
                 offline = isOffline,
             )
         }.stateIn(viewModelScope, whileShown, state.value)

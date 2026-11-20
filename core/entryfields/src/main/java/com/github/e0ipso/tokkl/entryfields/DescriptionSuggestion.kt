@@ -49,11 +49,24 @@ class DescriptionSuggestions private constructor(private val candidates: List<Ca
             .toList()
     }
 
-    /** These suggestions limited to the entries of [workspaceId], or none without a workspace. */
-    fun inWorkspace(workspaceId: WorkspaceId?): DescriptionSuggestions = if (workspaceId == null) {
-        NONE
-    } else {
-        DescriptionSuggestions(candidates.filter { it.entry.workspaceId == workspaceId })
+    /** The last [inWorkspace] answer, so a page drawn again for each letter typed filters once. */
+    @Volatile
+    private var limited: Limited? = null
+
+    /**
+     * These suggestions limited to the entries of [workspaceId], or none without a workspace. It
+     * keeps its last answer, so a view model can call it each time it publishes a page, in the
+     * same step as the form whose workspace it uses.
+     */
+    fun inWorkspace(workspaceId: WorkspaceId?): DescriptionSuggestions {
+        limited?.takeIf { it.workspaceId == workspaceId }?.let { return it.suggestions }
+        val suggestions = if (workspaceId == null) {
+            NONE
+        } else {
+            DescriptionSuggestions(candidates.filter { it.entry.workspaceId == workspaceId })
+        }
+        limited = Limited(workspaceId, suggestions)
+        return suggestions
     }
 
     companion object {
@@ -82,6 +95,8 @@ class DescriptionSuggestions private constructor(private val candidates: List<Ca
             return DescriptionSuggestions(candidates)
         }
     }
+
+    private class Limited(val workspaceId: WorkspaceId?, val suggestions: DescriptionSuggestions)
 
     private class Candidate(val entry: TimeEntry, val haystack: String, val suggestion: DescriptionSuggestion)
 }

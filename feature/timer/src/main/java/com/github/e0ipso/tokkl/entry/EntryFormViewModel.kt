@@ -32,7 +32,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -114,19 +113,18 @@ class EntryFormViewModel(
         current.shown(names, settings, offered)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), EntryFormState.Closed)
 
-    // Limited to the form's workspace when the cache or that workspace changes, not at each letter typed.
-    private val suggestions = combine(
-        descriptionSuggestions(entries.map { rows -> rows.map { it.entry } }, picker),
-        state.map { (it as? EntryFormState.Open)?.workspaceId }.distinctUntilChanged(),
-    ) { all, workspaceId -> all.inWorkspace(workspaceId) }
+    private val suggestions = descriptionSuggestions(entries.map { rows -> rows.map { it.entry } }, picker)
 
+    // The suggestions are limited to the form's workspace in the same step that publishes the form,
+    // so a page never pairs a form with another workspace's suggestions.
     val page: StateFlow<EntryFormPage> = combine(
         state,
         picker.stateIn(viewModelScope, whileShown, PickerSource()),
         offline,
         suggestions,
-        ::EntryFormPage,
-    ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), EntryFormPage())
+    ) { form, source, isOffline, all ->
+        EntryFormPage(form, source, isOffline, all.inWorkspace((form as? EntryFormState.Open)?.workspaceId))
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), EntryFormPage())
 
     /** Whether a form is open, or opening. False after [close], and before the first opening. */
     val isOpen: Boolean get() = phase.value != Phase.Closed

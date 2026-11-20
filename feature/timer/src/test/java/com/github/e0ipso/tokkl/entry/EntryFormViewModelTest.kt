@@ -24,6 +24,7 @@ import com.github.e0ipso.tokkl.platform.MainDispatcherRule
 import com.github.e0ipso.tokkl.session.AccountSettings
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,6 +35,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -261,6 +263,30 @@ class EntryFormViewModelTest {
         save()
 
         assertEquals(listOf("update $ENTRY_ID $fields ${ENTRY.start} ${ENTRY.stop}"), changes.calls)
+    }
+
+    /** A new default workspace never pairs the form with the suggestions of the one before. */
+    @Test
+    fun theSuggestionsFollowTheFormsWorkspaceInTheSamePage() {
+        val elsewhere = OLDER.copy(description = "Plan elsewhere")
+        entries.value = listOf(ENTRY, elsewhere).map { EntryWithSendState(it, unsent = false) }
+        val workspaceOf = mapOf(ENTRY.description to ENTRY.workspaceId, elsewhere.description to elsewhere.workspaceId)
+        val pages = mutableListOf<EntryFormPage>()
+        // Unconfined sees every page the model publishes, not only the latest.
+        scope.launch(Dispatchers.Unconfined) { model.page.collect { pages += it } }
+        openNew()
+        awaitPage("the default workspace's suggestions show") { it.suggestions.forQuery("").isNotEmpty() }
+
+        settings.value = SETTINGS.copy(defaultWorkspaceId = WorkspaceId(OLDER_WORKSPACE))
+
+        awaitPage("the new default workspace's suggestions show") { page ->
+            page.suggestions.forQuery("").map { it.fields.description } == listOf(elsewhere.description)
+        }
+        for (page in pages) {
+            val form = page.form as? EntryFormState.Open ?: continue
+            val shown = page.suggestions.forQuery("").map { it.fields.description }
+            assertTrue("$shown in ${form.workspaceId}", shown.all { workspaceOf[it] == form.workspaceId })
+        }
     }
 
     @Test
