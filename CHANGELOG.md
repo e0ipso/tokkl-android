@@ -1,3 +1,9 @@
+## [0.9.0](https://github.com/e0ipso/tokkl-android/compare/v0.8.3...v0.9.0) (2026-11-21)
+
+### Features
+
+* suggest descriptions on the entry screen and Pomodoro page ([#49](https://github.com/e0ipso/tokkl-android/issues/49)) ([e0d4e37](https://github.com/e0ipso/tokkl-android/commit/e0d4e375022b7159becf422fbb029a8ef99962b2)), references [#48](https://github.com/e0ipso/tokkl-android/issues/48)
+
 ## [0.8.3](https://github.com/e0ipso/tokkl-android/compare/v0.8.2...v0.8.3) (2026-11-13)
 
 ## [0.8.2](https://github.com/e0ipso/tokkl-android/compare/v0.8.1...v0.8.2) (2026-11-10)
