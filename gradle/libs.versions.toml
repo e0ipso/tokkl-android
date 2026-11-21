@@ -4,7 +4,7 @@ kotlin = "2.4.21"
 composeBom = "2026.09.00"
 activityCompose = "1.13.0"
 # The version the AndroidX libraries already bring.
-annotation = "1.10.0"
+annotation = "1.11.0"
 glance = "1.2.0"
 room = "2.8.5"
 ksp = "2.3.13"
