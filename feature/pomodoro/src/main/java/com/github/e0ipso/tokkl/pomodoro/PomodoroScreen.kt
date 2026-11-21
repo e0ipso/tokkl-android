@@ -246,6 +246,8 @@ fun PomodoroContent(
                     onBillableChange = { onFields(state.fields.copy(billable = it)) },
                     picker = picker,
                     enabled = !state.busy && state.workspaceId != null,
+                    suggestions = state.suggestions,
+                    onSuggestion = { onFields(it.fields) },
                 )
                 if (state.workspaceId == null) Text(stringResource(R.string.pomodoro_workspace_missing))
                 if (session == null || held == null) {

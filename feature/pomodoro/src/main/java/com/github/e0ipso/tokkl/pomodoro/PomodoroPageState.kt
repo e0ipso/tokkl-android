@@ -2,6 +2,7 @@ package com.github.e0ipso.tokkl.pomodoro
 
 import androidx.compose.runtime.Immutable
 import com.github.e0ipso.tokkl.cache.HeldChange
+import com.github.e0ipso.tokkl.entryfields.DescriptionSuggestions
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
@@ -76,6 +77,8 @@ data class PomodoroPageState(
     val refused: List<HeldChange> = emptyList(),
     val problem: PomodoroProblem? = null,
     val picker: PickerSource = PickerSource(),
+    /** The description suggestions of [workspaceId]'s cached entries. */
+    val suggestions: DescriptionSuggestions = DescriptionSuggestions.NONE,
     val offline: Boolean = false,
 ) {
     val pomodoro: PomodoroSession? get() = held?.pomodoro

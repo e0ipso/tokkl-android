@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.github.e0ipso.tokkl.cache.HeldChange
 import com.github.e0ipso.tokkl.cache.PendingEdit
 import com.github.e0ipso.tokkl.cache.afterWrite
+import com.github.e0ipso.tokkl.entryfields.DescriptionSuggestions
+import com.github.e0ipso.tokkl.entryfields.descriptionSuggestions
 import com.github.e0ipso.tokkl.entryfields.entryLabels
 import com.github.e0ipso.tokkl.entryfields.withPicked
 import com.github.e0ipso.tokkl.model.EntryFields
@@ -50,6 +52,7 @@ import kotlinx.coroutines.sync.withLock
  * @param exactAlarms whether exact alarms are refused, until the page reports the grants itself.
  * @param picker the cached projects, clients, tasks and tags, which the page's picker offers and
  *   its project and task are named from.
+ * @param entries the cached time entries, which the description field suggests from.
  * @param saved the route's saved state, which keeps the start form ([SavedPomodoroForm]).
  */
 class PomodoroViewModel(
@@ -63,6 +66,7 @@ class PomodoroViewModel(
     scope: CoroutineScope,
     private val exactAlarms: ExactAlarmAccess,
     picker: Flow<PickerSource>,
+    entries: Flow<List<TimeEntry>>,
     private val offline: StateFlow<Boolean>,
     private val saved: SavedStateHandle,
 ) : ViewModel(scope) {
@@ -84,14 +88,22 @@ class PomodoroViewModel(
     /** The page's state, before the picker and the network join it in [page]. */
     internal val state: StateFlow<PomodoroPageState> = mutableState.asStateFlow()
 
-    /** [state] with the picker's rows, which name its fields' project and task, and the network. */
-    val page: StateFlow<PomodoroPageState> = combine(state, pickerShown, offline) { shown, source, isOffline ->
-        shown.copy(
-            labels = entryLabels(shown.fields, source.projects, source.tasks),
-            picker = source,
-            offline = isOffline,
-        )
-    }.stateIn(viewModelScope, whileShown, state.value)
+    /** The description suggestions of every workspace, which [page] limits to the page's own. */
+    private val suggestions: Flow<DescriptionSuggestions> = descriptionSuggestions(entries, pickerShown)
+
+    /**
+     * [state] with the picker's rows, which name its fields' project and task, the suggestions of
+     * its workspace, limited in the same step so they always match it, and the network.
+     */
+    val page: StateFlow<PomodoroPageState> =
+        combine(state, pickerShown, suggestions, offline) { shown, source, all, isOffline ->
+            shown.copy(
+                labels = entryLabels(shown.fields, source.projects, source.tasks),
+                picker = source,
+                suggestions = all.inWorkspace(shown.workspaceId),
+                offline = isOffline,
+            )
+        }.stateIn(viewModelScope, whileShown, state.value)
 
     /** Commands to the server run one at a time, in tap order. */
     private val commands = Mutex()

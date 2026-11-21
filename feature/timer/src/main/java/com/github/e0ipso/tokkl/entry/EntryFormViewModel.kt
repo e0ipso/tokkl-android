@@ -8,7 +8,9 @@ import com.github.e0ipso.tokkl.cache.LocalWrite
 import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.cache.localWrite
 import com.github.e0ipso.tokkl.entries.SessionEntries
+import com.github.e0ipso.tokkl.entryfields.descriptionSuggestions
 import com.github.e0ipso.tokkl.entryfields.withPicked
+import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.EntryTiming
 import com.github.e0ipso.tokkl.model.EntryWithSendState
@@ -32,6 +34,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -110,12 +113,18 @@ class EntryFormViewModel(
         current.shown(names, settings, offered)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), EntryFormState.Closed)
 
+    private val suggestions = descriptionSuggestions(entries.map { rows -> rows.map { it.entry } }, picker)
+
+    // The suggestions are limited to the form's workspace in the same step that publishes the form,
+    // so a page never pairs a form with another workspace's suggestions.
     val page: StateFlow<EntryFormPage> = combine(
         state,
         picker.stateIn(viewModelScope, whileShown, PickerSource()),
         offline,
-        ::EntryFormPage,
-    ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), EntryFormPage())
+        suggestions,
+    ) { form, source, isOffline, all ->
+        EntryFormPage(form, source, isOffline, all.inWorkspace((form as? EntryFormState.Open)?.workspaceId))
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), EntryFormPage())
 
     /** Whether a form is open, or opening. False after [close], and before the first opening. */
     val isOpen: Boolean get() = phase.value != Phase.Closed
@@ -145,6 +154,9 @@ class EntryFormViewModel(
 
     /** Sets the project, task and tags, as [withPicked] says, so a billable project makes the entry billable. */
     fun pick(picked: Picked) = change { it.copy(fields = it.fields.withPicked(picked, catalog.value.projects)) }
+
+    /** Puts a picked suggestion's [fields] in the form, all five of them. Only [save] queues them. */
+    fun fill(fields: EntryFields) = change { it.copy(fields = fields) }
 
     fun setBillable(billable: Boolean) = change { it.copy(fields = it.fields.copy(billable = billable)) }
 

@@ -5,6 +5,8 @@ import com.github.e0ipso.tokkl.cache.EntryChanges
 import com.github.e0ipso.tokkl.cache.RunningEntryChanges
 import com.github.e0ipso.tokkl.entries.sessionEntries
 import com.github.e0ipso.tokkl.entryfields.EntryLabels
+import com.github.e0ipso.tokkl.model.Client
+import com.github.e0ipso.tokkl.model.ClientId
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.EntryId
 import com.github.e0ipso.tokkl.model.EntryTiming
@@ -22,6 +24,7 @@ import com.github.e0ipso.tokkl.platform.MainDispatcherRule
 import com.github.e0ipso.tokkl.session.AccountSettings
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,6 +35,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -61,6 +65,7 @@ class EntryFormViewModelTest {
     private val settings = MutableStateFlow<AccountSettings?>(SETTINGS)
 
     private val allDay = MutableStateFlow(true)
+    private val picker = MutableStateFlow(PickerSource())
     private val changes = FakeChanges()
     private lateinit var model: EntryFormViewModel
 
@@ -100,7 +105,7 @@ class EntryFormViewModelTest {
         scope = scope,
         clock = Clock.fixed(NOW, ZoneOffset.UTC),
         allDay = allDay,
-        picker = flowOf(PickerSource()),
+        picker = picker,
         offline = MutableStateFlow(false),
         saved = saved,
     )
@@ -218,6 +223,70 @@ class EntryFormViewModelTest {
 
         val fields = EntryFields("Edit the entry", APP.id, DESIGN.id, listOf("call"), billable = true)
         assertEquals(listOf("update $ENTRY_ID $fields 2026-10-15T07:30:00Z 2026-10-15T14:00:00Z"), changes.calls)
+    }
+
+    @Test
+    fun aSuggestionFromTheFormsWorkspaceFillsEveryFieldAndOnlySaveQueuesThem() {
+        val acme = Client(ClientId(3), WorkspaceId(WORKSPACE), "Acme")
+        val release = ENTRY.copy(
+            id = EntryId(9),
+            projectId = APP.id,
+            taskId = DESIGN.id,
+            description = "Ship the release",
+            billable = true,
+            tags = listOf("call"),
+        )
+        val elsewhere = OLDER.copy(description = "Ship the other release")
+        entries.value = listOf(ENTRY, release, elsewhere).map { EntryWithSendState(it, unsent = false) }
+        picker.value = PickerSource(
+            projects = listOf(APP.copy(clientId = acme.id), CLIENT_WORK),
+            clients = listOf(acme),
+        )
+        scope.launch { model.page.collect {} }
+        openEntry()
+
+        val suggestions = awaitPage("the suggestions show") { it.suggestions.forQuery("").isNotEmpty() }.suggestions
+        // Only the form's workspace, joined with the picker's projects and clients.
+        assertEquals(
+            listOf("Write the form", "Ship the release"),
+            suggestions.forQuery("").map { it.fields.description },
+        )
+        val picked = suggestions.forQuery("acme").single()
+        assertEquals(APP.name, picked.project)
+
+        onMain { model.fill(picked.fields) }
+
+        val fields = EntryFields("Ship the release", APP.id, DESIGN.id, listOf("call"), billable = true)
+        awaitOpen("the suggestion fills the form") { it.fields == fields }
+        assertEquals(emptyList<String>(), changes.calls)
+
+        save()
+
+        assertEquals(listOf("update $ENTRY_ID $fields ${ENTRY.start} ${ENTRY.stop}"), changes.calls)
+    }
+
+    /** A new default workspace never pairs the form with the suggestions of the one before. */
+    @Test
+    fun theSuggestionsFollowTheFormsWorkspaceInTheSamePage() {
+        val elsewhere = OLDER.copy(description = "Plan elsewhere")
+        entries.value = listOf(ENTRY, elsewhere).map { EntryWithSendState(it, unsent = false) }
+        val workspaceOf = mapOf(ENTRY.description to ENTRY.workspaceId, elsewhere.description to elsewhere.workspaceId)
+        val pages = mutableListOf<EntryFormPage>()
+        // Unconfined sees every page the model publishes, not only the latest.
+        scope.launch(Dispatchers.Unconfined) { model.page.collect { pages += it } }
+        openNew()
+        awaitPage("the default workspace's suggestions show") { it.suggestions.forQuery("").isNotEmpty() }
+
+        settings.value = SETTINGS.copy(defaultWorkspaceId = WorkspaceId(OLDER_WORKSPACE))
+
+        awaitPage("the new default workspace's suggestions show") { page ->
+            page.suggestions.forQuery("").map { it.fields.description } == listOf(elsewhere.description)
+        }
+        for (page in pages) {
+            val form = page.form as? EntryFormState.Open ?: continue
+            val shown = page.suggestions.forQuery("").map { it.fields.description }
+            assertTrue("$shown in ${form.workspaceId}", shown.all { workspaceOf[it] == form.workspaceId })
+        }
     }
 
     @Test
@@ -1161,6 +1230,13 @@ class EntryFormViewModelTest {
 
     private fun awaitOpen(what: String, condition: (EntryFormState.Open) -> Boolean): EntryFormState.Open =
         awaitState(what) { it is EntryFormState.Open && condition(it) } as EntryFormState.Open
+
+    private fun awaitPage(what: String, condition: (EntryFormPage) -> Boolean): EntryFormPage {
+        var last: EntryFormPage? = null
+        return main.onMain {
+            withTimeoutOrNull(TIMEOUT_MS) { model.page.onEach { last = it }.first(condition) }
+        } ?: throw AssertionError("timed out waiting until $what; the last page was $last")
+    }
 
     private fun awaitState(what: String, condition: (EntryFormState) -> Boolean): EntryFormState {
         var last: EntryFormState? = null

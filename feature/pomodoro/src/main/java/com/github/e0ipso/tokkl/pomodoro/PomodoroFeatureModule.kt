@@ -135,6 +135,7 @@ val pomodoroFeatureModule = module {
             scope = scope,
             exactAlarms = get(),
             picker = pickerSource(cache.projects, cache.clients, cache.tasks, cache.tags),
+            entries = cache.timeEntries,
             offline = get<DefaultNetwork>().offlineIn(scope),
             saved = get(),
         )

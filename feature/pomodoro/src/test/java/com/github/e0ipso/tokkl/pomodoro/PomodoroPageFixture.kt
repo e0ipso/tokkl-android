@@ -220,11 +220,15 @@ internal class PageFixture(
     val queueSends = CopyOnWriteArrayList<String>()
     var alarmsDenied = false
     val picker = MutableStateFlow(PickerSource())
+
+    /** The cached time entries the description field suggests from. */
+    val entries = MutableStateFlow<List<TimeEntry>>(emptyList())
     val session = PomodoroSessionEdits(held, server, changes, sender = { queueSends += "send" })
     val page = PomodoroViewModel(
         held, controls, session, defaults, settings, unsent, refused, scope,
         exactAlarms = { alarmsDenied },
         picker = picker,
+        entries = entries,
         offline = MutableStateFlow(false),
         saved = saved,
     )

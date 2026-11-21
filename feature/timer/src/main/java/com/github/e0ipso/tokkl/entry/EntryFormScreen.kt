@@ -30,8 +30,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.e0ipso.tokkl.catalog.ConfirmDialog
+import com.github.e0ipso.tokkl.entryfields.DescriptionSuggestions
 import com.github.e0ipso.tokkl.entryfields.EntryFieldsEditor
 import com.github.e0ipso.tokkl.feature.timer.R
+import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.picker.EntityPicker
@@ -80,6 +82,7 @@ fun EntryFormScreen(
         actions = EntryFormActions(
             onDescriptionChange = model::setDescription,
             onPick = model::pick,
+            onFill = model::fill,
             onBillableChange = model::setBillable,
             onNoTimesChange = model::setNoTimes,
             onDateChange = model::setDate,
@@ -98,12 +101,15 @@ fun EntryFormScreen(
             EntityPicker(page.picker, page.offline, workspaceId, original, picked, onPickedChange, pickerModifier)
         },
         modifier = modifier,
+        suggestions = page.suggestions,
     )
 }
 
 class EntryFormActions(
     val onDescriptionChange: (String) -> Unit = {},
     val onPick: (Picked) -> Unit = {},
+    /** A description suggestion was picked: its fields replace all five of the form's. */
+    val onFill: (EntryFields) -> Unit = {},
     val onBillableChange: (Boolean) -> Unit = {},
     val onNoTimesChange: (Boolean) -> Unit = {},
     val onDateChange: (LocalDate) -> Unit = {},
@@ -122,7 +128,8 @@ class EntryFormActions(
 /**
  * [EntryFormScreen] without its model, with the fields as the web app's EntryEditor.tsx lists
  * them. It scrolls under the bar and makes room for the keyboard, so every field can be reached
- * at the largest font scale.
+ * at the largest font scale. With [suggestions], the description field suggests recent entries
+ * of the form's workspace as it is typed in (T4).
  */
 @Composable
 fun EntryFormContent(
@@ -130,6 +137,7 @@ fun EntryFormContent(
     actions: EntryFormActions,
     picker: EntryFormPicker,
     modifier: Modifier = Modifier,
+    suggestions: DescriptionSuggestions? = null,
 ) {
     val editing = (state as? EntryFormState.Open)?.editing ?: true
     val openState = state as? EntryFormState.Open
@@ -179,7 +187,7 @@ fun EntryFormContent(
                     stringResource(R.string.entry_form_unknown_time_zone, state.timeZone),
                 )
 
-                is EntryFormState.Open -> Fields(state, actions, picker)
+                is EntryFormState.Open -> Fields(state, actions, picker, suggestions)
             }
         }
     }
@@ -192,7 +200,12 @@ private fun Notice(text: String) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun Fields(state: EntryFormState.Open, actions: EntryFormActions, picker: EntryFormPicker) {
+private fun Fields(
+    state: EntryFormState.Open,
+    actions: EntryFormActions,
+    picker: EntryFormPicker,
+    suggestions: DescriptionSuggestions?,
+) {
     val spacing = TokklTheme.spacing
     val words = DateWords(LocalResources.current)
     val canChange = state.canChange
@@ -210,6 +223,8 @@ private fun Fields(state: EntryFormState.Open, actions: EntryFormActions, picker
                 state.workspaceId?.let { picker(it, original, picked, onPickedChange, pickerModifier) }
             },
             enabled = canChange,
+            suggestions = suggestions,
+            onSuggestion = { actions.onFill(it.fields) },
         )
         if (state.noTimesOffered) {
             NoTimesSwitch(state.noTimes, enabled = !state.saving, onChange = actions.onNoTimesChange)
