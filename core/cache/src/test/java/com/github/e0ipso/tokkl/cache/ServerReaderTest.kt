@@ -314,7 +314,7 @@ class ServerReaderTest {
             settings = settings,
             scope = CoroutineScope(Dispatchers.Unconfined),
             io = Dispatchers.Unconfined,
-            steps = { reads, me, preferences ->
+            steps = { reads, me, preferences, _ ->
                 snapshot = readServerSnapshot(
                     reads.api,
                     me,
