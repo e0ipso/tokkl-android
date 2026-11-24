@@ -13,6 +13,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import mockwebserver3.QueueDispatcher
+import mockwebserver3.RecordedRequest
 import okhttp3.OkHttpClient
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -41,8 +43,16 @@ class ServerSignInTest {
     private var saveFailure: IOException? = null
     private lateinit var trust: InMemoryServerTrust
 
+    /** The answer to `GET /api/v9/me/preferences`; Tokkl before 2.8.0 sends no resolution there. */
+    private var preferences: MockResponse = me("{}")
+
     @Before
     fun setUp() {
+        // Queued answers serve /me; the preferences get [preferences], so every test need not queue them.
+        server.dispatcher = object : QueueDispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse =
+                if (request.url.encodedPath.endsWith(PREFERENCES)) preferences else super.dispatch(request)
+        }
         server.start()
         // Most tests sign in to the MockWebServer's plain http URLs, which the user has confirmed here.
         trust = InMemoryServerTrust(url("/"), url("/tokkl"))
@@ -100,6 +110,29 @@ class ServerSignInTest {
         assertEquals(listOf(AccountSettings("Europe/Madrid", DayOfWeek.MONDAY, null, userId = 7)), savedSettings)
     }
 
+    /** Tokkl 2.8.0 keeps the resolution in the preferences and leaves it out of `/me`. */
+    @Test
+    fun theTimeResolutionComesFromThePreferences() {
+        server.enqueue(me("""{"id":7,"api_token":"$TOKEN","timezone":"Europe/Madrid","beginning_of_week":1}"""))
+        preferences = me("""{"time_resolution_minutes":10}""")
+
+        assertEquals(SignInResult.SignedIn, attempt())
+
+        assertEquals("/api/v9/me", server.takeRequest().url.encodedPath)
+        assertEquals(PREFERENCES, server.takeRequest().url.encodedPath)
+        assertEquals(listOf(AccountSettings("Europe/Madrid", DayOfWeek.MONDAY, 10.0, userId = 7)), savedSettings)
+    }
+
+    @Test
+    fun failedPreferencesSignInWithTheResolutionFromMe() {
+        server.enqueue(me("""{"id":7,$SETTINGS,"api_token":"$TOKEN"}"""))
+        preferences = MockResponse.Builder().code(500).build()
+
+        assertEquals(SignInResult.SignedIn, attempt())
+
+        assertEquals(listOf(AccountSettings("Europe/Madrid", DayOfWeek.SUNDAY, 15.0, userId = 7)), savedSettings)
+    }
+
     @Test
     fun emailAndPasswordSignInSendsThemAsGivenAndStoresOnlyTheTokenFromMe() {
         server.enqueue(me("""{"id":7,$SETTINGS,"email":"ana@example.com","api_token":"$TOKEN"}"""))
@@ -109,6 +142,11 @@ class ServerSignInTest {
         assertEquals(SignInResult.SignedIn, result)
         assertEquals(
             ApiCredentials.EmailPassword("ana@example.com", " $PASSWORD ").authorizationHeader,
+            server.takeRequest().headers["Authorization"],
+        )
+        assertEquals(
+            "the password goes in one request; the preferences get the token",
+            ApiCredentials.ApiToken(TOKEN).authorizationHeader,
             server.takeRequest().headers["Authorization"],
         )
         assertEquals(listOf(url("/") to TOKEN), saved)
@@ -258,7 +296,7 @@ class ServerSignInTest {
         trust.pinCertificate(CERTIFICATE)
 
         assertEquals(SignInResult.SignedIn, attempt(signIn = signIn))
-        assertEquals(1, server.requestCount)
+        assertEquals("/me and /me/preferences", 2, server.requestCount)
     }
 
     @Test
@@ -302,7 +340,7 @@ class ServerSignInTest {
         trust.confirmCleartext(fresh)
 
         assertEquals(SignInResult.SignedIn, attempt(fresh))
-        assertEquals(1, server.requestCount)
+        assertEquals("/me and /me/preferences", 2, server.requestCount)
     }
 
     @Test
@@ -336,6 +374,7 @@ class ServerSignInTest {
     private companion object {
         val CERTIFICATE = ServerCertificate("tokkl.test", 443, "ab".repeat(32), "CN=tokkl.test")
 
+        const val PREFERENCES = "/api/v9/me/preferences"
         const val TOKEN = "0123456789abcdef0123456789abcdef"
         const val PASSWORD = "correct horse:battery"
 

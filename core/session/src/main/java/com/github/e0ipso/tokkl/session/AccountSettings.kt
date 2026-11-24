@@ -18,13 +18,15 @@ import java.time.ZoneId
 
 /**
  * The settings that decide how the app shows and reads times: those from `GET /api/v9/me`
- * (docs/PRD.md S7), and the duration and clock formats from `GET /api/v9/me/preferences`. With them goes
+ * (docs/PRD.md S7), and the time resolution, duration and clock formats from
+ * `GET /api/v9/me/preferences`. With them goes
  * the account's default workspace, where new entries go. They hold no credential.
  *
  * @property timeZone the account's timezone name, exactly as the server sent it.
  * @property timeResolutionMinutes Tokkl's `time_resolution_minutes`, which the server snaps
- *   stopped entries to. Null when `/me` leaves it out. Toggl Track and older Tokkl servers leave
- *   it out, and they do not snap.
+ *   stopped entries to, read by [timeResolutionMinutes]: from `/me/preferences` on Tokkl 2.8.0 and
+ *   later, from `/me` before. Null when both leave it out. Toggl Track and Tokkl before the setting
+ *   leave it out, and they do not snap.
  * @property durationFormat the preferences' `duration_format`; improved until a refresh reads it.
  * @property defaultWorkspaceId the account's `default_workspace_id` from `/me`. It is stored, so a
  *   timer started offline has one. A refresh whose `/me` leaves it out keeps the stored one. Null
@@ -89,6 +91,22 @@ fun Me.accountSettings(): AccountSettings? = dayOfWeek(beginningOfWeek)?.let {
         userId = id,
     )
 }
+
+/**
+ * Tokkl's `time_resolution_minutes` in the preferences, where Tokkl 2.8.0 and later keep it. Null
+ * when it is missing or not a number, as on Toggl Track and older Tokkl.
+ */
+val MePreferences.timeResolutionMinutes: Double?
+    get() = number("time_resolution_minutes")
+
+/**
+ * The time resolution the server snaps to: the one in [preferences], as Tokkl 2.8.0 and later send
+ * it, else the one in [me], as Tokkl 2.7 and older send it. When the preferences request failed
+ * ([preferences] null) and [me] has none, [stored] stays, as the formats do. Toggl Track sends
+ * neither, so its answers give null.
+ */
+fun timeResolutionMinutes(me: Me, preferences: MePreferences?, stored: Double?): Double? =
+    preferences?.timeResolutionMinutes ?: me.timeResolutionMinutes ?: stored.takeIf { preferences == null }
 
 /**
  * The web app shows durations as improved when `duration_format` is missing or null, and when it

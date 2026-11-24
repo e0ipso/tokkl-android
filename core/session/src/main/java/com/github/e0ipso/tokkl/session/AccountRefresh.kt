@@ -26,10 +26,10 @@ class ServerAccountReads(val api: TokklApi) {
 fun interface AccountRefreshSteps {
 
     /**
-     * Runs on the refresh's dispatcher, inside its job, with its [reads], its `/me` answer and its
-     * `GET /api/v9/me/preferences`, null when that request failed.
+     * Runs on the refresh's dispatcher, inside its job, with its [reads], its `/me` answer, its
+     * `GET /api/v9/me/preferences`, null when that request failed, and the [settings] it stored.
      */
-    suspend fun afterAnswer(reads: ServerAccountReads, me: Me, preferences: MePreferences?)
+    suspend fun afterAnswer(reads: ServerAccountReads, me: Me, preferences: MePreferences?, settings: AccountSettings)
 }
 
 /**
@@ -82,7 +82,8 @@ class AccountRefresh(
     private val refreshing = SingleFlight(scope, io)
 
     /**
-     * A failed `/me` or write keeps what is stored, failed preferences keep the stored formats, and
+     * A failed `/me` or write keeps what is stored, failed preferences keep the stored formats and,
+     * unless `/me` sends one, the stored time resolution, and
      * a `/me` without `default_workspace_id` keeps the stored workspace. While one refresh runs,
      * another call returns that one instead of sending a second request.
      */
@@ -132,16 +133,17 @@ class AccountRefresh(
         synchronized(lock) { answers++ }
         val fromMe = me.accountSettings() ?: return
         val preferences = (server.preferences() as? ApiResult.Success)?.value
-        val kept = settings.storeRefreshed(writesBefore) { stored ->
+        val refreshed = settings.storeRefreshed(writesBefore) { stored ->
             fromMe.copy(
+                timeResolutionMinutes = timeResolutionMinutes(me, preferences, stored?.timeResolutionMinutes),
                 durationFormat = preferences?.durationFormat ?: stored?.durationFormat ?: DurationFormat.IMPROVED,
                 twelveHour = preferences?.twelveHour ?: stored?.twelveHour ?: false,
                 collapseSimilar = preferences?.collapseSimilar ?: stored?.collapseSimilar ?: true,
                 defaultWorkspaceId = fromMe.defaultWorkspaceId ?: stored?.defaultWorkspaceId,
             )
         }
-        // Sign-in stored newer settings while the requests ran.
-        if (!kept) return
-        steps.afterAnswer(server, me, preferences)
+        // Null when sign-in stored newer settings while the requests ran.
+        refreshed ?: return
+        steps.afterAnswer(server, me, preferences, refreshed)
     }
 }

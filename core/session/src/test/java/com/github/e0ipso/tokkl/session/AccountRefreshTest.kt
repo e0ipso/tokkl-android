@@ -77,6 +77,51 @@ class AccountRefreshTest {
         assertEquals(SnappedSpan(start, stop), source.state.value!!.time()!!.snapUnsent(start, stop))
     }
 
+    /** Tokkl 2.8.0 keeps the resolution in `/me/preferences` only; the steps get what was stored. */
+    @Test
+    fun theTimeResolutionComesFromThePreferences() {
+        server.enqueue(json(MADRID_MONDAY))
+        server.enqueue(json("""{"duration_format":"improved","time_resolution_minutes":15}"""))
+        val handed = mutableListOf<AccountSettings>()
+        val source = Account(
+            initial = null,
+            save = { saved += it },
+            reads = { reads },
+            scope = CoroutineScope(Dispatchers.Unconfined),
+            io = Dispatchers.Unconfined,
+            onRefresh = { _, _, _, settings -> handed += settings },
+        )
+
+        source.refresh()
+
+        val snapping = MADRID_MONDAY_SETTINGS.copy(timeResolutionMinutes = 15.0)
+        assertEquals(snapping, source.state.value)
+        assertEquals("the steps get the stored settings", listOf(snapping), handed)
+    }
+
+    /** Tokkl 2.7 and older send the resolution in `/me` and not in the preferences. */
+    @Test
+    fun theTimeResolutionFromMeServesOlderTokkl() {
+        server.enqueue(json(MADRID_MONDAY.dropLast(1) + ""","time_resolution_minutes":10}"""))
+        server.enqueue(json(IMPROVED))
+        val source = source(initial = null)
+
+        source.refresh()
+
+        assertEquals(MADRID_MONDAY_SETTINGS.copy(timeResolutionMinutes = 10.0), source.state.value)
+    }
+
+    @Test
+    fun failedPreferencesKeepTheStoredTimeResolution() {
+        server.enqueue(json(MADRID_MONDAY))
+        server.enqueue(MockResponse.Builder().code(500).build())
+        val source = source(initial = MADRID_MONDAY_SETTINGS.copy(timeResolutionMinutes = 15.0))
+
+        source.refresh()
+
+        assertEquals(MADRID_MONDAY_SETTINGS.copy(timeResolutionMinutes = 15.0), source.state.value)
+    }
+
     @Test
     fun aRefreshWhileOneRunsJoinsItAndSendsNoSecondRequest() {
         server.enqueue(json(MADRID_MONDAY))
@@ -198,7 +243,7 @@ class AccountRefreshTest {
             reads = { reads },
             scope = CoroutineScope(Dispatchers.Unconfined),
             io = Dispatchers.Unconfined,
-            onRefresh = { _, _, _ -> onRefreshRuns++ },
+            onRefresh = { _, _, _, _ -> onRefreshRuns++ },
         )
 
         val refresh = source.refresh()
@@ -423,7 +468,7 @@ class AccountRefreshTest {
         reads: () -> ServerAccountReads?,
         scope: CoroutineScope,
         io: CoroutineContext,
-        onRefresh: AccountRefreshSteps = AccountRefreshSteps { _, _, _ -> },
+        onRefresh: AccountRefreshSteps = AccountRefreshSteps { _, _, _, _ -> },
     ) {
         private val settings = AccountSettingsSource(InMemoryValueStore(initial, save), scope, Dispatchers.Unconfined)
         private val refresher = AccountRefresh(reads, settings, scope, io, onRefresh)

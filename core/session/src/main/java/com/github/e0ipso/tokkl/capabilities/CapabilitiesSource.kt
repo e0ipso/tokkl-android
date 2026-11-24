@@ -61,16 +61,22 @@ class CapabilitiesSource(private val store: ValueStore<Capabilities>, scope: Cor
     fun allDayOffers(): Flow<Boolean> = loaded.map { it.allDay == true }.distinctUntilChanged()
 
     /**
-     * Sets the flags from [me], the refresh's `GET /api/v9/me`, one `GET /api/app/trash` and one
+     * Sets the flags from [me], the refresh's `GET /api/v9/me`, the [timeResolutionMinutes] it
+     * stored, one `GET /api/app/trash` and one
      * `GET /api/app/timer`, and stores them. A timer state the probe read goes to [timerState], so
      * the refresh sends no second request for it. A failed write keeps the new flags for this
      * process.
      */
-    suspend fun <R> refresh(api: TokklApi, me: Me, timerState: ProbedTimerState<R>): Capabilities = change {
+    suspend fun <R> refresh(
+        api: TokklApi,
+        me: Me,
+        timeResolutionMinutes: Double?,
+        timerState: ProbedTimerState<R>,
+    ): Capabilities = change {
         val trash = probeTrash(api)
         val read = timerState.begin()
         val timer = probeTimerState(api)
-        val flags = update(held.value.updatedWith(me, trash, timer))
+        val flags = update(held.value.updatedWith(me, timeResolutionMinutes, trash, timer))
         if (timer is TimerStateProbe.Present) timerState.accept(read, timer.state)
         flags
     }

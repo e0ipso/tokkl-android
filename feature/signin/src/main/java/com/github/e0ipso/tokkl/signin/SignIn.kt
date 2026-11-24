@@ -3,7 +3,9 @@ package com.github.e0ipso.tokkl.signin
 import com.github.e0ipso.tokkl.api.ApiConnector
 import com.github.e0ipso.tokkl.api.ApiCredentials
 import com.github.e0ipso.tokkl.api.ApiError
+import com.github.e0ipso.tokkl.api.ApiResult
 import com.github.e0ipso.tokkl.api.ConfiguredServer
+import com.github.e0ipso.tokkl.api.MePreferences
 import com.github.e0ipso.tokkl.api.ServerCertificate
 import com.github.e0ipso.tokkl.api.ServerUrl
 import com.github.e0ipso.tokkl.api.getOrElse
@@ -11,6 +13,7 @@ import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.session.AccountSettingsStore
 import com.github.e0ipso.tokkl.session.ServerConfigStore
 import com.github.e0ipso.tokkl.session.accountSettings
+import com.github.e0ipso.tokkl.session.timeResolutionMinutes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import java.io.IOException
@@ -109,10 +112,11 @@ interface SignIn {
 }
 
 /**
- * One sign-in attempt: `GET /api/v9/me` with HTTP Basic auth, then the server, the token and the
- * account settings from that response go to [storeSignIn]. With email and password, the token kept
- * is the `api_token` from that response; the password is used for this one request and never
- * written anywhere.
+ * One sign-in attempt: `GET /api/v9/me` with HTTP Basic auth, then `GET /api/v9/me/preferences` with
+ * the token, for the time resolution of Tokkl 2.8.0 and later. The server, the token and the account
+ * settings from those responses go to [storeSignIn]. With email and password, the token kept is the
+ * `api_token` from the `/me` response; the password is used for that one request and never written
+ * anywhere.
  *
  * An attempt runs in [scope], the application's, on [io]: once sent, a sign-in the server accepts
  * is stored also when the form that sent it goes meanwhile.
@@ -152,14 +156,26 @@ class ServerSignIn(
             is SignInCredentials.EmailPassword -> me.apiToken?.takeIf { it.isNotEmpty() }
                 ?: return SignInResult.NoApiToken
         }
+        val preferences = preferences(server, token)
+        val resolved = settings.copy(timeResolutionMinutes = timeResolutionMinutes(me, preferences, stored = null))
         return try {
-            storeSignIn(server, token, settings)
+            storeSignIn(server, token, resolved)
             SignInResult.SignedIn
         } catch (_: GeneralSecurityException) {
             SignInResult.StorageFailed
         } catch (_: IOException) {
             SignInResult.StorageFailed
         }
+    }
+
+    /**
+     * `GET /api/v9/me/preferences` with the [token] to keep, so a password goes in one request only.
+     * Tokkl 2.8.0 keeps the time resolution there. Null when the request fails: sign-in then keeps
+     * the resolution from `/me`, and the first refresh reads the preferences again.
+     */
+    private suspend fun preferences(server: ServerUrl, token: String): MePreferences? {
+        val api = connector.api(server, ApiCredentials.ApiToken(token), io)
+        return (configured.signingIn(server) { api.account.preferences() } as? ApiResult.Success)?.value
     }
 }
 
