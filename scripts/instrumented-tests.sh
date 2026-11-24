@@ -164,10 +164,11 @@
 
 set -euo pipefail
 
-# Tokkl 2.1.0 (tag v2.1.0), the release that has no-time entries. To upgrade,
+# Tokkl 2.8.0 (tag v2.8.0), the release where the time resolution is a per-user
+# preference in /api/v9/me/preferences. To upgrade,
 # take the index digest from
 # `docker buildx imagetools inspect ghcr.io/e0ipso/tokkl:<version>`.
-readonly IMAGE='ghcr.io/e0ipso/tokkl:2.1.0@sha256:d26098693f9080d84671cf8e2f924af20cb4fd87ae47ae73dacee9e5173ef0e7'
+readonly IMAGE='ghcr.io/e0ipso/tokkl:2.8.0@sha256:3d263830a560d33d6aee348bbc9e05e099a6c6e55f9e756e3a31a26e5040c2b6'
 # HAProxy 3.2.26 on Alpine, the index digest from
 # `docker buildx imagetools inspect haproxy:3.2.26-alpine`.
 readonly PROXY_IMAGE='haproxy:3.2.26-alpine@sha256:254e6370f01cd654e0744edf607c67f33777c1b6a9dc0d4b28bcba7171460122'
