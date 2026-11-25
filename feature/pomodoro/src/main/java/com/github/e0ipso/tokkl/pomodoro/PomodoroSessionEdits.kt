@@ -26,15 +26,21 @@ import kotlinx.coroutines.flow.Flow
  * revision the page showed, and the edits would land after the phase they belong to.
  *
  * Start sends a revision too, which [TimerRevisions.forStart] chooses: the one held at the tap, or
- * after a read when the phone holds none. When edits made here may not have reached the server, it
+ * after a read when the phone holds none. When edits made here may not have reached the server,
+ * or the queue holds another change it may still send, such as an edit made on the Timer page, it
  * sends the queue and reads first, as Next phase does. It sends only while no session shows, and
  * otherwise reports [TimerActionResult.Refused].
+ *
+ * @param unsent says whether the queue holds a change a send may still deliver, as
+ *   `ChangeQueue.hasSendable` does. A change the server refused waits for the user, so it does not
+ *   count.
  */
 class PomodoroSessionEdits(
     private val held: Flow<HeldTimerState?>,
     private val actions: SessionActions,
     changes: RunningEntryChanges,
     private val sender: suspend () -> Unit,
+    private val unsent: suspend () -> Boolean,
 ) {
 
     private val edits = RunningEntryEdits(changes)
@@ -50,7 +56,8 @@ class PomodoroSessionEdits(
         edits.write(RunningEntryIdentity(entry.id, entry.workspaceId, entry.start), fields, entry.fields(), running)
 
     suspend fun start(workspaceId: WorkspaceId, fields: EntryFields, lengths: SessionLengths): TimerActionResult =
-        revisions.forStart(edits::awaitQueued).send { actions.startSession(workspaceId, fields, lengths, it) }
+        revisions.forStart { edits.awaitQueued() || unsent() }
+            .send { actions.startSession(workspaceId, fields, lengths, it) }
 
     suspend fun next(shown: PomodoroShown): TimerActionResult = finish(shown, actions::nextPhase)
 

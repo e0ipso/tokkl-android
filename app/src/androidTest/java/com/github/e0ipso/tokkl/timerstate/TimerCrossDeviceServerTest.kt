@@ -334,9 +334,11 @@ class TimerCrossDeviceServerTest {
 
     /**
      * Pause on the Timer page and Start on the Pomodoro page send the revision the phone holds.
-     * Each time the other device moves the timer on first, while the phone's stream has not
-     * delivered it yet. The server refuses the stale request, and the phone takes the server's
-     * state from the refusal and shows the refusal notice. Neither request changes the server.
+     * Each time the other device moves the revision on first, while the phone's stream has not
+     * delivered it yet, and leaves a state where the action is still allowed: it renames the
+     * running entry before Pause, and starts a plain timer before Start. So only the revision can
+     * make the server refuse. The phone takes the server's state from the refusal and shows the
+     * refusal notice. Neither request changes the server.
      */
     @Test
     fun aPauseAndAPomodoroStartAtARevisionAnotherDeviceMovedOnAreRefused() {
@@ -349,29 +351,29 @@ class TimerCrossDeviceServerTest {
                 "the other device's entry",
             ) { it.entry.id.value == entry && it.pausable }
 
-            // The stream has not brought the other device's Pause yet, as on a slow network.
+            // The stream has not brought the other device's rename yet, as on a slow network.
             runBlocking { app.timerSync.stop().join() }
             val drawn = checkNotNull(held())
-            val pausedThere = postTimer("timer", "pause", revision = drawn.revision)
-            assertTrue(pausedThere.pause?.paused == true)
-            assertEquals("the phone has not heard of the Pause", drawn, held())
+            val renamed = renameTheRunningEntry(entry, "Renamed on another device")
+            assertTrue("the rename moved the revision", renamed.revision > drawn.revision)
+            assertEquals("the same entry still runs", entry, renamed.runningEntry?.id)
+            assertNull("nothing is paused", renamed.pause)
+            assertEquals("the phone has not heard of the rename", drawn, held())
 
             tapOnTheTimerPage(UiR.string.timer_pause_spoken)
             awaitRefusalNotice()
-            val paused = app.awaitControls<TimerControls.Paused>(
-                "the server's paused state from the refusal",
-            ) { it.target.revision == pausedThere.revision }
-            assertEquals("the server's frozen total", pausedThere.pause?.seconds, paused.seconds)
-            assertEquals("the refused Pause changed nothing", pausedThere.revision, other.timerState().revision)
+            app.awaitControls<TimerControls.Running>(
+                "the server's renamed entry from the refusal, still running",
+            ) { it.entry.id.value == entry && it.entry.description == "Renamed on another device" }
+            val adopted = checkNotNull(held())
+            assertEquals("the phone took the server's state from the refusal", renamed.revision, adopted.revision)
+            assertEquals(entry, adopted.runningEntry?.id?.value)
+            val afterPause = other.timerState()
+            assertEquals("the refused Pause changed nothing", renamed.revision, afterPause.revision)
+            assertNull("nothing was paused", afterPause.pause)
+            assertEquals(entry, afterPause.runningEntry?.id)
 
-            // The other device ends the chain, and the phone follows it again.
-            val discarded = postTimer("timer", "discard", revision = pausedThere.revision)
             app.followTimerSync()
-            app.awaitControls<TimerControls.Idle>("the other device's Discard")
-            compose.waitUntil("the phone holds the Discard", STREAM_CONNECT_MS) {
-                held()?.revision == discarded.revision
-            }
-
             compose.awaitPomodoroOffered(15_000)
             compose.openBarPage(UiR.string.pomodoro_title)
             var model: PomodoroViewModel? = null
@@ -380,13 +382,15 @@ class TimerCrossDeviceServerTest {
             compose.waitUntil("the page has loaded", 15_000) { !page.page.value.loading }
             compose.runOnIdle { page.editFields(EntryFields("Phone session"), entryId = null) }
 
-            // The stream has not brought the other device's session yet.
+            // The stream has not brought the other device's timer yet.
             runBlocking { app.timerSync.stop().join() }
-            val idle = checkNotNull(held())
-            assertEquals(discarded.revision, idle.revision)
-            val started = postTimer("pomodoro", body = sessionBody("Another device's session", every = 4))
-            val session = checkNotNull(started.model().pomodoro)
-            assertEquals("the phone has not heard of the session", idle, held())
+            val before = checkNotNull(held())
+            assertEquals(renamed.revision, before.revision)
+            val started = startATimer("Another device's timer")
+            val timer = checkNotNull(started.runningEntry)
+            assertTrue("the timer moved the revision", started.revision > before.revision)
+            assertNull("a session start is still allowed", started.pomodoro)
+            assertEquals("the phone has not heard of the timer", before, held())
 
             compose.onNode(
                 hasText(context.getString(UiR.string.pomodoro_start)) and hasClickAction(),
@@ -397,11 +401,17 @@ class TimerCrossDeviceServerTest {
             ) { page.page.value.problem != null && !page.page.value.busy }
             assertEquals(PomodoroProblem(PomodoroAction.START, TimerActionResult.Refused), page.page.value.problem)
             awaitRefusalNotice()
-            assertEquals("the page shows the other device's session", session, page.page.value.pomodoro)
-            assertEquals("the phone took the server's state from the refusal", started.revision, held()?.revision)
+            assertNull("the page shows no session", page.page.value.pomodoro)
+            val taken = checkNotNull(held())
+            assertEquals("the phone took the server's state from the refusal", started.revision, taken.revision)
+            assertEquals("the other device's timer runs", timer.id, taken.runningEntry?.id?.value)
+            app.awaitControls<TimerControls.Running>(
+                "the other device's timer from the refusal",
+            ) { it.entry.id.value == timer.id }
             val after = other.timerState()
             assertEquals("the refused Start changed nothing", started.revision, after.revision)
-            assertEquals("Another device's session", after.runningEntry?.description)
+            assertNull("no session started", after.pomodoro)
+            assertEquals("Another device's timer", after.runningEntry?.description)
             app.followTimerSync()
         }
     }
@@ -702,6 +712,39 @@ class TimerCrossDeviceServerTest {
         put("short_rest_minutes", 1)
         put("long_rest_minutes", 1)
         put("long_rest_every", every)
+    }
+
+    /** The other device renames the running entry [id] through v9 and returns the timer it left. */
+    private fun renameTheRunningEntry(id: Long, description: String): TimerState {
+        runBlocking {
+            other.send(
+                HttpMethod.PUT,
+                other.server.api("workspaces", "${fixture.account.workspaceId}", "time_entries", "$id"),
+                buildJsonObject { put("description", description) },
+                JsonObject.serializer(),
+            )
+        }.orFail("PUT the running entry")
+        return other.timerState()
+    }
+
+    /** The other device starts a plain timer through v9 and returns the timer it left. */
+    private fun startATimer(description: String): TimerState {
+        val workspace = fixture.account.workspaceId
+        runBlocking {
+            other.send(
+                HttpMethod.POST,
+                other.server.api("workspaces", "$workspace", "time_entries"),
+                buildJsonObject {
+                    put("workspace_id", workspace)
+                    put("created_with", "tokkl-android tests, another device")
+                    put("description", description)
+                    put("start", Instant.now().truncatedTo(ChronoUnit.SECONDS).toString())
+                    put("duration", -1)
+                },
+                JsonObject.serializer(),
+            )
+        }.orFail("POST a running entry")
+        return other.timerState()
     }
 
     /** A timer action from the other device: its answer, a 2xx state. */

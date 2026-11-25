@@ -222,7 +222,13 @@ internal class PageFixture(
 
     /** The cached time entries the description field suggests from. */
     val entries = MutableStateFlow<List<TimeEntry>>(emptyList())
-    val session = PomodoroSessionEdits(held, server, changes, sender = { queueSends += "send" })
+    val session = PomodoroSessionEdits(
+        held,
+        server,
+        changes,
+        sender = { queueSends += "send" },
+        unsent = { unsent.value > 0 },
+    )
     val page = PomodoroViewModel(
         held, controls, session, defaults, settings, unsent, refused, scope,
         exactAlarms = { alarmsDenied },

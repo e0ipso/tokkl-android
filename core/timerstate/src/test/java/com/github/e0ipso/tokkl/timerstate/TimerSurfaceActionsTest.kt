@@ -89,6 +89,29 @@ class TimerSurfaceActionsTest {
     }
 
     @Test
+    fun pauseWhileTheHeldStateRunsAnotherEntryReadsTheTimerFirst() = runTest {
+        // The stream published 43 after the controls showed 42, and before the revision was chosen.
+        now = running(id = 42)
+        heldState = held(revision = 8, running = 43)
+        onRead = { TimerActionResult.Done }
+
+        val replaced = tap(TimerSurfaceAction.Pause, running(id = 42).target) as SurfaceTap.Request
+        assertEquals(TimerActionResult.Refused, run { replaced.send() })
+        assertEquals("43 is not paused at its revision", listOf("read"), calls)
+
+        // A held state that was only behind the server, which the read brings up to date.
+        calls.clear()
+        heldState = held(revision = 7, running = 41)
+        onRead = {
+            heldState = held(revision = 9, running = 42)
+            TimerActionResult.Done
+        }
+        val behind = tap(TimerSurfaceAction.Pause, running(id = 42).target) as SurfaceTap.Request
+        assertEquals(TimerActionResult.Done, run { behind.send() })
+        assertEquals(listOf("read", "pause 9"), calls)
+    }
+
+    @Test
     fun pauseIsNotSentWhereTheControlsNoLongerOfferIt() {
         // During a Pomodoro session, or on a server without the timer API.
         now = running(id = 42, pausable = false)

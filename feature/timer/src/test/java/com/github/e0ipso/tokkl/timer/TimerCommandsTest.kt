@@ -68,7 +68,7 @@ class TimerCommandsTest {
         timerApi = MutableStateFlow(true),
         changes = changes,
         pauseChain = server,
-        held = MutableStateFlow(HeldTimerState(5, TAP, null, null, null, null, TAP)),
+        held = MutableStateFlow(HeldTimerState(5, TAP, running().entry, null, null, null, TAP)),
         sender = { changes.calls += "send queue" },
         notices = notices,
         sections = TapSections(TapTrace { {} }),

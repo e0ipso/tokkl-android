@@ -34,13 +34,14 @@ sealed interface RevisionChoice {
  * timer controls, and `forStart(queued)` for the Pomodoro page and widget. Send the action with
  * [RevisionChoice.send], as in `forPause(...).send(actions::pause)`.
  *
- * Each sends the revision the phone holds at the call, which the surface makes after its check
- * that the phone still shows what the control showed. When the phone holds no state yet, it reads
- * the timer first. When the phone's own queued changes would move the revision, as an unsent
- * Start or an edit does, it sends the queue, reads, and waits up to 3 s for a revision newer than
- * the one held before, so those changes do not get the action refused. After a read it sends the
- * latest held revision only while that state still shows what the surface showed, and otherwise
- * reports [TimerActionResult.Refused]. A read that fails ends the choice with its result.
+ * Each sends the revision the phone holds at the call while that state still shows what the
+ * control showed, which the surface checked just before. When the phone holds no state yet, or
+ * Pause finds the held state runs another entry, it reads the timer first. When the phone's own
+ * queued changes would move the revision, as an unsent Start or an edit does, it sends the queue,
+ * reads, and waits up to 3 s for a revision newer than the one held before, so those changes do
+ * not get the action refused. After a read it sends the latest held revision only while that
+ * state still shows what the surface showed, and otherwise reports [TimerActionResult.Refused]. A
+ * read that fails ends the choice with its result.
  *
  * @param held the account's held state, which [read] gives its answer to.
  * @param read reads the timer with `GET /api/app/timer`, as [PauseActions.read] and
@@ -55,16 +56,19 @@ class TimerRevisions(
 
     /**
      * The revision Pause of [entryId], the running entry the surface showed, sends. [unsent] says
-     * the queue holds a change the server may not have yet, such as the entry's own Start. After
-     * a read, it sends only while the held state runs that entry outside a session. [currentId]
-     * gives the entry's id once its Start is sent, as `RunningEntryChanges.currentId` does.
+     * the queue holds a change the server may not have yet, such as the entry's own Start. It
+     * sends the held revision only while the held state runs that entry outside a session. When
+     * it does not, as when the stream brought another entry after the surface's check, it reads
+     * first, and then sends only while the read state runs that entry. [currentId] gives the
+     * entry's id once its Start is sent, as `RunningEntryChanges.currentId` does.
      */
     suspend fun forPause(entryId: EntryId, unsent: Boolean, currentId: suspend (EntryId) -> EntryId): RevisionChoice {
-        val tapped = held.first()
-        if (tapped != null && !unsent) return RevisionChoice.Send(tapped.revision)
-        return readAgain(tapped, flush = unsent) { latest ->
-            latest.pomodoro == null && latest.runningEntry?.id == currentId(entryId)
+        val runsEntry: suspend (HeldTimerState) -> Boolean = { state ->
+            state.pomodoro == null && state.runningEntry?.id == currentId(entryId)
         }
+        val tapped = held.first()
+        if (tapped != null && !unsent && runsEntry(tapped)) return RevisionChoice.Send(tapped.revision)
+        return readAgain(tapped, flush = unsent, runsEntry)
     }
 
     /**

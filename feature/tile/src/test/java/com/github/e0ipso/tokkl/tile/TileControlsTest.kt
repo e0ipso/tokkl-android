@@ -142,12 +142,15 @@ class TileControlsTest {
 
     private fun press(control: TileControl): SurfaceTap? = runBlocking {
         TimerSurfaceActions(
-            FixedTimerState(controls = { now }, held = { ServerTimerStates.held(2, start) }),
+            FixedTimerState(controls = { now }, held = { heldNow() }),
             RecordingChanges(),
             RecordingServer(),
             sender = {},
         ).tap(control.action, control.target)
     }
+
+    /** The server's state at revision 2, running the entry the controls show. */
+    private fun heldNow() = ServerTimerStates.held(2, start).copy(runningEntry = (now as? TimerControls.Running)?.entry)
 
     private fun entry(id: Long) = TimeEntry(
         id = EntryId(id),

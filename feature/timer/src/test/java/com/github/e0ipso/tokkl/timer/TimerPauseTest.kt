@@ -133,7 +133,7 @@ class TimerPauseTest {
 
     @Test
     fun pauseWaitsForTheServerAndThenShowsItsFrozenSeconds() {
-        phone.value = Phone(running(), held(revision = 2))
+        phone.value = Phone(running(), held(revision = 2, runningId = RUNNING_ID))
         awaitState("the running entry shows") { it is TimerState.Running && it.entryId?.value == RUNNING_ID }
 
         server.gate = CompletableDeferred()
@@ -158,7 +158,7 @@ class TimerPauseTest {
 
     @Test
     fun pauseSendsADescriptionStillBeingTypedBeforeItself() {
-        phone.value = Phone(running(), held(revision = 2))
+        phone.value = Phone(running(), held(revision = 2, runningId = RUNNING_ID))
         awaitState("the running entry shows") { it is TimerState.Running }
 
         onMain { model.editDescription("Typed before Pause") }
@@ -210,7 +210,7 @@ class TimerPauseTest {
 
     @Test
     fun anOfflinePauseSaysSoAndLeavesTheTimerRunning() {
-        phone.value = Phone(running(), held(revision = 2))
+        phone.value = Phone(running(), held(revision = 2, runningId = RUNNING_ID))
         awaitState("the running entry shows") { it is TimerState.Running }
         server.answer = TimerActionResult.Offline
 
@@ -232,7 +232,7 @@ class TimerPauseTest {
 
     @Test
     fun aRefusedPauseShowsTheServersStateAndSaysAnotherDeviceChangedIt() {
-        phone.value = Phone(running(), held(revision = 2))
+        phone.value = Phone(running(), held(revision = 2, runningId = RUNNING_ID))
         awaitState("the running entry shows") { it is TimerState.Running }
         // Another device paused first, and the refusal brings its state.
         server.answer = TimerActionResult.Refused
@@ -250,7 +250,7 @@ class TimerPauseTest {
 
     @Test
     fun pauseIsNotOfferedWithoutTheTimerApiOrDuringASession() {
-        phone.value = Phone(running(), held(revision = 2))
+        phone.value = Phone(running(), held(revision = 2, runningId = RUNNING_ID))
         awaitState("Pause shows") { it is TimerState.Running && it.pausable }
 
         timerApi.value = false
@@ -377,9 +377,9 @@ class TimerPauseTest {
 
     @Test
     fun focusedCallbacksCannotPauseStopOrEditAReplacement() {
-        phone.value = Phone(running(), held(revision = 2))
+        phone.value = Phone(running(), held(revision = 2, runningId = RUNNING_ID))
         val old = awaitState("old focused context") { it is TimerState.Running } as TimerState.Running
-        phone.value = Phone(running(id = 99), held(revision = 3))
+        phone.value = Phone(running(id = 99), held(revision = 3, runningId = 99))
         awaitState("replacement context") { it is TimerState.Running && it.entryId?.value == 99L }
 
         onMain {
@@ -394,7 +394,7 @@ class TimerPauseTest {
 
     @Test
     fun focusedPauseAndResumeKeepTheChainsSecondsAndFenceAnOlderRevision() {
-        phone.value = Phone(running(), held(revision = 2))
+        phone.value = Phone(running(), held(revision = 2, runningId = RUNNING_ID))
         val running = awaitState("running context") { it is TimerState.Running } as TimerState.Running
         onMain { model.pauseShown(running.target!!) }
         val paused = awaitState(
@@ -425,7 +425,7 @@ class TimerPauseTest {
 
     @Test
     fun focusedStopExitsOnlyAfterAuthoritativeIdleAndCannotRepeat() {
-        phone.value = Phone(running(), held(revision = 2))
+        phone.value = Phone(running(), held(revision = 2, runningId = RUNNING_ID))
         val shown = awaitState("running context") { it is TimerState.Running } as TimerState.Running
         changes.gate = CompletableDeferred()
         onMain { model.stopShown(shown.target!!) }
@@ -456,7 +456,7 @@ class TimerPauseTest {
 
     @Test
     fun theRunningEditorDoesNotOpenWhilePausedOrWhileAPauseIsOnItsWay() {
-        phone.value = Phone(running(), held(revision = 2))
+        phone.value = Phone(running(), held(revision = 2, runningId = RUNNING_ID))
         awaitState("the running entry shows") { it is TimerState.Running }
         server.gate = CompletableDeferred()
         onMain { model.pause() }

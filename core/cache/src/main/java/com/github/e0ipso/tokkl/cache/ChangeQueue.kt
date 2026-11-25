@@ -85,6 +85,12 @@ class ChangeQueue(
 
     val heldCount: Flow<Int> = storage.heldCount
 
+    /**
+     * Whether the queue holds a change a send may still deliver: an unsent one the server has not
+     * refused. A held change waits for the user, so sending the queue does not move it.
+     */
+    suspend fun hasSendable(): Boolean = unsentNow() > heldCount.first()
+
     /** Latest short Stop, retained across process death until Undo or dismissal. */
     val shortStopUndo: Flow<ShortStopOffer?> = storage.latestShortStop.map { undo ->
         undo?.let { ShortStopOffer(EntryId(it.entryId), it.capturedAt) }

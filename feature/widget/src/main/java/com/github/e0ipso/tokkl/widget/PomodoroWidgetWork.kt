@@ -83,7 +83,7 @@ class PomodoroWidgetActionWorker(
         )
         val revision = PomodoroWidgetStartRevision(
             held = intake.state,
-            queued = { changes.unsentNow() > 0 },
+            queued = changes::hasSendable,
             sender = sender::sendQueued,
         )
         return sendPomodoroWidgetAction(tap, current, actions, revision)
