@@ -60,7 +60,7 @@ class TileControlsTest {
         assertTrue("Pause waits for the server, and queues nothing", calls.isEmpty())
         run { pause.send() }
         assertEquals(SurfaceTap.Queued, press(panel.buttons[1]))
-        assertEquals(listOf("pause", "stop 4"), calls)
+        assertEquals("Pause sends the held revision", listOf("pause 2", "stop 4"), calls)
     }
 
     @Test
@@ -142,7 +142,7 @@ class TileControlsTest {
 
     private fun press(control: TileControl): SurfaceTap? = runBlocking {
         TimerSurfaceActions(
-            FixedTimerState(controls = { now }),
+            FixedTimerState(controls = { now }, held = { ServerTimerStates.held(2, start) }),
             RecordingChanges(),
             RecordingServer(),
             sender = {},
@@ -204,7 +204,11 @@ class TileControlsTest {
         (0 until childNodes.length).map { childNodes.item(it) }.filterIsInstance<Element>()
 
     private inner class RecordingServer : PauseActions {
-        override suspend fun pause(): TimerActionResult = TimerActionResult.Done.also { calls += "pause" }
+        override suspend fun read(): TimerActionResult = throw AssertionError("unexpected read")
+
+        override suspend fun pause(revision: Long): TimerActionResult = TimerActionResult.Done.also {
+            calls += "pause $revision"
+        }
         override suspend fun resume(revision: Long): TimerActionResult = TimerActionResult.Done.also {
             calls +=
                 "resume $revision"

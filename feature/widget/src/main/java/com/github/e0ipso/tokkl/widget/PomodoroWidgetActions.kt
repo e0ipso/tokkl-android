@@ -10,8 +10,12 @@ import androidx.glance.appwidget.action.actionRunCallback
 import com.github.e0ipso.tokkl.api.ApiJson
 import com.github.e0ipso.tokkl.platform.CurrentWorkManager
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
+import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.SessionActions
+import com.github.e0ipso.tokkl.timerstate.SessionLengths
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
+import com.github.e0ipso.tokkl.timerstate.TimerRevisions
+import kotlinx.coroutines.flow.Flow
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
 import java.time.Instant
@@ -24,10 +28,27 @@ internal sealed interface PomodoroWidgetTap {
         PomodoroWidgetTap
 }
 
+/**
+ * What the widget's Start chooses its revision with, through [TimerRevisions.forStart]: the
+ * account's [held] state, whether the change queue holds changes the server may not have yet
+ * ([queued]), and the [sender] of that queue.
+ */
+internal class PomodoroWidgetStartRevision(
+    val held: Flow<HeldTimerState?>,
+    val queued: suspend () -> Boolean,
+    val sender: suspend () -> Unit,
+)
+
+/**
+ * Sends [tap] while [current], the widget's state now, still shows what the tap was drawn on.
+ * Returns what it came to, or null when it sent nothing. Start sends the revision [revision]
+ * chooses, while no session shows.
+ */
 internal suspend fun sendPomodoroWidgetAction(
     tap: PomodoroWidgetTap,
     current: PomodoroWidgetState,
     actions: SessionActions,
+    revision: PomodoroWidgetStartRevision,
 ): TimerActionResult? {
     val account = when (current) {
         is PomodoroWidgetState.Idle -> current.account
@@ -39,14 +60,11 @@ internal suspend fun sendPomodoroWidgetAction(
         is PomodoroWidgetTap.Start -> {
             if (current !is PomodoroWidgetState.Idle) return TimerActionResult.Refused
             val lengths = tap.defaults.run {
-                com.github.e0ipso.tokkl.timerstate.SessionLengths(
-                    workMinutes,
-                    shortRestMinutes,
-                    longRestMinutes,
-                    longRestEvery,
-                )
+                SessionLengths(workMinutes, shortRestMinutes, longRestMinutes, longRestEvery)
             }
-            actions.startSession(tap.entry.workspaceId, tap.entry.fields, lengths)
+            TimerRevisions(revision.held, actions::read, revision.sender)
+                .forStart(revision.queued)
+                .send { actions.startSession(tap.entry.workspaceId, tap.entry.fields, lengths, it) }
         }
 
         is PomodoroWidgetTap.Phase -> {

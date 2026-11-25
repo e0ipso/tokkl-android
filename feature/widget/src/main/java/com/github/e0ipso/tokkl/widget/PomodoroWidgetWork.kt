@@ -8,6 +8,8 @@ import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.github.e0ipso.tokkl.api.ApiClientProvider
+import com.github.e0ipso.tokkl.cache.ChangeQueue
+import com.github.e0ipso.tokkl.cache.ChangeSender
 import com.github.e0ipso.tokkl.platform.CurrentWorkManager
 import com.github.e0ipso.tokkl.session.Session
 import com.github.e0ipso.tokkl.timernotice.TimerFailureNotice
@@ -40,6 +42,12 @@ internal fun CurrentWorkManager.sendPomodoroWidgetTap(tap: PomodoroWidgetTap) {
  * it runs, and sends with the account's timer state and API as they are then, which it keeps
  * together until the answer: a sign-out or another account meanwhile drops the answer. One that
  * fails, offline or refused by the phone's storage included, says why and ends the work as failed.
+ *
+ * Start carries no revision, as the widget's idle state has none. It sends the revision that
+ * [com.github.e0ipso.tokkl.timerstate.TimerRevisions.forStart] chooses from the captured state:
+ * the one held when the work runs, or after a read when none is held. When the change queue holds
+ * changes, it sends them through [sender] and reads first, so the phone's own changes do not get
+ * Start refused. It sends only while no session shows.
  */
 class PomodoroWidgetActionWorker(
     context: Context,
@@ -49,6 +57,8 @@ class PomodoroWidgetActionWorker(
     private val signIn: Session,
     private val widgetStates: PomodoroWidgetStateSource,
     private val failures: TimerFailureNotice,
+    private val changes: ChangeQueue,
+    private val sender: ChangeSender,
     private val scope: CoroutineScope,
     private val io: CoroutineContext,
 ) : CoroutineWorker(context, parameters) {
@@ -71,7 +81,12 @@ class PomodoroWidgetActionWorker(
             scope = scope,
             io = io,
         )
-        return sendPomodoroWidgetAction(tap, current, actions)
+        val revision = PomodoroWidgetStartRevision(
+            held = intake.state,
+            queued = { changes.unsentNow() > 0 },
+            sender = sender::sendQueued,
+        )
+        return sendPomodoroWidgetAction(tap, current, actions, revision)
     }
 }
 

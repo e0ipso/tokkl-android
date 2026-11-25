@@ -11,9 +11,9 @@ import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.SessionActions
 import com.github.e0ipso.tokkl.timerstate.SessionLengths
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
+import com.github.e0ipso.tokkl.timerstate.TimerRevisions
+import com.github.e0ipso.tokkl.timerstate.awaitNewerThan
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Field edits of the open pomodoro go through the running entry's queue, as [RunningEntryEdits]
@@ -24,6 +24,11 @@ import kotlinx.coroutines.withTimeoutOrNull
  * the queue through [sender], read the state and wait for the revision the edits produced, and
  * send it only while the phase is the one the page showed. Otherwise the server would refuse the
  * revision the page showed, and the edits would land after the phase they belong to.
+ *
+ * Start sends a revision too, which [TimerRevisions.forStart] chooses: the one held at the tap, or
+ * after a read when the phone holds none. When edits made here may not have reached the server, it
+ * sends the queue and reads first, as Next phase does. It sends only while no session shows, and
+ * otherwise reports [TimerActionResult.Refused].
  */
 class PomodoroSessionEdits(
     private val held: Flow<HeldTimerState?>,
@@ -34,6 +39,8 @@ class PomodoroSessionEdits(
 
     private val edits = RunningEntryEdits(changes)
 
+    private val revisions = TimerRevisions(held, actions::read, sender)
+
     /**
      * Queues [fields] for the open pomodoro, [entry] as the page shows it, with the identity the
      * cache holds it under, and waits until [running], the cache's running entry, shows them, as
@@ -43,7 +50,7 @@ class PomodoroSessionEdits(
         edits.write(RunningEntryIdentity(entry.id, entry.workspaceId, entry.start), fields, entry.fields(), running)
 
     suspend fun start(workspaceId: WorkspaceId, fields: EntryFields, lengths: SessionLengths): TimerActionResult =
-        actions.startSession(workspaceId, fields, lengths)
+        revisions.forStart(edits::awaitQueued).send { actions.startSession(workspaceId, fields, lengths, it) }
 
     suspend fun next(shown: PomodoroShown): TimerActionResult = finish(shown, actions::nextPhase)
 
@@ -64,15 +71,7 @@ class PomodoroSessionEdits(
         if (!edits.awaitQueued()) return shown.revision
         sender()
         actions.read()
-        withTimeoutOrNull(REFRESH_MS) {
-            held.first { state -> state?.shown().let { now -> now == null || now.revision > shown.revision } }
-        }
-        val latest = held.first()?.shown() ?: return null
+        val latest = held.awaitNewerThan(shown.revision)?.shown() ?: return null
         return if (latest.phaseStart == shown.phaseStart) latest.revision else null
-    }
-
-    private companion object {
-        /** How long Next phase waits for the revision the page's own edits produced. */
-        const val REFRESH_MS = 3_000L
     }
 }

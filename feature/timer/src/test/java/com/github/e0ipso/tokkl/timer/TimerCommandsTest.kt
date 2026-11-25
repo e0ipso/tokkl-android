@@ -11,6 +11,7 @@ import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.timernotice.TimerNotice
 import com.github.e0ipso.tokkl.timerstate.DiscardNotices
+import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.PauseActions
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import com.github.e0ipso.tokkl.timerstate.TimerControls
@@ -67,6 +68,7 @@ class TimerCommandsTest {
         timerApi = MutableStateFlow(true),
         changes = changes,
         pauseChain = server,
+        held = MutableStateFlow(HeldTimerState(5, TAP, null, null, null, null, TAP)),
         sender = { changes.calls += "send queue" },
         notices = notices,
         sections = TapSections(TapTrace { {} }),
@@ -164,7 +166,7 @@ class TimerCommandsTest {
 
         timer.pause()
 
-        assertEquals(listOf("pause"), server.calls)
+        assertEquals("the held revision", listOf("pause 5"), server.calls)
         assertNull(timer.taps.value.pending)
         val notice = notices.notices(MutableStateFlow(null)).first() as TimerNotice.ActionFailed
         assertEquals(TimerActionResult.Refused, notice.result)
@@ -261,7 +263,9 @@ class TimerCommandsTest {
         val calls = mutableListOf<String>()
         var answer: TimerActionResult = TimerActionResult.Done
 
-        override suspend fun pause() = answer.also { calls += "pause" }
+        override suspend fun read() = TimerActionResult.Done.also { calls += "read" }
+
+        override suspend fun pause(revision: Long) = answer.also { calls += "pause $revision" }
 
         override suspend fun resume(revision: Long) = answer.also { calls += "resume $revision" }
 

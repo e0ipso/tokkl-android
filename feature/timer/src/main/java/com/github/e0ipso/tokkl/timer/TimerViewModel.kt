@@ -13,6 +13,7 @@ import com.github.e0ipso.tokkl.picker.Picked
 import com.github.e0ipso.tokkl.session.AccountSettings
 import com.github.e0ipso.tokkl.timernotice.TimerFrame
 import com.github.e0ipso.tokkl.timerstate.DiscardNotices
+import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.PauseActions
 import com.github.e0ipso.tokkl.timerstate.TimerControls
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
@@ -34,6 +35,7 @@ import java.time.Clock
  * @param trace marks each Start and Stop tap until the screen reports with [shown] that it drew
  *   what the tap did.
  * @param pauseChain the server's Pause, Resume and Discard, or null where the app sends none.
+ * @param held the account's held timer state, which Pause takes its revision from.
  * @param discards the too-short pomodoro whose notice no screen has shown, from the account's
  *   timer state, which a screen takes when it shows it.
  */
@@ -47,6 +49,7 @@ class TimerViewModel(
     clock: Clock,
     trace: TapTrace,
     pauseChain: PauseActions?,
+    held: Flow<HeldTimerState?>,
     sender: suspend () -> Unit,
     discards: DiscardNotices,
     timerApi: Flow<Boolean>,
@@ -65,6 +68,7 @@ class TimerViewModel(
         timerApi,
         changes,
         pauseChain,
+        held,
         sender,
         notices,
         sections,

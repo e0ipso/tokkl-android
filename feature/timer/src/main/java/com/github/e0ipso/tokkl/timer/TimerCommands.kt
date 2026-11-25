@@ -10,9 +10,11 @@ import com.github.e0ipso.tokkl.model.TimeEntry
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.model.fields
 import com.github.e0ipso.tokkl.session.AccountSettings
+import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.PauseActions
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import com.github.e0ipso.tokkl.timerstate.TimerControls
+import com.github.e0ipso.tokkl.timerstate.TimerRevisions
 import com.github.e0ipso.tokkl.timerstate.TimerTarget
 import com.github.e0ipso.tokkl.timerstate.target
 import kotlinx.coroutines.CoroutineScope
@@ -45,9 +47,9 @@ import java.time.temporal.ChronoUnit
  * never wait for the network (docs/PRD.md principle 2). From such a tap until the cache shows it,
  * other taps are ignored, so a double tap starts one entry. A start stops a cached running entry
  * first, as the server does, so one entry runs at a time, offline too. Pause, Resume and Stop while
- * paused belong to the server's pause chain and go to [pauseChain] at once, at the revision the
- * timer was shown at, so a stale tap gets a refusal; until the server's state shows, the timer
- * keeps what it showed and ignores other taps. A refusal or no answer goes to [notices].
+ * paused belong to the server's pause chain and go to [pauseChain] at once, with a revision, so a
+ * stale tap gets a refusal; until the server's state shows, the timer keeps what it showed and
+ * ignores other taps. A refusal or no answer goes to [notices].
  *
  * A queue write the phone's storage refuses ([LocalWrite.Failed]) gives the timer back as it was
  * before the tap, as the entry form gives its form back: Start brings its draft back and Stop
@@ -55,8 +57,9 @@ import java.time.temporal.ChronoUnit
  *
  * @param timerApi whether the server offers the timer API, which decides whether a timer that the
  *   cache does not show yet offers Pause.
- * @param sender sends the queue now and waits for it, so a description typed before Pause reaches
- *   the server before the Pause does.
+ * @param held the account's held timer state, which Pause takes its revision from.
+ * @param sender sends the queue now and waits for it, so a description typed before Pause, or the
+ *   running entry's own Start, reaches the server before the Pause does.
  * @param clock the time a Start tap shows until the cache has the queue's own tap time.
  */
 internal class TimerCommands(
@@ -67,7 +70,8 @@ internal class TimerCommands(
     timerApi: Flow<Boolean>,
     private val changes: RunningEntryChanges,
     private val pauseChain: PauseActions?,
-    private val sender: suspend () -> Unit,
+    held: Flow<HeldTimerState?>,
+    sender: suspend () -> Unit,
     private val notices: TimerNoticeBoard,
     private val sections: TapSections,
     private val clock: Clock,
@@ -75,6 +79,8 @@ internal class TimerCommands(
 ) {
 
     private val mutableTaps = MutableStateFlow(TimerTaps())
+
+    private val revisions = pauseChain?.let { TimerRevisions(held, it::read, sender) }
 
     val taps: StateFlow<TimerTaps> = mutableTaps.asStateFlow()
 
@@ -242,11 +248,15 @@ internal class TimerCommands(
 
     /**
      * Pauses the running entry on the server (docs/PRD.md T1). A description still being typed is
-     * queued and sent first, so the chain keeps it. The timer shows what it showed until the
-     * server's paused state does.
+     * queued first, so the chain keeps it. Pause sends the revision the phone holds once the tap's
+     * checks pass. When the entry is unsent or a description was typed, it sends the queue first,
+     * reads the timer again, and sends the newer revision while the same entry still runs, as
+     * [TimerRevisions.forPause] decides. The timer shows what it showed until the server's paused
+     * state does.
      */
     fun pause() {
         val actions = pauseChain ?: return
+        val choice = revisions ?: return
         if (taps.value.pending != null) return
         val shown = now() as? TimerState.Running ?: return
         val running = cached.value.controls() as? TimerControls.Running ?: return
@@ -254,11 +264,9 @@ internal class TimerCommands(
         val typed = taps.value.editFor(shown, cached.value)?.takeIf { !it.sent }
         if (typed != null) edits.send(shown, typed.fields)
         act(running.target, done = { it.target != running.target }) {
-            if (typed != null) {
-                edits.awaitWrites()
-                sender()
-            }
-            actions.pause()
+            if (typed != null) edits.awaitWrites()
+            choice.forPause(running.entry.id, running.unsent || typed != null, changes::currentId)
+                .send(actions::pause)
         }
     }
 

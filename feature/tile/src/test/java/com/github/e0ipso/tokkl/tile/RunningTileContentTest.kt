@@ -214,7 +214,11 @@ class RunningTileContentTest {
 
     /** The server answers no action: the phone is offline. */
     private inner class RecordingServer : PauseActions {
-        override suspend fun pause(): TimerActionResult = TimerActionResult.Offline.also { calls += "pause" }
+        override suspend fun read(): TimerActionResult = TimerActionResult.Offline.also { calls += "read" }
+
+        override suspend fun pause(revision: Long): TimerActionResult = TimerActionResult.Offline.also {
+            calls += "pause $revision"
+        }
         override suspend fun resume(revision: Long): TimerActionResult = TimerActionResult.Offline.also {
             calls +=
                 "resume $revision"

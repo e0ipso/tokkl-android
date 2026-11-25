@@ -103,6 +103,7 @@ class RunningEntryEditorTest {
         clock,
         trace = TapTrace { {} },
         pauseChain = null,
+        held = flowOf(null),
         sender = {},
         discards = discardNotices(),
         timerApi = flowOf(true),

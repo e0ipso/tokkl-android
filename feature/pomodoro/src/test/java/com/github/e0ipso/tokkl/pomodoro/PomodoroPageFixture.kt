@@ -117,8 +117,8 @@ internal class FakeServer(val held: MutableStateFlow<HeldTimerState?>) : Session
         )
     }
 
-    /** What a read changes on the server's side. */
-    var onRead: () -> Unit = {}
+    /** What a read changes on the server's side. By default it brings an idle state to a phone that holds none. */
+    var onRead: () -> Unit = { if (held.value == null) held.value = heldState(revision = 0, pomodoro = null) }
 
     override suspend fun read(): TimerActionResult {
         calls += "read"
@@ -130,11 +130,10 @@ internal class FakeServer(val held: MutableStateFlow<HeldTimerState?>) : Session
         workspaceId: WorkspaceId,
         fields: EntryFields,
         lengths: SessionLengths,
+        revision: Long,
     ): TimerActionResult {
-        calls +=
-            "start $workspaceId $fields ${lengths.workMinutes}/${lengths.shortRestMinutes}/${lengths.longRestMinutes}/${lengths.longRestEvery}"
-        gate.await()
-        return answer ?: TimerActionResult.Done.also { held.value = heldState(revision = 1) }
+        val lengthsText = lengths.run { "$workMinutes/$shortRestMinutes/$longRestMinutes/$longRestEvery" }
+        return act("start $workspaceId $fields $lengthsText at $revision", revision) { heldState(revision + 1) }
     }
 
     override suspend fun nextPhase(revision: Long): TimerActionResult = act("next $revision", revision)

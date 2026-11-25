@@ -144,6 +144,7 @@ val timerFeatureModule = module {
             clock = get(),
             trace = get(),
             pauseChain = get<TimerActions>(),
+            held = get<AccountTimerStates>().held,
             sender = get<ChangeSender>()::sendQueued,
             discards = get<AccountTimerStates>(),
             timerApi = get<CapabilitiesSource>().state.map { it.timerState },

@@ -6,10 +6,12 @@ import com.github.e0ipso.tokkl.model.ProjectId
 import com.github.e0ipso.tokkl.model.TaskId
 import com.github.e0ipso.tokkl.model.WorkspaceId
 import com.github.e0ipso.tokkl.preferences.PomodoroDefaults
+import com.github.e0ipso.tokkl.timerstate.HeldTimerState
 import com.github.e0ipso.tokkl.timerstate.ServerTimerStates
 import com.github.e0ipso.tokkl.timerstate.SessionActions
 import com.github.e0ipso.tokkl.timerstate.SessionLengths
 import com.github.e0ipso.tokkl.timerstate.TimerActionResult
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -39,7 +41,14 @@ class PomodoroWidgetActionsTest {
     )
     private val next = PomodoroWidgetTap.Phase("account-a", 17, at, false)
     private val start = PomodoroWidgetTap.Start(idle.account, idle.entry, idle.defaults)
-    private val server = RecordingActions()
+    private val held = MutableStateFlow<HeldTimerState?>(ServerTimerStates.held(5, at))
+    private val server = RecordingActions(held)
+    private val queueSends = mutableListOf<String>()
+    private var queued = false
+    private val revision = PomodoroWidgetStartRevision(held, { queued }, { queueSends += "send" })
+
+    private suspend fun send(tap: PomodoroWidgetTap, current: PomodoroWidgetState) =
+        sendPomodoroWidgetAction(tap, current, server, revision)
 
     @Test fun theWorkSendsTheTapTheWidgetDrew() {
         val started = start.toData().pomodoroWidgetTap() as PomodoroWidgetTap.Start
@@ -72,71 +81,99 @@ class PomodoroWidgetActionsTest {
             active.copy(account = "account-b"),
             idle.copy(account = "account-b"),
         )) {
-            assertNull(sendPomodoroWidgetAction(next, current, server))
-            assertNull(sendPomodoroWidgetAction(start, current, server))
+            assertNull(send(next, current))
+            assertNull(send(start, current))
         }
         assertTrue(server.calls.isEmpty())
     }
 
     @Test fun phaseControlsNeverActOnANewerPhaseOrAnEndedSession() = runTest {
         assertNull(
-            sendPomodoroWidgetAction(
+            send(
                 next,
                 active.copy(
                     session = active.session.copy(phase = active.session.phase.copy(start = at.plusSeconds(100))),
                 ),
-                server,
             ),
         )
-        assertNull(sendPomodoroWidgetAction(next, idle, server))
+        assertNull(send(next, idle))
         assertTrue(server.calls.isEmpty())
     }
 
     @Test fun nextAndEndSendTheDisplayedRevisionEvenAfterASamePhaseEdit() = runTest {
-        assertEquals(TimerActionResult.Done, sendPomodoroWidgetAction(next, active.copy(revision = 19), server))
-        assertEquals(TimerActionResult.Done, sendPomodoroWidgetAction(next.copy(endSession = true), active, server))
+        assertEquals(TimerActionResult.Done, send(next, active.copy(revision = 19)))
+        assertEquals(TimerActionResult.Done, send(next.copy(endSession = true), active))
         assertEquals(listOf("next:17", "end:17"), server.calls)
     }
 
-    @Test fun idleStartKeepsAllDisplayedFieldsWorkspaceAndFourDefaults() = runTest {
-        assertEquals(
-            TimerActionResult.Done,
-            sendPomodoroWidgetAction(
-                start,
-                idle.copy(defaults = PomodoroDefaults.DEFAULT, entry = entry.copy(workspaceId = WorkspaceId(99))),
-                server,
-            ),
-        )
+    @Test fun idleStartKeepsAllDisplayedFieldsWorkspaceAndFourDefaultsAndSendsTheHeldRevision() = runTest {
+        val otherWorkspace = entry.copy(workspaceId = WorkspaceId(99))
+        val drawnLater = idle.copy(defaults = PomodoroDefaults.DEFAULT, entry = otherWorkspace)
+        assertEquals(TimerActionResult.Done, send(start, drawnLater))
         assertEquals(Triple(WorkspaceId(21), entry.fields, SessionLengths(40, 7, 20, 3)), server.started)
-        assertEquals(listOf("start"), server.calls)
+        assertEquals(listOf("start:5"), server.calls)
+        assertTrue(queueSends.isEmpty())
     }
 
     @Test fun staleIdleStartRefusesWithoutReplacingTheActiveSession() = runTest {
-        assertEquals(TimerActionResult.Refused, sendPomodoroWidgetAction(start, active, server))
+        assertEquals(TimerActionResult.Refused, send(start, active))
         assertTrue(server.calls.isEmpty())
+    }
+
+    @Test fun startReadsTheTimerFirstWhenNoStateIsHeldOrTheQueueHoldsChanges() = runTest {
+        held.value = null
+        server.onRead = { held.value = ServerTimerStates.held(8, at) }
+        assertEquals(TimerActionResult.Done, send(start, idle))
+        assertEquals(listOf("read", "start:8"), server.calls)
+        assertTrue(queueSends.isEmpty())
+
+        server.calls.clear()
+        queued = true
+        server.onRead = { held.value = ServerTimerStates.held(9, at) }
+        assertEquals(TimerActionResult.Done, send(start, idle))
+        assertEquals(listOf("send"), queueSends)
+        assertEquals(listOf("read", "start:9"), server.calls)
+    }
+
+    @Test fun aSessionThatShowsByTheReadRefusesStart() = runTest {
+        held.value = null
+        server.onRead = {
+            held.value = ServerTimerStates.held(8, at, pomodoro = ServerTimerStates.session(EntryId(42), at))
+        }
+        assertEquals(TimerActionResult.Refused, send(start, idle))
+        assertEquals(listOf("read"), server.calls)
     }
 
     @Test fun offlineAndConflictReturnOnceWithoutReadingRetryingOrAdvancingLocally() = runTest {
         for (result in listOf(TimerActionResult.Offline, TimerActionResult.Refused)) {
             server.result = result
-            assertEquals(result, sendPomodoroWidgetAction(next, active, server))
+            assertEquals(result, send(next, active))
         }
         assertEquals(listOf("next:17", "next:17"), server.calls)
         assertEquals(17L, active.revision)
         assertFalse(active.ended)
     }
 
-    private class RecordingActions : SessionActions {
+    private class RecordingActions(private val held: MutableStateFlow<HeldTimerState?>) : SessionActions {
         val calls = mutableListOf<String>()
         var started: Triple<WorkspaceId, EntryFields, SessionLengths>? = null
         var result: TimerActionResult = TimerActionResult.Done
-        override suspend fun read(): TimerActionResult = error("widget actions must never read first")
+
+        /** What a read brings to the phone. */
+        var onRead: () -> Unit = { error("nothing here reads") }
+
+        override suspend fun read(): TimerActionResult {
+            calls += "read"
+            onRead()
+            return TimerActionResult.Done
+        }
         override suspend fun startSession(
             workspaceId: WorkspaceId,
             fields: EntryFields,
             lengths: SessionLengths,
+            revision: Long,
         ): TimerActionResult {
-            calls += "start"
+            calls += "start:$revision"
             started = Triple(workspaceId, fields, lengths)
             return result
         }
