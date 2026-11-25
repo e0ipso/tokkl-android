@@ -41,6 +41,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
@@ -122,7 +123,8 @@ class TimerPauseTest {
         scope = scope,
         clock = clock,
         pauseChain = server,
-        sender = { events += "send queued" },
+        held = phone.map { it.held },
+        sender = ::sendQueued,
         discards = discardNotices(discardNotices, takeDiscardNotice),
         trace = TapTrace { {} },
         timerApi = flowOf(true),
@@ -131,7 +133,7 @@ class TimerPauseTest {
 
     @Test
     fun pauseWaitsForTheServerAndThenShowsItsFrozenSeconds() {
-        phone.value = Phone(running(), held(revision = 2))
+        phone.value = Phone(running(), held(revision = 2, runningId = RUNNING_ID))
         awaitState("the running entry shows") { it is TimerState.Running && it.entryId?.value == RUNNING_ID }
 
         server.gate = CompletableDeferred()
@@ -140,7 +142,7 @@ class TimerPauseTest {
             model.pause()
             model.stop()
         }
-        assertEquals("one Pause, sent to the server", listOf("pause"), calls)
+        assertEquals("one Pause, sent to the server at the held revision", listOf("pause 2"), calls)
         assertTrue("nothing went to the queue", changes.calls.isEmpty())
         val inFlight = model.state.value as TimerState.Running
         assertEquals("the timer keeps running until the server answers", EntryId(RUNNING_ID), inFlight.entryId)
@@ -156,7 +158,7 @@ class TimerPauseTest {
 
     @Test
     fun pauseSendsADescriptionStillBeingTypedBeforeItself() {
-        phone.value = Phone(running(), held(revision = 2))
+        phone.value = Phone(running(), held(revision = 2, runningId = RUNNING_ID))
         awaitState("the running entry shows") { it is TimerState.Running }
 
         onMain { model.editDescription("Typed before Pause") }
@@ -169,15 +171,46 @@ class TimerPauseTest {
         awaitState("the server's pause shows") { it is TimerState.Paused }
         assertEquals(listOf("updateRunning $RUNNING_ID $typed"), changes.calls)
         assertEquals(
-            "the queue goes out before the server pauses",
-            listOf("updateRunning", "send queued", "pause"),
+            "the queue goes out and the timer is read again before the server pauses",
+            listOf("updateRunning", "send queued", "read", "pause"),
             events,
         )
+        assertEquals("Pause sends the revision the edit made", listOf("read", "pause 3"), calls)
+    }
+
+    @Test
+    fun pauseOfAnUnsentEntrySendsItsStartFirstAndThenTheRevisionItMade() {
+        phone.value = Phone(running(unsent = true), held(revision = 2))
+        awaitState("the unsent entry shows") { it is TimerState.Running && it.pausable }
+
+        onMain { model.pause() }
+
+        awaitState("the server's pause shows") { it is TimerState.Paused }
+        assertEquals(listOf("send queued", "read", "pause"), events)
+        assertEquals("Pause sends the revision the Start made", listOf("read", "pause 3"), calls)
+        assertTrue("nothing was queued", changes.calls.isEmpty())
+    }
+
+    @Test
+    fun aPauseOfAnEntryThatNoLongerRunsAfterTheReadSendsNothingAndSaysAnotherDeviceChangedIt() {
+        phone.value = Phone(running(unsent = true), held(revision = 2))
+        awaitState("the unsent entry shows") { it is TimerState.Running && it.pausable }
+        // Another device started another entry before the read.
+        server.read = Phone(running(id = 99), held(revision = 5, runningId = 99))
+
+        onMain { model.pause() }
+
+        assertEquals(
+            TimerActionResult.Refused,
+            (awaitNotice { it is TimerNotice.ActionFailed } as TimerNotice.ActionFailed).result,
+        )
+        awaitState("taps count again") { it is TimerState.Running && model.isShown(it.target!!) }
+        assertEquals("no Pause went out", listOf("read"), calls)
     }
 
     @Test
     fun anOfflinePauseSaysSoAndLeavesTheTimerRunning() {
-        phone.value = Phone(running(), held(revision = 2))
+        phone.value = Phone(running(), held(revision = 2, runningId = RUNNING_ID))
         awaitState("the running entry shows") { it is TimerState.Running }
         server.answer = TimerActionResult.Offline
 
@@ -190,7 +223,7 @@ class TimerPauseTest {
         ) { it is TimerState.Running && model.isShown(it.target!!) } as TimerState.Running
         assertEquals(EntryId(RUNNING_ID), shown.entryId)
         assertTrue("nothing was queued", changes.calls.isEmpty())
-        assertEquals(listOf("pause"), calls)
+        assertEquals(listOf("pause 2"), calls)
 
         assertEquals(notice, main.onMain { model.frame.claim(notice) })
         onMain { model.frame.noticeShown(notice) }
@@ -199,7 +232,7 @@ class TimerPauseTest {
 
     @Test
     fun aRefusedPauseShowsTheServersStateAndSaysAnotherDeviceChangedIt() {
-        phone.value = Phone(running(), held(revision = 2))
+        phone.value = Phone(running(), held(revision = 2, runningId = RUNNING_ID))
         awaitState("the running entry shows") { it is TimerState.Running }
         // Another device paused first, and the refusal brings its state.
         server.answer = TimerActionResult.Refused
@@ -217,7 +250,7 @@ class TimerPauseTest {
 
     @Test
     fun pauseIsNotOfferedWithoutTheTimerApiOrDuringASession() {
-        phone.value = Phone(running(), held(revision = 2))
+        phone.value = Phone(running(), held(revision = 2, runningId = RUNNING_ID))
         awaitState("Pause shows") { it is TimerState.Running && it.pausable }
 
         timerApi.value = false
@@ -344,9 +377,9 @@ class TimerPauseTest {
 
     @Test
     fun focusedCallbacksCannotPauseStopOrEditAReplacement() {
-        phone.value = Phone(running(), held(revision = 2))
+        phone.value = Phone(running(), held(revision = 2, runningId = RUNNING_ID))
         val old = awaitState("old focused context") { it is TimerState.Running } as TimerState.Running
-        phone.value = Phone(running(id = 99), held(revision = 3))
+        phone.value = Phone(running(id = 99), held(revision = 3, runningId = 99))
         awaitState("replacement context") { it is TimerState.Running && it.entryId?.value == 99L }
 
         onMain {
@@ -361,7 +394,7 @@ class TimerPauseTest {
 
     @Test
     fun focusedPauseAndResumeKeepTheChainsSecondsAndFenceAnOlderRevision() {
-        phone.value = Phone(running(), held(revision = 2))
+        phone.value = Phone(running(), held(revision = 2, runningId = RUNNING_ID))
         val running = awaitState("running context") { it is TimerState.Running } as TimerState.Running
         onMain { model.pauseShown(running.target!!) }
         val paused = awaitState(
@@ -370,20 +403,20 @@ class TimerPauseTest {
         assertEquals(90L, paused.seconds)
 
         onMain { model.resumeShown(running.target!!) }
-        assertEquals("a stale running callback cannot resume its paused successor", listOf("pause"), calls)
+        assertEquals("a stale running callback cannot resume its paused successor", listOf("pause 2"), calls)
         // A rename shown with the chain moves the server's revision.
         phone.value = Phone(running = null, held(revision = 4, pause = pause(seconds = 90, cloneEntryId = null)))
         val renamed = awaitState(
             "the newer revision shows",
         ) { it is TimerState.Paused && it.target != paused.target } as TimerState.Paused
         onMain { model.resumeShown(paused.target!!) }
-        assertEquals("an older revision's callback sends nothing", listOf("pause"), calls)
+        assertEquals("an older revision's callback sends nothing", listOf("pause 2"), calls)
 
         onMain { model.resumeShown(renamed.target!!) }
         val resumed = awaitState(
             "settled resumed context",
         ) { it is TimerState.Running && model.isShown(it.target!!) } as TimerState.Running
-        assertEquals(listOf("pause", "resume 4"), calls)
+        assertEquals(listOf("pause 2", "resume 4"), calls)
         assertEquals(90L, resumed.accumulatedSeconds)
         assertEquals(EntryId(CLONE_ID), resumed.entryId)
         val identity = main.onMain { model.runningForEditShown(resumed.target!!) }
@@ -392,7 +425,7 @@ class TimerPauseTest {
 
     @Test
     fun focusedStopExitsOnlyAfterAuthoritativeIdleAndCannotRepeat() {
-        phone.value = Phone(running(), held(revision = 2))
+        phone.value = Phone(running(), held(revision = 2, runningId = RUNNING_ID))
         val shown = awaitState("running context") { it is TimerState.Running } as TimerState.Running
         changes.gate = CompletableDeferred()
         onMain { model.stopShown(shown.target!!) }
@@ -423,7 +456,7 @@ class TimerPauseTest {
 
     @Test
     fun theRunningEditorDoesNotOpenWhilePausedOrWhileAPauseIsOnItsWay() {
-        phone.value = Phone(running(), held(revision = 2))
+        phone.value = Phone(running(), held(revision = 2, runningId = RUNNING_ID))
         awaitState("the running entry shows") { it is TimerState.Running }
         server.gate = CompletableDeferred()
         onMain { model.pause() }
@@ -494,7 +527,21 @@ class TimerPauseTest {
         main.runCurrent()
     }
 
-    private fun running(id: Long = RUNNING_ID) = EntryWithSendState(
+    /**
+     * Sends the queue as the server takes it: the running entry is sent, and the server's state
+     * runs it at the next revision.
+     */
+    private suspend fun sendQueued() {
+        events += "send queued"
+        val shown = phone.value
+        val entry = shown.running ?: return
+        phone.value = Phone(
+            entry.copy(unsent = false),
+            held((shown.held?.revision ?: 0) + 1, runningId = entry.entry.id.value),
+        )
+    }
+
+    private fun running(id: Long = RUNNING_ID, unsent: Boolean = false) = EntryWithSendState(
         TimeEntry(
             EntryId(id), WorkspaceId(WORKSPACE), FIELDS.projectId, FIELDS.taskId, FIELDS.description,
             EntryTiming.Running(
@@ -504,7 +551,7 @@ class TimerPauseTest {
             ),
             FIELDS.billable, FIELDS.tags, emptyList(),
         ),
-        unsent = false,
+        unsent = unsent,
     )
 
     private fun clone() = EntryWithSendState(
@@ -524,29 +571,41 @@ class TimerPauseTest {
 
     private fun TimeEntry.fields() = EntryFields(description, projectId, taskId, tags, billable)
 
-    /** A state the phone received at [TAP], with the server's clock [offset] ahead. */
+    /**
+     * A state the phone received at [TAP], with the server's clock [offset] ahead. It runs the
+     * pause chain's clone, or the entry [runningId] names.
+     */
     private fun held(
         revision: Long,
         pause: TimerPause? = null,
         pomodoro: TimerPomodoro? = null,
         offset: Duration = OFFSET,
-    ): HeldTimerState = serverState(revision, pause, pomodoro, offset).held(TAP)
+        runningId: Long? = null,
+    ): HeldTimerState = serverState(revision, pause, pomodoro, offset, runningId).held(TAP)
 
     private fun serverState(
         revision: Long,
         pause: TimerPause? = null,
         pomodoro: TimerPomodoro? = null,
         offset: Duration = OFFSET,
+        runningId: Long? = null,
     ): ServerTimerState {
-        val clone = pause?.cloneEntryId?.let {
+        val running = pause?.cloneEntryId?.let {
             ServerTimeEntry(
                 id = it,
                 workspaceId = WORKSPACE,
                 description = FIELDS.description,
                 start = CLONE_START.toString(),
             )
+        } ?: runningId?.let {
+            ServerTimeEntry(
+                id = it,
+                workspaceId = WORKSPACE,
+                description = FIELDS.description,
+                start = TAP.minusSeconds(90).toString(),
+            )
         }
-        return ServerTimerState(revision, TAP.plus(offset), clone, pause, pomodoro, discardedPomodoro = null)
+        return ServerTimerState(revision, TAP.plus(offset), running, pause, pomodoro, discardedPomodoro = null)
     }
 
     private fun pause(seconds: Long, cloneEntryId: EntryId?) = TimerPause(
@@ -587,7 +646,8 @@ class TimerPauseTest {
      * The server's pause chain actions. Each waits for [gate], then answers [answer]. A Done
      * pause stops the running entry into the chain, a Done resume starts the clone and a Done
      * discard ends the chain, each with the next revision, written to the cache and the holder
-     * together before it returns, as the holder does. A refusal brings [refusal], when set.
+     * together before it returns, as the holder does. A refusal brings [refusal], when set. A
+     * read brings [read], when set, and otherwise leaves the phone as it is.
      */
     private inner class FakeServer : PauseActions {
         @Volatile
@@ -599,7 +659,17 @@ class TimerPauseTest {
         @Volatile
         var refusal: Phone? = null
 
-        override suspend fun pause(): TimerActionResult = act("pause") { shown ->
+        @Volatile
+        var read: Phone? = null
+
+        override suspend fun read(): TimerActionResult {
+            calls += "read"
+            events += "read"
+            read?.let { phone.value = it }
+            return TimerActionResult.Done
+        }
+
+        override suspend fun pause(revision: Long): TimerActionResult = act("pause $revision") { shown ->
             val entry = shown.running?.entry ?: return@act shown
             val stored = Duration.between(entry.start, clock.instant()).seconds
             Phone(running = null, held(revision(shown) + 1, pause = pause(seconds = stored, cloneEntryId = null)))

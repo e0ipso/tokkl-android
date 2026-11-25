@@ -28,6 +28,7 @@ import com.github.e0ipso.tokkl.awaitControls
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.changes
+import com.github.e0ipso.tokkl.components.readTimerRevision
 import com.github.e0ipso.tokkl.components.runningCheck
 import com.github.e0ipso.tokkl.components.timerActions
 import com.github.e0ipso.tokkl.components.timerControls
@@ -418,7 +419,8 @@ class RunningTileServerTest {
         RunningNotifications.allow()
         account.createEntry("Paused on the laptop", Instant.now().minusSeconds(600).truncatedTo(ChronoUnit.SECONDS))
         runBlocking { app.accountRefresh.refresh().join() }
-        assertEquals("the server pauses it", TimerActionResult.Done, runBlocking { app.timerActions.pause() })
+        val pausedOnTheServer = runBlocking { app.timerActions.pause(app.readTimerRevision()) }
+        assertEquals("the server pauses it", TimerActionResult.Done, pausedOnTheServer)
         val paused = app.awaitControls<TimerControls.Paused>("the server's Pause")
         QuickSettingsTile.expand()
         QuickSettingsTile.awaitText("the paused timer", context.getString(R.string.tile_paused_subtitle))

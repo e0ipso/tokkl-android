@@ -31,6 +31,12 @@ interface CurrentTimerState {
     /** The signed-in account's held state now, or null without one. Loads the stored state on first use. */
     fun heldNow(): HeldTimerState?
 
+    /**
+     * The signed-in account's held state and each one it takes after it, across sign-ins, such
+     * as the answer of a read the phone sends. Null without one.
+     */
+    val held: Flow<HeldTimerState?>
+
     /** The name the signed-in account's timer controls carry in their targets. */
     fun account(): String
 
@@ -138,7 +144,7 @@ class AccountTimerStates(
      */
     private val states: Flow<AccountTimerState> = account.context.map { current() }
 
-    val held: Flow<HeldTimerState?> = states.flatMapLatest { it.source.state }.flowOn(io)
+    override val held: Flow<HeldTimerState?> = states.flatMapLatest { it.source.state }.flowOn(io)
 
     /**
      * [held] while the account's server offers the timer API, and null otherwise: what the

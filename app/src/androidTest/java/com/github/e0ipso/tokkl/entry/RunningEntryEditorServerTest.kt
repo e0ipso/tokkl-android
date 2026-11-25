@@ -73,6 +73,7 @@ import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.cache
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.navigationStores
+import com.github.e0ipso.tokkl.components.readTimerRevision
 import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.components.timerActions
 import com.github.e0ipso.tokkl.components.timerControls
@@ -505,7 +506,8 @@ class RunningEntryEditorServerTest {
         withMain {
             openClock()
             replace(FieldsR.string.entry_description, "Stale paused draft")
-            assertEquals("the server pauses it", TimerActionResult.Done, runBlocking { app.timerActions.pause() })
+            val pausedOnTheServer = runBlocking { app.timerActions.pause(app.readTimerRevision()) }
+            assertEquals("the server pauses it", TimerActionResult.Done, pausedOnTheServer)
             val paused = runBlocking {
                 withTimeout(
                     NETWORK_MS,
@@ -580,6 +582,7 @@ class RunningEntryEditorServerTest {
                         clock = Clock.systemUTC(),
                         trace = TapTrace { {} },
                         pauseChain = null,
+                        held = flowOf(null),
                         sender = {},
                         discards = object : DiscardNotices {
                             override val discardNotice = flowOf<DiscardedPomodoro?>(null)

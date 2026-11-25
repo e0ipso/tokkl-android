@@ -24,6 +24,7 @@ import com.github.e0ipso.tokkl.SessionRule
 import com.github.e0ipso.tokkl.TokklApplication
 import com.github.e0ipso.tokkl.components.capabilities
 import com.github.e0ipso.tokkl.components.heldTimerState
+import com.github.e0ipso.tokkl.components.readTimerRevision
 import com.github.e0ipso.tokkl.components.timerActions
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.PhaseKind
@@ -209,6 +210,7 @@ class PomodoroAlarmActivityTest {
                         WorkspaceId(fixture.account.workspaceId),
                         EntryFields("Alarm acceptance"),
                         lengths,
+                        app.readTimerRevision(),
                     )
                 },
             )

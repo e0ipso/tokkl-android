@@ -85,6 +85,7 @@ class TimerViewModelTest {
             clock = clock,
             trace = trace,
             pauseChain = null,
+            held = flowOf(null),
             sender = {},
             discards = discardNotices(),
             timerApi = flowOf(true),

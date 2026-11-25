@@ -297,11 +297,11 @@ class TokklApiTest {
     fun timerRequests() = runTest {
         api.timer.state()
         api.timer.events(ApiCallCancellation()) { it.readBytes() }
-        api.timer.pause()
+        api.timer.pause(6)
         api.timer.resume(7)
         api.timer.discard(7)
         api.timer.startSession(
-            SessionStartBody(7, "Tokkl for Android", "Deep work", 3, null, listOf("focus"), true, 40, 8, 20, 5),
+            SessionStartBody(7, "Tokkl for Android", "Deep work", 3, null, listOf("focus"), true, 40, 8, 20, 5, 7),
         )
         api.timer.nextPhase(8)
         api.timer.endSession(9)
@@ -310,12 +310,13 @@ class TokklApiTest {
             listOf(
                 "GET /tokkl/api/app/timer",
                 "GET /tokkl/api/app/timer/events",
-                "POST /tokkl/api/app/timer/pause {}",
+                """POST /tokkl/api/app/timer/pause {"revision":6}""",
                 """POST /tokkl/api/app/timer/resume {"revision":7}""",
                 """POST /tokkl/api/app/timer/discard {"revision":7}""",
                 """POST /tokkl/api/app/pomodoro {"workspace_id":7,"created_with":"Tokkl for Android",""" +
                     """"description":"Deep work","project_id":3,"task_id":null,"tags":["focus"],"billable":true,""" +
-                    """"work_minutes":40,"short_rest_minutes":8,"long_rest_minutes":20,"long_rest_every":5}""",
+                    """"work_minutes":40,"short_rest_minutes":8,"long_rest_minutes":20,"long_rest_every":5,""" +
+                    """"revision":7}""",
                 """POST /tokkl/api/app/pomodoro/next {"revision":8}""",
                 """POST /tokkl/api/app/pomodoro/end {"revision":9}""",
             ),

@@ -25,6 +25,7 @@ import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.accountSettings
 import com.github.e0ipso.tokkl.components.changes
 import com.github.e0ipso.tokkl.components.heldTimerState
+import com.github.e0ipso.tokkl.components.readTimerRevision
 import com.github.e0ipso.tokkl.components.sender
 import com.github.e0ipso.tokkl.components.signOut
 import com.github.e0ipso.tokkl.components.storeSignIn
@@ -254,7 +255,12 @@ class PomodoroSessionNotificationServerTest {
         assertEquals(
             TimerActionResult.Done,
             runBlocking {
-                app.timerActions.startSession(WorkspaceId(workspace), EntryFields("Notification acceptance"), lengths)
+                app.timerActions.startSession(
+                    WorkspaceId(workspace),
+                    EntryFields("Notification acceptance"),
+                    lengths,
+                    app.readTimerRevision(),
+                )
             },
         )
         return HeldPhases.key(checkNotNull(app.heldTimerState))

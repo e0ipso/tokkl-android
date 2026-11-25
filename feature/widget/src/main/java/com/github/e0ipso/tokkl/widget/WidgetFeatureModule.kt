@@ -66,6 +66,8 @@ val widgetFeatureModule = module {
             signIn = get(),
             widgetStates = get(),
             failures = get(),
+            changes = get(),
+            sender = get(),
             scope = get(),
             io = io(),
         )

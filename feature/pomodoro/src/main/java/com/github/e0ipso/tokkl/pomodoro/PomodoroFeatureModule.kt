@@ -127,6 +127,7 @@ val pomodoroFeatureModule = module {
                 actions = get<TimerActions>(),
                 changes = changes,
                 sender = get<ChangeSender>()::sendQueued,
+                unsent = changes::hasSendable,
             ),
             defaults = get<PomodoroDefaultsSetting>().defaults,
             settings = get<AccountSettingsSource>().state,

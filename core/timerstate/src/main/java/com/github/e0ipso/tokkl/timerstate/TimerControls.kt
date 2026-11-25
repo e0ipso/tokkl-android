@@ -26,7 +26,13 @@ sealed interface TimerTarget {
     /** The account the control was drawn for, as the timer state's store names it. */
     val account: String
 
-    /** The running entry [entryId] a control showed, which Pause and Stop act on. */
+    /**
+     * The running entry [entryId] a control showed, which Pause and Stop act on. It carries no
+     * revision, and neither do its flat copies and redraw keys: Pause sends the one the phone
+     * holds at the tap, as [TimerRevisions.forPause] chooses it. A change that moved the revision
+     * after the control was drawn, such as a rename, then does not get the Pause refused once the
+     * phone has it.
+     */
     data class Running(val entryId: EntryId, override val account: String) : TimerTarget
 
     /** A paused chain a control showed at the server's [revision], which Resume and Discard send. */

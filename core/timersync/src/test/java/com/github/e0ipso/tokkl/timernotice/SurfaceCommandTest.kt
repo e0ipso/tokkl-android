@@ -106,7 +106,9 @@ class SurfaceCommandTest {
     )
 
     private inner class Server : PauseActions {
-        override suspend fun pause(): TimerActionResult = answer
+        override suspend fun read(): TimerActionResult = answer
+
+        override suspend fun pause(revision: Long): TimerActionResult = answer
 
         override suspend fun resume(revision: Long): TimerActionResult = answer
 

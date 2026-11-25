@@ -141,9 +141,11 @@ class PomodoroViewModelTest {
         var started = 0
         f.page.start { started++ }!!.join()
         assertEquals(
+            "the phone holds no state yet, so it reads the timer and sends the revision it got",
             listOf(
+                "read",
                 "start $WORKSPACE EntryFields(description=First work, projectId=null, taskId=null, tags=[deep], " +
-                    "billable=false) 30/5/12/2",
+                    "billable=false) 30/5/12/2 at 0",
             ),
             f.server.calls,
         )
@@ -179,7 +181,53 @@ class PomodoroViewModelTest {
         assertNull(f.page.start())
         f.server.gate.complete(Unit)
         first.join()
-        assertEquals(1, f.server.calls.size)
+        assertEquals(1, f.server.calls.count { it.startsWith("start") })
+    }
+
+    @Test
+    fun startSendsTheRevisionOfTheIdleStateThePhoneHolds() = runTest {
+        val f = PageFixture(heldState(revision = 3, pomodoro = null)).also { fixtures += it }
+        f.page.start()!!.join()
+        assertTrue(f.queueSends.isEmpty())
+        assertEquals(listOf("start"), f.server.calls.map { it.substringBefore(' ') })
+        assertTrue(f.server.calls.single().endsWith(" at 3"))
+        assertNotNull(f.page.state.value.pomodoro)
+    }
+
+    @Test
+    fun startAfterAnEditOfAPomodoroThatEndedElsewhereSendsTheQueueAndTheRevisionItProduced() = runTest {
+        val f = running()
+        f.page.editFields(EntryFields("Typed"), EntryId(ENTRY))!!.join()
+        // Another device ended the session before the edit reached the server.
+        f.held.value = heldState(revision = 5, pomodoro = null)
+        f.server.onRead = { f.held.value = heldState(revision = 6, pomodoro = null) }
+        f.page.start()!!.join()
+        assertEquals(listOf("send"), f.queueSends)
+        assertEquals(listOf("read", "start"), f.server.calls.map { it.substringBefore(' ') })
+        assertTrue(f.server.calls.last().endsWith(" at 6"))
+        assertNull(f.page.state.value.problem)
+    }
+
+    @Test
+    fun startAfterAChangeQueuedOutsideThePageSendsTheQueueAndTheRevisionItProduced() = runTest {
+        // An edit of the running entry made on the Timer page, not yet sent.
+        val f = PageFixture(heldState(revision = 3, pomodoro = null)).also { fixtures += it }
+        f.unsent.value = 1
+        f.server.onRead = { f.held.value = heldState(revision = 4, pomodoro = null) }
+        f.page.start()!!.join()
+        assertEquals(listOf("send"), f.queueSends)
+        assertEquals(listOf("read", "start"), f.server.calls.map { it.substringBefore(' ') })
+        assertTrue(f.server.calls.last().endsWith(" at 4"))
+        assertNull(f.page.state.value.problem)
+    }
+
+    @Test
+    fun aSessionThatShowsByTheTimeStartReadsTheTimerIsRefusedAndNothingStarts() = runTest {
+        val f = idle()
+        f.server.onRead = { f.held.value = heldState(revision = 7) }
+        f.page.start()!!.join()
+        assertEquals("only the read went out", listOf("read"), f.server.calls)
+        assertEquals(PomodoroProblem(PomodoroAction.START, TimerActionResult.Refused), f.page.state.value.problem)
     }
 
     @Test
@@ -193,8 +241,9 @@ class PomodoroViewModelTest {
     @Test
     fun nothingStartsUntilTheHeldStateAndTheCacheHaveBeenRead() {
         val f = idle()
+        val session = PomodoroSessionEdits(emptyFlow(), f.server, f.changes, sender = {}, unsent = { false })
         val unread = PomodoroViewModel(
-            emptyFlow(), emptyFlow(), PomodoroSessionEdits(emptyFlow(), f.server, f.changes, sender = {}), f.defaults,
+            emptyFlow(), emptyFlow(), session, f.defaults,
             f.settings, f.unsent, f.refused, f.scope,
             exactAlarms = { false }, picker = flowOf(PickerSource()), entries = emptyFlow(),
             offline = MutableStateFlow(false),
