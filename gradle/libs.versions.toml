@@ -10,7 +10,7 @@ room = "2.8.5"
 ksp = "2.3.13"
 work = "2.12.0"
 okhttp = "5.5.1"
-kotlinxSerialization = "1.12.0"
+kotlinxSerialization = "1.13.0"
 # The version the AndroidX and Koin libraries already bring, which the API client's suspend calls use.
 kotlinxCoroutines = "1.9.0"
 junit = "4.13.2"
