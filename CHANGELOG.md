@@ -1,3 +1,9 @@
+## [0.9.1](https://github.com/e0ipso/tokkl-android/compare/v0.9.0...v0.9.1) (2026-11-25)
+
+### Bug Fixes
+
+* read the time resolution from /me/preferences ([#56](https://github.com/e0ipso/tokkl-android/issues/56)) ([81429bc](https://github.com/e0ipso/tokkl-android/commit/81429bcac823d70663342745499a46ccda17c780)), references [#54](https://github.com/e0ipso/tokkl-android/issues/54)
+
 ## [0.9.0](https://github.com/e0ipso/tokkl-android/compare/v0.8.3...v0.9.0) (2026-11-21)
 
 ### Features
