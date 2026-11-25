@@ -64,15 +64,15 @@ class AccountSettingsSource(
      * Writes what [merge] makes of the stored settings, unless a write or [forget] came after
      * [writesBefore], as when sign-in stored newer settings while a refresh ran. Settings equal to
      * the stored ones are not written again, and a failed write keeps the stored ones until the
-     * next refresh. Returns false when a newer write came.
+     * next refresh. Returns the merged settings, or null when a newer write came.
      */
     internal suspend fun storeRefreshed(
         writesBefore: Long,
         merge: (stored: AccountSettings?) -> AccountSettings,
-    ): Boolean {
+    ): AccountSettings? {
         ready()
         return writing.withLock {
-            if (writes != writesBefore) return@withLock false
+            if (writes != writesBefore) return@withLock null
             val settings = merge(held.value)
             if (settings != held.value) {
                 try {
@@ -81,7 +81,7 @@ class AccountSettingsSource(
                     // Keeps the stored settings until the next refresh.
                 }
             }
-            true
+            settings
         }
     }
 

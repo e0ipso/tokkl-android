@@ -113,7 +113,8 @@ class AccountApi internal constructor(private val client: ApiTransport) {
  * The fields the app reads from `GET /api/v9/me`. Toggl Track and Tokkl always send `id`,
  * `timezone` and `beginning_of_week`, so a body without them is not a `/me` user. They send
  * `default_workspace_id` too, but a body without it still signs in, and a refresh then keeps the
- * stored workspace. `time_resolution_minutes` and `role` are Tokkl's own and may be missing.
+ * stored workspace. `time_resolution_minutes` and `role` are Tokkl's own and may be missing. Tokkl
+ * 2.8.0 and later send `time_resolution_minutes` in `/me/preferences` instead (`AccountSettings`).
  * `role` marks a Tokkl server. `toString` leaves out the token.
  *
  * [clients], [projects], [tags] and [tasks] come only with `with_related_data=true`, and are null

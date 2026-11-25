@@ -102,6 +102,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.boolean
@@ -149,7 +150,6 @@ class RunningEntryEditorServerTest {
     private val app get() = context.applicationContext as TokklApplication
     private lateinit var account: TestAccounts.Account
     private var workspace = 0L
-    private var originalResolution: Long? = null
     private var relay: HangingRelay? = null
     private var barrier: WriteBarrier? = null
     private val web by lazy {
@@ -189,13 +189,9 @@ class RunningEntryEditorServerTest {
             if (::account.isInitialized) drain()
         } finally {
             try {
-                try {
-                    originalResolution?.let { setResolution(it) }
-                } finally {
-                    signIn(TokklTestServer.url, TokklTestServer.apiToken)
-                    // Successful DELETE removes this account, workspace and all its entries.
-                    if (::account.isInitialized) TestAccounts.delete(account)
-                }
+                signIn(TokklTestServer.url, TokklTestServer.apiToken)
+                // Successful DELETE removes this account, workspace, entries and preferences.
+                if (::account.isInitialized) TestAccounts.delete(account)
             } finally {
                 try {
                     relay?.close()
@@ -908,29 +904,17 @@ class RunningEntryEditorServerTest {
         }
     }
 
+    /**
+     * Sets this test's account's grid. Since Tokkl 2.8.0 it is the account's own preference, so
+     * deleting the account in [cleanUp] drops it and nothing needs restoring.
+     */
     private fun setResolution(minutes: Long) {
-        val admin = TogglApiClient(
-            TokklTestServer.url,
-            ApiCredentials.ApiToken(TokklTestServer.apiToken),
-            httpClient = OkHttpClient(),
-            io = Dispatchers.IO,
-        )
-        val url = admin.server.app("admin", "settings")
-        if (originalResolution == null) {
-            originalResolution = runBlocking {
-                admin.get(
-                    url,
-                    JsonObject.serializer(),
-                )
-            }.orFail("read fixture grid")
-                .getValue("time_resolution_minutes").jsonPrimitive.long
-        }
         runBlocking {
-            admin.send(
-                HttpMethod.PUT,
-                url,
+            web.send(
+                HttpMethod.POST,
+                web.server.api("me", "preferences"),
                 buildJsonObject { put("time_resolution_minutes", minutes) },
-                JsonObject.serializer(),
+                JsonElement.serializer(),
             )
         }.orFail("set fixture grid")
         refresh()

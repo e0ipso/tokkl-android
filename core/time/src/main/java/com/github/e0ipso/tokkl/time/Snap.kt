@@ -76,7 +76,8 @@ fun snapInstant(at: Instant, minutes: Double, timeZone: ZoneId): Instant {
  * show those times before sending it. Null means the typed span would be rejected as too short.
  * Never pass the running entry: its clock is not snapped.
  *
- * A server without Tokkl's `time_resolution_minutes` in `GET /api/v9/me` does not snap, so with
+ * A server without Tokkl's `time_resolution_minutes`, in `GET /api/v9/me/preferences` or in
+ * `GET /api/v9/me`, does not snap, so with
  * [timeResolutionMinutes] null the span comes back unchanged (docs/PRD.md section 8.3). A value
  * that is not a resolution leaves it unchanged as well, where [snapSpan] would throw. Otherwise
  * both ends are cut to whole seconds first, as Tokkl's server does before it snaps

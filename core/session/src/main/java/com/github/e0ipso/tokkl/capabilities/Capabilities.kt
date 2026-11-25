@@ -29,14 +29,20 @@ fun Capabilities.supports(kind: ReportCsvKind): Boolean = when (kind) {
 }
 
 /**
- * The flags from [me] and the [trash] probe. A probe that got no clear answer keeps the
+ * The flags from [me], the refresh's merged [timeResolutionMinutes] (`/me/preferences` on Tokkl
+ * 2.8.0, `/me` before) and the [trash] probe. A probe that got no clear answer keeps the
  * trash and restore flags as they were. CSV routes are POST only, so refresh does not send
  * OPTIONS: that 404 is not absence. Tokkl offers Share until a POST proves one kind is gone,
  * and a recorded false stays false across later refreshes. The same holds for [timerState]
  * and its probe. [allDay] follows the CSV rule: offered on Tokkl until a time entry list
  * proves it gone.
  */
-internal fun Capabilities.updatedWith(me: Me, trash: TrashProbe, timer: TimerStateProbe): Capabilities {
+internal fun Capabilities.updatedWith(
+    me: Me,
+    timeResolutionMinutes: Double?,
+    trash: TrashProbe,
+    timer: TimerStateProbe,
+): Capabilities {
     val hasTrash = when (trash) {
         TrashProbe.PRESENT -> true
         TrashProbe.ABSENT -> false
@@ -47,7 +53,7 @@ internal fun Capabilities.updatedWith(me: Me, trash: TrashProbe, timer: TimerSta
         trash = hasTrash,
         restore = if (trash == TrashProbe.UNKNOWN) restore else hasTrash,
         favorites = tokkl,
-        timeResolution = me.timeResolutionMinutes != null,
+        timeResolution = timeResolutionMinutes != null,
         negatedFilters = tokkl,
         summaryCsv = offeredUntilGone(tokkl, summaryCsv),
         detailedCsv = offeredUntilGone(tokkl, detailedCsv),

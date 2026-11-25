@@ -80,6 +80,16 @@ class CapabilitiesTest {
         assertFalse(capabilities.timeResolution)
     }
 
+    /** Tokkl 2.8.0 sends the resolution in `/me/preferences` only, so the flag follows the stored one. */
+    @Test
+    fun timeResolutionFollowsTheStoredResolutionWhenMeLacksIt() = runTest {
+        answers[TRASH] = json("[]")
+        val tokkl28 = me("""{"id":1,"timezone":"UTC","beginning_of_week":1,"role":"user"}""")
+
+        assertTrue(source().refresh(client, tokkl28, timeResolutionMinutes = 15.0).timeResolution)
+        assertFalse(source().refresh(client, tokkl28, timeResolutionMinutes = null).timeResolution)
+    }
+
     @Test
     fun favoritesAreFalseWhenMeLacksRole() = runTest {
         answers[TRASH] = json("[]")
@@ -351,7 +361,12 @@ class CapabilitiesTest {
         assertEquals(ALL, loading.state.value)
     }
 
-    private fun CapabilitiesSource.refresh(api: TokklApi, me: Me) = runBlocking { refresh(api, me, timerStates) }
+    /** A refresh whose stored resolution is [timeResolutionMinutes], `/me`'s own unless a test says otherwise. */
+    private fun CapabilitiesSource.refresh(
+        api: TokklApi,
+        me: Me,
+        timeResolutionMinutes: Double? = me.timeResolutionMinutes,
+    ) = runBlocking { refresh(api, me, timeResolutionMinutes, timerStates) }
 
     private fun MockWebServer.requests(): List<String> = List(requestCount) { takeRequest().url.encodedPath }
 

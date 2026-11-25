@@ -90,6 +90,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.buildJsonObject
@@ -135,7 +136,6 @@ class EntryFormServerTest {
     private val app get() = context.applicationContext as TokklApplication
     private lateinit var account: TestAccounts.Account
     private var workspace = 0L
-    private var originalResolution: Long? = null
 
     /** The web app: the same account, straight to the server and past the app's guard. */
     private val web by lazy {
@@ -173,13 +173,9 @@ class EntryFormServerTest {
                 io = Dispatchers.IO,
             )
             AirplaneMode.set(false, admin)
-            try {
-                originalResolution?.let { setResolution(it) }
-            } finally {
-                // TestAccounts talks to the server through the app's guard, which follows the session.
-                signIn(TokklTestServer.url, TokklTestServer.apiToken)
-                if (::account.isInitialized) TestAccounts.delete(account)
-            }
+            // TestAccounts talks to the server through the app's guard, which follows the session.
+            signIn(TokklTestServer.url, TokklTestServer.apiToken)
+            if (::account.isInitialized) TestAccounts.delete(account)
         } finally {
             SessionRule.signOut()
         }
@@ -795,28 +791,17 @@ class EntryFormServerTest {
         assertEquals(5_400L, saved.getValue("duration").jsonPrimitive.long)
     }
 
+    /**
+     * Sets this test's account's grid. Since Tokkl 2.8.0 it is the account's own preference, so
+     * deleting the account in [cleanUp] drops it and nothing needs restoring.
+     */
     private fun setResolution(minutes: Long) {
-        val admin = TogglApiClient(
-            TokklTestServer.url,
-            ApiCredentials.ApiToken(TokklTestServer.apiToken),
-            httpClient = OkHttpClient(),
-            io = Dispatchers.IO,
-        )
-        val url = admin.server.app("admin", "settings")
-        if (originalResolution == null) {
-            originalResolution = runBlocking {
-                admin.get(
-                    url,
-                    JsonObject.serializer(),
-                )
-            }.orFail("GET settings").getValue("time_resolution_minutes").jsonPrimitive.long
-        }
         runBlocking {
-            admin.send(
-                HttpMethod.PUT,
-                url,
+            web.send(
+                HttpMethod.POST,
+                web.server.api("me", "preferences"),
                 buildJsonObject { put("time_resolution_minutes", minutes) },
-                JsonObject.serializer(),
+                JsonElement.serializer(),
             )
         }.orFail("set resolution")
         runBlocking { app.accountRefresh.refreshAfterChange().join() }

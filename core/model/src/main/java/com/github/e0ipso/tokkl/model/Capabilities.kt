@@ -12,7 +12,8 @@ package com.github.e0ipso.tokkl.model
  * @property favorites `GET /api/v9/me` carries Tokkl's `role`. On Tokkl a missing `favorites` key
  *   in `/me/preferences` means no timer templates yet, not missing support. Tokkl's other preference
  *   keys that the app reads and writes, such as `timerView`, follow this flag too.
- * @property timeResolution `GET /api/v9/me` carries `time_resolution_minutes`.
+ * @property timeResolution the server sends `time_resolution_minutes`: `GET /api/v9/me/preferences`
+ *   on Tokkl 2.8.0 and later, `GET /api/v9/me` before.
  * @property negatedFilters report requests take `exclude_project_ids`, `exclude_client_ids` and
  *   `exclude_tag_ids`, the web app's "Is not" filters. Toggl Track's Reports API v3 has no
  *   negation, and every Tokkl release takes them, so Tokkl's `role` in `GET /api/v9/me` decides it.
