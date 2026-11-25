@@ -48,6 +48,7 @@ import com.github.e0ipso.tokkl.sync.LastAnswer
 import com.github.e0ipso.tokkl.timer.TimerViewSetting
 import com.github.e0ipso.tokkl.timerstate.AccountTimerStates
 import com.github.e0ipso.tokkl.timerstate.HeldTimerState
+import com.github.e0ipso.tokkl.timerstate.TimerActionResult
 import com.github.e0ipso.tokkl.timerstate.TimerActions
 import com.github.e0ipso.tokkl.timerstate.TimerControls
 import com.github.e0ipso.tokkl.timerstate.TimerStateSource
@@ -110,6 +111,16 @@ val TokklApplication.timerStates: AccountTimerStates get() = component()
 
 /** The signed-in account's held timer state now, read anew on each read as the app does. */
 val TokklApplication.heldTimerState: HeldTimerState? get() = timerStates.heldNow()
+
+/**
+ * Reads the timer with `GET /api/app/timer` and returns the revision the phone then holds, the one
+ * a Pause or Pomodoro Start the test sends straight through [timerActions] goes at.
+ */
+suspend fun TokklApplication.readTimerRevision(): Long {
+    val read = timerActions.read()
+    check(read == TimerActionResult.Done) { "GET /api/app/timer: $read" }
+    return checkNotNull(heldTimerState) { "no timer state held after the read" }.revision
+}
 
 /** Where the signed-in account's timer state takes answers, taken anew on each read as the app does. */
 val TokklApplication.timerStateIntake: TimerStateSource get() = timerStates.intake()

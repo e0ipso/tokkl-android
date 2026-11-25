@@ -35,6 +35,7 @@ import com.github.e0ipso.tokkl.clients.ClientsRoute
 import com.github.e0ipso.tokkl.components.accountRefresh
 import com.github.e0ipso.tokkl.components.capabilities
 import com.github.e0ipso.tokkl.components.heldTimerState
+import com.github.e0ipso.tokkl.components.readTimerRevision
 import com.github.e0ipso.tokkl.components.timerActions
 import com.github.e0ipso.tokkl.model.EntryFields
 import com.github.e0ipso.tokkl.model.WorkspaceId
@@ -305,6 +306,7 @@ class BottomBarTest {
                         WorkspaceId(account.workspaceId),
                         EntryFields(description = "Navigation session"),
                         SessionLengths(25, 5, 15, 4),
+                        app.readTimerRevision(),
                     )
                 },
             )

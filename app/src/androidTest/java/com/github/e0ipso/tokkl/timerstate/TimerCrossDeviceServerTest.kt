@@ -7,8 +7,10 @@ import android.service.notification.StatusBarNotification
 import android.util.Log
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.core.app.ActivityScenario
@@ -45,7 +47,9 @@ import com.github.e0ipso.tokkl.notification.RunningNotifications
 import com.github.e0ipso.tokkl.notification.action
 import com.github.e0ipso.tokkl.openBarPage
 import com.github.e0ipso.tokkl.orFail
+import com.github.e0ipso.tokkl.pomodoro.PomodoroAction
 import com.github.e0ipso.tokkl.pomodoro.PomodoroLengths
+import com.github.e0ipso.tokkl.pomodoro.PomodoroProblem
 import com.github.e0ipso.tokkl.pomodoro.PomodoroRing
 import com.github.e0ipso.tokkl.pomodoro.PomodoroRingObservation
 import com.github.e0ipso.tokkl.pomodoro.PomodoroSessionNotifier
@@ -329,6 +333,80 @@ class TimerCrossDeviceServerTest {
     }
 
     /**
+     * Pause on the Timer page and Start on the Pomodoro page send the revision the phone holds.
+     * Each time the other device moves the timer on first, while the phone's stream has not
+     * delivered it yet. The server refuses the stale request, and the phone takes the server's
+     * state from the refusal and shows the refusal notice. Neither request changes the server.
+     */
+    @Test
+    fun aPauseAndAPomodoroStartAtARevisionAnotherDeviceMovedOnAreRefused() {
+        prepareTheMainServer()
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            compose.awaitTimerPage()
+            awaitTimerSyncService()
+            val entry = awaitTheStream(startedSecondsAgo = 600)
+            app.awaitControls<TimerControls.Running>(
+                "the other device's entry",
+            ) { it.entry.id.value == entry && it.pausable }
+
+            // The stream has not brought the other device's Pause yet, as on a slow network.
+            runBlocking { app.timerSync.stop().join() }
+            val drawn = checkNotNull(held())
+            val pausedThere = postTimer("timer", "pause", revision = drawn.revision)
+            assertTrue(pausedThere.pause?.paused == true)
+            assertEquals("the phone has not heard of the Pause", drawn, held())
+
+            tapOnTheTimerPage(UiR.string.timer_pause_spoken)
+            awaitRefusalNotice()
+            val paused = app.awaitControls<TimerControls.Paused>(
+                "the server's paused state from the refusal",
+            ) { it.target.revision == pausedThere.revision }
+            assertEquals("the server's frozen total", pausedThere.pause?.seconds, paused.seconds)
+            assertEquals("the refused Pause changed nothing", pausedThere.revision, other.timerState().revision)
+
+            // The other device ends the chain, and the phone follows it again.
+            val discarded = postTimer("timer", "discard", revision = pausedThere.revision)
+            app.followTimerSync()
+            app.awaitControls<TimerControls.Idle>("the other device's Discard")
+            compose.waitUntil("the phone holds the Discard", STREAM_CONNECT_MS) {
+                held()?.revision == discarded.revision
+            }
+
+            compose.awaitPomodoroOffered(15_000)
+            compose.openBarPage(UiR.string.pomodoro_title)
+            var model: PomodoroViewModel? = null
+            scenario.onActivity { model = sessionViewModels(it)[PomodoroViewModel::class.java] }
+            val page = checkNotNull(model)
+            compose.waitUntil("the page has loaded", 15_000) { !page.page.value.loading }
+            compose.runOnIdle { page.editFields(EntryFields("Phone session"), entryId = null) }
+
+            // The stream has not brought the other device's session yet.
+            runBlocking { app.timerSync.stop().join() }
+            val idle = checkNotNull(held())
+            assertEquals(discarded.revision, idle.revision)
+            val started = postTimer("pomodoro", body = sessionBody("Another device's session", every = 4))
+            val session = checkNotNull(started.model().pomodoro)
+            assertEquals("the phone has not heard of the session", idle, held())
+
+            compose.onNode(
+                hasText(context.getString(UiR.string.pomodoro_start)) and hasClickAction(),
+            ).performScrollTo().performClick()
+            compose.waitUntil(
+                "the server refuses the Start",
+                15_000,
+            ) { page.page.value.problem != null && !page.page.value.busy }
+            assertEquals(PomodoroProblem(PomodoroAction.START, TimerActionResult.Refused), page.page.value.problem)
+            awaitRefusalNotice()
+            assertEquals("the page shows the other device's session", session, page.page.value.pomodoro)
+            assertEquals("the phone took the server's state from the refusal", started.revision, held()?.revision)
+            val after = other.timerState()
+            assertEquals("the refused Start changed nothing", started.revision, after.revision)
+            assertEquals("Another device's session", after.runningEntry?.description)
+            app.followTimerSync()
+        }
+    }
+
+    /**
      * Criterion 3: Pause and Resume work in both directions on one chain, with the same paused
      * total on the phone and the server, and Discard on the other device clears the paused chain
      * on the phone. The phone acts through its running notification, with the app in the
@@ -512,6 +590,27 @@ class TimerCrossDeviceServerTest {
         compose.onNode(
             TimerSurfaces.onTheAlarm(hasText(context.getString(R.string.pomodoro_alarm_next)) and hasClickAction()),
         ).assertIsDisplayed()
+    }
+
+    private fun tapOnTheTimerPage(spoken: Int) {
+        val button = hasContentDescription(context.getString(spoken)) and hasClickAction()
+        compose.waitUntil(
+            "the Timer page offers ${context.getString(spoken)}",
+            5_000,
+        ) { compose.onAllNodes(button).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNode(button).performClick()
+    }
+
+    /**
+     * Waits until the app says another device changed the timer first. The host's notice and the
+     * Pomodoro page's own both say it, so this waits for any of them.
+     */
+    private fun awaitRefusalNotice() {
+        val refused = context.getString(TimerNoticeR.string.timer_action_refused)
+        compose.waitUntil(
+            "the refusal notice shows",
+            10_000,
+        ) { compose.onAllNodesWithText(refused).fetchSemanticsNodes().isNotEmpty() }
     }
 
     private fun ringStopped(): Boolean = PomodoroRingObservation.now().let {
