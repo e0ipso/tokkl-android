@@ -31,9 +31,14 @@ import kotlin.coroutines.CoroutineContext
  * caller goes meanwhile, as a screen does. The read runs in the caller's coroutine and stops
  * with it.
  *
- * Resume, Discard, Next phase and End take the revision of the state the surface showed, not the
- * holder's latest, so a tap on an older notification or widget gets a refusal instead of acting
- * on a phase the user never saw.
+ * Every action sends a revision, and the server refuses one at a stale revision. Resume, Discard,
+ * Next phase and End take the revision of the state the surface showed, not the holder's latest,
+ * so a tap on an older notification or widget gets a refusal instead of acting on a phase the
+ * user never saw. Pause and Start take the revision [TimerRevisions] chooses: the one the phone
+ * holds at the tap, after the surface's check that it still shows what the control showed. The
+ * choice reads the timer first when the phone holds no state, and sends the queue and reads
+ * again when the phone's own queued changes would move the revision, so they do not get the
+ * action refused.
  *
  * @param states gives the intake where the account's timer state takes answers. Each call takes
  *   the intake once and gives the answer to it, so an answer for an account that signed out
@@ -51,8 +56,7 @@ class TimerActions(
         exchange { api -> api.timer.state().map { Refusable(it, refused = false) } }
     }
 
-    /** Pause reads no field, so it sends an empty object. */
-    override suspend fun pause(): TimerActionResult = send { it.timer.pause() }
+    override suspend fun pause(revision: Long): TimerActionResult = send { it.timer.pause(revision) }
 
     override suspend fun resume(revision: Long): TimerActionResult = send { it.timer.resume(revision) }
 
@@ -62,7 +66,8 @@ class TimerActions(
         workspaceId: WorkspaceId,
         fields: EntryFields,
         lengths: SessionLengths,
-    ): TimerActionResult = send { it.timer.startSession(sessionStart(workspaceId, fields, lengths)) }
+        revision: Long,
+    ): TimerActionResult = send { it.timer.startSession(sessionStart(workspaceId, fields, lengths, revision)) }
 
     override suspend fun nextPhase(revision: Long): TimerActionResult = send { it.timer.nextPhase(revision) }
 
@@ -87,11 +92,20 @@ class TimerActions(
     }
 }
 
-/** The pause chain's actions on the server, which the Timer page and the full-screen timer send. */
+/**
+ * The pause chain's actions on the server, which the Timer page, the full-screen timer and the
+ * native timer controls send, and the timer read that Pause uses to learn the revision to send.
+ */
 interface PauseActions {
 
-    /** Pauses the running entry. The server refuses it during a session and while nothing runs. */
-    suspend fun pause(): TimerActionResult
+    /** Reads the state with `GET /api/app/timer`. */
+    suspend fun read(): TimerActionResult
+
+    /**
+     * Pauses the running entry shown at [revision], the one [TimerRevisions.forPause] chooses. The
+     * server refuses it at a stale revision, during a session and while nothing runs.
+     */
+    suspend fun pause(revision: Long): TimerActionResult
 
     /** Resumes the paused chain shown at [revision], with a clone of its fields. */
     suspend fun resume(revision: Long): TimerActionResult
@@ -110,10 +124,16 @@ interface SessionActions {
     suspend fun read(): TimerActionResult
 
     /**
-     * The server refuses it while a session runs, and otherwise stops the running entry and ends
-     * any pause chain.
+     * Starts a session from the state shown at [revision], the one [TimerRevisions.forStart]
+     * chooses. The server refuses it at a stale revision and while a session runs, and otherwise
+     * stops the running entry and ends any pause chain.
      */
-    suspend fun startSession(workspaceId: WorkspaceId, fields: EntryFields, lengths: SessionLengths): TimerActionResult
+    suspend fun startSession(
+        workspaceId: WorkspaceId,
+        fields: EntryFields,
+        lengths: SessionLengths,
+        revision: Long,
+    ): TimerActionResult
 
     /** Confirms the phase shown at [revision] and starts the next one. */
     suspend fun nextPhase(revision: Long): TimerActionResult
@@ -176,18 +196,20 @@ data class SessionLengths(
 
 /**
  * The body of `POST /api/app/pomodoro`: the first pomodoro's fields as a v9 start sends them, tags
- * by name and the app's `created_with`, and the four lengths.
+ * by name and the app's `created_with`, the four lengths, and the [revision] the start acts on.
  */
-private fun sessionStart(workspaceId: WorkspaceId, fields: EntryFields, lengths: SessionLengths) = SessionStartBody(
-    workspaceId = workspaceId.value,
-    createdWith = CREATED_WITH,
-    description = fields.description,
-    projectId = fields.projectId?.value,
-    taskId = fields.taskId?.value,
-    tags = fields.tags,
-    billable = fields.billable,
-    workMinutes = lengths.workMinutes,
-    shortRestMinutes = lengths.shortRestMinutes,
-    longRestMinutes = lengths.longRestMinutes,
-    longRestEvery = lengths.longRestEvery,
-)
+private fun sessionStart(workspaceId: WorkspaceId, fields: EntryFields, lengths: SessionLengths, revision: Long) =
+    SessionStartBody(
+        workspaceId = workspaceId.value,
+        createdWith = CREATED_WITH,
+        description = fields.description,
+        projectId = fields.projectId?.value,
+        taskId = fields.taskId?.value,
+        tags = fields.tags,
+        billable = fields.billable,
+        workMinutes = lengths.workMinutes,
+        shortRestMinutes = lengths.shortRestMinutes,
+        longRestMinutes = lengths.longRestMinutes,
+        longRestEvery = lengths.longRestEvery,
+        revision = revision,
+    )

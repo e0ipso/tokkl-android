@@ -7,7 +7,8 @@ import java.io.InputStream
 
 /**
  * The body of `POST /api/app/pomodoro`: the first pomodoro's fields as a v9 start sends them, tags
- * by name, and the four lengths in place of the account's defaults.
+ * by name, the four lengths in place of the account's defaults, and the [revision] of the state
+ * the start acts on. A start stops a running timer, so the server refuses one at a stale revision.
  */
 @Serializable
 data class SessionStartBody(
@@ -22,6 +23,7 @@ data class SessionStartBody(
     @SerialName("short_rest_minutes") val shortRestMinutes: Int,
     @SerialName("long_rest_minutes") val longRestMinutes: Int,
     @SerialName("long_rest_every") val longRestEvery: Int,
+    val revision: Long,
 )
 
 /** The body of an action that depends on the state the surface showed. */
@@ -31,8 +33,9 @@ private class RevisionBody(val revision: Long)
 /**
  * Tokkl's server-owned timer under `/api/app`, from Tokkl 1.10.0; older servers answer 404. Each
  * action goes out once and answers with the timer state, also when the server refuses it with a
- * 409, as [ApiTransport.sendRefusable] describes. The actions that act on what a surface showed
- * take that state's revision.
+ * 409, as [ApiTransport.sendRefusable] describes. Every action takes the revision of the state it
+ * acts on, and the server refuses one at a stale revision. The server checks it on Pause and on
+ * the session start from Tokkl 2.2.0.
  */
 class TimerApi internal constructor(private val client: ApiTransport) {
 
@@ -43,8 +46,8 @@ class TimerApi internal constructor(private val client: ApiTransport) {
     suspend fun <T> events(cancellation: ApiCallCancellation, read: (InputStream) -> T): ApiResult<T> =
         client.stream(client.server.appUrl("timer", "events"), cancellation, read)
 
-    /** `POST /api/app/timer/pause`, which reads no field, with an empty object. */
-    suspend fun pause(): ApiResult<Refusable<TimerState>> = action(EMPTY_BODY, "timer", "pause")
+    /** `POST /api/app/timer/pause` at [revision]. */
+    suspend fun pause(revision: Long): ApiResult<Refusable<TimerState>> = action(revisioned(revision), "timer", "pause")
 
     /** `POST /api/app/timer/resume` at [revision]. */
     suspend fun resume(revision: Long): ApiResult<Refusable<TimerState>> =
@@ -54,7 +57,7 @@ class TimerApi internal constructor(private val client: ApiTransport) {
     suspend fun discard(revision: Long): ApiResult<Refusable<TimerState>> =
         action(revisioned(revision), "timer", "discard")
 
-    /** `POST /api/app/pomodoro`, which starts a session with [body]. */
+    /** `POST /api/app/pomodoro`, which starts a session with [body], at its revision. */
     suspend fun startSession(body: SessionStartBody): ApiResult<Refusable<TimerState>> =
         action(json(SessionStartBody.serializer(), body), "pomodoro")
 

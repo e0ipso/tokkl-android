@@ -37,16 +37,19 @@ sealed interface SurfaceTap {
  *
  * Stop of a running entry, a resumed clone included, goes to the change queue, so it works
  * offline and the server ends the chain when it gets it. Pause, Resume and Stop while paused go to
- * the server through [server]. Pause sends no revision. Resume and Stop while paused send the
- * revision the control was drawn at, also after a process restart, so the server refuses a tap on
- * a state it has moved past. Pause goes ahead only where the controls offer it now, which needs
- * the timer API and no Pomodoro session, so a control drawn before either changed sends nothing.
+ * the server through [server]. Resume and Stop while paused send the revision the control was
+ * drawn at, also after a process restart, so the server refuses a tap on a state it has moved
+ * past. Pause sends the revision [TimerRevisions.forPause] chooses once the request's checks
+ * pass: the one the phone holds then, or after a read when it holds none, or after sending the
+ * queue and reading again when the entry is unsent. Pause goes ahead only where the controls
+ * offer it now, which needs the timer API and no Pomodoro session, so a control drawn before
+ * either changed sends nothing.
  * One server action goes out at a time. Duplicate taps on the same state send nothing. Once
  * the server publishes the next state, a tap on its control waits for the previous call to
  * return, then checks the state again before sending. A Stop of a running entry never waits.
  *
- * @param state what the phone shows now, read at the tap, and the signed-in account's name, as
- *   the targets of its controls carry it.
+ * @param state what the phone shows now, read at the tap, the held state Pause takes its
+ *   revision from, and the signed-in account's name, as the targets of its controls carry it.
  * @param sender sends the queue and waits for it, so a Start the server has not had yet reaches
  *   it before the Pause that follows it.
  */
@@ -54,8 +57,10 @@ class TimerSurfaceActions(
     private val state: CurrentTimerState,
     private val changes: RunningEntryChanges,
     private val server: PauseActions,
-    private val sender: suspend () -> Unit,
+    sender: suspend () -> Unit,
 ) {
+
+    private val revisions = TimerRevisions(state.held, server::read, sender)
 
     /**
      * Checks [action] on the control drawn with [target] against what the phone holds now. A Stop
@@ -86,8 +91,7 @@ class TimerSurfaceActions(
         val running = state.currentControls() as? TimerControls.Running ?: return null
         if (!running.pausable || changes.currentId(target.entryId) != running.entry.id) return null
         return request(running.target) {
-            if (running.unsent) sender()
-            server.pause()
+            revisions.forPause(running.entry.id, running.unsent, changes::currentId).send(server::pause)
         }
     }
 

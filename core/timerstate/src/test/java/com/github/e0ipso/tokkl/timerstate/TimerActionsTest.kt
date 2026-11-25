@@ -109,7 +109,7 @@ class TimerActionsTest {
     fun anActionStillReachesTheHolderOnceItsCallerGoes() = runBlocking {
         gate = CompletableDeferred()
         server.enqueue(answer(200, state(revision = 3)))
-        val caller = launch(Dispatchers.IO) { actions.pause() }
+        val caller = launch(Dispatchers.IO) { actions.pause(2) }
         entered.await()
 
         caller.cancel()
@@ -140,6 +140,7 @@ class TimerActionsTest {
         hold(state(revision = 9))
         val shown = 7L
         val sent: List<Pair<String, suspend () -> TimerActionResult>> = listOf(
+            "/tokkl/api/app/timer/pause" to suspend { actions.pause(shown) },
             "/tokkl/api/app/timer/resume" to suspend { actions.resume(shown) },
             "/tokkl/api/app/timer/discard" to suspend { actions.discard(shown) },
             "/tokkl/api/app/pomodoro/next" to suspend { actions.nextPhase(shown) },
@@ -170,7 +171,7 @@ class TimerActionsTest {
             billable = true,
         )
 
-        assertEquals(TimerActionResult.Done, run { actions.pause() })
+        assertEquals(TimerActionResult.Done, run { actions.pause(revision = 4) })
         assertEquals(
             TimerActionResult.Done,
             run {
@@ -178,14 +179,14 @@ class TimerActionsTest {
                     workspaceId = WorkspaceId(7),
                     fields = fields,
                     lengths = SessionLengths(50, 10, 30, 3),
+                    revision = 1,
                 )
             },
         )
 
         val pause = server.takeRequest()
         assertEquals("POST" to "/tokkl/api/app/timer/pause", pause.method to pause.url.encodedPath)
-        // Pause reads no field, but the start, next, end, resume and discard routes need an object.
-        assertEquals(json("{}"), json(pause.body!!.utf8()))
+        assertEquals(json("""{"revision":4}"""), json(pause.body!!.utf8()))
 
         val start = server.takeRequest()
         assertEquals("POST" to "/tokkl/api/app/pomodoro", start.method to start.url.encodedPath)
@@ -195,7 +196,8 @@ class TimerActionsTest {
                 """
                 {"workspace_id":7,"created_with":"$CREATED_WITH","description":"Write the report","project_id":5,
                  "task_id":null,"tags":["deep","writing"],"billable":true,
-                 "work_minutes":50,"short_rest_minutes":10,"long_rest_minutes":30,"long_rest_every":3}
+                 "work_minutes":50,"short_rest_minutes":10,"long_rest_minutes":30,"long_rest_every":3,
+                 "revision":1}
                 """,
             ),
             json(start.body!!.utf8()),
@@ -227,13 +229,34 @@ class TimerActionsTest {
     }
 
     @Test
+    fun aPauseOrSessionStartAtAStaleRevisionIsRefusedAndTheServersStateIsHeld() = runTest {
+        // Another device started a timer at revision 5, then a session at revision 6.
+        hold(state(revision = 4))
+        server.enqueue(answer(409, state(revision = 5, running = serverEntry(40, "Focus"))))
+        server.enqueue(answer(409, state(revision = 6, running = serverEntry(41, "Session"))))
+
+        assertEquals(TimerActionResult.Refused, run { actions.pause(4) })
+        assertEquals("the pause's refusal is held", 5L, holder.state.value?.revision)
+        assertEquals(
+            TimerActionResult.Refused,
+            run { actions.startSession(WorkspaceId(7), EntryFields(), SessionLengths(25, 5, 15, 4), revision = 4) },
+        )
+        assertEquals("the start's refusal is held", 6L, holder.state.value?.revision)
+        assertEquals(
+            "each refusal's running entry reaches the cache",
+            listOf(EntryId(40), EntryId(41)),
+            cache.written.filterNotNull().map { it.id },
+        )
+    }
+
+    @Test
     fun anAnswerOlderThanTheHeldStateDoesNotReplaceIt() = runTest {
         // The stream delivered revision 15 while the actions were on their way.
         hold(state(revision = 15))
         server.enqueue(answer(200, state(revision = 14)))
         server.enqueue(answer(409, state(revision = 13)))
 
-        assertEquals(TimerActionResult.Done, run { actions.pause() })
+        assertEquals(TimerActionResult.Done, run { actions.pause(14) })
         assertEquals(TimerActionResult.Refused, run { actions.endSession(13) })
 
         assertEquals(15L, holder.state.value?.revision)
@@ -281,12 +304,12 @@ class TimerActionsTest {
         server.enqueue(answer(200, """{"revision":"not a state"}"""))
         server.enqueue(answer(409, """{"revision":"not a state"}"""))
 
-        assertEquals(TimerActionResult.Failed(ApiError.AuthFailed), run { actions.pause() })
+        assertEquals(TimerActionResult.Failed(ApiError.AuthFailed), run { actions.pause(2) })
         assertEquals(
             TimerActionResult.Failed(
                 ApiError.UnexpectedStatus(400, "Invalid work_minutes: expected an integer from 1 to 180"),
             ),
-            run { actions.startSession(WorkspaceId(7), EntryFields(), SessionLengths(25, 5, 15, 4)) },
+            run { actions.startSession(WorkspaceId(7), EntryFields(), SessionLengths(25, 5, 15, 4), revision = 2) },
         )
         assertEquals(
             TimerActionResult.Failed(ApiError.UnexpectedStatus(409, "Time entry already stopped")),
@@ -324,7 +347,7 @@ class TimerActionsTest {
 
         // Signed out, there is no account to send for.
         signedIn = false
-        assertEquals(TimerActionResult.Failed(ApiError.AuthFailed), run { actions.pause() })
+        assertEquals(TimerActionResult.Failed(ApiError.AuthFailed), run { actions.pause(2) })
         assertEquals("nothing reached the server", requestsBefore, server.requestCount)
         assertSame(held, holder.state.value)
     }

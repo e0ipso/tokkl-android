@@ -30,26 +30,62 @@ class TimerSurfaceActionsTest {
     private var answer: TimerActionResult = TimerActionResult.Done
     private val mappings = mutableMapOf<EntryId, EntryId>()
 
+    /** The account's held state, which the phone took from the server's last answer or event. */
+    private var heldState: HeldTimerState? = held(revision = 7, running = 42)
+
+    /** What the server's timer read does, as [TimerActions.read] gives its answer to the holder. */
+    private var onRead: () -> TimerActionResult = { error("this tap reads nothing") }
+
+    /** What sending the queue does besides, such as the server's id for a phone-made entry. */
+    private var onSend: () -> Unit = {}
+
     /** While set, the server's Pause answers only once it completes. */
     private var held: CompletableDeferred<Unit>? = null
 
     private val actions = TimerSurfaceActions(
-        state = FixedTimerState(controls = { now }, account = ACCOUNT),
+        state = FixedTimerState(controls = { now }, account = ACCOUNT, held = { heldState }),
         changes = Queue(),
         server = Server(),
-        sender = { calls += "send queue" },
+        sender = {
+            calls += "send queue"
+            onSend()
+        },
     )
 
     @Test
-    fun pauseOfTheShownEntryGoesToTheServerAndQueuesNothing() = runTest {
+    fun pauseOfTheShownEntryGoesToTheServerAtTheRevisionHeldAtTheTap() = runTest {
         now = running(id = 42)
+        heldState = held(revision = 7, running = 42)
 
         val tap = tap(TimerSurfaceAction.Pause, running(id = 42).target)
+        // A state the stream delivers before the request goes out, as a rename on another device makes.
+        heldState = held(revision = 8, running = 42)
 
         assertTrue(tap is SurfaceTap.Request)
         assertTrue("nothing goes out before the surface sends it", calls.isEmpty())
         assertEquals(TimerActionResult.Done, run { (tap as SurfaceTap.Request).send() })
-        assertEquals(listOf("pause"), calls)
+        assertEquals("no read and no queue", listOf("pause 8"), calls)
+    }
+
+    @Test
+    fun pauseWithNoHeldStateReadsTheTimerFirstAndSendsItsRevision() = runTest {
+        // A phone that has read no timer state yet, as before the stream's first event.
+        now = running(id = 42)
+        heldState = null
+        onRead = { TimerActionResult.Offline }
+
+        val offline = tap(TimerSurfaceAction.Pause, running(id = 42).target) as SurfaceTap.Request
+        assertEquals("a failed read is what the tap comes to", TimerActionResult.Offline, run { offline.send() })
+        assertEquals("nothing is sent without a revision", listOf("read"), calls)
+
+        calls.clear()
+        onRead = {
+            heldState = held(revision = 12, running = 42)
+            TimerActionResult.Done
+        }
+        val online = tap(TimerSurfaceAction.Pause, running(id = 42).target) as SurfaceTap.Request
+        assertEquals(TimerActionResult.Done, run { online.send() })
+        assertEquals(listOf("read", "pause 12"), calls)
     }
 
     @Test
@@ -84,16 +120,45 @@ class TimerSurfaceActionsTest {
         val tap = tap(TimerSurfaceAction.Pause, running(id = -5).target) as SurfaceTap.Request
         run { tap.send() }
 
-        assertEquals(listOf("pause"), calls)
+        assertEquals(listOf("pause 7"), calls)
     }
 
     @Test
     fun pauseOfAnUnsentEntrySendsTheQueueFirst() = runTest {
+        // The phone started -5 while the server held revision 7 with 41 running.
         now = running(id = -5, unsent = true)
+        heldState = held(revision = 7, running = 41)
+        onSend = { mappings[EntryId(-5)] = EntryId(42) }
+        onRead = {
+            heldState = held(revision = 8, running = 42)
+            TimerActionResult.Done
+        }
 
-        run { (tap(TimerSurfaceAction.Pause, running(id = -5).target) as SurfaceTap.Request).send() }
+        val result = run { (tap(TimerSurfaceAction.Pause, running(id = -5).target) as SurfaceTap.Request).send() }
 
-        assertEquals("the server runs the shown entry before it pauses it", listOf("send queue", "pause"), calls)
+        assertEquals(TimerActionResult.Done, result)
+        assertEquals(
+            "the server runs the shown entry before it pauses it, at the revision its start made",
+            listOf("send queue", "read", "pause 8"),
+            calls,
+        )
+    }
+
+    @Test
+    fun pauseOfAnUnsentEntryThatNoLongerRunsOnceSentSendsNothing() = runTest {
+        // Another device started 43 before the phone's Start of -5 reached the server.
+        now = running(id = -5, unsent = true)
+        heldState = held(revision = 7, running = 41)
+        onSend = { mappings[EntryId(-5)] = EntryId(42) }
+        onRead = {
+            heldState = held(revision = 9, running = 43)
+            TimerActionResult.Done
+        }
+
+        val result = run { (tap(TimerSurfaceAction.Pause, running(id = -5).target) as SurfaceTap.Request).send() }
+
+        assertEquals(TimerActionResult.Refused, result)
+        assertEquals(listOf("send queue", "read"), calls)
     }
 
     @Test
@@ -185,7 +250,7 @@ class TimerSurfaceActionsTest {
 
         gate.complete(Unit)
         assertEquals(TimerActionResult.Done, sending.await())
-        assertEquals(listOf("pause", "stop 42"), calls)
+        assertEquals(listOf("pause 7", "stop 42"), calls)
         assertTrue("the next tap goes out again", actions.tap(TimerSurfaceAction.Pause, target) is SurfaceTap.Request)
     }
 
@@ -203,11 +268,11 @@ class TimerSurfaceActionsTest {
             val next = actions.tap(TimerSurfaceAction.Resume, paused(revision = 9).target)
             assertTrue("the newly drawn control accepts a tap", next is SurfaceTap.Request)
             val resuming = async(start = CoroutineStart.UNDISPATCHED) { (next as SurfaceTap.Request).send() }
-            assertEquals("server calls stay serialized", listOf("pause"), calls)
+            assertEquals("server calls stay serialized", listOf("pause 7"), calls)
             gate.complete(Unit)
             assertEquals(TimerActionResult.Done, sending.await())
             assertEquals(TimerActionResult.Done, resuming.await())
-            assertEquals(listOf("pause", "resume 9"), calls)
+            assertEquals(listOf("pause 7", "resume 9"), calls)
         } finally {
             gate.complete(Unit)
         }
@@ -232,7 +297,7 @@ class TimerSurfaceActionsTest {
             gate.complete(Unit)
             sending.await()
             assertNull("the waiting control is now stale", resuming.await())
-            assertEquals("only the original action reached the server", listOf("pause"), calls)
+            assertEquals("only the original action reached the server", listOf("pause 7"), calls)
         } finally {
             gate.complete(Unit)
         }
@@ -247,20 +312,29 @@ class TimerSurfaceActionsTest {
 
     private fun running(id: Long, pausable: Boolean = true, unsent: Boolean = false, accumulatedSeconds: Long = 0) =
         TimerControls.Running(
-            entry = TimeEntry(
-                EntryId(id), WorkspaceId(1), null, null, "Work",
-                EntryTiming.Running(
-                    Instant.parse(
-                        "2026-10-28T09:00:00Z",
-                    ),
-                ),
-                false, emptyList(), emptyList(),
-            ),
+            entry = entry(id),
             unsent = unsent,
             accumulatedSeconds = accumulatedSeconds,
             target = TimerTarget.Running(EntryId(id), ACCOUNT),
             pausable = pausable,
         )
+
+    private fun entry(id: Long) = TimeEntry(
+        EntryId(id), WorkspaceId(1), null, null, "Work",
+        EntryTiming.Running(START),
+        false, emptyList(), emptyList(),
+    )
+
+    /** A state the server sent at [revision] with [running] as its running entry, outside a session. */
+    private fun held(revision: Long, running: Long?) = HeldTimerState(
+        revision = revision,
+        serverTime = START,
+        runningEntry = running?.let(::entry),
+        pause = null,
+        pomodoro = null,
+        discardedPomodoro = null,
+        receivedAt = START,
+    )
 
     private fun paused(revision: Long) = TimerControls.Paused(
         600,
@@ -270,8 +344,13 @@ class TimerSurfaceActionsTest {
     )
 
     private inner class Server : PauseActions {
-        override suspend fun pause(): TimerActionResult {
-            calls += "pause"
+        override suspend fun read(): TimerActionResult {
+            calls += "read"
+            return onRead()
+        }
+
+        override suspend fun pause(revision: Long): TimerActionResult {
+            calls += "pause $revision"
             held?.await()
             return answer
         }
@@ -304,5 +383,6 @@ class TimerSurfaceActionsTest {
 
     private companion object {
         const val ACCOUNT = "this account"
+        val START: Instant = Instant.parse("2026-10-28T09:00:00Z")
     }
 }
