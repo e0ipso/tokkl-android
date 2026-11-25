@@ -1,3 +1,9 @@
+## [0.10.0](https://github.com/e0ipso/tokkl-android/compare/v0.9.1...v0.10.0) (2026-11-25)
+
+### Features
+
+* send the timer revision on Pause and Pomodoro Start ([#60](https://github.com/e0ipso/tokkl-android/issues/60)) ([1bf13d2](https://github.com/e0ipso/tokkl-android/commit/1bf13d2381d807f04cf82d9060385fe90073c326)), references [#55](https://github.com/e0ipso/tokkl-android/issues/55)
+
 ## [0.9.1](https://github.com/e0ipso/tokkl-android/compare/v0.9.0...v0.9.1) (2026-11-25)
 
 ### Bug Fixes
